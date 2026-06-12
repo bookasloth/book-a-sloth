@@ -7,6 +7,7 @@ vi.mock('../../../services/api', () => ({
   adminEmailTemplates: () => Promise.resolve({ data: [] }),
   adminCampCreate: vi.fn(), adminCampLaunch: vi.fn(),
   adminCampSegPreview: vi.fn(), adminCampSyncContacts: vi.fn(),
+  adminCampWaTemplates: () => Promise.resolve({ data: [] }), adminCampWaCreate: vi.fn(),
 }));
 
 import AdminCampaigns from '../AdminCampaigns';

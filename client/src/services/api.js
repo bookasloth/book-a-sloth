@@ -273,12 +273,16 @@ export const adminCampContacts     = (params)   => API.get('/admin/campaigns/con
 export const adminCampSyncContacts = ()         => API.post('/admin/campaigns/contacts/sync');
 export const adminCampSuppress     = (id, data) => API.patch(`/admin/campaigns/contacts/${id}`, data);
 export const adminCampSegments     = ()         => API.get('/admin/campaigns/segments');
-export const adminCampSegPreview   = (definition) => API.post('/admin/campaigns/segments/preview', { definition });
+export const adminCampSegPreview   = (definition, channel = 'email') => API.post('/admin/campaigns/segments/preview', { definition, channel });
 export const adminCampaigns        = ()         => API.get('/admin/campaigns');
 export const adminCampCreate       = (data)     => API.post('/admin/campaigns', data);
 export const adminCampGet          = (id)       => API.get(`/admin/campaigns/${id}`);
 export const adminCampUpdate       = (id, data) => API.put(`/admin/campaigns/${id}`, data);
 export const adminCampLaunch       = (id)       => API.post(`/admin/campaigns/${id}/launch`);
+// WhatsApp template registry (AiSensy approved templates + variable mapping)
+export const adminCampWaTemplates  = ()         => API.get('/admin/campaigns/wa-templates');
+export const adminCampWaCreate     = (data)     => API.post('/admin/campaigns/wa-templates', data);
+export const adminCampWaUpdate     = (id, data) => API.put(`/admin/campaigns/wa-templates/${id}`, data);
 
 // ── Public: Badge Showcase ───────────────────────────────────
 export const getVendorBadges       = (username)         => API.get(`/vendors/${username}/badges`);

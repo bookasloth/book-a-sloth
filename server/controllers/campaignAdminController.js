@@ -42,7 +42,7 @@ const listSegments = async (_req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 };
 const previewSegment = async (req, res) => {
-  try { const n = await segmentService.count(req.body?.definition || {}, 'email'); res.json({ count: n }); }
+  try { const n = await segmentService.count(req.body?.definition || {}, req.body?.channel || 'email'); res.json({ count: n }); }
   catch (e) { res.status(500).json({ message: e.message }); }
 };
 
