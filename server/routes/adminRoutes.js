@@ -123,4 +123,19 @@ router.get('/email/settings',                 requireAdmin('email.manage'), emai
 router.put('/email/settings',                 requireAdmin('email.manage'), email.updateSettings);
 router.get('/email/events',                   requireAdmin('email.manage'), email.listEvents);
 
+// ── Campaigns (Phase 1: email) ─────────────────────────────────
+// Static sub-paths (contacts, segments) are registered BEFORE '/campaigns/:id'
+// so Express does not match them as an :id param.
+const campaigns = require('../controllers/campaignAdminController');
+router.get('/campaigns/contacts',          requireAdmin('campaigns.view'),   campaigns.listContacts);
+router.post('/campaigns/contacts/sync',    requireAdmin('campaigns.manage'), campaigns.syncContacts);
+router.patch('/campaigns/contacts/:id',    requireAdmin('campaigns.manage'), campaigns.suppressContact);
+router.get('/campaigns/segments',          requireAdmin('campaigns.view'),   campaigns.listSegments);
+router.post('/campaigns/segments/preview', requireAdmin('campaigns.view'),   campaigns.previewSegment);
+router.get('/campaigns',                   requireAdmin('campaigns.view'),   campaigns.listCampaigns);
+router.post('/campaigns',                  requireAdmin('campaigns.manage'), campaigns.createCampaign);
+router.get('/campaigns/:id',               requireAdmin('campaigns.view'),   campaigns.getCampaign);
+router.put('/campaigns/:id',               requireAdmin('campaigns.manage'), campaigns.updateCampaign);
+router.post('/campaigns/:id/launch',       requireAdmin('campaigns.manage'), campaigns.launchCampaign);
+
 module.exports = router;
