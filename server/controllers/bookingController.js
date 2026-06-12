@@ -231,11 +231,16 @@ const createBooking = async (req, res) => {
     const commission   = pricing.commission;
     const vendorPayout = pricing.vendorPayout;
 
-    // Google Calendar — Task 4: use hostTimezone
+    // Google Calendar — created at booking time ONLY for FREE services.
+    // PAID services defer event creation to paymentController.verifyPayment so a
+    // pending/unpaid booking does not place a placeholder event that would then
+    // collide with itself during pre-payment slot re-validation (the "slot no
+    // longer available" bug) and to avoid orphan events from abandoned checkouts.
     let meetingLink = "";
     const isOnline = service.meeting_mode !== "offline";
     if (
       isOnline &&
+      service.price === 0 &&
       host.google_calendar_connected &&
       host.google_refresh_token
     ) {
