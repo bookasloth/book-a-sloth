@@ -1,0 +1,52 @@
+import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
+
+// /auth/google/done — landing page for the vendor Google OAuth callback.
+// Session tokens arrive in the URL FRAGMENT (never sent to any server/logs):
+//   #access_token=...&refresh_token=...&new=1|0
+const GoogleAuthDone = () => {
+  const { adoptSession } = useAuth();
+  const navigate = useNavigate();
+  const ran = useRef(false);
+
+  useEffect(() => {
+    if (ran.current) return; // StrictMode double-invoke guard
+    ran.current = true;
+
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const token = params.get('access_token');
+    const refresh = params.get('refresh_token');
+    const isNew = params.get('new') === '1';
+
+    // Scrub tokens from the address bar immediately
+    window.history.replaceState(null, '', '/auth/google/done');
+
+    if (!token || !refresh) {
+      navigate('/login-as-vendor?error=auth_failed', { replace: true });
+      return;
+    }
+
+    adoptSession({ token, refresh_token: refresh })
+      .then(() => {
+        toast.success(isNew ? 'Welcome to Book A Sloth! 🦥' : 'Welcome back!');
+        navigate('/dashboard', { replace: true });
+      })
+      .catch(() => {
+        navigate('/login-as-vendor?error=auth_failed', { replace: true });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-[#FE5100] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm text-gray-500">Setting up your account…</p>
+      </div>
+    </div>
+  );
+};
+
+export default GoogleAuthDone;

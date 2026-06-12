@@ -1,0 +1,266 @@
+/**
+ * availabilityService.js — single source of truth for slot availability.
+ *
+ * Available = Working Hours
+ *           − Manual Blocked Dates (availability.blocked_dates)
+ *           − Existing Platform Bookings (grace-period aware)
+ *           − Google Calendar busy intervals (Free/Busy API)
+ *           − Buffer Times (availability.buffer_minutes)
+ *
+ * Design notes:
+ *   - All comparisons happen in UTC; working hours are wall-clock in the
+ *     host's timezone and converted per-day with the Intl API (no deps).
+ *   - A Google API failure NEVER blocks bookings — it logs and falls back to
+ *     platform-only availability (an outage must not take the marketplace down).
+ *   - The HARD double-booking guarantee lives in the DB (bookings_no_overlap
+ *     exclusion constraint, migration v2.5); this service is the UX layer.
+ */
+
+const { supabaseAdmin } = require("../config/supabase");
+const { getFreeBusy } = require("../config/google");
+const { decrypt: decryptToken } = require("../utils/cryptoTokens");
+
+const DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+// Convert a wall-clock time in `tz` to a UTC Date (mirror of the client's
+// wallClockToUTC in ServiceBooking.jsx — keep the two in sync).
+const wallClockToUTC = (year, month, day, hour, minute, tz) => {
+  const fakeUTC = new Date(Date.UTC(year, month, day, hour, minute, 0));
+  const tzStr = fakeUTC.toLocaleString("sv", { timeZone: tz });
+  const inTz = new Date(tzStr.replace(" ", "T") + "Z");
+  const offsetMs = fakeUTC.getTime() - inTz.getTime();
+  return new Date(fakeUTC.getTime() + offsetMs);
+};
+
+// Date parts ("YYYY-MM-DD" → {y,m,d}); returns null on bad input.
+const parseDateStr = (dateStr) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr || ""));
+  if (!m) return null;
+  return { y: Number(m[1]), mo: Number(m[2]) - 1, d: Number(m[3]) };
+};
+
+// What calendar date (and weekday) a UTC instant falls on in `tz`.
+const dateInTz = (utcDate, tz) => {
+  const s = utcDate.toLocaleString("sv", { timeZone: tz }); // "YYYY-MM-DD HH:MM:SS"
+  return { dateStr: s.slice(0, 10), dayName: DAY_NAMES[new Date(s.replace(" ", "T") + "Z").getUTCDay()] };
+};
+
+const isDateBlocked = (blockedDates, dateStr) =>
+  Array.isArray(blockedDates) && blockedDates.some((b) => String(b).slice(0, 10) === dateStr);
+
+// ── Busy intervals ───────────────────────────────────────────────────────────
+
+// Platform bookings overlapping [windowStart, windowEnd], grace-padded.
+const getPlatformBusy = async (hostId, windowStart, windowEnd) => {
+  const select = "scheduled_at, services(duration, grace_period_minutes)";
+  let result = await supabaseAdmin
+    .from("bookings")
+    .select(select)
+    .eq("host_id", hostId)
+    .neq("status", "cancelled")
+    .gte("scheduled_at", new Date(windowStart.getTime() - 24 * 3600 * 1000).toISOString())
+    .lte("scheduled_at", windowEnd.toISOString());
+  if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
+    result = await supabaseAdmin
+      .from("bookings")
+      .select("scheduled_at, services(duration)")
+      .eq("host_id", hostId)
+      .neq("status", "cancelled")
+      .gte("scheduled_at", new Date(windowStart.getTime() - 24 * 3600 * 1000).toISOString())
+      .lte("scheduled_at", windowEnd.toISOString());
+  }
+  if (result.error) throw new Error(result.error.message);
+  return (result.data || []).map((b) => {
+    const start = new Date(b.scheduled_at);
+    const grace = (b.services?.grace_period_minutes ?? 10) * 60000;
+    const end = new Date(start.getTime() + (b.services?.duration || 30) * 60000);
+    return { start: new Date(start.getTime() - grace), end: new Date(end.getTime() + grace) };
+  });
+};
+
+// Persisted last-good FreeBusy cache (one row per host+day). Survives restarts
+// and is shared across instances, so a Google outage degrades to the most
+// recent known busy set instead of a blind "all free".
+const CACHE_TABLE = "google_freebusy_cache";
+
+const readFreeBusyCache = async (hostId, day) => {
+  const { data, error } = await supabaseAdmin
+    .from(CACHE_TABLE).select("busy, fetched_at")
+    .eq("host_id", hostId).eq("day", day).maybeSingle();
+  if (error || !data) return null;
+  return {
+    intervals: (data.busy || []).map((b) => ({ start: new Date(b.start), end: new Date(b.end) })),
+    fetchedAt: data.fetched_at,
+  };
+};
+
+const writeFreeBusyCache = async (hostId, day, busy) => {
+  try {
+    await supabaseAdmin.from(CACHE_TABLE).upsert(
+      { host_id: hostId, day, busy, fetched_at: new Date().toISOString() },
+      { onConflict: "host_id,day" },
+    );
+  } catch (err) {
+    // Cache table missing (pre-v2.6) or write race — never fatal.
+    if (!/Could not find the|does not exist|relation .* does not exist/i.test(err.message || "")) {
+      console.error("freebusy cache write failed (non-fatal):", err.message);
+    }
+  }
+};
+
+// Google Calendar busy intervals for the given calendar `day` ("YYYY-MM-DD").
+// Returns { intervals, unverified }:
+//   - not connected           → { intervals: [], unverified: false }
+//   - live fetch ok           → { intervals, unverified: false } (and caches)
+//   - live fetch FAILS, cache → { intervals: <cached>, unverified: true }
+//   - live fetch FAILS, none  → { intervals: [], unverified: true }
+// Fail-open is preserved (an outage never blocks bookings) but the caller now
+// knows the calendar could not be verified and can warn the guest.
+const getGoogleBusy = async (host, windowStart, windowEnd, day) => {
+  if (!host?.google_calendar_connected || !host?.google_refresh_token)
+    return { intervals: [], unverified: false };
+  try {
+    const busy = await getFreeBusy(
+      decryptToken(host.google_access_token),
+      decryptToken(host.google_refresh_token),
+      windowStart.toISOString(),
+      windowEnd.toISOString(),
+    );
+    const intervals = busy.map((b) => ({ start: new Date(b.start), end: new Date(b.end) }));
+    if (day) writeFreeBusyCache(host.id, day, busy); // fire-and-forget
+    return { intervals, unverified: false };
+  } catch (err) {
+    console.error(`google freebusy failed for host ${host.id} (fail-open):`, err.message);
+    if (day) {
+      const cached = await readFreeBusyCache(host.id, day);
+      if (cached) return { intervals: cached.intervals, unverified: true };
+    }
+    return { intervals: [], unverified: true };
+  }
+};
+
+const overlaps = (aStart, aEnd, intervals) =>
+  intervals.some((i) => aStart < i.end && aEnd > i.start);
+
+// ── Public API ───────────────────────────────────────────────────────────────
+
+/**
+ * Compute bookable slots for one date.
+ * @returns { slots: ["HH:MM", ...], timezone, blocked: bool }
+ */
+const computeSlots = async ({ host, service, availability, dateStr, now = new Date() }) => {
+  const tz = availability?.timezone || "Asia/Kolkata";
+  const parts = parseDateStr(dateStr);
+  if (!parts) return { slots: [], timezone: tz, blocked: false };
+
+  if (isDateBlocked(availability?.blocked_dates, dateStr))
+    return { slots: [], timezone: tz, blocked: true };
+
+  const schedule = availability?.weekly_schedule || {};
+  // Weekday of this calendar date in the host's tz (noon avoids DST edges)
+  const noonUTC = wallClockToUTC(parts.y, parts.mo, parts.d, 12, 0, tz);
+  const { dayName } = dateInTz(noonUTC, tz);
+  const windows = schedule[dayName] || [];
+  if (!windows.length) return { slots: [], timezone: tz, blocked: false };
+
+  const bufferMin = availability?.buffer_minutes || 0;
+  const duration = service?.duration || 30;
+  const grace = (service?.grace_period_minutes ?? 10) * 60000;
+  const stepMin = duration + bufferMin;
+
+  const dayStart = wallClockToUTC(parts.y, parts.mo, parts.d, 0, 0, tz);
+  const dayEnd = wallClockToUTC(parts.y, parts.mo, parts.d, 23, 59, tz);
+  const [platformBusy, google] = await Promise.all([
+    getPlatformBusy(host.id, dayStart, dayEnd),
+    getGoogleBusy(host, dayStart, dayEnd, dateStr),
+  ]);
+
+  const slots = [];
+  for (const { start, end } of windows) {
+    const [sh, sm] = String(start).split(":").map(Number);
+    const [eh, em] = String(end).split(":").map(Number);
+    if ([sh, sm, eh, em].some(Number.isNaN)) continue;
+    let cur = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+    while (cur + duration <= endMin) {
+      const h = Math.floor(cur / 60), m = cur % 60;
+      const sStart = wallClockToUTC(parts.y, parts.mo, parts.d, h, m, tz);
+      const sEnd = new Date(sStart.getTime() + duration * 60000);
+      const sStartPadded = new Date(sStart.getTime() - grace);
+      const sEndPadded = new Date(sEnd.getTime() + grace);
+      const free =
+        sStart > now &&
+        !overlaps(sStartPadded, sEndPadded, platformBusy) &&
+        !overlaps(sStart, sEnd, google.intervals);
+      if (free) slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+      cur += stepMin;
+    }
+  }
+  // calendarUnverified: Google was connected but FreeBusy could not be fetched
+  // (and no cache) — the slot list may not reflect external calendar events.
+  return { slots, timezone: tz, blocked: false, calendarUnverified: google.unverified };
+};
+
+/**
+ * Validate one concrete slot (used by createBooking + createOrder).
+ * @returns { ok: true } | { ok: false, reason }
+ */
+const validateSlot = async ({ host, service, availability, scheduledAtUTC, excludeBookingId = null, now = new Date() }) => {
+  const tz = availability?.timezone || "Asia/Kolkata";
+  const start = new Date(scheduledAtUTC);
+  if (Number.isNaN(start.getTime())) return { ok: false, reason: "Invalid time." };
+  if (start <= now) return { ok: false, reason: "Cannot book a slot in the past. Please choose a future time." };
+
+  const duration = service?.duration || 30;
+  const grace = (service?.grace_period_minutes ?? 10) * 60000;
+  const end = new Date(start.getTime() + duration * 60000);
+  const { dateStr, dayName } = dateInTz(start, tz);
+
+  if (isDateBlocked(availability?.blocked_dates, dateStr))
+    return { ok: false, reason: "The host is unavailable on this date." };
+
+  // Inside a working-hours window? (only enforced when a schedule exists —
+  // hosts without an availability row keep legacy behaviour)
+  const windows = availability?.weekly_schedule?.[dayName];
+  if (availability?.weekly_schedule && (!windows || !windows.length))
+    return { ok: false, reason: "The host does not take bookings on this day." };
+
+  const [platformBusy, google] = await Promise.all([
+    getPlatformBusyExcluding(host.id, start, end, excludeBookingId),
+    getGoogleBusy(host, start, end, dateStr),
+  ]);
+  if (overlaps(new Date(start.getTime() - grace), new Date(end.getTime() + grace), platformBusy))
+    return { ok: false, reason: "This time slot is no longer available. Please choose another." };
+  if (overlaps(start, end, google.intervals))
+    return { ok: false, reason: "The host is busy at this time. Please choose another slot." };
+  return { ok: true };
+};
+
+// Same as getPlatformBusy but can exclude one booking (payment re-validation
+// must not collide with the booking being paid for).
+const getPlatformBusyExcluding = async (hostId, windowStart, windowEnd, excludeBookingId) => {
+  const run = async (select) => {
+    let q = supabaseAdmin
+      .from("bookings")
+      .select(select)
+      .eq("host_id", hostId)
+      .neq("status", "cancelled")
+      .gte("scheduled_at", new Date(windowStart.getTime() - 24 * 3600 * 1000).toISOString())
+      .lte("scheduled_at", new Date(windowEnd.getTime() + 24 * 3600 * 1000).toISOString());
+    if (excludeBookingId) q = q.neq("id", excludeBookingId);
+    return q;
+  };
+  let result = await run("id, scheduled_at, services(duration, grace_period_minutes)");
+  if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
+    result = await run("id, scheduled_at, services(duration)");
+  }
+  if (result.error) throw new Error(result.error.message);
+  return (result.data || []).map((b) => {
+    const s = new Date(b.scheduled_at);
+    const g = (b.services?.grace_period_minutes ?? 10) * 60000;
+    const e = new Date(s.getTime() + (b.services?.duration || 30) * 60000);
+    return { start: new Date(s.getTime() - g), end: new Date(e.getTime() + g) };
+  });
+};
+
+module.exports = { computeSlots, validateSlot, wallClockToUTC, isDateBlocked };

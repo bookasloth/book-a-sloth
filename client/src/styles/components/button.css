@@ -1,0 +1,63 @@
+/* Friendly Brutalism Buttons */
+.fb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.6rem 1.1rem;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-family: var(--font-primary);
+    border: 3px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-hard-2);
+    transition: transform var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+    text-decoration: none;
+}
+
+.fb-btn:focus-visible {
+    outline: 3px solid rgba(0, 0, 0, 0.14);
+    outline-offset: 3px;
+}
+
+.fb-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: calc(var(--shadow-hard-2) + 2px);
+}
+
+.fb-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+    box-shadow: var(--shadow-inset-press);
+}
+
+.fb-btn--primary {
+    background: linear-gradient(180deg, var(--primary), color-mix(in srgb, var(--primary) 80%, black 10%));
+    color: #ffffff;
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border) 60%);
+}
+
+.fb-btn--secondary {
+    background: var(--surface);
+    color: var(--text);
+}
+
+.fb-btn--ghost {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.fb-btn--block {
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+    .fb-btn {
+        width: 100%;
+        min-height: 46px;
+        padding: 0.85rem 1rem;
+    }
+}
