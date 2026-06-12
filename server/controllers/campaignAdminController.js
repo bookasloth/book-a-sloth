@@ -70,7 +70,7 @@ const getCampaign = async (req, res) => {
 };
 const updateCampaign = async (req, res) => {
   try {
-    const allowed = ['name', 'segment_id', 'template_id', 'subject_override', 'scheduled_at', 'throttle_per_min', 'status'];
+    const allowed = ['name', 'channel', 'segment_id', 'template_id', 'whatsapp_template_id', 'subject_override', 'scheduled_at', 'throttle_per_min', 'status'];
     const updates = { updated_at: new Date().toISOString() };
     for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
     const { data, error } = await supabaseAdmin.from('email_campaigns').update(updates).eq('id', req.params.id).select().single();
@@ -86,8 +86,41 @@ const launchCampaign = async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 };
 
+// ── WhatsApp templates (AiSensy approved-template registry + variable map) ──
+const listWaTemplates = async (_req, res) => {
+  try { const { data, error } = await supabaseAdmin.from('whatsapp_templates').select('*').order('name');
+    if (error) return res.status(500).json({ message: error.message }); res.json(data || []);
+  } catch (e) { res.status(500).json({ message: e.message }); }
+};
+const createWaTemplate = async (req, res) => {
+  try {
+    const { name, aisensy_campaign_name } = req.body || {};
+    if (!name || !aisensy_campaign_name) return res.status(400).json({ message: 'name and aisensy_campaign_name are required' });
+    const row = {
+      name, aisensy_campaign_name, language: req.body.language || 'en',
+      body_preview: req.body.body_preview || '', variable_map: req.body.variable_map || {},
+      param_count: req.body.param_count || 0, approval_status: req.body.approval_status || 'pending',
+      is_active: req.body.is_active !== undefined ? !!req.body.is_active : true,
+    };
+    const { data, error } = await supabaseAdmin.from('whatsapp_templates').insert(row).select().single();
+    if (error) return res.status(500).json({ message: error.message });
+    res.status(201).json(data);
+  } catch (e) { res.status(500).json({ message: e.message }); }
+};
+const updateWaTemplate = async (req, res) => {
+  try {
+    const allowed = ['name', 'aisensy_campaign_name', 'language', 'body_preview', 'variable_map', 'param_count', 'approval_status', 'is_active'];
+    const updates = { updated_at: new Date().toISOString() };
+    for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
+    const { data, error } = await supabaseAdmin.from('whatsapp_templates').update(updates).eq('id', req.params.id).select().single();
+    if (error || !data) return res.status(404).json({ message: error?.message || 'Template not found' });
+    res.json(data);
+  } catch (e) { res.status(500).json({ message: e.message }); }
+};
+
 module.exports = {
   listContacts, syncContacts, suppressContact,
   listSegments, previewSegment,
   listCampaigns, createCampaign, getCampaign, updateCampaign, launchCampaign,
+  listWaTemplates, createWaTemplate, updateWaTemplate,
 };

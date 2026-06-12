@@ -9,14 +9,11 @@ const segmentService = require('./segmentService');
 async function create(input) {
   const row = {
     name: input.name, channel: input.channel || 'email', segment_id: input.segment_id || null,
-    template_id: input.template_id || null,
+    template_id: input.template_id || null, whatsapp_template_id: input.whatsapp_template_id || null,
     subject_override: input.subject_override || '',
     status: 'draft', scheduled_at: input.scheduled_at || null,
     throttle_per_min: input.throttle_per_min || 120, created_by: input.created_by || '',
   };
-  // NOTE: whatsapp_template_id is added to this insert in Phase 2 (Task 17),
-  // after migration v2.7 introduces the column. Omitted here so Phase-1
-  // campaign creation works against the v2.6-only schema.
   const { data, error } = await supabaseAdmin.from('email_campaigns').insert(row).select().single();
   if (error) return { error: error.message };
   return { campaign: data };

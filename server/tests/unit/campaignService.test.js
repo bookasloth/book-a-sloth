@@ -37,3 +37,16 @@ test('email campaign without template is rejected', async () => {
   const r = await campaignService.launch('camp1');
   expect(r.error).toBe('no_template');
 });
+
+test('whatsapp campaign without wa template is rejected', async () => {
+  state.campaign = { id: 'camp1', status: 'draft', channel: 'whatsapp', segment_id: 'seg1', whatsapp_template_id: null };
+  const r = await campaignService.launch('camp1');
+  expect(r.error).toBe('no_whatsapp_template');
+});
+
+test('whatsapp launch snapshots recipients on the whatsapp channel', async () => {
+  state.campaign = { id: 'camp1', status: 'draft', channel: 'whatsapp', segment_id: 'seg1', whatsapp_template_id: 'wt1' };
+  await campaignService.launch('camp1');
+  expect(state.recipients).toHaveLength(2);
+  expect(state.recipients[0].channel).toBe('whatsapp');
+});
