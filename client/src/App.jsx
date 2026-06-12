@@ -101,6 +101,7 @@ const AdminMenuBuilder   = lazy(() => import('./pages/admin/AdminMenuBuilder'));
 const AdminFooterBuilder = lazy(() => import('./pages/admin/AdminFooterBuilder'));
 const AdminCommunication = lazy(() => import('./pages/admin/AdminCommunication'));
 const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'));
+const AdminCampaigns     = lazy(() => import('./pages/admin/AdminCampaigns'));
 const AdminBadges        = lazy(() => import('./pages/admin/AdminBadges'));
 const BadgeShowcase      = lazy(() => import('./pages/BadgeShowcase'));
 
@@ -242,6 +243,7 @@ function App() {
           <Route path="/admin/platform/footer" element={<AdminWrapper><AdminFooterBuilder /></AdminWrapper>} />
           <Route path="/admin/platform/communication" element={<AdminWrapper><AdminCommunication /></AdminWrapper>} />
           <Route path="/admin/notifications" element={<AdminWrapper><AdminNotifications /></AdminWrapper>} />
+          <Route path="/admin/campaigns" element={<AdminWrapper><AdminCampaigns /></AdminWrapper>} />
           <Route path="/admin/badges" element={<AdminWrapper><AdminBadges /></AdminWrapper>} />
 
           {/* System — Staff & Roles, Audit Logs (M1) */}

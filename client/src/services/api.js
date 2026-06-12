@@ -268,6 +268,18 @@ export const adminEmailSettings    = ()         => API.get('/admin/email/setting
 export const adminEmailSaveSettings= (data)     => API.put('/admin/email/settings', data);
 export const adminEmailEvents      = ()         => API.get('/admin/email/events');
 
+// ── Admin: Campaigns (Phase 1: email) ────────────────────────
+export const adminCampContacts     = (params)   => API.get('/admin/campaigns/contacts', { params });
+export const adminCampSyncContacts = ()         => API.post('/admin/campaigns/contacts/sync');
+export const adminCampSuppress     = (id, data) => API.patch(`/admin/campaigns/contacts/${id}`, data);
+export const adminCampSegments     = ()         => API.get('/admin/campaigns/segments');
+export const adminCampSegPreview   = (definition) => API.post('/admin/campaigns/segments/preview', { definition });
+export const adminCampaigns        = ()         => API.get('/admin/campaigns');
+export const adminCampCreate       = (data)     => API.post('/admin/campaigns', data);
+export const adminCampGet          = (id)       => API.get(`/admin/campaigns/${id}`);
+export const adminCampUpdate       = (id, data) => API.put(`/admin/campaigns/${id}`, data);
+export const adminCampLaunch       = (id)       => API.post(`/admin/campaigns/${id}/launch`);
+
 // ── Public: Badge Showcase ───────────────────────────────────
 export const getVendorBadges       = (username)         => API.get(`/vendors/${username}/badges`);
 export const getVendorBadgeDetail  = (username, badgeId) => API.get(`/vendors/${username}/badges/${badgeId}`);
