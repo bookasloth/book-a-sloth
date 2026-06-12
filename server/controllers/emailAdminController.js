@@ -6,6 +6,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const communicationEngine = require('../services/email/communicationEngine');
 const { renderEmail } = communicationEngine;
+const { getProvider } = require('../services/email/providers');
 
 const CATEGORIES = ['Authentication', 'Security', 'Booking', 'Profile', 'Badge', 'Subscription', 'Celebrations'];
 
@@ -208,7 +209,28 @@ const listEvents = async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 };
 
+// ── POST /api/admin/email/test-provider ──────────────────────────
+// Sends a minimal email through the CURRENTLY configured provider (no template).
+// Use to verify Resend/SES credentials before running a campaign.
+const testProvider = async (req, res) => {
+  try {
+    const { to } = req.body;
+    if (!to) return res.status(400).json({ message: 'A recipient email (to) is required' });
+    const settings = await communicationEngine.loadSettings();
+    const provider = getProvider(settings.provider);
+    const r = await provider.sendEmail({
+      to,
+      subject: `Book A Sloth — ${settings.provider} provider test`,
+      html: `<p>This is a provider connectivity test sent via <b>${settings.provider}</b>.</p>`,
+      fromName: settings.from_name, fromEmail: settings.from_email,
+    });
+    return res.status(r.success ? 200 : 502)
+      .json({ message: r.success ? `Test email sent via ${provider.name}` : `Send failed: ${r.error}`, provider: provider.name });
+  } catch (e) { res.status(500).json({ message: e.message }); }
+};
+
 module.exports = {
   listTemplates, getTemplate, createTemplate, updateTemplate, duplicateTemplate, archiveTemplate,
   previewTemplate, testTemplate, listLogs, getLog, retryLog, getSettings, updateSettings, listEvents,
+  testProvider,
 };

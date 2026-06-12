@@ -115,6 +115,7 @@ router.post('/email/templates/:id/duplicate', requireAdmin('email.manage'), emai
 router.patch('/email/templates/:id/archive',  requireAdmin('email.manage'), email.archiveTemplate);
 router.post('/email/templates/:id/preview',   requireAdmin('email.manage'), email.previewTemplate);
 router.post('/email/templates/:id/test',      requireAdmin('email.manage'), email.testTemplate);
+router.post('/email/test-provider',           requireAdmin('email.manage'), email.testProvider);
 router.get('/email/logs',                     requireAdmin('email.manage'), email.listLogs);
 router.get('/email/logs/:id',                 requireAdmin('email.manage'), email.getLog);
 router.post('/email/logs/:id/retry',          requireAdmin('email.manage'), email.retryLog);
