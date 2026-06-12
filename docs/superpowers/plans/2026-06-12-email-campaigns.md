@@ -84,10 +84,12 @@ CREATE TABLE IF NOT EXISTS contacts (
   updated_at          TIMESTAMPTZ DEFAULT now(),
   last_synced_at      TIMESTAMPTZ
 );
--- Dedup key: one row per email (case-insensitive). Phone-only contacts are out of
--- scope for Phase 1 (email channel) and are simply not inserted.
-CREATE UNIQUE INDEX IF NOT EXISTS uq_contacts_email
-  ON contacts (lower(email)) WHERE email IS NOT NULL AND email <> '';
+-- Dedup key: one row per email. The sync service lowercases email before upsert
+-- (case-insensitive dedup), so a PLAIN unique index on (email) is required — a
+-- partial/expression index cannot serve as the ON CONFLICT (email) arbiter that
+-- supabase-js .upsert({ onConflict: 'email' }) needs. Null/empty emails are never
+-- inserted in Phase 1 (email channel only).
+CREATE UNIQUE INDEX IF NOT EXISTS uq_contacts_email ON contacts (email);
 CREATE INDEX IF NOT EXISTS idx_contacts_type ON contacts (contact_type);
 ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;   -- service-role only (no public policy)
 
