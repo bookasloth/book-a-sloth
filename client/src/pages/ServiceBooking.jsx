@@ -1116,84 +1116,60 @@ const ServiceBooking = () => {
           })()}
 
           {/* STEP: confirmed */}
-          {step === "confirmed" && confirmation && (
+          {step === "confirmed" && confirmation && (() => {
+            const scheduledISO = wallClockToUTC(
+              selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(),
+              ...selectedTime.split(":").map(Number), hostTz
+            );
+            const calTitle = `${service.title} with ${host.name}`;
+            const calDetails = confirmation.meeting_link ? `Join: ${confirmation.meeting_link}` : "";
+            const calLocation = confirmation.meeting_link || "Online";
+            const gUrl = googleCalUrl({ title: calTitle, details: calDetails, location: calLocation, startISO: scheduledISO, durationMin: service.duration || 30 });
+            const icsUrl = buildICS({ title: calTitle, details: calDetails, location: calLocation, startISO: scheduledISO, durationMin: service.duration || 30, uid: confirmation.id });
+            return (
             <div className="bg-white border rounded p-5 sm:p-7">
               <div className="max-w-md mx-auto text-center">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
-                style={{ background: `${tc}18` }}>
-                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  style={{ color: tc }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold mb-2" style={{ color: tc }}>
-                Booking Confirmed!
-              </h2>
-              <p className="text-sm text-gray-500 mb-6">
-                {selectedDate?.toLocaleDateString("en-IN", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}{" "}
-                at {formatTime(selectedTime)} ({tzAbbr})
-              </p>
-              <div className="bg-gray-50 rounded p-4 text-sm text-left space-y-2 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Service</span>
-                  <span className="font-medium">{service.title}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Host</span>
-                  <span>{host.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Duration</span>
-                  <span>{service.duration} min</span>
-                </div>
-                {confirmation.meeting_link && (
-                  <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="text-gray-500">Meeting</span>
-                    <a
-                      href={confirmation.meeting_link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-blue-600 hover:underline font-medium"
-                    >
-                      Join Google Meet
-                    </a>
-                  </div>
-                )}
-              </div>
-              {confirmation.meeting_link && (
-                <a
-                  href={confirmation.meeting_link}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 fb-btn fb-btn--primary mb-4"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: `${tc}18` }}>
+                  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: tc }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
-                  Join Google Meet
-                </a>
-              )}
-              <p className="text-xs text-gray-400">
-                Confirmation email sent to {email}
-              </p>
-              <Link
-                to={`/${profileSlug}`}
-                className="block mt-4 text-sm text-green-600 hover:underline"
-              >
-                Back to {host.name}'s profile
-              </Link>
-              </div>{/* end max-w-md center wrapper */}
+                </div>
+                <h2 className="text-2xl font-bold mb-2" style={{ color: tc }}>Booking Confirmed</h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
+                </p>
+                <div className="border rounded p-4 text-sm text-left space-y-3 mb-6">
+                  <div className="flex justify-between"><span className="text-gray-500">Service</span><span className="font-medium">{service.title}</span></div>
+                  <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Date</span><span>{selectedDate?.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span></div>
+                  <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Time</span><span>{formatTime(selectedTime)} ({tzAbbr})</span></div>
+                  <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Customer</span><span>{`${firstName} ${lastName}`.trim()}</span></div>
+                  {confirmation.meeting_link && (
+                    <div className="flex justify-between border-t pt-3 items-center">
+                      <span className="text-gray-500">Meeting</span>
+                      <a href={confirmation.meeting_link} target="_blank" rel="noreferrer" className="font-medium hover:underline" style={{ color: tc }}>Join Link</a>
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <a href={gUrl} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center justify-center py-2.5 px-3 rounded font-semibold text-sm border transition-opacity hover:opacity-85"
+                    style={{ borderColor: tc, color: tc }}>
+                    Add to Google Calendar
+                  </a>
+                  <a href={icsUrl} download={`${service.title.replace(/\s+/g, "-")}.ics`}
+                    className="inline-flex items-center justify-center py-2.5 px-3 rounded font-semibold text-sm transition-opacity hover:opacity-85"
+                    style={{ background: tc, color: textOnTheme }}>
+                    Download iCal (.ics)
+                  </a>
+                </div>
+                <p className="text-xs text-gray-400 mt-4">Confirmation email sent to {email}</p>
+                <Link to={`/${profileSlug}`} className="block mt-3 text-sm hover:underline" style={{ color: tc }}>
+                  Back to {host.name}'s profile
+                </Link>
+              </div>
             </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </div>
