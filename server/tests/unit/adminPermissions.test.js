@@ -103,3 +103,20 @@ describe('role matrix — least privilege spot checks', () => {
     }
   });
 });
+
+describe('campaigns permissions (v2.6)', () => {
+  const can = (role, perm) => hasPermission(roleGrants(role), perm);
+  test('catalog includes campaigns.view / campaigns.manage', () => {
+    expect(PERMISSIONS).toContain('campaigns.view');
+    expect(PERMISSIONS).toContain('campaigns.manage');
+  });
+  test('marketing can manage campaigns; super via wildcard', () => {
+    expect(can('marketing', 'campaigns.view')).toBe(true);
+    expect(can('marketing', 'campaigns.manage')).toBe(true);
+    expect(can('super', 'campaigns.manage')).toBe(true);
+  });
+  test('finance/support cannot send campaigns', () => {
+    expect(can('finance', 'campaigns.manage')).toBe(false);
+    expect(can('support', 'campaigns.manage')).toBe(false);
+  });
+});

@@ -39,6 +39,7 @@ const PERMISSIONS = [
   'analytics.view',
   // Engagement
   'notifications.view', 'email.manage', 'whatsapp.manage',
+  'campaigns.view', 'campaigns.manage',
   'badges.manage', 'announcements.manage',
   // Content
   'cms.manage', 'seo.manage',
@@ -142,6 +143,7 @@ const ROLES = {
       'coupons.view', 'coupons.manage',
       'analytics.view',
       'notifications.view', 'email.manage', 'whatsapp.manage',
+      'campaigns.view', 'campaigns.manage',
       'badges.manage', 'announcements.manage',
       'cms.manage', 'seo.manage',
       'branding.manage',
