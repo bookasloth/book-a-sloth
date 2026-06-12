@@ -51,6 +51,8 @@ async function upsertTemplate(t) {
     html_content: t.html_content,
     cta_label: t.cta_label || '',
     cta_url: t.cta_url || '',
+    email_category: t.email_category || '',
+    email_reason: t.email_reason || '',
     status: 'active',
     updated_at: new Date().toISOString(),
   };

@@ -74,6 +74,8 @@ function renderEmail(template, { data = {}, user = {}, settings }) {
   const html = renderLayout({
     bodyHtml: r.html, previewText: data.preview_text || template.preview_text || '',
     ctaLabel: r.ctaLabel, ctaUrl: r.ctaUrl, settings,
+    emailCategory: template.email_category || '',
+    emailReason: template.email_reason || '',
   });
   return { subject: r.subject, html, missing: r.missing };
 }
