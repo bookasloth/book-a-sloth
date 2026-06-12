@@ -16,7 +16,8 @@ const sendOtpNotification = async ({ email, phone, name, otp }) => {
       email,
       phone,
       name,
-      templateParams: otp ? [String(otp)] : [],   // WhatsApp template var
+      templateParams: otp ? [String(otp)] : [],   // WhatsApp body var {{1}}
+      buttonParams: otp ? [String(otp)] : [],      // copy-code button (auth OTP template)
       emailData: { otp: otp ? String(otp) : '' },  // {{otp}} for the email template
       emailUser: { email, name },
       immediateEmail: true,                         // OTP bypasses the queue
@@ -33,7 +34,7 @@ const sendWhatsAppOtp = async ({ phone, otp, name = 'Friend' }) => {
   if (!phone) return false;
   const result = await NotificationEngine.send({
     event: 'BOOKING_OTP',
-    data: { phone, name, templateParams: [String(otp)] },
+    data: { phone, name, templateParams: [String(otp)], buttonParams: [String(otp)] },
   });
   return !!result.whatsapp.success;
 };

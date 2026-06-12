@@ -32,7 +32,7 @@ const normalizePhone = (phone) => {
  * @param {string[]} opts.templateParams ordered template variables
  * @returns {{ success: boolean, response?: object, error?: string }}
  */
-const sendCampaign = async ({ apiKey, campaignName, destination, userName, templateParams = [] }) => {
+const sendCampaign = async ({ apiKey, campaignName, destination, userName, templateParams = [], buttonParams = [] }) => {
   const phone = normalizePhone(destination);
   if (!apiKey)       return { success: false, error: 'AiSensy API key not configured' };
   if (!campaignName) return { success: false, error: 'Campaign name not configured for this event' };
@@ -45,6 +45,16 @@ const sendCampaign = async ({ apiKey, campaignName, destination, userName, templ
     userName: userName || 'Customer',
     templateParams: templateParams.map(String),
   };
+
+  // Copy-code / dynamic-URL button (e.g. Authentication OTP templates). WhatsApp
+  // requires the button to receive its OWN parameter, separate from the body —
+  // omitting it triggers "Button at index 0 of type Url requires a parameter".
+  if (buttonParams && buttonParams.length) {
+    body.buttons = [{
+      type: 'button', sub_type: 'url', index: 0,
+      parameters: buttonParams.map((t) => ({ type: 'text', text: String(t) })),
+    }];
+  }
 
   try {
     const res = await fetch(AISENSY_API_URL, {

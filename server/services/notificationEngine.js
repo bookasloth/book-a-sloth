@@ -103,6 +103,7 @@ const send = async ({ event, data = {} }) => {
       destination: data.phone,
       userName: data.name,
       templateParams: data.templateParams || [],
+      buttonParams: data.buttonParams || [],   // copy-code button (auth/OTP templates)
     };
     const r = await aisensy.sendCampaign(params);
     results.whatsapp = { attempted: true, ...r };
@@ -110,7 +111,7 @@ const send = async ({ event, data = {} }) => {
       event, channel: 'whatsapp', destination: data.phone,
       status: r.success ? 'sent' : 'failed',
       response: r.response, error: r.error,
-      payload: { campaignName: evt.campaign_name, userName: data.name, templateParams: data.templateParams || [] },
+      payload: { campaignName: evt.campaign_name, userName: data.name, templateParams: data.templateParams || [], buttonParams: data.buttonParams || [] },
     });
   }
 

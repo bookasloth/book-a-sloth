@@ -141,6 +141,8 @@ const testSend = async (req, res) => {
         email: channel === 'email' ? destination : undefined,
         name: 'Test User',
         templateParams: sampleParams,
+        // OTP templates carry a copy-code button that needs the code too.
+        buttonParams: event_key === 'BOOKING_OTP' ? sampleParams : [],
         emailSubject: `[TEST] ${event_key}`,
         emailHtml: channel === 'email'
           ? `<div style="font-family:sans-serif;padding:24px;"><h2>Test notification</h2><p>This is a test of <strong>${event_key}</strong> from Book A Sloth Super Admin.</p><p>Params: ${sampleParams.join(', ')}</p></div>`
