@@ -1,9 +1,19 @@
 # Current Work — Book A Sloth
 _Last updated: 2026-06-12_
 
-## Sprint: Communication → Campaign Platform — Audit + Plan (PLANNED — NOT STARTED, 2026-06-12)
+## Sprint: Communication → Campaign Platform — Email + WhatsApp (SHIPPED 2026-06-12)
 
-> **Status: PLANNING ONLY.** No code written, no migration applied, no tests run. This session produced an audit + a complete implementation plan. Local-only git was initialised (no GitHub remote) as the pre-build rollback baseline.
+> **Status: SHIPPED.** Audience + segment + campaign layers built on the existing engines; migrations v2.6 + v2.7 applied live; email **and** WhatsApp broadcast campaigns work. Tests: server **253/253**, client **113/113**. Local-only git (branch `feat/email-campaigns`, no GitHub remote), committed task-by-task.
+
+**What shipped (plan: `docs/superpowers/plans/2026-06-12-email-campaigns.md`; reference: `docs/communication-campaigns-architecture.md`; guides: `docs/guides/*-campaigns.md`):**
+- **Audience:** `contacts` table synced from profiles/bookings/product_purchases (vendor phones included), per-channel `*_opt_in` / `*_suppressed`; `segments` (4 system seeds) resolved with consent enforced.
+- **Campaign engine:** `email_campaigns` + `campaign_recipients` + a throttled `campaignWorker` (60s). Email reuses `communicationEngine` queue/retry (Resend for bulk); WhatsApp sends approved AiSensy templates via `aisensyService` with named variable mapping (`whatsappTemplateService`).
+- **Consent enforced twice** (segment resolve + worker re-check); inbound **STOP** opt-out via public secret-gated `POST /api/notifications/aisensy/webhook` → `whatsapp_suppressed`.
+- **Admin:** `/admin/campaigns` (`AdminCampaigns.jsx`) — builder with channel selector, segment recipient-count preview, email/WhatsApp template pick, launch + the WhatsApp template registry. API `/api/admin/campaigns/*`. New perms `campaigns.view`/`campaigns.manage` (marketing + super). Provider self-test `POST /api/admin/email/test-provider`.
+- **Deferred:** stepped AiSensy onboarding wizard (Task 20, cosmetic); delivery/read funnel (open rates / read receipts) = v2; scheduled-campaign trigger (column exists, scheduler not wired).
+- **Manual e2e still TODO (needs live creds):** real Resend send; real AiSensy send to an opted-in test number + STOP suppression. Code + all unit tests pass without creds.
+
+### Audit findings that motivated the rebuild (kept for reference)
 
 - **Full plan:** `docs/superpowers/plans/2026-06-12-email-campaigns.md` — 26 tasks across 3 phases, TDD with complete code + tests per step. Execute on command, all 3 phases together.
 - **Trigger:** UX audit of "Communication Settings". The area is messy — email and WhatsApp (AiSensy) configuration are spread across **three overlapping admin pages** with **two divergent data models**.

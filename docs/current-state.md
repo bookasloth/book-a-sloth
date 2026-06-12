@@ -67,7 +67,7 @@ _Last updated: 2026-06-12_
 - Booking reschedule UI in guest-facing flow (API exists, UI limited)
 - Review submission UI (API exists, no dedicated page)
 - Admin payout approval workflow (requests stored, approval UI may be partial)
-- **Email & WhatsApp campaigns (PLANNED, not built)** — audience/segment/campaign layers designed but not implemented. The send engines (`communicationEngine`, `aisensyService`) exist and work for *triggered* messages; there is no broadcast/campaign capability yet and no contacts/segment layer. Full plan: `docs/superpowers/plans/2026-06-12-email-campaigns.md`. See `current-work.md` for the audit findings.
+- **Email & WhatsApp campaigns (SHIPPED 2026-06-12)** — broadcast to consented segments at `/admin/campaigns`. Audience (`contacts` + consent/suppression), `segments`, `email_campaigns`/`campaign_recipients`, throttled `campaignWorker`. Email via Resend (set provider in Communication → Settings); WhatsApp via approved AiSensy templates. Reference: `docs/communication-campaigns-architecture.md`; guides: `docs/guides/`. **Pending:** real-creds e2e (Resend + AiSensy test number), delivery/read funnel (v2), scheduled-send trigger.
 
 ## Environment Status
 - Server port: 5000

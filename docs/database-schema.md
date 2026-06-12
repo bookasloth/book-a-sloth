@@ -251,3 +251,19 @@ Key-value store for admin-configurable platform settings.
 | v1.5 | increment_product_purchase_count function |
 | v1.6 | Catch-up: all profile columns (google tokens, razorpay, cover_image etc) |
 | v1.7 | ⚠️ PENDING: bookings.commission_applied column |
+| v1.9 | notification_providers, notification_events, notification_logs; otp_codes hardening |
+| v2.0–v2.5 | badges, plans, payout model, email engine, admin RBAC, Google auth/availability |
+| v2.6 | **Campaign platform:** `contacts`, `segments`, `email_campaigns`, `campaign_recipients`; `email_logs.campaign_id` |
+| v2.7 | **WhatsApp campaigns:** `whatsapp_templates`; `email_campaigns.whatsapp_template_id` |
+
+---
+
+## Campaign Platform Tables (v2.6 / v2.7) — applied live
+
+- **contacts** — consented, contactable audience synced from `profiles`+`bookings`+`product_purchases`. Cols: `email` (unique), `phone`, `name`, `user_id`, `contact_type` (vendor|guest|buyer), `email_opt_in`, `whatsapp_opt_in`, `email_suppressed`, `whatsapp_suppressed`, `attributes` JSONB, `source`, `last_synced_at`. Service-role RLS.
+- **segments** — saved filter: `definition` JSONB `{ contact_type?, filters:[{field,op,value}] }`, `is_system`. 4 system seeds.
+- **email_campaigns** — campaign object (holds email **and** WhatsApp; name is historical). `channel`, `segment_id`, `template_id` (email), `whatsapp_template_id`, `subject_override`, `status` (draft|scheduled|sending|sent|paused|failed), `scheduled_at`, `throttle_per_min`, `stats` JSONB.
+- **campaign_recipients** — per-recipient queue: `campaign_id`, `contact_id`, `channel`, `destination`, `status` (queued|sent|failed|skipped), `email_log_id`, `sent_at`.
+- **whatsapp_templates** — approved AiSensy templates: `aisensy_campaign_name`, `language`, `body_preview`, `variable_map` JSONB ({"1":"first_name",…}), `param_count`, `approval_status`, `is_active`.
+
+Full design: `docs/communication-campaigns-architecture.md`.

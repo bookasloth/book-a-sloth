@@ -166,3 +166,16 @@
 - **Profile fields:** `google_calendar_connected`, `google_access_token`, `google_refresh_token`
 - **OAuth route:** `GET /api/auth/google`, `GET /api/auth/google/callback`
 - **Related:** Service Booking, Payments
+
+---
+
+## 16. Campaign Platform (Email + WhatsApp broadcasts) — shipped 2026-06-12
+**Purpose:** Send targeted Email/WhatsApp campaigns to consented contact segments (distinct from triggered notifications).
+- **Primary (client):** `client/src/pages/admin/AdminCampaigns.jsx` (route `/admin/campaigns`)
+- **Services (server):** `contactsService.js` (audience sync), `segmentService.js` (consent-enforced resolve), `campaignService.js` (create/launch/stats), `campaignWorker.js` (throttled, 60s in `server.js`), `whatsappTemplateService.js` (variable mapping), `communicationEngine.enqueueCampaignEmail`
+- **Controller/API:** `campaignAdminController.js` → `/api/admin/campaigns/*` (contacts, segments, campaigns, wa-templates); webhook `whatsappWebhookController.js` → public `POST /api/notifications/aisensy/webhook`
+- **DB Tables:** `contacts`, `segments`, `email_campaigns`, `campaign_recipients`, `whatsapp_templates`, `email_logs.campaign_id` (migrations v2.6, v2.7)
+- **Perms:** `campaigns.view` / `campaigns.manage`
+- **Dependencies:** `communicationEngine` (email queue/Resend), `aisensyService` (WhatsApp), `notificationEngine.logResult`
+- **Reference:** `docs/communication-campaigns-architecture.md`; **guides:** `docs/guides/email-campaigns.md`, `whatsapp-campaigns.md`, `aisensy-onboarding.md`, `segments-and-consent.md`
+- **Related:** Email Communication Engine, Notification System
