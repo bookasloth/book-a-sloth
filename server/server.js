@@ -75,6 +75,7 @@ app.use('/api/vendor',      require('./routes/vendorRoutes'));
 app.use('/api/services',    require('./routes/serviceRoutes'));
 app.use('/api/categories',  require('./routes/categoryRoutes'));
 app.use('/api/vendors',     require('./routes/badgePublicRoutes'));
+app.use('/api/notifications', require('./routes/notificationWebhookRoutes')); // public AiSensy webhook (secret-gated)
 app.get('/api/plans',       require('./controllers/planAdminController').publicPlans);
 
 app.get('/', (req, res) => res.json({ message: 'Book A Sloth API v1.4 running' }));
