@@ -8,6 +8,8 @@ const NotificationEngine = require("../services/notificationEngine");
 const { computeBreakdown, calculateVendorPayout } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
 const platformConfig = require("../services/platformConfig");
+const { createCalendarEvent } = require("../config/google");
+const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 
 // Annual plan price in paise, read from subscription_plans (DB-driven, spec v1.1)
 const getPlanPricePaise = async (slug) => {
@@ -139,7 +141,7 @@ const verifyPayment = async (req, res) => {
     // Verify the order_id matches what we stored (replay attack prevention)
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("razorpay_order_id, payment_status, commission_applied, services(price)")
+      .select("razorpay_order_id, payment_status, commission_applied, meeting_link, scheduled_at, guest_name, guest_email, notes, host_id, service_id, services(price, title, duration, meeting_mode)")
       .eq("id", booking_id).single();
 
     if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -183,6 +185,50 @@ const verifyPayment = async (req, res) => {
     }
 
     if (error) return res.status(500).json({ message: error.message });
+
+    // Payment captured → now create the Google Calendar event (deferred from
+    // booking time for paid services). A calendar failure must NOT fail an
+    // already-charged payment — log and continue with an empty meeting link.
+    let meetingLink = booking.meeting_link || "";
+    try {
+      const svc = booking.services || {};
+      const isOnline = svc.meeting_mode !== "offline";
+      if (isOnline && !meetingLink) {
+        const { data: host } = await supabaseAdmin
+          .from("profiles")
+          .select("id, email, google_calendar_connected, google_access_token, google_refresh_token")
+          .eq("id", booking.host_id).single();
+        const { data: avail } = await supabaseAdmin
+          .from("availability").select("timezone").eq("host_id", booking.host_id).maybeSingle();
+        if (host?.google_calendar_connected && host?.google_refresh_token) {
+          const startTime = new Date(booking.scheduled_at);
+          const endTime = new Date(startTime.getTime() + (svc.duration || 30) * 60000);
+          const event = await createCalendarEvent(
+            decryptToken(host.google_access_token),
+            decryptToken(host.google_refresh_token),
+            {
+              title: `${svc.title || "Service"} — ${booking.guest_name || "Guest"}`,
+              description: `Booked via Book A Sloth\n${booking.notes || ""}`,
+              startTime: startTime.toISOString(),
+              endTime: endTime.toISOString(),
+              timezone: avail?.timezone || "Asia/Kolkata",
+              attendees: [
+                { email: host.email },
+                ...(booking.guest_email ? [{ email: booking.guest_email }] : []),
+              ],
+            },
+          );
+          meetingLink = event.meetLink || "";
+          if (meetingLink) {
+            const { data: relinked } = await supabaseAdmin
+              .from("bookings").update({ meeting_link: meetingLink }).eq("id", booking_id).select().single();
+            if (relinked) updated = relinked;
+          }
+        }
+      }
+    } catch (calErr) {
+      console.error("Post-payment calendar event error (non-fatal):", calErr.message);
+    }
 
     auditLog('PAYMENT_VERIFIED', null, { booking_id, razorpay_payment_id });
 
