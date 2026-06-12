@@ -1,0 +1,61 @@
+/**
+ * campaignService — create, launch (snapshot recipients), and report stats for
+ * campaigns. Sending itself is done by campaignWorker via the channel engines.
+ */
+'use strict';
+const { supabaseAdmin } = require('../config/supabase');
+const segmentService = require('./segmentService');
+
+async function create(input) {
+  const row = {
+    name: input.name, channel: input.channel || 'email', segment_id: input.segment_id || null,
+    template_id: input.template_id || null,
+    subject_override: input.subject_override || '',
+    status: 'draft', scheduled_at: input.scheduled_at || null,
+    throttle_per_min: input.throttle_per_min || 120, created_by: input.created_by || '',
+  };
+  // NOTE: whatsapp_template_id is added to this insert in Phase 2 (Task 17),
+  // after migration v2.7 introduces the column. Omitted here so Phase-1
+  // campaign creation works against the v2.6-only schema.
+  const { data, error } = await supabaseAdmin.from('email_campaigns').insert(row).select().single();
+  if (error) return { error: error.message };
+  return { campaign: data };
+}
+
+/** Resolve segment → snapshot consented recipients → status 'sending'. */
+async function launch(campaignId) {
+  const { data: campaign } = await supabaseAdmin.from('email_campaigns').select('*').eq('id', campaignId).single();
+  if (!campaign) return { error: 'campaign_not_found' };
+  const channel = campaign.channel || 'email';
+  if (channel === 'whatsapp' && !campaign.whatsapp_template_id) return { error: 'no_whatsapp_template' };
+  if (channel === 'email' && !campaign.template_id) return { error: 'no_template' };
+  if (!['draft', 'scheduled'].includes(campaign.status)) return { error: `cannot_launch_from_${campaign.status}` };
+
+  const { data: segment } = await supabaseAdmin.from('segments').select('*').eq('id', campaign.segment_id).single();
+  const recipients = await segmentService.resolve(segment ? segment.definition : {}, channel);
+
+  if (recipients.length) {
+    const rows = recipients.map((c) => ({
+      campaign_id: campaignId, contact_id: c.id, channel,
+      destination: channel === 'whatsapp' ? c.phone : c.email, status: 'queued', attempts: 0,
+    }));
+    const { error } = await supabaseAdmin.from('campaign_recipients').insert(rows).select();
+    if (error) return { error: error.message };
+  }
+
+  const stats = { total: recipients.length, queued: recipients.length, sent: 0, failed: 0, skipped: 0 };
+  await supabaseAdmin.from('email_campaigns')
+    .update({ status: 'sending', stats, updated_at: new Date().toISOString() })
+    .eq('id', campaignId).select().single();
+
+  return { recipients: recipients.length };
+}
+
+async function stats(campaignId) {
+  const { data } = await supabaseAdmin.from('campaign_recipients').select('status').eq('campaign_id', campaignId);
+  const acc = { total: 0, queued: 0, sent: 0, failed: 0, skipped: 0 };
+  for (const r of data || []) { acc.total++; acc[r.status] = (acc[r.status] || 0) + 1; }
+  return acc;
+}
+
+module.exports = { create, launch, stats };
