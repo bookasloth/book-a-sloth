@@ -9,6 +9,7 @@ import {
   getAvailableSlots,
   createPaymentOrder,
   verifyPayment,
+  getHostReviews,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -46,6 +47,36 @@ const loadRazorpay = () =>
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
   });
+
+// Build a Google Calendar "add event" URL from a UTC start ISO + duration (min).
+const googleCalUrl = ({ title, details, location, startISO, durationMin }) => {
+  const fmt = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const start = new Date(startISO);
+  const end = new Date(start.getTime() + durationMin * 60000);
+  const p = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title || "Booking",
+    dates: `${fmt(start)}/${fmt(end)}`,
+    details: details || "",
+    location: location || "",
+  });
+  return `https://calendar.google.com/calendar/render?${p.toString()}`;
+};
+
+// Generate a downloadable .ics blob URL for a single event.
+const buildICS = ({ title, details, location, startISO, durationMin, uid }) => {
+  const fmt = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const start = new Date(startISO);
+  const end = new Date(start.getTime() + durationMin * 60000);
+  const esc = (s) => String(s || "").replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
+  const lines = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Book A Sloth//Booking//EN",
+    "BEGIN:VEVENT", `UID:${uid || fmt(start)}@bookasloth`, `DTSTAMP:${fmt(new Date())}`,
+    `DTSTART:${fmt(start)}`, `DTEND:${fmt(end)}`, `SUMMARY:${esc(title)}`,
+    `DESCRIPTION:${esc(details)}`, `LOCATION:${esc(location)}`, "END:VEVENT", "END:VCALENDAR",
+  ];
+  return URL.createObjectURL(new Blob([lines.join("\r\n")], { type: "text/calendar" }));
+};
 
 // BUG-13 fix: convert a wall-clock time in the host's timezone to UTC
 // Uses only the built-in Intl API — no external library needed.
@@ -98,6 +129,7 @@ const ServiceBooking = () => {
   const [verifying, setVerifying] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false); // Section 1: collapsed by default
 
   useEffect(() => {
     const fetchService = async () => {
@@ -106,6 +138,12 @@ const ServiceBooking = () => {
         setHost(data.host);
         setService(data.service);
         setAvailability(data.availability);
+        // Section 1: host-level rating for the profile card (hidden when 0)
+        try {
+          const username = data.host?.username || profileSlug;
+          const { data: rv } = await getHostReviews(username);
+          setHost((h) => h ? { ...h, review_avg: rv?.avg ?? 0, review_count: rv?.count ?? 0 } : h);
+        } catch { /* no reviews → row stays hidden */ }
         // SEO — update page title
         if (data.service?.title) {
           document.title = `Book ${data.service.title}${data.host?.name ? ` with ${data.host.name}` : ''} | Book A Sloth`;
