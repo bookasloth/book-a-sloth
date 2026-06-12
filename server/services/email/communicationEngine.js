@@ -208,7 +208,28 @@ async function processQueue(limit = 25) {
   return { processed: rows.length, sent, failed, retried };
 }
 
+/**
+ * Enqueue one campaign email (render chosen template for one contact → queued log).
+ * The standard processQueue() worker delivers it. Subject override optional.
+ */
+async function enqueueCampaignEmail({ templateId, to, data = {}, user = {}, campaignId, subjectOverride, recipientUserId = null }) {
+  if (!templateId || !to) return { ok: false, reason: 'templateId and to required' };
+  const settings = await loadSettings();
+  const { data: template } = await supabaseAdmin.from('email_templates').select('*').eq('id', templateId).single();
+  if (!template) return { ok: false, reason: 'no_template' };
+
+  const rendered = renderEmail(template, { data, user, settings });
+  const subject = subjectOverride || rendered.subject;
+  const logId = await insertLog({
+    event_key: `CAMPAIGN:${campaignId || ''}`, template_id: template.id, audience: template.audience,
+    recipient: to, recipient_user_id: recipientUserId, campaign_id: campaignId || null,
+    subject, html: rendered.html, status: 'queued', attempts: 0,
+    next_attempt_at: new Date().toISOString(), is_test: false,
+  });
+  return { ok: true, status: 'queued', logId };
+}
+
 module.exports = {
   send, processQueue, renderEmail, getTemplate, loadSettings, loadTemplates,
-  clearCache, BACKOFFS_MIN,
+  clearCache, BACKOFFS_MIN, enqueueCampaignEmail,
 };
