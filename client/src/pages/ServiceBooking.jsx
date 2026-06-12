@@ -863,124 +863,88 @@ const ServiceBooking = () => {
                 onClick={() => setStep("time")}
                 className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-4"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>{" "}
                 Back
               </button>
               <h2 className="text-xl font-bold mb-5">Enter Details</h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      className="fb-input"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      className="fb-input"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      className="fb-input"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Mobile Number
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="+91 98765 43210"
-                      className="fb-input"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      Your verification code arrives on WhatsApp (and email as backup).
-                    </p>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* LEFT: Booking Summary */}
+                <div className="order-2 lg:order-1">
+                  <h3 className="font-semibold mb-3 text-sm text-gray-700">Booking Summary</h3>
+                  <div className="border rounded p-4 text-sm space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Service</span>
+                      <span className="font-medium text-right">{service.title}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-3">
+                      <span className="text-gray-500">Date</span>
+                      <span>{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-3">
+                      <span className="text-gray-500">Time</span>
+                      <span>
+                        {formatTime(selectedTime)} – {formatTime(getEndTime(selectedTime))}{" "}
+                        <span className="text-gray-400 text-xs">({tzAbbr})</span>
+                      </span>
+                    </div>
+                    {isPaid && (
+                      <div className="flex justify-between border-t pt-3">
+                        <span className="text-gray-500 flex items-center gap-1">
+                          Platform Fee (₹10 + GST)
+                          <span className="relative group inline-flex">
+                            <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" />
+                            </svg>
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 rounded bg-gray-900 text-white text-xs p-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+                              This helps us to keep your booking authenticated and send you timely reminders.
+                            </span>
+                          </span>
+                        </span>
+                        <span>₹{Math.round((10 + 10 * 0.18) * 100) / 100}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t pt-3 font-semibold text-base">
+                      <span>Total Amount</span>
+                      <span style={{ color: tc }}>
+                        {service.price === 0 ? "Free" : `₹${Math.round((service.price + 10 + 10 * 0.18) * 100) / 100}`}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Additional Notes
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Any specific requirements..."
-                    className="fb-input resize-none"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="mt-6 pt-5 border-t">
-                <h3 className="font-semibold mb-3">Booking Summary</h3>
-                <div className="fb-card fb-card--compact p-4 text-sm space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Service</span>
-                    <span className="font-medium">{service.title}</span>
+
+                {/* RIGHT: Customer Information */}
+                <div className="order-1 lg:order-2 space-y-4">
+                  <h3 className="font-semibold mb-3 text-sm text-gray-700">Customer Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">First Name</label>
+                      <input type="text" required className="fb-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Last Name</label>
+                      <input type="text" className="fb-input" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Date</span>
-                    <span>
-                      {selectedDate?.toLocaleDateString("en-IN", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </span>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Email Address</label>
+                    <input type="email" required className="fb-input" value={email} onChange={(e) => setEmail(e.target.value)} />
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Time</span>
-                    <span>
-                      {formatTime(selectedTime)} –{" "}
-                      {formatTime(getEndTime(selectedTime))}{" "}
-                      <span className="text-gray-400 text-xs">({tzAbbr})</span>
-                    </span>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Mobile Number</label>
+                    <input type="tel" required placeholder="+91 98765 43210" className="fb-input" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                    <p className="text-xs text-gray-400 mt-1">Your verification code arrives on WhatsApp (and email as backup).</p>
                   </div>
-                  <div className="flex justify-between pt-2 border-t font-semibold">
-                    <span>Total</span>
-                    <span className="text-green-600">
-                      {service.price === 0 ? "Free" : `₹${service.price}`}
-                    </span>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Notes</label>
+                    <textarea rows={3} placeholder="Any specific requirements..." className="fb-input resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} />
                   </div>
                 </div>
               </div>
+
+              {/* Full-width Continue */}
               <button
                 onClick={handleSendOtp}
                 disabled={otpSending || !firstName || !email || (!user && !isPhoneValid)}
@@ -988,12 +952,12 @@ const ServiceBooking = () => {
                 style={{ background: tc, color: textOnTheme }}
               >
                 {otpSending || verifying
-                ? "Please wait..."
-                : user
-                ? isPaid
-                  ? "Continue to Payment"
-                  : "Confirm Booking"
-                : "Send Verification Code"}
+                  ? "Please wait..."
+                  : user
+                  ? isPaid
+                    ? "Continue to Payment"
+                    : "Confirm Booking"
+                  : "Send Verification Code"}
               </button>
             </div>
           )}
