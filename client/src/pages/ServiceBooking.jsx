@@ -445,12 +445,16 @@ const ServiceBooking = () => {
         order_id: order.razorpay_order_id,
         handler: async (response) => {
           try {
-            await verifyPayment({
+            const { data: verifyData } = await verifyPayment({
               booking_id: confirmation.id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
             });
+            // Post-payment the server creates the calendar event; pick up the link.
+            if (verifyData?.booking) {
+              setConfirmation((prev) => ({ ...prev, ...verifyData.booking }));
+            }
             setStep("confirmed");
             toast.success("Payment successful! Booking confirmed.");
           } catch {
