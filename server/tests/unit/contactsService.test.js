@@ -1,6 +1,6 @@
 const sources = {
   profiles: [
-    { id: 'u1', email: 'Vendor@x.test', name: 'Vee', role: 'host', plan: 'explorer' },
+    { id: 'u1', email: 'Vendor@x.test', name: 'Vee', phone: '9990001111', role: 'host', plan: 'explorer' },
     { id: 'u2', email: 'guest@x.test',  name: 'Gee', role: 'guest', plan: null },
   ],
   bookings: [
@@ -44,6 +44,13 @@ test('classifies contact_type from source', async () => {
   expect(byEmail['vendor@x.test'].contact_type).toBe('vendor');
   expect(byEmail['walkin@x.test'].contact_type).toBe('guest');
   expect(byEmail['buyer@x.test'].contact_type).toBe('buyer');
+});
+
+test('captures vendor phone from profiles (enables WhatsApp targeting)', async () => {
+  await contactsService.sync();
+  const v = upserted.find((c) => c.email.toLowerCase() === 'vendor@x.test');
+  expect(v.phone).toBe('9990001111');
+  expect(v.contact_type).toBe('vendor');
 });
 
 test('preserves existing suppression / opt-out flags', async () => {

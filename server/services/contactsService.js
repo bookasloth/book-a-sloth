@@ -38,7 +38,7 @@ function upsertInto(map, { email, name, phone, type, attrs = {}, userId = null, 
 
 async function sync() {
   const [{ data: profiles }, { data: bookings }, { data: purchases }] = await Promise.all([
-    supabaseAdmin.from('profiles').select('id, email, name, role, plan'),
+    supabaseAdmin.from('profiles').select('id, email, name, phone, role, plan'),
     supabaseAdmin.from('bookings').select('guest_email, guest_name, guest_phone, scheduled_at'),
     supabaseAdmin.from('product_purchases').select('buyer_email, buyer_name, buyer_phone'),
   ]);
@@ -46,7 +46,7 @@ async function sync() {
   const work = new Map();
   for (const p of profiles || []) {
     upsertInto(work, {
-      email: p.email, name: p.name, type: p.role === 'host' ? 'vendor' : 'guest',
+      email: p.email, name: p.name, phone: p.phone, type: p.role === 'host' ? 'vendor' : 'guest',
       userId: p.id, attrs: { plan: p.plan || null }, source: 'profile',
     });
   }
