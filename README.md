@@ -2,7 +2,7 @@
 
 A multi-tenant appointment-booking SaaS. Hosts (creators) publish services, set availability, and receive paid bookings. Guests discover profiles, book via OTP or account login, and pay through Razorpay.
 
-> Think Topmate.io — built for the Indian creator economy.
+> Think Calendly, Gumroad, Razorpay and Google had baby.
 
 ---
 
