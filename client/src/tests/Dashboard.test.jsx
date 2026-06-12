@@ -56,30 +56,35 @@ describe('Dashboard — Vendor (role:host)', () => {
     await waitFor(() => expect(screen.getByText(/connect google calendar/i)).toBeTruthy());
   });
 
-  test('hides Google Calendar prompt when already connected', async () => {
+  test('marks Google Calendar done in the setup checklist when connected', async () => {
+    // Redesign: the prompt is now a setup-checklist item that stays visible but
+    // is struck through / marked complete once connected (no longer hidden).
     renderDashboard({ ...VENDOR, google_calendar_connected: true });
-    await waitFor(() => expect(screen.queryByText(/connect google calendar/i)).toBeNull());
+    const label = await screen.findByText(/connect google calendar/i);
+    expect(label.className).toMatch(/line-through/);
   });
 
-  test('shows stat cards (Upcoming, Completed, Total Bookings, Earnings)', async () => {
+  test('shows stat cards (Upcoming, Completed, Total Bookings, Total Earnings)', async () => {
     const { container } = renderDashboard(VENDOR);
     await waitFor(() => {
-      // 'Earnings' also renders as a quick-action link below the stat cards, so a
-      // bare getByText('Earnings') is ambiguous. Scope to the stats grid (first
-      // .grid) where each of the four labels is unique.
+      // Stats live in two sub-grids inside the outer 2-column grid (first .grid),
+      // so scoping to the outer grid still finds all four labels.
       const statsGrid = container.querySelector('.grid');
       expect(within(statsGrid).getByText('Upcoming')).toBeTruthy();
       expect(within(statsGrid).getByText('Completed')).toBeTruthy();
       expect(within(statsGrid).getByText('Total Bookings')).toBeTruthy();
-      expect(within(statsGrid).getByText('Earnings')).toBeTruthy();
+      expect(within(statsGrid).getByText('Total Earnings')).toBeTruthy();
     });
   });
 
-  test('shows quick action links (Bookings, Services, Earnings, Profile)', async () => {
+  test('shows dashboard sections (Bookings overview, Your business, Finish setup)', async () => {
+    // Redesign replaced the old quick-action link row with stat sections + a
+    // setup checklist. Assert the stable section headings instead.
     renderDashboard(VENDOR);
     await waitFor(() => {
-      expect(screen.getByText('Bookings')).toBeTruthy();
-      expect(screen.getByText(/services/i)).toBeTruthy();
+      expect(screen.getByText('Bookings overview')).toBeTruthy();
+      expect(screen.getByText('Your business')).toBeTruthy();
+      expect(screen.getByText('Finish setup')).toBeTruthy();
     });
   });
 });

@@ -84,18 +84,28 @@ describe('ServiceBooking — profile card', () => {
     });
   });
 
+  // Section 1 redesign: vendor/service/pricing details now live in a
+  // "Profile Information" panel that is collapsed by default — expand it first.
+  const openProfile = async () => {
+    await waitFor(() => screen.getByText('Profile Information'));
+    fireEvent.click(screen.getByText('Profile Information'));
+  };
+
   test('shows vendor name in left panel', async () => {
     renderBooking();
+    await openProfile();
     await waitFor(() => expect(screen.getByText('Jane Vendor')).toBeTruthy());
   });
 
   test('shows service title in the booking summary card', async () => {
     renderBooking();
+    await openProfile();
     await waitFor(() => expect(screen.getByText('Consultation')).toBeTruthy());
   });
 
   test('shows service duration in left panel', async () => {
     renderBooking();
+    await openProfile();
     await waitFor(() => expect(screen.getByText(/30 min/i)).toBeTruthy());
   });
 
