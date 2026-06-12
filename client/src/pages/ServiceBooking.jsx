@@ -683,7 +683,7 @@ const ServiceBooking = () => {
 
           {/* STEP: time */}
           {step === "time" && (
-            <div className="bg-white border rounded-2xl p-5 sm:p-7">
+            <div className="bg-white border rounded p-5 sm:p-7">
               <Link
                 to={`/${profileSlug}`}
                 className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-4"
@@ -771,7 +771,7 @@ const ServiceBooking = () => {
                           key={day}
                           onClick={() => selectDate(day)}
                           disabled={!ok}
-                          className={`aspect-square min-h-10 rounded-lg text-sm transition-colors ${ok && !sel ? "hover:bg-gray-100 cursor-pointer" : ""} ${!ok ? "text-gray-300 cursor-default" : ""}`}
+                          className={`aspect-square min-h-10 rounded text-sm transition-colors ${ok && !sel ? "hover:bg-gray-100 cursor-pointer" : ""} ${!ok ? "text-gray-300 cursor-default" : ""}`}
                           style={sel
                             ? { background: tc, color: textOnTheme, fontWeight: 700 }
                             : td && !sel
@@ -797,20 +797,22 @@ const ServiceBooking = () => {
                         <div className="flex border rounded-full overflow-hidden text-xs">
                           <button
                             onClick={() => setTimeFormat("12h")}
-                            className={`min-h-9 px-3 py-1 ${timeFormat === "12h" ? "bg-gray-900 text-white" : "text-gray-500"}`}
+                            className="min-h-9 px-3 py-1"
+                            style={timeFormat === "12h" ? { background: tc, color: textOnTheme } : { color: "#6b7280" }}
                           >
                             12h
                           </button>
                           <button
                             onClick={() => setTimeFormat("24h")}
-                            className={`min-h-9 px-3 py-1 ${timeFormat === "24h" ? "bg-gray-900 text-white" : "text-gray-500"}`}
+                            className="min-h-9 px-3 py-1"
+                            style={timeFormat === "24h" ? { background: tc, color: textOnTheme } : { color: "#6b7280" }}
                           >
                             24h
                           </button>
                         </div>
                       </div>
                       {calendarUnverified && timeSlots.length > 0 && (
-                        <div className="mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        <div className="mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
                           We couldn't reach {host.name?.split(" ")[0] || "the host"}'s calendar just now — these times may be subject to confirmation.
                         </div>
                       )}
@@ -824,7 +826,7 @@ const ServiceBooking = () => {
                             <button
                               key={t}
                               onClick={() => setSelectedTime(t)}
-                              className="py-2.5 rounded-lg border text-sm transition-all"
+                              className="py-2.5 rounded border text-sm transition-all"
                               style={selectedTime === t
                                 ? { background: tc, color: textOnTheme, borderColor: tc, fontWeight: 600 }
                                 : {}}
@@ -845,7 +847,7 @@ const ServiceBooking = () => {
               {selectedTime && (
                 <button
                   onClick={() => setStep("details")}
-                  className="mt-6 w-full py-3 rounded-xl font-bold text-sm transition-opacity hover:opacity-85"
+                  className="mt-6 w-full py-3 rounded font-bold text-sm transition-opacity hover:opacity-85"
                   style={{ background: tc, color: textOnTheme }}
                 >
                   Continue →
@@ -856,7 +858,7 @@ const ServiceBooking = () => {
 
           {/* STEP: details */}
           {step === "details" && (
-            <div className="bg-white border rounded-2xl p-5 sm:p-7">
+            <div className="bg-white border rounded p-5 sm:p-7">
               <button
                 onClick={() => setStep("time")}
                 className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-4"
@@ -982,7 +984,7 @@ const ServiceBooking = () => {
               <button
                 onClick={handleSendOtp}
                 disabled={otpSending || !firstName || !email || (!user && !isPhoneValid)}
-                className="mt-6 w-full py-3 rounded-xl font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="mt-6 w-full py-3 rounded font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {otpSending || verifying
@@ -998,7 +1000,7 @@ const ServiceBooking = () => {
 
           {/* STEP: otp */}
           {step === "otp" && (
-            <div className="bg-white border rounded-2xl p-5 sm:p-7">
+            <div className="bg-white border rounded p-5 sm:p-7">
               <button
                 onClick={() => setStep("details")}
                 className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-6"
@@ -1045,7 +1047,7 @@ const ServiceBooking = () => {
               <button
                 onClick={handleVerifyAndBook}
                 disabled={verifying || otp.length !== 6}
-                className="mt-6 w-full py-3 rounded-xl font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="mt-6 w-full py-3 rounded font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {verifying
@@ -1076,7 +1078,7 @@ const ServiceBooking = () => {
               ? Number(confirmation.customer_total)
               : Math.round((service.price + _fee + _gst) * 100) / 100;
             return (
-            <div className="bg-white border rounded-2xl p-5 sm:p-7">
+            <div className="bg-white border rounded p-5 sm:p-7">
               <div className="max-w-md mx-auto text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                 style={{ background: `${tc}18` }}>
@@ -1090,7 +1092,7 @@ const ServiceBooking = () => {
               <p className="text-sm text-gray-500 mb-6">
                 Your slot is held. Pay now to confirm.
               </p>
-              <div className="bg-gray-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
+              <div className="bg-gray-50 rounded p-4 text-sm text-left space-y-2 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Service</span>
                   <span className="font-medium">{service.title}</span>
@@ -1128,13 +1130,13 @@ const ServiceBooking = () => {
                 <div className="flex justify-between pt-2 border-t font-semibold text-base">
                   <span>Total you pay</span>
                   {/* Must equal the amount Razorpay charges (service + fee + GST) */}
-                  <span className="text-indigo-600">₹{checkoutTotal}</span>
+                  <span style={{ color: tc }}>₹{checkoutTotal}</span>
                 </div>
               </div>
               <button
                 onClick={handlePayment}
                 disabled={paymentLoading}
-                className="w-full py-3 rounded-xl font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="w-full py-3 rounded font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {paymentLoading
@@ -1151,7 +1153,7 @@ const ServiceBooking = () => {
 
           {/* STEP: confirmed */}
           {step === "confirmed" && confirmation && (
-            <div className="bg-white border rounded-2xl p-5 sm:p-7">
+            <div className="bg-white border rounded p-5 sm:p-7">
               <div className="max-w-md mx-auto text-center">
               <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
                 style={{ background: `${tc}18` }}>
@@ -1172,7 +1174,7 @@ const ServiceBooking = () => {
                 })}{" "}
                 at {formatTime(selectedTime)} ({tzAbbr})
               </p>
-              <div className="bg-gray-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
+              <div className="bg-gray-50 rounded p-4 text-sm text-left space-y-2 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Service</span>
                   <span className="font-medium">{service.title}</span>
