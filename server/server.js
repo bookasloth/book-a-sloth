@@ -101,6 +101,15 @@ setInterval(async () => {
   } catch (err) { console.error('Email queue worker error:', err.message); }
 }, 60 * 1000);
 
+// Campaign worker — drives 'sending' campaigns under their throttle (every 60s)
+const campaignWorker = require('./services/campaignWorker');
+setInterval(async () => {
+  try {
+    const r = await campaignWorker.processDue();
+    if (r.enqueued || r.failed) console.log(`Campaign worker: ${r.enqueued} enqueued, ${r.failed} failed`);
+  } catch (err) { console.error('Campaign worker error:', err.message); }
+}, 60 * 1000);
+
 // Badge engine: scheduled full evaluation (interval configurable via env, default 60 min)
 const badgeEngine = require('./services/badgeEngine');
 const BADGE_EVAL_INTERVAL_MIN = parseInt(process.env.BADGE_EVAL_INTERVAL_MIN) || 60;
