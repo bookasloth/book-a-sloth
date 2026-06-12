@@ -1,5 +1,5 @@
 # Current State — Book A Sloth
-_Last updated: 2026-06-06_
+_Last updated: 2026-06-12_
 
 ## ✅ Working Features
 
@@ -67,6 +67,7 @@ _Last updated: 2026-06-06_
 - Booking reschedule UI in guest-facing flow (API exists, UI limited)
 - Review submission UI (API exists, no dedicated page)
 - Admin payout approval workflow (requests stored, approval UI may be partial)
+- **Email & WhatsApp campaigns (PLANNED, not built)** — audience/segment/campaign layers designed but not implemented. The send engines (`communicationEngine`, `aisensyService`) exist and work for *triggered* messages; there is no broadcast/campaign capability yet and no contacts/segment layer. Full plan: `docs/superpowers/plans/2026-06-12-email-campaigns.md`. See `current-work.md` for the audit findings.
 
 ## Environment Status
 - Server port: 5000

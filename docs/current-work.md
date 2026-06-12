@@ -1,5 +1,28 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-06-11_
+_Last updated: 2026-06-12_
+
+## Sprint: Communication → Campaign Platform — Audit + Plan (PLANNED — NOT STARTED, 2026-06-12)
+
+> **Status: PLANNING ONLY.** No code written, no migration applied, no tests run. This session produced an audit + a complete implementation plan. Local-only git was initialised (no GitHub remote) as the pre-build rollback baseline.
+
+- **Full plan:** `docs/superpowers/plans/2026-06-12-email-campaigns.md` — 26 tasks across 3 phases, TDD with complete code + tests per step. Execute on command, all 3 phases together.
+- **Trigger:** UX audit of "Communication Settings". The area is messy — email and WhatsApp (AiSensy) configuration are spread across **three overlapping admin pages** with **two divergent data models**.
+- **Audit findings (recorded for the rebuild):**
+  - Two admin pages overlap: `AdminNotifications.jsx` (`/admin/notifications`, AiSensy + per-event email toggles) and `AdminCommunication.jsx` (`/admin/platform/communication`, email templates/logs/settings). Plus an empty `AdminNewsletter.jsx` shell promising "campaigns".
+  - **Two event registries:** `notification_events` (channel routing + AiSensy campaign names, 12 rows) vs `email_templates` (content, 29 rows) — divergent lists, no single "what fires on event X" view.
+  - **Dead field:** `notification_events.email_subject` is editable in the UI but ignored by the engine (which uses `email_templates.subject`).
+  - **Two log stores, double-logged:** `notification_logs` + `email_logs`, surfaced in two separate "Logs" tabs.
+  - **No campaigns at all:** the only "campaign" today is the AiSensy `campaign_name` text field per event; no audience/segment concept; WhatsApp `{{n}}` param order is hardcoded in code.
+  - **The real gap:** no contactable/consented audience layer. Contacts are scattered across `profiles` (email only, no phone), `bookings` (`guest_*`), `product_purchases` (`buyer_*`); no suppression/opt-out anywhere. "System in place, purpose unfulfilled" = there was no list to point the engines at.
+- **Architecture decided (4 layers):** Delivery (exists: communicationEngine + aisensyService) → Routing (exists: notification_events) → **Audience (new: `contacts` + consent/suppression + `segments`)** → **Campaign (new: `email_campaigns` + `campaign_recipients` + a throttled worker)**. Campaigns reuse the existing `email_logs` queue + 60s worker; no new send infra.
+- **Phase plan:** P1 Email campaigns (Tasks 1–12) → P2 WhatsApp campaigns (Tasks 13–21, additive, never edits P1 schema) → P3 Documentation (Tasks 22–26).
+- **Key decisions made this session:**
+  - Bulk email → **Resend** (provider abstraction already supports it); transactional OTP can stay SMTP. Gmail/Workspace SMTP can't do campaign volume.
+  - Schema is **multi-channel from Phase 1** (contacts/segments/recipients all channel-aware), so WhatsApp slots in additively.
+  - **Consent basis:** users agree via T&C at signup to email + WhatsApp; suppression/opt-out is still enforced in two places (segment resolve + worker re-check). WhatsApp STOP → suppress via a webhook (P2).
+  - Naming debt accepted: the campaigns table stays named `email_campaigns` even when holding WhatsApp campaigns (avoids a risky live rename).
+  - **Git: local only, never pushed.** Migrations (v2.6, v2.7) are additive and need explicit go before hitting live Supabase.
+- **Open confirmations before/within execution:** vendor phone source (P2 pre-task — may scope WhatsApp to guests first), AiSensy Pro webhook payload shape (P2 Task 18), `RESEND_API_KEY` + verified sender for the email e2e.
 
 ## Sprint: Auth Split + Availability Engine + Theme/Media Fixes (DONE 2026-06-11)
 - **Vendor Google-only auth**: `GET /api/auth/google/vendor?intent=signup|login` (public) → callback auto-creates/logs-in vendor with ONE consent screen (identity + full calendar scopes). Session minted password-less via `mintSessionForEmail()` (admin generateLink → disposable-client verifyOtp — same poisoning rule as signInWithPassword). Tokens delivered in URL fragment to `/auth/google/done`. New pages: `/be-a-sloth` (signup), `/login-as-vendor` (login), `GoogleAuthDone.jsx`. Legacy `/login` email/password kept for pre-migration vendors (back-compat).
