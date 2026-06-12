@@ -567,72 +567,93 @@ const ServiceBooking = () => {
       )}
       <div className="app-container py-6 sm:py-8 flex flex-col lg:flex-row gap-6 lg:items-start">
 
-        {/* ── LEFT: Persistent Creator Profile Card ── */}
+        {/* ── LEFT: Collapsible Profile Card ── */}
         <div className="lg:w-[300px] flex-shrink-0">
-          <div className="bg-white border rounded-2xl overflow-hidden shadow-sm lg:sticky lg:top-24">
+          <div className="bg-white border rounded overflow-hidden lg:sticky lg:top-24">
+            {/* Header toggle */}
+            <button
+              onClick={() => setProfileOpen((o) => !o)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left"
+            >
+              <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: tc }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Profile Information
+              </span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${profileOpen ? "rotate-180" : ""}`}
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-            {/* Cover */}
-            <div className="h-24 relative overflow-hidden"
-              style={{ background: host.cover_image ? undefined : `linear-gradient(135deg, ${tc}26, ${tc}55)` }}>
-              {host.cover_image && (
-                <img src={host.cover_image} alt="" className="w-full h-full object-cover" />
-              )}
-              {host.google_calendar_connected && (
-                <div className="absolute top-2 right-2 w-4 h-4 bg-green-400 rounded-full border-2 border-white" title="Online meetings" />
-              )}
-            </div>
-
-            {/* Avatar */}
-            <div className="flex justify-center -mt-7">
-              <div className="w-14 h-14 rounded-xl border-2 overflow-hidden bg-white"
-                style={{ borderColor }}>
-                {host.profile_image
-                  ? <img src={host.profile_image} alt={host.name} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center text-xl font-bold" style={{ color: tc }}>
-                      {host.name?.charAt(0)?.toUpperCase()}
-                    </div>
-                }
-              </div>
-            </div>
-
-            <div className="px-4 pb-5 pt-2.5 text-center">
-              <h2 className="text-base font-bold text-gray-900">{host.name}</h2>
-              {(host.profession || host.tagline) && (
-                <p className="text-xs font-semibold mt-0.5" style={{ color: tc }}>
-                  {host.profession || host.tagline}
-                </p>
-              )}
-              {host.bio && (
-                <p className="text-xs text-gray-500 mt-2.5 leading-relaxed text-left">
-                  {host.bio.slice(0, 180)}{host.bio.length > 180 ? '…' : ''}
-                </p>
-              )}
-
-              {/* Service being booked */}
-              <div className="mt-3 pt-3 border-t text-left">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">Booking</p>
-                <p className="text-sm font-semibold text-gray-900 leading-snug">{service.title}</p>
-                <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-                  <span className="flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                    </svg>
-                    {service.duration} min
-                  </span>
-                  <span>{service.meeting_mode === 'offline' ? '📍 In-person' : '🌐 Online'}</span>
+            {profileOpen && (
+              <div className="border-t">
+                {/* Section 1: Vendor Profile */}
+                <div className="h-20 relative overflow-hidden"
+                  style={{ background: host.cover_image ? undefined : `linear-gradient(135deg, ${tc}26, ${tc}55)` }}>
+                  {host.cover_image && <img src={host.cover_image} alt="" className="w-full h-full object-cover" />}
                 </div>
-                <p className="text-base font-bold mt-1" style={{ color: tc }}>
-                  {service.price === 0 ? 'Free' : `₹${service.price}`}
-                </p>
-              </div>
+                <div className="flex justify-center -mt-7">
+                  <div className="w-14 h-14 rounded border-2 overflow-hidden bg-white" style={{ borderColor }}>
+                    {host.profile_image
+                      ? <img src={host.profile_image} alt={host.name} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-xl font-bold" style={{ color: tc }}>
+                          {host.name?.charAt(0)?.toUpperCase()}
+                        </div>}
+                  </div>
+                </div>
+                <div className="px-4 pt-2 pb-4 text-center">
+                  <h2 className="text-base font-bold text-gray-900">{host.name}</h2>
+                </div>
 
-              {/* View full profile link */}
-              <Link to={`/${profileSlug}`}
-                className="mt-3 block text-xs font-medium hover:opacity-75 transition-opacity"
-                style={{ color: tc }}>
-                View full profile →
-              </Link>
-            </div>
+                {/* Divider + Section 2: Service Information */}
+                <div className="px-4 py-4 border-t text-left">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">Service</p>
+                  <p className="text-sm font-semibold text-gray-900 leading-snug">{service.title}</p>
+                  {service.description && (
+                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                      {service.description.slice(0, 140)}{service.description.length > 140 ? "…" : ""}
+                    </p>
+                  )}
+                  {host.review_count > 0 && (
+                    <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" style={{ fill: tc }}>
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                      </svg>
+                      <span className="font-semibold text-gray-700">{host.review_avg}</span>
+                      <span className="text-gray-400">({host.review_count})</span>
+                    </p>
+                  )}
+                </div>
+
+                {/* Divider + Section 3: Pricing & Duration */}
+                <div className="px-4 py-4 border-t text-left">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">Pricing &amp; Duration</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-bold" style={{ color: tc }}>
+                      {service.price === 0 ? "Free" : `₹${service.price}`}
+                    </span>
+                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                      </svg>
+                      {service.duration} min
+                    </span>
+                  </div>
+                </div>
+
+                {/* View full profile — kept exactly as before */}
+                <div className="px-4 pb-4">
+                  <Link to={`/${profileSlug}`}
+                    className="block text-xs font-medium hover:opacity-75 transition-opacity"
+                    style={{ color: tc }}>
+                    View full profile →
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
