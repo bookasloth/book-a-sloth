@@ -375,6 +375,19 @@ const verifySubscription = async (req, res) => {
       return res.status(400).json({ message: "Payment verification failed." });
     }
 
+    // Idempotency: if this payment was already processed, return success without
+    // re-activating / re-inserting / re-posting (prevents double subscription revenue).
+    const { data: priorPayment } = await supabaseAdmin
+      .from("subscription_payments")
+      .select("id")
+      .eq("razorpay_payment_id", razorpay_payment_id)
+      .maybeSingle();
+    if (priorPayment) {
+      const { data: existingProfile } = await supabaseAdmin
+        .from("profiles").select("id, name, email, plan, plan_expires_at").eq("id", req.user.id).single();
+      return res.json({ message: `Subscription already active`, profile: existingProfile });
+    }
+
     // Annual billing per spec v1.1 (was incorrectly 30 days)
     const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
     const { data: profile, error } = await supabaseAdmin
@@ -422,7 +435,11 @@ const verifySubscription = async (req, res) => {
         }).select().single();
 
       if (subErr) {
-        console.error("subscription_payments insert failed (reconciler cannot heal this — investigate):", subErr.message);
+        if (subErr.code === "23505" || /duplicate key|unique constraint/i.test(subErr.message || "")) {
+          console.log("subscription_payments duplicate (replay) — skipping ledger post:", razorpay_payment_id);
+        } else {
+          console.error("subscription_payments insert failed (reconciler cannot heal this — investigate):", subErr.message);
+        }
       } else {
         const { subscriptionPaymentEntry } = require("../services/ledger/journalTemplates");
         const { postSafe } = require("../services/ledger/postingService");
