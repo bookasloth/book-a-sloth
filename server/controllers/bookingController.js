@@ -289,6 +289,9 @@ const createBooking = async (req, res) => {
       gst_rate:            gstRate,                // snapshot of rate used (v2.2)
       razorpay_fee_actual: 0,                      // set at payment capture (v2.2)
       commission_applied:  commission,    // requires v1.7 migration
+      commission_gst:        pricing.commissionGst,   // v2.8: 18% GST on commission, vendor-borne
+      commission_percentage: commissionPct,           // v2.8 snapshot
+      vendor_plan_type:      effectivePlanSlug,       // v2.8 snapshot
       reminder_24h_sent: false,
       reminder_1h_sent: false,
       status: service.price === 0 ? "confirmed" : "pending",
@@ -309,7 +312,9 @@ const createBooking = async (req, res) => {
       // Drop v1.7 + v2.2 + v2.5 columns if the migrations haven't been applied yet
       const {
         commission_applied: _c, platform_fee_gst: _g, customer_total: _t,
-        gst_rate: _r, razorpay_fee_actual: _f, end_at: _e, ...payloadCore
+        gst_rate: _r, razorpay_fee_actual: _f, end_at: _e,
+        commission_gst: _cg, commission_percentage: _cp, vendor_plan_type: _vp,
+        ...payloadCore
       } = bookingPayload;
       bookingResult = await supabaseAdmin
         .from("bookings")
