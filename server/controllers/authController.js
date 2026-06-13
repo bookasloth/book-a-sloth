@@ -616,6 +616,19 @@ const forgotPassword = async (req, res) => {
       return res.json({ message: "If that email exists, an OTP has been sent." });
     }
 
+    // Respect an active reset lockout: re-requesting a code must NOT clear it,
+    // otherwise the per-code attempt lockout in resetPassword is trivially
+    // bypassable (guess N times → request new code → repeat). While locked we
+    // issue nothing and leave attempts/locked_until intact.
+    const { data: existingOtp } = await supabaseAdmin
+      .from("otp_codes")
+      .select("locked_until")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+    if (existingOtp?.locked_until && new Date(existingOtp.locked_until) > new Date()) {
+      return res.json({ message: "If that email exists, an OTP has been sent." });
+    }
+
     // CSPRNG 6-digit code; stored only as a bcrypt hash (never plaintext).
     const otp = crypto.randomInt(100000, 1000000).toString();
     const otpHash = await bcrypt.hash(otp, 10);
