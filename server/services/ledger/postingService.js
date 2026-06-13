@@ -35,12 +35,17 @@ async function post({ sourceType, sourceId, template, journalDate = null, create
 /**
  * Non-throwing variant for payment paths: a captured payment must never fail
  * because the ledger write failed. The reconciler cron self-heals misses.
+ * ONLY for source types the reconciler scans (ORDER_PAYMENT,
+ * SUBSCRIPTION_PAYMENT) — all other flows must use post() and surface errors.
  */
 async function postSafe(args) {
   try {
     return await post(args);
   } catch (err) {
-    console.error('LEDGER POSTING MISSED (reconciler will retry):', err.message);
+    console.error(
+      `LEDGER POSTING MISSED (reconciler will retry) ${args?.sourceType}/${args?.sourceId}:`,
+      err.message,
+    );
     return null;
   }
 }
