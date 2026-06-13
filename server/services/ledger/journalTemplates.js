@@ -13,12 +13,18 @@
 const { ACCOUNTS } = require('../../lib/ledgerAccounts');
 const { round2 } = require('../../lib/pricingEngine');
 
-const line = (account_code, side, amount, tags = {}) => ({
-  account_code,
-  debit:  side === 'debit'  ? round2(amount) : 0,
-  credit: side === 'credit' ? round2(amount) : 0,
-  ...tags,
-});
+const line = (account_code, side, amount, tags = {}) => {
+  const value = round2(amount);
+  if (!Number.isFinite(value)) {
+    throw new Error(`journal line for account ${account_code} has a non-numeric amount (${amount})`);
+  }
+  return {
+    account_code,
+    debit:  side === 'debit'  ? value : 0,
+    credit: side === 'credit' ? value : 0,
+    ...tags,
+  };
+};
 
 /** ORDER_PAYMENT — from the booking's immutable snapshot (v2.8 columns). */
 function orderPaymentEntry(snapshot) {
@@ -86,14 +92,21 @@ function adjustmentEntry({ description, lines }) {
   return { description: description || 'Manual adjustment', lines };
 }
 
-/** REVERSAL — mirror of an existing entry's lines. */
+/**
+ * REVERSAL — mirror of an existing entry's lines.
+ * Caller must supply lines with `account_code` (persisted journal_lines rows
+ * carry account_id only — join chart_of_accounts before calling).
+ */
 function reversalEntry(original) {
   return {
     description: `Reversal of ${original.journal_number}`,
     lines: original.lines.map((l) => ({
-      ...l,
-      debit: l.credit,
-      credit: l.debit,
+      account_code: l.account_code,
+      debit: round2(l.credit || 0),
+      credit: round2(l.debit || 0),
+      vendor_id: l.vendor_id || null,
+      order_item_id: l.order_item_id || null,
+      subscription_payment_id: l.subscription_payment_id || null,
     })),
   };
 }
