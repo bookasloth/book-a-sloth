@@ -405,10 +405,15 @@ const createBooking = async (req, res) => {
 // GET /api/bookings/host
 const getHostBookings = async (req, res) => {
   try {
+    // Vendors only see PAID bookings. An unpaid/pending booking is not yet the
+    // vendor's booking — it is a lead and only Admin can see it. payment_status
+    // 'paid' covers paid/confirmed and paid-then-cancelled (refund visibility);
+    // 'unpaid' and 'failed' stay hidden. Admin endpoints see everything.
     let result = await supabaseAdmin
       .from("bookings")
       .select("*, services(*), profiles!bookings_guest_id_fkey(*)")
       .eq("host_id", req.user.id)
+      .eq("payment_status", "paid")
       .order("scheduled_at", { ascending: true });
     // Fallback if schema cache is stale
     if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
@@ -416,6 +421,7 @@ const getHostBookings = async (req, res) => {
         .from("bookings")
         .select("id, service_id, host_id, guest_id, guest_name, guest_email, scheduled_at, status, payment_status, meeting_link, notes, created_at, updated_at, services(id, title, duration, price), profiles!bookings_guest_id_fkey(id, name, email)")
         .eq("host_id", req.user.id)
+        .eq("payment_status", "paid")
         .order("scheduled_at", { ascending: true });
     }
     const { data, error } = result;

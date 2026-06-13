@@ -24,14 +24,20 @@ const getTransactions = async (req, res) => {
     const from = (parseInt(page) - 1) * parseInt(limit);
     const to   = from + parseInt(limit) - 1;
 
+    // Vendors only see PAID bookings here too — an unpaid/pending booking is a
+    // lead, visible to Admin only, not the vendor's transaction history. This
+    // is a hard filter; there is intentionally no client-overridable
+    // payment_status param (that was the leak). `status` (booking lifecycle:
+    // confirmed/completed/cancelled) may still narrow within paid bookings.
     let query = supabaseAdmin
       .from('bookings')
       .select('*, services(title, price, duration)', { count: 'exact' })
       .eq('host_id', req.user.id)
+      .eq('payment_status', 'paid')
       .order('created_at', { ascending: sort === 'asc' })
       .range(from, to);
 
-    if (status) query = query.eq('payment_status', status);
+    if (status) query = query.eq('status', status);
     if (search) {
       query = query.or(
         `guest_name.ilike.%${search}%,guest_email.ilike.%${search}%`

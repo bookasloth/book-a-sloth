@@ -211,10 +211,10 @@ const Transactions = () => {
           }}
           className="fb-input"
         >
-          <option value="">All Payments</option>
-          <option value="paid">Paid</option>
-          <option value="unpaid">Unpaid</option>
-          <option value="refunded">Refunded</option>
+          <option value="">All Bookings</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
         </select>
         <select
           value={sort}
