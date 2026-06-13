@@ -121,5 +121,15 @@ setInterval(async () => {
   } catch (err) { console.error('Badge engine cron error:', err.message); }
 }, BADGE_EVAL_INTERVAL_MIN * 60 * 1000);
 
+// Ledger reconciler — self-heals missed journal postings (hourly, idempotent)
+const ledgerReconciler = require('./services/ledger/ledgerReconciler');
+const LEDGER_RECONCILE_MIN = Number(process.env.LEDGER_RECONCILE_INTERVAL_MIN || 60);
+setInterval(async () => {
+  try {
+    const r = await ledgerReconciler.reconcile();
+    if (r.reposted > 0) console.log(`Ledger reconciler: reposted ${r.reposted} missed entries`);
+  } catch (err) { console.error('Ledger reconciler cron error:', err.message); }
+}, LEDGER_RECONCILE_MIN * 60 * 1000);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log('Server running on port ' + PORT));

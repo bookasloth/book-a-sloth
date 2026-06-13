@@ -1,12 +1,14 @@
 /**
  * tests/unit/pricingEngine.test.js
  *
- * Final commission/fees/payout model (v2.2):
+ * Final commission/fees/payout model (v3):
  *   Customer pays  = servicePrice + platformFee + GST(platformFee)
  *   platformFee    = flat configurable (default ₹10), 0 for free services
  *   Razorpay fee   = always vendor-borne (actual recorded fee)
  *   commission     = commissionPercentage % of servicePrice (from plan record)
- *   Vendor payout  = servicePrice − commission − razorpayFee
+ *   commissionGst  = 18% GST on the commission, vendor-borne
+ *   Vendor payout  = servicePrice − commission − commissionGst − razorpayFee
+ *   Subscriptions: GST charged ON TOP of plan price (₹999 → ₹1,178.82 total)
  */
 
 'use strict';
@@ -80,17 +82,20 @@ describe('calculateCommission', () => {
 
 // ─── calculateVendorPayout ────────────────────────────────────────────────────
 describe('calculateVendorPayout', () => {
-  test('free plan ₹100: 100 − 5 − 2.34 = ₹92.66', () => {
-    expect(calculateVendorPayout(100, 5, 2.34)).toBe(92.66);
+  test('free plan ₹100: 100 − 5 − 0 − 2.34 = ₹92.66 (no commission GST passed)', () => {
+    expect(calculateVendorPayout(100, 5, 0, 2.34)).toBe(92.66);
   });
-  test('paid plan ₹100: 100 − 0 − 2.34 = ₹97.66', () => {
-    expect(calculateVendorPayout(100, 0, 2.34)).toBe(97.66);
+  test('paid plan ₹100: 100 − 0 − 0 − 2.34 = ₹97.66', () => {
+    expect(calculateVendorPayout(100, 0, 0, 2.34)).toBe(97.66);
   });
-  test('razorpay fee defaults to 0 when unknown', () => {
+  test('commission GST and razorpay fee default to 0 when unknown', () => {
     expect(calculateVendorPayout(500, 25)).toBe(475);
   });
+  test('negative commission GST throws', () => {
+    expect(() => calculateVendorPayout(100, 0, -1)).toThrow('commissionGst cannot be negative');
+  });
   test('negative fee throws', () => {
-    expect(() => calculateVendorPayout(100, 0, -1)).toThrow('razorpayFee cannot be negative');
+    expect(() => calculateVendorPayout(100, 0, 0, -1)).toThrow('razorpayFee cannot be negative');
   });
 });
 
@@ -111,23 +116,25 @@ describe('computeBreakdown — worked examples from the spec', () => {
     expect(b.platformFee).toBe(10);
     expect(b.gst).toBe(1.8);
     expect(b.commission).toBe(5);
+    expect(b.commissionGst).toBe(0.9);    // 18% of ₹5 commission, vendor-borne
     expect(b.customerTotal).toBe(111.8);
-    expect(b.vendorPayout).toBe(92.66);
+    expect(b.vendorPayout).toBe(91.76);   // 100 − 5 − 0.90 − 2.34
     expect(b.platformRevenue).toBe(15);   // ₹5 commission + ₹10 platform fee
   });
 
   test('Paid plan, ₹100 booking, ₹2.34 actual Razorpay fee', () => {
     const b = computeBreakdown({ servicePrice: 100, commissionPercentage: 0, razorpayFee: 2.34 });
     expect(b.commission).toBe(0);
+    expect(b.commissionGst).toBe(0);      // no commission → no commission GST
     expect(b.customerTotal).toBe(111.8);
-    expect(b.vendorPayout).toBe(97.66);
+    expect(b.vendorPayout).toBe(97.66);   // 100 − 0 − 0 − 2.34
     expect(b.platformRevenue).toBe(10);   // platform fee only
   });
 
   test('Razorpay fee unknown at booking time → payout excludes it (finalised later)', () => {
     const b = computeBreakdown({ servicePrice: 100, commissionPercentage: 5 });
     expect(b.razorpayFee).toBe(0);
-    expect(b.vendorPayout).toBe(95);      // 100 − 5 − 0; PG fee deducted at capture
+    expect(b.vendorPayout).toBe(94.1);    // 100 − 5 − 0.90 − 0; PG fee deducted at capture
   });
 
   test('Custom platform fee + GST rate flows through', () => {
@@ -135,8 +142,43 @@ describe('computeBreakdown — worked examples from the spec', () => {
     expect(b.platformFee).toBe(20);
     expect(b.gst).toBe(3.6);
     expect(b.commission).toBe(10);
+    expect(b.commissionGst).toBe(1.8);    // 18% of ₹10 commission
     expect(b.customerTotal).toBe(223.6);
-    expect(b.vendorPayout).toBe(185.28);  // 200 − 10 − 4.72
+    expect(b.vendorPayout).toBe(183.48);  // 200 − 10 − 1.80 − 4.72
     expect(b.platformRevenue).toBe(30);
+  });
+});
+
+describe('v3 — commission GST + subscription breakdown (PRD fixtures)', () => {
+  const { calculateCommissionGst, calculateVendorPayout, computeBreakdown, computeSubscriptionBreakdown } = require('../../lib/pricingEngine');
+
+  test('commission GST is 18% of commission', () => {
+    expect(calculateCommissionGst(50)).toBe(9);
+    expect(calculateCommissionGst(0)).toBe(0);
+    expect(calculateCommissionGst(33.33)).toBe(6.0); // 5.9994 → 6.00
+  });
+
+  test('PRD §3.1 Free plan ₹1000: payout 917.40', () => {
+    // commission 50, commission GST 9, razorpay fee 20 + tax 3.60
+    expect(calculateVendorPayout(1000, 50, 9, 23.6)).toBe(917.4);
+  });
+
+  test('PRD §3.2 Paid plan ₹1000: payout 976.40', () => {
+    expect(calculateVendorPayout(1000, 0, 0, 23.6)).toBe(976.4);
+  });
+
+  test('computeBreakdown returns commissionGst and v3 payout', () => {
+    const b = computeBreakdown({ servicePrice: 1000, commissionPercentage: 5, platformFee: 10, gstRate: 0.18, razorpayFee: 23.6 });
+    expect(b.commission).toBe(50);
+    expect(b.commissionGst).toBe(9);
+    expect(b.vendorPayout).toBe(917.4);
+    expect(b.customerTotal).toBe(1011.8);
+    expect(b.platformRevenue).toBe(60); // fee 10 + commission 50 (GST excluded)
+  });
+
+  test('PRD §5.2 subscription ₹999 → GST 179.82, total 1178.82', () => {
+    const s = computeSubscriptionBreakdown({ planPrice: 999, gstRate: 0.18 });
+    expect(s.gstAmount).toBe(179.82);
+    expect(s.totalCharged).toBe(1178.82);
   });
 });

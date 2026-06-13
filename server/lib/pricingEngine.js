@@ -6,25 +6,30 @@
  * percentage are injected by the caller — NOTHING about plans or rates is
  * hardcoded here (commission % comes from the vendor's subscription plan row).
  *
- * The money model (final, v2.2):
+ * The money model (final, v3):
  *
  *   Customer pays  = servicePrice + platformFee + gstOnPlatformFee
  *   platformFee    = flat, admin-configurable (default ₹10); 0 for free services
  *   gst            = gstRate × platformFee   (tax liability, NOT platform revenue)
  *   razorpayFee    = ALWAYS borne by the vendor; the ACTUAL fee Razorpay charged
  *   commission     = commissionPercentage × servicePrice   (from plan record)
- *   Vendor payout  = servicePrice − commission − razorpayFee
+ *   commissionGst  = gstRate × commission   (vendor-borne GST on the platform's
+ *                    commission service — PRD compliance; pass-through liability)
+ *   Vendor payout  = servicePrice − commission − commissionGst − razorpayFee
  *
- *   Free plan, ₹100:  payout = 100 − 5 − 2.34 = 92.66 ; platform earns 5 + 10 = 15
- *   Paid plan, ₹100:  payout = 100 − 0 − 2.34 = 97.66 ; platform earns 10
- *   (GST ₹1.80 collected from customer belongs to the government, not the platform)
+ *   Free plan, ₹1000:  payout = 1000 − 50 − 9 − 23.60 = 917.40 ; platform earns 50 + 10 = 60
+ *   Paid plan, ₹1000:  payout = 1000 − 0 − 0 − 23.60 = 976.40 ; platform earns 10
+ *   (All GST collected belongs to the government, not the platform)
+ *
+ *   Subscriptions (PRD §5.2): GST is charged ON TOP of the plan price —
+ *   ₹999 plan → GST ₹179.82 → total charged ₹1,178.82 (computeSubscriptionBreakdown).
  */
 
 'use strict';
 
 const DEFAULTS = Object.freeze({
   platformFee: 10,   // ₹ flat, overridden by platform_settings.platform_fee
-  gstRate: 0.18,     // 18% GST on the platform fee
+  gstRate: 0.18,     // 18% GST — applied to platform fee, commission, and subscriptions
 });
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
@@ -75,18 +80,33 @@ function calculateCommission(servicePrice, commissionPercentage) {
   return round2(servicePrice * (pct / 100));
 }
 
-// ─── Vendor payout (Razorpay fee always vendor-borne) ────────────────────────
+// ─── GST on the commission (vendor-borne; platform's GST on its service) ─────
 /**
- * @param {number} servicePrice  service amount
- * @param {number} commission    platform commission (₹)
- * @param {number} [razorpayFee] ACTUAL Razorpay fee (₹), vendor-borne. 0 if unknown.
+ * @param {number} commission  commission amount (₹)
+ * @param {object} [opts]      { gstRate } override (default 18%)
+ * @returns {number} commission GST in ₹
+ */
+function calculateCommissionGst(commission, opts = {}) {
+  assertNonNegative(commission, 'commission');
+  const rate = opts.gstRate != null ? Number(opts.gstRate) : DEFAULTS.gstRate;
+  assertNonNegative(rate, 'gstRate');
+  return round2(commission * rate);
+}
+
+// ─── Vendor payout (commission GST + Razorpay fee always vendor-borne) ───────
+/**
+ * @param {number} servicePrice   service amount
+ * @param {number} commission     platform commission (₹)
+ * @param {number} [commissionGst] 18% GST on the commission (₹), vendor-borne
+ * @param {number} [razorpayFee]  ACTUAL Razorpay fee+tax total (₹), vendor-borne
  * @returns {number} net amount the vendor receives in ₹
  */
-function calculateVendorPayout(servicePrice, commission, razorpayFee = 0) {
+function calculateVendorPayout(servicePrice, commission, commissionGst = 0, razorpayFee = 0) {
   assertNonNegative(servicePrice, 'servicePrice');
   assertNonNegative(commission, 'commission');
+  assertNonNegative(commissionGst, 'commissionGst');
   assertNonNegative(razorpayFee, 'razorpayFee');
-  return round2(servicePrice - commission - razorpayFee);
+  return round2(servicePrice - commission - commissionGst - razorpayFee);
 }
 
 // ─── Customer total (what is actually charged) ───────────────────────────────
@@ -107,25 +127,40 @@ function calculateCustomerTotal(servicePrice, platformFee, gst) {
  * Convenience: compute the full money breakdown for a booking in one call.
  * razorpayFee defaults to 0 (unknown until payment capture).
  *
- * @returns {{ servicePrice, platformFee, gst, commission, razorpayFee,
- *             customerTotal, vendorPayout, platformRevenue }}
+ * @returns {{ servicePrice, platformFee, gst, commission, commissionGst,
+ *             razorpayFee, customerTotal, vendorPayout, platformRevenue }}
  */
 function computeBreakdown({ servicePrice, commissionPercentage, platformFee, gstRate, razorpayFee = 0 }) {
   const fee = calculatePlatformFee(servicePrice, { platformFee });
   const gst = calculateGst(fee, { gstRate });
   const commission = calculateCommission(servicePrice, commissionPercentage);
-  const vendorPayout = calculateVendorPayout(servicePrice, commission, razorpayFee);
+  const commissionGst = calculateCommissionGst(commission, { gstRate });
+  const vendorPayout = calculateVendorPayout(servicePrice, commission, commissionGst, razorpayFee);
   const customerTotal = calculateCustomerTotal(servicePrice, fee, gst);
   return {
     servicePrice: round2(servicePrice),
     platformFee: fee,
     gst,
     commission,
+    commissionGst,
     razorpayFee: round2(razorpayFee),
     customerTotal,
     vendorPayout,
-    // Platform keeps the commission + platform fee. GST is a pass-through liability.
+    // Platform keeps commission + platform fee. All GST is pass-through liability.
     platformRevenue: round2(commission + fee),
+  };
+}
+
+// ─── Subscription breakdown (GST charged ON TOP of plan price — PRD §5.2) ────
+function computeSubscriptionBreakdown({ planPrice, gstRate }) {
+  assertNonNegative(planPrice, 'planPrice');
+  const rate = gstRate != null ? Number(gstRate) : DEFAULTS.gstRate;
+  assertNonNegative(rate, 'gstRate');
+  const gstAmount = round2(planPrice * rate);
+  return {
+    planPrice: round2(planPrice),
+    gstAmount,
+    totalCharged: round2(planPrice + gstAmount),
   };
 }
 
@@ -134,8 +169,10 @@ module.exports = {
   calculatePlatformFee,
   calculateGst,
   calculateCommission,
+  calculateCommissionGst,
   calculateVendorPayout,
   calculateCustomerTotal,
   computeBreakdown,
+  computeSubscriptionBreakdown,
   round2,
 };

@@ -1,5 +1,33 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-06-12_
+_Last updated: 2026-06-13_
+
+## Sprint: Financial Ledger P1 (Ledger Core) — Double-Entry Accounting (DONE 2026-06-13)
+
+> **Status: SHIPPED on branch `sd/adoring-elgamal-625af7` (NOT merged).** Migrations APPLIED to live Supabase (`xwvciqkayammbvsidqig`). Tests: server **281/281**, client **115/115**, build clean. Live ledger integrity verified: Σdebit = Σcredit, imbalance 0.
+
+**Spec / plan:** `docs/superpowers/specs/2026-06-13-financial-ledger-p1-design.md`; `docs/superpowers/plans/2026-06-13-financial-ledger-p1.md` (full P1→P5 decomposition; only **P1** built).
+
+**Migrations (applied live):**
+- `v2.8_financial_ledger` — `chart_of_accounts` (+12 seeded accounts), `journal_entries`, `journal_lines`, `ledger_entries`, `account_balances`, `subscription_payments`; +10 `bookings` columns; RLS deny-all on all; `post_journal_entry(jsonb)` RPC (atomic, balanced, idempotent on `source_type+source_id`).
+- `v2.8.1_ledger_hardening` — ordered account locks, idempotency-race handling, auto-seed balance rows, immutability triggers on journal/ledger tables, ledger amount CHECK, dropped redundant index, clock_timestamp ledger ordering.
+- `v2.8.2_subscription_payment_idempotency` — partial unique index on `subscription_payments.razorpay_payment_id`.
+
+**Money model v3 (was v2.2):**
+- Added **commission GST** = 18% of commission, vendor-borne. New vendor payable = `service_price − commission − commission_gst − razorpay_fee − razorpay_tax`. Fixtures: Free ₹1000 → vendor ₹917.40; Paid ₹1000 → ₹976.40. Razorpay fee now stored **split** (`razorpay_fee_actual` excl-tax + `razorpay_tax_actual`). Old bookings keep original snapshots.
+- **Subscription GST**: plans charge 18% on top (₹999 → ₹1,178.82 total, ₹179.82 GST). New `subscription_payments` records each charge. Subscription Razorpay fees are platform-borne (expense); order fees vendor-borne.
+- `server/lib/pricingEngine.js` v3: `calculateCommissionGst`, new `calculateVendorPayout(price, commission, commissionGst, razorpayFee)`, `computeBreakdown` returns `commissionGst`, `computeSubscriptionBreakdown`.
+
+**Posting pipeline:**
+- Pure builders `server/services/ledger/journalTemplates.js` → `server/services/ledger/postingService.js` (`post` throws / `postSafe` never throws) → RPC. Order-payment template posts gross receivable + same-entry gateway relief (Razorpay Receivable = net remittance; account 5000 nets 0).
+- Triggers wired: `paymentController.verifyPayment` posts ORDER_PAYMENT + stamps `paid_at` + fee/tax split + concurrent-verify guard (`.neq payment_status paid`); `bookingController.completeBooking` stamps `completed_at`/`revenue_recognized_at`/`revenue_recognition_status=recognized`/`settlement_status` (paid→`eligible_for_settlement` else `not_eligible`) + idempotent re-complete guard; `verifySubscription` inserts `subscription_payments` + posts SUBSCRIPTION_PAYMENT + replay guard.
+- **Self-heal**: hourly `server/services/ledger/ledgerReconciler.js` cron (env `LEDGER_RECONCILE_INTERVAL_MIN`, default 60) reposts paid bookings + subscription_payments missing a journal entry; per-row try/catch.
+- **Backfill**: `server/scripts/backfillLedger.js` (idempotent, `--dry-run`) replays historical paid bookings/plan_purchases/executed payouts. **NOT yet run on live** (dataset near-empty today; run at deploy from an env with `server/.env`).
+
+**Admin (API + UI):**
+- API `/api/admin/finance/*` (`server/controllers/financeAdminController.js`): summary, accounts, journals, journals/:id, ledger/:accountId (reads, `finance.view`); adjustment, reversal, bank-transfer (writes, `finance.manage`). New perm `finance.manage` added to `lib/adminPermissions.js` + live admin_roles finance row.
+- UI (new FINANCE nav): `AdminFinanceDashboard.jsx` (`/admin/finance`, 12 metric cards), `AdminJournal.jsx` (`/admin/finance/journal`, browser + expandable lines + reverse + manual-entry modal with client-side balance gate), `AdminLedger.jsx` (`/admin/finance/ledger`, per-account running balance). `UpgradePlan.jsx` shows +18% GST line.
+
+**NOT done (future phases):** P2 settlement engine (eligibility/batches/holds/vendor ledger), P3 refunds, P4 reconciliation+periods+reports/exports, P5 Razorpay recurring-mandate subscriptions. Followups noted in PR: `getSummary` in-memory aggregation → P4 SQL view; account_code 400-vs-500 on adjustment; fee-fetch-failure has no auto re-fetch (manual ADJUSTMENT).
 
 ## Sprint: Communication → Campaign Platform — Email + WhatsApp (SHIPPED 2026-06-12)
 

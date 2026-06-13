@@ -93,7 +93,7 @@ const PATH_LABELS = {
   support:'Support', tickets:'Tickets', disputes:'Disputes', reviews:'Reviews',
   platform:'Platform', appearance:'Appearance', menu:'Menu Builder',
   footer:'Footer Builder', communication:'Communication', campaigns:'Campaigns', notifications:'Notification Settings', badges:'Badges',
-  upcoming:'Upcoming', completed:'Completed', cancelled:'Cancelled',
+  upcoming:'Upcoming', live:'Live', completed:'Completed', cancelled:'Cancelled',
   categories:'Categories', featured:'Featured',
   staff:'Staff & Roles', system:'System', audit:'Audit Logs',
 };
@@ -111,6 +111,7 @@ const NAV = [
     { label:'Bookings', icon:'calCheck', groupId:'op-bookings', perm:'bookings.view', children:[
       { label:'All',       to:'/admin/bookings' },
       { label:'Upcoming',  to:'/admin/bookings/upcoming' },
+      { label:'Live',      to:'/admin/bookings/live' },
       { label:'Completed', to:'/admin/bookings/completed' },
       { label:'Cancelled', to:'/admin/bookings/cancelled' },
       { label:'Disputes',  to:'/admin/bookings/disputes' },
@@ -140,6 +141,9 @@ const NAV = [
     { label:'Staff & Roles', icon:'users2', to:'/admin/staff', perm:'staff.manage' },
   ]},
   { id:'finance', section:'FINANCE', items:[
+    { label:'Dashboard',         icon:'trendUp', to:'/admin/finance', exact:true, perm:'finance.view' },
+    { label:'Journal',   icon:'file',    to:'/admin/finance/journal', perm:'finance.view' },
+    { label:'Ledger',    icon:'layers',  to:'/admin/finance/ledger',  perm:'finance.view' },
     { label:'Transactions',      icon:'dollar',  to:'/admin/finance/transactions', perm:'finance.view' },
     { label:'Provider Earnings', icon:'wallet',  to:'/admin/finance/earnings', perm:'finance.view' },
     { label:'Refunds',           icon:'refresh', to:'/admin/finance/refunds', perm:'finance.refund' },

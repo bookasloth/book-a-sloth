@@ -288,7 +288,11 @@ const createBooking = async (req, res) => {
       customer_total:      pricing.customerTotal,  // service + fee + GST (v2.2)
       gst_rate:            gstRate,                // snapshot of rate used (v2.2)
       razorpay_fee_actual: 0,                      // set at payment capture (v2.2)
+      razorpay_tax_actual: 0,                      // set at payment capture (v2.8)
       commission_applied:  commission,    // requires v1.7 migration
+      commission_gst:        pricing.commissionGst,   // v2.8: 18% GST on commission, vendor-borne
+      commission_percentage: commissionPct,           // v2.8 snapshot
+      vendor_plan_type:      effectivePlanSlug,       // v2.8 snapshot
       reminder_24h_sent: false,
       reminder_1h_sent: false,
       status: service.price === 0 ? "confirmed" : "pending",
@@ -306,10 +310,12 @@ const createBooking = async (req, res) => {
       bookingResult.error &&
       /Could not find the|column.*does not exist/i.test(bookingResult.error.message)
     ) {
-      // Drop v1.7 + v2.2 + v2.5 columns if the migrations haven't been applied yet
+      // Drop v1.7 + v2.2 + v2.5 + v2.8 columns if the migrations haven't been applied yet
       const {
         commission_applied: _c, platform_fee_gst: _g, customer_total: _t,
-        gst_rate: _r, razorpay_fee_actual: _f, end_at: _e, ...payloadCore
+        gst_rate: _r, razorpay_fee_actual: _f, razorpay_tax_actual: _rt, end_at: _e,
+        commission_gst: _cg, commission_percentage: _cp, vendor_plan_type: _vp,
+        ...payloadCore
       } = bookingPayload;
       bookingResult = await supabaseAdmin
         .from("bookings")
@@ -496,13 +502,37 @@ const completeBooking = async (req, res) => {
     if (req.user.id !== booking.host_id) {
       return res.status(403).json({ message: "Only the host can mark a booking as completed" });
     }
+    // Idempotent: re-completing must not re-stamp completed_at/revenue_recognized_at
+    // (would silently shift revenue across a reporting period) or re-fire notifications.
+    if (booking.status === "completed") return res.json(booking);
 
-    const { data, error } = await supabaseAdmin
+    const nowIso = new Date().toISOString();
+    const completionUpdate = {
+      status: "completed",
+      completed_at: nowIso,
+      revenue_recognized_at: nowIso,            // PRD Rule 2: commission recognised at completion
+      revenue_recognition_status: "recognized",
+      // Only a paid booking can actually be settled; P2 re-checks, but don't
+      // write a knowingly-false eligibility value for unpaid/failed/refunded.
+      settlement_status: booking.payment_status === "paid" ? "eligible_for_settlement" : "not_eligible",
+      updated_at: nowIso,
+    };
+    let { data, error } = await supabaseAdmin
       .from("bookings")
-      .update({ status: "completed", updated_at: new Date().toISOString() })
+      .update(completionUpdate)
       .eq("id", req.params.id)
       .select()
       .single();
+
+    // Legacy DB without v2.8 columns: retry with the original minimal update
+    if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+      ({ data, error } = await supabaseAdmin
+        .from("bookings")
+        .update({ status: "completed", updated_at: nowIso })
+        .eq("id", req.params.id)
+        .select()
+        .single());
+    }
     if (error) return res.status(500).json({ message: error.message });
 
     try {

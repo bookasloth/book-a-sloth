@@ -1,5 +1,5 @@
 # Current State — Book A Sloth
-_Last updated: 2026-06-12_
+_Last updated: 2026-06-13_
 
 ## ✅ Working Features
 
@@ -48,6 +48,14 @@ _Last updated: 2026-06-12_
 - 24h and 1h booking reminder emails
 - Cron runs every 5 minutes
 
+### Financial Ledger (P1)
+- Double-entry accounting: `chart_of_accounts` (12 accounts) + `journal_entries`/`journal_lines`/`ledger_entries`/`account_balances`, written atomically via `post_journal_entry(jsonb)` RPC (balanced + idempotent on source_type+source_id)
+- Posts on triggers: ORDER_PAYMENT (verifyPayment), SUBSCRIPTION_PAYMENT (verifySubscription), with completeBooking stamping revenue recognition + settlement status
+- **Money model now v3**: commission GST (18% of commission, vendor-borne) + subscription GST (18% on plan price); Razorpay fee stored split (fee + tax)
+- Hourly self-heal reconciler reposts paid bookings/subscription_payments missing a journal entry
+- Admin finance UI at `/admin/finance` (dashboard, journal browser, per-account ledger); perms `finance.view` / `finance.manage`
+- SHIPPED on branch `sd/adoring-elgamal-625af7` (not merged); migrations v2.8/v2.8.1/v2.8.2 applied live
+
 ## ⚠️ Pending / Known Limitations
 
 ### DB Migration Required
@@ -68,6 +76,11 @@ _Last updated: 2026-06-12_
 - Review submission UI (API exists, no dedicated page)
 - Admin payout approval workflow (requests stored, approval UI may be partial)
 - **Email & WhatsApp campaigns (SHIPPED 2026-06-12)** — broadcast to consented segments at `/admin/campaigns`. Audience (`contacts` + consent/suppression), `segments`, `email_campaigns`/`campaign_recipients`, throttled `campaignWorker`. Email via Resend (set provider in Communication → Settings); WhatsApp via approved AiSensy templates. Reference: `docs/communication-campaigns-architecture.md`; guides: `docs/guides/`. **Pending:** real-creds e2e (Resend + AiSensy test number), delivery/read funnel (v2), scheduled-send trigger.
+
+### Financial Ledger — phases not built / pending
+- **P1 only is built.** P2 (settlement engine: eligibility/batches/holds/vendor ledger), P3 (refunds), P4 (reconciliation + accounting periods + reports/exports), P5 (Razorpay recurring-mandate subscriptions) are NOT built.
+- **Backfill not yet run on live** — `server/scripts/backfillLedger.js` (idempotent, `--dry-run`) must be run from an env with `server/.env` at deploy to replay historical paid bookings/plan_purchases/payouts.
+- Branch `sd/adoring-elgamal-625af7` is NOT merged to main.
 
 ## Environment Status
 - Server port: 5000

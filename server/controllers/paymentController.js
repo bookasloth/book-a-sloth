@@ -5,7 +5,7 @@ const { supabaseAdmin } = require("../config/supabase");
 const { securityLog, auditLog } = require("../utils/logger");
 const sendEmail = require("../utils/sendEmail");
 const NotificationEngine = require("../services/notificationEngine");
-const { computeBreakdown, calculateVendorPayout } = require("../lib/pricingEngine");
+const { computeBreakdown, calculateVendorPayout, calculatePlatformFee, computeSubscriptionBreakdown } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
 const platformConfig = require("../services/platformConfig");
 const { createCalendarEvent } = require("../config/google");
@@ -141,7 +141,7 @@ const verifyPayment = async (req, res) => {
     // Verify the order_id matches what we stored (replay attack prevention)
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("razorpay_order_id, payment_status, commission_applied, meeting_link, scheduled_at, guest_name, guest_email, notes, host_id, service_id, services(price, title, duration, meeting_mode)")
+      .select("razorpay_order_id, payment_status, commission_applied, commission_gst, platform_fee_amount, platform_fee_gst, customer_total, meeting_link, scheduled_at, guest_name, guest_email, notes, host_id, service_id, services(price, title, duration, meeting_mode)")
       .eq("id", booking_id).single();
 
     if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -156,35 +156,82 @@ const verifyPayment = async (req, res) => {
       return res.status(400).json({ message: "Payment verification failed — invalid signature." });
     }
 
-    // Record the ACTUAL Razorpay fee (vendor-borne) and finalise the payout.
-    // Razorpay returns fee + tax in paise on the captured payment.
-    let razorpayFeeActual = 0;
+    // Record the ACTUAL Razorpay fee + tax (vendor-borne) and finalise the payout.
+    // Razorpay's `fee` (paise) INCLUDES `tax`; we store them split (PRD §19).
+    let razorpayFeeTotal = 0, razorpayTax = 0;
     try {
       const payment = await razorpay.payments.fetch(razorpay_payment_id);
-      if (payment && payment.fee != null) razorpayFeeActual = Number(payment.fee) / 100;
+      if (payment && payment.fee != null) razorpayFeeTotal = Number(payment.fee) / 100;
+      if (payment && payment.tax != null) razorpayTax = Number(payment.tax) / 100;
     } catch (feeErr) {
-      console.error("Razorpay fee fetch failed (payout uses 0 until reconciled):", feeErr.message);
+      // No self-heal re-fetches this fee: payout finalises with 0 and needs a
+      // manual admin ADJUSTMENT entry once the real fee is known.
+      console.error("Razorpay fee fetch failed — fee recorded as 0, manual correction needed:", feeErr.message);
     }
-    const servicePrice = booking.services?.price || 0;
-    const commission   = Number(booking.commission_applied) || 0;
-    const finalPayout  = calculateVendorPayout(servicePrice, commission, razorpayFeeActual);
+    // Tax is a component of fee; clamp so excl-tax + tax always reconstitutes the total.
+    razorpayTax = Math.min(razorpayTax, razorpayFeeTotal);
+    const razorpayFeeExclTax = Math.max(0, Math.round((razorpayFeeTotal - razorpayTax) * 100) / 100);
+    const servicePrice  = booking.services?.price || 0;
+    const commission    = Number(booking.commission_applied) || 0;
+    const commissionGst = Number(booking.commission_gst) || 0;
+    const finalPayout   = calculateVendorPayout(servicePrice, commission, commissionGst, razorpayFeeTotal);
 
+    const paidAt = new Date().toISOString();
     const fullUpdate = {
       payment_status: "paid", status: "confirmed", razorpay_payment_id,
-      razorpay_fee_actual: razorpayFeeActual, vendor_amount: finalPayout,
-      updated_at: new Date().toISOString(),
+      razorpay_fee_actual: razorpayFeeExclTax, razorpay_tax_actual: razorpayTax,
+      vendor_amount: finalPayout, paid_at: paidAt,
+      updated_at: paidAt,
     };
+    // .neq guard: two concurrent verifies can both pass the read check above;
+    // only the first matches this conditional update (zero rows = already paid).
     let { data: updated, error } = await supabaseAdmin
-      .from("bookings").update(fullUpdate).eq("id", booking_id).select().single();
+      .from("bookings").update(fullUpdate)
+      .eq("id", booking_id).neq("payment_status", "paid").select().single();
 
-    // Legacy DB without the v2.2 column: retry without the fee field
+    // Legacy DB without the v2.2/v2.8 columns: retry without the new fields
     if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
-      const { razorpay_fee_actual: _drop, ...coreUpdate } = fullUpdate;
+      const { razorpay_fee_actual: _drop, razorpay_tax_actual: _drop2, paid_at: _drop3, ...coreUpdate } = fullUpdate;
       ({ data: updated, error } = await supabaseAdmin
-        .from("bookings").update(coreUpdate).eq("id", booking_id).select().single());
+        .from("bookings").update(coreUpdate)
+        .eq("id", booking_id).neq("payment_status", "paid").select().single());
     }
 
+    if (error && error.code === "PGRST116") {
+      return res.status(400).json({ message: "Already paid" });
+    }
     if (error) return res.status(500).json({ message: error.message });
+
+    // ── Ledger: post ORDER_PAYMENT (non-fatal — payment already recorded;
+    // the reconciler cron retries missed posts). Pre-v2.2 rows have no
+    // customer_total snapshot → entry can't balance → skip (reconciler skips too).
+    try {
+      const ledgerCustomerTotal = Number(booking.customer_total) || 0;
+      if (ledgerCustomerTotal > 0) {
+      const { orderPaymentEntry } = require("../services/ledger/journalTemplates");
+      const { postSafe } = require("../services/ledger/postingService");
+      await postSafe({
+        sourceType: "ORDER_PAYMENT",
+        sourceId: booking_id,
+        journalDate: paidAt.slice(0, 10),
+        template: orderPaymentEntry({
+          booking_id,
+          host_id: booking.host_id,
+          service_price: servicePrice,
+          platform_fee_amount: Number(booking.platform_fee_amount) || 0,
+          platform_fee_gst: Number(booking.platform_fee_gst) || 0,
+          commission_applied: commission,
+          commission_gst: commissionGst,
+          razorpay_fee_actual: razorpayFeeExclTax,
+          razorpay_tax_actual: razorpayTax,
+          vendor_amount: finalPayout,
+          customer_total: ledgerCustomerTotal,
+        }),
+      });
+      }
+    } catch (ledgerErr) {
+      console.error("Order ledger posting error (non-fatal):", ledgerErr.message);
+    }
 
     // Payment captured → now create the Google Calendar event (deferred from
     // booking time for paid services). A calendar failure must NOT fail an
@@ -295,15 +342,24 @@ const verifyPayment = async (req, res) => {
 const subscribePlan = async (req, res) => {
   try {
     const { plan } = req.body;
-    const amountPaise = await getPlanPricePaise(plan);
-    if (!amountPaise) return res.status(400).json({ message: "Invalid or free plan — nothing to purchase." });
+    const planRecord = await planService.getPlan(plan);
+    if (!planRecord || planRecord.slug !== planService.normalizeSlug(plan) || !(Number(planRecord.annual_price) > 0)) {
+      return res.status(400).json({ message: "Invalid or free plan — nothing to purchase." });
+    }
+    // GST is charged ON TOP of the plan price (PRD §5.2) — never embedded.
+    const { gstRate } = await platformConfig.getConfig();
+    const breakdown = computeSubscriptionBreakdown({ planPrice: Number(planRecord.annual_price), gstRate });
+    const amountPaise = Math.round(breakdown.totalCharged * 100);
     const order = await razorpay.orders.create({
       amount: amountPaise, currency: "INR",
       receipt: `plan_${plan}_${req.user.id.slice(0, 10)}`,
-      notes: { vendor_id: req.user.id, plan },
+      notes: { vendor_id: req.user.id, plan, plan_price: breakdown.planPrice, gst: breakdown.gstAmount },
     });
     auditLog('SUBSCRIPTION_ORDER_CREATED', req.user.id, { plan, amount: amountPaise });
-    res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency, plan });
+    res.json({
+      razorpay_order_id: order.id, amount: order.amount, currency: order.currency, plan,
+      plan_price: breakdown.planPrice, gst_amount: breakdown.gstAmount, total: breakdown.totalCharged,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -317,6 +373,19 @@ const verifySubscription = async (req, res) => {
     if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)) {
       securityLog('SUBSCRIPTION_SIGNATURE_INVALID', { userId: req.user.id, ip: req.ip });
       return res.status(400).json({ message: "Payment verification failed." });
+    }
+
+    // Idempotency: if this payment was already processed, return success without
+    // re-activating / re-inserting / re-posting (prevents double subscription revenue).
+    const { data: priorPayment } = await supabaseAdmin
+      .from("subscription_payments")
+      .select("id")
+      .eq("razorpay_payment_id", razorpay_payment_id)
+      .maybeSingle();
+    if (priorPayment) {
+      const { data: existingProfile } = await supabaseAdmin
+        .from("profiles").select("id, name, email, plan, plan_expires_at").eq("id", req.user.id).single();
+      return res.json({ message: `Subscription already active`, profile: existingProfile });
     }
 
     // Annual billing per spec v1.1 (was incorrectly 30 days)
@@ -333,6 +402,57 @@ const verifySubscription = async (req, res) => {
       razorpay_order_id, razorpay_payment_id,
       activated_at: new Date().toISOString(), expires_at: expiresAt.toISOString(),
     });
+
+    // ── v2.8: subscription payment record + SUBSCRIPTION_PAYMENT ledger entry ──
+    try {
+      const planRecord2 = await planService.getPlan(plan);
+      const { gstRate } = await platformConfig.getConfig();
+      const breakdown = computeSubscriptionBreakdown({ planPrice: Number(planRecord2?.annual_price) || 0, gstRate });
+
+      // Actual gateway fee+tax — PLATFORM-borne for subscriptions (PRD §5.3)
+      let subFeeTotal = 0, subTax = 0;
+      try {
+        const payment = await razorpay.payments.fetch(razorpay_payment_id);
+        if (payment && payment.fee != null) subFeeTotal = Number(payment.fee) / 100;
+        if (payment && payment.tax != null) subTax = Number(payment.tax) / 100;
+      } catch (feeErr) {
+        console.error("Subscription fee fetch failed (recorded 0):", feeErr.message);
+      }
+      subTax = Math.min(subTax, subFeeTotal);
+      const subFeeExclTax = Math.max(0, Math.round((subFeeTotal - subTax) * 100) / 100);
+
+      const nowIso = new Date().toISOString();
+      const { data: subPayment, error: subErr } = await supabaseAdmin
+        .from("subscription_payments").insert({
+          vendor_id: req.user.id, plan_type: plan,
+          plan_price: breakdown.planPrice, gst_amount: breakdown.gstAmount, total_charged: breakdown.totalCharged,
+          razorpay_fee: subFeeExclTax, razorpay_tax: subTax,
+          razorpay_payment_id, razorpay_order_id,
+          paid_at: nowIso, revenue_recognized_at: nowIso,
+          billing_period_start: nowIso.slice(0, 10),
+          billing_period_end: expiresAt.toISOString().slice(0, 10),
+          status: "paid",
+        }).select().single();
+
+      if (subErr) {
+        if (subErr.code === "23505" || /duplicate key|unique constraint/i.test(subErr.message || "")) {
+          console.log("subscription_payments duplicate (replay) — skipping ledger post:", razorpay_payment_id);
+        } else {
+          console.error("subscription_payments insert failed (reconciler cannot heal this — investigate):", subErr.message);
+        }
+      } else {
+        const { subscriptionPaymentEntry } = require("../services/ledger/journalTemplates");
+        const { postSafe } = require("../services/ledger/postingService");
+        await postSafe({
+          sourceType: "SUBSCRIPTION_PAYMENT",
+          sourceId: subPayment.id,
+          journalDate: nowIso.slice(0, 10),
+          template: subscriptionPaymentEntry(subPayment),
+        });
+      }
+    } catch (subLedgerErr) {
+      console.error("Subscription ledger error (non-fatal):", subLedgerErr.message);
+    }
 
     auditLog('SUBSCRIPTION_ACTIVATED', req.user.id, { plan, expires_at: expiresAt });
 

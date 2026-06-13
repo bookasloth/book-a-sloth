@@ -114,6 +114,11 @@ const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
 const AdminStaff = lazy(() => import('./pages/admin/AdminStaff'));
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
 
+// Admin — Finance (P1: double-entry ledger)
+const AdminFinanceDashboard = lazy(() => import('./pages/admin/AdminFinanceDashboard'));
+const AdminJournal = lazy(() => import('./pages/admin/AdminJournal'));
+const AdminLedger  = lazy(() => import('./pages/admin/AdminLedger'));
+
 // ── Fallback shown while a route chunk downloads ──────────────────────────────
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-white">
@@ -245,6 +250,11 @@ function App() {
           <Route path="/admin/notifications" element={<AdminWrapper><AdminNotifications /></AdminWrapper>} />
           <Route path="/admin/campaigns" element={<AdminWrapper><AdminCampaigns /></AdminWrapper>} />
           <Route path="/admin/badges" element={<AdminWrapper><AdminBadges /></AdminWrapper>} />
+
+          {/* Finance — double-entry ledger (P1) */}
+          <Route path="/admin/finance" element={<AdminWrapper><AdminFinanceDashboard /></AdminWrapper>} />
+          <Route path="/admin/finance/journal" element={<AdminWrapper><AdminJournal /></AdminWrapper>} />
+          <Route path="/admin/finance/ledger" element={<AdminWrapper><AdminLedger /></AdminWrapper>} />
 
           {/* System — Staff & Roles, Audit Logs (M1) */}
           <Route path="/admin/staff" element={<AdminWrapper><AdminStaff /></AdminWrapper>} />

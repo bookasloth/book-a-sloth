@@ -30,7 +30,7 @@ const PERMISSIONS = [
   // Bookings
   'bookings.view', 'bookings.edit', 'bookings.cancel',
   // Finance
-  'finance.view', 'finance.refund',
+  'finance.view', 'finance.refund', 'finance.manage',
   'payouts.view', 'payouts.approve', 'payouts.release', 'payouts.manual',
   'commission.view', 'commission.edit',
   // Growth
@@ -122,7 +122,7 @@ const ROLES = {
     permissions: [
       'ops.view',
       'bookings.view',
-      'finance.view', 'finance.refund',
+      'finance.view', 'finance.refund', 'finance.manage',
       'payouts.view', 'payouts.approve', 'payouts.release', 'payouts.manual',
       'commission.view', 'commission.edit',
       'plans.view',
