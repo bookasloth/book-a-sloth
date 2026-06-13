@@ -167,6 +167,8 @@ const verifyPayment = async (req, res) => {
     }
     const servicePrice = booking.services?.price || 0;
     const commission   = Number(booking.commission_applied) || 0;
+    // TODO(Task 6): pass commissionGst — v2-shape interim call (fee binds to the
+    // commissionGst slot; numerically equal to v2 payout, omits commission GST)
     const finalPayout  = calculateVendorPayout(servicePrice, commission, razorpayFeeActual);
 
     const fullUpdate = {

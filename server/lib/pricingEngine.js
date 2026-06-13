@@ -29,7 +29,7 @@
 
 const DEFAULTS = Object.freeze({
   platformFee: 10,   // ₹ flat, overridden by platform_settings.platform_fee
-  gstRate: 0.18,     // 18% GST on the platform fee
+  gstRate: 0.18,     // 18% GST — applied to platform fee, commission, and subscriptions
 });
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
