@@ -5,7 +5,7 @@
  */
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi } from 'vitest';
+import { vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('../services/api', () => ({
@@ -23,6 +23,14 @@ vi.mock('../components/common/BackButton', () => ({ default: () => <div>Back</di
 import { useAuth } from '../context/AuthContext';
 import { uploadProductFile } from '../services/api';
 import Products from '../pages/Products';
+
+// Reset mock call-counts before every test so assertions like
+// expect(uploadProductFile).not.toHaveBeenCalled() cannot false-positive
+// from a prior test's call. clearAllMocks leaves mockResolvedValue
+// implementations intact, so no re-establishment is needed.
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 // jsdom has no URL.createObjectURL; the thumbnail-upload preview uses it.
 beforeAll(() => {
