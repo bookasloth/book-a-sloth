@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const { supabaseAdmin, signInWithPassword } = require("../config/supabase");
 const { sendWhatsAppOtp } = require("../utils/notify");
 const communicationEngine = require("../services/email/communicationEngine");
@@ -43,8 +44,8 @@ const generateUniqueSlug = async (baseName) => {
 
 // ─── OTP Sending (Email + WhatsApp) ─────────────────────────────────────
 const sendOtpBothChannels = async (slug, email, phone, name = "Vendor") => {
-  // Generate OTP (6-digit)
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  // Generate OTP (6-digit, CSPRNG)
+  const otp = crypto.randomInt(100000, 1000000).toString();
 
   // Store in otp_sessions table
   const { error: storeError } = await supabaseAdmin
@@ -179,28 +180,31 @@ const createVendorAccount = async (slug, email, password, name) => {
     throw new Error("Account already exists for this slug");
   }
 
-  // Create Supabase auth user
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email: email.toLowerCase().trim(),
-    password,
-    email_confirm: true,
-    user_metadata: { name },
-  });
-
-  if (authError) throw authError;
-
-  // Get OTP session to confirm verification
+  // Verify the OTP session BEFORE creating any auth user. SECURITY: the email
+  // being registered MUST be the exact address that was OTP-verified. A verified
+  // phone alone does NOT authorize binding an arbitrary email — otherwise an
+  // attacker could verify their own phone and register a victim's email.
   const { data: session } = await supabaseAdmin
     .from("otp_sessions")
     .select("*")
     .eq("onboarding_slug", slug)
     .maybeSingle();
 
-  if (!session || (!session.email_verified && !session.phone_verified)) {
-    // Clean up the created auth user
-    await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-    throw new Error("Email and/or phone verification required");
+  const submittedEmail = email.toLowerCase().trim();
+  const verifiedEmail = (session?.email || "").toLowerCase().trim();
+  if (!session || !session.email_verified || verifiedEmail !== submittedEmail) {
+    throw new Error("Email must be verified before creating the account");
   }
+
+  // Create Supabase auth user
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email: submittedEmail,
+    password,
+    email_confirm: true,
+    user_metadata: { name },
+  });
+
+  if (authError) throw authError;
 
   // Create profile
   const { data: profile, error: profileError } = await supabaseAdmin
@@ -306,21 +310,43 @@ const createRazorpayOrder = async (vendorId, plan, amount) => {
 };
 
 // ─── Razorpay Webhook Verification ──────────────────────────────────────
-const verifyRazorpayPayment = async (paymentId, orderId) => {
+const verifyRazorpayPayment = async (paymentId, orderId, vendorId) => {
   try {
-    // Fetch payment details from Razorpay
-    const payment = await razorpay.payments.fetch(paymentId);
+    // SECURITY: look up the order WE created and assert it belongs to this
+    // vendor. Without the vendor_id scope, a vendor could submit another
+    // vendor's captured order id (IDOR / cross-account replay).
+    const { data: order, error: lookupError } = await supabaseAdmin
+      .from("razorpay_orders")
+      .select("*")
+      .eq("order_id", orderId)
+      .eq("vendor_id", vendorId)
+      .maybeSingle();
+    if (lookupError) throw lookupError;
+    if (!order) throw new Error("Order not found for this account");
 
+    // Replay guard: each order can be redeemed exactly once.
+    if (order.payment_verified) throw new Error("Order already processed");
+
+    // Confirm with Razorpay (the source of truth — never the client body).
+    const payment = await razorpay.payments.fetch(paymentId);
     if (payment.status !== "captured") {
       throw new Error("Payment not captured");
     }
-
     if (payment.order_id !== orderId) {
       throw new Error("Order ID mismatch");
     }
 
-    // Fetch and update order record
-    const { data: order, error: orderError } = await supabaseAdmin
+    // Amount binding: the captured amount (paise) MUST equal the amount we
+    // stored for this order. Stops "pay for cheap plan, activate expensive
+    // plan" — the plan is derived from this order below, not from the client.
+    const expectedPaise = Math.round(Number(order.amount) * 100);
+    if (Number(payment.amount) !== expectedPaise) {
+      throw new Error("Payment amount mismatch");
+    }
+
+    // Mark completed — scoped to this vendor + the still-unverified row so a
+    // concurrent double-submit can only win once.
+    const { data: updated, error: updateError } = await supabaseAdmin
       .from("razorpay_orders")
       .update({
         payment_id: paymentId,
@@ -330,12 +356,14 @@ const verifyRazorpayPayment = async (paymentId, orderId) => {
         updated_at: new Date().toISOString(),
       })
       .eq("order_id", orderId)
+      .eq("vendor_id", vendorId)
+      .eq("payment_verified", false)
       .select()
       .single();
 
-    if (orderError) throw orderError;
+    if (updateError) throw updateError;
 
-    return order;
+    return updated;
   } catch (error) {
     console.error("Payment verification failed:", error);
     throw error;

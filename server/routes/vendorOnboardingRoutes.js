@@ -175,16 +175,17 @@ router.post('/create-order', protect, async (req, res) => {
 // POST /api/onboarding/verify-payment
 router.post('/verify-payment', protect, async (req, res) => {
   try {
-    const { paymentId, orderId, plan } = req.body;
+    const { paymentId, orderId } = req.body;
     if (!paymentId || !orderId) {
       return res.status(400).json({ message: 'Payment ID and Order ID are required' });
     }
 
-    // Verify payment with Razorpay
-    const order = await verifyRazorpayPayment(paymentId, orderId);
+    // Verify payment with Razorpay (binds order to this vendor, blocks replay,
+    // checks the captured amount). Returns the stored order row.
+    const order = await verifyRazorpayPayment(paymentId, orderId, req.user.id);
 
-    // Activate plan
-    const profile = await activatePlan(req.user.id, plan);
+    // Activate the plan recorded ON THE ORDER — never a client-supplied plan.
+    const profile = await activatePlan(req.user.id, order.plan);
 
     res.json({
       message: 'Payment verified and plan activated',
