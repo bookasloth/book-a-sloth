@@ -4,8 +4,16 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { svcGetPublicByProfile } from '../services/api';
 import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/themeUtils';
+
+// Sanitize vendor-supplied rich text before rendering as HTML. Strips <script>,
+// event handlers (onerror/onload/…), javascript:/data: URLs, <iframe>, etc.
+// SECURITY: long_description is vendor-controlled and shown on a public page —
+// rendering it raw is stored XSS against every guest/host who views it.
+const sanitizeHtml = (dirty) =>
+  DOMPurify.sanitize(String(dirty || ''), { USE_PROFILES: { html: true } });
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -35,20 +43,21 @@ const Stars = ({ avg, count, size = 'sm' }) => {
 const OverviewTab = ({ html }) => {
   const [expanded, setExpanded] = useState(false);
   const ref = useRef(null);
+  const clean = sanitizeHtml(html);
   const [tall, setTall] = useState(false);
 
   useEffect(() => {
     if (ref.current) setTall(ref.current.scrollHeight > 320);
-  }, [html]);
+  }, [clean]);
 
-  if (!html) return <p className="text-gray-400 text-sm">No overview provided.</p>;
+  if (!clean) return <p className="text-gray-400 text-sm">No overview provided.</p>;
 
   return (
     <div className="relative">
       <div
         ref={ref}
         className={`prose prose-sm max-w-none text-gray-700 transition-all duration-300 ${!expanded && tall ? 'max-h-80 overflow-hidden' : ''}`}
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={{ __html: clean }}
       />
       {!expanded && tall && (
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent"/>
