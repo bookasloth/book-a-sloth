@@ -47,6 +47,8 @@ describe('createProduct — v2.9 link fields', () => {
     expect(inserted.product_url).toBe('https://store.example/guide');
     expect(inserted.file_name).toBe('guide.pdf');
     expect(inserted.file_size_bytes).toBe(12345);
+    // Ownership: insert payload must carry host_id = req.user.id
+    expect(inserted.host_id).toBe('host-1');
   });
 
   test('falls back (drops new fields) and still creates when columns missing', async () => {
@@ -108,6 +110,32 @@ describe('updateProduct — v2.9 link fields', () => {
     expect(updated.product_url).toBe('https://store.example/v2');
     expect(updated.file_name).toBe('v2.pdf');
     expect(updated.file_size_bytes).toBe(999);
+  });
+
+  test('enforces host_id ownership scope on update', async () => {
+    // Capture every argument pair passed to .eq() on the update chain so we can
+    // assert that BOTH .eq('id', productId) and .eq('host_id', userId) are applied.
+    const eqCalls = [];
+    const eqMock = jest.fn().mockImplementation((col, val) => {
+      eqCalls.push([col, val]);
+      return chainObj; // eslint-disable-line no-use-before-define
+    });
+    const chainObj = {
+      eq: eqMock,
+      select: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: { id: 'p1', title: 'X' }, error: null }),
+    };
+    supabaseAdmin.from.mockReturnValue({
+      update: jest.fn().mockReturnValue(chainObj),
+    });
+
+    const r = res();
+    await updateProduct(req({ title: 'X' }, { id: 'p1' }, { id: 'vendor-42' }), r);
+
+    // Must have called .eq('id', 'p1') and .eq('host_id', 'vendor-42')
+    expect(eqCalls).toContainEqual(['id', 'p1']);
+    expect(eqCalls).toContainEqual(['host_id', 'vendor-42']);
+    expect(r.json).toHaveBeenCalled();
   });
 
   test('falls back (drops new fields) and still updates when columns missing', async () => {
