@@ -245,6 +245,16 @@ export const uploadImage = (formData, folder = 'uploads') =>
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
+// Uploads a single product file (field "file") to the products bucket.
+// Returns { data: { url, name, size } }.
+export const uploadProductFile = (file) => {
+  const fd = new FormData();
+  fd.append('file', file);
+  return API.post('/upload/product-file', fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+
 // ── Vendor dashboard ──────────────────────────────────────────
 export const getTransactions    = (params)    => API.get('/vendor/transactions', { params });
 export const getPayoutBalance   = ()          => API.get('/vendor/payout/balance');
