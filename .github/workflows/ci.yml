@@ -29,7 +29,13 @@ jobs:
           node-version: "20"
           cache: npm
           cache-dependency-path: client/package-lock.json
-      - run: npm ci
+      # Use `npm install` (not `npm ci`) for the client: `npm ci` trips the npm
+      # optional-deps bug (npm/cli#4828) and fails to install rollup's Linux
+      # native binary (@rollup/rollup-linux-x64-gnu), crashing `vite build`.
+      # `npm install` resolves the platform optional correctly — and matches how
+      # Vercel installs on deploy, so CI mirrors production.
+      - name: Install deps
+        run: npm install --no-audit --no-fund
       - name: Build
         run: npm run build
         env:
