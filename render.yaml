@@ -1,0 +1,72 @@
+# Render Blueprint — Book A Sloth backend (Express API)
+# Render reads this when you create a "Blueprint" from the repo. It provisions
+# the API service with the right build/start/health settings. Secrets are NOT
+# in here (sync: false) — you paste them once in the Render dashboard.
+#
+# Region note: "singapore" is the closest Render region to India (lowest latency
+# for your users). Change if your audience is elsewhere.
+
+services:
+  - type: web
+    name: bookasloth-api
+    runtime: node
+    rootDir: server
+    region: singapore
+    plan: starter # $7/mo, always-on (no spin-down → reminder/email crons keep running)
+    branch: main
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true # deploy automatically on push to main
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PERF_LOG
+        value: "false"
+      - key: NODE_VERSION
+        value: "20"
+      # ── Everything below: set the real values in Render dashboard → Environment.
+      #    sync:false keeps them OUT of git. CLIENT_URL/API_URL get your real
+      #    domains once DNS is wired in Phase 4.
+      - key: CLIENT_URL
+        sync: false
+      - key: API_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SUPER_ADMIN_JWT_SECRET
+        sync: false
+      - key: OAUTH_STATE_SECRET
+        sync: false
+      - key: GOOGLE_TOKEN_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: ADMIN_ALERT_EMAIL
+        sync: false
+      - key: SUPER_ADMIN_EMAIL
+        sync: false
