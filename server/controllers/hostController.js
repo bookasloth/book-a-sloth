@@ -82,9 +82,14 @@ const updateServiceSafe = async (id, updates, userId) => {
 // GET /api/host/:username -- public profile
 const getHostProfile = async (req, res) => {
   try {
+    // SECURITY: explicit public column whitelist. Never `select('*')` on a
+    // public route — a blacklist leaks every new/sensitive column (email,
+    // phone, google tokens, plan_expires_at, onboarding_*, otp_*) by default.
     const { data: host, error } = await supabaseAdmin
       .from("profiles")
-      .select("*")
+      .select(
+        "id, name, username, role, bio, tagline, profession, location, profile_image, cover_image, social_links, badges, theme_color, plan, is_verified, google_calendar_connected",
+      )
       .eq("username", req.params.username)
       .eq("role", "host")
       .single();
@@ -92,14 +97,15 @@ const getHostProfile = async (req, res) => {
     if (error || !host)
       return res.status(404).json({ message: "Host not found" });
 
-    // Task 10: Show unverified status but don't block -- client shows a banner
-    // (flip host.is_verified to true in Admin -> Users to go fully live)
-
-    // Strip sensitive fields
+    // Defense-in-depth: the whitelist above already excludes these at the query
+    // layer; this strip is a second guard in case the select ever changes.
     delete host.google_access_token;
     delete host.google_refresh_token;
     delete host.otp_code;
     delete host.otp_expires_at;
+
+    // Task 10: Show unverified status but don't block -- client shows a banner
+    // (flip host.is_verified to true in Admin -> Users to go fully live)
 
     // Fetch services + availability in parallel
     const [servicesResult, { data: availability }] = await Promise.all([
@@ -387,7 +393,7 @@ const getServiceBySlug = async (req, res) => {
     const { data: host } = await supabaseAdmin
       .from("profiles")
       .select(
-        "id, name, email, username, tagline, profession, profile_image, cover_image, bio, location, social_links, badges, google_calendar_connected",
+        "id, name, username, tagline, profession, profile_image, cover_image, bio, location, social_links, badges, google_calendar_connected",
       )
       .eq("username", req.params.username)
       .eq("role", "host")
