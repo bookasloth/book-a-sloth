@@ -14,6 +14,7 @@
  */
 
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const { supabaseAdmin } = require('../config/supabase');
 
 const TTL_MS         = 10 * 60 * 1000;  // 10 min expiry
@@ -27,8 +28,8 @@ const normalizeEmail = (e) => (e || '').toLowerCase().trim();
 const _isMissingSchema = (error) =>
   error && /Could not find the|column.*does not exist/i.test(error.message || '');
 
-/** Generate a 6-digit OTP. */
-const generate = () => Math.floor(100000 + Math.random() * 900000).toString();
+/** Generate a 6-digit OTP (CSPRNG). */
+const generate = () => crypto.randomInt(100000, 1000000).toString();
 
 /**
  * Store (or replace) an OTP for the given email, enforcing send rate limits.

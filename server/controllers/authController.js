@@ -7,6 +7,8 @@ const {
 } = require("../config/google");
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 const { encrypt: encryptToken } = require("../utils/cryptoTokens");
 
 // HMAC secret for the OAuth `state` parameter (CSRF protection on the Google
@@ -614,14 +616,19 @@ const forgotPassword = async (req, res) => {
       return res.json({ message: "If that email exists, an OTP has been sent." });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // CSPRNG 6-digit code; stored only as a bcrypt hash (never plaintext).
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const otpHash = await bcrypt.hash(otp, 10);
 
     const { error: otpError } = await supabaseAdmin
       .from("otp_codes")
       .upsert(
         {
           email: normalizedEmail,
-          otp,
+          otp: "",                 // legacy plaintext column kept empty
+          otp_hash: otpHash,
+          attempts: 0,
+          locked_until: null,
           type: "password_reset",
           expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
           created_at: new Date().toISOString(),
@@ -630,8 +637,29 @@ const forgotPassword = async (req, res) => {
       );
 
     if (otpError) {
-      console.error("forgot-password: OTP store error:", otpError.message);
-      return res.status(500).json({ message: "Failed to send reset code. Please try again." });
+      // Pre-v1.9 DB without otp_hash/attempts/locked_until — degrade to the
+      // legacy plaintext column so reset still works (resetPassword reads both).
+      if (/Could not find the|column.*does not exist/i.test(otpError.message || "")) {
+        const { error: legacyErr } = await supabaseAdmin
+          .from("otp_codes")
+          .upsert(
+            {
+              email: normalizedEmail,
+              otp,
+              type: "password_reset",
+              expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+              created_at: new Date().toISOString(),
+            },
+            { onConflict: "email" }
+          );
+        if (legacyErr) {
+          console.error("forgot-password: OTP store error:", legacyErr.message);
+          return res.status(500).json({ message: "Failed to send reset code. Please try again." });
+        }
+      } else {
+        console.error("forgot-password: OTP store error:", otpError.message);
+        return res.status(500).json({ message: "Failed to send reset code. Please try again." });
+      }
     }
 
     // Email rendered from the PASSWORD_RESET DB template; immediate (waiting user).
@@ -658,8 +686,16 @@ const resetPassword = async (req, res) => {
     const { email, otp, newPassword } = req.body;
     if (!email || !otp || !newPassword)
       return res.status(400).json({ message: "Email, OTP, and new password are required" });
-    if (newPassword.length < 6)
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    // Match the registration password policy (8+ chars, upper + number).
+    if (
+      newPassword.length < 8 ||
+      newPassword.length > 128 ||
+      !/[A-Z]/.test(newPassword) ||
+      !/[0-9]/.test(newPassword)
+    )
+      return res.status(400).json({
+        message: "Password must be 8–128 characters and include an uppercase letter and a number",
+      });
 
     const normalizedEmail = email.toLowerCase().trim();
 
@@ -673,12 +709,38 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ message: "No reset code found. Request a new one." });
     if (record.type && record.type !== "password_reset")
       return res.status(400).json({ message: "Invalid reset code." });
+
+    // Lockout after too many wrong attempts (brute-force protection).
+    const MAX_RESET_ATTEMPTS = 5;
+    const LOCKOUT_MS = 15 * 60 * 1000;
+    if (record.locked_until && new Date(record.locked_until) > new Date()) {
+      const mins = Math.ceil((new Date(record.locked_until) - new Date()) / 60000);
+      return res.status(429).json({ message: `Too many attempts. Try again in ${mins} minute(s).` });
+    }
     if (new Date(record.expires_at) < new Date()) {
       await supabaseAdmin.from("otp_codes").delete().eq("email", normalizedEmail);
       return res.status(400).json({ message: "Reset code expired. Request a new one." });
     }
-    if (String(record.otp) !== String(otp).trim())
+
+    // Compare against the bcrypt hash (v1.9) or the legacy plaintext column.
+    const supplied = String(otp).trim();
+    const matches = record.otp_hash
+      ? await bcrypt.compare(supplied, record.otp_hash)
+      : String(record.otp) === supplied;
+
+    if (!matches) {
+      const attempts = (record.attempts || 0) + 1;
+      if (attempts >= MAX_RESET_ATTEMPTS) {
+        await supabaseAdmin
+          .from("otp_codes")
+          .update({ attempts, locked_until: new Date(Date.now() + LOCKOUT_MS).toISOString() })
+          .eq("email", normalizedEmail);
+        return res.status(429).json({ message: "Too many incorrect attempts. Try again in 15 minutes." });
+      }
+      // Best-effort attempt increment (no-op on pre-v1.9 schemas without the column).
+      await supabaseAdmin.from("otp_codes").update({ attempts }).eq("email", normalizedEmail);
       return res.status(400).json({ message: "Invalid reset code." });
+    }
 
     await supabaseAdmin.from("otp_codes").delete().eq("email", normalizedEmail);
 

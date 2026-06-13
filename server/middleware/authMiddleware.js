@@ -31,4 +31,20 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+// Like `protect`, but never rejects: if a valid Bearer token is present it
+// attaches req.user; otherwise the request proceeds anonymously. Used by mixed
+// endpoints such as guest booking (logged-in user OR OTP-verified guest).
+const optionalProtect = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return next();
+  try {
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    if (!error && user) req.user = { id: user.id, email: user.email };
+  } catch (_) {
+    /* invalid token → treat as anonymous guest */
+  }
+  return next();
+};
+
+module.exports = { protect, optionalProtect };
