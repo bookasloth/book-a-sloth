@@ -38,7 +38,11 @@ const verifySignature = (orderId, paymentId, signature) => {
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
     .update(`${orderId}|${paymentId}`)
     .digest("hex");
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+  const expectedBuf = Buffer.from(expected);
+  const sigBuf = Buffer.from(String(signature || ""));
+  // Length-guard: timingSafeEqual throws on unequal-length buffers; a
+  // mismatched/forged signature must return false, not throw.
+  return expectedBuf.length === sigBuf.length && crypto.timingSafeEqual(expectedBuf, sigBuf);
 };
 
 // ── POST /api/payment/create-order ───────────────────────────
@@ -563,7 +567,10 @@ const handleWebhook = async (req, res) => {
     .update(req.body) // raw body buffer
     .digest('hex');
 
-  if (!crypto.timingSafeEqual(Buffer.from(expectedSig), Buffer.from(signature))) {
+  const expectedBuf = Buffer.from(expectedSig);
+  const sigBuf = Buffer.from(String(signature));
+  // Length-guard: timingSafeEqual throws on unequal-length buffers.
+  if (expectedBuf.length !== sigBuf.length || !crypto.timingSafeEqual(expectedBuf, sigBuf)) {
     securityLog('WEBHOOK_SIGNATURE_INVALID', { ip: req.ip });
     return res.status(400).json({ message: "Invalid webhook signature" });
   }
