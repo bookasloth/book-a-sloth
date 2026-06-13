@@ -110,11 +110,10 @@ const NAV = [
   { id:'operations', section:'OPERATIONS', items:[
     { label:'Bookings', icon:'calCheck', groupId:'op-bookings', perm:'bookings.view', children:[
       { label:'All',       to:'/admin/bookings' },
-      { label:'Upcoming',  to:'/admin/bookings/upcoming' },
-      { label:'Live',      to:'/admin/bookings/live' },
+      { label:'Confirmed', to:'/admin/bookings/confirmed' },
       { label:'Completed', to:'/admin/bookings/completed' },
       { label:'Cancelled', to:'/admin/bookings/cancelled' },
-      { label:'Disputes',  to:'/admin/bookings/disputes' },
+      { label:'Disputed',  to:'/admin/bookings/disputed' },
     ]},
     { label:'Services', icon:'layers', groupId:'op-services', perm:'services.view', children:[
       { label:'All Services', to:'/admin/services' },
