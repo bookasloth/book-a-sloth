@@ -139,4 +139,53 @@ describe('uploadProductFile', () => {
     );
     expect(r.json.mock.calls[0][0].url).toMatch(/^https:\/\//);
   });
+
+  test('admin bypass: req.admin skips role DB check and succeeds with { url, name, size }', async () => {
+    // Arrange: admin request — req.user is null/undefined, req.admin is set.
+    // The controller's `if (!req.admin)` guard means supabaseAdmin.from should
+    // NOT be called for the role lookup. The storage mock is the default happy-path.
+    const adminReq = {
+      file: { size: PDF_BUF.length, buffer: PDF_BUF, originalname: 'admin-guide.pdf' },
+      user: undefined,
+      admin: { id: 'admin-1' },
+      query: {},
+    };
+    const r = res();
+
+    await uploadProductFile(adminReq, r);
+
+    // Must NOT have called supabaseAdmin.from (role check bypassed).
+    expect(supabaseAdmin.from).not.toHaveBeenCalled();
+    // Must NOT 403.
+    expect(r.status).not.toHaveBeenCalledWith(403);
+    // Must return { url, name, size }.
+    const out = r.json.mock.calls[0][0];
+    expect(out.url).toMatch(/^https:\/\//);
+    expect(out.name).toBe('admin-guide.pdf');
+    expect(out.size).toBe(PDF_BUF.length);
+    // Storage path must use admin-1 as the host segment.
+    const uploadedPath = supabaseAdmin.__uploadMock.mock.calls[0][0];
+    expect(uploadedPath).toMatch(/^products\/admin-1\/\d+_[a-z0-9]+\.pdf$/);
+  });
+
+  test('storage upload error returns 500 with clean message (no crash)', async () => {
+    // Arrange: make the 'products' bucket upload fail, simulating a missing
+    // bucket (pre-migration scenario). The handler must call safeError → 500
+    // without throwing.
+    supabaseAdmin.__uploadMock.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Bucket not found' },
+    });
+
+    const r = res();
+    await uploadProductFile(
+      req({ size: PDF_BUF.length, buffer: PDF_BUF, originalname: 'guide.pdf' }),
+      r,
+    );
+
+    expect(r.status).toHaveBeenCalledWith(500);
+    expect(r.json.mock.calls[0][0].message).toMatch(/file upload failed/i);
+    // Confirm res.json was called exactly once (no double-response crash).
+    expect(r.json).toHaveBeenCalledTimes(1);
+  });
 });
