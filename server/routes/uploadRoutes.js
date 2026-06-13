@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { protect } = require('../middleware/authMiddleware');
-const { uploadImage } = require('../controllers/uploadController');
+const { uploadImage, uploadProductFile } = require('../controllers/uploadController');
 
 // Store in memory (buffer) — we upload directly to Supabase Storage
 const upload = multer({
@@ -26,7 +26,26 @@ const handleSingleUpload = (req, res, next) => {
   });
 };
 
+// Wrap multer for the product file field "file" so its errors return JSON.
+const handleProductFileUpload = (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ message: 'File size must be under 2MB' });
+      }
+      if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+        return res.status(400).json({ message: 'Unexpected file field. Upload the file as "file".' });
+      }
+      return res.status(400).json({ message: err.message || 'Upload failed' });
+    }
+    next();
+  });
+};
+
 // POST /api/upload/image?folder=profiles|covers|services
 router.post('/image', protect, handleSingleUpload, uploadImage);
+
+// POST /api/upload/product-file
+router.post('/product-file', protect, handleProductFileUpload, uploadProductFile);
 
 module.exports = router;
