@@ -41,20 +41,26 @@ async function reconcile() {
   const missingBookings = await missingSourceIds('ORDER_PAYMENT', (bookings || []).map((b) => b.id));
   for (const b of bookings || []) {
     if (!missingBookings.has(b.id)) continue;
-    const id = await postSafe({
-      sourceType: 'ORDER_PAYMENT',
-      sourceId: b.id,
-      journalDate: (b.paid_at || '').slice(0, 10) || null,
-      template: orderPaymentEntry({
-        booking_id: b.id, host_id: b.host_id,
-        service_price: b.services?.price || 0,
-        platform_fee_amount: b.platform_fee_amount, platform_fee_gst: b.platform_fee_gst,
-        commission_applied: b.commission_applied, commission_gst: b.commission_gst,
-        razorpay_fee_actual: b.razorpay_fee_actual, razorpay_tax_actual: b.razorpay_tax_actual,
-        vendor_amount: b.vendor_amount, customer_total: b.customer_total,
-      }),
-    });
-    if (id) reposted += 1;
+    // Per-row guard: a poison-pill row (template build throws on a non-finite
+    // amount) must not abort the whole run — log and skip it.
+    try {
+      const id = await postSafe({
+        sourceType: 'ORDER_PAYMENT',
+        sourceId: b.id,
+        journalDate: (b.paid_at || '').slice(0, 10) || null,
+        template: orderPaymentEntry({
+          booking_id: b.id, host_id: b.host_id,
+          service_price: b.services?.price || 0,
+          platform_fee_amount: b.platform_fee_amount, platform_fee_gst: b.platform_fee_gst,
+          commission_applied: b.commission_applied, commission_gst: b.commission_gst,
+          razorpay_fee_actual: b.razorpay_fee_actual, razorpay_tax_actual: b.razorpay_tax_actual,
+          vendor_amount: b.vendor_amount, customer_total: b.customer_total,
+        }),
+      });
+      if (id) reposted += 1;
+    } catch (err) {
+      console.error(`Reconciler skipped booking ${b.id}:`, err.message);
+    }
   }
 
   // ── Subscription payments without a SUBSCRIPTION_PAYMENT entry ──
@@ -69,13 +75,17 @@ async function reconcile() {
   const missingSubs = await missingSourceIds('SUBSCRIPTION_PAYMENT', (subs || []).map((s) => s.id));
   for (const s of subs || []) {
     if (!missingSubs.has(s.id)) continue;
-    const id = await postSafe({
-      sourceType: 'SUBSCRIPTION_PAYMENT',
-      sourceId: s.id,
-      journalDate: (s.paid_at || '').slice(0, 10) || null,
-      template: subscriptionPaymentEntry(s),
-    });
-    if (id) reposted += 1;
+    try {
+      const id = await postSafe({
+        sourceType: 'SUBSCRIPTION_PAYMENT',
+        sourceId: s.id,
+        journalDate: (s.paid_at || '').slice(0, 10) || null,
+        template: subscriptionPaymentEntry(s),
+      });
+      if (id) reposted += 1;
+    } catch (err) {
+      console.error(`Reconciler skipped subscription ${s.id}:`, err.message);
+    }
   }
 
   return { reposted };
