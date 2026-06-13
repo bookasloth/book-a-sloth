@@ -509,52 +509,43 @@ const cancelBooking = async (req, res) => {
   }
 };
 
-// PUT /api/bookings/:id/complete
-const completeBooking = async (req, res) => {
-  try {
-    // BUG-01 fixed: only the host can mark a booking complete
-    const { data: booking } = await supabaseAdmin
-      .from("bookings")
-      .select("*, services(title), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
-      .eq("id", req.params.id)
-      .single();
-    if (!booking) return res.status(404).json({ message: "Booking not found" });
-    if (req.user.id !== booking.host_id) {
-      return res.status(403).json({ message: "Only the host can mark a booking as completed" });
-    }
-    // Idempotent: re-completing must not re-stamp completed_at/revenue_recognized_at
-    // (would silently shift revenue across a reporting period) or re-fire notifications.
-    if (booking.status === "completed") return res.json(booking);
+// Shared completion logic — used by the host action (completeBooking) AND the
+// auto-complete cron (autoCompleteBookings) so the two can never drift. Stamps
+// the revenue-recognition + settlement-eligibility fields and (optionally) fires
+// the completion notifications + badge re-evaluation. `booking` must be a row
+// selected with `services(title)` and the
+// `profiles!bookings_host_id_fkey(name, email, phone, username, location)` join.
+const markBookingCompleted = async (booking, { notify = true } = {}) => {
+  const nowIso = new Date().toISOString();
+  const completionUpdate = {
+    status: "completed",
+    completed_at: nowIso,
+    revenue_recognized_at: nowIso,            // PRD Rule 2: commission recognised at completion
+    revenue_recognition_status: "recognized",
+    // Only a paid booking can actually be settled; P2 re-checks, but don't
+    // write a knowingly-false eligibility value for unpaid/failed/refunded.
+    settlement_status: booking.payment_status === "paid" ? "eligible_for_settlement" : "not_eligible",
+    updated_at: nowIso,
+  };
+  let { data, error } = await supabaseAdmin
+    .from("bookings")
+    .update(completionUpdate)
+    .eq("id", booking.id)
+    .select()
+    .single();
 
-    const nowIso = new Date().toISOString();
-    const completionUpdate = {
-      status: "completed",
-      completed_at: nowIso,
-      revenue_recognized_at: nowIso,            // PRD Rule 2: commission recognised at completion
-      revenue_recognition_status: "recognized",
-      // Only a paid booking can actually be settled; P2 re-checks, but don't
-      // write a knowingly-false eligibility value for unpaid/failed/refunded.
-      settlement_status: booking.payment_status === "paid" ? "eligible_for_settlement" : "not_eligible",
-      updated_at: nowIso,
-    };
-    let { data, error } = await supabaseAdmin
+  // Legacy DB without v2.8 columns: retry with the original minimal update
+  if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+    ({ data, error } = await supabaseAdmin
       .from("bookings")
-      .update(completionUpdate)
-      .eq("id", req.params.id)
+      .update({ status: "completed", updated_at: nowIso })
+      .eq("id", booking.id)
       .select()
-      .single();
+      .single());
+  }
+  if (error) return { data: null, error };
 
-    // Legacy DB without v2.8 columns: retry with the original minimal update
-    if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
-      ({ data, error } = await supabaseAdmin
-        .from("bookings")
-        .update({ status: "completed", updated_at: nowIso })
-        .eq("id", req.params.id)
-        .select()
-        .single());
-    }
-    if (error) return safeError(res, error);
-
+  if (notify) {
     try {
       const host = booking["profiles!bookings_host_id_fkey"] || {};
       const when = new Date(booking.scheduled_at).toLocaleString("en-IN");
@@ -589,12 +580,35 @@ const completeBooking = async (req, res) => {
     } catch (notifyError) {
       console.error("Complete notification error:", notifyError.message);
     }
+  }
 
-    // Event-driven badge evaluation for this vendor (fire-and-forget)
-    require("../services/badgeEngine")
-      .evaluate({ vendorIds: [booking.host_id] })
-      .catch((e) => console.error("Badge evaluation error:", e.message));
+  // Event-driven badge evaluation for this vendor (fire-and-forget)
+  require("../services/badgeEngine")
+    .evaluate({ vendorIds: [booking.host_id] })
+    .catch((e) => console.error("Badge evaluation error:", e.message));
 
+  return { data, error: null };
+};
+
+// PUT /api/bookings/:id/complete
+const completeBooking = async (req, res) => {
+  try {
+    // BUG-01 fixed: only the host can mark a booking complete
+    const { data: booking } = await supabaseAdmin
+      .from("bookings")
+      .select("*, services(title), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
+      .eq("id", req.params.id)
+      .single();
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (req.user.id !== booking.host_id) {
+      return res.status(403).json({ message: "Only the host can mark a booking as completed" });
+    }
+    // Idempotent: re-completing must not re-stamp completed_at/revenue_recognized_at
+    // (would silently shift revenue across a reporting period) or re-fire notifications.
+    if (booking.status === "completed") return res.json(booking);
+
+    const { data, error } = await markBookingCompleted(booking, { notify: true });
+    if (error) return safeError(res, error);
     res.json(data);
   } catch (error) {
     safeError(res, error);
@@ -895,6 +909,70 @@ const processReminders = async () => {
   }
 };
 
+// ── Auto-completion cron ───────────────────────────────────────────
+// Nobody can be relied on to click "Mark Completed" (especially for no-shows),
+// which would leave a past session 'confirmed' forever — the lifecycle never
+// closes and the intended revenue-recognition / settlement-eligibility path
+// never fires (so the vendor's earnings never become settle-able). This sweep
+// finds confirmed bookings whose session window has fully elapsed
+// (duration + grace + hold) and completes them through the shared
+// markBookingCompleted, identical to a host clicking "Mark Completed".
+//
+//   HOLD   (default 120 min) — post-session dispute/refund buffer before
+//          revenue is recognised. Override with AUTO_COMPLETE_HOLD_MIN.
+//   CUTOFF — bounds the first-run backfill: a session that ended before it is
+//          ignored. Defaults to 3 days before boot (so a restart still catches
+//          recent sessions but never mass-completes ancient history). Set
+//          AUTO_COMPLETE_CUTOFF=<ISO> to the deploy timestamp for zero backfill.
+const AUTO_COMPLETE_HOLD_MS = (Number(process.env.AUTO_COMPLETE_HOLD_MIN) || 120) * 60 * 1000;
+const AUTO_COMPLETE_CUTOFF = process.env.AUTO_COMPLETE_CUTOFF
+  ? new Date(process.env.AUTO_COMPLETE_CUTOFF)
+  : new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+const AUTO_COMPLETE_BATCH = 200;
+
+const autoCompleteBookings = async () => {
+  const now = Date.now();
+  const hostJoin = "profiles!bookings_host_id_fkey(name, email, phone, username, location)";
+  // Coarse DB prefilter (confirmed + already past start); the precise
+  // duration + grace + hold check is applied per-row in JS below because the
+  // session end depends on each service's duration/grace.
+  const baseQuery = (svcCols) =>
+    supabaseAdmin
+      .from("bookings")
+      .select(`*, services(title, ${svcCols}), ${hostJoin}`)
+      .eq("status", "confirmed")
+      .lte("scheduled_at", new Date(now).toISOString())
+      .order("scheduled_at", { ascending: true })
+      .limit(AUTO_COMPLETE_BATCH);
+
+  let result = await baseQuery("duration, grace_period_minutes");
+  // Fallback if the schema cache doesn't know grace_period_minutes yet.
+  if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
+    result = await baseQuery("duration");
+  }
+  const { data: rows, error } = result;
+  if (error) {
+    console.error("Auto-complete query error:", error.message);
+    return { completed: 0 };
+  }
+
+  let completed = 0;
+  for (const b of rows || []) {
+    const sessionMin = (b.services?.duration || 30) + (b.services?.grace_period_minutes || 0);
+    const sessionEnd = new Date(b.scheduled_at).getTime() + sessionMin * 60 * 1000;
+    if (sessionEnd < AUTO_COMPLETE_CUTOFF.getTime()) continue; // pre-cutoff backlog — skip
+    if (now < sessionEnd + AUTO_COMPLETE_HOLD_MS) continue;    // still inside the hold window
+    const { error: e } = await markBookingCompleted(b, { notify: true });
+    if (e) {
+      console.error(`Auto-complete failed for booking ${b.id}:`, e.message);
+      continue;
+    }
+    completed += 1;
+  }
+  if (completed) console.log(`Auto-complete: completed ${completed} booking(s)`);
+  return { completed };
+};
+
 module.exports = {
   getServiceById,
   getBookedSlots,
@@ -904,6 +982,8 @@ module.exports = {
   getGuestBookings,
   cancelBooking,
   completeBooking,
+  markBookingCompleted,
+  autoCompleteBookings,
   rescheduleBooking,
   confirmReschedule,
   processReminders,

@@ -97,12 +97,21 @@ app.get('/', (req, res) => res.json({ message: 'Book A Sloth API v1.4 running' }
 
 app.use(require('./middleware/errorMiddleware'));
 
-const { processReminders } = require('./controllers/bookingController');
+const { processReminders, autoCompleteBookings } = require('./controllers/bookingController');
 const { cleanup: cleanupOtps } = require('./utils/otpStore');
 
 setInterval(async () => {
   try { await processReminders(); } catch (err) { console.error('Reminder cron error:', err.message); }
 }, 5 * 60 * 1000);
+
+// Auto-complete elapsed bookings so the lifecycle closes (and revenue becomes
+// settle-able) without depending on anyone clicking "Mark Completed". Interval
+// configurable via env, default 15 min; the per-booking hold/cutoff live in
+// the controller (AUTO_COMPLETE_HOLD_MIN / AUTO_COMPLETE_CUTOFF).
+const AUTO_COMPLETE_INTERVAL_MIN = Number(process.env.AUTO_COMPLETE_INTERVAL_MIN) || 15;
+setInterval(async () => {
+  try { await autoCompleteBookings(); } catch (err) { console.error('Auto-complete cron error:', err.message); }
+}, AUTO_COMPLETE_INTERVAL_MIN * 60 * 1000);
 
 setInterval(async () => {
   try { await cleanupOtps(); } catch (err) { console.error('OTP cleanup error:', err.message); }
