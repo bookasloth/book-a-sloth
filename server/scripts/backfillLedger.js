@@ -82,6 +82,13 @@ async function run() {
     try {
       const planPrice = Math.round(Number(p.amount_paid || 0)) / 100; // paise → ₹
       if (!(planPrice > 0)) { skipped += 1; continue; }
+      // Dedup relies on razorpay_payment_id; a row without one can't be matched
+      // on a re-run (would insert a duplicate subscription_payments row). Skip.
+      if (!p.razorpay_payment_id) {
+        skipped += 1;
+        console.warn(`  ! plan_purchase ${p.id} has no razorpay_payment_id — skipped (not backfillable safely)`);
+        continue;
+      }
       const journalDate = (p.activated_at || '').slice(0, 10) || null;
       planned += 1;
       console.log(`[plan_purchase ${p.id}] ${journalDate} ${p.plan} ₹${planPrice}`);
