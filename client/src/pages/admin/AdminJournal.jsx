@@ -102,6 +102,13 @@ const AdminJournal = () => {
     return lines.reduce((s, l) => s + (Number(l.debit) || 0), 0);
   };
 
+  // Client-side balance gate for the adjustment modal — catch an unbalanced or
+  // single-sided entry before the server 400 round-trip.
+  const adjFilled = adjLines.filter((l) => l.account_code);
+  const adjDebit = Math.round(adjFilled.reduce((s, l) => s + (Number(l.debit) || 0), 0) * 100) / 100;
+  const adjCredit = Math.round(adjFilled.reduce((s, l) => s + (Number(l.credit) || 0), 0) * 100) / 100;
+  const adjBalanced = adjFilled.length >= 2 && adjDebit > 0 && adjDebit === adjCredit;
+
   return (
     <div>
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
@@ -248,9 +255,13 @@ const AdminJournal = () => {
                   </div>
                 ))}
                 <button className="text-[11px] text-gray-500 underline mb-4" onClick={() => setAdjLines((ls) => [...ls, emptyLine()])}>+ Add line</button>
+                <div className={`text-[12px] mb-4 tabular-nums ${adjBalanced ? 'text-green-600' : 'text-gray-400'}`}>
+                  Debits {inr(adjDebit)} · Credits {inr(adjCredit)}
+                  {!adjBalanced && <span className="ml-1 text-gray-400">— must balance (≥2 lines, debits = credits)</span>}
+                </div>
                 <div className="flex justify-end gap-2">
                   <button className="fb-btn fb-btn--secondary text-xs" onClick={() => setModal(null)}>Cancel</button>
-                  <button className="fb-btn text-xs disabled:opacity-40" disabled={saving} onClick={submitAdjustment}>
+                  <button className="fb-btn text-xs disabled:opacity-40" disabled={saving || !adjBalanced} onClick={submitAdjustment}>
                     {saving ? 'Posting…' : 'Post entry'}
                   </button>
                 </div>
