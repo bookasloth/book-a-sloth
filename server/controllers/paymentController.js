@@ -164,8 +164,12 @@ const verifyPayment = async (req, res) => {
       if (payment && payment.fee != null) razorpayFeeTotal = Number(payment.fee) / 100;
       if (payment && payment.tax != null) razorpayTax = Number(payment.tax) / 100;
     } catch (feeErr) {
-      console.error("Razorpay fee fetch failed (payout uses 0 until reconciled):", feeErr.message);
+      // No self-heal re-fetches this fee: payout finalises with 0 and needs a
+      // manual admin ADJUSTMENT entry once the real fee is known.
+      console.error("Razorpay fee fetch failed — fee recorded as 0, manual correction needed:", feeErr.message);
     }
+    // Tax is a component of fee; clamp so excl-tax + tax always reconstitutes the total.
+    razorpayTax = Math.min(razorpayTax, razorpayFeeTotal);
     const razorpayFeeExclTax = Math.max(0, Math.round((razorpayFeeTotal - razorpayTax) * 100) / 100);
     const servicePrice  = booking.services?.price || 0;
     const commission    = Number(booking.commission_applied) || 0;
@@ -179,20 +183,31 @@ const verifyPayment = async (req, res) => {
       vendor_amount: finalPayout, paid_at: paidAt,
       updated_at: paidAt,
     };
+    // .neq guard: two concurrent verifies can both pass the read check above;
+    // only the first matches this conditional update (zero rows = already paid).
     let { data: updated, error } = await supabaseAdmin
-      .from("bookings").update(fullUpdate).eq("id", booking_id).select().single();
+      .from("bookings").update(fullUpdate)
+      .eq("id", booking_id).neq("payment_status", "paid").select().single();
 
     // Legacy DB without the v2.2/v2.8 columns: retry without the new fields
     if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
       const { razorpay_fee_actual: _drop, razorpay_tax_actual: _drop2, paid_at: _drop3, ...coreUpdate } = fullUpdate;
       ({ data: updated, error } = await supabaseAdmin
-        .from("bookings").update(coreUpdate).eq("id", booking_id).select().single());
+        .from("bookings").update(coreUpdate)
+        .eq("id", booking_id).neq("payment_status", "paid").select().single());
     }
 
+    if (error && error.code === "PGRST116") {
+      return res.status(400).json({ message: "Already paid" });
+    }
     if (error) return res.status(500).json({ message: error.message });
 
-    // ── Ledger: post ORDER_PAYMENT (non-fatal — reconciler self-heals) ──
+    // ── Ledger: post ORDER_PAYMENT (non-fatal — payment already recorded;
+    // the reconciler cron retries missed posts). Pre-v2.2 rows have no
+    // customer_total snapshot → entry can't balance → skip (reconciler skips too).
     try {
+      const ledgerCustomerTotal = Number(booking.customer_total) || 0;
+      if (ledgerCustomerTotal > 0) {
       const { orderPaymentEntry } = require("../services/ledger/journalTemplates");
       const { postSafe } = require("../services/ledger/postingService");
       await postSafe({
@@ -210,9 +225,10 @@ const verifyPayment = async (req, res) => {
           razorpay_fee_actual: razorpayFeeExclTax,
           razorpay_tax_actual: razorpayTax,
           vendor_amount: finalPayout,
-          customer_total: Number(booking.customer_total) || 0,
+          customer_total: ledgerCustomerTotal,
         }),
       });
+      }
     } catch (ledgerErr) {
       console.error("Order ledger posting error (non-fatal):", ledgerErr.message);
     }
