@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { adminGetBookings, adminUpdateBooking, adminDeleteBooking } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -68,6 +68,10 @@ const IC = {
   zap:     'M13 2L3 14h9l-1 8 10-12h-9l1-8z',
   dot:     'M12 12m-3 0a3 3 0 106 0 3 3 0 10-6 0',
   inbox:   ['M22 12h-6l-2 3h-4l-2-3H2', 'M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z'],
+  arrowL:  ['M19 12H5', 'M12 19l-7-7 7-7'],
+  globe:   ['M12 2a10 10 0 100 20 10 10 0 000-20z', 'M2 12h20', 'M12 2c2.5 2.7 4 6.3 4 10s-1.5 7.3-4 10c-2.5-2.7-4-6.3-4-10s1.5-7.3 4-10z'],
+  receipt: ['M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1z', 'M8 7h8', 'M8 11h8', 'M8 15h5'],
+  list:    ['M8 6h13', 'M8 12h13', 'M8 18h13', 'M3 6h.01', 'M3 12h.01', 'M3 18h.01'],
 };
 
 // ── Operational state model ───────────────────────────────────────
@@ -221,262 +225,636 @@ const BookingCard = ({ b, state, onView, onEdit }) => {
   );
 };
 
-// ── Detail modal: the primary management interface ────────────────
-const Row = ({ label, value, mono }) => (
-  <div className="flex items-start justify-between gap-4 py-1.5">
-    <span className="text-[12px] text-gray-400 flex-shrink-0">{label}</span>
-    <span className={`text-[12.5px] text-gray-800 text-right ${mono ? 'font-mono' : 'font-medium'}`}>{value ?? '—'}</span>
-  </div>
+// ── Booking table (desktop dense rows) ────────────────────────────
+const TH = ({ children, right }) => (
+  <th className={`px-4 py-2.5 font-semibold whitespace-nowrap ${right ? 'text-right' : 'text-left'}`}>{children}</th>
 );
 
-const Section = ({ title, icon, children, action }) => (
-  <section className="border-b border-gray-100 last:border-0 py-4">
-    <div className="flex items-center justify-between mb-2">
-      <h4 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-        {icon && <Ic d={icon} size={13} className="text-gray-400" />}{title}
-      </h4>
-      {action}
-    </div>
-    {children}
-  </section>
-);
-
-const Timeline = ({ b }) => {
-  // Built from real timestamps where available; the rest are designed-but-pending.
-  const events = [
-    { label: 'Booking Created',  at: b.created_at,            done: !!b.created_at },
-    { label: 'Payment Received', at: b.paid_at,               done: b.payment_status === 'paid' || !!b.paid_at },
-    { label: 'Vendor Confirmed', at: null,                    done: ['confirmed', 'completed'].includes(b.status) },
-    { label: 'Reminder Sent',    at: null,                    done: !!(b.reminder_24h_sent || b.reminder_1h_sent) },
-    { label: 'Session Started',  at: null,                    done: false, pending: true },  // TODO(backend): no session-start ts
-    { label: 'Session Ended',    at: null,                    done: false, pending: true },  // TODO(backend): no session-end ts
-    { label: 'Booking Completed', at: b.completed_at,         done: b.status === 'completed' || !!b.completed_at },
-  ];
+const BookingRow = ({ b, state, onView, onEdit }) => {
+  const price = b.services?.price || 0;
+  const dur = b.services?.duration || 30;
   return (
-    <ol className="relative ml-1">
-      {events.map((e, i) => (
-        <li key={i} className="flex gap-3 pb-3 last:pb-0 relative">
-          {i < events.length - 1 && <span className="absolute left-[6px] top-4 bottom-0 w-px bg-gray-200" />}
-          <span className={`relative z-10 mt-1 w-3 h-3 rounded-full flex-shrink-0 ${e.done ? 'bg-[#FE5100]' : 'bg-gray-200 ring-2 ring-white'}`} />
-          <div className="flex-1 min-w-0 flex items-baseline justify-between gap-2">
-            <span className={`text-[12.5px] ${e.done ? 'font-medium text-gray-800' : 'text-gray-400'}`}>
-              {e.label}{e.pending && <span className="ml-1.5 text-[10px] text-gray-300">(pending)</span>}
-            </span>
-            {e.at && <span className="text-[11px] text-gray-400 flex-shrink-0">{fmtDate(e.at)} · {fmtTime(e.at)}</span>}
+    <tr onClick={() => onView(b)}
+      className="group border-t border-gray-100 hover:bg-gray-50/70 cursor-pointer transition-colors">
+      {/* Booking */}
+      <td className="px-4 py-3 align-middle">
+        <div className="flex items-center gap-2">
+          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${(STATES[state] || STATES.upcoming).dot}`} />
+          <div className="min-w-0">
+            <code className="text-[12.5px] font-bold font-mono text-gray-900">{shortId(b.id)}</code>
+            <p className="text-[11.5px] text-gray-400 truncate max-w-[150px]">{b.services?.title || 'Service'}</p>
           </div>
-        </li>
-      ))}
-    </ol>
+        </div>
+      </td>
+      {/* Customer */}
+      <td className="px-4 py-3 align-middle">
+        <p className="text-[12.5px] font-medium text-gray-800 truncate max-w-[180px]">{b.guest_name || '—'}</p>
+        <p className="text-[11.5px] text-gray-400 truncate max-w-[180px]">{b.guest_email || '—'}</p>
+      </td>
+      {/* Vendor */}
+      <td className="px-4 py-3 align-middle">
+        <p className="text-[12.5px] font-medium text-gray-800 truncate max-w-[150px]">{b.profiles?.name || '—'}</p>
+        {b.profiles?.username && <p className="text-[11.5px] text-gray-400 truncate max-w-[150px]">@{b.profiles.username}</p>}
+      </td>
+      {/* Schedule */}
+      <td className="px-4 py-3 align-middle whitespace-nowrap">
+        <p className="text-[12.5px] text-gray-700">{fmtDate(b.scheduled_at)}</p>
+        <p className="text-[11.5px] text-gray-400 tabular-nums">{fmtTime(b.scheduled_at)} · {dur} min</p>
+      </td>
+      {/* Amount */}
+      <td className="px-4 py-3 align-middle text-right whitespace-nowrap">
+        <span className="text-[13px] font-bold text-gray-900 tabular-nums">{inr(price)}</span>
+      </td>
+      {/* Status */}
+      <td className="px-4 py-3 align-middle"><StatePill state={state} /></td>
+      {/* Payment */}
+      <td className="px-4 py-3 align-middle"><PaymentPill status={b.payment_status} /></td>
+      {/* Actions (reveal on row hover/focus) */}
+      <td className="px-3 py-3 align-middle">
+        <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+          onClick={(e) => e.stopPropagation()}>
+          <IconBtn icon={IC.eye} label="View details" tone="primary" onClick={() => onView(b)} />
+          <IconBtn icon={IC.pencil} label="Edit booking" tone="gray" onClick={() => onEdit(b)} />
+        </div>
+      </td>
+    </tr>
   );
 };
 
-// State-driven primary actions (per brief). Placeholders are wired to notImplemented().
-const stateActions = (state, b, handlers) => {
-  switch (state) {
-    case 'upcoming':
-      return [
-        { icon: IC.refresh, label: 'Reschedule',      onClick: () => notImplemented('Reschedule') },
-        { icon: IC.xCircle, label: 'Cancel Booking',  onClick: handlers.cancel, variant: 'danger' },
-        { icon: IC.msg,     label: 'Message Customer', onClick: () => notImplemented('Message Customer') },
-        { icon: IC.msg,     label: 'Message Vendor',   onClick: () => notImplemented('Message Vendor') },
-      ];
-    case 'live':
-      return [
-        { icon: IC.video, label: 'Join Meeting',     href: b.meeting_link || undefined, onClick: b.meeting_link ? undefined : () => notImplemented('Join Meeting'), variant: 'primary' },
-        { icon: IC.msg,   label: 'Message Customer', onClick: () => notImplemented('Message Customer') },
-        { icon: IC.msg,   label: 'Message Vendor',   onClick: () => notImplemented('Message Vendor') },
-      ];
-    case 'completed':
-      return [
-        { icon: IC.refresh, label: 'Issue Refund', onClick: () => notImplemented('Issue Refund') },
-        { icon: IC.alert,   label: 'Open Dispute', onClick: () => notImplemented('Open Dispute') },
-      ];
-    case 'cancelled':
-      return [
-        { icon: IC.calendar, label: 'Rebook', onClick: () => notImplemented('Rebook'), variant: 'primary' },
-        { icon: IC.refresh,  label: 'Refund', onClick: () => notImplemented('Refund') },
-      ];
-    case 'disputed':
-      return [
-        { icon: IC.wallet,  label: 'Refund Customer',        onClick: () => notImplemented('Refund Customer'), variant: 'danger' },
-        { icon: IC.check,   label: 'Release Vendor Payment', onClick: () => notImplemented('Release Vendor Payment') },
-        { icon: IC.refresh, label: 'Partial Refund',         onClick: () => notImplemented('Partial Refund') },
-        { icon: IC.checkCircle, label: 'Close Dispute',      onClick: () => notImplemented('Close Dispute') },
-      ];
-    default:
-      return [];
-  }
+const BookingTable = ({ items, onView, onEdit }) => (
+  <div className="hidden md:block bg-white border border-gray-200/80 rounded-xl overflow-hidden">
+    <table className="w-full border-collapse">
+      <thead>
+        <tr className="bg-gray-50/60 text-[11px] uppercase tracking-wide text-gray-400">
+          <TH>Booking</TH>
+          <TH>Customer</TH>
+          <TH>Vendor</TH>
+          <TH>Schedule</TH>
+          <TH right>Amount</TH>
+          <TH>Status</TH>
+          <TH>Payment</TH>
+          <th className="px-3" aria-hidden="true" />
+        </tr>
+      </thead>
+      <tbody>
+        {items.map(({ b, state }) => (
+          <BookingRow key={b.id} b={b} state={state} onView={onView} onEdit={onEdit} />
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
+// ── Detail modal: world-class 3-column ops console ────────────────
+//
+// Layout: sticky header · left snapshot (20%) · tabbed center (55%) ·
+//   sticky action panel (25%). Collapses to a single vertical scroll
+//   below lg. Many actions/fields depend on backend that isn't built
+//   yet (payout P2, session start/end ts, vendor phone, disputes,
+//   audit log, refund/note/dispute) — those stay visible + wired to
+//   notImplemented() so the workflow is locked in before the API lands.
+
+// Payout / settlement status (P2 not built — derived from snapshots).
+const PAYOUT = {
+  settled:                 { label: 'Settled',     badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15' },
+  eligible_for_settlement: { label: 'Eligible',    badge: 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/15' },
+  pending_completion:      { label: 'Pending',     badge: 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/15' },
+  not_eligible:            { label: 'Not eligible', badge: 'bg-gray-100 text-gray-500 ring-1 ring-gray-400/20' },
+};
+const payoutKey = (b) => b.settled_at ? 'settled'
+  : (b.settlement_status || (b.payment_status === 'paid' ? 'pending_completion' : 'not_eligible'));
+const PayoutPill = ({ b }) => {
+  const p = PAYOUT[payoutKey(b)] || PAYOUT.not_eligible;
+  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${p.badge}`}>{p.label}</span>;
 };
 
+// mailto with URL-encoded subject referencing the booking id.
+const mailto = (email, b) => email
+  ? `mailto:${email}?subject=${encodeURIComponent(`About your booking ID ${shortId(b.id)}`)}`
+  : undefined;
+
+// Never show the full meeting URL by default — reveal on hover.
+const shortUrl = (link) => {
+  if (!link) return '—';
+  try {
+    const u = new URL(link);
+    const seg = u.pathname.replace(/^\/+/, '');
+    return `${u.host}/${seg.slice(0, 3)}${seg.length > 3 ? '…' : ''}`;
+  } catch { return link.length > 24 ? `${link.slice(0, 24)}…` : link; }
+};
+
+// ── Detail-modal presentational atoms ─────────────────────────────
+const Card = ({ title, icon, action, children, className = '' }) => (
+  <div className={`bg-white border border-gray-200/80 rounded-xl ${className}`}>
+    {title && (
+      <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-1.5">
+        <h4 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+          {icon && <Ic d={icon} size={13} className="text-gray-400" />}{title}
+        </h4>
+        {action}
+      </div>
+    )}
+    <div className="px-4 pb-3">{children}</div>
+  </div>
+);
+
+const Field = ({ label, value, mono, children }) => (
+  <div className="flex items-center justify-between gap-4 py-[5px] border-b border-gray-50 last:border-0">
+    <span className="text-[12px] text-gray-400 flex-shrink-0">{label}</span>
+    {children || (
+      <span className={`text-[12.5px] text-gray-800 text-right truncate tabular-nums ${mono ? 'font-mono' : 'font-medium'}`}>{value ?? '—'}</span>
+    )}
+  </div>
+);
+
+const CopyField = ({ label, value, mono = true }) => (
+  <div className="flex items-center justify-between gap-2 py-[5px] border-b border-gray-50 last:border-0">
+    <span className="text-[12px] text-gray-400 flex-shrink-0">{label}</span>
+    <span className="flex items-center gap-1 min-w-0">
+      <span className={`text-[12.5px] text-gray-800 truncate ${mono ? 'font-mono' : 'font-medium'}`}>{value || '—'}</span>
+      {value && <IconBtn icon={IC.copy} label={`Copy ${label}`} onClick={() => copy(value, label)} />}
+    </span>
+  </div>
+);
+
+// Contact card: clickable envelope sits BEFORE the email; the email text
+// itself is plain (not a link), per the brief.
+const ContactCard = ({ title, icon, name, email, phone, b, mailLabel, extra }) => (
+  <Card title={title} icon={icon} action={
+    <div className="flex items-center gap-0.5">
+      <IconBtn icon={IC.phone} label={`Call ${title.split(' ')[0]}`} href={phone ? `tel:${phone}` : undefined} onClick={phone ? undefined : () => toast.error('No phone on file')} />
+      {extra}
+    </div>
+  }>
+    <Field label="Name" value={name} />
+    <div className="flex items-center justify-between gap-2 py-[5px] border-b border-gray-50">
+      <span className="text-[12px] text-gray-400">Email</span>
+      <span className="flex items-center gap-1 min-w-0">
+        <IconBtn icon={IC.mail} label={mailLabel} href={mailto(email, b)} onClick={email ? undefined : () => toast.error('No email on file')} />
+        <span className="text-[12.5px] font-medium text-gray-800 truncate">{email || '—'}</span>
+        {email && <IconBtn icon={IC.copy} label="Copy email" onClick={() => copy(email, 'Email')} />}
+      </span>
+    </div>
+    <div className="flex items-center justify-between gap-2 py-[5px]">
+      <span className="text-[12px] text-gray-400">Phone</span>
+      <span className="flex items-center gap-1 min-w-0">
+        <span className="text-[12.5px] font-medium text-gray-800 truncate">{phone || '—'}</span>
+        {phone && <IconBtn icon={IC.copy} label="Copy phone" onClick={() => copy(phone, 'Phone')} />}
+      </span>
+    </div>
+  </Card>
+);
+
+// Lifecycle events derived from real timestamps; the rest are designed-but-pending.
+const lifecycle = (b) => [
+  { label: 'Booking Created',   at: b.created_at,   done: !!b.created_at },
+  { label: 'Payment Received',  at: b.paid_at,      done: b.payment_status === 'paid' || !!b.paid_at },
+  { label: 'Vendor Confirmed',  at: null,           done: ['confirmed', 'completed'].includes(b.status) },
+  { label: 'Session Started',   at: null,           done: false, pending: true }, // TODO(backend): no session-start ts
+  { label: 'Session Ended',     at: null,           done: false, pending: true }, // TODO(backend): no session-end ts
+  { label: 'Booking Completed', at: b.completed_at, done: b.status === 'completed' || !!b.completed_at },
+];
+
+// Horizontal on desktop (spec), vertical on mobile.
+const LifecycleTimeline = ({ b }) => {
+  const events = lifecycle(b);
+  const n = events.length;
+  return (
+    <>
+      {/* Horizontal (md+) */}
+      <div className="hidden md:flex items-start pt-1">
+        {events.map((e, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center text-center relative px-1">
+            {i < n - 1 && <span className={`absolute top-[9px] left-1/2 w-full h-[2px] ${events[i + 1].done ? 'bg-emerald-400' : 'bg-gray-200'}`} />}
+            <span className={`relative z-10 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0
+              ${e.done ? 'bg-emerald-500 text-white' : 'bg-white border-2 border-gray-300'}`}>
+              {e.done && <Ic d={IC.check} size={11} strokeWidth={3} />}
+            </span>
+            <span className={`mt-2 text-[11px] leading-tight ${e.done ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>{e.label}</span>
+            {e.pending && <span className="text-[10px] text-gray-300">(pending)</span>}
+            {e.at && <span className="mt-0.5 text-[10px] text-gray-400 tabular-nums">{fmtDate(e.at)}<br />{fmtTime(e.at)}</span>}
+          </div>
+        ))}
+      </div>
+      {/* Vertical (mobile) */}
+      <ol className="md:hidden relative ml-1">
+        {events.map((e, i) => (
+          <li key={i} className="flex gap-3 pb-3 last:pb-0 relative">
+            {i < n - 1 && <span className={`absolute left-[8px] top-5 bottom-0 w-[2px] ${events[i + 1].done ? 'bg-emerald-400' : 'bg-gray-200'}`} />}
+            <span className={`relative z-10 mt-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center flex-shrink-0
+              ${e.done ? 'bg-emerald-500 text-white' : 'bg-white border-2 border-gray-300'}`}>
+              {e.done && <Ic d={IC.check} size={10} strokeWidth={3} />}
+            </span>
+            <div className="flex-1 min-w-0 flex items-baseline justify-between gap-2">
+              <span className={`text-[12.5px] ${e.done ? 'font-medium text-gray-800' : 'text-gray-400'}`}>
+                {e.label}{e.pending && <span className="ml-1.5 text-[10px] text-gray-300">(pending)</span>}
+              </span>
+              {e.at && <span className="text-[11px] text-gray-400 flex-shrink-0 tabular-nums">{fmtDate(e.at)} · {fmtTime(e.at)}</span>}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </>
+  );
+};
+
+// Earnings breakdown bar — relative share of vendor / platform / taxes.
+const BreakdownBar = ({ vendor, platform, taxes }) => {
+  const parts = [
+    { label: 'Vendor',   value: Number(vendor) || 0,   color: 'bg-emerald-500',  text: 'text-emerald-600' },
+    { label: 'Platform', value: Number(platform) || 0, color: 'bg-[#FE5100]',    text: 'text-[#FE5100]' },
+    { label: 'Taxes',    value: Number(taxes) || 0,    color: 'bg-amber-400',    text: 'text-amber-600' },
+  ].filter(p => p.value > 0);
+  const sum = parts.reduce((s, p) => s + p.value, 0);
+  if (!sum) return <p className="text-[12px] text-gray-400 py-2">Breakdown unavailable for this booking.</p>;
+  return (
+    <div>
+      <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100">
+        {parts.map((p, i) => <div key={i} className={p.color} style={{ width: `${(p.value / sum) * 100}%` }} title={`${p.label} ${inr(p.value)}`} />)}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
+        {parts.map((p, i) => (
+          <div key={i} className="flex items-center gap-1.5 text-[11.5px]">
+            <span className={`w-2 h-2 rounded-full ${p.color}`} />
+            <span className="text-gray-500">{p.label}</span>
+            <span className={`font-semibold tabular-nums ${p.text}`}>{inr(p.value)}</span>
+            <span className="text-gray-400 tabular-nums">{Math.round((p.value / sum) * 100)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Tab in the center column.
+const TabBtn = ({ active, label, onClick }) => (
+  <button type="button" onClick={onClick}
+    className={`relative px-3 py-2.5 text-[13px] font-medium transition-colors whitespace-nowrap
+      ${active ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}>
+    {label}
+    {active && <span className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full bg-[#FE5100]" />}
+  </button>
+);
+
+// Action-panel button (full width, icon-left).
+const PanelBtn = ({ icon, label, onClick, href, tone = 'default' }) => {
+  const tones = {
+    default: 'text-gray-700 hover:bg-gray-50 border-gray-200',
+    danger:  'text-rose-600 hover:bg-rose-50 border-rose-200 bg-white',
+  };
+  const cls = `w-full inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border bg-white text-[12.5px] font-medium transition-colors ${tones[tone]}`;
+  const inner = <><Ic d={icon} size={15} className="flex-shrink-0" /><span className="truncate">{label}</span></>;
+  if (href) return <a href={href} target="_blank" rel="noreferrer" className={cls}>{inner}</a>;
+  return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
+};
+
+const PanelGroup = ({ title, children }) => (
+  <div>
+    <h5 className="text-[10.5px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 px-0.5">{title}</h5>
+    <div className="space-y-1.5">{children}</div>
+  </div>
+);
+
+const MenuItem = ({ icon, label, onClick, href }) => {
+  const cls = 'w-full flex items-center gap-2.5 px-3 py-2 text-[12.5px] text-gray-700 hover:bg-gray-50 transition-colors';
+  const inner = <><Ic d={icon} size={14} className="text-gray-400" />{label}</>;
+  if (href) return <a href={href} target="_blank" rel="noreferrer" className={cls} onClick={onClick}>{inner}</a>;
+  return <button type="button" className={cls} onClick={onClick}>{inner}</button>;
+};
+
+const DETAIL_TABS = ['Overview', 'Timeline', 'Meeting', 'Financials', 'Logs'];
+
 const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) => {
-  const [adminOpen, setAdminOpen] = useState(false);
+  const [tab, setTab] = useState('Overview');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirm, setConfirm] = useState(null); // 'cancel' | 'delete' | null
+  const [delText, setDelText] = useState('');
+  const panelRef = useRef(null);
+
+  // Lock body scroll while open.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    panelRef.current?.focus();
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  // Keyboard: ESC closes (menu → confirm → modal). Cmd/Ctrl+C copies the
+  // booking id when nothing is selected. Tab is trapped within the panel.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        if (menuOpen) { setMenuOpen(false); return; }
+        if (confirm) { setConfirm(null); return; }
+        onClose();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c') {
+        if (!window.getSelection?.().toString()) { copy(b.id, 'Booking ID'); }
+        return;
+      }
+      if (e.key === 'Tab' && panelRef.current) {
+        const f = panelRef.current.querySelectorAll('a[href],button:not([disabled]),input,select,[tabindex]:not([tabindex="-1"])');
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [b.id, onClose, menuOpen, confirm]);
+
+  useEffect(() => { setDelText(''); }, [confirm]);
+
   if (!b) return null;
 
   const host = b.profiles || {};
-  const total = b.services?.price || 0;
-  const fee = b.platform_fee_amount;
-  const earnings = b.vendor_amount;
-  const tax = (Number(b.commission_gst) || 0) + (Number(b.razorpay_tax_actual) || 0);
-  const showJoin = state === 'live';
-  const showMeetingLink = state === 'upcoming' || state === 'live';
-
-  const actions = stateActions(state, b, { cancel: onCancel });
-
-  const adminActions = [
-    { icon: IC.ban,     label: 'Force Cancel',          onClick: onCancel, danger: true },
-    { icon: IC.wallet,  label: 'Force Refund',          onClick: () => notImplemented('Force Refund') },
-    { icon: IC.pencil,  label: 'Edit Booking',          onClick: () => onEdit(b) },
-    { icon: IC.swap,    label: 'Change Vendor',         onClick: () => notImplemented('Change Vendor') },
-    { icon: IC.link,    label: 'Regenerate Meeting Link', onClick: () => notImplemented('Regenerate Meeting Link') },
-    { icon: IC.note,    label: 'Add Internal Note',     onClick: () => notImplemented('Add Internal Note') },
-    { icon: IC.trash,   label: 'Delete Permanently',    onClick: onDelete, danger: true },
-  ];
+  const dur = b.services?.duration || 30;
+  const servicePrice = Number(b.services?.price || 0);
+  const total = Number(b.customer_total ?? b.services?.price ?? 0);
+  const platformFee = b.platform_fee_amount;
+  const vendorEarnings = b.vendor_amount;
+  const commission = b.commission_applied;
+  const taxes = (Number(b.platform_fee_gst) || 0) + (Number(b.commission_gst) || 0) + (Number(b.razorpay_tax_actual) || 0);
+  const platformRevenue = (Number(commission) || 0) + (Number(platformFee) || 0);
+  const requiredId = String(b.id).slice(0, 8).toUpperCase();
+  const timeRange = `${fmtTime(b.scheduled_at)} – ${fmtTime(endTime(b))}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" onClick={onClose} />
-      <div className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[92vh] flex flex-col animate-[slideUp_.18s_ease-out]">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 flex-shrink-0">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <code className="text-[13px] font-bold font-mono text-gray-900">{shortId(b.id)}</code>
-              <StatePill state={state} size="lg" />
-            </div>
-            <p className="text-[12px] text-gray-400 truncate">{b.services?.title || 'Service'} · {inr(total)}</p>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" role="dialog" aria-modal="true" aria-label="Booking details">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] animate-[fadeIn_.15s_ease-out]" onClick={onClose} />
+      <div ref={panelRef} tabIndex={-1} onMouseDown={() => menuOpen && setMenuOpen(false)}
+        className="relative bg-white w-full sm:max-w-[1480px] h-[94vh] sm:h-[88vh] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden outline-none animate-[slideUp_.18s_ease-out]">
+
+        {/* ── Sticky header ── */}
+        <header className="flex items-center gap-3 px-3 sm:px-4 py-2.5 border-b border-gray-100 flex-shrink-0">
+          {/* Left: back + id copy */}
+          <div className="flex items-center gap-0.5 flex-shrink-0">
+            <IconBtn icon={IC.arrowL} label="Back" onClick={onClose} />
+            <IconBtn icon={IC.copy} label="Copy booking ID" onClick={() => copy(b.id, 'Booking ID')} />
           </div>
-          <button onClick={onClose} aria-label="Close" className="p-1.5 -mr-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-            <Ic d={IC.x} size={18} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto px-5 flex-1">
-          {/* Customer */}
-          <Section title="Customer Information" icon={IC.user}
-            action={
-              <div className="flex items-center gap-0.5">
-                <IconBtn icon={IC.mail}  label="Email customer" href={b.guest_email ? `mailto:${b.guest_email}` : undefined} onClick={b.guest_email ? undefined : () => toast.error('No email')} />
-                <IconBtn icon={IC.phone} label="Call customer"  href={b.guest_phone ? `tel:${b.guest_phone}` : undefined} onClick={b.guest_phone ? undefined : () => toast.error('No phone')} />
+          {/* Center: identity */}
+          <div className="flex-1 min-w-0 flex items-center gap-2.5">
+            <StatePill state={state} size="lg" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <h3 className="text-[14px] font-bold text-gray-900 truncate">{b.services?.title || 'Service'}</h3>
+                <code className="hidden sm:inline text-[11.5px] font-mono text-gray-400 flex-shrink-0">Booking {shortId(b.id)}</code>
               </div>
-            }>
-            <Row label="Name" value={b.guest_name} />
-            <div className="flex items-center justify-between gap-2 py-1.5">
-              <span className="text-[12px] text-gray-400">Email</span>
-              <span className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[12.5px] font-medium text-gray-800 truncate">{b.guest_email || '—'}</span>
-                <IconBtn icon={IC.copy} label="Copy email" onClick={() => copy(b.guest_email, 'Email')} />
-              </span>
+              <p className="text-[11.5px] text-gray-400 truncate tabular-nums">
+                {inr(total)} · {dur} min · {fmtDate(b.scheduled_at)} · {fmtTime(b.scheduled_at)} IST
+              </p>
             </div>
-            <div className="flex items-center justify-between gap-2 py-1.5">
-              <span className="text-[12px] text-gray-400">Phone</span>
-              <span className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[12.5px] font-medium text-gray-800 truncate">{b.guest_phone || '—'}</span>
-                <IconBtn icon={IC.copy} label="Copy phone" onClick={() => copy(b.guest_phone, 'Phone')} />
-              </span>
-            </div>
-          </Section>
-
-          {/* Vendor */}
-          <Section title="Vendor Information" icon={IC.building}
-            action={
-              <div className="flex items-center gap-0.5">
-                <IconBtn icon={IC.mail}     label="Email vendor" href={host.email ? `mailto:${host.email}` : undefined} onClick={host.email ? undefined : () => toast.error('No email')} />
-                {/* TODO(backend): host phone not selected by list endpoint */}
-                <IconBtn icon={IC.phone}    label="Call vendor"  onClick={() => notImplemented('Call Vendor')} />
-                <IconBtn icon={IC.external} label="View vendor profile" href={host.username ? `/${host.username}` : undefined} onClick={host.username ? undefined : () => toast.error('No profile')} />
-              </div>
-            }>
-            <Row label="Vendor Name" value={host.name} />
-            <Row label="Email" value={host.email} />
-            <Row label="Phone" value={'—'} />
-          </Section>
-
-          {/* Booking */}
-          <Section title="Booking Information" icon={IC.calendar}>
-            <Row label="Booking ID" value={shortId(b.id)} mono />
-            <Row label="Date" value={fmtDate(b.scheduled_at)} />
-            <Row label="Start Time" value={fmtTime(b.scheduled_at)} />
-            <Row label="End Time" value={fmtTime(endTime(b))} />
-            <Row label="Duration" value={`${b.services?.duration || 30} min`} />
-            <Row label="Timezone" value="Asia/Kolkata (IST)" />
-            <div className="flex items-center justify-between gap-4 py-1.5">
-              <span className="text-[12px] text-gray-400">Current State</span>
-              <StatePill state={state} />
-            </div>
-          </Section>
-
-          {/* Payment Summary */}
-          <Section title="Payment Summary" icon={IC.card}>
-            <Row label="Total Amount" value={inr(total)} />
-            <Row label="Platform Fee" value={fee != null ? inr(fee) : '—'} />
-            <Row label="Vendor Earnings" value={earnings != null ? inr(earnings) : '—'} />
-            <Row label="Taxes" value={tax ? inr(tax) : '—'} />
-            <Row label="Payment Method" value={b.payment_id ? 'Razorpay' : '—'} />
-            <div className="flex items-center justify-between gap-4 py-1.5">
-              <span className="text-[12px] text-gray-400">Payment Status</span>
-              <PaymentPill status={b.payment_status} />
-            </div>
-          </Section>
-
-          {/* Payout (P2 not built — placeholder) */}
-          <Section title="Payout Information" icon={IC.wallet}>
-            {/* TODO(backend): settlement/payout (P2) not implemented */}
-            <Row label="Payout Status" value={b.settlement_status || 'Pending'} />
-            <Row label="Payout Date" value={b.settled_at ? fmtDate(b.settled_at) : '—'} />
-            <Row label="Transaction ID" value={b.payment_id} mono />
-          </Section>
-
-          {/* Meeting */}
-          <Section title="Meeting Information" icon={IC.video}>
-            <Row label="Meeting Provider" value={meetingProvider(b.meeting_link)} />
-            <div className="flex items-center justify-between gap-2 py-1.5">
-              <span className="text-[12px] text-gray-400">Meeting Link</span>
-              {b.meeting_link ? (
-                <span className="flex items-center gap-1.5 min-w-0">
-                  <a href={b.meeting_link} target="_blank" rel="noreferrer" className="text-[12.5px] text-[#FE5100] hover:underline truncate max-w-[180px]">{b.meeting_link}</a>
-                  {showMeetingLink && <IconBtn icon={IC.copy} label="Copy link" onClick={() => copy(b.meeting_link, 'Link')} />}
-                </span>
-              ) : <span className="text-[12.5px] text-gray-400">—</span>}
-            </div>
-            <Row label="Meeting ID" value={meetingId(b.meeting_link)} mono />
-            {showJoin && b.meeting_link && (
-              <div className="pt-2">
-                <ActionBtn icon={IC.video} label="Join Meeting" href={b.meeting_link} variant="primary" />
-              </div>
-            )}
-          </Section>
-
-          {/* Timeline */}
-          <Section title="Timeline" icon={IC.clock}><Timeline b={b} /></Section>
-
-          {/* Actions (state-driven) */}
-          {actions.length > 0 && (
-            <Section title="Actions" icon={IC.zap}>
-              <div className="grid grid-cols-2 gap-2">
-                {actions.map((a, i) => <ActionBtn key={i} {...a} />)}
-              </div>
-            </Section>
-          )}
-
-          {/* Admin Actions (collapsed by default, visually separated) */}
-          <Section title={null}>
-            <button onClick={() => setAdminOpen(o => !o)}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors">
-              <span className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider">
-                <Ic d={IC.shield} size={14} />Admin Actions
-              </span>
-              <Ic d={IC.chevD} size={16} className={`transition-transform ${adminOpen ? 'rotate-180' : ''}`} />
+          </div>
+          {/* Right: more + close */}
+          <div className="flex items-center gap-0.5 flex-shrink-0 relative">
+            <button type="button" title="More actions" aria-label="More actions"
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(o => !o); }}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors">
+              <svg width="16" height="16" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" /></g></svg>
             </button>
-            {adminOpen && (
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {adminActions.map((a, i) => (
-                  <ActionBtn key={i} icon={a.icon} label={a.label} onClick={a.onClick} variant={a.danger ? 'danger' : 'default'} />
-                ))}
+            <IconBtn icon={IC.x} label="Close" onClick={onClose} />
+            {menuOpen && (
+              <div className="absolute right-0 top-9 z-[56] w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-1" onMouseDown={(e) => e.stopPropagation()}>
+                <MenuItem icon={IC.copy} label="Copy Booking ID" onClick={() => { copy(b.id, 'Booking ID'); setMenuOpen(false); }} />
+                <MenuItem icon={IC.link} label="Copy Meeting Link" onClick={() => { copy(b.meeting_link, 'Link'); setMenuOpen(false); }} />
+                {host.username && <MenuItem icon={IC.external} label="View Vendor Profile" href={`/${host.username}`} onClick={() => setMenuOpen(false)} />}
+                <MenuItem icon={IC.pencil} label="Edit Booking" onClick={() => { onEdit(b); setMenuOpen(false); }} />
               </div>
             )}
-          </Section>
+          </div>
+        </header>
+
+        {/* ── Body: 3 columns on lg, single scroll below ── */}
+        <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden lg:flex">
+
+          {/* Left snapshot */}
+          <aside className="lg:w-[244px] lg:flex-shrink-0 lg:overflow-y-auto bg-gray-50/50 border-b lg:border-b-0 lg:border-r border-gray-100 p-4 space-y-4">
+            <div>
+              <StatePill state={state} size="lg" />
+              <h2 className="mt-2.5 text-[15px] font-bold text-gray-900 leading-snug">{b.services?.title || 'Service'}</h2>
+              <p className="mt-1 text-[26px] font-bold text-gray-900 tabular-nums leading-none">{inr(total)}</p>
+            </div>
+            <div className="space-y-1.5 text-[12.5px] text-gray-600">
+              <p className="flex items-center gap-2"><Ic d={IC.calendar} size={14} className="text-gray-400 flex-shrink-0" />{fmtDate(b.scheduled_at)}</p>
+              <p className="flex items-center gap-2 tabular-nums"><Ic d={IC.clock} size={14} className="text-gray-400 flex-shrink-0" />{timeRange}</p>
+              <p className="flex items-center gap-2"><Ic d={IC.zap} size={14} className="text-gray-400 flex-shrink-0" />{dur} min</p>
+              <p className="flex items-center gap-2"><Ic d={IC.globe} size={14} className="text-gray-400 flex-shrink-0" />Asia/Kolkata (IST)</p>
+            </div>
+            <div className="pt-3 border-t border-gray-200/70 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Booking ID</span>
+                <span className="flex items-center gap-1 min-w-0">
+                  <code className="text-[12px] font-mono font-semibold text-gray-700 truncate">{shortId(b.id)}</code>
+                  <IconBtn icon={IC.copy} label="Copy booking ID" onClick={() => copy(b.id, 'Booking ID')} />
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Payment</span>
+                <PaymentPill status={b.payment_status} />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Payout</span>
+                <PayoutPill b={b} />
+              </div>
+            </div>
+          </aside>
+
+          {/* Center: tabs + content */}
+          <main className="lg:flex-1 lg:min-w-0 lg:overflow-y-auto">
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-100 px-3 sm:px-4 flex gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              {DETAIL_TABS.map(t => <TabBtn key={t} label={t} active={tab === t} onClick={() => setTab(t)} />)}
+            </div>
+
+            <div className="p-4 space-y-3">
+              {tab === 'Overview' && (
+                <>
+                  <ContactCard title="Customer Information" icon={IC.user} b={b}
+                    name={b.guest_name} email={b.guest_email} phone={b.guest_phone} mailLabel="Email Customer" />
+                  <ContactCard title="Vendor Information" icon={IC.building} b={b}
+                    name={host.name} email={host.email}
+                    /* TODO(backend): host phone not selected by list endpoint */
+                    phone={null} mailLabel="Email Vendor"
+                    extra={<IconBtn icon={IC.external} label="View vendor profile" href={host.username ? `/${host.username}` : undefined} onClick={host.username ? undefined : () => toast.error('No profile')} />} />
+                  <Card title="Booking Information" icon={IC.calendar}>
+                    <div className="grid grid-cols-2 gap-x-6">
+                      <CopyField label="Booking ID" value={shortId(b.id)} />
+                      <Field label="Duration" value={`${dur} min`} />
+                      <Field label="Date" value={fmtDate(b.scheduled_at)} />
+                      <Field label="Timezone" value="Asia/Kolkata" />
+                      <Field label="Start Time" value={fmtTime(b.scheduled_at)} />
+                      <Field label="End Time" value={fmtTime(endTime(b))} />
+                      <div className="flex items-center justify-between gap-4 py-[5px] col-span-2 border-t border-gray-50 mt-0.5 pt-2">
+                        <span className="text-[12px] text-gray-400">Current State</span>
+                        <StatePill state={state} />
+                      </div>
+                    </div>
+                  </Card>
+                </>
+              )}
+
+              {tab === 'Timeline' && (
+                <Card title="Booking Lifecycle" icon={IC.clock}>
+                  <LifecycleTimeline b={b} />
+                </Card>
+              )}
+
+              {tab === 'Meeting' && (
+                <Card title="Meeting Information" icon={IC.video}>
+                  {b.meeting_link ? (
+                    <>
+                      <Field label="Provider" value={meetingProvider(b.meeting_link)} />
+                      <CopyField label="Meeting ID" value={meetingId(b.meeting_link)} />
+                      <div className="flex items-center justify-between gap-2 py-[5px] border-b border-gray-50">
+                        <span className="text-[12px] text-gray-400">Meeting URL</span>
+                        <span className="group flex items-center gap-1 min-w-0" title={b.meeting_link}>
+                          <span className="font-mono text-[12.5px] text-gray-700 truncate group-hover:hidden">{shortUrl(b.meeting_link)}</span>
+                          <span className="font-mono text-[12.5px] text-gray-700 truncate hidden group-hover:inline">{b.meeting_link}</span>
+                          <IconBtn icon={IC.copy} label="Copy link" onClick={() => copy(b.meeting_link, 'Link')} />
+                        </span>
+                      </div>
+                      <div className="flex gap-2 pt-3">
+                        <ActionBtn icon={IC.video} label="Open Meeting" href={b.meeting_link} variant="primary" />
+                        <ActionBtn icon={IC.copy} label="Copy Link" onClick={() => copy(b.meeting_link, 'Link')} />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-3"><Ic d={IC.video} size={20} className="text-gray-400" /></div>
+                      <p className="text-[12.5px] text-gray-400">No meeting link on this booking.</p>
+                    </div>
+                  )}
+                </Card>
+              )}
+
+              {tab === 'Financials' && (
+                <>
+                  <Card title="Payment Summary" icon={IC.receipt}>
+                    <Field label="Service Price" value={inr(servicePrice)} />
+                    <Field label="Platform Fee" value={platformFee != null ? inr(platformFee) : '—'} />
+                    <Field label="Taxes" value={taxes ? inr(taxes) : '—'} />
+                    <div className="flex items-center justify-between gap-4 py-2 border-t border-gray-100 mt-1">
+                      <span className="text-[12.5px] font-semibold text-gray-700">Total Amount</span>
+                      <span className="text-[14px] font-bold text-gray-900 tabular-nums">{inr(total)}</span>
+                    </div>
+                    <Field label="Vendor Earnings" value={vendorEarnings != null ? inr(vendorEarnings) : '—'} />
+                    <Field label="Payment Method" value={b.payment_id ? 'Razorpay' : '—'} />
+                    <div className="flex items-center justify-between gap-4 py-[5px]">
+                      <span className="text-[12px] text-gray-400">Payment Status</span>
+                      <PaymentPill status={b.payment_status} />
+                    </div>
+                  </Card>
+                  <Card title="Earnings Breakdown" icon={IC.zap}>
+                    <BreakdownBar vendor={vendorEarnings} platform={platformRevenue} taxes={taxes} />
+                  </Card>
+                  <Card title="Payout Information" icon={IC.wallet}>
+                    {/* TODO(backend): settlement/payout (P2) not implemented */}
+                    <div className="flex items-center justify-between gap-4 py-[5px] border-b border-gray-50">
+                      <span className="text-[12px] text-gray-400">Payout Status</span>
+                      <PayoutPill b={b} />
+                    </div>
+                    <Field label="Payout Date" value={b.settled_at ? fmtDate(b.settled_at) : '—'} />
+                    <CopyField label="Transaction ID" value={b.payment_id} />
+                  </Card>
+                </>
+              )}
+
+              {tab === 'Logs' && (
+                <Card title="Activity" icon={IC.list}>
+                  {(() => {
+                    const logs = [
+                      { label: 'Booking created', at: b.created_at, icon: IC.calendar },
+                      b.paid_at && { label: 'Payment received', at: b.paid_at, icon: IC.card },
+                      b.completed_at && { label: 'Booking completed', at: b.completed_at, icon: IC.checkCircle },
+                      b.status === 'cancelled' && { label: 'Booking cancelled', at: b.updated_at, icon: IC.xCircle },
+                      b.updated_at && b.updated_at !== b.created_at && { label: 'Last updated', at: b.updated_at, icon: IC.pencil },
+                    ].filter(Boolean);
+                    return (
+                      <>
+                        <ul className="space-y-2.5">
+                          {logs.map((l, i) => (
+                            <li key={i} className="flex items-center gap-3">
+                              <span className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0"><Ic d={l.icon} size={13} className="text-gray-500" /></span>
+                              <span className="text-[12.5px] text-gray-700 flex-1">{l.label}</span>
+                              <span className="text-[11px] text-gray-400 tabular-nums">{fmtDate(l.at)} · {fmtTime(l.at)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        {/* TODO(backend): admin_audit_logs not yet joined to bookings */}
+                        <p className="mt-3 pt-3 border-t border-gray-50 text-[11px] text-gray-400">Derived from booking timestamps. Full audit trail coming soon.</p>
+                      </>
+                    );
+                  })()}
+                </Card>
+              )}
+            </div>
+          </main>
+
+          {/* Right action panel */}
+          <aside className="lg:w-[284px] lg:flex-shrink-0 lg:overflow-y-auto border-t lg:border-t-0 lg:border-l border-gray-100 p-4 space-y-5">
+            <PanelGroup title="General">
+              <PanelBtn icon={IC.pencil} label="Edit Booking" onClick={() => onEdit(b)} />
+              <PanelBtn icon={IC.note} label="Add Internal Note" onClick={() => notImplemented('Add Internal Note')} />
+              <PanelBtn icon={IC.swap} label="Change Vendor" onClick={() => notImplemented('Change Vendor')} />
+              <PanelBtn icon={IC.alert} label="Open Dispute" onClick={() => notImplemented('Open Dispute')} />
+            </PanelGroup>
+            <PanelGroup title="Financial">
+              <PanelBtn icon={IC.refresh} label="Issue Refund" onClick={() => notImplemented('Issue Refund')} />
+              <PanelBtn icon={IC.wallet} label="Force Refund" onClick={() => notImplemented('Force Refund')} />
+            </PanelGroup>
+            <PanelGroup title="Meeting">
+              <PanelBtn icon={IC.link} label="Regenerate Meeting Link" onClick={() => notImplemented('Regenerate Meeting Link')} />
+              {b.meeting_link && <PanelBtn icon={IC.video} label="Open Meeting" href={b.meeting_link} />}
+            </PanelGroup>
+            <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-3">
+              <h5 className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-wider text-rose-500 mb-2">
+                <Ic d={IC.alert} size={12} />Danger Zone
+              </h5>
+              <div className="space-y-1.5">
+                <PanelBtn icon={IC.ban} label="Force Cancel" tone="danger" onClick={() => setConfirm('cancel')} />
+                <PanelBtn icon={IC.trash} label="Delete Permanently" tone="danger" onClick={() => setConfirm('delete')} />
+              </div>
+            </div>
+          </aside>
         </div>
+
+        {/* ── Confirmation overlays ── */}
+        {confirm && (
+          <div className="absolute inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setConfirm(null)} />
+            <div className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5 animate-[slideUp_.16s_ease-out]">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Ic d={confirm === 'delete' ? IC.trash : IC.ban} size={17} className="text-rose-600" /></span>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-gray-900">{confirm === 'delete' ? 'Delete booking permanently?' : 'Force cancel this booking?'}</h3>
+                  <p className="text-[12.5px] text-gray-500 mt-0.5">
+                    {confirm === 'delete'
+                      ? 'This removes the booking and cannot be undone.'
+                      : 'The booking will be marked cancelled. The customer and vendor are not auto-notified.'}
+                  </p>
+                </div>
+              </div>
+              {confirm === 'delete' && (
+                <label className="block mb-3">
+                  <span className="text-[12px] text-gray-500">Type <code className="font-mono font-semibold text-gray-700">{requiredId}</code> to confirm</span>
+                  <input autoFocus value={delText} onChange={e => setDelText(e.target.value)}
+                    className="mt-1.5 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-rose-400/30 focus:border-rose-400 outline-none"
+                    placeholder={requiredId} />
+                </label>
+              )}
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setConfirm(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
+                <button
+                  disabled={confirm === 'delete' && delText.trim().toUpperCase() !== requiredId}
+                  onClick={() => { const c = confirm; setConfirm(null); if (c === 'delete') onDelete(); else onCancel(); }}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  {confirm === 'delete' ? 'Delete Forever' : 'Force Cancel'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -599,13 +977,12 @@ const AdminBookings = () => {
     } catch { toast.error('Update failed'); }
   };
 
+  // Confirmation is owned by the detail modal (Danger Zone dialogs).
   const handleCancel = async (id) => {
-    if (!window.confirm('Cancel this booking?')) return;
     await handleSave(id, { status: 'cancelled' });
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Permanently delete this booking? This cannot be undone.')) return;
     try {
       await adminDeleteBooking(id);
       toast.success('Booking deleted');
@@ -615,8 +992,8 @@ const AdminBookings = () => {
   };
 
   return (
-    <div className="max-w-[1100px]">
-      <style>{`@keyframes slideUp{from{transform:translateY(12px);opacity:.6}to{transform:translateY(0);opacity:1}}`}</style>
+    <div className="max-w-[1240px]">
+      <style>{`@keyframes slideUp{from{transform:translateY(12px);opacity:.6}to{transform:translateY(0);opacity:1}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}`}</style>
 
       {/* Header */}
       <div className="mb-5">
@@ -658,9 +1035,21 @@ const AdminBookings = () => {
 
       {/* List */}
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-[88px] bg-white border border-gray-200/70 rounded-xl animate-pulse" />)}
-        </div>
+        <>
+          <div className="hidden md:block bg-white border border-gray-200/80 rounded-xl overflow-hidden divide-y divide-gray-100">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3.5 animate-pulse">
+                <div className="h-8 w-24 bg-gray-100 rounded" />
+                <div className="h-8 flex-1 bg-gray-100 rounded" />
+                <div className="h-6 w-20 bg-gray-100 rounded-full" />
+                <div className="h-6 w-16 bg-gray-100 rounded-full" />
+              </div>
+            ))}
+          </div>
+          <div className="md:hidden space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-[88px] bg-white border border-gray-200/70 rounded-xl animate-pulse" />)}
+          </div>
+        </>
       ) : pageItems.length === 0 ? (
         <div className="bg-white border border-gray-200/80 rounded-2xl py-16 px-6 text-center">
           <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
@@ -676,11 +1065,14 @@ const AdminBookings = () => {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {pageItems.map(({ b, state }) => (
-            <BookingCard key={b.id} b={b} state={state} onView={setDetail} onEdit={setEditing} />
-          ))}
-        </div>
+        <>
+          <BookingTable items={pageItems} onView={setDetail} onEdit={setEditing} />
+          <div className="md:hidden space-y-3">
+            {pageItems.map(({ b, state }) => (
+              <BookingCard key={b.id} b={b} state={state} onView={setDetail} onEdit={setEditing} />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Pagination (client-side) */}
