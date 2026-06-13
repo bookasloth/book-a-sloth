@@ -124,6 +124,16 @@ export const adminResetStaffPass   = (id, data)    => API.post(`/admin/staff/${i
 export const adminAuditLogs    = (params)      => API.get('/admin/audit', { params });
 export const adminAuditActions = ()            => API.get('/admin/audit/actions');
 
+// ── Financial ledger (P1) ──
+export const adminFinanceSummary      = ()            => API.get('/admin/finance/summary');
+export const adminFinanceAccounts     = ()            => API.get('/admin/finance/accounts');
+export const adminFinanceJournals     = (params)      => API.get('/admin/finance/journals', { params });
+export const adminFinanceJournal      = (id)          => API.get(`/admin/finance/journals/${id}`);
+export const adminFinanceLedger       = (accountId, params) => API.get(`/admin/finance/ledger/${accountId}`, { params });
+export const adminFinanceAdjustment   = (data)        => API.post('/admin/finance/adjustment', data);
+export const adminFinanceReversal     = (data)        => API.post('/admin/finance/reversal', data);
+export const adminFinanceBankTransfer = (data)        => API.post('/admin/finance/bank-transfer', data);
+
 // ── Vendor Onboarding (10-step flow) ──────────────────────────
 export const checkSlugAvailable   = (slug)             => API.post('/onboarding/check-slug', { slug });
 export const sendOnboardingOtp    = (data)             => API.post('/onboarding/send-otp', data);

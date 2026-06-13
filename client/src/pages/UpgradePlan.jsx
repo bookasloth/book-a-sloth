@@ -221,6 +221,11 @@ const UpgradePlan = () => {
                       </span>
                     </p>
                   )}
+                  {plan.price > 0 && (
+                    <p className={`text-[11px] mt-1 ${isPro ? "text-gray-400" : "text-gray-500"}`}>
+                      + 18% GST · ₹{Math.round(plan.price * 1.18).toLocaleString("en-IN")} billed
+                    </p>
+                  )}
                 </div>
               </div>
 

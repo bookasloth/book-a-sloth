@@ -140,6 +140,9 @@ const NAV = [
     { label:'Staff & Roles', icon:'users2', to:'/admin/staff', perm:'staff.manage' },
   ]},
   { id:'finance', section:'FINANCE', items:[
+    { label:'Dashboard',         icon:'trendUp', to:'/admin/finance', exact:true, perm:'finance.view' },
+    { label:'Journal',   icon:'file',    to:'/admin/finance/journal', perm:'finance.view' },
+    { label:'Ledger',    icon:'layers',  to:'/admin/finance/ledger',  perm:'finance.view' },
     { label:'Transactions',      icon:'dollar',  to:'/admin/finance/transactions', perm:'finance.view' },
     { label:'Provider Earnings', icon:'wallet',  to:'/admin/finance/earnings', perm:'finance.view' },
     { label:'Refunds',           icon:'refresh', to:'/admin/finance/refunds', perm:'finance.refund' },

@@ -141,4 +141,15 @@ router.get('/campaigns/:id',               requireAdmin('campaigns.view'),   cam
 router.put('/campaigns/:id',               requireAdmin('campaigns.manage'), campaigns.updateCampaign);
 router.post('/campaigns/:id/launch',       requireAdmin('campaigns.manage'), campaigns.launchCampaign);
 
+// ── Financial ledger (P1) ──────────────────────────────────────
+const finance = require('../controllers/financeAdminController');
+router.get('/finance/summary',            requireAdmin('finance.view'),   finance.getSummary);
+router.get('/finance/accounts',           requireAdmin('finance.view'),   finance.getAccounts);
+router.get('/finance/journals',           requireAdmin('finance.view'),   finance.listJournals);
+router.get('/finance/journals/:id',       requireAdmin('finance.view'),   finance.getJournal);
+router.get('/finance/ledger/:accountId',  requireAdmin('finance.view'),   finance.getLedger);
+router.post('/finance/adjustment',        requireAdmin('finance.manage'), finance.postAdjustment);
+router.post('/finance/reversal',          requireAdmin('finance.manage'), finance.postReversal);
+router.post('/finance/bank-transfer',     requireAdmin('finance.manage'), finance.postBankTransfer);
+
 module.exports = router;
