@@ -93,9 +93,11 @@ const STATUS = {
 };
 const statusKey = (b) => (b && STATUS[b.status]) ? b.status : 'pending';
 
+// Customer→platform payment (NOT vendor payout). Labels say money direction
+// ("Received") so "Unpaid" can't be misread as "vendor not paid out".
 const PAYMENT = {
-  paid:     { label: 'Paid',     badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15' },
-  unpaid:   { label: 'Unpaid',   badge: 'bg-gray-100 text-gray-500 ring-1 ring-gray-400/20' },
+  paid:     { label: 'Received', badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15' },
+  unpaid:   { label: 'Pending',  badge: 'bg-gray-100 text-gray-500 ring-1 ring-gray-400/20' },
   refunded: { label: 'Refunded', badge: 'bg-purple-50 text-purple-700 ring-1 ring-purple-600/15' },
 };
 
@@ -299,7 +301,7 @@ const BookingTable = ({ items, onView, onEdit, onDelete }) => (
           <TH>Customer</TH>
           <TH>Date &amp; Time</TH>
           <TH right>Amount</TH>
-          <TH>Payment</TH>
+          <TH>Customer Payment</TH>
           <TH right>Revenue</TH>
           <th className="px-3" aria-hidden="true" />
         </tr>
@@ -861,7 +863,7 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
                       <Field label="Vendor Earnings" value={vendorEarnings != null ? inr(vendorEarnings) : '—'} />
                       <Field label="Payment Method" value={b.payment_id ? 'Razorpay' : '—'} />
                       <div className="flex items-center justify-between gap-4 py-[5px]">
-                        <span className="text-[12px] text-gray-400">Payment Status</span>
+                        <span className="text-[12px] text-gray-400">Customer Payment</span>
                         <PaymentPill status={b.payment_status} />
                       </div>
                     </Card>
@@ -1003,9 +1005,9 @@ const EditModal = ({ b, onClose, onSave }) => {
             </select>
           </label>
           <label className="block">
-            <span className="text-[12px] font-medium text-gray-500 mb-1.5 block">Payment Status</span>
+            <span className="text-[12px] font-medium text-gray-500 mb-1.5 block">Customer Payment</span>
             <select value={payment} onChange={e => setPayment(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FE5100]/30 focus:border-[#FE5100] outline-none">
-              {['unpaid', 'paid', 'refunded'].map(s => <option key={s} value={s}>{s}</option>)}
+              {[['unpaid', 'Pending'], ['paid', 'Received'], ['refunded', 'Refunded']].map(([v, lbl]) => <option key={v} value={v}>{lbl}</option>)}
             </select>
           </label>
         </div>
