@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -23,15 +23,17 @@ const GoogleIcon = () => (
 // /login-as-vendor — Google-only vendor login. Existing vendors who signed up
 // with email/password before the Google migration can still use /login.
 const VendorLogin = () => {
-  const { startVendorGoogleAuth } = useAuth();
+  const { startVendorGoogleAuth, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (user) { navigate('/dashboard', { replace: true }); return; }
     const err = searchParams.get('error');
     if (err) toast.error(ERROR_COPY[err] || 'Sign-in failed. Please try again.');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const handleGoogle = async () => {
     setLoading(true);

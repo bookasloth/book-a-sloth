@@ -898,8 +898,12 @@ const ServiceBooking = () => {
                             <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" />
                             </svg>
-                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 rounded bg-gray-900 text-white text-xs p-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
-                              This helps us to keep your booking authenticated and send you timely reminders.
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 rounded-2xl bg-gray-950 text-white text-xs p-4 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-10 shadow-2xl shadow-black/40 border border-white/10 backdrop-blur-sm">
+                              <span className="flex items-start gap-2.5">
+                                <svg className="w-3.5 h-3.5 mt-px shrink-0 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1a9 9 0 100 18A9 9 0 0010 1zm.75 13.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V5.5h1.5V11.5z"/></svg>
+                                <span className="leading-relaxed text-white/85 tracking-wide">This fee secures your slot, handles payments, sends reminders, and adds the session to your calendar.</span>
+                              </span>
+                              <span className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-gray-950"></span>
                             </span>
                           </span>
                         </span>
