@@ -93,7 +93,7 @@ const PATH_LABELS = {
   support:'Support', tickets:'Tickets', disputes:'Disputes', reviews:'Reviews',
   platform:'Platform', appearance:'Appearance', menu:'Menu Builder',
   footer:'Footer Builder', communication:'Communication', campaigns:'Campaigns', notifications:'Notification Settings', badges:'Badges',
-  upcoming:'Upcoming', completed:'Completed', cancelled:'Cancelled',
+  upcoming:'Upcoming', live:'Live', completed:'Completed', cancelled:'Cancelled',
   categories:'Categories', featured:'Featured',
   staff:'Staff & Roles', system:'System', audit:'Audit Logs',
 };
@@ -111,6 +111,7 @@ const NAV = [
     { label:'Bookings', icon:'calCheck', groupId:'op-bookings', perm:'bookings.view', children:[
       { label:'All',       to:'/admin/bookings' },
       { label:'Upcoming',  to:'/admin/bookings/upcoming' },
+      { label:'Live',      to:'/admin/bookings/live' },
       { label:'Completed', to:'/admin/bookings/completed' },
       { label:'Cancelled', to:'/admin/bookings/cancelled' },
       { label:'Disputes',  to:'/admin/bookings/disputes' },
