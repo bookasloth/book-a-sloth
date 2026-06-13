@@ -1,0 +1,70 @@
+name: CI
+
+# Runs on every push and PR to main. Gate for "does it build + do tests pass".
+# Deploys happen separately: Render and Vercel watch the repo and auto-deploy on
+# push to main (see DEPLOYMENT.md). This workflow is the safety net before that.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel an in-progress run if a newer commit is pushed to the same branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  client:
+    name: Client (build + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          # Build needs VITE_ vars present (values don't matter for a build check).
+          VITE_API_URL: http://localhost:5000
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-placeholder
+          VITE_RAZORPAY_KEY_ID: ci-placeholder
+      - name: Test
+        run: npm test
+
+  server:
+    name: Server (unit tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - name: Unit tests
+        # Only unit tests in CI. Integration tests hit live Supabase/SMTP and
+        # need real credentials — run those manually/locally, not in CI.
+        run: npm run test:unit
+        env:
+          NODE_ENV: test
+          # Dummy secrets so tests that read process.env don't crash. These are
+          # NOT real and grant nothing.
+          SUPER_ADMIN_JWT_SECRET: ci-test-secret-not-real
+          OAUTH_STATE_SECRET: ci-test-secret-not-real
+          GOOGLE_TOKEN_KEY: ci-test-32-byte-key-000000000000
+          CLIENT_URL: http://localhost:5173
+          AISENSY_WEBHOOK_SECRET: ci-test-secret-not-real

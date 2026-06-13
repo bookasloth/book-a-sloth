@@ -85,6 +85,14 @@ app.use('/api/vendors',     require('./routes/badgePublicRoutes'));
 app.use('/api/notifications', require('./routes/notificationWebhookRoutes')); // public AiSensy webhook (secret-gated)
 app.get('/api/plans',       require('./controllers/planAdminController').publicPlans);
 
+// Health check — used by Render's health probe and UptimeRobot. Mounted outside
+// /api so it bypasses the API rate limiter and maintenance-mode 503s, staying
+// reachable even while the app is in maintenance. Intentionally does NOT touch
+// the DB so a slow Supabase round-trip can't flap the platform health check.
+app.get('/health', (req, res) =>
+  res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() })
+);
+
 app.get('/', (req, res) => res.json({ message: 'Book A Sloth API v1.4 running' }));
 
 app.use(require('./middleware/errorMiddleware'));
