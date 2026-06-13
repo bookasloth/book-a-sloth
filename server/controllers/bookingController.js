@@ -288,6 +288,7 @@ const createBooking = async (req, res) => {
       customer_total:      pricing.customerTotal,  // service + fee + GST (v2.2)
       gst_rate:            gstRate,                // snapshot of rate used (v2.2)
       razorpay_fee_actual: 0,                      // set at payment capture (v2.2)
+      razorpay_tax_actual: 0,                      // set at payment capture (v2.8)
       commission_applied:  commission,    // requires v1.7 migration
       commission_gst:        pricing.commissionGst,   // v2.8: 18% GST on commission, vendor-borne
       commission_percentage: commissionPct,           // v2.8 snapshot
@@ -309,10 +310,10 @@ const createBooking = async (req, res) => {
       bookingResult.error &&
       /Could not find the|column.*does not exist/i.test(bookingResult.error.message)
     ) {
-      // Drop v1.7 + v2.2 + v2.5 columns if the migrations haven't been applied yet
+      // Drop v1.7 + v2.2 + v2.5 + v2.8 columns if the migrations haven't been applied yet
       const {
         commission_applied: _c, platform_fee_gst: _g, customer_total: _t,
-        gst_rate: _r, razorpay_fee_actual: _f, end_at: _e,
+        gst_rate: _r, razorpay_fee_actual: _f, razorpay_tax_actual: _rt, end_at: _e,
         commission_gst: _cg, commission_percentage: _cp, vendor_plan_type: _vp,
         ...payloadCore
       } = bookingPayload;

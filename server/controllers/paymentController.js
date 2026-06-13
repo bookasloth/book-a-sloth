@@ -5,7 +5,7 @@ const { supabaseAdmin } = require("../config/supabase");
 const { securityLog, auditLog } = require("../utils/logger");
 const sendEmail = require("../utils/sendEmail");
 const NotificationEngine = require("../services/notificationEngine");
-const { computeBreakdown, calculateVendorPayout } = require("../lib/pricingEngine");
+const { computeBreakdown, calculateVendorPayout, calculatePlatformFee } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
 const platformConfig = require("../services/platformConfig");
 const { createCalendarEvent } = require("../config/google");
@@ -141,7 +141,7 @@ const verifyPayment = async (req, res) => {
     // Verify the order_id matches what we stored (replay attack prevention)
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("razorpay_order_id, payment_status, commission_applied, meeting_link, scheduled_at, guest_name, guest_email, notes, host_id, service_id, services(price, title, duration, meeting_mode)")
+      .select("razorpay_order_id, payment_status, commission_applied, commission_gst, platform_fee_amount, platform_fee_gst, customer_total, meeting_link, scheduled_at, guest_name, guest_email, notes, host_id, service_id, services(price, title, duration, meeting_mode)")
       .eq("id", booking_id).single();
 
     if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -156,37 +156,66 @@ const verifyPayment = async (req, res) => {
       return res.status(400).json({ message: "Payment verification failed — invalid signature." });
     }
 
-    // Record the ACTUAL Razorpay fee (vendor-borne) and finalise the payout.
-    // Razorpay returns fee + tax in paise on the captured payment.
-    let razorpayFeeActual = 0;
+    // Record the ACTUAL Razorpay fee + tax (vendor-borne) and finalise the payout.
+    // Razorpay's `fee` (paise) INCLUDES `tax`; we store them split (PRD §19).
+    let razorpayFeeTotal = 0, razorpayTax = 0;
     try {
       const payment = await razorpay.payments.fetch(razorpay_payment_id);
-      if (payment && payment.fee != null) razorpayFeeActual = Number(payment.fee) / 100;
+      if (payment && payment.fee != null) razorpayFeeTotal = Number(payment.fee) / 100;
+      if (payment && payment.tax != null) razorpayTax = Number(payment.tax) / 100;
     } catch (feeErr) {
       console.error("Razorpay fee fetch failed (payout uses 0 until reconciled):", feeErr.message);
     }
-    const servicePrice = booking.services?.price || 0;
-    const commission   = Number(booking.commission_applied) || 0;
-    // TODO(Task 6): pass commissionGst — v2-shape interim call (fee binds to the
-    // commissionGst slot; numerically equal to v2 payout, omits commission GST)
-    const finalPayout  = calculateVendorPayout(servicePrice, commission, razorpayFeeActual);
+    const razorpayFeeExclTax = Math.max(0, Math.round((razorpayFeeTotal - razorpayTax) * 100) / 100);
+    const servicePrice  = booking.services?.price || 0;
+    const commission    = Number(booking.commission_applied) || 0;
+    const commissionGst = Number(booking.commission_gst) || 0;
+    const finalPayout   = calculateVendorPayout(servicePrice, commission, commissionGst, razorpayFeeTotal);
 
+    const paidAt = new Date().toISOString();
     const fullUpdate = {
       payment_status: "paid", status: "confirmed", razorpay_payment_id,
-      razorpay_fee_actual: razorpayFeeActual, vendor_amount: finalPayout,
-      updated_at: new Date().toISOString(),
+      razorpay_fee_actual: razorpayFeeExclTax, razorpay_tax_actual: razorpayTax,
+      vendor_amount: finalPayout, paid_at: paidAt,
+      updated_at: paidAt,
     };
     let { data: updated, error } = await supabaseAdmin
       .from("bookings").update(fullUpdate).eq("id", booking_id).select().single();
 
-    // Legacy DB without the v2.2 column: retry without the fee field
+    // Legacy DB without the v2.2/v2.8 columns: retry without the new fields
     if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
-      const { razorpay_fee_actual: _drop, ...coreUpdate } = fullUpdate;
+      const { razorpay_fee_actual: _drop, razorpay_tax_actual: _drop2, paid_at: _drop3, ...coreUpdate } = fullUpdate;
       ({ data: updated, error } = await supabaseAdmin
         .from("bookings").update(coreUpdate).eq("id", booking_id).select().single());
     }
 
     if (error) return res.status(500).json({ message: error.message });
+
+    // ── Ledger: post ORDER_PAYMENT (non-fatal — reconciler self-heals) ──
+    try {
+      const { orderPaymentEntry } = require("../services/ledger/journalTemplates");
+      const { postSafe } = require("../services/ledger/postingService");
+      await postSafe({
+        sourceType: "ORDER_PAYMENT",
+        sourceId: booking_id,
+        journalDate: paidAt.slice(0, 10),
+        template: orderPaymentEntry({
+          booking_id,
+          host_id: booking.host_id,
+          service_price: servicePrice,
+          platform_fee_amount: Number(booking.platform_fee_amount) || 0,
+          platform_fee_gst: Number(booking.platform_fee_gst) || 0,
+          commission_applied: commission,
+          commission_gst: commissionGst,
+          razorpay_fee_actual: razorpayFeeExclTax,
+          razorpay_tax_actual: razorpayTax,
+          vendor_amount: finalPayout,
+          customer_total: Number(booking.customer_total) || 0,
+        }),
+      });
+    } catch (ledgerErr) {
+      console.error("Order ledger posting error (non-fatal):", ledgerErr.message);
+    }
 
     // Payment captured → now create the Google Calendar event (deferred from
     // booking time for paid services). A calendar failure must NOT fail an
