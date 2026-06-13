@@ -160,13 +160,15 @@ const createBooking = async (req, res) => {
     const {
       service_id,
       host_id,
-      guest_id,
       guest_name,
       guest_email,
       guest_phone,
       scheduled_at,
       notes,
     } = req.body;
+    // SECURITY: guest_id is NEVER taken from the request body (that allowed
+    // attributing a booking to any victim's account — IDOR). It is resolved
+    // below from the authenticated session or the booking email.
 
     const { data: service } = await supabaseAdmin
       .from("services")
@@ -181,6 +183,23 @@ const createBooking = async (req, res) => {
       .eq("id", host_id)
       .single();
     if (!host) return res.status(404).json({ message: "Host not found" });
+
+    // Resolve guest_id server-side (never from the body).
+    //  - Logged-in user (optionalProtect set req.user) → their own id.
+    //  - Anonymous OTP guest → the profile that owns the booking email
+    //    (created during OTP verification). You can only attach a booking to a
+    //    profile whose email you are booking with — not to an arbitrary id.
+    let resolvedGuestId = null;
+    if (req.user?.id) {
+      resolvedGuestId = req.user.id;
+    } else if (guest_email) {
+      const { data: guestProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("email", String(guest_email).toLowerCase().trim())
+        .maybeSingle();
+      resolvedGuestId = guestProfile?.id || null;
+    }
 
     const { data: avail } = await supabaseAdmin
       .from("availability")
@@ -274,7 +293,7 @@ const createBooking = async (req, res) => {
     const bookingPayload = {
       service_id,
       host_id,
-      guest_id: guest_id || null,
+      guest_id: resolvedGuestId,
       guest_name,
       guest_email,
       guest_phone,
@@ -359,7 +378,7 @@ const createBooking = async (req, res) => {
             email: guest_email, phone: guest_phone, name: guest_name,
             templateParams: customerParams(ctx),
             emailData, emailUser: { name: guest_name, email: guest_email },
-            recipientUserId: guest_id || null, bookingId: booking.id,
+            recipientUserId: resolvedGuestId, bookingId: booking.id,
           },
         });
         await NotificationEngine.send({
