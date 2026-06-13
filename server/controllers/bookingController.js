@@ -503,12 +503,31 @@ const completeBooking = async (req, res) => {
       return res.status(403).json({ message: "Only the host can mark a booking as completed" });
     }
 
-    const { data, error } = await supabaseAdmin
+    const nowIso = new Date().toISOString();
+    const completionUpdate = {
+      status: "completed",
+      completed_at: nowIso,
+      revenue_recognized_at: nowIso,            // PRD Rule 2: commission recognised at completion
+      revenue_recognition_status: "recognized",
+      settlement_status: "eligible_for_settlement",
+      updated_at: nowIso,
+    };
+    let { data, error } = await supabaseAdmin
       .from("bookings")
-      .update({ status: "completed", updated_at: new Date().toISOString() })
+      .update(completionUpdate)
       .eq("id", req.params.id)
       .select()
       .single();
+
+    // Legacy DB without v2.8 columns: retry with the original minimal update
+    if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+      ({ data, error } = await supabaseAdmin
+        .from("bookings")
+        .update({ status: "completed", updated_at: nowIso })
+        .eq("id", req.params.id)
+        .select()
+        .single());
+    }
     if (error) return res.status(500).json({ message: error.message });
 
     try {
