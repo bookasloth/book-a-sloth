@@ -1,4 +1,5 @@
 const { supabaseAdmin, signInWithPassword, mintSessionForEmail } = require("../config/supabase");
+const { safeError } = require('../utils/httpError');
 const {
   getAuthUrl,
   getTokensFromCode,
@@ -187,7 +188,7 @@ const registerVendor = async (req, res) => {
 
     res.status(201).json(serializeProfile(profile, signInData.session));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -451,7 +452,7 @@ const registerUser = async (req, res) => {
 
     res.status(201).json(serializeProfile(profile, signInData.session));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -497,7 +498,7 @@ const sendOtp = async (req, res) => {
     res.json({ message: "Verification code sent" });
   } catch (error) {
     console.error("send-otp error:", error);
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -541,7 +542,7 @@ const verifyOtp = async (req, res) => {
     });
   } catch (error) {
     console.error("verify-otp error:", error);
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -566,7 +567,7 @@ const login = async (req, res) => {
 
     res.json(serializeProfile(profile, data.session));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -589,7 +590,7 @@ const getMe = async (req, res) => {
     // Return the same serialized shape as login/register so the client can merge it cleanly
     res.json(serializeProfile(profile, null));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -779,7 +780,7 @@ const resetPassword = async (req, res) => {
     res.json({ message: "Password reset successful. You can now log in." });
   } catch (error) {
     console.error("reset-password error:", error);
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 

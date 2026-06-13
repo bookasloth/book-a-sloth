@@ -95,7 +95,8 @@ describe('GET /api/admin/users/:id', () => {
       select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
       single: jest.fn().mockResolvedValue({ data: null, error: { message: 'not found' } }),
     });
-    const res = await request(app).get('/api/admin/users/ghost-id').set(adminHeaders());
+    // valid UUID that doesn't exist → genuine not-found path (non-UUID ids are 400)
+    const res = await request(app).get('/api/admin/users/00000000-0000-0000-0000-000000000000').set(adminHeaders());
     expect(res.status).toBe(404);
   });
 });
@@ -166,7 +167,8 @@ describe('GET /api/admin/services', () => {
   test('returns all services for admin', async () => {
     supabaseAdmin.from.mockReturnValue({
       select: jest.fn().mockReturnThis(),
-      order:  jest.fn().mockResolvedValue({ data: [SERVICE], error: null }),
+      order:  jest.fn().mockReturnThis(),
+      limit:  jest.fn().mockResolvedValue({ data: [SERVICE], error: null }),
     });
     const res = await request(app).get('/api/admin/services').set(adminHeaders());
     expect(res.status).toBe(200);

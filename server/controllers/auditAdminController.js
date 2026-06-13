@@ -7,6 +7,7 @@
  */
 
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 
 // GET /api/admin/audit?admin_id=&action=&resource_type=&from=&to=&page=&limit=
 const listAudit = async (req, res) => {
@@ -28,11 +29,11 @@ const listAudit = async (req, res) => {
     if (req.query.to)            q = q.lte('created_at', req.query.to);
 
     const { data, count, error } = await q;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     res.json({ logs: data || [], total: count || 0, page, limit });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 
@@ -41,11 +42,11 @@ const listActions = async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('admin_audit_logs').select('action').limit(1000);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     const actions = [...new Set((data || []).map(r => r.action))].sort();
     res.json({ actions });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 

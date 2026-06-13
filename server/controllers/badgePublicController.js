@@ -8,6 +8,7 @@
  *  - Only active, non-revoked awards of non-archived badges are shown.
  */
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 
 const resolveVendor = async (username) => {
   const { data } = await supabaseAdmin
@@ -33,7 +34,7 @@ const getPublicBadges = async (req, res) => {
       .eq('badges.is_negative', false)      // query-layer filter, per spec
       .neq('badges.status', 'archived')
       .order('assigned_at', { ascending: true });
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     res.set('Cache-Control', 'public, max-age=60');
     res.json({
@@ -50,7 +51,7 @@ const getPublicBadges = async (req, res) => {
       })),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -98,7 +99,7 @@ const getPublicBadgeDetail = async (req, res) => {
       rank: count || 1,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 

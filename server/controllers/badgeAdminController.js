@@ -4,6 +4,7 @@
  * and engine trigger endpoints. All routes sit behind requireSuperAdmin.
  */
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 const badgeEngine = require('../services/badgeEngine');
 
 const slugify = (text) =>
@@ -37,7 +38,7 @@ const listBadges = async (req, res) => {
     if (status)      q = q.eq('status', status);
     if (category_id) q = q.eq('category_id', category_id);
     const { data: badges, error } = await q;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     // Live earned_count per badge (single grouped query, no N+1)
     const { data: counts } = await supabaseAdmin
@@ -49,7 +50,7 @@ const listBadges = async (req, res) => {
 
     res.json((badges || []).map((b) => ({ ...b, earned_count: countMap[b.id] || 0 })));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -64,7 +65,7 @@ const getMeta = async (req, res) => {
       operators: VALID_OPERATORS,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -78,7 +79,7 @@ const getBadge = async (req, res) => {
       .from('badge_rules').select('*').eq('badge_id', badge.id).order('group_id').order('sort_order');
     res.json({ ...badge, rules: rules || [] });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -111,7 +112,7 @@ const createBadge = async (req, res) => {
       .single();
     if (error) {
       if (/duplicate key/i.test(error.message)) return res.status(409).json({ message: 'A badge with this name already exists' });
-      return res.status(500).json({ message: error.message });
+      return safeError(res, error);
     }
 
     if (badge.badge_type === 'automatic' && rules.length) {
@@ -131,7 +132,7 @@ const createBadge = async (req, res) => {
 
     res.status(201).json(badge);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -174,7 +175,7 @@ const updateBadge = async (req, res) => {
 
     res.json(badge);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -196,7 +197,7 @@ const updateBadgeStatus = async (req, res) => {
     }
     res.json(badge);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -210,7 +211,7 @@ const previewBadge = async (req, res) => {
     const count = await badgeEngine.previewRuleSet(badge, rules || []);
     res.json({ count });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -223,7 +224,7 @@ const previewRules = async (req, res) => {
     const count = await badgeEngine.previewRuleSet({ rule_logic }, rules);
     res.json({ count });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -235,10 +236,10 @@ const getVendorBadges = async (req, res) => {
       .select('*, badges(*)')
       .eq('vendor_id', req.params.id)
       .order('assigned_at', { ascending: false });
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data || []);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -266,7 +267,7 @@ const assignBadge = async (req, res) => {
       .single();
     if (error) {
       if (/duplicate key/i.test(error.message)) return res.status(409).json({ message: 'Vendor already holds this badge' });
-      return res.status(500).json({ message: error.message });
+      return safeError(res, error);
     }
 
     // Badge unlocked email (queued, non-blocking)
@@ -288,7 +289,7 @@ const assignBadge = async (req, res) => {
 
     res.status(201).json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -310,11 +311,11 @@ const revokeBadge = async (req, res) => {
       .eq('badge_id', req.params.badgeId)
       .is('revoked_at', null)
       .select();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     if (!data || data.length === 0) return res.status(404).json({ message: 'Vendor does not hold this badge' });
     res.json({ message: 'Badge revoked', revoked: data[0] });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -325,7 +326,7 @@ const runEvaluation = async (req, res) => {
     const result = await badgeEngine.evaluate({ vendorIds });
     res.json({ message: 'Evaluation complete', ...result });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 

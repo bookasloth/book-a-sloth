@@ -6,6 +6,13 @@ dotenv.config();
 
 const app = express();
 
+// Behind a reverse proxy (Render/Heroku/Nginx) the client IP is in
+// X-Forwarded-For. Trust the first proxy hop so express-rate-limit and the
+// security middleware key on the real client IP instead of the proxy's (which
+// would otherwise lump all users into one bucket or be spoofable). Adjust the
+// hop count if more proxies sit in front.
+app.set('trust proxy', 1);
+
 // CORS: in production lock to CLIENT_URL. In dev, also accept any localhost port
 // so Vite drifting (5173 → 5174 → 5175 when ports are busy) doesn't break the
 // API with origin-mismatch failures that surface as "Could not start..." toasts.

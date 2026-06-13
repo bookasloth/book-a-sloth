@@ -1,4 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 const sendEmail = require('../utils/sendEmail');
 
 const ADMIN_ALERT_EMAIL =
@@ -44,7 +45,7 @@ const listActive = async (req, res) => {
     if (error) throw error;
     res.json(data || []);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -86,7 +87,7 @@ const suggest = async (req, res) => {
     notifyAdminOfSuggestion(category); // non-blocking
     res.status(201).json(category);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -104,7 +105,7 @@ const adminList = async (req, res) => {
     if (error) throw error;
     res.json(data || []);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -133,7 +134,7 @@ const adminCreate = async (req, res) => {
     }
     res.status(201).json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -155,7 +156,7 @@ const adminUpdate = async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -169,7 +170,7 @@ const adminDelete = async (req, res) => {
     if (error) throw error;
     res.json({ message: 'Category deleted' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 

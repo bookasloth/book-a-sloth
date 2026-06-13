@@ -19,14 +19,19 @@ const bcrypt = require('bcryptjs');
 const SESSION_TTL_SEC = 8 * 60 * 60; // 8 hours
 const BCRYPT_ROUNDS   = 10;
 
-const isProd = process.env.NODE_ENV === 'production';
+const ENV = process.env.NODE_ENV;
+const allowDevSecret = ENV === 'development' || ENV === 'test';
 
-if (isProd && !process.env.SUPER_ADMIN_JWT_SECRET) {
-  throw new Error('[ADMIN] SUPER_ADMIN_JWT_SECRET must be set in production — refusing to start.');
+// FAIL CLOSED everywhere except explicit local dev/test. This closes the gap
+// where a staging/preview deploy that simply forgot to set NODE_ENV=production
+// would otherwise sign admin sessions with the publicly-known dev fallback
+// secret, letting anyone forge a super-admin token.
+if (!allowDevSecret && !process.env.SUPER_ADMIN_JWT_SECRET) {
+  throw new Error('[ADMIN] SUPER_ADMIN_JWT_SECRET must be set (any non dev/test environment) — refusing to start.');
 }
 
-// Outside production we allow a stable dev secret so local sessions survive a
-// nodemon restart; never used when NODE_ENV=production (guarded above).
+// Stable dev secret so local sessions survive a nodemon restart; only ever
+// reached when NODE_ENV is 'development' or 'test' (guarded above).
 const JWT_SECRET = process.env.SUPER_ADMIN_JWT_SECRET || 'dev-only-insecure-admin-secret';
 
 const b64url = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
@@ -45,6 +50,14 @@ const jwtVerify = (token) => {
   const parts = (token || '').split('.');
   if (parts.length !== 3) throw new Error('Malformed token');
   const [header, body, sig] = parts;
+
+  // Pin the algorithm: reject anything that isn't an HS256 JWT before trusting
+  // the signature (defense-in-depth against alg-confusion / alg:none).
+  let head;
+  try { head = JSON.parse(Buffer.from(header, 'base64url').toString()); }
+  catch (_) { throw new Error('Malformed token header'); }
+  if (head.alg !== 'HS256' || head.typ !== 'JWT') throw new Error('Unsupported token algorithm');
+
   const expected = crypto.createHmac('sha256', JWT_SECRET).update(header + '.' + body).digest('base64url');
 
   // Constant-time compare, length-safe.

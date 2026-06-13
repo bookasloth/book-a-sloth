@@ -8,6 +8,7 @@
  */
 
 const crypto = require('crypto');
+const { safeError } = require('../utils/httpError');
 const { supabaseAdmin } = require('../config/supabase');
 const { hashPassword } = require('../services/adminAuthService');
 const { isValidRole } = require('../lib/adminPermissions');
@@ -40,9 +41,9 @@ const listRoles = async (req, res) => {
       .from('admin_roles')
       .select('key, name, description, permissions, is_system')
       .order('key', { ascending: true });
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json({ roles: data || [] });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // GET /api/admin/staff
@@ -52,9 +53,9 @@ const listStaff = async (req, res) => {
       .from('admin_users')
       .select(PUBLIC_COLUMNS)
       .order('created_at', { ascending: true });
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json({ staff: data || [] });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // GET /api/admin/staff/:id  — includes that staff member's recent audit trail
@@ -72,7 +73,7 @@ const getStaff = async (req, res) => {
       .limit(20);
 
     res.json({ staff, activity: activity || [] });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // POST /api/admin/staff   body: { email, username, name, role_key, password? }
@@ -109,7 +110,7 @@ const createStaff = async (req, res) => {
       })
       .select(PUBLIC_COLUMNS)
       .single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     await audit(req, { action: 'staff.create', resource_type: 'admin_user', resource_id: data.id,
       after: { email, username, role_key: roleKey } });
@@ -117,7 +118,7 @@ const createStaff = async (req, res) => {
     // Return the temp password ONCE so the creator can hand it over. It is never
     // stored in plaintext and never logged.
     res.status(201).json({ staff: data, temp_password: tempPassword });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // PUT /api/admin/staff/:id   body: { name?, role_key? }
@@ -141,12 +142,12 @@ const updateStaff = async (req, res) => {
 
     const { data, error } = await supabaseAdmin
       .from('admin_users').update(updates).eq('id', req.params.id).select(PUBLIC_COLUMNS).single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     await audit(req, { action: 'staff.update', resource_type: 'admin_user', resource_id: data.id,
       before: { name: before.name, role_key: before.role_key }, after: { name: data.name, role_key: data.role_key } });
     res.json({ staff: data });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // PATCH /api/admin/staff/:id/status   body: { is_active }
@@ -168,12 +169,12 @@ const setStaffActive = async (req, res) => {
       .from('admin_users')
       .update({ is_active: isActive, updated_at: new Date().toISOString() })
       .eq('id', req.params.id).select(PUBLIC_COLUMNS).single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     await audit(req, { action: isActive ? 'staff.activate' : 'staff.deactivate',
       resource_type: 'admin_user', resource_id: data.id });
     res.json({ staff: data });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // POST /api/admin/staff/:id/reset-password   body: { password? }
@@ -193,11 +194,11 @@ const resetStaffPassword = async (req, res) => {
       .update({ password_hash, must_set_password: true, failed_attempts: 0, locked_until: null,
         updated_at: new Date().toISOString() })
       .eq('id', req.params.id);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     await audit(req, { action: 'staff.reset_password', resource_type: 'admin_user', resource_id: staff.id });
     res.json({ message: 'Password reset.', temp_password: newPassword });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 module.exports = { listRoles, listStaff, getStaff, createStaff, updateStaff, setStaffActive, resetStaffPassword };

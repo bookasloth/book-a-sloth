@@ -13,8 +13,18 @@
  * and passed as ?secret= or the x-webhook-secret header.
  */
 'use strict';
+const crypto = require('crypto');
+const { safeError } = require('../utils/httpError');
 const { supabaseAdmin } = require('../config/supabase');
 const aisensy = require('../services/aisensyService');
+
+// Constant-time secret comparison with a length guard (timingSafeEqual throws
+// on unequal-length buffers).
+const secretsMatch = (provided, expected) => {
+  const a = Buffer.from(String(provided || ''));
+  const b = Buffer.from(String(expected || ''));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+};
 
 async function getSecret() {
   if (process.env.AISENSY_WEBHOOK_SECRET) return process.env.AISENSY_WEBHOOK_SECRET;
@@ -29,8 +39,11 @@ const OPT_OUT_RE = /\b(stop|unsubscribe|opt[\s-]?out)\b/i;
 const handleWebhook = async (req, res) => {
   try {
     const expected = await getSecret();
+    // FAIL CLOSED: with no secret configured the endpoint must NOT accept
+    // unauthenticated requests (which could forge opt-out events for any phone).
+    if (!expected) return res.status(503).json({ message: 'webhook not configured' });
     const provided = req.query?.secret || req.headers?.['x-webhook-secret'];
-    if (expected && provided !== expected) return res.status(401).json({ message: 'invalid secret' });
+    if (!secretsMatch(provided, expected)) return res.status(401).json({ message: 'invalid secret' });
 
     const body = req.body || {};
     const phoneRaw = body.destination || body.phone || body.from || body.mobile || body.waId || '';
@@ -48,7 +61,7 @@ const handleWebhook = async (req, res) => {
 
     // Delivery/read status: acknowledged; funnel beyond sent/failed is v2.
     return res.json({ ok: true, action: status ? 'status_ack' : 'ignored' });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 module.exports = { handleWebhook, OPT_OUT_RE };

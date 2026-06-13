@@ -4,6 +4,7 @@
  * (search), settings, and the system event list. No campaigns/newsletters.
  */
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 const communicationEngine = require('../services/email/communicationEngine');
 const { renderEmail } = communicationEngine;
 const { getProvider } = require('../services/email/providers');
@@ -31,9 +32,9 @@ const listTemplates = async (req, res) => {
     if (status)   q = q.eq('status', status);
     if (search)   q = q.ilike('name', `%${search}%`);
     const { data, error } = await q;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data || []);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── GET /api/admin/email/templates/:id ───────────────────────────
@@ -42,7 +43,7 @@ const getTemplate = async (req, res) => {
     const { data, error } = await supabaseAdmin.from('email_templates').select('*').eq('id', req.params.id).single();
     if (error || !data) return res.status(404).json({ message: 'Template not found' });
     res.json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── PUT /api/admin/email/templates/:id ───────────────────────────
@@ -56,7 +57,7 @@ const updateTemplate = async (req, res) => {
     if (error || !data) return res.status(404).json({ message: error?.message || 'Template not found' });
     communicationEngine.clearCache();
     res.json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── POST /api/admin/email/templates ──────────────────────────────
@@ -70,11 +71,11 @@ const createTemplate = async (req, res) => {
     }).select().single();
     if (error) {
       if (/duplicate key/i.test(error.message)) return res.status(409).json({ message: 'An active template already exists for this event + audience' });
-      return res.status(500).json({ message: error.message });
+      return safeError(res, error);
     }
     communicationEngine.clearCache();
     res.status(201).json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── POST /api/admin/email/templates/:id/duplicate ────────────────
@@ -86,10 +87,10 @@ const duplicateTemplate = async (req, res) => {
     const { data, error } = await supabaseAdmin.from('email_templates').insert({
       ...rest, name: `${src.name} (Copy)`, status: 'draft',  // drafts avoid the active-unique clash
     }).select().single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     communicationEngine.clearCache();
     res.status(201).json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── PATCH /api/admin/email/templates/:id/archive ─────────────────
@@ -101,7 +102,7 @@ const archiveTemplate = async (req, res) => {
     if (error || !data) return res.status(404).json({ message: 'Template not found' });
     communicationEngine.clearCache();
     res.json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── POST /api/admin/email/templates/:id/preview ──────────────────
@@ -114,7 +115,7 @@ const previewTemplate = async (req, res) => {
     const data = { ...SAMPLE, ...(req.body?.data || {}) };
     const rendered = renderEmail(tpl, { data, user: { name: data.user_name, email: data.email, username: 'asha' }, settings });
     res.json({ subject: rendered.subject, html: rendered.html, missing: rendered.missing });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── POST /api/admin/email/templates/:id/test ─────────────────────
@@ -130,7 +131,7 @@ const testTemplate = async (req, res) => {
       data: SAMPLE, user: { name: SAMPLE.user_name, email: to, username: 'asha' },
     });
     res.status(r.ok ? 200 : 502).json({ message: r.ok ? 'Test email sent' : `Send failed: ${r.error || r.reason}` });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── GET /api/admin/email/logs ────────────────────────────────────
@@ -145,10 +146,10 @@ const listLogs = async (req, res) => {
     if (status)  q = q.eq('status', status);
     if (booking) q = q.eq('booking_id', booking);
     const { data, error } = await q;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     // Don't ship full rendered HTML in the list payload
     res.json((data || []).map(({ html, ...rest }) => rest));
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── GET /api/admin/email/logs/:id ────────────────────────────────
@@ -157,7 +158,7 @@ const getLog = async (req, res) => {
     const { data, error } = await supabaseAdmin.from('email_logs').select('*').eq('id', req.params.id).single();
     if (error || !data) return res.status(404).json({ message: 'Log not found' });
     res.json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── POST /api/admin/email/logs/:id/retry ─────────────────────────
@@ -169,7 +170,7 @@ const retryLog = async (req, res) => {
       .eq('id', req.params.id).select().single();
     if (error || !data) return res.status(404).json({ message: 'Log not found' });
     res.json({ message: 'Re-queued for delivery', log: { id: data.id, status: data.status } });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── GET /api/admin/email/settings ────────────────────────────────
@@ -177,7 +178,7 @@ const getSettings = async (req, res) => {
   try {
     const { data } = await supabaseAdmin.from('email_settings').select('*').eq('id', 1).maybeSingle();
     res.json(data || {});
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── PUT /api/admin/email/settings ────────────────────────────────
@@ -187,10 +188,10 @@ const updateSettings = async (req, res) => {
     const updates = { id: 1, updated_at: new Date().toISOString() };
     for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
     const { data, error } = await supabaseAdmin.from('email_settings').upsert(updates, { onConflict: 'id' }).select().single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     communicationEngine.clearCache();
     res.json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── GET /api/admin/email/events ──────────────────────────────────
@@ -206,7 +207,7 @@ const listEvents = async (req, res) => {
       event_key, templates, has_active: templates.some((t) => t.status === 'active'),
     })).sort((a, b) => a.event_key.localeCompare(b.event_key));
     res.json({ categories: CATEGORIES, events });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── POST /api/admin/email/test-provider ──────────────────────────
@@ -226,7 +227,7 @@ const testProvider = async (req, res) => {
     });
     return res.status(r.success ? 200 : 502)
       .json({ message: r.success ? `Test email sent via ${provider.name}` : `Send failed: ${r.error}`, provider: provider.name });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 module.exports = {

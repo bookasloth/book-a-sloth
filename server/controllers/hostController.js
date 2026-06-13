@@ -1,4 +1,6 @@
 const { supabaseAdmin } = require("../config/supabase");
+const { safeError } = require('../utils/httpError');
+const { sanitizeLikeTerm } = require("../utils/searchSanitize");
 
 // ??? Profile slug helpers ????????????????????????????????????????????????????
 const slugifyUsername = (text) =>
@@ -130,7 +132,7 @@ const getHostProfile = async (req, res) => {
 
     res.json({ host, services: services || [], availability });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -230,10 +232,10 @@ const updateProfile = async (req, res) => {
         .single();
     }
 
-    if (result.error) return res.status(500).json({ message: result.error.message });
+    if (result.error) return safeError(res, result.error);
     res.json(result.data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -267,10 +269,10 @@ const createService = async (req, res) => {
 
     const { data, error } = await insertServiceSafe(payload);
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.status(201).json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -308,10 +310,10 @@ const updateService = async (req, res) => {
       req.user.id,
     );
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -324,10 +326,10 @@ const deleteService = async (req, res) => {
       .eq("id", req.params.id)
       .eq("host_id", req.user.id);
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json({ message: "Service deleted" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -350,10 +352,10 @@ const getMyServices = async (req, res) => {
     }
     const { data, error } = result;
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -380,10 +382,10 @@ const setAvailability = async (req, res) => {
       .select()
       .single();
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -419,7 +421,7 @@ const getServiceBySlug = async (req, res) => {
 
     res.json({ host, service, availability });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -429,7 +431,9 @@ const duplicateSearchVendors = async (req, res) => {
     const { q = "" } = req.query;
     if (!q.trim()) return res.json({ vendors: [], services: [] });
 
-    const term = `%${q.trim()}%`;
+    const safe = sanitizeLikeTerm(q);
+    if (!safe) return res.json({ vendors: [], services: [] });
+    const term = `%${safe}%`;
 
     // Search vendor profiles
     const { data: vendors } = await supabaseAdmin
@@ -455,7 +459,7 @@ const duplicateSearchVendors = async (req, res) => {
 
     res.json({ vendors: vendors || [], services: services || [] });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -468,10 +472,10 @@ const getAvailability = async (req, res) => {
       .eq("host_id", req.user.id)
       .single();
     if (error && error.code !== "PGRST116")
-      return res.status(500).json({ message: error.message });
+      return safeError(res, error);
     res.json(data || null);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -482,7 +486,9 @@ const searchVendors = async (req, res) => {
   try {
     const { q = "" } = req.query;
     if (!q.trim()) return res.json({ vendors: [], services: [] });
-    const term = `%${q.trim()}%`;
+    const safe = sanitizeLikeTerm(q);
+    if (!safe) return res.json({ vendors: [], services: [] });
+    const term = `%${safe}%`;
 
     const { data: vendors } = await supabaseAdmin
       .from("profiles")
@@ -506,7 +512,7 @@ const searchVendors = async (req, res) => {
 
     res.json({ vendors: vendors || [], services: services || [] });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 

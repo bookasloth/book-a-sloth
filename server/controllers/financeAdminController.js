@@ -7,6 +7,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const { safeError } = require('../utils/httpError');
 const { supabaseAdmin } = require('../config/supabase');
 const { audit } = require('../services/auditService');
 const { adjustmentEntry, reversalEntry, bankTransferEntry } = require('../services/ledger/journalTemplates');
@@ -21,7 +22,7 @@ const getSummary = async (req, res) => {
     const { data: balanceRows, error } = await supabaseAdmin
       .from('account_balances')
       .select('balance, chart_of_accounts(code, name, type)');
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     const balances = {};
     for (const row of balanceRows || []) {
@@ -78,7 +79,7 @@ const getSummary = async (req, res) => {
       },
     });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 
@@ -89,10 +90,10 @@ const getAccounts = async (req, res) => {
       .from('chart_of_accounts')
       .select('id, code, name, type, active, account_balances(balance)')
       .order('code');
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json({ accounts: data || [] });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 
@@ -109,10 +110,10 @@ const listJournals = async (req, res) => {
     if (req.query.from) q = q.gte('journal_date', req.query.from);
     if (req.query.to) q = q.lte('journal_date', req.query.to);
     const { data, error, count } = await q;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json({ journals: data || [], total: count || 0, page, limit: PAGE_LIMIT });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 
@@ -129,7 +130,7 @@ const getJournal = async (req, res) => {
       .order('created_at');
     res.json({ entry, lines: lines || [] });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 
@@ -143,10 +144,10 @@ const getLedger = async (req, res) => {
       .eq('account_id', req.params.accountId)
       .order('created_at', { ascending: false })
       .range((page - 1) * PAGE_LIMIT, page * PAGE_LIMIT - 1);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json({ entries: data || [], total: count || 0, page, limit: PAGE_LIMIT });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 
@@ -184,7 +185,7 @@ const postAdjustment = async (req, res) => {
     });
     res.json({ id: entryId });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 
@@ -218,7 +219,7 @@ const postReversal = async (req, res) => {
     });
     res.json({ id: entryId });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 
@@ -241,7 +242,7 @@ const postBankTransfer = async (req, res) => {
     });
     res.json({ id: entryId });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 

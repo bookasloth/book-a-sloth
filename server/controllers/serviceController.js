@@ -4,6 +4,7 @@
  * Does NOT touch existing bookingController / authController / paymentController.
  */
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 
 // ─── Slug helpers ────────────────────────────────────────────────────────────
 
@@ -168,10 +169,10 @@ const createService = async (req, res) => {
     p.is_active = true;
 
     const { data, error } = await insertSafe(p);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.status(201).json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -186,10 +187,10 @@ const getMyServices = async (req, res) => {
       data  = r.data;
       error = r.error;
     }
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data || []);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -204,7 +205,7 @@ const getServiceById = async (req, res) => {
     if (r.error || !r.data) return res.status(404).json({ message: 'Service not found' });
     res.json(r.data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -222,10 +223,10 @@ const updateService = async (req, res) => {
     }
 
     const { data, error } = await updateSafe(req.params.id, req.user.id, updates);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -238,10 +239,10 @@ const deleteService = async (req, res) => {
       .delete()
       .eq('id', req.params.id)
       .eq('host_id', req.user.id);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json({ message: 'Service deleted' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -264,10 +265,10 @@ const duplicateService = async (req, res) => {
 
     const payload = { ...rest, title: newTitle, slug: newSlug, is_active: false, host_id: req.user.id };
     const { data, error } = await insertSafe(payload);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.status(201).json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -283,10 +284,10 @@ const toggleService = async (req, res) => {
       .update({ is_active: !svc.is_active, updated_at: new Date().toISOString() })
       .eq('id', req.params.id)
       .eq('host_id', req.user.id);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json({ is_active: !svc.is_active });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -357,7 +358,7 @@ const getPublicServiceBySlug = async (req, res) => {
       ratingBreakdown,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -437,7 +438,7 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
       ratingBreakdown,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 

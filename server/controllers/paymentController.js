@@ -1,5 +1,6 @@
 // Razorpay payment controller — bookings + product purchases + plan subscriptions
 const Razorpay = require("razorpay");
+const { safeError } = require('../utils/httpError');
 const crypto = require("crypto");
 const { supabaseAdmin } = require("../config/supabase");
 const { securityLog, auditLog } = require("../utils/logger");
@@ -204,7 +205,7 @@ const verifyPayment = async (req, res) => {
     if (error && error.code === "PGRST116") {
       return res.status(400).json({ message: "Already paid" });
     }
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     // ── Ledger: post ORDER_PAYMENT (non-fatal — payment already recorded;
     // the reconciler cron retries missed posts). Pre-v2.2 rows have no
@@ -365,7 +366,7 @@ const subscribePlan = async (req, res) => {
       plan_price: breakdown.planPrice, gst_amount: breakdown.gstAmount, total: breakdown.totalCharged,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -399,7 +400,7 @@ const verifySubscription = async (req, res) => {
       .update({ plan, plan_expires_at: expiresAt.toISOString(), plan_updated_at: new Date().toISOString(), plan_activated_at: new Date().toISOString() })
       .eq("id", req.user.id).select("id, name, email, plan, plan_expires_at").single();
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     await supabaseAdmin.from("plan_purchases").insert({
       vendor_id: req.user.id, plan, amount_paid: await getPlanPricePaise(plan),
@@ -479,7 +480,7 @@ const verifySubscription = async (req, res) => {
 
     res.json({ message: `Successfully upgraded to ${plan}!`, profile });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -503,15 +504,18 @@ const createProductOrder = async (req, res) => {
     res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency,
       product_price: product.price, platform_fee: productFee });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
 // ── POST /api/payment/verify-product ────────────────────────
 const verifyProductPayment = async (req, res) => {
   try {
-    const { product_id, buyer_name, buyer_email, buyer_phone, buyer_id,
+    const { product_id, buyer_name, buyer_phone,
       razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+    // buyer_id is never trusted from the body — derive from the session if any.
+    const buyerId = req.user?.id || null;
+    const buyerEmail = String(req.body.buyer_email || '').toLowerCase().trim();
 
     if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)) {
       securityLog('PRODUCT_PAYMENT_SIGNATURE_INVALID', { product_id, ip: req.ip });
@@ -523,27 +527,52 @@ const verifyProductPayment = async (req, res) => {
     if (!product) return res.status(404).json({ message: "Product not found" });
 
     const productFee = calculatePlatformFee(product.price);
+
+    // SECURITY: the signature only proves the order/payment pair is genuine —
+    // not WHAT it was for. Fetch the Razorpay order and assert it was created
+    // for THIS product and the correct amount; otherwise a buyer could pay for
+    // a cheap product and verify against an expensive product_id.
+    let rzpOrder;
+    try {
+      rzpOrder = await razorpay.orders.fetch(razorpay_order_id);
+    } catch (_) {
+      return res.status(400).json({ message: "Order not found." });
+    }
+    const expectedPaise = Math.round((product.price + productFee) * 100);
+    if (String(rzpOrder?.notes?.product_id) !== String(product_id) || Number(rzpOrder?.amount) !== expectedPaise) {
+      securityLog('PRODUCT_PAYMENT_MISMATCH', { product_id, order_id: razorpay_order_id, ip: req.ip });
+      return res.status(400).json({ message: "Payment does not match this product." });
+    }
+
+    // Idempotent: never issue two purchases for the same order (replay guard).
+    const { data: existingPurchase } = await supabaseAdmin
+      .from("product_purchases").select("download_token")
+      .eq("razorpay_order_id", razorpay_order_id).limit(1).maybeSingle();
+    if (existingPurchase) {
+      return res.json({ message: "Payment verified", download_token: existingPurchase.download_token });
+    }
+
     const downloadToken = crypto.randomUUID();
     const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const { data: purchase, error } = await supabaseAdmin
       .from("product_purchases").insert({
         product_id, host_id: product.host_id,
-        buyer_id: buyer_id || null, buyer_name, buyer_email, buyer_phone,
+        buyer_id: buyerId, buyer_name, buyer_email: buyerEmail, buyer_phone,
         amount_paid: product.price, platform_fee: productFee,
         payment_status: "paid", razorpay_order_id, razorpay_payment_id,
         download_token: downloadToken,
         download_token_expires_at: tokenExpires.toISOString(),
       }).select().single();
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     // BUG-15 fixed: atomic increment to avoid race condition under concurrent purchases
     await supabaseAdmin.rpc("increment_product_purchase_count", { row_id: product_id });
 
-    auditLog('PRODUCT_PURCHASED', buyer_id, { product_id, amount: product.price });
+    auditLog('PRODUCT_PURCHASED', buyerId, { product_id, amount: product.price });
     res.json({ message: "Payment verified", download_token: downloadToken, purchase });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 

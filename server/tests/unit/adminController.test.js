@@ -106,7 +106,7 @@ describe('getUserById', () => {
       single: jest.fn().mockResolvedValue({ data: null, error: { message: 'not found' } }),
     });
     const r = res();
-    await getUserById(req({ id: 'ghost' }), r);
+    await getUserById(req({ id: '00000000-0000-0000-0000-000000000000' }), r);
     expect(r.status).toHaveBeenCalledWith(404);
   });
 });
@@ -177,7 +177,8 @@ describe('getAllServices', () => {
   test('returns services array', async () => {
     supabaseAdmin.from.mockReturnValue({
       select: jest.fn().mockReturnThis(),
-      order:  jest.fn().mockResolvedValue({ data: [], error: null }),
+      order:  jest.fn().mockReturnThis(),
+      limit:  jest.fn().mockResolvedValue({ data: [], error: null }),
     });
     const r = res();
     await getAllServices(req(), r);

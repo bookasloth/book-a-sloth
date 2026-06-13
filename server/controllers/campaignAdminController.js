@@ -4,6 +4,7 @@
  */
 'use strict';
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 const contactsService = require('../services/contactsService');
 const segmentService = require('../services/segmentService');
 const campaignService = require('../services/campaignService');
@@ -16,13 +17,13 @@ const listContacts = async (req, res) => {
     if (type) q = q.eq('contact_type', type);
     if (search) q = q.ilike('email', `%${search}%`);
     const { data, error } = await q;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data || []);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 const syncContacts = async (_req, res) => {
   try { const r = await contactsService.sync(); res.json(r); }
-  catch (e) { res.status(500).json({ message: e.message }); }
+  catch (e) { safeError(res, e); }
 };
 const suppressContact = async (req, res) => {
   try {
@@ -32,25 +33,25 @@ const suppressContact = async (req, res) => {
     const { data, error } = await supabaseAdmin.from('contacts').update(updates).eq('id', req.params.id).select().single();
     if (error || !data) return res.status(404).json({ message: error?.message || 'Contact not found' });
     res.json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── Segments ──
 const listSegments = async (_req, res) => {
   try { const { data, error } = await supabaseAdmin.from('segments').select('*').order('name');
-    if (error) return res.status(500).json({ message: error.message }); res.json(data || []);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+    if (error) return safeError(res, error); res.json(data || []);
+  } catch (e) { safeError(res, e); }
 };
 const previewSegment = async (req, res) => {
   try { const n = await segmentService.count(req.body?.definition || {}, req.body?.channel || 'email'); res.json({ count: n }); }
-  catch (e) { res.status(500).json({ message: e.message }); }
+  catch (e) { safeError(res, e); }
 };
 
 // ── Campaigns ──
 const listCampaigns = async (_req, res) => {
   try { const { data, error } = await supabaseAdmin.from('email_campaigns').select('*').order('created_at', { ascending: false });
-    if (error) return res.status(500).json({ message: error.message }); res.json(data || []);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+    if (error) return safeError(res, error); res.json(data || []);
+  } catch (e) { safeError(res, e); }
 };
 const createCampaign = async (req, res) => {
   try {
@@ -58,7 +59,7 @@ const createCampaign = async (req, res) => {
     const r = await campaignService.create({ ...req.body, created_by: req.admin?.email || '' });
     if (r.error) return res.status(500).json({ message: r.error });
     res.status(201).json(r);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 const getCampaign = async (req, res) => {
   try {
@@ -66,7 +67,7 @@ const getCampaign = async (req, res) => {
     if (error || !data) return res.status(404).json({ message: 'Campaign not found' });
     const stats = await campaignService.stats(req.params.id);
     res.json({ ...data, live_stats: stats });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 const updateCampaign = async (req, res) => {
   try {
@@ -76,21 +77,21 @@ const updateCampaign = async (req, res) => {
     const { data, error } = await supabaseAdmin.from('email_campaigns').update(updates).eq('id', req.params.id).select().single();
     if (error || !data) return res.status(404).json({ message: error?.message || 'Campaign not found' });
     res.json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 const launchCampaign = async (req, res) => {
   try {
     const r = await campaignService.launch(req.params.id);
     if (r.error) return res.status(400).json({ message: r.error });
     res.json({ message: `Launched — ${r.recipients} recipients queued`, recipients: r.recipients });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 // ── WhatsApp templates (AiSensy approved-template registry + variable map) ──
 const listWaTemplates = async (_req, res) => {
   try { const { data, error } = await supabaseAdmin.from('whatsapp_templates').select('*').order('name');
-    if (error) return res.status(500).json({ message: error.message }); res.json(data || []);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+    if (error) return safeError(res, error); res.json(data || []);
+  } catch (e) { safeError(res, e); }
 };
 const createWaTemplate = async (req, res) => {
   try {
@@ -103,9 +104,9 @@ const createWaTemplate = async (req, res) => {
       is_active: req.body.is_active !== undefined ? !!req.body.is_active : true,
     };
     const { data, error } = await supabaseAdmin.from('whatsapp_templates').insert(row).select().single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.status(201).json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 const updateWaTemplate = async (req, res) => {
   try {
@@ -115,7 +116,7 @@ const updateWaTemplate = async (req, res) => {
     const { data, error } = await supabaseAdmin.from('whatsapp_templates').update(updates).eq('id', req.params.id).select().single();
     if (error || !data) return res.status(404).json({ message: error?.message || 'Template not found' });
     res.json(data);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 };
 
 module.exports = {

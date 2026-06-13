@@ -1,5 +1,6 @@
 // Task 9: Reviews and ratings system
 const { supabaseAdmin } = require("../config/supabase");
+const { safeError } = require('../utils/httpError');
 
 // POST /api/reviews — submit a review for a completed booking
 const createReview = async (req, res) => {
@@ -37,7 +38,7 @@ const createReview = async (req, res) => {
       .select()
       .single();
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     // Event-driven badge evaluation for this vendor (fire-and-forget)
     require("../services/badgeEngine")
@@ -46,7 +47,7 @@ const createReview = async (req, res) => {
 
     res.status(201).json(review);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -67,7 +68,7 @@ const getHostReviews = async (req, res) => {
       .eq("host_id", host.id)
       .order("created_at", { ascending: false });
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     const count = reviews?.length || 0;
     const avg = count > 0
@@ -76,23 +77,34 @@ const getHostReviews = async (req, res) => {
 
     res.json({ reviews: reviews || [], count, avg });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
 // GET /api/reviews/booking/:id — check if current user has reviewed a booking
 const getBookingReview = async (req, res) => {
   try {
+    // IDOR guard: only the booking's guest or host may read its review.
+    const { data: booking } = await supabaseAdmin
+      .from("bookings")
+      .select("id, guest_id, host_id")
+      .eq("id", req.params.id)
+      .single();
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (req.user.id !== booking.guest_id && req.user.id !== booking.host_id) {
+      return res.status(403).json({ message: "Not authorized to view this review" });
+    }
+
     const { data, error } = await supabaseAdmin
       .from("reviews")
       .select("*")
       .eq("booking_id", req.params.id)
       .single();
 
-    if (error && error.code !== "PGRST116") return res.status(500).json({ message: error.message });
+    if (error && error.code !== "PGRST116") return safeError(res, error);
     res.json(data || null);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 

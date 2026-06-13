@@ -9,6 +9,7 @@
  */
 
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 
 // Each metric builds its own table-bound COUNT query; returns 0 on any error
 // (missing column, empty table) so the dashboard never 500s.
@@ -76,7 +77,7 @@ const getSummary = async (req, res) => {
       generated_at: new Date().toISOString(),
     });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    safeError(res, e);
   }
 };
 

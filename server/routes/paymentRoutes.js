@@ -6,7 +6,7 @@ const {
   createProductOrder, verifyProductPayment,
   handleWebhook,
 } = require('../controllers/paymentController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, optionalProtect } = require('../middleware/authMiddleware');
 const { paymentLimiter } = require('../middleware/security');
 
 // Razorpay server-side webhook — authoritative payment confirmation.
@@ -25,6 +25,8 @@ router.post('/verify-subscription', paymentLimiter, protect, verifySubscription)
 
 // Product purchases
 router.post('/create-product-order', paymentLimiter, createProductOrder);
-router.post('/verify-product', paymentLimiter, verifyProductPayment);
+// optionalProtect: links the purchase to the logged-in buyer; buyer_id is
+// never taken from the request body.
+router.post('/verify-product', paymentLimiter, optionalProtect, verifyProductPayment);
 
 module.exports = router;

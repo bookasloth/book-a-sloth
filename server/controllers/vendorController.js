@@ -6,6 +6,7 @@
  *   - Service soft-disable/enable
  */
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 
 // ─── TRANSACTIONS ─────────────────────────────────────────────────────────────
 
@@ -38,11 +39,11 @@ const getTransactions = async (req, res) => {
     }
 
     const { data, error, count } = await query;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     res.json({ data: data || [], total: count || 0, page: parseInt(page), limit: parseInt(limit) });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -87,7 +88,7 @@ const getPayoutBalance = async (req, res) => {
       totalEarned: Math.round(totalEarned * 100) / 100,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -100,10 +101,10 @@ const getPayoutRequests = async (req, res) => {
       .eq('host_id', req.user.id)
       .order('created_at', { ascending: false });
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data || []);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -157,10 +158,10 @@ const requestPayout = async (req, res) => {
       .select()
       .single();
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.status(201).json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -192,10 +193,10 @@ const toggleService = async (req, res) => {
       .select()
       .single();
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 

@@ -1,5 +1,6 @@
 // Phase 3: Digital Products — CRUD + secure download
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 const crypto = require('crypto');
 
 // ── POST /api/products ────────────────────────────────────────
@@ -14,9 +15,9 @@ const createProduct = async (req, res) => {
       .insert({ host_id: req.user.id, title, description, type: type || 'pdf', price, file_url, thumbnail_url, slug })
       .select().single();
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.status(201).json(data);
-  } catch (error) { res.status(500).json({ message: error.message }); }
+  } catch (error) { safeError(res, error); }
 };
 
 // ── GET /api/products/mine ────────────────────────────────────
@@ -24,9 +25,9 @@ const getMyProducts = async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin.from('products')
       .select('*').eq('host_id', req.user.id).order('created_at', { ascending: false });
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data || []);
-  } catch (error) { res.status(500).json({ message: error.message }); }
+  } catch (error) { safeError(res, error); }
 };
 
 // ── PUT /api/products/:id ─────────────────────────────────────
@@ -44,9 +45,9 @@ const updateProduct = async (req, res) => {
 
     const { data, error } = await supabaseAdmin.from('products')
       .update(updates).eq('id', req.params.id).eq('host_id', req.user.id).select().single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data);
-  } catch (error) { res.status(500).json({ message: error.message }); }
+  } catch (error) { safeError(res, error); }
 };
 
 // ── DELETE /api/products/:id ──────────────────────────────────
@@ -54,9 +55,9 @@ const deleteProduct = async (req, res) => {
   try {
     const { error } = await supabaseAdmin.from('products')
       .delete().eq('id', req.params.id).eq('host_id', req.user.id);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json({ message: 'Product deleted' });
-  } catch (error) { res.status(500).json({ message: error.message }); }
+  } catch (error) { safeError(res, error); }
 };
 
 // ── GET /api/products/host/:username ─────────────────────────
@@ -71,9 +72,9 @@ const getHostProducts = async (req, res) => {
       .select('id, title, description, type, price, thumbnail_url, slug, purchase_count')
       .eq('host_id', host.id).eq('is_active', true)
       .order('created_at', { ascending: false });
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data || []);
-  } catch (error) { res.status(500).json({ message: error.message }); }
+  } catch (error) { safeError(res, error); }
 };
 
 // ── GET /api/products/:id ─────────────────────────────────────
@@ -85,7 +86,7 @@ const getProduct = async (req, res) => {
       .eq('id', req.params.id).eq('is_active', true).single();
     if (error || !data) return res.status(404).json({ message: 'Product not found' });
     res.json(data);
-  } catch (error) { res.status(500).json({ message: error.message }); }
+  } catch (error) { safeError(res, error); }
 };
 
 // ── GET /api/products/download/:token ────────────────────────
@@ -119,14 +120,20 @@ const downloadProduct = async (req, res) => {
       title: purchase.products?.title,
       downloads_remaining: 2 - purchase.download_count,
     });
-  } catch (error) { res.status(500).json({ message: error.message }); }
+  } catch (error) { safeError(res, error); }
 };
 
 // ── POST /api/products/free-download ─────────────────────────
 // For free products — OTP verified, issue download token
 const freeDownload = async (req, res) => {
   try {
-    const { product_id, buyer_name, buyer_email, buyer_phone, buyer_id } = req.body;
+    const { product_id, buyer_name, buyer_phone } = req.body;
+    // Validate email; never trust a client-supplied buyer_id (derive from auth).
+    const buyerEmail = String(req.body.buyer_email || '').toLowerCase().trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyerEmail)) {
+      return res.status(400).json({ message: 'A valid email is required' });
+    }
+    const buyerId = req.user?.id || null;
 
     const { data: product } = await supabaseAdmin
       .from('products').select('id, price, host_id, file_url').eq('id', product_id).single();
@@ -135,19 +142,30 @@ const freeDownload = async (req, res) => {
     if (product.price !== 0) return res.status(400).json({ message: 'This product requires payment' });
     if (!product.file_url) return res.status(404).json({ message: 'File not available' });
 
+    // Dedupe: reuse a still-valid token for the same product+email instead of
+    // spawning a new purchase row on every call (anti-spam / DB-bloat guard).
+    const { data: existing } = await supabaseAdmin
+      .from('product_purchases')
+      .select('download_token, download_token_expires_at')
+      .eq('product_id', product_id).eq('buyer_email', buyerEmail)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (existing && new Date(existing.download_token_expires_at) > new Date()) {
+      return res.json({ download_token: existing.download_token, reused: true });
+    }
+
     const downloadToken = crypto.randomUUID();
     const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const { data: purchase } = await supabaseAdmin.from('product_purchases').insert({
       product_id, host_id: product.host_id,
-      buyer_id: buyer_id || null, buyer_name, buyer_email, buyer_phone,
+      buyer_id: buyerId, buyer_name, buyer_email: buyerEmail, buyer_phone,
       amount_paid: 0, platform_fee: 0, payment_status: 'paid',
       download_token: downloadToken,
       download_token_expires_at: tokenExpires.toISOString(),
     }).select().single();
 
     res.json({ download_token: downloadToken, purchase });
-  } catch (error) { res.status(500).json({ message: error.message }); }
+  } catch (error) { safeError(res, error); }
 };
 
 module.exports = { createProduct, getMyProducts, updateProduct, deleteProduct, getHostProducts, getProduct, downloadProduct, freeDownload };

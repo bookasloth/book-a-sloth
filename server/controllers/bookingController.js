@@ -1,4 +1,5 @@
 const { supabaseAdmin } = require("../config/supabase");
+const { safeError } = require('../utils/httpError');
 const { createCalendarEvent } = require("../config/google");
 const sendEmail = require("../utils/sendEmail");
 const NotificationEngine = require("../services/notificationEngine");
@@ -98,7 +99,7 @@ const getServiceById = async (req, res) => {
       .single();
     res.json({ service, host });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -121,10 +122,10 @@ const getBookedSlots = async (req, res) => {
         .gte("scheduled_at", start.toISOString())
         .lte("scheduled_at", end.toISOString()),
     );
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data || []);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -150,7 +151,7 @@ const getAvailableSlots = async (req, res) => {
     });
     res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -356,7 +357,7 @@ const createBooking = async (req, res) => {
     }
 
     const { data: booking, error } = bookingResult;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     const when = new Date(scheduled_at).toLocaleString("en-IN", {
       timeZone: hostTimezone,
@@ -397,7 +398,7 @@ const createBooking = async (req, res) => {
 
     res.status(201).json(booking);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -418,10 +419,10 @@ const getHostBookings = async (req, res) => {
         .order("scheduled_at", { ascending: true });
     }
     const { data, error } = result;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -442,10 +443,10 @@ const getGuestBookings = async (req, res) => {
         .order("scheduled_at", { ascending: true });
     }
     const { data, error } = result;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -469,7 +470,7 @@ const cancelBooking = async (req, res) => {
       .eq("id", req.params.id)
       .select()
       .single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     // Notify both sides (engine decides channels per admin config)
     try {
@@ -504,7 +505,7 @@ const cancelBooking = async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -552,7 +553,7 @@ const completeBooking = async (req, res) => {
         .select()
         .single());
     }
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     try {
       const host = booking["profiles!bookings_host_id_fkey"] || {};
@@ -596,7 +597,7 @@ const completeBooking = async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -715,7 +716,7 @@ const rescheduleBooking = async (req, res) => {
       return res.status(409).json({ message: "That time slot is already taken." });
     }
     const { data: updated, error } = rescheduleResult;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     const s = booking.services;
     const host = booking["profiles!bookings_host_id_fkey"] || {};
@@ -762,7 +763,7 @@ const rescheduleBooking = async (req, res) => {
 
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 

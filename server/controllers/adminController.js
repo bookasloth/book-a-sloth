@@ -1,5 +1,11 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 const { audit } = require('../services/auditService');
+const { sanitizeLikeTerm, isUuid } = require('../utils/searchSanitize');
+
+// Coerce + clamp pagination so a client can't request an unbounded page size.
+const clampPage = (p) => Math.max(1, parseInt(p, 10) || 1);
+const clampLimit = (l, max = 100) => Math.min(max, Math.max(1, parseInt(l, 10) || 20));
 
 // ══════════════════════════════════════
 // PLATFORM STATS
@@ -45,7 +51,7 @@ const getStats = async (req, res) => {
       cancelled: allBookings.filter(b => b.payment_status === 'refunded').length,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -55,7 +61,9 @@ const getStats = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    const { role, search, page = 1, limit = 20 } = req.query;
+    const { role } = req.query;
+    const page = clampPage(req.query.page);
+    const limit = clampLimit(req.query.limit);
     let query = supabaseAdmin
       .from('profiles')
       .select('id, name, email, role, username, is_verified, is_banned, google_calendar_connected, created_at', { count: 'exact' })
@@ -63,19 +71,22 @@ const getUsers = async (req, res) => {
       .range((page - 1) * limit, page * limit - 1);
 
     if (role && role !== 'all') query = query.eq('role', role);
+    // Sanitize the term so commas/parens/wildcards can't break out of the or().
+    const search = sanitizeLikeTerm(req.query.search);
     if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,username.ilike.%${search}%`);
 
     const { data, count, error } = await query;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
-    res.json({ users: data, total: count, page: parseInt(page), limit: parseInt(limit) });
+    res.json({ users: data, total: count, page, limit });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
 const getUserById = async (req, res) => {
   try {
+    if (!isUuid(req.params.id)) return res.status(400).json({ message: 'Invalid user id' });
     const { data: user, error } = await supabaseAdmin
       .from('profiles')
       .select('*')
@@ -99,7 +110,7 @@ const getUserById = async (req, res) => {
 
     res.json({ user, bookings: bookingsRes.count || 0, services: servicesRes.count || 0 });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -125,12 +136,12 @@ const updateUser = async (req, res) => {
       .select()
       .single();
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     await audit(req, { action: 'user.update', resource_type: 'profile', resource_id: req.params.id,
       after: { role: updates.role, is_verified: updates.is_verified, is_banned: updates.is_banned } });
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -141,11 +152,11 @@ const deleteUser = async (req, res) => {
       .from('profiles')
       .delete()
       .eq('id', req.params.id);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     await audit(req, { action: 'user.delete', resource_type: 'profile', resource_id: req.params.id });
     res.json({ message: 'User deleted' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -155,7 +166,9 @@ const deleteUser = async (req, res) => {
 
 const getAllBookings = async (req, res) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
+    const { status } = req.query;
+    const page = clampPage(req.query.page);
+    const limit = clampLimit(req.query.limit);
     let query = supabaseAdmin
       .from('bookings')
       .select('*, services(title, price, duration), profiles!bookings_host_id_fkey(name, email, username)', { count: 'exact' })
@@ -165,11 +178,11 @@ const getAllBookings = async (req, res) => {
     if (status && status !== 'all') query = query.eq('status', status);
 
     const { data, count, error } = await query;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
-    res.json({ bookings: data, total: count, page: parseInt(page), limit: parseInt(limit) });
+    res.json({ bookings: data, total: count, page, limit });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -187,23 +200,23 @@ const updateBooking = async (req, res) => {
       .select()
       .single();
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     await audit(req, { action: 'booking.update', resource_type: 'booking', resource_id: req.params.id,
       after: { status: updates.status, payment_status: updates.payment_status } });
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
 const deleteBooking = async (req, res) => {
   try {
     const { error } = await supabaseAdmin.from('bookings').delete().eq('id', req.params.id);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     await audit(req, { action: 'booking.delete', resource_type: 'booking', resource_id: req.params.id });
     res.json({ message: 'Booking deleted' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -213,26 +226,28 @@ const deleteBooking = async (req, res) => {
 
 const getAllServices = async (req, res) => {
   try {
+    // Hard cap to avoid dumping the entire services table in one unbounded query.
     const { data, error } = await supabaseAdmin
       .from('services')
       .select('*, profiles!services_host_id_fkey(name, username)')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(500);
 
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
 const deleteService = async (req, res) => {
   try {
     const { error } = await supabaseAdmin.from('services').delete().eq('id', req.params.id);
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     await audit(req, { action: 'service.delete', resource_type: 'service', resource_id: req.params.id });
     res.json({ message: 'Service deleted' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -243,12 +258,12 @@ const deleteService = async (req, res) => {
 const getSettings = async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin.from('platform_settings').select('*');
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     const settings = {};
     (data || []).forEach(r => { settings[r.key] = r.value; });
     res.json(settings);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 
@@ -266,7 +281,7 @@ const updateSettings = async (req, res) => {
     try { require('../middleware/maintenanceMiddleware').clearCache(); } catch (_) {}
     res.json({ message: 'Settings updated' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 };
 

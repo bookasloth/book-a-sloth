@@ -6,6 +6,7 @@
  * All routes behind requireSuperAdmin.
  */
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 const planService = require('../services/planService');
 
 const RULES = { min_active_plans: 2, max_active_plans: 3 };
@@ -26,7 +27,7 @@ const listPlans = async (req, res) => {
   try {
     const { data: plans, error } = await supabaseAdmin
       .from('subscription_plans').select('*').order('sort_order');
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     // Subscriber counts per plan slug (legacy 'explorer' counts toward starter)
     const { data: profiles } = await supabaseAdmin
@@ -41,7 +42,7 @@ const listPlans = async (req, res) => {
       plans: (plans || []).map((p) => ({ ...p, subscriber_count: counts[p.slug] || 0 })),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -78,12 +79,12 @@ const createPlan = async (req, res) => {
       .select().single();
     if (error) {
       if (/duplicate key/i.test(error.message)) return res.status(409).json({ message: 'A plan with this name/slug already exists' });
-      return res.status(500).json({ message: error.message });
+      return safeError(res, error);
     }
     planService.clearCache();
     res.status(201).json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -101,7 +102,7 @@ const updatePlan = async (req, res) => {
     planService.clearCache();
     res.json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -127,7 +128,7 @@ const setPlanActive = async (req, res) => {
     planService.clearCache();
     res.json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -160,11 +161,11 @@ const clonePlan = async (req, res) => {
         sort_order: (maxSort?.sort_order || 0) + 1,
       })
       .select().single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     planService.clearCache();
     res.status(201).json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -182,7 +183,7 @@ const reorderPlans = async (req, res) => {
     planService.clearCache();
     res.json({ message: 'Plans reordered' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -212,7 +213,7 @@ const assignPlan = async (req, res) => {
     if (error || !data) return res.status(404).json({ message: 'Vendor not found' });
     res.json({ message: `Vendor moved to ${plan.name}`, vendor: data });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -225,7 +226,7 @@ const publicPlans = async (req, res) => {
       .map(({ id, name, slug, annual_price, billing_cycle, commission_percentage, limits, features, integrations, support_type }) =>
         ({ id, name, slug, annual_price, billing_cycle, commission_percentage, limits, features, integrations, support_type })));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 

@@ -5,6 +5,7 @@
  * Secrets never leave the server unmasked.
  */
 const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
 const NotificationEngine = require('../services/notificationEngine');
 const aisensy = require('../services/aisensyService');
 const sendEmail = require('../utils/sendEmail');
@@ -25,7 +26,7 @@ const getProvider = async (req, res) => {
       .select('*')
       .eq('provider', 'aisensy')
       .maybeSingle();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     if (!data) return res.json({ provider: 'aisensy', api_key_masked: '', settings_json: {}, is_active: false, configured: false });
     res.json({
       provider: data.provider,
@@ -36,7 +37,7 @@ const getProvider = async (req, res) => {
       updated_at: data.updated_at,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -57,7 +58,7 @@ const updateProvider = async (req, res) => {
       .upsert({ provider: 'aisensy', ...updates }, { onConflict: 'provider' })
       .select()
       .single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     NotificationEngine.clearCache();
     res.json({
@@ -67,7 +68,7 @@ const updateProvider = async (req, res) => {
       is_active: data.is_active,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -82,7 +83,8 @@ const testProvider = async (req, res) => {
     const result = await aisensy.testConnection({ apiKey: data?.api_key });
     res.status(result.ok ? 200 : 400).json(result);
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    console.error('[api error]', err?.message || err);
+    res.status(500).json({ ok: false, message: 'Something went wrong. Please try again.' });
   }
 };
 
@@ -93,10 +95,10 @@ const getEvents = async (req, res) => {
       .from('notification_events')
       .select('*')
       .order('event_key');
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data || []);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -113,12 +115,12 @@ const updateEvent = async (req, res) => {
       .eq('id', req.params.id)
       .select()
       .single();
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
 
     NotificationEngine.clearCache();
     res.json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -156,7 +158,7 @@ const testSend = async (req, res) => {
     }
     res.status(ch.success ? 200 : 502).json({ message: ch.success ? 'Test sent' : `Send failed: ${ch.error}`, result });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -173,10 +175,10 @@ const getLogs = async (req, res) => {
     if (channel)   q = q.eq('channel', channel);
     if (status)    q = q.eq('status', status);
     const { data, error } = await q;
-    if (error) return res.status(500).json({ message: error.message });
+    if (error) return safeError(res, error);
     res.json(data || []);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
@@ -220,13 +222,13 @@ const retryLog = async (req, res) => {
         return res.json({ message: 'Retried successfully' });
       } catch (e) {
         await NotificationEngine.logResult({ event: log.event_key, channel: 'email', destination: log.destination, status: 'failed', error: e.message, payload: log.payload });
-        return res.status(502).json({ message: `Retry failed: ${e.message}` });
+        return res.status(502).json({ message: 'Retry failed. Please try again.' });
       }
     }
 
     res.status(400).json({ message: `Unknown channel: ${log.channel}` });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    safeError(res, err);
   }
 };
 
