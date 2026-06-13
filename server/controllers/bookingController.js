@@ -502,6 +502,9 @@ const completeBooking = async (req, res) => {
     if (req.user.id !== booking.host_id) {
       return res.status(403).json({ message: "Only the host can mark a booking as completed" });
     }
+    // Idempotent: re-completing must not re-stamp completed_at/revenue_recognized_at
+    // (would silently shift revenue across a reporting period) or re-fire notifications.
+    if (booking.status === "completed") return res.json(booking);
 
     const nowIso = new Date().toISOString();
     const completionUpdate = {
@@ -509,7 +512,9 @@ const completeBooking = async (req, res) => {
       completed_at: nowIso,
       revenue_recognized_at: nowIso,            // PRD Rule 2: commission recognised at completion
       revenue_recognition_status: "recognized",
-      settlement_status: "eligible_for_settlement",
+      // Only a paid booking can actually be settled; P2 re-checks, but don't
+      // write a knowingly-false eligibility value for unpaid/failed/refunded.
+      settlement_status: booking.payment_status === "paid" ? "eligible_for_settlement" : "not_eligible",
       updated_at: nowIso,
     };
     let { data, error } = await supabaseAdmin
