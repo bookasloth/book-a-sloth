@@ -72,49 +72,51 @@ const IC = {
   globe:   ['M12 2a10 10 0 100 20 10 10 0 000-20z', 'M2 12h20', 'M12 2c2.5 2.7 4 6.3 4 10s-1.5 7.3-4 10c-2.5-2.7-4-6.3-4-10s1.5-7.3 4-10z'],
   receipt: ['M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1z', 'M8 7h8', 'M8 11h8', 'M8 15h5'],
   list:    ['M8 6h13', 'M8 12h13', 'M8 18h13', 'M3 6h.01', 'M3 12h.01', 'M3 18h.01'],
+  mapPin:  ['M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z', 'M12 7a3 3 0 100 6 3 3 0 000-6z'],
+  dots:    'M12 5.01V5m0 7.01V12m0 7.01V19',
+  plus:    ['M12 5v14', 'M5 12h14'],
 };
 
-// ── Operational state model ───────────────────────────────────────
-// UI philosophy: future = Upcoming, ongoing = Live, past = Completed.
-// Backend has no `dispute` flag yet, so DISPUTED is never derived here
-// (the Disputes tab shows an empty state). The modal still designs the
-// full disputed action-set for when the backend lands.
-const STATES = {
-  upcoming:  { label: 'Upcoming',  icon: IC.clock,       badge: 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/15',     dot: 'bg-blue-500' },
-  live:      { label: 'Live',      icon: IC.dot,         badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15', dot: 'bg-emerald-500 animate-pulse' },
-  completed: { label: 'Completed', icon: IC.checkCircle, badge: 'bg-gray-100 text-gray-600 ring-1 ring-gray-500/15',    dot: 'bg-gray-400' },
-  cancelled: { label: 'Cancelled', icon: IC.xCircle,     badge: 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/15',     dot: 'bg-rose-500' },
-  disputed:  { label: 'Disputed',  icon: IC.alert,       badge: 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/15',  dot: 'bg-amber-500' },
+// ── Status model ──────────────────────────────────────────────────
+// Keyed by the DB `booking.status` field (NOT time-derived). Colours:
+// Confirmed green · Completed blue · Cancelled red · Disputed orange ·
+// Pending gray. `disputed` has no backend source yet (no dispute column)
+// so the Disputed tab stays empty — the icon/colour are designed for when
+// it lands. Mapping is shared by the list (icon-only) and the modal
+// (full pill) so status reads identically across every booking view.
+const STATUS = {
+  pending:   { label: 'Pending',   icon: IC.clock,       text: 'text-gray-400',    badge: 'bg-gray-100 text-gray-600 ring-1 ring-gray-500/15',        dot: 'bg-gray-400',    chip: 'bg-gray-100' },
+  confirmed: { label: 'Confirmed', icon: IC.check,       text: 'text-emerald-600', badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15', dot: 'bg-emerald-500', chip: 'bg-emerald-50' },
+  completed: { label: 'Completed', icon: IC.checkCircle, text: 'text-blue-600',    badge: 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/15',          dot: 'bg-blue-500',    chip: 'bg-blue-50' },
+  cancelled: { label: 'Cancelled', icon: IC.xCircle,     text: 'text-rose-600',    badge: 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/15',          dot: 'bg-rose-500',    chip: 'bg-rose-50' },
+  disputed:  { label: 'Disputed',  icon: IC.alert,       text: 'text-amber-600',   badge: 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/15',       dot: 'bg-amber-500',   chip: 'bg-amber-50' },
 };
+const statusKey = (b) => (b && STATUS[b.status]) ? b.status : 'pending';
 
+// Customer→platform payment (NOT vendor payout). Labels say money direction
+// ("Received") so "Unpaid" can't be misread as "vendor not paid out".
 const PAYMENT = {
-  paid:     { label: 'Paid',     badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15' },
-  unpaid:   { label: 'Unpaid',   badge: 'bg-gray-100 text-gray-500 ring-1 ring-gray-400/20' },
+  paid:     { label: 'Received', badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15' },
+  unpaid:   { label: 'Pending',  badge: 'bg-gray-100 text-gray-500 ring-1 ring-gray-400/20' },
   refunded: { label: 'Refunded', badge: 'bg-purple-50 text-purple-700 ring-1 ring-purple-600/15' },
 };
 
-const deriveState = (b, now = Date.now()) => {
-  if (b.status === 'cancelled') return 'cancelled';
-  const start = new Date(b.scheduled_at).getTime();
-  const durMin = b.services?.duration || 30;
-  const end = start + durMin * 60000;
-  if (b.status === 'completed' || end < now) return 'completed';
-  if (now >= start && now <= end) return 'live';
-  return 'upcoming';
-};
-
-// Tabs map 1:1 to the existing /admin/bookings/:filter routes used by the sidebar.
+// Tabs map 1:1 to the /admin/bookings/:filter routes (sidebar). Filtering
+// is by booking.status. Pending bookings surface only under "All".
 const TABS = [
   { key: 'all',       label: 'All',       to: '/admin/bookings' },
-  { key: 'upcoming',  label: 'Upcoming',  to: '/admin/bookings/upcoming' },
-  { key: 'live',      label: 'Live',      to: '/admin/bookings/live' },
+  { key: 'confirmed', label: 'Confirmed', to: '/admin/bookings/confirmed' },
   { key: 'completed', label: 'Completed', to: '/admin/bookings/completed' },
   { key: 'cancelled', label: 'Cancelled', to: '/admin/bookings/cancelled' },
-  { key: 'disputes',  label: 'Disputes',  to: '/admin/bookings/disputes' },
+  { key: 'disputed',  label: 'Disputed',  to: '/admin/bookings/disputed' },
 ];
 
 // ── Formatting helpers ────────────────────────────────────────────
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+// Platform's take on a booking = commission + platform fee. null when the
+// booking carries neither field (so the cell shows "—", not a fake ₹0).
+const platformRevenue = (b) => (b.commission_applied == null && b.platform_fee_amount == null)
+  ? null : (Number(b.commission_applied) || 0) + (Number(b.platform_fee_amount) || 0);
 const shortId = (id) => (id ? `#${String(id).slice(0, 8).toUpperCase()}` : '#—');
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 const fmtTime = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -141,13 +143,26 @@ const copy = (val, label) => {
 const notImplemented = (name) => toast(`${name} — coming soon`, { icon: '🛠️' });
 
 // ── Small presentational atoms ────────────────────────────────────
-const StatePill = ({ state, size = 'sm' }) => {
-  const s = STATES[state] || STATES.upcoming;
+// Full pill (dot + label) — used inside the modal where space allows.
+const StatusBadge = ({ status, size = 'sm' }) => {
+  const s = STATUS[status] || STATUS.pending;
   const pad = size === 'lg' ? 'px-2.5 py-1 text-[12px]' : 'px-2 py-0.5 text-[11px]';
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full font-semibold ${pad} ${s.badge}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {s.label}
+    </span>
+  );
+};
+
+// Icon-only status (list Status column). Coloured icon in a tinted chip;
+// native tooltip shows the full status name. Same colour scheme as the pill.
+const StatusIcon = ({ status }) => {
+  const s = STATUS[status] || STATUS.pending;
+  return (
+    <span title={s.label} aria-label={s.label}
+      className={`inline-flex items-center justify-center w-7 h-7 rounded-lg ${s.chip}`}>
+      <Ic d={s.icon} size={15} className={s.text} />
     </span>
   );
 };
@@ -180,46 +195,34 @@ const ActionBtn = ({ icon, label, onClick, href, variant = 'default' }) => {
   return <button type="button" onClick={onClick} className={cls}><Ic d={icon} size={15} />{label}</button>;
 };
 
-// ── Booking card (fast-scan row) ──────────────────────────────────
-const BookingCard = ({ b, state, onView, onEdit }) => {
-  const price = b.services?.price || 0;
+// ── Booking card (mobile fast-scan) ───────────────────────────────
+const BookingCard = ({ b, status, onView, onEdit, onDelete }) => {
+  const amount = Number(b.customer_total ?? b.services?.price ?? 0);
+  const rev = platformRevenue(b);
   return (
-    <div className="group bg-white border border-gray-200/80 rounded-xl p-4 hover:border-gray-300 hover:shadow-sm transition-all">
-      <div className="flex items-start gap-4">
-        {/* Left: identity */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1.5">
-            <code className="text-[12px] font-bold text-gray-900 font-mono">{shortId(b.id)}</code>
-            <StatePill state={state} />
-            <PaymentPill status={b.payment_status} />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-[12.5px]">
-            <p className="text-gray-600 truncate">
-              <span className="text-gray-400">Customer</span>{' '}
-              <span className="font-semibold text-gray-900">{b.guest_name || '—'}</span>
-            </p>
-            <p className="text-gray-600 truncate">
-              <span className="text-gray-400">Vendor</span>{' '}
-              <span className="font-semibold text-gray-900">{b.profiles?.name || '—'}</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-3 mt-1.5 text-[12px] text-gray-500 flex-wrap">
-            <span className="inline-flex items-center gap-1"><Ic d={IC.calendar} size={13} className="text-gray-400" />{fmtDate(b.scheduled_at)}</span>
-            <span className="inline-flex items-center gap-1"><Ic d={IC.clock} size={13} className="text-gray-400" />{fmtTime(b.scheduled_at)}</span>
-            <span className="text-gray-400">·</span>
-            <span>{b.services?.duration || 30} min</span>
-            <span className="text-gray-300 truncate hidden md:inline">{b.services?.title || 'Service'}</span>
-          </div>
-        </div>
-
-        {/* Right: price + quick actions */}
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <p className="font-bold text-sm text-gray-900">{inr(price)}</p>
-          <div className="flex items-center gap-0.5">
-            <IconBtn icon={IC.eye}    label="View details" tone="primary" onClick={() => onView(b)} />
-            <IconBtn icon={IC.pencil} label="Edit booking"  tone="gray"    onClick={() => onEdit(b)} />
-          </div>
-        </div>
+    <div className="bg-white border border-gray-200/80 rounded-xl p-4 hover:border-gray-300 hover:shadow-sm transition-all"
+      onClick={() => onView(b)}>
+      <div className="flex items-center gap-2 mb-2">
+        <StatusIcon status={status} />
+        <code className="text-[12px] font-bold text-gray-900 font-mono">{shortId(b.id)}</code>
+        <PaymentPill status={b.payment_status} />
+        <span className="ml-auto font-bold text-sm text-gray-900 tabular-nums">{inr(amount)}</span>
+      </div>
+      <p className="text-[13px] font-semibold text-gray-900 truncate">{b.services?.title || 'Service'}</p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mt-1 text-[12px]">
+        <p className="truncate"><span className="text-gray-400">Customer </span><span className="font-medium text-gray-800">{b.guest_name || '—'}</span></p>
+        <p className="truncate"><span className="text-gray-400">Vendor </span><span className="font-medium text-gray-800">{b.profiles?.name || '—'}</span></p>
+      </div>
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+        <span className="inline-flex items-center gap-1.5 text-[11.5px] text-gray-500 tabular-nums">
+          <Ic d={IC.calendar} size={13} className="text-gray-400" />{fmtDate(b.scheduled_at)} · {fmtTime(b.scheduled_at)}
+        </span>
+        <span className="text-[11.5px] text-gray-400">Rev <span className="font-semibold text-emerald-600 tabular-nums">{rev == null ? '—' : inr(rev)}</span></span>
+      </div>
+      <div className="flex items-center gap-0.5 justify-end mt-1" onClick={(e) => e.stopPropagation()}>
+        <IconBtn icon={IC.eye}    label="View details" tone="primary" onClick={() => onView(b)} />
+        <IconBtn icon={IC.pencil} label="Edit booking"  tone="gray"    onClick={() => onEdit(b)} />
+        <IconBtn icon={IC.trash}  label="Delete booking" tone="danger"  onClick={() => onDelete(b)} />
       </div>
     </div>
   );
@@ -230,75 +233,82 @@ const TH = ({ children, right }) => (
   <th className={`px-4 py-2.5 font-semibold whitespace-nowrap ${right ? 'text-right' : 'text-left'}`}>{children}</th>
 );
 
-const BookingRow = ({ b, state, onView, onEdit }) => {
-  const price = b.services?.price || 0;
+const BookingRow = ({ b, status, onView, onEdit, onDelete }) => {
+  const amount = Number(b.customer_total ?? b.services?.price ?? 0);
   const dur = b.services?.duration || 30;
+  const rev = platformRevenue(b);
   return (
     <tr onClick={() => onView(b)}
       className="group border-t border-gray-100 hover:bg-gray-50/70 cursor-pointer transition-colors">
-      {/* Booking */}
+      {/* 1 Booking ID */}
       <td className="px-4 py-3 align-middle">
-        <div className="flex items-center gap-2">
-          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${(STATES[state] || STATES.upcoming).dot}`} />
-          <div className="min-w-0">
-            <code className="text-[12.5px] font-bold font-mono text-gray-900">{shortId(b.id)}</code>
-            <p className="text-[11.5px] text-gray-400 truncate max-w-[150px]">{b.services?.title || 'Service'}</p>
-          </div>
-        </div>
+        <code className="text-[12.5px] font-bold font-mono text-gray-900">{shortId(b.id)}</code>
       </td>
-      {/* Customer */}
+      {/* 2 Status (icon only + tooltip) */}
+      <td className="px-3 py-3 align-middle"><StatusIcon status={status} /></td>
+      {/* 3 Service */}
       <td className="px-4 py-3 align-middle">
-        <p className="text-[12.5px] font-medium text-gray-800 truncate max-w-[180px]">{b.guest_name || '—'}</p>
-        <p className="text-[11.5px] text-gray-400 truncate max-w-[180px]">{b.guest_email || '—'}</p>
+        <p className="text-[12.5px] font-medium text-gray-800 truncate max-w-[160px]">{b.services?.title || 'Service'}</p>
+        <p className="text-[11.5px] text-gray-400 tabular-nums">{dur} min</p>
       </td>
-      {/* Vendor */}
+      {/* 4 Vendor */}
       <td className="px-4 py-3 align-middle">
         <p className="text-[12.5px] font-medium text-gray-800 truncate max-w-[150px]">{b.profiles?.name || '—'}</p>
         {b.profiles?.username && <p className="text-[11.5px] text-gray-400 truncate max-w-[150px]">@{b.profiles.username}</p>}
       </td>
-      {/* Schedule */}
+      {/* 5 Customer */}
+      <td className="px-4 py-3 align-middle">
+        <p className="text-[12.5px] font-medium text-gray-800 truncate max-w-[170px]">{b.guest_name || '—'}</p>
+        <p className="text-[11.5px] text-gray-400 truncate max-w-[170px]">{b.guest_email || '—'}</p>
+      </td>
+      {/* 6 Date & Time */}
       <td className="px-4 py-3 align-middle whitespace-nowrap">
         <p className="text-[12.5px] text-gray-700">{fmtDate(b.scheduled_at)}</p>
-        <p className="text-[11.5px] text-gray-400 tabular-nums">{fmtTime(b.scheduled_at)} · {dur} min</p>
+        <p className="text-[11.5px] text-gray-400 tabular-nums">{fmtTime(b.scheduled_at)}</p>
       </td>
-      {/* Amount */}
+      {/* 7 Amount */}
       <td className="px-4 py-3 align-middle text-right whitespace-nowrap">
-        <span className="text-[13px] font-bold text-gray-900 tabular-nums">{inr(price)}</span>
+        <span className="text-[13px] font-bold text-gray-900 tabular-nums">{inr(amount)}</span>
       </td>
-      {/* Status */}
-      <td className="px-4 py-3 align-middle"><StatePill state={state} /></td>
-      {/* Payment */}
+      {/* 8 Payment */}
       <td className="px-4 py-3 align-middle"><PaymentPill status={b.payment_status} /></td>
-      {/* Actions (reveal on row hover/focus) */}
+      {/* 9 Revenue (platform take) */}
+      <td className="px-4 py-3 align-middle text-right whitespace-nowrap">
+        <span className="text-[12.5px] font-semibold text-emerald-600 tabular-nums">{rev == null ? '—' : inr(rev)}</span>
+      </td>
+      {/* 10 Actions (reveal on row hover/focus) */}
       <td className="px-3 py-3 align-middle">
         <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
           onClick={(e) => e.stopPropagation()}>
           <IconBtn icon={IC.eye} label="View details" tone="primary" onClick={() => onView(b)} />
           <IconBtn icon={IC.pencil} label="Edit booking" tone="gray" onClick={() => onEdit(b)} />
+          <IconBtn icon={IC.trash} label="Delete booking" tone="danger" onClick={() => onDelete(b)} />
         </div>
       </td>
     </tr>
   );
 };
 
-const BookingTable = ({ items, onView, onEdit }) => (
-  <div className="hidden md:block bg-white border border-gray-200/80 rounded-xl overflow-hidden">
+const BookingTable = ({ items, onView, onEdit, onDelete }) => (
+  <div className="hidden md:block bg-white border border-gray-200/80 rounded-xl overflow-x-auto">
     <table className="w-full border-collapse">
       <thead>
         <tr className="bg-gray-50/60 text-[11px] uppercase tracking-wide text-gray-400">
-          <TH>Booking</TH>
-          <TH>Customer</TH>
-          <TH>Vendor</TH>
-          <TH>Schedule</TH>
-          <TH right>Amount</TH>
+          <TH>Booking ID</TH>
           <TH>Status</TH>
-          <TH>Payment</TH>
+          <TH>Service</TH>
+          <TH>Vendor</TH>
+          <TH>Customer</TH>
+          <TH>Date &amp; Time</TH>
+          <TH right>Amount</TH>
+          <TH>Customer Payment</TH>
+          <TH right>Revenue</TH>
           <th className="px-3" aria-hidden="true" />
         </tr>
       </thead>
       <tbody>
-        {items.map(({ b, state }) => (
-          <BookingRow key={b.id} b={b} state={state} onView={onView} onEdit={onEdit} />
+        {items.map(({ b, status }) => (
+          <BookingRow key={b.id} b={b} status={status} onView={onView} onEdit={onEdit} onDelete={onDelete} />
         ))}
       </tbody>
     </table>
@@ -378,42 +388,183 @@ const CopyField = ({ label, value, mono = true }) => (
 );
 
 // Contact card: clickable envelope sits BEFORE the email; the email text
-// itself is plain (not a link), per the brief.
-const ContactCard = ({ title, icon, name, email, phone, b, mailLabel, extra }) => (
-  <Card title={title} icon={icon} action={
-    <div className="flex items-center gap-0.5">
-      <IconBtn icon={IC.phone} label={`Call ${title.split(' ')[0]}`} href={phone ? `tel:${phone}` : undefined} onClick={phone ? undefined : () => toast.error('No phone on file')} />
-      {extra}
+// itself is plain (not a link), per the brief. `accent` tints the header
+// icon + adds a colored top rule/ring (blue = customer, crimson = vendor).
+const CONTACT_ACCENTS = {
+  blue:    { ring: 'ring-blue-500/15',  rule: 'border-t-blue-400',  tint: 'text-blue-500',  chip: 'bg-blue-50' },
+  crimson: { ring: 'ring-rose-500/15',  rule: 'border-t-rose-400',  tint: 'text-rose-500',  chip: 'bg-rose-50' },
+  gray:    { ring: 'ring-gray-900/5',   rule: 'border-t-gray-200',  tint: 'text-gray-400',  chip: 'bg-gray-100' },
+};
+const ContactCard = ({ title, icon, name, email, phone, b, mailLabel, extra, accent = 'gray' }) => {
+  const a = CONTACT_ACCENTS[accent] || CONTACT_ACCENTS.gray;
+  return (
+    <div className={`bg-white border border-gray-200/80 border-t-2 ${a.rule} rounded-xl ring-1 ${a.ring}`}>
+      <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-1.5">
+        <h4 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+          <span className={`w-5 h-5 rounded-md flex items-center justify-center ${a.chip}`}><Ic d={icon} size={12} className={a.tint} /></span>
+          {title}
+        </h4>
+        <div className="flex items-center gap-0.5">
+          <IconBtn icon={IC.phone} label={`Call ${title.split(' ')[0]}`} href={phone ? `tel:${phone}` : undefined} onClick={phone ? undefined : () => toast.error('No phone on file')} />
+          {extra}
+        </div>
+      </div>
+      <div className="px-4 pb-3">
+        <Field label="Name" value={name} />
+        <div className="flex items-center justify-between gap-2 py-[5px] border-b border-gray-50">
+          <span className="text-[12px] text-gray-400">Email</span>
+          <span className="flex items-center gap-1 min-w-0">
+            <IconBtn icon={IC.mail} label={mailLabel} href={mailto(email, b)} onClick={email ? undefined : () => toast.error('No email on file')} />
+            <span className="text-[12.5px] font-medium text-gray-800 truncate">{email || '—'}</span>
+            {email && <IconBtn icon={IC.copy} label="Copy email" onClick={() => copy(email, 'Email')} />}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2 py-[5px]">
+          <span className="text-[12px] text-gray-400">Phone</span>
+          <span className="flex items-center gap-1 min-w-0">
+            <span className="text-[12.5px] font-medium text-gray-800 truncate">{phone || '—'}</span>
+            {phone && <IconBtn icon={IC.copy} label="Copy phone" onClick={() => copy(phone, 'Phone')} />}
+          </span>
+        </div>
+      </div>
     </div>
-  }>
-    <Field label="Name" value={name} />
-    <div className="flex items-center justify-between gap-2 py-[5px] border-b border-gray-50">
-      <span className="text-[12px] text-gray-400">Email</span>
-      <span className="flex items-center gap-1 min-w-0">
-        <IconBtn icon={IC.mail} label={mailLabel} href={mailto(email, b)} onClick={email ? undefined : () => toast.error('No email on file')} />
-        <span className="text-[12.5px] font-medium text-gray-800 truncate">{email || '—'}</span>
-        {email && <IconBtn icon={IC.copy} label="Copy email" onClick={() => copy(email, 'Email')} />}
-      </span>
+  );
+};
+
+// ── Net-earnings card (left-column anchor) ────────────────────────
+// Itemized breakdown straight from existing booking fields. Renders
+// `—` for any null field; never NaN/₹0 from missing data.
+const EarningsLine = ({ label, value, sign }) => (
+  <div className="flex items-center justify-between gap-3 py-[5px] text-[12.5px]">
+    <span className="text-gray-500">{label}</span>
+    <span className="font-medium text-gray-800 tabular-nums">
+      {value == null ? '—' : `${sign === '−' ? '−' : ''}${inr(value)}`}
+    </span>
+  </div>
+);
+const EarningsCard = ({ b }) => {
+  const bookingAmount = b.customer_total ?? b.services?.price ?? null;
+  const net = b.vendor_amount;
+  const lines = [
+    { label: 'Booking Amount',     value: bookingAmount,         sign: '+' },
+    { label: 'Razorpay Fees',      value: b.razorpay_fee_actual, sign: '−' },
+    { label: 'Platform Commission',value: b.commission_applied,  sign: '−' },
+    { label: 'GST on Commission',  value: b.commission_gst,      sign: '−' },
+    { label: 'Platform Fee',       value: b.platform_fee_amount, sign: '−' },
+  ];
+  return (
+    <div className="rounded-xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50/80 to-white p-4">
+      <h4 className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-wider text-emerald-700 mb-1.5">
+        <Ic d={IC.wallet} size={13} />Net Earnings From This Booking
+      </h4>
+      <div className="divide-y divide-emerald-100/70">
+        {lines.map((l, i) => <EarningsLine key={i} {...l} />)}
+      </div>
+      <div className="flex items-center justify-between gap-3 pt-2.5 mt-1 border-t-2 border-emerald-200/80">
+        <span className="text-[12px] font-semibold text-gray-700">Final Net Earnings</span>
+        <span className="text-[20px] font-bold text-emerald-700 tabular-nums leading-none">{net == null ? '—' : inr(net)}</span>
+      </div>
     </div>
-    <div className="flex items-center justify-between gap-2 py-[5px]">
-      <span className="text-[12px] text-gray-400">Phone</span>
-      <span className="flex items-center gap-1 min-w-0">
-        <span className="text-[12.5px] font-medium text-gray-800 truncate">{phone || '—'}</span>
-        {phone && <IconBtn icon={IC.copy} label="Copy phone" onClick={() => copy(phone, 'Phone')} />}
-      </span>
+  );
+};
+
+// ── Dependency-free SVG donut + legend ────────────────────────────
+const PieChart = ({ segments }) => {
+  const data = segments.filter(s => Number(s.value) > 0);
+  const sum = data.reduce((s, x) => s + Number(x.value), 0);
+  if (!sum) return <p className="text-[12px] text-gray-400 py-2">Breakdown unavailable for this booking.</p>;
+  const r = 54, c = 70, C = 2 * Math.PI * r;
+  let acc = 0;
+  return (
+    <div className="flex flex-col sm:flex-row items-center gap-5">
+      <div className="relative flex-shrink-0">
+        <svg width="140" height="140" viewBox="0 0 140 140" className="-rotate-90">
+          <circle cx={c} cy={c} r={r} fill="none" stroke="#f3f4f6" strokeWidth="16" />
+          {data.map((s, i) => {
+            const len = (Number(s.value) / sum) * C;
+            const el = (
+              <circle key={i} cx={c} cy={c} r={r} fill="none" stroke={s.color} strokeWidth="16"
+                strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-acc} strokeLinecap="butt" />
+            );
+            acc += len;
+            return el;
+          })}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-[9px] uppercase tracking-wide text-gray-400">Total</span>
+          <span className="text-[13px] font-bold text-gray-900 tabular-nums">{inr(sum)}</span>
+        </div>
+      </div>
+      <ul className="flex-1 w-full space-y-1.5">
+        {data.map((s, i) => (
+          <li key={i} className="flex items-center gap-2 text-[11.5px]">
+            <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: s.color }} />
+            <span className="text-gray-600 flex-1 truncate">{s.label}</span>
+            <span className="font-semibold text-gray-900 tabular-nums">{inr(s.value)}</span>
+            <span className="text-gray-400 tabular-nums w-9 text-right">{Math.round((Number(s.value) / sum) * 100)}%</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+// ── Static, always-inactive Google Maps placeholder ───────────────
+const MapsPlaceholder = () => (
+  <Card title="Vendor Location" icon={IC.mapPin}>
+    <div className="py-6 flex flex-col items-center text-center">
+      <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center mb-3"><Ic d={IC.mapPin} size={20} className="text-gray-400" /></div>
+      <p className="text-[12px] text-gray-400 max-w-[230px] mb-3 leading-relaxed">
+        Vendor location — coming soon. Once vendors add a business address to their profile, an Open in Google Maps button appears here.
+      </p>
+      <button type="button" disabled aria-disabled="true"
+        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] font-medium border border-gray-200 text-gray-300 cursor-not-allowed">
+        <Ic d={IC.external} size={14} />Open in Google Maps
+      </button>
     </div>
   </Card>
 );
 
-// Lifecycle events derived from real timestamps; the rest are designed-but-pending.
-const lifecycle = (b) => [
-  { label: 'Booking Created',   at: b.created_at,   done: !!b.created_at },
-  { label: 'Payment Received',  at: b.paid_at,      done: b.payment_status === 'paid' || !!b.paid_at },
-  { label: 'Vendor Confirmed',  at: null,           done: ['confirmed', 'completed'].includes(b.status) },
-  { label: 'Session Started',   at: null,           done: false, pending: true }, // TODO(backend): no session-start ts
-  { label: 'Session Ended',     at: null,           done: false, pending: true }, // TODO(backend): no session-end ts
-  { label: 'Booking Completed', at: b.completed_at, done: b.status === 'completed' || !!b.completed_at },
-];
+// ── Compact "More" dropdown for secondary actions ─────────────────
+const MoreMenu = ({ items }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative" onBlur={() => setTimeout(() => setOpen(false), 120)}>
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-medium border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+        <Ic d={IC.dots} size={15} />More
+      </button>
+      {open && (
+        <div className="absolute right-0 bottom-11 z-20 w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-1">
+          {items.map((it, i) => (
+            <MenuItem key={i} icon={it.icon} label={it.label} onClick={() => { setOpen(false); it.onClick?.(); }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Lifecycle events — REAL timestamps only. No fake "pending session" rows
+// (they read as broken). Terminal node is Cancelled or Completed.
+const lifecycle = (b) => {
+  const events = [
+    { label: 'Booking Created',  at: b.created_at, done: !!b.created_at },
+    { label: 'Payment Received', at: b.paid_at,    done: b.payment_status === 'paid' || !!b.paid_at },
+    { label: 'Vendor Confirmed', at: null,         done: ['confirmed', 'completed'].includes(b.status) },
+  ];
+  if (b.status === 'cancelled') {
+    events.push({ label: 'Cancelled', at: b.updated_at, done: true, cancelled: true });
+  } else {
+    events.push({ label: 'Completed', at: b.completed_at, done: b.status === 'completed' || !!b.completed_at });
+  }
+  return events;
+};
+
+// Node fill per event: cancelled = rose, done = emerald, else hollow.
+const nodeFill = (e) => e.cancelled ? 'bg-rose-500 text-white'
+  : e.done ? 'bg-emerald-500 text-white' : 'bg-white border-2 border-gray-300';
+const connFill = (e) => e.cancelled ? 'bg-rose-300' : e.done ? 'bg-emerald-400' : 'bg-gray-200';
 
 // Horizontal on desktop (spec), vertical on mobile.
 const LifecycleTimeline = ({ b }) => {
@@ -425,13 +576,11 @@ const LifecycleTimeline = ({ b }) => {
       <div className="hidden md:flex items-start pt-1">
         {events.map((e, i) => (
           <div key={i} className="flex-1 flex flex-col items-center text-center relative px-1">
-            {i < n - 1 && <span className={`absolute top-[9px] left-1/2 w-full h-[2px] ${events[i + 1].done ? 'bg-emerald-400' : 'bg-gray-200'}`} />}
-            <span className={`relative z-10 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0
-              ${e.done ? 'bg-emerald-500 text-white' : 'bg-white border-2 border-gray-300'}`}>
-              {e.done && <Ic d={IC.check} size={11} strokeWidth={3} />}
+            {i < n - 1 && <span className={`absolute top-[9px] left-1/2 w-full h-[2px] ${connFill(events[i + 1])}`} />}
+            <span className={`relative z-10 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${nodeFill(e)}`}>
+              {e.done && <Ic d={e.cancelled ? IC.x : IC.check} size={11} strokeWidth={3} />}
             </span>
-            <span className={`mt-2 text-[11px] leading-tight ${e.done ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>{e.label}</span>
-            {e.pending && <span className="text-[10px] text-gray-300">(pending)</span>}
+            <span className={`mt-2 text-[11px] leading-tight ${e.cancelled ? 'font-semibold text-rose-600' : e.done ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>{e.label}</span>
             {e.at && <span className="mt-0.5 text-[10px] text-gray-400 tabular-nums">{fmtDate(e.at)}<br />{fmtTime(e.at)}</span>}
           </div>
         ))}
@@ -440,49 +589,18 @@ const LifecycleTimeline = ({ b }) => {
       <ol className="md:hidden relative ml-1">
         {events.map((e, i) => (
           <li key={i} className="flex gap-3 pb-3 last:pb-0 relative">
-            {i < n - 1 && <span className={`absolute left-[8px] top-5 bottom-0 w-[2px] ${events[i + 1].done ? 'bg-emerald-400' : 'bg-gray-200'}`} />}
-            <span className={`relative z-10 mt-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center flex-shrink-0
-              ${e.done ? 'bg-emerald-500 text-white' : 'bg-white border-2 border-gray-300'}`}>
-              {e.done && <Ic d={IC.check} size={10} strokeWidth={3} />}
+            {i < n - 1 && <span className={`absolute left-[8px] top-5 bottom-0 w-[2px] ${connFill(events[i + 1])}`} />}
+            <span className={`relative z-10 mt-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center flex-shrink-0 ${nodeFill(e)}`}>
+              {e.done && <Ic d={e.cancelled ? IC.x : IC.check} size={10} strokeWidth={3} />}
             </span>
             <div className="flex-1 min-w-0 flex items-baseline justify-between gap-2">
-              <span className={`text-[12.5px] ${e.done ? 'font-medium text-gray-800' : 'text-gray-400'}`}>
-                {e.label}{e.pending && <span className="ml-1.5 text-[10px] text-gray-300">(pending)</span>}
-              </span>
+              <span className={`text-[12.5px] ${e.cancelled ? 'font-medium text-rose-600' : e.done ? 'font-medium text-gray-800' : 'text-gray-400'}`}>{e.label}</span>
               {e.at && <span className="text-[11px] text-gray-400 flex-shrink-0 tabular-nums">{fmtDate(e.at)} · {fmtTime(e.at)}</span>}
             </div>
           </li>
         ))}
       </ol>
     </>
-  );
-};
-
-// Earnings breakdown bar — relative share of vendor / platform / taxes.
-const BreakdownBar = ({ vendor, platform, taxes }) => {
-  const parts = [
-    { label: 'Vendor',   value: Number(vendor) || 0,   color: 'bg-emerald-500',  text: 'text-emerald-600' },
-    { label: 'Platform', value: Number(platform) || 0, color: 'bg-[#FE5100]',    text: 'text-[#FE5100]' },
-    { label: 'Taxes',    value: Number(taxes) || 0,    color: 'bg-amber-400',    text: 'text-amber-600' },
-  ].filter(p => p.value > 0);
-  const sum = parts.reduce((s, p) => s + p.value, 0);
-  if (!sum) return <p className="text-[12px] text-gray-400 py-2">Breakdown unavailable for this booking.</p>;
-  return (
-    <div>
-      <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100">
-        {parts.map((p, i) => <div key={i} className={p.color} style={{ width: `${(p.value / sum) * 100}%` }} title={`${p.label} ${inr(p.value)}`} />)}
-      </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
-        {parts.map((p, i) => (
-          <div key={i} className="flex items-center gap-1.5 text-[11.5px]">
-            <span className={`w-2 h-2 rounded-full ${p.color}`} />
-            <span className="text-gray-500">{p.label}</span>
-            <span className={`font-semibold tabular-nums ${p.text}`}>{inr(p.value)}</span>
-            <span className="text-gray-400 tabular-nums">{Math.round((p.value / sum) * 100)}%</span>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 };
 
@@ -499,10 +617,12 @@ const TabBtn = ({ active, label, onClick }) => (
 // Action-panel button (full width, icon-left).
 const PanelBtn = ({ icon, label, onClick, href, tone = 'default' }) => {
   const tones = {
-    default: 'text-gray-700 hover:bg-gray-50 border-gray-200',
-    danger:  'text-rose-600 hover:bg-rose-50 border-rose-200 bg-white',
+    default: 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200',
+    primary: 'bg-[#FE5100] text-white hover:bg-[#e54900] border-transparent shadow-sm',
+    success: 'bg-emerald-600 text-white hover:bg-emerald-700 border-transparent shadow-sm',
+    danger:  'bg-white text-rose-600 hover:bg-rose-50 border-rose-200',
   };
-  const cls = `w-full inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border bg-white text-[12.5px] font-medium transition-colors ${tones[tone]}`;
+  const cls = `w-full inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border text-[12.5px] font-medium transition-colors ${tones[tone]}`;
   const inner = <><Ic d={icon} size={15} className="flex-shrink-0" /><span className="truncate">{label}</span></>;
   if (href) return <a href={href} target="_blank" rel="noreferrer" className={cls}>{inner}</a>;
   return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
@@ -524,7 +644,7 @@ const MenuItem = ({ icon, label, onClick, href }) => {
 
 const DETAIL_TABS = ['Overview', 'Timeline', 'Meeting', 'Financials', 'Logs'];
 
-const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) => {
+const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, onMarkComplete }) => {
   const [tab, setTab] = useState('Overview');
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirm, setConfirm] = useState(null); // 'cancel' | 'delete' | null
@@ -575,11 +695,23 @@ const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) =
   const total = Number(b.customer_total ?? b.services?.price ?? 0);
   const platformFee = b.platform_fee_amount;
   const vendorEarnings = b.vendor_amount;
-  const commission = b.commission_applied;
   const taxes = (Number(b.platform_fee_gst) || 0) + (Number(b.commission_gst) || 0) + (Number(b.razorpay_tax_actual) || 0);
-  const platformRevenue = (Number(commission) || 0) + (Number(platformFee) || 0);
   const requiredId = String(b.id).slice(0, 8).toUpperCase();
   const timeRange = `${fmtTime(b.scheduled_at)} – ${fmtTime(endTime(b))}`;
+
+  // Action visibility (spec 4.2): Mark Completed for any active booking;
+  // Cancel hidden once terminal.
+  const showMarkComplete = !['completed', 'cancelled'].includes(b.status);
+  const showCancel = !['cancelled', 'completed'].includes(b.status);
+
+  // Revenue-split donut segments — only > 0 are drawn (spec 4.7).
+  const pieSegments = [
+    { label: 'Vendor Earnings',     value: Number(b.vendor_amount) || 0,        color: '#10b981' },
+    { label: 'Platform Commission', value: Number(b.commission_applied) || 0,    color: '#FE5100' },
+    { label: 'Razorpay Fees',       value: Number(b.razorpay_fee_actual) || 0,   color: '#f59e0b' },
+    { label: 'GST',                 value: (Number(b.commission_gst) || 0) + (Number(b.platform_fee_gst) || 0), color: '#8b5cf6' },
+    { label: 'Taxes',               value: Number(b.razorpay_tax_actual) || 0,   color: '#64748b' },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" role="dialog" aria-modal="true" aria-label="Booking details">
@@ -594,16 +726,14 @@ const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) =
             <IconBtn icon={IC.arrowL} label="Back" onClick={onClose} />
             <IconBtn icon={IC.copy} label="Copy booking ID" onClick={() => copy(b.id, 'Booking ID')} />
           </div>
-          {/* Center: identity */}
+          {/* Center: slim identity — service · date · time · duration · id + state */}
           <div className="flex-1 min-w-0 flex items-center gap-2.5">
-            <StatePill state={state} size="lg" />
+            <StatusBadge status={status} size="lg" />
             <div className="min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <h3 className="text-[14px] font-bold text-gray-900 truncate">{b.services?.title || 'Service'}</h3>
-                <code className="hidden sm:inline text-[11.5px] font-mono text-gray-400 flex-shrink-0">Booking {shortId(b.id)}</code>
-              </div>
+              <h3 className="text-[14px] font-bold text-gray-900 truncate">{b.services?.title || 'Service'}</h3>
               <p className="text-[11.5px] text-gray-400 truncate tabular-nums">
-                {inr(total)} · {dur} min · {fmtDate(b.scheduled_at)} · {fmtTime(b.scheduled_at)} IST
+                {fmtDate(b.scheduled_at)} · {timeRange} · {dur} min
+                <code className="hidden sm:inline font-mono"> · {shortId(b.id)}</code>
               </p>
             </div>
           </div>
@@ -629,35 +759,16 @@ const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) =
         {/* ── Body: 3 columns on lg, single scroll below ── */}
         <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden lg:flex">
 
-          {/* Left snapshot */}
-          <aside className="lg:w-[244px] lg:flex-shrink-0 lg:overflow-y-auto bg-gray-50/50 border-b lg:border-b-0 lg:border-r border-gray-100 p-4 space-y-4">
-            <div>
-              <StatePill state={state} size="lg" />
-              <h2 className="mt-2.5 text-[15px] font-bold text-gray-900 leading-snug">{b.services?.title || 'Service'}</h2>
-              <p className="mt-1 text-[26px] font-bold text-gray-900 tabular-nums leading-none">{inr(total)}</p>
-            </div>
-            <div className="space-y-1.5 text-[12.5px] text-gray-600">
-              <p className="flex items-center gap-2"><Ic d={IC.calendar} size={14} className="text-gray-400 flex-shrink-0" />{fmtDate(b.scheduled_at)}</p>
-              <p className="flex items-center gap-2 tabular-nums"><Ic d={IC.clock} size={14} className="text-gray-400 flex-shrink-0" />{timeRange}</p>
-              <p className="flex items-center gap-2"><Ic d={IC.zap} size={14} className="text-gray-400 flex-shrink-0" />{dur} min</p>
-              <p className="flex items-center gap-2"><Ic d={IC.globe} size={14} className="text-gray-400 flex-shrink-0" />Asia/Kolkata (IST)</p>
-            </div>
-            <div className="pt-3 border-t border-gray-200/70 space-y-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Booking ID</span>
-                <span className="flex items-center gap-1 min-w-0">
-                  <code className="text-[12px] font-mono font-semibold text-gray-700 truncate">{shortId(b.id)}</code>
-                  <IconBtn icon={IC.copy} label="Copy booking ID" onClick={() => copy(b.id, 'Booking ID')} />
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Payment</span>
-                <PaymentPill status={b.payment_status} />
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Payout</span>
-                <PayoutPill b={b} />
-              </div>
+          {/* Left: earnings anchor + primary actions + condensed snapshot */}
+          <aside className="lg:w-[272px] lg:flex-shrink-0 lg:overflow-y-auto bg-gray-50/50 border-b lg:border-b-0 lg:border-r border-gray-100 p-4 space-y-4">
+            <EarningsCard b={b} />
+
+            {/* Action buttons */}
+            <div className="space-y-1.5">
+              <PanelBtn icon={IC.pencil} label="Edit Booking" tone="primary" onClick={() => onEdit(b)} />
+              {showMarkComplete && <PanelBtn icon={IC.checkCircle} label="Mark Completed" tone="success" onClick={() => onMarkComplete?.()} />}
+              {showCancel && <PanelBtn icon={IC.ban} label="Cancel Booking" tone="danger" onClick={() => setConfirm('cancel')} />}
+              <PanelBtn icon={IC.alert} label="Open Dispute" onClick={() => notImplemented('Open Dispute')} />
             </div>
           </aside>
 
@@ -670,13 +781,15 @@ const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) =
             <div className="p-4 space-y-3">
               {tab === 'Overview' && (
                 <>
-                  <ContactCard title="Customer Information" icon={IC.user} b={b}
-                    name={b.guest_name} email={b.guest_email} phone={b.guest_phone} mailLabel="Email Customer" />
-                  <ContactCard title="Vendor Information" icon={IC.building} b={b}
-                    name={host.name} email={host.email}
-                    /* TODO(backend): host phone not selected by list endpoint */
-                    phone={null} mailLabel="Email Vendor"
-                    extra={<IconBtn icon={IC.external} label="View vendor profile" href={host.username ? `/${host.username}` : undefined} onClick={host.username ? undefined : () => toast.error('No profile')} />} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <ContactCard title="Customer" icon={IC.user} b={b} accent="blue"
+                      name={b.guest_name} email={b.guest_email} phone={b.guest_phone} mailLabel="Email Customer" />
+                    <ContactCard title="Vendor" icon={IC.building} b={b} accent="crimson"
+                      name={host.name} email={host.email}
+                      /* TODO(backend): host phone not selected by list endpoint */
+                      phone={null} mailLabel="Email Vendor"
+                      extra={<IconBtn icon={IC.external} label="View vendor profile" href={host.username ? `/${host.username}` : undefined} onClick={host.username ? undefined : () => toast.error('No profile')} />} />
+                  </div>
                   <Card title="Booking Information" icon={IC.calendar}>
                     <div className="grid grid-cols-2 gap-x-6">
                       <CopyField label="Booking ID" value={shortId(b.id)} />
@@ -687,7 +800,7 @@ const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) =
                       <Field label="End Time" value={fmtTime(endTime(b))} />
                       <div className="flex items-center justify-between gap-4 py-[5px] col-span-2 border-t border-gray-50 mt-0.5 pt-2">
                         <span className="text-[12px] text-gray-400">Current State</span>
-                        <StatePill state={state} />
+                        <StatusBadge status={status} />
                       </div>
                     </div>
                   </Card>
@@ -695,59 +808,69 @@ const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) =
               )}
 
               {tab === 'Timeline' && (
-                <Card title="Booking Lifecycle" icon={IC.clock}>
+                <Card title="Booking Lifecycle" icon={IC.clock} action={
+                  <span className="flex items-center gap-1.5 text-[11px] text-gray-400">Current state <StatusBadge status={statusKey(b)} /></span>
+                }>
                   <LifecycleTimeline b={b} />
                 </Card>
               )}
 
               {tab === 'Meeting' && (
-                <Card title="Meeting Information" icon={IC.video}>
-                  {b.meeting_link ? (
-                    <>
-                      <Field label="Provider" value={meetingProvider(b.meeting_link)} />
-                      <CopyField label="Meeting ID" value={meetingId(b.meeting_link)} />
-                      <div className="flex items-center justify-between gap-2 py-[5px] border-b border-gray-50">
-                        <span className="text-[12px] text-gray-400">Meeting URL</span>
-                        <span className="group flex items-center gap-1 min-w-0" title={b.meeting_link}>
-                          <span className="font-mono text-[12.5px] text-gray-700 truncate group-hover:hidden">{shortUrl(b.meeting_link)}</span>
-                          <span className="font-mono text-[12.5px] text-gray-700 truncate hidden group-hover:inline">{b.meeting_link}</span>
-                          <IconBtn icon={IC.copy} label="Copy link" onClick={() => copy(b.meeting_link, 'Link')} />
-                        </span>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  <Card title="Meeting Information" icon={IC.video}>
+                    {b.meeting_link ? (
+                      <>
+                        <Field label="Provider" value={meetingProvider(b.meeting_link)} />
+                        <CopyField label="Meeting ID" value={meetingId(b.meeting_link)} />
+                        <div className="flex items-center justify-between gap-2 py-[5px] border-b border-gray-50">
+                          <span className="text-[12px] text-gray-400">Meeting URL</span>
+                          <span className="group flex items-center gap-1 min-w-0" title={b.meeting_link}>
+                            <span className="font-mono text-[12.5px] text-gray-700 truncate group-hover:hidden">{shortUrl(b.meeting_link)}</span>
+                            <span className="font-mono text-[12.5px] text-gray-700 truncate hidden group-hover:inline">{b.meeting_link}</span>
+                            <IconBtn icon={IC.copy} label="Copy link" onClick={() => copy(b.meeting_link, 'Link')} />
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 pt-3">
+                          <ActionBtn icon={IC.video} label="Join Meeting" href={b.meeting_link} variant="primary" />
+                          <MoreMenu items={[
+                            { icon: IC.copy, label: 'Copy Link', onClick: () => copy(b.meeting_link, 'Link') },
+                            { icon: IC.link, label: 'Regenerate Meeting Link', onClick: () => notImplemented('Regenerate Meeting Link') },
+                          ]} />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="py-8 text-center">
+                        <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-3"><Ic d={IC.video} size={20} className="text-gray-400" /></div>
+                        <p className="text-[12.5px] text-gray-400">No meeting link on this booking.</p>
                       </div>
-                      <div className="flex gap-2 pt-3">
-                        <ActionBtn icon={IC.video} label="Open Meeting" href={b.meeting_link} variant="primary" />
-                        <ActionBtn icon={IC.copy} label="Copy Link" onClick={() => copy(b.meeting_link, 'Link')} />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="py-8 text-center">
-                      <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-3"><Ic d={IC.video} size={20} className="text-gray-400" /></div>
-                      <p className="text-[12.5px] text-gray-400">No meeting link on this booking.</p>
-                    </div>
-                  )}
-                </Card>
+                    )}
+                  </Card>
+                  <MapsPlaceholder />
+                </div>
               )}
 
               {tab === 'Financials' && (
                 <>
-                  <Card title="Payment Summary" icon={IC.receipt}>
-                    <Field label="Service Price" value={inr(servicePrice)} />
-                    <Field label="Platform Fee" value={platformFee != null ? inr(platformFee) : '—'} />
-                    <Field label="Taxes" value={taxes ? inr(taxes) : '—'} />
-                    <div className="flex items-center justify-between gap-4 py-2 border-t border-gray-100 mt-1">
-                      <span className="text-[12.5px] font-semibold text-gray-700">Total Amount</span>
-                      <span className="text-[14px] font-bold text-gray-900 tabular-nums">{inr(total)}</span>
-                    </div>
-                    <Field label="Vendor Earnings" value={vendorEarnings != null ? inr(vendorEarnings) : '—'} />
-                    <Field label="Payment Method" value={b.payment_id ? 'Razorpay' : '—'} />
-                    <div className="flex items-center justify-between gap-4 py-[5px]">
-                      <span className="text-[12px] text-gray-400">Payment Status</span>
-                      <PaymentPill status={b.payment_status} />
-                    </div>
-                  </Card>
-                  <Card title="Earnings Breakdown" icon={IC.zap}>
-                    <BreakdownBar vendor={vendorEarnings} platform={platformRevenue} taxes={taxes} />
-                  </Card>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    <Card title="Payment Summary" icon={IC.receipt}>
+                      <Field label="Service Price" value={inr(servicePrice)} />
+                      <Field label="Platform Fee" value={platformFee != null ? inr(platformFee) : '—'} />
+                      <Field label="Taxes" value={taxes ? inr(taxes) : '—'} />
+                      <div className="flex items-center justify-between gap-4 py-2 border-t border-gray-100 mt-1">
+                        <span className="text-[12.5px] font-semibold text-gray-700">Total Amount</span>
+                        <span className="text-[14px] font-bold text-gray-900 tabular-nums">{inr(total)}</span>
+                      </div>
+                      <Field label="Vendor Earnings" value={vendorEarnings != null ? inr(vendorEarnings) : '—'} />
+                      <Field label="Payment Method" value={b.payment_id ? 'Razorpay' : '—'} />
+                      <div className="flex items-center justify-between gap-4 py-[5px]">
+                        <span className="text-[12px] text-gray-400">Customer Payment</span>
+                        <PaymentPill status={b.payment_status} />
+                      </div>
+                    </Card>
+                    <Card title="Revenue Split" icon={IC.zap}>
+                      <div className="pt-1"><PieChart segments={pieSegments} /></div>
+                    </Card>
+                  </div>
                   <Card title="Payout Information" icon={IC.wallet}>
                     {/* TODO(backend): settlement/payout (P2) not implemented */}
                     <div className="flex items-center justify-between gap-4 py-[5px] border-b border-gray-50">
@@ -793,12 +916,6 @@ const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) =
 
           {/* Right action panel */}
           <aside className="lg:w-[284px] lg:flex-shrink-0 lg:overflow-y-auto border-t lg:border-t-0 lg:border-l border-gray-100 p-4 space-y-5">
-            <PanelGroup title="General">
-              <PanelBtn icon={IC.pencil} label="Edit Booking" onClick={() => onEdit(b)} />
-              <PanelBtn icon={IC.note} label="Add Internal Note" onClick={() => notImplemented('Add Internal Note')} />
-              <PanelBtn icon={IC.swap} label="Change Vendor" onClick={() => notImplemented('Change Vendor')} />
-              <PanelBtn icon={IC.alert} label="Open Dispute" onClick={() => notImplemented('Open Dispute')} />
-            </PanelGroup>
             <PanelGroup title="Financial">
               <PanelBtn icon={IC.refresh} label="Issue Refund" onClick={() => notImplemented('Issue Refund')} />
               <PanelBtn icon={IC.wallet} label="Force Refund" onClick={() => notImplemented('Force Refund')} />
@@ -812,7 +929,6 @@ const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) =
                 <Ic d={IC.alert} size={12} />Danger Zone
               </h5>
               <div className="space-y-1.5">
-                <PanelBtn icon={IC.ban} label="Force Cancel" tone="danger" onClick={() => setConfirm('cancel')} />
                 <PanelBtn icon={IC.trash} label="Delete Permanently" tone="danger" onClick={() => setConfirm('delete')} />
               </div>
             </div>
@@ -827,7 +943,7 @@ const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) =
               <div className="flex items-start gap-3 mb-3">
                 <span className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Ic d={confirm === 'delete' ? IC.trash : IC.ban} size={17} className="text-rose-600" /></span>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-gray-900">{confirm === 'delete' ? 'Delete booking permanently?' : 'Force cancel this booking?'}</h3>
+                  <h3 className="text-sm font-bold text-gray-900">{confirm === 'delete' ? 'Delete booking permanently?' : 'Cancel this booking?'}</h3>
                   <p className="text-[12.5px] text-gray-500 mt-0.5">
                     {confirm === 'delete'
                       ? 'This removes the booking and cannot be undone.'
@@ -849,7 +965,7 @@ const BookingDetailModal = ({ b, state, onClose, onEdit, onCancel, onDelete }) =
                   disabled={confirm === 'delete' && delText.trim().toUpperCase() !== requiredId}
                   onClick={() => { const c = confirm; setConfirm(null); if (c === 'delete') onDelete(); else onCancel(); }}
                   className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                  {confirm === 'delete' ? 'Delete Forever' : 'Force Cancel'}
+                  {confirm === 'delete' ? 'Delete Forever' : 'Cancel Booking'}
                 </button>
               </div>
             </div>
@@ -889,9 +1005,9 @@ const EditModal = ({ b, onClose, onSave }) => {
             </select>
           </label>
           <label className="block">
-            <span className="text-[12px] font-medium text-gray-500 mb-1.5 block">Payment Status</span>
+            <span className="text-[12px] font-medium text-gray-500 mb-1.5 block">Customer Payment</span>
             <select value={payment} onChange={e => setPayment(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FE5100]/30 focus:border-[#FE5100] outline-none">
-              {['unpaid', 'paid', 'refunded'].map(s => <option key={s} value={s}>{s}</option>)}
+              {[['unpaid', 'Pending'], ['paid', 'Received'], ['refunded', 'Refunded']].map(([v, lbl]) => <option key={v} value={v}>{lbl}</option>)}
             </select>
           </label>
         </div>
@@ -899,6 +1015,39 @@ const EditModal = ({ b, onClose, onSave }) => {
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
           <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#FE5100] text-white hover:bg-[#e54900] disabled:opacity-50 transition-colors">
             {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Delete confirm (type-to-confirm) — used by the list row/card ──
+const DeleteDialog = ({ b, onClose, onConfirm }) => {
+  const [txt, setTxt] = useState('');
+  const reqId = String(b.id).slice(0, 8).toUpperCase();
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5 animate-[slideUp_.16s_ease-out]">
+        <div className="flex items-start gap-3 mb-3">
+          <span className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Ic d={IC.trash} size={17} className="text-rose-600" /></span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-gray-900">Delete booking permanently?</h3>
+            <p className="text-[12.5px] text-gray-500 mt-0.5">This removes the booking and cannot be undone.</p>
+          </div>
+        </div>
+        <label className="block mb-3">
+          <span className="text-[12px] text-gray-500">Type <code className="font-mono font-semibold text-gray-700">{reqId}</code> to confirm</span>
+          <input autoFocus value={txt} onChange={e => setTxt(e.target.value)}
+            className="mt-1.5 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-rose-400/30 focus:border-rose-400 outline-none"
+            placeholder={reqId} />
+        </label>
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
+          <button disabled={txt.trim().toUpperCase() !== reqId} onClick={onConfirm}
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            Delete Forever
           </button>
         </div>
       </div>
@@ -919,6 +1068,7 @@ const AdminBookings = () => {
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   // Client-side fetch (see scope note). Pulls a generous page so search
   // + state filters work across the whole recent set without a new API.
@@ -934,33 +1084,32 @@ const AdminBookings = () => {
   useEffect(() => { fetchBookings(); }, [fetchBookings]);
   useEffect(() => { setPage(1); }, [tab, query]);
 
-  // Annotate each booking with its derived operational state once.
-  const withState = useMemo(() => raw.map(b => ({ b, state: deriveState(b) })), [raw]);
+  // Annotate each booking with its status key once.
+  const withStatus = useMemo(() => raw.map(b => ({ b, status: statusKey(b) })), [raw]);
 
   // Search: Booking ID / phone / email ONLY (per brief — nothing else).
   const searched = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return withState;
+    if (!q) return withStatus;
     const digits = q.replace(/\D/g, '');
-    return withState.filter(({ b }) => {
+    return withStatus.filter(({ b }) => {
       const idMatch = String(b.id).toLowerCase().includes(q);
       const emailMatch = (b.guest_email || '').toLowerCase().includes(q);
       const phoneMatch = digits.length >= 3 && (b.guest_phone || '').replace(/\D/g, '').includes(digits);
       return idMatch || emailMatch || phoneMatch;
     });
-  }, [withState, query]);
+  }, [withStatus, query]);
 
-  // Tab filter (Disputes has no backend source yet → always empty).
+  // Tab filter by booking.status (Disputed has no backend source → empty).
   const filtered = useMemo(() => {
     if (tab === 'all') return searched;
-    if (tab === 'disputes') return searched.filter(({ state }) => state === 'disputed');
-    return searched.filter(({ state }) => state === tab);
+    return searched.filter(({ status }) => status === tab);
   }, [searched, tab]);
 
   // Tab counts (over the searched set so counts respect active search).
   const counts = useMemo(() => {
-    const c = { all: searched.length, upcoming: 0, live: 0, completed: 0, cancelled: 0, disputes: 0 };
-    searched.forEach(({ state }) => { if (c[state] != null) c[state] += 1; });
+    const c = { all: searched.length, confirmed: 0, completed: 0, cancelled: 0, disputed: 0 };
+    searched.forEach(({ status }) => { if (c[status] != null) c[status] += 1; });
     return c;
   }, [searched]);
 
@@ -1021,7 +1170,7 @@ const AdminBookings = () => {
       <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1 -mx-0.5 px-0.5" style={{ scrollbarWidth: 'none' }}>
         {TABS.map(t => {
           const active = t.key === tab;
-          const count = counts[t.key === 'disputes' ? 'disputes' : t.key];
+          const count = counts[t.key];
           return (
             <Link key={t.key} to={t.to}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-medium whitespace-nowrap transition-colors
@@ -1053,23 +1202,23 @@ const AdminBookings = () => {
       ) : pageItems.length === 0 ? (
         <div className="bg-white border border-gray-200/80 rounded-2xl py-16 px-6 text-center">
           <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-            <Ic d={tab === 'disputes' ? IC.alert : IC.inbox} size={24} className="text-gray-400" />
+            <Ic d={tab === 'disputed' ? IC.alert : IC.inbox} size={24} className="text-gray-400" />
           </div>
           <h3 className="text-sm font-bold text-gray-800 mb-1">
-            {query ? 'No matches' : tab === 'disputes' ? 'No disputes' : `No ${tab === 'all' ? '' : tab + ' '}bookings`}
+            {query ? 'No matches' : tab === 'disputed' ? 'No disputes' : `No ${tab === 'all' ? '' : tab + ' '}bookings`}
           </h3>
           <p className="text-[12.5px] text-gray-400 max-w-sm mx-auto">
             {query ? 'No booking matches that ID, phone, or email.'
-              : tab === 'disputes' ? 'Disputed bookings will appear here once a customer or vendor raises a dispute.'
+              : tab === 'disputed' ? 'Disputed bookings will appear here once a customer or vendor raises a dispute.'
               : 'Nothing to show in this view yet.'}
           </p>
         </div>
       ) : (
         <>
-          <BookingTable items={pageItems} onView={setDetail} onEdit={setEditing} />
+          <BookingTable items={pageItems} onView={setDetail} onEdit={setEditing} onDelete={setDeleting} />
           <div className="md:hidden space-y-3">
-            {pageItems.map(({ b, state }) => (
-              <BookingCard key={b.id} b={b} state={state} onView={setDetail} onEdit={setEditing} />
+            {pageItems.map(({ b, status }) => (
+              <BookingCard key={b.id} b={b} status={status} onView={setDetail} onEdit={setEditing} onDelete={setDeleting} />
             ))}
           </div>
         </>
@@ -1098,15 +1247,21 @@ const AdminBookings = () => {
       {detail && (
         <BookingDetailModal
           b={detail}
-          state={deriveState(detail)}
+          status={statusKey(detail)}
           onClose={() => setDetail(null)}
           onEdit={(b) => { setEditing(b); }}
           onCancel={() => handleCancel(detail.id)}
           onDelete={() => handleDelete(detail.id)}
+          onMarkComplete={() => handleSave(detail.id, { status: 'completed' })}
         />
       )}
       {editing && (
         <EditModal b={editing} onClose={() => setEditing(null)} onSave={handleSave} />
+      )}
+      {deleting && (
+        <DeleteDialog b={deleting}
+          onClose={() => setDeleting(null)}
+          onConfirm={() => { handleDelete(deleting.id); setDeleting(null); }} />
       )}
     </div>
   );
