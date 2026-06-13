@@ -237,6 +237,7 @@ Key-value store for admin-configurable platform settings.
 |---|---|
 | `handle_new_user()` | Trigger: auto-create profile on auth.users insert |
 | `increment_product_purchase_count(uuid)` | Atomic increment of `products.purchase_count` |
+| `post_journal_entry(jsonb)` | **Atomic double-entry posting** (v2.8). SECURITY DEFINER, service-role only (REVOKEd from anon/authenticated). Validates balance (Σdebit = Σcredit, ≥2 lines), is idempotent on `(source_type, source_id)`, writes `journal_entries` + `journal_lines`, then per line updates `account_balances` under row lock (normal-balance sign: ASSET/EXPENSE grow on debit, LIABILITY/REVENUE on credit) and appends a `ledger_entries` row with `balance_after_account`. Returns `journal_entry_id`. Input: `{ source_type, source_id, description?, journal_date?, created_by?, lines:[{account_code, debit\|credit, vendor_id?, order_item_id?, subscription_payment_id?}] }`. Hardened in v2.8.1 (ordered locks, immutability triggers). |
 
 ---
 
@@ -255,6 +256,9 @@ Key-value store for admin-configurable platform settings.
 | v2.0–v2.5 | badges, plans, payout model, email engine, admin RBAC, Google auth/availability |
 | v2.6 | **Campaign platform:** `contacts`, `segments`, `email_campaigns`, `campaign_recipients`; `email_logs.campaign_id` |
 | v2.7 | **WhatsApp campaigns:** `whatsapp_templates`; `email_campaigns.whatsapp_template_id` |
+| v2.8 | **Financial ledger P1:** `chart_of_accounts` (12 seeded), `journal_entries`, `journal_lines`, `ledger_entries`, `account_balances`, `subscription_payments`; +10 `bookings` columns; `post_journal_entry(jsonb)` RPC; all RLS deny-all (applied live) |
+| v2.8.1 | Ledger hardening: ordered account locks, idempotency-race handling, journal/ledger immutability triggers, ledger amount CHECK (applied live) |
+| v2.8.2 | Partial unique index on `subscription_payments.razorpay_payment_id` (applied live) |
 
 ---
 
@@ -267,3 +271,122 @@ Key-value store for admin-configurable platform settings.
 - **whatsapp_templates** — approved AiSensy templates: `aisensy_campaign_name`, `language`, `body_preview`, `variable_map` JSONB ({"1":"first_name",…}), `param_count`, `approval_status`, `is_active`.
 
 Full design: `docs/communication-campaigns-architecture.md`.
+
+---
+
+## Financial Ledger Tables (v2.8 / v2.8.1 / v2.8.2) — applied live
+
+Double-entry accounting (P1 Ledger Core). All tables RLS **deny-all** (service-role only). Ledger/journal tables are append-only and written exclusively through the `post_journal_entry(jsonb)` RPC (see Database Functions). Money model **v3**. Spec: `docs/superpowers/specs/2026-06-13-financial-ledger-p1-design.md`.
+
+### chart_of_accounts
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID PK | |
+| code | TEXT UNIQUE | e.g. `'1000'`, `'4100'` |
+| name | TEXT | |
+| type | TEXT | `ASSET` \| `LIABILITY` \| `REVENUE` \| `EXPENSE` |
+| active | BOOLEAN | default true |
+| created_at | TIMESTAMPTZ | |
+
+**12 seeded accounts:** 1000 Bank, 1100 Razorpay Receivable, 2000 Vendor Payables, 2100 GST Payable, 2200 Refund Liability, 4000 Platform Fee Revenue, 4100 Commission Revenue, 4200 Subscription Revenue, 5000 Razorpay Charges (Orders), 5100 Razorpay Charges (Subscriptions), 5200 Settlement Charges, 5300 Refund Losses.
+
+---
+
+### journal_entries
+One per business event; UNIQUE `(source_type, source_id)` = idempotency key.
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID PK | |
+| journal_number | TEXT UNIQUE | `JNL-YYYY-NNNNNN` (from `journal_number_seq`) |
+| journal_date | DATE | default CURRENT_DATE |
+| source_type | TEXT | `ORDER_PAYMENT` \| `SUBSCRIPTION_PAYMENT` \| `SETTLEMENT` \| `REFUND` \| `ADJUSTMENT` \| `REVERSAL` \| `BANK_TRANSFER` \| `BACKFILL` \| `BACKFILL_SETTLEMENT` |
+| source_id | UUID | e.g. booking id / subscription_payment id |
+| description | TEXT | |
+| created_by | UUID | `admin_users.id`; NULL = system |
+| created_at | TIMESTAMPTZ | |
+
+---
+
+### journal_lines
+Balanced debit/credit lines per entry (each line: exactly one of debit/credit > 0).
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID PK | |
+| journal_entry_id | UUID FK | → `journal_entries(id)` |
+| account_id | UUID FK | → `chart_of_accounts(id)` |
+| debit | NUMERIC(12,2) | ≥ 0 |
+| credit | NUMERIC(12,2) | ≥ 0 |
+| vendor_id | UUID | |
+| order_id | UUID | future cart structure; NULL today |
+| order_item_id | UUID | = `bookings.id` today |
+| subscription_payment_id | UUID | |
+| created_at | TIMESTAMPTZ | |
+
+---
+
+### ledger_entries
+Append-only running-balance log; written ONLY by the RPC.
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID PK | |
+| created_at | TIMESTAMPTZ | clock_timestamp ordering (v2.8.1) |
+| account_id | UUID FK | → `chart_of_accounts(id)` |
+| order_id | UUID | |
+| order_item_id | UUID | |
+| vendor_id | UUID | |
+| subscription_payment_id | UUID | |
+| journal_entry_id | UUID FK | → `journal_entries(id)` |
+| ledger_type | TEXT | `DEBIT` \| `CREDIT` |
+| debit | NUMERIC(12,2) | |
+| credit | NUMERIC(12,2) | |
+| balance_after_account | NUMERIC(14,2) | account balance after this line |
+
+---
+
+### account_balances
+One row per account; updated under row lock inside the RPC (auto-seeded).
+| Column | Type | Notes |
+|---|---|---|
+| account_id | UUID PK | → `chart_of_accounts(id)` |
+| balance | NUMERIC(14,2) | default 0 |
+| updated_at | TIMESTAMPTZ | |
+
+---
+
+### subscription_payments
+Records each vendor plan charge (PRD §5.4). Partial unique index on `razorpay_payment_id` (v2.8.2).
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID PK | |
+| vendor_id | UUID | |
+| plan_type | TEXT | |
+| plan_price | NUMERIC(12,2) | |
+| gst_amount | NUMERIC(12,2) | 18% of plan price |
+| total_charged | NUMERIC(12,2) | plan_price + gst |
+| razorpay_fee | NUMERIC(12,2) | platform-borne (expense) |
+| razorpay_tax | NUMERIC(12,2) | |
+| razorpay_payment_id | TEXT | partial-unique (v2.8.2) |
+| razorpay_order_id | TEXT | |
+| razorpay_subscription_id | TEXT | NULL until P5 (recurring mandate) |
+| paid_at | TIMESTAMPTZ | |
+| revenue_recognized_at | TIMESTAMPTZ | |
+| billing_period_start / _end | DATE | |
+| status | TEXT | default `'paid'` |
+| created_at | TIMESTAMPTZ | |
+
+---
+
+### bookings — new ledger columns (v2.8)
+Added to the existing `bookings` table (old rows keep original snapshots):
+| Column | Type | Notes |
+|---|---|---|
+| paid_at | TIMESTAMPTZ | stamped on verifyPayment |
+| completed_at | TIMESTAMPTZ | stamped on completeBooking |
+| revenue_recognized_at | TIMESTAMPTZ | |
+| settled_at | TIMESTAMPTZ | P2 |
+| commission_gst | NUMERIC(12,2) | 18% of commission, vendor-borne (money model v3) |
+| razorpay_tax_actual | NUMERIC(12,2) | fee stored split (fee_actual + tax_actual) |
+| commission_percentage | NUMERIC(5,2) | snapshot |
+| vendor_plan_type | TEXT | snapshot |
+| settlement_status | TEXT | default `'pending_completion'`; → `eligible_for_settlement` \| `not_eligible` on complete |
+| revenue_recognition_status | TEXT | default `'pending'`; → `recognized` on complete |
