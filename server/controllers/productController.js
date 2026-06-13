@@ -6,17 +6,30 @@ const crypto = require('crypto');
 // ── POST /api/products ────────────────────────────────────────
 const createProduct = async (req, res) => {
   try {
-    const { title, description, type, price, file_url, thumbnail_url } = req.body;
+    const {
+      title, description, type, price, file_url, thumbnail_url,
+      product_url, file_name, file_size_bytes,
+    } = req.body;
     if (!title || price == null) return res.status(400).json({ message: 'title and price are required' });
 
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-    const { data, error } = await supabaseAdmin.from('products')
-      .insert({ host_id: req.user.id, title, description, type: type || 'pdf', price, file_url, thumbnail_url, slug })
-      .select().single();
+    const payload = {
+      host_id: req.user.id, title, description, type: type || 'pdf', price,
+      file_url, thumbnail_url, slug,
+      product_url, file_name, file_size_bytes,
+    };
 
-    if (error) return safeError(res, error);
-    res.status(201).json(data);
+    let result = await supabaseAdmin.from('products').insert(payload).select().single();
+
+    // Fallback: drop v2.9 fields if the migration hasn't been applied yet.
+    if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
+      const { product_url: _u, file_name: _n, file_size_bytes: _s, ...payloadCore } = payload;
+      result = await supabaseAdmin.from('products').insert(payloadCore).select().single();
+    }
+
+    if (result.error) return safeError(res, result.error);
+    res.status(201).json(result.data);
   } catch (error) { safeError(res, error); }
 };
 
@@ -33,7 +46,10 @@ const getMyProducts = async (req, res) => {
 // ── PUT /api/products/:id ─────────────────────────────────────
 const updateProduct = async (req, res) => {
   try {
-    const { title, description, type, price, file_url, thumbnail_url, is_active } = req.body;
+    const {
+      title, description, type, price, file_url, thumbnail_url, is_active,
+      product_url, file_name, file_size_bytes,
+    } = req.body;
     const updates = { updated_at: new Date().toISOString() };
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
@@ -42,11 +58,23 @@ const updateProduct = async (req, res) => {
     if (file_url !== undefined) updates.file_url = file_url;
     if (thumbnail_url !== undefined) updates.thumbnail_url = thumbnail_url;
     if (is_active !== undefined) updates.is_active = is_active;
+    if (product_url !== undefined) updates.product_url = product_url;
+    if (file_name !== undefined) updates.file_name = file_name;
+    if (file_size_bytes !== undefined) updates.file_size_bytes = file_size_bytes;
 
-    const { data, error } = await supabaseAdmin.from('products')
-      .update(updates).eq('id', req.params.id).eq('host_id', req.user.id).select().single();
-    if (error) return safeError(res, error);
-    res.json(data);
+    const runUpdate = (u) => supabaseAdmin.from('products')
+      .update(u).eq('id', req.params.id).eq('host_id', req.user.id).select().single();
+
+    let result = await runUpdate(updates);
+
+    // Fallback: drop v2.9 fields if the migration hasn't been applied yet.
+    if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
+      const { product_url: _u, file_name: _n, file_size_bytes: _s, ...updatesCore } = updates;
+      result = await runUpdate(updatesCore);
+    }
+
+    if (result.error) return safeError(res, result.error);
+    res.json(result.data);
   } catch (error) { safeError(res, error); }
 };
 
