@@ -41,126 +41,6 @@ const ROUTE_LOGIN = "/login-as-vendor";
 const EASE = [0.22, 1, 0.36, 1];
 
 /* ════════════════════════════════════════════════════════════
-   HEADER — sticky, minimal, shrinks on scroll
-   ════════════════════════════════════════════════════════════ */
-const NAV_LINKS = [
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Find Vendors", href: "#find" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Manifesto", href: "#manifesto" },
-  { label: "The Collective", href: "#collective" },
-];
-
-const SlothHeader = () => {
-  const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  return (
-    <motion.header
-      initial={{ opacity: 0, y: -16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: EASE }}
-      className="fixed inset-x-0 top-0 z-50"
-    >
-      <div
-        className={`mx-auto flex items-center justify-between px-5 transition-all duration-300 sm:px-8 ${
-          scrolled
-            ? "max-w-6xl mt-2 rounded-full border border-black/5 bg-white/80 py-2.5 shadow-[0_8px_30px_rgba(26,26,26,0.08)] backdrop-blur-xl"
-            : "max-w-7xl py-4"
-        }`}
-      >
-        {/* Logo */}
-        <a href="#top" className="flex items-center gap-2 hover:no-underline">
-          <span className="text-xl">🦥</span>
-          <span className="font-heading text-base font-extrabold tracking-tight text-ink">
-            Book A Sloth
-          </span>
-        </a>
-
-        {/* Center menu */}
-        <nav className="hidden items-center gap-8 lg:flex">
-          {NAV_LINKS.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="text-sm font-medium text-neutral-500 transition-colors hover:text-ink hover:no-underline"
-            >
-              {l.label}
-            </a>
-          ))}
-        </nav>
-
-        {/* Right */}
-        <div className="hidden items-center gap-3 lg:flex">
-          <Link
-            to={ROUTE_LOGIN}
-            className="text-sm font-medium text-neutral-600 transition-colors hover:text-ink hover:no-underline"
-          >
-            Login
-          </Link>
-          <Link
-            to={ROUTE_START}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(254,81,0,0.28)] transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
-          >
-            Start Calmly
-          </Link>
-        </div>
-
-        {/* Mobile toggle */}
-        <button
-          aria-label="Menu"
-          onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 lg:hidden"
-        >
-          {open ? <X size={18} /> : <Menu size={18} />}
-        </button>
-      </div>
-
-      {/* Mobile drawer */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: EASE }}
-            className="mx-3 mt-2 rounded-3xl border border-black/5 bg-white/95 p-5 shadow-xl backdrop-blur-xl lg:hidden"
-          >
-            <nav className="flex flex-col gap-1">
-              {NAV_LINKS.map((l) => (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100 hover:no-underline"
-                >
-                  {l.label}
-                </a>
-              ))}
-            </nav>
-            <div className="mt-3 flex flex-col gap-2 border-t border-neutral-100 pt-3">
-              <Link to={ROUTE_LOGIN} className="rounded-xl px-3 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100 hover:no-underline">
-                Login
-              </Link>
-              <Link to={ROUTE_START} className="rounded-full bg-primary px-3 py-3 text-center text-sm font-semibold text-white hover:no-underline">
-                Start Calmly
-              </Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
-  );
-};
-
-/* ════════════════════════════════════════════════════════════
    LINE-DRAW ICON wrapper (How it works)
    ════════════════════════════════════════════════════════════ */
 const LineIcon = ({ children }) => {
@@ -377,10 +257,9 @@ const Home = () => {
   return (
     <div id="top" className="overflow-x-hidden bg-canvas text-ink">
       <BrandPreloader variant="homepage" ready={assetsReady} />
-      <SlothHeader />
 
       {/* ════════════════ HERO ════════════════ */}
-      <section ref={heroRef} className="relative px-5 pb-16 pt-28 sm:px-8 sm:pt-32 lg:pb-24 lg:pt-40">
+      <section ref={heroRef} className="relative px-5 pb-16 pt-16 sm:px-8 sm:pt-20 lg:pb-24 lg:pt-28">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-8">
           {/* LEFT */}
           <div>
