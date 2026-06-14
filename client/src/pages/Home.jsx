@@ -263,11 +263,6 @@ const Home = () => {
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-8">
           {/* LEFT */}
           <div>
-            <Reveal as="p" className="mb-5 inline-flex items-center gap-2 rounded-full border border-black/5 bg-white px-3 py-1.5 text-xs font-medium text-neutral-500 shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              The Calm Economy
-            </Reveal>
-
             <Reveal as="h1" delay={0.05} className="text-[2.6rem] leading-[1.05] text-ink sm:text-6xl">
               Get booked & paid
               <br />
@@ -283,9 +278,10 @@ const Home = () => {
 
             {/* URL creator */}
             <Reveal delay={0.18} className="mt-8">
-              <div className="flex max-w-md flex-col gap-2 rounded-2xl border border-black/5 bg-white p-2 shadow-sm sm:flex-row sm:items-center">
-                <div className="flex flex-1 items-center rounded-xl bg-neutral-50 px-3">
-                  <span className="select-none whitespace-nowrap text-sm text-neutral-400">
+              <div className="flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 sm:rounded-2xl sm:border sm:border-neutral-200 sm:bg-white sm:p-1.5 sm:shadow-[0_4px_20px_-6px_rgba(0,0,0,0.12)]">
+                {/* URL prefix + input — own card on mobile, merges into pill on desktop */}
+                <div className="flex flex-1 items-center min-w-0 rounded-2xl border border-neutral-200 bg-white px-4 shadow-sm sm:rounded-xl sm:border-0 sm:bg-transparent sm:px-3 sm:shadow-none">
+                  <span className="select-none whitespace-nowrap text-sm font-medium text-neutral-400 shrink-0">
                     bookasloth.com/
                   </span>
                   <input
@@ -295,12 +291,12 @@ const Home = () => {
                     }
                     onKeyDown={(e) => e.key === "Enter" && claim()}
                     placeholder="yourname"
-                    className="!min-h-0 !w-auto flex-1 !border-0 !bg-transparent !p-0 py-2.5 text-sm !shadow-none focus:!ring-0"
+                    className="!min-h-0 !w-auto flex-1 min-w-0 !border-0 !bg-transparent !p-0 py-3.5 text-sm font-medium text-ink placeholder:font-normal placeholder:text-neutral-300 !shadow-none focus:!ring-0 sm:py-2.5"
                   />
                 </div>
                 <button
                   onClick={claim}
-                  className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark"
+                  className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:rounded-xl sm:py-3"
                 >
                   Claim Your SlothPage
                   <ArrowRight size={15} />
