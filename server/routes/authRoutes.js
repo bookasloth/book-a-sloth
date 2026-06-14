@@ -9,6 +9,9 @@ const {
   sendOtp,
   verifyOtp,
   login,
+  loginWithPhone,
+  verifyOtpLogin,
+  setPassword,
   getMe,
   forgotPassword,
   resetPassword,
@@ -30,6 +33,11 @@ router.get('/google/callback', googleCallback);
 // OTP (for guest booking)
 router.post('/send-otp', otpLimiter, sendOtp);
 router.post('/verify-otp', otpLimiter, verifyOtp);
+
+// Phone-primary user login: phone+password, OTP login, set-password
+router.post('/login-phone', authLimiter, loginWithPhone);
+router.post('/verify-otp-login', otpLimiter, verifyOtpLogin);
+router.post('/set-password', protect, setPassword);
 
 // Password reset (OTP-based, works for user/vendor/admin)
 router.post('/forgot-password', otpLimiter, forgotPassword);

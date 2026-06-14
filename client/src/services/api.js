@@ -90,6 +90,10 @@ export const getGoogleAuthUrl = ()             => API.get('/auth/google');
 export const getVendorGoogleUrl = (intent = 'login') => API.get('/auth/google/vendor', { params: { intent } });
 export const sendOtp          = (data)         => API.post('/auth/send-otp', data);
 export const verifyOtp        = (data)         => API.post('/auth/verify-otp', data);
+// Phone-primary user login
+export const loginWithPhone   = (data)         => API.post('/auth/login-phone', data);
+export const verifyOtpLogin   = (data)         => API.post('/auth/verify-otp-login', data);
+export const setUserPassword  = (data)         => API.post('/auth/set-password', data);
 export const forgotPassword   = (data)         => API.post('/auth/forgot-password', data);
 export const resetPassword    = (data)         => API.post('/auth/reset-password', data);
 

@@ -45,6 +45,8 @@ const serializeProfile = (profile, session) => ({
   id:                       profile.id,
   name:                     profile.name,
   email:                    profile.email,
+  phone:                    profile.phone || null,
+  password_set:             !!profile.password_set,
   role:                     profile.role,
   plan:                     profile.plan || 'explorer',
   username:                 profile.username || null,
@@ -547,6 +549,158 @@ const verifyOtp = async (req, res) => {
 };
 
 // ============================================
+// PHONE-PRIMARY USER LOGIN
+// ============================================
+
+// Synthetic Supabase auth email for a phone-only account. Internal artifact —
+// the user never sees or types it. Deterministic from the e164 digits so it is
+// idempotent across create-or-resolve.
+const syntheticPhoneEmail = (phone) =>
+  `p${String(phone).replace(/\D/g, "")}@users.bookasloth.app`;
+
+// Find the guest profile for a phone, creating one if none exists. Order matters
+// to avoid duplicate accounts:
+//   1. profiles.phone match
+//   2. a past booking's guest_phone → its guest profile (link phone onto it)
+//   3. create a fresh guest (synthetic email + temp password)
+// The profiles_phone_unique_idx (v3.1) is the DB-level backstop against races.
+const findOrCreateProfileByPhone = async (normalizedPhone) => {
+  // 1. Direct match on the unique phone column.
+  const { data: byPhone } = await supabaseAdmin
+    .from("profiles").select("*").eq("phone", normalizedPhone).maybeSingle();
+  if (byPhone) return byPhone;
+
+  // 2. Returning guest who booked before phone-login existed: link via booking.
+  const { data: booking } = await supabaseAdmin
+    .from("bookings")
+    .select("guest_id")
+    .eq("guest_phone", normalizedPhone)
+    .not("guest_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (booking?.guest_id) {
+    const { data: linked } = await supabaseAdmin
+      .from("profiles").select("*").eq("id", booking.guest_id).maybeSingle();
+    if (linked) {
+      await supabaseAdmin
+        .from("profiles")
+        .update({ phone: normalizedPhone, updated_at: new Date().toISOString() })
+        .eq("id", linked.id);
+      return { ...linked, phone: normalizedPhone };
+    }
+  }
+
+  // 3. Brand-new phone account. Username is derived from the (unique) phone, so
+  // no slug-uniqueness round-trip is needed.
+  const email = syntheticPhoneEmail(normalizedPhone);
+  const digits = String(normalizedPhone).replace(/\D/g, "");
+  const { data: created } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password: `tmp_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    email_confirm: true,
+    user_metadata: { name: "Guest" },
+  });
+  const userId = created?.user?.id;
+  if (!userId) throw new Error("Could not create account");
+
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .upsert(
+      {
+        id: userId,
+        name: "Guest",
+        email,
+        role: "guest",
+        username: `user-${digits}`,
+        phone: normalizedPhone,
+        password_set: false,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    )
+    .select("*")
+    .single();
+  return profile;
+};
+
+// POST /api/auth/login-phone — end-user login with phone + password
+const loginWithPhone = async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+    if (!phone || !password)
+      return res.status(400).json({ message: "Phone and password are required" });
+    const normalized = normalizePhone(phone);
+    if (!normalized)
+      return res.status(400).json({ message: "A valid mobile number is required" });
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles").select("*").eq("phone", normalized).maybeSingle();
+    if (!profile)
+      return res.status(404).json({ message: "No account found for this number. Log in with OTP to get started." });
+    if (profile.role !== "guest")
+      return res.status(409).json({ message: "This number is registered as a vendor. Please use vendor login." });
+    if (!profile.password_set)
+      return res.status(409).json({ needsPassword: true, message: "Set a password to continue." });
+
+    const { data, error } = await signInWithPassword(profile.email, password);
+    if (error) return res.status(401).json({ message: "Invalid phone or password" });
+    res.json(serializeProfile(profile, data.session));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// POST /api/auth/verify-otp-login — verify phone OTP and issue a session.
+// Unlike verify-otp (booking), this finds-or-creates by phone and mints a real
+// session so the user is logged in.
+const verifyOtpLogin = async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+    const normalized = normalizePhone(phone);
+    if (!normalized || !otp)
+      return res.status(400).json({ message: "Mobile number and OTP are required" });
+
+    const result = await otpStore.verify(normalized, otp);
+    if (!result.valid)
+      return res.status(400).json({ message: result.reason });
+
+    const profile = await findOrCreateProfileByPhone(normalized);
+    if (!profile)
+      return res.status(500).json({ message: "Could not access your account" });
+    if (profile.role !== "guest")
+      return res.status(409).json({ message: "This number is registered as a vendor. Please use vendor login." });
+
+    const session = await mintSessionForEmail(profile.email);
+    res.json(serializeProfile(profile, session));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// POST /api/auth/set-password — logged-in user sets a real password so they can
+// log in with phone + password next time (flips password_set).
+const setPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 8)
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(req.user.id, { password });
+    if (error) return res.status(400).json({ message: error.message });
+
+    await supabaseAdmin
+      .from("profiles")
+      .update({ password_set: true, updated_at: new Date().toISOString() })
+      .eq("id", req.user.id);
+
+    res.json({ ok: true });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// ============================================
 // SHARED: LOGIN & GET ME
 // ============================================
 
@@ -793,6 +947,9 @@ module.exports = {
   sendOtp,
   verifyOtp,
   login,
+  loginWithPhone,
+  verifyOtpLogin,
+  setPassword,
   getMe,
   forgotPassword,
   resetPassword,
