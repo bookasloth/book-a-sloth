@@ -1,13 +1,39 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const featureFlags = require('../services/featureFlags');
+const { REGISTRY } = require('../config/featureRegistry');
 
-// Flags safe to expose to unauthenticated clients (UI gating only).
-const PUBLIC_KEYS = ['reschedule', 'reschedule_fee'];
+/**
+ * Upsert every registry flag into feature_flags WITHOUT touching the `enabled`
+ * column of rows that already exist (admin choices win). New rows land enabled.
+ * Idempotent — safe to call on boot and on every admin GET.
+ */
+const syncRegistry = async () => {
+  try {
+    const { data: existing } = await supabaseAdmin.from('feature_flags').select('key');
+    const have = new Set((existing || []).map((r) => r.key));
+    const missing = REGISTRY.filter((f) => !have.has(f.key)).map((f) => ({
+      key: f.key, label: f.label, description: f.description,
+      category: f.category, scope: f.scope, enabled: true,
+    }));
+    if (missing.length) await supabaseAdmin.from('feature_flags').insert(missing);
+
+    // Keep label/description/category/scope fresh for known keys (metadata only,
+    // never `enabled`) so registry edits propagate to the admin UI.
+    for (const f of REGISTRY) {
+      if (!have.has(f.key)) continue;
+      await supabaseAdmin.from('feature_flags')
+        .update({ label: f.label, description: f.description, category: f.category, scope: f.scope })
+        .eq('key', f.key);
+    }
+    featureFlags.clearCache();
+  } catch (_) { /* boot/best-effort; getFlags still returns whatever exists */ }
+};
 
 // GET /api/admin/features
 const getFlags = async (req, res) => {
   try {
+    await syncRegistry();
     const { data, error } = await supabaseAdmin.from('feature_flags').select('*').order('key');
     if (error) return safeError(res, error);
     res.json(data || []);
@@ -32,14 +58,40 @@ const toggleFlag = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-// GET /api/feature-flags  (public)
-const getPublicFlags = async (req, res) => {
+// POST /api/admin/features — create a custom flag from the admin UI.
+const createFlag = async (req, res) => {
   try {
-    const map = await featureFlags.loadFlags();
-    const out = {};
-    for (const k of PUBLIC_KEYS) out[k] = k in map ? map[k] : true;
-    res.json(out);
+    let { key, label, description, category, scope } = req.body || {};
+    key = String(key || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    if (!key) return res.status(400).json({ message: 'key is required' });
+    if (!label || !String(label).trim()) return res.status(400).json({ message: 'label is required' });
+
+    const { data: clash } = await supabaseAdmin.from('feature_flags').select('key').eq('key', key).maybeSingle();
+    if (clash) return res.status(409).json({ message: `Flag "${key}" already exists` });
+
+    const row = {
+      key,
+      label: String(label).trim(),
+      description: description ? String(description).trim() : null,
+      category: category ? String(category).trim() : 'Custom',
+      scope: ['vendor', 'customer', 'both'].includes(scope) ? scope : 'both',
+      enabled: true, // new switches always ship ON
+      updated_by: req.admin?.id || req.user?.id || null,
+    };
+    const { data, error } = await supabaseAdmin.from('feature_flags').insert(row).select().single();
+    if (error) return safeError(res, error);
+    featureFlags.clearCache();
+    res.status(201).json(data);
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { getFlags, toggleFlag, getPublicFlags };
+// GET /api/feature-flags  (public) — every flag, for client UI gating.
+// Values only (key → bool); labels/descriptions stay admin-side.
+const getPublicFlags = async (req, res) => {
+  try {
+    const map = await featureFlags.loadFlags();
+    res.json(map);
+  } catch (e) { safeError(res, e); }
+};
+
+module.exports = { getFlags, toggleFlag, createFlag, getPublicFlags, syncRegistry };
