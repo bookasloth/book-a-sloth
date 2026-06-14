@@ -4,6 +4,7 @@ const {
   createOrder, verifyPayment,
   subscribePlan, verifySubscription,
   createProductOrder, verifyProductPayment,
+  createRescheduleFeeOrder,
   handleWebhook,
 } = require('../controllers/paymentController');
 const { protect, optionalProtect } = require('../middleware/authMiddleware');
@@ -22,6 +23,9 @@ router.post('/verify', paymentLimiter, verifyPayment);
 // Plan subscriptions (vendor must be logged in)
 router.post('/subscribe', paymentLimiter, protect, subscribePlan);
 router.post('/verify-subscription', paymentLimiter, protect, verifySubscription);
+
+// Reschedule fee (guest must be logged in — the guest who owns the booking)
+router.post('/reschedule-fee/create-order', paymentLimiter, protect, createRescheduleFeeOrder);
 
 // Product purchases
 router.post('/create-product-order', paymentLimiter, createProductOrder);

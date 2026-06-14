@@ -509,6 +509,31 @@ const createProductOrder = async (req, res) => {
   }
 };
 
+// ── POST /api/payment/reschedule-fee/create-order ────────────
+const createRescheduleFeeOrder = async (req, res) => {
+  try {
+    const { booking_id } = req.body;
+    const { data: booking } = await supabaseAdmin
+      .from("bookings")
+      .select("id, guest_id, reschedule_count, profiles!bookings_host_id_fkey(reschedule_fee)")
+      .eq("id", booking_id).single();
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (req.user?.id !== booking.guest_id) return res.status(403).json({ message: "Not authorized" });
+    const fee = Number(booking["profiles!bookings_host_id_fkey"]?.reschedule_fee) || 0;
+    if (fee <= 0 || (Number(booking.reschedule_count) || 0) < 1) {
+      return res.status(400).json({ message: "No reschedule fee due", fee: 0 });
+    }
+    const order = await razorpay.orders.create({
+      amount: Math.round(fee * 100), currency: "INR",
+      receipt: `rsf_${booking_id.slice(0, 20)}`,
+      notes: { booking_id, kind: "reschedule_fee" },
+    });
+    res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency, fee });
+  } catch (e) {
+    res.status(500).json({ message: "Could not start reschedule fee payment" });
+  }
+};
+
 // ── POST /api/payment/verify-product ────────────────────────
 const verifyProductPayment = async (req, res) => {
   try {
@@ -638,4 +663,4 @@ const handleWebhook = async (req, res) => {
   res.json({ received: true });
 };
 
-module.exports = { createOrder, verifyPayment, subscribePlan, verifySubscription, createProductOrder, verifyProductPayment, handleWebhook };
+module.exports = { createOrder, verifyPayment, subscribePlan, verifySubscription, createProductOrder, verifyProductPayment, createRescheduleFeeOrder, handleWebhook };

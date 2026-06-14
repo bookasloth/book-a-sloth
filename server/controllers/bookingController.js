@@ -710,6 +710,29 @@ const rescheduleBooking = async (req, res) => {
 
     const isHostReschedule = req.user?.id === booking.host_id;
     const isGuestReschedule = !isHostReschedule;
+
+    // Reschedule fee — platform-kept, "first reschedule free". A guest's first
+    // move (reschedule_count 0) is always free; from the second onward, if the
+    // reschedule_fee flag is ON and the vendor set a fee > 0, a valid Razorpay
+    // fee payment is required BEFORE any DB mutation (402 otherwise).
+    const { verifySignature } = require("../utils/razorpaySignature");
+    let feeChargedAmount = 0;
+    if (isGuestReschedule) {
+      const hostRow = booking["profiles!bookings_host_id_fkey"] || {};
+      const vendorFee = Number(hostRow.reschedule_fee) || 0;
+      const priorCount = Number(booking.reschedule_count) || 0;
+      const feeFlagOn = await featureFlags.isFeatureEnabled('reschedule_fee');
+      const feeApplies = priorCount >= 1 && feeFlagOn && vendorFee > 0;
+      if (feeApplies) {
+        const { fee_payment_id, fee_order_id, fee_signature } = req.body;
+        if (!fee_payment_id || !fee_order_id || !fee_signature ||
+            !verifySignature(fee_order_id, fee_payment_id, fee_signature)) {
+          return res.status(402).json({ message: 'Reschedule fee payment required', fee: vendorFee });
+        }
+        feeChargedAmount = vendorFee;
+      }
+    }
+
     const ackToken = isHostReschedule
       ? crypto.randomBytes(24).toString("hex")
       : null;
@@ -761,6 +784,22 @@ const rescheduleBooking = async (req, res) => {
       }
     } catch (calErr) {
       console.error("Reschedule calendar patch error (non-fatal):", calErr.message);
+    }
+
+    if (feeChargedAmount > 0) {
+      try {
+        const { rescheduleFeeEntry } = require("../services/ledger/journalTemplates");
+        const { postSafe } = require("../services/ledger/postingService");
+        const newCount = (Number(booking.reschedule_count) || 0) + 1;
+        await postSafe({
+          sourceType: 'RESCHEDULE_FEE',
+          sourceId: `${booking.id}:${newCount}`,
+          journalDate: new Date().toISOString().slice(0, 10),
+          template: rescheduleFeeEntry({ booking_id: booking.id, host_id: booking.host_id, fee: feeChargedAmount, gstRate: 0.18 }),
+        });
+      } catch (ledgerErr) {
+        console.error("Reschedule fee ledger error (non-fatal):", ledgerErr.message);
+      }
     }
 
     const s = booking.services;
