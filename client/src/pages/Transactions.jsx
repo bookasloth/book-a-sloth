@@ -355,14 +355,14 @@ const Transactions = () => {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 rounded-lg border text-xs disabled:opacity-40 hover:bg-gray-50"
+                className="btn btn--outline px-3 py-1 text-xs disabled:opacity-40 hover:bg-gray-50"
               >
                 Prev
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-3 py-1 rounded-lg border text-xs disabled:opacity-40 hover:bg-gray-50"
+                className="btn btn--outline px-3 py-1 text-xs disabled:opacity-40 hover:bg-gray-50"
               >
                 Next
               </button>

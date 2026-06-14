@@ -27,6 +27,13 @@
     --radius-card: 6px;
     --radius-nested: 6px;
 
+    /* ── Buttons — SINGLE SOURCE OF TRUTH (geometry only; colors stay per-button) ──
+       Matches the public Vendor Profile "Book" CTA (HostProfile.jsx).
+       Change these three values to restyle every button in the app. */
+    --btn-radius: 4px;            /* border-radius for ALL buttons */
+    --btn-border-width: 1px;      /* stroke width — outline/secondary buttons only */
+    --btn-border-color: #E5E5E5;  /* stroke color — outline/secondary buttons only */
+
     /* Spacing */
     --space-1: 8px;
     --space-2: 16px;

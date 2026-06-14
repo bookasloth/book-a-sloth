@@ -141,7 +141,7 @@ const FirstServiceStep = () => {
             <button
               type="submit"
               disabled={loading || !isValid}
-              className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+              className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
             >
               {loading ? 'Creating service...' : 'Create Service & Continue'}
             </button>

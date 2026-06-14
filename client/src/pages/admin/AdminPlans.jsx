@@ -145,7 +145,7 @@ const AdminPlans = () => {
             Database-driven — changes apply without deployment · {activeCount} active (min {rules.min_active_plans}, max {rules.max_active_plans})
           </p>
         </div>
-        <button onClick={() => openEdit('new')} className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">+ New Plan</button>
+        <button onClick={() => openEdit('new')} className="btn bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800">+ New Plan</button>
       </div>
 
       {loading ? <p className="text-center text-sm text-gray-400 py-10">Loading…</p> : (
@@ -182,9 +182,9 @@ const AdminPlans = () => {
                 </div>
               </div>
               <div className="flex gap-2 text-xs">
-                <button onClick={() => openEdit(plan)} className="flex-1 border rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50">Edit</button>
-                <button onClick={() => clone(plan)} className="flex-1 border rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50">Clone</button>
-                <button onClick={() => archive(plan)} className={`flex-1 border rounded-lg py-2 font-semibold ${plan.active ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50'}`}>
+                <button onClick={() => openEdit(plan)} className="btn btn--outline flex-1 py-2 font-semibold text-gray-700 hover:bg-gray-50">Edit</button>
+                <button onClick={() => clone(plan)} className="btn btn--outline flex-1 py-2 font-semibold text-gray-700 hover:bg-gray-50">Clone</button>
+                <button onClick={() => archive(plan)} className={`btn btn--outline flex-1 py-2 font-semibold ${plan.active ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50'}`}>
                   {plan.active ? 'Archive' : 'Restore'}
                 </button>
               </div>
@@ -204,7 +204,7 @@ const AdminPlans = () => {
             <option value="">Target plan…</option>
             {plans.filter((p) => p.active).map((p) => <option key={p.id} value={p.slug}>{p.name}</option>)}
           </select>
-          <button onClick={searchVendors} className="border px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Search</button>
+          <button onClick={searchVendors} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Search</button>
         </div>
         <div className="space-y-1.5">
           {assignResults.map((v) => (
@@ -280,8 +280,8 @@ const AdminPlans = () => {
               </select></div>
 
             <div className="flex justify-end gap-2 pt-4 border-t">
-              <button onClick={() => setEditing(null)} className="border px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button onClick={save} disabled={saving} className="bg-gray-900 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
+              <button onClick={() => setEditing(null)} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+              <button onClick={save} disabled={saving} className="btn bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
                 {saving ? 'Saving…' : 'Save Plan'}
               </button>
             </div>

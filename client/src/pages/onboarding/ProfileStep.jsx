@@ -155,7 +155,7 @@ const ProfileStep = () => {
           <button
             onClick={handleNext}
             disabled={loading || uploading}
-            className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+            className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
           >
             {loading ? 'Saving...' : 'Save & Continue'}
           </button>

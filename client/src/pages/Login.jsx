@@ -131,7 +131,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={busy || !phone || !password}
-                className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
+                className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
               >
                 {busy ? "Logging in..." : "Log in"}
               </button>
@@ -172,7 +172,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={busy || otp.length !== 6}
-                className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
+                className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
               >
                 {busy ? "Verifying..." : "Verify & log in"}
               </button>
@@ -201,7 +201,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={busy || newPw.length < 8}
-                className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
+                className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
               >
                 {busy ? "Saving..." : "Save password"}
               </button>

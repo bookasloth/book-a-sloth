@@ -376,7 +376,7 @@ const Services = () => {
         </div>
         <button
           onClick={() => setModal("create")}
-          className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/90"
+          className="btn inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 text-sm font-semibold hover:bg-primary/90"
         >
           <svg
             className="w-4 h-4"

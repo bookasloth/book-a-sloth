@@ -172,10 +172,10 @@ const AdminCommunication = () => {
             </div>
             <p className="text-[11px] text-gray-400">Variables: <code>{'{{first_name}} {{service_name}} {{vendor_name}} {{booking_date}} {{booking_time}} {{otp}} {{badge_name}} {{plan_name}} {{support_email}}'}</code></p>
             <div className="flex gap-2 pt-2 border-t">
-              <button onClick={save} disabled={saving} className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50">{saving ? 'Saving…' : 'Save'}</button>
-              <button onClick={doPreview} className="border px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Live Preview</button>
+              <button onClick={save} disabled={saving} className="btn bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800 disabled:opacity-50">{saving ? 'Saving…' : 'Save'}</button>
+              <button onClick={doPreview} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Live Preview</button>
               <input className="fb-input text-sm flex-1" placeholder="test@email" value={testTo} onChange={(e) => setTestTo(e.target.value)} />
-              <button onClick={sendTest} className="border px-4 py-2 rounded-lg text-sm font-medium text-violet-700 hover:bg-violet-50">Send Test</button>
+              <button onClick={sendTest} className="btn btn--outline px-4 py-2 text-sm font-medium text-violet-700 hover:bg-violet-50">Send Test</button>
             </div>
           </div>
           <div className="bg-white border rounded-xl p-3">
@@ -196,7 +196,7 @@ const AdminCommunication = () => {
             <select className="fb-input text-sm w-32" value={logFilter.status} onChange={(e) => setLogFilter((f) => ({ ...f, status: e.target.value }))}>
               <option value="">All</option><option value="sent">Sent</option><option value="queued">Queued</option><option value="failed">Failed</option>
             </select>
-            <button onClick={loadLogs} className="border px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-50">Refresh</button>
+            <button onClick={loadLogs} className="btn btn--outline px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">Refresh</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -245,7 +245,7 @@ const AdminCommunication = () => {
             <div><label className="block text-xs font-semibold text-gray-500 mb-1">Brand color</label>
               <input className="fb-input text-sm" value={settings.brand_color || ''} onChange={(e) => setSettings({ ...settings, brand_color: e.target.value })} /></div>
           </div>
-          <button onClick={saveSettings} className="bg-gray-900 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Save settings</button>
+          <button onClick={saveSettings} className="btn bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800">Save settings</button>
         </div>
       )}
 

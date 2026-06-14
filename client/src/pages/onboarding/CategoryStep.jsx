@@ -160,7 +160,7 @@ const CategoryStep = () => {
               <button
                 onClick={handleAddCustom}
                 disabled={adding}
-                className="flex items-center gap-1.5 bg-gray-900 text-white px-3 rounded text-sm font-medium hover:bg-black disabled:opacity-50 transition shrink-0"
+                className="btn flex items-center gap-1.5 bg-gray-900 text-white px-3 text-sm font-medium hover:bg-black disabled:opacity-50 transition shrink-0"
               >
                 {adding ? (
                   <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />
@@ -175,7 +175,7 @@ const CategoryStep = () => {
           <button
             onClick={handleNext}
             disabled={saving || selected.length === 0}
-            className="w-full bg-primary text-white py-2.5 rounded text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+            className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
           >
             {saving ? 'Saving...' : 'Save & Continue'}
           </button>

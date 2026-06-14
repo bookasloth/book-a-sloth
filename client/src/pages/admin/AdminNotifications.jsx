@@ -203,16 +203,16 @@ const AdminNotifications = () => {
 
           <div className="flex gap-2 pt-2">
             <button onClick={() => saveProvider()} disabled={savingProvider}
-              className="bg-gray-900 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
+              className="btn bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
               {savingProvider ? 'Saving…' : 'Save'}
             </button>
             <button onClick={testConnection} disabled={testingConn}
-              className="border px-5 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+              className="btn btn--outline px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
               {testingConn ? 'Testing…' : 'Test Connection'}
             </button>
             {whatsappEnabled && (
               <button onClick={() => { setWhatsappEnabled(false); saveProvider(false); }}
-                className="border border-red-200 text-red-600 px-5 py-2 rounded-lg text-sm font-medium hover:bg-red-50">
+                className="btn btn--outline text-red-600 px-5 py-2 text-sm font-medium hover:bg-red-50">
                 Disable
               </button>
             )}
@@ -270,11 +270,11 @@ const AdminNotifications = () => {
                   value={testTarget[evt.id] || ''}
                   onChange={(e) => setTestTarget((p) => ({ ...p, [evt.id]: e.target.value }))} />
                 <button onClick={() => sendTest(evt, 'whatsapp')}
-                  className="text-xs font-semibold px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100">
+                  className="btn text-xs font-semibold px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100">
                   Test WhatsApp
                 </button>
                 <button onClick={() => sendTest(evt, 'email')}
-                  className="text-xs font-semibold px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+                  className="btn text-xs font-semibold px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
                   Test Email
                 </button>
                 {savingEventId === evt.id && <span className="text-xs text-gray-400">Saving…</span>}
@@ -300,7 +300,7 @@ const AdminNotifications = () => {
               <option value="sent">Sent</option>
               <option value="failed">Failed</option>
             </select>
-            <button onClick={loadLogs} className="text-xs font-semibold px-3 py-2 rounded-lg border text-gray-600 hover:bg-gray-50">Refresh</button>
+            <button onClick={loadLogs} className="btn btn--outline text-xs font-semibold px-3 py-2 text-gray-600 hover:bg-gray-50">Refresh</button>
           </div>
           {loadingLogs ? (
             <p className="text-center text-sm text-gray-400 py-8">Loading…</p>

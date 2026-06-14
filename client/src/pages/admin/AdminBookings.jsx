@@ -190,11 +190,11 @@ const IconBtn = ({ icon, label, onClick, href, tone = 'gray' }) => {
 // Action button used inside the detail modal's Actions sections.
 const ActionBtn = ({ icon, label, onClick, href, variant = 'default' }) => {
   const variants = {
-    default: 'border border-gray-200 text-gray-700 bg-white hover:bg-gray-50',
-    primary: 'bg-[#FE5100] text-white hover:bg-[#e54900] border border-transparent shadow-sm',
-    danger:  'border border-rose-200 text-rose-600 bg-white hover:bg-rose-50',
+    default: 'btn--outline text-gray-700 bg-white hover:bg-gray-50',
+    primary: 'bg-[#FE5100] text-white hover:bg-[#e54900] shadow-sm',
+    danger:  'btn--outline text-rose-600 bg-white hover:bg-rose-50',
   };
-  const cls = `inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${variants[variant]}`;
+  const cls = `btn inline-flex items-center justify-center gap-2 px-3 py-2 text-[13px] font-medium transition-colors ${variants[variant]}`;
   if (href) return <a href={href} target="_blank" rel="noreferrer" className={cls}><Ic d={icon} size={15} />{label}</a>;
   return <button type="button" onClick={onClick} className={cls}><Ic d={icon} size={15} />{label}</button>;
 };
@@ -536,7 +536,7 @@ const MapsPlaceholder = () => (
         Vendor location — coming soon. Once vendors add a business address to their profile, an Open in Google Maps button appears here.
       </p>
       <button type="button" disabled aria-disabled="true"
-        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] font-medium border border-gray-200 text-gray-300 cursor-not-allowed">
+        className="btn btn--outline inline-flex items-center gap-2 px-3 py-2 text-[12.5px] font-medium text-gray-300 cursor-not-allowed">
         <Ic d={IC.external} size={14} />Open in Google Maps
       </button>
     </div>
@@ -549,7 +549,7 @@ const MoreMenu = ({ items }) => {
   return (
     <div className="relative" onBlur={() => setTimeout(() => setOpen(false), 120)}>
       <button type="button" onClick={() => setOpen(o => !o)}
-        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-medium border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+        className="btn btn--outline inline-flex items-center justify-center gap-1.5 px-3 py-2 text-[13px] font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
         <Ic d={IC.dots} size={15} />More
       </button>
       {open && (
@@ -635,12 +635,12 @@ const TabBtn = ({ active, label, onClick }) => (
 // Action-panel button (full width, icon-left).
 const PanelBtn = ({ icon, label, onClick, href, tone = 'default' }) => {
   const tones = {
-    default: 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200',
-    primary: 'bg-[#FE5100] text-white hover:bg-[#e54900] border-transparent shadow-sm',
-    success: 'bg-emerald-600 text-white hover:bg-emerald-700 border-transparent shadow-sm',
-    danger:  'bg-white text-rose-600 hover:bg-rose-50 border-rose-200',
+    default: 'bg-white text-gray-700 hover:bg-gray-50 btn--outline',
+    primary: 'bg-[#FE5100] text-white hover:bg-[#e54900] shadow-sm',
+    success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
+    danger:  'bg-white text-rose-600 hover:bg-rose-50 btn--outline',
   };
-  const cls = `w-full inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border text-[12.5px] font-medium transition-colors ${tones[tone]}`;
+  const cls = `btn w-full inline-flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-medium transition-colors ${tones[tone]}`;
   const inner = <><Ic d={icon} size={15} className="flex-shrink-0" /><span className="truncate">{label}</span></>;
   if (href) return <a href={href} target="_blank" rel="noreferrer" className={cls}>{inner}</a>;
   return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
@@ -986,7 +986,7 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
                 <button
                   disabled={confirm === 'delete' && delText.trim().toUpperCase() !== requiredId}
                   onClick={() => { const c = confirm; setConfirm(null); if (c === 'delete') onDelete(); else onCancel(); }}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  className="btn px-4 py-2 text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                   {confirm === 'delete' ? 'Delete Forever' : 'Cancel Booking'}
                 </button>
               </div>
@@ -1035,7 +1035,7 @@ const EditModal = ({ b, onClose, onSave }) => {
         </div>
         <div className="flex justify-end gap-2 px-5 py-4 border-t border-gray-100">
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
-          <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#FE5100] text-white hover:bg-[#e54900] disabled:opacity-50 transition-colors">
+          <button onClick={save} disabled={saving} className="btn px-4 py-2 text-sm font-semibold bg-[#FE5100] text-white hover:bg-[#e54900] disabled:opacity-50 transition-colors">
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
@@ -1068,7 +1068,7 @@ const DeleteDialog = ({ b, onClose, onConfirm }) => {
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
           <button disabled={txt.trim().toUpperCase() !== reqId} onClick={onConfirm}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            className="btn px-4 py-2 text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
             Delete Forever
           </button>
         </div>
@@ -1250,18 +1250,18 @@ const AdminBookings = () => {
       {!loading && totalPages > 1 && (
         <div className="flex items-center justify-center gap-1.5 mt-5">
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-            className="px-2.5 h-8 rounded-lg text-[12px] font-medium bg-white border border-gray-200 text-gray-500 disabled:opacity-40 hover:border-gray-300 transition">Prev</button>
+            className="btn btn--outline px-2.5 h-8 text-[12px] font-medium bg-white text-gray-500 disabled:opacity-40 transition">Prev</button>
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
             .map((n, idx, arr) => (
               <span key={n} className="flex items-center">
                 {idx > 0 && n - arr[idx - 1] > 1 && <span className="px-1 text-gray-300">…</span>}
                 <button onClick={() => setPage(n)}
-                  className={`w-8 h-8 rounded-lg text-[12px] font-medium transition ${page === n ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-300'}`}>{n}</button>
+                  className={`btn w-8 h-8 text-[12px] font-medium transition ${page === n ? 'bg-gray-900 text-white' : 'btn--outline bg-white text-gray-500'}`}>{n}</button>
               </span>
             ))}
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            className="px-2.5 h-8 rounded-lg text-[12px] font-medium bg-white border border-gray-200 text-gray-500 disabled:opacity-40 hover:border-gray-300 transition">Next</button>
+            className="btn btn--outline px-2.5 h-8 text-[12px] font-medium bg-white text-gray-500 disabled:opacity-40 transition">Next</button>
         </div>
       )}
 

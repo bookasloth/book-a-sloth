@@ -258,7 +258,7 @@ const AdminUsers = () => {
                 <button
                   key={i}
                   onClick={() => setPage(i + 1)}
-                  className={`w-8 h-8 rounded-lg text-xs font-medium ${page === i + 1 ? "bg-gray-900 text-white" : "bg-white border text-gray-500"}`}
+                  className={`btn w-8 h-8 text-xs font-medium ${page === i + 1 ? "bg-gray-900 text-white" : "btn--outline bg-white text-gray-500"}`}
                 >
                   {i + 1}
                 </button>

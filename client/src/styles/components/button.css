@@ -1,3 +1,21 @@
+/* ── Unified app button — SHARED, geometry only (radius + border/stroke) ──
+   Radius + stroke come from the --btn-* tokens (design-tokens.css), which mirror
+   the public Vendor Profile "Book" CTA. Each button keeps its own background,
+   text color, size, padding and shadow — only radius + border are unified here.
+
+   .btn          → filled buttons (have a solid background): no border.
+   .btn .btn--outline (or .btn--outline alone) → transparent/light buttons that
+                    need a visible edge: one standardized 1px stroke. */
+.btn {
+    border-radius: var(--btn-radius);
+    border: none;
+}
+
+.btn--outline {
+    border-radius: var(--btn-radius);
+    border: var(--btn-border-width) solid var(--btn-border-color);
+}
+
 /* Friendly Brutalism Buttons */
 .fb-btn {
     display: inline-flex;
@@ -6,10 +24,10 @@
     gap: 0.5rem;
     min-height: 44px;
     padding: 0.6rem 1.1rem;
-    border-radius: var(--radius-md);
+    border-radius: var(--btn-radius);
     font-weight: 700;
     font-family: var(--font-primary);
-    border: 3px solid var(--border);
+    border: none;
     background: var(--surface);
     color: var(--text);
     box-shadow: var(--shadow-hard-2);
@@ -36,12 +54,12 @@
 .fb-btn--primary {
     background: linear-gradient(180deg, var(--primary), color-mix(in srgb, var(--primary) 80%, black 10%));
     color: #ffffff;
-    border-color: color-mix(in srgb, var(--primary) 40%, var(--border) 60%);
 }
 
 .fb-btn--secondary {
     background: var(--surface);
     color: var(--text);
+    border: var(--btn-border-width) solid var(--btn-border-color);
 }
 
 .fb-btn--ghost {

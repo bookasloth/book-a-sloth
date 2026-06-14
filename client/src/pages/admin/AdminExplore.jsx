@@ -30,10 +30,10 @@ const Section = ({ children }) => (
 );
 
 const Btn = ({ onClick, variant = 'primary', disabled, children, className = '' }) => {
-  const base = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold rounded-[4px] border-2 border-[#1E1E1E] transition-shadow disabled:opacity-50';
+  const base = 'btn inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold transition-shadow disabled:opacity-50';
   const v = {
     primary: 'bg-[#FE5100] text-white shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]',
-    ghost:   'bg-white text-[#1E1E1E] shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]',
+    ghost:   'btn--outline bg-white text-[#1E1E1E] shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]',
     danger:  'bg-[#EF4444] text-white shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]',
   };
   return <button onClick={onClick} disabled={disabled} className={`${base} ${v[variant]} ${className}`}>{children}</button>;

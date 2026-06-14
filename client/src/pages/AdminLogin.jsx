@@ -81,7 +81,7 @@ const AdminLogin = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-lg text-sm font-bold text-white transition-opacity disabled:opacity-50 mt-2"
+              className="btn w-full py-2.5 text-sm font-bold text-white transition-opacity disabled:opacity-50 mt-2"
               style={{ background: "#FE5100" }}
             >
               {loading ? "Verifying…" : "Grant Access"}

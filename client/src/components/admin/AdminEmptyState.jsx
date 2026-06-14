@@ -42,13 +42,13 @@ const AdminEmptyState = ({
       {children}
       {ctaLabel && (ctaHref ? (
         <a href={ctaHref}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#FE5100] text-white text-sm font-semibold rounded-xl hover:bg-[#e54900] transition-colors shadow-sm">
+          className="btn inline-flex items-center gap-2 px-5 py-2.5 bg-[#FE5100] text-white text-sm font-semibold hover:bg-[#e54900] transition-colors shadow-sm">
           <Ic d={IC.plus} size={14} />
           {ctaLabel}
         </a>
       ) : (
         <button onClick={ctaOnClick}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#FE5100] text-white text-sm font-semibold rounded-xl hover:bg-[#e54900] transition-colors shadow-sm">
+          className="btn inline-flex items-center gap-2 px-5 py-2.5 bg-[#FE5100] text-white text-sm font-semibold hover:bg-[#e54900] transition-colors shadow-sm">
           <Ic d={IC.plus} size={14} />
           {ctaLabel}
         </button>

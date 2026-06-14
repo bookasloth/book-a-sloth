@@ -237,7 +237,7 @@ const ProfileSetup = () => {
     <button
       type="button"
       onClick={() => setActiveSection(id)}
-      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+      className={`btn px-4 py-2 text-sm font-medium transition-colors ${
         activeSection === id
           ? 'bg-gray-900 text-white'
           : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
@@ -295,7 +295,7 @@ const ProfileSetup = () => {
                   </div>
                   <div>
                     <button type="button" onClick={() => setCropper("profile")}
-                      className="text-xs text-primary hover:underline border border-primary/30 px-3 py-1.5 rounded-lg block">
+                      className="btn btn--outline text-xs text-primary hover:underline px-3 py-1.5 block">
                       {form.profile_image ? "Change photo" : "Upload photo"}
                     </button>
                     <p className="text-[10px] text-gray-400 mt-1">Border colour reflects your plan tier</p>
@@ -480,7 +480,7 @@ const ProfileSetup = () => {
                 <p className="text-xs text-gray-400 mb-2 font-medium">Booking Button Preview</p>
                 <button
                   type="button"
-                  className="w-full py-2.5 rounded-xl font-bold text-sm transition-all"
+                  className="btn w-full py-2.5 font-bold text-sm transition-all"
                   style={{ background: tc, color: getContrastColor(tc) }}
                 >
                   Book a Session
@@ -535,10 +535,10 @@ const ProfileSetup = () => {
                         );
                       }
                     }}
-                    className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-semibold border transition-colors whitespace-nowrap ${
+                    className={`btn btn--outline flex-shrink-0 px-4 py-2 text-xs font-semibold transition-colors whitespace-nowrap ${
                       user?.google_calendar_connected
-                        ? 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                        : 'border-[#FE5100] text-[#FE5100] hover:bg-[#FFF4EE]'
+                        ? 'text-gray-500 hover:bg-gray-50'
+                        : 'text-[#FE5100] hover:bg-[#FFF4EE]'
                     }`}
                   >
                     {user?.google_calendar_connected ? 'Connected ✓' : 'Connect'}
@@ -598,7 +598,7 @@ const ProfileSetup = () => {
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors"
+            className="btn flex-1 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition-colors"
             style={{ background: tc }}
           >
             {loading ? "Saving…" : "Save Profile"}
@@ -606,7 +606,7 @@ const ProfileSetup = () => {
           <button
             type="button"
             onClick={() => navigate("/dashboard")}
-            className="px-5 py-2.5 rounded-lg text-sm font-medium border text-gray-600 hover:bg-gray-50"
+            className="btn btn--outline px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
           >
             Cancel
           </button>

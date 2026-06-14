@@ -65,7 +65,7 @@ const CalendarStep = () => {
           <button
             onClick={handleConnect}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-white border-2 border-primary text-primary py-2.5 rounded text-sm font-medium hover:bg-primary-light transition disabled:opacity-60"
+            className="btn btn--outline w-full flex items-center justify-center gap-2 bg-white text-primary py-2.5 text-sm font-medium hover:bg-primary-light transition disabled:opacity-60"
           >
             {loading ? (
               <>

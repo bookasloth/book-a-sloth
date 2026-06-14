@@ -182,7 +182,7 @@ const Availability = () => {
                   <button
                     type="button"
                     onClick={() => addSlot(day)}
-                    className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+                    className="btn text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1"
                   >
                     + Add slot
                   </button>
@@ -255,7 +255,7 @@ const Availability = () => {
                 setNewBlockedDate("");
                 setDirty(true);
               }}
-              className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded"
+              className="btn text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1"
             >
               + Block date
             </button>
@@ -287,7 +287,7 @@ const Availability = () => {
         <button
           type="submit"
           disabled={loading}
-          className="mt-6 w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
+          className="btn mt-6 w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
         >
           {loading ? "Saving..." : "Save Availability"}
         </button>
