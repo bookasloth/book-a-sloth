@@ -280,6 +280,7 @@ const HostProfile = () => {
   const [reviewData,  setReviewData]  = useState({ reviews: [], count: 0, avg: 0 });
   const [showReviews, setShowReviews] = useState(false);
   const [products,    setProducts]    = useState([]);
+  const [cardExpanded, setCardExpanded] = useState(false); // mobile-only collapse
 
   useEffect(() => {
     const load = async () => {
@@ -366,8 +367,42 @@ const HostProfile = () => {
               <lg: full-width, centered, capped. lg+: fixed 340 sticky left. */}
           <div className="w-full max-w-md mx-auto lg:mx-0 lg:max-w-none lg:w-[340px] lg:flex-shrink-0 lg:sticky lg:top-24">
 
-            <div className="overflow-hidden rounded-2xl"
+            {/* Collapsed bar — mobile only, tap to expand full card */}
+            <button onClick={() => setCardExpanded(true)}
+              className={`sm:hidden w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-shadow active:shadow-sm ${cardExpanded ? 'hidden' : ''}`}
               style={{ background: C.card, border: `1px solid ${C.border}` }}>
+              <div className="flex-shrink-0 overflow-hidden"
+                style={{ width: 48, height: 48, borderRadius: 10, outline: `2px solid ${borderColor}`, background: C.card }}>
+                {host.profile_image
+                  ? <img src={host.profile_image} alt={host.name} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-lg font-bold"
+                      style={{ background: `${tc}18`, color: tc }}>
+                      {host.name?.charAt(0)?.toUpperCase()}
+                    </div>}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-sm truncate" style={{ color: C.text }}>{host.name}</div>
+                {(host.profession || host.tagline) && (
+                  <div className="text-xs truncate" style={{ color: C.secondary }}>{host.profession || host.tagline}</div>
+                )}
+              </div>
+              <svg className="w-5 h-5 flex-shrink-0" style={{ color: C.muted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Full card — mobile: only when expanded; sm+: always shown */}
+            <div className={`relative overflow-hidden rounded-2xl ${cardExpanded ? 'block' : 'hidden'} sm:block`}
+              style={{ background: C.card, border: `1px solid ${C.border}` }}>
+
+              {/* Collapse button — mobile only */}
+              <button onClick={() => setCardExpanded(false)} aria-label="Collapse"
+                className="sm:hidden absolute top-3 right-3 z-10 flex items-center justify-center w-8 h-8 rounded-full"
+                style={{ background: 'rgba(255,255,255,0.85)', color: C.text }}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
 
               {/* Cover — 150px, rounded top only */}
               <div className="relative overflow-hidden"
@@ -501,8 +536,8 @@ const HostProfile = () => {
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold" style={{ color: C.text }}>Services</h2>
 
-              {/* Grid / List toggle */}
-              <div className="flex rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}`, background: C.card }}>
+              {/* Grid / List toggle — hidden on mobile (no real value) */}
+              <div className="hidden sm:flex rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}`, background: C.card }}>
                 {[
                   {
                     mode: 'grid',
