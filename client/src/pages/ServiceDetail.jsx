@@ -270,15 +270,12 @@ const TRUST_SIGNALS = [
     path: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
   { key: 'instant',   label: 'Instant confirmation',
     path: 'M13 10V3L4 14h7v7l9-11h-7z' },
-  { key: 'reschedule',label: 'Free reschedule & refund policy',
-    path: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
-  { key: 'transparent', label: 'Transparent pricing — no hidden fees',
-    path: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
 ];
 
 const BookingCard = ({ service, onBookNow, bookingFee = 0 }) => {
   const isFree = service.price === 0;
   const [feeOpen, setFeeOpen] = useState(false);
+  const [btnHover, setBtnHover] = useState(false);
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
@@ -291,38 +288,39 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0 }) => {
             </svg>
           </div>}
       <div className="p-5">
-        {/* Price */}
-        <div className="text-3xl font-black text-gray-900 leading-none">{isFree ? 'Free' : `₹${service.price}`}</div>
-
-        {/* Booking charges + info tooltip */}
-        {!isFree && bookingFee > 0 && (
-          <div className="relative mt-2 mb-5">
+        {/* Price + booking fee on one line */}
+        <div className="relative flex items-baseline gap-2 mt-2 mb-5">
+          <div className="text-3xl font-black text-gray-900 leading-none">{isFree ? 'Free' : `₹${service.price}`}</div>
+          {!isFree && bookingFee > 0 && (
             <button type="button" onClick={() => setFeeOpen(o => !o)}
-              className="inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
+              className="inline-flex items-center gap-0.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
               <span>+ ₹{bookingFee} Booking Charges</span>
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="9" strokeWidth={1.6}/><path strokeWidth={1.8} strokeLinecap="round" d="M12 16v-4M12 8.5h.01"/>
               </svg>
             </button>
-            {feeOpen && (
-              <>
-                {/* click-away catcher */}
-                <button type="button" aria-hidden tabIndex={-1}
-                  className="fixed inset-0 z-10 cursor-default" onClick={() => setFeeOpen(false)}/>
-                <div className="absolute z-20 left-0 top-full mt-2 w-64 rounded-xl bg-gray-900 text-white text-xs leading-relaxed p-3 shadow-lg">
-                  <span className="absolute -top-1.5 left-6 w-3 h-3 rotate-45 bg-gray-900"/>
-                  This fee helps us operate and improve our platform, delivering a seamless experience.
-                </div>
-              </>
-            )}
-          </div>
-        )}
-        {(isFree || bookingFee <= 0) && <div className="mb-5"/>}
+          )}
+          {!isFree && bookingFee > 0 && feeOpen && (
+            <>
+              <button type="button" aria-hidden tabIndex={-1}
+                className="fixed inset-0 z-10 cursor-default" onClick={() => setFeeOpen(false)}/>
+              <div className="absolute z-20 left-0 top-full mt-2 w-64 rounded-xl bg-gray-900 text-white text-xs leading-relaxed p-3 shadow-lg">
+                <span className="absolute -top-1.5 left-6 w-3 h-3 rotate-45 bg-gray-900"/>
+                This fee helps us operate and improve our platform, delivering a seamless experience.
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Primary CTA */}
         <button onClick={onBookNow}
-          className="w-full py-3.5 rounded-xl font-bold text-sm hover:opacity-90 active:opacity-80 transition-opacity"
-          style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)' }}>
+          onMouseEnter={() => setBtnHover(true)}
+          onMouseLeave={() => setBtnHover(false)}
+          className="w-full py-3.5 rounded-xl font-bold text-sm transition-colors"
+          style={{
+            background: 'var(--profile-accent, #FE5100)',
+            color: btnHover ? '#000000' : 'var(--profile-accent-text, #ffffff)',
+          }}>
           Book a Slot
         </button>
 
