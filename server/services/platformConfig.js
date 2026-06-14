@@ -16,14 +16,22 @@ const DEFAULTS = { platformFee: 10, gstRate: 0.18 };
 const CACHE_TTL_MS = 60 * 1000;
 let _cache = { at: 0, value: null };
 
-// Coerce a platform_settings value (number | "10" | "\"10\"") into a finite number.
+// Coerce a platform_settings value into a finite number. Values may be raw
+// numbers, numeric strings, or JSON-stringified MULTIPLE times (a buggy admin
+// save re-encoded them, e.g. "\"\\\"0.18\\\"\""). Unwrap every JSON layer
+// before parsing so corrupted rows resolve instead of silently falling back.
 const toNumber = (raw, fallback) => {
   if (raw == null) return fallback;
-  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : fallback;
-  let s = String(raw).trim();
-  // strip one layer of JSON quoting if present
-  if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1, -1);
-  const n = parseFloat(s);
+  let v = raw;
+  for (let i = 0; i < 8 && typeof v === 'string'; i++) {
+    const s = v.trim();
+    let parsed;
+    try { parsed = JSON.parse(s); } catch { break; }
+    if (parsed === v) break; // converged (e.g. JSON.parse('0.18') === '0.18' never, but guard anyway)
+    v = parsed;
+  }
+  if (typeof v === 'number') return Number.isFinite(v) ? v : fallback;
+  const n = parseFloat(String(v));
   return Number.isFinite(n) ? n : fallback;
 };
 

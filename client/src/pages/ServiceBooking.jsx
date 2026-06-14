@@ -98,6 +98,9 @@ const ServiceBooking = () => {
 
   const [host, setHost] = useState(null);
   const [service, setService] = useState(null);
+  // Admin-editable booking charge (platform fee + GST), from the server so the
+  // summary always matches what Razorpay charges. Defaults until fetched.
+  const [fees, setFees] = useState({ bookingFee: 0, platformFee: 0, gstRate: 0.18 });
   const [availability, setAvailability] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -138,6 +141,11 @@ const ServiceBooking = () => {
         setHost(data.host);
         setService(data.service);
         setAvailability(data.availability);
+        setFees({
+          bookingFee:  Number(data.bookingFee ?? 0),
+          platformFee: Number(data.platformFee ?? 0),
+          gstRate:     Number(data.gstRate ?? 0.18),
+        });
         // Section 1: host-level rating for the profile card (hidden when 0)
         try {
           const username = data.host?.username || profileSlug;
@@ -902,7 +910,7 @@ const ServiceBooking = () => {
                     {isPaid && (
                       <div className="flex justify-between border-t pt-3">
                         <span className="text-gray-500 flex items-center gap-1">
-                          Platform Fee (₹10 + GST)
+                          Platform Fee (₹{fees.platformFee} + GST)
                           <span className="relative group inline-flex">
                             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[10px] font-bold leading-none cursor-help"
                               style={{ background: tc }}>i</span>
@@ -915,13 +923,13 @@ const ServiceBooking = () => {
                             </span>
                           </span>
                         </span>
-                        <span>₹{Math.round((10 + 10 * 0.18) * 100) / 100}</span>
+                        <span>₹{fees.bookingFee}</span>
                       </div>
                     )}
                     <div className="flex justify-between border-t pt-3 font-semibold text-base">
                       <span>Total Amount</span>
                       <span style={{ color: tc }}>
-                        {service.price === 0 ? "Free" : `₹${Math.round((service.price + 10 + 10 * 0.18) * 100) / 100}`}
+                        {service.price === 0 ? "Free" : `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}`}
                       </span>
                     </div>
                   </div>

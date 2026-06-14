@@ -1,6 +1,7 @@
 const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require('../utils/httpError');
 const { sanitizeLikeTerm } = require("../utils/searchSanitize");
+const { getConfig: getPlatformConfig } = require("../services/platformConfig");
 
 // ??? Profile slug helpers ????????????????????????????????????????????????????
 const slugifyUsername = (text) =>
@@ -419,7 +420,15 @@ const getServiceBySlug = async (req, res) => {
       .eq("host_id", host.id)
       .single();
 
-    res.json({ host, service, availability });
+    // Customer-facing booking charge = flat platform fee + GST (admin-editable).
+    // Single source of truth so the booking summary matches what Razorpay charges.
+    let bookingFee = 0, platformFee = 0, gstRate = 0;
+    try {
+      ({ platformFee, gstRate } = await getPlatformConfig());
+      bookingFee = Math.round(platformFee * (1 + gstRate) * 100) / 100;
+    } catch (_) { bookingFee = 0; }
+
+    res.json({ host, service, availability, bookingFee, platformFee, gstRate });
   } catch (error) {
     safeError(res, error);
   }

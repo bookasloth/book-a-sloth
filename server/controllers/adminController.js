@@ -255,12 +255,27 @@ const deleteService = async (req, res) => {
 // SETTINGS
 // ══════════════════════════════════════
 
+// Unwrap any number of JSON-stringify layers. updateSettings JSON.stringifies on
+// every save, so a value the UI reads-then-resaves gains a quote layer each round
+// trip ("10" → "\"10\"" → …). Returning the fully-unwrapped value here keeps the
+// round trip flat and stops the corruption that broke platform_fee_gst_rate.
+const deepUnwrap = (raw) => {
+  let v = raw;
+  for (let i = 0; i < 8 && typeof v === 'string'; i++) {
+    let parsed;
+    try { parsed = JSON.parse(v.trim()); } catch { break; }
+    if (parsed === v) break;
+    v = parsed;
+  }
+  return v;
+};
+
 const getSettings = async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin.from('platform_settings').select('*');
     if (error) return safeError(res, error);
     const settings = {};
-    (data || []).forEach(r => { settings[r.key] = r.value; });
+    (data || []).forEach(r => { settings[r.key] = deepUnwrap(r.value); });
     res.json(settings);
   } catch (error) {
     safeError(res, error);

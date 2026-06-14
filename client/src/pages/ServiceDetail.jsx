@@ -276,45 +276,20 @@ const TRUST_SIGNALS = [
     path: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
 ];
 
-const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false }) => {
+const BookingCard = ({ service, onBookNow, bookingFee = 0 }) => {
   const isFree = service.price === 0;
   const [feeOpen, setFeeOpen] = useState(false);
-  const online = service.meeting_mode !== 'offline';
-
-  // Service meta — fixed order: duration · medium · location mode.
-  const META = [
-    {
-      key: 'time',
-      label: fmtMetaDuration(service.duration),
-      icon: <><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></>,
-    },
-    {
-      key: 'medium',
-      label: online ? 'Video Call' : 'In Person',
-      icon: online
-        ? <><rect x="2.5" y="6.5" width="12" height="11" rx="2"/><path d="M14.5 10.5l7-3.5v10l-7-3.5z"/></>
-        : <><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9.5 21v-5h5v5"/></>,
-    },
-    {
-      key: 'mode',
-      label: online ? 'Online' : 'Offline',
-      icon: <><path d="M12 21s-6.5-5.1-6.5-10.5a6.5 6.5 0 0113 0C18.5 15.9 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.3"/></>,
-    },
-  ];
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Thumbnail — collapses smoothly when the sidebar pins (compact) */}
-      <div className="overflow-hidden transition-[max-height,opacity] duration-500 ease-out"
-        style={{ maxHeight: compact ? 0 : 320, opacity: compact ? 0 : 1 }}>
-        {service.thumbnail_url
-          ? <img src={service.thumbnail_url} alt={service.title}
-              className="w-full aspect-[16/10] object-cover"/>
-          : <div className="w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-              <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            </div>}
-      </div>
-
+      {/* Thumbnail */}
+      {service.thumbnail_url
+        ? <img src={service.thumbnail_url} alt={service.title} className="w-full aspect-[16/10] object-cover"/>
+        : <div className="w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 16M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>}
       <div className="p-5">
         {/* Price */}
         <div className="text-3xl font-black text-gray-900 leading-none">{isFree ? 'Free' : `₹${service.price}`}</div>
@@ -344,18 +319,6 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false }) =>
         )}
         {(isFree || bookingFee <= 0) && <div className="mb-5"/>}
 
-        {/* Service meta */}
-        <ul className="space-y-2.5 mb-5">
-          {META.map(({ key, label, icon }) => (
-            <li key={key} className="flex items-center gap-2.5 text-sm text-gray-700">
-              <svg className="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                {icon}
-              </svg>
-              <span className="font-medium">{label}</span>
-            </li>
-          ))}
-        </ul>
-
         {/* Primary CTA */}
         <button onClick={onBookNow}
           className="w-full py-3.5 rounded-xl font-bold text-sm hover:opacity-90 active:opacity-80 transition-opacity"
@@ -382,12 +345,8 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false }) =>
 // ─── Profile Card (creator summary — sits below the booking card) ─────────────
 // Premium, vertical layout distinct from the InstructorTab. Excludes bio.
 const ProfileCard = ({ vendor, rating, reviewCount, bookings }) => {
+  const [btnHover, setBtnHover] = useState(false);
   if (!vendor?.name) return null;
-
-  const social = vendor.social_links || {};
-  const socialLinks = SOCIAL_ORDER
-    .filter(k => social[k])
-    .map(k => ({ key: k, href: k === 'email' ? `mailto:${social[k]}` : social[k] }));
 
   const expertise = [vendor.profession, vendor.tagline]
     .filter(Boolean)
@@ -397,18 +356,10 @@ const ProfileCard = ({ vendor, rating, reviewCount, bookings }) => {
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Accent header strip */}
-      <div className="h-14 relative"
-        style={{ background: vendor.cover_image
-          ? undefined
-          : `linear-gradient(120deg, color-mix(in srgb, ${accent} 22%, white), color-mix(in srgb, ${accent} 55%, white))` }}>
-        {vendor.cover_image && <img src={vendor.cover_image} alt="" className="w-full h-full object-cover"/>}
-      </div>
-
-      <div className="px-5 pb-5">
-        {/* Photo overlapping the strip */}
-        <div className="-mt-9 mb-3">
-          <div className="w-[68px] h-[68px] rounded-2xl border-[3px] border-white shadow-sm overflow-hidden bg-white">
+      <div className="px-5 pb-5 pt-5 text-center">
+        {/* Photo — centered */}
+        <div className="flex justify-center mb-3">
+          <div className="w-20 h-20 rounded-2xl border-[3px] border-white shadow-sm overflow-hidden bg-white">
             {vendor.profile_image
               ? <img src={vendor.profile_image} alt={vendor.name} className="w-full h-full object-cover"/>
               : <div className="w-full h-full flex items-center justify-center text-2xl font-bold"
@@ -418,9 +369,9 @@ const ProfileCard = ({ vendor, rating, reviewCount, bookings }) => {
           </div>
         </div>
 
-        {/* Name + verified */}
-        <div className="flex items-center gap-1.5">
-          <h3 className="text-base font-bold text-gray-900 truncate">{vendor.name}</h3>
+        {/* Name + verified — centered */}
+        <div className="flex items-center justify-center gap-1.5">
+          <h3 className="text-base font-bold text-gray-900">{vendor.name}</h3>
           {vendor.is_verified && (
             <svg className="w-4 h-4 flex-shrink-0 text-green-500" fill="currentColor" viewBox="0 0 24 24">
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -428,9 +379,14 @@ const ProfileCard = ({ vendor, rating, reviewCount, bookings }) => {
           )}
         </div>
 
+        {/* Profession — plain text, no badge */}
+        {expertise.length > 0 && (
+          <p className="text-sm text-gray-500 mt-1">{expertise.join(' · ')}</p>
+        )}
+
         {/* Inline stats: rating · bookings */}
         {(rating > 0 || bookings > 0) && (
-          <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-2 text-sm">
+          <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-1 mt-3 text-sm">
             {rating > 0 && (
               <span className="flex items-center gap-1 text-gray-700">
                 <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
@@ -448,30 +404,16 @@ const ProfileCard = ({ vendor, rating, reviewCount, bookings }) => {
           </div>
         )}
 
-        {/* Expertise badges */}
-        {expertise.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {expertise.map((e, i) => (
-              <span key={i}
-                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
-                style={{ background: `color-mix(in srgb, ${accent} 10%, white)`, color: accent }}>
-                {e}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Social links */}
-        {socialLinks.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {socialLinks.map(({ key, href }) => <SocialIcon key={key} platform={key} href={href}/>)}
-          </div>
-        )}
-
-        {/* View full profile */}
+        {/* View full profile — white→brand on hover, no underline */}
         {vendor.username && (
           <Link to={`/${vendor.username}`}
-            className="mt-5 w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+            onMouseEnter={() => setBtnHover(true)} onMouseLeave={() => setBtnHover(false)}
+            className="mt-5 w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-sm font-semibold no-underline transition-colors"
+            style={{
+              background: btnHover ? accent : '#ffffff',
+              color: btnHover ? '#ffffff' : accent,
+              borderColor: accent,
+            }}>
             View full profile
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
           </Link>
@@ -492,34 +434,6 @@ export default function ServiceDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
   const [tab, setTab]       = useState('Overview');
-
-  // Sticky sidebar: collapse the booking-card thumbnail once the sidebar pins
-  // (sentinel's viewport-top reaches the `top-24` pin line), restore it only
-  // when the user scrolls back near the sidebar's origin. We read the sentinel's
-  // getBoundingClientRect().top (viewport-relative) and listen for scroll in the
-  // CAPTURE phase — this app scrolls <body>, not window, so window.scrollY and a
-  // bubbling listener both stay 0; capture catches the body's scroll.
-  const sentinelRef = useRef(null);
-  const [compact, setCompact] = useState(false);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const STICKY_OFFSET = 96; // matches `top-24`
-    const update = () => {
-      if (el.offsetParent === null) return; // hidden (mobile) → ignore
-      // setCompact is a no-op when the value is unchanged, so calling this on
-      // every scroll event is cheap (one rect read, React bails on same value).
-      setCompact(el.getBoundingClientRect().top <= STICKY_OFFSET);
-    };
-    window.addEventListener('scroll', update, { capture: true, passive: true });
-    window.addEventListener('resize', update);
-    update();
-    return () => {
-      window.removeEventListener('scroll', update, { capture: true });
-      window.removeEventListener('resize', update);
-    };
-  }, [data]);
 
   useEffect(() => {
     svcGetPublicByProfile(profileSlug, serviceSlug)
@@ -709,14 +623,9 @@ export default function ServiceDetail() {
           </div>
 
           {/* ── RIGHT: Sticky sidebar ── */}
-          <div className="hidden lg:block lg:w-[320px] flex-shrink-0">
-            {/* Sentinel — marks the sidebar's natural top for the pin observer.
-                Needs non-zero area or IntersectionObserver never reports it. */}
-            <div ref={sentinelRef} aria-hidden className="h-px -mb-px"/>
-            <div className="sticky top-24 space-y-5">
-              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} compact={compact}/>
-              <ProfileCard vendor={vendor} rating={rating} reviewCount={reviewCount} bookings={bookings}/>
-            </div>
+          <div className="hidden lg:flex lg:w-[320px] flex-shrink-0 self-start sticky top-24 flex-col gap-5">
+            <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee}/>
+            <ProfileCard vendor={vendor} rating={rating} reviewCount={reviewCount} bookings={bookings}/>
           </div>
         </div>
       </div>
