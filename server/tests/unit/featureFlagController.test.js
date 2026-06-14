@@ -7,8 +7,8 @@ const { getPublicFlags, toggleFlag } = require('../../controllers/featureFlagCon
 const res = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
 beforeEach(() => jest.clearAllMocks());
 
-test('getPublicFlags returns only public keys, fail-open default true', async () => {
-  featureFlags.loadFlags.mockResolvedValue({ reschedule: false });
+test('getPublicFlags returns the loadFlags value map verbatim (client fails open per-key)', async () => {
+  featureFlags.loadFlags.mockResolvedValue({ reschedule: false, reschedule_fee: true });
   const r = res();
   await getPublicFlags({}, r);
   expect(r.json).toHaveBeenCalledWith({ reschedule: false, reschedule_fee: true });
