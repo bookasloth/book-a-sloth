@@ -1,18 +1,27 @@
-import { useEffect, useState } from 'react';
-import { adminGetFeatures, adminToggleFeature } from '../../services/api';
+import { useEffect, useMemo, useState } from 'react';
+import { adminGetFeatures, adminToggleFeature, adminCreateFeature } from '../../services/api';
 import toast from 'react-hot-toast';
+
+const SCOPE_LABEL = { vendor: 'Vendor', customer: 'Customer', both: 'Shared' };
+const SCOPE_ORDER = ['vendor', 'customer', 'both'];
+
+const emptyNew = { key: '', label: '', description: '', category: '', scope: 'both' };
 
 export default function AdminFeatureStatus() {
   const [flags, setFlags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
+  const [showNew, setShowNew] = useState(false);
+  const [form, setForm] = useState(emptyNew);
+  const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
+  const load = () =>
     adminGetFeatures()
       .then(({ data }) => setFlags(Array.isArray(data) ? data : []))
       .catch(() => setFlags([]))
       .finally(() => setLoading(false));
-  }, []);
+
+  useEffect(() => { load(); }, []);
 
   const toggle = async (f) => {
     const next = !f.enabled;
@@ -29,30 +38,138 @@ export default function AdminFeatureStatus() {
     }
   };
 
+  const create = async (e) => {
+    e.preventDefault();
+    if (!form.key.trim() || !form.label.trim()) {
+      toast.error('Key and label are required');
+      return;
+    }
+    setCreating(true);
+    try {
+      const { data } = await adminCreateFeature(form);
+      setFlags((fs) => [...fs, data].sort((a, b) => a.key.localeCompare(b.key)));
+      toast.success(`Switch "${data.label}" created (ON)`);
+      setForm(emptyNew);
+      setShowNew(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not create switch');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Group flags by scope, then category, for a scannable layout.
+  const groups = useMemo(() => {
+    const byScope = {};
+    for (const f of flags) {
+      const s = SCOPE_ORDER.includes(f.scope) ? f.scope : 'both';
+      (byScope[s] = byScope[s] || []).push(f);
+    }
+    return SCOPE_ORDER
+      .filter((s) => byScope[s]?.length)
+      .map((s) => ({ scope: s, items: byScope[s] }));
+  }, [flags]);
+
+  const Switch = ({ f }) => (
+    <div className="flex items-start justify-between gap-4 bg-white border rounded-xl p-4">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="font-semibold">{f.label}</p>
+          {f.category && (
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{f.category}</span>
+          )}
+          <code className="text-[10px] text-gray-400">{f.key}</code>
+        </div>
+        <p className="text-sm text-gray-500 mt-0.5">{f.description}</p>
+      </div>
+      <button
+        role="switch"
+        aria-checked={f.enabled}
+        aria-label={f.label}
+        disabled={busy === f.key}
+        onClick={() => toggle(f)}
+        className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${f.enabled ? 'bg-[#FE5100]' : 'bg-gray-300'} disabled:opacity-50`}
+      >
+        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${f.enabled ? 'translate-x-5' : ''}`} />
+      </button>
+    </div>
+  );
+
   return (
     <div className="p-6 max-w-3xl">
-      <h1 className="text-2xl font-bold mb-1">Feature Status</h1>
-      <p className="text-sm text-gray-500 mb-6">Turn platform features on or off.</p>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Feature Status</h1>
+          <p className="text-sm text-gray-500">Turn platform features on or off. New switches always start ON.</p>
+        </div>
+        <button
+          onClick={() => setShowNew((v) => !v)}
+          className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold border border-[#FE5100] text-[#FE5100] hover:bg-[#FFF4EE] transition-colors"
+        >
+          {showNew ? 'Close' : '+ New switch'}
+        </button>
+      </div>
+
+      {showNew && (
+        <form onSubmit={create} className="bg-white border rounded-xl p-4 mb-6 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Key (a–z, 0–9, _)</label>
+              <input className="fb-input text-sm font-mono" placeholder="e.g. live_chat" value={form.key}
+                onChange={(e) => setForm({ ...form, key: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Label</label>
+              <input className="fb-input text-sm" placeholder="e.g. Live Chat" value={form.label}
+                onChange={(e) => setForm({ ...form, label: e.target.value })} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+            <input className="fb-input text-sm" placeholder="What this switch controls" value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
+              <input className="fb-input text-sm" placeholder="e.g. Engagement" value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Scope</label>
+              <select className="fb-input text-sm" value={form.scope}
+                onChange={(e) => setForm({ ...form, scope: e.target.value })}>
+                <option value="vendor">Vendor</option>
+                <option value="customer">Customer</option>
+                <option value="both">Shared</option>
+              </select>
+            </div>
+          </div>
+          <p className="text-[11px] text-gray-400">
+            Heads up: a new switch only changes behaviour once a developer wires its key into the
+            relevant route guard or <code>FeatureGate</code>. Until then it is a no-op toggle.
+          </p>
+          <button type="submit" disabled={creating}
+            className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#FE5100] disabled:opacity-50">
+            {creating ? 'Creating…' : 'Create switch'}
+          </button>
+        </form>
+      )}
+
       {loading ? (
         <p className="text-gray-400">Loading…</p>
+      ) : flags.length === 0 ? (
+        <p className="text-gray-400">No feature flags yet.</p>
       ) : (
-        <div className="space-y-3">
-          {flags.map((f) => (
-            <div key={f.key} className="flex items-start justify-between gap-4 bg-white border rounded-xl p-4">
-              <div className="min-w-0">
-                <p className="font-semibold">{f.label}</p>
-                <p className="text-sm text-gray-500 mt-0.5">{f.description}</p>
+        <div className="space-y-8">
+          {groups.map(({ scope, items }) => (
+            <div key={scope}>
+              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">
+                {SCOPE_LABEL[scope]} <span className="text-gray-400 font-normal">({items.length})</span>
+              </h2>
+              <div className="space-y-3">
+                {items.map((f) => <Switch key={f.key} f={f} />)}
               </div>
-              <button
-                role="switch"
-                aria-checked={f.enabled}
-                aria-label={f.label}
-                disabled={busy === f.key}
-                onClick={() => toggle(f)}
-                className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${f.enabled ? 'bg-[#FE5100]' : 'bg-gray-300'} disabled:opacity-50`}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${f.enabled ? 'translate-x-5' : ''}`} />
-              </button>
             </div>
           ))}
         </div>

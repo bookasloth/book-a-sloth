@@ -348,5 +348,6 @@ export const adminRevokeExploreKeyword      = (id)       => API.delete(`/admin/e
 export const getFeatureFlags    = ()             => API.get('/feature-flags');
 export const adminGetFeatures   = ()             => API.get('/admin/features');
 export const adminToggleFeature = (key, enabled) => API.patch(`/admin/features/${key}`, { enabled });
+export const adminCreateFeature = (payload)      => API.post('/admin/features', payload);
 // ── Reschedule fee ────────────────────────────────────────────
 export const createRescheduleFeeOrder = (bookingId) => API.post('/payment/reschedule-fee/create-order', { booking_id: bookingId });
