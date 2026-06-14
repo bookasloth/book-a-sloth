@@ -1,6 +1,7 @@
 const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require('../utils/httpError');
-const { createCalendarEvent } = require("../config/google");
+const { createCalendarEvent, updateCalendarEvent } = require("../config/google");
+const featureFlags = require("../services/featureFlags");
 const sendEmail = require("../utils/sendEmail");
 const NotificationEngine = require("../services/notificationEngine");
 const { checkBookingReceiveLimit } = require("../middleware/planMiddleware");
@@ -628,6 +629,10 @@ const completeBooking = async (req, res) => {
 // PUT /api/bookings/:id/reschedule
 const rescheduleBooking = async (req, res) => {
   try {
+    if (!(await featureFlags.isFeatureEnabled('reschedule'))) {
+      return res.status(403).json({ message: 'Reschedule is currently disabled' });
+    }
+
     const { scheduled_at } = req.body;
     if (!scheduled_at)
       return res.status(400).json({ message: "scheduled_at is required" });
@@ -704,6 +709,7 @@ const rescheduleBooking = async (req, res) => {
     }
 
     const isHostReschedule = req.user?.id === booking.host_id;
+    const isGuestReschedule = !isHostReschedule;
     const ackToken = isHostReschedule
       ? crypto.randomBytes(24).toString("hex")
       : null;
@@ -715,6 +721,7 @@ const rescheduleBooking = async (req, res) => {
       reschedule_status: isHostReschedule ? "awaiting_guest_ack" : "none",
       reschedule_ack_token: ackToken,
       reschedule_acknowledged_at: null,
+      reschedule_count: (Number(booking.reschedule_count) || 0) + (isGuestReschedule ? 1 : 0),
       updated_at: new Date().toISOString(),
     };
     let rescheduleResult = await supabaseAdmin
@@ -723,12 +730,12 @@ const rescheduleBooking = async (req, res) => {
       .eq("id", req.params.id)
       .select()
       .single();
-    // Pre-v2.5 DB without end_at
+    // Pre-v2.5 DB without end_at / pre-v3.3 DB without reschedule_count
     if (
       rescheduleResult.error &&
       /Could not find the|column.*does not exist/i.test(rescheduleResult.error.message)
     ) {
-      const { end_at: _e, ...coreUpdate } = rescheduleUpdate;
+      const { end_at: _e, reschedule_count: _rc, ...coreUpdate } = rescheduleUpdate;
       rescheduleResult = await supabaseAdmin
         .from("bookings").update(coreUpdate).eq("id", req.params.id).select().single();
     }
@@ -741,6 +748,20 @@ const rescheduleBooking = async (req, res) => {
     }
     const { data: updated, error } = rescheduleResult;
     if (error) return safeError(res, error);
+
+    try {
+      const hostRow = booking["profiles!bookings_host_id_fkey"] || {};
+      if (booking.google_event_id && hostRow.google_calendar_connected && hostRow.google_refresh_token) {
+        await updateCalendarEvent(
+          decryptToken(hostRow.google_access_token),
+          decryptToken(hostRow.google_refresh_token),
+          booking.google_event_id,
+          { startTime: newStart.toISOString(), endTime: newEnd.toISOString(), timezone: hostTimezone },
+        );
+      }
+    } catch (calErr) {
+      console.error("Reschedule calendar patch error (non-fatal):", calErr.message);
+    }
 
     const s = booking.services;
     const host = booking["profiles!bookings_host_id_fkey"] || {};
