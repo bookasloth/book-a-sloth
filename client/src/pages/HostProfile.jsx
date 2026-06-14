@@ -362,9 +362,9 @@ const HostProfile = () => {
       <div className="app-container pt-8">
         <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-          {/* ── LEFT SIDEBAR — profile card (~80% width) ─────────────────── */}
-          <div className="w-full lg:flex-shrink-0 lg:sticky lg:top-24"
-            style={{ minWidth: 300, maxWidth: 340 }}>
+          {/* ── LEFT SIDEBAR — profile card ──────────────────────────────
+              <lg: full-width, centered, capped. lg+: fixed 340 sticky left. */}
+          <div className="w-full max-w-md mx-auto lg:mx-0 lg:max-w-none lg:w-[340px] lg:flex-shrink-0 lg:sticky lg:top-24">
 
             <div className="overflow-hidden rounded-2xl"
               style={{ background: C.card, border: `1px solid ${C.border}` }}>
@@ -495,7 +495,7 @@ const HostProfile = () => {
           </div>
 
           {/* ── RIGHT — services, reviews, products ──────────────────────── */}
-          <div className="flex-1 min-w-0">
+          <div className="w-full lg:flex-1 min-w-0">
 
             {/* Header row */}
             <div className="flex items-center justify-between mb-5">
