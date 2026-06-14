@@ -11,6 +11,7 @@ vi.mock('../services/api', () => ({
   getHostProfile: vi.fn(),
   getHostReviews: vi.fn().mockResolvedValue({ data: { reviews: [], count: 0, avg: 0 } }),
   getHostProducts: vi.fn().mockResolvedValue({ data: [] }),
+  getVendorBadges: vi.fn().mockResolvedValue({ data: { badges: [] } }),
 }));
 
 import { getHostProfile } from '../services/api';
@@ -41,10 +42,10 @@ const renderProfile = (username = 'jane-vendor') =>
 // ── Loading + error states ────────────────────────────────────────────────────
 
 describe('HostProfile — loading/error', () => {
-  test('shows spinner while loading', () => {
+  test('shows brand preloader while loading', () => {
     getHostProfile.mockReturnValueOnce(new Promise(() => {})); // never resolves
     renderProfile();
-    expect(document.querySelector('.animate-spin')).toBeTruthy();
+    expect(document.querySelector('.pl-overlay')).toBeTruthy();
   });
 
   test('shows "Creator not found" on 404', async () => {
@@ -63,12 +64,14 @@ describe('HostProfile — profile info', () => {
 
   test('renders creator name', async () => {
     renderProfile();
-    await waitFor(() => expect(screen.getByText('Jane Vendor')).toBeTruthy());
+    // Name renders twice (collapsed mobile bar + full card) — match either.
+    await waitFor(() => expect(screen.getAllByText('Jane Vendor').length).toBeGreaterThan(0));
   });
 
   test('renders creator title/profession', async () => {
     renderProfile();
-    await waitFor(() => expect(screen.getByText('Life Coach')).toBeTruthy());
+    // Profession renders twice (collapsed mobile bar + full card) — match either.
+    await waitFor(() => expect(screen.getAllByText('Life Coach').length).toBeGreaterThan(0));
   });
 
   test('renders bio text', async () => {
@@ -85,7 +88,7 @@ describe('HostProfile — profile info', () => {
     renderProfile();
     await waitFor(() => {
       // Verified icon is an SVG — check the container text renders
-      expect(screen.getByText('Jane Vendor')).toBeTruthy();
+      expect(screen.getAllByText('Jane Vendor').length).toBeGreaterThan(0);
     });
   });
 });
@@ -163,11 +166,13 @@ describe('HostProfile — theme color applied', () => {
   test('injects --profile-accent CSS variable with vendor color', async () => {
     getHostProfile.mockResolvedValue({ data: { host: HOST, services: SERVICES, availability: null } });
     renderProfile();
-    await waitFor(() => screen.getByText('Jane Vendor'));
+    await waitFor(() => screen.getAllByText('Jane Vendor'));
     // --profile-accent is set by a useEffect that runs after the name commits,
     // so poll for it rather than reading once (avoids an effect-timing race).
     await waitFor(() => {
-      const root = document.querySelector('[style]');
+      // Query the page root specifically — BrandPreloader locks body style,
+      // so a bare [style] selector would match <body> instead.
+      const root = document.querySelector('.host-profile');
       expect(root?.style?.getPropertyValue('--profile-accent')).toBe('#2563EB');
       expect(root?.style?.getPropertyValue('--profile-accent-text')).toBe('#ffffff');
     });
@@ -177,10 +182,10 @@ describe('HostProfile — theme color applied', () => {
     const hostNoColor = { ...HOST, theme_color: null };
     getHostProfile.mockResolvedValue({ data: { host: hostNoColor, services: [], availability: null } });
     renderProfile();
-    await waitFor(() => screen.getByText('Jane Vendor'));
+    await waitFor(() => screen.getAllByText('Jane Vendor'));
     // Poll for the CSS var (applied by a post-commit useEffect) to avoid a race.
     await waitFor(() => {
-      const root = document.querySelector('[style]');
+      const root = document.querySelector('.host-profile');
       expect(root?.style?.getPropertyValue('--profile-accent')).toBe('#FE5100');
     });
   });
