@@ -281,6 +281,13 @@ const HostProfile = () => {
   const [showReviews, setShowReviews] = useState(false);
   const [products,    setProducts]    = useState([]);
   const [cardExpanded, setCardExpanded] = useState(false); // mobile-only collapse
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
+  );
+  const [barH,  setBarH]  = useState(0);
+  const [bodyH, setBodyH] = useState(0);
+  const barRef      = useRef(null);
+  const cardBodyRef = useRef(null);
 
   useEffect(() => {
     const load = async () => {
@@ -315,6 +322,26 @@ const HostProfile = () => {
     const color = isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
     applyProfileTheme(pageRef.current, color);
   }, [host]);
+
+  // Track mobile breakpoint for the collapsible card (curtain only on phones).
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)');
+    const onMq = () => setIsMobile(mq.matches);
+    mq.addEventListener('change', onMq);
+    return () => mq.removeEventListener('change', onMq);
+  }, []);
+
+  // Measure collapsed-bar + full-card heights so the max-height curtain is smooth.
+  useEffect(() => {
+    if (!host) return;
+    const measure = () => {
+      if (barRef.current)      setBarH(barRef.current.scrollHeight);
+      if (cardBodyRef.current) setBodyH(cardBodyRef.current.scrollHeight);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [host, products, reviewData]);
 
   // Derived values are null-safe: the component renders the preloader while
   // host is still loading, so these run before host exists.
@@ -367,9 +394,12 @@ const HostProfile = () => {
               <lg: full-width, centered, capped. lg+: fixed 340 sticky left. */}
           <div className="w-full max-w-md mx-auto lg:mx-0 lg:max-w-none lg:w-[340px] lg:flex-shrink-0 lg:sticky lg:top-24">
 
-            {/* Collapsed bar — mobile only, tap to expand full card */}
+            {/* Collapsed bar — mobile only; smooth max-height curtain */}
+            <div className="sm:hidden overflow-hidden transition-[max-height,opacity] duration-300 ease-out"
+              style={{ maxHeight: cardExpanded ? 0 : (barH || 200), opacity: cardExpanded ? 0 : 1 }}>
+              <div ref={barRef}>
             <button onClick={() => setCardExpanded(true)}
-              className={`sm:hidden w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-shadow active:shadow-sm ${cardExpanded ? 'hidden' : ''}`}
+              className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-shadow active:shadow-sm"
               style={{ background: C.card, border: `1px solid ${C.border}` }}>
               <div className="flex-shrink-0 overflow-hidden"
                 style={{ width: 48, height: 48, borderRadius: 10, outline: `2px solid ${borderColor}`, background: C.card }}>
@@ -390,9 +420,14 @@ const HostProfile = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
+              </div>
+            </div>
 
-            {/* Full card — mobile: only when expanded; sm+: always shown */}
-            <div className={`relative overflow-hidden rounded-2xl ${cardExpanded ? 'block' : 'hidden'} sm:block`}
+            {/* Full card — mobile: smooth max-height curtain; sm+: always open */}
+            <div className="overflow-hidden transition-[max-height,opacity] duration-300 ease-out sm:!max-h-none sm:!opacity-100"
+              style={isMobile ? { maxHeight: cardExpanded ? (bodyH || 2000) : 0, opacity: cardExpanded ? 1 : 0 } : undefined}>
+              <div ref={cardBodyRef}>
+            <div className="relative overflow-hidden rounded-2xl"
               style={{ background: C.card, border: `1px solid ${C.border}` }}>
 
               {/* Collapse button — mobile only */}
@@ -525,6 +560,8 @@ const HostProfile = () => {
                     {host.location}
                   </div>
                 )}
+              </div>
+            </div>
               </div>
             </div>
           </div>
