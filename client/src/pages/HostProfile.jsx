@@ -345,9 +345,12 @@ const HostProfile = () => {
         </div>
       )}
 
-      {/* ── HERO — centered profile card (100vh on desktop) ─────────────── */}
-      <section className="lg:min-h-screen flex flex-col items-center justify-center px-4 pt-8 lg:pt-0">
-        <div className="w-full relative" style={{ maxWidth: 340 }}>
+      <div className="app-container pt-8">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+
+          {/* ── LEFT SIDEBAR — profile card (~80% width) ─────────────────── */}
+          <div className="w-full lg:flex-shrink-0 lg:sticky lg:top-24"
+            style={{ minWidth: 300, maxWidth: 340 }}>
 
             <div className="overflow-hidden rounded-2xl"
               style={{ background: C.card, border: `1px solid ${C.border}` }}>
@@ -472,19 +475,10 @@ const HostProfile = () => {
                 )}
               </div>
             </div>
-
-            {/* Scroll cue — desktop only */}
-            <a href="#services" className="hidden lg:flex justify-center mt-6 transition-opacity hover:opacity-60">
-              <svg className="w-5 h-5 animate-bounce" style={{ color: C.muted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            </a>
           </div>
-        </section>
 
-        {/* ── BELOW THE FOLD — services, reviews, products ────────────────── */}
-        <div id="services" className="app-container pb-16 pt-4 lg:pt-0">
-          <div className="min-w-0">
+          {/* ── RIGHT — services, reviews, products ──────────────────────── */}
+          <div className="flex-1 min-w-0">
 
             {/* Header row */}
             <div className="flex items-center justify-between mb-5">
@@ -586,6 +580,7 @@ const HostProfile = () => {
             )}
           </div>
         </div>
+      </div>
     </div>
       )}
     </>
