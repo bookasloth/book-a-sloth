@@ -179,3 +179,17 @@
 - **Dependencies:** `communicationEngine` (email queue/Resend), `aisensyService` (WhatsApp), `notificationEngine.logResult`
 - **Reference:** `docs/communication-campaigns-architecture.md`; **guides:** `docs/guides/email-campaigns.md`, `whatsapp-campaigns.md`, `aisensy-onboarding.md`, `segments-and-consent.md`
 - **Related:** Email Communication Engine, Notification System
+
+---
+
+## 17. Explore — Foundation Data Capture (deferred feature; capture live 2026-06-14)
+**Purpose:** Collect discovery signals (searches, profile/service views) from go-live so the
+DEFERRED Explore page launches on real history. Feature itself built ~3–4 months later.
+- **Capture (server):** `server/services/discoveryEvents.js` (`logEvent` fire-and-forget, `contextFromReq`)
+- **Hooks:** `hostController.js` → `searchVendors` (search + result_count), `getHostProfile` (profile view), `getServiceBySlug` (service view)
+- **Client:** `client/src/services/api.js` sets anon `sloth_sid` → `x-sloth-sid` header
+- **DB Tables:** `discovery_events` (migration `v3.0_discovery_events.sql`, applied)
+- **Hidden:** `Navbar.jsx` (Explore removed), `App.jsx` (`/explore` → redirect home)
+- **Future foundation (unrouted/unapplied):** `Explore.jsx`, `AdminExplore.jsx`, `exploreController.js`, `v2.9_explore.sql`
+- **Spec / full deferred design / how to build:** `docs/superpowers/specs/2026-06-14-explore-foundation-design.md`
+- **Related:** Public Host Profile, Service Booking Flow

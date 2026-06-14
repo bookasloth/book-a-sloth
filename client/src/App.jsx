@@ -104,7 +104,9 @@ const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications')
 const AdminCampaigns     = lazy(() => import('./pages/admin/AdminCampaigns'));
 const AdminBadges        = lazy(() => import('./pages/admin/AdminBadges'));
 const BadgeShowcase      = lazy(() => import('./pages/BadgeShowcase'));
-const Explore         = lazy(() => import('./pages/Explore'));
+// Explore page is built but hidden until the feature ships (~3-4 mo). Route
+// below redirects to home. The page + admin tooling stay in the repo as the
+// foundation. See docs/superpowers/specs/2026-06-14-explore-foundation-design.md
 
 // Admin — Operations
 const AdminPlans  = lazy(() => import('./pages/admin/AdminPlans'));
@@ -265,8 +267,8 @@ function App() {
           {/* General settings */}
           <Route path="/admin/settings" element={<AdminWrapper><AdminSettings /></AdminWrapper>} />
 
-          {/* Explore page */}
-          <Route path="/explore" element={<Explore />} />
+          {/* Explore page — hidden until launch; data is being collected now. */}
+          <Route path="/explore" element={<Navigate to="/" replace />} />
 
           {/* Public host/service pages — specific before dynamic */}
           <Route path="/:profileSlug/badges" element={<BadgeShowcase />} />

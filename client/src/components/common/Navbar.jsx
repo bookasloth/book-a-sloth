@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Home, Compass, Tag, UserPlus, HelpCircle,
+  Home, Tag, UserPlus, HelpCircle,
   CalendarCheck, MessageCircle, Bookmark, BarChart2,
   Briefcase, Bell, X, Menu, ChevronDown,
-  Search, User, Settings, LogOut, TrendingUp,
+  User, Settings, LogOut, TrendingUp,
   Clock, Wallet, LayoutDashboard, ExternalLink,
 } from 'lucide-react';
 
@@ -13,7 +13,9 @@ import {
 
 const PUBLIC_NAV = [
   { label: 'Home',             href: '/',             icon: Home,        exact: true },
-  { label: 'Explore',          href: '/explore',       icon: Compass },
+  // Explore hidden until the feature ships (~3-4 mo). Data is being collected now
+  // (discovery_events). Re-add when explore_settings.is_live flips. See
+  // docs/superpowers/specs/2026-06-14-explore-foundation-design.md
   { label: 'Categories',       href: '/categories',    icon: Tag },
   { label: 'Become a Creator', href: '/be-a-sloth',   icon: UserPlus },
   { label: 'How It Works',     href: '/how-it-works',  icon: HelpCircle },
@@ -21,7 +23,7 @@ const PUBLIC_NAV = [
 
 const CUSTOMER_NAV = [
   { label: 'Home',     href: '/',           icon: Home,           exact: true },
-  { label: 'Explore',  href: '/explore',    icon: Search },
+  // Explore hidden until the feature ships — see PUBLIC_NAV note above.
   { label: 'Bookings', href: '/my-bookings', icon: CalendarCheck },
   { label: 'Messages', href: '/messages',   icon: MessageCircle,  badge: 'messages' },
   { label: 'Saved',    href: '/saved',      icon: Bookmark },

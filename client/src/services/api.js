@@ -4,7 +4,29 @@ const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
 
+// Anonymous first-party session id for discovery analytics (Explore foundation).
+// No PII — just a stable random id so searches/views can be grouped into a
+// session when the Explore feature is built later. Server reads `x-sloth-sid`.
+function getSlothSid() {
+  try {
+    let sid = localStorage.getItem('sloth_sid');
+    if (!sid) {
+      sid = (window.crypto && window.crypto.randomUUID)
+        ? window.crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem('sloth_sid', sid);
+    }
+    return sid;
+  } catch {
+    return null;
+  }
+}
+
 API.interceptors.request.use((config) => {
+  // Attach the anon discovery session id to every request (best-effort).
+  const sid = getSlothSid();
+  if (sid) config.headers['x-sloth-sid'] = sid;
+
   // SECURITY: Admin routes ONLY use the isolated 'bas_admin' session.
   // There is NO fallback to the vendor/user session.
   // A vendor token sent to an admin route will be rejected server-side.

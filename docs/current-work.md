@@ -1,5 +1,30 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-06-13_
+_Last updated: 2026-06-14_
+
+## Sprint: Explore Foundation — Discovery Data Capture (DONE 2026-06-14)
+
+> **Strategy:** Explore page (discovery + paid placement) is NOT for launch. Only the
+> irreplaceable asset — behavioural event history — is captured now; the full feature is
+> built ~3–4 months later on top of it. Spec + full deferred design + where-is-what:
+> `docs/superpowers/specs/2026-06-14-explore-foundation-design.md`.
+
+**Shipped now:**
+- Migration `v3.0_discovery_events.sql` (**APPLIED live**): `discovery_events` table
+  (event_type search/view/click, surface, vendor_id, query, category, result_count,
+  source, session_id, user_id), 4 indexes, RLS deny-all (service-role only).
+- `server/services/discoveryEvents.js` — `logEvent` (fire-and-forget, never throws/blocks,
+  swallows missing-table) + `contextFromReq` (anon `x-sloth-sid`, source, user_id).
+- Hooks in `hostController.js`: `searchVendors` (search + result_count, incl. zero-result
+  demand), `getHostProfile` (profile view), `getServiceBySlug` (service view).
+- Client `api.js` sets anon `sloth_sid` → `x-sloth-sid` header. CORS reflects it already.
+- **Explore hidden:** removed from `Navbar` (PUBLIC + CUSTOMER nav); `/explore` → redirect
+  home. `Explore.jsx` / `AdminExplore.jsx` / `exploreController.js` / `v2.9_explore.sql`
+  kept as foundation — **v2.9 NOT applied**.
+- Tests: `server/tests/unit/discoveryEvents.test.js` (8 cases).
+
+**NOT done (deferred ~3–4 mo, full design in spec):** explore_index + tsvector search,
+ranking engine, self-serve Razorpay placement (featured/boost/keyword/badge), pricing
+catalog, admin tooling, `explore_settings` go-live flag, the public page itself.
 
 ## Sprint: Financial Ledger P1 (Ledger Core) — Double-Entry Accounting (DONE 2026-06-13)
 

@@ -64,6 +64,20 @@ cd client && npm test             # Vitest
 Run `server/migrations/v1.7_pricing_snapshot.sql` in Supabase SQL Editor.
 Adds `commission_applied` column to `bookings`. Code has fallback until applied.
 
+## Explore (DEFERRED feature — data capture is LIVE now)
+The Explore page (public vendor discovery + paid placement) is **not** built for
+launch. Only the irreplaceable part — behavioural event history — is captured now;
+the feature is built ~3–4 months later on top of that data.
+- **Spec / how to build it / where-is-what:** `docs/superpowers/specs/2026-06-14-explore-foundation-design.md`
+- **Live now:** `discovery_events` table (`v3.0_discovery_events.sql`, applied) +
+  `server/services/discoveryEvents.js`, hooked into `hostController` search + profile +
+  service views. Client sends anon `x-sloth-sid`.
+- **Hidden:** Explore removed from `Navbar`; `/explore` redirects home. The page
+  (`Explore.jsx`), admin (`AdminExplore.jsx`), `exploreController.js`, and
+  `v2.9_explore.sql` (**unapplied**) remain as the foundation — do NOT apply v2.9 yet.
+- **To resume:** query `discovery_events` (top + zero-result searches, most-viewed
+  vendors) first, then follow the build order in the spec.
+
 ## Documentation Map
 | File | Purpose |
 |---|---|

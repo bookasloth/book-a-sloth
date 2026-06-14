@@ -2,6 +2,7 @@ const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require('../utils/httpError');
 const { sanitizeLikeTerm } = require("../utils/searchSanitize");
 const { getConfig: getPlatformConfig } = require("../services/platformConfig");
+const { logEvent, contextFromReq } = require("../services/discoveryEvents");
 
 // ??? Profile slug helpers ????????????????????????????????????????????????????
 const slugifyUsername = (text) =>
@@ -109,6 +110,9 @@ const getHostProfile = async (req, res) => {
 
     // Task 10: Show unverified status but don't block -- client shows a banner
     // (flip host.is_verified to true in Admin -> Users to go fully live)
+
+    // Explore foundation: capture the profile view (fire-and-forget).
+    logEvent({ event_type: "view", surface: "profile", vendor_id: host.id, ...contextFromReq(req) });
 
     // Fetch services + availability in parallel
     const [servicesResult, { data: availability }] = await Promise.all([
@@ -428,6 +432,9 @@ const getServiceBySlug = async (req, res) => {
       bookingFee = Math.round(platformFee * (1 + gstRate) * 100) / 100;
     } catch (_) { bookingFee = 0; }
 
+    // Explore foundation: capture the service view (fire-and-forget).
+    logEvent({ event_type: "view", surface: "service", vendor_id: host.id, category: service.type || null, ...contextFromReq(req) });
+
     res.json({ host, service, availability, bookingFee, platformFee, gstRate });
   } catch (error) {
     safeError(res, error);
@@ -518,6 +525,17 @@ const searchVendors = async (req, res) => {
       .eq("is_active", true)
       .or(`title.ilike.${term},description.ilike.${term}`)
       .limit(10);
+
+    // Explore foundation: capture search intent + result count (fire-and-forget).
+    // result_count === 0 → unmet demand: exactly what drives vendor recruitment
+    // and the future Explore collections/categories.
+    logEvent({
+      event_type: "search",
+      surface: "home_search",
+      query: q,
+      result_count: (vendors ? vendors.length : 0) + (services ? services.length : 0),
+      ...contextFromReq(req),
+    });
 
     res.json({ vendors: vendors || [], services: services || [] });
   } catch (error) {
