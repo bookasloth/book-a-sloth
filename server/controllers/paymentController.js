@@ -11,6 +11,7 @@ const planService = require("../services/planService");
 const platformConfig = require("../services/platformConfig");
 const { createCalendarEvent } = require("../config/google");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
+const { verifySignature } = require("../utils/razorpaySignature");
 
 // Annual plan price in paise, read from subscription_plans (DB-driven, spec v1.1)
 const getPlanPricePaise = async (slug) => {
@@ -33,18 +34,6 @@ const razorpay = new Razorpay({
   key_id:     process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
-
-const verifySignature = (orderId, paymentId, signature) => {
-  const expected = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-    .update(`${orderId}|${paymentId}`)
-    .digest("hex");
-  const expectedBuf = Buffer.from(expected);
-  const sigBuf = Buffer.from(String(signature || ""));
-  // Length-guard: timingSafeEqual throws on unequal-length buffers; a
-  // mismatched/forged signature must return false, not throw.
-  return expectedBuf.length === sigBuf.length && crypto.timingSafeEqual(expectedBuf, sigBuf);
-};
 
 // ── POST /api/payment/create-order ───────────────────────────
 // SECURITY FIX: validate guest identity against the booking before creating order
