@@ -157,5 +157,12 @@ setInterval(async () => {
   } catch (err) { console.error('Ledger reconciler cron error:', err.message); }
 }, LEDGER_RECONCILE_MIN * 60 * 1000);
 
+// Feature flags — seed any registry keys missing from the DB on boot (all ON,
+// never overwrites an admin's existing on/off choice). Best-effort; the admin
+// GET also re-syncs, so a transient boot failure self-heals.
+require('./controllers/featureFlagController').syncRegistry()
+  .then(() => console.log('Feature flags synced'))
+  .catch((err) => console.error('Feature flag sync error:', err.message));
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log('Server running on port ' + PORT));

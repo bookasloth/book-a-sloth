@@ -264,7 +264,8 @@ const createBooking = async (req, res) => {
       isOnline &&
       service.price === 0 &&
       host.google_calendar_connected &&
-      host.google_refresh_token
+      host.google_refresh_token &&
+      (await featureFlags.isFeatureEnabled("google_calendar"))
     ) {
       try {
         const startTime = new Date(scheduled_at);
@@ -370,7 +371,7 @@ const createBooking = async (req, res) => {
 
     // BUG-12 fixed: only send confirmation emails immediately for FREE services.
     // Paid services: emails are sent in paymentController.verifyPayment after payment succeeds.
-    if (service.price === 0) {
+    if (service.price === 0 && (await featureFlags.isFeatureEnabled("confirmation_emails"))) {
       try {
         const ctx = { guestName: guest_name, serviceTitle: service.title, hostName: host.name, when };
         const emailData = bookingEmailData({
@@ -930,6 +931,7 @@ const confirmReschedule = async (req, res) => {
 };
 
 const processReminders = async () => {
+  if (!(await featureFlags.isFeatureEnabled("booking_reminders"))) return;
   const now = new Date();
   for (const windowHours of [24, 1]) {
     const rangeStart = new Date(

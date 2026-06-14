@@ -49,6 +49,7 @@ router.put('/settings', requireAdmin('settings.manage'), updateSettings);
 // ── Feature flags ──────────────────────────────────────────────
 const features = require('../controllers/featureFlagController');
 router.get('/features',        requireAdmin('settings.manage'), features.getFlags);
+router.post('/features',       requireAdmin('settings.manage'), features.createFlag);
 router.patch('/features/:key', requireAdmin('settings.manage'), features.toggleFlag);
 
 // ── Staff & roles (Super Admin only — staff.manage is super-exclusive) ──
