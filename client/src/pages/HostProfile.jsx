@@ -148,8 +148,8 @@ const MetaRow = ({ price, duration, mode }) => (
       { val: mode === 'offline' ? 'In-person' : 'Online', lbl: 'Mode' },
     ].map(({ val, lbl }) => (
       <div key={lbl}>
-        <div className="text-xs font-semibold" style={{ color: C.text }}>{val}</div>
-        <div className="text-[10px] mt-0.5" style={{ color: C.muted }}>{lbl}</div>
+        <div className="text-sm font-semibold" style={{ color: C.text }}>{val}</div>
+        <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>{lbl}</div>
       </div>
     ))}
   </div>
@@ -169,8 +169,8 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
         style={{ border: `1px solid ${C.border}` }}>
         <div className="flex-1 min-w-0">
           {detailUrl
-            ? <Link to={detailUrl} className="font-semibold text-sm hover:opacity-60 transition-opacity" style={{ color: C.text }}>{s.title}</Link>
-            : <span className="font-semibold text-sm" style={{ color: C.text }}>{s.title}</span>}
+            ? <Link to={detailUrl} className="font-semibold text-base hover:opacity-60 transition-opacity" style={{ color: C.text }}>{s.title}</Link>
+            : <span className="font-semibold text-base" style={{ color: C.text }}>{s.title}</span>}
           <div className="grid grid-cols-3 gap-3 mt-2">
             {[
               { val: s.price === 0 ? 'Free' : `₹${s.price}`, lbl: 'Price' },
@@ -178,15 +178,15 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
               { val: s.meeting_mode === 'offline' ? 'In-person' : 'Online', lbl: 'Mode' },
             ].map(({ val, lbl }) => (
               <div key={lbl}>
-                <div className="text-xs font-semibold" style={{ color: C.text }}>{val}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: C.muted }}>{lbl}</div>
+                <div className="text-sm font-semibold" style={{ color: C.text }}>{val}</div>
+                <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>{lbl}</div>
               </div>
             ))}
           </div>
         </div>
         {bookUrl && (
           <Link to={bookUrl}
-            className="flex-shrink-0 rounded-lg text-xs font-semibold flex items-center transition-opacity hover:opacity-80"
+            className="flex-shrink-0 rounded-lg text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
             style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 40, padding: '0 18px' }}>
             Book Now
           </Link>
@@ -198,13 +198,13 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
   // Grid — fixed 250px height
   return (
     <div className="flex flex-col bg-white rounded-xl transition-shadow hover:shadow-sm"
-      style={{ border: `1px solid ${C.border}`, height: 250, padding: '20px 20px 18px' }}>
+      style={{ border: `1px solid ${C.border}`, height: 270, padding: '20px 20px 18px' }}>
 
       {/* Title + tag */}
       <div className="flex items-start justify-between gap-2 mb-2">
         {detailUrl
-          ? <Link to={detailUrl} className="font-semibold text-sm leading-snug hover:opacity-60 transition-opacity line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</Link>
-          : <span className="font-semibold text-sm leading-snug line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</span>}
+          ? <Link to={detailUrl} className="font-semibold text-base leading-snug hover:opacity-60 transition-opacity line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</Link>
+          : <span className="font-semibold text-base leading-snug line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</span>}
         {tagStyle && (
           <span className="flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
             style={{ background: tagStyle.bg, color: tagStyle.color }}>
@@ -214,7 +214,7 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
       </div>
 
       {/* Description */}
-      <p className="text-xs leading-relaxed line-clamp-2 flex-1 mb-3" style={{ color: C.secondary }}>
+      <p className="text-sm leading-relaxed line-clamp-2 flex-1 mb-3" style={{ color: C.secondary }}>
         {desc || ' '}
       </p>
 
@@ -224,11 +224,11 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
       {/* Footer */}
       <div className="flex items-center justify-between mt-3">
         {detailUrl
-          ? <Link to={detailUrl} className="text-xs font-medium transition-opacity hover:opacity-60" style={{ color: C.secondary }}>View Details →</Link>
+          ? <Link to={detailUrl} className="text-sm font-medium transition-opacity hover:opacity-60" style={{ color: C.secondary }}>View Details →</Link>
           : <span />}
         {bookUrl && (
           <Link to={bookUrl}
-            className="rounded-lg text-xs font-semibold flex items-center transition-opacity hover:opacity-80"
+            className="rounded-lg text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
             style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 40, padding: '0 18px' }}>
             Book Now
           </Link>
