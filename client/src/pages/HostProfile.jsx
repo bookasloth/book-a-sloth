@@ -23,6 +23,11 @@ const C = {
   btnText:   '#FFFFFF',
 };
 
+// Card metrics (Services/Rating/Reviews stats strip + card star rating) are
+// collected and still fetched, but hidden from the landing card. Flip to true
+// to re-enable with no layout changes. See spec 2026-06-14-profile-landing-redesign.
+const SHOW_CARD_METRICS = false;
+
 // ─── Star Rating ─────────────────────────────────────────────────────────────
 const Stars = ({ avg, count, size = "sm" }) => {
   const sz = size === "lg" ? "w-4 h-4" : "w-3 h-3";
@@ -89,7 +94,7 @@ const Badge = ({ badge }) => {
         onMouseEnter={() => setTip(true)}
         onMouseLeave={() => setTip(false)}
         className="flex items-center justify-center cursor-default select-none transition-transform hover:scale-110"
-        style={{ width: 40, height: 40, borderRadius: 12, background: '#F4F4F4', fontSize: 20 }}>
+        style={{ width: 44, height: 44, borderRadius: 12, background: '#F4F4F4', fontSize: 22 }}>
         {icon}
       </div>
       {tip && (
@@ -340,20 +345,17 @@ const HostProfile = () => {
         </div>
       )}
 
-      <div className="app-container pt-8">
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
-
-          {/* ── LEFT SIDEBAR ────────────────────────────────────────────── */}
-          <div className="w-full lg:flex-shrink-0 lg:sticky lg:top-24"
-            style={{ minWidth: 350, maxWidth: 420 }}>
+      {/* ── HERO — centered profile card (100vh on desktop) ─────────────── */}
+      <section className="lg:min-h-screen flex flex-col items-center justify-center px-4 pt-8 lg:pt-0">
+        <div className="w-full relative" style={{ maxWidth: 340 }}>
 
             <div className="overflow-hidden rounded-2xl"
               style={{ background: C.card, border: `1px solid ${C.border}` }}>
 
-              {/* Cover — 180px, rounded top only */}
+              {/* Cover — 150px, rounded top only */}
               <div className="relative overflow-hidden"
                 style={{
-                  height: 180,
+                  height: 150,
                   borderRadius: '16px 16px 0 0',
                   background: host.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)`,
                 }}>
@@ -363,7 +365,7 @@ const HostProfile = () => {
               </div>
 
               {/* Profile photo — 100×100 square, overlapping cover */}
-              <div className="flex justify-center" style={{ marginTop: -50, position: 'relative' }}>
+              <div className="flex justify-center" style={{ marginTop: -42, position: 'relative' }}>
                 <div style={{
                   width: 100, height: 100,
                   borderRadius: 12,
@@ -403,20 +405,24 @@ const HostProfile = () => {
                   </p>
                 )}
 
-                {/* Rating + Available now */}
-                <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
-                  {reviewData.avg > 0 && <Stars avg={reviewData.avg} count={reviewData.count} />}
-                  {host.google_calendar_connected && (
-                    <span className="flex items-center gap-1 text-xs font-medium" style={{ color: '#16A34A' }}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16A34A', display: 'inline-block' }} />
-                      Available now
-                    </span>
-                  )}
-                </div>
+                {/* Available Now — own line directly under name */}
+                {host.google_calendar_connected && (
+                  <div className="flex items-center justify-center gap-1.5 mt-1.5">
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#16A34A', display: 'inline-block' }} />
+                    <span className="text-xs font-semibold" style={{ color: '#16A34A' }}>Available Now</span>
+                  </div>
+                )}
+
+                {/* Card star rating — hidden by default (collect, don't display) */}
+                {SHOW_CARD_METRICS && reviewData.avg > 0 && (
+                  <div className="flex justify-center mt-2">
+                    <Stars avg={reviewData.avg} count={reviewData.count} />
+                  </div>
+                )}
 
                 {/* Bio — 3 lines max */}
                 {host.bio && (
-                  <p className="text-sm leading-relaxed mt-3 line-clamp-3 text-left" style={{ color: C.secondary }}>
+                  <p className="text-sm leading-relaxed mt-3 line-clamp-3 text-center" style={{ color: C.secondary }}>
                     {host.bio}
                   </p>
                 )}
@@ -437,18 +443,20 @@ const HostProfile = () => {
                   </div>
                 )}
 
-                {/* Stats — 3 columns, no cards */}
-                <div className="grid grid-cols-3 mt-6 pt-5"
-                  style={{ borderTop: `1px solid ${C.border}` }}>
-                  {stats.map(({ val, lbl }, i) => (
-                    <div key={lbl}
-                      className={i > 0 ? 'border-l' : ''}
-                      style={{ borderColor: C.border }}>
-                      <div className="text-lg font-bold" style={{ color: C.text }}>{val}</div>
-                      <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>{lbl}</div>
-                    </div>
-                  ))}
-                </div>
+                {/* Stats — hidden by default (collect, don't display) */}
+                {SHOW_CARD_METRICS && (
+                  <div className="grid grid-cols-3 mt-6 pt-5"
+                    style={{ borderTop: `1px solid ${C.border}` }}>
+                    {stats.map(({ val, lbl }, i) => (
+                      <div key={lbl}
+                        className={i > 0 ? 'border-l' : ''}
+                        style={{ borderColor: C.border }}>
+                        <div className="text-lg font-bold" style={{ color: C.text }}>{val}</div>
+                        <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>{lbl}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Location */}
                 {host.location && (
@@ -464,10 +472,19 @@ const HostProfile = () => {
                 )}
               </div>
             </div>
-          </div>
 
-          {/* ── RIGHT ───────────────────────────────────────────────────── */}
-          <div className="flex-1 min-w-0">
+            {/* Scroll cue — desktop only */}
+            <a href="#services" className="hidden lg:flex justify-center mt-6 transition-opacity hover:opacity-60">
+              <svg className="w-5 h-5 animate-bounce" style={{ color: C.muted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </a>
+          </div>
+        </section>
+
+        {/* ── BELOW THE FOLD — services, reviews, products ────────────────── */}
+        <div id="services" className="app-container pb-16 pt-4 lg:pt-0">
+          <div className="min-w-0">
 
             {/* Header row */}
             <div className="flex items-center justify-between mb-5">
@@ -569,7 +586,6 @@ const HostProfile = () => {
             )}
           </div>
         </div>
-      </div>
     </div>
       )}
     </>
