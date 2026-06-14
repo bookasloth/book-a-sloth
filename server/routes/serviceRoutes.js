@@ -14,6 +14,7 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 // BUG-04: import plan middlewares so the new /api/services endpoint enforces limits
 const { attachPlan, checkServiceLimit } = require('../middleware/planMiddleware');
+const { requireFeature } = require('../middleware/requireFeature');
 
 // Public routes — no auth (specific before dynamic)
 router.get('/public/:profileSlug/:serviceSlug', getPublicServiceByProfileAndSlug);
@@ -21,11 +22,11 @@ router.get('/public/:slug', getPublicServiceBySlug);
 
 // Protected routes — vendor dashboard
 router.get('/',               protect, getMyServices);
-router.post('/',              protect, attachPlan, checkServiceLimit, createService); // BUG-04 fixed
+router.post('/',              protect, requireFeature('services'), attachPlan, checkServiceLimit, createService); // BUG-04 fixed
 router.get('/:id',            protect, getServiceById);
-router.put('/:id',            protect, updateService);
+router.put('/:id',            protect, requireFeature('services'), updateService);
 router.delete('/:id',         protect, deleteService);
-router.post('/:id/duplicate', protect, duplicateService);
+router.post('/:id/duplicate', protect, requireFeature('services'), duplicateService);
 router.put('/:id/toggle',     protect, toggleService);
 
 module.exports = router;

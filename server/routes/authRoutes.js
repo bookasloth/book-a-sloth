@@ -15,10 +15,12 @@ const {
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const { otpLimiter, authLimiter } = require('../middleware/security');
+const { requireFeature } = require('../middleware/requireFeature');
 
 // Separate registration
 router.post('/register/vendor', authLimiter, registerVendor);
-router.post('/register/user', authLimiter, registerUser);
+// guest_signup kill-switch — vendor registration intentionally NOT gated here.
+router.post('/register/user', authLimiter, requireFeature('guest_signup'), registerUser);
 
 // Google OAuth
 router.get('/google', protect, googleAuth);                 // legacy: calendar connect (logged-in vendor)
