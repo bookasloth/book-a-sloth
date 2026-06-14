@@ -151,6 +151,7 @@ const updateProfile = async (req, res) => {
       profession,
       location,
       theme_color,
+      reschedule_fee,
     } = req.body;
 
     // Slugify and validate username
@@ -213,6 +214,12 @@ const updateProfile = async (req, res) => {
         return res.status(403).json({ message: "This colour is not available on your plan. Upgrade to unlock more colours." });
       }
       updates.theme_color = hex;
+    }
+
+    if (reschedule_fee !== undefined) {
+      const rf = Number(reschedule_fee);
+      if (rf !== 0 && rf !== 10) return res.status(400).json({ message: 'reschedule_fee must be 0 or 10' });
+      updates.reschedule_fee = rf;
     }
 
     let result = await supabaseAdmin

@@ -2,8 +2,8 @@ jest.mock('../../config/google', () => ({ updateCalendarEvent: jest.fn().mockRes
 jest.mock('../../services/featureFlags', () => ({ isFeatureEnabled: jest.fn() }));
 jest.mock('../../utils/cryptoTokens', () => ({ decryptToken: (v) => v, decrypt: (v) => v }));
 jest.mock('../../services/notificationEngine', () => ({ send: jest.fn().mockResolvedValue() }));
-const mockPostSafe = jest.fn().mockResolvedValue({});
-jest.mock('../../services/ledger/postingService', () => ({ postSafe: (...a) => mockPostSafe(...a) }));
+const mockPost = jest.fn().mockResolvedValue('je1');
+jest.mock('../../services/ledger/postingService', () => ({ post: (...a) => mockPost(...a), postSafe: jest.fn() }));
 const mockVerifySignature = jest.fn().mockReturnValue(true);
 jest.mock('../../utils/razorpaySignature', () => ({ verifySignature: (...a) => mockVerifySignature(...a) }));
 
@@ -23,7 +23,7 @@ const mk = (count, fee) => ({
 });
 const wire = (b) => mockFrom.mockImplementation(() => {
   const c = { select: jest.fn(() => c), eq: jest.fn(() => c), neq: jest.fn(() => c), gte: jest.fn(() => c),
-    lte: jest.fn(() => c), order: jest.fn(() => c), update: jest.fn(() => c),
+    lte: jest.fn(() => c), order: jest.fn(() => c), update: jest.fn(() => c), insert: jest.fn(() => c),
     single: jest.fn().mockResolvedValue({ data: b, error: null }),
     maybeSingle: jest.fn().mockResolvedValue({ data: { timezone: 'Asia/Kolkata', buffer_minutes: 0 } }),
     then: (resolve) => resolve({ data: [], error: null }) };
@@ -37,7 +37,7 @@ test('1st guest reschedule is free even if vendor fee=10', async () => {
   const r = res();
   await rescheduleBooking(req({ scheduled_at: future }), r);
   expect(r.status).not.toHaveBeenCalledWith(402);
-  expect(mockPostSafe).not.toHaveBeenCalled();
+  expect(mockPost).not.toHaveBeenCalled();
 });
 
 test('2nd reschedule with fee=10 and no payment → 402', async () => {
@@ -52,7 +52,7 @@ test('2nd reschedule with fee=10 + valid payment → posts ledger', async () => 
   const r = res();
   await rescheduleBooking(req({ scheduled_at: future, fee_payment_id: 'p', fee_order_id: 'o', fee_signature: 's' }), r);
   expect(mockVerifySignature).toHaveBeenCalled();
-  expect(mockPostSafe).toHaveBeenCalledWith(expect.objectContaining({ sourceType: 'RESCHEDULE_FEE' }));
+  expect(mockPost).toHaveBeenCalledWith(expect.objectContaining({ sourceType: 'RESCHEDULE_FEE' }));
 });
 
 test('2nd reschedule but reschedule_fee flag off → free', async () => {
@@ -61,4 +61,5 @@ test('2nd reschedule but reschedule_fee flag off → free', async () => {
   const r = res();
   await rescheduleBooking(req({ scheduled_at: future }), r);
   expect(r.status).not.toHaveBeenCalledWith(402);
+  expect(mockPost).not.toHaveBeenCalled();
 });

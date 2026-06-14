@@ -717,6 +717,7 @@ const rescheduleBooking = async (req, res) => {
     // fee payment is required BEFORE any DB mutation (402 otherwise).
     const { verifySignature } = require("../utils/razorpaySignature");
     let feeChargedAmount = 0;
+    let feeOrderId = null, feePaymentId = null;
     if (isGuestReschedule) {
       const hostRow = booking["profiles!bookings_host_id_fkey"] || {};
       const vendorFee = Number(hostRow.reschedule_fee) || 0;
@@ -730,6 +731,8 @@ const rescheduleBooking = async (req, res) => {
           return res.status(402).json({ message: 'Reschedule fee payment required', fee: vendorFee });
         }
         feeChargedAmount = vendorFee;
+        feeOrderId = fee_order_id;
+        feePaymentId = fee_payment_id;
       }
     }
 
@@ -788,17 +791,22 @@ const rescheduleBooking = async (req, res) => {
 
     if (feeChargedAmount > 0) {
       try {
-        const { rescheduleFeeEntry } = require("../services/ledger/journalTemplates");
-        const { postSafe } = require("../services/ledger/postingService");
-        const newCount = (Number(booking.reschedule_count) || 0) + 1;
-        await postSafe({
+        const { data: rfRow, error: rfErr } = await supabaseAdmin
+          .from('reschedule_payments')
+          .insert({ booking_id: booking.id, guest_id: booking.guest_id, host_id: booking.host_id,
+                    amount: feeChargedAmount, razorpay_order_id: feeOrderId, razorpay_payment_id: feePaymentId })
+          .select('id').single();
+        if (rfErr) throw rfErr;
+        const { rescheduleFeeEntry } = require('../services/ledger/journalTemplates');
+        const { post } = require('../services/ledger/postingService');
+        await post({
           sourceType: 'RESCHEDULE_FEE',
-          sourceId: `${booking.id}:${newCount}`,
+          sourceId: rfRow.id,
           journalDate: new Date().toISOString().slice(0, 10),
           template: rescheduleFeeEntry({ booking_id: booking.id, host_id: booking.host_id, fee: feeChargedAmount, gstRate: 0.18 }),
         });
       } catch (ledgerErr) {
-        console.error("Reschedule fee ledger error (non-fatal):", ledgerErr.message);
+        console.error('Reschedule fee ledger error (non-fatal):', ledgerErr.message);
       }
     }
 

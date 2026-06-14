@@ -519,6 +519,10 @@ const createRescheduleFeeOrder = async (req, res) => {
       .eq("id", booking_id).single();
     if (!booking) return res.status(404).json({ message: "Booking not found" });
     if (req.user?.id !== booking.guest_id) return res.status(403).json({ message: "Not authorized" });
+    const featureFlags = require('../services/featureFlags');
+    if (!(await featureFlags.isFeatureEnabled('reschedule_fee'))) {
+      return res.status(400).json({ message: 'Reschedule fee is not enabled', fee: 0 });
+    }
     const fee = Number(booking["profiles!bookings_host_id_fkey"]?.reschedule_fee) || 0;
     if (fee <= 0 || (Number(booking.reschedule_count) || 0) < 1) {
       return res.status(400).json({ message: "No reschedule fee due", fee: 0 });
