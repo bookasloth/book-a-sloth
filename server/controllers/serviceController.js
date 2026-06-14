@@ -5,6 +5,7 @@
  */
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const { getConfig: getPlatformConfig } = require('../services/platformConfig');
 
 // ─── Slug helpers ────────────────────────────────────────────────────────────
 
@@ -373,7 +374,7 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
     // 1. Resolve the vendor by username (profileSlug)
     const { data: vendor, error: vendorErr } = await supabaseAdmin
       .from('profiles')
-      .select('id,name,username,profession,tagline,profile_image,cover_image,bio,is_verified,google_calendar_connected,badges,theme_color,plan')
+      .select('id,name,username,profession,tagline,profile_image,cover_image,bio,is_verified,google_calendar_connected,badges,social_links,theme_color,plan')
       .eq('username', profileSlug)
       .eq('role', 'host')
       .single();
@@ -428,6 +429,15 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
       count: reviewList.filter((r) => r.rating === star).length,
     }));
 
+    // Customer-facing booking charge = flat platform fee + GST (admin-editable).
+    // Mirrors the breakdown shown on the booking/payment screen so the price the
+    // guest sees here matches what they pay. Falls back to 0 on error.
+    let bookingFee = 0;
+    try {
+      const { platformFee, gstRate } = await getPlatformConfig();
+      bookingFee = Math.round(platformFee * (1 + gstRate) * 100) / 100;
+    } catch (_) { bookingFee = 0; }
+
     res.json({
       service: svc,
       vendor: vendor || {},
@@ -436,6 +446,7 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
       reviews: reviewList,
       avgRating,
       ratingBreakdown,
+      bookingFee,
     });
   } catch (err) {
     safeError(res, err);
