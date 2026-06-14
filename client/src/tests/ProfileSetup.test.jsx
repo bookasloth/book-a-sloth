@@ -230,3 +230,45 @@ describe('ProfileSetup — save', () => {
     await waitFor(() => expect(toast.default.error).toHaveBeenCalled());
   });
 });
+
+// ── Reschedule fee toggle ─────────────────────────────────────────────────────
+
+describe('ProfileSetup — reschedule fee', () => {
+  test('renders "Guest reschedule fee" select in Integrations tab', async () => {
+    renderSetup();
+    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    expect(screen.getByLabelText(/guest reschedule fee/i)).toBeTruthy();
+  });
+
+  test('defaults to 0 (Free) when profile has no reschedule_fee', async () => {
+    renderSetup();
+    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    const select = screen.getByLabelText(/guest reschedule fee/i);
+    expect(Number(select.value)).toBe(0);
+  });
+
+  test('pre-fills ₹10 when profile has reschedule_fee: 10', async () => {
+    useAuth.mockReturnValue({
+      user: { ...VENDOR, reschedule_fee: 10 },
+      updateUser: vi.fn(),
+    });
+    render(<MemoryRouter><ProfileSetup /></MemoryRouter>);
+    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    const select = screen.getByLabelText(/guest reschedule fee/i);
+    expect(Number(select.value)).toBe(10);
+  });
+
+  test('changing to ₹10 and saving calls updateProfile with reschedule_fee: 10', async () => {
+    updateProfile.mockResolvedValueOnce({ data: { ...VENDOR, reschedule_fee: 10 } });
+    renderSetup();
+    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    const select = screen.getByLabelText(/guest reschedule fee/i);
+    await userEvent.selectOptions(select, '10');
+    await userEvent.click(screen.getByRole('button', { name: /save profile/i }));
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ reschedule_fee: 10 })
+      )
+    );
+  });
+});

@@ -125,6 +125,7 @@ const ProfileSetup = () => {
     cover_image: "",
     location: "",
     theme_color: DEFAULT_THEME_COLOR,
+    reschedule_fee: 0,
     social_links: {
       instagram: "", youtube: "", linkedin: "", facebook: "",
       twitter: "", whatsapp: "", website: "", github: "", email: "",
@@ -137,15 +138,16 @@ const ProfileSetup = () => {
     if (user) {
       const sl = user.social_links || {};
       setForm({
-        name:          user.name || "",
-        username:      user.username || "",
-        bio:           user.bio || "",
-        tagline:       user.tagline || "",
-        profession:    user.profession || "",
-        profile_image: user.profile_image || "",
-        cover_image:   user.cover_image || "",
-        location:      user.location || "",
-        theme_color:   user.theme_color || DEFAULT_THEME_COLOR,
+        name:           user.name || "",
+        username:       user.username || "",
+        bio:            user.bio || "",
+        tagline:        user.tagline || "",
+        profession:     user.profession || "",
+        profile_image:  user.profile_image || "",
+        cover_image:    user.cover_image || "",
+        location:       user.location || "",
+        theme_color:    user.theme_color || DEFAULT_THEME_COLOR,
+        reschedule_fee: Number(user.reschedule_fee ?? 0),
         social_links: {
           instagram: sl.instagram || "",
           youtube:   sl.youtube   || "",
@@ -534,6 +536,24 @@ const ProfileSetup = () => {
                 <p>• Works with online services only (not in-person)</p>
                 <p>• Guests receive the Meet link in their confirmation email</p>
                 <p>• Bookings appear on your Google Calendar automatically</p>
+              </div>
+            </div>
+
+            {/* Reschedule fee */}
+            <div className="bg-white border rounded-2xl p-5">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Booking Policy</h3>
+              <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="reschedule_fee">Guest reschedule fee</label>
+                <select
+                  id="reschedule_fee"
+                  className="fb-input"
+                  value={form.reschedule_fee ?? 0}
+                  onChange={(e) => { setForm({ ...form, reschedule_fee: Number(e.target.value) }); setDirty(true); }}
+                >
+                  <option value={0}>Free (₹0)</option>
+                  <option value={10}>₹10 per reschedule (from the 2nd)</option>
+                </select>
+                <p className="text-xs text-gray-400 mt-1">The platform keeps this fee. The guest's first reschedule is always free.</p>
               </div>
             </div>
 
