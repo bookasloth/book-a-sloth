@@ -109,8 +109,8 @@ const Badge = ({ badge }) => {
         onMouseLeave={() => setTip(false)}
         className="flex items-center justify-center cursor-default select-none overflow-hidden transition-transform hover:scale-110"
         style={{
-          width: 44, height: 44, borderRadius: 12, background: '#F4F4F4', fontSize: 22,
-          boxShadow: badge.is_bas_team ? `0 0 0 2px ${C.text}` : undefined,
+          width: 44, height: 44, borderRadius: 2, background: '#F4F4F4', fontSize: 22,
+          border: `0.5px solid ${badge.is_bas_team ? C.text : C.border}`,
         }}>
         {badge.image_url
           ? <img src={badge.image_url} alt={label} className="w-full h-full object-contain" />
