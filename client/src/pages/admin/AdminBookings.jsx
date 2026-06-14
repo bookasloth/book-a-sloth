@@ -26,6 +26,10 @@ import toast from 'react-hot-toast';
 // state filter so we can drop the high-limit client-side fetch below.
 const FETCH_LIMIT = 200;
 
+// Abuse signal: bookings with this many or more guest-initiated reschedules
+// get an amber warning badge in the list row and mobile card.
+const RESCHEDULE_ALERT_THRESHOLD = 3;
+
 // ── Inline SVG icons (no emoji — consistent 1.75 stroke) ──────────
 const Ic = ({ d, size = 16, className = '', strokeWidth = 1.75 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -206,6 +210,12 @@ const BookingCard = ({ b, status, onView, onEdit, onDelete }) => {
         <StatusIcon status={status} />
         <code className="text-[12px] font-bold text-gray-900 font-mono">{shortId(b.id)}</code>
         <PaymentPill status={b.payment_status} />
+        {Number(b.reschedule_count) >= RESCHEDULE_ALERT_THRESHOLD && (
+          <span title={`${b.reschedule_count} reschedules`}
+            className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+            ⚠ {b.reschedule_count}× resched
+          </span>
+        )}
         <span className="ml-auto font-bold text-sm text-gray-900 tabular-nums">{inr(amount)}</span>
       </div>
       <p className="text-[13px] font-semibold text-gray-900 truncate">{b.services?.title || 'Service'}</p>
@@ -242,7 +252,15 @@ const BookingRow = ({ b, status, onView, onEdit, onDelete }) => {
       className="group border-t border-gray-100 hover:bg-gray-50/70 cursor-pointer transition-colors">
       {/* 1 Booking ID */}
       <td className="px-4 py-3 align-middle">
-        <code className="text-[12.5px] font-bold font-mono text-gray-900">{shortId(b.id)}</code>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <code className="text-[12.5px] font-bold font-mono text-gray-900">{shortId(b.id)}</code>
+          {Number(b.reschedule_count) >= RESCHEDULE_ALERT_THRESHOLD && (
+            <span title={`${b.reschedule_count} reschedules`}
+              className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+              ⚠ {b.reschedule_count}× resched
+            </span>
+          )}
+        </div>
       </td>
       {/* 2 Status (icon only + tooltip) */}
       <td className="px-3 py-3 align-middle"><StatusIcon status={status} /></td>
