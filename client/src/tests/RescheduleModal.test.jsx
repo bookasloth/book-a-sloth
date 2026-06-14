@@ -4,6 +4,7 @@ vi.mock('../services/api', () => ({
   getAvailableSlots: vi.fn(), rescheduleBooking: vi.fn(), createRescheduleFeeOrder: vi.fn(),
 }));
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
+vi.mock('../hooks/useFeatureFlags', () => ({ default: () => ({ on: () => true }) }));
 import { getAvailableSlots, rescheduleBooking } from '../services/api';
 import RescheduleModal from '../components/booking/RescheduleModal';
 

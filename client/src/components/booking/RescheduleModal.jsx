@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
 import { getAvailableSlots, rescheduleBooking, createRescheduleFeeOrder } from '../../services/api';
+import useFeatureFlags from '../../hooks/useFeatureFlags';
 import toast from 'react-hot-toast';
 
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -10,7 +11,8 @@ export default function RescheduleModal({ open, booking, onClose, onDone }) {
   const svc = booking.services || {};
   const count = Number(booking.reschedule_count) || 0;
   const vendorFee = Number(host.reschedule_fee) || 0;
-  const feeDue = count >= 1 ? vendorFee : 0; // first reschedule free; server is authoritative
+  const { on } = useFeatureFlags();
+  const feeDue = (count >= 1 && on('reschedule_fee')) ? vendorFee : 0; // first reschedule free; server is authoritative
 
   const [date, setDate] = useState('');
   const [slots, setSlots] = useState(null);
