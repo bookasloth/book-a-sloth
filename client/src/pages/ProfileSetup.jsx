@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { updateProfile, uploadImage } from "../services/api";
 import BackButton from "../components/common/BackButton";
 import ImageCropper from "../components/common/ImageCropper";
+import FeatureGate from "../components/common/FeatureGate";
 import toast from "react-hot-toast";
 import {
   getColorsForPlan,
@@ -240,7 +241,7 @@ const ProfileSetup = () => {
         activeSection === id
           ? 'bg-gray-900 text-white'
           : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-      }`}
+      }`})
     >
       {label}
     </button>
@@ -301,7 +302,8 @@ const ProfileSetup = () => {
                   </div>
                 </div>
               </div>
-              <div>
+              <FeatureGate flag="cover_photo">
+                <div>
                   <label className="block text-sm font-medium mb-1">Cover Photo</label>
                   <div
                     className="rounded-xl border bg-gray-50 h-16 overflow-hidden relative cursor-pointer hover:opacity-80 transition-opacity"
@@ -316,6 +318,7 @@ const ProfileSetup = () => {
                   </div>
                   <p className="text-[10px] text-gray-400 mt-1">JPG/PNG/WebP up to 2MB — shown full-width, auto-cropped to fit</p>
                 </div>
+              </FeatureGate>
               </div>
             </div>
 
@@ -384,7 +387,7 @@ const ProfileSetup = () => {
             {/* Left: controls */}
             <div className="space-y-6">
               {/* Theme Color */}
-              <div>
+            <div>
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="text-sm font-semibold text-gray-800">Theme Color</h3>
@@ -470,7 +473,7 @@ const ProfileSetup = () => {
                 <p className="text-xs text-gray-400 mb-2 font-medium">Booking Button Preview</p>
                 <button
                   type="button"
-                  className="w-full py-2.5 rounded-xl font-bold text-sm transition-all"
+                  className="w-full py-2.5 rounded-lg font-bold text-sm transition-all"
                   style={{ background: tc, color: getContrastColor(tc) }}
                 >
                   Book a Session
@@ -562,46 +565,45 @@ const ProfileSetup = () => {
             <div className="bg-gray-50 border border-dashed rounded-2xl p-5">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Coming Soon</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { name: 'Zoom', desc: 'Auto-create Zoom meeting links', icon: '🎥' },
-                  { name: 'Notion', desc: 'Log bookings to a Notion database', icon: '📝' },
-                  { name: 'Razorpay Payouts', desc: 'Instant payout scheduling', icon: '💸' },
-                  { name: 'WhatsApp Business', desc: 'Send reminders via WhatsApp', icon: '💬' },
-                ].map(i => (
-                  <div key={i.name} className="flex items-center gap-3 bg-white border rounded-xl p-3 opacity-60">
-                    <span className="text-xl">{i.icon}</span>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700">{i.name}</p>
-                      <p className="text-[10px] text-gray-400">{i.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+                {[<br />
+                  { name: 'Zoom', desc: 'Auto-create Zoom meeting links', icon: '🎥' },<br />
+                  { name: 'Notion', desc: 'Log bookings to a Notion database', icon: '📝' },<br />
+                  { name: 'Razorpay Payouts', desc: 'Instant payout scheduling', icon: '💸' },<br />
+                  { name: 'WhatsApp Business', desc: 'Send reminders via WhatsApp', icon: '💬' },<br />
+                ].map(i => (<br />
+                  <div key={i.name} className="flex items-center gap-3 bg-white border rounded-xl p-3 opacity-60"> <br />
+                    <span className="text-xl">{i.icon}</span> <br />
+                    <div> <br />
+                      <p className="text-xs font-semibold text-gray-700">{i.name}</p> <br />
+                      <p className="text-[10px] text-gray-400">{i.desc}</p> <br />
+                    </div> <br />
+                  </div> <br />
+                ))}<br />
+              </div> <br />
+            </div> <br />
+          </div> <br />
+        )}<br />
 
-        {/* Save button — always visible */}
-        <div className="mt-8 pt-5 border-t flex gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors"
-            style={{ background: tc }}
-          >
-            {loading ? "Saving…" : "Save Profile"}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/dashboard")}
-            className="px-5 py-2.5 rounded-lg text-sm font-medium border text-gray-600 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-};
+        {/* Save button — always visible */}<br />
+        <div className="mt-8 pt-5 border-t flex gap-3"> <br />
+          <button<br />
+            type="submit"<br />
+            disabled={loading}<br />
+            className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors"<br />
+            style={{ background: tc }}<br />
+          > <br />
+            {loading ? "Saving…" : "Save Profile"}<br />
+          </button> <br />
+          <button<br />
+            type="button"<br />
+            onClick={() => navigate("/dashboard")}<br />
+            className="px-5 py-2.5 rounded-lg text-sm font-medium border text-gray-600 hover:bg-gray-50"<br />
+          > <br />
+            Cancel<br />
+          </button> <br />
+        </div> <br />
+      </form> <br />
+    </div> <br />
+  );<br />};
 
 export default ProfileSetup;
