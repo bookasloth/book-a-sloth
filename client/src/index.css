@@ -102,6 +102,12 @@ h3 {
   text-decoration: none;
 }
 
+/* No link underline on host profile page (incl. hover). */
+.host-profile a,
+.host-profile a:hover {
+  text-decoration: none;
+}
+
 h1 {
   font-size: clamp(2.1rem, 5vw, 3.7rem);
   font-weight: 800;

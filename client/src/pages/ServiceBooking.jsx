@@ -549,6 +549,13 @@ const ServiceBooking = () => {
     payment: "Pay",
     confirmed: "Done",
   };
+  const STEP_ICONS = {
+    time:      <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    details:   <><path d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" /><path d="M5 21a7 7 0 0 1 14 0" /></>,
+    otp:       <><path d="M12 3l7 4v5c0 4-3 7-7 8-4-1-7-4-7-8V7z" /><path d="M9 12l2 2 4-4" /></>,
+    payment:   <><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M3 10h18" /></>,
+    confirmed: <path d="M5 13l4 4L19 7" />,
+  };
   const daysInMonth = getDaysInMonth(calMonth, calYear);
   const firstDay = getFirstDayOfMonth(calMonth, calYear);
   // Server list is authoritative (includes Google busy + blocked dates);
@@ -591,12 +598,12 @@ const ServiceBooking = () => {
             {profileOpen && (
               <div className="border-t">
                 {/* Section 1: Vendor Profile */}
-                <div className="h-20 relative overflow-hidden"
+                <div className="h-20 relative z-0 overflow-hidden"
                   style={{ background: host.cover_image ? undefined : `linear-gradient(135deg, ${tc}26, ${tc}55)` }}>
                   {host.cover_image && <img src={host.cover_image} alt="" className="w-full h-full object-cover" />}
                 </div>
-                <div className="flex justify-center -mt-7">
-                  <div className="w-14 h-14 rounded border-2 overflow-hidden bg-white" style={{ borderColor }}>
+                <div className="flex justify-center -mt-7 relative z-10">
+                  <div className="w-14 h-14 rounded-full border-2 overflow-hidden bg-white" style={{ borderColor }}>
                     {host.profile_image
                       ? <img src={host.profile_image} alt={host.name} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-xl font-bold" style={{ color: tc }}>
@@ -608,48 +615,48 @@ const ServiceBooking = () => {
                   <h2 className="text-base font-bold text-gray-900">{host.name}</h2>
                 </div>
 
-                {/* Divider + Section 2: Service Information */}
-                <div className="px-4 py-4 border-t text-left">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">Service</p>
-                  <p className="text-sm font-semibold text-gray-900 leading-snug">{service.title}</p>
-                  {service.description && (
-                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                      {service.description.slice(0, 140)}{service.description.length > 140 ? "…" : ""}
-                    </p>
-                  )}
-                  {host.review_count > 0 && (
-                    <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" style={{ fill: tc }}>
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                      </svg>
-                      <span className="font-semibold text-gray-700">{host.review_avg}</span>
-                      <span className="text-gray-400">({host.review_count})</span>
-                    </p>
-                  )}
-                </div>
-
-                {/* Divider + Section 3: Pricing & Duration */}
-                <div className="px-4 py-4 border-t text-left">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">Pricing &amp; Duration</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-bold" style={{ color: tc }}>
+                {/* Service details — name, price, duration only (icons in brand colour) */}
+                <div className="px-4 py-4 border-t text-left space-y-3">
+                  {/* Service name */}
+                  <div className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}
+                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ color: tc }}>
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                      <line x1="7" y1="7" x2="7.01" y2="7" />
+                    </svg>
+                    <span className="text-sm font-semibold text-gray-900 leading-snug">{service.title}</span>
+                  </div>
+                  {/* Price */}
+                  <div className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}
+                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ color: tc }}>
+                      <path d="M6 5h12M6 9h12M9 5c3 0 5 1.5 5 4s-2 4-5 4H6l6 6" />
+                    </svg>
+                    <span className="text-sm font-semibold text-gray-900">
                       {service.price === 0 ? "Free" : `₹${service.price}`}
                     </span>
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
-                      </svg>
-                      {service.duration} min
-                    </span>
+                  </div>
+                  {/* Duration */}
+                  <div className="flex items-center gap-2.5">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}
+                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ color: tc }}>
+                      <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+                    </svg>
+                    <span className="text-sm font-semibold text-gray-900">{service.duration} min</span>
                   </div>
                 </div>
 
-                {/* View full profile — kept exactly as before */}
-                <div className="px-4 pb-4">
+                {/* View full profile */}
+                <div className="px-4 pb-4 border-t pt-4">
                   <Link to={`/${profileSlug}`}
-                    className="block text-xs font-medium hover:opacity-75 transition-opacity"
+                    className="flex items-center gap-2 text-sm font-semibold hover:opacity-75 transition-opacity"
                     style={{ color: tc }}>
-                    View full profile →
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}
+                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                    View full page
                   </Link>
                 </div>
               </div>
@@ -659,22 +666,30 @@ const ServiceBooking = () => {
 
         {/* ── RIGHT: Booking Engine ── */}
         <div className="flex-1 min-w-0 flex flex-col" style={{ minHeight: '560px' }}>
-          {/* Progress bar */}
-          <div className="scroll-safe mb-6 flex items-center gap-2 pb-1 overflow-x-auto">
+          {/* Progress bar — full width, icon per step */}
+          <div className="mb-6 flex items-start w-full">
             {STEPS.map((s, i) => {
               const idx = STEPS.indexOf(step);
               const active = i <= idx;
+              const done = i < idx;
               return (
-                <div key={s} className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-colors"
-                    style={{ background: active ? tc : '#e5e7eb' }} />
-                  <span className={`text-xs whitespace-nowrap transition-colors ${active ? 'font-medium' : 'text-gray-400'}`}
-                    style={active ? { color: tc } : {}}>
-                    {LABELS[s]}
-                  </span>
+                <div key={s} className={`flex items-start ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+                      style={{ background: active ? tc : '#e5e7eb', color: active ? textOnTheme : '#9ca3af' }}>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2}
+                        strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        {STEP_ICONS[s]}
+                      </svg>
+                    </div>
+                    <span className="text-[11px] whitespace-nowrap transition-colors"
+                      style={{ color: active ? tc : '#9ca3af', fontWeight: active ? 600 : 400 }}>
+                      {LABELS[s]}
+                    </span>
+                  </div>
                   {i < STEPS.length - 1 && (
-                    <div className="flex-1 h-0.5 transition-colors"
-                      style={{ background: i < idx ? tc : '#e5e7eb' }} />
+                    <div className="flex-1 h-0.5 mx-2 transition-colors"
+                      style={{ marginTop: 17, background: done ? tc : '#e5e7eb' }} />
                   )}
                 </div>
               );
@@ -684,30 +699,22 @@ const ServiceBooking = () => {
           {/* STEP: time */}
           {step === "time" && (
             <div className="bg-white border rounded p-5 sm:p-7">
-              <Link
-                to={`/${profileSlug}`}
-                className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-4"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="flex items-center justify-between gap-3 mb-5">
+                <Link
+                  to={`/${profileSlug}`}
+                  className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-shrink-0"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-                Back to Services
-              </Link>
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl font-bold">Select Date & Time</h2>
-                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-                  {tzAbbr}
-                </span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back to Services
+                </Link>
+                <div className="flex items-center gap-2 min-w-0">
+                  <h2 className="text-xl font-bold truncate">Select Date & Time</h2>
+                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full flex-shrink-0">
+                    {tzAbbr}
+                  </span>
+                </div>
               </div>
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Calendar */}
@@ -859,16 +866,18 @@ const ServiceBooking = () => {
           {/* STEP: details */}
           {step === "details" && (
             <div className="bg-white border rounded p-5 sm:p-7">
-              <button
-                onClick={() => setStep("time")}
-                className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-4"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>{" "}
-                Back
-              </button>
-              <h2 className="text-xl font-bold mb-5">Enter Details</h2>
+              <div className="flex items-center justify-between gap-3 mb-5">
+                <button
+                  onClick={() => setStep("time")}
+                  className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-shrink-0"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back
+                </button>
+                <h2 className="text-xl font-bold truncate">Enter Details</h2>
+              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* LEFT: Booking Summary */}
@@ -895,9 +904,8 @@ const ServiceBooking = () => {
                         <span className="text-gray-500 flex items-center gap-1">
                           Platform Fee (₹10 + GST)
                           <span className="relative group inline-flex">
-                            <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" />
-                            </svg>
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[10px] font-bold leading-none cursor-help"
+                              style={{ background: tc }}>i</span>
                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 rounded-2xl bg-gray-950 text-white text-xs p-4 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-10 shadow-2xl shadow-black/40 border border-white/10 backdrop-blur-sm">
                               <span className="flex items-start gap-2.5">
                                 <svg className="w-3.5 h-3.5 mt-px shrink-0 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1a9 9 0 100 18A9 9 0 0010 1zm.75 13.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V5.5h1.5V11.5z"/></svg>
@@ -925,27 +933,29 @@ const ServiceBooking = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">First Name</label>
-                      <input type="text" required className="fb-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                      <input type="text" required className="fb-input fb-input--sm" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Last Name</label>
-                      <input type="text" className="fb-input" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                      <input type="text" className="fb-input fb-input--sm" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Email Address</label>
-                    <input type="email" required className="fb-input" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <input type="email" required className="fb-input fb-input--sm" value={email} onChange={(e) => setEmail(e.target.value)} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Mobile Number</label>
-                    <input type="tel" required placeholder="+91 98765 43210" className="fb-input" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                    <p className="text-xs text-gray-400 mt-1">Your verification code arrives on WhatsApp (and email as backup).</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Notes</label>
-                    <textarea rows={3} placeholder="Any specific requirements..." className="fb-input resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    <input type="tel" required placeholder="+91 98765 43210" className="fb-input fb-input--sm" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                    <p className="text-xs text-gray-400 mt-1">Code sent via WhatsApp &amp; email.</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Notes — full width, single line */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium mb-1">Notes</label>
+                <input type="text" placeholder="Any specific requirements..." className="fb-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
               </div>
 
               {/* Full-width Continue */}

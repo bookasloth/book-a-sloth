@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getHostProfile, getHostReviews, getHostProducts } from "../services/api";
+import { getHostProfile, getHostReviews, getHostProducts, getVendorBadges } from "../services/api";
 import BrandPreloader from "../components/preloader/BrandPreloader";
 import {
   DEFAULT_THEME_COLOR,
@@ -97,19 +97,24 @@ const SocialIcon = ({ platform, href }) => {
   );
 };
 
-// ─── Badge (emoji with tooltip) ───────────────────────────────────────────────
+// ─── Badge (image award with tooltip) ─────────────────────────────────────────
+// Renders a real vendor_badges award: { name, image_url, is_bas_team, ... }.
 const Badge = ({ badge }) => {
   const [tip, setTip] = useState(false);
-  const icon  = badge.icon  || badge.emoji || '🏅';
-  const label = badge.label || badge.name  || 'Badge';
+  const label = badge.label || badge.name || 'Badge';
   return (
     <div className="relative">
       <div
         onMouseEnter={() => setTip(true)}
         onMouseLeave={() => setTip(false)}
-        className="flex items-center justify-center cursor-default select-none transition-transform hover:scale-110"
-        style={{ width: 44, height: 44, borderRadius: 12, background: '#F4F4F4', fontSize: 22 }}>
-        {icon}
+        className="flex items-center justify-center cursor-default select-none overflow-hidden transition-transform hover:scale-110"
+        style={{
+          width: 44, height: 44, borderRadius: 12, background: '#F4F4F4', fontSize: 22,
+          boxShadow: badge.is_bas_team ? `0 0 0 2px ${C.text}` : undefined,
+        }}>
+        {badge.image_url
+          ? <img src={badge.image_url} alt={label} className="w-full h-full object-contain" />
+          : <span className="font-extrabold" style={{ color: C.text }}>{label.charAt(0)?.toUpperCase()}</span>}
       </div>
       {tip && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap pointer-events-none z-20">
@@ -165,12 +170,16 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
 
   if (viewMode === 'list') {
     return (
-      <div className="flex items-center gap-4 bg-white rounded-xl px-5 py-4 transition-shadow hover:shadow-sm"
+      <div className="flex items-end gap-4 bg-white rounded-xl px-5 py-4 transition-shadow hover:shadow-sm"
         style={{ border: `1px solid ${C.border}` }}>
         <div className="flex-1 min-w-0">
-          {detailUrl
-            ? <Link to={detailUrl} className="font-semibold text-base hover:opacity-60 transition-opacity" style={{ color: C.text }}>{s.title}</Link>
-            : <span className="font-semibold text-base" style={{ color: C.text }}>{s.title}</span>}
+          <div className="flex items-baseline gap-2 min-w-0">
+            {detailUrl
+              ? <Link to={detailUrl} className="font-semibold text-base hover:opacity-60 transition-opacity flex-shrink-0" style={{ color: C.text }}>{s.title}</Link>
+              : <span className="font-semibold text-base flex-shrink-0" style={{ color: C.text }}>{s.title}</span>}
+            {desc && <span className="flex-shrink-0 self-stretch w-px" style={{ background: C.border }} />}
+            {desc && <span className="text-sm truncate min-w-0 flex-1" style={{ color: C.secondary }}>{desc}</span>}
+          </div>
           <div className="grid grid-cols-3 gap-3 mt-2">
             {[
               { val: s.price === 0 ? 'Free' : `₹${s.price}`, lbl: 'Price' },
@@ -214,7 +223,7 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
       </div>
 
       {/* Description */}
-      <p className="text-sm leading-relaxed line-clamp-2 flex-1 mb-3" style={{ color: C.secondary }}>
+      <p className="text-sm leading-relaxed line-clamp-2 flex-1 mb-1" style={{ color: C.secondary }}>
         {desc || ' '}
       </p>
 
@@ -280,6 +289,7 @@ const HostProfile = () => {
   const [reviewData,  setReviewData]  = useState({ reviews: [], count: 0, avg: 0 });
   const [showReviews, setShowReviews] = useState(false);
   const [products,    setProducts]    = useState([]);
+  const [badgeList,   setBadgeList]   = useState([]); // real awards from vendor_badges
   const [cardExpanded, setCardExpanded] = useState(false); // mobile-only collapse
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
@@ -297,6 +307,7 @@ const HostProfile = () => {
         setServices(data.services || []);
         getHostReviews(profileSlug).then(r => setReviewData(r.data)).catch(() => {});
         getHostProducts(profileSlug).then(r => setProducts(r.data || [])).catch(() => {});
+        getVendorBadges(profileSlug).then(r => setBadgeList(r.data?.badges || [])).catch(() => {});
       } catch (err) {
         setError(err.response?.status === 404 ? 'Creator not found' : 'Something went wrong');
       } finally {
@@ -348,7 +359,7 @@ const HostProfile = () => {
   const tc          = host && isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
   const borderColor = getPlanBorderColor(host?.plan || 'explorer');
   const social      = host?.social_links || {};
-  const badges      = Array.isArray(host?.badges) ? host.badges : [];
+  const badges      = badgeList;
 
   const SOCIAL_ORDER = ['instagram', 'youtube', 'linkedin', 'facebook', 'twitter', 'whatsapp', 'website', 'github', 'email'];
   const socialLinks  = SOCIAL_ORDER
@@ -378,7 +389,7 @@ const HostProfile = () => {
           </div>
         </div>
       ) : !host ? null : (
-    <div ref={pageRef} className="min-h-screen" style={{ background: C.bg, paddingBottom: 64 }}>
+    <div ref={pageRef} className="host-profile min-h-screen" style={{ background: C.bg, paddingBottom: 64 }}>
 
       {host.is_verified === false && (
         <div className="px-4 py-2 text-center text-sm"
