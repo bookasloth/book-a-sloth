@@ -73,5 +73,14 @@ beforeAll(() => {
           `expected element ${pass ? 'not ' : ''}to be in the document`,
       };
     },
+    toBeEmptyDOMElement(element) {
+      const pass = element !== null && element !== undefined &&
+        element.innerHTML === '';
+      return {
+        pass,
+        message: () =>
+          `expected element ${pass ? 'not ' : ''}to be an empty DOM element but received: ${element ? element.innerHTML : element}`,
+      };
+    },
   });
 });
