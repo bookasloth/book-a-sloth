@@ -302,19 +302,20 @@ const ProfileSetup = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Cover Photo</label>
-                <div
-                  className="rounded-xl border bg-gray-50 h-16 overflow-hidden relative cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => !coverUploading && coverInputRef.current?.click()}
-                >
-                  {coverUploading
-                    ? <div className="flex items-center justify-center h-full text-xs text-gray-400">Uploading…</div>
-                    : form.cover_image
-                      ? <img src={form.cover_image} alt="" className="w-full h-full object-cover" />
-                      : <div className="flex items-center justify-center h-full text-xs text-gray-400">Click to upload cover photo</div>
-                  }
+                  <label className="block text-sm font-medium mb-1">Cover Photo</label>
+                  <div
+                    className="rounded-xl border bg-gray-50 h-16 overflow-hidden relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => !coverUploading && coverInputRef.current?.click()}
+                  >
+                    {coverUploading
+                      ? <div className="flex items-center justify-center h-full text-xs text-gray-400">Uploading…</div>
+                      : form.cover_image
+                        ? <img src={form.cover_image} alt="" className="w-full h-full object-cover" />
+                        : <div className="flex items-center justify-center h-full text-xs text-gray-400">Click to upload cover photo</div>
+                    }
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">JPG/PNG/WebP up to 2MB — shown full-width, auto-cropped to fit</p>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">JPG/PNG/WebP up to 2MB — shown full-width, auto-cropped to fit</p>
               </div>
             </div>
 
