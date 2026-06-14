@@ -272,9 +272,21 @@ const verifyPayment = async (req, res) => {
           );
           meetingLink = event.meetLink || "";
           if (meetingLink) {
-            const { data: relinked } = await supabaseAdmin
-              .from("bookings").update({ meeting_link: meetingLink }).eq("id", booking_id).select().single();
-            if (relinked) updated = relinked;
+            // Persist meeting link and google_event_id; fall back if v3.3 column is missing
+            let relinkResult = await supabaseAdmin
+              .from("bookings")
+              .update({ meeting_link: meetingLink, google_event_id: event.eventId || null })
+              .eq("id", booking_id).select().single();
+            if (
+              relinkResult.error &&
+              /Could not find the|column.*does not exist/i.test(relinkResult.error.message)
+            ) {
+              relinkResult = await supabaseAdmin
+                .from("bookings")
+                .update({ meeting_link: meetingLink })
+                .eq("id", booking_id).select().single();
+            }
+            if (relinkResult.data) updated = relinkResult.data;
           }
         }
       }

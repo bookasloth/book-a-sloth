@@ -257,6 +257,7 @@ const createBooking = async (req, res) => {
     // collide with itself during pre-payment slot re-validation (the "slot no
     // longer available" bug) and to avoid orphan events from abandoned checkouts.
     let meetingLink = "";
+    let googleEventId = null;
     const isOnline = service.meeting_mode !== "offline";
     if (
       isOnline &&
@@ -285,6 +286,7 @@ const createBooking = async (req, res) => {
           },
         );
         meetingLink = event.meetLink || "";
+        googleEventId = event.eventId || null;
       } catch (calError) {
         console.error("Google Calendar error:", calError.message);
       }
@@ -302,6 +304,7 @@ const createBooking = async (req, res) => {
       end_at: newEnd.toISOString(),  // backs the v2.5 no-overlap exclusion constraint
       notes,
       meeting_link: meetingLink,
+      google_event_id: googleEventId,
       vendor_amount:       vendorPayout,
       platform_fee_amount: platformFee,
       platform_fee_gst:    pricing.gst,           // GST on platform fee (v2.2)
@@ -335,6 +338,7 @@ const createBooking = async (req, res) => {
         commission_applied: _c, platform_fee_gst: _g, customer_total: _t,
         gst_rate: _r, razorpay_fee_actual: _f, razorpay_tax_actual: _rt, end_at: _e,
         commission_gst: _cg, commission_percentage: _cp, vendor_plan_type: _vp,
+        google_event_id: _gei,
         ...payloadCore
       } = bookingPayload;
       bookingResult = await supabaseAdmin
