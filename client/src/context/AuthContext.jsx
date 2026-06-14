@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { registerVendor, registerUser, loginUser, getGoogleAuthUrl, getVendorGoogleUrl, getMe } from '../services/api';
+import { registerVendor, registerUser, loginUser, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe } from '../services/api';
 import supabase from '../services/supabaseClient';
 
 const AuthContext = createContext();
@@ -46,6 +46,30 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(data));
     setUser(data);
     return data;
+  };
+
+  // Phone-primary user login. Throws on 401/404/409 (caller inspects
+  // err.response to branch to OTP / "set password").
+  const loginWithPhone = async (phone, password) => {
+    const { data } = await apiLoginWithPhone({ phone, password });
+    localStorage.setItem('user', JSON.stringify(data));
+    setUser(data);
+    return data;
+  };
+
+  // Phone OTP login. The server returns a fully serialized profile WITH session
+  // tokens, so we can persist it directly (no /me round-trip needed).
+  const loginWithOtp = async (phone, otp) => {
+    const { data } = await apiVerifyOtpLogin({ phone, otp });
+    localStorage.setItem('user', JSON.stringify(data));
+    setUser(data);
+    return data;
+  };
+
+  // Set a real password for the logged-in user (flips password_set server-side).
+  const setPassword = async (password) => {
+    await setUserPassword({ password });
+    updateUser({ password_set: true });
   };
 
   const registerAsVendor = async (name, email, password) => {
@@ -100,6 +124,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       user, loading, login,
+      loginWithPhone, loginWithOtp, setPassword,
       registerAsVendor, registerAsUser,
       connectGoogleCalendar,
       startVendorGoogleAuth, adoptSession,
