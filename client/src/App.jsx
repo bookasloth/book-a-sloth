@@ -116,6 +116,9 @@ const AdminExplore    = lazy(() => import('./pages/admin/AdminExplore'));
 const AdminStaff = lazy(() => import('./pages/admin/AdminStaff'));
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
 
+// Admin — Platform Control
+const AdminFeatureStatus = lazy(() => import('./pages/admin/AdminFeatureStatus'));
+
 // Admin — Finance (P1: double-entry ledger)
 const AdminFinanceDashboard = lazy(() => import('./pages/admin/AdminFinanceDashboard'));
 const AdminJournal = lazy(() => import('./pages/admin/AdminJournal'));
@@ -261,6 +264,9 @@ function App() {
           {/* System — Staff & Roles, Audit Logs (M1) */}
           <Route path="/admin/staff" element={<AdminWrapper><AdminStaff /></AdminWrapper>} />
           <Route path="/admin/system/audit" element={<AdminWrapper><AdminAudit /></AdminWrapper>} />
+
+          {/* Platform Control */}
+          <Route path="/admin/features" element={<AdminWrapper><AdminFeatureStatus /></AdminWrapper>} />
 
           {/* General settings */}
           <Route path="/admin/settings" element={<AdminWrapper><AdminSettings /></AdminWrapper>} />

@@ -96,6 +96,7 @@ const PATH_LABELS = {
   upcoming:'Upcoming', live:'Live', completed:'Completed', cancelled:'Cancelled',
   categories:'Categories', featured:'Featured',
   staff:'Staff & Roles', system:'System', audit:'Audit Logs',
+  features:'Feature Status',
 };
 
 const NAV = [
@@ -175,6 +176,9 @@ const NAV = [
     { label:'Audit Logs',          icon:'activity',  to:'/admin/system/audit', perm:'audit.view' },
     { label:'Roles & Permissions', icon:'shieldOk', to:'/admin/staff', perm:'staff.manage' },
     { label:'API Keys',            icon:'key',       disabled:true },
+  ]},
+  { id:'control', section:'PLATFORM CONTROL', items:[
+    { label:'Feature Status', icon:'zap', to:'/admin/features', perm:'settings.manage' },
   ]},
   { id:'future', section:'FUTURE MODULES', items:[
     { label:'Affiliates',           icon:'affiliate', disabled:true },
