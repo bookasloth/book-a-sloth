@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getGuestBookings, cancelBooking } from "../services/api";
+import { getGuestBookings, cancelBooking, getBookingReview } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import useFeatureFlags from "../hooks/useFeatureFlags";
+import RescheduleModal from "../components/booking/RescheduleModal";
+import ReviewModal from "../components/booking/ReviewModal";
 import toast from "react-hot-toast";
 
 // Customer-facing "My Bookings" — a read-only list of the bookings a guest has
@@ -23,13 +26,24 @@ const fmtWhen = (iso) =>
 
 const CustomerBookings = () => {
   const { user } = useAuth();
+  const { on } = useFeatureFlags();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(null);
+  const [reviews, setReviews] = useState({});       // bookingId -> review|null
+  const [reschedFor, setReschedFor] = useState(null);
+  const [reviewFor, setReviewFor] = useState(null);
 
   const load = () => {
     getGuestBookings()
-      .then(({ data }) => setBookings(Array.isArray(data) ? data : []))
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : [];
+        setBookings(list);
+        const completed = list.filter((b) => b.status === "completed");
+        Promise.all(completed.map((b) =>
+          getBookingReview(b.id).then(({ data: r }) => [b.id, r]).catch(() => [b.id, null])
+        )).then((pairs) => setReviews(Object.fromEntries(pairs)));
+      })
       .catch(() => setBookings([]))
       .finally(() => setLoading(false));
   };
@@ -74,7 +88,7 @@ const CustomerBookings = () => {
             {b.status}
           </span>
         </div>
-        {(b.meeting_link || isUpcoming) && (
+        {(isUpcoming || b.status === "completed" || b.status === "cancelled" || b.meeting_link) && (
           <div className="mt-3 pt-3 border-t flex flex-wrap items-center gap-3">
             {b.meeting_link && (
               <a href={b.meeting_link} target="_blank" rel="noreferrer"
@@ -82,12 +96,23 @@ const CustomerBookings = () => {
                 Join Google Meet →
               </a>
             )}
+            {isUpcoming && on("reschedule") && (
+              <button onClick={() => setReschedFor(b)}
+                className="text-sm font-medium text-primary hover:underline">Reschedule</button>
+            )}
+            {b.status === "completed" && (
+              reviews[b.id]
+                ? <span className="text-sm text-gray-500">Your review {"★".repeat(reviews[b.id].rating)}</span>
+                : <button onClick={() => setReviewFor(b)}
+                    className="text-sm font-medium text-primary hover:underline">Leave review</button>
+            )}
+            {(b.status === "completed" || b.status === "cancelled") && host.username && svc.slug && (
+              <Link to={`/${host.username}/booking/${svc.slug}`}
+                className="text-sm text-gray-600 hover:underline">Rebook</Link>
+            )}
             {isUpcoming && (
-              <button
-                onClick={() => handleCancel(b.id)}
-                disabled={cancelling === b.id}
-                className="text-sm text-red-500 hover:text-red-600 disabled:opacity-50 ml-auto"
-              >
+              <button onClick={() => handleCancel(b.id)} disabled={cancelling === b.id}
+                className="text-sm text-red-500 hover:text-red-600 disabled:opacity-50 ml-auto">
                 {cancelling === b.id ? "Cancelling…" : "Cancel"}
               </button>
             )}
@@ -137,6 +162,18 @@ const CustomerBookings = () => {
           </div>
         )}
       </div>
+      {reschedFor && (
+        <RescheduleModal open booking={reschedFor} onClose={() => setReschedFor(null)}
+          onDone={(newWhen) => {
+            setBookings((bs) => bs.map((x) => x.id === reschedFor.id
+              ? { ...x, scheduled_at: newWhen, reschedule_count: (x.reschedule_count || 0) + 1 } : x));
+            setReschedFor(null);
+          }} />
+      )}
+      {reviewFor && (
+        <ReviewModal open booking={reviewFor} onClose={() => setReviewFor(null)}
+          onDone={(review) => { setReviews((m) => ({ ...m, [reviewFor.id]: review })); setReviewFor(null); }} />
+      )}
     </div>
   );
 };
