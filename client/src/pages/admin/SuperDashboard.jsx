@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { adminGetStats, adminGetBookings, adminGetUsers, adminOpsSummary } from '../../services/api';
+import { adminGetStats, adminGetBookings, adminGetUsers, adminOpsSummary, adminGetProviderPlanAnalytics } from '../../services/api';
 
 // ── Mini icon renderer ────────────────────────────────────────
 const Ic = ({ d, size = 16, className = '' }) => (
@@ -232,16 +232,137 @@ const UsersTab = ({ stats }) => {
   );
 };
 
+// ══ Provider plan charts (dependency-free SVG) ════════════════
+const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+
+// Plan visual identity. Free = white (needs a visible border), Creator = grey,
+// Professional = brand orange. Slice + outer rim share one border colour.
+const PLAN_ORDER = ['starter', 'creator', 'professional'];
+const PLAN_META = {
+  starter:      { label: 'Free',      color: '#ffffff' },
+  creator:      { label: '₹999',      color: '#9ca3af' },
+  professional: { label: '₹3,650',    color: '#FE5100' },
+};
+const PIE_BORDER = '#374151'; // gray-700 — keeps the white slice readable on a white card
+
+const polar = (cx, cy, r, deg) => {
+  const rad = ((deg - 90) * Math.PI) / 180;
+  return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+};
+const arcPath = (cx, cy, r, start, end) => {
+  const [x1, y1] = polar(cx, cy, r, end);
+  const [x2, y2] = polar(cx, cy, r, start);
+  const large = end - start <= 180 ? 0 : 1;
+  return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 0 ${x2} ${y2} Z`;
+};
+
+// Plan-share pie — slice size = provider headcount. Border on pie + each slice.
+const PlanSharePie = ({ distribution }) => {
+  const data = PLAN_ORDER.map((k) => ({ key: k, ...PLAN_META[k], value: distribution?.[k] || 0 }));
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const cx = 90, cy = 90, r = 80;
+
+  return (
+    <div className="bg-white border border-gray-200/80 rounded-2xl p-5">
+      <p className="text-sm font-semibold text-gray-800 mb-0.5">Plan Share</p>
+      <p className="text-[12px] text-gray-400 mb-4">Providers by subscription plan</p>
+      {total === 0 ? (
+        <div className="py-10 text-center text-[12px] text-gray-400">No providers on any plan yet.</div>
+      ) : (
+        <div className="flex flex-col sm:flex-row items-center gap-5">
+          <svg width="180" height="180" viewBox="0 0 180 180" className="flex-shrink-0">
+            {data.filter((d) => d.value > 0).length === 1 ? (
+              // Single plan holds 100% — an arc would collapse, so draw a full circle.
+              <circle cx={cx} cy={cy} r={r} fill={data.find((d) => d.value > 0).color} stroke={PIE_BORDER} strokeWidth="2" />
+            ) : (() => {
+              let acc = 0;
+              return data.filter((d) => d.value > 0).map((d) => {
+                const start = (acc / total) * 360;
+                acc += d.value;
+                const end = (acc / total) * 360;
+                return <path key={d.key} d={arcPath(cx, cy, r, start, end)} fill={d.color} stroke={PIE_BORDER} strokeWidth="1.5" strokeLinejoin="round" />;
+              });
+            })()}
+            {/* crisp outer rim */}
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke={PIE_BORDER} strokeWidth="1.5" />
+          </svg>
+          <ul className="flex-1 w-full space-y-2">
+            {data.map((d) => (
+              <li key={d.key} className="flex items-center gap-2 text-[12px]">
+                <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: d.color, border: `1px solid ${PIE_BORDER}` }} />
+                <span className="text-gray-600 flex-1">{d.label}</span>
+                <span className="font-semibold text-gray-900 tabular-nums">{d.value}</span>
+                <span className="text-gray-400 tabular-nums w-10 text-right">{total ? Math.round((d.value / total) * 100) : 0}%</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Grouped (double) bar — per plan: earning from plans vs from their bookings.
+const PlanEarningsBars = ({ planEarnings, bookingEarnings }) => {
+  const groups = [
+    { key: 'creator',      label: 'Creator (₹999)' },
+    { key: 'professional', label: 'Professional (₹3,650)' },
+  ];
+  const series = [
+    { key: 'plans',    label: 'Earning from Plans',    color: '#FE5100', data: planEarnings },
+    { key: 'bookings', label: 'Earning from Bookings', color: '#1E1E1E', data: bookingEarnings },
+  ];
+  const max = Math.max(1, ...groups.flatMap((g) => series.map((s) => Number(s.data?.[g.key]) || 0)));
+  const H = 150; // px plot height
+
+  return (
+    <div className="bg-white border border-gray-200/80 rounded-2xl p-5">
+      <p className="text-sm font-semibold text-gray-800 mb-0.5">Earnings by Plan</p>
+      <p className="text-[12px] text-gray-400 mb-4">Subscription revenue vs booking commission</p>
+      <div className="flex items-end justify-around gap-6" style={{ height: H + 28 }}>
+        {groups.map((g) => (
+          <div key={g.key} className="flex-1 flex flex-col items-center">
+            <div className="flex items-end justify-center gap-3" style={{ height: H }}>
+              {series.map((s) => {
+                const v = Number(s.data?.[g.key]) || 0;
+                const h = Math.max(v > 0 ? 3 : 0, (v / max) * H);
+                return (
+                  <div key={s.key} className="flex flex-col items-center justify-end" style={{ height: H }}>
+                    <span className="text-[10px] font-semibold text-gray-600 tabular-nums mb-1 whitespace-nowrap">{inr(v)}</span>
+                    <div className="w-9 rounded-t-md" style={{ height: h, background: s.color }} title={`${s.label}: ${inr(v)}`} />
+                  </div>
+                );
+              })}
+            </div>
+            <span className="mt-2 text-[11px] font-medium text-gray-500 text-center">{g.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-gray-100">
+        {series.map((s) => (
+          <span key={s.key} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: s.color }} />{s.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ── Providers Tab ─────────────────────────────────────────────
 const ProvidersTab = ({ stats }) => {
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState(null);
 
   useEffect(() => {
     adminGetUsers({ page: 1, limit: 10, role: 'host' })
       .then(r => setProviders(r.data.users || []))
       .catch(() => {})
       .finally(() => setLoading(false));
+    adminGetProviderPlanAnalytics()
+      .then(r => setAnalytics(r.data))
+      .catch(() => {});
   }, []);
 
   return (
@@ -259,6 +380,13 @@ const ProvidersTab = ({ stats }) => {
           </div>
         ))}
       </div>
+
+      {/* Plan analytics — two columns: share pie + earnings bars */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <PlanSharePie distribution={analytics?.distribution} />
+        <PlanEarningsBars planEarnings={analytics?.planEarnings} bookingEarnings={analytics?.bookingEarnings} />
+      </div>
+
       <div className="bg-white border border-gray-200/80 rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <p className="font-semibold text-gray-800 text-sm">Active Providers</p>

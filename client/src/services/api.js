@@ -215,6 +215,7 @@ export const freeDownloadProduct = (data)     => API.post('/products/free-downlo
 
 // ── Admin ─────────────────────────────────────────────────────
 export const adminGetStats       = ()          => API.get('/admin/stats');
+export const adminGetProviderPlanAnalytics = () => API.get('/admin/provider-plan-analytics');
 export const adminGetUsers       = (params)    => API.get('/admin/users', { params });
 export const adminGetUser        = (id)        => API.get(`/admin/users/${id}`);
 export const adminUpdateUser     = (id, data)  => API.put(`/admin/users/${id}`, data);

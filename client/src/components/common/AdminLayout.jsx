@@ -351,7 +351,7 @@ const AdminLayout = ({ children }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F6F7F9] flex" style={{ fontFamily:"'Inter',system-ui,sans-serif" }}>
+    <div className="admin-shell min-h-screen bg-[#F6F7F9] flex" style={{ fontFamily:"'Poppins',system-ui,sans-serif" }}>
       <aside className={`hidden md:flex flex-col bg-[#1E1E1E] fixed inset-y-0 left-0 z-30 transition-all duration-300 overflow-hidden ${collapsed ? 'w-[70px]' : 'w-[258px]'}`}>
         <SidebarBody />
       </aside>

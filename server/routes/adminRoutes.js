@@ -9,7 +9,7 @@ const router  = express.Router();
 const { requireAdmin, requireSuperAdmin } = require('../middleware/adminMiddleware');
 
 const {
-  getStats, getUsers, getUserById, updateUser, deleteUser,
+  getStats, getProviderPlanAnalytics, getUsers, getUserById, updateUser, deleteUser,
   getAllBookings, updateBooking, deleteBooking,
   getAllServices, deleteService,
   getSettings, updateSettings,
@@ -17,7 +17,8 @@ const {
 
 // ── Operations Center ──────────────────────────────────────────
 const ops = require('../controllers/opsAdminController');
-router.get('/stats',        requireAdmin('ops.view'), getStats);
+router.get('/stats',                    requireAdmin('ops.view'),             getStats);
+router.get('/provider-plan-analytics',  requireAdmin('professionals.view'),   getProviderPlanAnalytics);
 router.get('/ops/summary',  requireAdmin('ops.view'), ops.getSummary);
 
 // ── Image upload (admin session) — badges, branding, CMS, etc. ─

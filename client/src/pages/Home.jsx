@@ -31,6 +31,7 @@ import {
 import { searchVendors } from "../services/api";
 import useLenis from "../hooks/useLenis";
 import Reveal from "../components/home/Reveal";
+import BrandPreloader from "../components/preloader/BrandPreloader";
 import { HERO, PERSONAS, FACES, FINAL, NEWSLETTER } from "../components/home/images";
 
 /* Real funnel routes — do not point CTAs anywhere else. */
@@ -211,7 +212,7 @@ const TCard = ({ t, face }) => {
           <Star key={i} size={14} className="fill-primary text-primary" />
         ))}
       </div>
-      <blockquote className="font-editorial text-[17px] leading-snug text-neutral-800">
+      <blockquote className="text-[17px] leading-snug text-neutral-800">
         “{t.q}”
       </blockquote>
       <figcaption className="mt-5 flex items-center gap-3">
@@ -305,6 +306,22 @@ const Home = () => {
   useLenis();
   const navigate = useNavigate();
 
+  // ── Preloader readiness: fonts loaded + hero image decoded (real, not timed) ──
+  const [assetsReady, setAssetsReady] = useState(false);
+  useEffect(() => {
+    let done = false;
+    const finish = () => { if (!done) { done = true; setAssetsReady(true); } };
+    const fontsP = document.fonts ? document.fonts.ready : Promise.resolve();
+    const img = new Image();
+    img.src = HERO;
+    const imgP = img.decode
+      ? img.decode().catch(() => {})
+      : new Promise((r) => { img.onload = r; img.onerror = r; });
+    Promise.all([fontsP, imgP]).then(finish);
+    const safety = setTimeout(finish, 4000); // never strand the preloader
+    return () => clearTimeout(safety);
+  }, []);
+
   // ── Hero username / SlothPage claim ──
   const [username, setUsername] = useState("");
   const claim = () => navigate(ROUTE_START);
@@ -359,6 +376,7 @@ const Home = () => {
 
   return (
     <div id="top" className="overflow-x-hidden bg-canvas text-ink">
+      <BrandPreloader variant="homepage" ready={assetsReady} />
       <SlothHeader />
 
       {/* ════════════════ HERO ════════════════ */}
@@ -371,7 +389,7 @@ const Home = () => {
               The Calm Economy
             </Reveal>
 
-            <Reveal as="h1" delay={0.05} className="font-editorial text-[2.6rem] leading-[1.05] text-ink sm:text-6xl">
+            <Reveal as="h1" delay={0.05} className="text-[2.6rem] leading-[1.05] text-ink sm:text-6xl">
               Get booked & paid
               <br />
               <span className="italic text-neutral-500">before you even</span>
@@ -480,7 +498,7 @@ const Home = () => {
       {/* ════════════════ SEARCH ════════════════ */}
       <section id="find" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-3xl text-center">
-          <Reveal as="h2" className="font-editorial text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" className="text-4xl text-ink sm:text-5xl">
             Find a vendor
           </Reveal>
           <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-md text-neutral-500">
@@ -609,7 +627,7 @@ const Home = () => {
           <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
             How the calm works
           </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-4 max-w-xl text-center font-editorial text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-4 max-w-xl text-center text-4xl text-ink sm:text-5xl">
             Three steps. Zero chaos.
           </Reveal>
 
@@ -674,7 +692,7 @@ const Home = () => {
               <div className="flex h-full flex-col justify-between overflow-hidden rounded-[2rem] bg-ink p-8 text-white sm:p-10">
                 <div>
                   <Sparkles size={24} className="text-primary" />
-                  <h2 className="mt-6 font-editorial text-3xl leading-tight sm:text-4xl">
+                  <h2 className="mt-6 text-3xl leading-tight sm:text-4xl">
                     More than a scheduler.
                     <br />
                     <span className="text-white/50">Your calm business partner.</span>
@@ -719,7 +737,7 @@ const Home = () => {
       {/* ════════════════ WHO IT'S FOR ════════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="h2" className="max-w-xl font-editorial text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" className="max-w-xl text-4xl text-ink sm:text-5xl">
             Built for the new
             <br />
             <span className="text-neutral-400">Indian professional.</span>
@@ -754,7 +772,7 @@ const Home = () => {
           <Reveal as="p" className="text-sm font-medium uppercase tracking-[0.2em] text-primary">
             The Collective
           </Reveal>
-          <Reveal as="h2" delay={0.05} className="mt-4 font-editorial text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" delay={0.05} className="mt-4 text-4xl text-ink sm:text-5xl">
             Peace of mind, proven by professionals.
           </Reveal>
         </div>
@@ -778,7 +796,7 @@ const Home = () => {
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">
               The Calm Economy
             </p>
-            <h2 className="mt-4 font-editorial text-4xl leading-[1.05] text-ink sm:text-5xl">
+            <h2 className="mt-4 text-4xl leading-[1.05] text-ink sm:text-5xl">
               Work slower.
               <br />
               <span className="italic text-neutral-400">Earn smarter.</span>
@@ -801,7 +819,7 @@ const Home = () => {
             <ul className="space-y-4 border-l border-neutral-200 pl-6">
               {["Less hustle, more flow.", "Balance over burnout.", "Time earns better when it's calm.", "Quiet tools, loud results."].map(
                 (t) => (
-                  <li key={t} className="font-editorial text-lg text-ink">
+                  <li key={t} className="text-lg text-ink">
                     {t}
                   </li>
                 )
@@ -814,7 +832,7 @@ const Home = () => {
       {/* ════════════════ PRICING ════════════════ */}
       <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
-          <Reveal as="h2" className="text-center font-editorial text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" className="text-center text-4xl text-ink sm:text-5xl">
             Calm plans, no contracts.
           </Reveal>
           <Reveal as="p" delay={0.06} className="mt-4 text-center text-neutral-500">
@@ -858,7 +876,7 @@ const Home = () => {
                     {p.tagline}
                   </p>
                   <div className="mt-6 flex items-end gap-1">
-                    <span className="font-editorial text-5xl">{p.price}</span>
+                    <span className="text-5xl">{p.price}</span>
                     <span className={`mb-1.5 text-sm ${p.popular ? "text-white/50" : "text-neutral-400"}`}>
                       {p.period}
                     </span>
@@ -896,7 +914,7 @@ const Home = () => {
                 </p>
               </div>
               <div className="text-center">
-                <span className="font-editorial text-5xl text-ink">₹0</span>
+                <span className="text-5xl text-ink">₹0</span>
                 <p className="text-xs text-neutral-400">forever</p>
               </div>
               <Link
@@ -915,7 +933,7 @@ const Home = () => {
         <Reveal className="mx-auto max-w-4xl overflow-hidden rounded-[2.5rem] bg-sand">
           <div className="grid items-center gap-8 p-8 sm:p-12 lg:grid-cols-2">
             <div>
-              <h2 className="font-editorial text-3xl text-ink sm:text-4xl">
+              <h2 className="text-3xl text-ink sm:text-4xl">
                 Letters from the calm side.
               </h2>
               <p className="mt-3 max-w-sm text-neutral-500">
@@ -955,7 +973,7 @@ const Home = () => {
           />
           <div className="absolute inset-0 bg-ink/60" />
           <div className="relative px-6 py-24 text-center sm:py-32">
-            <Reveal as="h2" className="mx-auto max-w-2xl font-editorial text-4xl leading-tight text-white sm:text-6xl">
+            <Reveal as="h2" className="mx-auto max-w-2xl text-4xl leading-tight text-white sm:text-6xl">
               You've done the hustle.
               <br />
               <span className="italic text-white/70">Now try the flow.</span>

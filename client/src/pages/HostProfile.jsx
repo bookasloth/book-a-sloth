@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getHostProfile, getHostReviews, getHostProducts } from "../services/api";
+import BrandPreloader from "../components/preloader/BrandPreloader";
 import {
   DEFAULT_THEME_COLOR,
   getContrastColor,
@@ -295,25 +296,12 @@ const HostProfile = () => {
     applyProfileTheme(pageRef.current, color);
   }, [host]);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: C.bg }}>
-      <div className="w-7 h-7 rounded-full border-2 border-gray-200 border-t-gray-500 animate-spin" />
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: C.bg }}>
-      <div className="text-center">
-        <p className="text-lg" style={{ color: C.secondary }}>{error}</p>
-        <Link to="/" className="mt-4 inline-block text-sm hover:underline" style={{ color: C.text }}>← Back to home</Link>
-      </div>
-    </div>
-  );
-
-  const tc          = isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
-  const borderColor = getPlanBorderColor(host.plan || 'explorer');
-  const social      = host.social_links || {};
-  const badges      = Array.isArray(host.badges) ? host.badges : [];
+  // Derived values are null-safe: the component renders the preloader while
+  // host is still loading, so these run before host exists.
+  const tc          = host && isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
+  const borderColor = getPlanBorderColor(host?.plan || 'explorer');
+  const social      = host?.social_links || {};
+  const badges      = Array.isArray(host?.badges) ? host.badges : [];
 
   const SOCIAL_ORDER = ['instagram', 'youtube', 'linkedin', 'facebook', 'twitter', 'whatsapp', 'website', 'github', 'email'];
   const socialLinks  = SOCIAL_ORDER
@@ -327,6 +315,22 @@ const HostProfile = () => {
   ];
 
   return (
+    <>
+      <BrandPreloader
+        variant="profile"
+        ready={!loading && !!host && !error}
+        profileName={host?.name}
+        accentColor={tc}
+      />
+
+      {error ? (
+        <div className="min-h-screen flex items-center justify-center" style={{ background: C.bg }}>
+          <div className="text-center">
+            <p className="text-lg" style={{ color: C.secondary }}>{error}</p>
+            <Link to="/" className="mt-4 inline-block text-sm hover:underline" style={{ color: C.text }}>← Back to home</Link>
+          </div>
+        </div>
+      ) : !host ? null : (
     <div ref={pageRef} className="min-h-screen" style={{ background: C.bg, paddingBottom: 64 }}>
 
       {host.is_verified === false && (
@@ -567,6 +571,8 @@ const HostProfile = () => {
         </div>
       </div>
     </div>
+      )}
+    </>
   );
 };
 

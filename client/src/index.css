@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
 @import './styles/design-tokens.css';
 @import './styles/base-fb.css';
 @import './styles/components/button.css';
@@ -21,6 +21,30 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+}
+
+/* Lenis smooth-scroll (client/src/hooks/useLenis.js).
+   Required so Lenis' per-frame scrollTo isn't fought by native smooth scroll. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+html.lenis,
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 body {
@@ -50,9 +74,32 @@ h4,
 h5,
 h6 {
   color: var(--color-ink);
-  font-family: 'Plus Jakarta Sans', 'Poppins', system-ui, sans-serif;
   letter-spacing: 0;
   line-height: 1.15;
+}
+
+/* Headings: H1/H2/H3 → Plus Jakarta Sans. Everything else inherits Poppins. */
+h1,
+h2,
+h3 {
+  font-family: 'Plus Jakarta Sans', 'Poppins', system-ui, sans-serif;
+}
+
+/* Admin/super-admin dashboard: entirely Poppins, headings included. */
+.admin-shell,
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell h4,
+.admin-shell h5,
+.admin-shell h6 {
+  font-family: 'Poppins', system-ui, sans-serif;
+}
+
+/* No link underline anywhere in the admin dashboard (incl. hover). */
+.admin-shell a,
+.admin-shell a:hover {
+  text-decoration: none;
 }
 
 h1 {
@@ -270,13 +317,6 @@ table {
 /* ════════════════════════════════════════════════════════════
    HOMEPAGE — premium editorial styling (Book A Sloth landing)
    ════════════════════════════════════════════════════════════ */
-
-/* Editorial serif for big display headlines */
-.font-editorial {
-  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
-  letter-spacing: -0.015em;
-  font-weight: 500;
-}
 
 /* Calm neutral surface palette */
 .sloth-bg-canvas { background: #faf9f6; }

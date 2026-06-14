@@ -285,6 +285,70 @@ const updateSettings = async (req, res) => {
   }
 };
 
+// ══════════════════════════════════════
+// PROVIDER PLAN ANALYTICS
+// Powers the Providers tab charts:
+//   1. distribution    — provider headcount per plan (pie)
+//   2. planEarnings    — actual collected subscription revenue, net of gateway
+//                        cost, per paid plan (GST is a pass-through, excluded)
+//   3. bookingEarnings — platform net take (commission + platform fee) on paid
+//                        bookings, grouped by the host's current plan
+// ══════════════════════════════════════
+const planService = require('../services/planService');
+
+const getProviderPlanAnalytics = async (req, res) => {
+  try {
+    // ── Hosts: one fetch drives both headcount distribution and host→plan map ──
+    const { data: hostRows, error: hostErr } = await supabaseAdmin
+      .from('profiles').select('id, plan').eq('role', 'host');
+    if (hostErr) return safeError(res, hostErr);
+
+    const distribution = { starter: 0, creator: 0, professional: 0 };
+    const hostPlan = {};
+    (hostRows || []).forEach((h) => {
+      const slug = planService.normalizeSlug(h.plan);
+      hostPlan[h.id] = slug;
+      distribution[slug] = (distribution[slug] || 0) + 1;
+    });
+
+    // ── Earning from plans: collected subscription payments, net of gateway ──
+    // net = plan_price − razorpay_fee − razorpay_tax (GST excluded: pass-through).
+    const planEarnings = { creator: 0, professional: 0 };
+    const { data: subs } = await supabaseAdmin
+      .from('subscription_payments')
+      .select('plan_type, plan_price, razorpay_fee, razorpay_tax, status')
+      .eq('status', 'paid');
+    (subs || []).forEach((s) => {
+      const slug = planService.normalizeSlug(s.plan_type);
+      if (planEarnings[slug] == null) return; // ignore starter / unknown
+      const net = (Number(s.plan_price) || 0) - (Number(s.razorpay_fee) || 0) - (Number(s.razorpay_tax) || 0);
+      planEarnings[slug] += Math.max(0, net);
+    });
+
+    // ── Earning from their bookings: platform net take, grouped by host plan ──
+    let bookingsRes = await supabaseAdmin
+      .from('bookings')
+      .select('host_id, payment_status, commission_applied, platform_fee_amount')
+      .eq('payment_status', 'paid');
+    if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
+      bookingsRes = await supabaseAdmin
+        .from('bookings')
+        .select('host_id, payment_status, platform_fee_amount')
+        .eq('payment_status', 'paid');
+    }
+    const bookingEarnings = { starter: 0, creator: 0, professional: 0 };
+    (bookingsRes.data || []).forEach((b) => {
+      const slug = hostPlan[b.host_id] || 'starter';
+      if (bookingEarnings[slug] == null) bookingEarnings[slug] = 0;
+      bookingEarnings[slug] += (Number(b.commission_applied) || 0) + (Number(b.platform_fee_amount) || 0);
+    });
+
+    res.json({ distribution, planEarnings, bookingEarnings });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 // NOTE: the former POST /api/admin/cleanup-users handler (mass-deleted every
 // Supabase Auth user except a hardcoded fallback email) was removed in M0 — a
 // destructive dev-reset tool must never be exposed on the production admin API.
@@ -292,6 +356,7 @@ const updateSettings = async (req, res) => {
 
 module.exports = {
   getStats,
+  getProviderPlanAnalytics,
   getUsers,
   getUserById,
   updateUser,

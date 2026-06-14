@@ -301,7 +301,7 @@ const BookingTable = ({ items, onView, onEdit, onDelete }) => (
           <TH>Customer</TH>
           <TH>Date &amp; Time</TH>
           <TH right>Amount</TH>
-          <TH>Customer Payment</TH>
+          <TH>Payment</TH>
           <TH right>Revenue</TH>
           <th className="px-3" aria-hidden="true" />
         </tr>
@@ -479,11 +479,11 @@ const PieChart = ({ segments }) => {
     <div className="flex flex-col sm:flex-row items-center gap-5">
       <div className="relative flex-shrink-0">
         <svg width="140" height="140" viewBox="0 0 140 140" className="-rotate-90">
-          <circle cx={c} cy={c} r={r} fill="none" stroke="#f3f4f6" strokeWidth="16" />
+          <circle cx={c} cy={c} r={r} fill="none" stroke="#f3f4f6" strokeWidth="28" />
           {data.map((s, i) => {
             const len = (Number(s.value) / sum) * C;
             const el = (
-              <circle key={i} cx={c} cy={c} r={r} fill="none" stroke={s.color} strokeWidth="16"
+              <circle key={i} cx={c} cy={c} r={r} fill="none" stroke={s.color} strokeWidth="28"
                 strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-acc} strokeLinecap="butt" />
             );
             acc += len;
@@ -704,13 +704,21 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
   const showMarkComplete = !['completed', 'cancelled'].includes(b.status);
   const showCancel = !['cancelled', 'completed'].includes(b.status);
 
-  // Revenue-split donut segments — only > 0 are drawn (spec 4.7).
+  // Revenue split — 4 buckets that decompose the full customer payment, so
+  // they always sum to 100% of `total`. "Us" is the residual (platform net
+  // income after vendor payout, Razorpay's cut, and all GSTs to govt).
+  // Razorpay charges a ~2% PG fee + 18% GST on that fee, and keeps both
+  // (it remits its own GST). So razorpay_tax_actual belongs in Razorpay's
+  // bucket, NOT Govt. Govt = only the GSTs WE remit (commission + platform fee).
+  const vendorShare   = Number(b.vendor_amount) || 0;
+  const razorpayShare = (Number(b.razorpay_fee_actual) || 0) + (Number(b.razorpay_tax_actual) || 0);
+  const govtShare     = (Number(b.commission_gst) || 0) + (Number(b.platform_fee_gst) || 0);
+  const usShare       = Math.max(0, total - vendorShare - razorpayShare - govtShare);
   const pieSegments = [
-    { label: 'Vendor Earnings',     value: Number(b.vendor_amount) || 0,        color: '#10b981' },
-    { label: 'Platform Commission', value: Number(b.commission_applied) || 0,    color: '#FE5100' },
-    { label: 'Razorpay Fees',       value: Number(b.razorpay_fee_actual) || 0,   color: '#f59e0b' },
-    { label: 'GST',                 value: (Number(b.commission_gst) || 0) + (Number(b.platform_fee_gst) || 0), color: '#8b5cf6' },
-    { label: 'Taxes',               value: Number(b.razorpay_tax_actual) || 0,   color: '#64748b' },
+    { label: 'Vendor',          value: vendorShare,   color: '#16a34a' }, // green
+    { label: 'Razorpay',        value: razorpayShare, color: '#f97316' }, // orange
+    { label: 'Govt (All GSTs)', value: govtShare,     color: '#ef4444' }, // red
+    { label: 'Us (Net Income)', value: usShare,       color: '#2563eb' }, // blue
   ];
 
   return (
@@ -726,16 +734,12 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
             <IconBtn icon={IC.arrowL} label="Back" onClick={onClose} />
             <IconBtn icon={IC.copy} label="Copy booking ID" onClick={() => copy(b.id, 'Booking ID')} />
           </div>
-          {/* Center: slim identity — service · date · time · duration · id + state */}
-          <div className="flex-1 min-w-0 flex items-center gap-2.5">
-            <StatusBadge status={status} size="lg" />
-            <div className="min-w-0">
-              <h3 className="text-[14px] font-bold text-gray-900 truncate">{b.services?.title || 'Service'}</h3>
-              <p className="text-[11.5px] text-gray-400 truncate tabular-nums">
-                {fmtDate(b.scheduled_at)} · {timeRange} · {dur} min
-                <code className="hidden sm:inline font-mono"> · {shortId(b.id)}</code>
-              </p>
-            </div>
+          {/* Center: slim identity — service · date · time · duration */}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[14px] font-bold text-gray-900 truncate">{b.services?.title || 'Service'}</h3>
+            <p className="text-[11.5px] text-gray-400 truncate tabular-nums">
+              {fmtDate(b.scheduled_at)} · {timeRange} · {dur} min
+            </p>
           </div>
           {/* Right: more + close */}
           <div className="flex items-center gap-0.5 flex-shrink-0 relative">

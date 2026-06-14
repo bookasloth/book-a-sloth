@@ -17,7 +17,6 @@ export default {
       fontFamily: {
         sans: ["Poppins", "system-ui", "sans-serif"],
         heading: ["Plus Jakarta Sans", "Poppins", "system-ui", "sans-serif"],
-        editorial: ["Fraunces", "Georgia", "serif"],
       },
       // Global radius rule: 4px max; 6px only for a wrapper that contains a 4px child.
       // `full` kept for pills/avatars. Overrides Tailwind's default rounded-* scale app-wide.
