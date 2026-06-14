@@ -153,4 +153,31 @@ router.post('/finance/adjustment',        requireAdmin('finance.manage'), financ
 router.post('/finance/reversal',          requireAdmin('finance.manage'), finance.postReversal);
 router.post('/finance/bank-transfer',     requireAdmin('finance.manage'), finance.postBankTransfer);
 
+
+// ── Explore Page Revenue Management ───────────────────────────
+const explore = require('../controllers/exploreController');
+// Featured slots
+router.get('/explore/featured',                             requireAdmin('settings.manage'), explore.adminListFeatured);
+router.post('/explore/featured',                            requireAdmin('settings.manage'), explore.adminCreateFeatured);
+router.put('/explore/featured/:id',                         requireAdmin('settings.manage'), explore.adminUpdateFeatured);
+router.delete('/explore/featured/:id',                      requireAdmin('settings.manage'), explore.adminDeleteFeatured);
+// Collections
+router.get('/explore/collections',                          requireAdmin('settings.manage'), explore.adminListCollections);
+router.post('/explore/collections',                         requireAdmin('settings.manage'), explore.adminCreateCollection);
+router.put('/explore/collections/:id',                      requireAdmin('settings.manage'), explore.adminUpdateCollection);
+router.post('/explore/collections/:id/vendors',             requireAdmin('settings.manage'), explore.adminAddToCollection);
+router.delete('/explore/collections/:id/vendors/:vendorId', requireAdmin('settings.manage'), explore.adminRemoveFromCollection);
+// Boosts
+router.get('/explore/boosts',                               requireAdmin('settings.manage'), explore.adminListBoosts);
+router.post('/explore/boosts',                              requireAdmin('settings.manage'), explore.adminCreateBoost);
+router.delete('/explore/boosts/:id',                        requireAdmin('settings.manage'), explore.adminRevokeBoost);
+// Verified badges
+router.get('/explore/verified',                             requireAdmin('settings.manage'), explore.adminListVerified);
+router.post('/explore/verified',                            requireAdmin('settings.manage'), explore.adminGrantVerified);
+router.delete('/explore/verified/:id',                      requireAdmin('settings.manage'), explore.adminRevokeVerified);
+// Sponsored keywords
+router.get('/explore/keywords',                             requireAdmin('settings.manage'), explore.adminListKeywords);
+router.post('/explore/keywords',                            requireAdmin('settings.manage'), explore.adminCreateKeyword);
+router.delete('/explore/keywords/:id',                      requireAdmin('settings.manage'), explore.adminRevokeKeyword);
+
 module.exports = router;

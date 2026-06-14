@@ -312,3 +312,34 @@ export const svcToggle              = (id)                     => API.put(`/serv
 export const svcGetPublic           = (slug)                   => API.get(`/services/public/${slug}`);
 // Clean URL: resolves service by both profileSlug + serviceSlug (validates vendor ownership)
 export const svcGetPublicByProfile  = (profileSlug, serviceSlug) => API.get(`/services/public/${profileSlug}/${serviceSlug}`);
+
+// ── Explore (public) ──────────────────────────────────────────
+export const getExploreVendors    = (params) => API.get('/explore',            { params });
+export const getExploreFeatured   = ()        => API.get('/explore/featured');
+export const getExploreCategories = ()        => API.get('/explore/categories');
+export const getExploreCollections= ()        => API.get('/explore/collections');
+export const getExploreSponsored  = (keyword) => API.get('/explore/sponsored', { params: { keyword } });
+
+// ── Explore (admin) ───────────────────────────────────────────
+export const adminGetExploreFeatured        = ()         => API.get('/admin/explore/featured');
+export const adminCreateExploreFeatured     = (data)     => API.post('/admin/explore/featured', data);
+export const adminUpdateExploreFeatured     = (id, data) => API.put(`/admin/explore/featured/${id}`, data);
+export const adminDeleteExploreFeatured     = (id)       => API.delete(`/admin/explore/featured/${id}`);
+
+export const adminGetExploreCollections     = ()         => API.get('/admin/explore/collections');
+export const adminCreateExploreCollection   = (data)     => API.post('/admin/explore/collections', data);
+export const adminUpdateExploreCollection   = (id, data) => API.put(`/admin/explore/collections/${id}`, data);
+export const adminAddToExploreCollection    = (id, data) => API.post(`/admin/explore/collections/${id}/vendors`, data);
+export const adminRemoveFromExploreCollection = (id, vendorId) => API.delete(`/admin/explore/collections/${id}/vendors/${vendorId}`);
+
+export const adminGetExploreBoosts          = ()         => API.get('/admin/explore/boosts');
+export const adminCreateExploreBoost        = (data)     => API.post('/admin/explore/boosts', data);
+export const adminRevokeExploreBoost        = (id)       => API.delete(`/admin/explore/boosts/${id}`);
+
+export const adminGetExploreVerified        = ()         => API.get('/admin/explore/verified');
+export const adminGrantExploreVerified      = (data)     => API.post('/admin/explore/verified', data);
+export const adminRevokeExploreVerified     = (id)       => API.delete(`/admin/explore/verified/${id}`);
+
+export const adminGetExploreKeywords        = ()         => API.get('/admin/explore/keywords');
+export const adminCreateExploreKeyword      = (data)     => API.post('/admin/explore/keywords', data);
+export const adminRevokeExploreKeyword      = (id)       => API.delete(`/admin/explore/keywords/${id}`);

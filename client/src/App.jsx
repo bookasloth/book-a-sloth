@@ -104,11 +104,13 @@ const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications')
 const AdminCampaigns     = lazy(() => import('./pages/admin/AdminCampaigns'));
 const AdminBadges        = lazy(() => import('./pages/admin/AdminBadges'));
 const BadgeShowcase      = lazy(() => import('./pages/BadgeShowcase'));
+const Explore         = lazy(() => import('./pages/Explore'));
 
 // Admin — Operations
 const AdminPlans  = lazy(() => import('./pages/admin/AdminPlans'));
 const AdminAddons = lazy(() => import('./pages/admin/AdminAddons'));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const AdminExplore    = lazy(() => import('./pages/admin/AdminExplore'));
 
 // Admin — System (M1: RBAC foundation)
 const AdminStaff = lazy(() => import('./pages/admin/AdminStaff'));
@@ -218,6 +220,7 @@ function App() {
           <Route path="/admin/addons" element={<AdminWrapper><AdminAddons /></AdminWrapper>} />
           <Route path="/admin/plans" element={<AdminWrapper><AdminPlans /></AdminWrapper>} />
           <Route path="/admin/professions" element={<AdminWrapper><AdminCategories /></AdminWrapper>} />
+          <Route path="/admin/explore"     element={<AdminWrapper><AdminExplore /></AdminWrapper>} />
 
           {/* People */}
           <Route path="/admin/providers/:status" element={<AdminWrapper><AdminProviders /></AdminWrapper>} />
@@ -261,6 +264,9 @@ function App() {
 
           {/* General settings */}
           <Route path="/admin/settings" element={<AdminWrapper><AdminSettings /></AdminWrapper>} />
+
+          {/* Explore page */}
+          <Route path="/explore" element={<Explore />} />
 
           {/* Public host/service pages — specific before dynamic */}
           <Route path="/:profileSlug/badges" element={<BadgeShowcase />} />

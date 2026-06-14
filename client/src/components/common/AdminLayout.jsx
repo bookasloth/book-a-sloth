@@ -124,6 +124,7 @@ const NAV = [
     { label:'Badges',             icon:'star',    to:'/admin/badges', perm:'badges.manage' },
     { label:'Subscription Plans', icon:'card',    to:'/admin/plans', perm:'plans.view' },
     { label:'Professions',        icon:'layers',  to:'/admin/professions', perm:'settings.manage' },
+    { label:'Explore Page',        icon:'search',  to:'/admin/explore',      perm:'settings.manage' },
   ]},
   { id:'people', section:'PEOPLE', items:[
     { label:'Providers', icon:'userCheck', groupId:'ppl-providers', perm:'professionals.view', children:[

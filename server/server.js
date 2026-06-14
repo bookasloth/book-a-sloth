@@ -81,6 +81,7 @@ app.use('/api/upload',      require('./routes/uploadRoutes'));
 app.use('/api/vendor',      require('./routes/vendorRoutes'));
 app.use('/api/services',    require('./routes/serviceRoutes'));
 app.use('/api/categories',  require('./routes/categoryRoutes'));
+app.use('/api/explore',     require('./routes/exploreRoutes'));
 app.use('/api/vendors',     require('./routes/badgePublicRoutes'));
 app.use('/api/notifications', require('./routes/notificationWebhookRoutes')); // public AiSensy webhook (secret-gated)
 app.get('/api/plans',       require('./controllers/planAdminController').publicPlans);
