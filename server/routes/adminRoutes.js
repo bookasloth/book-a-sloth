@@ -46,6 +46,11 @@ router.delete('/services/:id', requireAdmin('services.manage'), deleteService);
 router.get('/settings', requireAdmin('settings.manage'), getSettings);
 router.put('/settings', requireAdmin('settings.manage'), updateSettings);
 
+// ── Feature flags ──────────────────────────────────────────────
+const features = require('../controllers/featureFlagController');
+router.get('/features',        requireAdmin('settings.manage'), features.getFlags);
+router.patch('/features/:key', requireAdmin('settings.manage'), features.toggleFlag);
+
 // ── Staff & roles (Super Admin only — staff.manage is super-exclusive) ──
 const staff = require('../controllers/staffAdminController');
 router.get('/roles',                       requireAdmin('staff.manage'), staff.listRoles);
