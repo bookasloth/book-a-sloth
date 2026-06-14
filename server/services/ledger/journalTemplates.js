@@ -87,6 +87,26 @@ function bankTransferEntry({ amount, reference }) {
   };
 }
 
+/** RESCHEDULE_FEE — platform keeps the fee; platform bears the gateway charge. */
+function rescheduleFeeEntry({ booking_id, host_id, fee, gstRate = 0.18, razorpay_fee = 0, razorpay_tax = 0 }) {
+  const tags = { vendor_id: host_id, order_item_id: booking_id };
+  const gross = round2(fee);
+  // Fee is GST-inclusive: revenue = gross / (1+gstRate); gst = remainder.
+  const net = round2(gross / (1 + gstRate));
+  const gst = round2(gross - net);
+  const gatewayTotal = round2(Number(razorpay_fee || 0) + Number(razorpay_tax || 0));
+  const lines = [
+    line(ACCOUNTS.RAZORPAY_RECEIVABLE, 'debit', gross, tags),
+    line(ACCOUNTS.PLATFORM_FEE_REVENUE, 'credit', net, tags),
+  ];
+  if (gst > 0) lines.push(line(ACCOUNTS.GST_PAYABLE, 'credit', gst, tags));
+  if (gatewayTotal > 0) {
+    lines.push(line(ACCOUNTS.RZP_CHARGES_ORDERS, 'debit', gatewayTotal, tags));
+    lines.push(line(ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit', gatewayTotal, tags));
+  }
+  return { description: `Reschedule fee — booking ${booking_id}`, lines };
+}
+
 /** ADJUSTMENT — admin-supplied balanced lines (validated again by the RPC). */
 function adjustmentEntry({ description, lines }) {
   return { description: description || 'Manual adjustment', lines };
@@ -115,6 +135,7 @@ module.exports = {
   orderPaymentEntry,
   subscriptionPaymentEntry,
   bankTransferEntry,
+  rescheduleFeeEntry,
   adjustmentEntry,
   reversalEntry,
 };
