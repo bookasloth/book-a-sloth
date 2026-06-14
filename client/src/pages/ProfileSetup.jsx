@@ -241,7 +241,7 @@ const ProfileSetup = () => {
         activeSection === id
           ? 'bg-gray-900 text-white'
           : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-      }`})
+      }`}
     >
       {label}
     </button>
@@ -319,7 +319,6 @@ const ProfileSetup = () => {
                   <p className="text-[10px] text-gray-400 mt-1">JPG/PNG/WebP up to 2MB — shown full-width, auto-cropped to fit</p>
                 </div>
               </FeatureGate>
-              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -367,18 +366,22 @@ const ProfileSetup = () => {
 
         {/* ── SECTION: Social Links ── */}
         {activeSection === 'social' && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-500">Add your social profiles. Only filled links appear on your public page.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {SOCIAL_PLATFORMS.map(({ key, label, placeholder, type }) => (
-                <div key={key}>
-                  <label htmlFor={`sl-${key}`} className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-                  <input id={`sl-${key}`} type={type} name={key} placeholder={placeholder}
-                    className="fb-input text-sm" value={form.social_links[key] || ''} onChange={handleSocialChange} />
-                </div>
-              ))}
+          <FeatureGate flag="social_links" fallback={
+            <p className="text-sm text-gray-400">Social links are currently disabled.</p>
+          }>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">Add your social profiles. Only filled links appear on your public page.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {SOCIAL_PLATFORMS.map(({ key, label, placeholder, type }) => (
+                  <div key={key}>
+                    <label htmlFor={`sl-${key}`} className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+                    <input id={`sl-${key}`} type={type} name={key} placeholder={placeholder}
+                      className="fb-input text-sm" value={form.social_links[key] || ''} onChange={handleSocialChange} />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </FeatureGate>
         )}
 
         {/* ── SECTION: Appearance & Branding ── */}
@@ -387,52 +390,56 @@ const ProfileSetup = () => {
             {/* Left: controls */}
             <div className="space-y-6">
               {/* Theme Color */}
-            <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-800">Theme Color</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">Applied to buttons, accents, and CTAs on your profile</p>
+              <FeatureGate flag="theme_colors">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-800">Theme Color</h3>
+                      <p className="text-xs text-gray-400 mt-0.5">Applied to buttons, accents, and CTAs on your profile</p>
+                    </div>
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                      {PLAN_LABEL[plan]}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                    {PLAN_LABEL[plan]}
-                  </span>
-                </div>
 
-                {/* Swatches */}
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {availableColors.map(color => (
-                    <Swatch
-                      key={color.hex}
-                      color={color}
-                      selected={form.theme_color === color.hex}
-                      onClick={handleColorSelect}
-                    />
-                  ))}
-                </div>
-
-                {/* Pro custom hex */}
-                {customHexAllowed ? (
-                  <div className="flex items-center gap-2 mt-2">
-                    <div
-                      className="w-8 h-8 rounded-lg border flex-shrink-0"
-                      style={{ background: isValidHex(customHex) ? customHex : '#e5e7eb' }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="#4F46E5"
-                      maxLength={7}
-                      className="fb-input text-sm font-mono flex-1"
-                      value={customHex}
-                      onChange={handleCustomHex}
-                    />
-                    <span className="text-xs text-gray-400">Custom</span>
+                  {/* Swatches */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {availableColors.map(color => (
+                      <Swatch
+                        key={color.hex}
+                        color={color}
+                        selected={form.theme_color === color.hex}
+                        onClick={handleColorSelect}
+                      />
+                    ))}
                   </div>
-                ) : (
-                  <p className="text-xs text-gray-400 mt-1">
-                    {plan === 'creator' ? '16 colours available. Upgrade to Pro for custom hex.' : 'Upgrade to Creator for more colours.'}
-                  </p>
-                )}
-              </div>
+
+                  {/* Pro custom hex */}
+                  {customHexAllowed ? (
+                    <FeatureGate flag="custom_hex_color">
+                      <div className="flex items-center gap-2 mt-2">
+                        <div
+                          className="w-8 h-8 rounded-lg border flex-shrink-0"
+                          style={{ background: isValidHex(customHex) ? customHex : '#e5e7eb' }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="#4F46E5"
+                          maxLength={7}
+                          className="fb-input text-sm font-mono flex-1"
+                          value={customHex}
+                          onChange={handleCustomHex}
+                        />
+                        <span className="text-xs text-gray-400">Custom</span>
+                      </div>
+                    </FeatureGate>
+                  ) : (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {plan === 'creator' ? '16 colours available. Upgrade to Pro for custom hex.' : 'Upgrade to Creator for more colours.'}
+                    </p>
+                  )}
+                </div>
+              </FeatureGate>
 
               {/* Profile Border Info */}
               <div className="bg-gray-50 rounded-xl p-4">
@@ -473,7 +480,7 @@ const ProfileSetup = () => {
                 <p className="text-xs text-gray-400 mb-2 font-medium">Booking Button Preview</p>
                 <button
                   type="button"
-                  className="w-full py-2.5 rounded-lg font-bold text-sm transition-all"
+                  className="w-full py-2.5 rounded-xl font-bold text-sm transition-all"
                   style={{ background: tc, color: getContrastColor(tc) }}
                 >
                   Book a Session
@@ -490,58 +497,60 @@ const ProfileSetup = () => {
         {activeSection === 'integrations' && (
           <div className="space-y-5">
             {/* Google Calendar */}
-            <div className="bg-white border rounded-2xl p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  {/* Google icon */}
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 border flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
+            <FeatureGate flag="google_calendar">
+              <div className="bg-white border rounded-2xl p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    {/* Google icon */}
+                    <div className="w-10 h-10 rounded-xl bg-gray-50 border flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">Google Calendar</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Auto-create Google Meet links for every confirmed online booking.
+                      </p>
+                      {user?.google_calendar_connected && (
+                        <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                          Connected
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900">Google Calendar</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Auto-create Google Meet links for every confirmed online booking.
-                    </p>
-                    {user?.google_calendar_connected && (
-                      <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-                        Connected
-                      </span>
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (user?.google_calendar_connected) {
+                        toast('To disconnect, contact support or revoke access in your Google account settings.', { icon: 'ℹ️' });
+                      } else {
+                        // Trigger Google OAuth — same as Dashboard connect button
+                        import('../services/api').then(({ getGoogleAuthUrl }) =>
+                          getGoogleAuthUrl().then(({ data }) => { window.location.href = data.url; })
+                        );
+                      }
+                    }}
+                    className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-semibold border transition-colors whitespace-nowrap ${
+                      user?.google_calendar_connected
+                        ? 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                        : 'border-[#FE5100] text-[#FE5100] hover:bg-[#FFF4EE]'
+                    }`}
+                  >
+                    {user?.google_calendar_connected ? 'Connected ✓' : 'Connect'}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (user?.google_calendar_connected) {
-                      toast('To disconnect, contact support or revoke access in your Google account settings.', { icon: 'ℹ️' });
-                    } else {
-                      // Trigger Google OAuth — same as Dashboard connect button
-                      import('../services/api').then(({ getGoogleAuthUrl }) =>
-                        getGoogleAuthUrl().then(({ data }) => { window.location.href = data.url; })
-                      );
-                    }
-                  }}
-                  className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-semibold border transition-colors whitespace-nowrap ${
-                    user?.google_calendar_connected
-                      ? 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                      : 'border-[#FE5100] text-[#FE5100] hover:bg-[#FFF4EE]'
-                  }`}
-                >
-                  {user?.google_calendar_connected ? 'Connected ✓' : 'Connect'}
-                </button>
+                <div className="mt-3 pt-3 border-t text-xs text-gray-400 space-y-1">
+                  <p>• Works with online services only (not in-person)</p>
+                  <p>• Guests receive the Meet link in their confirmation email</p>
+                  <p>• Bookings appear on your Google Calendar automatically</p>
+                </div>
               </div>
-              <div className="mt-3 pt-3 border-t text-xs text-gray-400 space-y-1">
-                <p>• Works with online services only (not in-person)</p>
-                <p>• Guests receive the Meet link in their confirmation email</p>
-                <p>• Bookings appear on your Google Calendar automatically</p>
-              </div>
-            </div>
+            </FeatureGate>
 
             {/* Reschedule fee */}
             <div className="bg-white border rounded-2xl p-5">
@@ -565,45 +574,46 @@ const ProfileSetup = () => {
             <div className="bg-gray-50 border border-dashed rounded-2xl p-5">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Coming Soon</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[<br />
-                  { name: 'Zoom', desc: 'Auto-create Zoom meeting links', icon: '🎥' },<br />
-                  { name: 'Notion', desc: 'Log bookings to a Notion database', icon: '📝' },<br />
-                  { name: 'Razorpay Payouts', desc: 'Instant payout scheduling', icon: '💸' },<br />
-                  { name: 'WhatsApp Business', desc: 'Send reminders via WhatsApp', icon: '💬' },<br />
-                ].map(i => (<br />
-                  <div key={i.name} className="flex items-center gap-3 bg-white border rounded-xl p-3 opacity-60"> <br />
-                    <span className="text-xl">{i.icon}</span> <br />
-                    <div> <br />
-                      <p className="text-xs font-semibold text-gray-700">{i.name}</p> <br />
-                      <p className="text-[10px] text-gray-400">{i.desc}</p> <br />
-                    </div> <br />
-                  </div> <br />
-                ))}<br />
-              </div> <br />
-            </div> <br />
-          </div> <br />
-        )}<br />
+                {[
+                  { name: 'Zoom', desc: 'Auto-create Zoom meeting links', icon: '🎥' },
+                  { name: 'Notion', desc: 'Log bookings to a Notion database', icon: '📝' },
+                  { name: 'Razorpay Payouts', desc: 'Instant payout scheduling', icon: '💸' },
+                  { name: 'WhatsApp Business', desc: 'Send reminders via WhatsApp', icon: '💬' },
+                ].map(i => (
+                  <div key={i.name} className="flex items-center gap-3 bg-white border rounded-xl p-3 opacity-60">
+                    <span className="text-xl">{i.icon}</span>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700">{i.name}</p>
+                      <p className="text-[10px] text-gray-400">{i.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* Save button — always visible */}<br />
-        <div className="mt-8 pt-5 border-t flex gap-3"> <br />
-          <button<br />
-            type="submit"<br />
-            disabled={loading}<br />
-            className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors"<br />
-            style={{ background: tc }}<br />
-          > <br />
-            {loading ? "Saving…" : "Save Profile"}<br />
-          </button> <br />
-          <button<br />
-            type="button"<br />
-            onClick={() => navigate("/dashboard")}<br />
-            className="px-5 py-2.5 rounded-lg text-sm font-medium border text-gray-600 hover:bg-gray-50"<br />
-          > <br />
-            Cancel<br />
-          </button> <br />
-        </div> <br />
-      </form> <br />
-    </div> <br />
-  );<br />};
+        {/* Save button — always visible */}
+        <div className="mt-8 pt-5 border-t flex gap-3">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors"
+            style={{ background: tc }}
+          >
+            {loading ? "Saving…" : "Save Profile"}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard")}
+            className="px-5 py-2.5 rounded-lg text-sm font-medium border text-gray-600 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 export default ProfileSetup;
