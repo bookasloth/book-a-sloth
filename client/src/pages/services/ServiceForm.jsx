@@ -6,6 +6,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { svcCreate, svcUpdate, uploadImage } from '../../services/api';
 import toast from 'react-hot-toast';
+import FeatureGate from '../../components/common/FeatureGate';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -498,20 +499,22 @@ export default function ServiceForm({ initialData, serviceId }) {
                 className="fb-input resize-none"/>
             </div>
 
-            {/* Service Type */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                Service Type
-              </label>
-              <div className="flex gap-3">
-                {['online','offline'].map(t => (
-                  <button key={t} type="button" onClick={() => set('service_type', t)}
-                    className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ${form.service_type === t ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
-                    {t === 'online' ? '🌐 Online' : '📍 Offline'}
-                  </button>
-                ))}
+            {/* Service Type — offline option gated; off = online only */}
+            <FeatureGate flag="service_offline_type">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Service Type
+                </label>
+                <div className="flex gap-3">
+                  {['online','offline'].map(t => (
+                    <button key={t} type="button" onClick={() => set('service_type', t)}
+                      className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ${form.service_type === t ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                      {t === 'online' ? '🌐 Online' : '📍 Offline'}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            </FeatureGate>
 
             {/* Price */}
             <div>
@@ -547,20 +550,24 @@ export default function ServiceForm({ initialData, serviceId }) {
             </div>
 
             {/* Grace Period */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                Grace Period (buffer before/after)
-              </label>
-              <select value={form.grace_period} onChange={e => set('grace_period', parseInt(e.target.value))} className="fb-input">
-                {GRACE_PERIODS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
-              </select>
-            </div>
+            <FeatureGate flag="service_grace_period">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Grace Period (buffer before/after)
+                </label>
+                <select value={form.grace_period} onChange={e => set('grace_period', parseInt(e.target.value))} className="fb-input">
+                  {GRACE_PERIODS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
+                </select>
+              </div>
+            </FeatureGate>
 
             {/* Thumbnail */}
-            <ThumbnailCropper
-              currentUrl={form.thumbnail_url}
-              onUploaded={url => set('thumbnail_url', url)}
-            />
+            <FeatureGate flag="service_thumbnail">
+              <ThumbnailCropper
+                currentUrl={form.thumbnail_url}
+                onUploaded={url => set('thumbnail_url', url)}
+              />
+            </FeatureGate>
           </div>
         </div>
       </div>
@@ -568,36 +575,43 @@ export default function ServiceForm({ initialData, serviceId }) {
       {/* ── BELOW THE FOLD: Two-column layout ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Left: Long Description */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-base font-bold mb-1 text-gray-800">Overview</h2>
-          <p className="text-xs text-gray-400 mb-4">Shown on the Overview tab of your public service page</p>
-          <RichEditor value={form.long_description} onChange={v => set('long_description', v)}/>
-        </div>
+        <FeatureGate flag="service_rich_overview">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-base font-bold mb-1 text-gray-800">Overview</h2>
+            <p className="text-xs text-gray-400 mb-4">Shown on the Overview tab of your public service page</p>
+            <RichEditor value={form.long_description} onChange={v => set('long_description', v)}/>
+          </div>
+        </FeatureGate>
 
         {/* Right: Inclusions, Exclusions, FAQ, Notes */}
         <div className="space-y-6">
-          {/* Included */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-base font-bold mb-1 text-gray-800">What's Included</h2>
-            <p className="text-xs text-gray-400 mb-3">Press Enter or comma after each item</p>
-            <TagInput value={form.included_items} onChange={v => set('included_items', v)}
-              placeholder="Type and press Enter…" color="green"/>
-          </div>
+          {/* Included / Excluded */}
+          <FeatureGate flag="service_inclusions">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-base font-bold mb-1 text-gray-800">What's Included</h2>
+              <p className="text-xs text-gray-400 mb-3">Press Enter or comma after each item</p>
+              <TagInput value={form.included_items} onChange={v => set('included_items', v)}
+                placeholder="Type and press Enter…" color="green"/>
+            </div>
+          </FeatureGate>
 
-          {/* Excluded */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-base font-bold mb-1 text-gray-800">Not Included</h2>
-            <p className="text-xs text-gray-400 mb-3">Press Enter or comma after each item</p>
-            <TagInput value={form.excluded_items} onChange={v => set('excluded_items', v)}
-              placeholder="Type and press Enter…" color="red"/>
-          </div>
+          <FeatureGate flag="service_inclusions">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-base font-bold mb-1 text-gray-800">Not Included</h2>
+              <p className="text-xs text-gray-400 mb-3">Press Enter or comma after each item</p>
+              <TagInput value={form.excluded_items} onChange={v => set('excluded_items', v)}
+                placeholder="Type and press Enter…" color="red"/>
+            </div>
+          </FeatureGate>
 
           {/* FAQ */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-base font-bold mb-1 text-gray-800">FAQs</h2>
-            <p className="text-xs text-gray-400 mb-4">Optional · Add as many as you need</p>
-            <FAQBuilder value={form.faqs} onChange={v => set('faqs', v)}/>
-          </div>
+          <FeatureGate flag="service_faqs">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-base font-bold mb-1 text-gray-800">FAQs</h2>
+              <p className="text-xs text-gray-400 mb-4">Optional · Add as many as you need</p>
+              <FAQBuilder value={form.faqs} onChange={v => set('faqs', v)}/>
+            </div>
+          </FeatureGate>
 
           {/* Important Note */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">

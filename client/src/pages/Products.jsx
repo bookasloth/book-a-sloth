@@ -6,6 +6,7 @@ import {
   deleteProduct,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { useFeature } from "../context/FeatureContext";
 import BackButton from "../components/common/BackButton";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -38,7 +39,9 @@ const Products = () => {
   const [dirty, setDirty] = useState(false);
 
   const plan = user?.plan || "explorer";
-  const canCreate = plan !== "explorer";
+  // Plan-gated AND admin kill-switch gated. Off = no create surfaces shown.
+  const digitalProductsOn = useFeature("digital_products");
+  const canCreate = plan !== "explorer" && digitalProductsOn;
 
   const fetchProducts = async () => {
     try {
