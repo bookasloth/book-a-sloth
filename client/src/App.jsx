@@ -140,7 +140,6 @@ function AdminWrapper({ children }) {
 function App() {
   const location = useLocation();
   const hideNavbar =
-    location.pathname === '/' ||
     location.pathname.startsWith('/dashboard') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/super-dashboard') ||
