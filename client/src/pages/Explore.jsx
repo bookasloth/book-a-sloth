@@ -324,7 +324,7 @@ export default function Explore() {
               <button
                 disabled={page === 1}
                 onClick={() => setPage(p => p - 1)}
-                className="w-9 h-9 flex items-center justify-center border-2 border-[#1E1E1E] rounded-[4px]
+                className="btn btn--outline w-9 h-9 flex items-center justify-center
                            bg-white font-bold shadow-[2px_2px_0_#1E1E1E] disabled:opacity-40
                            hover:shadow-[3px_3px_0_#1E1E1E] transition-shadow"
               >
@@ -345,11 +345,11 @@ export default function Explore() {
                     <button
                       key={p}
                       onClick={() => setPage(p)}
-                      className={`w-9 h-9 flex items-center justify-center border-2 border-[#1E1E1E]
-                                  rounded-[4px] font-bold text-sm transition-all
+                      className={`btn w-9 h-9 flex items-center justify-center
+                                  font-bold text-sm transition-all
                                   ${page === p
                                     ? 'bg-[#FE5100] text-white shadow-[2px_2px_0_#1E1E1E]'
-                                    : 'bg-white text-[#1E1E1E] shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]'
+                                    : 'btn--outline bg-white text-[#1E1E1E] shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]'
                                   }`}
                     >
                       {p}
@@ -360,7 +360,7 @@ export default function Explore() {
               <button
                 disabled={page === totalPages}
                 onClick={() => setPage(p => p + 1)}
-                className="w-9 h-9 flex items-center justify-center border-2 border-[#1E1E1E] rounded-[4px]
+                className="btn btn--outline w-9 h-9 flex items-center justify-center
                            bg-white font-bold shadow-[2px_2px_0_#1E1E1E] disabled:opacity-40
                            hover:shadow-[3px_3px_0_#1E1E1E] transition-shadow"
               >

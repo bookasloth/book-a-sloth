@@ -792,7 +792,7 @@ const Bookings = () => {
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`px-3 py-1 rounded-lg border text-xs ${p === page ? "bg-primary text-white border-primary" : "hover:bg-gray-50"}`}
+                    className={`btn px-3 py-1 text-xs ${p === page ? "bg-primary text-white" : "btn--outline hover:bg-gray-50"}`}
                   >
                     {p}
                   </button>
