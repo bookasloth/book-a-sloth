@@ -106,11 +106,33 @@ const getCalendarTimezone = async (accessToken, refreshToken) => {
   return data?.value || null;
 };
 
+// Move an existing event to a new time. Keeps the same Meet link; notifies
+// attendees. Used by reschedule.
+const updateCalendarEvent = async (accessToken, refreshToken, eventId, { startTime, endTime, timezone }) => {
+  const auth = buildOAuthClient(accessToken, refreshToken);
+  const calendar = google.calendar({ version: 'v3', auth });
+  const response = await calendar.events.patch({
+    calendarId: 'primary',
+    eventId,
+    sendUpdates: 'all',
+    resource: {
+      start: { dateTime: startTime, timeZone: timezone || 'Asia/Kolkata' },
+      end:   { dateTime: endTime,   timeZone: timezone || 'Asia/Kolkata' },
+    },
+  });
+  return {
+    eventId: response.data.id,
+    meetLink: response.data.hangoutLink,
+    htmlLink: response.data.htmlLink,
+  };
+};
+
 module.exports = {
   oauth2Client,
   getAuthUrl,
   getTokensFromCode,
   createCalendarEvent,
+  updateCalendarEvent,
   getFreeBusy,
   getCalendarTimezone,
 };
