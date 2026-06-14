@@ -343,3 +343,10 @@ export const adminRevokeExploreVerified     = (id)       => API.delete(`/admin/e
 export const adminGetExploreKeywords        = ()         => API.get('/admin/explore/keywords');
 export const adminCreateExploreKeyword      = (data)     => API.post('/admin/explore/keywords', data);
 export const adminRevokeExploreKeyword      = (id)       => API.delete(`/admin/explore/keywords/${id}`);
+
+// ── Feature flags ─────────────────────────────────────────────
+export const getFeatureFlags    = ()             => API.get('/feature-flags');
+export const adminGetFeatures   = ()             => API.get('/admin/features');
+export const adminToggleFeature = (key, enabled) => API.patch(`/admin/features/${key}`, { enabled });
+// ── Reschedule fee ────────────────────────────────────────────
+export const createRescheduleFeeOrder = (bookingId) => API.post('/payment/reschedule-fee/create-order', { booking_id: bookingId });

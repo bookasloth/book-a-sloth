@@ -64,5 +64,14 @@ beforeAll(() => {
           `expected ${element ? element.outerHTML : element} ${isDisabled ? 'not ' : ''}to be enabled`,
       };
     },
+    toBeInTheDocument(element) {
+      const pass = element !== null && element !== undefined &&
+        (element.ownerDocument ? element.ownerDocument.documentElement.contains(element) : false);
+      return {
+        pass,
+        message: () =>
+          `expected element ${pass ? 'not ' : ''}to be in the document`,
+      };
+    },
   });
 });
