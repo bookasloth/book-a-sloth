@@ -98,7 +98,7 @@ const AdminSettings = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 w-full"
+          className="btn bg-gray-900 text-white px-6 py-2.5 text-sm font-medium hover:bg-gray-800 disabled:opacity-50 w-full"
         >
           {saving ? "Saving..." : "Save Settings"}
         </button>

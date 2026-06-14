@@ -190,7 +190,7 @@ const ImageCropper = ({ aspect = 1, folder = 'uploads', currentUrl, onUploaded, 
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="mt-2 w-full border border-gray-200 rounded-xl py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-primary/40 transition-colors"
+                  className="btn btn--outline mt-2 w-full py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
                 >
                   {imgEl ? 'Choose different photo' : 'Choose photo'}
                 </button>
@@ -235,14 +235,14 @@ const ImageCropper = ({ aspect = 1, folder = 'uploads', currentUrl, onUploaded, 
             {/* Action buttons */}
             <div className="flex gap-2 pt-2 border-t">
               <button type="button" onClick={onClose}
-                className="flex-1 border rounded-xl py-2.5 text-sm text-gray-500 hover:bg-gray-50 transition-colors">
+                className="btn btn--outline flex-1 py-2.5 text-sm text-gray-500 hover:bg-gray-50 transition-colors">
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={!imgEl || uploading}
-                className="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-40 hover:bg-primary/90 transition-colors"
+                className="btn flex-1 bg-primary text-white py-2.5 text-sm font-semibold disabled:opacity-40 hover:bg-primary/90 transition-colors"
               >
                 {uploading ? 'Saving...' : 'Save'}
               </button>

@@ -141,7 +141,7 @@ const PasswordStep = () => {
             <button
               type="submit"
               disabled={loading || password.length < 8 || password !== confirmPassword}
-              className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+              className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
             >
               {loading ? 'Creating account...' : 'Create Account & Continue'}
             </button>

@@ -112,7 +112,7 @@ const SlugClaim = () => {
           <button
             onClick={handleClaim}
             disabled={!available || checking}
-            className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             Claim & Continue
           </button>

@@ -230,9 +230,9 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
           )}
 
           <div className="flex gap-2">
-            <button onClick={onClose} className="flex-1 border rounded-xl py-2.5 text-sm text-gray-500">Cancel</button>
+            <button onClick={onClose} className="btn btn--outline flex-1 py-2.5 text-sm text-gray-500">Cancel</button>
             <button onClick={save} disabled={saving || !selDate || !selTime}
-              className="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-40">
+              className="btn flex-1 bg-primary text-white py-2.5 text-sm font-semibold disabled:opacity-40">
               {saving ? "Saving…" : "Confirm"}
             </button>
           </div>
@@ -472,14 +472,14 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
               <div className="flex gap-2">
                 <button
                   onClick={() => setConfirming(null)}
-                  className="flex-1 border rounded-xl py-2 text-sm text-gray-500"
+                  className="btn btn--outline flex-1 py-2 text-sm text-gray-500"
                 >
                   Back
                 </button>
                 <button
                   onClick={() => doAction(confirming)}
                   disabled={busy}
-                  className={`flex-1 rounded-xl py-2 text-sm font-semibold text-white disabled:opacity-50 ${confirming === "cancel" ? "bg-red-500" : "bg-primary"}`}
+                  className={`btn flex-1 py-2 text-sm font-semibold text-white disabled:opacity-50 ${confirming === "cancel" ? "bg-red-500" : "bg-primary"}`}
                 >
                   {busy ? "..." : `Yes, ${confirming}`}
                 </button>
@@ -491,7 +491,7 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
                 new Date(booking.scheduled_at) > new Date() && (
                   <button
                     onClick={() => setShowReschedule(true)}
-                    className="flex-1 min-w-[120px] border border-primary text-primary rounded-xl py-2 text-sm font-medium hover:bg-primary/5"
+                    className="btn btn--outline flex-1 min-w-[120px] text-primary py-2 text-sm font-medium hover:bg-primary/5"
                   >
                     Reschedule
                   </button>
@@ -500,7 +500,7 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
                 new Date(booking.scheduled_at) <= new Date() && (
                   <button
                     onClick={() => setConfirming("complete")}
-                    className="flex-1 min-w-[120px] bg-primary text-white rounded-xl py-2 text-sm font-medium"
+                    className="btn flex-1 min-w-[120px] bg-primary text-white py-2 text-sm font-medium"
                   >
                     Mark Completed
                   </button>
@@ -509,7 +509,7 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
                 booking.status !== "completed" && (
                   <button
                     onClick={() => setConfirming("cancel")}
-                    className="flex-1 min-w-[120px] border border-red-300 text-red-500 rounded-xl py-2 text-sm font-medium hover:bg-red-50"
+                    className="btn btn--outline flex-1 min-w-[120px] text-red-500 py-2 text-sm font-medium hover:bg-red-50"
                   >
                     Cancel Booking
                   </button>
@@ -781,7 +781,7 @@ const Bookings = () => {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 rounded-lg border text-xs disabled:opacity-40 hover:bg-gray-50"
+                className="btn btn--outline px-3 py-1 text-xs disabled:opacity-40 hover:bg-gray-50"
               >
                 Prev
               </button>
@@ -801,7 +801,7 @@ const Bookings = () => {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-3 py-1 rounded-lg border text-xs disabled:opacity-40 hover:bg-gray-50"
+                className="btn btn--outline px-3 py-1 text-xs disabled:opacity-40 hover:bg-gray-50"
               >
                 Next
               </button>

@@ -305,8 +305,8 @@ export default function Explore() {
               <p className="text-lg font-bold text-[#1E1E1E]">No sloths found</p>
               <p className="text-sm text-[#64748b] mt-1">Try a different search or category</p>
               <button onClick={() => { setQuery(''); setInputVal(''); setCategory(''); setPage(1); }}
-                className="mt-4 px-4 py-2 bg-[#FE5100] text-white font-bold rounded-[4px]
-                           border-2 border-[#1E1E1E] shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]">
+                className="btn mt-4 px-4 py-2 bg-[#FE5100] text-white font-bold
+                           shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]">
                 Clear filters
               </button>
             </div>
@@ -380,8 +380,8 @@ export default function Explore() {
             </p>
           </div>
           <Link to="/be-a-sloth"
-            className="shrink-0 px-6 py-3 bg-[#FE5100] text-white font-black text-sm rounded-[4px]
-                       border-2 border-[#1E1E1E] shadow-[4px_4px_0_#1E1E1E]
+            className="btn shrink-0 px-6 py-3 bg-[#FE5100] text-white font-black text-sm
+                       shadow-[4px_4px_0_#1E1E1E]
                        hover:shadow-[6px_6px_0_#1E1E1E] transition-shadow whitespace-nowrap">
             Become a Sloth →
           </Link>

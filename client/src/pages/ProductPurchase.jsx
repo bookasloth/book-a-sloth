@@ -345,7 +345,7 @@ const ProductPurchase = () => {
                 <button
                   onClick={handleSendOtp}
                   disabled={otpSending || !name || !email}
-                  className="w-full bg-primary text-white py-3 rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50"
+                  className="btn w-full bg-primary text-white py-3 text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50"
                 >
                   {otpSending ? "Sending..." : "Send OTP"}
                 </button>
@@ -387,7 +387,7 @@ const ProductPurchase = () => {
               <button
                 onClick={handleVerify}
                 disabled={verifying || otp.length !== 6}
-                className="w-full bg-primary text-white py-3 rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50"
+                className="btn w-full bg-primary text-white py-3 text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
                 {verifying
                   ? "Verifying..."
@@ -435,7 +435,7 @@ const ProductPurchase = () => {
               <button
                 onClick={handlePayment}
                 disabled={paymentLoading}
-                className="w-full bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="btn w-full bg-indigo-600 text-white py-3 text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
               >
                 {paymentLoading
                   ? "Opening payment..."
@@ -476,7 +476,7 @@ const ProductPurchase = () => {
               <button
                 onClick={handleDownload}
                 disabled={downloading}
-                className="w-full bg-gray-900 text-white py-3 rounded-xl text-sm font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mb-3"
+                className="btn w-full bg-gray-900 text-white py-3 text-sm font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mb-3"
               >
                 <svg
                   className="w-4 h-4"

@@ -56,7 +56,7 @@ const VendorLogin = () => {
         <button
           onClick={handleGoogle}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 hover:border-gray-300 bg-white py-3 rounded-xl text-sm font-semibold transition disabled:opacity-50"
+          className="btn btn--outline w-full flex items-center justify-center gap-3 hover:border-gray-300 bg-white py-3 text-sm font-semibold transition disabled:opacity-50"
         >
           <GoogleIcon />
           {loading ? 'Opening Google…' : 'Sign in with Google'}

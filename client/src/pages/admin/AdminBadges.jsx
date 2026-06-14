@@ -174,8 +174,8 @@ const AdminBadges = () => {
         </div>
         <div className="flex gap-2">
           <button onClick={() => adminRunBadgeEval().then((r) => toast.success(`Evaluated: +${r.data.awarded} awarded, -${r.data.revoked} revoked`)).catch(() => toast.error('Evaluation failed'))}
-            className="border px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Run Engine Now</button>
-          <button onClick={openCreate} className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">+ New Badge</button>
+            className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Run Engine Now</button>
+          <button onClick={openCreate} className="btn bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800">+ New Badge</button>
         </div>
       </div>
 
@@ -243,7 +243,7 @@ const AdminBadges = () => {
         <div className="flex gap-2 mb-3">
           <input className="fb-input text-sm flex-1" placeholder="Search vendor by name/email…" value={vendorQuery}
             onChange={(e) => setVendorQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchVendors()} />
-          <button onClick={searchVendors} className="border px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Search</button>
+          <button onClick={searchVendors} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Search</button>
         </div>
         {vendorResults.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
@@ -289,7 +289,7 @@ const AdminBadges = () => {
                 <label className="block text-[11px] font-semibold text-gray-500 mb-1">Reason (required)</label>
                 <input className="fb-input text-sm" value={assignForm.reason} onChange={(e) => setAssignForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Why is this badge being assigned?" />
               </div>
-              <button onClick={assign} className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Assign</button>
+              <button onClick={assign} className="btn bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800">Assign</button>
             </div>
           </div>
         )}
@@ -397,7 +397,7 @@ const AdminBadges = () => {
                 <div className="flex items-center gap-3">
                   <button onClick={() => setForm((f) => ({ ...f, rules: [...f.rules, { field: meta.fields[0] || 'completed_bookings', operator: '>=', value: '', group_id: 0 }] }))}
                     className="text-xs font-semibold text-indigo-600 hover:underline">+ Add rule</button>
-                  <button onClick={runPreview} className="text-xs font-semibold text-gray-600 border px-3 py-1.5 rounded-lg hover:bg-gray-50">Preview eligible vendors</button>
+                  <button onClick={runPreview} className="btn btn--outline text-xs font-semibold text-gray-600 px-3 py-1.5 hover:bg-gray-50">Preview eligible vendors</button>
                   {preview !== null && <span className="text-xs font-bold text-emerald-600">{preview} vendor(s) would earn this badge now</span>}
                 </div>
               </div>
@@ -422,17 +422,17 @@ const AdminBadges = () => {
 
             <div className="flex justify-between mt-6 pt-4 border-t">
               <button onClick={() => step > 1 ? setStep(step === 4 && form.badge_type === 'manual' ? 2 : step - 1) : setShowForm(false)}
-                className="border px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+                className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
                 {step === 1 ? 'Cancel' : 'Back'}
               </button>
               {step < 4 ? (
                 <button onClick={() => {
                   if (step === 1 && !form.name.trim()) return toast.error('Name is required');
                   setStep(step === 2 && form.badge_type === 'manual' ? 4 : step + 1);
-                }} className="bg-gray-900 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Next</button>
+                }} className="btn bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800">Next</button>
               ) : (
                 <button onClick={save} disabled={saving}
-                  className="bg-[#FE5100] text-white px-5 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
+                  className="btn bg-[#FE5100] text-white px-5 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50">
                   {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Create Badge'}
                 </button>
               )}

@@ -39,7 +39,7 @@ const GuestBookings = () => {
         <div className="bg-white border rounded p-8 text-center">
           <p className="text-lg font-semibold mb-2">No bookings yet</p>
           <p className="text-sm text-gray-500 mb-4">Browse services and book a session to get started.</p>
-          <Link to="/" className="bg-primary text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-primary-dark inline-block">
+          <Link to="/" className="btn bg-primary text-white px-6 py-2.5 text-sm font-medium hover:bg-primary-dark inline-block">
             Explore Services
           </Link>
         </div>
@@ -189,7 +189,7 @@ const Dashboard = () => {
             <p className="font-semibold text-sm text-gray-900">Set up your public profile</p>
             <p className="text-xs text-gray-500 mt-0.5">Add a username so clients can find and book you.</p>
           </div>
-          <Link to="/dashboard/profile" className="shrink-0 px-3 py-1.5 rounded text-xs font-bold text-white bg-primary hover:bg-primary-dark transition-colors whitespace-nowrap">
+          <Link to="/dashboard/profile" className="btn shrink-0 px-3 py-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark transition-colors whitespace-nowrap">
             Set username
           </Link>
         </div>

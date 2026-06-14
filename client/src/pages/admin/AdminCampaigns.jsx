@@ -84,9 +84,9 @@ const AdminCampaigns = () => {
           <p className="text-[12px] text-gray-400 mt-0.5">Targeted Email &amp; WhatsApp campaigns to consented segments.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setWaManage((v) => !v)} className="border px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">WhatsApp templates</button>
-          <button onClick={syncContacts} className="border px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Sync contacts</button>
-          <button onClick={() => setBuilding(true)} className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">New campaign</button>
+          <button onClick={() => setWaManage((v) => !v)} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">WhatsApp templates</button>
+          <button onClick={syncContacts} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Sync contacts</button>
+          <button onClick={() => setBuilding(true)} className="btn bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800">New campaign</button>
         </div>
       </div>
 
@@ -109,7 +109,7 @@ const AdminCampaigns = () => {
             <input className="fb-input text-sm" placeholder="Fields for {{1}},{{2}}… (comma-sep)" value={waForm.fields} onChange={(e) => setWaForm({ ...waForm, fields: e.target.value })} />
           </div>
           <p className="text-[11px] text-gray-400 mt-1">e.g. <code>first_name, service_name, vendor_name</code> maps to {'{{1}} {{2}} {{3}}'}.</p>
-          <button onClick={saveWaTemplate} className="mt-3 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Add template</button>
+          <button onClick={saveWaTemplate} className="btn mt-3 bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800">Add template</button>
         </div>
       )}
 
@@ -153,8 +153,8 @@ const AdminCampaigns = () => {
           )}
 
           <div className="flex gap-2 pt-2 border-t">
-            <button onClick={save} className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Save draft</button>
-            <button onClick={() => { setBuilding(false); setForm(BLANK); setCount(null); }} className="border px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button onClick={save} className="btn bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800">Save draft</button>
+            <button onClick={() => { setBuilding(false); setForm(BLANK); setCount(null); }} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
           </div>
         </div>
       )}

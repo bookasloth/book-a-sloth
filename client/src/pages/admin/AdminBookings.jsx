@@ -518,7 +518,7 @@ const MapsPlaceholder = () => (
         Vendor location — coming soon. Once vendors add a business address to their profile, an Open in Google Maps button appears here.
       </p>
       <button type="button" disabled aria-disabled="true"
-        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] font-medium border border-gray-200 text-gray-300 cursor-not-allowed">
+        className="btn btn--outline inline-flex items-center gap-2 px-3 py-2 text-[12.5px] font-medium text-gray-300 cursor-not-allowed">
         <Ic d={IC.external} size={14} />Open in Google Maps
       </button>
     </div>
@@ -531,7 +531,7 @@ const MoreMenu = ({ items }) => {
   return (
     <div className="relative" onBlur={() => setTimeout(() => setOpen(false), 120)}>
       <button type="button" onClick={() => setOpen(o => !o)}
-        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-medium border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+        className="btn btn--outline inline-flex items-center justify-center gap-1.5 px-3 py-2 text-[13px] font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
         <Ic d={IC.dots} size={15} />More
       </button>
       {open && (
@@ -968,7 +968,7 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
                 <button
                   disabled={confirm === 'delete' && delText.trim().toUpperCase() !== requiredId}
                   onClick={() => { const c = confirm; setConfirm(null); if (c === 'delete') onDelete(); else onCancel(); }}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  className="btn px-4 py-2 text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                   {confirm === 'delete' ? 'Delete Forever' : 'Cancel Booking'}
                 </button>
               </div>
@@ -1017,7 +1017,7 @@ const EditModal = ({ b, onClose, onSave }) => {
         </div>
         <div className="flex justify-end gap-2 px-5 py-4 border-t border-gray-100">
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
-          <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#FE5100] text-white hover:bg-[#e54900] disabled:opacity-50 transition-colors">
+          <button onClick={save} disabled={saving} className="btn px-4 py-2 text-sm font-semibold bg-[#FE5100] text-white hover:bg-[#e54900] disabled:opacity-50 transition-colors">
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
@@ -1050,7 +1050,7 @@ const DeleteDialog = ({ b, onClose, onConfirm }) => {
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
           <button disabled={txt.trim().toUpperCase() !== reqId} onClick={onConfirm}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            className="btn px-4 py-2 text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
             Delete Forever
           </button>
         </div>

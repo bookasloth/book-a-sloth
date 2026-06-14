@@ -48,7 +48,7 @@ const ExploreWithBolt = () => {
             <button
               onClick={() => handleActionComplete('demo')}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+              className="btn w-full flex items-center justify-center gap-2 bg-primary text-white py-3 font-medium hover:bg-primary-dark disabled:opacity-50 transition"
             >
               <CalendarClock className="h-5 w-5" strokeWidth={2} />
               Book a Demo with the Book a Sloth Team
@@ -57,7 +57,7 @@ const ExploreWithBolt = () => {
             <button
               onClick={() => handleActionComplete('dashboard')}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-white border-2 border-primary text-primary py-3 rounded font-medium hover:bg-primary-light disabled:opacity-50 transition"
+              className="btn btn--outline w-full flex items-center justify-center gap-2 bg-white text-primary py-3 font-medium hover:bg-primary-light disabled:opacity-50 transition"
             >
               Go to My Dashboard
               <ArrowRight className="h-5 w-5" strokeWidth={2} />

@@ -841,9 +841,9 @@ const ServiceBooking = () => {
                             <button
                               key={t}
                               onClick={() => setSelectedTime(t)}
-                              className="py-2.5 rounded border text-sm transition-all"
+                              className="btn btn--outline py-2.5 text-sm transition-all"
                               style={selectedTime === t
-                                ? { background: tc, color: textOnTheme, borderColor: tc, fontWeight: 600 }
+                                ? { background: tc, color: textOnTheme, fontWeight: 600 }
                                 : {}}
                             >
                               {formatTime(t)}
@@ -862,7 +862,7 @@ const ServiceBooking = () => {
               {selectedTime && (
                 <button
                   onClick={() => setStep("details")}
-                  className="mt-6 w-full py-3 rounded font-bold text-sm transition-opacity hover:opacity-85"
+                  className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85"
                   style={{ background: tc, color: textOnTheme }}
                 >
                   Continue →
@@ -970,7 +970,7 @@ const ServiceBooking = () => {
               <button
                 onClick={handleSendOtp}
                 disabled={otpSending || !firstName || !email || (!user && !isPhoneValid)}
-                className="mt-6 w-full py-3 rounded font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {otpSending || verifying
@@ -1033,7 +1033,7 @@ const ServiceBooking = () => {
               <button
                 onClick={handleVerifyAndBook}
                 disabled={verifying || otp.length !== 6}
-                className="mt-6 w-full py-3 rounded font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {verifying
@@ -1122,7 +1122,7 @@ const ServiceBooking = () => {
               <button
                 onClick={handlePayment}
                 disabled={paymentLoading}
-                className="w-full py-3 rounded font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {paymentLoading
@@ -1174,12 +1174,12 @@ const ServiceBooking = () => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <a href={gUrl} target="_blank" rel="noreferrer"
-                    className="inline-flex items-center justify-center py-2.5 px-3 rounded font-semibold text-sm border transition-opacity hover:opacity-85"
-                    style={{ borderColor: tc, color: tc }}>
+                    className="btn btn--outline inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                    style={{ color: tc }}>
                     Add to Google Calendar
                   </a>
                   <a href={icsUrl} download={`${service.title.replace(/\s+/g, "-")}.ics`}
-                    className="inline-flex items-center justify-center py-2.5 px-3 rounded font-semibold text-sm transition-opacity hover:opacity-85"
+                    className="btn inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
                     style={{ background: tc, color: textOnTheme }}>
                     Download iCal (.ics)
                   </a>

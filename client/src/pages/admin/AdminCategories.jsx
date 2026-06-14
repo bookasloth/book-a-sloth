@@ -112,7 +112,7 @@ const AdminCategories = () => {
         {cat.status === 'pending' && (
           <>
             <button onClick={() => setStatus(cat, 'active')} title="Approve"
-              className="flex items-center gap-1 text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700">
+              className="btn flex items-center gap-1 text-xs bg-green-600 text-white px-2 py-1 hover:bg-green-700">
               <Check className="w-3.5 h-3.5" strokeWidth={3} /> Approve
             </button>
             <button onClick={() => setStatus(cat, 'rejected')} title="Reject"
@@ -148,7 +148,7 @@ const AdminCategories = () => {
           onKeyDown={(e) => e.key === 'Enter' && create()}
         />
         <button onClick={create} disabled={creating}
-          className="flex items-center gap-1.5 bg-primary text-white px-4 rounded text-sm font-medium hover:bg-primary-dark disabled:opacity-50 shrink-0">
+          className="btn flex items-center gap-1.5 bg-primary text-white px-4 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 shrink-0">
           <Plus className="w-4 h-4" strokeWidth={3} /> Add
         </button>
       </div>

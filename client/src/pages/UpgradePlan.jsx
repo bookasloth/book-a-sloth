@@ -262,7 +262,7 @@ const UpgradePlan = () => {
                 <button
                   onClick={() => handleUpgrade(key)}
                   disabled={paying === key}
-                  className={`py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
+                  className={`btn py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
                     isPro
                       ? "bg-amber-400 text-gray-900 hover:bg-amber-300"
                       : "bg-primary text-white hover:bg-primary-dark"

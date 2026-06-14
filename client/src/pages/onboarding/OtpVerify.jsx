@@ -169,7 +169,7 @@ const OtpVerify = () => {
               <button
                 type="submit"
                 disabled={!formValid || loading}
-                className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+                className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
               >
                 {loading ? 'Sending OTPs...' : 'Send Verification Codes'}
               </button>
@@ -195,7 +195,7 @@ const OtpVerify = () => {
                   <button
                     onClick={() => handleVerifyOtp('email')}
                     disabled={emailVerified || loading || emailOtp.length !== 6}
-                    className="bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+                    className="btn bg-primary text-white px-4 py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
                   >
                     Verify
                   </button>
@@ -225,7 +225,7 @@ const OtpVerify = () => {
                   <button
                     onClick={() => handleVerifyOtp('phone')}
                     disabled={phoneVerified || loading || phoneOtp.length !== 6}
-                    className="bg-gray-300 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-400 disabled:opacity-50 transition"
+                    className="btn bg-gray-300 text-gray-700 px-4 py-2.5 text-sm font-medium hover:bg-gray-400 disabled:opacity-50 transition"
                   >
                     Verify
                   </button>
@@ -246,7 +246,7 @@ const OtpVerify = () => {
               <button
                 onClick={handleNext}
                 disabled={!emailVerified}
-                className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+                className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
               >
                 Next: Set Password
               </button>

@@ -155,15 +155,15 @@ const RevenueTab = ({ stats }) => {
         </div>
       </div>
       <div className="flex gap-3">
-        <Link to="/admin/finance/transactions" className="flex-1 bg-white border border-gray-200/80 rounded-xl p-4 hover:shadow-sm transition-all text-center">
+        <Link to="/admin/finance/transactions" className="btn btn--outline flex-1 bg-white p-4 hover:shadow-sm transition-all text-center">
           <p className="font-semibold text-gray-800 text-sm">All Transactions</p>
           <p className="text-xs text-gray-400 mt-0.5">View full transaction ledger</p>
         </Link>
-        <Link to="/admin/finance/refunds" className="flex-1 bg-white border border-gray-200/80 rounded-xl p-4 hover:shadow-sm transition-all text-center">
+        <Link to="/admin/finance/refunds" className="btn btn--outline flex-1 bg-white p-4 hover:shadow-sm transition-all text-center">
           <p className="font-semibold text-gray-800 text-sm">Refunds</p>
           <p className="text-xs text-gray-400 mt-0.5">Manage refund requests</p>
         </Link>
-        <Link to="/admin/finance/earnings" className="flex-1 bg-white border border-gray-200/80 rounded-xl p-4 hover:shadow-sm transition-all text-center">
+        <Link to="/admin/finance/earnings" className="btn btn--outline flex-1 bg-white p-4 hover:shadow-sm transition-all text-center">
           <p className="font-semibold text-gray-800 text-sm">Provider Earnings</p>
           <p className="text-xs text-gray-400 mt-0.5">Payout reports</p>
         </Link>

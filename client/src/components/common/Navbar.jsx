@@ -327,7 +327,7 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/be-a-sloth"
-                  className="inline-flex items-center px-4 py-2 text-[13px] font-semibold text-white bg-[#FE5100] hover:bg-[#d94400] rounded-lg transition-colors duration-150 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1 hover:no-underline"
+                  className="btn inline-flex items-center px-4 py-2 text-[13px] font-semibold text-white bg-[#FE5100] hover:bg-[#d94400] transition-colors duration-150 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1 hover:no-underline"
                 >
                   Get Started
                 </Link>
@@ -395,13 +395,13 @@ const Navbar = () => {
               <div className="flex gap-2 px-2 pt-3 mt-1 border-t border-gray-100">
                 <Link
                   to="/login-as-vendor"
-                  className="flex-1 py-2.5 text-[13px] font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-150 hover:no-underline"
+                  className="btn flex-1 py-2.5 text-[13px] font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors duration-150 hover:no-underline"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/be-a-sloth"
-                  className="flex-1 py-2.5 text-[13px] font-semibold text-center text-white bg-[#FE5100] hover:bg-[#d94400] rounded-lg transition-colors duration-150 hover:no-underline"
+                  className="btn flex-1 py-2.5 text-[13px] font-semibold text-center text-white bg-[#FE5100] hover:bg-[#d94400] transition-colors duration-150 hover:no-underline"
                 >
                   Get Started
                 </Link>

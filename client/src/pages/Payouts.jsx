@@ -129,14 +129,14 @@ const WithdrawModal = ({ available, onClose, onRequested }) => {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border rounded-xl py-2.5 text-sm text-gray-500"
+              className="btn btn--outline flex-1 py-2.5 text-sm text-gray-500"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-40"
+              className="btn flex-1 bg-primary text-white py-2.5 text-sm font-semibold disabled:opacity-40"
             >
               {saving ? "Submitting..." : "Request Withdrawal"}
             </button>
@@ -219,7 +219,7 @@ const Payouts = () => {
         <button
           onClick={() => setShowModal(true)}
           disabled={!balance?.available || balance.available < 100}
-          className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40 hover:bg-primary/90"
+          className="btn inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 text-sm font-semibold disabled:opacity-40 hover:bg-primary/90"
         >
           <svg
             className="w-4 h-4"

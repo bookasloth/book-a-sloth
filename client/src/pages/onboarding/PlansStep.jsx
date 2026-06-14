@@ -167,7 +167,7 @@ const PlansStep = () => {
           <button
             onClick={handleProceed}
             disabled={loading}
-            className="w-full bg-primary text-white py-3 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+            className="btn w-full bg-primary text-white py-3 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
           >
             {loading ? 'Processing...' : `Proceed with ${selected.charAt(0).toUpperCase() + selected.slice(1)} Plan`}
           </button>

@@ -195,7 +195,7 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
         </div>
         {bookUrl && (
           <Link to={bookUrl}
-            className="flex-shrink-0 rounded-lg text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
+            className="btn flex-shrink-0 text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
             style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 40, padding: '0 18px' }}>
             Book Now
           </Link>
@@ -237,7 +237,7 @@ const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
           : <span />}
         {bookUrl && (
           <Link to={bookUrl}
-            className="rounded-lg text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
+            className="btn text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
             style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 40, padding: '0 18px' }}>
             Book Now
           </Link>
@@ -268,7 +268,7 @@ const ProductCard = ({ product: p, profileSlug }) => {
       <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
         <span className="text-[10px]" style={{ color: C.muted }}>{p.purchase_count} purchase{p.purchase_count !== 1 ? 's' : ''}</span>
         <Link to={`/${profileSlug}/product/${p.id}`}
-          className="rounded-lg text-xs font-semibold flex items-center transition-opacity hover:opacity-80"
+          className="btn text-xs font-semibold flex items-center transition-opacity hover:opacity-80"
           style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 34, padding: '0 14px' }}>
           {p.price === 0 ? 'Get Free' : 'Buy Now'}
         </Link>
@@ -410,8 +410,8 @@ const HostProfile = () => {
               style={{ maxHeight: cardExpanded ? 0 : (barH || 200), opacity: cardExpanded ? 0 : 1 }}>
               <div ref={barRef}>
             <button onClick={() => setCardExpanded(true)}
-              className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-shadow active:shadow-sm"
-              style={{ background: C.card, border: `1px solid ${C.border}` }}>
+              className="btn btn--outline w-full flex items-center gap-3 p-3 text-left transition-shadow active:shadow-sm"
+              style={{ background: C.card }}>
               <div className="flex-shrink-0 overflow-hidden"
                 style={{ width: 48, height: 48, borderRadius: 10, outline: `2px solid ${borderColor}`, background: C.card }}>
                 {host.profile_image

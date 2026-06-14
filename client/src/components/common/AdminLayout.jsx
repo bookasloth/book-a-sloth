@@ -393,7 +393,7 @@ const AdminLayout = ({ children }) => {
           </nav>
 
           <div className="flex items-center gap-1 ml-auto flex-shrink-0">
-            <button className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors text-[12px] text-gray-400 w-44">
+            <button className="btn hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 transition-colors text-[12px] text-gray-400 w-44">
               <Ic d={IC.search} size={13} /><span>Search...</span>
               <span className="ml-auto text-[10px] text-gray-300 font-mono bg-gray-200 px-1 rounded">⌘K</span>
             </button>

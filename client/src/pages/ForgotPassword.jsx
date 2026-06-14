@@ -49,7 +49,7 @@ const ForgotPassword = () => {
           </p>
           <button
             onClick={() => navigate("/reset-password", { state: { email } })}
-            className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark"
+            className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark"
           >
             Enter reset code
           </button>
@@ -90,7 +90,7 @@ const ForgotPassword = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
+            className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
           >
             {loading ? "Sending..." : "Send reset code"}
           </button>

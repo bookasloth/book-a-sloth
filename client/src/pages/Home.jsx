@@ -296,7 +296,7 @@ const Home = () => {
                 </div>
                 <button
                   onClick={claim}
-                  className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:rounded-xl sm:py-3"
+                  className="btn inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap bg-primary px-5 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:py-3"
                 >
                   Claim Your SlothPage
                   <ArrowRight size={15} />

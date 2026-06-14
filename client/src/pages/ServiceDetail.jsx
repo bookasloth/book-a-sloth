@@ -316,7 +316,7 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0 }) => {
         <button onClick={onBookNow}
           onMouseEnter={() => setBtnHover(true)}
           onMouseLeave={() => setBtnHover(false)}
-          className="w-full py-3.5 rounded-xl font-bold text-sm transition-colors"
+          className="btn w-full py-3.5 font-bold text-sm transition-colors"
           style={{
             background: 'var(--profile-accent, #FE5100)',
             color: btnHover ? '#000000' : 'var(--profile-accent-text, #ffffff)',
@@ -406,11 +406,10 @@ const ProfileCard = ({ vendor, rating, reviewCount, bookings }) => {
         {vendor.username && (
           <Link to={`/${vendor.username}`}
             onMouseEnter={() => setBtnHover(true)} onMouseLeave={() => setBtnHover(false)}
-            className="mt-5 w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-sm font-semibold no-underline transition-colors"
+            className="btn btn--outline mt-5 w-full inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold no-underline transition-colors"
             style={{
               background: btnHover ? accent : '#ffffff',
               color: btnHover ? '#ffffff' : accent,
-              borderColor: accent,
             }}>
             View full profile
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
