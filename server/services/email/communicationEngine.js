@@ -16,6 +16,38 @@ const { supabaseAdmin } = require('../../config/supabase');
 const { buildGlobals, resolveTemplate } = require('./placeholderResolver');
 const { renderLayout } = require('./emailLayout');
 const { getProvider } = require('./providers');
+const { makeToken } = require('./unsubscribeToken');
+
+// Marketing / lifecycle events that honor the unsubscribe list. Everything NOT
+// listed here (OTP, auth, security, booking confirmations, payment receipts,
+// subscription receipts) is transactional and ALWAYS sends — the CAN-SPAM /
+// GDPR carve-out. Bulk campaigns (event_key 'CAMPAIGN:<id>') are always marketing.
+const MARKETING_EVENTS = new Set([
+  'BADGE_UNLOCKED',
+  'MILESTONE_FIRST_BOOKING', 'MILESTONE_10_BOOKINGS', 'MILESTONE_50_BOOKINGS', 'MILESTONE_100_BOOKINGS',
+  'BIRTHDAY', 'ACCOUNT_ANNIVERSARY',
+  'PROFILE_COMPLETION_REMINDER',
+]);
+
+const isMarketing = (event) => MARKETING_EVENTS.has(event) || String(event).startsWith('CAMPAIGN:');
+
+/**
+ * Has this address opted out of marketing email? Fails OPEN: if the table is
+ * missing or the query errors, returns false so transactional/lifecycle mail is
+ * never silently dropped by an infra problem.
+ */
+async function isUnsubscribed(email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!e) return false;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('email_unsubscribes').select('email').eq('email', e).maybeSingle();
+    if (error) return false;
+    return !!data;
+  } catch (_) {
+    return false;
+  }
+}
 
 // Retry delays (minutes) after a failed send: 5m, 30m, 2h, then permanent fail.
 const BACKOFFS_MIN = [5, 30, 120];
@@ -128,13 +160,23 @@ async function send(opts) {
     return { ok: false, reason: 'no_template' };
   }
 
-  const { subject, html } = renderEmail(template, { data, user, settings, audience });
+  // Signed unsubscribe token for the customer-footer link (recovered statelessly
+  // on click). Harmless for shells without an unsubscribe link (vendor).
+  const sendData = { ...data, unsubscribe_token: data.unsubscribe_token || makeToken(to) };
+  const { subject, html } = renderEmail(template, { data: sendData, user, settings, audience });
 
   const baseLog = {
     event_key: event, template_id: template.id, audience: template.audience,
     recipient: to, recipient_user_id: recipientUserId, booking_id: bookingId,
     subject, html, is_test: isTest,
   };
+
+  // Marketing email to an opted-out address → suppress (never reaches the queue).
+  // Transactional events bypass this entirely. Real sends only (not test/immediate-OTP).
+  if (!isTest && !immediate && isMarketing(event) && await isUnsubscribed(to)) {
+    const logId = await insertLog({ ...baseLog, status: 'suppressed', attempts: 0, sent_at: null });
+    return { ok: true, status: 'suppressed', logId };
+  }
 
   // Test send → deliver now, mark TEST (kept out of the normal logs view)
   if (isTest) {
@@ -225,8 +267,19 @@ async function enqueueCampaignEmail({ templateId, to, data = {}, user = {}, camp
   const { data: template } = await supabaseAdmin.from('email_templates').select('*').eq('id', templateId).single();
   if (!template) return { ok: false, reason: 'no_template' };
 
+  // Campaigns are bulk marketing — honor the unsubscribe list (legal requirement).
+  if (await isUnsubscribed(to)) {
+    const logId = await insertLog({
+      event_key: `CAMPAIGN:${campaignId || ''}`, template_id: template.id, audience: template.audience,
+      recipient: to, recipient_user_id: recipientUserId, campaign_id: campaignId || null,
+      subject: subjectOverride || '', html: '', status: 'suppressed', attempts: 0, is_test: false,
+    });
+    return { ok: true, status: 'suppressed', logId };
+  }
+
   // Campaigns target a specific audience template; render that audience's shell.
-  const rendered = renderEmail(template, { data, user, settings, audience: template.audience });
+  const sendData = { ...data, unsubscribe_token: data.unsubscribe_token || makeToken(to) };
+  const rendered = renderEmail(template, { data: sendData, user, settings, audience: template.audience });
   const subject = subjectOverride || rendered.subject;
   const logId = await insertLog({
     event_key: `CAMPAIGN:${campaignId || ''}`, template_id: template.id, audience: template.audience,
@@ -239,5 +292,5 @@ async function enqueueCampaignEmail({ templateId, to, data = {}, user = {}, camp
 
 module.exports = {
   send, processQueue, renderEmail, getTemplate, loadSettings, loadTemplates,
-  clearCache, BACKOFFS_MIN, enqueueCampaignEmail,
+  clearCache, BACKOFFS_MIN, enqueueCampaignEmail, isMarketing, isUnsubscribed,
 };

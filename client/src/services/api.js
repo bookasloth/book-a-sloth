@@ -97,6 +97,11 @@ export const setUserPassword  = (data)         => API.post('/auth/set-password',
 export const forgotPassword   = (data)         => API.post('/auth/forgot-password', data);
 export const resetPassword    = (data)         => API.post('/auth/reset-password', data);
 
+// ── Email preferences (public, signed-token gated) ────────────
+export const getUnsubscribeStatus = (token)    => API.get('/email/unsubscribe', { params: { token } });
+export const unsubscribeEmail     = (token)    => API.post('/email/unsubscribe', { token });
+export const resubscribeEmail     = (token)    => API.post('/email/resubscribe', { token });
+
 // ── Admin Auth (separate endpoint — /hello-sloth login) ───────
 // Single-step login: username/email + password -> isolated admin session token.
 export const adminLoginUser   = (data)         => API.post('/admin-auth/login', data);
