@@ -11,8 +11,11 @@ const db = {
       subject: 'Confirmed: {{service_name}}', preview_text: 'hi', html_content: '<p>Hi {{first_name}}</p>', cta_label: '', cta_url: '' },
     { id: 't2', event_key: 'BOOKING_OTP', audience: 'all', status: 'active',
       subject: 'Code {{otp}}', preview_text: '', html_content: '<p>{{otp}}</p>', cta_label: '', cta_url: '' },
+    { id: 't3', event_key: 'BADGE_UNLOCKED', audience: 'all', status: 'active',
+      subject: 'Badge!', preview_text: '', html_content: '<p>nice</p>', cta_label: '', cta_url: '' },
   ],
   email_logs: [],
+  email_unsubscribes: [], // list of opted-out emails
 };
 
 let mockProviderState = { success: true };
@@ -28,6 +31,12 @@ jest.mock('../../config/supabase', () => {
       limit() { return api; },
       maybeSingle() {
         if (table === 'email_settings') return Promise.resolve({ data: db.email_settings, error: null });
+        if (table === 'email_unsubscribes') {
+          const f = filters.find((x) => x[0] === 'eq' && x[1] === 'email');
+          const email = f && f[2];
+          const hit = db.email_unsubscribes.includes(email);
+          return Promise.resolve({ data: hit ? { email } : null, error: null });
+        }
         return Promise.resolve({ data: null, error: null });
       },
       single() {
@@ -63,7 +72,7 @@ jest.mock('../../services/email/providers', () => ({
 
 const engine = require('../../services/email/communicationEngine');
 
-beforeEach(() => { db.email_logs = []; mockProviderState = { success: true }; engine.clearCache(); });
+beforeEach(() => { db.email_logs = []; db.email_unsubscribes = []; mockProviderState = { success: true }; engine.clearCache(); });
 
 describe('communicationEngine.send', () => {
   test('queues a normal email (status queued, not yet sent)', async () => {
@@ -101,6 +110,41 @@ describe('communicationEngine.send', () => {
     expect(r.ok).toBe(false);
     expect(r.reason).toBe('no_template');
     expect(db.email_logs).toHaveLength(0);
+  });
+});
+
+describe('communicationEngine — marketing unsubscribe', () => {
+  test('marketing event to an opted-out address is suppressed (not queued)', async () => {
+    db.email_unsubscribes = ['opted@x.test'];
+    const r = await engine.send({ event: 'BADGE_UNLOCKED', to: 'opted@x.test', data: {}, user: {} });
+    expect(r.status).toBe('suppressed');
+    expect(db.email_logs[0].status).toBe('suppressed');
+  });
+
+  test('marketing event to a subscribed address still queues', async () => {
+    const r = await engine.send({ event: 'BADGE_UNLOCKED', to: 'ok@x.test', data: {}, user: {} });
+    expect(r.status).toBe('queued');
+    expect(db.email_logs[0].status).toBe('queued');
+  });
+
+  test('transactional event to an opted-out address still sends (carve-out)', async () => {
+    db.email_unsubscribes = ['opted@x.test'];
+    const r = await engine.send({ event: 'BOOKING_CONFIRMED_CUSTOMER', to: 'opted@x.test', data: { service_name: 'X' }, user: {} });
+    expect(r.status).toBe('queued');
+    expect(db.email_logs[0].status).toBe('queued');
+  });
+
+  test('isMarketing flags lifecycle + campaigns, not transactional', () => {
+    expect(engine.isMarketing('BADGE_UNLOCKED')).toBe(true);
+    expect(engine.isMarketing('CAMPAIGN:abc')).toBe(true);
+    expect(engine.isMarketing('BOOKING_CONFIRMED_CUSTOMER')).toBe(false);
+    expect(engine.isMarketing('BOOKING_OTP')).toBe(false);
+  });
+
+  test('queued marketing email embeds an unsubscribe token in the customer footer', async () => {
+    const r = await engine.send({ event: 'BADGE_UNLOCKED', to: 'ok@x.test', audience: 'customer', data: {}, user: {} });
+    expect(r.status).toBe('queued');
+    expect(db.email_logs[0].html).toMatch(/\/unsubscribe\?u=[\w.\-]+/);
   });
 });
 

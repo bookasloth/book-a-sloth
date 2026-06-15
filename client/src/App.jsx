@@ -17,6 +17,9 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword  = lazy(() => import('./pages/ResetPassword'));
 const VendorSignup   = lazy(() => import('./pages/VendorSignup'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
+const Help           = lazy(() => import('./pages/Help'));
+const Privacy        = lazy(() => import('./pages/Privacy'));
+const Unsubscribe    = lazy(() => import('./pages/Unsubscribe'));
 
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
@@ -162,6 +165,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
           {/* Customers never register — accounts are created automatically
               during booking (phone OTP). Old signup URL redirects home. */}
           <Route path="/signup" element={<Navigate to="/" replace />} />
