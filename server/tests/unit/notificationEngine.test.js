@@ -153,4 +153,32 @@ describe('NotificationEngine', () => {
     expect(result.email.success).toBe(false);
     expect(result.email.error).toBe('no_template');
   });
+
+  test('forwards inferred vendor audience to the communication engine (_VENDOR event)', async () => {
+    mockTables.notification_events = [{ ...CONFIRMED_EVENT, event_key: 'BOOKING_CONFIRMED_VENDOR' }];
+    await NotificationEngine.send({ event: 'BOOKING_CONFIRMED_VENDOR', data: { email: 'host@x.com' } });
+    expect(communicationEngine.send).toHaveBeenCalledWith(expect.objectContaining({ audience: 'vendor' }));
+  });
+
+  test('explicit data.audience overrides inference', async () => {
+    await NotificationEngine.send({ event: 'BOOKING_CONFIRMED_CUSTOMER', data: { email: 'a@b.com', audience: 'vendor' } });
+    expect(communicationEngine.send).toHaveBeenCalledWith(expect.objectContaining({ audience: 'vendor' }));
+  });
+});
+
+describe('NotificationEngine.inferAudience', () => {
+  const { inferAudience } = NotificationEngine;
+  test('explicit wins', () => expect(inferAudience('BOOKING_CONFIRMED_CUSTOMER', 'vendor')).toBe('vendor'));
+  test('_VENDOR suffix → vendor', () => expect(inferAudience('BOOKING_REMINDER_VENDOR')).toBe('vendor'));
+  test('_CUSTOMER suffix → customer', () => expect(inferAudience('BOOKING_REMINDER_CUSTOMER')).toBe('customer'));
+  test('vendor-lifecycle event → vendor', () => {
+    expect(inferAudience('VENDOR_WELCOME')).toBe('vendor');
+    expect(inferAudience('PROFILE_VERIFIED')).toBe('vendor');
+    expect(inferAudience('SUBSCRIPTION_PURCHASED')).toBe('vendor');
+  });
+  test('auth/security/generic → all (customer shell)', () => {
+    expect(inferAudience('BOOKING_OTP')).toBe('all');
+    expect(inferAudience('PASSWORD_RESET')).toBe('all');
+    expect(inferAudience('SECURITY_PASSWORD_CHANGED')).toBe('all');
+  });
 });

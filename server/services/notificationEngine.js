@@ -59,6 +59,31 @@ const loadConfig = async () => {
 
 const clearCache = () => { _cache = { at: 0, events: null, providers: null }; };
 
+// Vendor-recipient lifecycle events that don't carry a _VENDOR suffix.
+// (Hosts own profiles, plans, badges/metrics — these always reach a vendor.)
+const VENDOR_EVENTS = new Set([
+  'VENDOR_WELCOME',
+  'PROFILE_COMPLETION_REMINDER', 'PROFILE_VERIFIED', 'PROFILE_REJECTED',
+  'BADGE_UNLOCKED',
+  'MILESTONE_FIRST_BOOKING', 'MILESTONE_10_BOOKINGS', 'MILESTONE_50_BOOKINGS', 'MILESTONE_100_BOOKINGS',
+  'SUBSCRIPTION_PURCHASED', 'SUBSCRIPTION_EXPIRING', 'SUBSCRIPTION_RENEWED',
+]);
+
+/**
+ * Resolve the RECIPIENT audience that selects the email layout shell.
+ * Explicit data.audience always wins. Otherwise inferred from the event key:
+ *   *_VENDOR / known vendor-lifecycle event → 'vendor' (host-branded shell)
+ *   *_CUSTOMER                              → 'customer'
+ *   else                                    → 'all' (→ customer/BAS-branded shell;
+ *                                             correct for OTP/auth/security/generic)
+ */
+const inferAudience = (event, explicit) => {
+  if (explicit) return explicit;
+  if (/_VENDOR$/.test(event) || VENDOR_EVENTS.has(event)) return 'vendor';
+  if (/_CUSTOMER$/.test(event)) return 'customer';
+  return 'all';
+};
+
 const logResult = async ({ event, channel, destination, status, response, error, payload }) => {
   try {
     await supabaseAdmin.from('notification_logs').insert({
@@ -124,7 +149,7 @@ const send = async ({ event, data = {} }) => {
     const r = await communicationEngine.send({
       event,
       to: data.email,
-      audience: data.audience || 'all',
+      audience: inferAudience(event, data.audience),
       data: data.emailData || {},
       user: data.emailUser || { email: data.email, name: data.name },
       recipientUserId: data.recipientUserId || null,
@@ -144,4 +169,4 @@ const send = async ({ event, data = {} }) => {
   return results;
 };
 
-module.exports = { send, loadConfig, clearCache, logResult };
+module.exports = { send, loadConfig, clearCache, logResult, inferAudience };

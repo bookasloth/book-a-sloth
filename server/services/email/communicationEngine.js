@@ -67,15 +67,20 @@ async function getTemplate(event, audience = 'all') {
   return map.get(`${event}:${audience}`) || map.get(`${event}:all`) || null;
 }
 
-/** Render a template to a full HTML document (no DB writes). */
-function renderEmail(template, { data = {}, user = {}, settings }) {
+/**
+ * Render a template to a full HTML document (no DB writes).
+ * `audience` selects the layout shell (vendor vs customer); it is the RECIPIENT
+ * audience, not the template row tag. Defaults to 'all' → customer shell.
+ */
+function renderEmail(template, { data = {}, user = {}, settings, audience = 'all' }) {
   const globals = buildGlobals(settings, user);
   const r = resolveTemplate(template, data, globals);
   const html = renderLayout({
+    audience,
     bodyHtml: r.html, previewText: data.preview_text || template.preview_text || '',
     ctaLabel: r.ctaLabel, ctaUrl: r.ctaUrl, settings,
     emailCategory: template.email_category || '',
-    emailReason: template.email_reason || '',
+    data,
   });
   return { subject: r.subject, html, missing: r.missing };
 }
@@ -123,7 +128,7 @@ async function send(opts) {
     return { ok: false, reason: 'no_template' };
   }
 
-  const { subject, html } = renderEmail(template, { data, user, settings });
+  const { subject, html } = renderEmail(template, { data, user, settings, audience });
 
   const baseLog = {
     event_key: event, template_id: template.id, audience: template.audience,
@@ -220,7 +225,8 @@ async function enqueueCampaignEmail({ templateId, to, data = {}, user = {}, camp
   const { data: template } = await supabaseAdmin.from('email_templates').select('*').eq('id', templateId).single();
   if (!template) return { ok: false, reason: 'no_template' };
 
-  const rendered = renderEmail(template, { data, user, settings });
+  // Campaigns target a specific audience template; render that audience's shell.
+  const rendered = renderEmail(template, { data, user, settings, audience: template.audience });
   const subject = subjectOverride || rendered.subject;
   const logId = await insertLog({
     event_key: `CAMPAIGN:${campaignId || ''}`, template_id: template.id, audience: template.audience,
