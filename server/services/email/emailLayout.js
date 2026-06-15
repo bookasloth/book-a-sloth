@@ -1,21 +1,30 @@
 /**
- * emailLayout.js — the ONE standard email shell.
+ * emailLayout.js — recipient-driven email shells.
  *
- * Structure: HEADER (logo + category chip) → BODY → optional CTA → FOOTER
- * (logo, link row, company address, email reason, copyright).
+ * Two layouts, selected by the RECIPIENT audience (not the template row tag):
+ *   • customer → Book A Sloth-branded header, nav + legal footer (new users:
+ *                build platform trust, give navigation + legal unsubscribe).
+ *   • vendor   → host-branded header (host's own logo/name), minimal
+ *                "Powered by Book a Sloth" footer (they already know the brand).
  *
- * Design tokens are defined as constants and interpolated into inline styles.
- * Email clients do not support CSS custom properties, so values are inlined.
- * Table-based layout for Outlook / Gmail / Apple Mail / dark-mode compatibility.
- * Max width: 600px.
+ * renderLayout({ audience, ... }) dispatches:
+ *   'vendor'                      → renderVendorLayout
+ *   'customer' | 'all' | missing  → renderCustomerLayout (safe default; it is
+ *                                   platform-branded and carries unsubscribe)
  *
- * Footer link URLs discovered from app router (App.jsx):
- *   /dashboard           ✓ exists — Manage Account
- *   /dashboard/profile   ✓ exists — Preferences
- *   /help                TODO — Help Center page not yet built
- *   /privacy             TODO — Privacy Policy page not yet built
- *   /terms               TODO — Terms of Service page not yet built
- *   /unsubscribe         TODO — Unsubscribe endpoint not yet built
+ * Shared private helpers (accent bar, card wrapper, CTA, header block, escaping)
+ * keep the two variants from drifting — they differ ONLY in header logo source
+ * and footer content.
+ *
+ * Email-client notes:
+ *   • Table-based layout for Outlook / Gmail / Apple Mail / dark-mode.
+ *   • Chip tint is a precomputed SOLID hex (brand blended toward white), NOT
+ *     8-digit alpha hex — Outlook desktop does not render alpha hex.
+ *   • Max width 600px. Design tokens inlined (no CSS custom properties in email).
+ *
+ * Placeholders are resolved BEFORE the layout runs (resolver only touches the
+ * template body/subject/cta). So values the layout needs — host logo/name,
+ * unsubscribe token — are read from `data`, NOT from {{tokens}}.
  */
 
 'use strict';
@@ -24,109 +33,90 @@ const esc = (s) => String(s == null ? '' : s).replace(/"/g, '&quot;');
 
 // Brand design tokens
 const D = {
-  primary:  '#FE5100',
-  dark:     '#202124',
-  muted:    '#5f6368',
-  border:   '#edf0f2',
-  bg:       '#f3f5f7',
-  chipBg:   '#FFF4EE',  // light tint of brand primary
-  white:    '#ffffff',
-  subtext:  '#6b7280',
-  note:     '#9ca3af',
-  font:     "'Poppins','Plus Jakarta Sans',Arial,sans-serif",
+  dark:   '#202124',
+  muted:  '#5f6368',
+  sub:    '#80868b',
+  border: '#edf0f2',
+  bg:     '#f3f5f7',
+  cardBg: '#fafafa',
+  white:  '#ffffff',
+  note:   '#9aa0a6',
+  font:   "'Poppins','Plus Jakarta Sans',Arial,sans-serif",
 };
 
-/** Derive footer page URLs from the configured website base. */
-function buildFooterUrls(websiteUrl) {
-  return {
-    help:        `${websiteUrl}/help`,              // TODO: /help not yet built
-    privacy:     `${websiteUrl}/privacy`,           // TODO: /privacy not yet built
-    terms:       `${websiteUrl}/terms`,             // TODO: /terms not yet built
-    account:     `${websiteUrl}/dashboard`,         // ✓ /dashboard exists
-    preferences: `${websiteUrl}/dashboard/profile`, // ✓ /dashboard/profile exists
-    unsubscribe: `${websiteUrl}/unsubscribe`,       // TODO: /unsubscribe not yet built
-  };
+// Fixed brand constants (legal entity, address, platform footer mark)
+const COMPANY    = 'Timewheel Internet (P) Ltd';
+const ADDRESS    = '2nd Floor, Eureka Coworking, Mate Square, Nagpur 440030';
+const TAGLINE    = 'Booking Made Easy';
+const FOOTER_LOGO = 'https://company-assets.bookasloth.in/images/email/footer-logo.png';
+
+/** Blend a #rrggbb color toward white. ratio 0 = original, 1 = white. */
+function tint(hex, ratio) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ''));
+  if (!m) return '#FFF4EE';
+  const n = parseInt(m[1], 16);
+  const mix = (c) => Math.round(c + (255 - c) * ratio);
+  const r = mix((n >> 16) & 255), g = mix((n >> 8) & 255), b = mix(n & 255);
+  return '#' + [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * Render a complete email HTML document.
- *
- * @param {object}  opts
- * @param {string}  opts.bodyHtml        resolved template body (no layout chrome)
- * @param {string}  [opts.previewText]   inbox preheader
- * @param {string}  [opts.ctaLabel]      button text (button omitted if blank)
- * @param {string}  [opts.ctaUrl]        button URL
- * @param {string}  [opts.emailCategory] right-side header chip, e.g. "Security Check"
- * @param {string}  [opts.emailReason]   footer legal copy
- * @param {object}  opts.settings        email_settings row from DB
- * @returns {string} full HTML document
- */
-function renderLayout({
-  bodyHtml      = '',
-  previewText   = '',
-  ctaLabel      = '',
-  ctaUrl        = '',
-  emailCategory = '',
-  emailReason   = '',
-  settings      = {},
-}) {
-  const brand    = settings.brand_color   || D.primary;
-  const website  = settings.website_url   || 'https://bookasloth.in';
-  const support  = settings.support_email || 'support@bookasloth.in';
-  const fromName = settings.from_name     || 'Book A Sloth';
-  const logo     = settings.logo_url      || '';
-  const year     = new Date().getFullYear();
-  const urls     = buildFooterUrls(website);
+// ── Shared pieces ──────────────────────────────────────────────────────────
 
-  // ── Header: logo (left)
-  const headerLogo = logo
-    ? `<img src="${esc(logo)}" alt="${esc(fromName)}" height="32" style="display:block;border:0;height:32px;">`
-    : `<span style="font-size:18px;font-weight:800;letter-spacing:-0.01em;color:${esc(brand)};font-family:${D.font};">${esc(fromName)}</span>`;
+/** 4px brand accent bar at the top of the card. */
+function accentBar(brand) {
+  return `<tr><td style="height:4px;line-height:4px;font-size:0;background:${esc(brand)};">&nbsp;</td></tr>`;
+}
 
-  // ── Header: category chip (right), visible only when a value is present
-  const categoryCell = emailCategory
-    ? `<td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:12px;">
-         <span style="display:inline-block;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:0.04em;color:${esc(brand)};background:${D.chipBg};border-radius:100px;font-family:${D.font};">${esc(emailCategory)}</span>
+/** Header row: logo (left) + name + sub-label, optional pill chip (right). */
+function headerBlock({ logoHtml, name, subLabel, chip, brand }) {
+  const chipCell = chip
+    ? `<td align="right" style="vertical-align:middle;white-space:nowrap;padding-left:12px;">
+         <span style="display:inline-block;padding:7px 12px;border-radius:999px;background:${tint(brand, 0.90)};color:${esc(brand)};font-size:12px;font-weight:600;font-family:${D.font};">${esc(chip)}</span>
        </td>`
     : '';
-
-  // ── CTA button
-  const cta = ctaLabel && ctaUrl
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px 0 4px;">
-         <tr><td style="border-radius:8px;background:${esc(brand)};">
-           <a href="${esc(ctaUrl)}" style="display:inline-block;padding:13px 26px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:8px;font-family:${D.font};">${esc(ctaLabel)}</a>
-         </td></tr>
-       </table>`
+  const subEl = subLabel
+    ? `<div style="font-size:12px;color:${D.sub};padding-top:2px;font-family:${D.font};">${esc(subLabel)}</div>`
     : '';
+  return `<tr>
+    <td style="padding:22px 28px;border-bottom:1px solid ${D.border};">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="left" style="vertical-align:middle;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;">${logoHtml}</td>
+              <td width="12"></td>
+              <td style="vertical-align:middle;">
+                <div style="font-size:15px;font-weight:600;line-height:1.4;color:${D.dark};font-family:${D.font};">${esc(name)}</div>
+                ${subEl}
+              </td>
+            </tr></table>
+          </td>
+          ${chipCell}
+        </tr>
+      </table>
+    </td>
+  </tr>`;
+}
 
-  // ── Footer: logo (slightly smaller than header logo)
-  const footerLogo = logo
-    ? `<img src="${esc(logo)}" alt="${esc(fromName)}" height="26" style="display:block;border:0;height:26px;">`
-    : `<span style="font-size:15px;font-weight:800;letter-spacing:-0.01em;color:${D.dark};font-family:${D.font};">${esc(fromName)}</span>`;
+/** Full-width block CTA. Rendered only when both label and url are present. */
+function ctaButton(label, url, brand) {
+  if (!label || !url) return '';
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 4px;">
+    <tr><td style="border-radius:10px;background:${esc(brand)};">
+      <a href="${esc(url)}" style="display:block;text-align:center;padding:15px 24px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;font-family:${D.font};">${esc(label)}</a>
+    </td></tr>
+  </table>`;
+}
 
-  // ── Footer link row
-  const lk = (href, label) =>
-    `<a href="${esc(href)}" style="color:${D.muted};text-decoration:none;font-size:12px;font-family:${D.font};">${label}</a>`;
-  const dot = `<span style="color:${D.note};margin:0 5px;">&middot;</span>`;
-  const footerLinks = [
-    lk(urls.help,        'Help Center'),
-    lk(urls.privacy,     'Privacy Policy'),
-    lk(urls.terms,       'Terms of Service'),
-    lk(urls.account,     'Manage Account'),
-    lk(urls.preferences, 'Preferences'),
-    lk(urls.unsubscribe, 'Unsubscribe'),
-  ].join(dot);
+/** Logo <img> with text-wordmark fallback. */
+function logoImg(src, alt, fallbackColor) {
+  return src
+    ? `<img src="${esc(src)}" alt="${esc(alt)}" width="48" style="display:block;border:0;border-radius:10px;">`
+    : `<span style="font-size:18px;font-weight:800;letter-spacing:-0.01em;color:${esc(fallbackColor)};font-family:${D.font};">${esc(alt)}</span>`;
+}
 
-  // ── Optional custom HTML injected from email_settings.footer_html
-  const customFooter = settings.footer_html
-    ? `<div style="margin-bottom:14px;">${settings.footer_html}</div>`
-    : '';
-
-  // ── Legal / reason copy (why this email was sent)
-  const reasonEl = emailReason
-    ? `<p style="margin:14px 0 0;font-size:11px;line-height:1.65;color:${D.note};font-family:${D.font};">${esc(emailReason)}</p>`
-    : '';
-
+/** Document shell + card open. Returns the HTML up to (and including) the accent bar. */
+function shellOpen({ previewText, fromName, brand }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -137,64 +127,24 @@ function renderLayout({
 </head>
 <body style="margin:0;padding:0;background:${D.bg};font-family:${D.font};">
 
-  <!-- Inbox preheader (hidden) -->
   <span style="display:none!important;opacity:0;color:transparent;height:0;width:0;max-height:0;max-width:0;overflow:hidden;font-size:1px;">${esc(previewText)}</span>
 
-  <!-- Outer wrapper -->
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${D.bg};padding:28px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${D.bg};padding:32px 16px;">
     <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:${D.white};border:1px solid ${D.border};border-radius:14px;overflow:hidden;">
+        ${accentBar(brand)}`;
+}
 
-      <!-- Email card: 600px max, rounded, shadow -->
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:${D.white};border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(15,23,42,0.07);">
-
-        <!-- ══ HEADER ══════════════════════════════════════════════ -->
+/** Body cell + card/document close, with the supplied footer row injected. */
+function shellClose({ bodyHtml, cta, footerRow }) {
+  return `
         <tr>
-          <td style="padding:20px 32px;border-bottom:1px solid ${D.border};">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="vertical-align:middle;">${headerLogo}</td>
-                ${categoryCell}
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        <!-- ══ BODY + CTA ══════════════════════════════════════════ -->
-        <tr>
-          <td style="padding:32px 32px 18px;">
+          <td style="padding:34px 28px 18px;">
             ${bodyHtml}
             ${cta}
           </td>
         </tr>
-
-        <!-- ══ FOOTER ══════════════════════════════════════════════ -->
-        <tr>
-          <td style="padding:24px 32px 28px;border-top:1px solid ${D.border};background:${D.bg};">
-
-            <!-- Footer logo -->
-            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
-              <tr><td>${footerLogo}</td></tr>
-            </table>
-
-            ${customFooter}
-
-            <!-- Link row -->
-            <p style="margin:0 0 18px;font-size:12px;line-height:2.2;font-family:${D.font};">${footerLinks}</p>
-
-            <!-- Company address -->
-            <p style="margin:0 0 2px;font-size:12px;font-weight:700;color:${D.dark};font-family:${D.font};">Timewheel Internet (P) Ltd</p>
-            <p style="margin:0 0 2px;font-size:12px;line-height:1.6;color:${D.muted};font-family:${D.font};">2nd Floor, Eureka Coworking, Mate Square, Nagpur 440030</p>
-            <p style="margin:0;font-size:12px;color:${D.muted};font-family:${D.font};"><a href="mailto:${esc(support)}" style="color:${D.muted};text-decoration:none;">${esc(support)}</a></p>
-
-            <!-- Email reason / legal copy -->
-            ${reasonEl}
-
-            <!-- Copyright -->
-            <p style="margin:14px 0 0;font-size:11px;color:${D.note};font-family:${D.font};">© ${year} ${esc(fromName)}. All rights reserved.</p>
-
-          </td>
-        </tr>
-
+        ${footerRow}
       </table>
     </td></tr>
   </table>
@@ -203,4 +153,115 @@ function renderLayout({
 </html>`;
 }
 
-module.exports = { renderLayout };
+// ── Customer layout ──────────────────────────────────────────────────────────
+
+function renderCustomerLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, subLabel, chip, settings, data }) {
+  const brand    = settings.brand_color   || '#FE5100';
+  const website  = settings.website_url   || 'https://bookasloth.in';
+  const support  = settings.support_email || 'support@bookasloth.in';
+  const fromName = settings.from_name     || 'Book A Sloth';
+  const logo     = settings.logo_url      || '';
+  const year     = new Date().getFullYear();
+  const unsubToken = data.unsubscribe_token || '';
+
+  const header = headerBlock({
+    logoHtml: logoImg(logo, fromName, brand),
+    name: fromName, subLabel, chip, brand,
+  });
+
+  const lk = (href, label) =>
+    `<a href="${esc(href)}" style="color:${D.muted};text-decoration:none;font-size:12px;font-family:${D.font};">${label}</a>`;
+  const dot = `<span style="color:${D.note};margin:0 6px;">&middot;</span>`;
+  const nav = [
+    lk(`${website}/my-bookings`, 'My Bookings'),
+    lk(`${website}/help`,        'Help'),
+    lk(`${website}/privacy`,     'Privacy'),
+    lk(`${website}/unsubscribe?u=${esc(unsubToken)}`, 'Unsubscribe'),
+  ].join(dot);
+
+  const footerRow = `<tr>
+    <td style="padding:24px 28px 28px;border-top:1px solid ${D.border};background:${D.bg};text-align:center;">
+      <img src="${esc(FOOTER_LOGO)}" alt="${esc(fromName)}" width="60" style="margin:0 auto 14px;display:block;border:0;">
+      <p style="margin:0 0 16px;font-size:12px;line-height:2;font-family:${D.font};">${nav}</p>
+      <p style="margin:0 0 2px;font-size:12px;font-weight:700;color:${D.dark};font-family:${D.font};">${COMPANY}</p>
+      <p style="margin:0 0 2px;font-size:12px;line-height:1.6;color:${D.muted};font-family:${D.font};">${ADDRESS}</p>
+      <p style="margin:0;font-size:12px;color:${D.muted};font-family:${D.font};"><a href="mailto:${esc(support)}" style="color:${D.muted};text-decoration:none;">${esc(support)}</a></p>
+      <p style="margin:14px 0 0;font-size:11px;color:${D.note};font-family:${D.font};">© ${year} ${esc(fromName)}. All rights reserved.</p>
+    </td>
+  </tr>`;
+
+  return shellOpen({ previewText, fromName, brand })
+    + header
+    + shellClose({ bodyHtml, cta: ctaButton(ctaLabel, ctaUrl, brand), footerRow });
+}
+
+// ── Vendor layout ────────────────────────────────────────────────────────────
+
+function renderVendorLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, subLabel, chip, settings, data }) {
+  const brand     = settings.brand_color   || '#FE5100';
+  const fromName  = settings.from_name     || 'Book A Sloth';
+  const basLogo   = settings.logo_url      || '';
+  const year      = new Date().getFullYear();
+
+  // Host's own brand leads; fall back to the platform brand if absent.
+  const hostLogo  = data.company_logo || basLogo;
+  const hostName  = data.company_name || fromName;
+
+  const header = headerBlock({
+    logoHtml: logoImg(hostLogo, hostName, brand),
+    name: hostName, subLabel, chip, brand,
+  });
+
+  const footerRow = `<tr>
+    <td style="padding:22px 20px;border-top:1px solid ${D.border};text-align:center;font-size:11px;line-height:1.7;color:${D.note};font-family:${D.font};">
+      Powered by<br>
+      <img src="${esc(FOOTER_LOGO)}" alt="Book a Sloth" width="60" style="margin:8px auto;display:block;border:0;">
+      ${esc(COMPANY)} &middot; ${esc(TAGLINE)}<br>
+      ${esc(ADDRESS)}<br>
+      <span style="color:${D.note};">© ${year} Book A Sloth</span>
+    </td>
+  </tr>`;
+
+  return shellOpen({ previewText, fromName, brand })
+    + header
+    + shellClose({ bodyHtml, cta: ctaButton(ctaLabel, ctaUrl, brand), footerRow });
+}
+
+// ── Dispatcher ───────────────────────────────────────────────────────────────
+
+/**
+ * Render a complete email HTML document, choosing the shell by recipient audience.
+ *
+ * @param {object}  opts
+ * @param {string}  [opts.audience]      'vendor' → vendor shell; else customer shell
+ * @param {string}  opts.bodyHtml        resolved template body (no layout chrome)
+ * @param {string}  [opts.previewText]   inbox preheader
+ * @param {string}  [opts.ctaLabel]      block button text (omitted if blank)
+ * @param {string}  [opts.ctaUrl]        block button URL
+ * @param {string}  [opts.emailCategory] header sub-label (e.g. "Booking Notification")
+ * @param {string}  [opts.headerChip]    header pill chip (e.g. "#1234"); from data.header_chip
+ * @param {object}  opts.settings        email_settings row
+ * @param {object}  [opts.data]          per-send data (company_logo, company_name, unsubscribe_token, header_chip)
+ * @returns {string} full HTML document
+ */
+function renderLayout({
+  audience      = 'all',
+  bodyHtml      = '',
+  previewText   = '',
+  ctaLabel      = '',
+  ctaUrl        = '',
+  emailCategory = '',
+  headerChip    = '',
+  settings      = {},
+  data          = {},
+} = {}) {
+  const args = {
+    bodyHtml, previewText, ctaLabel, ctaUrl,
+    subLabel: emailCategory,
+    chip: headerChip || data.header_chip || '',
+    settings, data: data || {},
+  };
+  return audience === 'vendor' ? renderVendorLayout(args) : renderCustomerLayout(args);
+}
+
+module.exports = { renderLayout, tint };
