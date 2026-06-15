@@ -78,8 +78,8 @@ function payoutEntry({ host_id, amount, reference }) {
 }
 ```
 
-- Posted via `postSafe` (never throws — a ledger miss must not block the status update; the hourly reconciler is the safety net) **on mark-paid only**.
-- `sourceType = 'PAYOUT'`, `sourceId = payout_request.id` → idempotent on the RPC's `UNIQUE(source_type, source_id)`, so a retry is a no-op.
+- Posted via `post()` (throwing) **before** the status update, on mark-paid. The reconciler only self-heals ORDER_PAYMENT/SUBSCRIPTION_PAYMENT, so `postSafe` would silently lose a payout miss — therefore post first; if it throws, the row stays `approved` and the admin retries (safe, idempotent). Only after a successful post does the row flip to `paid`.
+- `sourceType = 'SETTLEMENT'` (a vendor payout is a settlement; `'PAYOUT'` is not in the `journal_entries.source_type` CHECK, `'SETTLEMENT'` is — no constraint change). `sourceId = payout_request.id` → idempotent on the RPC's `UNIQUE(source_type, source_id)`, so a retry posts nothing new.
 - `journalDate` = the paid date.
 - Mirrors the `backfillLedger.js` section-3 payout shape and `bankTransferEntry`.
 
