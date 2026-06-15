@@ -93,7 +93,7 @@ const PATH_LABELS = {
   support:'Support', tickets:'Tickets', disputes:'Disputes', reviews:'Reviews',
   platform:'Platform', appearance:'Appearance', menu:'Menu Builder',
   footer:'Footer Builder', communication:'Communication', campaigns:'Campaigns', notifications:'Notification Settings', badges:'Badges',
-  upcoming:'Upcoming', live:'Live', completed:'Completed', cancelled:'Cancelled',
+  confirmed:'Confirmed', completed:'Completed', cancelled:'Cancelled', disputed:'Disputed',
   categories:'Categories', featured:'Featured',
   staff:'Staff & Roles', system:'System', audit:'Audit Logs',
   features:'Feature Status',
