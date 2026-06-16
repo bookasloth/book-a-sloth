@@ -183,18 +183,18 @@ const Payouts = () => {
       big: true,
     },
     {
-      label: "Pending Payouts",
-      value: fmt(balance?.pending),
+      label: "Clearing",
+      value: fmt(balance?.clearing),
       color: "text-amber-600",
     },
     {
-      label: "Total Withdrawn",
-      value: fmt(balance?.totalWithdrawn),
-      color: "text-gray-700",
+      label: "Pending Completion",
+      value: fmt(balance?.pendingCompletion),
+      color: "text-gray-500",
     },
     {
-      label: "Total Earned",
-      value: fmt(balance?.totalEarned),
+      label: "Total Withdrawn",
+      value: fmt(balance?.paidOut),
       color: "text-gray-700",
     },
   ];
