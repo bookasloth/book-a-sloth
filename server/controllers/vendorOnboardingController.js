@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 const { supabaseAdmin, signInWithPassword } = require("../config/supabase");
 const { sendWhatsAppOtp } = require("../utils/notify");
 const communicationEngine = require("../services/email/communicationEngine");
@@ -37,10 +38,58 @@ const generateUniqueSlug = async (baseName) => {
   }
 };
 
+// ─── Send-cap constants (mirror otpStore.js) ────────────────────────────
+const MAX_SENDS      = 3;
+const SEND_WINDOW_MS = 60 * 60 * 1000;   // 1 hour
+const LOCKOUT_MS     = 15 * 60 * 1000;   // 15 minutes
+
 // ─── OTP Sending (Email + WhatsApp) ─────────────────────────────────────
 const sendOtpBothChannels = async (slug, email, phone, name = "Vendor") => {
+  const now = Date.now();
+
+  // Read existing session for per-account send-rate-limiting.
+  // This prevents an attacker (rotating IPs to bypass the IP limiter) from
+  // flooding a victim's email/WhatsApp with OTPs.
+  const { data: existing } = await supabaseAdmin
+    .from("otp_sessions")
+    .select("*")
+    .eq("onboarding_slug", slug)
+    .maybeSingle();
+
+  if (existing) {
+    // Already locked out from a previous cap breach?
+    if (existing.send_locked_until && new Date(existing.send_locked_until).getTime() > now) {
+      const mins = Math.ceil((new Date(existing.send_locked_until).getTime() - now) / 60000);
+      throw new Error(`Too many OTP requests. Try again in ${mins} minute(s).`);
+    }
+
+    // Within the rolling send window?
+    const windowStart = existing.first_send_at ? new Date(existing.first_send_at).getTime() : 0;
+    const inWindow = now - windowStart < SEND_WINDOW_MS;
+
+    if (inWindow && (existing.send_count || 0) >= MAX_SENDS) {
+      // Hit the cap — set a 15-min lockout and reject.
+      await supabaseAdmin
+        .from("otp_sessions")
+        .update({ send_locked_until: new Date(now + LOCKOUT_MS).toISOString() })
+        .eq("onboarding_slug", slug);
+      throw new Error("Too many OTP requests. Try again in 15 minutes.");
+    }
+
+    var sendCount   = inWindow ? (existing.send_count || 0) + 1 : 1;
+    var firstSendAt = inWindow && existing.first_send_at ? existing.first_send_at : new Date(now).toISOString();
+  } else {
+    var sendCount   = 1;
+    var firstSendAt = new Date(now).toISOString();
+  }
+
   // Generate OTP (6-digit, CSPRNG)
   const otp = crypto.randomInt(100000, 1000000).toString();
+
+  // Hash before storing — never persist plaintext OTPs (parity with
+  // authController.forgotPassword). Both channels share the same OTP value,
+  // so one hash covers email_otp and phone_otp.
+  const otpHash = await bcrypt.hash(otp, 10);
 
   // Store in otp_sessions table
   const { error: storeError } = await supabaseAdmin
@@ -50,12 +99,15 @@ const sendOtpBothChannels = async (slug, email, phone, name = "Vendor") => {
         onboarding_slug: slug,
         email: email.toLowerCase().trim(),
         phone: phone || "",
-        email_otp: otp,
-        phone_otp: otp,
-        email_otp_expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-        phone_otp_expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+        email_otp: otpHash,
+        phone_otp: otpHash,
+        email_otp_expires_at: new Date(now + 10 * 60 * 1000).toISOString(),
+        phone_otp_expires_at: new Date(now + 10 * 60 * 1000).toISOString(),
         email_verified: false,
         phone_verified: false,
+        send_count: sendCount,
+        first_send_at: firstSendAt,
+        send_locked_until: null,
       },
       { onConflict: "onboarding_slug" }
     );
@@ -104,17 +156,17 @@ const verifyOtp = async (slug, channel, otp) => {
     if (session.email_locked_until && new Date() < new Date(session.email_locked_until)) {
       throw new Error("Email OTP locked due to too many attempts");
     }
-    if (session.email_otp !== otp) {
+    if (!(await bcrypt.compare(otp, session.email_otp || ""))) {
       const newAttempts = (session.email_attempts || 0) + 1;
       if (newAttempts >= 3) {
         await supabaseAdmin
           .from("otp_sessions")
           .update({
             email_attempts: newAttempts,
-            email_locked_until: new Date(Date.now() + 60 * 1000).toISOString(),
+            email_locked_until: new Date(Date.now() + LOCKOUT_MS).toISOString(),
           })
           .eq("onboarding_slug", slug);
-        throw new Error("Too many attempts. Try again in 60 seconds.");
+        throw new Error("Too many attempts. Try again in 15 minutes.");
       }
       await supabaseAdmin
         .from("otp_sessions")
@@ -134,17 +186,17 @@ const verifyOtp = async (slug, channel, otp) => {
     if (session.phone_locked_until && new Date() < new Date(session.phone_locked_until)) {
       throw new Error("Phone OTP locked due to too many attempts");
     }
-    if (session.phone_otp !== otp) {
+    if (!(await bcrypt.compare(otp, session.phone_otp || ""))) {
       const newAttempts = (session.phone_attempts || 0) + 1;
       if (newAttempts >= 3) {
         await supabaseAdmin
           .from("otp_sessions")
           .update({
             phone_attempts: newAttempts,
-            phone_locked_until: new Date(Date.now() + 60 * 1000).toISOString(),
+            phone_locked_until: new Date(Date.now() + LOCKOUT_MS).toISOString(),
           })
           .eq("onboarding_slug", slug);
-        throw new Error("Too many attempts. Try again in 60 seconds.");
+        throw new Error("Too many attempts. Try again in 15 minutes.");
       }
       await supabaseAdmin
         .from("otp_sessions")
