@@ -191,7 +191,17 @@ const updateBooking = async (req, res) => {
     const { status, payment_status } = req.body;
     const updates = { updated_at: new Date().toISOString() };
     if (status) updates.status = status;
-    if (payment_status) updates.payment_status = payment_status;
+    if (payment_status) {
+      // SECURITY: 'paid' may ONLY be set by the verified Razorpay payment flow.
+      // Allowing it here lets an admin fabricate a withdrawable vendor balance.
+      // Case-insensitive guard so 'PAID'/'Paid' can't slip past the app layer.
+      if (String(payment_status).toLowerCase() === 'paid') {
+        return res.status(400).json({
+          message: "payment_status 'paid' can only be set by a verified payment, not a manual edit.",
+        });
+      }
+      updates.payment_status = payment_status;
+    }
 
     const { data, error } = await supabaseAdmin
       .from('bookings')
