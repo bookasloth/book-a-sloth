@@ -168,9 +168,8 @@ const confirm2fa = async (req, res) => {
 
     const { data: staff } = await supabaseAdmin
       .from('admin_users').select('*').eq('id', p.sub).maybeSingle();
-    if (!staff || !staff.totp_secret) {
-      return res.status(400).json({ message: 'Start enrollment first.' });
-    }
+    if (!staff || !staff.is_active) return res.status(401).json({ message: 'Invalid session.' });
+    if (!staff.totp_secret) return res.status(400).json({ message: 'Start enrollment first.' });
 
     if (!twofa.verifyToken((req.body || {}).code, decrypt(staff.totp_secret))) {
       return res.status(400).json({ message: 'Invalid code. Try the current 6 digits.' });
