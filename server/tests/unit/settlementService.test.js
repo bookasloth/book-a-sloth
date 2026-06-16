@@ -1,0 +1,113 @@
+'use strict';
+jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
+const { supabaseAdmin } = require('../../config/supabase');
+const { computeSettlementBalance } = require('../../services/settlementService');
+
+const chain = (result) => {
+  const c = {};
+  for (const m of ['select', 'eq']) c[m] = jest.fn(() => c);
+  c.then = (resolve) => resolve(result);
+  return c;
+};
+
+const NOW = Date.UTC(2026, 5, 20, 0, 0, 0); // 2026-06-20
+const daysAgo = (d) => new Date(NOW - d * 86400000).toISOString();
+
+const mockData = (bookings, payouts) => {
+  supabaseAdmin.from.mockImplementation((t) => {
+    if (t === 'bookings') return chain({ data: bookings });
+    if (t === 'payout_requests') return chain({ data: payouts });
+    return chain({ data: [] });
+  });
+};
+
+beforeEach(() => jest.clearAllMocks());
+
+test('matured eligible booking (completed > window ago) counts as available', async () => {
+  mockData(
+    [{ vendor_amount: 500, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid' }],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(500);
+  expect(b.clearing).toBe(0);
+});
+
+test('eligible booking still in clearing window is clearing, not available', async () => {
+  mockData(
+    [{ vendor_amount: 300, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(2), payment_status: 'paid' }],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(0);
+  expect(b.clearing).toBe(300);
+});
+
+test('paid-but-not-completed booking is pendingCompletion only', async () => {
+  mockData(
+    [{ vendor_amount: 200, settlement_status: 'pending_completion', completed_at: null, payment_status: 'paid' }],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(0);
+  expect(b.clearing).toBe(0);
+  expect(b.pendingCompletion).toBe(200);
+});
+
+test('cancelled and not_eligible bookings are excluded from all buckets', async () => {
+  mockData(
+    [
+      { vendor_amount: 999, settlement_status: 'cancelled', completed_at: daysAgo(30), payment_status: 'paid' },
+      { vendor_amount: 888, settlement_status: 'not_eligible', completed_at: daysAgo(30), payment_status: 'paid' },
+    ],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(0);
+  expect(b.clearing).toBe(0);
+  expect(b.pendingCompletion).toBe(0);
+  expect(b.lifetimeEarned).toBe(0);
+});
+
+test('payouts (pending/approved/paid) reduce available; report inflight and paidOut', async () => {
+  mockData(
+    [{ vendor_amount: 1000, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid' }],
+    [
+      { amount: 200, status: 'paid' },
+      { amount: 100, status: 'approved' },
+      { amount: 50, status: 'pending' },
+      { amount: 999, status: 'rejected' },
+    ]
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(650);
+  expect(b.paidOut).toBe(200);
+  expect(b.inflight).toBe(150);
+});
+
+test('available never negative when over-claimed', async () => {
+  mockData(
+    [{ vendor_amount: 100, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid' }],
+    [{ amount: 500, status: 'paid' }]
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(0);
+});
+
+test('booking completed exactly at cutoff counts as matured (<= cutoff)', async () => {
+  mockData(
+    [{ vendor_amount: 400, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(7), payment_status: 'paid' }],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(400);
+});
+
+test('zero-day window makes eligible bookings immediately available', async () => {
+  mockData(
+    [{ vendor_amount: 250, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(0), payment_status: 'paid' }],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 0, NOW);
+  expect(b.available).toBe(250);
+});
