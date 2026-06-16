@@ -2,7 +2,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
-const ALLOWED_FOLDERS = ['profiles', 'covers', 'services'];
+const ALLOWED_FOLDERS = ['profiles', 'covers', 'services', 'branding'];
 
 // Content-based image detection via magic bytes — the client-supplied mimetype
 // and filename extension are both attacker-controlled, so they are never

@@ -86,6 +86,7 @@ app.use('/api/vendors',        require('./routes/badgePublicRoutes'));
 app.use('/api/feature-flags',  require('./routes/featureFlagRoutes'));
 app.use('/api/notifications', require('./routes/notificationWebhookRoutes')); // public AiSensy webhook (secret-gated)
 app.use('/api/email',         require('./routes/emailRoutes')); // public unsubscribe (signed-token gated)
+app.get('/api/appearance',  require('./controllers/appearanceController').getPublic); // public navbar logo
 app.get('/api/plans',       require('./controllers/planAdminController').publicPlans);
 
 // Health check — used by Render's health probe and UptimeRobot. Mounted outside

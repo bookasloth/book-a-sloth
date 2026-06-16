@@ -46,6 +46,11 @@ router.delete('/services/:id', requireAdmin('services.manage'), deleteService);
 router.get('/settings', requireAdmin('settings.manage'), getSettings);
 router.put('/settings', requireAdmin('settings.manage'), updateSettings);
 
+// ── Appearance — navbar logo (mode + image URLs) ───────────────
+const appearance = require('../controllers/appearanceController');
+router.get('/appearance', requireAdmin('settings.manage'), appearance.getAdmin);
+router.put('/appearance', requireAdmin('settings.manage'), appearance.update);
+
 // ── Payment settings — Razorpay credentials (encrypted at rest) ─
 const paymentSettings = require('../controllers/paymentSettingsAdminController');
 router.get('/settings/payment/razorpay',       requireAdmin('settings.manage'), paymentSettings.getRazorpay);
