@@ -119,6 +119,7 @@ const createOrder = async (req, res) => {
     auditLog('PAYMENT_ORDER_CREATED', booking.guest_id, { booking_id, amount: totalPaise });
 
     res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency,
+      key: await razorpayConfig.getKeyId(),
       service_price: servicePrice, platform_fee: platformFee, gst, total: customerTotal });
   } catch (error) {
     securityLog('PAYMENT_ORDER_ERROR', { error: error.message });
@@ -674,6 +675,7 @@ const createProductOrder = async (req, res) => {
       notes: { product_id, title: product.title, platform_fee: productFee },
     });
     res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency,
+      key: await razorpayConfig.getKeyId(),
       product_price: product.price, platform_fee: productFee });
   } catch (error) {
     safeError(res, error);
@@ -704,7 +706,8 @@ const createRescheduleFeeOrder = async (req, res) => {
       receipt: `rsf_${booking_id.slice(0, 20)}`,
       notes: { booking_id, kind: "reschedule_fee" },
     });
-    res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency, fee });
+    res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency, fee,
+      key: await razorpayConfig.getKeyId() });
   } catch (e) {
     res.status(500).json({ message: "Could not start reschedule fee payment" });
   }
