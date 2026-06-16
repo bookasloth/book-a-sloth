@@ -36,11 +36,13 @@ const JWT_SECRET = process.env.SUPER_ADMIN_JWT_SECRET || 'dev-only-insecure-admi
 
 const b64url = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
 
-/** Sign an admin session token. `payload` should include type/sub/role/permissions. */
-const jwtSign = (payload) => {
+/** Sign an admin session token. `payload` should include type/sub/role/permissions.
+ *  Pass an optional `ttlSec` to override the default 8-hour session TTL (e.g. for
+ *  short-lived pending tokens used during 2FA flows). */
+const jwtSign = (payload, ttlSec = SESSION_TTL_SEC) => {
   const header = b64url({ alg: 'HS256', typ: 'JWT' });
   const now    = Math.floor(Date.now() / 1000);
-  const body   = b64url({ ...payload, iat: now, exp: now + SESSION_TTL_SEC });
+  const body   = b64url({ ...payload, iat: now, exp: now + ttlSec });
   const sig    = crypto.createHmac('sha256', JWT_SECRET).update(header + '.' + body).digest('base64url');
   return `${header}.${body}.${sig}`;
 };
@@ -75,7 +77,14 @@ const jwtVerify = (token) => {
   return payload;
 };
 
+/** Verify a short-lived pending token AND assert its `type`. Throws otherwise. */
+const verifyPending = (token, expectedType) => {
+  const payload = jwtVerify(token);
+  if (payload.type !== expectedType) throw new Error('Wrong token type');
+  return payload;
+};
+
 const hashPassword   = (plain)       => bcrypt.hash(String(plain), BCRYPT_ROUNDS);
 const verifyPassword = (plain, hash) => (hash ? bcrypt.compare(String(plain), hash) : Promise.resolve(false));
 
-module.exports = { jwtSign, jwtVerify, hashPassword, verifyPassword, SESSION_TTL_SEC };
+module.exports = { jwtSign, jwtVerify, verifyPending, hashPassword, verifyPassword, SESSION_TTL_SEC };
