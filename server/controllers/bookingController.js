@@ -21,6 +21,10 @@ const emailHtml = (body) => `
 const row = (label, value) =>
   `<p style="margin:0 0 12px;font-size:15px;color:#374151;"><strong>${label}:</strong> ${value}</p>`;
 
+const escHtml = (s) => String(s == null ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 const button = (href, label) =>
   `<a href="${href}" style="display:inline-block;margin-top:12px;padding:12px 18px;border-radius:12px;background:#4f46e5;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;">${label}</a>`;
 
@@ -907,7 +911,10 @@ const confirmReschedule = async (req, res) => {
       })
       .eq("id", booking.id);
 
-    if (updateError) return res.status(500).send(updateError.message);
+    if (updateError) {
+      console.error('reschedule ack update:', updateError.message);
+      return res.status(500).send("Something went wrong confirming your reschedule. Please contact support.");
+    }
 
     const s = booking.services;
     const host = booking["profiles!bookings_host_id_fkey"] || {};
@@ -939,12 +946,13 @@ const confirmReschedule = async (req, res) => {
       emailHtml(`
       <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.12em;">Confirmed</p>
       <h1 style="margin:0 0 20px;font-size:26px;font-weight:800;">Thanks, the new time is acknowledged</h1>
-      ${row("Service", s?.title || "Service")}
-      ${row("When", when)}
+      ${row("Service", escHtml(s?.title || "Service"))}
+      ${row("When", escHtml(when))}
     `),
     );
   } catch (error) {
-    res.status(500).send(error.message);
+    console.error('acknowledgeReschedule:', error.message);
+    res.status(500).send("Something went wrong. Please contact support.");
   }
 };
 
