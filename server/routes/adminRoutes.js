@@ -105,6 +105,13 @@ router.get('/vendors/:id/badges',         requireAdmin('badges.manage'), badges.
 router.post('/vendors/:id/badges',        requireAdmin('badges.manage'), badges.assignBadge);
 router.delete('/vendors/:id/badges/:badgeId', requireAdmin('badges.manage'), badges.revokeBadge);
 
+// ── Payout approval ────────────────────────────────────────────
+const payouts = require('../controllers/payoutAdminController');
+router.get('/payouts',              requireAdmin('payouts.view'),    payouts.listPayouts);
+router.post('/payouts/:id/approve', requireAdmin('payouts.approve'), payouts.approvePayout);
+router.post('/payouts/:id/reject',  requireAdmin('payouts.approve'), payouts.rejectPayout);
+router.post('/payouts/:id/pay',     requireAdmin('payouts.release'), payouts.markPayoutPaid);
+
 // ── Subscription plans ─────────────────────────────────────────
 const plans = require('../controllers/planAdminController');
 router.get('/plans',                 requireAdmin('plans.view'),   plans.listPlans);

@@ -78,7 +78,7 @@ const getPayoutBalance = async (req, res) => {
       .eq('host_id', hostId);
 
     const totalWithdrawn = (payouts || [])
-      .filter(p => p.status === 'approved')
+      .filter(p => p.status === 'approved' || p.status === 'paid')
       .reduce((sum, p) => sum + (p.amount || 0), 0);
 
     const pendingPayout = (payouts || [])
@@ -141,7 +141,7 @@ const requestPayout = async (req, res) => {
       .eq('host_id', hostId);
 
     const alreadyClaimed = (payouts || [])
-      .filter(p => p.status === 'approved' || p.status === 'pending')
+      .filter(p => p.status === 'approved' || p.status === 'pending' || p.status === 'paid')
       .reduce((sum, p) => sum + (p.amount || 0), 0);
 
     const available = Math.max(0, totalEarned - alreadyClaimed);

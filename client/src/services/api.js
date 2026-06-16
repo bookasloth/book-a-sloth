@@ -148,6 +148,12 @@ export const adminFinanceAdjustment   = (data)        => API.post('/admin/financ
 export const adminFinanceReversal     = (data)        => API.post('/admin/finance/reversal', data);
 export const adminFinanceBankTransfer = (data)        => API.post('/admin/finance/bank-transfer', data);
 
+// Admin — Payout approval
+export const adminGetPayouts     = (status)         => API.get('/admin/payouts', { params: status ? { status } : {} });
+export const adminApprovePayout  = (id)             => API.post(`/admin/payouts/${id}/approve`);
+export const adminRejectPayout   = (id, reason)     => API.post(`/admin/payouts/${id}/reject`, { reason });
+export const adminMarkPayoutPaid = (id, reference)  => API.post(`/admin/payouts/${id}/pay`, { payment_reference: reference });
+
 // ── Vendor Onboarding (10-step flow) ──────────────────────────
 export const checkSlugAvailable   = (slug)             => API.post('/onboarding/check-slug', { slug });
 export const sendOnboardingOtp    = (data)             => API.post('/onboarding/send-otp', data);

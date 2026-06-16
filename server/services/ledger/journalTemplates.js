@@ -87,6 +87,18 @@ function bankTransferEntry({ amount, reference }) {
   };
 }
 
+/** SETTLEMENT (vendor payout) — relieve Vendor Payables when cash is sent. */
+function payoutEntry({ host_id, amount, reference }) {
+  const tags = { vendor_id: host_id };
+  return {
+    description: `Vendor payout ${reference || ''}`.trim(),
+    lines: [
+      line(ACCOUNTS.VENDOR_PAYABLES, 'debit', amount, tags),
+      line(ACCOUNTS.BANK, 'credit', amount, tags),
+    ],
+  };
+}
+
 /** RESCHEDULE_FEE — platform keeps the fee; platform bears the gateway charge. */
 function rescheduleFeeEntry({ booking_id, host_id, fee, gstRate = 0.18, razorpay_fee = 0, razorpay_tax = 0 }) {
   const tags = { vendor_id: host_id, order_item_id: booking_id };
@@ -135,6 +147,7 @@ module.exports = {
   orderPaymentEntry,
   subscriptionPaymentEntry,
   bankTransferEntry,
+  payoutEntry,
   rescheduleFeeEntry,
   adjustmentEntry,
   reversalEntry,
