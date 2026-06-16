@@ -22,6 +22,10 @@ const otpStore = require("../utils/otpStore");
 const { sendOtpNotification } = require("../utils/notify");
 const NotificationEngine = require("../services/notificationEngine");
 
+// ─── Per-account login lockout constants ───────────────────────────────────
+const LOGIN_MAX_FAILED = 5;
+const LOGIN_LOCK_MS = 15 * 60 * 1000;
+
 // ─── Profile slug helpers (inline to avoid circular deps) ──────────────────
 const slugifyUsername = (text) =>
   text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/--+/g, '-').slice(0, 60);
@@ -653,8 +657,30 @@ const loginWithPhone = async (req, res) => {
     if (!profile.password_set)
       return res.status(409).json({ needsPassword: true, message: "Set a password to continue." });
 
+    // ── Per-account lockout check ─────────────────────────────────────────────
+    if (profile.login_locked_until && new Date(profile.login_locked_until).getTime() > Date.now()) {
+      const mins = Math.ceil((new Date(profile.login_locked_until).getTime() - Date.now()) / 60000);
+      return res.status(429).json({ message: `Too many attempts. Try again in ${mins} minute(s).` });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const { data, error } = await signInWithPassword(profile.email, password);
-    if (error) return res.status(401).json({ message: "Invalid phone or password" });
+    if (error) {
+      const failed = (profile.failed_login_count || 0) + 1;
+      const patch = { failed_login_count: failed };
+      if (failed >= LOGIN_MAX_FAILED) {
+        patch.login_locked_until = new Date(Date.now() + LOGIN_LOCK_MS).toISOString();
+      }
+      await supabaseAdmin.from('profiles').update(patch).eq('id', profile.id);
+      return res.status(401).json({ message: "Invalid phone or password" });
+    }
+
+    // Reset counters on success
+    await supabaseAdmin
+      .from('profiles')
+      .update({ failed_login_count: 0, login_locked_until: null })
+      .eq('id', profile.id);
+
     res.json(serializeProfile(profile, data.session));
   } catch (error) {
     safeError(res, error);
@@ -719,9 +745,38 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // ── Per-account lockout check (distributed brute-force defence) ──────────
+    const emailKey = String(email || '').toLowerCase().trim();
+    const { data: pre } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email, failed_login_count, login_locked_until')
+      .eq('email', emailKey)
+      .maybeSingle();
+
+    if (pre?.login_locked_until && new Date(pre.login_locked_until).getTime() > Date.now()) {
+      const mins = Math.ceil((new Date(pre.login_locked_until).getTime() - Date.now()) / 60000);
+      return res.status(429).json({ message: `Too many attempts. Try again in ${mins} minute(s).` });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const { data, error } = await signInWithPassword(email, password);
-    if (error)
-      return res.status(401).json({ message: "Invalid email or password" });
+    if (error) {
+      if (pre) {
+        const failed = (pre.failed_login_count || 0) + 1;
+        const patch = { failed_login_count: failed };
+        if (failed >= LOGIN_MAX_FAILED) {
+          patch.login_locked_until = new Date(Date.now() + LOGIN_LOCK_MS).toISOString();
+        }
+        await supabaseAdmin.from('profiles').update(patch).eq('id', pre.id);
+      }
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Reset counters on success
+    await supabaseAdmin
+      .from('profiles')
+      .update({ failed_login_count: 0, login_locked_until: null })
+      .eq('id', data.user.id);
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
