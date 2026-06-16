@@ -59,12 +59,13 @@ function resolveTemplate(template, data = {}, globals = {}) {
   const subject = resolveString(template.subject, context);
   const html = resolveString(template.html_content, context);
   const ctaUrl = resolveString(template.cta_url, context);
-  const missing = [...new Set([...subject.missing, ...html.missing, ...ctaUrl.missing])];
+  const ctaLabel = resolveString(template.cta_label, context);
+  const missing = [...new Set([...subject.missing, ...html.missing, ...ctaUrl.missing, ...ctaLabel.missing])];
   return {
     subject: subject.text,
     html: html.text,
     ctaUrl: ctaUrl.text,
-    ctaLabel: template.cta_label || '',
+    ctaLabel: ctaLabel.text,
     missing,
   };
 }

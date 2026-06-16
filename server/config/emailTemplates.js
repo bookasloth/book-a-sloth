@@ -139,7 +139,7 @@ const TEMPLATES = [
       eyebrow('Upcoming appointment') + h('See you soon, {{first_name}}') +
       lead('A friendly reminder about your upcoming appointment:') +
       card(detail('Service', '{{service_name}}') + detail('Host', '{{vendor_name}}') + detail('When', '{{booking_date}} at {{booking_time}}')),
-    cta_label: 'View booking', cta_url: '{{dashboard_url}}',
+    cta_label: '{{action_label}}', cta_url: '{{action_link}}',
   },
 
   {
@@ -152,7 +152,7 @@ const TEMPLATES = [
       eyebrow('Upcoming session') + h('You have a session soon') +
       lead('Reminder of your upcoming session:') +
       card(detail('Client', '{{user_name}}') + detail('Service', '{{service_name}}') + detail('When', '{{booking_date}} at {{booking_time}}')),
-    cta_label: 'Open dashboard', cta_url: '{{dashboard_url}}',
+    cta_label: '{{action_label}}', cta_url: '{{action_link}}',
   },
 
   // ── Booking — Cancelled ─────────────────────────────────────────────────────

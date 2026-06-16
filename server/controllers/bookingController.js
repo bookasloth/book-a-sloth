@@ -27,10 +27,20 @@ const button = (href, label) =>
 // WhatsApp template params for the approved AiSensy booking templates:
 //   customer: [customerName, serviceTitle, vendorName, dateTime]
 //   vendor:   [vendorName, customerName, serviceTitle, dateTime]
-const customerParams = ({ guestName, serviceTitle, hostName, when }) =>
-  [guestName || "Customer", serviceTitle || "Service", hostName || "Host", when];
-const vendorParams = ({ guestName, serviceTitle, hostName, when }) =>
-  [hostName || "Host", guestName || "Customer", serviceTitle || "Service", when];
+// `actionLink` is OPTIONAL and APPEND-ONLY: pass it only for the reminder
+// templates (which carry a 5th body variable = join/directions link). The
+// confirmed/cancelled/rescheduled AiSensy templates only have 4 vars, so
+// callers that omit actionLink keep the 4-param shape and never break.
+const customerParams = ({ guestName, serviceTitle, hostName, when, actionLink }) => {
+  const p = [guestName || "Customer", serviceTitle || "Service", hostName || "Host", when];
+  if (actionLink) p.push(actionLink);
+  return p;
+};
+const vendorParams = ({ guestName, serviceTitle, hostName, when, actionLink }) => {
+  const p = [hostName || "Host", guestName || "Customer", serviceTitle || "Service", when];
+  if (actionLink) p.push(actionLink);
+  return p;
+};
 
 // ── Email placeholder data for the Communication Engine templates ──
 // Split a scheduled time into {{booking_date}} / {{booking_time}}.
@@ -42,15 +52,24 @@ const splitWhen = (scheduledAt, tz = "Asia/Kolkata") => {
   };
 };
 // Placeholder map shared by customer + vendor booking emails.
-const bookingEmailData = ({ serviceTitle, hostName, hostPhone, guestName, scheduledAt, tz, bookingId, online }) => ({
-  service_name: serviceTitle || "Service",
-  vendor_name: hostName || "Host",
-  vendor_phone: hostPhone || "",
-  user_name: guestName || "Customer",
-  booking_id: bookingId || "",
-  location: online ? "Online (link in your dashboard)" : "",
-  ...splitWhen(scheduledAt, tz),
-});
+const bookingEmailData = ({ serviceTitle, hostName, hostPhone, guestName, scheduledAt, tz, bookingId, online, actionLink }) => {
+  const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
+  const link = actionLink || dashboard;
+  return {
+    service_name: serviceTitle || "Service",
+    vendor_name: hostName || "Host",
+    vendor_phone: hostPhone || "",
+    user_name: guestName || "Customer",
+    booking_id: bookingId || "",
+    location: online ? "Online" : "",
+    // Reminder CTA: Meet link when online, dashboard otherwise (offline maps
+    // link lands in Phase 2). action_label drives the button text once the
+    // engine resolves cta_label.
+    action_link: link,
+    action_label: online && actionLink ? "Join meeting" : "View booking",
+    ...splitWhen(scheduledAt, tz),
+  };
+};
 
 const BOOKING_SERVICE_SELECT =
   "scheduled_at, services(duration, grace_period_minutes)";
@@ -957,10 +976,17 @@ const processReminders = async () => {
       const host = b["profiles!bookings_host_id_fkey"] || {};
       const when = new Date(b.scheduled_at).toLocaleString("en-IN");
       try {
-        const ctx = { guestName: b.guest_name, serviceTitle: s?.title, hostName: host.name, when };
+        // Mode of truth = service.meeting_mode (NOT meeting_link presence — the
+        // Meet link may not be minted yet). Online → join link; offline → dashboard
+        // for now (Phase 2 swaps in a Google Maps directions link).
+        const isOnline = (s?.meeting_mode || (b.meeting_link ? "online" : "offline")) === "online";
+        const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
+        const actionLink = isOnline && b.meeting_link ? b.meeting_link : dashboard;
+        const ctx = { guestName: b.guest_name, serviceTitle: s?.title, hostName: host.name, when, actionLink };
         const emailData = bookingEmailData({
           serviceTitle: s?.title, hostName: host.name, hostPhone: host.phone,
-          guestName: b.guest_name, scheduledAt: b.scheduled_at, bookingId: b.id, online: !!b.meeting_link,
+          guestName: b.guest_name, scheduledAt: b.scheduled_at, bookingId: b.id,
+          online: isOnline, actionLink: isOnline && b.meeting_link ? b.meeting_link : "",
         });
         await NotificationEngine.send({
           event: "BOOKING_REMINDER_CUSTOMER",
