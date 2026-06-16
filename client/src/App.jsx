@@ -34,6 +34,7 @@ const VendorTypeStep   = lazy(() => import('./pages/onboarding/VendorTypeStep'))
 const CategoryStep     = lazy(() => import('./pages/onboarding/CategoryStep'));
 const BookingTypeStep  = lazy(() => import('./pages/onboarding/BookingTypeStep'));
 const CalendarStep     = lazy(() => import('./pages/onboarding/CalendarStep'));
+const WhatsAppStep     = lazy(() => import('./pages/onboarding/WhatsAppStep'));
 const ProfileStep      = lazy(() => import('./pages/onboarding/ProfileStep'));
 const FirstServiceStep = lazy(() => import('./pages/onboarding/FirstServiceStep'));
 const PlansStep        = lazy(() => import('./pages/onboarding/PlansStep'));
@@ -187,6 +188,7 @@ function App() {
           <Route path="/vendor-register/:slug/category" element={<CategoryStep />} />
           <Route path="/vendor-register/:slug/booking-type" element={<BookingTypeStep />} />
           <Route path="/vendor-register/:slug/calendar" element={<CalendarStep />} />
+          <Route path="/vendor-register/:slug/whatsapp" element={<WhatsAppStep />} />
           <Route path="/vendor-register/:slug/profile" element={<ProfileStep />} />
           <Route path="/vendor-register/:slug/first-service" element={<FirstServiceStep />} />
           <Route path="/vendor-register/:slug/plans" element={<PlansStep />} />

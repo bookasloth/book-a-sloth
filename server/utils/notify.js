@@ -39,4 +39,14 @@ const sendWhatsAppOtp = async ({ phone, otp, name = 'Friend' }) => {
   return !!result.whatsapp.success;
 };
 
-module.exports = { sendOtpNotification, sendWhatsAppOtp };
+// WhatsApp number-verification OTP — dedicated AiSensy template.
+const sendWhatsAppVerifyOtp = async ({ phone, otp, name = 'Friend' }) => {
+  if (!phone) return false;
+  const result = await NotificationEngine.send({
+    event: 'WHATSAPP_VERIFY_OTP',
+    data: { phone, name, templateParams: [String(otp)], buttonParams: [String(otp)] },
+  });
+  return !!result.whatsapp.success;
+};
+
+module.exports = { sendOtpNotification, sendWhatsAppOtp, sendWhatsAppVerifyOtp };

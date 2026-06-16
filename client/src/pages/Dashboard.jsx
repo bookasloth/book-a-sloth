@@ -3,11 +3,13 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CalendarClock, CheckCircle2, XCircle, CalendarDays, LayoutGrid, IndianRupee,
   UserCheck, Activity, Camera, UserCog, Tag, CalendarCheck, CreditCard, ShieldCheck,
-  Check, ArrowRight, Copy, Link2,
+  Check, ArrowRight, Copy, Link2, MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getHostBookings, getMyServices, getGuestBookings } from '../services/api';
 import toast from 'react-hot-toast';
+import Modal from '../components/booking/Modal';
+import WhatsAppVerify from '../components/whatsapp/WhatsAppVerify';
 
 const STATUS_PILL = (status) => {
   const map = {
@@ -97,6 +99,8 @@ const Dashboard = () => {
   const [bannerDismissed, setBannerDismissed] = useState(
     () => localStorage.getItem('legacyPlanBannerDismissed') === '1'
   );
+  const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
+  const [whatsappEntry, setWhatsappEntry] = useState(undefined); // { country, number } preserved across close
 
   // Legacy paid vendors were backfilled to subscription_status='active' but have
   // NO auto-renew mandate — nudge them onto auto-renew before their period ends.
@@ -162,6 +166,7 @@ const Dashboard = () => {
     { key: 'gcal',    label: 'Connect Google Calendar',  done: !!user?.google_calendar_connected,      Icon: CalendarCheck, onClick: connectGoogleCalendar },
     { key: 'plan',    label: 'Choose a plan',            done: !!user?.plan,                           Icon: CreditCard,   to: '/dashboard/upgrade' },
     { key: 'verify',  label: 'Verify contact details',   done: !!user?.is_verified,                    Icon: ShieldCheck,  to: '/dashboard/profile' },
+    { key: 'whatsapp', label: 'Add WhatsApp for Booking Updates', done: !!user?.whatsapp_verified, Icon: MessageCircle, onClick: () => setWhatsappModalOpen(true) },
   ], [user, services, connectGoogleCalendar]);
 
   const completion = Math.round((checklist.filter((c) => c.done).length / checklist.length) * 100);
@@ -321,6 +326,22 @@ const Dashboard = () => {
           )}
         </section>
       </div>
+
+      <Modal open={whatsappModalOpen} title="Verify WhatsApp" onClose={() => setWhatsappModalOpen(false)}>
+        <p className="text-sm text-gray-500 mb-4">
+          Receive booking confirmations and important updates directly on WhatsApp.
+        </p>
+        <WhatsAppVerify
+          initialCountry={whatsappEntry?.country}
+          initialPhone={whatsappEntry?.number}
+          onPhoneChange={setWhatsappEntry}
+          onVerified={(phone) => {
+            updateUser({ whatsapp_verified: true, whatsapp_number: phone });
+            setWhatsappModalOpen(false);
+            toast.success("WhatsApp successfully verified.\nYou'll now receive booking updates.");
+          }}
+        />
+      </Modal>
     </div>
   );
 };
