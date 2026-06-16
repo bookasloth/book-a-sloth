@@ -46,7 +46,7 @@ const FirstServiceStep = () => {
       // Update onboarding step
       await updateOnboardingStep({
         slug,
-        step: 8,
+        step: 9,
         data: { first_service_created: true },
       });
 
@@ -61,7 +61,7 @@ const FirstServiceStep = () => {
 
   return (
     <>
-      <ProgressBar current={8} total={10} />
+      <ProgressBar current={9} total={11} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
         <div className="page-card w-full max-w-2xl p-5 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Add your first service</h1>

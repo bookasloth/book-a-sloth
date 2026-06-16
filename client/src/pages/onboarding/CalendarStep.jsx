@@ -18,7 +18,7 @@ const CalendarStep = () => {
     if (!user?.google_calendar_connected) return;
     updateOnboardingStep({ slug, step: 6, data: { calendar_connected: true } })
       .catch(() => {})
-      .finally(() => navigate(`/vendor-register/${slug}/profile`, { replace: true }));
+      .finally(() => navigate(`/vendor-register/${slug}/whatsapp`, { replace: true }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.google_calendar_connected]);
 
@@ -32,7 +32,7 @@ const CalendarStep = () => {
         data: { calendar_connected: false, calendar_skipped: true },
       });
       toast.success('Skipped calendar step');
-      navigate(`/vendor-register/${slug}/profile`);
+      navigate(`/vendor-register/${slug}/whatsapp`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to skip');
     } finally {
@@ -54,7 +54,7 @@ const CalendarStep = () => {
 
   return (
     <>
-      <ProgressBar current={6} total={10} />
+      <ProgressBar current={6} total={11} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
         <div className="page-card w-full max-w-md p-5 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Connect Google Calendar</h1>

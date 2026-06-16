@@ -68,7 +68,7 @@ const ProfileStep = () => {
     try {
       await updateOnboardingStep({
         slug,
-        step: 7,
+        step: 8,
         data: {
           profile_image: profileImage,
           bio,
@@ -89,7 +89,7 @@ const ProfileStep = () => {
     try {
       await updateOnboardingStep({
         slug,
-        step: 7,
+        step: 8,
         data: { profile_image: null, bio: '' },
       });
 
@@ -103,7 +103,7 @@ const ProfileStep = () => {
 
   return (
     <>
-      <ProgressBar current={7} total={10} />
+      <ProgressBar current={8} total={11} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
         <div className="page-card w-full max-w-md p-5 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Complete your profile</h1>

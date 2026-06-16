@@ -54,6 +54,7 @@ const ProtectedRoute = ({ children }) => {
       '/vendor-register/:slug/category',
       '/vendor-register/:slug/booking-type',
       '/vendor-register/:slug/calendar',
+      '/vendor-register/:slug/whatsapp',
       '/vendor-register/:slug/profile',
       '/vendor-register/:slug/first-service',
       '/vendor-register/:slug/plans',

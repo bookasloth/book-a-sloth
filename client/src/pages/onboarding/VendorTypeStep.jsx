@@ -37,7 +37,7 @@ const VendorTypeStep = () => {
 
   return (
     <>
-      <ProgressBar current={3} total={10} />
+      <ProgressBar current={3} total={11} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
         <div className="page-card w-full max-w-md p-5 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">What best describes you?</h1>
