@@ -32,7 +32,9 @@ cp server/.env.example server/.env
 
 # Client
 cp client/.env.example client/.env   # if example exists
-# Fill in: VITE_API_URL, VITE_RAZORPAY_KEY_ID, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+# Fill in: VITE_API_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+# (Razorpay key id is NOT a client env var — it's configured in
+#  Admin → Settings → Payment and served by the API at checkout.)
 ```
 
 ### 3. Set Up Database
@@ -181,11 +183,20 @@ Admin roles: `superadmin`, `operations`, `finance`, `support`, `content`, `techn
 
 ## Plans
 
-| Plan | Price | Commission | Services | Products |
-|---|---|---|---|---|
-| Starter (free) | ₹0 | 5% | 3 | 0 |
-| Creator | ₹999/yr | 0% | 15 | 5 |
-| Professional | ₹3,650/yr | 0% | Unlimited | Unlimited |
+Paid plans bill **monthly or annually**, both auto-renewing via Razorpay
+Subscriptions (GST charged on top; annual is the better deal). Prices are
+admin-editable in **Admin → Subscription Plans**.
+
+| Plan | Monthly | Annual | Commission | Services | Products |
+|---|---|---|---|---|---|
+| Starter (free) | — | ₹0 | 5% | 3 | 0 |
+| Creator | ₹199/mo | ₹999/yr | 0% | 15 | 5 |
+| Professional | ₹499/mo | ₹3,650/yr | 0% | Unlimited | Unlimited |
+
+Vendors pick a cadence at checkout; switching tier/cadence prorates remaining
+value into free days on the new plan. See
+[docs/razorpay-webhook-setup.md](docs/razorpay-webhook-setup.md) for going live
+with subscription billing.
 
 ---
 
