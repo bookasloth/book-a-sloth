@@ -161,6 +161,8 @@ export const verifyOnboardingOtp  = (data)             => API.post('/onboarding/
 export const createVendorAccount  = (data)             => API.post('/onboarding/create-account', data);
 export const updateOnboardingStep = (data)             => API.post('/onboarding/update-step', data);
 export const getOnboardingStatus  = ()                 => API.get('/onboarding/status');
+export const whatsappSendOtp      = (phone)            => API.post('/whatsapp/send-otp', { phone });
+export const whatsappVerifyOtp    = (phone, otp)       => API.post('/whatsapp/verify-otp', { phone, otp });
 export const createRazorpayOrder  = (data)             => API.post('/onboarding/create-order', data);
 export const verifyOnboardingPayment = (data)          => API.post('/onboarding/verify-payment', data);
 export const markOnboardingComplete = ()               => API.post('/onboarding/mark-complete');
