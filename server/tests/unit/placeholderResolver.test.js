@@ -2,7 +2,7 @@
  * tests/unit/placeholderResolver.test.js — pure resolver, no DB.
  */
 'use strict';
-const { buildGlobals, resolveString, resolveTemplate } = require('../../services/email/placeholderResolver');
+const { buildGlobals, resolveString, resolveTemplate, htmlEscape } = require('../../services/email/placeholderResolver');
 
 describe('buildGlobals', () => {
   test('derives first/last name and profile url', () => {
@@ -54,5 +54,32 @@ describe('resolveTemplate', () => {
     expect(r.ctaUrl).toBe('https://x.test/dashboard');
     expect(r.ctaLabel).toBe('View');
     expect(r.missing).toHaveLength(0);
+  });
+});
+
+describe('XSS / html-escape security', () => {
+  test('html body escapes user-controlled substituted values (XSS)', () => {
+    const out = resolveTemplate(
+      { subject: 'Hi {{user_name}}', html_content: '<p>Hello {{user_name}}</p>', cta_url: '' },
+      { user_name: '<img src=x onerror=alert(1)>' }, {}
+    );
+    expect(out.html).not.toContain('<img src=x');
+    expect(out.html).toContain('&lt;img');
+  });
+
+  test('subject is NOT html-escaped (plain header)', () => {
+    const out = resolveTemplate(
+      { subject: 'Order for {{user_name}}', html_content: '', cta_url: '' },
+      { user_name: 'Tom & Jerry' }, {}
+    );
+    expect(out.subject).toBe('Order for Tom & Jerry');
+  });
+
+  test('legit ampersand in name renders correctly-escaped in html', () => {
+    const out = resolveTemplate(
+      { subject: '', html_content: '<p>{{user_name}}</p>', cta_url: '' },
+      { user_name: 'A & B' }, {}
+    );
+    expect(out.html).toContain('A &amp; B');
   });
 });

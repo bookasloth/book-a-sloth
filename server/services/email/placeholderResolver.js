@@ -11,6 +11,19 @@
 
 const PLACEHOLDER_RE = /\{\{\s*([a-z0-9_]+)\s*\}\}/gi;
 
+/**
+ * Escape a string for safe insertion into HTML.
+ * Applied to every substituted VALUE in html_content and cta_url,
+ * but NOT to subjects (which are plain-text mail headers).
+ */
+const htmlEscape = (s) =>
+  String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 /** Build the global placeholder context from email settings + a user object. */
 function buildGlobals(settings = {}, user = {}) {
   const websiteUrl = settings.website_url || 'https://bookasloth.in';
@@ -32,17 +45,23 @@ function buildGlobals(settings = {}, user = {}) {
 
 /**
  * Replace placeholders in a string using a context object.
+ * @param {string|null} input   Template string containing {{tokens}}.
+ * @param {object}      context Key→value map of substitutions.
+ * @param {Function|null} escapeFn  Optional fn applied to each substituted value
+ *   (e.g. htmlEscape for HTML bodies). Pass null/undefined for plain-text fields
+ *   such as email subjects where literal characters must not be entity-encoded.
  * @returns {{ text, missing }} text with substitutions; missing = unresolved keys
  */
-function resolveString(input, context = {}) {
+function resolveString(input, context = {}, escapeFn = null) {
   const missing = [];
   if (input == null) return { text: '', missing };
   const text = String(input).replace(PLACEHOLDER_RE, (_m, key) => {
     const k = key.toLowerCase();
-    if (context[k] != null && context[k] !== '') return String(context[k]);
-    if (k in context) return String(context[k] ?? '');
-    missing.push(k);
-    return '';
+    let val;
+    if (context[k] != null && context[k] !== '') val = String(context[k]);
+    else if (k in context) val = String(context[k] ?? '');
+    else { missing.push(k); val = ''; }
+    return escapeFn ? escapeFn(val) : val;
   });
   return { text, missing };
 }
@@ -56,9 +75,11 @@ function resolveString(input, context = {}) {
  */
 function resolveTemplate(template, data = {}, globals = {}) {
   const context = { ...globals, ...data };
+  // Subject is a plain-text mail header — do NOT html-escape (would show &amp; literally).
   const subject = resolveString(template.subject, context);
-  const html = resolveString(template.html_content, context);
-  const ctaUrl = resolveString(template.cta_url, context);
+  // html_content and cta_url are injected into HTML — escape substituted values.
+  const html = resolveString(template.html_content, context, htmlEscape);
+  const ctaUrl = resolveString(template.cta_url, context, htmlEscape);
   const missing = [...new Set([...subject.missing, ...html.missing, ...ctaUrl.missing])];
   return {
     subject: subject.text,
@@ -69,4 +90,4 @@ function resolveTemplate(template, data = {}, globals = {}) {
   };
 }
 
-module.exports = { buildGlobals, resolveString, resolveTemplate, PLACEHOLDER_RE };
+module.exports = { buildGlobals, resolveString, resolveTemplate, htmlEscape, PLACEHOLDER_RE };
