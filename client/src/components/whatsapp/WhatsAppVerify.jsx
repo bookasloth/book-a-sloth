@@ -9,17 +9,21 @@ const RESEND_SECONDS = 30;
 const WhatsAppVerify = ({ initialPhone = '', initialCountry, onVerified, onPhoneChange }) => {
   const [screen, setScreen] = useState('number'); // 'number' | 'otp'
   const [country, setCountry] = useState(initialCountry || defaultDialCode());
-  const [number, setNumber] = useState(initialPhone);
+  const [number, setNumber] = useState((initialPhone || '').replace(/[^\d\s]/g, ''));
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [cooldown, setCooldown] = useState(0);
   const timerRef = useRef(null);
+  const sendingRef = useRef(false);
 
   const fullPhone = `${country}${number.replace(/[^\d]/g, '')}`;
 
   useEffect(() => () => clearInterval(timerRef.current), []);
-  useEffect(() => { onPhoneChange?.({ country, number }); }, [country, number]); // eslint-disable-line
+  // Surface the entry to a parent so it can preserve it across an accidental close.
+  // onPhoneChange intentionally omitted from deps: parents often pass a fresh
+  // callback each render, which would loop. eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onPhoneChange?.({ country, number }); }, [country, number]);
 
   const startCooldown = () => {
     setCooldown(RESEND_SECONDS);
@@ -33,9 +37,11 @@ const WhatsAppVerify = ({ initialPhone = '', initialCountry, onVerified, onPhone
   };
 
   const handleSend = async () => {
+    if (sendingRef.current) return;
     setError('');
-    if (number.replace(/[^\d]/g, '').length < 6) { setError('Enter a valid WhatsApp number.'); return; }
+    if (number.replace(/[^\d]/g, '').length < 7) { setError('Enter a valid WhatsApp number.'); return; }
     setLoading(true);
+    sendingRef.current = true;
     try {
       const { data } = await whatsappSendOtp(fullPhone);
       if (!data?.success) throw new Error(data?.message || 'Could not send OTP');
@@ -45,6 +51,7 @@ const WhatsAppVerify = ({ initialPhone = '', initialCountry, onVerified, onPhone
     } catch (e) {
       toast.error(e.response?.data?.message || e.message || 'Could not send OTP');
     } finally {
+      sendingRef.current = false;
       setLoading(false);
     }
   };
