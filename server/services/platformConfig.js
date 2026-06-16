@@ -12,7 +12,7 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 
-const DEFAULTS = { platformFee: 10, gstRate: 0.18 };
+const DEFAULTS = { platformFee: 10, gstRate: 0.18, clearingDays: 7 };
 const CACHE_TTL_MS = 60 * 1000;
 let _cache = { at: 0, value: null };
 
@@ -41,22 +41,26 @@ const getConfig = async () => {
 
   let platformFee = DEFAULTS.platformFee;
   let gstRate = DEFAULTS.gstRate;
+  let clearingDays = DEFAULTS.clearingDays;
   try {
     const { data } = await supabaseAdmin
       .from('platform_settings')
       .select('key, value')
-      .in('key', ['platform_fee', 'platform_fee_gst_rate']);
+      .in('key', ['platform_fee', 'platform_fee_gst_rate', 'settlement_clearing_days']);
     for (const row of data || []) {
       if (row.key === 'platform_fee') platformFee = toNumber(row.value, DEFAULTS.platformFee);
       if (row.key === 'platform_fee_gst_rate') gstRate = toNumber(row.value, DEFAULTS.gstRate);
+      if (row.key === 'settlement_clearing_days') clearingDays = toNumber(row.value, DEFAULTS.clearingDays);
     }
   } catch (_) { /* fall back to defaults */ }
 
   // Guard against nonsensical config
   if (platformFee < 0) platformFee = DEFAULTS.platformFee;
   if (gstRate < 0 || gstRate > 1) gstRate = DEFAULTS.gstRate;
+  if (!Number.isFinite(clearingDays) || clearingDays < 0) clearingDays = DEFAULTS.clearingDays;
+  clearingDays = Math.floor(clearingDays);
 
-  _cache = { at: now, value: { platformFee, gstRate } };
+  _cache = { at: now, value: { platformFee, gstRate, clearingDays } };
   return _cache.value;
 };
 
