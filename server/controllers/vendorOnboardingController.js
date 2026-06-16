@@ -433,13 +433,14 @@ const getResumeStep = (stepCompleted) => {
     "/vendor-onboarding/:slug/category",
     "/vendor-onboarding/:slug/booking-type",
     "/vendor-onboarding/:slug/calendar",
+    "/vendor-onboarding/:slug/whatsapp",
     "/vendor-onboarding/:slug/profile",
     "/vendor-onboarding/:slug/first-service",
     "/vendor-onboarding/:slug/plans",
     "/explore-with-bolt",
   ];
 
-  // stepCompleted is 0-10, next step is stepCompleted + 1
+  // stepCompleted is 0-11, next step is stepCompleted + 1
   return steps[stepCompleted] || steps[0];
 };
 

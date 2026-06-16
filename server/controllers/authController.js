@@ -68,6 +68,8 @@ const serializeProfile = (profile, session) => ({
   theme_color:              profile.theme_color || null,
   google_calendar_connected:!!profile.google_calendar_connected,
   is_verified:              !!profile.is_verified,
+  whatsapp_verified:        !!profile.whatsapp_verified,
+  whatsapp_number:          profile.whatsapp_number || null,
   badges:                   profile.badges || [],
   ...(session ? { token: session.access_token, refresh_token: session.refresh_token } : {}),
 });

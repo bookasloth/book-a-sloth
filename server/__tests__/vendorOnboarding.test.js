@@ -33,10 +33,11 @@ describe('Vendor Onboarding', () => {
     it('should return correct resume step for completed steps', () => {
       expect(getResumeStep(0)).toBe('/vendor-register');
       expect(getResumeStep(1)).toBe('/vendor-register/:slug/verify');
-      expect(getResumeStep(2)).toBe('/vendor-register/:slug/password');
-      expect(getResumeStep(5)).toBe('/vendor-register/:slug/booking-type');
-      expect(getResumeStep(9)).toBe('/vendor-register/:slug/plans');
-      expect(getResumeStep(10)).toBe('/explore-with-bolt');
+      expect(getResumeStep(2)).toBe('/vendor-onboarding/:slug/password');
+      expect(getResumeStep(5)).toBe('/vendor-onboarding/:slug/booking-type');
+      expect(getResumeStep(7)).toBe('/vendor-onboarding/:slug/whatsapp');
+      expect(getResumeStep(10)).toBe('/vendor-onboarding/:slug/plans');
+      expect(getResumeStep(11)).toBe('/explore-with-bolt');
     });
   });
 
