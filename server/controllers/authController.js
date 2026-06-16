@@ -49,6 +49,14 @@ const serializeProfile = (profile, session) => ({
   password_set:             !!profile.password_set,
   role:                     profile.role,
   plan:                     profile.plan || 'explorer',
+  plan_expires_at:          profile.plan_expires_at || null,
+  billing_cadence:          profile.billing_cadence || null,
+  subscription_status:      profile.subscription_status || null,
+  current_period_end:       profile.current_period_end || null,
+  // True only when a real Razorpay mandate exists. Legacy one-time annual
+  // vendors are 'active' from the v3.8 backfill but carry NO mandate — the UI
+  // uses this to avoid showing them a bogus "auto-renew on / cancel" control.
+  has_payment_mandate:      !!profile.razorpay_subscription_id,
   username:                 profile.username || null,
   bio:                      profile.bio || '',
   tagline:                  profile.tagline || '',

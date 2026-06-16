@@ -24,8 +24,13 @@ const FEATURE_KEYS = [
 
 const CALENDAR_APPS = ['google_calendar', 'zoom', 'ical'];
 
+// RBI: auto-debit e-mandates run without per-charge re-auth only under ₹15,000.
+// gross = price + 18% GST; warn admins when a cadence crosses the ceiling.
+const AUTO_DEBIT_THRESHOLD = 15000;
+const grossWithGst = (price) => Math.round((Number(price) || 0) * 1.18);
+
 const EMPTY_PLAN = {
-  name: '', annual_price: 0, billing_cycle: 'yearly', commission_percentage: 0,
+  name: '', annual_price: 0, monthly_price: 0, billing_cycle: 'yearly', commission_percentage: 0,
   support_type: 'standard',
   limits: Object.fromEntries(LIMIT_KEYS.map(([k]) => [k, 0])),
   features: Object.fromEntries(FEATURE_KEYS.map((k) => [k, false])),
@@ -61,6 +66,7 @@ const AdminPlans = () => {
     setForm(plan === 'new' ? EMPTY_PLAN : {
       name: plan.name,
       annual_price: Number(plan.annual_price),
+      monthly_price: Number(plan.monthly_price) || 0,
       billing_cycle: plan.billing_cycle || 'yearly',
       commission_percentage: Number(plan.commission_percentage),
       support_type: plan.support_type || 'standard',
@@ -167,7 +173,8 @@ const AdminPlans = () => {
                   </div>
                 </div>
               </div>
-              <p className="text-2xl font-extrabold text-gray-900 mb-1">₹{Number(plan.annual_price).toLocaleString('en-IN')}<span className="text-xs font-medium text-gray-400"> / {plan.billing_cycle}</span></p>
+              <p className="text-2xl font-extrabold text-gray-900 mb-0.5">₹{Number(plan.annual_price).toLocaleString('en-IN')}<span className="text-xs font-medium text-gray-400"> / year</span></p>
+              <p className="text-sm font-bold text-gray-500 mb-1">{Number(plan.monthly_price) > 0 ? <>₹{Number(plan.monthly_price).toLocaleString('en-IN')}<span className="text-xs font-medium text-gray-400"> / month</span></> : <span className="text-xs font-medium text-gray-300">no monthly price set</span>}</p>
               <p className="text-xs text-gray-500 mb-3">Commission: <strong>{Number(plan.commission_percentage)}%</strong> · {plan.subscriber_count} subscriber{plan.subscriber_count === 1 ? '' : 's'}</p>
               <div className="text-xs text-gray-600 space-y-1 border-t pt-3 mb-4">
                 {LIMIT_KEYS.map(([k, label]) => (
@@ -228,10 +235,20 @@ const AdminPlans = () => {
               <div><label className="block text-xs font-semibold text-gray-500 mb-1">Price (₹/yr)</label>
                 <input type="number" min="0" className="fb-input text-sm" value={form.annual_price}
                   onChange={(e) => setForm((f) => ({ ...f, annual_price: Number(e.target.value) }))} /></div>
+              <div><label className="block text-xs font-semibold text-gray-500 mb-1">Price (₹/mo)</label>
+                <input type="number" min="0" className="fb-input text-sm" value={form.monthly_price}
+                  onChange={(e) => setForm((f) => ({ ...f, monthly_price: Number(e.target.value) }))} /></div>
               <div><label className="block text-xs font-semibold text-gray-500 mb-1">Commission %</label>
                 <input type="number" min="0" max="100" step="0.5" className="fb-input text-sm" value={form.commission_percentage}
                   onChange={(e) => setForm((f) => ({ ...f, commission_percentage: Number(e.target.value) }))} /></div>
             </div>
+
+            {(grossWithGst(form.annual_price) > AUTO_DEBIT_THRESHOLD || grossWithGst(form.monthly_price) > AUTO_DEBIT_THRESHOLD) && (
+              <div className="mb-4 -mt-1 text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                ⚠ A cadence gross (price + 18% GST) exceeds ₹{AUTO_DEBIT_THRESHOLD.toLocaleString('en-IN')}.
+                Above this, RBI requires the vendor to approve <strong>every</strong> auto-debit — auto-renew won't be frictionless for that cadence.
+              </div>
+            )}
 
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Limits <span className="normal-case font-normal">(-1 = unlimited)</span></p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">

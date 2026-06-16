@@ -9,6 +9,9 @@ const NotificationEngine = require("../services/notificationEngine");
 const { computeBreakdown, calculateVendorPayout, calculatePlatformFee, computeSubscriptionBreakdown } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
 const platformConfig = require("../services/platformConfig");
+const razorpaySubscriptions = require("../services/razorpaySubscriptions");
+const subscriptionService = require("../services/subscriptionService");
+const { cadencePrice, cadenceGross, cadencePeriodDays, computeSwitch, normCadence } = require("../lib/subscriptionPricing");
 const { createCalendarEvent } = require("../config/google");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const { verifySignature } = require("../utils/razorpaySignature");
@@ -485,6 +488,172 @@ const verifySubscription = async (req, res) => {
   }
 };
 
+// ══ Auto-renewing subscriptions (Razorpay Subscriptions API) ══════════════════
+
+// ── POST /api/payment/subscription/create  { plan, cadence } ──────────────────
+// Creates a Razorpay subscription (mandate). Access is NOT granted here — the
+// subscription.activated/charged webhook (or the sync endpoint) activates it.
+const createVendorSubscription = async (req, res) => {
+  try {
+    const { plan } = req.body;
+    const cadence = normCadence(req.body.cadence);
+    if (!['monthly', 'annual'].includes(cadence)) {
+      return res.status(400).json({ message: "cadence must be 'monthly' or 'annual'" });
+    }
+    const planRecord = await planService.getPlan(plan);
+    if (!planRecord || planRecord.slug !== planService.normalizeSlug(plan)) {
+      return res.status(404).json({ message: "Plan not found" });
+    }
+    if (!(cadencePrice(planRecord, cadence) > 0)) {
+      return res.status(400).json({ message: `This plan has no ${cadence} price.` });
+    }
+
+    // ── Proration / switch context (Phase C) ──────────────────────────────
+    // A SWITCH is when a vendor on a settled paid plan (status='active', period
+    // still in future) changes tier/cadence. Unused value becomes FREE DAYS on
+    // the new plan via a deferred subscription start_at — single mandate, no
+    // second payment. Excess credit beyond one new period is forfeited (#4).
+    // Legacy one-time annual vendors (no razorpay_subscription_id) are migrated
+    // by the SAME path: their remaining paid days seed the credit.
+    const { data: prof } = await supabaseAdmin.from("profiles")
+      .select("plan, subscription_status, current_period_end, plan_expires_at, plan_activated_at, razorpay_subscription_id, billing_cadence")
+      .eq("id", req.user.id).single();
+
+    const nowIso = new Date().toISOString();
+    const nowMs = Date.now();
+    const periodEndMs = prof?.current_period_end ? new Date(prof.current_period_end).getTime()
+      : prof?.plan_expires_at ? new Date(prof.plan_expires_at).getTime() : 0;
+    const onPaidPlan = prof && planService.normalizeSlug(prof.plan) !== "starter";
+    const isSwitch = !!(onPaidPlan && prof.subscription_status === "active" && periodEndMs > nowMs);
+
+    let switchInfo = null, startAt;
+    if (isSwitch) {
+      const { gstRate } = await platformConfig.getConfig();
+      const newGross = cadenceGross(planRecord, cadence, gstRate);
+
+      // Determine amount paid + period for the current plan (subscription first,
+      // then legacy plan_purchases for one-time annual vendors).
+      let amountPaid = 0, periodStart = prof.plan_activated_at, periodEnd = prof.current_period_end || prof.plan_expires_at;
+      const { data: lastPay } = await supabaseAdmin.from("subscription_payments")
+        .select("total_charged, billing_period_start, billing_period_end")
+        .eq("vendor_id", req.user.id).order("paid_at", { ascending: false }).limit(1).maybeSingle();
+      if (lastPay) {
+        amountPaid = Number(lastPay.total_charged) || 0;
+        periodStart = lastPay.billing_period_start; periodEnd = lastPay.billing_period_end;
+      } else {
+        const { data: lastPurchase } = await supabaseAdmin.from("plan_purchases")
+          .select("amount_paid, activated_at, expires_at")
+          .eq("vendor_id", req.user.id).order("activated_at", { ascending: false }).limit(1).maybeSingle();
+        if (lastPurchase) {
+          amountPaid = (Number(lastPurchase.amount_paid) || 0) / 100; // stored in paise
+          periodStart = lastPurchase.activated_at; periodEnd = lastPurchase.expires_at;
+        }
+      }
+
+      if (amountPaid > 0 && periodStart && periodEnd) {
+        switchInfo = computeSwitch({ amountPaid, periodStart, periodEnd, now: nowIso, newPeriodGross: newGross, newCadence: cadence });
+        if (switchInfo.creditDays > 0) startAt = switchInfo.startAtUnix;
+      } else {
+        console.warn(`Switch detected for vendor ${req.user.id} but no prior payment found — proceeding without proration credit.`);
+      }
+    }
+
+    // Cancel any prior Razorpay subscription BEFORE creating the replacement, so
+    // a switch (or an abandoned pending setup) never leaves two live mandates →
+    // double-charge. A real failure here is fatal; "already gone" is tolerated.
+    if (prof?.razorpay_subscription_id) {
+      try {
+        await razorpaySubscriptions.cancelSubscription(prof.razorpay_subscription_id, false);
+      } catch (e) {
+        const msg = e?.error?.description || e?.message || "";
+        const alreadyGone = /not found|already cancelled|already canceled|cancelled|completed|does not exist/i.test(msg);
+        if (!alreadyGone) {
+          console.error("cancel old subscription failed (fatal — aborting to avoid double mandate):", msg);
+          return res.status(502).json({ message: "Could not switch plans right now. Please try again." });
+        }
+      }
+    }
+
+    const planId = await razorpaySubscriptions.ensureRazorpayPlan(planRecord, cadence);
+    const subscription = await razorpaySubscriptions.createSubscription({
+      planId, cadence,
+      notes: { vendor_id: req.user.id, plan: planRecord.slug, cadence },
+      startAt,
+    });
+
+    if (isSwitch) {
+      // Grant the new tier + free days immediately (vendor already paid for the
+      // old period) but keep status 'pending' until the mandate is authorized.
+      const grantedEnd = new Date(nowMs + ((switchInfo?.creditDays || 0) + cadencePeriodDays(cadence)) * 86400000).toISOString();
+      await supabaseAdmin.from("profiles").update({
+        plan: planRecord.slug, billing_cadence: cadence, subscription_status: "pending",
+        razorpay_subscription_id: subscription.id, current_period_end: grantedEnd, plan_expires_at: grantedEnd,
+        plan_updated_at: nowIso, updated_at: nowIso,
+      }).eq("id", req.user.id);
+    } else {
+      // Fresh upgrade from free/expired — no access until the mandate activates.
+      await supabaseAdmin.from("profiles")
+        .update({ razorpay_subscription_id: subscription.id, subscription_status: "pending", updated_at: nowIso })
+        .eq("id", req.user.id);
+    }
+
+    auditLog('SUBSCRIPTION_CREATED', req.user.id, { plan: planRecord.slug, cadence, subscription_id: subscription.id, switch: isSwitch });
+    res.json({
+      subscription_id: subscription.id, key: process.env.RAZORPAY_KEY_ID, plan: planRecord.slug, cadence,
+      ...(switchInfo ? { credit_applied: switchInfo.creditApplied, forfeited: switchInfo.forfeited, free_days: switchInfo.creditDays } : {}),
+    });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// ── POST /api/payment/subscription/sync ───────────────────────────────────────
+// On-return fallback for webhook latency: pull live status from Razorpay and
+// activate immediately so the vendor isn't stuck waiting on a webhook.
+const syncVendorSubscription = async (req, res) => {
+  try {
+    const { data: prof } = await supabaseAdmin.from("profiles")
+      .select("razorpay_subscription_id").eq("id", req.user.id).single();
+    if (!prof?.razorpay_subscription_id) {
+      return res.json({ status: "none" });
+    }
+    const rzpSub = await razorpaySubscriptions.fetchSubscription(prof.razorpay_subscription_id);
+    if (subscriptionService.ACTIVE_STATES.includes(rzpSub.status)) {
+      await subscriptionService.activateFromSubscription({ rzpSub });
+    } else if (rzpSub.status === "halted") {
+      await subscriptionService.markHalted(rzpSub);
+    } else if (["cancelled", "expired", "completed"].includes(rzpSub.status)) {
+      await subscriptionService.markCancelled(rzpSub);
+    }
+    const { data: updated } = await supabaseAdmin.from("profiles")
+      .select("id, plan, plan_expires_at, billing_cadence, subscription_status, current_period_end")
+      .eq("id", req.user.id).single();
+    res.json({ status: rzpSub.status, profile: updated });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// ── POST /api/payment/subscription/cancel ─────────────────────────────────────
+// Cancel at cycle end — vendor keeps access until current_period_end.
+const cancelVendorSubscription = async (req, res) => {
+  try {
+    const { data: prof } = await supabaseAdmin.from("profiles")
+      .select("razorpay_subscription_id, subscription_status").eq("id", req.user.id).single();
+    if (!prof?.razorpay_subscription_id) {
+      return res.status(400).json({ message: "No active subscription to cancel." });
+    }
+    await razorpaySubscriptions.cancelSubscription(prof.razorpay_subscription_id, true);
+    await supabaseAdmin.from("profiles")
+      .update({ subscription_status: "cancelled", updated_at: new Date().toISOString() })
+      .eq("id", req.user.id);
+    auditLog('SUBSCRIPTION_CANCELLED', req.user.id, { subscription_id: prof.razorpay_subscription_id });
+    res.json({ message: "Subscription cancelled. You keep access until the end of the current period." });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 // ── POST /api/payment/create-product-order ───────────────────
 const createProductOrder = async (req, res) => {
   try {
@@ -638,6 +807,30 @@ const handleWebhook = async (req, res) => {
   try { event = JSON.parse(req.body.toString()); }
   catch { return res.status(400).json({ message: "Invalid JSON" }); }
 
+  // ── Subscription lifecycle (handled BEFORE the payment-only guard, since
+  // subscription.activated/halted/cancelled carry no payment entity) ──
+  if (typeof event.event === 'string' && event.event.startsWith('subscription.')) {
+    const rzpSub = event.payload?.subscription?.entity;
+    const rzpPayment = event.payload?.payment?.entity || null;
+    try {
+      if (rzpSub) {
+        if (event.event === 'subscription.charged' || event.event === 'subscription.activated') {
+          await subscriptionService.activateFromSubscription({ rzpSub, rzpPayment });
+          auditLog('WEBHOOK_SUBSCRIPTION_ACTIVE', null, { subscription_id: rzpSub.id, event: event.event });
+        } else if (event.event === 'subscription.halted') {
+          await subscriptionService.markHalted(rzpSub);
+          securityLog('WEBHOOK_SUBSCRIPTION_HALTED', { subscription_id: rzpSub.id });
+        } else if (event.event === 'subscription.cancelled') {
+          await subscriptionService.markCancelled(rzpSub);
+          auditLog('WEBHOOK_SUBSCRIPTION_CANCELLED', null, { subscription_id: rzpSub.id });
+        }
+      }
+    } catch (err) {
+      securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
+    }
+    return res.json({ received: true });
+  }
+
   const payment = event.payload?.payment?.entity;
   if (!payment) return res.json({ received: true });
 
@@ -667,4 +860,8 @@ const handleWebhook = async (req, res) => {
   res.json({ received: true });
 };
 
-module.exports = { createOrder, verifyPayment, subscribePlan, verifySubscription, createProductOrder, verifyProductPayment, createRescheduleFeeOrder, handleWebhook };
+module.exports = {
+  createOrder, verifyPayment, subscribePlan, verifySubscription,
+  createVendorSubscription, syncVendorSubscription, cancelVendorSubscription,
+  createProductOrder, verifyProductPayment, createRescheduleFeeOrder, handleWebhook,
+};

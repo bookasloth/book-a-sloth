@@ -191,6 +191,10 @@ export const createPaymentOrder   = (data) => API.post('/payment/create-order', 
 export const verifyPayment        = (data) => API.post('/payment/verify', data);
 export const subscribePlan        = (data) => API.post('/payment/subscribe', data);
 export const verifySubscription   = (data) => API.post('/payment/verify-subscription', data);
+// Auto-renewing subscriptions (Razorpay Subscriptions)
+export const createSubscription   = (data) => API.post('/payment/subscription/create', data);
+export const syncSubscription     = ()     => API.post('/payment/subscription/sync');
+export const cancelSubscription   = ()     => API.post('/payment/subscription/cancel');
 export const createProductOrder   = (data) => API.post('/payment/create-product-order', data);
 export const verifyProductPayment = (data) => API.post('/payment/verify-product', data);
 
