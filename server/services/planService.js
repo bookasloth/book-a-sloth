@@ -16,13 +16,16 @@ const LEGACY_ALIASES = { explorer: 'starter' };
 
 // Fallback only used when subscription_plans table is missing.
 const FALLBACK_PLANS = {
-  starter:      { name: 'Starter', slug: 'starter', annual_price: 0, commission_percentage: 5, active: true,
+  starter:      { name: 'Starter', slug: 'starter', annual_price: 0, monthly_price: 0, commission_percentage: 5, active: true,
+    razorpay_plan_id_monthly: null, razorpay_plan_id_annual: null,
     limits: { services: 10, bookings_per_year: 1000, digital_products: 3, calendar_integrations: 1, profile_theme_colors: 3, reminder_flows: 0, followup_flows: 0 },
     features: {}, integrations: { calendar_apps: ['google_calendar'] }, support_type: 'standard', sort_order: 1 },
-  creator:      { name: 'Creator', slug: 'creator', annual_price: 999, commission_percentage: 5, active: true,
+  creator:      { name: 'Creator', slug: 'creator', annual_price: 999, monthly_price: 0, commission_percentage: 5, active: true,
+    razorpay_plan_id_monthly: null, razorpay_plan_id_annual: null,
     limits: { services: 20, bookings_per_year: 2000, digital_products: 10, calendar_integrations: 2, profile_theme_colors: 16, reminder_flows: 1, followup_flows: 1 },
     features: {}, integrations: { calendar_apps: ['google_calendar', 'zoom'] }, support_type: 'priority_email', sort_order: 2 },
-  professional: { name: 'Professional', slug: 'professional', annual_price: 3650, commission_percentage: 5, active: true,
+  professional: { name: 'Professional', slug: 'professional', annual_price: 3650, monthly_price: 0, commission_percentage: 5, active: true,
+    razorpay_plan_id_monthly: null, razorpay_plan_id_annual: null,
     limits: { services: 30, bookings_per_year: 3000, digital_products: 20, calendar_integrations: 3, profile_theme_colors: -1, reminder_flows: 2, followup_flows: 2 },
     features: {}, integrations: { calendar_apps: ['google_calendar', 'zoom', 'ical'] }, support_type: 'priority', sort_order: 3 },
 };

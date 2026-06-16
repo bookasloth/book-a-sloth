@@ -158,6 +158,17 @@ setInterval(async () => {
   } catch (err) { console.error('Ledger reconciler cron error:', err.message); }
 }, LEDGER_RECONCILE_MIN * 60 * 1000);
 
+// Subscription reconciler — heals subscriptions whose activation webhook was
+// missed (vendor stuck 'pending'). Idempotent; interval configurable (default 15 min).
+const subscriptionReconciler = require('./services/subscriptionReconciler');
+const SUB_RECONCILE_MIN = Number(process.env.SUBSCRIPTION_RECONCILE_INTERVAL_MIN || 15);
+setInterval(async () => {
+  try {
+    const r = await subscriptionReconciler.reconcile();
+    if (r.healed > 0) console.log(`Subscription reconciler: activated ${r.healed} pending subscriptions`);
+  } catch (err) { console.error('Subscription reconciler cron error:', err.message); }
+}, SUB_RECONCILE_MIN * 60 * 1000);
+
 // Feature flags — seed any registry keys missing from the DB on boot (all ON,
 // never overwrites an admin's existing on/off choice). Best-effort; the admin
 // GET also re-syncs, so a transient boot failure self-heals.

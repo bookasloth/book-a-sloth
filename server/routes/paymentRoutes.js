@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   createOrder, verifyPayment,
   subscribePlan, verifySubscription,
+  createVendorSubscription, syncVendorSubscription, cancelVendorSubscription,
   createProductOrder, verifyProductPayment,
   createRescheduleFeeOrder,
   handleWebhook,
@@ -23,8 +24,14 @@ router.post('/create-order', paymentLimiter, requireFeature('razorpay_payment'),
 router.post('/verify', paymentLimiter, verifyPayment);
 
 // Plan subscriptions (vendor must be logged in)
+// Legacy one-time order flow (retained as a fallback for vendors who decline a mandate)
 router.post('/subscribe', paymentLimiter, protect, requireFeature('plan_upgrade'), subscribePlan);
 router.post('/verify-subscription', paymentLimiter, protect, verifySubscription);
+
+// Auto-renewing subscriptions (Razorpay Subscriptions API)
+router.post('/subscription/create', paymentLimiter, protect, requireFeature('plan_upgrade'), createVendorSubscription);
+router.post('/subscription/sync', paymentLimiter, protect, syncVendorSubscription);
+router.post('/subscription/cancel', paymentLimiter, protect, cancelVendorSubscription);
 
 // Reschedule fee (guest must be logged in — the guest who owns the booking)
 router.post('/reschedule-fee/create-order', paymentLimiter, protect, requireFeature('reschedule_fee'), createRescheduleFeeOrder);

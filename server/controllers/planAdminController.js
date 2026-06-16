@@ -8,8 +8,26 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const planService = require('../services/planService');
+const razorpaySubscriptions = require('../services/razorpaySubscriptions');
 
 const RULES = { min_active_plans: 2, max_active_plans: 3 };
+
+// Best-effort: provision Razorpay Plan objects for whichever cadences have a
+// price. Failures (e.g. Razorpay unconfigured in dev) are logged, never fatal —
+// the subscribe flow falls back to lazy creation. Pass the freshly-saved row.
+const provisionRazorpayPlans = async (planRow) => {
+  for (const cadence of ['monthly', 'annual']) {
+    const priceKey = cadence === 'monthly' ? 'monthly_price' : 'annual_price';
+    const idKey = razorpaySubscriptions.PLAN_ID_COLUMN[cadence];
+    if (Number(planRow?.[priceKey]) > 0 && !planRow?.[idKey]) {
+      try {
+        await razorpaySubscriptions.ensureRazorpayPlan(planRow, cadence);
+      } catch (e) {
+        console.error(`Razorpay ${cadence} plan provisioning failed for ${planRow.slug} (non-fatal):`, e.message);
+      }
+    }
+  }
+};
 
 const slugify = (text) =>
   String(text).toLowerCase().trim()
@@ -49,7 +67,7 @@ const listPlans = async (req, res) => {
 // ── POST /api/admin/plans ────────────────────────────────────────
 const createPlan = async (req, res) => {
   try {
-    const { name, annual_price, billing_cycle, commission_percentage, limits, features, integrations, support_type, active } = req.body;
+    const { name, annual_price, monthly_price, billing_cycle, commission_percentage, limits, features, integrations, support_type, active } = req.body;
     if (!name) return res.status(400).json({ message: 'Plan name is required' });
 
     if (active !== false) {
@@ -67,6 +85,7 @@ const createPlan = async (req, res) => {
         name: name.trim(),
         slug: slugify(name),
         annual_price: Number(annual_price) || 0,
+        monthly_price: Number(monthly_price) || 0,
         billing_cycle: billing_cycle || 'yearly',
         commission_percentage: Number(commission_percentage) || 0,
         limits: limits || {},
@@ -82,6 +101,7 @@ const createPlan = async (req, res) => {
       return safeError(res, error);
     }
     planService.clearCache();
+    await provisionRazorpayPlans(data);
     res.status(201).json(data);
   } catch (err) {
     safeError(res, err);
@@ -91,15 +111,29 @@ const createPlan = async (req, res) => {
 // ── PUT /api/admin/plans/:id ─────────────────────────────────────
 const updatePlan = async (req, res) => {
   try {
-    const allowed = ['name', 'annual_price', 'billing_cycle', 'commission_percentage', 'limits', 'features', 'integrations', 'support_type'];
+    const allowed = ['name', 'annual_price', 'monthly_price', 'billing_cycle', 'commission_percentage', 'limits', 'features', 'integrations', 'support_type'];
     const updates = { updated_at: new Date().toISOString() };
     for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
     if (updates.name) updates.slug = req.body.keep_slug ? undefined : undefined; // slug is stable after creation — code references it
+
+    // Razorpay Plan objects are immutable. If a cadence price actually CHANGED,
+    // drop its stale plan id so provisionRazorpayPlans recreates it at the new
+    // amount. Compare against the stored row — the client always sends both
+    // prices, so "key present" alone would needlessly recreate plans every save.
+    const { data: current } = await supabaseAdmin
+      .from('subscription_plans').select('annual_price, monthly_price').eq('id', req.params.id).maybeSingle();
+    if ('monthly_price' in updates && current && Number(updates.monthly_price) !== Number(current.monthly_price)) {
+      updates.razorpay_plan_id_monthly = null;
+    }
+    if ('annual_price' in updates && current && Number(updates.annual_price) !== Number(current.annual_price)) {
+      updates.razorpay_plan_id_annual = null;
+    }
 
     const { data, error } = await supabaseAdmin
       .from('subscription_plans').update(updates).eq('id', req.params.id).select().single();
     if (error || !data) return res.status(404).json({ message: 'Plan not found' });
     planService.clearCache();
+    await provisionRazorpayPlans(data);
     res.json(data);
   } catch (err) {
     safeError(res, err);
@@ -154,7 +188,8 @@ const clonePlan = async (req, res) => {
       .from('subscription_plans')
       .insert({
         name, slug,
-        annual_price: src.annual_price, billing_cycle: src.billing_cycle,
+        annual_price: src.annual_price, monthly_price: src.monthly_price || 0,
+        billing_cycle: src.billing_cycle,
         commission_percentage: src.commission_percentage,
         limits: src.limits, features: src.features, integrations: src.integrations,
         support_type: src.support_type, active: false,
@@ -223,8 +258,8 @@ const publicPlans = async (req, res) => {
     const plans = await planService.loadPlans();
     res.json([...plans.values()].filter((p) => p.active !== false)
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-      .map(({ id, name, slug, annual_price, billing_cycle, commission_percentage, limits, features, integrations, support_type }) =>
-        ({ id, name, slug, annual_price, billing_cycle, commission_percentage, limits, features, integrations, support_type })));
+      .map(({ id, name, slug, annual_price, monthly_price, billing_cycle, commission_percentage, limits, features, integrations, support_type }) =>
+        ({ id, name, slug, annual_price, monthly_price: Number(monthly_price) || 0, billing_cycle, commission_percentage, limits, features, integrations, support_type })));
   } catch (err) {
     safeError(res, err);
   }
