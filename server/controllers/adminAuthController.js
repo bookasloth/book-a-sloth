@@ -135,8 +135,8 @@ const setup2fa = async (req, res) => {
     }
 
     const { data: staff } = await supabaseAdmin
-      .from('admin_users').select('id, email').eq('id', p.sub).maybeSingle();
-    if (!staff) return res.status(401).json({ message: 'Invalid session.' });
+      .from('admin_users').select('id, email, is_active').eq('id', p.sub).maybeSingle();
+    if (!staff || !staff.is_active) return res.status(401).json({ message: 'Invalid session.' });
 
     const { secret, otpauth } = twofa.newSecret(staff.email);
     // eslint-disable-next-line global-require
