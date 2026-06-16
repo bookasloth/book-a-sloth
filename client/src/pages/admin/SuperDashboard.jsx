@@ -101,7 +101,7 @@ const OverviewTab = ({ stats, ops }) => {
           { title: 'Manage Bookings',      desc: 'View, update status, resolve disputes',    to: '/admin/bookings',   icon: 'calendar', color: 'text-violet-600 bg-violet-50' },
           { title: 'Manage Users',          desc: 'Verify, ban, or delete platform accounts', to: '/admin/users',      icon: 'users',    color: 'text-blue-600 bg-blue-50' },
           { title: 'Manage Services',       desc: 'Review and moderate provider services',     to: '/admin/services',   icon: 'grid',     color: 'text-pink-600 bg-pink-50' },
-          { title: 'Provider Earnings',     desc: 'Review payouts and transaction records',    to: '/admin/finance/earnings', icon: 'dollar', color: 'text-[#FE5100] bg-orange-50' },
+          { title: 'Payouts',               desc: 'Approve and release vendor payout requests', to: '/admin/finance/payouts', icon: 'dollar', color: 'text-[#FE5100] bg-orange-50' },
           { title: 'Platform Settings',     desc: 'Configure fees, maintenance, branding',     to: '/admin/settings',   icon: 'activity', color: 'text-emerald-600 bg-emerald-50' },
           { title: 'Support Tickets',       desc: 'Respond to user issues and disputes',       to: '/admin/support/tickets', icon: 'clock', color: 'text-amber-600 bg-amber-50' },
         ].map(item => (
@@ -163,9 +163,9 @@ const RevenueTab = ({ stats }) => {
           <p className="font-semibold text-gray-800 text-sm">Refunds</p>
           <p className="text-xs text-gray-400 mt-0.5">Manage refund requests</p>
         </Link>
-        <Link to="/admin/finance/earnings" className="btn btn--outline flex-1 bg-white p-4 hover:shadow-sm transition-all text-center">
-          <p className="font-semibold text-gray-800 text-sm">Provider Earnings</p>
-          <p className="text-xs text-gray-400 mt-0.5">Payout reports</p>
+        <Link to="/admin/finance/payouts" className="btn btn--outline flex-1 bg-white p-4 hover:shadow-sm transition-all text-center">
+          <p className="font-semibold text-gray-800 text-sm">Payouts</p>
+          <p className="text-xs text-gray-400 mt-0.5">Approve &amp; release</p>
         </Link>
       </div>
     </div>
