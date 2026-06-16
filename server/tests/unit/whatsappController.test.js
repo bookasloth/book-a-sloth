@@ -59,6 +59,13 @@ describe('whatsappController.verifyOtp', () => {
     );
   });
 
+  it('returns 400 when phone or otp is missing', async () => {
+    const res = mockRes();
+    await verifyOtp({ user: { id: 'u1' }, body: { phone: '', otp: '' } }, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(otpStore.verify).not.toHaveBeenCalled();
+  });
+
   it('persists profile + returns verified on a good OTP', async () => {
     otpStore.verify.mockResolvedValue({ valid: true });
     const eq = jest.fn().mockResolvedValue({ error: null });

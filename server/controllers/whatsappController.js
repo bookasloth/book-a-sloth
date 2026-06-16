@@ -23,6 +23,9 @@ const sendOtp = async (req, res) => {
 
 // POST /api/whatsapp/verify-otp  { phone, otp }
 const verifyOtp = async (req, res) => {
+  if (!req.user?.id) {
+    return res.status(401).json({ success: false, verified: false, message: 'Authentication required.' });
+  }
   const { phone, otp } = req.body || {};
   const normalized = aisensy.normalizePhone(phone);
   if (!normalized || !otp) {
@@ -39,7 +42,7 @@ const verifyOtp = async (req, res) => {
       whatsapp_verified: true,
       whatsapp_verified_at: new Date().toISOString(),
     })
-    .eq('id', req.user.id);
+    .eq('id', req.user?.id);
   if (error) {
     return res.status(500).json({ success: false, verified: false, message: 'Could not save your number.' });
   }
