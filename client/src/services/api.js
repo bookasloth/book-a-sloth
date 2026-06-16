@@ -120,6 +120,11 @@ export const adminUploadImage = (file, folder = 'badges') => {
   });
 };
 
+// ── Appearance — navbar logo ──────────────────────────────────
+export const getAppearance         = ()            => API.get('/appearance');            // public
+export const adminGetAppearance    = ()            => API.get('/admin/appearance');
+export const adminUpdateAppearance = (data)        => API.put('/admin/appearance', data);
+
 // ── Admin: Staff & Roles (Super Admin only) ───────────────────
 export const adminListRoles        = ()            => API.get('/admin/roles');
 export const adminListStaff        = ()            => API.get('/admin/staff');
