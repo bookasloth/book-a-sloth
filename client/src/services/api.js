@@ -106,6 +106,10 @@ export const resubscribeEmail     = (token)    => API.post('/email/resubscribe',
 // Single-step login: username/email + password -> isolated admin session token.
 export const adminLoginUser   = (data)         => API.post('/admin-auth/login', data);
 export const adminGetMe       = ()             => API.get('/admin-auth/me');
+// 2FA (TOTP) — pending_token from login travels in the body, not the auth header.
+export const admin2faSetup    = (data)         => API.post('/admin-auth/2fa-setup', data);
+export const admin2faConfirm  = (data)         => API.post('/admin-auth/2fa-confirm', data);
+export const admin2faVerify   = (data)         => API.post('/admin-auth/2fa-verify', data);
 
 // ── Admin: Operations Center ──────────────────────────────────
 export const adminOpsSummary  = ()             => API.get('/admin/ops/summary');
