@@ -10,9 +10,11 @@
 
 const crypto = require('crypto');
 
-function verifySignature(orderId, paymentId, signature) {
+// keySecret is injected by callers (from razorpayConfig, DB-driven). Defaults to
+// the env var for back-compat and for tests that mock this module entirely.
+function verifySignature(orderId, paymentId, signature, keySecret = process.env.RAZORPAY_KEY_SECRET) {
   const expected = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .createHmac('sha256', keySecret)
     .update(`${orderId}|${paymentId}`)
     .digest('hex');
   const expectedBuf = Buffer.from(expected);

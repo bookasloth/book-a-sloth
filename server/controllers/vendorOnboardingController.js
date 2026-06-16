@@ -3,12 +3,7 @@ const { supabaseAdmin, signInWithPassword } = require("../config/supabase");
 const { sendWhatsAppOtp } = require("../utils/notify");
 const communicationEngine = require("../services/email/communicationEngine");
 const otpStore = require("../utils/otpStore");
-const Razorpay = require("razorpay");
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+const razorpayConfig = require("../services/razorpayConfig");
 
 // ─── Slug validation & generation ───────────────────────────────────────
 const isValidSlug = (slug) => {
@@ -280,6 +275,7 @@ const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
 // ─── Razorpay Order Creation ────────────────────────────────────────────
 const createRazorpayOrder = async (vendorId, plan, amount) => {
   // Create order in Razorpay
+  const razorpay = await razorpayConfig.getClient();
   const order = await razorpay.orders.create({
     amount: Math.round(amount * 100), // Convert to paise
     currency: "INR",
@@ -305,7 +301,7 @@ const createRazorpayOrder = async (vendorId, plan, amount) => {
     orderId: order.id,
     amount,
     currency: "INR",
-    key: process.env.RAZORPAY_KEY_ID,
+    key: await razorpayConfig.getKeyId(),
   };
 };
 
@@ -328,6 +324,7 @@ const verifyRazorpayPayment = async (paymentId, orderId, vendorId) => {
     if (order.payment_verified) throw new Error("Order already processed");
 
     // Confirm with Razorpay (the source of truth — never the client body).
+    const razorpay = await razorpayConfig.getClient();
     const payment = await razorpay.payments.fetch(paymentId);
     if (payment.status !== "captured") {
       throw new Error("Payment not captured");

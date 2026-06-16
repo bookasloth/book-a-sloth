@@ -84,7 +84,7 @@ const IC = {
 const PATH_LABELS = {
   'super-dashboard':'Dashboard', revenue:'Revenue', pending:'Pending Actions',
   admin:null, bookings:'Bookings', users:'Users', services:'Services',
-  settings:'General Settings', plans:'Subscription Plans', addons:'Addons',
+  settings:'General Settings', payment:'Payment Settings', plans:'Subscription Plans', addons:'Addons',
   providers:'Providers', active:'Active', suspended:'Suspended',
   kyc:'KYC', approved:'Approved', rejected:'Rejected',
   finance:'Finance', transactions:'Transactions', earnings:'Provider Earnings', refunds:'Refunds',
@@ -170,6 +170,7 @@ const NAV = [
     { label:'Communication',    icon:'mail',    to:'/admin/platform/communication', perm:'email.manage' },
     { label:'Campaigns',        icon:'mail',    to:'/admin/campaigns', perm:'campaigns.view' },
     { label:'Notification Settings', icon:'bell', to:'/admin/notifications', perm:'notifications.view' },
+    { label:'Payment Settings', icon:'card',    to:'/admin/settings/payment', perm:'settings.manage' },
     { label:'General Settings', icon:'gear',    to:'/admin/settings', perm:'settings.manage' },
   ]},
   { id:'security', section:'SECURITY', items:[

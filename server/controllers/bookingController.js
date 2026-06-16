@@ -717,6 +717,7 @@ const rescheduleBooking = async (req, res) => {
     // reschedule_fee flag is ON and the vendor set a fee > 0, a valid Razorpay
     // fee payment is required BEFORE any DB mutation (402 otherwise).
     const { verifySignature } = require("../utils/razorpaySignature");
+    const rzpConfig = require("../services/razorpayConfig");
     let feeChargedAmount = 0;
     let feeOrderId = null, feePaymentId = null;
     if (isGuestReschedule) {
@@ -727,8 +728,9 @@ const rescheduleBooking = async (req, res) => {
       const feeApplies = priorCount >= 1 && feeFlagOn && vendorFee > 0;
       if (feeApplies) {
         const { fee_payment_id, fee_order_id, fee_signature } = req.body;
+        const feeKeySecret = await rzpConfig.getKeySecret();
         if (!fee_payment_id || !fee_order_id || !fee_signature ||
-            !verifySignature(fee_order_id, fee_payment_id, fee_signature)) {
+            !verifySignature(fee_order_id, fee_payment_id, fee_signature, feeKeySecret)) {
           return res.status(402).json({ message: 'Reschedule fee payment required', fee: vendorFee });
         }
         feeChargedAmount = vendorFee;

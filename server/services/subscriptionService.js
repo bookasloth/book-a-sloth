@@ -85,7 +85,7 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
     // Gateway fee+tax — PLATFORM-borne for subscriptions (PRD §5.3).
     let feeTotal = 0, tax = 0;
     try {
-      const { razorpay } = require('./razorpaySubscriptions');
+      const razorpay = await require('./razorpaySubscriptions').getClient();
       const pmt = await razorpay.payments.fetch(paymentId);
       if (pmt?.fee != null) feeTotal = Number(pmt.fee) / 100;
       if (pmt?.tax != null) tax = Number(pmt.tax) / 100;

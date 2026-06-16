@@ -274,6 +274,11 @@ export const adminRestorePlan  = (id)       => API.patch(`/admin/plans/${id}/res
 export const adminClonePlan    = (id)       => API.post(`/admin/plans/${id}/clone`);
 export const adminReorderPlans = (order)    => API.patch('/admin/plans/reorder', { order });
 export const adminAssignPlan   = (data)     => API.post('/admin/plans/assign', data);
+
+// ── Admin: payment (Razorpay) settings ────────────────────────
+export const adminGetRazorpay    = ()     => API.get('/admin/settings/payment/razorpay');
+export const adminUpdateRazorpay = (data) => API.put('/admin/settings/payment/razorpay', data);
+export const adminTestRazorpay   = (data) => API.post('/admin/settings/payment/razorpay/test', data);
 export const getPublicPlans    = ()         => API.get('/plans');
 
 // ── Admin: Email Communication Engine ────────────────────────

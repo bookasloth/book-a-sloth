@@ -46,6 +46,12 @@ router.delete('/services/:id', requireAdmin('services.manage'), deleteService);
 router.get('/settings', requireAdmin('settings.manage'), getSettings);
 router.put('/settings', requireAdmin('settings.manage'), updateSettings);
 
+// ── Payment settings — Razorpay credentials (encrypted at rest) ─
+const paymentSettings = require('../controllers/paymentSettingsAdminController');
+router.get('/settings/payment/razorpay',       requireAdmin('settings.manage'), paymentSettings.getRazorpay);
+router.put('/settings/payment/razorpay',        requireAdmin('settings.manage'), paymentSettings.updateRazorpay);
+router.post('/settings/payment/razorpay/test',  requireAdmin('settings.manage'), paymentSettings.testRazorpay);
+
 // ── Feature flags ──────────────────────────────────────────────
 const features = require('../controllers/featureFlagController');
 router.get('/features',        requireAdmin('settings.manage'), features.getFlags);
