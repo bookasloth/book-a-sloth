@@ -7,6 +7,8 @@
  */
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const platformConfig = require('../services/platformConfig');
+const { computeSettlementBalance } = require('../services/settlementService');
 
 // ─── TRANSACTIONS ─────────────────────────────────────────────────────────────
 
@@ -59,40 +61,9 @@ const getTransactions = async (req, res) => {
 const getPayoutBalance = async (req, res) => {
   try {
     const hostId = req.user.id;
-
-    // Total earned (paid bookings, vendor_amount)
-    const { data: paidBookings } = await supabaseAdmin
-      .from('bookings')
-      .select('vendor_amount, platform_fee_amount')
-      .eq('host_id', hostId)
-      .eq('payment_status', 'paid');
-
-    const totalEarned = (paidBookings || []).reduce(
-      (sum, b) => sum + (b.vendor_amount || 0), 0
-    );
-
-    // Total withdrawn (approved payouts)
-    const { data: payouts } = await supabaseAdmin
-      .from('payout_requests')
-      .select('amount, status')
-      .eq('host_id', hostId);
-
-    const totalWithdrawn = (payouts || [])
-      .filter(p => p.status === 'approved' || p.status === 'paid')
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
-
-    const pendingPayout = (payouts || [])
-      .filter(p => p.status === 'pending')
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
-
-    const available = Math.max(0, totalEarned - totalWithdrawn - pendingPayout);
-
-    res.json({
-      available: Math.round(available * 100) / 100,
-      pending: Math.round(pendingPayout * 100) / 100,
-      totalWithdrawn: Math.round(totalWithdrawn * 100) / 100,
-      totalEarned: Math.round(totalEarned * 100) / 100,
-    });
+    const { clearingDays } = await platformConfig.getConfig();
+    const balance = await computeSettlementBalance(hostId, clearingDays);
+    res.json(balance);
   } catch (error) {
     safeError(res, error);
   }
@@ -124,27 +95,8 @@ const requestPayout = async (req, res) => {
       return res.status(400).json({ message: 'Minimum withdrawal amount is ₹100' });
     }
 
-    // Get available balance
-    const { data: paidBookings } = await supabaseAdmin
-      .from('bookings')
-      .select('vendor_amount')
-      .eq('host_id', hostId)
-      .eq('payment_status', 'paid');
-
-    const totalEarned = (paidBookings || []).reduce(
-      (sum, b) => sum + (b.vendor_amount || 0), 0
-    );
-
-    const { data: payouts } = await supabaseAdmin
-      .from('payout_requests')
-      .select('amount, status')
-      .eq('host_id', hostId);
-
-    const alreadyClaimed = (payouts || [])
-      .filter(p => p.status === 'approved' || p.status === 'pending' || p.status === 'paid')
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
-
-    const available = Math.max(0, totalEarned - alreadyClaimed);
+    const { clearingDays } = await platformConfig.getConfig();
+    const { available } = await computeSettlementBalance(hostId, clearingDays);
 
     if (parseFloat(amount) > available) {
       return res.status(400).json({
