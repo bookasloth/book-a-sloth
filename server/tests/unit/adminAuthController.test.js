@@ -99,31 +99,45 @@ describe('adminLogin (credential store)', () => {
     expect(res.status).toHaveBeenCalledWith(429);
   });
 
-  test('200 — login by username returns a token + role + permissions', async () => {
+  // Login now returns a short-lived pending token, NOT a full session (2FA gate added v2.5).
+  // When totp_enabled is false (no 2FA enrolled), the response is enroll_required + pending_token.
+  // When totp_enabled is true, the response is twofa_required + pending_token.
+  // Full sessions are only issued after the second factor (verify2fa / confirm2fa).
+
+  test('200 — login by username (no 2FA enrolled) returns enroll_required pending token', async () => {
     const res = mockRes();
     await adminLogin(mockReq({ username: 'ops', password: PASSWORD }), res);
     const payload = res.json.mock.calls[0][0];
-    expect(payload.token).toBeDefined();
-    expect(payload.type).toBe('admin');
-    expect(payload.role).toBe('operations');
-    expect(payload.permissions).toEqual(['ops.view', 'bookings.view']);
+    expect(payload.enroll_required).toBe(true);
+    expect(payload.pending_token).toBeDefined();
+    // No full session in this response.
+    expect(payload.token).toBeUndefined();
+    expect(payload.permissions).toBeUndefined();
+    // Pending token carries the enroll type.
+    const decoded = jwtVerify(payload.pending_token);
+    expect(decoded.type).toBe('admin_2fa_enroll');
+    expect(decoded.sub).toBe('staff-1');
   });
 
-  test('200 — login by email works too', async () => {
+  test('200 — login by email (no 2FA enrolled) also returns pending token', async () => {
     const res = mockRes();
     await adminLogin(mockReq({ email: 'ops@bookasloth.com', password: PASSWORD }), res);
     expect(res.status).not.toHaveBeenCalledWith(401);
     const payload = res.json.mock.calls[0][0];
-    expect(payload.username).toBe('ops');
+    expect(payload.enroll_required).toBe(true);
+    expect(payload.pending_token).toBeDefined();
   });
 
-  test('issued token verifies as an admin session', async () => {
+  test('200 — login with totp_enabled=true returns twofa_required pending token', async () => {
+    seedStaff({ totp_enabled: true });
     const res = mockRes();
     await adminLogin(mockReq({ username: 'ops', password: PASSWORD }), res);
-    const { token } = res.json.mock.calls[0][0];
-    const decoded = jwtVerify(token);
-    expect(decoded.type).toBe('admin');
-    expect(decoded.role).toBe('operations');
-    expect(decoded.permissions).toContain('ops.view');
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.twofa_required).toBe(true);
+    expect(payload.pending_token).toBeDefined();
+    expect(payload.token).toBeUndefined();
+    const decoded = jwtVerify(payload.pending_token);
+    expect(decoded.type).toBe('admin_2fa');
+    expect(decoded.sub).toBe('staff-1');
   });
 });

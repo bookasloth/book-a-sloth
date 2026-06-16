@@ -55,6 +55,27 @@ describe('jwtSign / jwtVerify', () => {
   });
 });
 
+describe('jwtSign custom TTL + verifyPending', () => {
+  const { verifyPending } = require('../../services/adminAuthService');
+
+  test('jwtSign honors a custom ttl', () => {
+    const p = jwtVerify(jwtSign({ type: 'admin_2fa', sub: 'a1' }, 300));
+    expect(p.exp - p.iat).toBe(300);
+  });
+
+  test('jwtSign default ttl is 8h', () => {
+    const p = jwtVerify(jwtSign({ type: 'admin', sub: 'a1' }));
+    expect(p.exp - p.iat).toBe(8 * 60 * 60);
+  });
+
+  test('verifyPending accepts the matching type, rejects others and garbage', () => {
+    const t = jwtSign({ type: 'admin_2fa', sub: 'a1' }, 300);
+    expect(verifyPending(t, 'admin_2fa').sub).toBe('a1');
+    expect(() => verifyPending(t, 'admin_2fa_enroll')).toThrow();
+    expect(() => verifyPending('garbage', 'admin_2fa')).toThrow();
+  });
+});
+
 describe('password hashing', () => {
   test('hashes and verifies a correct password', async () => {
     const hash = await hashPassword('S3cret-Pass!');

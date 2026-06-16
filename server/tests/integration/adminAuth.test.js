@@ -81,13 +81,23 @@ describe('POST /api/admin-auth/login', () => {
     expect(res.status).toBe(401);
   });
 
-  test('200 — success returns an admin session token', async () => {
+  test('200 — correct password for a non-enrolled admin returns an enroll pending token, NOT a full session', async () => {
     const res = await request(app).post('/api/admin-auth/login').send({ username: 'ops', password: PASSWORD });
     expect(res.status).toBe(200);
-    expect(res.body.token).toBeDefined();
-    expect(res.body.type).toBe('admin');
-    expect(res.body.role).toBe('operations');
-    expect(res.body.permissions).toContain('ops.view');
+    expect(res.body.enroll_required).toBe(true);
+    expect(res.body.pending_token).toBeDefined();
+    // SECURITY: no full session before the second factor
+    expect(res.body.token).toBeUndefined();
+    expect(res.body.permissions).toBeUndefined();
+  });
+
+  test('200 — correct password for a 2FA-enrolled admin returns a 2FA pending token, NOT a full session', async () => {
+    globalThis.__staff.totp_enabled = true;
+    const res = await request(app).post('/api/admin-auth/login').send({ username: 'ops', password: PASSWORD });
+    expect(res.status).toBe(200);
+    expect(res.body.twofa_required).toBe(true);
+    expect(res.body.pending_token).toBeDefined();
+    expect(res.body.token).toBeUndefined();
   });
 });
 
