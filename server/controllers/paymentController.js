@@ -385,6 +385,23 @@ const verifySubscription = async (req, res) => {
       return res.status(400).json({ message: "Payment verification failed." });
     }
 
+    // SECURITY: the signature only proves the order/payment pair is genuine — not
+    // WHICH plan it was for. Fetch the order and confirm it was created for THIS
+    // vendor and the claimed plan, else a vendor could pay for a cheap plan and
+    // activate an expensive one.
+    let rzpOrder;
+    try {
+      const razorpay = await razorpayConfig.getClient();
+      rzpOrder = await razorpay.orders.fetch(razorpay_order_id);
+    } catch (_) {
+      return res.status(400).json({ message: "Order not found." });
+    }
+    if (String(rzpOrder?.notes?.vendor_id) !== String(req.user.id) ||
+        String(rzpOrder?.notes?.plan) !== String(plan)) {
+      securityLog('SUBSCRIPTION_ORDER_MISMATCH', { userId: req.user.id, order_id: razorpay_order_id, claimedPlan: plan, ip: req.ip });
+      return res.status(400).json({ message: "Payment does not match this plan." });
+    }
+
     // Idempotency: if this payment was already processed, return success without
     // re-activating / re-inserting / re-posting (prevents double subscription revenue).
     const { data: priorPayment } = await supabaseAdmin
