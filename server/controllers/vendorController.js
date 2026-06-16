@@ -95,27 +95,8 @@ const requestPayout = async (req, res) => {
       return res.status(400).json({ message: 'Minimum withdrawal amount is ₹100' });
     }
 
-    // Get available balance
-    const { data: paidBookings } = await supabaseAdmin
-      .from('bookings')
-      .select('vendor_amount')
-      .eq('host_id', hostId)
-      .eq('payment_status', 'paid');
-
-    const totalEarned = (paidBookings || []).reduce(
-      (sum, b) => sum + (b.vendor_amount || 0), 0
-    );
-
-    const { data: payouts } = await supabaseAdmin
-      .from('payout_requests')
-      .select('amount, status')
-      .eq('host_id', hostId);
-
-    const alreadyClaimed = (payouts || [])
-      .filter(p => p.status === 'approved' || p.status === 'pending' || p.status === 'paid')
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
-
-    const available = Math.max(0, totalEarned - alreadyClaimed);
+    const { clearingDays } = await platformConfig.getConfig();
+    const { available } = await computeSettlementBalance(hostId, clearingDays);
 
     if (parseFloat(amount) > available) {
       return res.status(400).json({
