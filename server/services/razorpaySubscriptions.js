@@ -7,16 +7,11 @@
  */
 'use strict';
 
-const Razorpay = require('razorpay');
 const planService = require('./planService');
 const platformConfig = require('./platformConfig');
+const razorpayConfig = require('./razorpayConfig');
 const { supabaseAdmin } = require('../config/supabase');
 const { cadenceAmountPaise, razorpayInterval, normCadence } = require('../lib/subscriptionPricing');
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
 
 const PLAN_ID_COLUMN = { monthly: 'razorpay_plan_id_monthly', annual: 'razorpay_plan_id_annual' };
 // total_count is required by Razorpay; cap cycles high enough to be effectively
@@ -39,6 +34,7 @@ async function ensureRazorpayPlan(planRow, cadence) {
   if (!(amount > 0)) throw new Error(`plan "${planRow.slug}" has no ${c} price set`);
 
   const { period, interval } = razorpayInterval(c);
+  const razorpay = await razorpayConfig.getClient();
   const rzpPlan = await razorpay.plans.create({
     period,
     interval,
@@ -69,6 +65,7 @@ async function ensureRazorpayPlan(planRow, cadence) {
  */
 async function createSubscription({ planId, cadence, notes = {}, startAt }) {
   const c = normCadence(cadence);
+  const razorpay = await razorpayConfig.getClient();
   return razorpay.subscriptions.create({
     plan_id: planId,
     total_count: TOTAL_COUNT[c] || 120,
@@ -80,15 +77,17 @@ async function createSubscription({ planId, cadence, notes = {}, startAt }) {
 
 /** Cancel a subscription (at cycle end by default; immediate when atCycleEnd=false). */
 async function cancelSubscription(subscriptionId, atCycleEnd = true) {
+  const razorpay = await razorpayConfig.getClient();
   return razorpay.subscriptions.cancel(subscriptionId, atCycleEnd);
 }
 
 async function fetchSubscription(subscriptionId) {
+  const razorpay = await razorpayConfig.getClient();
   return razorpay.subscriptions.fetch(subscriptionId);
 }
 
 module.exports = {
-  razorpay,
+  getClient: razorpayConfig.getClient,
   PLAN_ID_COLUMN,
   ensureRazorpayPlan,
   createSubscription,

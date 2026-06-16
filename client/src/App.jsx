@@ -76,6 +76,7 @@ const AdminUsers    = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminBookings = lazy(() => import('./pages/admin/AdminBookings'));
 const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
+const AdminPaymentSettings = lazy(() => import('./pages/admin/AdminPaymentSettings'));
 
 // Admin — People
 const AdminProviders = lazy(() => import('./pages/admin/AdminProviders'));
@@ -276,6 +277,7 @@ function App() {
 
           {/* General settings */}
           <Route path="/admin/settings" element={<AdminWrapper><AdminSettings /></AdminWrapper>} />
+          <Route path="/admin/settings/payment" element={<AdminWrapper><AdminPaymentSettings /></AdminWrapper>} />
 
           {/* Explore page */}
           <Route path="/explore" element={<Explore />} />

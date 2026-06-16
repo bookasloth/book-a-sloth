@@ -14,7 +14,7 @@ jest.mock('../../services/planService', () => ({
 jest.mock('../../services/platformConfig', () => ({ getConfig: jest.fn(() => Promise.resolve({ gstRate: 0.18 })) }));
 jest.mock('../../services/notificationEngine', () => ({ send: jest.fn(() => Promise.resolve()) }));
 jest.mock('../../services/razorpaySubscriptions', () => ({
-  razorpay: { payments: { fetch: jest.fn(() => Promise.resolve({ fee: 2360, tax: 360 })) } },
+  getClient: jest.fn(() => Promise.resolve({ payments: { fetch: jest.fn(() => Promise.resolve({ fee: 2360, tax: 360 })) } })),
 }));
 jest.mock('../../services/ledger/journalTemplates', () => ({ subscriptionPaymentEntry: jest.fn(() => ({ lines: [] })) }));
 jest.mock('../../services/ledger/postingService', () => ({ postSafe: jest.fn(() => Promise.resolve()) }));

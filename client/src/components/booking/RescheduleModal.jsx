@@ -56,7 +56,7 @@ export default function RescheduleModal({ open, booking, onClose, onDone }) {
     try {
       const { data } = await createRescheduleFeeOrder(booking.id);
       const rzp = new window.Razorpay({
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: data.key,
         order_id: data.razorpay_order_id,
         amount: data.amount,
         currency: data.currency,

@@ -483,7 +483,7 @@ const ServiceBooking = () => {
         guest_email: email,
       });
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: order.key,
         amount: order.amount,
         currency: order.currency,
         name: "Book A Sloth",

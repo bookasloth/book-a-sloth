@@ -1,5 +1,4 @@
 // Razorpay payment controller — bookings + product purchases + plan subscriptions
-const Razorpay = require("razorpay");
 const { safeError } = require('../utils/httpError');
 const crypto = require("crypto");
 const { supabaseAdmin } = require("../config/supabase");
@@ -11,6 +10,7 @@ const planService = require("../services/planService");
 const platformConfig = require("../services/platformConfig");
 const razorpaySubscriptions = require("../services/razorpaySubscriptions");
 const subscriptionService = require("../services/subscriptionService");
+const razorpayConfig = require("../services/razorpayConfig");
 const { cadencePrice, cadenceGross, cadencePeriodDays, computeSwitch, normCadence } = require("../lib/subscriptionPricing");
 const { createCalendarEvent } = require("../config/google");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
@@ -32,11 +32,6 @@ const emailHtml = (body) => `
   </div>`;
 const row = (label, value) =>
   `<p style="margin:0 0 12px;font-size:15px;color:#374151;"><strong>${label}:</strong> ${value}</p>`;
-
-const razorpay = new Razorpay({
-  key_id:     process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
 
 // ── POST /api/payment/create-order ───────────────────────────
 // SECURITY FIX: validate guest identity against the booking before creating order
@@ -109,6 +104,7 @@ const createOrder = async (req, res) => {
     }
 
     const totalPaise = Math.round(customerTotal * 100);
+    const razorpay = await razorpayConfig.getClient();
     const order = await razorpay.orders.create({
       amount: totalPaise, currency: "INR",
       receipt: `bkg_${booking_id.slice(0, 20)}`,
@@ -123,6 +119,7 @@ const createOrder = async (req, res) => {
     auditLog('PAYMENT_ORDER_CREATED', booking.guest_id, { booking_id, amount: totalPaise });
 
     res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency,
+      key: await razorpayConfig.getKeyId(),
       service_price: servicePrice, platform_fee: platformFee, gst, total: customerTotal });
   } catch (error) {
     securityLog('PAYMENT_ORDER_ERROR', { error: error.message });
@@ -148,7 +145,8 @@ const verifyPayment = async (req, res) => {
       return res.status(400).json({ message: "Payment verification failed." });
     }
 
-    if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)) {
+    const keySecret = await razorpayConfig.getKeySecret();
+    if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, keySecret)) {
       securityLog('PAYMENT_SIGNATURE_INVALID', { booking_id, ip: req.ip });
       return res.status(400).json({ message: "Payment verification failed — invalid signature." });
     }
@@ -157,6 +155,7 @@ const verifyPayment = async (req, res) => {
     // Razorpay's `fee` (paise) INCLUDES `tax`; we store them split (PRD §19).
     let razorpayFeeTotal = 0, razorpayTax = 0;
     try {
+      const razorpay = await razorpayConfig.getClient();
       const payment = await razorpay.payments.fetch(razorpay_payment_id);
       if (payment && payment.fee != null) razorpayFeeTotal = Number(payment.fee) / 100;
       if (payment && payment.tax != null) razorpayTax = Number(payment.tax) / 100;
@@ -359,6 +358,7 @@ const subscribePlan = async (req, res) => {
     const { gstRate } = await platformConfig.getConfig();
     const breakdown = computeSubscriptionBreakdown({ planPrice: Number(planRecord.annual_price), gstRate });
     const amountPaise = Math.round(breakdown.totalCharged * 100);
+    const razorpay = await razorpayConfig.getClient();
     const order = await razorpay.orders.create({
       amount: amountPaise, currency: "INR",
       receipt: `plan_${plan}_${req.user.id.slice(0, 10)}`,
@@ -379,7 +379,8 @@ const verifySubscription = async (req, res) => {
   try {
     const { plan, razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
 
-    if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)) {
+    const keySecret = await razorpayConfig.getKeySecret();
+    if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, keySecret)) {
       securityLog('SUBSCRIPTION_SIGNATURE_INVALID', { userId: req.user.id, ip: req.ip });
       return res.status(400).json({ message: "Payment verification failed." });
     }
@@ -421,6 +422,7 @@ const verifySubscription = async (req, res) => {
       // Actual gateway fee+tax — PLATFORM-borne for subscriptions (PRD §5.3)
       let subFeeTotal = 0, subTax = 0;
       try {
+        const razorpay = await razorpayConfig.getClient();
         const payment = await razorpay.payments.fetch(razorpay_payment_id);
         if (payment && payment.fee != null) subFeeTotal = Number(payment.fee) / 100;
         if (payment && payment.tax != null) subTax = Number(payment.tax) / 100;
@@ -599,7 +601,7 @@ const createVendorSubscription = async (req, res) => {
 
     auditLog('SUBSCRIPTION_CREATED', req.user.id, { plan: planRecord.slug, cadence, subscription_id: subscription.id, switch: isSwitch });
     res.json({
-      subscription_id: subscription.id, key: process.env.RAZORPAY_KEY_ID, plan: planRecord.slug, cadence,
+      subscription_id: subscription.id, key: await razorpayConfig.getKeyId(), plan: planRecord.slug, cadence,
       ...(switchInfo ? { credit_applied: switchInfo.creditApplied, forfeited: switchInfo.forfeited, free_days: switchInfo.creditDays } : {}),
     });
   } catch (error) {
@@ -666,12 +668,14 @@ const createProductOrder = async (req, res) => {
 
     const productFee = calculatePlatformFee(product.price);
     const totalPaise = Math.round((product.price + productFee) * 100);
+    const razorpay = await razorpayConfig.getClient();
     const order = await razorpay.orders.create({
       amount: totalPaise, currency: "INR",
       receipt: `prd_${product_id.slice(0, 20)}`,
       notes: { product_id, title: product.title, platform_fee: productFee },
     });
     res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency,
+      key: await razorpayConfig.getKeyId(),
       product_price: product.price, platform_fee: productFee });
   } catch (error) {
     safeError(res, error);
@@ -696,12 +700,14 @@ const createRescheduleFeeOrder = async (req, res) => {
     if (fee <= 0 || (Number(booking.reschedule_count) || 0) < 1) {
       return res.status(400).json({ message: "No reschedule fee due", fee: 0 });
     }
+    const razorpay = await razorpayConfig.getClient();
     const order = await razorpay.orders.create({
       amount: Math.round(fee * 100), currency: "INR",
       receipt: `rsf_${booking_id.slice(0, 20)}`,
       notes: { booking_id, kind: "reschedule_fee" },
     });
-    res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency, fee });
+    res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency, fee,
+      key: await razorpayConfig.getKeyId() });
   } catch (e) {
     res.status(500).json({ message: "Could not start reschedule fee payment" });
   }
@@ -716,7 +722,8 @@ const verifyProductPayment = async (req, res) => {
     const buyerId = req.user?.id || null;
     const buyerEmail = String(req.body.buyer_email || '').toLowerCase().trim();
 
-    if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)) {
+    const keySecret = await razorpayConfig.getKeySecret();
+    if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, keySecret)) {
       securityLog('PRODUCT_PAYMENT_SIGNATURE_INVALID', { product_id, ip: req.ip });
       return res.status(400).json({ message: "Payment verification failed." });
     }
@@ -733,6 +740,7 @@ const verifyProductPayment = async (req, res) => {
     // a cheap product and verify against an expensive product_id.
     let rzpOrder;
     try {
+      const razorpay = await razorpayConfig.getClient();
       rzpOrder = await razorpay.orders.fetch(razorpay_order_id);
     } catch (_) {
       return res.status(400).json({ message: "Order not found." });
@@ -779,7 +787,7 @@ const verifyProductPayment = async (req, res) => {
 // Razorpay server-side webhook for payment.captured / payment.failed events
 // MUST use raw body — register before express.json()
 const handleWebhook = async (req, res) => {
-  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const webhookSecret = await razorpayConfig.getWebhookSecret();
   if (!webhookSecret) {
     return res.status(500).json({ message: "Webhook secret not configured" });
   }
