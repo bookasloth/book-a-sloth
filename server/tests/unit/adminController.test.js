@@ -39,7 +39,7 @@ jest.mock('../../services/auditService', () => ({ audit: jest.fn() }));
 const { supabaseAdmin } = require('../../config/supabase');
 const {
   getStats, getUsers, getUserById, updateUser, deleteUser,
-  getAllBookings, getAllServices,
+  getAllBookings, getAllServices, updateBooking,
 } = require('../../controllers/adminController');
 
 const req = (params = {}, body = {}, query = {}) => ({ params, body, query });
@@ -184,6 +184,67 @@ describe('getAllServices', () => {
     await getAllServices(req(), r);
     const payload = r.json.mock.calls[0][0];
     expect(Array.isArray(payload)).toBe(true);
+  });
+});
+
+// ── updateBooking ─────────────────────────────────────────────────────────────
+
+describe('updateBooking', () => {
+  test('SECURITY: rejects payment_status="paid" with 400 and does NOT write to DB', async () => {
+    // Set up a mock that lets us detect whether .update() was called
+    const updateMock = jest.fn().mockReturnThis();
+    supabaseAdmin.from.mockReturnValue({
+      update: updateMock,
+      eq:     jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: {}, error: null }),
+    });
+    const r = res();
+    await updateBooking(req({ id: 'b1' }, { payment_status: 'paid' }), r);
+    expect(r.status).toHaveBeenCalledWith(400);
+    expect(r.json.mock.calls[0][0].message).toMatch(/paid/i);
+    // Supabase .update() must NOT have been called — no fabricated balance write
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  test('allows status="completed" (no payment_status) and updates successfully', async () => {
+    const UPDATED = { id: 'b1', status: 'completed', payment_status: 'pending' };
+    supabaseAdmin.from.mockReturnValue({
+      update: jest.fn().mockReturnThis(),
+      eq:     jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: UPDATED, error: null }),
+    });
+    const r = res();
+    await updateBooking(req({ id: 'b1' }, { status: 'completed' }), r);
+    expect(r.status).not.toHaveBeenCalled();
+    expect(r.json.mock.calls[0][0]).toMatchObject({ status: 'completed' });
+  });
+
+  test('allows payment_status="refunded" (non-paid status) and updates successfully', async () => {
+    const UPDATED = { id: 'b1', status: 'cancelled', payment_status: 'refunded' };
+    supabaseAdmin.from.mockReturnValue({
+      update: jest.fn().mockReturnThis(),
+      eq:     jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: UPDATED, error: null }),
+    });
+    const r = res();
+    await updateBooking(req({ id: 'b1' }, { payment_status: 'refunded' }), r);
+    expect(r.status).not.toHaveBeenCalled();
+    expect(r.json.mock.calls[0][0]).toMatchObject({ payment_status: 'refunded' });
+  });
+
+  test('returns 500 on DB error', async () => {
+    supabaseAdmin.from.mockReturnValue({
+      update: jest.fn().mockReturnThis(),
+      eq:     jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: { message: 'DB err' } }),
+    });
+    const r = res();
+    await updateBooking(req({ id: 'b1' }, { status: 'completed' }), r);
+    expect(r.status).toHaveBeenCalledWith(500);
   });
 });
 
