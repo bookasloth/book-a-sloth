@@ -94,6 +94,21 @@ const Dashboard = () => {
 
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => localStorage.getItem('legacyPlanBannerDismissed') === '1'
+  );
+
+  // Legacy paid vendors were backfilled to subscription_status='active' but have
+  // NO auto-renew mandate — nudge them onto auto-renew before their period ends.
+  const showLegacyBanner =
+    isHost && user?.plan && user.plan !== 'starter' &&
+    user.subscription_status === 'active' && !user.has_payment_mandate &&
+    !bannerDismissed;
+
+  const dismissBanner = () => {
+    localStorage.setItem('legacyPlanBannerDismissed', '1');
+    setBannerDismissed(true);
+  };
 
   // Google-calendar return toast
   useEffect(() => {
@@ -166,6 +181,25 @@ const Dashboard = () => {
     <div className="w-full max-w-5xl">
       <h1 className="text-2xl sm:text-3xl font-bold mb-1">Welcome back, {user?.name?.split(' ')[0]}</h1>
       <p className="text-sm text-gray-400 mb-6">Here's what's happening with your bookings.</p>
+
+      {/* Legacy plan → auto-renew migration nudge */}
+      {showLegacyBanner && (
+        <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded p-4">
+          <CreditCard className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" strokeWidth={2.25} />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-gray-900 capitalize">Your {user.plan} plan won't auto-renew</p>
+            <p className="text-xs text-gray-600 mt-0.5">Set up auto-renew so you never lose access when your current period ends.</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link to="/dashboard/upgrade" className="btn px-3 py-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 transition-colors whitespace-nowrap">
+              Set up auto-renew
+            </Link>
+            <button onClick={dismissBanner} aria-label="Dismiss" className="text-amber-500 hover:text-amber-700 p-1">
+              <XCircle className="h-4 w-4" strokeWidth={2.25} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Profile URL pill */}
       {user?.username ? (
