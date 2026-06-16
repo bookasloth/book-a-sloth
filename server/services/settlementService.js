@@ -19,16 +19,18 @@ const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
  * @param {string} hostId
  * @param {number} clearingDays  days after completion before money matures
  * @param {number} [nowMs]       injectable clock for tests
+ * // lifetimeEarned is GROSS eligible+pending (sum of non-cancelled booking amounts); it is NOT net of payouts.
  * @returns {Promise<{available:number, clearing:number, pendingCompletion:number,
  *                     inflight:number, paidOut:number, lifetimeEarned:number}>}
  */
 async function computeSettlementBalance(hostId, clearingDays, nowMs = Date.now()) {
   const cutoff = nowMs - (Number(clearingDays) || 0) * 86400000;
 
-  const { data: bookings } = await supabaseAdmin
+  const { data: bookings, error: bErr } = await supabaseAdmin
     .from('bookings')
     .select('vendor_amount, settlement_status, completed_at, payment_status')
     .eq('host_id', hostId);
+  if (bErr) throw new Error(`settlementService: bookings query failed: ${bErr.message}`);
 
   let matured = 0, clearing = 0, pendingCompletion = 0;
   for (const b of bookings || []) {
@@ -44,10 +46,11 @@ async function computeSettlementBalance(hostId, clearingDays, nowMs = Date.now()
     }
   }
 
-  const { data: payouts } = await supabaseAdmin
+  const { data: payouts, error: pErr } = await supabaseAdmin
     .from('payout_requests')
     .select('amount, status')
     .eq('host_id', hostId);
+  if (pErr) throw new Error(`settlementService: payout_requests query failed: ${pErr.message}`);
 
   let claimed = 0, inflight = 0, paidOut = 0;
   for (const p of payouts || []) {

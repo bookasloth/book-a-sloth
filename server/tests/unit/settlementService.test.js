@@ -111,3 +111,25 @@ test('zero-day window makes eligible bookings immediately available', async () =
   const b = await computeSettlementBalance('h1', 0, NOW);
   expect(b.available).toBe(250);
 });
+
+test('throws when the bookings query errors (no silent all-zeros)', async () => {
+  supabaseAdmin.from.mockImplementation((t) => {
+    if (t === 'bookings') return chain({ data: null, error: { message: 'connection refused' } });
+    return chain({ data: [] });
+  });
+  await expect(computeSettlementBalance('h1', 7, NOW)).rejects.toThrow(/bookings query failed/);
+});
+
+test('scopes the bookings query to the given host_id', async () => {
+  const calls = [];
+  const spyChain = (result) => {
+    const c = {};
+    c.select = jest.fn(() => c);
+    c.eq = jest.fn((col, val) => { calls.push([col, val]); return c; });
+    c.then = (resolve) => resolve(result);
+    return c;
+  };
+  supabaseAdmin.from.mockImplementation(() => spyChain({ data: [] }));
+  await computeSettlementBalance('host-xyz', 7, NOW);
+  expect(calls).toContainEqual(['host_id', 'host-xyz']);
+});

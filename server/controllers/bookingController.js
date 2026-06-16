@@ -478,7 +478,7 @@ const cancelBooking = async (req, res) => {
 
     const { data, error } = await supabaseAdmin
       .from("bookings")
-      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .update({ status: "cancelled", settlement_status: "cancelled", updated_at: new Date().toISOString() })
       .eq("id", req.params.id)
       .select()
       .single();
