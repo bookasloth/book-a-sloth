@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 const { supabaseAdmin, signInWithPassword } = require("../config/supabase");
 const { sendWhatsAppOtp } = require("../utils/notify");
 const communicationEngine = require("../services/email/communicationEngine");
@@ -42,6 +43,11 @@ const sendOtpBothChannels = async (slug, email, phone, name = "Vendor") => {
   // Generate OTP (6-digit, CSPRNG)
   const otp = crypto.randomInt(100000, 1000000).toString();
 
+  // Hash before storing — never persist plaintext OTPs (parity with
+  // authController.forgotPassword). Both channels share the same OTP value,
+  // so one hash covers email_otp and phone_otp.
+  const otpHash = await bcrypt.hash(otp, 10);
+
   // Store in otp_sessions table
   const { error: storeError } = await supabaseAdmin
     .from("otp_sessions")
@@ -50,8 +56,8 @@ const sendOtpBothChannels = async (slug, email, phone, name = "Vendor") => {
         onboarding_slug: slug,
         email: email.toLowerCase().trim(),
         phone: phone || "",
-        email_otp: otp,
-        phone_otp: otp,
+        email_otp: otpHash,
+        phone_otp: otpHash,
         email_otp_expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
         phone_otp_expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
         email_verified: false,
@@ -104,7 +110,7 @@ const verifyOtp = async (slug, channel, otp) => {
     if (session.email_locked_until && new Date() < new Date(session.email_locked_until)) {
       throw new Error("Email OTP locked due to too many attempts");
     }
-    if (session.email_otp !== otp) {
+    if (!(await bcrypt.compare(otp, session.email_otp || ""))) {
       const newAttempts = (session.email_attempts || 0) + 1;
       if (newAttempts >= 3) {
         await supabaseAdmin
@@ -134,7 +140,7 @@ const verifyOtp = async (slug, channel, otp) => {
     if (session.phone_locked_until && new Date() < new Date(session.phone_locked_until)) {
       throw new Error("Phone OTP locked due to too many attempts");
     }
-    if (session.phone_otp !== otp) {
+    if (!(await bcrypt.compare(otp, session.phone_otp || ""))) {
       const newAttempts = (session.phone_attempts || 0) + 1;
       if (newAttempts >= 3) {
         await supabaseAdmin
