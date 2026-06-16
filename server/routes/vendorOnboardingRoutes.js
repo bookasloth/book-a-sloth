@@ -206,7 +206,7 @@ router.post('/mark-complete', protect, async (req, res) => {
       .from('profiles')
       .update({
         onboarding_completed: true,
-        onboarding_step_completed: 10,
+        onboarding_step_completed: 11,
         updated_at: new Date().toISOString(),
       })
       .eq('id', req.user.id)

@@ -257,6 +257,13 @@ const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
     updates.calendar_connected = data.calendar_connected || false;
     updates.calendar_skipped = data.calendar_skipped || false;
   } else if (stepNumber === 7) {
+    // WhatsApp step. Verified data is written by /api/whatsapp/verify-otp.
+    // Only the skip path writes the "unverified" state here.
+    if (data.whatsapp_skipped) {
+      updates.whatsapp_verified = false;
+      updates.whatsapp_number = null;
+    }
+  } else if (stepNumber === 8) {
     updates.profile_image = data.profile_image || null;
     updates.bio = data.bio || "";
   }
@@ -384,7 +391,7 @@ const activatePlan = async (vendorId, plan) => {
     .update({
       plan,
       plan_expires_at: planDetails[plan].expires,
-      onboarding_step_completed: 10, // Onboarding complete
+      onboarding_step_completed: 11, // Onboarding complete
       onboarding_completed: true,
       plan_activated_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
