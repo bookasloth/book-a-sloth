@@ -84,7 +84,7 @@ const AdminKYC       = lazy(() => import('./pages/admin/AdminKYC'));
 
 // Admin — Finance
 const AdminTransactions = lazy(() => import('./pages/admin/AdminTransactions'));
-const AdminEarnings     = lazy(() => import('./pages/admin/AdminEarnings'));
+const AdminPayouts      = lazy(() => import('./pages/admin/AdminPayouts'));
 const AdminRefunds      = lazy(() => import('./pages/admin/AdminRefunds'));
 
 // Admin — Content
@@ -239,7 +239,7 @@ function App() {
 
           {/* Finance */}
           <Route path="/admin/finance/transactions" element={<AdminWrapper><AdminTransactions /></AdminWrapper>} />
-          <Route path="/admin/finance/earnings" element={<AdminWrapper><AdminEarnings /></AdminWrapper>} />
+          <Route path="/admin/finance/payouts" element={<AdminWrapper><AdminPayouts /></AdminWrapper>} />
           <Route path="/admin/finance/refunds" element={<AdminWrapper><AdminRefunds /></AdminWrapper>} />
 
           {/* Content */}
