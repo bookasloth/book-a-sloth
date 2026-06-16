@@ -9,6 +9,11 @@
  * snapshot (no commission GST — it did not exist then; razorpay_tax_actual
  * defaults 0). Old plan purchases post with gst_amount 0 (none was charged).
  * Idempotent: posting dedupes on (source_type, source_id); re-runs are no-ops.
+ * CROSS-SOURCE GUARD: DB idempotency is per (source_type, source_id), so a
+ * BACKFILL row would NOT dedupe against a live ORDER_PAYMENT / SUBSCRIPTION_PAYMENT
+ * entry for the same source — double-posting it. `alreadyPosted()` checks for ANY
+ * existing journal entry on the source id first and skips, so this script is safe
+ * to run even after live triggers have already posted some rows.
  *
  * Schema verified live (project xwvciqkayammbvsidqig, 2026-06-13):
  *   payout_requests(id, host_id, amount numeric, status text, created_at, updated_at)
@@ -30,6 +35,17 @@ const { ACCOUNTS } = require('../lib/ledgerAccounts');
 
 const DRY = process.argv.includes('--dry-run');
 
+// Returns the source_type of any existing journal entry for this source id, or
+// null. Used to skip rows already posted by a live trigger (ORDER_PAYMENT /
+// SUBSCRIPTION_PAYMENT) so a backfill run can never double-post them.
+async function alreadyPosted(sourceId) {
+  if (!sourceId) return null;
+  const { data, error } = await supabaseAdmin
+    .from('journal_entries').select('source_type').eq('source_id', sourceId).limit(1);
+  if (error) throw error;
+  return data && data.length ? data[0].source_type : null;
+}
+
 async function run() {
   let planned = 0, posted = 0, skipped = 0;
   console.log(`${DRY ? '=== DRY RUN (no writes) ===' : '=== BACKFILL (writing entries) ==='}\n`);
@@ -48,6 +64,9 @@ async function run() {
     try {
       // Guard: can't balance an entry with no customer total.
       if (!(Number(b.customer_total) > 0)) { skipped += 1; continue; }
+      // Guard: already posted by a live trigger (or a prior backfill) — never double-post.
+      const dupB = await alreadyPosted(b.id);
+      if (dupB) { skipped += 1; console.log(`[booking ${b.id}] already posted as ${dupB} — skip`); continue; }
       const journalDate = (b.paid_at || b.updated_at || b.created_at || '').slice(0, 10) || null;
       planned += 1;
       console.log(`[booking ${b.id}] ${journalDate} customer_total=${b.customer_total} vendor=${b.vendor_amount}`);
@@ -89,6 +108,14 @@ async function run() {
         console.warn(`  ! plan_purchase ${p.id} has no razorpay_payment_id — skipped (not backfillable safely)`);
         continue;
       }
+      // Resolve any existing subscription_payments row first (read-only, dry-safe)
+      // so the cross-source guard can run before we plan/insert anything.
+      const { data: existing } = await supabaseAdmin
+        .from('subscription_payments').select('*').eq('razorpay_payment_id', p.razorpay_payment_id).maybeSingle();
+      if (existing) {
+        const dupS = await alreadyPosted(existing.id);
+        if (dupS) { skipped += 1; console.log(`[plan_purchase ${p.id}] subscription_payment ${existing.id} already posted as ${dupS} — skip`); continue; }
+      }
       const journalDate = (p.activated_at || '').slice(0, 10) || null;
       planned += 1;
       console.log(`[plan_purchase ${p.id}] ${journalDate} ${p.plan} ₹${planPrice}`);
@@ -96,8 +123,6 @@ async function run() {
 
       // Retroactive subscription_payments row (gst 0 — none was charged then).
       let subRow;
-      const { data: existing } = await supabaseAdmin
-        .from('subscription_payments').select('*').eq('razorpay_payment_id', p.razorpay_payment_id).maybeSingle();
       if (existing) {
         subRow = existing;
       } else {
@@ -142,6 +167,9 @@ async function run() {
     try {
       const amount = Number(po.amount) || 0;
       if (!(amount > 0)) { skipped += 1; continue; }
+      // Guard: already relieved (live settlement engine or prior backfill).
+      const dupP = await alreadyPosted(po.id);
+      if (dupP) { skipped += 1; console.log(`[payout ${po.id}] already posted as ${dupP} — skip`); continue; }
       const journalDate = (po.updated_at || po.created_at || '').slice(0, 10) || null;
       planned += 1;
       console.log(`[payout ${po.id}] ${journalDate} vendor=${po.host_id} ₹${amount}`);
