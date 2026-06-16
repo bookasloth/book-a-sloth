@@ -155,8 +155,10 @@ describe('POST /api/auth/login', () => {
     supabaseAdmin.auth.signInWithPassword.mockResolvedValueOnce({
       data: { user: { id: 'vendor-uuid' }, session: { access_token: 'tok', refresh_token: 'ref' } }, error: null,
     });
-    supabaseAdmin.from.mockReturnValueOnce({
-      select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+    // login now: pre-flight lookup by email (maybeSingle), reset update on success, then fetch by id (single)
+    supabaseAdmin.from.mockReturnValue({
+      select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), update: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: { id: 'vendor-uuid', email: 'jane@vendor.com', failed_login_count: 0, login_locked_until: null } }),
       single: jest.fn().mockResolvedValue({ data: VENDOR_PROFILE, error: null }),
     });
     const res = await request(app).post('/api/auth/login').send({ email: 'jane@vendor.com', password: 'pass123' });
