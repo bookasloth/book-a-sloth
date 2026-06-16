@@ -733,6 +733,22 @@ const rescheduleBooking = async (req, res) => {
             !verifySignature(fee_order_id, fee_payment_id, fee_signature, feeKeySecret)) {
           return res.status(402).json({ message: 'Reschedule fee payment required', fee: vendorFee });
         }
+        // SECURITY: the HMAC signature only proves the order/payment pair is genuine —
+        // it does NOT bind to which booking the fee was for, nor the amount. Without
+        // this check a guest could pay a ₹10 fee on Booking A and reuse those tokens
+        // to reschedule Booking B (fee ₹500), underpaying ₹490.
+        // Fix: fetch the Razorpay order and assert it was created for THIS booking
+        // at the correct amount before accepting the payment.
+        let feeOrder;
+        try {
+          feeOrder = await (await rzpConfig.getClient()).orders.fetch(fee_order_id);
+        } catch (_) {
+          return res.status(402).json({ message: 'Reschedule fee order not found', fee: vendorFee });
+        }
+        if (String(feeOrder?.notes?.booking_id) !== String(booking.id) ||
+            Number(feeOrder?.amount) !== Math.round(vendorFee * 100)) {
+          return res.status(402).json({ message: 'Reschedule fee does not match this booking', fee: vendorFee });
+        }
         feeChargedAmount = vendorFee;
         feeOrderId = fee_order_id;
         feePaymentId = fee_payment_id;

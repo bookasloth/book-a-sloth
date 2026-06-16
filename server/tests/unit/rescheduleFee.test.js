@@ -6,8 +6,13 @@ const mockPost = jest.fn().mockResolvedValue('je1');
 jest.mock('../../services/ledger/postingService', () => ({ post: (...a) => mockPost(...a), postSafe: jest.fn() }));
 const mockVerifySignature = jest.fn().mockReturnValue(true);
 jest.mock('../../utils/razorpaySignature', () => ({ verifySignature: (...a) => mockVerifySignature(...a) }));
+jest.mock('../../services/razorpayConfig', () => ({
+  getKeySecret: jest.fn().mockResolvedValue('test-secret'),
+  getClient: jest.fn(),
+}));
 
 const featureFlags = require('../../services/featureFlags');
+const razorpayConfig = require('../../services/razorpayConfig');
 const mockFrom = jest.fn();
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: (...a) => mockFrom(...a) } }));
 const { rescheduleBooking } = require('../../controllers/bookingController');
@@ -30,7 +35,14 @@ const wire = (b) => mockFrom.mockImplementation(() => {
   return c;
 });
 
-beforeEach(() => { jest.clearAllMocks(); featureFlags.isFeatureEnabled.mockResolvedValue(true); });
+// Default rzpClient: orders.fetch returns an order that matches booking 'b1' with fee=10
+const mockRzpOrderFetch = jest.fn();
+beforeEach(() => {
+  jest.clearAllMocks();
+  featureFlags.isFeatureEnabled.mockResolvedValue(true);
+  mockRzpOrderFetch.mockResolvedValue({ id: 'o', amount: 1000, notes: { booking_id: 'b1', kind: 'reschedule_fee' } });
+  razorpayConfig.getClient.mockResolvedValue({ orders: { fetch: mockRzpOrderFetch } });
+});
 
 test('1st guest reschedule is free even if vendor fee=10', async () => {
   wire(mk(0, 10));
