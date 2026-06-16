@@ -187,14 +187,20 @@ describe('login', () => {
       data: { user: { id: 'vendor-uuid' }, session: { access_token: 'tok', refresh_token: 'ref' } },
       error: null,
     });
+    // login now does: maybeSingle (pre-flight lockout check), update (counter
+    // reset on success), single (fetch full profile). Provide a chain that
+    // supports all three terminal methods plus update().
     supabaseAdmin.from.mockReturnValue({
       select: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
       eq:     jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null }), // no lockout by default
       single: jest.fn().mockResolvedValue({ data: VENDOR_PROFILE, error: null }),
     });
   });
 
   test('returns 401 on invalid credentials', async () => {
+    // pre is null (no profile found) → increment skipped → uniform 401
     supabaseAdmin.auth.signInWithPassword.mockResolvedValue({ data: null, error: { message: 'Invalid' } });
     const r = res();
     await login(req({ email: 'x@x.com', password: 'bad' }), r);
