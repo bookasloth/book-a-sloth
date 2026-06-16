@@ -6,8 +6,9 @@
  * we coerce defensively. 60s cache; clearCache() after admin edits.
  *
  * Keys:
- *   platform_fee           default ₹10 (flat fee charged to the customer)
- *   platform_fee_gst_rate  default 0.18 (18% GST on the platform fee)
+ *   platform_fee              default ₹10 (flat fee charged to the customer)
+ *   platform_fee_gst_rate     default 0.18 (18% GST on the platform fee)
+ *   settlement_clearing_days  default 7 (days after completion before a vendor payout matures)
  */
 
 const { supabaseAdmin } = require('../config/supabase');

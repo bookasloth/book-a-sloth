@@ -37,10 +37,10 @@ async function computeSettlementBalance(hostId, clearingDays, nowMs = Date.now()
     const amt = Number(b.vendor_amount) || 0;
     const ss = b.settlement_status;
     if (ss === 'cancelled' || ss === 'not_eligible') continue;
-    if (ss === 'eligible_for_settlement' && b.completed_at) {
-      const completedMs = new Date(b.completed_at).getTime();
+    if (ss === 'eligible_for_settlement') {
+      const completedMs = b.completed_at ? new Date(b.completed_at).getTime() : NaN;
       if (Number.isFinite(completedMs) && completedMs <= cutoff) matured += amt;
-      else clearing += amt;
+      else clearing += amt;   // in-window OR missing/invalid completed_at -> clearing (visible, not yet withdrawable)
     } else if (b.payment_status === 'paid' && ss === 'pending_completion') {
       pendingCompletion += amt;
     }

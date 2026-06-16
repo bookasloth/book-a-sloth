@@ -133,3 +133,13 @@ test('scopes the bookings query to the given host_id', async () => {
   await computeSettlementBalance('host-xyz', 7, NOW);
   expect(calls).toContainEqual(['host_id', 'host-xyz']);
 });
+
+test('eligible booking with null completed_at goes to clearing, not dropped', async () => {
+  mockData(
+    [{ vendor_amount: 150, settlement_status: 'eligible_for_settlement', completed_at: null, payment_status: 'paid' }],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(0);
+  expect(b.clearing).toBe(150);
+});
