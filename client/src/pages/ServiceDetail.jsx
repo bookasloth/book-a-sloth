@@ -27,10 +27,9 @@ const fmtDuration = (min) => {
 const Stars = ({ avg, count, size = 'sm' }) => {
   const sz = size === 'lg' ? 'w-5 h-5' : 'w-4 h-4';
   return (
-    <div className="flex items-center gap-1" role="img"
-      aria-label={avg ? `Rated ${avg.toFixed(1)} out of 5${count > 0 ? ` from ${count} reviews` : ''}` : 'Not yet rated'}>
+    <div className="flex items-center gap-1">
       {[1,2,3,4,5].map(s => (
-        <svg key={s} aria-hidden="true" className={`${sz} ${s <= Math.round(avg) ? 'text-amber-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
+        <svg key={s} className={`${sz} ${s <= Math.round(avg) ? 'text-amber-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
         </svg>
       ))}
@@ -116,9 +115,7 @@ const DeliverablesTab = ({ included = [], excluded = [] }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
     <div>
       <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-        <span className="w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center" aria-hidden="true">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
-        </span>
+        <span className="w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs">✓</span>
         What's Included
       </h3>
       {included.length === 0
@@ -135,9 +132,7 @@ const DeliverablesTab = ({ included = [], excluded = [] }) => (
     </div>
     <div>
       <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-        <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center" aria-hidden="true">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12"/></svg>
-        </span>
+        <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs">✕</span>
         Not Included
       </h3>
       {excluded.length === 0
@@ -277,23 +272,21 @@ const TRUST_SIGNALS = [
     path: 'M13 10V3L4 14h7v7l9-11h-7z' },
 ];
 
-const BookingCard = ({ service, vendor, onBookNow, bookingFee = 0 }) => {
+const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false }) => {
   const isFree = service.price === 0;
   const [feeOpen, setFeeOpen] = useState(false);
   const [btnHover, setBtnHover] = useState(false);
-  // Only claim "Verified vendor" when the vendor is actually verified.
-  const trustSignals = TRUST_SIGNALS.filter(s => s.key !== 'verified' || vendor?.is_verified);
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Thumbnail */}
-      {service.thumbnail_url
+      {/* Thumbnail — hidden once the sidebar is pinned and the user keeps scrolling */}
+      {!compact && (service.thumbnail_url
         ? <img src={service.thumbnail_url} alt={service.title} className="w-full aspect-[16/10] object-cover"/>
         : <div className="w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
             <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 16M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-          </div>}
+          </div>)}
       <div className="p-5">
         {/* Price + booking fee on one line */}
         <div className="relative flex items-baseline gap-2 mt-2 mb-5">
@@ -333,7 +326,7 @@ const BookingCard = ({ service, vendor, onBookNow, bookingFee = 0 }) => {
 
         {/* Trust indicators */}
         <ul className="mt-5 pt-5 border-t border-gray-100 space-y-3">
-          {trustSignals.map(({ key, label, path }) => (
+          {TRUST_SIGNALS.map(({ key, label, path }) => (
             <li key={key} className="flex items-start gap-2.5 text-xs text-gray-600">
               <svg className="w-4 h-4 flex-shrink-0 text-green-500 mt-px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={path}/>
@@ -438,7 +431,21 @@ export default function ServiceDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
   const [tab, setTab]       = useState('Overview');
-  const tabRefs = useRef([]);
+  const sentinelRef = useRef(null);
+  const [stuck, setStuck]   = useState(false); // card image scrolled up to the top
+
+  // Sentinel sits exactly where the sticky card begins. When it scrolls past the
+  // pinned offset (top-24 = 96px) the image is at the top → hide; back down → show.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setStuck(!entry.isIntersecting),
+      { threshold: 0, rootMargin: '-96px 0px 0px 0px' },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [data]);
 
   useEffect(() => {
     svcGetPublicByProfile(profileSlug, serviceSlug)
@@ -468,45 +475,13 @@ export default function ServiceDetail() {
   }, [profileSlug, serviceSlug]);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#f7f5ef]" aria-busy="true" aria-label="Loading service">
-      <div className="app-container py-8 animate-pulse">
-        <div className="h-4 w-24 bg-gray-200 rounded mb-6"/>
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1 min-w-0">
-            {/* Hero skeleton */}
-            <div className="rounded-2xl bg-gray-200/70 p-6 sm:p-10 mb-6">
-              <div className="h-10 w-3/4 bg-gray-300 rounded mb-4"/>
-              <div className="h-4 w-full max-w-xl bg-gray-300 rounded mb-2"/>
-              <div className="h-4 w-2/3 bg-gray-300 rounded mb-6"/>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-11 h-11 rounded-full bg-gray-300"/>
-                <div className="h-4 w-40 bg-gray-300 rounded"/>
-              </div>
-              <div className="h-4 w-56 bg-gray-300 rounded"/>
-            </div>
-            {/* Tabs skeleton */}
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-              <div className="flex gap-5 mb-6">
-                {[0,1,2,3].map(i => <div key={i} className="h-4 w-20 bg-gray-200 rounded"/>)}
-              </div>
-              <div className="space-y-3">
-                <div className="h-4 w-full bg-gray-100 rounded"/>
-                <div className="h-4 w-11/12 bg-gray-100 rounded"/>
-                <div className="h-4 w-4/5 bg-gray-100 rounded"/>
-              </div>
-            </div>
-          </div>
-          {/* Sidebar skeleton */}
-          <div className="hidden lg:block lg:w-[320px] flex-shrink-0">
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-              <div className="w-full aspect-[16/10] bg-gray-200"/>
-              <div className="p-5">
-                <div className="h-8 w-24 bg-gray-200 rounded mb-5"/>
-                <div className="h-12 w-full bg-gray-200 rounded-lg"/>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center text-gray-400">
+        <svg className="w-8 h-8 animate-spin mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        Loading…
       </div>
     </div>
   );
@@ -533,21 +508,6 @@ export default function ServiceDetail() {
   const hasFAQs = Array.isArray(service.faqs) && service.faqs.length > 0;
   const hasDeliverables = (service.included_items?.length || 0) + (service.excluded_items?.length || 0) > 0;
 
-  // ARIA tablist keyboard nav (←/→/Home/End)
-  const onTabKey = (e, i) => {
-    const last = TABS.length - 1;
-    let next = null;
-    if (e.key === 'ArrowRight') next = i === last ? 0 : i + 1;
-    else if (e.key === 'ArrowLeft') next = i === 0 ? last : i - 1;
-    else if (e.key === 'Home') next = 0;
-    else if (e.key === 'End') next = last;
-    if (next !== null) {
-      e.preventDefault();
-      setTab(TABS[next]);
-      tabRefs.current[next]?.focus();
-    }
-  };
-
   // Hero trust signals (derived from existing data — no schema change)
   const rating      = avgRating || service.rating || 0;
   const reviewCount = reviews?.length || service.total_reviews || 0;
@@ -558,42 +518,54 @@ export default function ServiceDetail() {
     || vendor?.profession || vendor?.tagline || '';
 
   return (
-    <div className="min-h-screen bg-[#f7f5ef]">
-      <div className="app-container py-8">
-        {/* Breadcrumb — orientation + SEO */}
-        <nav aria-label="Breadcrumb" className="mb-6">
-          <ol className="flex items-center flex-wrap gap-x-1.5 gap-y-1 text-sm text-gray-500 min-w-0">
-            <li>
-              <button onClick={() => navigate(-1)} className="flex items-center gap-1 hover:text-gray-800 transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
-                Back
-              </button>
-            </li>
-            <li aria-hidden="true" className="text-gray-300">/</li>
-            <li><Link to="/" className="hover:text-gray-800 transition-colors">Home</Link></li>
-            {vendor?.username && (
-              <>
-                <li aria-hidden="true" className="text-gray-300">/</li>
-                <li className="min-w-0">
-                  <Link to={`/${vendor.username}`} className="hover:text-gray-800 transition-colors truncate inline-block max-w-[40vw] sm:max-w-none align-bottom">{vendor.name}</Link>
-                </li>
-              </>
-            )}
-            <li aria-hidden="true" className="text-gray-300">/</li>
-            <li aria-current="page" className="text-gray-800 font-medium truncate min-w-0 max-w-[45vw] sm:max-w-xs">{service.title}</li>
-          </ol>
-        </nav>
+    <div className="min-h-screen bg-[#f7f5ef] relative">
+      {/* ── Above-the-fold decoration — original theme-tinted shapes, fades out ── */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[400px] overflow-hidden"
+        style={{
+          color: 'var(--profile-accent, #FE5100)',
+          WebkitMaskImage: 'linear-gradient(to bottom, #000 60%, transparent)',
+          maskImage: 'linear-gradient(to bottom, #000 60%, transparent)',
+        }}>
+        {/* coral wash — cooler, lighter; left to right */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to right, #ff7a66, #ff8f73)' }}
+        />
+        <svg
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 1440 560"
+          preserveAspectRatio="xMidYMin slice"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          {/* concentric rings, top-right */}
+          <circle cx="1290" cy="20" r="300" fill="currentColor" opacity="0.05" />
+          <circle cx="1290" cy="20" r="210" stroke="currentColor" strokeWidth="2" opacity="0.12" />
+          <circle cx="1290" cy="20" r="140" stroke="currentColor" strokeWidth="2" opacity="0.10" />
+          <circle cx="1290" cy="20" r="78"  stroke="currentColor" strokeWidth="2" opacity="0.08" />
+          {/* large soft blob, left */}
+          <circle cx="60" cy="360" r="240" fill="currentColor" opacity="0.05" />
+          {/* floating accents */}
+          <circle cx="430" cy="90"  r="8"  fill="currentColor" opacity="0.18" />
+          <circle cx="880" cy="150" r="5"  fill="currentColor" opacity="0.15" />
+          <circle cx="300" cy="240" r="14" stroke="currentColor" strokeWidth="2" opacity="0.14" />
+          <circle cx="980" cy="60"  r="22" stroke="currentColor" strokeWidth="2" opacity="0.10" />
+          {/* sweeping arcs, mid-left */}
+          <path d="M-40 470 Q 360 300 760 460" stroke="currentColor" strokeWidth="2" opacity="0.10" />
+          <path d="M-40 520 Q 420 340 880 500" stroke="currentColor" strokeWidth="2" opacity="0.07" />
+          {/* rounded squircle, drifting */}
+          <rect x="640" y="300" width="120" height="120" rx="34" transform="rotate(18 700 360)" stroke="currentColor" strokeWidth="2" opacity="0.09" />
+        </svg>
+      </div>
 
+      <div className="app-container py-8 relative z-10">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── LEFT: Main content ── */}
           <div className="flex-1 min-w-0">
 
-            {/* ── HERO ── theme-derived gradient band, creator-focused */}
-            <section
-              className="rounded-2xl p-6 sm:p-10 mb-6"
-              style={{
-                background: 'linear-gradient(135deg, color-mix(in srgb, var(--profile-accent, #FE5100) 14%, white), color-mix(in srgb, var(--profile-accent, #FE5100) 4%, white))',
-              }}>
+            {/* ── HERO ── plain; page decoration sits behind, above the fold */}
+            <section className="p-6 sm:p-10 mb-6">
               {/* Title */}
               <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight">{service.title}</h1>
 
@@ -610,11 +582,7 @@ export default function ServiceDetail() {
                     : <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary ring-2 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
                   <p className="text-sm text-gray-600 flex items-center flex-wrap gap-x-1.5 gap-y-0.5 min-w-0">
                     <span>by</span>
-                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-primary">{vendor.name}</Link>
-                    {vendor.is_verified && (
-                      <svg className="w-4 h-4 flex-shrink-0 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    )}
-                    {creatorCategory && <><span>in</span><span className="font-bold text-gray-900">{creatorCategory}</span></>}
+                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-white transition-colors">{vendor.name}</Link>
                   </p>
                 </div>
               )}
@@ -628,39 +596,45 @@ export default function ServiceDetail() {
                   </span>
                 )}
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900">{rating ? rating.toFixed(1) : 'New'}</span>
-                  <Stars avg={rating} count={0}/>
-                  {reviewCount > 0 && <span className="text-gray-500">{reviewCount} Rating</span>}
+                  {rating > 0 ? (
+                    <>
+                      <Stars avg={rating} count={0}/>
+                      <span className="text-gray-700">
+                        <strong className="font-semibold text-gray-900">{rating.toFixed(1)}</strong>
+                        {reviewCount > 0 && <span className="text-gray-500"> ({reviewCount})</span>}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-sm font-semibold bg-white text-gray-900 shadow-sm">New</span>
+                  )}
                 </div>
                 {bookings > 0 && (
                   <span className="flex items-center gap-1.5 text-gray-600">
                     <strong className="font-semibold text-gray-900">{bookings}</strong> Bookings
                   </span>
                 )}
-                <span className="flex items-center gap-1.5 text-gray-600">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-white text-gray-800 shadow-sm">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   {fmtDuration(service.duration)}
                 </span>
-                <span className="flex items-center gap-1.5 text-gray-600">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-white text-gray-800 shadow-sm">
                   {service.meeting_mode === 'offline'
-                    ? <><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
-                    : <><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>Online</>}
+                    ? <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
+                    : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>Online</>}
                 </span>
               </div>
             </section>
 
             {/* Mobile: booking card as a normal block below the hero */}
             <div className="lg:hidden mb-6 space-y-6">
-              <BookingCard service={service} vendor={vendor} onBookNow={handleBookNow} bookingFee={bookingFee}/>
+              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee}/>
               <ProfileCard vendor={vendor} rating={rating} reviewCount={reviewCount} bookings={bookings}/>
             </div>
 
             {/* Important note */}
             {service.important_note && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex gap-2.5">
-                <svg className="w-5 h-5 flex-shrink-0 text-amber-500 mt-px" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                </svg>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex gap-2">
+                <span className="text-amber-500 flex-shrink-0">⚠️</span>
                 <p className="text-sm text-amber-800 whitespace-pre-line">{service.important_note}</p>
               </div>
             )}
@@ -668,29 +642,23 @@ export default function ServiceDetail() {
             {/* Tabs */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
               {/* Tab bar */}
-              <div role="tablist" aria-label="Service details" className="flex overflow-x-auto border-b border-gray-100 scrollbar-hide">
-                {TABS.map((t, i) => {
-                  const selected = tab === t;
-                  return (
-                    <button key={t} role="tab" id={`tab-${t}`} aria-controls={`tabpanel-${t}`}
-                      aria-selected={selected} tabIndex={selected ? 0 : -1}
-                      ref={el => (tabRefs.current[i] = el)}
-                      onClick={() => setTab(t)} onKeyDown={e => onTabKey(e, i)}
-                      className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors border-b-2 ${selected ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
-                      {t}
-                      {t === 'Reviews' && (reviews?.length || 0) > 0 && (
-                        <span className="ml-1.5 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">{reviews.length}</span>
-                      )}
-                      {t === 'FAQ' && hasFAQs && (
-                        <span className="ml-1.5 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{service.faqs.length}</span>
-                      )}
-                    </button>
-                  );
-                })}
+              <div className="flex overflow-x-auto border-b border-gray-100 scrollbar-hide">
+                {TABS.map(t => (
+                  <button key={t} onClick={() => setTab(t)}
+                    className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors border-b-2 ${tab === t ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+                    {t}
+                    {t === 'Reviews' && (reviews?.length || 0) > 0 && (
+                      <span className="ml-1.5 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">{reviews.length}</span>
+                    )}
+                    {t === 'FAQ' && hasFAQs && (
+                      <span className="ml-1.5 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{service.faqs.length}</span>
+                    )}
+                  </button>
+                ))}
               </div>
 
               {/* Tab content */}
-              <div className="p-6" role="tabpanel" id={`tabpanel-${tab}`} aria-labelledby={`tab-${tab}`} tabIndex={0}>
+              <div className="p-6">
                 {tab === 'Overview'     && <OverviewTab html={service.long_description || service.description}/>}
                 {tab === 'Deliverables' && <DeliverablesTab included={service.included_items} excluded={service.excluded_items}/>}
                 {tab === 'Instructor'   && <InstructorTab vendor={vendor} totalServices={totalServices}/>}
@@ -701,9 +669,11 @@ export default function ServiceDetail() {
           </div>
 
           {/* ── RIGHT: Sticky sidebar ── */}
-          <div className="hidden lg:flex lg:w-[320px] flex-shrink-0 self-start sticky top-24 flex-col gap-5">
-            <BookingCard service={service} vendor={vendor} onBookNow={handleBookNow} bookingFee={bookingFee}/>
-            <ProfileCard vendor={vendor} rating={rating} reviewCount={reviewCount} bookings={bookings}/>
+          <div className="hidden lg:block lg:w-[320px] flex-shrink-0 lg:mt-[130px]">
+            <div ref={sentinelRef} className="h-0" />
+            <div className="sticky top-24 flex flex-col gap-5">
+              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} compact={stuck}/>
+            </div>
           </div>
         </div>
       </div>
