@@ -18,8 +18,10 @@ jest.mock('../../services/razorpaySubscriptions', () => ({
 }));
 jest.mock('../../services/ledger/journalTemplates', () => ({ subscriptionPaymentEntry: jest.fn(() => ({ lines: [] })) }));
 jest.mock('../../services/ledger/postingService', () => ({ postSafe: jest.fn(() => Promise.resolve()) }));
+jest.mock('../../utils/posthog', () => ({ capture: jest.fn(), resolveGuestId: jest.fn() }));
 
 const { supabaseAdmin } = require('../../config/supabase');
+const { capture: phCapture } = require('../../utils/posthog');
 const svc = require('../../services/subscriptionService');
 
 const RZP_SUB = {
@@ -98,12 +100,17 @@ describe('activateFromSubscription', () => {
     expect(row.razorpay_fee).toBe(20);           // (2360 − 360)/100
     expect(row.razorpay_tax).toBe(3.6);          // 360/100
     expect(row.razorpay_subscription_id).toBe('sub_123');
+    // initial purchase is captured by the verify path — not here (no double-count)
+    expect(phCapture).not.toHaveBeenCalled();
   });
 
-  test('subsequent charge records as renewal', async () => {
+  test('subsequent charge records as renewal + captures subscription_renewed', async () => {
     const { insert } = wireSupabase({ priorPayment: null, priorCount: 1 });
     await svc.activateFromSubscription({ rzpSub: RZP_SUB, rzpPayment: { id: 'pay_renew' } });
     expect(insert.mock.calls[0][0].kind).toBe('renewal');
+    expect(phCapture).toHaveBeenCalledWith('vendor-1', 'subscription_renewed', {
+      plan: 'creator', cadence: 'monthly', expires_at: expect.any(String),
+    });
   });
 
   test('activation without a payment entity grants access but records no charge', async () => {

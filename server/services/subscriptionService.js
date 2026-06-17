@@ -10,6 +10,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const planService = require('./planService');
 const platformConfig = require('./platformConfig');
 const NotificationEngine = require('./notificationEngine');
+const { capture: phCapture } = require('../utils/posthog');
 const { computeSubscriptionBreakdown } = require('../lib/pricingEngine');
 const { normCadence } = require('../lib/subscriptionPricing');
 
@@ -138,6 +139,17 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
         },
       }).catch((e) => console.error('subscription email error:', e.message));
     } catch (_) { /* non-fatal */ }
+  }
+
+  // Auto-renew analytics. Renewal charges flow ONLY through this path (webhook /
+  // reconciler), never the verify endpoint — so a dedicated event can't overlap
+  // the verify path's `subscription_purchased` and never double-counts.
+  if (paymentId && kind === 'renewal') {
+    phCapture(vendorId, 'subscription_renewed', {
+      plan: planSlug,
+      cadence,
+      expires_at: periodEndIso,
+    });
   }
 
   return { activated: true };
