@@ -17,6 +17,7 @@ const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const { verifySignature } = require("../utils/razorpaySignature");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { trackServer } = require("../utils/trackServer");
+const { runInBackground } = require("../utils/background");
 
 // Annual plan price in paise, read from subscription_plans (DB-driven, spec v1.1)
 const getPlanPricePaise = async (slug) => {
@@ -203,9 +204,11 @@ const verifyPayment = async (req, res) => {
     // ── Ledger: post ORDER_PAYMENT (non-fatal — payment already recorded;
     // the reconciler cron retries missed posts). Pre-v2.2 rows have no
     // customer_total snapshot → entry can't balance → skip (reconciler skips too).
-    try {
+    // Deferred to background: the reconciler is the durability backstop, so this
+    // never needs to block the payment response.
+    runInBackground("verifyPayment:ledger", async () => {
       const ledgerCustomerTotal = Number(booking.customer_total) || 0;
-      if (ledgerCustomerTotal > 0) {
+      if (ledgerCustomerTotal <= 0) return;
       const { orderPaymentEntry } = require("../services/ledger/journalTemplates");
       const { postSafe } = require("../services/ledger/postingService");
       await postSafe({
@@ -226,10 +229,7 @@ const verifyPayment = async (req, res) => {
           customer_total: ledgerCustomerTotal,
         }),
       });
-      }
-    } catch (ledgerErr) {
-      console.error("Order ledger posting error (non-fatal):", ledgerErr.message);
-    }
+    });
 
     // Payment captured → now create the Google Calendar event (deferred from
     // booking time for paid services). A calendar failure must NOT fail an
@@ -289,75 +289,76 @@ const verifyPayment = async (req, res) => {
 
     auditLog('PAYMENT_VERIFIED', null, { booking_id, razorpay_payment_id });
 
-    trackServer(resolveGuestId({ guestId: req.user?.id, guestEmail: booking.guest_email }), "booking_paid", {
-      booking_id,
-      service_title: booking.services?.title,
-      host_id: booking.host_id,
-      amount: Number(booking.customer_total) || 0,
-      currency: "INR",
-      razorpay_payment_id,
-    }, {
-      value: Number(booking.customer_total) || 0,
-      currency: "INR",
-      email: booking.guest_email,
-      eventId: razorpay_payment_id,           // de-dupe vs browser pixel
-      gaClientId: req.body?.ga_client_id,     // browser _ga id if client forwarded it
-    });
+    // Payment is now durably recorded. Respond immediately; analytics fan-out
+    // (server GA4/Meta CAPI) and confirmation emails (WhatsApp + SMTP) are
+    // best-effort and ran synchronously before — they were the bulk of the ~6s.
+    res.json({ message: "Payment verified", booking: updated });
+
+    runInBackground("verifyPayment:analytics", () =>
+      trackServer(resolveGuestId({ guestId: req.user?.id, guestEmail: booking.guest_email }), "booking_paid", {
+        booking_id,
+        service_title: booking.services?.title,
+        host_id: booking.host_id,
+        amount: Number(booking.customer_total) || 0,
+        currency: "INR",
+        razorpay_payment_id,
+      }, {
+        value: Number(booking.customer_total) || 0,
+        currency: "INR",
+        email: booking.guest_email,
+        eventId: razorpay_payment_id,           // de-dupe vs browser pixel
+        gaClientId: req.body?.ga_client_id,     // browser _ga id if client forwarded it
+      }));
 
     // BUG-12 fixed: send confirmation emails now that payment is verified
-    try {
+    runInBackground("verifyPayment:confirmation-emails", async () => {
       const { data: fullBooking } = await supabaseAdmin
         .from("bookings")
         .select("*, services(*), profiles!bookings_host_id_fkey(*)")
         .eq("id", booking_id)
         .single();
-      if (fullBooking) {
-        const svc  = fullBooking.services;
-        const host = fullBooking["profiles!bookings_host_id_fkey"] || {};
-        const { data: avail } = await supabaseAdmin
-          .from("availability").select("timezone").eq("host_id", fullBooking.host_id).single();
-        const tz   = avail?.timezone || "Asia/Kolkata";
-        const when = new Date(fullBooking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
+      if (!fullBooking) return;
+      const svc  = fullBooking.services;
+      const host = fullBooking["profiles!bookings_host_id_fkey"] || {};
+      const { data: avail } = await supabaseAdmin
+        .from("availability").select("timezone").eq("host_id", fullBooking.host_id).single();
+      const tz   = avail?.timezone || "Asia/Kolkata";
+      const when = new Date(fullBooking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
 
-        const d = new Date(fullBooking.scheduled_at);
-        const emailData = {
-          service_name: svc?.title || "Service",
-          vendor_name: host.name || "Host",
-          vendor_phone: host.phone || "",
-          user_name: fullBooking.guest_name || "Customer",
-          booking_id: fullBooking.id,
-          location: fullBooking.meeting_link ? "Online (link in your dashboard)" : "",
-          booking_date: d.toLocaleDateString("en-IN", { timeZone: tz, weekday: "short", day: "numeric", month: "short", year: "numeric" }),
-          booking_time: d.toLocaleTimeString("en-IN", { timeZone: tz, hour: "2-digit", minute: "2-digit" }),
-        };
-        const ctx = {
-          customer: [fullBooking.guest_name || "Customer", svc?.title || "Service", host.name || "Host", when],
-          vendor:   [host.name || "Host", fullBooking.guest_name || "Customer", svc?.title || "Service", when],
-        };
-        await NotificationEngine.send({
-          event: "BOOKING_CONFIRMED_CUSTOMER",
-          data: {
-            email: fullBooking.guest_email, phone: fullBooking.guest_phone, name: fullBooking.guest_name,
-            templateParams: ctx.customer,
-            emailData, emailUser: { name: fullBooking.guest_name, email: fullBooking.guest_email },
-            recipientUserId: fullBooking.guest_id, bookingId: fullBooking.id,
-          },
-        });
-        await NotificationEngine.send({
-          event: "BOOKING_CONFIRMED_VENDOR",
-          data: {
-            email: host.email, phone: host.phone, name: host.name,
-            templateParams: ctx.vendor,
-            emailData, emailUser: { name: host.name, email: host.email, username: host.username },
-            recipientUserId: fullBooking.host_id, bookingId: fullBooking.id,
-          },
-        });
-      }
-    } catch (emailErr) {
-      console.error("Post-payment email error:", emailErr.message);
-    }
-
-    res.json({ message: "Payment verified", booking: updated });
+      const d = new Date(fullBooking.scheduled_at);
+      const emailData = {
+        service_name: svc?.title || "Service",
+        vendor_name: host.name || "Host",
+        vendor_phone: host.phone || "",
+        user_name: fullBooking.guest_name || "Customer",
+        booking_id: fullBooking.id,
+        location: fullBooking.meeting_link ? "Online (link in your dashboard)" : "",
+        booking_date: d.toLocaleDateString("en-IN", { timeZone: tz, weekday: "short", day: "numeric", month: "short", year: "numeric" }),
+        booking_time: d.toLocaleTimeString("en-IN", { timeZone: tz, hour: "2-digit", minute: "2-digit" }),
+      };
+      const ctx = {
+        customer: [fullBooking.guest_name || "Customer", svc?.title || "Service", host.name || "Host", when],
+        vendor:   [host.name || "Host", fullBooking.guest_name || "Customer", svc?.title || "Service", when],
+      };
+      await NotificationEngine.send({
+        event: "BOOKING_CONFIRMED_CUSTOMER",
+        data: {
+          email: fullBooking.guest_email, phone: fullBooking.guest_phone, name: fullBooking.guest_name,
+          templateParams: ctx.customer,
+          emailData, emailUser: { name: fullBooking.guest_name, email: fullBooking.guest_email },
+          recipientUserId: fullBooking.guest_id, bookingId: fullBooking.id,
+        },
+      });
+      await NotificationEngine.send({
+        event: "BOOKING_CONFIRMED_VENDOR",
+        data: {
+          email: host.email, phone: host.phone, name: host.name,
+          templateParams: ctx.vendor,
+          emailData, emailUser: { name: host.name, email: host.email, username: host.username },
+          recipientUserId: fullBooking.host_id, bookingId: fullBooking.id,
+        },
+      });
+    });
   } catch (error) {
     res.status(500).json({ message: "Payment verification failed." });
   }

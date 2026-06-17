@@ -12,6 +12,7 @@ const platformConfig = require("../services/platformConfig");
 const availabilityService = require("../services/availabilityService");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
+const { runInBackground } = require("../utils/background");
 
 const emailHtml = (body) => `
   <div style="max-width:520px;margin:0 auto;padding:26px;border-radius:24px;background:#ffffff;font-family:'Plus Jakarta Sans','Poppins',sans-serif;color:#111827;box-shadow:0 24px 60px rgba(15,23,42,0.08);">
@@ -196,18 +197,25 @@ const createBooking = async (req, res) => {
     // attributing a booking to any victim's account — IDOR). It is resolved
     // below from the authenticated session or the booking email.
 
-    const { data: service } = await supabaseAdmin
-      .from("services")
-      .select("*")
-      .eq("id", service_id)
-      .single();
+    // These four reads are independent — fetch them in one round-trip instead of
+    // four sequential awaits. The guest-profile lookup resolves guest_id (see
+    // below); it only runs for anonymous bookings with an email.
+    const lookupGuest = !req.user?.id && guest_email;
+    const [
+      { data: service },
+      { data: host },
+      { data: avail },
+      guestRes,
+    ] = await Promise.all([
+      supabaseAdmin.from("services").select("*").eq("id", service_id).single(),
+      supabaseAdmin.from("profiles").select("*").eq("id", host_id).single(),
+      supabaseAdmin.from("availability").select("*").eq("host_id", host_id).maybeSingle(),
+      lookupGuest
+        ? supabaseAdmin.from("profiles").select("id")
+            .eq("email", String(guest_email).toLowerCase().trim()).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
     if (!service) return res.status(404).json({ message: "Service not found" });
-
-    const { data: host } = await supabaseAdmin
-      .from("profiles")
-      .select("*")
-      .eq("id", host_id)
-      .single();
     if (!host) return res.status(404).json({ message: "Host not found" });
 
     // Resolve guest_id server-side (never from the body).
@@ -215,23 +223,8 @@ const createBooking = async (req, res) => {
     //  - Anonymous OTP guest → the profile that owns the booking email
     //    (created during OTP verification). You can only attach a booking to a
     //    profile whose email you are booking with — not to an arbitrary id.
-    let resolvedGuestId = null;
-    if (req.user?.id) {
-      resolvedGuestId = req.user.id;
-    } else if (guest_email) {
-      const { data: guestProfile } = await supabaseAdmin
-        .from("profiles")
-        .select("id")
-        .eq("email", String(guest_email).toLowerCase().trim())
-        .maybeSingle();
-      resolvedGuestId = guestProfile?.id || null;
-    }
+    const resolvedGuestId = req.user?.id || guestRes?.data?.id || null;
 
-    const { data: avail } = await supabaseAdmin
-      .from("availability")
-      .select("*")
-      .eq("host_id", host_id)
-      .maybeSingle();
     const hostTimezone = avail?.timezone || "Asia/Kolkata";
 
     // Full availability validation: past, blocked dates, working-hours window,
@@ -389,14 +382,19 @@ const createBooking = async (req, res) => {
     const { data: booking, error } = bookingResult;
     if (error) return safeError(res, error);
 
+    // Respond now; confirmation emails (WhatsApp + SMTP) and analytics are
+    // best-effort side-effects that should not add seconds to the user's wait.
+    res.status(201).json(booking);
+
     const when = new Date(scheduled_at).toLocaleString("en-IN", {
       timeZone: hostTimezone,
     });
 
-    // BUG-12 fixed: only send confirmation emails immediately for FREE services.
+    // BUG-12 fixed: only send confirmation emails for FREE services.
     // Paid services: emails are sent in paymentController.verifyPayment after payment succeeds.
-    if (service.price === 0 && (await featureFlags.isFeatureEnabled("confirmation_emails"))) {
-      try {
+    if (service.price === 0) {
+      runInBackground("createBooking:confirmation-emails", async () => {
+        if (!(await featureFlags.isFeatureEnabled("confirmation_emails"))) return;
         const ctx = { guestName: guest_name, serviceTitle: service.title, hostName: host.name, when };
         const emailData = bookingEmailData({
           serviceTitle: service.title, hostName: host.name, hostPhone: host.phone,
@@ -421,9 +419,7 @@ const createBooking = async (req, res) => {
             recipientUserId: host_id, bookingId: booking.id,
           },
         });
-      } catch (notifyError) {
-        console.error("Notification error:", notifyError.message);
-      }
+      });
     }
 
     phCapture(resolveGuestId({ guestId: resolvedGuestId, guestEmail: guest_email }), "booking_created", {
@@ -435,8 +431,6 @@ const createBooking = async (req, res) => {
       is_paid: service.price > 0,
       payment_status: booking.payment_status,
     });
-
-    res.status(201).json(booking);
   } catch (error) {
     safeError(res, error);
   }
