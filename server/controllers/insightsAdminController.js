@@ -1,0 +1,87 @@
+// Marketing/performance insights — owned KPI tiles for the admin dashboard.
+//
+// POSTGRES-FIRST: money + booking + host metrics come straight from our own
+// tables (the source of truth), never from analytics events. Traffic/source and
+// the visitor-side funnel live in PostHog/GA4 and are reached via launchpad links
+// in the UI (a server-side PostHog query API is deferred — see docs).
+//
+// Auth: gated by requireAdmin('analytics.view') in adminRoutes.
+const { supabaseAdmin } = require('../config/supabase');
+const { safeError } = require('../utils/httpError');
+
+const DAY = 24 * 60 * 60 * 1000;
+
+// Platform revenue on a paid booking = platform fee + commission collected.
+// GST is a pass-through liability, not revenue (matches getStats).
+const bookingRevenue = (b) =>
+  (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
+
+const getKpis = async (req, res) => {
+  try {
+    const now = Date.now();
+    const since30 = new Date(now - 30 * DAY).toISOString();
+    const since60 = new Date(now - 60 * DAY).toISOString();
+
+    // ── Bookings (one scan drives revenue, conversion + booking counts) ──
+    // v1.7 fallback: commission_applied may not exist yet (see getStats).
+    let bookingsRes = await supabaseAdmin
+      .from('bookings')
+      .select('id, payment_status, platform_fee_amount, commission_applied, created_at');
+    if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
+      bookingsRes = await supabaseAdmin
+        .from('bookings')
+        .select('id, payment_status, platform_fee_amount, created_at');
+    }
+    if (bookingsRes.error) return safeError(res, bookingsRes.error);
+    const bookings = bookingsRes.data || [];
+    const paid = bookings.filter((b) => b.payment_status === 'paid');
+    const paid30 = paid.filter((b) => b.created_at >= since30);
+
+    const revenueTotal = paid.reduce((s, b) => s + bookingRevenue(b), 0);
+    const revenue30    = paid30.reduce((s, b) => s + bookingRevenue(b), 0);
+    // Prior 30-day window [60d, 30d) for a growth delta.
+    const revenuePrev30 = paid
+      .filter((b) => b.created_at >= since60 && b.created_at < since30)
+      .reduce((s, b) => s + bookingRevenue(b), 0);
+
+    // ── Hosts + guests (growth tile) ──
+    const [hostsRes, guestsRes] = await Promise.all([
+      supabaseAdmin.from('profiles').select('id, created_at').eq('role', 'host'),
+      supabaseAdmin.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'guest'),
+    ]);
+    const hosts = hostsRes.data || [];
+    const hostsNew30 = hosts.filter((h) => h.created_at >= since30).length;
+
+    res.json({
+      // Tile 1 — Revenue + bookings (Postgres truth)
+      revenue: {
+        total: Math.round(revenueTotal * 100) / 100,
+        last30: Math.round(revenue30 * 100) / 100,
+        prev30: Math.round(revenuePrev30 * 100) / 100,
+      },
+      bookings: {
+        total: bookings.length,
+        paid: paid.length,
+        last30: paid30.length,
+      },
+      // Tile 2 — Conversion (booking→paid, Postgres-only proxy; full visitor
+      // funnel = PostHog, surfaced via launchpad until the PH query API lands)
+      conversion: {
+        created: bookings.length,
+        paid: paid.length,
+        rate: bookings.length ? Math.round((paid.length / bookings.length) * 1000) / 10 : 0, // %
+      },
+      // Tile 4 — Host growth
+      hosts: {
+        total: hosts.length,
+        new30: hostsNew30,
+      },
+      guests: { total: guestsRes.count || 0 },
+      generatedAt: new Date(now).toISOString(),
+    });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+module.exports = { getKpis };

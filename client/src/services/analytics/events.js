@@ -1,0 +1,50 @@
+// Event catalog — the single source of truth for analytics event names.
+//
+// WHY this file exists: naming drift is what forces analytics rebuilds. If one
+// component fires 'BookingStarted' and another 'booking-started', funnels break
+// silently and you re-instrument everything. Lock every name here, reference the
+// constant, never type a raw string at a call site.
+//
+// CONVENTION: snake_case, object_action (noun first, past-tense verb). This
+// matches the server-side names already in use (booking_created, booking_paid,
+// product_purchased) so client + server events land on the same PostHog event.
+//
+// Each entry maps to a server-side conversion event (see server/utils/trackServer
+// CONVERSIONS) when it is money/acquisition-significant — those also fan out to
+// GA4 Measurement Protocol + Meta CAPI. Client-only UI events stay client-side.
+
+export const EVENTS = Object.freeze({
+  // ── Acquisition / top of funnel (client-only, retargeting-relevant) ──
+  PAGE_VIEWED:        'page_viewed',        // manual SPA route change (autocapture also runs)
+  PROFILE_VIEWED:     'host_profile_viewed', // guest landed on a host's public page
+  SERVICE_VIEWED:     'service_viewed',      // guest opened a bookable service
+
+  // ── Booking funnel (client emits intent; server confirms paid) ──
+  BOOKING_STARTED:    'booking_started',     // guest opened the booking flow
+  BOOKING_SLOT_PICKED:'booking_slot_picked', // guest selected a time slot
+  CHECKOUT_STARTED:   'checkout_started',    // guest reached the pay step
+
+  // ── Host / account ──
+  SIGNUP_STARTED:     'signup_started',      // vendor opened onboarding
+  ONBOARDING_STEP:    'onboarding_step_completed',
+  PLAN_VIEWED:        'plan_viewed',         // pricing/plans seen
+
+  // ── Conversions (ALSO fired server-side → GA4 MP + Meta CAPI). Listed here so
+  //    client retargeting pixels can fire the browser-side counterpart. ──
+  BOOKING_CREATED:    'booking_created',
+  BOOKING_PAID:       'booking_paid',
+  PRODUCT_PURCHASED:  'product_purchased',
+  SUBSCRIPTION_STARTED:'subscription_started',
+  USER_REGISTERED:    'user_registered',
+});
+
+// Dev guard: reject unknown event names so a typo throws in dev instead of
+// silently polluting the dataset. No-op in production (never break a money path).
+const KNOWN = new Set(Object.values(EVENTS));
+export function assertKnownEvent(name) {
+  if (import.meta.env.DEV && !KNOWN.has(name)) {
+    // eslint-disable-next-line no-console
+    console.warn(`[analytics] unknown event "${name}" — add it to events.js EVENTS`);
+  }
+  return name;
+}

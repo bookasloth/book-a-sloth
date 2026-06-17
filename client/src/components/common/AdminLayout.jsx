@@ -103,6 +103,7 @@ const NAV = [
   { id:'dashboard', section:'DASHBOARD', items:[
     { label:'Operations Center', icon:'grid',     to:'/super-dashboard', exact:true, perm:'ops.view' },
     { label:'Revenue',         icon:'trendUp',  to:'/super-dashboard/revenue', perm:'analytics.view' },
+    { label:'Marketing Insights', icon:'trendUp', to:'/admin/insights', perm:'analytics.view' },
     { label:'Users',           icon:'users',    to:'/super-dashboard/users', perm:'users.view' },
     { label:'Providers',       icon:'building', to:'/super-dashboard/providers', perm:'professionals.view' },
     { label:'Bookings',        icon:'calendar', to:'/super-dashboard/bookings', perm:'bookings.view' },

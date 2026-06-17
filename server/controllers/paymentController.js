@@ -16,6 +16,7 @@ const { createCalendarEvent } = require("../config/google");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const { verifySignature } = require("../utils/razorpaySignature");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
+const { trackServer } = require("../utils/trackServer");
 
 // Annual plan price in paise, read from subscription_plans (DB-driven, spec v1.1)
 const getPlanPricePaise = async (slug) => {
@@ -288,13 +289,19 @@ const verifyPayment = async (req, res) => {
 
     auditLog('PAYMENT_VERIFIED', null, { booking_id, razorpay_payment_id });
 
-    phCapture(resolveGuestId({ guestId: req.user?.id, guestEmail: booking.guest_email }), "booking_paid", {
+    trackServer(resolveGuestId({ guestId: req.user?.id, guestEmail: booking.guest_email }), "booking_paid", {
       booking_id,
       service_title: booking.services?.title,
       host_id: booking.host_id,
       amount: Number(booking.customer_total) || 0,
       currency: "INR",
       razorpay_payment_id,
+    }, {
+      value: Number(booking.customer_total) || 0,
+      currency: "INR",
+      email: booking.guest_email,
+      eventId: razorpay_payment_id,           // de-dupe vs browser pixel
+      gaClientId: req.body?.ga_client_id,     // browser _ga id if client forwarded it
     });
 
     // BUG-12 fixed: send confirmation emails now that payment is verified
@@ -494,10 +501,16 @@ const verifySubscription = async (req, res) => {
 
     auditLog('SUBSCRIPTION_ACTIVATED', req.user.id, { plan, expires_at: expiresAt });
 
-    phCapture(req.user.id, "subscription_purchased", {
+    trackServer(req.user.id, "subscription_purchased", {
       plan,
       cadence: "annual",
       expires_at: expiresAt.toISOString(),
+    }, {
+      value: Number(breakdown?.totalCharged) || 0,
+      currency: "INR",
+      email: profile.email,
+      eventId: razorpay_payment_id,
+      gaClientId: req.body?.ga_client_id,
     });
 
     // Premium activated email (queued, non-blocking)
@@ -811,12 +824,19 @@ const verifyProductPayment = async (req, res) => {
 
     auditLog('PRODUCT_PURCHASED', buyerId, { product_id, amount: product.price });
 
-    phCapture(resolveGuestId({ guestId: buyerId, guestEmail: buyerEmail }), "product_purchased", {
+    trackServer(resolveGuestId({ guestId: buyerId, guestEmail: buyerEmail }), "product_purchased", {
       product_id,
       host_id: product.host_id,
       amount: Number(product.price) || 0,
       currency: "INR",
       razorpay_payment_id,
+    }, {
+      value: Number(product.price) || 0,
+      currency: "INR",
+      email: buyerEmail,
+      phone: buyer_phone,
+      eventId: razorpay_payment_id,
+      gaClientId: req.body?.ga_client_id,
     });
 
     res.json({ message: "Payment verified", download_token: downloadToken, purchase });
@@ -899,7 +919,7 @@ const handleWebhook = async (req, res) => {
         auditLog('WEBHOOK_BOOKING_PAID', null, { booking_id: notes.booking_id, payment_id: payment.id });
         const paid = paidRows && paidRows[0];
         if (paid) {
-          phCapture(resolveGuestId({ guestId: paid.guest_id, guestEmail: paid.guest_email }), "booking_paid", {
+          trackServer(resolveGuestId({ guestId: paid.guest_id, guestEmail: paid.guest_email }), "booking_paid", {
             booking_id: paid.id,
             service_title: paid.services?.title,
             host_id: paid.host_id,
@@ -907,6 +927,11 @@ const handleWebhook = async (req, res) => {
             currency: "INR",
             razorpay_payment_id: payment.id,
             source: "webhook",
+          }, {
+            value: Number(paid.customer_total) || 0,
+            currency: "INR",
+            email: paid.guest_email,
+            eventId: payment.id,              // same id browser pixel used → de-dupe
           });
         }
       }

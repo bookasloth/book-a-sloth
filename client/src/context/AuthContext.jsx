@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { usePostHog } from '@posthog/react';
+import { analytics } from '../services/analytics';
 import { registerVendor, registerUser, loginUser, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe } from '../services/api';
 import supabase from '../services/supabaseClient';
 
@@ -29,6 +30,9 @@ export const AuthProvider = ({ children }) => {
         role: user.role,
         plan: user.plan,
       });
+      // Fan the same identity to the gated adapters (GA4 user_id, Clarity tags).
+      // PostHog is skipped inside analytics.identify — it's owned by the line above.
+      analytics.identify(String(id), { name: user.name, role: user.role, plan: user.plan });
       wasIdentified.current = true;
     } else if (wasIdentified.current) {
       posthog.reset();

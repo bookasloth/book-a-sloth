@@ -12,6 +12,7 @@ import {
   getHostReviews,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { analytics, EVENTS, gaClientId } from "../services/analytics";
 import toast from "react-hot-toast";
 import {
   DEFAULT_THEME_COLOR,
@@ -156,6 +157,11 @@ const ServiceBooking = () => {
         if (data.service?.title) {
           document.title = `Book ${data.service.title}${data.host?.name ? ` with ${data.host.name}` : ''} | Book A Sloth`;
         }
+        analytics.track(EVENTS.SERVICE_VIEWED, {
+          service_id: data.service?.id,
+          host_id: data.host?.id,
+          price: Number(data.service?.price) || 0,
+        });
       } catch {
         toast.error("Service not found");
       } finally {
@@ -476,6 +482,10 @@ const ServiceBooking = () => {
       return;
     }
     setPaymentLoading(true);
+    analytics.track(EVENTS.CHECKOUT_STARTED, {
+      booking_id: confirmation.id, service_id: service.id, host_id: host.id,
+      value: Number(confirmation?.customer_total) || 0, currency: "INR",
+    });
     try {
       // BUG-02 fix: send guest_email so server can authorize the payment
       const { data: order } = await createPaymentOrder({
@@ -496,6 +506,7 @@ const ServiceBooking = () => {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
+              ga_client_id: gaClientId(),   // join server GA4 hit to this web session
             });
             // Post-payment the server creates the calendar event; pick up the link.
             if (verifyData?.booking) {
@@ -861,7 +872,13 @@ const ServiceBooking = () => {
               </div>
               {selectedTime && (
                 <button
-                  onClick={() => setStep("details")}
+                  onClick={() => {
+                    analytics.track(EVENTS.BOOKING_STARTED, {
+                      service_id: service.id, host_id: host.id,
+                      price: Number(service.price) || 0,
+                    });
+                    setStep("details");
+                  }}
                   className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85"
                   style={{ background: tc, color: textOnTheme }}
                 >

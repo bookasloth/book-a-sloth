@@ -19,6 +19,10 @@ const {
 const ops = require('../controllers/opsAdminController');
 router.get('/stats',                    requireAdmin('ops.view'),             getStats);
 router.get('/provider-plan-analytics',  requireAdmin('professionals.view'),   getProviderPlanAnalytics);
+
+// ── Marketing / performance insights (owned KPI tiles, Postgres-first) ──
+const insights = require('../controllers/insightsAdminController');
+router.get('/insights/kpis', requireAdmin('analytics.view'), insights.getKpis);
 router.get('/ops/summary',  requireAdmin('ops.view'), ops.getSummary);
 
 // ── Image upload (admin session) — badges, branding, CMS, etc. ─

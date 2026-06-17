@@ -10,6 +10,7 @@ import {
   downloadProduct,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { gaClientId } from "../services/analytics";
 import toast from "react-hot-toast";
 
 const loadRazorpay = () =>
@@ -146,6 +147,7 @@ const ProductPurchase = () => {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
+              ga_client_id: gaClientId(),   // join server GA4 hit to this web session
             });
             setDownloadToken(data.download_token);
             setStep("done");
