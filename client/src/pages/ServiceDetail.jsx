@@ -515,63 +515,63 @@ export default function ServiceDetail() {
           {/* ── LEFT: Main content ── */}
           <div className="flex-1 min-w-0">
 
-            {/* ── HERO ── premium, creator-focused service info */}
-            <section className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm mb-6">
-              {/* Badges */}
-              <div className="flex flex-wrap items-center gap-2 mb-5">
-                <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium ${service.meeting_mode === 'offline' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
-                  {service.meeting_mode === 'offline' ? '📍 In-person' : '🌐 Online'}
-                </span>
-                {isBestseller && (
-                  <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-800">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    Bestseller
-                  </span>
-                )}
-              </div>
-
+            {/* ── HERO ── theme-derived gradient band, creator-focused */}
+            <section
+              className="rounded-2xl p-6 sm:p-10 mb-6"
+              style={{
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--profile-accent, #FE5100) 14%, white), color-mix(in srgb, var(--profile-accent, #FE5100) 4%, white))',
+              }}>
               {/* Title */}
-              <h1 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4 leading-[1.12] tracking-tight">{service.title}</h1>
+              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight">{service.title}</h1>
 
               {/* Short description */}
               {service.short_description && (
                 <p className="text-base sm:text-lg text-gray-600 mb-6 leading-relaxed max-w-2xl">{service.short_description}</p>
               )}
 
-              {/* Creator */}
+              {/* Creator — [photo] by Name in Category */}
               {vendor?.name && (
                 <div className="flex items-center gap-3 mb-6">
                   {vendor.profile_image
-                    ? <img src={vendor.profile_image} alt={vendor.name} className="w-11 h-11 rounded-full object-cover border border-gray-100"/>
-                    : <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary">{vendor.name.charAt(0)}</div>}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <Link to={`/${vendor.username}`} className="text-sm font-semibold text-gray-900 hover:text-primary truncate">{vendor.name}</Link>
-                      {vendor.is_verified && (
-                        <svg className="w-4 h-4 flex-shrink-0 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                      )}
-                    </div>
-                    {creatorCategory && <p className="text-xs text-gray-500 truncate">{creatorCategory}</p>}
-                  </div>
+                    ? <img src={vendor.profile_image} alt={vendor.name} className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-sm flex-shrink-0"/>
+                    : <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary ring-2 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
+                  <p className="text-sm text-gray-600 flex items-center flex-wrap gap-x-1.5 gap-y-0.5 min-w-0">
+                    <span>by</span>
+                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-primary">{vendor.name}</Link>
+                    {vendor.is_verified && (
+                      <svg className="w-4 h-4 flex-shrink-0 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    )}
+                    {creatorCategory && <><span>in</span><span className="font-bold text-gray-900">{creatorCategory}</span></>}
+                  </p>
                 </div>
               )}
 
-              {/* Trust indicators */}
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-5 border-t border-gray-100 text-sm">
-                <div className="flex items-center gap-2">
-                  <Stars avg={rating} count={0}/>
-                  <span className="font-semibold text-gray-900">{rating ? rating.toFixed(1) : 'New'}</span>
-                  <span className="text-gray-400">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
-                </div>
-                {bookings > 0 && (
-                  <span className="flex items-center gap-1.5 text-gray-500">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    <strong className="font-semibold text-gray-900">{bookings}</strong> booked
+              {/* Meta row — bestseller · rating · bookings · duration · mode */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                {isBestseller && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    Bestseller
                   </span>
                 )}
-                <span className="flex items-center gap-1.5 text-gray-500">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-gray-900">{rating ? rating.toFixed(1) : 'New'}</span>
+                  <Stars avg={rating} count={0}/>
+                  {reviewCount > 0 && <span className="text-gray-500">{reviewCount} Rating</span>}
+                </div>
+                {bookings > 0 && (
+                  <span className="flex items-center gap-1.5 text-gray-600">
+                    <strong className="font-semibold text-gray-900">{bookings}</strong> Bookings
+                  </span>
+                )}
+                <span className="flex items-center gap-1.5 text-gray-600">
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   {fmtDuration(service.duration)}
+                </span>
+                <span className="flex items-center gap-1.5 text-gray-600">
+                  {service.meeting_mode === 'offline'
+                    ? <><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
+                    : <><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>Online</>}
                 </span>
               </div>
             </section>
