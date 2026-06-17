@@ -7,10 +7,11 @@ const {
 } = require('../controllers/bookingController');
 const { protect, optionalProtect } = require('../middleware/authMiddleware');
 const { requireFeature } = require('../middleware/requireFeature');
+const { slotsLimiter } = require('../middleware/security');
 
 router.get('/service/:id', getServiceById);
 router.get('/slots', getBookedSlots);              // Task 3: ?host_id=&date= (legacy)
-router.get('/available-slots', getAvailableSlots); // v2.5: server-computed availability
+router.get('/available-slots', slotsLimiter, getAvailableSlots); // v2.5: server-computed availability
 // optionalProtect: sets req.user if logged in; createBooking derives guest_id
 // server-side and never trusts a client-supplied id.
 router.post('/', optionalProtect, requireFeature('guest_booking'), createBooking);

@@ -81,6 +81,39 @@ const paymentLimiter = rateLimit({
   message: { message: 'Too many payment requests. Please try again later.' },
 });
 
+// Username/slug availability check — prevent vendor-username enumeration.
+const slugLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests. Please slow down.' },
+});
+
+// Public availability lookup — each call can hit the Google Calendar FreeBusy
+// API, so cap it tighter than the global limiter to protect the API quota.
+const slotsLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many availability checks. Please wait a moment.' },
+});
+
+// Free digital-product download — keyed by EMAIL (falling back to IP) so an
+// attacker can't spam purchase rows / a victim's address by rotating IPs.
+const freeDownloadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const email = String(req.body?.buyer_email || '').toLowerCase().trim();
+    return email || req.ip;
+  },
+  message: { message: 'Too many download requests for this email. Please try again later.' },
+});
+
 // Slow down abusive request floods — secondary to apiLimiter (100/min hard cap).
 //
 // PROVEN BUG (fixed): the old config (delayAfter:50, delayMs: hits*200, no cap)
@@ -152,6 +185,9 @@ module.exports = {
   apiLimiter,
   adminLimiter,
   paymentLimiter,
+  slugLimiter,
+  slotsLimiter,
+  freeDownloadLimiter,
   speedLimiter,
   hppMiddleware,
   sanitizeBody,
