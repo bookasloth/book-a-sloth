@@ -21,7 +21,7 @@
     "express-rate-limit": "^7.1.5",
     "express-slow-down": "^2.0.1",
     "express-validator": "^7.0.1",
-    "googleapis": "^128.0.0",
+    "googleapis": "^173.0.0",
     "helmet": "^7.1.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.3",
@@ -32,7 +32,7 @@
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.6",
     "speakeasy": "^2.0.0",
-    "uuid": "^9.0.1",
+    "uuid": "^11.1.1",
     "winston": "^3.11.0"
   },
   "devDependencies": {
