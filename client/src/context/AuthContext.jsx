@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { usePostHog } from '@posthog/react';
 import { registerVendor, registerUser, loginUser, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe } from '../services/api';
 import supabase from '../services/supabaseClient';
 
@@ -9,6 +10,31 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const posthog = usePostHog();
+  const wasIdentified = useRef(false);
+
+  // Link PostHog events to the known user. One central watcher covers every
+  // login path (password, phone, OTP, Google, register) plus refresh-rehydrate.
+  // reset() fires ONLY on the logout transition (identified -> null), never for
+  // a plain anonymous visitor — otherwise the anon distinct_id would churn on
+  // every page load and break anonymous funnels. distinct_id MUST match what the
+  // backend will send later (posthog-node) so events join on one person.
+  useEffect(() => {
+    if (!posthog) return;
+    const id = user?.id || user?._id;
+    if (id) {
+      posthog.identify(String(id), {
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        plan: user.plan,
+      });
+      wasIdentified.current = true;
+    } else if (wasIdentified.current) {
+      posthog.reset();
+      wasIdentified.current = false;
+    }
+  }, [posthog, user?.id, user?._id]);
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
