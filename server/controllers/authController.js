@@ -24,6 +24,7 @@ const sendEmail = require("../utils/sendEmail");
 const otpStore = require("../utils/otpStore");
 const { sendOtpNotification } = require("../utils/notify");
 const NotificationEngine = require("../services/notificationEngine");
+const { runInBackground } = require("../utils/background");
 
 // ─── Per-account login lockout constants ───────────────────────────────────
 const LOGIN_MAX_FAILED = 5;
@@ -509,10 +510,14 @@ const sendOtp = async (req, res) => {
       console.error("send-otp: ensureGuestProfile error (non-fatal):", profileErr.message);
     }
 
-    // Email rendered from the BOOKING_OTP DB template by the Communication Engine.
-    await sendOtpNotification({ email, phone, name, otp });
-
+    // Respond immediately; OTP delivery (WhatsApp + email) is slow (~6s) and
+    // best-effort. Rate-limit + otpStore.set above already gate correctness, so
+    // send in the background to keep the endpoint sub-100ms.
     res.json({ message: "Verification code sent" });
+
+    // Email rendered from the BOOKING_OTP DB template by the Communication Engine.
+    runInBackground("send-otp:notify", () =>
+      sendOtpNotification({ email, phone, name, otp }));
   } catch (error) {
     console.error("send-otp error:", error);
     safeError(res, error);

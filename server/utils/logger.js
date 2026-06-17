@@ -5,9 +5,26 @@
 const winston = require('winston');
 const path = require('path');
 
-const { combine, timestamp, json, colorize, simple, errors } = winston.format;
+const { combine, timestamp, json, colorize, printf, errors } = winston.format;
 
 const isProd = process.env.NODE_ENV === 'production';
+
+// Dev console: never let an object-valued message render as "[object Object]".
+// winston's built-in simple() coerces info.message with template interpolation,
+// so a call like logger.info(someObject) collapses to "[object Object]". This
+// printf JSON-stringifies object messages and any extra metadata instead, so the
+// real content is always visible. Prod uses json() below and is unaffected.
+const stringify = (v) => (typeof v === 'object' && v !== null ? JSON.stringify(v) : v);
+const devFormat = printf((info) => {
+  const { level, message, stack, timestamp: ts, ...rest } = info;
+  // Strip winston-internal symbol keys; keep only real metadata.
+  const meta = Object.keys(rest).reduce((acc, k) => {
+    if (typeof k === 'string' && k !== 'splat') acc[k] = rest[k];
+    return acc;
+  }, {});
+  const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+  return `${level}: ${stack || stringify(message) || ''}${metaStr}`;
+});
 
 // Mask sensitive fields before logging
 const maskSensitive = winston.format((info) => {
@@ -32,7 +49,7 @@ const logger = winston.createLogger({
   transports: [
     // Console (always)
     new winston.transports.Console({
-      format: isProd ? combine(timestamp(), json()) : combine(colorize(), simple()),
+      format: isProd ? combine(timestamp(), json()) : combine(colorize(), devFormat),
     }),
     // File transport in production
     ...(isProd ? [
