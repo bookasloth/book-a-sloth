@@ -83,6 +83,14 @@ const getPlatformBusy = async (hostId, windowStart, windowEnd) => {
 // recent known busy set instead of a blind "all free".
 const CACHE_TABLE = "google_freebusy_cache";
 
+// Latency cache TTL: how long a successful FreeBusy fetch is reused before we
+// hit Google live again. The slots endpoint is polled per date-pick, so without
+// this every click is a ~1s Google round-trip. Tradeoff: an external-calendar
+// change can take up to TTL to surface in the picker (platform double-booking
+// is still hard-guaranteed by the v2.5 DB exclusion constraint, independent of
+// this cache). Env-overridable; default 60s.
+const FREEBUSY_TTL_MS = Number(process.env.FREEBUSY_CACHE_TTL_MS) || 60_000;
+
 const readFreeBusyCache = async (hostId, day) => {
   const { data, error } = await supabaseAdmin
     .from(CACHE_TABLE).select("busy, fetched_at")
@@ -111,14 +119,29 @@ const writeFreeBusyCache = async (hostId, day, busy) => {
 // Google Calendar busy intervals for the given calendar `day` ("YYYY-MM-DD").
 // Returns { intervals, unverified }:
 //   - not connected           → { intervals: [], unverified: false }
-//   - live fetch ok           → { intervals, unverified: false } (and caches)
-//   - live fetch FAILS, cache → { intervals: <cached>, unverified: true }
-//   - live fetch FAILS, none  → { intervals: [], unverified: true }
+//   - fresh cache hit (< TTL)  → { intervals: <cached>, unverified: false }
+//   - live fetch ok            → { intervals, unverified: false } (and caches)
+//   - live fetch FAILS, cache  → { intervals: <cached>, unverified: true }
+//   - live fetch FAILS, none   → { intervals: [], unverified: true }
 // Fail-open is preserved (an outage never blocks bookings) but the caller now
 // knows the calendar could not be verified and can warn the guest.
-const getGoogleBusy = async (host, windowStart, windowEnd, day) => {
+const getGoogleBusy = async (host, windowStart, windowEnd, day, { useCache = true } = {}) => {
   if (!host?.google_calendar_connected || !host?.google_refresh_token)
     return { intervals: [], unverified: false };
+
+  // Latency cache: reuse a recent successful fetch so a polled date-picker does
+  // not make a live Google round-trip on every request. A fresh hit is treated
+  // as verified (it was a real successful fetch, just recent). Disabled by the
+  // caller (validateSlot) for the booking-time hard check, which must see the
+  // host's live external calendar and runs once per booking, not on every poll.
+  if (day && useCache) {
+    const cached = await readFreeBusyCache(host.id, day);
+    if (cached?.fetchedAt &&
+        Date.now() - new Date(cached.fetchedAt).getTime() < FREEBUSY_TTL_MS) {
+      return { intervals: cached.intervals, unverified: false };
+    }
+  }
+
   try {
     const busy = await getFreeBusy(
       decryptToken(host.google_access_token),
@@ -227,7 +250,7 @@ const validateSlot = async ({ host, service, availability, scheduledAtUTC, exclu
 
   const [platformBusy, google] = await Promise.all([
     getPlatformBusyExcluding(host.id, start, end, excludeBookingId),
-    getGoogleBusy(host, start, end, dateStr),
+    getGoogleBusy(host, start, end, dateStr, { useCache: false }), // booking-time check: always live
   ]);
   if (overlaps(new Date(start.getTime() - grace), new Date(end.getTime() + grace), platformBusy))
     return { ok: false, reason: "This time slot is no longer available. Please choose another." };
