@@ -42,3 +42,21 @@ test('accepts valid amount within available', async () => {
   await ctrl.requestPayout({ user: { id: 'h1' }, body: { amount: 500, notes: 'upi' } }, res);
   expect(res.status).toHaveBeenCalledWith(201);
 });
+
+test('TOCTOU: a concurrent second request (unique-index 23505) is rejected with 409, not double-created', async () => {
+  computeSettlementBalance.mockResolvedValue({ available: 1000 });
+  // The partial unique index (v3.16) rejects the second concurrent open request.
+  supabaseAdmin.from.mockReturnValue(insertChain({ data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint "payout_requests_one_open_per_host"' } }));
+  const res = mockRes();
+  await ctrl.requestPayout({ user: { id: 'h1' }, body: { amount: 500 } }, res);
+  expect(res.status).toHaveBeenCalledWith(409);
+  expect(res.json.mock.calls[0][0].message).toMatch(/already have a payout request/i);
+});
+
+test('a non-unique DB error still surfaces as a 500 (not masked as 409)', async () => {
+  computeSettlementBalance.mockResolvedValue({ available: 1000 });
+  supabaseAdmin.from.mockReturnValue(insertChain({ data: null, error: { code: '42P01', message: 'relation does not exist' } }));
+  const res = mockRes();
+  await ctrl.requestPayout({ user: { id: 'h1' }, body: { amount: 500 } }, res);
+  expect(res.status).toHaveBeenCalledWith(500);
+});

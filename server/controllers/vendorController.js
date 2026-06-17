@@ -116,7 +116,17 @@ const requestPayout = async (req, res) => {
       .select()
       .single();
 
-    if (error) return safeError(res, error);
+    if (error) {
+      // TOCTOU guard: the partial unique index (v3.16) rejects a second concurrent
+      // open request for the same host — so even if two requests both pass the
+      // available-balance check above, only one row is created.
+      if (error.code === '23505' || /duplicate key|unique constraint/i.test(error.message || '')) {
+        return res.status(409).json({
+          message: 'You already have a payout request in progress. Please wait for it to be processed.',
+        });
+      }
+      return safeError(res, error);
+    }
     res.status(201).json(data);
   } catch (error) {
     safeError(res, error);
