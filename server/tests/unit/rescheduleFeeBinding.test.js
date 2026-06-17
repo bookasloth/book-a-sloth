@@ -73,24 +73,38 @@ const makeBooking = ({ bookingId = 'booking-b', rescheduleCount = 1, vendorFee =
   },
 });
 
-/** Wire the Supabase mock: booking read returns `booking`; conflicts = []; update succeeds. */
+// Module-level override: set to a row object to simulate a prior reschedule_payment existing.
+// Reset to null in beforeEach so happy-path tests are unaffected.
+let priorFeeRow = null;
+
+/** Wire the Supabase mock: booking read returns `booking`; conflicts = []; update succeeds.
+ *  Table-aware: reschedule_payments.maybeSingle resolves priorFeeRow (null by default),
+ *  other tables use the standard booking single / timezone maybySingle / conflict then. */
 const wireSupabase = (booking) => {
-  mockFrom.mockImplementation(() => {
+  mockFrom.mockImplementation((table) => {
     const c = {};
     c.select = jest.fn(() => c);
     c.eq = jest.fn(() => c);
     c.neq = jest.fn(() => c);
     c.gte = jest.fn(() => c);
     c.lte = jest.fn(() => c);
+    c.limit = jest.fn(() => c);
     c.order = jest.fn(() => c);
     c.update = jest.fn(() => c);
     c.insert = jest.fn(() => c);
-    c.single = jest.fn().mockResolvedValue({ data: booking, error: null });
-    c.maybeSingle = jest.fn().mockResolvedValue({
-      data: { timezone: 'Asia/Kolkata', buffer_minutes: 0 },
-    });
-    // awaiting the chain directly (conflict query) resolves to empty list
-    c.then = (resolve) => resolve({ data: [], error: null });
+    if (table === 'reschedule_payments') {
+      // idempotency pre-check: returns priorFeeRow when set, else null (no prior payment)
+      c.single = jest.fn().mockResolvedValue({ data: null, error: null });
+      c.maybeSingle = jest.fn().mockResolvedValue({ data: priorFeeRow });
+      c.then = (resolve) => resolve({ data: [], error: null });
+    } else {
+      c.single = jest.fn().mockResolvedValue({ data: booking, error: null });
+      c.maybeSingle = jest.fn().mockResolvedValue({
+        data: { timezone: 'Asia/Kolkata', buffer_minutes: 0 },
+      });
+      // awaiting the chain directly (conflict query) resolves to empty list
+      c.then = (resolve) => resolve({ data: [], error: null });
+    }
     return c;
   });
 };
@@ -102,6 +116,8 @@ const mockRzpClient = (orderStub) => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // Reset idempotency override so happy-path tests see no prior payment
+  priorFeeRow = null;
   // Reschedule feature on; reschedule_fee feature on by default
   featureFlags.isFeatureEnabled.mockResolvedValue(true);
   // Signature always passes (we are testing the BINDING check, not the sig check)
@@ -265,4 +281,49 @@ test('CONTROL: first reschedule (count=0) is free; fee-binding path never entere
   // No 402
   const statusCalls = res.status.mock.calls.map((c) => c[0]);
   expect(statusCalls).not.toContain(402);
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SECURITY: replay attack — same fee_payment_id already exists in reschedule_payments
+// ═════════════════════════════════════════════════════════════════════════════
+test('SECURITY: replay rejected when fee_payment_id already used in reschedule_payments', async () => {
+  const bookingBeingRescheduled = makeBooking({ bookingId: 'booking-b', vendorFee: 500 });
+
+  // Simulate a prior reschedule_payment row with the same payment id
+  priorFeeRow = { id: 'rp1' };
+  wireSupabase(bookingBeingRescheduled);
+
+  // Razorpay order matches correctly (binding check passes) — we want to reach the idempotency check
+  razorpayConfig.getClient.mockResolvedValue(
+    mockRzpClient({
+      id: 'order_fee_correct',
+      amount: Math.round(500 * 100), // correct amount
+      notes: { booking_id: 'booking-b', kind: 'reschedule_fee' }, // correct booking
+    })
+  );
+
+  const req = {
+    params: { id: 'booking-b' },
+    user: { id: 'guest-1' },
+    body: {
+      scheduled_at: FUTURE,
+      fee_order_id: 'order_fee_correct',
+      fee_payment_id: 'pay_fee_already_used',
+      fee_signature: 'sig_valid',
+    },
+  };
+  const res = mockRes();
+  await rescheduleBooking(req, res);
+
+  // Must return 409 — replay blocked before booking is mutated
+  expect(res.status).toHaveBeenCalledWith(409);
+  expect(res.json.mock.calls[0][0].message).toMatch(/already been used/i);
+
+  // The booking UPDATE must NOT have been called
+  const allFromCalls = mockFrom.mock.calls.map((c) => c[0]);
+  const bookingFromCalls = mockFrom.mock.results
+    .filter((_, i) => allFromCalls[i] === 'bookings')
+    .map((r) => r.value);
+  const anyUpdateCalled = bookingFromCalls.some((c) => c.update.mock.calls.length > 0);
+  expect(anyUpdateCalled).toBe(false);
 });

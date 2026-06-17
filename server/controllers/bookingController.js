@@ -777,6 +777,21 @@ const rescheduleBooking = async (req, res) => {
       }
     }
 
+    // Idempotency: a given reschedule-fee payment backs exactly ONE reschedule.
+    // Check BEFORE mutating the booking so a replay of the same fee tokens can't
+    // re-reschedule for free. (DB unique index v3.17 is the hard backstop.)
+    if (feePaymentId) {
+      const { data: priorFee } = await supabaseAdmin
+        .from('reschedule_payments')
+        .select('id')
+        .eq('razorpay_payment_id', feePaymentId)
+        .limit(1)
+        .maybeSingle();
+      if (priorFee) {
+        return res.status(409).json({ message: 'This reschedule fee payment has already been used.' });
+      }
+    }
+
     const ackToken = isHostReschedule
       ? crypto.randomBytes(24).toString("hex")
       : null;
@@ -837,7 +852,16 @@ const rescheduleBooking = async (req, res) => {
           .insert({ booking_id: booking.id, guest_id: booking.guest_id, host_id: booking.host_id,
                     amount: feeChargedAmount, razorpay_order_id: feeOrderId, razorpay_payment_id: feePaymentId })
           .select('id').single();
-        if (rfErr) throw rfErr;
+        if (rfErr) {
+          // 23505 = unique_violation: a concurrent replay raced past the pre-check and
+          // hit the DB unique index (v3.17). The booking was already updated — that's
+          // acceptable. Surface a 409 instead of a 500.
+          if (rfErr.code === '23505') {
+            console.warn('Reschedule fee replay blocked by DB unique index (concurrent race):', feePaymentId);
+            return res.status(409).json({ message: 'This reschedule fee payment has already been used.' });
+          }
+          throw rfErr;
+        }
         const { rescheduleFeeEntry } = require('../services/ledger/journalTemplates');
         const { post } = require('../services/ledger/postingService');
         await post({

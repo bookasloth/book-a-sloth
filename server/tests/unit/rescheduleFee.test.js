@@ -26,12 +26,32 @@ const mk = (count, fee) => ({
   google_event_id: null,
   'profiles!bookings_host_id_fkey': { id: 'h1', reschedule_fee: fee },
 });
-const wire = (b) => mockFrom.mockImplementation(() => {
-  const c = { select: jest.fn(() => c), eq: jest.fn(() => c), neq: jest.fn(() => c), gte: jest.fn(() => c),
-    lte: jest.fn(() => c), order: jest.fn(() => c), update: jest.fn(() => c), insert: jest.fn(() => c),
-    single: jest.fn().mockResolvedValue({ data: b, error: null }),
-    maybeSingle: jest.fn().mockResolvedValue({ data: { timezone: 'Asia/Kolkata', buffer_minutes: 0 } }),
-    then: (resolve) => resolve({ data: [], error: null }) };
+const wire = (b) => mockFrom.mockImplementation((table) => {
+  const c = {};
+  c.select = jest.fn(() => c);
+  c.eq = jest.fn(() => c);
+  c.neq = jest.fn(() => c);
+  c.gte = jest.fn(() => c);
+  c.lte = jest.fn(() => c);
+  c.limit = jest.fn(() => c);
+  c.order = jest.fn(() => c);
+  c.update = jest.fn(() => c);
+  // For reschedule_payments: insert returns a row (so rfRow.id works); select returns null (idempotency pre-check: no prior payment)
+  c.insert = jest.fn(() => {
+    const ins = {};
+    ins.select = jest.fn(() => ins);
+    ins.single = jest.fn().mockResolvedValue({ data: { id: 'rf-row-1' }, error: null });
+    return ins;
+  });
+  if (table === 'reschedule_payments') {
+    // idempotency pre-check: no prior payment → let the reschedule proceed
+    c.single = jest.fn().mockResolvedValue({ data: null, error: null });
+    c.maybeSingle = jest.fn().mockResolvedValue({ data: null });
+  } else {
+    c.single = jest.fn().mockResolvedValue({ data: b, error: null });
+    c.maybeSingle = jest.fn().mockResolvedValue({ data: { timezone: 'Asia/Kolkata', buffer_minutes: 0 } });
+  }
+  c.then = (resolve) => resolve({ data: [], error: null });
   return c;
 });
 
