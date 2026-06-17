@@ -13,6 +13,14 @@ test('select stars + submit calls createReview', async () => {
   render(<ReviewModal open booking={{ id: 'b1' }} onClose={() => {}} onDone={onDone} />);
   fireEvent.click(screen.getByRole('button', { name: /rate 4/i }));
   fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
-  await waitFor(() => expect(createReview).toHaveBeenCalledWith({ booking_id: 'b1', rating: 4, comment: '' }));
+  await waitFor(() => expect(createReview).toHaveBeenCalledWith({ booking_id: 'b1', rating: 4, comment: '', direction: 'guest_to_host' }));
   expect(onDone).toHaveBeenCalled();
+});
+
+test('host_to_guest direction is forwarded to createReview', async () => {
+  createReview.mockResolvedValue({ data: { id: 'r2', rating: 5 } });
+  render(<ReviewModal open booking={{ id: 'b9', guest_name: 'Sam' }} direction="host_to_guest" onClose={() => {}} onDone={() => {}} />);
+  fireEvent.click(screen.getByRole('button', { name: /rate 5/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
+  await waitFor(() => expect(createReview).toHaveBeenCalledWith({ booking_id: 'b9', rating: 5, comment: '', direction: 'host_to_guest' }));
 });
