@@ -813,6 +813,33 @@ const getMe = async (req, res) => {
   }
 };
 
+// PUT /api/auth/me
+// Self-service profile edit for any logged-in user (guest or host). Only a
+// small allow-list of personal fields is writable here — never role, plan,
+// username, etc. Email is intentionally NOT editable (it's the auth identity).
+const updateMe = async (req, res) => {
+  try {
+    const { name, phone, profile_image } = req.body;
+    const patch = { updated_at: new Date().toISOString() };
+    if (name !== undefined)          patch.name = String(name).trim();
+    if (phone !== undefined)         patch.phone = phone ? String(phone).trim() : null;
+    if (profile_image !== undefined) patch.profile_image = profile_image || null;
+
+    if (patch.name === "") return res.status(400).json({ message: "Name cannot be empty" });
+
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .update(patch)
+      .eq("id", req.user.id)
+      .select("*")
+      .single();
+    if (error || !profile) return safeError(res, error || new Error("Update failed"));
+    res.json(serializeProfile(profile, null));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 // ============================================
 // PASSWORD RESET (OTP-based, all user types)
 // ==========================================
@@ -1016,6 +1043,7 @@ module.exports = {
   verifyOtpLogin,
   setPassword,
   getMe,
+  updateMe,
   forgotPassword,
   resetPassword,
 };

@@ -85,6 +85,7 @@ export const registerVendor   = (data)         => API.post('/auth/register/vendo
 export const registerUser     = (data)         => API.post('/auth/register/user', data);
 export const loginUser        = (data)         => API.post('/auth/login', data);
 export const getMe            = ()             => API.get('/auth/me');
+export const updateMe         = (data)         => API.put('/auth/me', data);
 export const getGoogleAuthUrl = ()             => API.get('/auth/google');
 // Vendor Google auth (public): one consent screen = identity + calendar scopes
 export const getVendorGoogleUrl = (intent = 'login') => API.get('/auth/google/vendor', { params: { intent } });
