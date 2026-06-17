@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getHostProfile, getHostReviews, getHostProducts, getVendorBadges } from "../services/api";
+import { analytics, EVENTS } from "../services/analytics";
 import BrandPreloader from "../components/preloader/BrandPreloader";
 import {
   DEFAULT_THEME_COLOR,
@@ -305,6 +306,7 @@ const HostProfile = () => {
         const { data } = await getHostProfile(profileSlug);
         setHost(data.host);
         setServices(data.services || []);
+        analytics.track(EVENTS.PROFILE_VIEWED, { host_id: data.host?.id, slug: profileSlug });
         getHostReviews(profileSlug).then(r => setReviewData(r.data)).catch(() => {});
         getHostProducts(profileSlug).then(r => setProducts(r.data || [])).catch(() => {});
         getVendorBadges(profileSlug).then(r => setBadgeList(r.data?.badges || [])).catch(() => {});

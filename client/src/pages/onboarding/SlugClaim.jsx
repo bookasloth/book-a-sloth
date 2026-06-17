@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { checkSlugAvailable } from '../../services/api';
+import { analytics, EVENTS } from '../../services/analytics';
 import ProgressBar from './ProgressBar';
 
 const SlugClaim = () => {
@@ -11,6 +12,9 @@ const SlugClaim = () => {
   const navigate = useNavigate();
   const debounceRef = useRef(null);
   const requestSeq = useRef(0); // guards against out-of-order responses
+
+  // Vendor opened onboarding — top of the host-acquisition funnel.
+  useEffect(() => { analytics.track(EVENTS.SIGNUP_STARTED, {}); }, []);
 
   const checkSlug = useCallback(async (value) => {
     // Validate slug format before hitting the server.

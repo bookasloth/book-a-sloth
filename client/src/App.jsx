@@ -5,6 +5,8 @@ import Navbar from './components/common/Navbar';
 import DashboardLayout from './components/common/DashboardLayout';
 import AdminLayout from './components/common/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import AnalyticsBridge from './components/common/AnalyticsBridge';
+import ConsentBanner from './components/common/ConsentBanner';
 
 // ── Route-level lazy loading ──────────────────────────────────────────────────
 // Layout / guard components stay eager (always needed, small).
@@ -71,6 +73,7 @@ const ProductPurchase = lazy(() => import('./pages/ProductPurchase'));
 // Admin — Dashboard
 const SuperDashboard = lazy(() => import('./pages/admin/SuperDashboard'));
 const AdminOverview  = lazy(() => import('./pages/admin/AdminOverview'));
+const AdminInsights  = lazy(() => import('./pages/admin/AdminInsights'));
 
 // Admin — Core
 const AdminUsers    = lazy(() => import('./pages/admin/AdminUsers'));
@@ -159,6 +162,8 @@ function App() {
   return (
     <>
       <Toaster position="top-right" />
+      <AnalyticsBridge />
+      <ConsentBanner />
       {!hideNavbar && <Navbar />}
       <Suspense fallback={<PageLoader />}>
         <Routes>
@@ -273,6 +278,9 @@ function App() {
           {/* System — Staff & Roles, Audit Logs (M1) */}
           <Route path="/admin/staff" element={<AdminWrapper><AdminStaff /></AdminWrapper>} />
           <Route path="/admin/system/audit" element={<AdminWrapper><AdminAudit /></AdminWrapper>} />
+
+          {/* Marketing & performance insights */}
+          <Route path="/admin/insights" element={<AdminWrapper><AdminInsights /></AdminWrapper>} />
 
           {/* Platform Control */}
           <Route path="/admin/features" element={<AdminWrapper><AdminFeatureStatus /></AdminWrapper>} />

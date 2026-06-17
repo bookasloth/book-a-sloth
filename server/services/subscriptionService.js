@@ -11,6 +11,7 @@ const planService = require('./planService');
 const platformConfig = require('./platformConfig');
 const NotificationEngine = require('./notificationEngine');
 const { capture: phCapture } = require('../utils/posthog');
+const { trackServer } = require('../utils/trackServer');
 const { computeSubscriptionBreakdown } = require('../lib/pricingEngine');
 const { normCadence } = require('../lib/subscriptionPricing');
 
@@ -145,10 +146,14 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
   // reconciler), never the verify endpoint — so a dedicated event can't overlap
   // the verify path's `subscription_purchased` and never double-counts.
   if (paymentId && kind === 'renewal') {
-    phCapture(vendorId, 'subscription_renewed', {
+    trackServer(vendorId, 'subscription_renewed', {
       plan: planSlug,
       cadence,
       expires_at: periodEndIso,
+    }, {
+      value: Number(breakdown?.totalCharged) || 0,
+      currency: 'INR',
+      eventId: paymentId,   // de-dupe (renewals have no browser pixel, but keep stable)
     });
   }
 
