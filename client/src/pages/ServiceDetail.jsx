@@ -272,21 +272,21 @@ const TRUST_SIGNALS = [
     path: 'M13 10V3L4 14h7v7l9-11h-7z' },
 ];
 
-const BookingCard = ({ service, onBookNow, bookingFee = 0 }) => {
+const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false }) => {
   const isFree = service.price === 0;
   const [feeOpen, setFeeOpen] = useState(false);
   const [btnHover, setBtnHover] = useState(false);
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Thumbnail */}
-      {service.thumbnail_url
+      {/* Thumbnail — hidden once the sidebar is pinned and the user keeps scrolling */}
+      {!compact && (service.thumbnail_url
         ? <img src={service.thumbnail_url} alt={service.title} className="w-full aspect-[16/10] object-cover"/>
         : <div className="w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
             <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 16M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-          </div>}
+          </div>)}
       <div className="p-5">
         {/* Price + booking fee on one line */}
         <div className="relative flex items-baseline gap-2 mt-2 mb-5">
@@ -431,6 +431,21 @@ export default function ServiceDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
   const [tab, setTab]       = useState('Overview');
+  const sentinelRef = useRef(null);
+  const [stuck, setStuck]   = useState(false); // card image scrolled up to the top
+
+  // Sentinel sits exactly where the sticky card begins. When it scrolls past the
+  // pinned offset (top-24 = 96px) the image is at the top → hide; back down → show.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setStuck(!entry.isIntersecting),
+      { threshold: 0, rootMargin: '-96px 0px 0px 0px' },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [data]);
 
   useEffect(() => {
     svcGetPublicByProfile(profileSlug, serviceSlug)
@@ -503,24 +518,54 @@ export default function ServiceDetail() {
     || vendor?.profession || vendor?.tagline || '';
 
   return (
-    <div className="min-h-screen bg-[#f7f5ef]">
-      <div className="app-container py-8">
-        {/* Back */}
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-6 transition-colors">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
-          Back
-        </button>
+    <div className="min-h-screen bg-[#f7f5ef] relative">
+      {/* ── Above-the-fold decoration — original theme-tinted shapes, fades out ── */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[400px] overflow-hidden"
+        style={{
+          color: 'var(--profile-accent, #FE5100)',
+          WebkitMaskImage: 'linear-gradient(to bottom, #000 60%, transparent)',
+          maskImage: 'linear-gradient(to bottom, #000 60%, transparent)',
+        }}>
+        {/* coral wash — cooler, lighter; left to right */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to right, #ff7a66, #ff8f73)' }}
+        />
+        <svg
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 1440 560"
+          preserveAspectRatio="xMidYMin slice"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          {/* concentric rings, top-right */}
+          <circle cx="1290" cy="20" r="300" fill="currentColor" opacity="0.05" />
+          <circle cx="1290" cy="20" r="210" stroke="currentColor" strokeWidth="2" opacity="0.12" />
+          <circle cx="1290" cy="20" r="140" stroke="currentColor" strokeWidth="2" opacity="0.10" />
+          <circle cx="1290" cy="20" r="78"  stroke="currentColor" strokeWidth="2" opacity="0.08" />
+          {/* large soft blob, left */}
+          <circle cx="60" cy="360" r="240" fill="currentColor" opacity="0.05" />
+          {/* floating accents */}
+          <circle cx="430" cy="90"  r="8"  fill="currentColor" opacity="0.18" />
+          <circle cx="880" cy="150" r="5"  fill="currentColor" opacity="0.15" />
+          <circle cx="300" cy="240" r="14" stroke="currentColor" strokeWidth="2" opacity="0.14" />
+          <circle cx="980" cy="60"  r="22" stroke="currentColor" strokeWidth="2" opacity="0.10" />
+          {/* sweeping arcs, mid-left */}
+          <path d="M-40 470 Q 360 300 760 460" stroke="currentColor" strokeWidth="2" opacity="0.10" />
+          <path d="M-40 520 Q 420 340 880 500" stroke="currentColor" strokeWidth="2" opacity="0.07" />
+          {/* rounded squircle, drifting */}
+          <rect x="640" y="300" width="120" height="120" rx="34" transform="rotate(18 700 360)" stroke="currentColor" strokeWidth="2" opacity="0.09" />
+        </svg>
+      </div>
 
+      <div className="app-container py-8 relative z-10">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── LEFT: Main content ── */}
           <div className="flex-1 min-w-0">
 
-            {/* ── HERO ── theme-derived gradient band, creator-focused */}
-            <section
-              className="rounded-2xl p-6 sm:p-10 mb-6"
-              style={{
-                background: 'linear-gradient(135deg, color-mix(in srgb, var(--profile-accent, #FE5100) 14%, white), color-mix(in srgb, var(--profile-accent, #FE5100) 4%, white))',
-              }}>
+            {/* ── HERO ── plain; page decoration sits behind, above the fold */}
+            <section className="p-6 sm:p-10 mb-6">
               {/* Title */}
               <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight">{service.title}</h1>
 
@@ -537,11 +582,7 @@ export default function ServiceDetail() {
                     : <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary ring-2 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
                   <p className="text-sm text-gray-600 flex items-center flex-wrap gap-x-1.5 gap-y-0.5 min-w-0">
                     <span>by</span>
-                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-primary">{vendor.name}</Link>
-                    {vendor.is_verified && (
-                      <svg className="w-4 h-4 flex-shrink-0 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    )}
-                    {creatorCategory && <><span>in</span><span className="font-bold text-gray-900">{creatorCategory}</span></>}
+                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-white transition-colors">{vendor.name}</Link>
                   </p>
                 </div>
               )}
@@ -555,23 +596,31 @@ export default function ServiceDetail() {
                   </span>
                 )}
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900">{rating ? rating.toFixed(1) : 'New'}</span>
-                  <Stars avg={rating} count={0}/>
-                  {reviewCount > 0 && <span className="text-gray-500">{reviewCount} Rating</span>}
+                  {rating > 0 ? (
+                    <>
+                      <Stars avg={rating} count={0}/>
+                      <span className="text-gray-700">
+                        <strong className="font-semibold text-gray-900">{rating.toFixed(1)}</strong>
+                        {reviewCount > 0 && <span className="text-gray-500"> ({reviewCount})</span>}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-sm font-semibold bg-white text-gray-900 shadow-sm">New</span>
+                  )}
                 </div>
                 {bookings > 0 && (
                   <span className="flex items-center gap-1.5 text-gray-600">
                     <strong className="font-semibold text-gray-900">{bookings}</strong> Bookings
                   </span>
                 )}
-                <span className="flex items-center gap-1.5 text-gray-600">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-white text-gray-800 shadow-sm">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   {fmtDuration(service.duration)}
                 </span>
-                <span className="flex items-center gap-1.5 text-gray-600">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-white text-gray-800 shadow-sm">
                   {service.meeting_mode === 'offline'
-                    ? <><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
-                    : <><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>Online</>}
+                    ? <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
+                    : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>Online</>}
                 </span>
               </div>
             </section>
@@ -620,9 +669,11 @@ export default function ServiceDetail() {
           </div>
 
           {/* ── RIGHT: Sticky sidebar ── */}
-          <div className="hidden lg:flex lg:w-[320px] flex-shrink-0 self-start sticky top-24 flex-col gap-5">
-            <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee}/>
-            <ProfileCard vendor={vendor} rating={rating} reviewCount={reviewCount} bookings={bookings}/>
+          <div className="hidden lg:block lg:w-[320px] flex-shrink-0 lg:mt-[130px]">
+            <div ref={sentinelRef} className="h-0" />
+            <div className="sticky top-24 flex flex-col gap-5">
+              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} compact={stuck}/>
+            </div>
           </div>
         </div>
       </div>
