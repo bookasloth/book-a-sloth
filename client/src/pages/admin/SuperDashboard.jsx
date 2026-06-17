@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { adminGetStats, adminGetBookings, adminGetUsers, adminOpsSummary, adminGetProviderPlanAnalytics } from '../../services/api';
+import AdminInsights from './AdminInsights';
 
 // ── Mini icon renderer ────────────────────────────────────────
 const Ic = ({ d, size = 16, className = '' }) => (
@@ -34,6 +35,7 @@ const TABS = [
   { id: 'providers',  label: 'Providers',        to: '/super-dashboard/providers' },
   { id: 'bookings',   label: 'Bookings',         to: '/super-dashboard/bookings' },
   { id: 'pending',    label: 'Pending Actions',  to: '/super-dashboard/pending' },
+  { id: 'insights',   label: 'Insights',         to: '/super-dashboard/insights' },
 ];
 
 const STATUS_DOT = {
@@ -589,6 +591,7 @@ const SuperDashboard = () => {
           {activeTab === 'providers' && <ProvidersTab  stats={stats} />}
           {activeTab === 'bookings'  && <BookingsTab   stats={stats} />}
           {activeTab === 'pending'   && <PendingTab ops={ops} />}
+          {activeTab === 'insights'  && <AdminInsights />}
         </>
       )}
     </div>
