@@ -77,7 +77,6 @@ const ProductPurchase = lazy(() => import('./pages/ProductPurchase'));
 // Admin — Dashboard
 const SuperDashboard = lazy(() => import('./pages/admin/SuperDashboard'));
 const AdminOverview  = lazy(() => import('./pages/admin/AdminOverview'));
-const AdminInsights  = lazy(() => import('./pages/admin/AdminInsights'));
 
 // Admin — Core
 const AdminUsers    = lazy(() => import('./pages/admin/AdminUsers'));
@@ -284,8 +283,8 @@ function App() {
           <Route path="/admin/staff" element={<AdminWrapper><AdminStaff /></AdminWrapper>} />
           <Route path="/admin/system/audit" element={<AdminWrapper><AdminAudit /></AdminWrapper>} />
 
-          {/* Marketing & performance insights */}
-          <Route path="/admin/insights" element={<AdminWrapper><AdminInsights /></AdminWrapper>} />
+          {/* Marketing & performance insights — now a SuperDashboard tab; keep old path as redirect */}
+          <Route path="/admin/insights" element={<Navigate to="/super-dashboard/insights" replace />} />
 
           {/* Platform Control */}
           <Route path="/admin/features" element={<AdminWrapper><AdminFeatureStatus /></AdminWrapper>} />
