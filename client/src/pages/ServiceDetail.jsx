@@ -651,7 +651,7 @@ export default function ServiceDetail() {
 
             {/* Mobile: booking card as a normal block below the hero */}
             <div className="lg:hidden mb-6 space-y-6">
-              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee}/>
+              <BookingCard service={service} vendor={vendor} onBookNow={handleBookNow} bookingFee={bookingFee}/>
               <ProfileCard vendor={vendor} rating={rating} reviewCount={reviewCount} bookings={bookings}/>
             </div>
 
@@ -668,23 +668,29 @@ export default function ServiceDetail() {
             {/* Tabs */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
               {/* Tab bar */}
-              <div className="flex overflow-x-auto border-b border-gray-100 scrollbar-hide">
-                {TABS.map(t => (
-                  <button key={t} onClick={() => setTab(t)}
-                    className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors border-b-2 ${tab === t ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
-                    {t}
-                    {t === 'Reviews' && (reviews?.length || 0) > 0 && (
-                      <span className="ml-1.5 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">{reviews.length}</span>
-                    )}
-                    {t === 'FAQ' && hasFAQs && (
-                      <span className="ml-1.5 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{service.faqs.length}</span>
-                    )}
-                  </button>
-                ))}
+              <div role="tablist" aria-label="Service details" className="flex overflow-x-auto border-b border-gray-100 scrollbar-hide">
+                {TABS.map((t, i) => {
+                  const selected = tab === t;
+                  return (
+                    <button key={t} role="tab" id={`tab-${t}`} aria-controls={`tabpanel-${t}`}
+                      aria-selected={selected} tabIndex={selected ? 0 : -1}
+                      ref={el => (tabRefs.current[i] = el)}
+                      onClick={() => setTab(t)} onKeyDown={e => onTabKey(e, i)}
+                      className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors border-b-2 ${selected ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+                      {t}
+                      {t === 'Reviews' && (reviews?.length || 0) > 0 && (
+                        <span className="ml-1.5 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">{reviews.length}</span>
+                      )}
+                      {t === 'FAQ' && hasFAQs && (
+                        <span className="ml-1.5 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{service.faqs.length}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Tab content */}
-              <div className="p-6">
+              <div className="p-6" role="tabpanel" id={`tabpanel-${tab}`} aria-labelledby={`tab-${tab}`} tabIndex={0}>
                 {tab === 'Overview'     && <OverviewTab html={service.long_description || service.description}/>}
                 {tab === 'Deliverables' && <DeliverablesTab included={service.included_items} excluded={service.excluded_items}/>}
                 {tab === 'Instructor'   && <InstructorTab vendor={vendor} totalServices={totalServices}/>}
@@ -696,7 +702,7 @@ export default function ServiceDetail() {
 
           {/* ── RIGHT: Sticky sidebar ── */}
           <div className="hidden lg:flex lg:w-[320px] flex-shrink-0 self-start sticky top-24 flex-col gap-5">
-            <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee}/>
+            <BookingCard service={service} vendor={vendor} onBookNow={handleBookNow} bookingFee={bookingFee}/>
             <ProfileCard vendor={vendor} rating={rating} reviewCount={reviewCount} bookings={bookings}/>
           </div>
         </div>
