@@ -112,7 +112,7 @@ const getHostProfile = async (req, res) => {
 
     // Fetch services + availability in parallel
     const [servicesResult, { data: availability }] = await Promise.all([
-      supabaseAdmin.from("services").select("*").eq("host_id", host.id).eq("is_active", true),
+      supabaseAdmin.from("services").select("*").eq("host_id", host.id).eq("is_active", true).limit(100),
       supabaseAdmin.from("availability").select("*").eq("host_id", host.id).single(),
     ]);
 

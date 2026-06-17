@@ -17,6 +17,9 @@ const { encrypt: encryptToken } = require("../utils/cryptoTokens");
 // always-present fallback (server-side only, never sent to the browser).
 const OAUTH_STATE_SECRET =
   process.env.OAUTH_STATE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (process.env.NODE_ENV === 'production' && !process.env.OAUTH_STATE_SECRET) {
+  console.warn('[security] OAUTH_STATE_SECRET not set — falling back to the service-role key. Set a dedicated OAUTH_STATE_SECRET in production.');
+}
 const sendEmail = require("../utils/sendEmail");
 const otpStore = require("../utils/otpStore");
 const { sendOtpNotification } = require("../utils/notify");
@@ -418,9 +421,7 @@ const googleCallback = async (req, res) => {
     if (isVendorAuthFlow) {
       return res.redirect(`${clientUrl}/login-as-vendor?error=auth_failed`);
     }
-    res.redirect(
-      `${clientUrl}/dashboard?google=error&reason=${encodeURIComponent(error.message)}`,
-    );
+    res.redirect(`${clientUrl}/dashboard?google=error&reason=auth_failed`);
   }
 };
 
@@ -730,7 +731,10 @@ const setPassword = async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 8 characters" });
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(req.user.id, { password });
-    if (error) return res.status(400).json({ message: error.message });
+    if (error) {
+      console.error('setPassword:', error.message);
+      return res.status(400).json({ message: 'Could not set password. Please try again.' });
+    }
 
     await supabaseAdmin
       .from("profiles")
@@ -799,7 +803,9 @@ const login = async (req, res) => {
 
 // GET /api/auth/me
 const getMe = async (req, res) => {
-  const PERF = process.env.PERF_LOG !== "false";
+  const PERF = process.env.NODE_ENV !== 'production'
+    ? process.env.PERF_LOG !== 'false'
+    : process.env.PERF_LOG === 'true';
   try {
     const t0 = process.hrtime.bigint();
     const { data: profile, error } = await supabaseAdmin

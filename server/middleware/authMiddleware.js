@@ -4,7 +4,9 @@ const { supabaseAdmin } = require('../config/supabase');
 // measured at ~175ms and NOT the source of the /api/auth/me latency (that was
 // express-slow-down — see middleware/security.js). Project tokens are ES256
 // (asymmetric signing keys), so a shared-secret local verify is not applicable.
-const PERF = process.env.PERF_LOG !== 'false';
+const PERF = process.env.NODE_ENV !== 'production'
+  ? process.env.PERF_LOG !== 'false'
+  : process.env.PERF_LOG === 'true';
 
 const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
