@@ -12,5 +12,5 @@ ALTER TABLE profiles
 INSERT INTO notification_events
   (event_key, display_name, whatsapp_enabled, email_enabled, campaign_name, email_subject)
 VALUES
-  ('WHATSAPP_VERIFY_OTP', 'WhatsApp Verification OTP', true, false, '', NULL)
+  ('WHATSAPP_VERIFY_OTP', 'Vendor WhatsApp Registration OTP', true, false, '', NULL)
 ON CONFLICT (event_key) DO NOTHING;

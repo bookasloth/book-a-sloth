@@ -30,6 +30,11 @@ const TEMPLATE_PREVIEWS = {
   BOOKING_COMPLETED_CUSTOMER:  '{{1}} customer · {{2}} service · {{3}} vendor · {{4}} date/time',
   BOOKING_CANCELLED_CUSTOMER:  '{{1}} customer · {{2}} service · {{3}} vendor · {{4}} date/time',
   BOOKING_CANCELLED_VENDOR:    '{{1}} vendor · {{2}} customer · {{3}} service · {{4}} date/time',
+  // Reminders carry a 5th var = join link (online) / directions link (offline)
+  BOOKING_REMINDER_CUSTOMER:   '{{1}} customer · {{2}} service · {{3}} vendor · {{4}} date/time · {{5}} join/location link',
+  BOOKING_REMINDER_VENDOR:     '{{1}} vendor · {{2}} customer · {{3}} service · {{4}} date/time · {{5}} join/location link',
+  BOOKING_RESCHEDULED_CUSTOMER:'{{1}} customer · {{2}} service · {{3}} vendor · {{4}} date/time',
+  BOOKING_RESCHEDULED_VENDOR:  '{{1}} vendor · {{2}} customer · {{3}} service · {{4}} date/time',
 };
 
 const AdminNotifications = () => {

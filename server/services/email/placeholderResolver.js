@@ -77,15 +77,16 @@ function resolveTemplate(template, data = {}, globals = {}) {
   const context = { ...globals, ...data };
   // Subject is a plain-text mail header — do NOT html-escape (would show &amp; literally).
   const subject = resolveString(template.subject, context);
-  // html_content and cta_url are injected into HTML — escape substituted values.
+  // html_content, cta_url and cta_label are injected into HTML — escape substituted values.
   const html = resolveString(template.html_content, context, htmlEscape);
   const ctaUrl = resolveString(template.cta_url, context, htmlEscape);
-  const missing = [...new Set([...subject.missing, ...html.missing, ...ctaUrl.missing])];
+  const ctaLabel = resolveString(template.cta_label, context, htmlEscape);
+  const missing = [...new Set([...subject.missing, ...html.missing, ...ctaUrl.missing, ...ctaLabel.missing])];
   return {
     subject: subject.text,
     html: html.text,
     ctaUrl: ctaUrl.text,
-    ctaLabel: template.cta_label || '',
+    ctaLabel: ctaLabel.text,
     missing,
   };
 }
