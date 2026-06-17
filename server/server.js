@@ -179,4 +179,17 @@ require('./controllers/featureFlagController').syncRegistry()
   .catch((err) => console.error('Feature flag sync error:', err.message));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log('Server running on port ' + PORT));
+const server = app.listen(PORT, () => console.log('Server running on port ' + PORT));
+
+// Graceful shutdown: flush buffered PostHog events before exit (Render sends
+// SIGTERM on deploy/restart). Best-effort, then close the HTTP server.
+const { shutdown: posthogShutdown } = require('./utils/posthog');
+const gracefulShutdown = async (signal) => {
+  console.log(`${signal} received — flushing analytics and shutting down`);
+  await posthogShutdown();
+  server.close(() => process.exit(0));
+  // Hard cap so a stuck connection can't hang the deploy.
+  setTimeout(() => process.exit(0), 5000).unref();
+};
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

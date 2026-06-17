@@ -15,6 +15,7 @@ const { cadencePrice, cadenceGross, cadencePeriodDays, computeSwitch, normCadenc
 const { createCalendarEvent } = require("../config/google");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const { verifySignature } = require("../utils/razorpaySignature");
+const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 
 // Annual plan price in paise, read from subscription_plans (DB-driven, spec v1.1)
 const getPlanPricePaise = async (slug) => {
@@ -287,6 +288,15 @@ const verifyPayment = async (req, res) => {
 
     auditLog('PAYMENT_VERIFIED', null, { booking_id, razorpay_payment_id });
 
+    phCapture(resolveGuestId({ guestId: req.user?.id, guestEmail: booking.guest_email }), "booking_paid", {
+      booking_id,
+      service_title: booking.services?.title,
+      host_id: booking.host_id,
+      amount: Number(booking.customer_total) || 0,
+      currency: "INR",
+      razorpay_payment_id,
+    });
+
     // BUG-12 fixed: send confirmation emails now that payment is verified
     try {
       const { data: fullBooking } = await supabaseAdmin
@@ -483,6 +493,12 @@ const verifySubscription = async (req, res) => {
     }
 
     auditLog('SUBSCRIPTION_ACTIVATED', req.user.id, { plan, expires_at: expiresAt });
+
+    phCapture(req.user.id, "subscription_purchased", {
+      plan,
+      cadence: "annual",
+      expires_at: expiresAt.toISOString(),
+    });
 
     // Premium activated email (queued, non-blocking)
     try {
@@ -794,6 +810,15 @@ const verifyProductPayment = async (req, res) => {
     await supabaseAdmin.rpc("increment_product_purchase_count", { row_id: product_id });
 
     auditLog('PRODUCT_PURCHASED', buyerId, { product_id, amount: product.price });
+
+    phCapture(resolveGuestId({ guestId: buyerId, guestEmail: buyerEmail }), "product_purchased", {
+      product_id,
+      host_id: product.host_id,
+      amount: Number(product.price) || 0,
+      currency: "INR",
+      razorpay_payment_id,
+    });
+
     res.json({ message: "Payment verified", download_token: downloadToken, purchase });
   } catch (error) {
     safeError(res, error);
@@ -863,11 +888,27 @@ const handleWebhook = async (req, res) => {
     if (event.event === 'payment.captured') {
       const notes = payment.notes || {};
       if (notes.booking_id) {
-        await supabaseAdmin.from("bookings")
+        // idempotent: only the unpaid→paid transition matches; .select() lets us
+        // tell whether THIS call did the transition (vs verifyPayment already did)
+        // so the analytics event fires exactly once even though both paths run.
+        const { data: paidRows } = await supabaseAdmin.from("bookings")
           .update({ payment_status: "paid", status: "confirmed",
             razorpay_payment_id: payment.id, updated_at: new Date().toISOString() })
-          .eq("id", notes.booking_id).eq("payment_status", "unpaid"); // idempotent
+          .eq("id", notes.booking_id).eq("payment_status", "unpaid")
+          .select("id, host_id, guest_id, guest_email, customer_total, services(title)");
         auditLog('WEBHOOK_BOOKING_PAID', null, { booking_id: notes.booking_id, payment_id: payment.id });
+        const paid = paidRows && paidRows[0];
+        if (paid) {
+          phCapture(resolveGuestId({ guestId: paid.guest_id, guestEmail: paid.guest_email }), "booking_paid", {
+            booking_id: paid.id,
+            service_title: paid.services?.title,
+            host_id: paid.host_id,
+            amount: Number(paid.customer_total) || 0,
+            currency: "INR",
+            razorpay_payment_id: payment.id,
+            source: "webhook",
+          });
+        }
       }
     } else if (event.event === 'payment.failed') {
       const notes = payment.notes || {};

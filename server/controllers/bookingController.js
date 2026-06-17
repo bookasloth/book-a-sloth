@@ -11,6 +11,7 @@ const planService = require("../services/planService");
 const platformConfig = require("../services/platformConfig");
 const availabilityService = require("../services/availabilityService");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
+const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 
 const emailHtml = (body) => `
   <div style="max-width:520px;margin:0 auto;padding:26px;border-radius:24px;background:#ffffff;font-family:'Plus Jakarta Sans','Poppins',sans-serif;color:#111827;box-shadow:0 24px 60px rgba(15,23,42,0.08);">
@@ -406,6 +407,16 @@ const createBooking = async (req, res) => {
       }
     }
 
+    phCapture(resolveGuestId({ guestId: resolvedGuestId, guestEmail: guest_email }), "booking_created", {
+      booking_id: booking.id,
+      service_id,
+      service_title: service.title,
+      host_id,
+      price: service.price,
+      is_paid: service.price > 0,
+      payment_status: booking.payment_status,
+    });
+
     res.status(201).json(booking);
   } catch (error) {
     safeError(res, error);
@@ -518,6 +529,13 @@ const cancelBooking = async (req, res) => {
     } catch (notifyError) {
       console.error("Cancel notification error:", notifyError.message);
     }
+
+    phCapture(req.user.id, "booking_cancelled", {
+      booking_id: booking.id,
+      service_title: booking.services?.title,
+      host_id: booking.host_id,
+      cancelled_by: req.user.id === booking.host_id ? "host" : "guest",
+    });
 
     res.json(data);
   } catch (error) {
