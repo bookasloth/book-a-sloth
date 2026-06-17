@@ -100,6 +100,15 @@ const slotsLimiter = rateLimit({
   message: { message: 'Too many availability checks. Please wait a moment.' },
 });
 
+// Booking creation — public + fires email/WhatsApp notifications; cap per IP.
+const bookingLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many booking attempts. Please try again later.' },
+});
+
 // Free digital-product download — keyed by EMAIL (falling back to IP) so an
 // attacker can't spam purchase rows / a victim's address by rotating IPs.
 const freeDownloadLimiter = rateLimit({
@@ -141,6 +150,12 @@ const speedLimiter = slowDown({
   maxDelayMs: 2000,                         // never add more than 2s, ever
   validate: { delayMs: false },             // silence express-slow-down v2 notice
 });
+
+// Permissions-Policy — deny powerful features the app never uses.
+const permissionsPolicy = (req, res, next) => {
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), browsing-topics=()');
+  next();
+};
 
 // ── Request hardening ─────────────────────────────────────────
 
@@ -197,6 +212,7 @@ module.exports = {
   apiLimiter,
   adminLimiter,
   paymentLimiter,
+  bookingLimiter,
   slugLimiter,
   slotsLimiter,
   freeDownloadLimiter,
@@ -205,4 +221,5 @@ module.exports = {
   hppMiddleware,
   sanitizeBody,
   blockSuspiciousRequests,
+  permissionsPolicy,
 };

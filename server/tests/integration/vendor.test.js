@@ -62,6 +62,7 @@ describe('GET /api/host/:username', () => {
       })
       .mockReturnValue({
         select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+        limit:  jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({ data: null, error: null }),
       });
 

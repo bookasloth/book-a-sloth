@@ -35,7 +35,9 @@ app.use(express.json());
 // ── Perf instrumentation ────────────────────────────────────────────────
 // Logs real wall-clock per /api request so the actual slow endpoints behind the
 // "20s+ vendor page" reports are visible. Disable with PERF_LOG=false.
-if (process.env.PERF_LOG !== 'false') {
+if (process.env.NODE_ENV !== 'production'
+  ? process.env.PERF_LOG !== 'false'
+  : process.env.PERF_LOG === 'true') {
   app.use('/api', (req, res, next) => {
     const start = process.hrtime.bigint();
     res.on('finish', () => {
@@ -51,13 +53,16 @@ if (process.env.PERF_LOG !== 'false') {
 const {
   helmetMiddleware,
   apiLimiter,
+  adminLimiter,
   speedLimiter,
   hppMiddleware,
   sanitizeBody,
   blockSuspiciousRequests,
+  permissionsPolicy,
 } = require('./middleware/security');
 
 app.use(helmetMiddleware);
+app.use(permissionsPolicy);
 app.use(hppMiddleware);
 app.use(sanitizeBody);
 app.use(blockSuspiciousRequests);
@@ -69,12 +74,12 @@ const { maintenanceMiddleware } = require('./middleware/maintenanceMiddleware');
 app.use('/api', maintenanceMiddleware);
 
 app.use('/api/auth',        require('./routes/authRoutes'));
-app.use('/api/admin-auth',  require('./routes/adminAuthRoutes'));
+app.use('/api/admin-auth',  adminLimiter, require('./routes/adminAuthRoutes'));
 app.use('/api/onboarding',  require('./routes/vendorOnboardingRoutes'));
 app.use('/api/host',        require('./routes/hostRoutes'));
 app.use('/api/bookings',    require('./routes/bookingRoutes'));
 app.use('/api/payment',     require('./routes/paymentRoutes'));
-app.use('/api/admin',       require('./routes/adminRoutes'));
+app.use('/api/admin',       adminLimiter, require('./routes/adminRoutes'));
 app.use('/api/reviews',     require('./routes/reviewRoutes'));
 app.use('/api/products',    require('./routes/productRoutes'));
 app.use('/api/upload',      require('./routes/uploadRoutes'));
