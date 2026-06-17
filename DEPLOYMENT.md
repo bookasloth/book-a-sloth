@@ -96,6 +96,10 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    - `CLIENT_URL` = `http://localhost:5173` (temporary; fixed in Phase 4)
    - `API_URL` = your Render URL (e.g. `https://bookasloth-api.onrender.com`)
    - `GOOGLE_REDIRECT_URI` = `https://bookasloth-api.onrender.com/api/auth/google/callback`
+   - `POSTHOG_PROJECT_TOKEN` = your PostHog project token (`phc_...`)
+   - `POSTHOG_HOST` = `https://us.i.posthog.com`
+     (server-side analytics — without these, backend booking/payment events
+     are silently dropped; the app still runs fine)
 4. **Manual Deploy → Deploy latest commit.**
 
 **Verify:**
@@ -118,6 +122,9 @@ Render dashboard → service should show **Live** (green) and health check passi
    - `VITE_SUPABASE_URL` = your Supabase URL
    - `VITE_SUPABASE_ANON_KEY` = your anon key
    - `VITE_RAZORPAY_KEY_ID` = your Razorpay key id
+   - `VITE_POSTHOG_PROJECT_TOKEN` = your PostHog project token (`phc_...`)
+   - `VITE_POSTHOG_HOST` = `https://us.i.posthog.com`
+     (frontend analytics — without these, no pageviews/events are captured in prod)
 5. **Deploy.**
 
 **Verify:** open the `*.vercel.app` URL Vercel gives you. Site loads. Open
@@ -166,6 +173,9 @@ Add:
 - **Razorpay dashboard** → Webhooks → set URL to
   `https://api.yourdomain.com/api/payment/webhook` (use your `RAZORPAY_WEBHOOK_SECRET`).
 - **Supabase** → Auth → URL Configuration → Site URL = `https://yourdomain.com`.
+- **PostHog** → Project Settings → **Authorized Domains** → add `https://yourdomain.com`
+  and `https://www.yourdomain.com` (concrete URLs only, no wildcards). Drives Web
+  Analytics breakdowns + toolbar; not a security gate (events still ingest regardless).
 
 **Verify:**
 ```bash
