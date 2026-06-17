@@ -1,9 +1,17 @@
 import { Link } from "react-router-dom";
+import { MessageCircle, MessageSquare, Phone, Mail, Sparkles } from "lucide-react";
 
 /**
- * /help — Help Center. Placeholder copy; refine before launch (or wire to the
- * FAQ admin at /admin/content/faq later).
+ * /help — Help Center. FAQ + support channels.
+ * Placeholder copy + support number; refine before launch (FAQ can later be
+ * wired to the admin FAQ at /admin/content/faq, and the WhatsApp number pulled
+ * from admin settings). See gap list.
  */
+
+// TODO: move to admin-configurable support settings.
+const SUPPORT_WHATSAPP = "919999999999"; // placeholder — replace with real number
+const SUPPORT_EMAIL = "support@bookasloth.in";
+
 const FAQ = [
   {
     q: "How do I book an appointment?",
@@ -27,33 +35,78 @@ const FAQ = [
   },
 ];
 
+const ChannelCard = ({ icon: Icon, title, desc, action, disabled, badge }) => {
+  const body = (
+    <div className={`relative bg-white border rounded-2xl p-5 h-full transition-shadow ${disabled ? "opacity-60" : "hover:shadow-md"}`}>
+      {badge && (
+        <span className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wide text-gray-400 bg-gray-50 border rounded-full px-2 py-0.5">
+          {badge}
+        </span>
+      )}
+      <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#FE5100]/10 text-[#FE5100] mb-3">
+        <Icon size={20} />
+      </span>
+      <p className="font-semibold text-gray-900">{title}</p>
+      <p className="text-sm text-gray-500 mt-1">{desc}</p>
+    </div>
+  );
+  if (disabled || !action) return body;
+  return <a href={action} target="_blank" rel="noreferrer" className="block hover:no-underline">{body}</a>;
+};
+
 const Help = () => (
-  <div className="app-container py-8 sm:py-12">
-    <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-2">Help Center</h1>
+  <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
+    <div className="app-container py-8 sm:py-12 max-w-3xl">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-2">Help & Support</h1>
       <p className="text-sm text-gray-500 mb-8">
-        Answers to common questions. Need more help? Email us — we're happy to assist.
+        Find quick answers, or reach us directly — we're happy to help.
       </p>
 
-      <div className="space-y-4">
+      {/* Support channels */}
+      <div className="grid sm:grid-cols-2 gap-4 mb-10">
+        <ChannelCard
+          icon={Sparkles}
+          title="Chat with Bolt"
+          desc="Our assistant can answer most questions instantly."
+          badge="Coming soon"
+          disabled
+        />
+        <ChannelCard
+          icon={MessageCircle}
+          title="WhatsApp us"
+          desc="Message our support team directly on WhatsApp."
+          action={`https://wa.me/${SUPPORT_WHATSAPP}`}
+        />
+        <ChannelCard
+          icon={Mail}
+          title="Email support"
+          desc={SUPPORT_EMAIL}
+          action={`mailto:${SUPPORT_EMAIL}`}
+        />
+        <ChannelCard
+          icon={Phone}
+          title="Call us"
+          desc="Phone support is not available yet."
+          badge="Inactive"
+          disabled
+        />
+      </div>
+
+      {/* FAQ */}
+      <h2 className="text-lg font-bold mb-3">Frequently asked questions</h2>
+      <div className="space-y-3">
         {FAQ.map(({ q, a }) => (
-          <div key={q} className="page-card p-5">
-            <h2 className="text-base font-semibold mb-1.5">{q}</h2>
-            <p className="text-sm text-gray-600 leading-relaxed">{a}</p>
+          <div key={q} className="bg-white border rounded-2xl p-5">
+            <h3 className="text-base font-semibold mb-1.5 flex items-start gap-2">
+              <MessageSquare size={16} className="text-[#FE5100] mt-0.5 flex-shrink-0" /> {q}
+            </h3>
+            <p className="text-sm text-gray-600 leading-relaxed pl-6">{a}</p>
           </div>
         ))}
       </div>
 
-      <div className="page-card p-5 mt-6 text-center">
-        <p className="text-sm text-gray-600">
-          Still stuck?{" "}
-          <a href="mailto:support@bookasloth.in" className="text-primary hover:underline">
-            support@bookasloth.in
-          </a>
-        </p>
-        <Link to="/" className="text-primary hover:underline text-sm mt-2 inline-block">
-          Go home
-        </Link>
+      <div className="text-center mt-8">
+        <Link to="/" className="text-[#FE5100] hover:underline text-sm">Go home</Link>
       </div>
     </div>
   </div>

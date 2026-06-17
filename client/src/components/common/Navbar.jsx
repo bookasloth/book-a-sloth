@@ -8,6 +8,7 @@ import {
   Briefcase, Bell, X, Menu, ChevronDown,
   Search, User, Settings, LogOut, TrendingUp,
   Clock, Wallet, LayoutDashboard, ExternalLink,
+  Gift, Star, Info,
 } from 'lucide-react';
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
@@ -37,11 +38,12 @@ const VENDOR_NAV = [
 ];
 
 const CUSTOMER_DROPDOWN = [
-  { label: 'My Profile',  href: '/profile',      icon: User },
-  { label: 'My Bookings', href: '/my-bookings',  icon: CalendarCheck },
-  { label: 'Saved Items', href: '/saved',        icon: Bookmark },
-  { label: 'Settings',    href: '/settings',     icon: Settings },
-  { label: 'Help Center', href: '/help',         icon: HelpCircle },
+  { label: 'My Bookings',     href: '/my-bookings', icon: CalendarCheck },
+  { label: 'My Profile',      href: '/profile',     icon: User },
+  { label: 'Help',            href: '/help',        icon: HelpCircle },
+  { label: 'Loyalty Program', href: '/loyalty',     icon: Gift },
+  { label: 'Reviews',         href: '/reviews',     icon: Star },
+  { label: 'About',           href: '/about',       icon: Info },
 ];
 
 const VENDOR_DROPDOWN = [

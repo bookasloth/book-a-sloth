@@ -22,6 +22,7 @@ const NotFound       = lazy(() => import('./pages/NotFound'));
 const Help           = lazy(() => import('./pages/Help'));
 const Privacy        = lazy(() => import('./pages/Privacy'));
 const Unsubscribe    = lazy(() => import('./pages/Unsubscribe'));
+const About          = lazy(() => import('./pages/About'));
 
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
@@ -63,6 +64,9 @@ const EditService  = lazy(() => import('./pages/services/EditService'));
 
 // Customer (guest) pages
 const CustomerBookings = lazy(() => import('./pages/CustomerBookings'));
+const CustomerProfile  = lazy(() => import('./pages/CustomerProfile'));
+const CustomerReviews  = lazy(() => import('./pages/CustomerReviews'));
+const Loyalty          = lazy(() => import('./pages/Loyalty'));
 
 // Public host / service pages
 const HostProfile     = lazy(() => import('./pages/HostProfile'));
@@ -173,6 +177,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/help" element={<Help />} />
+          <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           {/* Customers never register — accounts are created automatically
@@ -302,6 +307,9 @@ function App() {
           {/* Guests land here after login — dedicated read-only bookings list
               (no longer the vendor Dashboard). */}
           <Route path="/my-bookings" element={<ProtectedRoute><CustomerBookings /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
+          <Route path="/reviews" element={<ProtectedRoute><CustomerReviews /></ProtectedRoute>} />
+          <Route path="/loyalty" element={<ProtectedRoute><Loyalty /></ProtectedRoute>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

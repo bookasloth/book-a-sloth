@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 vi.mock('../services/api', () => ({
@@ -22,21 +22,47 @@ beforeEach(() => {
   useFeatureFlags.mockReturnValue({ on: () => true });
 });
 
-test('upcoming shows Reschedule; completed shows Leave review + Rebook', async () => {
-  getGuestBookings.mockResolvedValue({ data: [upcoming, done] });
+// Per-booking actions now live inside the Details modal (not inline on the card).
+test('upcoming → Details modal shows Reschedule + Cancel', async () => {
+  getGuestBookings.mockResolvedValue({ data: [upcoming] });
   getBookingReview.mockResolvedValue({ data: null });
   renderPage();
   await waitFor(() => screen.getByText('Coaching'));
+  fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+  await waitFor(() => screen.getByText('Booking details'));
   expect(screen.getByRole('button', { name: /Reschedule/i })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /Leave review/i })).toBeInTheDocument();
-  expect(screen.getAllByRole('link', { name: /Rebook/i }).length).toBeGreaterThan(0);
+  expect(screen.getByRole('button', { name: /Cancel booking/i })).toBeInTheDocument();
 });
 
-test('reschedule hidden when flag off', async () => {
+test('completed → Details modal shows Leave a review + Rebook', async () => {
+  getGuestBookings.mockResolvedValue({ data: [done] });
+  getBookingReview.mockResolvedValue({ data: null });
+  renderPage();
+  await waitFor(() => screen.getByText('Old'));
+  fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+  await waitFor(() => screen.getByText('Booking details'));
+  expect(screen.getByRole('button', { name: /Leave a review/i })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /Rebook/i })).toBeInTheDocument();
+});
+
+test('reschedule hidden in Details when flag off', async () => {
   useFeatureFlags.mockReturnValue({ on: () => false });
   getGuestBookings.mockResolvedValue({ data: [upcoming] });
   getBookingReview.mockResolvedValue({ data: null });
   renderPage();
   await waitFor(() => screen.getByText('Coaching'));
+  fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+  await waitFor(() => screen.getByText('Booking details'));
   expect(screen.queryByRole('button', { name: /Reschedule/i })).toBeNull();
+});
+
+test('review button hidden in Details when review flag off', async () => {
+  useFeatureFlags.mockReturnValue({ on: () => false });
+  getGuestBookings.mockResolvedValue({ data: [done] });
+  getBookingReview.mockResolvedValue({ data: null });
+  renderPage();
+  await waitFor(() => screen.getByText('Old'));
+  fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+  await waitFor(() => screen.getByText('Booking details'));
+  expect(screen.queryByRole('button', { name: /Leave a review/i })).toBeNull();
 });

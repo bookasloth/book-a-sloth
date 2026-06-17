@@ -8,6 +8,8 @@ import {
   getBookedSlots,
 } from "../services/api";
 import toast from "react-hot-toast";
+import ReviewModal from "../components/booking/ReviewModal";
+import useFeatureFlags from "../hooks/useFeatureFlags";
 
 const STATUS_COLORS = {
   pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
@@ -244,9 +246,11 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
 
 // ------ DETAILS MODAL ------
 const DetailsModal = ({ booking, onClose, onAction }) => {
+  const { on } = useFeatureFlags();
   const [confirming, setConfirming] = useState(null); // 'cancel' | 'delete' | 'complete'
   const [busy, setBusy] = useState(false);
   const [showReschedule, setShowReschedule] = useState(false);
+  const [showReview, setShowReview] = useState(false);
 
   const doAction = async (action) => {
     setBusy(true);
@@ -284,6 +288,17 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
           onAction();
           onClose();
         }}
+      />
+    );
+
+  if (showReview)
+    return (
+      <ReviewModal
+        open
+        booking={booking}
+        direction="host_to_guest"
+        onClose={() => setShowReview(false)}
+        onDone={() => { setShowReview(false); onClose(); }}
       />
     );
 
@@ -514,6 +529,14 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
                     Cancel Booking
                   </button>
                 )}
+              {booking.status === "completed" && on("review_submission") && booking.guest_id && (
+                <button
+                  onClick={() => setShowReview(true)}
+                  className="btn flex-1 min-w-[120px] bg-primary text-white py-2 text-sm font-medium"
+                >
+                  Review Guest
+                </button>
+              )}
             </div>
           )}
         </div>

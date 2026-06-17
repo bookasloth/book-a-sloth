@@ -13,6 +13,7 @@ const {
   verifyOtpLogin,
   setPassword,
   getMe,
+  updateMe,
   forgotPassword,
   resetPassword,
 } = require('../controllers/authController');
@@ -46,5 +47,6 @@ router.post('/reset-password', authLimiter, resetPassword);
 // Shared
 router.post('/login', authLimiter, login);
 router.get('/me', protect, getMe);
+router.put('/me', protect, updateMe);
 
 module.exports = router;

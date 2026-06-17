@@ -85,6 +85,7 @@ export const registerVendor   = (data)         => API.post('/auth/register/vendo
 export const registerUser     = (data)         => API.post('/auth/register/user', data);
 export const loginUser        = (data)         => API.post('/auth/login', data);
 export const getMe            = ()             => API.get('/auth/me');
+export const updateMe         = (data)         => API.put('/auth/me', data);
 export const getGoogleAuthUrl = ()             => API.get('/auth/google');
 // Vendor Google auth (public): one consent screen = identity + calendar scopes
 export const getVendorGoogleUrl = (intent = 'login') => API.get('/auth/google/vendor', { params: { intent } });
@@ -216,9 +217,10 @@ export const createProductOrder   = (data) => API.post('/payment/create-product-
 export const verifyProductPayment = (data) => API.post('/payment/verify-product', data);
 
 // ── Reviews ───────────────────────────────────────────────────
-export const createReview     = (data)      => API.post('/reviews', data);
-export const getHostReviews   = (username)  => API.get(`/reviews/${username}`);
-export const getBookingReview = (id)        => API.get(`/reviews/booking/${id}`);
+export const createReview       = (data)      => API.post('/reviews', data);
+export const getReceivedReviews = ()          => API.get('/reviews/received');
+export const getHostReviews     = (username)  => API.get(`/reviews/${username}`);
+export const getBookingReview   = (id)        => API.get(`/reviews/booking/${id}`);
 
 // ── Upload ────────────────────────────────────────────────────
 export const uploadImage = (formData, folder = 'uploads') =>

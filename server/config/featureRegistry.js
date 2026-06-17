@@ -60,7 +60,7 @@ const REGISTRY = [
   { key: 'guest_login',          label: 'Guest Login',          category: 'Auth',     scope: 'customer', description: 'Customer sign-in. Off = customer login blocked.' },
   { key: 'razorpay_payment',     label: 'Razorpay Payment',     category: 'Payments', scope: 'customer', description: 'Paid checkout via Razorpay. Off = paid bookings/purchases blocked.' },
   { key: 'product_purchase',     label: 'Product Purchase',     category: 'Payments', scope: 'customer', description: 'Buy digital products. Off = product checkout blocked.' },
-  { key: 'review_submission',    label: 'Review Submission',    category: 'Engagement', scope: 'customer', description: 'Submit reviews on bookings. Off = new reviews blocked.' },
+  { key: 'review_submission',    label: 'Review Submission',    category: 'Engagement', scope: 'both', description: 'Guests and hosts review each other after a completed booking. Off = all new reviews blocked (both directions).' },
   { key: 'customer_bookings',    label: 'Customer Booking History', category: 'Engagement', scope: 'customer', description: 'Guest "my bookings" dashboard. Off = page hidden.' },
 
   // ── CUSTOMER · Notifications ─────────────────────────────────
