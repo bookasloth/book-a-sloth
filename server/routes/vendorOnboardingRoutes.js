@@ -14,11 +14,11 @@ const {
   getResumeStep,
 } = require('../controllers/vendorOnboardingController');
 const { protect } = require('../middleware/authMiddleware');
-const { otpLimiter, authLimiter } = require('../middleware/security');
+const { otpLimiter, authLimiter, slugLimiter } = require('../middleware/security');
 
 // ── Public: Step 1 - Username/Slug Availability Check ──────────────────────
 // POST /api/onboarding/check-slug
-router.post('/check-slug', async (req, res) => {
+router.post('/check-slug', slugLimiter, async (req, res) => {
   try {
     const { slug } = req.body;
     if (!slug) return res.status(400).json({ message: 'Slug is required' });

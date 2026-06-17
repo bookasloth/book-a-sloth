@@ -88,19 +88,23 @@ describe('loginWithPhone', () => {
     expect(r.status).toHaveBeenCalledWith(400);
   });
 
-  test('404 when no profile for the phone', async () => {
+  test('401 when no profile for the phone (enumeration-resistant)', async () => {
     queueFrom(chain({ data: null }));
+    // Timing-equalization: the no-account path makes a dummy auth call (resolves here).
+    signInWithPassword.mockResolvedValue({ data: null, error: { message: 'x' } });
     const r = res();
     await loginWithPhone(req({ phone: '+919876543210', password: 'secret12' }), r);
-    expect(r.status).toHaveBeenCalledWith(404);
+    expect(r.status).toHaveBeenCalledWith(401);
+    expect(r.json.mock.calls[0][0].message).toBe('Invalid phone or password');
   });
 
-  test('409 when phone belongs to a vendor', async () => {
+  test('401 when phone belongs to a non-guest account (enumeration-resistant)', async () => {
     queueFrom(chain({ data: { ...GUEST, role: 'host' } }));
+    signInWithPassword.mockResolvedValue({ data: null, error: { message: 'x' } });
     const r = res();
     await loginWithPhone(req({ phone: '+919876543210', password: 'secret12' }), r);
-    expect(r.status).toHaveBeenCalledWith(409);
-    expect(r.json.mock.calls[0][0].message).toMatch(/vendor/i);
+    expect(r.status).toHaveBeenCalledWith(401);
+    expect(r.json.mock.calls[0][0].message).toBe('Invalid phone or password');
   });
 
   test('409 needsPassword when password not yet set', async () => {
