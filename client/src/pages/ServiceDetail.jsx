@@ -76,14 +76,27 @@ const fmtMetaDuration = (min) => {
 
 // ─── Tab components ───────────────────────────────────────────────────────────
 
+const COLLAPSED_H = 320;
+
 const OverviewTab = ({ html }) => {
   const [expanded, setExpanded] = useState(false);
   const ref = useRef(null);
   const clean = sanitizeHtml(html);
   const [tall, setTall] = useState(false);
+  const [fullH, setFullH] = useState(0);
 
+  // Measure full content height so max-height can animate to a real px value
+  // (CSS can't transition to `auto`). Re-measure on content + viewport changes.
   useEffect(() => {
-    if (ref.current) setTall(ref.current.scrollHeight > 320);
+    const measure = () => {
+      if (!ref.current) return;
+      const h = ref.current.scrollHeight;
+      setFullH(h);
+      setTall(h > COLLAPSED_H);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
   }, [clean]);
 
   if (!clean) return <p className="text-gray-400 text-sm">No overview provided.</p>;
@@ -92,17 +105,20 @@ const OverviewTab = ({ html }) => {
     <div className="relative">
       <div
         ref={ref}
-        className={`prose prose-sm max-w-none text-gray-700 transition-all duration-300 ${!expanded && tall ? 'max-h-80 overflow-hidden' : ''}`}
+        className="prose prose-sm max-w-none text-gray-700 overflow-hidden transition-[max-height] duration-500 ease-in-out"
+        style={{ maxHeight: tall ? (expanded ? fullH : COLLAPSED_H) : undefined }}
         dangerouslySetInnerHTML={{ __html: clean }}
       />
-      {!expanded && tall && (
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent"/>
+      {tall && (
+        <div
+          className={`pointer-events-none absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent transition-opacity duration-300 ${expanded ? 'opacity-0' : 'opacity-100'}`}
+        />
       )}
       {tall && (
         <button onClick={() => setExpanded(e => !e)}
           className="mt-3 text-sm font-medium text-primary hover:underline flex items-center gap-1">
           {expanded ? 'Show Less' : 'Show More'}
-          <svg className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
           </svg>
         </button>
@@ -211,33 +227,49 @@ const FAQTab = ({ faqs = [] }) => {
 
 const ReviewsTab = ({ reviews = [], avgRating, ratingBreakdown = [] }) => {
   const total = reviews.length;
+  const avg = avgRating || 0;
+  // Always show the summary — fall back to an empty 5→1 breakdown when no reviews
+  const breakdown = ratingBreakdown.length
+    ? ratingBreakdown
+    : [5, 4, 3, 2, 1].map(star => ({ star, count: 0 }));
   return (
     <div>
+      {/* Summary — compact score box + per-star bars (always shown) */}
+      <div className="flex items-stretch gap-4 mb-5 pb-5 border-b">
+        {/* Score box */}
+        <div className="flex flex-shrink-0 flex-col items-center justify-center rounded-xl bg-gray-100 px-5 py-3 text-center">
+          <div className="text-3xl font-black leading-none text-gray-900">{avg.toFixed(1)}</div>
+          <div className="mt-1.5 flex gap-0.5">
+            {[1,2,3,4,5].map(s => (
+              <svg key={s} className={`w-3 h-3 ${s <= Math.round(avg) ? 'text-[#7a1f2b]' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            ))}
+          </div>
+          <p className="mt-1 text-[11px] font-semibold text-[#7a1f2b]">Service Ratings</p>
+        </div>
+        {/* Per-star bars */}
+        <div className="flex flex-1 flex-col justify-center gap-1.5">
+          {breakdown.map(({star, count}) => {
+            const pct = total ? Math.round((count / total) * 100) : 0;
+            return (
+              <div key={star} className="flex items-center gap-2">
+                <div className="flex flex-shrink-0 gap-0.5">
+                  {[1,2,3,4,5].map(s => (
+                    <svg key={s} className="w-3 h-3" style={{ color: s <= star ? 'var(--profile-accent, #FE5100)' : '#d1d5db' }} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                  ))}
+                </div>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: 'var(--profile-accent, #FE5100)' }}/>
+                </div>
+                <span className="w-9 text-right text-xs text-gray-500">{pct}%</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {/* Review list */}
       {total === 0
         ? <p className="text-gray-400 text-sm">No reviews yet.</p>
-        : <>
-            {/* Summary */}
-            <div className="flex flex-col sm:flex-row gap-6 mb-6 pb-6 border-b">
-              <div className="text-center">
-                <div className="text-5xl font-black text-gray-900 leading-none">{avgRating?.toFixed(1)}</div>
-                <Stars avg={avgRating} count={0} size="lg"/>
-                <p className="text-xs text-gray-400 mt-1">{total} review{total !== 1 ? 's' : ''}</p>
-              </div>
-              <div className="flex-1 space-y-1.5">
-                {ratingBreakdown.map(({star, count}) => (
-                  <div key={star} className="flex items-center gap-2 text-xs">
-                    <span className="w-4 text-gray-500 text-right">{star}</span>
-                    <svg className="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-400 rounded-full" style={{ width: total ? `${(count / total) * 100}%` : '0%' }}/>
-                    </div>
-                    <span className="w-4 text-gray-400">{count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Review list */}
-            <div className="space-y-4">
+        : <div className="space-y-4">
               {reviews.map(r => (
                 <div key={r.id} className="flex gap-3">
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex-shrink-0 flex items-center justify-center text-sm font-bold text-primary">
@@ -256,7 +288,6 @@ const ReviewsTab = ({ reviews = [], avgRating, ratingBreakdown = [] }) => {
                 </div>
               ))}
             </div>
-          </>
       }
     </div>
   );
@@ -272,21 +303,20 @@ const TRUST_SIGNALS = [
     path: 'M13 10V3L4 14h7v7l9-11h-7z' },
 ];
 
-const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false }) => {
+const BookingCard = ({ service, onBookNow, bookingFee = 0 }) => {
   const isFree = service.price === 0;
   const [feeOpen, setFeeOpen] = useState(false);
-  const [btnHover, setBtnHover] = useState(false);
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Thumbnail — hidden once the sidebar is pinned and the user keeps scrolling */}
-      {!compact && (service.thumbnail_url
+      {/* Thumbnail */}
+      {service.thumbnail_url
         ? <img src={service.thumbnail_url} alt={service.title} className="w-full aspect-[16/10] object-cover"/>
         : <div className="w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
             <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 16M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-          </div>)}
+          </div>}
       <div className="p-5">
         {/* Price + booking fee on one line */}
         <div className="relative flex items-baseline gap-2 mt-2 mb-5">
@@ -314,13 +344,7 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false }) =>
 
         {/* Primary CTA */}
         <button onClick={onBookNow}
-          onMouseEnter={() => setBtnHover(true)}
-          onMouseLeave={() => setBtnHover(false)}
-          className="btn w-full py-3.5 font-bold text-sm transition-colors"
-          style={{
-            background: 'var(--profile-accent, #FE5100)',
-            color: btnHover ? '#000000' : 'var(--profile-accent-text, #ffffff)',
-          }}>
+          className="btn cta-press w-full py-3.5 font-bold text-sm">
           Book a Slot
         </button>
 
@@ -339,6 +363,134 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false }) =>
     </div>
   );
 };
+
+// ─── Ad Space Card — house promo slot under the booking card ───────────────────
+const AdSpaceCard = () => (
+  <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-white p-5 text-center">
+    {/* faint accent wash */}
+    <div className="pointer-events-none absolute inset-0"
+      style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--profile-accent, #FE5100) 8%, white), transparent 70%)' }}/>
+    <div className="relative">
+      {/* megaphone */}
+      <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl"
+        style={{ background: 'color-mix(in srgb, var(--profile-accent, #FE5100) 14%, white)', color: 'var(--profile-accent, #FE5100)' }}>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 11l14-6v14L3 13v-2zM3 11v2m0-2H2a1 1 0 00-1 1v0a1 1 0 001 1h1m4 1v3a1 1 0 001 1h1a1 1 0 001-1v-2"/>
+        </svg>
+      </div>
+      <h3 className="text-sm font-bold text-gray-900">Ad Space for Sale</h3>
+      <p className="mt-1 text-xs leading-relaxed text-gray-500">
+        Put your brand in front of buyers actively booking services. Limited slots.
+      </p>
+      <a href="mailto:bookasloth@gmail.com?subject=Ad%20space%20enquiry"
+        className="btn cta-ghost mt-4 inline-flex items-center justify-center !rounded-full px-6 py-2.5 text-sm font-semibold no-underline">
+        Advertise Here
+      </a>
+    </div>
+  </div>
+);
+
+// ─── Sponsored Card — promo upsell styled like a native ad slot ────────────────
+const SponsoredCard = () => (
+  <div className="relative rounded-2xl border border-gray-200 bg-white p-5 text-center">
+    {/* Ad label */}
+    <div className="absolute right-3 top-3 flex items-center gap-1.5 text-[11px] text-gray-400">
+      <span>Ad</span>
+      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+    </div>
+
+    {/* Eyebrow stat */}
+    <p className="px-4 pt-1 text-xs leading-relaxed text-gray-500">
+      Verified hosts get up to <strong className="text-gray-700">5x more bookings</strong> on average
+    </p>
+
+    {/* Avatar + Pro badge */}
+    <div className="my-4 flex items-center justify-center gap-3">
+      <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-gray-300">
+        <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.42 0-8 2.69-8 6v2h16v-2c0-3.31-3.58-6-8-6z"/></svg>
+      </div>
+      <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#E0A431"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+        Pro
+      </span>
+    </div>
+
+    {/* Headline */}
+    <p className="text-base font-semibold leading-snug text-gray-700">More visibility means more bookings</p>
+
+    {/* Pill CTA */}
+    <Link to="/be-a-sloth"
+      className="btn cta-ghost mt-4 inline-flex items-center justify-center !rounded-full px-6 py-2.5 text-sm font-semibold no-underline">
+      Try 1 month free
+    </Link>
+  </div>
+);
+
+// ─── Sponsored Card B — second native ad slot ─────────────────────────────────
+const SponsoredCardB = () => (
+  <div className="relative rounded-2xl border border-gray-200 bg-white p-5 text-center">
+    {/* Ad label */}
+    <div className="absolute right-3 top-3 flex items-center gap-1.5 text-[11px] text-gray-400">
+      <span>Ad</span>
+      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+    </div>
+
+    {/* Eyebrow */}
+    <p className="px-4 pt-1 text-xs leading-relaxed text-gray-500">
+      List your service free for <strong className="text-gray-700">30 days</strong>. Get started today.
+    </p>
+
+    {/* Avatar + brand mark */}
+    <div className="my-4 flex items-center justify-center gap-4">
+      <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-gray-300">
+        <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.42 0-8 2.69-8 6v2h16v-2c0-3.31-3.58-6-8-6z"/></svg>
+      </div>
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl text-base font-black text-white"
+        style={{ background: 'var(--profile-accent, #FE5100)' }}>B</div>
+    </div>
+
+    {/* Headline */}
+    <p className="text-base font-semibold leading-snug text-gray-700">Save time and grow your bookings.</p>
+
+    {/* Pill CTA */}
+    <Link to="/be-a-sloth"
+      className="btn cta-ghost mt-4 inline-flex items-center justify-center !rounded-full px-6 py-2.5 text-sm font-semibold no-underline">
+      Sign Up
+    </Link>
+  </div>
+);
+
+// ─── Display Ad Card — bold full-bleed banner (LinkedIn-style) ─────────────────
+const DisplayAdCard = () => (
+  <Link to="/be-a-sloth"
+    className="group relative block overflow-hidden rounded-2xl no-underline"
+    style={{ background: '#1463D6' }}>
+    {/* Ad tag */}
+    <span className="absolute right-3 top-2 z-10 text-[11px] font-medium text-white/70">Ad</span>
+
+    <div className="space-y-2.5 p-5">
+      {/* navy bubble */}
+      <div className="inline-block rounded-2xl bg-[#0A2A66] px-4 py-3">
+        <p className="text-2xl font-black leading-[1.05] tracking-tight text-white">Bookings<br/>slipping away?</p>
+      </div>
+      {/* yellow bubble, overlapping */}
+      <div className="-mt-1 rounded-2xl bg-[#FFC400] px-4 py-3.5">
+        <p className="text-2xl font-black leading-[1.05] tracking-tight text-[#0A2A66]">But a Sloth can run your calendar for you.</p>
+      </div>
+
+      {/* bottom row — pill CTA + wordmark */}
+      <div className="flex items-center justify-between gap-2 pt-2">
+        <span className="inline-flex items-center gap-2 rounded-full bg-[#0A2A66] py-2 pl-4 pr-1.5 text-sm font-bold text-white transition-transform group-hover:-translate-y-0.5">
+          Get started
+          <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ background: '#FFC400' }}>
+            <svg className="w-4 h-4 text-[#0A2A66]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </span>
+        </span>
+        <span className="text-sm font-extrabold leading-tight text-white text-right">Book A<br/>Sloth Pro</span>
+      </div>
+    </div>
+  </Link>
+);
 
 // ─── Profile Card (creator summary — sits below the booking card) ─────────────
 // Premium, vertical layout distinct from the InstructorTab. Excludes bio.
@@ -431,21 +583,7 @@ export default function ServiceDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
   const [tab, setTab]       = useState('Overview');
-  const sentinelRef = useRef(null);
-  const [stuck, setStuck]   = useState(false); // card image scrolled up to the top
-
-  // Sentinel sits exactly where the sticky card begins. When it scrolls past the
-  // pinned offset (top-24 = 96px) the image is at the top → hide; back down → show.
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => setStuck(!entry.isIntersecting),
-      { threshold: 0, rootMargin: '-96px 0px 0px 0px' },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [data]);
+  const [feeInfoOpen, setFeeInfoOpen] = useState(false); // mobile fee disclaimer
 
   useEffect(() => {
     svcGetPublicByProfile(profileSlug, serviceSlug)
@@ -559,36 +697,29 @@ export default function ServiceDetail() {
         </svg>
       </div>
 
-      <div className="app-container py-8 relative z-10">
+      <div className="app-container py-8 pb-28 lg:pb-8 relative z-10">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── LEFT: Main content ── */}
           <div className="flex-1 min-w-0">
 
             {/* ── HERO ── plain; page decoration sits behind, above the fold */}
             <section className="p-6 sm:p-10 mb-6">
-              {/* Title */}
-              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight">{service.title}</h1>
+              {/* Title — last word accent-highlighted */}
+              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight">
+                {(() => {
+                  const words = (service.title || '').trim().split(/\s+/);
+                  const last = words.pop();
+                  return <>{words.length > 0 && <>{words.join(' ')} </>}<span style={{ color: 'var(--profile-accent, #FE5100)' }}>{last}</span></>;
+                })()}
+              </h1>
 
               {/* Short description */}
               {service.short_description && (
                 <p className="text-base sm:text-lg text-gray-600 mb-6 leading-relaxed max-w-2xl">{service.short_description}</p>
               )}
 
-              {/* Creator — [photo] by Name in Category */}
-              {vendor?.name && (
-                <div className="flex items-center gap-3 mb-6">
-                  {vendor.profile_image
-                    ? <img src={vendor.profile_image} alt={vendor.name} className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-sm flex-shrink-0"/>
-                    : <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary ring-2 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
-                  <p className="text-sm text-gray-600 flex items-center flex-wrap gap-x-1.5 gap-y-0.5 min-w-0">
-                    <span>by</span>
-                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-white transition-colors">{vendor.name}</Link>
-                  </p>
-                </div>
-              )}
-
-              {/* Meta row — bestseller · rating · bookings · duration · mode */}
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              {/* Meta — under the description — New · 15 min · Online · etc. */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm mb-6">
                 {isBestseller && (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
@@ -605,7 +736,7 @@ export default function ServiceDetail() {
                       </span>
                     </>
                   ) : (
-                    <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-sm font-semibold bg-white text-gray-900 shadow-sm">New</span>
+                    <span className="text-sm font-bold" style={{ color: 'var(--profile-accent, #FE5100)' }}>New</span>
                   )}
                 </div>
                 {bookings > 0 && (
@@ -623,13 +754,20 @@ export default function ServiceDetail() {
                     : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>Online</>}
                 </span>
               </div>
-            </section>
 
-            {/* Mobile: booking card as a normal block below the hero */}
-            <div className="lg:hidden mb-6 space-y-6">
-              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee}/>
-              <ProfileCard vendor={vendor} rating={rating} reviewCount={reviewCount} bookings={bookings}/>
-            </div>
+              {/* Creator — [photo] by Name */}
+              {vendor?.name && (
+                <div className="flex items-center gap-3">
+                  {vendor.profile_image
+                    ? <img src={vendor.profile_image} alt={vendor.name} className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-sm flex-shrink-0"/>
+                    : <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary ring-2 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
+                  <p className="text-sm text-gray-600 flex items-center flex-wrap gap-x-1.5 gap-y-0.5 min-w-0">
+                    <span>by</span>
+                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-white transition-colors">{vendor.name}</Link>
+                  </p>
+                </div>
+              )}
+            </section>
 
             {/* Important note */}
             {service.important_note && (
@@ -641,8 +779,8 @@ export default function ServiceDetail() {
 
             {/* Tabs */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-              {/* Tab bar */}
-              <div className="flex overflow-x-auto border-b border-gray-100 scrollbar-hide">
+              {/* Tab bar — desktop only; mobile stacks every section */}
+              <div className="hidden lg:flex overflow-x-auto border-b border-gray-100 scrollbar-hide">
                 {TABS.map(t => (
                   <button key={t} onClick={() => setTab(t)}
                     className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors border-b-2 ${tab === t ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
@@ -657,25 +795,87 @@ export default function ServiceDetail() {
                 ))}
               </div>
 
-              {/* Tab content */}
-              <div className="p-6">
+              {/* Tab content — desktop: active tab only */}
+              <div className="hidden lg:block p-6">
                 {tab === 'Overview'     && <OverviewTab html={service.long_description || service.description}/>}
                 {tab === 'Deliverables' && <DeliverablesTab included={service.included_items} excluded={service.excluded_items}/>}
                 {tab === 'Instructor'   && <InstructorTab vendor={vendor} totalServices={totalServices}/>}
                 {tab === 'FAQ'          && <FAQTab faqs={service.faqs}/>}
                 {tab === 'Reviews'      && <ReviewsTab reviews={reviews} avgRating={avgRating} ratingBreakdown={ratingBreakdown}/>}
               </div>
+
+              {/* Mobile: every section stacked, one after another */}
+              <div className="lg:hidden divide-y divide-gray-100">
+                <section className="p-6">
+                  <h2 className="text-base font-bold text-gray-900 mb-4">Overview about {service.title}</h2>
+                  <OverviewTab html={service.long_description || service.description}/>
+                </section>
+                <section className="p-6">
+                  <h2 className="text-base font-bold text-gray-900 mb-4">Deliverables</h2>
+                  <DeliverablesTab included={service.included_items} excluded={service.excluded_items}/>
+                </section>
+                <section className="p-6">
+                  <h2 className="text-base font-bold text-gray-900 mb-4">Instructor</h2>
+                  <InstructorTab vendor={vendor} totalServices={totalServices}/>
+                </section>
+                <section className="p-6">
+                  <h2 className="text-base font-bold text-gray-900 mb-4">FAQ</h2>
+                  <FAQTab faqs={service.faqs}/>
+                </section>
+                <section className="p-6">
+                  <h2 className="text-base font-bold text-gray-900 mb-4">Reviews</h2>
+                  <ReviewsTab reviews={reviews} avgRating={avgRating} ratingBreakdown={ratingBreakdown}/>
+                </section>
+              </div>
             </div>
           </div>
 
           {/* ── RIGHT: Sticky sidebar ── */}
           <div className="hidden lg:block lg:w-[320px] flex-shrink-0 lg:mt-[130px]">
-            <div ref={sentinelRef} className="h-0" />
             <div className="sticky top-24 flex flex-col gap-5">
-              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} compact={stuck}/>
+              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee}/>
+              <AdSpaceCard/>
+              {/* Hidden for now — keep for later
+              <SponsoredCard/>
+              <SponsoredCardB/>
+              <DisplayAdCard/>
+              */}
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Mobile: sticky bottom CTA bar ── */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex items-center gap-3 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <div className="relative flex-1 min-w-0">
+          <div className="text-xl font-black text-gray-900 leading-none">{service.price === 0 ? 'Free' : `₹${service.price}`}</div>
+          {service.price !== 0 && bookingFee > 0 && (
+            <div className="text-[11px] text-gray-500 mt-1 flex items-center gap-1">
+              + ₹{bookingFee} platform fees per booking.
+              <button type="button" onClick={() => setFeeInfoOpen(o => !o)} aria-label="Fee details"
+                className="flex-shrink-0" style={{ color: '#FE5100' }}>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="9" strokeWidth={1.6}/><path strokeWidth={1.8} strokeLinecap="round" d="M12 16v-4M12 8.5h.01"/>
+                </svg>
+              </button>
+            </div>
+          )}
+          {feeInfoOpen && (
+            <>
+              <button type="button" aria-hidden tabIndex={-1}
+                className="fixed inset-0 z-10 cursor-default" onClick={() => setFeeInfoOpen(false)}/>
+              <div className="absolute z-20 left-0 bottom-full mb-2 w-64 rounded-xl bg-gray-900 text-white text-xs leading-relaxed p-3 shadow-lg">
+                <span className="absolute -bottom-1.5 left-6 w-3 h-3 rotate-45 bg-gray-900"/>
+                This fee helps us operate and improve our platform, delivering a seamless experience.
+              </div>
+            </>
+          )}
+        </div>
+        <button onClick={handleBookNow}
+          className="btn cta-press flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 font-bold text-sm">
+          Book a Slot
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        </button>
       </div>
     </div>
   );
