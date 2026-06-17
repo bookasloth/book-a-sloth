@@ -650,12 +650,15 @@ const loginWithPhone = async (req, res) => {
 
     const { data: profile } = await supabaseAdmin
       .from("profiles").select("*").eq("phone", normalized).maybeSingle();
-    if (!profile)
-      return res.status(404).json({ message: "No account found for this number. Log in with OTP to get started." });
-    if (profile.role !== "guest")
-      return res.status(409).json({ message: "This number is registered as a vendor. Please use vendor login." });
-    if (!profile.password_set)
+
+    // Enumeration-resistant: do NOT reveal whether the number exists or its role.
+    // No account and a non-guest account both return the same 401 as a wrong password.
+    if (!profile || profile.role !== "guest") {
+      return res.status(401).json({ message: "Invalid phone or password" });
+    }
+    if (!profile.password_set) {
       return res.status(409).json({ needsPassword: true, message: "Set a password to continue." });
+    }
 
     // ── Per-account lockout check ─────────────────────────────────────────────
     if (profile.login_locked_until && new Date(profile.login_locked_until).getTime() > Date.now()) {
