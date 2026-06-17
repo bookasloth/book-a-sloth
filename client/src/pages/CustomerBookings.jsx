@@ -242,6 +242,7 @@ const CustomerBookings = () => {
           review={reviews[detailsFor.id]}
           onClose={() => setDetailsFor(null)}
           canReschedule={isUpcoming(detailsFor) && on("reschedule")}
+          canReview={on("review_submission")}
           canCancel={isUpcoming(detailsFor)}
           cancelling={cancelling === detailsFor.id}
           onReschedule={() => { setReschedFor(detailsFor); setDetailsFor(null); }}
@@ -267,7 +268,7 @@ const CustomerBookings = () => {
 };
 
 // ── Booking Details modal ─────────────────────────────────────────────────────
-const DetailsModal = ({ b, host, review, onClose, canReschedule, canCancel, cancelling, onReschedule, onReview, onCancel }) => {
+const DetailsModal = ({ b, host, review, onClose, canReschedule, canReview, canCancel, cancelling, onReschedule, onReview, onCancel }) => {
   const svc = b.services || {};
   const Line = ({ icon: Icon, label, value }) => (
     <div className="flex items-center justify-between py-2.5 border-b border-gray-100 text-sm">
@@ -313,7 +314,7 @@ const DetailsModal = ({ b, host, review, onClose, canReschedule, canCancel, canc
                 <RotateCcw size={15} /> Reschedule
               </button>
             )}
-            {b.status === "completed" && !review && (
+            {b.status === "completed" && !review && canReview && (
               <button onClick={onReview}
                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 border rounded-xl hover:bg-gray-50">
                 <Star size={15} /> Leave a review

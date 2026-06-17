@@ -217,9 +217,10 @@ export const createProductOrder   = (data) => API.post('/payment/create-product-
 export const verifyProductPayment = (data) => API.post('/payment/verify-product', data);
 
 // ── Reviews ───────────────────────────────────────────────────
-export const createReview     = (data)      => API.post('/reviews', data);
-export const getHostReviews   = (username)  => API.get(`/reviews/${username}`);
-export const getBookingReview = (id)        => API.get(`/reviews/booking/${id}`);
+export const createReview       = (data)      => API.post('/reviews', data);
+export const getReceivedReviews = ()          => API.get('/reviews/received');
+export const getHostReviews     = (username)  => API.get(`/reviews/${username}`);
+export const getBookingReview   = (id)        => API.get(`/reviews/booking/${id}`);
 
 // ── Upload ────────────────────────────────────────────────────
 export const uploadImage = (formData, folder = 'uploads') =>
