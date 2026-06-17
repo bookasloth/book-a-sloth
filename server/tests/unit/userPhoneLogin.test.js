@@ -90,6 +90,8 @@ describe('loginWithPhone', () => {
 
   test('401 when no profile for the phone (enumeration-resistant)', async () => {
     queueFrom(chain({ data: null }));
+    // Timing-equalization: the no-account path makes a dummy auth call (resolves here).
+    signInWithPassword.mockResolvedValue({ data: null, error: { message: 'x' } });
     const r = res();
     await loginWithPhone(req({ phone: '+919876543210', password: 'secret12' }), r);
     expect(r.status).toHaveBeenCalledWith(401);
@@ -98,6 +100,7 @@ describe('loginWithPhone', () => {
 
   test('401 when phone belongs to a non-guest account (enumeration-resistant)', async () => {
     queueFrom(chain({ data: { ...GUEST, role: 'host' } }));
+    signInWithPassword.mockResolvedValue({ data: null, error: { message: 'x' } });
     const r = res();
     await loginWithPhone(req({ phone: '+919876543210', password: 'secret12' }), r);
     expect(r.status).toHaveBeenCalledWith(401);

@@ -114,6 +114,18 @@ const freeDownloadLimiter = rateLimit({
   message: { message: 'Too many download requests for this email. Please try again later.' },
 });
 
+// Companion to freeDownloadLimiter, keyed by IP. The email-keyed limiter alone
+// is bypassed by rotating buyer_email per request (each unique email = a fresh
+// bucket) → unlimited purchase-row spam from one IP. This caps total free-download
+// requests per IP regardless of how many distinct emails are used. Stack BOTH.
+const freeDownloadIpLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many download requests. Please try again later.' },
+});
+
 // Slow down abusive request floods — secondary to apiLimiter (100/min hard cap).
 //
 // PROVEN BUG (fixed): the old config (delayAfter:50, delayMs: hits*200, no cap)
@@ -188,6 +200,7 @@ module.exports = {
   slugLimiter,
   slotsLimiter,
   freeDownloadLimiter,
+  freeDownloadIpLimiter,
   speedLimiter,
   hppMiddleware,
   sanitizeBody,

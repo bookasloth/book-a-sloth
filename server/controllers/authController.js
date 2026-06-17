@@ -654,6 +654,10 @@ const loginWithPhone = async (req, res) => {
     // Enumeration-resistant: do NOT reveal whether the number exists or its role.
     // No account and a non-guest account both return the same 401 as a wrong password.
     if (!profile || profile.role !== "guest") {
+      // Equalize response time with the real wrong-password path (which makes a
+      // signInWithPassword round-trip) so an attacker can't time-distinguish a
+      // registered guest from an unknown/non-guest number.
+      await signInWithPassword("nonexistent@bookasloth.invalid", String(password)).catch(() => {});
       return res.status(401).json({ message: "Invalid phone or password" });
     }
     if (!profile.password_set) {

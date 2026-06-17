@@ -169,11 +169,14 @@ describe('loginWithPhone enumeration hardening', () => {
     supabaseAdmin.from.mockReturnValue(
       profileChain(null)
     );
+    signInWithPassword.mockResolvedValue({ data: null, error: { message: 'x' } });
     const res = mockRes();
     await ctrl.loginWithPhone({ body: { phone: '+911234567890', password: 'anypassword' } }, res);
     expect(res.status).toHaveBeenCalledWith(EXPECTED_STATUS);
     expect(res.json.mock.calls[0][0].message).toBe(EXPECTED_MSG);
-    expect(signInWithPassword).not.toHaveBeenCalled();
+    // Timing-equalization: a dummy auth call IS made on the no-account path so an
+    // attacker can't distinguish it from a real wrong-password attempt by timing.
+    expect(signInWithPassword).toHaveBeenCalled();
   });
 
   test('account exists with role=host → 401 with uniform message (not 409 mentioning vendor)', async () => {
@@ -181,13 +184,15 @@ describe('loginWithPhone enumeration hardening', () => {
       profileChain({ id: 'v1', email: 'v@x.com', phone: '+911234567890', role: 'host',
                      password_set: true, failed_login_count: 0, login_locked_until: null })
     );
+    signInWithPassword.mockResolvedValue({ data: null, error: { message: 'x' } });
     const res = mockRes();
     await ctrl.loginWithPhone({ body: { phone: '+911234567890', password: 'anypassword' } }, res);
     expect(res.status).toHaveBeenCalledWith(EXPECTED_STATUS);
     expect(res.json.mock.calls[0][0].message).toBe(EXPECTED_MSG);
     // Must not leak role information
     expect(res.json.mock.calls[0][0].message).not.toMatch(/vendor/i);
-    expect(signInWithPassword).not.toHaveBeenCalled();
+    // Timing-equalization dummy auth call is made (see no-account test).
+    expect(signInWithPassword).toHaveBeenCalled();
   });
 
   test('valid guest + wrong password → 401 with same uniform message', async () => {
