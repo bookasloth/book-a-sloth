@@ -18,30 +18,42 @@ export default function ConsentBanner() {
     <div
       role="dialog"
       aria-label="Cookie and analytics consent"
-      className="fixed bottom-0 inset-x-0 z-[9999] bg-white border-t border-gray-200 shadow-lg"
+      className="fixed z-[9999] bottom-5 right-5 max-[600px]:bottom-2.5 max-[600px]:right-2.5 max-[600px]:max-w-[90%] max-w-[380px] flex flex-col items-center gap-4 rounded-2xl bg-[whitesmoke] px-5 pt-5 pb-4 text-[#252525] shadow-[0_4px_20px_rgba(0,0,0,0.35)]"
     >
-      <div className="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-        <p className="text-sm text-gray-700 flex-1">
-          We use cookies for analytics and to improve marketing. Essential product
-          analytics always run; you can decline marketing & ad cookies.{' '}
-          <a href="/privacy" className="text-[#FE5100] underline">Learn more</a>.
+      {/* Cookie pops above the card via negative top margin */}
+      <div className="-mt-16 mb-[-20px] drop-shadow">
+        <img src="/cookie.svg" alt="" className="h-auto w-28" />
+      </div>
+
+      <div className="text-center leading-relaxed">
+        <h4 className="mb-1.5 text-base font-semibold">This site uses cookies 🍪</h4>
+        <p className="text-xs text-gray-600">
+          We use cookies for analytics &amp; marketing. Essential analytics always
+          run — you can decline marketing &amp; ad cookies.
         </p>
-        <div className="flex gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => choose(false)}
-            className="px-4 py-2 text-sm rounded-[4px] border border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Decline
-          </button>
-          <button
-            type="button"
-            onClick={() => choose(true)}
-            className="px-4 py-2 text-sm rounded-[4px] bg-[#FE5100] text-white hover:opacity-90"
-          >
-            Accept
-          </button>
-        </div>
+      </div>
+
+      <div className="mt-1 flex flex-wrap justify-center gap-2.5">
+        <button
+          type="button"
+          onClick={() => choose(true)}
+          className="rounded-[4px] border-2 border-current bg-[whitesmoke] px-3.5 py-2 text-sm text-[#4caf50] transition-all duration-300 hover:bg-[#0f0f0f]"
+        >
+          Agree
+        </button>
+        <button
+          type="button"
+          onClick={() => choose(false)}
+          className="rounded-[4px] border-2 border-current bg-[whitesmoke] px-3.5 py-2 text-sm text-[#f44336] transition-all duration-300 hover:bg-[#d32f2f] hover:text-[#0f0f0f]"
+        >
+          Disagree
+        </button>
+        <a
+          href="/privacy"
+          className="rounded-[4px] border-2 border-current bg-[whitesmoke] px-3.5 py-2 text-sm text-[#2196f3] no-underline transition-all duration-300 hover:bg-[#1976d2] hover:text-[#0f0f0f]"
+        >
+          Learn More
+        </a>
       </div>
     </div>
   );
