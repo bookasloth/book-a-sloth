@@ -55,24 +55,27 @@ One service per row. Services belong to a host.
 | short_description | TEXT | v2 — shown in cards |
 | long_description | TEXT | v2 — full details |
 | type | TEXT | `'one_on_one'` \| `'group'` \| `'paid_dm'` |
-| service_type | TEXT | v2 alias: `'online'` \| `'offline'` |
 | duration | INTEGER | Minutes |
 | price | NUMERIC(10,2) | 0 = free |
 | currency | TEXT | Default `'INR'` |
 | meeting_mode | TEXT | `'online'` \| `'offline'` |
 | thumbnail_url | TEXT | Cloudinary URL |
 | grace_period_minutes | INTEGER | Default 10 — overlap buffer |
-| slug | TEXT | URL slug (unique per host) |
+| slug | TEXT | URL slug — **globally unique** (see Indexes below) |
 | is_active | BOOLEAN | Default true |
 | included_items | JSONB | v2 — what's included |
 | excluded_items | JSONB | v2 — what's not included |
 | faqs | JSONB | v2 — FAQ array |
 | important_note | TEXT | v2 — disclaimer |
+| rating | NUMERIC | Cached average rating |
+| total_reviews | INTEGER | Cached review count |
 | total_bookings | INTEGER | Cached count |
 | created_at | TIMESTAMPTZ | |
 | updated_at | TIMESTAMPTZ | |
 
-**Index:** `UNIQUE (host_id, slug)` — `services_host_slug_idx`
+**Indexes:**
+- `UNIQUE (host_id, slug)` — `services_host_slug_idx`
+- `UNIQUE (slug)` — `services_slug_unique_idx` (slug is **globally unique**; two hosts cannot share a slug, even across different hosts)
 
 **RLS:**
 - SELECT: `is_active = true`
