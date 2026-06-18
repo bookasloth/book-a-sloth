@@ -4,12 +4,14 @@ name: Performance (JMeter)
 # LOAD_TEST_MODE, then fails if the SLA is breached (P95 > 500ms / error > 1% /
 # throughput drop > 20% vs baseline).
 #
-# Starts NON-BLOCKING: manual + nightly only, so it never wedges PRs. To gate
-# PRs, add `pull_request: { branches: [main] }` below once the TEST_SUPABASE_*
-# secrets are configured. The job no-ops (soft pass) if secrets are absent.
+# Runs on PRs to main, plus manual + nightly. SAFE before secrets exist: the
+# "Check secrets" step soft-passes (no-op) when TEST_SUPABASE_* is absent, so it
+# never blocks PRs. Once the secrets are set it actually runs the smoke + gate.
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
   schedule:
     - cron: '0 2 * * *'   # nightly 02:00 UTC
 
