@@ -22,7 +22,11 @@ export default function ConsentBanner() {
     >
       {/* Cookie pops above the card via negative top margin */}
       <div className="-mt-16 mb-[-20px] drop-shadow">
-        <img src="/cookie.svg" alt="" className="h-auto w-28" />
+        <img
+          src="https://company-assets.bookasloth.in/images/banner/consent.png"
+          alt=""
+          className="h-auto w-28"
+        />
       </div>
 
       <div className="text-center leading-relaxed">
