@@ -373,3 +373,39 @@ committed `client/package-lock.json` resolves identically locally and on deploy.
 | Sentry | $0 |
 | Supabase (free tier) | $0 (Pro $25 if you want managed backups) |
 | **Total** | **~$7/mo** |
+
+---
+
+## Scaling up — when you outgrow one server
+
+A load test (PR #59, see `BENCHMARK_REPORT.md` / `FINAL_VERDICT.md`) measured what the
+current **single** backend server can handle:
+
+- **Comfortable & snappy:** ~a few hundred real people using the site at the same moment.
+- **Still works, just slower:** up to ~500 hammering test-users — **zero errors, no crashes**,
+  but pages take a few seconds.
+- **Per day:** tens of thousands of visitors are fine — the limit is how many pile in *at the
+  same few seconds* (a viral spike), not the daily total.
+- The wall is one CPU core (~160–175 requests/second). The failure mode at scale is
+  **slowness, not downtime.**
+
+### To go bigger (thousands at once): add more server copies — no app rewrite needed
+The path is **horizontal scaling**: run several copies of the backend behind Render's load
+balancer instead of one. Roughly, **2 copies ≈ 2× the crowd, 3 copies ≈ 3×**, and so on.
+
+- **Render:** upgrade off Starter to a plan that allows multiple instances / autoscaling, then
+  raise the instance count. No code rewrite.
+- **⚠️ Do this one thing first:** the per-IP rate limiter currently lives in each server's
+  memory, so with multiple copies the limits count *per copy* (3 copies = 3× the intended
+  limit, weakening abuse protection). Move it to a **shared store (Redis)** before scaling out.
+  Small change, not a rewrite — ask Claude ("move express-rate-limit to a Redis store").
+- **Then watch the database:** once the app side is multiplied, Supabase becomes the next
+  limit. Turn on the **transaction pooler** and size up Supabase compute (Pro) when its
+  connection/CPU graphs climb under load.
+
+For the full ranked list (with the biggest single win — local JWT verification, which shaves
+~175 ms off every logged-in request) see `OPTIMIZATION_REPORT.md` and `FINAL_VERDICT.md`.
+
+> **In short:** today's one-server setup is fine for a normal launch. When a real spike or
+> steady growth pushes you past a few hundred simultaneous users, add server copies (after the
+> Redis limiter fix) — the app code does not need rewriting.
