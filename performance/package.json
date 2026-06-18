@@ -10,6 +10,7 @@
     "perf:normal": "node scripts/run.js local normal",
     "perf:launch": "node scripts/run.js local launch",
     "perf:spike": "node scripts/run.js local spike",
-    "perf:report": "node scripts/run.js report"
+    "perf:report": "node scripts/run.js report",
+    "perf:gate": "node scripts/parse-jtl.js"
   }
 }
