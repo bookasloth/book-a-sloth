@@ -29,6 +29,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const aisensy = require('./aisensyService');
 const communicationEngine = require('./email/communicationEngine');
+const { isLoadTestMode } = require('../config/loadTestMode');
 
 const CACHE_TTL_MS = 60 * 1000;
 let _cache = { at: 0, events: null, providers: null };
@@ -103,6 +104,15 @@ const logResult = async ({ event, channel, destination, status, response, error,
  * Never throws — returns { whatsapp, email } result objects.
  */
 const send = async ({ event, data = {} }) => {
+  if (isLoadTestMode()) {
+    // Load test: never touch real providers. Shape mirrors the real return
+    // so callers (notify.js reads .email.success / .whatsapp.success) work.
+    return {
+      event,
+      whatsapp: { attempted: false, success: true, stub: true },
+      email: { attempted: false, success: true, stub: true },
+    };
+  }
   const results = { event, whatsapp: { attempted: false }, email: { attempted: false } };
   if (!event) return results;
 
