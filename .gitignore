@@ -69,3 +69,7 @@ graphify-out/.graphify_labels.json
 *.pfx
 id_rsa
 id_ed25519
+
+# Schema dumps — contain RLS logic, never commit
+staging_schema.sql
+*_schema.sql

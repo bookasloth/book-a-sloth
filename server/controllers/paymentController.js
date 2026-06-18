@@ -905,6 +905,7 @@ const handleWebhook = async (req, res) => {
       }
     } catch (err) {
       securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
+      return res.status(500).json({ error: 'processing_failed' });
     }
     return res.json({ received: true });
   }
@@ -954,6 +955,7 @@ const handleWebhook = async (req, res) => {
     }
   } catch (err) {
     securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
+    return res.status(500).json({ error: 'processing_failed' });
   }
 
   res.json({ received: true });
