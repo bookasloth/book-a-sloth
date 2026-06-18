@@ -133,10 +133,31 @@ Render dashboard → service should show **Live** (green) and health check passi
      `index.html`, which fired them before consent, so they were moved to env.
      **Skip these three and prod has no Pixel/GA/Clarity at all** — ad conversion
      tracking goes dark. They are public client-side IDs, safe to set here.)
+   - `API_ORIGIN` = `https://bookasloth-api.onrender.com` (your Render URL for now)
+     (**NOT** `VITE_`-prefixed — this is read at runtime by the Vercel **Edge
+     Middleware** `client/middleware.js`, not at build time. It must be the API
+     base **without** the trailing `/api`. See the username-redirect callout below.)
 5. **Deploy.**
 
 **Verify:** open the `*.vercel.app` URL Vercel gives you. Site loads. Open
 browser DevTools → Network: API calls go to the Render URL and return 200.
+
+> ### ⚠️ Permanent-username 301 redirects (Edge Middleware)
+> Public profiles live at the root path (`/:username`). When a host changes their
+> username, the old URL must permanently redirect to the new one (Facebook/GitHub
+> style). A React SPA can't emit a real HTTP 301, so `client/middleware.js` runs
+> as a **Vercel Edge Middleware**: it resolves the slug via
+> `GET {API_ORIGIN}/api/username/resolve/:slug` and issues a **301** to the current
+> handle for any stale alias. Everything else passes through to the SPA.
+>
+> **Required to make it work:**
+> 1. Set the `API_ORIGIN` env var (above) — API base **without** `/api`. Missing/wrong
+>    → the middleware fails **open** (no crash; old usernames just 404 in-app instead
+>    of redirecting).
+> 2. **Deploy** so the edge middleware ships (it deploys automatically with the
+>    `client` project; no extra config).
+> 3. DB migration **`v3.17_username_history.sql` is already applied live** in Supabase
+>    (`username_history` table + `change_username` RPC + backfill). Nothing to run.
 
 ---
 
@@ -173,6 +194,7 @@ Add:
   - → then **Manual Deploy** to apply.
 - **Vercel → Environment:**
   - `VITE_API_URL` = `https://api.yourdomain.com`
+  - `API_ORIGIN` = `https://api.yourdomain.com` (edge middleware — no `/api`, not `VITE_`-prefixed)
   - → **Redeploy** (Deployments → ⋯ → Redeploy).
 
 ### D. Update third-party allow-lists
