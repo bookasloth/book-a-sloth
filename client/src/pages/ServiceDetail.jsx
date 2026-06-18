@@ -702,8 +702,8 @@ export default function ServiceDetail() {
           {/* ── LEFT: Main content ── */}
           <div className="flex-1 min-w-0">
 
-            {/* ── HERO ── plain; page decoration sits behind, above the fold */}
-            <section className="p-6 sm:p-10 mb-6">
+            {/* ── HERO ── theme-derived gradient band */}
+            <section className="rounded-2xl p-6 sm:p-10 mb-6" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--profile-accent, #FE5100) 14%, white), color-mix(in srgb, var(--profile-accent, #FE5100) 4%, white))' }}>
               {/* Title — last word accent-highlighted */}
               <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight">
                 {(() => {
