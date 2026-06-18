@@ -213,7 +213,7 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 // unhandledRejection: log at error level but do NOT exit — exiting on every
 // rejected promise (an awaited fetch that 500s, etc.) would crash-loop the
 // service. Surface it so it gets fixed; keep serving.
-const logger = require('./utils/logger');
+const { logger } = require('./utils/logger');
 process.on('uncaughtException', (err) => {
   logger.error({ event: 'uncaughtException', message: err.message, stack: err.stack });
   // Flush analytics best-effort, then exit non-zero so Render restarts a clean
