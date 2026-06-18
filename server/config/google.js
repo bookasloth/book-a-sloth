@@ -1,4 +1,5 @@
 const { google } = require('googleapis');
+const { isLoadTestMode } = require('./loadTestMode');
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -45,6 +46,14 @@ const getTokensFromCode = async (code) => {
 };
 
 const createCalendarEvent = async (accessToken, refreshToken, eventDetails) => {
+  if (isLoadTestMode()) {
+    // Load test: do NOT write to a real calendar. Synthetic, deterministic result.
+    return {
+      eventId: `loadtest-${eventDetails.title || 'event'}`,
+      meetLink: 'https://meet.google.com/loadtest-aaa-bbb-ccc',
+      htmlLink: 'https://calendar.google.com/loadtest',
+    };
+  }
   const auth = buildOAuthClient(accessToken, refreshToken);
   const calendar = google.calendar({ version: 'v3', auth });
 

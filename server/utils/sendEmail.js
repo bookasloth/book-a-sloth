@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { isLoadTestMode } = require('../config/loadTestMode');
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -11,6 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendEmail = async ({ to, subject, html }) => {
+  if (isLoadTestMode()) return; // no SMTP egress in load mode
   await transporter.sendMail({
     from: `"Book A Sloth" <${process.env.SMTP_USER}>`,
     to,
