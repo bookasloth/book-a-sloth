@@ -89,6 +89,7 @@ launch([
   '-q', path.join(CONFIG_DIR, `${envName}.properties`),
   '-Jthreads=' + sc.threads, '-Jrampup=' + sc.rampup, '-Jduration=' + sc.duration,
   '-Jdata.dir=' + DATA_DIR,
+  '-Jvendortoken=' + (process.env.VENDOR_TOKEN || ''),
   '-l', path.join(RESULTS_DIR, `${tag}.jtl`),
   '-e', '-o', path.join(REPORTS_DIR, tag),
 ]);
