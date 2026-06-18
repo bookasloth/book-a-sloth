@@ -16,6 +16,7 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { supabaseAdmin } = require('../config/supabase');
+const { isLoadTestMode } = require('../config/loadTestMode');
 
 const TTL_MS         = 10 * 60 * 1000;  // 10 min expiry
 const MAX_ATTEMPTS   = 3;               // verify attempts per OTP
@@ -28,8 +29,8 @@ const normalizeEmail = (e) => (e || '').toLowerCase().trim();
 const _isMissingSchema = (error) =>
   error && /Could not find the|column.*does not exist/i.test(error.message || '');
 
-/** Generate a 6-digit OTP (CSPRNG). */
-const generate = () => crypto.randomInt(100000, 1000000).toString();
+/** Generate a 6-digit OTP (CSPRNG). Fixed in load mode for deterministic tests. */
+const generate = () => (isLoadTestMode() ? '000000' : crypto.randomInt(100000, 1000000).toString());
 
 /**
  * Store (or replace) an OTP for the given email, enforcing send rate limits.
