@@ -94,9 +94,11 @@ describe('ProfileSetup — Profile Info', () => {
     expect(screen.getByDisplayValue('Jane Vendor')).toBeTruthy();
   });
 
-  test('pre-fills username', () => {
+  test('shows the current username (read-only — change is gated)', () => {
     renderSetup();
-    expect(screen.getByDisplayValue('jane-vendor')).toBeTruthy();
+    // Username is no longer a free-text field here; it's a permanent handle shown
+    // as text, changed only via the gated UsernameField control.
+    expect(screen.getByText('jane-vendor')).toBeTruthy();
   });
 
   test('bio field has maxLength 500', () => {

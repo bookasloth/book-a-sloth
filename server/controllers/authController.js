@@ -25,6 +25,7 @@ const otpStore = require("../utils/otpStore");
 const { sendOtpNotification } = require("../utils/notify");
 const NotificationEngine = require("../services/notificationEngine");
 const { runInBackground } = require("../utils/background");
+const usernameService = require("../services/usernameService");
 
 // ─── Per-account login lockout constants ───────────────────────────────────
 const LOGIN_MAX_FAILED = 5;
@@ -83,8 +84,16 @@ const serializeProfile = (profile, session) => ({
 });
 
 const upsertProfile = async ({ id, name, email, role, username }) => {
-  // Auto-generate profile slug from name if not supplied
-  const slug = username || await uniqueProfileSlug(slugifyUsername(name), id);
+  // Resolve the username. This upsert runs on every login (e.g. Google), so we
+  // must NEVER regenerate over an existing one. Order: caller-supplied → the
+  // row's current username (preserve it) → a fresh permanent username for a
+  // brand-new account ({adjective}-{noun}-{suffix}), recorded as 'auto' in history.
+  let slug = username;
+  if (!slug) {
+    const { data: existing } = await supabaseAdmin
+      .from("profiles").select("username").eq("id", id).maybeSingle();
+    slug = existing?.username || await usernameService.createInitialUsername();
+  }
 
   const { data, error } = await supabaseAdmin
     .from("profiles")
@@ -103,6 +112,7 @@ const upsertProfile = async ({ id, name, email, role, username }) => {
     .single();
 
   if (error) throw error;
+  await usernameService.recordInitialUsername(id, slug);
   return data;
 };
 
@@ -641,6 +651,8 @@ const findOrCreateProfileByPhone = async (normalizedPhone) => {
     )
     .select("*")
     .single();
+  // Record the phone-derived username as the initial alias (non-reuse + history).
+  if (profile?.username) await usernameService.recordInitialUsername(userId, profile.username);
   return profile;
 };
 

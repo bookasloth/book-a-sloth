@@ -19,7 +19,16 @@ jest.mock('../../config/supabase', () => {
   return { supabaseAdmin: { from: jest.fn().mockImplementation(chain) } };
 });
 
+jest.mock('../../services/usernameService', () => ({
+  resolve: jest.fn().mockResolvedValue(null),
+  createInitialUsername: jest.fn().mockResolvedValue('auto-handle-x1'),
+  recordInitialUsername: jest.fn().mockResolvedValue(undefined),
+  usernameExists: jest.fn().mockResolvedValue(false),
+  changeUsername: jest.fn(),
+}));
+
 const { supabaseAdmin } = require('../../config/supabase');
+const usernameService = require('../../services/usernameService');
 const {
   getHostProfile, updateProfile, getServiceBySlug, getMyServices,
 } = require('../../controllers/hostController');
@@ -104,7 +113,26 @@ describe('getHostProfile', () => {
 // ── updateProfile ─────────────────────────────────────────────────────────────
 
 describe('updateProfile', () => {
-  test('slugifies username on save', async () => {
+  test('ignores body username; never changes an existing one', async () => {
+    let capturedUpdates;
+    supabaseAdmin.from.mockReturnValue({
+      select:  jest.fn().mockReturnThis(),
+      update:  jest.fn().mockImplementation((u) => { capturedUpdates = u; return { eq: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(), single: jest.fn().mockResolvedValue({ data: HOST, error: null }) }; }),
+      eq:      jest.fn().mockReturnThis(),
+      neq:     jest.fn().mockReturnThis(),
+      single:  jest.fn().mockResolvedValue({ data: { username: 'jane-v' }, error: null }),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null }),
+    });
+
+    const r = res();
+    await updateProfile(req({}, { name: 'Jane Vendor', username: 'hacker-handle' }), r);
+    // Username is gated elsewhere — updateProfile must NOT touch it when one exists.
+    expect(capturedUpdates).toBeDefined();
+    expect(capturedUpdates.username).toBeUndefined();
+    expect(usernameService.createInitialUsername).not.toHaveBeenCalled();
+  });
+
+  test('auto-assigns a username only when the account has none', async () => {
     let capturedUpdates;
     supabaseAdmin.from.mockReturnValue({
       select:  jest.fn().mockReturnThis(),
@@ -116,11 +144,9 @@ describe('updateProfile', () => {
     });
 
     const r = res();
-    await updateProfile(req({}, { name: 'Jane Vendor', username: 'Jane Vendor!' }), r);
-    // slug should be lowercase with hyphens, not the raw value
-    if (capturedUpdates?.username) {
-      expect(capturedUpdates.username).toMatch(/^[a-z0-9-]+$/);
-    }
+    await updateProfile(req({}, { name: 'Jane Vendor' }), r);
+    expect(usernameService.createInitialUsername).toHaveBeenCalled();
+    expect(capturedUpdates.username).toBe('auto-handle-x1');
   });
 
   test('validates theme_color is a valid hex', async () => {

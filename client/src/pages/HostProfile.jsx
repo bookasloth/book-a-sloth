@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { getHostProfile, getHostReviews, getHostProducts, getVendorBadges } from "../services/api";
 import { analytics, EVENTS } from "../services/analytics";
 import BrandPreloader from "../components/preloader/BrandPreloader";
@@ -281,6 +281,7 @@ const ProductCard = ({ product: p, profileSlug }) => {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 const HostProfile = () => {
   const { profileSlug } = useParams();
+  const navigate = useNavigate();
   const pageRef         = useRef(null);
   const [host,        setHost]        = useState(null);
   const [services,    setServices]    = useState([]);
@@ -304,6 +305,13 @@ const HostProfile = () => {
     const load = async () => {
       try {
         const { data } = await getHostProfile(profileSlug);
+        // Old/changed username → server returns the canonical one. The Vercel
+        // edge function already issues a real 301 for crawlers; this self-corrects
+        // the SPA URL for in-app navigations that bypass the edge.
+        if (data.redirect && data.username) {
+          navigate(`/${data.username}`, { replace: true });
+          return;
+        }
         setHost(data.host);
         setServices(data.services || []);
         analytics.track(EVENTS.PROFILE_VIEWED, { host_id: data.host?.id, slug: profileSlug });

@@ -5,6 +5,7 @@ import { updateProfile, uploadImage } from "../services/api";
 import BackButton from "../components/common/BackButton";
 import ImageCropper from "../components/common/ImageCropper";
 import FeatureGate from "../components/common/FeatureGate";
+import UsernameField from "../components/dashboard/UsernameField";
 import toast from "react-hot-toast";
 import {
   getColorsForPlan,
@@ -326,16 +327,10 @@ const ProfileSetup = () => {
                 <label htmlFor="ps-name" className="block text-sm font-medium mb-1">Creator Name</label>
                 <input id="ps-name" type="text" name="name" required className="fb-input" value={form.name} onChange={handleChange} />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Profile URL</label>
-                <div className="flex min-w-0 flex-col overflow-hidden rounded-lg border focus-within:ring-2 focus-within:ring-primary sm:flex-row">
-                  <span className="shrink-0 bg-gray-50 px-3 py-2 text-sm text-gray-400 border-b sm:border-b-0 sm:border-r">bookasloth.com/</span>
-                  <input type="text" name="username" required
-                    className="flex-1 px-3 py-2 text-sm focus:outline-none"
-                    value={form.username} onChange={handleChange}
-                    pattern="[a-z0-9_-]+" title="Lowercase letters, numbers, hyphens and underscores only" />
-                </div>
-              </div>
+              <UsernameField
+                user={user}
+                onChanged={(u) => updateUser({ ...user, username: u })}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

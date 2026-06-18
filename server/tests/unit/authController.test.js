@@ -46,6 +46,14 @@ jest.mock('../../utils/otpStore',   () => ({
   generate: jest.fn(() => '123456'),
 }));
 
+jest.mock('../../services/usernameService', () => ({
+  resolve: jest.fn().mockResolvedValue(null),
+  createInitialUsername: jest.fn().mockResolvedValue('auto-handle-x1'),
+  recordInitialUsername: jest.fn().mockResolvedValue(undefined),
+  usernameExists: jest.fn().mockResolvedValue(false),
+  changeUsername: jest.fn(),
+}));
+
 const { supabaseAdmin }  = require('../../config/supabase');
 const otpStore           = require('../../utils/otpStore');
 const {

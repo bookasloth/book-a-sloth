@@ -87,6 +87,14 @@ jest.mock('../../config/supabase', () => {
   };
 });
 
+jest.mock('../../services/usernameService', () => ({
+  resolve: jest.fn().mockResolvedValue(null),
+  createInitialUsername: jest.fn().mockResolvedValue('auto-handle-x1'),
+  recordInitialUsername: jest.fn().mockResolvedValue(undefined),
+  usernameExists: jest.fn().mockResolvedValue(false),
+  changeUsername: jest.fn(),
+}));
+
 const jwt = require('jsonwebtoken');
 const supa = require('../../config/supabase');
 const { googleVendorAuth, googleCallback } = require('../../controllers/authController');

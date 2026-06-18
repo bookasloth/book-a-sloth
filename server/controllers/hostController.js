@@ -2,6 +2,7 @@ const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require('../utils/httpError');
 const { sanitizeLikeTerm } = require("../utils/searchSanitize");
 const { getConfig: getPlatformConfig } = require("../services/platformConfig");
+const usernameService = require("../services/usernameService");
 
 // ??? Profile slug helpers ????????????????????????????????????????????????????
 const slugifyUsername = (text) =>
@@ -97,8 +98,18 @@ const getHostProfile = async (req, res) => {
       .eq("role", "host")
       .single();
 
-    if (error || !host)
+    if (error || !host) {
+      // Not a current username — it may be an OLD alias. Resolve via history and
+      // tell the client to redirect to the canonical (current) username. The
+      // SEO-grade HTTP 301 is issued by the Vercel edge function; this 200
+      // envelope is defense-in-depth so the SPA self-corrects the URL too.
+      const requested = String(req.params.username || "").toLowerCase();
+      const resolved = await usernameService.resolve(requested);
+      if (resolved && resolved.currentUsername && resolved.currentUsername !== requested) {
+        return res.json({ redirect: true, username: resolved.currentUsername });
+      }
       return res.status(404).json({ message: "Host not found" });
+    }
 
     // Defense-in-depth: the whitelist above already excludes these at the query
     // layer; this strip is a second guard in case the select ever changes.
@@ -144,7 +155,6 @@ const updateProfile = async (req, res) => {
       name,
       bio,
       tagline,
-      username,
       social_links,
       profile_image,
       cover_image,
@@ -154,34 +164,22 @@ const updateProfile = async (req, res) => {
       reschedule_fee,
     } = req.body;
 
-    // Slugify and validate username
-    let resolvedUsername = username ? slugifyUsername(username) : undefined;
-
-    // If name provided but no username, check if this vendor has one; auto-generate if not
-    if (!resolvedUsername && name) {
-      const { data: existing } = await supabaseAdmin
-        .from('profiles')
-        .select('username')
-        .eq('id', req.user.id)
-        .single();
-      if (!existing?.username) {
-        resolvedUsername = await uniqueProfileSlug(slugifyUsername(name), req.user.id);
-      }
-    }
-
-    // Check slug uniqueness (if user explicitly provided a username)
-    if (resolvedUsername) {
-      const taken = await uniqueProfileSlug(resolvedUsername, req.user.id);
-      if (taken !== resolvedUsername) {
-        return res.status(400).json({ message: `Username "${resolvedUsername}" is already taken. Try "${taken}".` });
-      }
+    // Username is NOT editable here. Changes go through the gated, rate-limited
+    // PUT /api/host/username (WhatsApp-verified, max 2/year, 6-month gap). Any
+    // `username` field in this body is ignored. Safety net: a legacy account with
+    // no username gets an auto-generated one — an INITIAL assignment, not a change.
+    const { data: existingProfile } = await supabaseAdmin
+      .from('profiles').select('username').eq('id', req.user.id).single();
+    let initialUsername;
+    if (!existingProfile?.username) {
+      initialUsername = await usernameService.createInitialUsername();
     }
 
     const updates = { updated_at: new Date().toISOString() }; // BUG-05 fixed: removed forced role:"host"
     if (name) updates.name = name;
     if (bio !== undefined) updates.bio = bio;
     if (tagline !== undefined) updates.tagline = tagline;
-    if (resolvedUsername) updates.username = resolvedUsername;
+    if (initialUsername) updates.username = initialUsername;
     if (profile_image !== undefined) updates.profile_image = profile_image;
     if (cover_image !== undefined) updates.cover_image = cover_image;
     if (profession !== undefined) updates.profession = profession;
@@ -241,6 +239,12 @@ const updateProfile = async (req, res) => {
     }
 
     if (result.error) return safeError(res, result.error);
+
+    // Record an auto-assigned initial username in history (no-op if already present).
+    if (initialUsername) {
+      await usernameService.recordInitialUsername(req.user.id, initialUsername);
+    }
+
     res.json(result.data);
   } catch (error) {
     safeError(res, error);

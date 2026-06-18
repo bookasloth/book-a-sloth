@@ -184,6 +184,9 @@ export const adminDeleteCategory = (id)      => API.delete(`/admin/categories/${
 export const getHostProfile   = (username)       => API.get(`/host/${username}`);
 export const getServiceBySlug = (username, slug) => API.get(`/host/${username}/${slug}`);
 export const updateProfile    = (data)           => API.put('/host/profile', data);
+// Permanent username (gated: WhatsApp-verified, max 2/365d, 6-month gap).
+export const changeUsername   = (username)       => API.put('/host/username', { username });
+export const checkUsername    = (slug)           => API.get(`/username/check/${encodeURIComponent(slug)}`);
 export const createService    = (data)           => API.post('/host/services', data);
 export const getMyServices    = ()               => API.get('/host/services');
 export const updateService    = (id, data)       => API.put(`/host/services/${id}`, data);
