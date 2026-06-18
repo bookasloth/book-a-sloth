@@ -30,15 +30,15 @@ Real prod latency on the hot endpoints is dominated by the external calls (Googl
 
 | External | Seam (existing file) | Load-mode behavior | Rationale |
 |---|---|---|---|
-| Email (SMTP) | `server/utils/sendEmail.js` | return fake success, no SMTP send | Deferred via `runInBackground`; irrelevant to measured latency; sending real = spam |
-| OTP send / WhatsApp | `server/utils/notify.js` (`sendOtpNotification`, `sendWhatsAppOtp`) | no-op success | same as above |
-| OTP code generation | `server/utils/otpStore.js` (`generate`) | return fixed `000000` in load mode | deterministic verify step for JMeter |
-| Booking confirmation emails | `server/services/notificationEngine.js` (send path) | short-circuit send | async, spam-risk |
+| Email + WhatsApp + OTP send (all semantic notifications) | `server/services/notificationEngine.js` (`send`) — **single chokepoint** | short-circuit at top, return success-shaped result, no provider call | OTP, booking confirmations, vendor notifications all route here (via `communicationEngine` + `aisensy`); `utils/sendEmail` is NOT used by the engine |
+| Direct SMTP (password-reset etc. non-engine callers) | `server/utils/sendEmail.js` | return fake success, no SMTP | belt-and-suspenders so no SMTP can egress in load mode |
+| OTP code generation | `server/utils/otpStore.js` (`generate`) | return fixed `000000` | deterministic verify step for JMeter |
 | Google **createEvent** (write) | `server/config/google.js` (`createCalendarEvent`) | return synthetic event id, no API call | writes to real calendars = side effect |
 | Google **FreeBusy** (read) | `server/config/google.js` (`getFreeBusy`) | **KEPT REAL** (not stubbed) | recovers real Google latency **and** lets us measure the cache hit/miss — the whole point |
 | Razorpay order create | `server/services/razorpayConfig.js` (test keys) | **real sandbox API** (test keys), real latency | no money, real latency |
 | Razorpay signature verify | `paymentController.verifyPayment` | skip real payment fetch + accept a synthetic test signature | JMeter cannot run a real client-side checkout to produce a real signature/payment |
 | Supabase (all queries) | — | **never stubbed** | the DB is the primary thing under test |
+| Express rate limiters (NOT an external — a load blocker) | `server/middleware/security.js` (every `rateLimit`/`slowDown`) | `skip` fn → bypass when load mode | one JMeter IP would trip `otpLimiter` (5/hr) / `apiLimiter` (100/min) / `bookingLimiter` (15/hr) instantly; without bypass the test only measures 429s. Bypass is itself off-by-default → zero regression |
 
 **FreeBusy realism requires a Google-connected test vendor.** `getFreeBusy` is only called when the host has `google_calendar_connected=true` with valid tokens. So seeding creates **two** test vendors:
 - `loadtest-vendor-rules` — no Google; slots come purely from availability rules (fully deterministic, zero external). Used by the bulk of slot/booking load.
@@ -76,7 +76,7 @@ module.exports = { isLoadTestMode };
 
 ### 4.1 Tests for the flag (TDD — written before the seam edits)
 - `loadTestMode.test.js` — truth table incl. the production fail-safe.
-- Per-seam tests (`sendEmail`, `notify`, `google`, `razorpay verify`, `otpStore.generate`) asserting both states.
+- Per-seam tests asserting both states: `notificationEngine.send`, `sendEmail`, `otpStore.generate`, `google.createCalendarEvent` (stubbed) + `google.getFreeBusy` (still real), `paymentController.verifyPayment` signature bypass, and `security.js` rate-limiter `skip`.
 
 ## 5. Seeding & Cleanup
 
