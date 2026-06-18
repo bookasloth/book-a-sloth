@@ -32,6 +32,24 @@ phases in order. Each phase says **what you do** (only you can click these) and
 
 ---
 
+## ⚠️ Go-Live — Outstanding actions
+
+Live items merged in code but **not yet active in prod** until you do these. Tick
+each off; they are ops-only (no code changes).
+
+- [ ] **Permanent-username 301 redirects** — set Vercel env `API_ORIGIN`
+      (API base **without** `/api`, e.g. `https://api.yourdomain.com`; **not**
+      `VITE_`-prefixed) → **Redeploy** the `client` project so the edge middleware
+      (`client/middleware.js`) ships. Until then, changed/old usernames 404 in-app
+      instead of redirecting (middleware fails open). DB migration
+      `v3.17_username_history.sql` is **already applied live** — nothing to run.
+      Details: Phase 3 (initial) / Phase 4C (custom domain).
+
+> Add new rows here whenever a feature ships code that needs a prod env/config
+> flip before it works, so go-live steps aren't lost in the phase walkthroughs.
+
+---
+
 ## Phase 0 — Repo scaffolding ✅ (already done)
 
 These files were added for you:
