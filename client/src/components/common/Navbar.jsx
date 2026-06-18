@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
 import {
-  Home, Compass, Tag, UserPlus, HelpCircle,
+  Home, Tag, UserPlus, HelpCircle,
   CalendarCheck, MessageCircle, Bookmark, BarChart2,
   Briefcase, Bell, X, Menu, ChevronDown,
   Search, User, Settings, LogOut, TrendingUp,
@@ -15,7 +15,6 @@ import {
 
 const PUBLIC_NAV = [
   { label: 'Home',             href: '/',             icon: Home,        exact: true },
-  { label: 'Explore',          href: '/explore',       icon: Compass },
   { label: 'Categories',       href: '/categories',    icon: Tag },
   { label: 'Become a Creator', href: '/be-a-sloth',   icon: UserPlus },
   { label: 'How It Works',     href: '/how-it-works',  icon: HelpCircle },
@@ -23,7 +22,7 @@ const PUBLIC_NAV = [
 
 const CUSTOMER_NAV = [
   { label: 'Home',     href: '/',           icon: Home,           exact: true },
-  { label: 'Explore',  href: '/explore',    icon: Search },
+  { label: 'Explore',  href: '/explore',    icon: Search,         tag: 'Soon' },
   { label: 'Bookings', href: '/my-bookings', icon: CalendarCheck },
   { label: 'Messages', href: '/messages',   icon: MessageCircle,  badge: 'messages' },
   { label: 'Saved',    href: '/saved',      icon: Bookmark },
@@ -101,6 +100,14 @@ const BadgePill = ({ count }) =>
   count > 0 ? (
     <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-0.5 rounded-full bg-[#FE5100] text-white text-[9px] font-bold flex items-center justify-center leading-none pointer-events-none">
       {count > 99 ? '99+' : count}
+    </span>
+  ) : null;
+
+// ── Static label tag (e.g. "Soon") — distinct from numeric BadgePill ──────────
+const TagPill = ({ text }) =>
+  text ? (
+    <span className="absolute -top-2 -right-5 px-1 py-px rounded-full bg-amber-400 text-[#1E1E1E] text-[8px] font-bold uppercase tracking-wide leading-none pointer-events-none">
+      {text}
     </span>
   ) : null;
 
@@ -217,6 +224,7 @@ const Navbar = () => {
                         className={`transition-colors duration-150 ${active ? 'text-[#FE5100]' : 'text-gray-400 group-hover:text-[#FE5100]/80'}`}
                       />
                       {item.badge && <BadgePill count={badges[item.badge]} />}
+                      {item.tag && <TagPill text={item.tag} />}
                     </span>
                     <span className="leading-none">{item.label}</span>
                   </span>
@@ -396,6 +404,11 @@ const Navbar = () => {
                       className={`flex-shrink-0 ${active ? 'text-[#FE5100]' : 'text-gray-400'}`}
                     />
                     <span className="flex-1">{item.label}</span>
+                    {item.tag && (
+                      <span className="px-1.5 h-[16px] rounded-full bg-amber-400 text-[#1E1E1E] text-[10px] font-bold uppercase tracking-wide flex items-center">
+                        {item.tag}
+                      </span>
+                    )}
                     {item.badge && badges[item.badge] > 0 && (
                       <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#FE5100] text-white text-[10px] font-bold flex items-center justify-center">
                         {badges[item.badge]}
