@@ -4,6 +4,10 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+// Fail fast on an incomplete environment (prod), or warn loudly (dev/test),
+// instead of 500-ing later at request time deep inside a controller.
+require('./config/validateEnv').validateEnv();
+
 const app = express();
 
 // Behind a reverse proxy (Render/Heroku/Nginx) the client IP is in
@@ -199,3 +203,25 @@ const gracefulShutdown = async (signal) => {
 };
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// Last-resort safety nets. Without these, an unhandled promise rejection or a
+// stray synchronous throw outside Express's try/catch (e.g. inside a setInterval
+// cron callback) crashes the process silently with no captured context.
+//
+// uncaughtException: state is unknown/corrupt after one — log it, then exit so
+// Render restarts a clean process rather than serving from a poisoned one.
+// unhandledRejection: log at error level but do NOT exit — exiting on every
+// rejected promise (an awaited fetch that 500s, etc.) would crash-loop the
+// service. Surface it so it gets fixed; keep serving.
+const logger = require('./utils/logger');
+process.on('uncaughtException', (err) => {
+  logger.error({ event: 'uncaughtException', message: err.message, stack: err.stack });
+  // Flush analytics best-effort, then exit non-zero so Render restarts a clean
+  // process. Hard cap so a stuck flush can't hang the restart.
+  Promise.resolve(posthogShutdown()).finally(() => process.exit(1));
+  setTimeout(() => process.exit(1), 5000).unref();
+});
+process.on('unhandledRejection', (reason) => {
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error({ event: 'unhandledRejection', message: err.message, stack: err.stack });
+});

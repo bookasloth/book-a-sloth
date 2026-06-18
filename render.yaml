@@ -24,7 +24,7 @@ services:
       - key: PERF_LOG
         value: "false"
       - key: NODE_VERSION
-        value: "20"
+        value: "22"
       # ── Everything below: set the real values in Render dashboard → Environment.
       #    sync:false keeps them OUT of git. CLIENT_URL/API_URL get your real
       #    domains once DNS is wired in Phase 4.
