@@ -28,7 +28,7 @@ async function ensureVendor(v) {
   }
 
   const hasGoogle = v.gcal && !!process.env.TEST_VENDOR_GOOGLE_REFRESH_TOKEN;
-  await supabaseAdmin.from('profiles').upsert({
+  const { error: profErr } = await supabaseAdmin.from('profiles').upsert({
     id: userId,
     name: `LoadTest ${v.key}`,
     email,
@@ -39,25 +39,30 @@ async function ensureVendor(v) {
     google_access_token: hasGoogle ? (process.env.TEST_VENDOR_GOOGLE_ACCESS_TOKEN || null) : null,
     google_refresh_token: hasGoogle ? (process.env.TEST_VENDOR_GOOGLE_REFRESH_TOKEN || null) : null,
   }, { onConflict: 'id' });
+  if (profErr) throw new Error(`profiles upsert failed (${v.username}): ${profErr.message}`);
 
-  await supabaseAdmin.from('availability').upsert({
+  const { error: avErr } = await supabaseAdmin.from('availability').upsert({
     host_id: userId,
     weekly_schedule: wideOpen(),
     blocked_dates: [],
     timezone: 'Asia/Kolkata',
     buffer_minutes: 0,
   }, { onConflict: 'host_id' });
+  if (avErr) throw new Error(`availability upsert failed (${v.username}): ${avErr.message}`);
 
+  // NOTE: live `services` has a GLOBAL unique index on slug (services_slug_unique_idx),
+  // not (host_id, slug) as docs/database-schema.md claims — so slugs are per-vendor unique.
   const services = [
-    { slug: 'loadtest-free', title: 'LoadTest Free Session', duration: 30, price: 0 },
-    { slug: 'loadtest-paid', title: 'LoadTest Paid Session', duration: 30, price: 500 },
+    { slug: `loadtest-${v.key}-free`, title: 'LoadTest Free Session', duration: 30, price: 0 },
+    { slug: `loadtest-${v.key}-paid`, title: 'LoadTest Paid Session', duration: 30, price: 500 },
   ];
   for (const s of services) {
-    await supabaseAdmin.from('services').upsert({
+    const { error: svcErr } = await supabaseAdmin.from('services').upsert({
       host_id: userId, title: s.title, slug: s.slug, duration: s.duration, price: s.price,
-      currency: 'INR', meeting_mode: 'online', service_type: 'online',
+      currency: 'INR', meeting_mode: 'online',
       grace_period_minutes: 10, is_active: true,
-    }, { onConflict: 'host_id,slug' });
+    }, { onConflict: 'slug' });
+    if (svcErr) throw new Error(`services upsert failed (${s.slug}): ${svcErr.message}`);
   }
   return { key: v.key, userId, username: v.username, email, google: hasGoogle };
 }
