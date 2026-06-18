@@ -24,6 +24,12 @@ import {
   getExploreSponsored,
 } from '../services/api';
 
+// ── Launch flag ───────────────────────────────────────────────
+// Explore (discovery + paid placement) launches later. While this is true,
+// /explore renders <ExploreComingSoon />; the full page (ExploreFull) below is
+// kept intact and structurally identical so launch = flip COMING_SOON → false.
+const COMING_SOON = true;
+
 // ── Mock data (shown while real API is wired up) ──────────────
 const MOCK_CATEGORIES = [
   { id: '1', label: 'Fitness', slug: 'fitness' },
@@ -80,7 +86,7 @@ const SORT_OPTIONS = [
 
 const PAGE_SIZE = 12;
 
-export default function Explore() {
+function ExploreFull() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // ── State ─────────────────────────────────────────────────
@@ -390,4 +396,51 @@ export default function Explore() {
       </div>
     </div>
   );
+}
+
+// ── Coming Soon screen (shown while COMING_SOON is true) ──────────
+// Brand-consistent placeholder. No vendor profiles / listings rendered.
+function ExploreComingSoon() {
+  return (
+    <div className="min-h-screen bg-[#FFF8EE] flex items-center justify-center px-4 py-16">
+      <div className="max-w-lg w-full text-center">
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide
+                         bg-amber-400 text-[#1E1E1E] border-2 border-[#1E1E1E] rounded-[4px] px-3 py-1
+                         shadow-[2px_2px_0_#1E1E1E] mb-6">
+          <Sparkles size={13} /> Coming Soon
+        </span>
+
+        <div className="text-6xl mb-5" aria-hidden="true">🦥</div>
+
+        <h1 className="text-3xl md:text-4xl font-black text-[#1E1E1E] leading-tight tracking-tight mb-3">
+          Explore is on its way
+        </h1>
+        <p className="text-[15px] text-[#64748b] leading-relaxed mb-8">
+          We&apos;re building a place to discover coaches, mentors, therapists &amp; experts —
+          search by skill, browse curated collections, and find your perfect Sloth.
+          Not live yet, but worth the wait.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link to="/categories"
+            className="btn w-full sm:w-auto px-6 py-3 bg-[#FE5100] text-white font-black text-sm
+                       border-2 border-[#1E1E1E] shadow-[4px_4px_0_#1E1E1E]
+                       hover:shadow-[6px_6px_0_#1E1E1E] transition-shadow whitespace-nowrap">
+            Browse Categories
+          </Link>
+          <Link to="/be-a-sloth"
+            className="btn btn--outline w-full sm:w-auto px-6 py-3 bg-white text-[#1E1E1E] font-black text-sm
+                       border-2 border-[#1E1E1E] shadow-[4px_4px_0_#1E1E1E]
+                       hover:shadow-[6px_6px_0_#1E1E1E] transition-shadow whitespace-nowrap">
+            Become a Sloth →
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Route entry — flips between the launch placeholder and the full page.
+export default function Explore() {
+  return COMING_SOON ? <ExploreComingSoon /> : <ExploreFull />;
 }
