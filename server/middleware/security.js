@@ -6,6 +6,12 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 const hpp = require('hpp');
+const { isLoadTestMode } = require('../config/loadTestMode');
+
+// Load-test bypass: a single JMeter IP would trip every per-IP limiter
+// instantly. Off by default (isLoadTestMode() is false) → every limiter
+// behaves exactly as before. Never true in production (fail-safe).
+const skipWhenLoadTest = () => isLoadTestMode();
 
 // ── Helmet — security headers ─────────────────────────────────
 const helmetMiddleware = helmet({
@@ -43,6 +49,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many auth attempts. Please try again in 15 minutes.' },
   skipSuccessfulRequests: false,
+  skip: skipWhenLoadTest,
 });
 
 // OTP endpoints: very strict — 5 sends per hour per IP
@@ -52,6 +59,7 @@ const otpLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many OTP requests. Please wait before requesting another.' },
+  skip: skipWhenLoadTest,
 });
 
 // General API: 100 requests per minute per IP
@@ -61,6 +69,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests. Please slow down.' },
+  skip: skipWhenLoadTest,
 });
 
 // Admin endpoints: 30 per minute per IP
@@ -70,6 +79,7 @@ const adminLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many admin requests.' },
+  skip: skipWhenLoadTest,
 });
 
 // Payment endpoints: 20 per hour per IP (prevent order flooding)
@@ -79,6 +89,7 @@ const paymentLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many payment requests. Please try again later.' },
+  skip: skipWhenLoadTest,
 });
 
 // Username/slug availability check — prevent vendor-username enumeration.
@@ -88,6 +99,7 @@ const slugLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests. Please slow down.' },
+  skip: skipWhenLoadTest,
 });
 
 // Public availability lookup — each call can hit the Google Calendar FreeBusy
@@ -98,6 +110,7 @@ const slotsLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many availability checks. Please wait a moment.' },
+  skip: skipWhenLoadTest,
 });
 
 // Booking creation — public + fires email/WhatsApp notifications; cap per IP.
@@ -107,6 +120,7 @@ const bookingLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many booking attempts. Please try again later.' },
+  skip: skipWhenLoadTest,
 });
 
 // Free digital-product download — keyed by EMAIL (falling back to IP) so an
@@ -121,6 +135,7 @@ const freeDownloadLimiter = rateLimit({
     return email || req.ip;
   },
   message: { message: 'Too many download requests for this email. Please try again later.' },
+  skip: skipWhenLoadTest,
 });
 
 // Companion to freeDownloadLimiter, keyed by IP. The email-keyed limiter alone
@@ -133,6 +148,7 @@ const freeDownloadIpLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many download requests. Please try again later.' },
+  skip: skipWhenLoadTest,
 });
 
 // Slow down abusive request floods — secondary to apiLimiter (100/min hard cap).
@@ -149,6 +165,7 @@ const speedLimiter = slowDown({
   delayMs: (used) => (used - 300) * 100,    // gentle ramp only past the threshold
   maxDelayMs: 2000,                         // never add more than 2s, ever
   validate: { delayMs: false },             // silence express-slow-down v2 notice
+  skip: skipWhenLoadTest,
 });
 
 // Permissions-Policy — deny powerful features the app never uses.
@@ -207,6 +224,7 @@ const blockSuspiciousRequests = (req, res, next) => {
 
 module.exports = {
   helmetMiddleware,
+  skipWhenLoadTest,
   authLimiter,
   otpLimiter,
   apiLimiter,
