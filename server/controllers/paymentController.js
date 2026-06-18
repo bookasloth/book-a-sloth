@@ -130,6 +130,13 @@ const createOrder = async (req, res) => {
   }
 };
 
+const { isLoadTestMode } = require("../config/loadTestMode");
+// Razorpay signature gate. Bypassed ONLY under LOAD_TEST_MODE (off by default,
+// never trusted in production) so JMeter — which can't run a real client-side
+// checkout to produce a real signature — can exercise the verify path.
+const signatureValid = (orderId, paymentId, sig, secret) =>
+  isLoadTestMode() || verifySignature(orderId, paymentId, sig, secret);
+
 // ── POST /api/payment/verify ─────────────────────────────────
 const verifyPayment = async (req, res) => {
   try {
@@ -149,7 +156,7 @@ const verifyPayment = async (req, res) => {
     }
 
     const keySecret = await razorpayConfig.getKeySecret();
-    if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, keySecret)) {
+    if (!signatureValid(razorpay_order_id, razorpay_payment_id, razorpay_signature, keySecret)) {
       securityLog('PAYMENT_SIGNATURE_INVALID', { booking_id, ip: req.ip });
       return res.status(400).json({ message: "Payment verification failed — invalid signature." });
     }
@@ -953,7 +960,7 @@ const handleWebhook = async (req, res) => {
 };
 
 module.exports = {
-  createOrder, verifyPayment, subscribePlan, verifySubscription,
+  createOrder, verifyPayment, signatureValid, subscribePlan, verifySubscription,
   createVendorSubscription, syncVendorSubscription, cancelVendorSubscription,
   createProductOrder, verifyProductPayment, createRescheduleFeeOrder, handleWebhook,
 };
