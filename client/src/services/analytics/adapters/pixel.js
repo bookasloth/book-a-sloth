@@ -17,6 +17,7 @@ const STANDARD = {
   subscription_started: 'Subscribe',
   service_viewed:    'ViewContent',
   host_profile_viewed: 'ViewContent',
+  lead_captured:     'Lead',
 };
 
 let loaded = false;

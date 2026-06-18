@@ -125,6 +125,14 @@ Render dashboard → service should show **Live** (green) and health check passi
    - `VITE_POSTHOG_PROJECT_TOKEN` = your PostHog project token (`phc_...`)
    - `VITE_POSTHOG_HOST` = `https://us.i.posthog.com`
      (frontend analytics — without these, no pageviews/events are captured in prod)
+   - `VITE_FB_PIXEL_ID` = `3530370983781569`
+   - `VITE_GA4_MEASUREMENT_ID` = `G-96C5ZSXXZW`
+   - `VITE_CLARITY_PROJECT_ID` = `x801tklmp6`
+     (marketing tags — Meta Pixel / GA4 / Microsoft Clarity. They load **only
+     after the visitor accepts the consent banner**. These used to be hardcoded in
+     `index.html`, which fired them before consent, so they were moved to env.
+     **Skip these three and prod has no Pixel/GA/Clarity at all** — ad conversion
+     tracking goes dark. They are public client-side IDs, safe to set here.)
 5. **Deploy.**
 
 **Verify:** open the `*.vercel.app` URL Vercel gives you. Site loads. Open
@@ -221,6 +229,55 @@ land in Sentry.
 - `npm audit` on client + server, patch high/critical.
 - Verify CORS locked to your domain, rate limits active, Razorpay webhook
   signature verified, helmet on (already in code — confirm in prod).
+
+---
+
+## Phase 7 — Landing pages & paid ads
+
+Conversion landing pages for paid traffic live at `/lp/<slug>` — own header/footer,
+no site nav, one goal (start a signup). Currently live:
+- `https://bookasloth.com/lp/topmate-vs-bookasloth` — "0% commission" angle (vs Topmate)
+- `https://bookasloth.com/lp/calendly-alternative` — "get paid in ₹" angle (vs Calendly)
+
+**What you do:**
+
+1. **Analytics env vars** — confirm the three from Phase 3 (`VITE_FB_PIXEL_ID`,
+   `VITE_GA4_MEASUREMENT_ID`, `VITE_CLARITY_PROJECT_ID`) are set in Vercel.
+   Without them the LP's Meta **`Lead`** event never fires and you can't measure
+   ad ROI.
+
+2. **Point each ad at the LP with UTM tags** so you see which ad converts, e.g.:
+   `https://bookasloth.com/lp/topmate-vs-bookasloth?utm_source=meta&utm_medium=cpc&utm_campaign=topmate_switch`
+   The page captures these first-touch, attaches them to every event, and carries
+   them into the signup flow.
+
+3. **Meta Events Manager** → set **`Lead`** as the campaign's conversion /
+   optimization event. The LP fires a standard `Lead` on email submit (browser
+   Pixel + server CAPI de-dupe on `event_id`).
+
+4. **Trademark caution.** You may *bid* on competitor keywords (Topmate, Calendly),
+   but do **not** put their trademark in the **visible Google Ads copy** — it risks
+   disapproval. Comparative claims on your own LP are fine when truthful; the
+   price/commission figures are date-stamped "Jun 2026" — re-screenshot the source
+   if you ever need to defend a claim.
+
+5. **Social / ad-preview image (OG).** A 1200×630 card already ships at
+   `client/public/og-image.png`, wired site-wide as `https://bookasloth.com/og-image.png`.
+   To use your own design, **replace that file with the same name** — no code
+   change needed. Drop any extra images in `client/public/` and reference them as
+   `https://bookasloth.com/<filename>`.
+   > This is **one shared card for the whole site** (LPs included). Per-LP unique
+   > cards are **not** possible on this SPA without prerendering — social scrapers
+   > (Facebook/WhatsApp/LinkedIn) don't run JavaScript, so they only read the
+   > static tags in `index.html`. Ask Claude to add per-LP prerender if you want
+   > distinct cards per page later.
+
+**Verify:**
+- `https://bookasloth.com/lp/topmate-vs-bookasloth` loads with **no site navbar**.
+- Paste that URL into the **Meta Sharing Debugger** (and a WhatsApp chat) → the OG
+  image + title render.
+- Accept the consent banner → DevTools **Network** shows `facebook.net`,
+  `googletagmanager`, `clarity.ms` loading; submit the email → a `Lead` fires.
 
 ---
 

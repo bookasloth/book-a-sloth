@@ -24,6 +24,10 @@ const Privacy        = lazy(() => import('./pages/Privacy'));
 const Unsubscribe    = lazy(() => import('./pages/Unsubscribe'));
 const About          = lazy(() => import('./pages/About'));
 
+// Paid-traffic landing pages (/lp/*) — own header/footer, global nav hidden
+const TopmateVsBookASloth = lazy(() => import('./pages/lp/TopmateVsBookASloth'));
+const CalendlyAlternative  = lazy(() => import('./pages/lp/CalendlyAlternative'));
+
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
 const VendorLogin    = lazy(() => import('./pages/VendorLogin'));
@@ -160,6 +164,7 @@ function App() {
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/super-dashboard') ||
     location.pathname.startsWith('/vendor-register') ||
+    location.pathname.startsWith('/lp') ||
     location.pathname === '/hello-sloth';
 
   return (
@@ -172,6 +177,11 @@ function App() {
         <Routes>
           {/* Public */}
           <Route path="/" element={<Home />} />
+          {/* Paid-traffic landing pages — own header/footer, nav hidden */}
+          <Route path="/lp/topmate-vs-bookasloth" element={<TopmateVsBookASloth />} />
+          <Route path="/lp/calendly-alternative" element={<CalendlyAlternative />} />
+          {/* Unknown /lp/* slug → home (friendlier than a bare 404 for ad traffic) */}
+          <Route path="/lp/*" element={<Navigate to="/" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />

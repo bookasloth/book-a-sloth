@@ -2,9 +2,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Book A Sloth</title>
+    <title>Book A Sloth — booked &amp; paid at 0% commission</title>
+    <meta name="description" content="The calm booking + payments platform for India's freelancers, coaches, tutors and studios. Keep what you earn — 0% commission, flat pricing, UPI &amp; GST built in." />
+    <meta name="theme-color" content="#FE5100" />
+    <link rel="canonical" href="https://bookasloth.com/" />
+
+    <!-- Open Graph / social link previews. NOTE: static (scrapers don't run JS).
+         One shared card for all routes; per-LP cards need SSR/prerender.
+         TODO: add a 1200x630 og-image.png to client/public/. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Book A Sloth" />
+    <meta property="og:title" content="Book A Sloth — booked &amp; paid at 0% commission" />
+    <meta property="og:description" content="The calm booking + payments platform for India. Keep what you earn — 0% commission, flat pricing, UPI &amp; GST built in." />
+    <meta property="og:url" content="https://bookasloth.com/" />
+    <meta property="og:image" content="https://bookasloth.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Book A Sloth — booked &amp; paid at 0% commission" />
+    <meta name="twitter:description" content="Keep what you earn — 0% commission, flat pricing, UPI &amp; GST built in. Built for India." />
+    <meta name="twitter:image" content="https://bookasloth.com/og-image.png" />
     <!-- Poppins — admin panel font -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,49 +31,15 @@
     <!-- Razorpay Checkout — required for window.Razorpay in onboarding plan purchase -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-    <!-- Meta Pixel -->
-    <script>
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}
-      (window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '3530370983781569');
-      fbq('track', 'PageView');
-    </script>
-    <!-- End Meta Pixel (noscript fallback lives in <body> — img is invalid in head) -->
+    <!-- Marketing tags (Meta Pixel, GA4, Microsoft Clarity) are loaded by the
+         consent-gated analytics bus (src/services/analytics/) ONLY after the user
+         grants marketing consent. IDs come from VITE_FB_PIXEL_ID /
+         VITE_GA4_MEASUREMENT_ID / VITE_CLARITY_PROJECT_ID. Do NOT hardcode tag
+         <script>s here — that fires them before consent and bypasses the banner.
+         PostHog (needsConsent:false) initialises from JS at app boot. -->
 
-    <!-- Google Analytics (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-96C5ZSXXZW"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-96C5ZSXXZW');
-    </script>
-
-    <!-- Microsoft Clarity -->
-    <script type="text/javascript">
-      (function(c,l,a,r,i,t,y){
-          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-          t=l.createElement(r);
-          t.async=1;
-          t.src="https://www.clarity.ms/tag/"+i;
-          y=l.getElementsByTagName(r)[0];
-          y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "x801tklmp6");
-    </script>
   </head>
   <body>
-    <!-- Meta Pixel noscript fallback (img must live in body, not head) -->
-    <noscript>
-      <img height="1" width="1" style="display:none"
-           src="https://www.facebook.com/tr?id=3530370983781569&ev=PageView&noscript=1" />
-    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
