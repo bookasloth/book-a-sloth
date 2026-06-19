@@ -4,6 +4,19 @@ You decided (June 2026): launch on the **fresh Mumbai** Supabase project, leavin
 the current dev data behind as staging. This is the one-time setup to make that
 real. After this, the everyday flow is [release-pipeline.md](release-pipeline.md).
 
+> **✅ STATUS (2026-06-19): the prod config seed is already DONE** (applied
+> directly via the Supabase tool — schema was already in parity, so config rows
+> were copied: categories, subscription_plans, chart_of_accounts, admin_roles,
+> badges, platform_settings, notification_events, email_templates; feature_flags
+> kept prod's own 33). Prod holds **zero** customer data. **Do NOT run
+> `scripts/init-prod-db.sh` for the initial seed — it would double-insert.** The
+> script remains for the reverse *refresh-staging* direction / a future re-seed.
+> Still TODO in prod (env-specific, set in Admin after deploy, NOT cloned):
+> `email_settings` (live SMTP), `notification_providers` (AiSensy),
+> `subscription_plans.razorpay_plan_id_*` (live Razorpay plan ids), and a prod
+> **admin user** (admin_users is empty by design). Steps 1–2 below (env remap)
+> still apply.
+
 > **The roles (memorise this — the Supabase project *names* are currently misleading):**
 >
 > | Role going forward | Project ref | Region | Today |
