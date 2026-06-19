@@ -78,12 +78,14 @@ independent). Two ways to get into `/admin` on prod:
 
 ---
 
-## Step 4 — Security follow-up (do not skip)
+## Step 4 — Security note (already handled)
 
-The clone faithfully reproduces staging, where **RLS is OFF** on `feature_flags`
-and `reschedule_payments`. So prod inherits that hole. Enabling RLS is **not** a
-one-liner — toggling it on without policies blocks all access. Treat as its own
-task: design read/write policies, then enable. (Already flagged separately.)
+RLS was **enabled** on `feature_flags` and `reschedule_payments` in the source DB
+on 2026-06-19 (migration `enable_rls_internal_tables`), so the clone carries
+RLS-on into prod automatically — nothing to do here. Both tables are server-only
+(read/written via the service-role key, which bypasses RLS), so deny-all with no
+policy is the correct end state. If you add new tables that the **browser** reads
+via the anon key, those need RLS + explicit policies before launch.
 
 ---
 

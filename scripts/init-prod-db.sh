@@ -137,9 +137,8 @@ psql "$PROD_DB_URL" -v ON_ERROR_STOP=1 -f "$SEED_SQL"
 
 echo
 green "✔ Production schema + config seed applied."
-yellow "⚠ The cloned schema reproduces staging's RLS state — RLS is OFF on feature_flags"
-yellow "  and reschedule_payments. Enable RLS + add policies on prod as a SEPARATE step"
-yellow "  (toggling RLS without policies blocks all access — design the policies first)."
+green "✓ RLS is ON for feature_flags + reschedule_payments (fixed on the source 2026-06-19);"
+green "  the clone carries it. Both are server-only (service_role) → deny-all is correct, no policy needed."
 if [ "$WITH_ADMINS" -eq 0 ]; then
   yellow "⚠ admin_users NOT copied. Create your production admin before relying on /admin."
 fi
