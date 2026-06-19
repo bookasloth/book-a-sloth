@@ -181,6 +181,18 @@ setInterval(async () => {
   } catch (err) { console.error('Subscription reconciler cron error:', err.message); }
 }, SUB_RECONCILE_MIN * 60 * 1000);
 
+// Booking-payment reconciler — heals one-off bookings stuck 'unpaid' whose
+// payment.captured webhook was missed/exhausted, by asking Razorpay directly.
+// Idempotent; interval configurable (default 15 min).
+const bookingPaymentReconciler = require('./services/bookingPaymentReconciler');
+const BOOKING_RECONCILE_MIN = Number(process.env.BOOKING_RECONCILE_INTERVAL_MIN || 15);
+setInterval(async () => {
+  try {
+    const r = await bookingPaymentReconciler.reconcile();
+    if (r.healed > 0) console.log(`Booking reconciler: confirmed ${r.healed} paid bookings (of ${r.checked} checked)`);
+  } catch (err) { console.error('Booking reconciler cron error:', err.message); }
+}, BOOKING_RECONCILE_MIN * 60 * 1000);
+
 // Feature flags — seed any registry keys missing from the DB on boot (all ON,
 // never overwrites an admin's existing on/off choice). Best-effort; the admin
 // GET also re-syncs, so a transient boot failure self-heals.
