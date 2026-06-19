@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Navbar from './components/common/Navbar';
 import DashboardLayout from './components/common/DashboardLayout';
 import AdminLayout from './components/common/AdminLayout';
@@ -172,6 +173,7 @@ function App() {
       <Toaster position="top-right" />
       <AnalyticsBridge />
       <ConsentBanner />
+      <SpeedInsights />
       {!hideNavbar && <Navbar />}
       <Suspense fallback={<PageLoader />}>
         <Routes>
