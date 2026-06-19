@@ -22,6 +22,30 @@ const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 
 const DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
+// Platform default working hours, applied when a host has set NO availability of
+// their own (empty or missing weekly_schedule). Keeps brand-new vendors instantly
+// bookable instead of showing an empty calendar. Mon–Sat 10:00–18:00, Sunday off.
+// The instant a host adds any custom window, their schedule becomes authoritative.
+const DEFAULT_DAY_WINDOWS = Object.freeze([Object.freeze({ start: "10:00", end: "18:00" })]);
+const DEFAULT_WEEKLY_SCHEDULE = Object.freeze({
+  monday: DEFAULT_DAY_WINDOWS,
+  tuesday: DEFAULT_DAY_WINDOWS,
+  wednesday: DEFAULT_DAY_WINDOWS,
+  thursday: DEFAULT_DAY_WINDOWS,
+  friday: DEFAULT_DAY_WINDOWS,
+  saturday: DEFAULT_DAY_WINDOWS,
+  sunday: [],
+});
+
+// Resolve the schedule actually used for slot math. A host with at least one
+// custom window keeps their own schedule (including days they deliberately left
+// empty = closed). A host with none falls back to DEFAULT_WEEKLY_SCHEDULE.
+const effectiveSchedule = (weeklySchedule) => {
+  const s = weeklySchedule || {};
+  const hasCustom = DAY_NAMES.some((d) => Array.isArray(s[d]) && s[d].length > 0);
+  return hasCustom ? s : DEFAULT_WEEKLY_SCHEDULE;
+};
+
 // Convert a wall-clock time in `tz` to a UTC Date (mirror of the client's
 // wallClockToUTC in ServiceBooking.jsx — keep the two in sync).
 const wallClockToUTC = (year, month, day, hour, minute, tz) => {
@@ -179,7 +203,7 @@ const computeSlots = async ({ host, service, availability, dateStr, now = new Da
   if (isDateBlocked(availability?.blocked_dates, dateStr))
     return { slots: [], timezone: tz, blocked: true };
 
-  const schedule = availability?.weekly_schedule || {};
+  const schedule = effectiveSchedule(availability?.weekly_schedule);
   // Weekday of this calendar date in the host's tz (noon avoids DST edges)
   const noonUTC = wallClockToUTC(parts.y, parts.mo, parts.d, 12, 0, tz);
   const { dayName } = dateInTz(noonUTC, tz);
@@ -242,10 +266,11 @@ const validateSlot = async ({ host, service, availability, scheduledAtUTC, exclu
   if (isDateBlocked(availability?.blocked_dates, dateStr))
     return { ok: false, reason: "The host is unavailable on this date." };
 
-  // Inside a working-hours window? (only enforced when a schedule exists —
-  // hosts without an availability row keep legacy behaviour)
-  const windows = availability?.weekly_schedule?.[dayName];
-  if (availability?.weekly_schedule && (!windows || !windows.length))
+  // Inside a working-hours window? Uses the effective schedule, so a host who
+  // hasn't customised is bookable on the platform default (Mon–Sat 10:00–18:00)
+  // and a host's own schedule (incl. days left empty = closed) is authoritative.
+  const windows = effectiveSchedule(availability?.weekly_schedule)[dayName];
+  if (!windows || !windows.length)
     return { ok: false, reason: "The host does not take bookings on this day." };
 
   const [platformBusy, google] = await Promise.all([
@@ -286,4 +311,4 @@ const getPlatformBusyExcluding = async (hostId, windowStart, windowEnd, excludeB
   });
 };
 
-module.exports = { computeSlots, validateSlot, wallClockToUTC, isDateBlocked };
+module.exports = { computeSlots, validateSlot, wallClockToUTC, isDateBlocked, effectiveSchedule, DEFAULT_WEEKLY_SCHEDULE };
