@@ -57,6 +57,60 @@ What's already mitigated vs. what still needs attention. Update as items close.
 
 ---
 
+## First-time host setup (Vercel + Render)
+
+One-time bootstrap to connect the repo to its two hosts. Do this once; after that, merges to `main` deploy automatically.
+
+> **The #1 mistake to avoid: Root Directory.** The client lives in `client/`, not the repo root. A Vercel project pointed at the repo root (Root Directory empty/null) builds from a `package.json` that has no frontend and **fails** — that is exactly what caused the duplicate `book-a-sloth-j4zg` project's red checks. Use **one** Vercel project with Root Directory = `client`. Delete any stray duplicates.
+
+### Client → Vercel
+
+In the Vercel project → **Settings → Git → Import** `bookasloth/book-a-sloth`, then:
+
+| Setting | Value | Why |
+|---|---|---|
+| **Root Directory** | **`client`** | Repo root has no frontend — must point at `client/`. |
+| Framework Preset | Vite | auto-detected |
+| Build Command | `vite build` (or `npm run build`) | |
+| Output Directory | `dist` | Vite default |
+| Install Command | `npm install` | **Not** `npm ci` — the rollup optional-dep bug (npm/cli#4828) breaks `npm ci` on the client. |
+| Node version | 22 | matches `client/.nvmrc` + `engines`. |
+| Production Branch | `main` | deploy on merge |
+
+**Environment variables** (set for Production **and** Preview, *before* the first deploy — `VITE_*` are baked at build time, so changing one later needs a redeploy):
+
+```
+VITE_API_URL=https://<Render API URL>      # e.g. https://bookasloth-api.onrender.com → later https://api.yourdomain.com
+API_ORIGIN=https://<same API base, NO /api>  # NOT VITE_-prefixed — edge-runtime var for username 301s (client/middleware.js). Missing → redirects fail open (old usernames 404 in-app).
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...                   # publishable anon key only — never a secret
+VITE_POSTHOG_PROJECT_TOKEN=phc_...
+VITE_POSTHOG_HOST=https://us.i.posthog.com
+# Optional marketing (blank = that tool stays off):
+VITE_GA4_MEASUREMENT_ID=
+VITE_FB_PIXEL_ID=
+VITE_CLARITY_PROJECT_ID=
+```
+
+- **No Razorpay key in client env** — the API serves `key_id` at payment time. Never put a secret behind `VITE_` (it ships to the browser).
+- After import → **Deploy**, then run the [smoke test](#b-deployment-workflow).
+
+### Server → Render
+
+The server is provisioned from `render.yaml` (a Blueprint), so its build/start/health/env-keys are defined in-repo:
+
+1. Render → **New → Blueprint** → connect `bookasloth/book-a-sloth`. It reads `render.yaml` and creates the `bookasloth-api` web service (Root Directory `server`, `npm ci` / `npm start`, health `/health`, region Singapore, Node 22, autoDeploy `main`).
+2. Fill every `sync: false` secret in **Render → Environment** (Supabase, Razorpay, SMTP, Google, JWT/OAuth secrets, etc.). `NODE_ENV=production` is set by the blueprint — **verify it stuck** (it gates the payment-verify / OTP fail-safes).
+3. Confirm `https://<service>/health` returns `200`.
+
+### Wiring the two together
+
+- Vercel `VITE_API_URL` / `API_ORIGIN` must point at the Render service URL (or `api.yourdomain.com` once DNS is set).
+- Render `CLIENT_URL` must point at the Vercel URL (or `yourdomain.com`) — it locks CORS.
+- Custom domain + DNS steps live in [`DEPLOYMENT.md`](../DEPLOYMENT.md).
+
+---
+
 ## A. Git workflow
 
 `main` is the production branch — Render and Vercel auto-deploy from it. Treat it as sacred.
