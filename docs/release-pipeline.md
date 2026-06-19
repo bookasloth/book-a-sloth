@@ -5,6 +5,12 @@ roll back at **every** stage if it breaks. Written for someone doing this for th
 first time. Companion to [DEPLOYMENT.md](../DEPLOYMENT.md) (that file does the
 one-time prod setup; this file is the everyday flow + the staging layer).
 
+> **First time? Initialize the production database first.** Prod runs on a fresh
+> Mumbai Supabase project that needs its schema + config seeded from your current
+> dev DB (one-time). Staging = your existing dev DB. Full sequence (incl. the
+> `.env` role remap): **[init-prod-db.md](init-prod-db.md)**. Do that before the
+> everyday loop below makes sense.
+
 ---
 
 ## 1. The mental model
