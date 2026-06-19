@@ -8,6 +8,11 @@ dotenv.config();
 // instead of 500-ing later at request time deep inside a controller.
 require('./config/validateEnv').validateEnv();
 
+// Error tracking. No-op unless SENTRY_DSN is set, so local/CI are unaffected.
+const { initSentry, captureException, flushSentry } = require('./utils/sentry');
+const sentryStatus = initSentry();
+if (sentryStatus.enabled) console.log('Sentry error tracking enabled');
+
 const app = express();
 
 // Behind a reverse proxy (Render/Heroku/Nginx) the client IP is in
@@ -196,7 +201,7 @@ const server = app.listen(PORT, () => console.log('Server running on port ' + PO
 const { shutdown: posthogShutdown } = require('./utils/posthog');
 const gracefulShutdown = async (signal) => {
   console.log(`${signal} received — flushing analytics and shutting down`);
-  await posthogShutdown();
+  await Promise.allSettled([posthogShutdown(), flushSentry()]);
   server.close(() => process.exit(0));
   // Hard cap so a stuck connection can't hang the deploy.
   setTimeout(() => process.exit(0), 5000).unref();
@@ -216,12 +221,14 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 const { logger } = require('./utils/logger');
 process.on('uncaughtException', (err) => {
   logger.error({ event: 'uncaughtException', message: err.message, stack: err.stack });
-  // Flush analytics best-effort, then exit non-zero so Render restarts a clean
-  // process. Hard cap so a stuck flush can't hang the restart.
-  Promise.resolve(posthogShutdown()).finally(() => process.exit(1));
+  captureException(err, { event: 'uncaughtException' });
+  // Flush analytics + Sentry best-effort, then exit non-zero so Render restarts
+  // a clean process. Hard cap so a stuck flush can't hang the restart.
+  Promise.allSettled([posthogShutdown(), flushSentry()]).finally(() => process.exit(1));
   setTimeout(() => process.exit(1), 5000).unref();
 });
 process.on('unhandledRejection', (reason) => {
   const err = reason instanceof Error ? reason : new Error(String(reason));
   logger.error({ event: 'unhandledRejection', message: err.message, stack: err.stack });
+  captureException(err, { event: 'unhandledRejection' });
 });
