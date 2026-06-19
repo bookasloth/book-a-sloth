@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const { supabaseAdmin } = require("../config/supabase");
 const { securityLog, auditLog } = require("../utils/logger");
 const sendEmail = require("../utils/sendEmail");
+const { adminAlert } = require("../utils/adminAlert");
 const NotificationEngine = require("../services/notificationEngine");
 const { computeBreakdown, calculateVendorPayout, calculatePlatformFee, computeSubscriptionBreakdown } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
@@ -917,6 +918,19 @@ const handleWebhook = async (req, res) => {
       }
     } catch (err) {
       securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
+      // Fire-and-forget: 500 makes Razorpay retry, but if retries exhaust the
+      // subscription would silently stay pending. Alert the founder. Throttled
+      // per event type so a retry burst doesn't spam.
+      adminAlert({
+        key: `webhook_error:${event.event}`,
+        subject: `Razorpay webhook failed: ${event.event}`,
+        lines: [
+          `Event: ${event.event}`,
+          rzpSub?.id ? `Subscription: ${rzpSub.id}` : null,
+          `Error: ${err.message}`,
+          `Razorpay will retry. If this persists the subscription may stay pending — reconcile against the Razorpay dashboard.`,
+        ].filter(Boolean),
+      });
       return res.status(500).json({ error: 'processing_failed' });
     }
     return res.json({ received: true });
@@ -967,6 +981,20 @@ const handleWebhook = async (req, res) => {
     }
   } catch (err) {
     securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
+    // Fire-and-forget: 500 makes Razorpay retry, but if retries exhaust the
+    // booking would silently stay unpaid. Alert the founder. Throttled per
+    // event type so a retry burst doesn't spam.
+    adminAlert({
+      key: `webhook_error:${event.event}`,
+      subject: `Razorpay webhook failed: ${event.event}`,
+      lines: [
+        `Event: ${event.event}`,
+        payment?.notes?.booking_id ? `Booking: ${payment.notes.booking_id}` : null,
+        payment?.id ? `Payment: ${payment.id}` : null,
+        `Error: ${err.message}`,
+        `Razorpay will retry. If this persists the booking may stay unpaid — reconcile against the Razorpay dashboard.`,
+      ].filter(Boolean),
+    });
     return res.status(500).json({ error: 'processing_failed' });
   }
 
