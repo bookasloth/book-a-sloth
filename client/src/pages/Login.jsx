@@ -28,6 +28,7 @@ const Login = () => {
   // Send the OTP and move to the verify step (shared by the "OTP instead" button
   // and the auto-fallback when a password isn't set / account is new).
   const goToOtp = async () => {
+    if (busy) return;   // guard against double-send (rapid double-click / racing fallbacks)
     setBusy(true);
     try {
       await sendOtp({ phone });

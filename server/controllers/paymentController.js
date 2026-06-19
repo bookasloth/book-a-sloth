@@ -367,7 +367,9 @@ const verifyPayment = async (req, res) => {
       });
     });
   } catch (error) {
-    res.status(500).json({ message: "Payment verification failed." });
+    // Success response is sent at L302 before the best-effort background fan-out.
+    // A throw after that point must not attempt a second send (ERR_HTTP_HEADERS_SENT).
+    if (!res.headersSent) res.status(500).json({ message: "Payment verification failed." });
   }
 };
 
@@ -641,16 +643,26 @@ const createVendorSubscription = async (req, res) => {
       // Grant the new tier + free days immediately (vendor already paid for the
       // old period) but keep status 'pending' until the mandate is authorized.
       const grantedEnd = new Date(nowMs + ((switchInfo?.creditDays || 0) + cadencePeriodDays(cadence)) * 86400000).toISOString();
-      await supabaseAdmin.from("profiles").update({
+      const { error: upErr } = await supabaseAdmin.from("profiles").update({
         plan: planRecord.slug, billing_cadence: cadence, subscription_status: "pending",
         razorpay_subscription_id: subscription.id, current_period_end: grantedEnd, plan_expires_at: grantedEnd,
         plan_updated_at: nowIso, updated_at: nowIso,
       }).eq("id", req.user.id);
+      // Razorpay subscription already created — a silent profile-update failure
+      // would charge the vendor without granting access. Fail loud for reconciliation.
+      if (upErr) {
+        console.error(`subscription switch: profile update failed for vendor ${req.user.id} (sub ${subscription.id}):`, upErr.message);
+        return res.status(502).json({ message: "Subscription created but activation failed. Please contact support." });
+      }
     } else {
       // Fresh upgrade from free/expired — no access until the mandate activates.
-      await supabaseAdmin.from("profiles")
+      const { error: upErr } = await supabaseAdmin.from("profiles")
         .update({ razorpay_subscription_id: subscription.id, subscription_status: "pending", updated_at: nowIso })
         .eq("id", req.user.id);
+      if (upErr) {
+        console.error(`subscription create: profile update failed for vendor ${req.user.id} (sub ${subscription.id}):`, upErr.message);
+        return res.status(502).json({ message: "Subscription created but activation failed. Please contact support." });
+      }
     }
 
     auditLog('SUBSCRIPTION_CREATED', req.user.id, { plan: planRecord.slug, cadence, subscription_id: subscription.id, switch: isSwitch });

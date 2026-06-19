@@ -514,8 +514,15 @@ const ServiceBooking = () => {
             }
             setStep("confirmed");
             toast.success("Payment successful! Booking confirmed.");
-          } catch {
-            toast.error("Payment verification failed. Contact support.");
+          } catch (err) {
+            if (err?.response) {
+              // Server explicitly rejected (bad signature / mismatch) — genuine failure.
+              toast.error("Payment verification failed. If money was deducted, contact support — don't pay again.");
+            } else {
+              // Network/timeout: the server may have captured the payment anyway.
+              // Don't claim failure — point the user to check before retrying.
+              toast("Confirming your payment… if you don't see it shortly, check My Bookings before paying again.", { icon: "⏳" });
+            }
           }
         },
         prefill: {
