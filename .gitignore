@@ -74,3 +74,9 @@ id_ed25519
 # Schema dumps — contain RLS logic, never commit
 staging_schema.sql
 *_schema.sql
+
+# Database backups — contain customer PII + payment data, never commit
+*.dump
+*.dump.gpg
+*.sql.gz
+*.backup
