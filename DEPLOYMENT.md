@@ -324,12 +324,18 @@ no site nav, one goal (start a signup). Currently live:
 ## Routine operations
 
 ### Deploy a change
+The full **local → staging → production** flow (with the online staging test URL
+and per-stage rollback) lives in **[docs/release-pipeline.md](docs/release-pipeline.md)**.
+Short version:
 ```bash
-git checkout -b feature/whatever
-# ...make changes...
+git checkout main && git pull
+git checkout -b feat/whatever
+# ...make changes, test locally...
 git commit -am "feat: whatever"
-git push -u origin feature/whatever
-# open PR → CI runs → merge to main → Render + Vercel auto-deploy
+git push -u origin feat/whatever
+# PR feat/whatever → staging  → test on https://staging.bookasloth.com
+# PR staging        → main     → Render + Vercel auto-deploy to bookasloth.com
+node scripts/release.mjs v1.2.0   # tag the release once prod is verified
 ```
 
 ### Node / npm version (avoid lockfile drift)

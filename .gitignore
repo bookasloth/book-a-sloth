@@ -80,3 +80,6 @@ staging_schema.sql
 *.dump.gpg
 *.sql.gz
 *.backup
+
+# DB clone working dir (scripts/init-prod-db.sh) — schema + config dumps
+.db-clone/
