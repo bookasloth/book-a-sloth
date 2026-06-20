@@ -62,6 +62,7 @@ const Products    = lazy(() => import('./pages/Products'));
 const UpgradePlan = lazy(() => import('./pages/UpgradePlan'));
 const Payouts     = lazy(() => import('./pages/Payouts'));
 const Transactions = lazy(() => import('./pages/Transactions'));
+const Feedback     = lazy(() => import('./pages/Feedback'));
 
 // Service Module v2
 const ServicesList = lazy(() => import('./pages/services/ServicesList'));
@@ -234,6 +235,7 @@ function App() {
           <Route path="/dashboard/upgrade" element={<DashboardWrapper><UpgradePlan /></DashboardWrapper>} />
           <Route path="/dashboard/payments/payouts" element={<DashboardWrapper><Payouts /></DashboardWrapper>} />
           <Route path="/dashboard/payments/transactions" element={<DashboardWrapper><Transactions /></DashboardWrapper>} />
+          <Route path="/dashboard/feedback" element={<DashboardWrapper><Feedback /></DashboardWrapper>} />
 
           {/* Super Dashboard (main admin entry) */}
           <Route path="/super-dashboard" element={<AdminWrapper><SuperDashboard /></AdminWrapper>} />
