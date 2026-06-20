@@ -413,7 +413,7 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
     const { data: vendor, error: vendorErr } = await fetchPublicVendor(profileSlug);
 
     if (vendorErr || !vendor) {
-      return res.status(404).json({ message: 'Vendor not found' });
+      return res.status(404).json({ message: 'Host not found' });
     }
 
     // 2. Resolve the service by slug, scoped to this vendor (with SEO overrides)

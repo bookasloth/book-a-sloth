@@ -251,7 +251,7 @@ describe('getPublicServiceByProfileAndSlug', () => {
     const r = res();
     await getPublicServiceByProfileAndSlug(req({ profileSlug: 'nobody', serviceSlug: 'svc' }), r);
     expect(r.status).toHaveBeenCalledWith(404);
-    expect(r.json.mock.calls[0][0].message).toMatch(/vendor/i);
+    expect(r.json.mock.calls[0][0].message).toMatch(/host/i);
   });
 
   test('returns 404 when service slug not found for that vendor', async () => {

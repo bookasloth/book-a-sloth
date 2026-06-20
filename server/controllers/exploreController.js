@@ -40,7 +40,7 @@ async function listVendors(req, res) {
     });
   } catch (err) {
     console.error('[explore.listVendors]', err);
-    return res.status(500).json({ message: 'Failed to load vendors' });
+    return res.status(500).json({ message: 'Failed to load hosts' });
   }
 }
 
@@ -53,7 +53,7 @@ async function getFeatured(req, res) {
     return res.json({ featured: [] });
   } catch (err) {
     console.error('[explore.getFeatured]', err);
-    return res.status(500).json({ message: 'Failed to load featured vendors' });
+    return res.status(500).json({ message: 'Failed to load featured hosts' });
   }
 }
 
@@ -98,7 +98,7 @@ async function getSponsored(req, res) {
     return res.json({ sponsored: [], keyword });
   } catch (err) {
     console.error('[explore.getSponsored]', err);
-    return res.status(500).json({ message: 'Failed to load sponsored vendors' });
+    return res.status(500).json({ message: 'Failed to load sponsored hosts' });
   }
 }
 
@@ -212,7 +212,7 @@ async function adminAddToCollection(req, res) {
     if (error) throw error;
     return res.status(201).json({ entry: data });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to add vendor to collection' });
+    return res.status(500).json({ message: 'Failed to add host to collection' });
   }
 }
 
@@ -223,7 +223,7 @@ async function adminRemoveFromCollection(req, res) {
       .delete().eq('collection_id', id).eq('vendor_id', vendorId);
     return res.json({ success: true });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to remove vendor from collection' });
+    return res.status(500).json({ message: 'Failed to remove host from collection' });
   }
 }
 

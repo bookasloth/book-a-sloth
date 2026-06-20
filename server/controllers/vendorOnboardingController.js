@@ -44,7 +44,7 @@ const SEND_WINDOW_MS = 60 * 60 * 1000;   // 1 hour
 const LOCKOUT_MS     = 15 * 60 * 1000;   // 15 minutes
 
 // ─── OTP Sending (Email + WhatsApp) ─────────────────────────────────────
-const sendOtpBothChannels = async (slug, email, phone, name = "Vendor") => {
+const sendOtpBothChannels = async (slug, email, phone, name = "Host") => {
   const now = Date.now();
 
   // Read existing session for per-account send-rate-limiting.

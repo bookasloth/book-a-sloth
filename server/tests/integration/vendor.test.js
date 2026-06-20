@@ -120,7 +120,7 @@ describe('GET /api/services/public/:profileSlug/:serviceSlug', () => {
     });
     const res = await request(app).get('/api/services/public/ghost/svc');
     expect(res.status).toBe(404);
-    expect(res.body.message).toMatch(/vendor/i);
+    expect(res.body.message).toMatch(/host/i);
   });
 
   test('404 — service slug not owned by vendor', async () => {

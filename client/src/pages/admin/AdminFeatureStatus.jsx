@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { adminGetFeatures, adminToggleFeature, adminCreateFeature } from '../../services/api';
 import toast from 'react-hot-toast';
 
-const SCOPE_LABEL = { vendor: 'Vendor', customer: 'Customer', both: 'Shared' };
+const SCOPE_LABEL = { vendor: 'Host', customer: 'Customer', both: 'Shared' };
 const SCOPE_ORDER = ['vendor', 'customer', 'both'];
 
 const emptyNew = { key: '', label: '', description: '', category: '', scope: 'both' };
@@ -139,7 +139,7 @@ export default function AdminFeatureStatus() {
               <label className="block text-xs font-medium text-gray-600 mb-1">Scope</label>
               <select className="fb-input text-sm" value={form.scope}
                 onChange={(e) => setForm({ ...form, scope: e.target.value })}>
-                <option value="vendor">Vendor</option>
+                <option value="vendor">Host</option>
                 <option value="customer">Customer</option>
                 <option value="both">Shared</option>
               </select>

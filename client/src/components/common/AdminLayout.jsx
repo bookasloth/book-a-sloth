@@ -347,8 +347,8 @@ const AdminLayout = ({ children }) => {
         <div className="h-4" />
       </nav>
       <div className={`border-t border-[#1a1a1a] flex-shrink-0 space-y-0.5 ${(!collapsed || mobile) ? 'p-3' : 'p-1.5'}`}>
-        <Link to="/dashboard" className={`flex items-center gap-2.5 rounded-lg text-gray-600 hover:text-gray-300 hover:bg-white/[0.04] transition-colors text-[12px] ${(!collapsed || mobile) ? 'px-2.5 py-2' : 'justify-center p-2.5'}`} title={(!collapsed || mobile) ? undefined : 'Vendor Dashboard'}>
-          <Ic d={IC.external} size={14} />{(!collapsed || mobile) && <span>Vendor Dashboard</span>}
+        <Link to="/dashboard" className={`flex items-center gap-2.5 rounded-lg text-gray-600 hover:text-gray-300 hover:bg-white/[0.04] transition-colors text-[12px] ${(!collapsed || mobile) ? 'px-2.5 py-2' : 'justify-center p-2.5'}`} title={(!collapsed || mobile) ? undefined : 'Host Dashboard'}>
+          <Ic d={IC.external} size={14} />{(!collapsed || mobile) && <span>Host Dashboard</span>}
         </Link>
         <button onClick={handleLogout} className={`w-full flex items-center gap-2.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/[0.05] transition-colors text-[12px] ${(!collapsed || mobile) ? 'px-2.5 py-2' : 'justify-center p-2.5'}`} title={(!collapsed || mobile) ? undefined : 'Sign out'}>
           <Ic d={IC.logout} size={14} />{(!collapsed || mobile) && <span>Sign out</span>}

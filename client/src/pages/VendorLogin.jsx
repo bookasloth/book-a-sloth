@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 
 const ERROR_COPY = {
   invalid_state: 'That sign-in link expired. Please try again.',
-  customer_email: 'This Google account belongs to a customer profile. Vendors need a separate email.',
+  customer_email: 'This Google account belongs to a customer profile. Hosts need a separate email.',
   create_failed: 'We could not create your account. Please try again.',
   auth_failed: 'Google sign-in failed. Please try again.',
   no_email: 'Google did not share an email address. Check your account permissions.',
@@ -48,7 +48,7 @@ const VendorLogin = () => {
   return (
     <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
       <div className="page-card w-full max-w-md p-5 sm:p-8 text-center">
-        <h1 className="text-2xl font-bold mb-2">Vendor Login</h1>
+        <h1 className="text-2xl font-bold mb-2">Host Login</h1>
         <p className="text-sm text-gray-500 mb-8">
           Sign in with the Google account you used to become a sloth.
         </p>

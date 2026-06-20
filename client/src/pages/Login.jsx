@@ -148,7 +148,7 @@ const Login = () => {
               Want to offer services?{" "}
               <Link to="/be-a-sloth" className="text-primary hover:underline">Become a sloth</Link>
               {" · "}
-              <Link to="/login-as-vendor" className="text-primary hover:underline">Vendor login</Link>
+              <Link to="/login-as-vendor" className="text-primary hover:underline">Host login</Link>
             </p>
           </>
         )}

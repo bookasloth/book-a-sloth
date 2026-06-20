@@ -14,7 +14,7 @@ const AdminOverview = () => {
 
   const cards = [
     { label: 'Total Users', value: stats?.users || 0, color: 'text-blue-600', to: '/admin/users?role=guest' },
-    { label: 'Total Vendors', value: stats?.vendors || 0, color: 'text-green-600', to: '/admin/users?role=host' },
+    { label: 'Total Hosts', value: stats?.vendors || 0, color: 'text-green-600', to: '/admin/users?role=host' },
     { label: 'Total Bookings', value: stats?.bookings || 0, color: 'text-purple-600', to: '/admin/bookings' },
     { label: 'Total Services', value: stats?.services || 0, color: 'text-orange-500', to: '/admin/services' },
     { label: 'Platform Revenue', value: `₹${(stats?.revenue || 0).toLocaleString()}`, color: 'text-primary' },
@@ -39,7 +39,7 @@ const AdminOverview = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link to="/admin/users" className="bg-white border rounded-xl p-5 hover:shadow-sm transition-shadow">
           <h3 className="font-semibold mb-1">Manage Users</h3>
-          <p className="text-xs text-gray-400">View, edit, verify, ban, or delete users and vendors.</p>
+          <p className="text-xs text-gray-400">View, edit, verify, ban, or delete users and hosts.</p>
         </Link>
         <Link to="/admin/bookings" className="bg-white border rounded-xl p-5 hover:shadow-sm transition-shadow">
           <h3 className="font-semibold mb-1">Manage Bookings</h3>
@@ -47,7 +47,7 @@ const AdminOverview = () => {
         </Link>
         <Link to="/admin/services" className="bg-white border rounded-xl p-5 hover:shadow-sm transition-shadow">
           <h3 className="font-semibold mb-1">Manage Services</h3>
-          <p className="text-xs text-gray-400">Review and moderate vendor services.</p>
+          <p className="text-xs text-gray-400">Review and moderate host services.</p>
         </Link>
         <Link to="/admin/settings" className="bg-white border rounded-xl p-5 hover:shadow-sm transition-shadow">
           <h3 className="font-semibold mb-1">Platform Settings</h3>

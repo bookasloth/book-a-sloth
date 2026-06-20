@@ -100,7 +100,7 @@ const UserSignup = () => {
         <p className="text-sm text-gray-500 mt-1 text-center">
           Want to offer services?{" "}
           <Link to="/vendor/signup" className="text-primary hover:underline">
-            Sign up as a vendor
+            Sign up as a host
           </Link>
         </p>
       </div>

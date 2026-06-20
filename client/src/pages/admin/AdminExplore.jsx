@@ -87,7 +87,7 @@ function FeaturedTab() {
       <Section>
         <h3 className="font-bold text-[#1E1E1E] flex items-center gap-2"><Star size={16} className="text-[#FE5100]" /> Add Featured Slot</h3>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Vendor ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} placeholder="profiles.id (UUID)" />
+          <Input label="Host ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} placeholder="profiles.id (UUID)" />
           <div>
             <span className="text-xs font-bold text-[#1E1E1E] uppercase tracking-wide mb-1 block">Slot Position (1–5) *</span>
             <select value={form.slot_position} onChange={e => setForm(f => ({ ...f, slot_position: Number(e.target.value) }))}
@@ -156,7 +156,7 @@ function KeywordsTab() {
       <Section>
         <h3 className="font-bold text-[#1E1E1E] flex items-center gap-2"><Tag size={16} className="text-[#FE5100]" /> Add Sponsored Keyword</h3>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Vendor ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} />
+          <Input label="Host ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} />
           <Input label="Keyword / Category slug *" value={form.keyword} onChange={e => setForm(f => ({ ...f, keyword: e.target.value }))} placeholder="e.g. yoga, fitness" />
           <Input label="Bid amount (₹) *" type="number" value={form.bid_amount} onChange={e => setForm(f => ({ ...f, bid_amount: e.target.value }))} />
           <div />
@@ -225,7 +225,7 @@ function CollectionsTab() {
         </div>
         <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
           <input type="checkbox" checked={form.is_paid} onChange={e => setForm(f => ({ ...f, is_paid: e.target.checked }))} className="accent-[#FE5100]" />
-          Paid collection (vendors paid to be included)
+          Paid collection (hosts paid to be included)
         </label>
         <Btn onClick={create} disabled={saving}><Plus size={14} /> {saving ? 'Saving…' : 'Create Collection'}</Btn>
       </Section>
@@ -238,7 +238,7 @@ function CollectionsTab() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-bold text-sm text-[#1E1E1E]">{col.icon_emoji} {col.title} {col.is_paid && <span className="text-[10px] bg-[#FE5100] text-white px-1.5 py-0.5 rounded ml-1">Paid</span>}</p>
-                    <p className="text-xs text-[#64748b]">{col.subtitle} · {(col.explore_collection_vendors || []).length} vendors</p>
+                    <p className="text-xs text-[#64748b]">{col.subtitle} · {(col.explore_collection_vendors || []).length} hosts</p>
                   </div>
                   <Btn variant={col.is_active ? 'ghost' : 'primary'} onClick={() => toggle(col)}>
                     {col.is_active ? 'Deactivate' : 'Activate'}
@@ -286,7 +286,7 @@ function BoostsTab() {
       <Section>
         <h3 className="font-bold text-[#1E1E1E] flex items-center gap-2"><Zap size={16} className="text-[#FFB703]" /> Add Boost</h3>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Vendor ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} />
+          <Input label="Host ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} />
           <div>
             <span className="text-xs font-bold text-[#1E1E1E] uppercase tracking-wide mb-1 block">Boost Type *</span>
             <select value={form.boost_type} onChange={e => setForm(f => ({ ...f, boost_type: e.target.value }))}
@@ -337,7 +337,7 @@ function VerifiedTab() {
   useEffect(() => { load(); }, [load]);
 
   const grant = async () => {
-    if (!form.vendor_id) return toast.error('Vendor ID required');
+    if (!form.vendor_id) return toast.error('Host ID required');
     setSaving(true);
     try { await adminGrantExploreVerified(form); toast.success('Badge granted'); setForm({ vendor_id: '', expires_at: '', price_paid: '' }); load(); }
     catch { toast.error('Failed'); }
@@ -354,15 +354,15 @@ function VerifiedTab() {
       <Section>
         <h3 className="font-bold text-[#1E1E1E] flex items-center gap-2"><BadgeCheck size={16} className="text-[#FE5100]" /> Grant Verified Badge</h3>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Vendor ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} />
+          <Input label="Host ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} />
           <Input label="Expires at (leave blank = never)" type="date" value={form.expires_at} onChange={e => setForm(f => ({ ...f, expires_at: e.target.value }))} />
           <Input label="Price paid (₹)" type="number" value={form.price_paid} onChange={e => setForm(f => ({ ...f, price_paid: e.target.value }))} />
         </div>
         <Btn onClick={grant} disabled={saving}><CheckCircle size={14} /> {saving ? 'Saving…' : 'Grant Badge'}</Btn>
       </Section>
       <Section>
-        <h3 className="font-bold text-[#1E1E1E]">Verified Vendors ({verified.length})</h3>
-        {loading ? <p className="text-sm text-gray-400">Loading…</p> : verified.length === 0 ? <Empty label="No verified vendors yet" /> : (
+        <h3 className="font-bold text-[#1E1E1E]">Verified Hosts ({verified.length})</h3>
+        {loading ? <p className="text-sm text-gray-400">Loading…</p> : verified.length === 0 ? <Empty label="No verified hosts yet" /> : (
           <div className="space-y-2">
             {verified.map(v => (
               <div key={v.id} className="flex items-center justify-between p-3 border-2 border-[#E5E5E5] rounded-[4px]">

@@ -202,10 +202,10 @@ const AdminPlans = () => {
 
       {/* Manual assignment */}
       <div className="bg-white border rounded-xl p-5 max-w-2xl">
-        <h2 className="text-sm font-bold text-gray-900 mb-1">Assign Plan to Vendor</h2>
+        <h2 className="text-sm font-bold text-gray-900 mb-1">Assign Plan to Host</h2>
         <p className="text-xs text-gray-400 mb-3">Manual override for comp plans and support resolutions — activates immediately, 1-year expiry for paid plans.</p>
         <div className="flex flex-wrap gap-2 mb-3">
-          <input className="fb-input text-sm flex-1 min-w-[200px]" placeholder="Search vendor by name/email…"
+          <input className="fb-input text-sm flex-1 min-w-[200px]" placeholder="Search host by name/email…"
             value={assignQuery} onChange={(e) => setAssignQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchVendors()} />
           <select className="fb-input text-sm w-44" value={assignPlanSlug} onChange={(e) => setAssignPlanSlug(e.target.value)}>
             <option value="">Target plan…</option>
@@ -246,7 +246,7 @@ const AdminPlans = () => {
             {(grossWithGst(form.annual_price) > AUTO_DEBIT_THRESHOLD || grossWithGst(form.monthly_price) > AUTO_DEBIT_THRESHOLD) && (
               <div className="mb-4 -mt-1 text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                 ⚠ A cadence gross (price + 18% GST) exceeds ₹{AUTO_DEBIT_THRESHOLD.toLocaleString('en-IN')}.
-                Above this, RBI requires the vendor to approve <strong>every</strong> auto-debit — auto-renew won't be frictionless for that cadence.
+                Above this, RBI requires the host to approve <strong>every</strong> auto-debit — auto-renew won't be frictionless for that cadence.
               </div>
             )}
 

@@ -69,7 +69,7 @@ const AdminSettings = () => {
             }
           />
           <p className="text-xs text-gray-400 mt-1">
-            Percentage deducted from vendor earnings. Charged on top of the service price. Default: ₹10. Set 0 for no fee.
+            Percentage deducted from host earnings. Charged on top of the service price. Default: ₹10. Set 0 for no fee.
           </p>
         </div>
 
