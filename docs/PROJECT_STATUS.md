@@ -1,168 +1,124 @@
 # Project Status — Book A Sloth
 
-_Last updated: 2026-06-11_
+_Last updated: 2026-06-20_
 
 ---
 
-## Current State: Production-Ready Core
+## Current State: LIVE in Production
 
-The booking platform is functionally complete. All critical flows work end-to-end:
-- Guest booking with OTP → payment → confirmation
-- Host dashboard with full service/booking/availability management
-- Subscription plan upgrades via Razorpay
-- Admin panel with RBAC, email engine, badge system, notification system
+Book A Sloth is **live on its custom domain** as of 2026-06-19/20. The booking platform is functionally complete and all critical flows work end-to-end.
 
-**Test coverage:** 205 server tests / 112 client tests — all passing.
+**Live URLs:**
+- Frontend: `https://bookasloth.com` (+ `www`) — Vercel (Root Directory = `client`)
+- Backend: `https://book-a-sloth.onrender.com` — Render Web Service (`/api`)
+- DB: Supabase Mumbai (`ayjhlwyzszykqtnaktpb`)
+
+**Go-live ops — ALL DONE 2026-06-20 (founder-confirmed):**
+- ✅ Razorpay live creds + webhook (`/api/payment/webhook`, 6 events)
+- ✅ `bookasloth.com` DNS (Vercel nameserver delegation, SSL valid) + Vercel `API_ORIGIN` set (edge 301 + sitemap rewrite work)
+- ✅ UptimeRobot keep-alive on `/health` (counters Render free-tier spin-down)
+- ✅ Supabase PITR upgrade, `main` branch-protection, `service_role` key rotation
+- ✅ First admin `founder` seeded + mandatory 2FA enrolled
+- ✅ GSC domain verified + sitemap submitted (12 URLs discovered)
+- ✅ Real test booking e2e + Google OAuth consent-screen publish
+
+**Test coverage:** server **595** / client **160** — all passing.
 
 ---
 
 ## ✅ What's Complete
 
 ### Booking & Payments
-- ✅ Guest OTP-based booking (unauthenticated)
-- ✅ Logged-in user booking (skips OTP — BUG-16 fix)
-- ✅ Double-booking prevention (with grace period)
-- ✅ Razorpay payment integration (service + plan + product)
-- ✅ Full money model: platform fee (₹10) + 18% GST + commission snapshot
-- ✅ Actual Razorpay fee recording from API (not estimated)
-- ✅ Google Calendar Meet event auto-creation for online bookings
-- ✅ Booking confirmation emails (host + guest)
-- ✅ 24h and 1h booking reminder emails (cron, every 5 min)
-- ✅ Booking reschedule with guest acknowledgement flow
+- ✅ Guest OTP-based booking (DB-backed OTP, survives restarts)
+- ✅ Logged-in user booking (skips OTP)
+- ✅ Double-booking prevention (grace period + `bookings_no_overlap` gist constraint)
+- ✅ Razorpay payments (service + plan + product) + actual fee recording
+- ✅ Full money model v3: platform fee + 18% GST + commission GST + subscription GST, split Razorpay fee/tax
+- ✅ Booking reschedule with guest acknowledgement + reschedule fee
+- ✅ Google Calendar Meet event for online bookings (deferred to post-payment for paid services)
+- ✅ 24h/1h reminder emails + missed-webhook reconciler cron
 
 ### Authentication
-- ✅ Vendor + guest signup/login
-- ✅ Password reset via OTP
-- ✅ Google OAuth (calendar link)
-- ✅ JWT auto-refresh on 401
-- ✅ Admin RBAC auth (bcrypt, lockout, separate JWT)
+- ✅ Host (Google-only) + guest signup/login; phone-primary user login
+- ✅ Permanent usernames (history + gated change RPC + edge 301)
+- ✅ Password reset via OTP, JWT auto-refresh
+- ✅ Admin RBAC auth (bcrypt, lockout, separate store) + **mandatory TOTP 2FA** (all admins)
 
-### Host Dashboard
-- ✅ Services CRUD (v2: slugs, rich fields, FAQs, toggle, duplicate)
-- ✅ Availability editor (weekly schedule + blocked dates + timezone + buffer)
-- ✅ Bookings list (cancel, complete, reschedule)
-- ✅ Earnings overview
-- ✅ Payout request submission
-- ✅ Transaction history
-- ✅ Profile + theme color + social links
-- ✅ Digital products CRUD
+### Host Dashboard & Public
+- ✅ Services CRUD (v2 fields), availability editor, bookings management
+- ✅ Earnings + payout requests + transaction history (paid-only vendor visibility)
+- ✅ Public profile (theme), service detail, badge showcase, reviews
+- ✅ Vendor paid-only-visibility enforced
 
-### Public Pages
-- ✅ Host profile with plan-gated avatar border + theme color
-- ✅ Service listing
-- ✅ Service detail page
-- ✅ Badge showcase (`/:username/badges`)
-- ✅ Product purchase flow
+### Plans, Subscriptions & Settlement
+- ✅ DB-driven plan config + enforcement; admin plan management
+- ✅ **Monthly + annual subscriptions** via Razorpay Subscriptions (auto-renew)
+- ✅ **Settlement engine P2** — accurate vendor balance (completion + 7d clearing window)
+- ✅ **Admin payout approval** workflow (pending → approved → paid / rejected, ledger relief)
+- ✅ Financial Ledger **P1** — double-entry accounting + hourly self-heal reconciler
 
-### Vendor Onboarding
-- ✅ 10-step guided flow (slug → OTP → password → type → category → booking-type → calendar → profile → first-service → plans → explore)
-
-### Plan System
-- ✅ DB-driven plan config (limits, commission, features)
-- ✅ Plan enforcement (services, products, booking quota)
-- ✅ Admin plan management UI (CRUD, clone, archive, reorder, assign)
-- ✅ Public pricing page endpoint
-
-### Badge System
-- ✅ DB-driven rule engine (zero hardcoded badge logic)
-- ✅ Hourly automated evaluation + event hooks (booking complete, review)
-- ✅ Manual admin assign/revoke with required reason
-- ✅ Public badge showcase with accessible modal
-
-### Email Engine
-- ✅ 29 event templates (seeded)
-- ✅ Multi-provider (SMTP working; Resend + SES plugged in behind factory)
-- ✅ Queue with retry backoff (5min → 30min → 2h → permanent fail)
-- ✅ Placeholder resolver (`{{snake_case}}` variables)
-- ✅ Shared 600px email layout (no per-template HTML shells)
-- ✅ Admin UI: template CRUD, live iframe preview, test send, delivery logs
-
-### Notification System
-- ✅ AiSensy WhatsApp (DB-configured, no hardcoded keys)
-- ✅ Per-event channel toggles
-- ✅ Admin UI: provider config, test connection, event toggles, delivery logs
-
-### Admin RBAC (M0 + M1)
-- ✅ 6 roles, 45 permissions (DB-seeded)
-- ✅ Separate `admin_users` credential store (bcrypt, not auth.users)
-- ✅ Append-only audit log (`admin_audit_logs`)
-- ✅ 5-fail lockout enforcement
-- ✅ Staff management UI (invite, deactivate, role change)
-- ✅ Audit log viewer UI
-- ✅ Operations center with real attention queue
-- ✅ Maintenance mode (admin-toggleable, 30s cache, 503 to public)
+### Platform Systems
+- ✅ Email engine (DB templates, multi-provider, queue/retry) — **Resend live on prod**
+- ✅ Notification system (AiSensy WhatsApp, DB-configured) + host WhatsApp OTP verify
+- ✅ Email + WhatsApp **campaign platform** (contacts/segments/worker, consent-enforced)
+- ✅ Email **unsubscribe** (marketing opt-out, HMAC token)
+- ✅ Badge system (DB rule engine + auto-eval)
+- ✅ **Feature kill-switches** (33 flags, admin-managed) + bidirectional reviews kill-switch
+- ✅ Admin RBAC (6 roles, 45 perms, audit log, staff mgmt)
+- ✅ Razorpay admin config (DB-backed encrypted creds, no hardcoded keys)
+- ✅ **Newsletter** signup (homepage → welcome email)
+- ✅ Admin-managed **navbar logo** + email logo
+- ✅ Guest booking history (`/my-bookings` → `CustomerBookings.jsx`)
+- ✅ **SEO**: dynamic sitemap engine + admin service/profile SEO + JSON-LD + robots.txt (live, GSC-submitted)
+- ✅ Analytics stack (PostHog + GA4 + Meta Pixel + Clarity, consent-gated) + LP conversion pages
+- ✅ Deploy hardening (8 PRs: backup workflow, runbook, webhook alert, reconciler, Sentry no-op, etc.)
 
 ---
 
-## 🔄 Partial / Incomplete
+## 🔄 Partial / Not Yet Built
 
 | Feature | State | Gap |
 |---|---|---|
-| Guest booking history | BUG-18: `/my-bookings` routes to vendor dashboard | Need dedicated guest page + endpoint |
-| Review submission UI | API exists (`POST /api/reviews`) | No guest-facing form |
-| Admin payout approval | Requests stored; vendor UI works | No admin approve/reject endpoints or UI |
-| Refund processing | `payment_status='refunded'` enum only | No Razorpay refund API integration |
-| Admin finance pages | `AdminTransactions`, `AdminEarnings`, `AdminRefunds` | UI shells or partial |
-| Admin provider pages | `AdminProviders`, `AdminKYC` | Lists work; no state machine |
-| SuperDashboard trends | Attention queue is real | Trend % hardcoded (12/8/3/5); chart is fake |
-| Badge metrics | 12 of 14 metrics real | `avg_response_time_minutes` + `login_streak` = 0 |
-| CMS pages | Admin UI shells exist | No DB tables (pages, blogs, FAQ, newsletter, testimonials) |
-| Support pages | Admin UI shells exist | No DB tables (tickets, disputes) |
-| Email trigger wiring | Templates ready | Birthday, anniversary, milestones, login alert not triggered |
-| Admin appearance | UI shell | No general platform branding config |
+| Refunds | `refunded` enum only | No Razorpay refund API (= Ledger P3) |
+| Ledger P4 | P1 + P2 built | Reconciliation, accounting periods, reports/exports, GST invoicing, TDS |
+| Analytics dashboard | Attention queue real | SuperDashboard trend % still hardcoded; no GMV/MRR/churn/funnel |
+| CMS pages | Admin UI shells | No DB tables (pages, blogs, FAQ, testimonials; newsletter welcome shipped) |
+| Support center | Admin UI shells | No DB tables (tickets, disputes) |
+| KYC / provider verification | UI shell | No state machine |
+| Badge metrics | 12 of 14 real | `avg_response_time_minutes` + `login_streak` = 0 (no data source) |
+| Deferred email triggers | Templates ready | Birthday, anniversary, profile-completion, subscription-expiring, milestones, login-alert not wired (need DOB col + crons + counter hooks) |
+| Campaign v2 | Broadcast works | Delivery/read funnel + scheduled-send trigger (column exists, scheduler unwired) |
+| Explore page | Capture only | Deferred ~3–4mo; only `discovery_events` live (do NOT apply v2.9_explore.sql) |
+| SEO Phase 3 | Phases 0–2 shipped | Prerender/SSR for non-JS crawlers (see `docs/seo-aeo-geo-plan.md`); llms.txt |
+| Build-in-public blog | 30 posts drafted | Not published (`docs/build-in-public-blog-series.md`) |
+
+**Ideas / not committed:** Razorpay Route (split payouts), coupons/discounts, multi-currency, referral/affiliate, Twilio as alt WhatsApp provider, system-health dashboard, admin SSO.
 
 ---
 
-## ⚠️ Known Bugs / Issues
+## 🛠 Remaining Ops (founder, not code)
 
-| ID | Description | Severity | Status |
-|---|---|---|---|
-| BUG-16 | Logged-in users had to verify OTP again | High | **Fixed** |
-| BUG-18 | `/my-bookings` routes guest to vendor dashboard | Medium | Open |
-| — | WhatsApp via Twilio disabled (stub only) | Low | By design (AiSensy used instead) |
-| — | `commission_applied` column: v1.7 migration needed | Medium | **Workaround in place** (schema fallback) |
-| — | Admin dashboard trend % hardcoded | Low | Open |
-| — | Badge metrics: 2 of 14 always return 0 | Low | Open |
+These are the **only** ops items still open after the 2026-06-20 go-live:
+1. Dedicated **staging Supabase** project (prod currently has no isolated staging DB)
+2. Activate **#79 daily DB backup** — add repo secrets `BACKUP_DATABASE_URL` + `BACKUP_PASSPHRASE`, run once, test-restore
+3. Set **`SENTRY_DSN`** in Render to activate #83 error tracking (currently no-op)
 
----
-
-## 🚫 Blockers
-
-None currently. The only "blocker" for full production readiness:
-
-1. **Admin passwords** — initial credentials delivered in chat, must be changed before public launch. No force-change mechanism exists yet.
-2. **v1.7 migration** — if not applied, `commission_applied` is not stored (fallback prevents crash but data is incomplete). All other migrations have been applied to the production Supabase project.
+## 🧩 Data Loose Ends (verify)
+- `v1.7_pricing_snapshot.sql` (`commission_applied`) — code has schema fallback; confirm applied live
+- `server/scripts/backfillLedger.js` — historical ledger backfill not yet run on live (run with `--dry-run` first)
 
 ---
 
-## 📋 Next Priorities
-
-1. Guest booking history page (`/my-bookings`)
-2. Review submission UI (guest flow post-booking)
-3. Admin payout approval workflow
-4. Admin refund processing (Razorpay API integration)
-5. Wire deferred email triggers (subscription expiry, milestones)
-
----
-
-## 🔑 Credentials & Access
-
-- Admin login: `/hello-sloth` — 4 accounts created (superadmin, ops, finance, support). Credentials delivered in chat session on 2026-06-11.
-- Supabase: production project URL in `server/.env`
-- Razorpay: keys in `server/.env`
-
----
-
-## Test Coverage
-
-```
-Server:  205 / 205 passing (Jest)
-Client:  112 / 112 passing (Vitest)
-```
+## 📋 Next Priorities (by impact)
+1. **Refunds** (Razorpay refund API + Ledger P3) — only money flow still missing
+2. **Analytics dashboard** — replace hardcoded SuperDashboard trends with real GMV/MRR/churn
+3. **Wire deferred email triggers** — `SUBSCRIPTION_EXPIRING` first (cheapest churn-saver)
+4. **Badge metric data sources** — response-time + login-streak hooks
+5. **SEO Phase 3** — prerender bot traffic to lift the AEO/GEO ceiling
 
 ---
 
 ## Related Documentation
-- [CHANGELOG.md](CHANGELOG.md) — sprint-by-sprint history
-- [ROADMAP.md](ROADMAP.md) — what's planned next
+- [ROADMAP.md](ROADMAP.md) — full backlog (note: some "planned" items now shipped)
+- [current-state.md](current-state.md) — feature-level working/broken
 - [DECISIONS.md](DECISIONS.md) — why key choices were made
