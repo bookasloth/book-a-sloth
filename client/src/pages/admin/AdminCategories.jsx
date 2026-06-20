@@ -31,6 +31,16 @@ const AdminCategories = () => {
   const live = categories.filter((c) => c.status === 'active' || c.status === 'disabled');
   const pending = categories.filter((c) => c.status === 'pending');
   const groups = useMemo(() => groupCategories(live), [live]);
+  const knownGroups = useMemo(
+    () => [...new Set(categories.map((c) => c.group_label).filter(Boolean))],
+    [categories]
+  );
+
+  const totals = useMemo(() => ({
+    active: live.filter((c) => c.status === 'active').length,
+    hosts: live.reduce((n, c) => n + (c.registered_hosts || 0), 0),
+    top: [...live].sort((a, b) => (b.registered_hosts || 0) - (a.registered_hosts || 0))[0],
+  }), [live]);
 
   const create = async () => {
     const label = newLabel.trim();
@@ -70,6 +80,7 @@ const AdminCategories = () => {
     <select
       value={cat.status}
       onChange={(e) => setStatus(cat, e.target.value)}
+      aria-label={`Status: ${cat.label}`}
       className={`text-xs font-medium rounded border px-2 py-1 ${
         cat.status === 'active'
           ? 'border-green-300 bg-green-50 text-green-700'
@@ -114,13 +125,30 @@ const AdminCategories = () => {
         Switch categories on/off to control what hosts can pick at onboarding. Phased rollout: turn the next set 🟢 Active when ready.
       </p>
 
+      {!loading && (
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="rounded border border-gray-200 p-3">
+            <div className="text-2xl font-bold text-gray-900">{totals.active}</div>
+            <div className="text-xs text-gray-500">Active categories</div>
+          </div>
+          <div className="rounded border border-gray-200 p-3">
+            <div className="text-2xl font-bold text-gray-900">{totals.hosts}</div>
+            <div className="text-xs text-gray-500">Hosts categorised</div>
+          </div>
+          <div className="rounded border border-gray-200 p-3">
+            <div className="text-sm font-bold text-gray-900 truncate">{totals.top?.label || '—'}</div>
+            <div className="text-xs text-gray-500">Top category</div>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 mb-6">
         <input className="fb-input flex-1 min-w-[180px]" placeholder="New category name"
           value={newLabel} onChange={(e) => setNewLabel(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && create()} />
         <input className="fb-input flex-1 min-w-[160px]" placeholder="Group (e.g. Technology & Product)"
-          value={newGroup} onChange={(e) => setNewGroup(e.target.value)} />
+          value={newGroup} onChange={(e) => setNewGroup(e.target.value)} list="cat-groups" />
+        <datalist id="cat-groups">{knownGroups.map((g) => <option key={g} value={g} />)}</datalist>
         <button onClick={create} disabled={creating}
           className="btn flex items-center gap-1.5 bg-primary text-white px-4 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 shrink-0">
           <Plus className="w-4 h-4" strokeWidth={3} /> Add

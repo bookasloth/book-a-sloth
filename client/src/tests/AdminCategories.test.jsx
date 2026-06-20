@@ -22,25 +22,31 @@ beforeEach(() => {
   adminUpdateCategory.mockResolvedValue({ data: {} });
 });
 
-test('renders the analytics columns and counts', async () => {
+test('renders the analytics columns and the summary strip', async () => {
   render(<AdminCategories />);
-  expect(await screen.findByText('Life Coach')).toBeTruthy();
+  // "Life Coach" appears both in the busiest-category strip and in the table row.
+  expect((await screen.findAllByText('Life Coach')).length).toBeGreaterThanOrEqual(1);
+  // Per-row analytics columns
   expect(screen.getByText('Registered Hosts')).toBeTruthy();
   expect(screen.getByText('Active Services')).toBeTruthy();
-  expect(screen.getByText('4')).toBeTruthy(); // registered hosts for life-coach
+  // Summary strip
+  expect(screen.getByText('Active categories')).toBeTruthy();
+  expect(screen.getByText('Hosts categorised')).toBeTruthy();
+  expect(screen.getByText('Top category')).toBeTruthy();
 });
 
 test('status dropdown flips a category off', async () => {
   render(<AdminCategories />);
-  await screen.findByText('Life Coach');
-  const select = screen.getAllByRole('combobox')[0];
+  // Target the row's status select by its aria-label (avoids colliding with the
+  // group-name datalist input, which also has role combobox).
+  const select = await screen.findByLabelText('Status: Life Coach');
   fireEvent.change(select, { target: { value: 'disabled' } });
   await waitFor(() => expect(adminUpdateCategory).toHaveBeenCalledWith('1', { status: 'disabled' }));
 });
 
 test('delete is disabled when hosts are registered', async () => {
   render(<AdminCategories />);
-  await screen.findByText('Life Coach');
+  await screen.findByLabelText('Status: Life Coach');
   const delBtn = screen.getByTitle(/4 hosts registered/i);
   expect(delBtn.disabled).toBe(true);
 });
