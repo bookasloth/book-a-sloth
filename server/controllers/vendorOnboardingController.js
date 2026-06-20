@@ -302,7 +302,10 @@ const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
   if (stepNumber === 3) {
     updates.vendor_type = data.type; // 'individual' or 'organisation'
   } else if (stepNumber === 4) {
-    updates.categories = data.categories || [];
+    const cats = Array.isArray(data.categories) ? data.categories.filter(Boolean) : [];
+    const primary = data.primary_category || cats[0] || null;
+    updates.primary_category = primary;
+    updates.categories = primary ? [primary] : []; // onboarding = single primary
   } else if (stepNumber === 5) {
     updates.booking_type = data.booking_type; // 'online_only', 'offline_only', 'both'
   } else if (stepNumber === 6) {
