@@ -112,8 +112,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    **Environment** tab → add the real values for every `sync:false` key. Copy
    them from your working `server/.env`. For now set:
    - `CLIENT_URL` = `http://localhost:5173` (temporary; fixed in Phase 4)
-   - `API_URL` = your Render URL (e.g. `https://bookasloth-api.onrender.com`)
-   - `GOOGLE_REDIRECT_URI` = `https://bookasloth-api.onrender.com/api/auth/google/callback`
+   - `API_URL` = your Render URL (e.g. `https://book-a-sloth.onrender.com`)
+   - `GOOGLE_REDIRECT_URI` = `https://book-a-sloth.onrender.com/api/auth/google/callback`
    - `POSTHOG_PROJECT_TOKEN` = your PostHog project token (`phc_...`)
    - `POSTHOG_HOST` = `https://us.i.posthog.com`
      (server-side analytics — without these, backend booking/payment events
@@ -122,7 +122,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 **Verify:**
 ```bash
-curl https://bookasloth-api.onrender.com/health
+curl https://book-a-sloth.onrender.com/health
 # expect: {"status":"ok","uptime":...,"ts":...}
 ```
 Render dashboard → service should show **Live** (green) and health check passing.
@@ -136,7 +136,7 @@ Render dashboard → service should show **Live** (green) and health check passi
 3. Framework preset auto-detects **Vite**. Leave build (`vite build`) / output
    (`dist`) as-is.
 4. **Environment Variables** → add:
-   - `VITE_API_URL` = `https://bookasloth-api.onrender.com` (your Render URL for now)
+   - `VITE_API_URL` = `https://book-a-sloth.onrender.com` (your Render URL for now)
    - `VITE_SUPABASE_URL` = your Supabase URL
    - `VITE_SUPABASE_ANON_KEY` = your anon key
    - `VITE_RAZORPAY_KEY_ID` = your Razorpay key id
@@ -194,7 +194,7 @@ browser DevTools → Network: API calls go to the Render URL and return 200.
 - **Vercel** → Project → Settings → **Domains** → add `yourdomain.com` AND
   `www.yourdomain.com`. Vercel shows the records you need.
 - **Render** → Service → Settings → **Custom Domains** → add
-  `api.yourdomain.com`. Render shows a CNAME target (e.g. `bookasloth-api.onrender.com`).
+  `api.yourdomain.com`. Render shows a CNAME target (e.g. `book-a-sloth.onrender.com`).
 
 ### B. Add the records in Hostinger
 Hostinger **hPanel → Domains → (your domain) → DNS / Nameservers → Manage DNS records.**
@@ -204,7 +204,7 @@ Add:
 |---|---|---|---|
 | A | `@` | `76.76.21.21` (Vercel apex IP) | 3600 |
 | CNAME | `www` | `cname.vercel-dns.com` | 3600 |
-| CNAME | `api` | `bookasloth-api.onrender.com` (your Render target) | 3600 |
+| CNAME | `api` | `book-a-sloth.onrender.com` (your Render target) | 3600 |
 
 > If Hostinger already has default `A @` or `CNAME www` records, **edit/replace**
 > them rather than adding duplicates. Always confirm the exact values shown in
