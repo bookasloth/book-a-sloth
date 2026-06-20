@@ -918,10 +918,11 @@ const Home = () => {
 
           <div className="flex flex-col gap-2 border-t border-neutral-200 py-6 text-xs text-neutral-400 sm:flex-row sm:justify-between">
             <p>© {new Date().getFullYear()} Book A Sloth. All rights reserved.</p>
-            <div className="flex gap-5">
-              <a href="#" className="hover:text-ink hover:no-underline">Privacy</a>
-              <a href="#" className="hover:text-ink hover:no-underline">Terms</a>
-              <a href="#" className="hover:text-ink hover:no-underline">notifications@bookasloth.in</a>
+            <div className="flex flex-wrap gap-5">
+              <Link to="/terms" className="hover:text-ink hover:no-underline">Terms</Link>
+              <Link to="/privacy" className="hover:text-ink hover:no-underline">Privacy</Link>
+              <Link to="/refund" className="hover:text-ink hover:no-underline">Refund</Link>
+              <a href="mailto:team@timewheel.co.in" className="hover:text-ink hover:no-underline">team@timewheel.co.in</a>
             </div>
           </div>
         </div>

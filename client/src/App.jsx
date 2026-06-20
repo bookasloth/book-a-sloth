@@ -21,6 +21,8 @@ const VendorSignup   = lazy(() => import('./pages/VendorSignup'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
 const Help           = lazy(() => import('./pages/Help'));
 const Privacy        = lazy(() => import('./pages/Privacy'));
+const Terms          = lazy(() => import('./pages/Terms'));
+const Refund         = lazy(() => import('./pages/Refund'));
 const Unsubscribe    = lazy(() => import('./pages/Unsubscribe'));
 const About          = lazy(() => import('./pages/About'));
 
@@ -188,6 +190,8 @@ function App() {
           <Route path="/help" element={<Help />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/refund" element={<Refund />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           {/* Customers never register — accounts are created automatically
               during booking (phone OTP). Old signup URL redirects home. */}
