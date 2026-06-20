@@ -174,6 +174,45 @@ const TRENDING = [
   "Business consultant",
 ];
 
+/* "How it works" — outcome-led pipeline (Share → Book & Pay → Focus).
+   Line-draw glyphs reuse the LineIcon stroke style. */
+const STEPS = [
+  {
+    title: "Share one link",
+    desc: "Your services, availability and pricing — in a single SlothPage link.",
+    chip: "Replaces 20 DMs",
+    draw: (
+      <>
+        <path d="M20 28a7 7 0 0 1 0-10l4-4a7 7 0 0 1 10 10l-2 2" />
+        <path d="M28 20a7 7 0 0 1 0 10l-4 4a7 7 0 0 1-10-10l2-2" />
+      </>
+    ),
+  },
+  {
+    title: "Clients book & pay upfront",
+    desc: "They self-book a slot and pay before the session. Money lands first.",
+    chip: "Paid in advance",
+    draw: (
+      <>
+        <rect x="6" y="13" width="36" height="24" rx="4" />
+        <line x1="6" y1="21" x2="42" y2="21" />
+        <circle cx="14" cy="29" r="2.5" />
+      </>
+    ),
+  },
+  {
+    title: "You just show up",
+    desc: "Auto reminders cut no-shows; receipts and follow-ups send themselves.",
+    chip: "~0 no-shows",
+    draw: (
+      <>
+        <path d="M8 28c6 0 6-8 12-8s6 8 12 8 8-6 8-6" />
+        <circle cx="24" cy="14" r="4" />
+      </>
+    ),
+  },
+];
+
 /* Footer nav — every link resolves (route, on-page anchor, or mailto).
    No dead "#" hrefs. Add columns/links here as pages ship. */
 const FOOTER_COLS = [
@@ -351,7 +390,7 @@ const Home = () => {
                   onClick={claim}
                   className="btn inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap bg-primary-cta px-5 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:py-3"
                 >
-                  Claim Your SlothPage
+                  Get Started
                   <ArrowRight size={15} />
                 </button>
               </div>
@@ -572,57 +611,64 @@ const Home = () => {
             How the calm works
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-4 max-w-xl text-center text-4xl text-ink sm:text-5xl">
-            Three steps. Zero chaos.
+            From link to paid. Calmly.
+          </Reveal>
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-md text-center text-base text-neutral-500">
+            No WhatsApp back-and-forth. No payment chasing. No calendar chaos.
           </Reveal>
 
-          <div className="mt-16 grid gap-10 md:grid-cols-3 md:gap-6">
-            {[
-              {
-                title: "Book It",
-                desc: "Share your link. Clients pick a slot. No DMs, no “are you free tomorrow?”.",
-                draw: (
-                  <>
-                    <rect x="8" y="10" width="32" height="30" rx="4" />
-                    <line x1="8" y1="18" x2="40" y2="18" />
-                    <line x1="16" y1="6" x2="16" y2="14" />
-                    <line x1="32" y1="6" x2="32" y2="14" />
-                    <path d="M18 28l4 4 8-8" />
-                  </>
-                ),
-              },
-              {
-                title: "Get Paid",
-                desc: "Payment lands before you meet. UPI, card or wallet — peacefully verified.",
-                draw: (
-                  <>
-                    <rect x="6" y="13" width="36" height="24" rx="4" />
-                    <line x1="6" y1="21" x2="42" y2="21" />
-                    <circle cx="14" cy="29" r="2.5" />
-                  </>
-                ),
-              },
-              {
-                title: "Breathe Easy",
-                desc: "Automatic reminders, receipts and follow-ups. You focus; we handle the rest.",
-                draw: (
-                  <>
-                    <path d="M8 28c6 0 6-8 12-8s6 8 12 8 8-6 8-6" />
-                    <circle cx="24" cy="14" r="4" />
-                  </>
-                ),
-              },
-            ].map((s, i) => (
-              <Reveal key={s.title} delay={i * 0.1} className="text-center md:text-left">
-                <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_10px_30px_-10px_rgba(26,26,26,0.15)]">
-                  <LineIcon>{s.draw}</LineIcon>
-                </div>
-                <div className="mb-2 text-xs font-semibold text-neutral-300">
-                  0{i + 1}
-                </div>
-                <h3 className="font-heading text-xl font-bold text-ink">{s.title}</h3>
-                <p className="mt-2 text-neutral-500">{s.desc}</p>
-              </Reveal>
-            ))}
+          <div className="relative mt-16">
+            {/* Connector wire threading the step nodes (desktop) */}
+            <div
+              aria-hidden
+              className="absolute left-[16.666%] right-[16.666%] top-8 hidden -translate-y-1/2 border-t-2 border-dashed border-neutral-200 md:block"
+            />
+            {/* Direction chevrons on the wire (desktop) */}
+            <ArrowRight
+              aria-hidden
+              size={20}
+              className="absolute left-1/3 top-8 hidden -translate-x-1/2 -translate-y-1/2 rounded-full bg-canvas px-1 text-neutral-300 md:block"
+            />
+            <ArrowRight
+              aria-hidden
+              size={20}
+              className="absolute left-2/3 top-8 hidden -translate-x-1/2 -translate-y-1/2 rounded-full bg-canvas px-1 text-neutral-300 md:block"
+            />
+
+            <div className="grid gap-12 md:grid-cols-3 md:gap-6">
+              {STEPS.map((s, i) => (
+                <Reveal key={s.title} delay={i * 0.12} className="relative text-center">
+                  {/* Vertical connector to the next step (mobile) */}
+                  {i < STEPS.length - 1 && (
+                    <span
+                      aria-hidden
+                      className="absolute left-1/2 top-full h-12 w-px -translate-x-1/2 bg-neutral-200 md:hidden"
+                    >
+                      <ArrowRight
+                        size={16}
+                        className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-canvas text-neutral-300"
+                      />
+                    </span>
+                  )}
+
+                  {/* Node: icon box + step number */}
+                  <div className="relative z-10 mx-auto inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_10px_30px_-10px_rgba(26,26,26,0.15)]">
+                    <LineIcon>{s.draw}</LineIcon>
+                    <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary-cta text-[11px] font-bold text-white">
+                      {i + 1}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-6 font-heading text-xl font-bold text-ink">{s.title}</h3>
+                  <p className="mx-auto mt-2 max-w-xs text-neutral-500">{s.desc}</p>
+
+                  <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-sand px-3 py-1 text-xs font-semibold text-primary">
+                    <Check size={13} />
+                    {s.chip}
+                  </span>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -651,7 +697,7 @@ const Home = () => {
                   to={ROUTE_START}
                   className="mt-8 inline-flex w-fit items-center gap-2 rounded-full bg-primary-cta px-6 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
                 >
-                  Start Calmly <ArrowRight size={16} />
+                  Get Started <ArrowRight size={16} />
                 </Link>
               </div>
             </Reveal>
@@ -865,7 +911,7 @@ const Home = () => {
                 to={ROUTE_START}
                 className="inline-flex items-center gap-2 rounded-full bg-ink px-7 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:no-underline"
               >
-                Start free <ArrowRight size={15} />
+                Get Started <ArrowRight size={15} />
               </Link>
             </div>
           </Reveal>
@@ -944,7 +990,7 @@ const Home = () => {
                 to={ROUTE_START}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-cta px-8 py-4 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(254,81,0,0.4)] transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
               >
-                Start Calmly <ArrowRight size={16} />
+                Get Started <ArrowRight size={16} />
               </Link>
               <a
                 href="#how-it-works"
