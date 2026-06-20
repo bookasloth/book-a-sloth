@@ -42,9 +42,21 @@ export default async function middleware(request) {
   if (SKIP.has(slug)) return;
 
   try {
-    const res = await fetch(`${API_ORIGIN}/api/username/resolve/${encodeURIComponent(slug)}`, {
-      headers: { accept: 'application/json' },
-    });
+    // Hard timeout so a slow/cold backend fails OPEN fast (continue to the SPA)
+    // rather than hanging until Vercel kills the edge invocation with a 504
+    // MIDDLEWARE_INVOCATION_TIMEOUT — which would take the whole page down.
+    // Username resolve is sub-200ms when the API is warm; 2s is ample headroom.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    let res;
+    try {
+      res = await fetch(`${API_ORIGIN}/api/username/resolve/${encodeURIComponent(slug)}`, {
+        headers: { accept: 'application/json' },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!res.ok) return; // 404 (not a username) or error → continue to SPA
     const data = await res.json();
     if (data.found && data.current && data.current !== slug) {
@@ -52,6 +64,6 @@ export default async function middleware(request) {
       return Response.redirect(url.toString(), 301);
     }
   } catch (_) {
-    // fail open
+    // fail open — timeout/abort, network error, or non-200 all continue to the SPA
   }
 }
