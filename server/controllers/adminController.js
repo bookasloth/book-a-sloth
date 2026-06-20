@@ -3,6 +3,7 @@ const { safeError } = require('../utils/httpError');
 const { audit } = require('../services/auditService');
 const { sanitizeLikeTerm, isUuid } = require('../utils/searchSanitize');
 const { bustSitemapCache } = require('../utils/sitemapCache');
+const { validateCategorySelection } = require('../lib/categoryRules');
 
 // Admin-managed SEO fields (v3.19) — shared whitelist for service + profile SEO.
 // Builds a sanitised update payload from the request body; only provided keys
@@ -174,6 +175,42 @@ const deleteUser = async (req, res) => {
     if (error) return safeError(res, error);
     await audit(req, { action: 'user.delete', resource_type: 'profile', resource_id: req.params.id });
     res.json({ message: 'User deleted' });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// PATCH /api/admin/users/:id/categories — admin override, no plan cap.
+const adminSetUserCategories = async (req, res) => {
+  try {
+    const { data: activeRows, error: actErr } = await supabaseAdmin
+      .from('categories').select('slug').eq('status', 'active');
+    if (actErr) return safeError(res, actErr);
+    const activeSlugs = (activeRows || []).map((r) => r.slug);
+
+    const result = validateCategorySelection({
+      primary_category: req.body.primary_category,
+      categories: req.body.categories,
+      activeSlugs,
+      max: -1, // admin bypasses plan caps
+    });
+    if (!result.ok) return res.status(result.status).json({ message: result.message });
+
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .update({
+        primary_category: result.primary_category,
+        categories: result.categories,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.id)
+      .select('id, primary_category, categories')
+      .single();
+    if (error) return safeError(res, error);
+
+    await audit(req, { action: 'user.set_categories', resource_type: 'profile', resource_id: req.params.id,
+      after: { primary_category: result.primary_category, categories: result.categories } });
+    res.json(data);
   } catch (error) {
     safeError(res, error);
   }
@@ -460,6 +497,7 @@ module.exports = {
   getUserById,
   updateUser,
   deleteUser,
+  adminSetUserCategories,
   getAllBookings,
   updateBooking,
   deleteBooking,
