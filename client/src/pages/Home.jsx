@@ -21,14 +21,9 @@ import {
   ArrowRight,
   Star,
   Check,
-  Menu,
-  X,
   AtSign,
-  Send,
-  Rss,
-  MessageCircle,
 } from "lucide-react";
-import { searchVendors } from "../services/api";
+import { searchVendors, subscribeNewsletter } from "../services/api";
 import useLenis from "../hooks/useLenis";
 import Reveal from "../components/home/Reveal";
 import BrandPreloader from "../components/preloader/BrandPreloader";
@@ -179,6 +174,32 @@ const TRENDING = [
   "Business consultant",
 ];
 
+/* Footer nav — every link resolves (route, on-page anchor, or mailto).
+   No dead "#" hrefs. Add columns/links here as pages ship. */
+const FOOTER_COLS = [
+  { h: "Product", links: [
+    { t: "How It Works", href: "#how-it-works" },
+    { t: "Find Vendors", href: "#find" },
+    { t: "Pricing", href: "#pricing" },
+    { t: "Be a Sloth", href: "/be-a-sloth" },
+  ]},
+  { h: "Company", links: [
+    { t: "About", href: "/about" },
+    { t: "Manifesto", href: "#manifesto" },
+    { t: "Log in", href: "/login-as-vendor" },
+  ]},
+  { h: "Collective", links: [
+    { t: "The Collective", href: "#collective" },
+    { t: "Newsletter", href: "#newsletter" },
+    { t: "Contact", href: "mailto:team@timewheel.co.in" },
+  ]},
+];
+
+/* Social — only real destinations. Founder: add Instagram/X/WhatsApp URLs here. */
+const SOCIAL = [
+  { Icon: AtSign, label: "Email Book A Sloth", href: "mailto:team@timewheel.co.in" },
+];
+
 /* ════════════════════════════════════════════════════════════
    PAGE
    ════════════════════════════════════════════════════════════ */
@@ -204,15 +225,43 @@ const Home = () => {
 
   // ── Hero username / SlothPage claim ──
   const [username, setUsername] = useState("");
-  const claim = () => navigate(ROUTE_START);
+  const claim = () => {
+    const handle = username.trim();
+    // Carry the typed handle through the (Google-only) funnel instead of dropping it.
+    if (handle) sessionStorage.setItem("pendingSlothPage", handle);
+    navigate(ROUTE_START, { state: { desiredUsername: handle || undefined } });
+  };
 
   // ── Newsletter ──
   const [emailInput, setEmailInput] = useState("");
+  const [newsletterState, setNewsletterState] = useState("idle"); // idle|loading|ok|err
+  const submitNewsletter = async (e) => {
+    e.preventDefault();
+    const email = emailInput.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setNewsletterState("err");
+      return;
+    }
+    setNewsletterState("loading");
+    try {
+      await subscribeNewsletter(email);
+    } catch {
+      // Backend route /email/subscribe is pending — capture the lead client-side
+      // so it is never lost (mirrors the /lp client-only lead pattern).
+      try {
+        const leads = JSON.parse(localStorage.getItem("newsletterLeads") || "[]");
+        localStorage.setItem("newsletterLeads", JSON.stringify([...leads, email].slice(-200)));
+      } catch { /* storage unavailable — ignore */ }
+    }
+    setNewsletterState("ok");
+    setEmailInput("");
+  };
 
   // ── Search (UNCHANGED logic — debounced searchVendors) ──
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(false);
   const searchTimeout = useRef(null);
 
   const handleSearch = (q) => {
@@ -220,15 +269,18 @@ const Home = () => {
     clearTimeout(searchTimeout.current);
     if (!q.trim()) {
       setResults(null);
+      setSearchError(false);
       return;
     }
     searchTimeout.current = setTimeout(async () => {
       setSearching(true);
+      setSearchError(false);
       try {
         const { data } = await searchVendors(q);
         setResults(data);
       } catch {
         setResults(null);
+        setSearchError(true);
       } finally {
         setSearching(false);
       }
@@ -285,18 +337,19 @@ const Home = () => {
                     bookasloth.com/
                   </span>
                   <input
+                    aria-label="Your SlothPage username"
                     value={username}
                     onChange={(e) =>
                       setUsername(e.target.value.replace(/[^a-z0-9-]/gi, "").toLowerCase())
                     }
                     onKeyDown={(e) => e.key === "Enter" && claim()}
                     placeholder="yourname"
-                    className="!min-h-0 !w-auto flex-1 min-w-0 !border-0 !bg-transparent !p-0 py-3.5 text-sm font-medium text-ink placeholder:font-normal placeholder:text-neutral-300 !shadow-none focus:!ring-0 sm:py-2.5"
+                    className="!min-h-0 !w-auto flex-1 min-w-0 !border-0 !bg-transparent !p-0 py-3.5 text-sm font-medium text-ink placeholder:font-normal placeholder:text-neutral-400 !shadow-none focus:!ring-0 sm:py-2.5"
                   />
                 </div>
                 <button
                   onClick={claim}
-                  className="btn inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap bg-primary px-5 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:py-3"
+                  className="btn inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap bg-primary-cta px-5 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:py-3"
                 >
                   Claim Your SlothPage
                   <ArrowRight size={15} />
@@ -381,12 +434,16 @@ const Home = () => {
           </Reveal>
 
           <Reveal delay={0.12} className="relative mx-auto mt-10 max-w-2xl">
+            <label htmlFor="vendor-search" className="sr-only">
+              Search vendors by name, skill or service
+            </label>
             <Search
               size={20}
               className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-neutral-400"
             />
             <input
-              type="text"
+              id="vendor-search"
+              type="search"
               placeholder="e.g. career coach, UI designer, yoga teacher…"
               value={query}
               onChange={(e) => handleSearch(e.target.value)}
@@ -395,6 +452,16 @@ const Home = () => {
             {searching && (
               <div className="absolute right-6 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             )}
+            {/* Screen-reader status — announces search progress/outcome */}
+            <div role="status" aria-live="polite" className="sr-only">
+              {searching
+                ? "Searching"
+                : searchError
+                ? "Search failed, please try again"
+                : query && !hasResults
+                ? `No results for ${query}`
+                : ""}
+            </div>
           </Reveal>
 
           {/* Trending chips */}
@@ -419,8 +486,10 @@ const Home = () => {
           {query && (
             <div className="mt-6 text-left">
               {!hasResults && !searching && (
-                <p className="py-6 text-center text-sm text-neutral-400">
-                  No results for “{query}”.
+                <p className="py-6 text-center text-sm text-neutral-500">
+                  {searchError
+                    ? "Something went wrong. Please try again."
+                    : `No results for “${query}”.`}
                 </p>
               )}
 
@@ -580,7 +649,7 @@ const Home = () => {
                 </div>
                 <Link
                   to={ROUTE_START}
-                  className="mt-8 inline-flex w-fit items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
+                  className="mt-8 inline-flex w-fit items-center gap-2 rounded-full bg-primary-cta px-6 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
                 >
                   Start Calmly <ArrowRight size={16} />
                 </Link>
@@ -742,7 +811,7 @@ const Home = () => {
                   }`}
                 >
                   {p.popular && (
-                    <span className="absolute right-6 top-6 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
+                    <span className="absolute right-6 top-6 rounded-full bg-primary-cta px-3 py-1 text-xs font-semibold text-white">
                       Most popular
                     </span>
                   )}
@@ -768,7 +837,7 @@ const Home = () => {
                     to={ROUTE_START}
                     className={`mt-8 inline-flex items-center justify-center rounded-full py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:no-underline ${
                       p.popular
-                        ? "bg-primary text-white hover:bg-primary-dark"
+                        ? "bg-primary-cta text-white hover:bg-primary-dark"
                         : "bg-neutral-100 text-ink hover:bg-neutral-200"
                     }`}
                   >
@@ -804,7 +873,7 @@ const Home = () => {
       </section>
 
       {/* ════════════════ NEWSLETTER ════════════════ */}
-      <section className="px-5 py-20 sm:px-8">
+      <section id="newsletter" className="px-5 py-20 sm:px-8">
         <Reveal className="mx-auto max-w-4xl overflow-hidden rounded-[2.5rem] bg-sand">
           <div className="grid items-center gap-8 p-8 sm:p-12 lg:grid-cols-2">
             <div>
@@ -815,19 +884,36 @@ const Home = () => {
                 Tips, templates and the occasional truth bomb — delivered weekly,
                 quietly.
               </p>
-              <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+              <form onSubmit={submitNewsletter} noValidate className="mt-6 flex flex-col gap-2 sm:flex-row">
+                <label htmlFor="newsletter-email" className="sr-only">Email address</label>
                 <input
+                  id="newsletter-email"
                   type="email"
+                  autoComplete="email"
                   placeholder="your@email.com"
                   value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
+                  onChange={(e) => {
+                    setEmailInput(e.target.value);
+                    if (newsletterState !== "idle") setNewsletterState("idle");
+                  }}
+                  aria-invalid={newsletterState === "err"}
                   className="!h-12 flex-1 rounded-full border border-black/5 bg-white px-5 text-sm focus:!border-primary"
                 />
-                <button className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark">
-                  Join the Collective
+                <button
+                  type="submit"
+                  disabled={newsletterState === "loading"}
+                  className="inline-flex items-center justify-center rounded-full bg-primary-cta px-6 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark disabled:opacity-60"
+                >
+                  {newsletterState === "loading" ? "Joining…" : "Join the Collective"}
                 </button>
-              </div>
-              <p className="mt-3 text-xs text-neutral-400">No spam. Unsubscribe anytime.</p>
+              </form>
+              <p role="status" aria-live="polite" className="mt-3 text-xs text-neutral-500">
+                {newsletterState === "ok"
+                  ? "You’re in — welcome to the Collective."
+                  : newsletterState === "err"
+                  ? "Please enter a valid email address."
+                  : "No spam. Unsubscribe anytime."}
+              </p>
             </div>
             <div className="hidden overflow-hidden rounded-[1.5rem] lg:block">
               <img src={NEWSLETTER} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover" />
@@ -856,7 +942,7 @@ const Home = () => {
             <Reveal delay={0.1} className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 to={ROUTE_START}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(254,81,0,0.4)] transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-cta px-8 py-4 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(254,81,0,0.4)] transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
               >
                 Start Calmly <ArrowRight size={16} />
               </Link>
@@ -884,10 +970,11 @@ const Home = () => {
                 The calm way to get booked and paid. Built with calm, in India.
               </p>
               <div className="mt-5 flex gap-3">
-                {[AtSign, Send, Rss, MessageCircle].map((Icon, i) => (
+                {SOCIAL.map(({ Icon, label, href }) => (
                   <a
-                    key={i}
-                    href="#"
+                    key={label}
+                    href={href}
+                    aria-label={label}
                     className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 transition-colors hover:bg-primary hover:text-white"
                   >
                     <Icon size={16} />
@@ -896,19 +983,21 @@ const Home = () => {
               </div>
             </div>
 
-            {[
-              { h: "Product", links: ["How It Works", "Find Vendors", "Pricing", "SlothPage"] },
-              { h: "Company", links: ["About", "Manifesto", "Careers", "Contact"] },
-              { h: "Collective", links: ["The Collective", "Blog", "Stories", "Newsletter"] },
-            ].map((col) => (
+            {FOOTER_COLS.map((col) => (
               <div key={col.h}>
                 <p className="font-heading text-sm font-bold text-ink">{col.h}</p>
                 <ul className="mt-4 space-y-2.5">
                   {col.links.map((l) => (
-                    <li key={l}>
-                      <a href="#" className="text-sm text-neutral-500 hover:text-primary hover:no-underline">
-                        {l}
-                      </a>
+                    <li key={l.t}>
+                      {l.href.startsWith("/") ? (
+                        <Link to={l.href} className="text-sm text-neutral-500 hover:text-primary hover:no-underline">
+                          {l.t}
+                        </Link>
+                      ) : (
+                        <a href={l.href} className="text-sm text-neutral-500 hover:text-primary hover:no-underline">
+                          {l.t}
+                        </a>
+                      )}
                     </li>
                   ))}
                 </ul>

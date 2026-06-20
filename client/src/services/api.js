@@ -98,6 +98,11 @@ export const setUserPassword  = (data)         => API.post('/auth/set-password',
 export const forgotPassword   = (data)         => API.post('/auth/forgot-password', data);
 export const resetPassword    = (data)         => API.post('/auth/reset-password', data);
 
+// ── Newsletter (public) — backend route /email/subscribe is PENDING.
+// Caller treats this best-effort: on failure it still captures the lead
+// client-side (mirrors the /lp client-only lead pattern).
+export const subscribeNewsletter = (email)     => API.post('/email/subscribe', { email });
+
 // ── Email preferences (public, signed-token gated) ────────────
 export const getUnsubscribeStatus = (token)    => API.get('/email/unsubscribe', { params: { token } });
 export const unsubscribeEmail     = (token)    => API.post('/email/unsubscribe', { token });

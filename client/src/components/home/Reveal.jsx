@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 /**
  * Calm fade-up reveal on scroll-into-view.
@@ -18,13 +18,16 @@ export default function Reveal({
   ...rest
 }) {
   const MotionTag = motion[as] || motion.div;
+  // Respect prefers-reduced-motion: render the final state immediately so content
+  // never animates AND never gets stranded at opacity:0 for these users.
+  const reduce = useReducedMotion();
   return (
     <MotionTag
       className={className}
-      initial={{ opacity: 0, y, scale: 0.985 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      initial={reduce ? false : { opacity: 0, y, scale: 0.985 }}
+      whileInView={reduce ? undefined : { opacity: 1, y: 0, scale: 1 }}
       viewport={{ once, amount }}
-      transition={{ duration: 0.7, ease: EASE, delay }}
+      transition={reduce ? { duration: 0 } : { duration: 0.7, ease: EASE, delay }}
       {...rest}
     >
       {children}
