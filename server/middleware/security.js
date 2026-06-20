@@ -162,6 +162,36 @@ const freeDownloadIpLimiter = rateLimit({
   skip: skipWhenLoadTest,
 });
 
+// Newsletter signup — public write keyed by EMAIL (falling back to IP) so an
+// attacker can't repeatedly subscribe a victim's address from rotating IPs.
+const newsletterEmailLimiter = rateLimit({
+  store: makeRateLimitStore('newsletter_email'),
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const email = String(req.body?.email || '').toLowerCase().trim();
+    return email || req.ip;
+  },
+  message: { message: 'Too many signups for this email. Please try again later.' },
+  skip: skipWhenLoadTest,
+});
+
+// Companion to newsletterEmailLimiter, keyed by IP. The email-keyed limiter alone
+// is bypassed by rotating the email per request (each unique email = a fresh
+// bucket) → unlimited contact-row spam from one IP. Caps total signups per IP
+// regardless of distinct emails used. Stack BOTH on the route.
+const newsletterIpLimiter = rateLimit({
+  store: makeRateLimitStore('newsletter_ip'),
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many signups. Please try again later.' },
+  skip: skipWhenLoadTest,
+});
+
 // Slow down abusive request floods — secondary to apiLimiter (100/min hard cap).
 //
 // PROVEN BUG (fixed): the old config (delayAfter:50, delayMs: hits*200, no cap)
@@ -247,6 +277,8 @@ module.exports = {
   slotsLimiter,
   freeDownloadLimiter,
   freeDownloadIpLimiter,
+  newsletterEmailLimiter,
+  newsletterIpLimiter,
   speedLimiter,
   hppMiddleware,
   sanitizeBody,
