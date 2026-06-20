@@ -97,6 +97,11 @@ router.post('/notifications/test-send',      requireAdmin('whatsapp.manage'),   
 router.get('/notifications/logs',            requireAdmin('notifications.view'), notif.getLogs);
 router.post('/notifications/logs/:id/retry', requireAdmin('whatsapp.manage'),    notif.retryLog);
 
+// ── Vendor feedback (triage) ───────────────────────────────────
+const feedbackAdmin = require('../controllers/feedbackAdminController');
+router.get('/feedback',         requireAdmin('feedback.view'),   feedbackAdmin.listFeedback);
+router.patch('/feedback/:id',   requireAdmin('feedback.manage'), feedbackAdmin.updateFeedbackStatus);
+
 // ── Badge system ───────────────────────────────────────────────
 const badges = require('../controllers/badgeAdminController');
 router.get('/badges/meta',                requireAdmin('badges.manage'), badges.getMeta);
