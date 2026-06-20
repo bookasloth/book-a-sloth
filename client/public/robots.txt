@@ -1,0 +1,30 @@
+# Book A Sloth — robots.txt
+# Public profiles/services are crawlable; private app surfaces are not.
+# The sitemap is generated dynamically from the DB (see server sitemapController).
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /super-dashboard
+Disallow: /dashboard
+Disallow: /my-bookings
+Disallow: /profile
+Disallow: /loyalty
+Disallow: /login
+Disallow: /signup
+Disallow: /login-as-vendor
+
+# AI crawlers — explicitly welcomed (GEO / AI-search citation).
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://bookasloth.com/sitemap.xml

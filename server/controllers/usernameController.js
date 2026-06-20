@@ -1,6 +1,7 @@
 const usernameService = require('../services/usernameService');
 const { isReserved } = require('../utils/reservedUsernames');
 const { safeError } = require('../utils/httpError');
+const { bustSitemapCache } = require('../utils/sitemapCache');
 
 // Strict format: lowercase letters/digits in hyphen-separated groups, 3–30 chars.
 const USERNAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -58,6 +59,7 @@ const changeUsername = async (req, res) => {
 
     const result = await usernameService.changeUsername(req.user.id, slug);
     if (result.ok) {
+      bustSitemapCache(); // host + all their service URLs moved to the new username
       return res.json({ success: true, username: result.username });
     }
 

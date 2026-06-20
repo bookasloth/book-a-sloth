@@ -105,6 +105,11 @@ app.use('/api/username',      require('./routes/usernameRoutes')); // public res
 app.get('/api/appearance',  require('./controllers/appearanceController').getPublic); // public navbar logo
 app.get('/api/plans',       require('./controllers/planAdminController').publicPlans);
 
+// Dynamic sitemap — root-mounted (NOT /api) so the public URLs are
+// bookasloth.com/sitemap*.xml via the Vercel rewrite. DB-driven, cached, busted
+// on service/profile mutations. Bypasses the /api rate limiter + maintenance 503.
+app.use(require('./routes/sitemapRoutes'));
+
 // Health check — used by Render's health probe and UptimeRobot. Mounted outside
 // /api so it bypasses the API rate limiter and maintenance-mode 503s, staying
 // reachable even while the app is in maintenance. Intentionally does NOT touch

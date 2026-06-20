@@ -2,6 +2,22 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const { audit } = require('../services/auditService');
 const { sanitizeLikeTerm, isUuid } = require('../utils/searchSanitize');
+const { bustSitemapCache } = require('../utils/sitemapCache');
+
+// Admin-managed SEO fields (v3.19) — shared whitelist for service + profile SEO.
+// Builds a sanitised update payload from the request body; only provided keys
+// are touched. is_indexable is coerced to a real boolean.
+const buildSeoUpdate = (body, actor) => {
+  const u = { seo_updated_at: new Date().toISOString(), seo_updated_by: actor || null };
+  ['seo_title', 'seo_description', 'og_title', 'og_description', 'seo_image'].forEach((k) => {
+    if (body[k] !== undefined) u[k] = body[k] === null ? null : String(body[k]);
+  });
+  if (body.is_indexable !== undefined) u.is_indexable = !!body.is_indexable;
+  return u;
+};
+
+const SEO_MIGRATION_HINT =
+  'SEO columns are not present yet. Run migration v3.19_service_seo.sql in Supabase, then retry.';
 
 // Coerce + clamp pagination so a client can't request an unbounded page size.
 const clampPage = (p) => Math.max(1, parseInt(p, 10) || 1);
@@ -122,6 +138,8 @@ const updateUser = async (req, res) => {
     if (is_verified !== undefined) updates.is_verified = is_verified;
     if (is_banned !== undefined) updates.is_banned = is_banned;
     if (admin_notes !== undefined) updates.admin_notes = admin_notes;
+    // Verifying/unverifying/banning a host changes who appears in the sitemap.
+    const visibilityChanged = is_verified !== undefined || is_banned !== undefined;
     if (name !== undefined) updates.name = name;
     if (email !== undefined) {
       updates.email = email;
@@ -137,6 +155,7 @@ const updateUser = async (req, res) => {
       .single();
 
     if (error) return safeError(res, error);
+    if (visibilityChanged) bustSitemapCache();
     await audit(req, { action: 'user.update', resource_type: 'profile', resource_id: req.params.id,
       after: { role: updates.role, is_verified: updates.is_verified, is_banned: updates.is_banned } });
     res.json(data);
@@ -254,8 +273,63 @@ const deleteService = async (req, res) => {
   try {
     const { error } = await supabaseAdmin.from('services').delete().eq('id', req.params.id);
     if (error) return safeError(res, error);
+    bustSitemapCache();
     await audit(req, { action: 'service.delete', resource_type: 'service', resource_id: req.params.id });
     res.json({ message: 'Service deleted' });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// PUT /api/admin/services/:id/seo — admin-only SEO + index control for a service.
+// Vendors never reach this. is_indexable drives the page robots meta AND sitemap
+// inclusion. Canonical is derived from the live URL, so there is no field for it.
+const updateServiceSeo = async (req, res) => {
+  try {
+    if (!isUuid(req.params.id)) return res.status(400).json({ message: 'Invalid service id' });
+    const updates = buildSeoUpdate(req.body, req.admin?.email || req.admin?.id);
+
+    let { data, error } = await supabaseAdmin
+      .from('services').update(updates).eq('id', req.params.id)
+      .select('*, profiles!services_host_id_fkey(name, username)').single();
+
+    if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+      return res.status(409).json({ message: SEO_MIGRATION_HINT });
+    }
+    if (error) return safeError(res, error);
+
+    bustSitemapCache();
+    await audit(req, { action: 'service.seo.update', resource_type: 'service', resource_id: req.params.id,
+      after: { is_indexable: updates.is_indexable } });
+    res.json(data);
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// PUT /api/admin/providers/:id/seo — admin-only SEO + index control for a host
+// profile. Same contract as service SEO; a noindexed host also drops its service
+// pages from the sitemap (the canonical lives under the host path).
+const updateProviderSeo = async (req, res) => {
+  try {
+    if (!isUuid(req.params.id)) return res.status(400).json({ message: 'Invalid provider id' });
+    const updates = buildSeoUpdate(req.body, req.admin?.email || req.admin?.id);
+
+    let { data, error } = await supabaseAdmin
+      .from('profiles').update(updates).eq('id', req.params.id).eq('role', 'host')
+      .select('id, name, username, is_verified, is_banned, seo_title, seo_description, og_title, og_description, seo_image, is_indexable, seo_updated_at, seo_updated_by')
+      .single();
+
+    if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+      return res.status(409).json({ message: SEO_MIGRATION_HINT });
+    }
+    if (error) return safeError(res, error);
+    if (!data) return res.status(404).json({ message: 'Provider not found' });
+
+    bustSitemapCache();
+    await audit(req, { action: 'provider.seo.update', resource_type: 'profile', resource_id: req.params.id,
+      after: { is_indexable: updates.is_indexable } });
+    res.json(data);
   } catch (error) {
     safeError(res, error);
   }
@@ -391,6 +465,8 @@ module.exports = {
   deleteBooking,
   getAllServices,
   deleteService,
+  updateServiceSeo,
+  updateProviderSeo,
   getSettings,
   updateSettings,
 };

@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import { adminGetServices, adminDeleteService } from "../../services/api";
 import toast from "react-hot-toast";
+import SeoDrawer from "../../components/admin/SeoDrawer";
 
 const AdminServices = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [seoEntity, setSeoEntity] = useState(null);
+
+  // Merge the admin SEO update back into the row so the No-index badge reflects.
+  const handleSeoSaved = (row) =>
+    setServices((list) => list.map((s) => (s.id === row.id ? { ...s, ...row } : s)));
 
   const fetch = async () => {
     try {
@@ -78,13 +84,26 @@ const AdminServices = () => {
                     {s.price === 0 ? "Free" : `₹${s.price}`}
                   </td>
                   <td data-label="Status" className="px-4 py-3">
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${s.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}
-                    >
-                      {s.is_active ? "Active" : "Inactive"}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${s.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}
+                      >
+                        {s.is_active ? "Active" : "Inactive"}
+                      </span>
+                      {s.is_indexable === false && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-red-50 text-red-600">
+                          No-index
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td data-label="Actions" className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => setSeoEntity(s)}
+                      className="text-xs text-[#FE5100] hover:underline mr-3"
+                    >
+                      SEO
+                    </button>
                     <button
                       onClick={() => handleDelete(s.id)}
                       className="text-xs text-red-500 hover:underline"
@@ -98,6 +117,15 @@ const AdminServices = () => {
           </table>
         </div>
       </div>
+
+      {seoEntity && (
+        <SeoDrawer
+          kind="service"
+          entity={seoEntity}
+          onClose={() => setSeoEntity(null)}
+          onSaved={handleSeoSaved}
+        />
+      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const { getConfig: getPlatformConfig } = require('../services/platformConfig');
+const { bustSitemapCache } = require('../utils/sitemapCache');
 
 // ─── Slug helpers ────────────────────────────────────────────────────────────
 
@@ -96,6 +97,39 @@ const LEGACY_SELECT_COLS =
   'id,host_id,title,slug,description,type,meeting_mode,price,duration,currency,' +
   'grace_period_minutes,thumbnail_url,is_active,created_at,updated_at';
 
+// Admin-managed SEO columns (v3.19). Surfaced on PUBLIC reads so the page can
+// render admin overrides + robots/canonical; vendors can't set them (not in
+// buildPayload). is_indexable also drives the noindex meta on the service page.
+const SEO_COLS = 'seo_title,seo_description,og_title,og_description,seo_image,is_indexable';
+
+// Fetch a public service trying richest columns first, degrading gracefully if
+// the SEO migration (or v2 columns) aren't applied yet: V2+SEO -> V2 -> LEGACY.
+const schemaMissing = (err) =>
+  err && /Could not find the|column.*does not exist/i.test(err.message || '');
+
+const fetchPublicServiceSeo = async ({ hostId, slug }) => {
+  const make = (cols) =>
+    supabaseAdmin.from('services').select(cols)
+      .eq('host_id', hostId).eq('slug', slug).eq('is_active', true).single();
+  let r = await make(`${V2_SELECT_COLS},${SEO_COLS}`);
+  if (schemaMissing(r.error)) r = await make(V2_SELECT_COLS);
+  if (schemaMissing(r.error)) r = await make(LEGACY_SELECT_COLS);
+  return r;
+};
+
+// Vendor profile for the public service page. Adds SEO override cols with a
+// fallback so a pre-migration DB still resolves the vendor (404 otherwise).
+const VENDOR_PUBLIC_COLS =
+  'id,name,username,profession,tagline,profile_image,cover_image,bio,is_verified,' +
+  'google_calendar_connected,badges,social_links,theme_color,plan';
+const fetchPublicVendor = async (username) => {
+  const make = (cols) =>
+    supabaseAdmin.from('profiles').select(cols).eq('username', username).eq('role', 'host').single();
+  let r = await make(`${VENDOR_PUBLIC_COLS},seo_image,is_indexable`);
+  if (schemaMissing(r.error)) r = await make(VENDOR_PUBLIC_COLS);
+  return r;
+};
+
 const selectSafe = async (query) => {
   let r = await query.select(V2_SELECT_COLS);
   if (r.error && /Could not find the/i.test(r.error.message)) {
@@ -171,6 +205,7 @@ const createService = async (req, res) => {
 
     const { data, error } = await insertSafe(p);
     if (error) return safeError(res, error);
+    bustSitemapCache(); // new service may now be indexable
     res.status(201).json(data);
   } catch (err) {
     safeError(res, err);
@@ -225,6 +260,7 @@ const updateService = async (req, res) => {
 
     const { data, error } = await updateSafe(req.params.id, req.user.id, updates);
     if (error) return safeError(res, error);
+    bustSitemapCache(); // title/slug change moves the canonical URL
     res.json(data);
   } catch (err) {
     safeError(res, err);
@@ -241,6 +277,7 @@ const deleteService = async (req, res) => {
       .eq('id', req.params.id)
       .eq('host_id', req.user.id);
     if (error) return safeError(res, error);
+    bustSitemapCache(); // removed service drops from the sitemap
     res.json({ message: 'Service deleted' });
   } catch (err) {
     safeError(res, err);
@@ -286,6 +323,7 @@ const toggleService = async (req, res) => {
       .eq('id', req.params.id)
       .eq('host_id', req.user.id);
     if (error) return safeError(res, error);
+    bustSitemapCache(); // activating/deactivating adds/removes from the sitemap
     res.json({ is_active: !svc.is_active });
   } catch (err) {
     safeError(res, err);
@@ -372,35 +410,14 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
     const { profileSlug, serviceSlug } = req.params;
 
     // 1. Resolve the vendor by username (profileSlug)
-    const { data: vendor, error: vendorErr } = await supabaseAdmin
-      .from('profiles')
-      .select('id,name,username,profession,tagline,profile_image,cover_image,bio,is_verified,google_calendar_connected,badges,social_links,theme_color,plan')
-      .eq('username', profileSlug)
-      .eq('role', 'host')
-      .single();
+    const { data: vendor, error: vendorErr } = await fetchPublicVendor(profileSlug);
 
     if (vendorErr || !vendor) {
       return res.status(404).json({ message: 'Vendor not found' });
     }
 
-    // 2. Resolve the service by slug, scoped to this vendor
-    let r = await supabaseAdmin
-      .from('services')
-      .select(V2_SELECT_COLS)
-      .eq('host_id', vendor.id)
-      .eq('slug', serviceSlug)
-      .eq('is_active', true)
-      .single();
-
-    if (r.error && /Could not find the/i.test(r.error.message)) {
-      r = await supabaseAdmin
-        .from('services')
-        .select(LEGACY_SELECT_COLS)
-        .eq('host_id', vendor.id)
-        .eq('slug', serviceSlug)
-        .eq('is_active', true)
-        .single();
-    }
+    // 2. Resolve the service by slug, scoped to this vendor (with SEO overrides)
+    const r = await fetchPublicServiceSeo({ hostId: vendor.id, slug: serviceSlug });
 
     if (r.error || !r.data) {
       return res.status(404).json({ message: 'Service not found' });
