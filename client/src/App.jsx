@@ -112,6 +112,7 @@ const AdminTestimonials = lazy(() => import('./pages/admin/AdminTestimonials'));
 const AdminTickets   = lazy(() => import('./pages/admin/AdminTickets'));
 const AdminDisputes  = lazy(() => import('./pages/admin/AdminDisputes'));
 const AdminReviews   = lazy(() => import('./pages/admin/AdminReviews'));
+const AdminFeedback  = lazy(() => import('./pages/admin/AdminFeedback'));
 
 // Admin — Platform
 const AdminAppearance    = lazy(() => import('./pages/admin/AdminAppearance'));
@@ -280,6 +281,7 @@ function App() {
           <Route path="/admin/support/tickets" element={<AdminWrapper><AdminTickets /></AdminWrapper>} />
           <Route path="/admin/support/disputes" element={<AdminWrapper><AdminDisputes /></AdminWrapper>} />
           <Route path="/admin/support/reviews" element={<AdminWrapper><AdminReviews /></AdminWrapper>} />
+          <Route path="/admin/feedback" element={<AdminWrapper><AdminFeedback /></AdminWrapper>} />
 
           {/* Platform */}
           <Route path="/admin/platform/appearance" element={<AdminWrapper><AdminAppearance /></AdminWrapper>} />
