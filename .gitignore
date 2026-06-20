@@ -83,3 +83,6 @@ staging_schema.sql
 
 # DB clone working dir (scripts/init-prod-db.sh) — schema + config dumps
 .db-clone/
+
+# gstack tooling artifacts (browse logs, audits) — local only
+.gstack/
