@@ -6,6 +6,7 @@ import BackButton from "../components/common/BackButton";
 import ImageCropper from "../components/common/ImageCropper";
 import FeatureGate from "../components/common/FeatureGate";
 import UsernameField from "../components/dashboard/UsernameField";
+import CategoriesSection from "../components/dashboard/CategoriesSection";
 import toast from "react-hot-toast";
 import {
   getColorsForPlan,
@@ -259,6 +260,7 @@ const ProfileSetup = () => {
       {/* Section tabs */}
       <div className="flex flex-wrap gap-2 mb-6 border-b pb-3">
         <Tab id="info"         label="Profile Info" />
+        <Tab id="categories"   label="Categories" />
         <Tab id="social"       label="Social Links" />
         <Tab id="appearance"   label="Appearance" />
         <Tab id="integrations" label="Integrations" />
@@ -357,6 +359,14 @@ const ProfileSetup = () => {
                 className="fb-input resize-none" value={form.bio} onChange={handleChange} maxLength={500} />
             </div>
           </div>
+        )}
+
+        {/* ── SECTION: Categories ── */}
+        {activeSection === 'categories' && (
+          <CategoriesSection
+            plan={plan}
+            onSaved={(data) => updateUser({ ...user, primary_category: data.primary_category, categories: data.categories })}
+          />
         )}
 
         {/* ── SECTION: Social Links ── */}
