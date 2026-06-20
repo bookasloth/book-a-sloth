@@ -230,6 +230,10 @@ export const getReceivedReviews = ()          => API.get('/reviews/received');
 export const getHostReviews     = (username)  => API.get(`/reviews/${username}`);
 export const getBookingReview   = (id)        => API.get(`/reviews/booking/${id}`);
 
+// ── Vendor feedback ──────────────────────────────────────────
+export const submitFeedback  = (data)   => API.post('/feedback', data);
+export const getMyFeedback   = ()       => API.get('/feedback/mine');
+
 // ── Upload ────────────────────────────────────────────────────
 export const uploadImage = (formData, folder = 'uploads') =>
   API.post(`/upload/image?folder=${folder}`, formData, {
@@ -397,5 +401,8 @@ export const getFeatureFlags    = ()             => API.get('/feature-flags');
 export const adminGetFeatures   = ()             => API.get('/admin/features');
 export const adminToggleFeature = (key, enabled) => API.patch(`/admin/features/${key}`, { enabled });
 export const adminCreateFeature = (payload)      => API.post('/admin/features', payload);
+// ── Admin: Feedback ──────────────────────────────────────────
+export const adminListFeedback   = (params)   => API.get('/admin/feedback', { params });
+export const adminUpdateFeedback = (id, data) => API.patch(`/admin/feedback/${id}`, data);
 // ── Reschedule fee ────────────────────────────────────────────
 export const createRescheduleFeeOrder = (bookingId) => API.post('/payment/reschedule-fee/create-order', { booking_id: bookingId });

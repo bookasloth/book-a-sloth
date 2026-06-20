@@ -62,6 +62,7 @@ const Products    = lazy(() => import('./pages/Products'));
 const UpgradePlan = lazy(() => import('./pages/UpgradePlan'));
 const Payouts     = lazy(() => import('./pages/Payouts'));
 const Transactions = lazy(() => import('./pages/Transactions'));
+const Feedback     = lazy(() => import('./pages/Feedback'));
 
 // Service Module v2
 const ServicesList = lazy(() => import('./pages/services/ServicesList'));
@@ -111,6 +112,7 @@ const AdminTestimonials = lazy(() => import('./pages/admin/AdminTestimonials'));
 const AdminTickets   = lazy(() => import('./pages/admin/AdminTickets'));
 const AdminDisputes  = lazy(() => import('./pages/admin/AdminDisputes'));
 const AdminReviews   = lazy(() => import('./pages/admin/AdminReviews'));
+const AdminFeedback  = lazy(() => import('./pages/admin/AdminFeedback'));
 
 // Admin — Platform
 const AdminAppearance    = lazy(() => import('./pages/admin/AdminAppearance'));
@@ -234,6 +236,7 @@ function App() {
           <Route path="/dashboard/upgrade" element={<DashboardWrapper><UpgradePlan /></DashboardWrapper>} />
           <Route path="/dashboard/payments/payouts" element={<DashboardWrapper><Payouts /></DashboardWrapper>} />
           <Route path="/dashboard/payments/transactions" element={<DashboardWrapper><Transactions /></DashboardWrapper>} />
+          <Route path="/dashboard/feedback" element={<DashboardWrapper><Feedback /></DashboardWrapper>} />
 
           {/* Super Dashboard (main admin entry) */}
           <Route path="/super-dashboard" element={<AdminWrapper><SuperDashboard /></AdminWrapper>} />
@@ -278,6 +281,7 @@ function App() {
           <Route path="/admin/support/tickets" element={<AdminWrapper><AdminTickets /></AdminWrapper>} />
           <Route path="/admin/support/disputes" element={<AdminWrapper><AdminDisputes /></AdminWrapper>} />
           <Route path="/admin/support/reviews" element={<AdminWrapper><AdminReviews /></AdminWrapper>} />
+          <Route path="/admin/feedback" element={<AdminWrapper><AdminFeedback /></AdminWrapper>} />
 
           {/* Platform */}
           <Route path="/admin/platform/appearance" element={<AdminWrapper><AdminAppearance /></AdminWrapper>} />

@@ -44,6 +44,7 @@ const REGISTRY = [
   { key: 'payouts',              label: 'Payout Requests',      category: 'Operations', scope: 'vendor', description: 'Vendor payout requests. Off = payout requests blocked.' },
   { key: 'earnings',             label: 'Earnings View',        category: 'Operations', scope: 'vendor', description: 'Earnings dashboard. Off = earnings page hidden.' },
   { key: 'transactions',         label: 'Transaction History',  category: 'Operations', scope: 'vendor', description: 'Vendor transaction history. Off = page hidden.' },
+  { key: 'vendor_feedback',      label: 'Vendor Feedback',      category: 'Operations', scope: 'vendor', description: 'Vendor feedback widget + "my feedback" list. Off = feedback UI hidden and submit blocked.' },
   { key: 'plan_upgrade',         label: 'Plan Upgrade',         category: 'Account',  scope: 'vendor',   description: 'Subscription plan purchase/upgrade. Off = upgrades blocked.' },
 
   // ── VENDOR · Integrations ────────────────────────────────────

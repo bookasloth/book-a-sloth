@@ -1,5 +1,6 @@
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import FeatureGate from './FeatureGate';
 
 const NAV_ITEMS = [
   { to:'/dashboard',                label:'Overview',      icon:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1', exact:true },
@@ -10,6 +11,7 @@ const NAV_ITEMS = [
   { to:'/dashboard/products',       label:'Products',      icon:'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', locked:'creator' },
   { to:'/dashboard/earnings',       label:'Earnings',      icon:'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   { to:'/dashboard/profile',        label:'Profile',       icon:'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+  { to:'/dashboard/feedback',       label:'Feedback',      icon:'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z' },
 ];
 
 const BOTTOM_ITEMS = [
@@ -178,6 +180,13 @@ const DashboardLayout = ({ children }) => {
       {/* Main */}
       <main className="min-w-0 flex-1 overflow-y-auto px-4 py-6 pb-28 sm:px-6 md:px-8 md:pb-8">
         <div className="mx-auto w-full max-w-6xl">{children}</div>
+        <FeatureGate flag="vendor_feedback">
+          <Link to="/dashboard/feedback"
+            className="hidden md:flex fixed bottom-6 right-6 z-40 items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-full shadow-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
+            Feedback
+          </Link>
+        </FeatureGate>
       </main>
     </div>
   );

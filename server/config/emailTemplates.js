@@ -426,6 +426,26 @@ const TEMPLATES = [
     cta_label: 'Set up my page', cta_url: '{{dashboard_url}}',
   },
 
+  // ── Engagement ───────────────────────────────────────────────────────────────
+
+  {
+    event_key: 'FEEDBACK_STATUS_CHANGED', audience: 'vendor', category: 'Engagement',
+    name: 'Feedback Status Update', subject: 'Update on your feedback: {{feedback_subject}}',
+    preview_text: 'Your feedback is now {{status_label}}.',
+    email_category: 'Product Feedback',
+    email_reason: 'You are receiving this email because you submitted feedback on Book A Sloth.',
+    html_content:
+      eyebrow('Your feedback') + h('Your feedback is now {{status_label}}') +
+      lead('Thanks for helping us improve Book A Sloth. Here is where your feedback stands:') +
+      card(
+        detail('Your feedback', '{{feedback_subject}}') +
+        detail('Status', '{{status_label}}'),
+      ) +
+      lead('{{admin_response}}') +
+      note('Have more to share? Open Feedback in your dashboard any time.'),
+    cta_label: 'Open my feedback', cta_url: '{{dashboard_url}}',
+  },
+
   // ── Newsletter ────────────────────────────────────────────────────────────────
 
   {

@@ -46,6 +46,7 @@ const PERMISSIONS = [
   // Support
   'support.view', 'support.assign', 'disputes.view', 'disputes.decide',
   'reviews.moderate',
+  'feedback.view', 'feedback.manage',
   // System
   'settings.manage', 'branding.manage', 'flags.manage',
   'integrations.view', 'integrations.manage',
@@ -91,6 +92,7 @@ const ROLES = {
       'badges.manage', 'announcements.manage',
       'support.view', 'support.assign', 'disputes.view', 'disputes.decide',
       'reviews.moderate',
+      'feedback.view', 'feedback.manage',
       'health.view',
       'audit.view',
     ],
@@ -111,6 +113,7 @@ const ROLES = {
       'notifications.view',
       'support.view', 'support.assign', 'disputes.view', 'disputes.decide',
       'reviews.moderate',
+      'feedback.view',
     ],
   },
 
