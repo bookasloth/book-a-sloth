@@ -519,6 +519,13 @@ const HostProfile = () => {
                   </p>
                 )}
 
+                {/* Primary category chip */}
+                {host?.primary_category_label && (
+                  <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-primary-light text-primary mt-1.5">
+                    {host.primary_category_label}
+                  </span>
+                )}
+
                 {/* Available Now — disabled
                 {host.google_calendar_connected && (
                   <div className="flex items-center justify-center gap-1.5 mt-1.5">

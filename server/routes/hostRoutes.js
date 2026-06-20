@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getHostProfile, updateProfile, createService, updateService, deleteService,
+  getHostProfile, updateProfile, getMyCategories, updateCategories,
+  createService, updateService, deleteService,
   getMyServices, setAvailability, getServiceBySlug, searchVendors, getAvailability,
 } = require('../controllers/hostController');
 const { changeUsername } = require('../controllers/usernameController');
@@ -12,6 +13,8 @@ const { requireFeature } = require('../middleware/requireFeature');
 router.get('/search', searchVendors);              // Task 11 — must come before /:username
 router.get('/availability', protect, getAvailability); // GET current availability for dashboard
 router.put('/profile', protect, updateProfile);
+router.get('/categories', protect, getMyCategories);
+router.put('/categories', protect, attachPlan, updateCategories);
 router.put('/username', protect, changeUsername);  // gated, rate-limited username change
 router.post('/services', protect, requireFeature('services'), attachPlan, checkServiceLimit, createService);
 router.get('/services', protect, getMyServices);

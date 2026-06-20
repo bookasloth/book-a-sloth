@@ -9,7 +9,7 @@ const router  = express.Router();
 const { requireAdmin, requireSuperAdmin } = require('../middleware/adminMiddleware');
 
 const {
-  getStats, getProviderPlanAnalytics, getUsers, getUserById, updateUser, deleteUser,
+  getStats, getProviderPlanAnalytics, getUsers, getUserById, updateUser, deleteUser, adminSetUserCategories,
   getAllBookings, updateBooking, deleteBooking,
   getAllServices, deleteService, updateServiceSeo, updateProviderSeo,
   getSettings, updateSettings,
@@ -36,6 +36,7 @@ router.get('/users',        requireAdmin('users.view'),   getUsers);
 router.get('/users/:id',    requireAdmin('users.view'),   getUserById);
 router.put('/users/:id',    requireAdmin('users.edit'),   updateUser);
 router.delete('/users/:id', requireAdmin('users.delete'), deleteUser);
+router.patch('/users/:id/categories', requireAdmin('users.edit'), adminSetUserCategories);
 
 // ── Bookings ───────────────────────────────────────────────────
 router.get('/bookings',        requireAdmin('bookings.view'), getAllBookings);

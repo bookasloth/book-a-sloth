@@ -49,9 +49,10 @@ const renderSetup = (plan = 'explorer') => {
 // ── Tab navigation ────────────────────────────────────────────────────────────
 
 describe('ProfileSetup — tab navigation', () => {
-  test('renders four tabs', () => {
+  test('renders five tabs', () => {
     renderSetup();
     expect(screen.getByRole('button', { name: /profile info/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /categories/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /social links/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /appearance/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /integrations/i })).toBeTruthy();

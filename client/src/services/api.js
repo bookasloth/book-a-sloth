@@ -184,6 +184,9 @@ export const adminListCategories = (params)  => API.get('/admin/categories', { p
 export const adminCreateCategory = (data)    => API.post('/admin/categories', data);
 export const adminUpdateCategory = (id, data) => API.put(`/admin/categories/${id}`, data);
 export const adminDeleteCategory = (id)      => API.delete(`/admin/categories/${id}`);
+export const hostGetCategories      = ()         => API.get('/host/categories');
+export const hostUpdateCategories   = (payload)  => API.put('/host/categories', payload);
+export const adminSetUserCategories = (id, data) => API.patch(`/admin/users/${id}/categories`, data);
 
 // ── Host ──────────────────────────────────────────────────────
 export const getHostProfile   = (username)       => API.get(`/host/${username}`);

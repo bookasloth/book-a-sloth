@@ -4,13 +4,15 @@ const { sanitizeLikeTerm } = require("../utils/searchSanitize");
 const { getConfig: getPlatformConfig } = require("../services/platformConfig");
 const usernameService = require("../services/usernameService");
 const { bustSitemapCache } = require("../utils/sitemapCache");
+const planService = require('../services/planService');
+const { validateCategorySelection } = require('../lib/categoryRules');
 
 // Public host columns. SECURITY: explicit whitelist — never select('*') on a
 // public route. SEO override cols (v3.19) are appended with a fallback so a
 // pre-migration DB still resolves the profile.
 const HOST_PUBLIC_COLS =
   "id, name, username, role, bio, tagline, profession, location, profile_image, " +
-  "cover_image, social_links, badges, theme_color, plan, is_verified, google_calendar_connected";
+  "cover_image, social_links, badges, theme_color, plan, is_verified, google_calendar_connected, primary_category";
 const HOST_SEO_COLS =
   "seo_title, seo_description, og_title, og_description, seo_image, is_indexable";
 
@@ -158,6 +160,13 @@ const getHostProfile = async (req, res) => {
       services = fallback.data;
     }
 
+    // Resolve the primary category's human label for display (best-effort).
+    if (host?.primary_category) {
+      const { data: cat } = await supabaseAdmin
+        .from('categories').select('label').eq('slug', host.primary_category).maybeSingle();
+      host.primary_category_label = cat?.label || null;
+    }
+
     res.json({ host, services: services || [], availability });
   } catch (error) {
     safeError(res, error);
@@ -262,6 +271,67 @@ const updateProfile = async (req, res) => {
     }
 
     res.json(result.data);
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// GET /api/host/categories — current host's primary + categories
+const getMyCategories = async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('primary_category, categories')
+      .eq('id', req.user.id)
+      .single();
+    if (error) throw error;
+    res.json({
+      primary_category: data?.primary_category || null,
+      categories: Array.isArray(data?.categories) ? data.categories : [],
+    });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// PUT /api/host/categories — plan-capped update; body { primary_category, categories }
+const updateCategories = async (req, res) => {
+  try {
+    const plan = req.vendorPlan || 'starter';
+    const max = await planService.getLimit(plan, 'categories'); // 0=locked, N, -1
+    if (!max || max <= 0) {
+      return res.status(403).json({
+        message: 'Your plan does not allow changing your category. Contact admin to make a change.',
+        upgrade_required: true,
+        current_plan: plan,
+      });
+    }
+
+    const { data: activeRows, error: actErr } = await supabaseAdmin
+      .from('categories').select('slug').eq('status', 'active');
+    if (actErr) throw actErr;
+    const activeSlugs = (activeRows || []).map((r) => r.slug);
+
+    const result = validateCategorySelection({
+      primary_category: req.body.primary_category,
+      categories: req.body.categories,
+      activeSlugs,
+      max,
+    });
+    if (!result.ok) return res.status(result.status).json({ message: result.message });
+
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .update({
+        primary_category: result.primary_category,
+        categories: result.categories,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', req.user.id)
+      .select('primary_category, categories')
+      .single();
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     safeError(res, error);
   }
@@ -558,6 +628,8 @@ const searchVendors = async (req, res) => {
 module.exports = {
   getHostProfile,
   updateProfile,
+  getMyCategories,
+  updateCategories,
   createService,
   updateService,
   deleteService,

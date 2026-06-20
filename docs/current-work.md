@@ -1,5 +1,19 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-06-13_
+_Last updated: 2026-06-20_
+
+## Sprint: Industry Categories (branch `feat/category-system`) — built 2026-06-20
+
+> **Status: BUILT, tests green (server 616/616, client 171/171, client build clean). NOT merged. Migration `v3.21` NOT yet applied to live DB.**
+
+**Spec / plan:** `docs/superpowers/specs/2026-06-20-industry-categories-design.md`; `docs/superpowers/plans/2026-06-20-industry-categories.md`.
+
+- **Migration `v3.21_industry_categories.sql` (NOT applied — destructive):** `categories` gains `group_label` + `status` enum `+disabled`; replaces the 11-row seed with the curated **60** (20 `active` Day-1 / 40 `disabled` Day-30+60); adds `profiles.primary_category`; clears host arrays referencing the old slugs; adds per-plan `limits.categories` (starter `0` locked / creator `1` / professional `3`); adds `admin_category_stats()` RPC (registered hosts + active services per category).
+- **Plan caps** mirrored in `planService.FALLBACK_PLANS` (starter 0 / creator 1 / professional 3) and client `categoryUtils.getCategoryRules`.
+- **Primary Category** is a first-class concept: chosen at onboarding (single-select "Pick Your Primary Service Category"), drives profile/listings. Free locked (contact admin), Creator swaps 1, Pro adds up to 3 (one always primary).
+- **Endpoints:** `GET`/`PUT /api/host/categories` (plan-capped, pure validator `server/lib/categoryRules.js`), `PATCH /api/admin/users/:id/categories` (admin override, uncapped).
+- **Admin `/admin/services/categories` redesigned:** grouped table with status **dropdown** (🟢 Active / 🔴 Off), 5 columns (Category Name · Status · Registered Hosts · Active Services · Date Added), summary strip, delete-guard (blocks delete when hosts registered; server returns 409). Vendor "suggest category" pending flow retained.
+- **Profile settings:** new plan-gated "Categories" tab (`components/dashboard/CategoriesSection.jsx`). **HostProfile** shows a primary-category chip; `getHostProfile` returns `primary_category_label`.
+- **Pending ops (founder):** apply `v3.21` to the live Supabase DB (deletes + reseeds `categories`) before/with deploy, then phased rollout = flip Day-30/Day-60 categories to Active when ready.
 
 ## Sprint: Financial Ledger P1 (Ledger Core) — Double-Entry Accounting (DONE 2026-06-13)
 
