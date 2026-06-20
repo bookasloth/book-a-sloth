@@ -13,27 +13,25 @@ import {
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
 
+// Only destinations that actually have routes are listed. Items pointing at
+// not-yet-built pages (Categories, How It Works, Messages, Saved) were removed
+// to avoid dead 404 links in the navbar.
 const PUBLIC_NAV = [
-  { label: 'Home',             href: '/',             icon: Home,        exact: true },
-  { label: 'Categories',       href: '/categories',    icon: Tag },
-  { label: 'Become a Creator', href: '/be-a-sloth',   icon: UserPlus },
-  { label: 'How It Works',     href: '/how-it-works',  icon: HelpCircle },
+  { label: 'Home',             href: '/',           icon: Home,    exact: true },
+  { label: 'Become a Creator', href: '/be-a-sloth', icon: UserPlus },
 ];
 
 const CUSTOMER_NAV = [
-  { label: 'Home',     href: '/',           icon: Home,           exact: true },
-  { label: 'Explore',  href: '/explore',    icon: Search,         tag: 'Soon' },
+  { label: 'Home',     href: '/',            icon: Home,         exact: true },
+  { label: 'Explore',  href: '/explore',     icon: Search,       tag: 'Soon' },
   { label: 'Bookings', href: '/my-bookings', icon: CalendarCheck },
-  { label: 'Messages', href: '/messages',   icon: MessageCircle,  badge: 'messages' },
-  { label: 'Saved',    href: '/saved',      icon: Bookmark },
 ];
 
 const VENDOR_NAV = [
-  { label: 'Home',      href: '/',                    icon: Home,          exact: true },
-  { label: 'Bookings',  href: '/dashboard/bookings',  icon: CalendarCheck },
-  { label: 'Services',  href: '/dashboard/services',  icon: Briefcase },
-  { label: 'Analytics', href: '/dashboard',            icon: BarChart2,     exact: true },
-  { label: 'Messages',  href: '/dashboard/chats',     icon: MessageCircle, badge: 'messages' },
+  { label: 'Home',      href: '/',                   icon: Home,         exact: true },
+  { label: 'Bookings',  href: '/dashboard/bookings', icon: CalendarCheck },
+  { label: 'Services',  href: '/dashboard/services', icon: Briefcase },
+  { label: 'Analytics', href: '/dashboard',          icon: BarChart2,    exact: true },
 ];
 
 const CUSTOMER_DROPDOWN = [
@@ -121,9 +119,11 @@ const Navbar = () => {
   const [menuOpen,    setMenuOpen]    = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen,   setNotifOpen]   = useState(false);
+  const [signInOpen,  setSignInOpen]  = useState(false);
 
   const dropdownRef = useRef(null);
   const notifRef    = useRef(null);
+  const signInRef   = useRef(null);
 
   // Role detection
   const isVendor   = user?.role === 'host';
@@ -138,11 +138,13 @@ const Navbar = () => {
     const onPointer = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
       if (notifRef.current   && !notifRef.current.contains(e.target))    setNotifOpen(false);
+      if (signInRef.current  && !signInRef.current.contains(e.target))   setSignInOpen(false);
     };
     const onKey = (e) => {
       if (e.key === 'Escape') {
         setDropdownOpen(false);
         setNotifOpen(false);
+        setSignInOpen(false);
         setMenuOpen(false);
       }
     };
@@ -159,6 +161,7 @@ const Navbar = () => {
     setMenuOpen(false);
     setDropdownOpen(false);
     setNotifOpen(false);
+    setSignInOpen(false);
   }, [location.pathname]);
 
   const isActive = ({ href, exact }) =>
@@ -346,12 +349,32 @@ const Navbar = () => {
             ) : (
               /* Public CTAs */
               <>
-                <Link
-                  to="/login-as-vendor"
-                  className="hidden sm:inline-flex items-center px-3.5 py-2 text-[13px] font-medium text-gray-600 hover:text-[#FE5100] hover:bg-[#FE5100]/5 rounded-lg transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1 hover:no-underline"
-                >
-                  Sign In
-                </Link>
+                {/* Sign In dropdown — separate customer vs vendor login */}
+                <div ref={signInRef} className="relative hidden sm:block">
+                  <button
+                    onClick={() => { setSignInOpen(o => !o); }}
+                    className="inline-flex items-center gap-1 px-3.5 py-2 text-[13px] font-medium text-gray-600 hover:text-[#FE5100] hover:bg-[#FE5100]/5 rounded-lg transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1"
+                    aria-expanded={signInOpen}
+                    aria-haspopup="menu"
+                  >
+                    Sign In
+                    <ChevronDown size={13} strokeWidth={2.5} className={`text-gray-400 transition-transform duration-200 ${signInOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {signInOpen && (
+                    <div
+                      className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden"
+                      role="menu"
+                      aria-label="Sign in options"
+                    >
+                      <Link to="/login" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] transition-colors duration-150 hover:no-underline">
+                        <User size={15} className="flex-shrink-0" /> Sign in as Customer
+                      </Link>
+                      <Link to="/login-as-vendor" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] transition-colors duration-150 border-t border-gray-100 hover:no-underline">
+                        <Briefcase size={15} className="flex-shrink-0" /> Sign in as Vendor
+                      </Link>
+                    </div>
+                  )}
+                </div>
                 <Link
                   to="/be-a-sloth"
                   className="btn inline-flex items-center px-4 py-2 text-[13px] font-semibold text-white bg-[#FE5100] hover:bg-[#d94400] transition-colors duration-150 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1 hover:no-underline"
@@ -422,18 +445,26 @@ const Navbar = () => {
               })}
             </div>
 
-            {/* Public: Sign In + Get Started */}
+            {/* Public: Sign In (customer + vendor) + Get Started */}
             {!user && (
-              <div className="flex gap-2 px-2 pt-3 mt-1 border-t border-gray-100">
-                <Link
-                  to="/login-as-vendor"
-                  className="btn flex-1 py-2.5 text-[13px] font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors duration-150 hover:no-underline"
-                >
-                  Sign In
-                </Link>
+              <div className="px-2 pt-3 mt-1 border-t border-gray-100 space-y-2">
+                <div className="flex gap-2">
+                  <Link
+                    to="/login"
+                    className="btn flex-1 py-2.5 text-[13px] font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors duration-150 hover:no-underline"
+                  >
+                    Customer Login
+                  </Link>
+                  <Link
+                    to="/login-as-vendor"
+                    className="btn flex-1 py-2.5 text-[13px] font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors duration-150 hover:no-underline"
+                  >
+                    Vendor Login
+                  </Link>
+                </div>
                 <Link
                   to="/be-a-sloth"
-                  className="btn flex-1 py-2.5 text-[13px] font-semibold text-center text-white bg-[#FE5100] hover:bg-[#d94400] transition-colors duration-150 hover:no-underline"
+                  className="btn block w-full py-2.5 text-[13px] font-semibold text-center text-white bg-[#FE5100] hover:bg-[#d94400] transition-colors duration-150 hover:no-underline"
                 >
                   Get Started
                 </Link>
