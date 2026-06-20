@@ -3,6 +3,8 @@ import {
   adminGetUsers,
   adminUpdateUser,
   adminDeleteUser,
+  getCategories,
+  adminSetUserCategories,
 } from "../../services/api";
 import toast from "react-hot-toast";
 
@@ -20,6 +22,11 @@ const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [editingId, setEditingId] = useState(null);
+  const [catOptions, setCatOptions] = useState([]);
+
+  useEffect(() => {
+    getCategories().then(({ data }) => setCatOptions(data || [])).catch(() => {});
+  }, []);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -83,6 +90,17 @@ const AdminUsers = () => {
       fetchUsers();
     } catch {
       toast.error("Failed");
+    }
+  };
+
+  const handleSetCategory = async (user, slug) => {
+    if (!slug) return;
+    try {
+      await adminSetUserCategories(user.id, { primary_category: slug, categories: [slug] });
+      toast.success('Category updated');
+      fetchUsers();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed');
     }
   };
 
@@ -191,6 +209,17 @@ const AdminUsers = () => {
                           >
                             {u.role}
                           </button>
+                        )}
+                        {u.role === 'host' && (
+                          <select
+                            className="border rounded px-1.5 py-1 text-xs mt-1"
+                            value={u.primary_category || ''}
+                            onChange={(e) => handleSetCategory(u, e.target.value)}
+                            title="Set primary category"
+                          >
+                            <option value="">— category —</option>
+                            {catOptions.map((c) => <option key={c.slug} value={c.slug}>{c.label}</option>)}
+                          </select>
                         )}
                       </td>
                       <td data-label="Status" className="px-4 py-3">

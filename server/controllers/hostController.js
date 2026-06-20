@@ -12,7 +12,7 @@ const { validateCategorySelection } = require('../lib/categoryRules');
 // pre-migration DB still resolves the profile.
 const HOST_PUBLIC_COLS =
   "id, name, username, role, bio, tagline, profession, location, profile_image, " +
-  "cover_image, social_links, badges, theme_color, plan, is_verified, google_calendar_connected";
+  "cover_image, social_links, badges, theme_color, plan, is_verified, google_calendar_connected, primary_category";
 const HOST_SEO_COLS =
   "seo_title, seo_description, og_title, og_description, seo_image, is_indexable";
 
@@ -158,6 +158,13 @@ const getHostProfile = async (req, res) => {
         .eq("host_id", host.id)
         .eq("is_active", true);
       services = fallback.data;
+    }
+
+    // Resolve the primary category's human label for display (best-effort).
+    if (host?.primary_category) {
+      const { data: cat } = await supabaseAdmin
+        .from('categories').select('label').eq('slug', host.primary_category).maybeSingle();
+      host.primary_category_label = cat?.label || null;
     }
 
     res.json({ host, services: services || [], availability });
