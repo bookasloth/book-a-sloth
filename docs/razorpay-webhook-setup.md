@@ -14,22 +14,22 @@ for one-off booking/product payments.
   `localhost`.
 - You know your **API host** — the server, NOT the client:
   - Client (Vercel): `https://bookasloth.com`
-  - **API (Render): `https://api.bookasloth.com`** ← webhooks go here
-  - (Before DNS is pointed, the API is the raw Render URL, e.g.
-    `https://bookasloth-api.onrender.com`.)
-- **Verify the host:** open `https://api.bookasloth.com/api/plans` in a browser.
+  - **API (Render): `https://book-a-sloth.onrender.com`** ← webhooks go here
+  - (The API intentionally stays on the Render URL. `api.bookasloth.com` is **not**
+    pointed at Render — it 404s — so do **not** use it for webhooks.)
+- **Verify the host:** open `https://book-a-sloth.onrender.com/api/plans` in a browser.
   - Returns JSON (plan list) → correct host.
-  - Returns HTML / 404 → wrong host; use the Render URL or fix DNS first.
+  - Returns HTML / 404 → wrong host; use the Render URL above.
 
 ---
 
 ## 2. The Webhook URL
 
 ```
-https://api.bookasloth.com/api/payment/webhook
+https://book-a-sloth.onrender.com/api/payment/webhook
 ```
 
-(or `https://bookasloth-api.onrender.com/api/payment/webhook` until DNS points)
+(The API stays on Render; `api.bookasloth.com` is not pointed at Render and 404s.)
 
 This path is fixed in code (`server/routes/paymentRoutes.js` → `POST /webhook`).
 
@@ -56,7 +56,7 @@ Razorpay Dashboard → **Settings → Webhooks → Add New Webhook**.
 
 | Field | Value |
 |-------|-------|
-| **Webhook URL** | `https://api.bookasloth.com/api/payment/webhook` |
+| **Webhook URL** | `https://book-a-sloth.onrender.com/api/payment/webhook` |
 | **Secret** | A strong random string you choose (e.g. `openssl rand -hex 24`). **Copy it.** |
 | **Alert Email** | `bookasloth@gmail.com` (Razorpay emails you on failures) |
 | **Active Events** | The 6 below — nothing else |
