@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { adminGetUsers, adminUpdateUser } from '../../services/api';
+import { adminGetUsers, adminUpdateUser, adminGetUser } from '../../services/api';
 import toast from 'react-hot-toast';
 import AdminEmptyState from '../../components/admin/AdminEmptyState';
+import SeoDrawer from '../../components/admin/SeoDrawer';
 
 const PROVIDER_ICON = 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M16 11l2 2 4-4';
 
@@ -18,6 +19,15 @@ const AdminProviders = () => {
   const [loading, setLoading]     = useState(true);
   const [total, setTotal]         = useState(0);
   const [page, setPage]           = useState(1);
+  const [seoEntity, setSeoEntity] = useState(null);
+
+  // List rows lack the SEO columns, so load the full profile before opening.
+  const openSeo = async (p) => {
+    try {
+      const { data } = await adminGetUser(p.id);
+      setSeoEntity(data.user);
+    } catch { toast.error('Failed to load SEO'); }
+  };
 
   const fetchProviders = async () => {
     setLoading(true);
@@ -125,6 +135,9 @@ const AdminProviders = () => {
                         <button onClick={() => handleBan(p)} className="text-[11px] text-amber-600 hover:underline">
                           {p.is_banned ? 'Unban' : 'Suspend'}
                         </button>
+                        <button onClick={() => openSeo(p)} className="text-[11px] text-[#FE5100] hover:underline">
+                          SEO
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -133,6 +146,14 @@ const AdminProviders = () => {
             </table>
           </div>
         </div>
+      )}
+
+      {seoEntity && (
+        <SeoDrawer
+          kind="provider"
+          entity={seoEntity}
+          onClose={() => setSeoEntity(null)}
+        />
       )}
     </div>
   );

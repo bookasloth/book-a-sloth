@@ -3,6 +3,11 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { getHostProfile, getHostReviews, getHostProducts, getVendorBadges } from "../services/api";
 import { analytics, EVENTS } from "../services/analytics";
 import BrandPreloader from "../components/preloader/BrandPreloader";
+import Seo from "../components/common/Seo";
+import { resolveProfileSeo, profileJsonLd, SITE_URL } from "../utils/seo";
+
+// Production base for canonical/OG (Vercel env overrides the apex default).
+const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
 import {
   DEFAULT_THEME_COLOR,
   getContrastColor,
@@ -327,14 +332,8 @@ const HostProfile = () => {
     load();
   }, [profileSlug]);
 
-  useEffect(() => {
-    if (!host) return;
-    document.title = host.name
-      ? `${host.name}${host.profession ? ` — ${host.profession}` : ''} | Book A Sloth`
-      : 'Book A Sloth';
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.setAttribute('content', host.bio ? host.bio.slice(0, 160) : `Book sessions with ${host.name}.`);
-  }, [host]);
+  // SEO (title/description/robots/canonical/OG/ProfilePage JSON-LD) is rendered
+  // declaratively via <Seo> below from the admin-managed fields.
 
   // Inject --profile-accent and --profile-accent-text CSS variables so all
   // themed elements on this page pick up the host's chosen color.
@@ -382,8 +381,13 @@ const HostProfile = () => {
     { val: reviewData.count > 0 ? reviewData.count : '—',                 lbl: 'Reviews'  },
   ];
 
+  // Admin-managed SEO → head tags + ProfilePage JSON-LD (only once host loaded).
+  const seo = host ? resolveProfileSeo({ host, siteUrl: SEO_SITE }) : null;
+  const jsonLd = host ? profileJsonLd({ host, siteUrl: SEO_SITE, services }) : null;
+
   return (
     <>
+      {seo && <Seo {...seo} jsonLd={jsonLd} />}
       <BrandPreloader
         variant="profile"
         ready={!loading && !!host && !error}

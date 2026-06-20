@@ -151,10 +151,15 @@ Render dashboard → service should show **Live** (green) and health check passi
      `index.html`, which fired them before consent, so they were moved to env.
      **Skip these three and prod has no Pixel/GA/Clarity at all** — ad conversion
      tracking goes dark. They are public client-side IDs, safe to set here.)
-   - `API_ORIGIN` = `https://bookasloth-api.onrender.com` (your Render URL for now)
+   - `API_ORIGIN` = `https://book-a-sloth.onrender.com` (the **actual** live Render URL)
      (**NOT** `VITE_`-prefixed — this is read at runtime by the Vercel **Edge
      Middleware** `client/middleware.js`, not at build time. It must be the API
      base **without** the trailing `/api`. See the username-redirect callout below.)
+     > ⚠️ Must be a **reachable** origin. Do **not** point this at `api.bookasloth.com`
+     > unless that subdomain actually resolves to Render — a dangling subdomain makes
+     > the 301 fail open (no redirect) AND adds a ~2s hang per profile load. The code
+     > default (`https://api.bookasloth.com`) is a placeholder; set this env explicitly
+     > to the Render URL above until/unless a real `api.` host points at Render.
 5. **Deploy.**
 
 **Verify:** open the `*.vercel.app` URL Vercel gives you. Site loads. Open
@@ -212,8 +217,12 @@ Add:
   - → then **Manual Deploy** to apply.
 - **Vercel → Environment:**
   - `VITE_API_URL` = `https://api.yourdomain.com`
-  - `API_ORIGIN` = `https://api.yourdomain.com` (edge middleware — no `/api`, not `VITE_`-prefixed)
+  - `API_ORIGIN` = `https://api.yourdomain.com` (edge middleware — no `/api`, not `VITE_`-prefixed; must be a **live** origin, see ⚠️ above)
+  - `VITE_PUBLIC_SITE_URL` = `https://yourdomain.com` (canonical/OG base; defaults to `https://bookasloth.com`)
   - → **Redeploy** (Deployments → ⋯ → Redeploy).
+  - **Dynamic sitemap:** `client/vercel.json` proxies `/sitemap*.xml` → the API origin
+    (hardcoded `book-a-sloth.onrender.com`). Keep that destination in sync with the
+    `API_ORIGIN` env above so the apex sitemap + edge 301 hit the same API.
 
 ### D. Update third-party allow-lists
 - **Google Cloud Console** → OAuth client → Authorized redirect URIs → add

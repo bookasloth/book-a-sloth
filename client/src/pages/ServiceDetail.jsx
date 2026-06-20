@@ -7,6 +7,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { svcGetPublicByProfile } from '../services/api';
 import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/themeUtils';
+import Seo from '../components/common/Seo';
+import { resolveServiceSeo, serviceJsonLd, SITE_URL } from '../utils/seo';
+
+// Production base for canonical/OG (Vercel env overrides the apex default).
+const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
 
 // Sanitize vendor-supplied rich text before rendering as HTML. Strips <script>,
 // event handlers (onerror/onload/…), javascript:/data: URLs, <iframe>, etc.
@@ -595,18 +600,8 @@ export default function ServiceDetail() {
           document.documentElement,
           isValidHex(v?.theme_color) ? v.theme_color : DEFAULT_THEME_COLOR,
         );
-        // SEO — update page title and meta description
-        const svc = r.data?.service;
-        const vendor = r.data?.vendor;
-        if (svc) {
-          document.title = `${svc.title}${vendor?.name ? ` with ${vendor.name}` : ''} | Book A Sloth`;
-          const metaDesc = document.querySelector('meta[name="description"]');
-          if (metaDesc) {
-            metaDesc.setAttribute('content', svc.short_description || svc.description
-              ? (svc.short_description || svc.description).slice(0, 160)
-              : `Book ${svc.title} on Book A Sloth.`);
-          }
-        }
+        // SEO (title/description/robots/canonical/OG/JSON-LD) is rendered
+        // declaratively via <Seo> below, from the admin-managed fields.
       })
       .catch(() => setError('Service not found'))
       .finally(() => setLoading(false));
@@ -655,8 +650,13 @@ export default function ServiceDetail() {
   const creatorCategory = service.category?.name || service.category_name
     || vendor?.profession || vendor?.tagline || '';
 
+  // Admin-managed SEO → head tags + Service JSON-LD (canonical derived from URL).
+  const seo = resolveServiceSeo({ service, vendor, siteUrl: SEO_SITE });
+  const jsonLd = serviceJsonLd({ service, vendor, siteUrl: SEO_SITE, avgRating: rating, reviewCount });
+
   return (
     <div className="min-h-screen bg-[#f7f5ef] relative">
+      <Seo {...seo} jsonLd={jsonLd} />
       {/* ── Above-the-fold decoration — original theme-tinted shapes, fades out ── */}
       <div
         aria-hidden

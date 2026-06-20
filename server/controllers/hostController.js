@@ -3,6 +3,16 @@ const { safeError } = require('../utils/httpError');
 const { sanitizeLikeTerm } = require("../utils/searchSanitize");
 const { getConfig: getPlatformConfig } = require("../services/platformConfig");
 const usernameService = require("../services/usernameService");
+const { bustSitemapCache } = require("../utils/sitemapCache");
+
+// Public host columns. SECURITY: explicit whitelist — never select('*') on a
+// public route. SEO override cols (v3.19) are appended with a fallback so a
+// pre-migration DB still resolves the profile.
+const HOST_PUBLIC_COLS =
+  "id, name, username, role, bio, tagline, profession, location, profile_image, " +
+  "cover_image, social_links, badges, theme_color, plan, is_verified, google_calendar_connected";
+const HOST_SEO_COLS =
+  "seo_title, seo_description, og_title, og_description, seo_image, is_indexable";
 
 // ??? Profile slug helpers ????????????????????????????????????????????????????
 const slugifyUsername = (text) =>
@@ -86,17 +96,23 @@ const updateServiceSafe = async (id, updates, userId) => {
 // GET /api/host/:username -- public profile
 const getHostProfile = async (req, res) => {
   try {
-    // SECURITY: explicit public column whitelist. Never `select('*')` on a
-    // public route — a blacklist leaks every new/sensitive column (email,
-    // phone, google tokens, plan_expires_at, onboarding_*, otp_*) by default.
-    const { data: host, error } = await supabaseAdmin
+    // Try whitelist + SEO override cols; fall back to the base whitelist if the
+    // v3.19 SEO migration isn't applied yet (so the profile still resolves).
+    let { data: host, error } = await supabaseAdmin
       .from("profiles")
-      .select(
-        "id, name, username, role, bio, tagline, profession, location, profile_image, cover_image, social_links, badges, theme_color, plan, is_verified, google_calendar_connected",
-      )
+      .select(`${HOST_PUBLIC_COLS}, ${HOST_SEO_COLS}`)
       .eq("username", req.params.username)
       .eq("role", "host")
       .single();
+
+    if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+      ({ data: host, error } = await supabaseAdmin
+        .from("profiles")
+        .select(HOST_PUBLIC_COLS)
+        .eq("username", req.params.username)
+        .eq("role", "host")
+        .single());
+    }
 
     if (error || !host) {
       // Not a current username — it may be an OLD alias. Resolve via history and
@@ -282,6 +298,7 @@ const createService = async (req, res) => {
     const { data, error } = await insertServiceSafe(payload);
 
     if (error) return safeError(res, error);
+    bustSitemapCache();
     res.status(201).json(data);
   } catch (error) {
     safeError(res, error);
@@ -323,6 +340,7 @@ const updateService = async (req, res) => {
     );
 
     if (error) return safeError(res, error);
+    bustSitemapCache();
     res.json(data);
   } catch (error) {
     safeError(res, error);
@@ -339,6 +357,7 @@ const deleteService = async (req, res) => {
       .eq("host_id", req.user.id);
 
     if (error) return safeError(res, error);
+    bustSitemapCache();
     res.json({ message: "Service deleted" });
   } catch (error) {
     safeError(res, error);

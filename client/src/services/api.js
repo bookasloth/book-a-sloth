@@ -266,6 +266,8 @@ export const adminUpdateBooking  = (id, data)  => API.put(`/admin/bookings/${id}
 export const adminDeleteBooking  = (id)        => API.delete(`/admin/bookings/${id}`);
 export const adminGetServices    = ()          => API.get('/admin/services');
 export const adminDeleteService  = (id)        => API.delete(`/admin/services/${id}`);
+export const adminUpdateServiceSeo  = (id, data) => API.put(`/admin/services/${id}/seo`, data);
+export const adminUpdateProviderSeo = (id, data) => API.put(`/admin/providers/${id}/seo`, data);
 export const adminGetSettings    = ()          => API.get('/admin/settings');
 export const adminUpdateSettings = (data)      => API.put('/admin/settings', data);
 
