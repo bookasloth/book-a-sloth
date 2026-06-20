@@ -58,4 +58,56 @@ async function resubscribe(req, res) {
   }
 }
 
-module.exports = { getUnsubscribeStatus, unsubscribe, resubscribe };
+/**
+ * POST /api/email/subscribe { email } → opt an address into the newsletter
+ * (single opt-in). Reuses the campaign `contacts` table so subscribers are
+ * immediately reachable by existing email campaigns. No auth; rate-limited by
+ * stacked email+IP limiters on the route.
+ */
+async function subscribe(req, res) {
+  const email = String(req.body?.email || '').toLowerCase().trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return res.status(400).json({ message: 'Please enter a valid email address.' });
+  }
+  try {
+    // Don't clobber an existing contact's source / contact_type / attributes —
+    // only (re)assert the marketing opt-in and tag them as a newsletter subscriber.
+    const { data: existing } = await supabaseAdmin
+      .from('contacts').select('id, attributes').eq('email', email).maybeSingle();
+
+    if (existing) {
+      const attributes = { ...(existing.attributes || {}), newsletter: true };
+      await supabaseAdmin
+        .from('contacts')
+        .update({ email_opt_in: true, email_suppressed: false, attributes, updated_at: new Date().toISOString() })
+        .eq('id', existing.id);
+    } else {
+      const { error: insErr } = await supabaseAdmin.from('contacts').insert({
+        email,
+        contact_type: 'guest',
+        email_opt_in: true,
+        email_suppressed: false,
+        source: 'newsletter',
+        attributes: { newsletter: true },
+      });
+      // Lost an insert race (unique email) → fall back to re-asserting opt-in.
+      if (insErr && insErr.code === '23505') {
+        await supabaseAdmin
+          .from('contacts')
+          .update({ email_opt_in: true, email_suppressed: false, updated_at: new Date().toISOString() })
+          .eq('email', email);
+      } else if (insErr) {
+        throw insErr;
+      }
+    }
+
+    // Explicit opt-in overrides any prior marketing opt-out for this address.
+    await supabaseAdmin.from('email_unsubscribes').delete().eq('email', email);
+
+    return res.json({ ok: true, email });
+  } catch (_) {
+    return res.status(500).json({ message: 'Could not subscribe right now. Please try again.' });
+  }
+}
+
+module.exports = { getUnsubscribeStatus, unsubscribe, resubscribe, subscribe };
