@@ -245,8 +245,8 @@ const assignPlan = async (req, res) => {
       })
       .eq('id', vendor_id)
       .select('id, name, email, plan, plan_expires_at').single();
-    if (error || !data) return res.status(404).json({ message: 'Vendor not found' });
-    res.json({ message: `Vendor moved to ${plan.name}`, vendor: data });
+    if (error || !data) return res.status(404).json({ message: 'Host not found' });
+    res.json({ message: `Host moved to ${plan.name}`, vendor: data });
   } catch (err) {
     safeError(res, err);
   }

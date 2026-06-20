@@ -135,7 +135,7 @@ const AdminCategories = () => {
     <div className="max-w-3xl">
       <h1 className="text-xl font-bold text-gray-900 mb-1">Professions / Categories</h1>
       <p className="text-sm text-gray-500 mb-6">
-        Manage the categories vendors choose during onboarding. Approve vendor-suggested ones below.
+        Manage the categories hosts choose during onboarding. Approve host-suggested ones below.
       </p>
 
       {/* Add new */}

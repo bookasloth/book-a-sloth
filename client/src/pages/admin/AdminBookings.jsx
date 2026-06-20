@@ -221,7 +221,7 @@ const BookingCard = ({ b, status, onView, onEdit, onDelete }) => {
       <p className="text-[13px] font-semibold text-gray-900 truncate">{b.services?.title || 'Service'}</p>
       <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mt-1 text-[12px]">
         <p className="truncate"><span className="text-gray-400">Customer </span><span className="font-medium text-gray-800">{b.guest_name || '—'}</span></p>
-        <p className="truncate"><span className="text-gray-400">Vendor </span><span className="font-medium text-gray-800">{b.profiles?.name || '—'}</span></p>
+        <p className="truncate"><span className="text-gray-400">Host </span><span className="font-medium text-gray-800">{b.profiles?.name || '—'}</span></p>
       </div>
       <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
         <span className="inline-flex items-center gap-1.5 text-[11.5px] text-gray-500 tabular-nums">
@@ -315,7 +315,7 @@ const BookingTable = ({ items, onView, onEdit, onDelete }) => (
           <TH>Booking ID</TH>
           <TH>Status</TH>
           <TH>Service</TH>
-          <TH>Vendor</TH>
+          <TH>Host</TH>
           <TH>Customer</TH>
           <TH>Date &amp; Time</TH>
           <TH right>Amount</TH>
@@ -529,11 +529,11 @@ const PieChart = ({ segments }) => {
 
 // ── Static, always-inactive Google Maps placeholder ───────────────
 const MapsPlaceholder = () => (
-  <Card title="Vendor Location" icon={IC.mapPin}>
+  <Card title="Host Location" icon={IC.mapPin}>
     <div className="py-6 flex flex-col items-center text-center">
       <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center mb-3"><Ic d={IC.mapPin} size={20} className="text-gray-400" /></div>
       <p className="text-[12px] text-gray-400 max-w-[230px] mb-3 leading-relaxed">
-        Vendor location — coming soon. Once vendors add a business address to their profile, an Open in Google Maps button appears here.
+        Host location — coming soon. Once hosts add a business address to their profile, an Open in Google Maps button appears here.
       </p>
       <button type="button" disabled aria-disabled="true"
         className="btn btn--outline inline-flex items-center gap-2 px-3 py-2 text-[12.5px] font-medium text-gray-300 cursor-not-allowed">
@@ -569,7 +569,7 @@ const lifecycle = (b) => {
   const events = [
     { label: 'Booking Created',  at: b.created_at, done: !!b.created_at },
     { label: 'Payment Received', at: b.paid_at,    done: b.payment_status === 'paid' || !!b.paid_at },
-    { label: 'Vendor Confirmed', at: null,         done: ['confirmed', 'completed'].includes(b.status) },
+    { label: 'Host Confirmed', at: null,         done: ['confirmed', 'completed'].includes(b.status) },
   ];
   if (b.status === 'cancelled') {
     events.push({ label: 'Cancelled', at: b.updated_at, done: true, cancelled: true });
@@ -733,7 +733,7 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
   const govtShare     = (Number(b.commission_gst) || 0) + (Number(b.platform_fee_gst) || 0);
   const usShare       = Math.max(0, total - vendorShare - razorpayShare - govtShare);
   const pieSegments = [
-    { label: 'Vendor',          value: vendorShare,   color: '#16a34a' }, // green
+    { label: 'Host',          value: vendorShare,   color: '#16a34a' }, // green
     { label: 'Razorpay',        value: razorpayShare, color: '#f97316' }, // orange
     { label: 'Govt (All GSTs)', value: govtShare,     color: '#ef4444' }, // red
     { label: 'Us (Net Income)', value: usShare,       color: '#2563eb' }, // blue
@@ -771,7 +771,7 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
               <div className="absolute right-0 top-9 z-[56] w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-1" onMouseDown={(e) => e.stopPropagation()}>
                 <MenuItem icon={IC.copy} label="Copy Booking ID" onClick={() => { copy(b.id, 'Booking ID'); setMenuOpen(false); }} />
                 <MenuItem icon={IC.link} label="Copy Meeting Link" onClick={() => { copy(b.meeting_link, 'Link'); setMenuOpen(false); }} />
-                {host.username && <MenuItem icon={IC.external} label="View Vendor Profile" href={`/${host.username}`} onClick={() => setMenuOpen(false)} />}
+                {host.username && <MenuItem icon={IC.external} label="View Host Profile" href={`/${host.username}`} onClick={() => setMenuOpen(false)} />}
                 <MenuItem icon={IC.pencil} label="Edit Booking" onClick={() => { onEdit(b); setMenuOpen(false); }} />
               </div>
             )}
@@ -806,11 +806,11 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <ContactCard title="Customer" icon={IC.user} b={b} accent="blue"
                       name={b.guest_name} email={b.guest_email} phone={b.guest_phone} mailLabel="Email Customer" />
-                    <ContactCard title="Vendor" icon={IC.building} b={b} accent="crimson"
+                    <ContactCard title="Host" icon={IC.building} b={b} accent="crimson"
                       name={host.name} email={host.email}
                       /* TODO(backend): host phone not selected by list endpoint */
-                      phone={null} mailLabel="Email Vendor"
-                      extra={<IconBtn icon={IC.external} label="View vendor profile" href={host.username ? `/${host.username}` : undefined} onClick={host.username ? undefined : () => toast.error('No profile')} />} />
+                      phone={null} mailLabel="Email Host"
+                      extra={<IconBtn icon={IC.external} label="View host profile" href={host.username ? `/${host.username}` : undefined} onClick={host.username ? undefined : () => toast.error('No profile')} />} />
                   </div>
                   <Card title="Booking Information" icon={IC.calendar}>
                     <div className="grid grid-cols-2 gap-x-6">
@@ -882,7 +882,7 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
                         <span className="text-[12.5px] font-semibold text-gray-700">Total Amount</span>
                         <span className="text-[14px] font-bold text-gray-900 tabular-nums">{inr(total)}</span>
                       </div>
-                      <Field label="Vendor Earnings" value={vendorEarnings != null ? inr(vendorEarnings) : '—'} />
+                      <Field label="Host Earnings" value={vendorEarnings != null ? inr(vendorEarnings) : '—'} />
                       <Field label="Payment Method" value={b.payment_id ? 'Razorpay' : '—'} />
                       <div className="flex items-center justify-between gap-4 py-[5px]">
                         <span className="text-[12px] text-gray-400">Customer Payment</span>
@@ -969,7 +969,7 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
                   <p className="text-[12.5px] text-gray-500 mt-0.5">
                     {confirm === 'delete'
                       ? 'This removes the booking and cannot be undone.'
-                      : 'The booking will be marked cancelled. The customer and vendor are not auto-notified.'}
+                      : 'The booking will be marked cancelled. The customer and host are not auto-notified.'}
                   </p>
                 </div>
               </div>
@@ -1231,7 +1231,7 @@ const AdminBookings = () => {
           </h3>
           <p className="text-[12.5px] text-gray-400 max-w-sm mx-auto">
             {query ? 'No booking matches that ID, phone, or email.'
-              : tab === 'disputed' ? 'Disputed bookings will appear here once a customer or vendor raises a dispute.'
+              : tab === 'disputed' ? 'Disputed bookings will appear here once a customer or host raises a dispute.'
               : 'Nothing to show in this view yet.'}
           </p>
         </div>

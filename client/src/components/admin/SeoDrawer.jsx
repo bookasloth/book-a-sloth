@@ -106,7 +106,7 @@ const SeoDrawer = ({ kind, entity, onClose, onSaved }) => {
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4">
           <div className="min-w-0">
             <h2 className="truncate text-base font-bold text-gray-900">SEO · {heading}</h2>
-            <p className="text-[11px] text-gray-400">Admin-managed. Vendors can't see these.</p>
+            <p className="text-[11px] text-gray-400">Admin-managed. Hosts can't see these.</p>
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100" aria-label="Close">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>

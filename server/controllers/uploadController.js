@@ -30,7 +30,7 @@ const uploadImage = async (req, res) => {
       const { data: prof } = await supabaseAdmin
         .from('profiles').select('role').eq('id', req.user?.id).maybeSingle();
       if (!prof || prof.role !== 'host') {
-        return res.status(403).json({ message: 'Only vendors can upload images.' });
+        return res.status(403).json({ message: 'Only hosts can upload images.' });
       }
     }
 

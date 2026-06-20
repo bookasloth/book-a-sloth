@@ -218,7 +218,7 @@ const STEPS = [
 const FOOTER_COLS = [
   { h: "Product", links: [
     { t: "How It Works", href: "#how-it-works" },
-    { t: "Find Vendors", href: "#find" },
+    { t: "Find Hosts", href: "#find" },
     { t: "Pricing", href: "#pricing" },
     { t: "Be a Sloth", href: "/be-a-sloth" },
   ]},
@@ -474,7 +474,7 @@ const Home = () => {
 
           <Reveal delay={0.12} className="relative mx-auto mt-10 max-w-2xl">
             <label htmlFor="vendor-search" className="sr-only">
-              Search vendors by name, skill or service
+              Search hosts by name, skill or service
             </label>
             <Search
               size={20}
@@ -535,7 +535,7 @@ const Home = () => {
               {results?.vendors?.length > 0 && (
                 <div className="mb-5">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                    Vendors
+                    Hosts
                   </p>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {results.vendors.map((v) => (

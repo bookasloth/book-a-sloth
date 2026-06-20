@@ -59,7 +59,7 @@ const AdminPayouts = () => {
     <div className="max-w-[1100px]">
       <div className="mb-5">
         <h1 className="text-xl font-bold text-gray-900">Payouts</h1>
-        <p className="text-[12px] text-gray-400 mt-0.5">Approve, reject, and mark vendor payout requests as paid.</p>
+        <p className="text-[12px] text-gray-400 mt-0.5">Approve, reject, and mark host payout requests as paid.</p>
       </div>
 
       <div className="flex gap-1.5 mb-5">
@@ -81,7 +81,7 @@ const AdminPayouts = () => {
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr className="bg-gray-50/60 text-[11px] uppercase tracking-wide text-gray-400 text-left">
-                <th className="px-4 py-2.5 font-semibold">Vendor</th>
+                <th className="px-4 py-2.5 font-semibold">Host</th>
                 <th className="px-4 py-2.5 font-semibold text-right">Amount</th>
                 <th className="px-4 py-2.5 font-semibold">Requested</th>
                 <th className="px-4 py-2.5 font-semibold">Status</th>
@@ -123,7 +123,7 @@ const AdminPayouts = () => {
       )}
 
       {modal?.kind === 'reject' && (
-        <Modal title="Reject payout request" label="Reason (shown to vendor)" placeholder="e.g. Bank details missing" confirmText="Reject"
+        <Modal title="Reject payout request" label="Reason (shown to host)" placeholder="e.g. Bank details missing" confirmText="Reject"
           onClose={() => setModal(null)}
           onConfirm={(reason) => { setModal(null); act(adminRejectPayout, modal.id, reason); }} />
       )}

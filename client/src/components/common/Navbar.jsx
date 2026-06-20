@@ -370,7 +370,7 @@ const Navbar = () => {
                         <User size={15} className="flex-shrink-0" /> Sign in as Customer
                       </Link>
                       <Link to="/login-as-vendor" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] transition-colors duration-150 border-t border-gray-100 hover:no-underline">
-                        <Briefcase size={15} className="flex-shrink-0" /> Sign in as Vendor
+                        <Briefcase size={15} className="flex-shrink-0" /> Sign in as Host
                       </Link>
                     </div>
                   )}
@@ -459,7 +459,7 @@ const Navbar = () => {
                     to="/login-as-vendor"
                     className="btn flex-1 py-2.5 text-[13px] font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors duration-150 hover:no-underline"
                   >
-                    Vendor Login
+                    Host Login
                   </Link>
                 </div>
                 <Link

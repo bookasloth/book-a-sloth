@@ -32,7 +32,7 @@ const VendorSignup = () => {
   return (
     <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
       <div className="page-card w-full max-w-md p-5 sm:p-8">
-        <h1 className="text-2xl font-bold mb-1">Create a vendor account</h1>
+        <h1 className="text-2xl font-bold mb-1">Create a host account</h1>
         <p className="text-gray-500 text-sm mb-6">
           Offer services, get booked, and earn. You'll connect Google Calendar
           next so meetings get a Google Meet link automatically.
@@ -88,7 +88,7 @@ const VendorSignup = () => {
             disabled={loading}
             className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Vendor Account"}
+            {loading ? "Creating..." : "Create Host Account"}
           </button>
         </form>
 

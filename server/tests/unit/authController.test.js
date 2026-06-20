@@ -176,7 +176,7 @@ describe('registerUser', () => {
     const r = res();
     await registerUser(req({ name: 'Bob', email: 'bob@user.com', password: 'pass123' }), r);
     expect(r.status).toHaveBeenCalledWith(409);
-    expect(r.json.mock.calls[0][0].message).toMatch(/vendor account/i);
+    expect(r.json.mock.calls[0][0].message).toMatch(/host account/i);
   });
 
   test('returns role: guest on success', async () => {

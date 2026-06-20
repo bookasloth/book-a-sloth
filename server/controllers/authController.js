@@ -188,7 +188,7 @@ const registerVendor = async (req, res) => {
       .from('profiles').select('id, role').eq('email', email.toLowerCase().trim()).maybeSingle();
     if (existing) {
       if (existing.role === 'guest')
-        return res.status(409).json({ message: 'This email is registered as a user account. Vendors and users must use separate email addresses.' });
+        return res.status(409).json({ message: 'This email is registered as a user account. Hosts and users must use separate email addresses.' });
       return res.status(409).json({ message: 'An account with this email already exists. Please log in.' });
     }
 
@@ -452,7 +452,7 @@ const registerUser = async (req, res) => {
       .from('profiles').select('id, role').eq('email', email.toLowerCase().trim()).maybeSingle();
     if (existing) {
       if (existing.role === 'host')
-        return res.status(409).json({ message: 'This email belongs to a vendor account. Users and vendors must use separate email addresses.' });
+        return res.status(409).json({ message: 'This email belongs to a host account. Users and hosts must use separate email addresses.' });
       return res.status(409).json({ message: 'An account with this email already exists. Please log in.' });
     }
 
@@ -730,7 +730,7 @@ const verifyOtpLogin = async (req, res) => {
     if (!profile)
       return res.status(500).json({ message: "Could not access your account" });
     if (profile.role !== "guest")
-      return res.status(409).json({ message: "This number is registered as a vendor. Please use vendor login." });
+      return res.status(409).json({ message: "This number is registered as a host. Please use host login." });
 
     const session = await mintSessionForEmail(profile.email);
     res.json(serializeProfile(profile, session));

@@ -132,7 +132,7 @@ const AdminBadges = () => {
       const r = await adminGetUsers({ search: vendorQuery, role: 'host' });
       const rows = Array.isArray(r.data) ? r.data : r.data?.users || [];
       setVendorResults(rows.filter((u) => u.role === 'host').slice(0, 8));
-    } catch { toast.error('Vendor search failed'); }
+    } catch { toast.error('Host search failed'); }
   };
 
   const openVendor = async (vendor) => {
@@ -140,7 +140,7 @@ const AdminBadges = () => {
       const r = await adminVendorBadges(vendor.id);
       setVendorPanel({ vendor, awards: r.data });
       setAssignForm({ badge_id: '', reason: '' });
-    } catch { toast.error('Failed to load vendor badges'); }
+    } catch { toast.error('Failed to load host badges'); }
   };
 
   const assign = async () => {
@@ -170,7 +170,7 @@ const AdminBadges = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Badges</h1>
-          <p className="text-[12px] text-gray-400 mt-0.5">Rules-driven vendor credentialing — all badge logic lives in the database</p>
+          <p className="text-[12px] text-gray-400 mt-0.5">Rules-driven host credentialing — all badge logic lives in the database</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => adminRunBadgeEval().then((r) => toast.success(`Evaluated: +${r.data.awarded} awarded, -${r.data.revoked} revoked`)).catch(() => toast.error('Evaluation failed'))}
@@ -238,10 +238,10 @@ const AdminBadges = () => {
 
       {/* Vendor badge management */}
       <div className="bg-white border rounded-xl p-5 max-w-3xl">
-        <h2 className="text-sm font-bold text-gray-900 mb-1">Vendor Badges</h2>
-        <p className="text-xs text-gray-400 mb-3">Search a vendor to view earned badges and manage manual assignments (reason required, full audit trail).</p>
+        <h2 className="text-sm font-bold text-gray-900 mb-1">Host Badges</h2>
+        <p className="text-xs text-gray-400 mb-3">Search a host to view earned badges and manage manual assignments (reason required, full audit trail).</p>
         <div className="flex gap-2 mb-3">
-          <input className="fb-input text-sm flex-1" placeholder="Search vendor by name/email…" value={vendorQuery}
+          <input className="fb-input text-sm flex-1" placeholder="Search host by name/email…" value={vendorQuery}
             onChange={(e) => setVendorQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchVendors()} />
           <button onClick={searchVendors} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Search</button>
         </div>
@@ -397,8 +397,8 @@ const AdminBadges = () => {
                 <div className="flex items-center gap-3">
                   <button onClick={() => setForm((f) => ({ ...f, rules: [...f.rules, { field: meta.fields[0] || 'completed_bookings', operator: '>=', value: '', group_id: 0 }] }))}
                     className="text-xs font-semibold text-indigo-600 hover:underline">+ Add rule</button>
-                  <button onClick={runPreview} className="btn btn--outline text-xs font-semibold text-gray-600 px-3 py-1.5 hover:bg-gray-50">Preview eligible vendors</button>
-                  {preview !== null && <span className="text-xs font-bold text-emerald-600">{preview} vendor(s) would earn this badge now</span>}
+                  <button onClick={runPreview} className="btn btn--outline text-xs font-semibold text-gray-600 px-3 py-1.5 hover:bg-gray-50">Preview eligible hosts</button>
+                  {preview !== null && <span className="text-xs font-bold text-emerald-600">{preview} host(s) would earn this badge now</span>}
                 </div>
               </div>
             )}

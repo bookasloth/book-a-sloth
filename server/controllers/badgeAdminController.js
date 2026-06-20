@@ -266,7 +266,7 @@ const assignBadge = async (req, res) => {
       .select()
       .single();
     if (error) {
-      if (/duplicate key/i.test(error.message)) return res.status(409).json({ message: 'Vendor already holds this badge' });
+      if (/duplicate key/i.test(error.message)) return res.status(409).json({ message: 'Host already holds this badge' });
       return safeError(res, error);
     }
 
@@ -312,7 +312,7 @@ const revokeBadge = async (req, res) => {
       .is('revoked_at', null)
       .select();
     if (error) return safeError(res, error);
-    if (!data || data.length === 0) return res.status(404).json({ message: 'Vendor does not hold this badge' });
+    if (!data || data.length === 0) return res.status(404).json({ message: 'Host does not hold this badge' });
     res.json({ message: 'Badge revoked', revoked: data[0] });
   } catch (err) {
     safeError(res, err);

@@ -103,7 +103,7 @@ const OverviewTab = ({ stats, ops }) => {
           { title: 'Manage Bookings',      desc: 'View, update status, resolve disputes',    to: '/admin/bookings',   icon: 'calendar', color: 'text-violet-600 bg-violet-50' },
           { title: 'Manage Users',          desc: 'Verify, ban, or delete platform accounts', to: '/admin/users',      icon: 'users',    color: 'text-blue-600 bg-blue-50' },
           { title: 'Manage Services',       desc: 'Review and moderate provider services',     to: '/admin/services',   icon: 'grid',     color: 'text-pink-600 bg-pink-50' },
-          { title: 'Payouts',               desc: 'Approve and release vendor payout requests', to: '/admin/finance/payouts', icon: 'dollar', color: 'text-[#FE5100] bg-orange-50' },
+          { title: 'Payouts',               desc: 'Approve and release host payout requests', to: '/admin/finance/payouts', icon: 'dollar', color: 'text-[#FE5100] bg-orange-50' },
           { title: 'Platform Settings',     desc: 'Configure fees, maintenance, branding',     to: '/admin/settings',   icon: 'activity', color: 'text-emerald-600 bg-emerald-50' },
           { title: 'Support Tickets',       desc: 'Respond to user issues and disputes',       to: '/admin/support/tickets', icon: 'clock', color: 'text-amber-600 bg-amber-50' },
         ].map(item => (

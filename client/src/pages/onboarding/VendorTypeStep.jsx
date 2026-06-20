@@ -30,7 +30,7 @@ const VendorTypeStep = () => {
   const handleSelect = (typeId) => {
     setSelected(typeId);
     updateOnboardingStep({ slug, step: 3, data: { type: typeId } }).catch((error) => {
-      toast.error(error.response?.data?.message || 'Could not save vendor type');
+      toast.error(error.response?.data?.message || 'Could not save host type');
     });
     navigate(`/vendor-register/${slug}/category`);
   };

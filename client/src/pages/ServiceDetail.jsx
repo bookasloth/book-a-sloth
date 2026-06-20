@@ -302,7 +302,7 @@ const ReviewsTab = ({ reviews = [], avgRating, ratingBreakdown = [] }) => {
 
 // Conversion-focused trust signals shown under the CTA.
 const TRUST_SIGNALS = [
-  { key: 'verified',  label: 'Verified vendor',
+  { key: 'verified',  label: 'Verified host',
     path: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
   { key: 'instant',   label: 'Instant confirmation',
     path: 'M13 10V3L4 14h7v7l9-11h-7z' },

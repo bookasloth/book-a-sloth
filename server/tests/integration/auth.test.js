@@ -134,7 +134,7 @@ describe('POST /api/auth/register/user', () => {
       .post('/api/auth/register/user')
       .send({ name: 'Bob', email: 'clash@vendor.com', password: 'pass123' });
     expect(res.status).toBe(409);
-    expect(res.body.message).toMatch(/vendor account/i);
+    expect(res.body.message).toMatch(/host account/i);
   });
 
   test('201 — successful user registration returns guest role', async () => {

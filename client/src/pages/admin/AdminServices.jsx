@@ -54,7 +54,7 @@ const AdminServices = () => {
             <thead className="bg-gray-50 text-left text-xs text-gray-400 uppercase">
               <tr>
                 <th className="px-4 py-3">Service</th>
-                <th className="px-4 py-3">Vendor</th>
+                <th className="px-4 py-3">Host</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Price</th>
                 <th className="px-4 py-3">Status</th>
@@ -70,7 +70,7 @@ const AdminServices = () => {
                       {s.duration} min · {s.meeting_mode || "online"}
                     </p>
                   </td>
-                  <td data-label="Vendor" className="px-4 py-3 text-xs">
+                  <td data-label="Host" className="px-4 py-3 text-xs">
                     <p>{s.profiles?.name}</p>
                     <p className="text-gray-400">@{s.profiles?.username}</p>
                   </td>

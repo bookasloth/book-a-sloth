@@ -106,7 +106,7 @@ const AdminUsers = () => {
 
   return (
     <div className="max-w-5xl">
-      <h1 className="text-2xl font-bold mb-1">Users & Vendors</h1>
+      <h1 className="text-2xl font-bold mb-1">Users & Hosts</h1>
       <p className="text-sm text-gray-400 mb-6">
         Manage all platform accounts.
       </p>

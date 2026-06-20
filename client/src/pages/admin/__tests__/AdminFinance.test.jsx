@@ -21,7 +21,7 @@ vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() 
 describe('AdminFinanceDashboard', () => {
   it('renders metric cards with en-IN currency', async () => {
     render(<AdminFinanceDashboard />);
-    await waitFor(() => expect(screen.getByText('Vendor Payables')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Host Payables')).toBeTruthy());
     // en-IN INR formatting: ₹917.40 (no trailing thousands separator below 1000)
     expect(screen.getByText('₹917.40')).toBeTruthy();
     expect(screen.getByText('GST Liability')).toBeTruthy();
