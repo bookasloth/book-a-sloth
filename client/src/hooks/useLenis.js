@@ -32,6 +32,13 @@ export default function useLenis() {
     return () => {
       cancelAnimationFrame(rafId);
       lenis.destroy();
+      // Belt-and-suspenders: Lenis toggles classes on <html> that flip body/#root to
+      // `height: auto` (index.css). If any survive destroy() (version quirks), they leak
+      // a broken scroll height onto the NEXT route (e.g. /lp scrolls past the footer into
+      // dead space). Explicitly strip them so non-Lenis pages scroll cleanly.
+      document.documentElement.classList.remove(
+        'lenis', 'lenis-smooth', 'lenis-scrolling', 'lenis-stopped',
+      );
     };
   }, []);
 }
