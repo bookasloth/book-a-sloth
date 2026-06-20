@@ -29,6 +29,7 @@ const EMAIL_ONLY_EVENTS = [
   ['SUBSCRIPTION_RENEWED', 'Premium Renewed'],
   ['BIRTHDAY', 'Birthday'],
   ['ACCOUNT_ANNIVERSARY', 'Account Anniversary'],
+  ['NEWSLETTER_WELCOME', 'Newsletter Welcome'],
 ];
 
 async function upsertTemplate(t) {
