@@ -80,7 +80,7 @@ In the Vercel project → **Settings → Git → Import** `bookasloth/book-a-slo
 **Environment variables** (set for Production **and** Preview, *before* the first deploy — `VITE_*` are baked at build time, so changing one later needs a redeploy):
 
 ```
-VITE_API_URL=https://<Render API URL>      # e.g. https://bookasloth-api.onrender.com → later https://api.yourdomain.com
+VITE_API_URL=https://<Render API URL>      # e.g. https://book-a-sloth.onrender.com → later https://api.yourdomain.com
 API_ORIGIN=https://<same API base, NO /api>  # NOT VITE_-prefixed — edge-runtime var for username 301s (client/middleware.js). Missing → redirects fail open (old usernames 404 in-app).
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...                   # publishable anon key only — never a secret
