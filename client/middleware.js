@@ -8,13 +8,13 @@
 //
 // Requirements:
 //   - Env var API_ORIGIN = your API base WITHOUT trailing /api
-//     (e.g. https://api.bookasloth.com). Falls back to the public site's API.
+//     (e.g. https://book-a-sloth.onrender.com). Falls back to the live API origin.
 //
 // Fail-open: any error (network, non-200) simply continues to the SPA, so a
 // flaky API never takes down profile pages — at worst the client-side fallback
 // in HostProfile.jsx self-corrects the URL.
 
-const API_ORIGIN = process.env.API_ORIGIN || 'https://api.bookasloth.com';
+const API_ORIGIN = process.env.API_ORIGIN || 'https://book-a-sloth.onrender.com';
 
 // High-traffic app routes — skip the API round-trip for these. Not exhaustive
 // (the resolve API returns 404 for any non-username anyway); this is just to

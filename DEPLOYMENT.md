@@ -158,8 +158,9 @@ Render dashboard → service should show **Live** (green) and health check passi
      > ⚠️ Must be a **reachable** origin. Do **not** point this at `api.bookasloth.com`
      > unless that subdomain actually resolves to Render — a dangling subdomain makes
      > the 301 fail open (no redirect) AND adds a ~2s hang per profile load. The code
-     > default (`https://api.bookasloth.com`) is a placeholder; set this env explicitly
-     > to the Render URL above until/unless a real `api.` host points at Render.
+     > default is now `https://book-a-sloth.onrender.com` (the live Render URL), so the
+     > middleware works even if this env is unset; still set it explicitly so a future
+     > API host change is driven by env, not a code edit.
 5. **Deploy.**
 
 **Verify:** open the `*.vercel.app` URL Vercel gives you. Site loads. Open
