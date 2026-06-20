@@ -377,7 +377,7 @@ const Navbar = () => {
                 </div>
                 <Link
                   to="/be-a-sloth"
-                  className="btn inline-flex items-center px-4 py-2 text-[13px] font-semibold text-white bg-[#FE5100] hover:bg-[#d94400] transition-colors duration-150 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1 hover:no-underline"
+                  className="btn inline-flex items-center px-4 py-2 text-[13px] font-semibold text-white bg-primary-cta hover:bg-[#d94400] transition-colors duration-150 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1 hover:no-underline"
                 >
                   Get Started
                 </Link>
@@ -464,7 +464,7 @@ const Navbar = () => {
                 </div>
                 <Link
                   to="/be-a-sloth"
-                  className="btn block w-full py-2.5 text-[13px] font-semibold text-center text-white bg-[#FE5100] hover:bg-[#d94400] transition-colors duration-150 hover:no-underline"
+                  className="btn block w-full py-2.5 text-[13px] font-semibold text-center text-white bg-primary-cta hover:bg-[#d94400] transition-colors duration-150 hover:no-underline"
                 >
                   Get Started
                 </Link>

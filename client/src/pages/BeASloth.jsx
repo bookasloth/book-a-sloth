@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,6 +17,12 @@ const GoogleIcon = () => (
 const BeASloth = () => {
   const { startVendorGoogleAuth } = useAuth();
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
+  // Handle typed on the homepage hero — carried via router state, sessionStorage as fallback.
+  const desiredUsername =
+    location.state?.desiredUsername ||
+    (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('pendingSlothPage')) ||
+    '';
 
   const handleGoogle = async () => {
     setLoading(true);
@@ -37,6 +43,12 @@ const BeASloth = () => {
           Publish your services, share your booking page and get paid —
           calendar and Google Meet links set up automatically.
         </p>
+
+        {desiredUsername && (
+          <p className="mb-6 inline-block rounded-full bg-primary-light px-3 py-1 text-xs font-medium text-ink">
+            Claiming <span className="font-semibold">bookasloth.com/{desiredUsername}</span>
+          </p>
+        )}
 
         <button
           onClick={handleGoogle}

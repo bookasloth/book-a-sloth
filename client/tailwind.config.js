@@ -6,6 +6,9 @@ export default {
       colors: {
         primary: "#FE5100",
         "primary-dark": "#d94400",
+        // White-text buttons only. #FE5100 + white = 3.26:1 (fails WCAG AA);
+        // this darker shade = ~5.3:1. Keep `primary` for accents/large text.
+        "primary-cta": "#c23d00",
         "primary-light": "#FFE9DD",
         secondary: "#f59e0b",
         surface: "#ffffff",
