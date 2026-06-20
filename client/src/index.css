@@ -20,7 +20,9 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow-x: clip; /* clip (not hidden): stops horizontal scroll WITHOUT making
+                       html/body a vertical scroll container — that container is
+                       what created dead scroll space below the footer on /lp. */
 }
 
 /* Lenis smooth-scroll (client/src/hooks/useLenis.js).
@@ -51,7 +53,9 @@ body {
   width: 100%;
   min-height: 100vh;
   margin: 0;
-  overflow-x: hidden;
+  overflow-x: clip; /* clip (not hidden): stops horizontal scroll WITHOUT making
+                       html/body a vertical scroll container — that container is
+                       what created dead scroll space below the footer on /lp. */
   background:
     radial-gradient(circle at top left, rgba(232, 239, 229, 0.55), transparent 28rem),
     linear-gradient(180deg, #fdfcf9 0%, #f8fafc 44%, #f7f5ef 100%);
