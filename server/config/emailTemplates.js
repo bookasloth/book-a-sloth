@@ -426,6 +426,22 @@ const TEMPLATES = [
     cta_label: 'Set up my page', cta_url: '{{dashboard_url}}',
   },
 
+  // ── Newsletter ────────────────────────────────────────────────────────────────
+
+  {
+    event_key: 'NEWSLETTER_WELCOME', audience: 'all', category: 'Newsletter',
+    name: 'Newsletter Welcome', subject: 'Welcome to the Collective 🦥',
+    preview_text: 'Calm tips, templates and the occasional truth bomb — straight to your inbox.',
+    email_category: 'Newsletter',
+    email_reason: 'You are receiving this email because you subscribed to the Book A Sloth newsletter.',
+    html_content:
+      eyebrow('The Collective') + h("You're in.") +
+      lead('Thanks for joining the calm side. Every week we send tips, templates and honest lessons on getting booked and paid — without the chaos.') +
+      lead('No noise, no spam. Just the good stuff, quietly.') +
+      note('Not for you? You can unsubscribe any time using the link below.'),
+    cta_label: 'Explore Book A Sloth', cta_url: '{{website_url}}',
+  },
+
 ];
 
 module.exports = TEMPLATES;

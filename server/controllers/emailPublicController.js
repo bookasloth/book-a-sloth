@@ -14,6 +14,7 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 const { verifyToken } = require('../services/email/unsubscribeToken');
+const communicationEngine = require('../services/email/communicationEngine');
 
 const emailFromToken = (token) => verifyToken(token);
 
@@ -75,7 +76,12 @@ async function subscribe(req, res) {
     const { data: existing } = await supabaseAdmin
       .from('contacts').select('id, attributes').eq('email', email).maybeSingle();
 
+    // First-time newsletter join? Gates the one-shot welcome email so repeat
+    // submitters are never re-welcomed.
+    let firstTime;
+
     if (existing) {
+      firstTime = !(existing.attributes && existing.attributes.newsletter === true);
       const attributes = { ...(existing.attributes || {}), newsletter: true };
       await supabaseAdmin
         .from('contacts')
@@ -90,19 +96,33 @@ async function subscribe(req, res) {
         source: 'newsletter',
         attributes: { newsletter: true },
       });
-      // Lost an insert race (unique email) → fall back to re-asserting opt-in.
+      // Lost an insert race (unique email) → re-assert opt-in, treat as not-first.
       if (insErr && insErr.code === '23505') {
+        firstTime = false;
         await supabaseAdmin
           .from('contacts')
           .update({ email_opt_in: true, email_suppressed: false, updated_at: new Date().toISOString() })
           .eq('email', email);
       } else if (insErr) {
         throw insErr;
+      } else {
+        firstTime = true;
       }
     }
 
     // Explicit opt-in overrides any prior marketing opt-out for this address.
     await supabaseAdmin.from('email_unsubscribes').delete().eq('email', email);
+
+    // Welcome email — only on the first join, best-effort: a template/queue hiccup
+    // must never fail the subscription itself. NEWSLETTER_WELCOME is transactional
+    // (a direct response to their action), so it always delivers the single welcome.
+    if (firstTime) {
+      try {
+        await communicationEngine.send({
+          event: 'NEWSLETTER_WELCOME', to: email, audience: 'all', user: { email },
+        });
+      } catch (_) { /* subscription already saved; welcome is non-critical */ }
+    }
 
     return res.json({ ok: true, email });
   } catch (_) {
