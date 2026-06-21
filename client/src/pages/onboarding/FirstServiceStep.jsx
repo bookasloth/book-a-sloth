@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { createService, updateOnboardingStep } from '../../services/api';
+import { createService, updateOnboardingStep, hostGetCategories, getCategories } from '../../services/api';
+import ServiceCategoryPicker from '../../components/services/ServiceCategoryPicker';
+import { categoryLabel } from '../../utils/categoryUtils';
 import ProgressBar from './ProgressBar';
 
 const FirstServiceStep = () => {
@@ -14,6 +16,25 @@ const FirstServiceStep = () => {
   const [price, setPrice] = useState('');
   const [type, setType] = useState('online');
   const [loading, setLoading] = useState(false);
+  const [category, setCategory] = useState('');
+  const [hostCats, setHostCats] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([hostGetCategories(), getCategories()])
+      .then(([h, c]) => {
+        if (!alive) return;
+        const list = c.data || [];
+        const slugs = h.data?.categories?.length
+          ? h.data.categories
+          : (h.data?.primary_category ? [h.data.primary_category] : []);
+        const items = slugs.map((s) => ({ slug: s, label: categoryLabel(s, list) }));
+        setHostCats(items);
+        setCategory(h.data?.primary_category || items[0]?.slug || '');
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   const priceNum = price === '' ? NaN : Number(price);
   const priceValid = Number.isFinite(priceNum) && priceNum >= 0 && priceNum <= 10000;
@@ -29,6 +50,10 @@ const FirstServiceStep = () => {
       toast.error('Enter a price between ₹0 and ₹10,000');
       return;
     }
+    if (hostCats.length > 1 && !category) {
+      toast.error('Please choose a category');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -41,6 +66,7 @@ const FirstServiceStep = () => {
         duration: parseInt(duration),
         price: parseFloat(price),
         slug: serviceSlug,
+        category: category || null,
       });
 
       // Update onboarding step
@@ -118,6 +144,12 @@ const FirstServiceStep = () => {
                 />
               </div>
             </div>
+
+            <ServiceCategoryPicker
+              categories={hostCats}
+              value={category}
+              onChange={setCategory}
+            />
 
             <div>
               <label className="block text-sm font-medium mb-1">Price (₹) *</label>
