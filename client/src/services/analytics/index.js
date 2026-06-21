@@ -10,17 +10,18 @@
 //
 // Consent model:
 //   - PostHog (needsConsent:false) is always-on, inits at app boot.
-//   - GA4 / Pixel / Clarity (needsConsent:true) load ONLY after the user grants
-//     marketing consent. Events fired before consent are dropped for those tools
-//     (not replayed) — we never backfill pre-consent activity into ad networks.
+//   - GA4 / Pixel / Clarity / GTM (needsConsent:true) load ONLY after the user
+//     grants marketing consent. Events fired before consent are dropped for those
+//     tools (not replayed) — we never backfill pre-consent activity into ad networks.
 import { assertKnownEvent } from './events';
 import { getConsent, onConsentChange, setConsent, isGranted, hasDecided } from './consent';
 import posthog from './adapters/posthog';
 import ga4 from './adapters/ga4';
 import pixel from './adapters/pixel';
 import clarity from './adapters/clarity';
+import gtm from './adapters/gtm';
 
-const ADAPTERS = [posthog, ga4, pixel, clarity];
+const ADAPTERS = [posthog, ga4, pixel, clarity, gtm];
 
 const ready = new Set();   // adapters that have run init()
 let lastIdentify = null;   // re-apply identity to adapters that init after login
