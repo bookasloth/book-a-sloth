@@ -4,7 +4,9 @@ import {
   createService,
   updateService,
   toggleService,
+  getCategories,
 } from "../services/api";
+import { categoryLabel } from "../utils/categoryUtils";
 import ImageCropper from "../components/common/ImageCropper";
 import toast from "react-hot-toast";
 
@@ -308,6 +310,13 @@ const Services = () => {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(null); // null | 'create' | service object
+  const [catList, setCatList] = useState([]);
+
+  useEffect(() => {
+    getCategories()
+      .then(({ data }) => setCatList(data || []))
+      .catch(() => {});
+  }, []);
 
   const fetch = async () => {
     try {
@@ -486,6 +495,11 @@ const Services = () => {
                     </td>
                     <td data-label="Service Name" className="px-4 py-3">
                       <p className="font-medium text-gray-800">{s.title}</p>
+                      {s.category && (
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
+                          {categoryLabel(s.category, catList)}
+                        </span>
+                      )}
                       {s.description && (
                         <p className="text-xs text-gray-400 truncate max-w-[200px]">
                           {s.description}

@@ -647,7 +647,7 @@ export default function ServiceDetail() {
   const bookings    = service.total_bookings || 0;
   // Bestseller heuristic: proven volume + high rating
   const isBestseller = bookings >= 10 && rating >= 4.5;
-  const creatorCategory = service.category?.name || service.category_name
+  const creatorCategory = service.category_label || service.category
     || vendor?.profession || vendor?.tagline || '';
 
   // Admin-managed SEO → head tags + Service JSON-LD (canonical derived from URL).
@@ -753,6 +753,11 @@ export default function ServiceDetail() {
                     ? <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
                     : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>Online</>}
                 </span>
+                {service.category_label && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-900/5 text-gray-700">
+                    {service.category_label}
+                  </span>
+                )}
               </div>
 
               {/* Creator — [photo] by Name */}
