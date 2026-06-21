@@ -22,9 +22,7 @@ import {
   Star,
   Check,
   AtSign,
-  Banknote,
   MessageCircle,
-  Coins,
   ArrowUpRight,
   Video,
   Link2,
@@ -148,17 +146,6 @@ const FEATURES = [
   { icon: Users, title: "Light CRM", desc: "Notes, history, receipts — zero spreadsheets." },
   { icon: IndianRupee, title: "India First", desc: "GST, INR, UPI — built for how India pays." },
   { icon: Sparkles, title: "AI Assistant", desc: "Suggests slots, drafts briefs, sends thank-yous." },
-];
-
-/* Modern features (pastel grid) — sits directly under the hero.
-   "Calendar Sync" replaces the earlier AI card. */
-const MODERN_FEATURES = [
-  { icon: Banknote, title: "Payments Built In", desc: "Clients pay up-front. Your time finally bills itself — peacefully.", bg: "bg-pink-200/60" },
-  { icon: MessageCircle, title: "WhatsApp Reminders", desc: "Because email reminders get ghosted. Calm, timely pings straight to WhatsApp.", bg: "bg-lime-200/60" },
-  { icon: Globe, title: "Personal Sloth Page", desc: "A mini-website that books, bills, and brands you — automatically.", bg: "bg-orange-200/60" },
-  { icon: Users, title: "Light CRM", desc: "Client notes, history, and receipts — zero spreadsheets, zero stress.", bg: "bg-blue-200/60" },
-  { icon: Coins, title: "India-First Design", desc: "GST, INR, and UPI native — no dollar drama, no currency confusion.", bg: "bg-amber-200/60" },
-  { icon: CalendarCheck, title: "Calendar Sync", desc: "Two-way Google Calendar sync — no double-bookings, no clashes.", bg: "bg-teal-200/60" },
 ];
 
 /* "…and so much more" — features + integrations.
@@ -545,9 +532,9 @@ const Home = () => {
 
             {/* URL creator */}
             <Reveal delay={0.18} className="mt-9">
-              <div className="flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 sm:rounded-[18px] sm:border sm:border-black/[0.07] sm:bg-white sm:p-1.5 sm:shadow-[0_10px_30px_-10px_rgba(26,26,26,0.18)]">
+              <div className="flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 sm:rounded-[5px] sm:border sm:border-black/[0.07] sm:bg-white sm:p-1.5 sm:shadow-[0_10px_30px_-10px_rgba(26,26,26,0.18)]">
                 {/* URL prefix + input — own card on mobile, merges into pill on desktop */}
-                <div className="flex min-h-[3.5rem] flex-1 items-center min-w-0 rounded-[14px] border border-black/[0.07] bg-white px-5 shadow-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-4 sm:shadow-none">
+                <div className="flex min-h-[3.5rem] flex-1 items-center min-w-0 rounded-[5px] border border-black/[0.07] bg-white px-5 shadow-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-4 sm:shadow-none">
                   <span className="select-none whitespace-nowrap text-sm font-medium text-neutral-400 shrink-0">
                     bookasloth.com/
                   </span>
@@ -564,7 +551,7 @@ const Home = () => {
                 </div>
                 <button
                   onClick={claim}
-                  className="btn inline-flex min-h-[3.5rem] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[14px] bg-primary-cta px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:min-h-0 sm:py-3"
+                  className="btn inline-flex min-h-[3.5rem] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[5px] bg-primary-cta px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:min-h-0 sm:py-3"
                 >
                   Get Started
                   <ArrowRight size={15} />
@@ -605,7 +592,7 @@ const Home = () => {
 
           {/* RIGHT */}
           <Reveal delay={0.1} className="relative">
-            <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[2.25rem] bg-sand shadow-[0_40px_90px_-25px_rgba(26,26,26,0.38)] ring-1 ring-black/5">
+            <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[6px] bg-sand shadow-[0_40px_90px_-25px_rgba(26,26,26,0.38)] ring-1 ring-black/5">
               <motion.img
                 src={HERO}
                 alt="A calm professional at work"
@@ -614,7 +601,7 @@ const Home = () => {
                 className="h-[112%] w-full object-cover"
               />
               {/* Subtle inset sheen for a more premium frame */}
-              <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[2.25rem] ring-1 ring-inset ring-white/15" />
+              <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[6px] ring-1 ring-inset ring-white/15" />
             </div>
 
             {/* Floating glass cards */}
@@ -641,35 +628,6 @@ const Home = () => {
               className="bottom-8 left-2 sm:left-6"
             />
           </Reveal>
-        </div>
-      </section>
-
-      {/* ════════════════ MODERN FEATURES (PASTEL GRID) ════════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <Reveal as="h2" className="mx-auto max-w-3xl text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
-            Contains modern features for better experience{" "}
-            <span className="text-primary">better experience.</span>
-          </Reveal>
-
-          <div className="mt-14 grid gap-5 sm:gap-6 md:grid-cols-3">
-            {MODERN_FEATURES.map((f, i) => (
-              <Reveal key={f.title} delay={(i % 3) * 0.08}>
-                <div className={`relative flex h-full min-h-[240px] flex-col justify-between overflow-hidden rounded-[24px] border border-white/50 ${f.bg} p-7 shadow-[0_8px_30px_rgba(26,26,26,0.06)] ring-1 ring-inset ring-white/40 backdrop-blur-xl backdrop-saturate-150 sm:p-8`}>
-                  {/* Top sheen — sells the frosted-glass look on a flat canvas */}
-                  <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/30 to-transparent" />
-                  <div className="relative flex items-start justify-between">
-                    <f.icon size={28} strokeWidth={2} className="text-ink" />
-                    <ArrowUpRight size={20} className="text-ink/50" />
-                  </div>
-                  <div className="relative">
-                    <h3 className="font-heading text-lg font-bold text-ink">{f.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-ink/70">{f.desc}</p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -724,10 +682,10 @@ const Home = () => {
           <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
             Industries we support
           </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-2xl text-center text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
             Built for your <span className="italic text-primary">profession.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-2xl text-center text-base text-neutral-500">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             From tech to coaching to wellness — explore an industry to see the roles already booking on Book A Sloth.
           </Reveal>
 
@@ -742,7 +700,7 @@ const Home = () => {
                   tabIndex={0}
                   role="group"
                   aria-label={`${ind.name} — show popular professions`}
-                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[24px] border border-white/60 bg-white/70 shadow-[0_8px_30px_rgba(26,26,26,0.05)] outline-none ring-1 ring-inset ring-white/50 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.22)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
+                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[20px] border border-white/60 bg-white/70 shadow-[0_8px_30px_rgba(26,26,26,0.05)] outline-none ring-1 ring-inset ring-white/50 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.22)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
                 >
                   {/* Big line icon bleeding from the top-left corner — card background */}
                   <ind.icon
@@ -941,15 +899,12 @@ const Home = () => {
       )}
 
       {/* ════════════════ HOW THE CALM WORKS ════════════════ */}
-      <section id="how-it-works" className="px-5 py-20 sm:px-8 lg:py-32">
+      <section id="how-it-works" className="bg-neutral-800 px-5 py-20 sm:px-8 lg:py-32">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
-            How the calm works
-          </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-4 max-w-xl text-center text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" className="mx-auto max-w-[750px] text-center text-4xl text-white sm:text-5xl">
             From link to paid. <span className="italic text-primary">Calmly.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-md text-center text-base text-neutral-500">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-300">
             No WhatsApp back-and-forth. No payment chasing. No calendar chaos.
           </Reveal>
 
@@ -958,27 +913,27 @@ const Home = () => {
             <ArrowRight
               aria-hidden
               size={22}
-              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/40 md:block"
+              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/60 md:block"
             />
             <ArrowRight
               aria-hidden
               size={22}
-              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/40 md:block"
+              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/60 md:block"
             />
 
             <div className="grid gap-12 md:grid-cols-3 md:gap-6">
               {STEPS.map((s, i) => (
                 <Reveal key={s.title} delay={i * 0.12}>
-                  <div className="group relative flex h-full flex-col items-center rounded-[24px] border border-white/60 bg-white/60 p-8 text-center shadow-[0_8px_30px_rgba(26,26,26,0.05)] ring-1 ring-inset ring-white/50 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.25)]">
+                  <div className="group relative flex h-full flex-col items-center rounded-[24px] border border-white/10 bg-white/5 p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
                     {/* Vertical connector to the next step (mobile) */}
                     {i < STEPS.length - 1 && (
                       <span
                         aria-hidden
-                        className="absolute left-1/2 top-full z-20 h-12 w-px -translate-x-1/2 bg-neutral-200 md:hidden"
+                        className="absolute left-1/2 top-full z-20 h-12 w-px -translate-x-1/2 bg-white/15 md:hidden"
                       >
                         <ArrowRight
                           size={16}
-                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-canvas text-primary/40"
+                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-neutral-800 text-primary/60"
                         />
                       </span>
                     )}
@@ -997,10 +952,10 @@ const Home = () => {
                       </span>
                     </div>
 
-                    <h3 className="mt-6 font-heading text-xl font-bold text-ink">{s.title}</h3>
-                    <p className="mx-auto mt-2 max-w-xs text-neutral-500">{s.desc}</p>
+                    <h3 className="mt-6 font-heading text-xl font-bold text-white">{s.title}</h3>
+                    <p className="mx-auto mt-2 max-w-xs text-neutral-300">{s.desc}</p>
 
-                    <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-sand px-3 py-1 text-xs font-semibold text-primary">
+                    <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
                       <Check size={13} />
                       {s.chip}
                     </span>
@@ -1106,10 +1061,10 @@ const Home = () => {
       {/* ════════════════ TESTIMONIALS (CENTERED CAROUSEL) ════════════════ */}
       <section id="collective" className="overflow-hidden px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-3xl text-center">
-          <Reveal as="h2" className="text-5xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-6xl">
+          <Reveal as="h2" className="text-4xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-5xl">
             Don't just take our word for it
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-5 max-w-xl text-base text-neutral-500">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-5 max-w-[750px] text-base text-neutral-500">
             Our hosts are our best ambassadors. Discover why calm professionals across India choose Book A Sloth.
           </Reveal>
         </div>
@@ -1230,7 +1185,7 @@ const Home = () => {
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
             Simple pricing. <span className="text-primary">Zero commission.</span>
           </Reveal>
-          <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-md text-center text-neutral-500">
+          <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-[750px] text-center text-neutral-500">
             Keep everything you earn. Start free — upgrade when you're ready.
           </Reveal>
 
@@ -1469,7 +1424,7 @@ const Home = () => {
           <div className="lg:flex lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Compare</p>
-              <h2 className="mt-4 max-w-xl text-4xl leading-tight text-white sm:text-5xl">
+              <h2 className="mt-4 max-w-[750px] text-4xl leading-tight text-white sm:text-5xl">
                 A calmer alternative to the tools you know.
               </h2>
             </div>
