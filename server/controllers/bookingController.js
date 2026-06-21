@@ -13,6 +13,7 @@ const availabilityService = require("../services/availabilityService");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { runInBackground } = require("../utils/background");
+const { hostOf } = require("../utils/hostOf");
 
 const emailHtml = (body) => `
   <div style="max-width:520px;margin:0 auto;padding:26px;border-radius:24px;background:#ffffff;font-family:'Plus Jakarta Sans','Poppins',sans-serif;color:#111827;box-shadow:0 24px 60px rgba(15,23,42,0.08);">
@@ -514,7 +515,7 @@ const cancelBooking = async (req, res) => {
 
     // Notify both sides (engine decides channels per admin config)
     try {
-      const host = booking["profiles!bookings_host_id_fkey"] || {};
+      const host = hostOf(booking);
       const when = new Date(booking.scheduled_at).toLocaleString("en-IN");
       const ctx = { guestName: booking.guest_name, serviceTitle: booking.services?.title, hostName: host.name, when };
       const emailData = bookingEmailData({
@@ -594,7 +595,7 @@ const markBookingCompleted = async (booking, { notify = true } = {}) => {
 
   if (notify) {
     try {
-      const host = booking["profiles!bookings_host_id_fkey"] || {};
+      const host = hostOf(booking);
       const when = new Date(booking.scheduled_at).toLocaleString("en-IN");
       const ctx = { guestName: booking.guest_name, serviceTitle: booking.services?.title, hostName: host.name, when };
       const emailData = bookingEmailData({
@@ -756,7 +757,7 @@ const rescheduleBooking = async (req, res) => {
     let feeChargedAmount = 0;
     let feeOrderId = null, feePaymentId = null;
     if (isGuestReschedule) {
-      const hostRow = booking["profiles!bookings_host_id_fkey"] || {};
+      const hostRow = hostOf(booking);
       const vendorFee = Number(hostRow.reschedule_fee) || 0;
       const priorCount = Number(booking.reschedule_count) || 0;
       const feeFlagOn = await featureFlags.isFeatureEnabled('reschedule_fee');
@@ -845,7 +846,7 @@ const rescheduleBooking = async (req, res) => {
     if (error) return safeError(res, error);
 
     try {
-      const hostRow = booking["profiles!bookings_host_id_fkey"] || {};
+      const hostRow = hostOf(booking);
       if (booking.google_event_id && hostRow.google_calendar_connected && hostRow.google_refresh_token) {
         await updateCalendarEvent(
           decryptToken(hostRow.google_access_token),
@@ -889,7 +890,7 @@ const rescheduleBooking = async (req, res) => {
     }
 
     const s = booking.services;
-    const host = booking["profiles!bookings_host_id_fkey"] || {};
+    const host = hostOf(booking);
     const oldWhen = new Date(booking.scheduled_at).toLocaleString("en-IN", {
       timeZone: hostTimezone,
     });
@@ -972,7 +973,7 @@ const confirmReschedule = async (req, res) => {
     }
 
     const s = booking.services;
-    const host = booking["profiles!bookings_host_id_fkey"] || {};
+    const host = hostOf(booking);
     const when = new Date(booking.scheduled_at).toLocaleString("en-IN");
 
     try {
@@ -1033,7 +1034,7 @@ const processReminders = async () => {
 
     for (const b of bookings || []) {
       const s = b.services;
-      const host = b["profiles!bookings_host_id_fkey"] || {};
+      const host = hostOf(b);
       const when = new Date(b.scheduled_at).toLocaleString("en-IN");
       try {
         // Mode of truth = service.meeting_mode (NOT meeting_link presence — the

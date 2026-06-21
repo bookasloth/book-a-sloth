@@ -1,5 +1,6 @@
 // Razorpay payment controller — bookings + product purchases + plan subscriptions
 const { safeError } = require('../utils/httpError');
+const { hostOf } = require("../utils/hostOf");
 const crypto = require("crypto");
 const { supabaseAdmin } = require("../config/supabase");
 const { securityLog, auditLog } = require("../utils/logger");
@@ -327,7 +328,7 @@ const verifyPayment = async (req, res) => {
         .single();
       if (!fullBooking) return;
       const svc  = fullBooking.services;
-      const host = fullBooking["profiles!bookings_host_id_fkey"] || {};
+      const host = hostOf(fullBooking);
       const { data: avail } = await supabaseAdmin
         .from("availability").select("timezone").eq("host_id", fullBooking.host_id).single();
       const tz   = avail?.timezone || "Asia/Kolkata";

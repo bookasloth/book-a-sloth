@@ -90,3 +90,30 @@ test('query error returns zero without throwing', async () => {
   const result = await autoCompleteBookings();
   expect(result.completed).toBe(0);
 });
+
+test('session-complete email resolves the host name from the bare `profiles` embed key', async () => {
+  // Regression for the "session with Host" bug: supabase-js returns the
+  // un-aliased `profiles!bookings_host_id_fkey(...)` embed under the table-name
+  // key `profiles`. Reading the raw select string yields undefined, so the email
+  // rendered the literal "Host". hostOf() must fall back to `.profiles`.
+  const now = Date.now();
+  const H = 60 * 60 * 1000;
+  const realHost = { name: 'Shubham Datarkar', email: 'h@x.com', phone: '1', username: 'shubham', location: '' };
+  const row = baseRow({ id: 'done', scheduled_at: new Date(now - 5 * H).toISOString() });
+  delete row['profiles!bookings_host_id_fkey']; // real PostgREST shape: keyed by table name
+  row.profiles = realHost;
+  wire([row]);
+
+  await autoCompleteBookings();
+
+  const customerCall = NotificationEngine.send.mock.calls
+    .map((c) => c[0])
+    .find((arg) => arg.event === 'BOOKING_COMPLETED_CUSTOMER');
+  expect(customerCall).toBeTruthy();
+  // Host name renders, not the literal "Host" — in the email body via {{vendor_name}}.
+  expect(customerCall.data.emailData.vendor_name).toBe('Shubham Datarkar');
+  // …and the guest name still interpolates from its own column.
+  expect(customerCall.data.name).toBe('G');
+  // Review CTA ({{profile_url}}) targets the host profile instead of the dashboard fallback.
+  expect(customerCall.data.emailData.profile_url).toContain('/shubham');
+});
