@@ -25,6 +25,9 @@ export default function ConsentBanner() {
         <img
           src="https://company-assets.bookasloth.in/images/banner/consent.png"
           alt=""
+          width={298}
+          height={280}
+          decoding="async"
           className="h-auto w-28"
         />
       </div>

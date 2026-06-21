@@ -14,6 +14,10 @@ export default defineConfig({
   },
 
   build: {
+    // Modern baseline — every browser we support runs es2022 (Chrome 94+,
+    // Safari 15.4+, FF 93+). Stops esbuild down-levelling our own output.
+    target: 'es2022',
+
     // Raise the warning threshold — vendor chunks are expected to be 500 KB+
     chunkSizeWarningLimit: 600,
 
