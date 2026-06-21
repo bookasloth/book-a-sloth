@@ -22,9 +22,7 @@ import {
   Star,
   Check,
   AtSign,
-  Banknote,
   MessageCircle,
-  Coins,
   ArrowUpRight,
   Video,
   Link2,
@@ -42,6 +40,21 @@ import {
   GraduationCap,
   Briefcase,
   Plus,
+  TrendingUp,
+  Smile,
+  Stethoscope,
+  Dumbbell,
+  Brain,
+  PenTool,
+  Compass,
+  Clock,
+  FolderKanban,
+  Zap,
+  Lock,
+  Download,
+  FileCheck,
+  Eye,
+  CalendarX2,
 } from "lucide-react";
 import { searchVendors, subscribeNewsletter } from "../services/api";
 import useLenis from "../hooks/useLenis";
@@ -139,6 +152,97 @@ const GlassCard = ({ icon: Icon, label, value, accent, className, float }) => (
 );
 
 /* ════════════════════════════════════════════════════════════
+   PRODUCT MOCKUPS — stylised UI placeholders for the screenshots
+   section. Built from brand tokens so they read as "our product"
+   without needing real screenshots. Swap for real captures later.
+   ════════════════════════════════════════════════════════════ */
+const Bar = ({ w = "w-full", c = "bg-neutral-200", h = "h-2.5" }) => (
+  <div className={`${h} ${w} ${c} rounded-full`} />
+);
+const ProductMock = ({ kind }) => {
+  if (kind === "booking") {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 flex-shrink-0 rounded-full bg-primary/15" />
+          <div className="flex-1 space-y-2">
+            <Bar w="w-28" h="h-3" />
+            <Bar w="w-20" c="bg-neutral-100" />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          {["10:00", "11:30", "2:00", "3:30", "4:00", "5:30"].map((t, i) => (
+            <div
+              key={t}
+              className={`rounded-[6px] px-2 py-1.5 text-center text-[10px] font-semibold ${
+                i === 2 ? "bg-primary text-white" : "bg-neutral-100 text-neutral-500"
+              }`}
+            >
+              {t}
+            </div>
+          ))}
+        </div>
+        <div className="h-8 rounded-[6px] bg-primary-cta" />
+      </div>
+    );
+  }
+  if (kind === "service") {
+    return (
+      <div className="space-y-3">
+        <div className="h-20 rounded-[8px] bg-gradient-to-br from-primary/15 to-sand" />
+        <Bar w="w-32" h="h-3" />
+        <Bar w="w-full" c="bg-neutral-100" />
+        <Bar w="w-2/3" c="bg-neutral-100" />
+        <div className="flex items-center justify-between pt-1">
+          <div className="text-sm font-bold text-ink">₹1,500</div>
+          <div className="h-7 w-24 rounded-[6px] bg-primary-cta" />
+        </div>
+      </div>
+    );
+  }
+  if (kind === "checkout") {
+    return (
+      <div className="space-y-3">
+        <Bar w="w-24" h="h-3" />
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex items-center justify-between">
+            <Bar w="w-28" c="bg-neutral-100" />
+            <Bar w="w-12" c="bg-neutral-100" />
+          </div>
+        ))}
+        <div className="flex items-center justify-between border-t border-dashed border-neutral-200 pt-2.5">
+          <div className="text-xs font-semibold text-ink">Total</div>
+          <div className="text-sm font-bold text-primary">₹1,500</div>
+        </div>
+        <div className="flex h-8 items-center justify-center rounded-[6px] bg-primary-cta text-[10px] font-bold text-white">
+          Pay with UPI
+        </div>
+      </div>
+    );
+  }
+  // dashboard
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-3 gap-2">
+        {[["₹84k", "This month"], ["126", "Bookings"], ["4.9", "Rating"]].map(([v, l]) => (
+          <div key={l} className="rounded-[8px] bg-neutral-100 p-2">
+            <div className="text-sm font-bold text-ink">{v}</div>
+            <div className="text-[9px] text-neutral-400">{l}</div>
+          </div>
+        ))}
+      </div>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="flex items-center gap-2">
+          <div className="h-7 w-7 flex-shrink-0 rounded-full bg-primary/15" />
+          <Bar w="w-32" c="bg-neutral-100" />
+          <div className="ml-auto h-4 w-10 rounded-full bg-primary/10" />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════
    FEATURES (bento)
    ════════════════════════════════════════════════════════════ */
 const FEATURES = [
@@ -148,17 +252,6 @@ const FEATURES = [
   { icon: Users, title: "Light CRM", desc: "Notes, history, receipts — zero spreadsheets." },
   { icon: IndianRupee, title: "India First", desc: "GST, INR, UPI — built for how India pays." },
   { icon: Sparkles, title: "AI Assistant", desc: "Suggests slots, drafts briefs, sends thank-yous." },
-];
-
-/* Modern features (pastel grid) — sits directly under the hero.
-   "Calendar Sync" replaces the earlier AI card. */
-const MODERN_FEATURES = [
-  { icon: Banknote, title: "Payments Built In", desc: "Clients pay up-front. Your time finally bills itself — peacefully.", bg: "bg-pink-200/60" },
-  { icon: MessageCircle, title: "WhatsApp Reminders", desc: "Because email reminders get ghosted. Calm, timely pings straight to WhatsApp.", bg: "bg-lime-200/60" },
-  { icon: Globe, title: "Personal Sloth Page", desc: "A mini-website that books, bills, and brands you — automatically.", bg: "bg-orange-200/60" },
-  { icon: Users, title: "Light CRM", desc: "Client notes, history, and receipts — zero spreadsheets, zero stress.", bg: "bg-blue-200/60" },
-  { icon: Coins, title: "India-First Design", desc: "GST, INR, and UPI native — no dollar drama, no currency confusion.", bg: "bg-amber-200/60" },
-  { icon: CalendarCheck, title: "Calendar Sync", desc: "Two-way Google Calendar sync — no double-bookings, no clashes.", bg: "bg-teal-200/60" },
 ];
 
 /* "…and so much more" — features + integrations.
@@ -315,6 +408,89 @@ const SOCIAL = [
   { Icon: AtSign, label: "Email Book A Sloth", href: "mailto:team@timewheel.co.in" },
 ];
 
+/* ── Stats strip (placeholder numbers — refine before launch) ── */
+const STATS = [
+  { icon: Users, value: "12,000+", label: "Professionals on Book A Sloth" },
+  { icon: CalendarCheck, value: "480K+", label: "Bookings completed" },
+  { icon: Wallet, value: "₹40 Cr+", label: "Payments processed" },
+  { icon: Smile, value: "4.9 / 5", label: "Average host rating" },
+];
+
+/* ── Who it's for — quick self-identification grid ── */
+const WHO_FOR = [
+  { icon: PenTool, label: "Freelancers" },
+  { icon: Target, label: "Coaches" },
+  { icon: Compass, label: "Consultants" },
+  { icon: GraduationCap, label: "Tutors" },
+  { icon: Brain, label: "Therapists" },
+  { icon: Stethoscope, label: "Doctors" },
+  { icon: Palette, label: "Designers" },
+  { icon: Code2, label: "Developers" },
+  { icon: Briefcase, label: "Agencies" },
+  { icon: Sparkles, label: "Studios" },
+  { icon: Dumbbell, label: "Trainers" },
+  { icon: HeartPulse, label: "Mentors" },
+];
+
+/* ── Problem → solution pairs ── */
+const PROBLEMS = [
+  { icon: Wallet, problem: "Chasing clients for payments", solution: "They pay up-front while booking." },
+  { icon: MessageCircle, problem: "Juggling bookings on WhatsApp", solution: "One link does the back-and-forth for you." },
+  { icon: Clock, problem: "No-shows eating your day", solution: "Auto reminders nudge every client." },
+  { icon: Calendar, problem: "Calendar chaos across apps", solution: "Two-way Google Calendar sync, always current." },
+  { icon: CalendarX2, problem: "Double bookings and clashes", solution: "Slots lock the moment they're taken." },
+  { icon: BellRing, problem: "Sending reminders by hand", solution: "Confirmations and follow-ups send themselves." },
+];
+
+/* ── Feature breakdown — grouped by the job it does ── */
+const FEATURE_GROUPS = [
+  { icon: CalendarCheck, title: "Get booked", desc: "A booking page that works while you don't.", items: ["Personal booking page", "Availability management", "Two-way calendar sync"] },
+  { icon: Wallet, title: "Get paid", desc: "Money in before the session starts.", items: ["Razorpay — UPI, cards, netbanking", "Advance & full payments", "Automatic GST invoices"] },
+  { icon: FolderKanban, title: "Stay organized", desc: "Every client, in one calm place.", items: ["Client history & receipts", "Private notes", "Bookings & revenue reports"] },
+  { icon: BellRing, title: "Reduce no-shows", desc: "Gentle nudges that actually land.", items: ["Email & WhatsApp reminders", "Instant confirmations", "Post-session follow-ups"] },
+];
+
+/* ── Product mockups (stylised UI placeholders — swap for real screenshots later) ── */
+const PRODUCT_SHOTS = [
+  { tab: "bookasloth.com/you", title: "Public booking page", kind: "booking" },
+  { tab: "bookasloth.com/you/strategy-call", title: "Service page", kind: "service" },
+  { tab: "Checkout · Razorpay", title: "Checkout & payment", kind: "checkout" },
+  { tab: "Dashboard", title: "Your dashboard", kind: "dashboard" },
+];
+
+/* ── Why Book A Sloth — reasons to choose it ── */
+const WHY_CARDS = [
+  { icon: IndianRupee, title: "Built for India", desc: "INR, GST and UPI are native — not bolted on for a Western tool." },
+  { icon: Wallet, title: "0% commission", desc: "On every paid plan, you keep 100% of what you earn." },
+  { icon: CreditCard, title: "Razorpay inside", desc: "Payments, payouts and subscriptions your clients already trust." },
+  { icon: Zap, title: "Live in minutes", desc: "Claim your link, add a service, share. No setup project." },
+  { icon: Wind, title: "Calm by design", desc: "A clean, quiet experience for you and the people who book you." },
+  { icon: Target, title: "Made for services", desc: "Purpose-built for booked time — not retrofitted from a CRM." },
+];
+
+/* ── FAQ — refine copy later ── */
+const FAQS = [
+  { q: "Is Book A Sloth really free?", a: "Yes. The free plan lets you take bookings and payments with no time limit and no card required. Paid plans add more services, integrations and reports when you're ready." },
+  { q: "Do you charge commission?", a: "No. On every paid plan you keep 100% of what you earn — we never take a cut of your bookings." },
+  { q: "Can clients pay while booking?", a: "Yes. Clients pay up-front through Razorpay — UPI, cards or netbanking — so your time is paid for before the session starts." },
+  { q: "Do clients need an account?", a: "No. Clients book with a quick OTP or as a guest. The fewer steps, the more bookings you get." },
+  { q: "Can I connect Google Calendar?", a: "Yes. Two-way Google Calendar sync keeps your real availability accurate and prevents double bookings." },
+  { q: "Can I take deposits or advance payments?", a: "Yes. Charge a deposit or the full amount up-front — your choice per service." },
+  { q: "Is GST handled?", a: "Yes. Invoices are generated with GST built in, made for how India bills." },
+  { q: "Will reminders reduce my no-shows?", a: "That's the idea. Automatic email and WhatsApp reminders nudge clients before every session, so far fewer slip through." },
+  { q: "Can I cancel anytime?", a: "Yes. Plans are monthly or yearly and you can cancel whenever you like — no lock-in, no contracts." },
+  { q: "Can I move over from another platform?", a: "Yes. Set up your services and share your new link — most hosts are up and running the same day." },
+];
+
+/* ── Trust & security badges ── */
+const TRUST = [
+  { icon: Lock, title: "Secure payments", desc: "Processed by Razorpay, India's trusted gateway." },
+  { icon: ShieldCheck, title: "SSL encrypted", desc: "Every page and payment is encrypted end to end." },
+  { icon: Eye, title: "Privacy-first", desc: "Your data is yours. Never sold, never shared." },
+  { icon: FileCheck, title: "You own your data", desc: "Clients, bookings and earnings always belong to you." },
+  { icon: Download, title: "Export anytime", desc: "Download your data whenever you want to." },
+];
+
 /* ════════════════════════════════════════════════════════════
    PAGE
    ════════════════════════════════════════════════════════════ */
@@ -421,49 +597,8 @@ const Home = () => {
   });
   const finalImgY = useTransform(finalProg, [0, 1], [-40, 40]);
 
-  // ── Testimonials carousel: centred active card fills the 28%→72% middle cell.
-  //    Transform-based track (the page runs Lenis smooth-scroll, which blocks inner
-  //    scrollLeft — so we translate, not scroll). List is tripled; the auto-advance
-  //    walks FORWARD forever and, on reaching the 3rd copy, jumps back one copy with
-  //    animation OFF (identical frame) → seamless, never scrolls back. ──
-  const N_T = TESTIMONIALS.length;
-  const T_GAP = 20; // px gap between cards
-  const [activeT, setActiveT] = useState(N_T); // start in the middle copy
-  const [tAnim, setTAnim] = useState(false); // transition on? (off on mount + during the seamless jump)
-  const [tW, setTW] = useState(0);
-  const tWrapRef = useRef(null);
-  const tPausedRef = useRef(false);
-  useEffect(() => {
-    const el = tWrapRef.current;
-    if (!el) return;
-    const measure = () => setTW(el.clientWidth);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  // Enable the transition a frame AFTER the offset has applied instantly (covers first
-  // paint and the post-jump frame) so the track never animates in from the left.
-  useEffect(() => {
-    if (tAnim || !tW) return;
-    const id = requestAnimationFrame(() => requestAnimationFrame(() => setTAnim(true)));
-    return () => cancelAnimationFrame(id);
-  }, [tAnim, tW]);
-  useEffect(() => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const id = setInterval(() => {
-      if (!tPausedRef.current) setActiveT((a) => a + 1);
-    }, 2500);
-    return () => clearInterval(id);
-  }, []);
-  useEffect(() => {
-    if (activeT < 2 * N_T) return;
-    const id = setTimeout(() => { setTAnim(false); setActiveT((a) => a - N_T); }, 700);
-    return () => clearTimeout(id);
-  }, [activeT, N_T]);
-  const tFrac = tW >= 1024 ? 0.44 : tW >= 640 ? 0.6 : 0.84;
-  const tCardW = tW ? tW * tFrac : 0;
-  const tOffset = tW ? (tW - tCardW) / 2 - activeT * (tCardW + T_GAP) : 0;
+  // Testimonials are a simple 3-up grid now (see TESTIMONIALS section) — the
+  // old transform-based infinite carousel was removed to cut visual repetition.
 
   // ── Pricing: 2 plans, Yearly active by default ──
   const [yearly, setYearly] = useState(true);
@@ -545,9 +680,9 @@ const Home = () => {
 
             {/* URL creator */}
             <Reveal delay={0.18} className="mt-9">
-              <div className="flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 sm:rounded-[18px] sm:border sm:border-black/[0.07] sm:bg-white sm:p-1.5 sm:shadow-[0_10px_30px_-10px_rgba(26,26,26,0.18)]">
+              <div className="flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 sm:rounded-[5px] sm:border sm:border-black/[0.07] sm:bg-white sm:p-1.5 sm:shadow-[0_10px_30px_-10px_rgba(26,26,26,0.18)]">
                 {/* URL prefix + input — own card on mobile, merges into pill on desktop */}
-                <div className="flex min-h-[3.5rem] flex-1 items-center min-w-0 rounded-[14px] border border-black/[0.07] bg-white px-5 shadow-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-4 sm:shadow-none">
+                <div className="flex min-h-[3.5rem] flex-1 items-center min-w-0 rounded-[5px] border border-black/[0.07] bg-white px-5 shadow-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-4 sm:shadow-none">
                   <span className="select-none whitespace-nowrap text-sm font-medium text-neutral-400 shrink-0">
                     bookasloth.com/
                   </span>
@@ -564,7 +699,7 @@ const Home = () => {
                 </div>
                 <button
                   onClick={claim}
-                  className="btn inline-flex min-h-[3.5rem] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[14px] bg-primary-cta px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:min-h-0 sm:py-3"
+                  className="btn inline-flex min-h-[3.5rem] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[5px] bg-primary-cta px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:min-h-0 sm:py-3"
                 >
                   Get Started
                   <ArrowRight size={15} />
@@ -605,7 +740,7 @@ const Home = () => {
 
           {/* RIGHT */}
           <Reveal delay={0.1} className="relative">
-            <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[2.25rem] bg-sand shadow-[0_40px_90px_-25px_rgba(26,26,26,0.38)] ring-1 ring-black/5">
+            <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[6px] bg-sand shadow-[0_40px_90px_-25px_rgba(26,26,26,0.38)] ring-1 ring-black/5">
               <motion.img
                 src={HERO}
                 alt="A calm professional at work"
@@ -614,7 +749,7 @@ const Home = () => {
                 className="h-[112%] w-full object-cover"
               />
               {/* Subtle inset sheen for a more premium frame */}
-              <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[2.25rem] ring-1 ring-inset ring-white/15" />
+              <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[6px] ring-1 ring-inset ring-white/15" />
             </div>
 
             {/* Floating glass cards */}
@@ -644,29 +779,23 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ════════════════ MODERN FEATURES (PASTEL GRID) ════════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
+      {/* ════════════════ STATS STRIP (dark) ════════════════ */}
+      <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="h2" className="mx-auto max-w-3xl text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
-            Contains modern features for better experience{" "}
-            <span className="text-primary">better experience.</span>
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+            The calm is catching on
           </Reveal>
-
-          <div className="mt-14 grid gap-5 sm:gap-6 md:grid-cols-3">
-            {MODERN_FEATURES.map((f, i) => (
-              <Reveal key={f.title} delay={(i % 3) * 0.08}>
-                <div className={`relative flex h-full min-h-[240px] flex-col justify-between overflow-hidden rounded-[24px] border border-white/50 ${f.bg} p-7 shadow-[0_8px_30px_rgba(26,26,26,0.06)] ring-1 ring-inset ring-white/40 backdrop-blur-xl backdrop-saturate-150 sm:p-8`}>
-                  {/* Top sheen — sells the frosted-glass look on a flat canvas */}
-                  <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/30 to-transparent" />
-                  <div className="relative flex items-start justify-between">
-                    <f.icon size={28} strokeWidth={2} className="text-ink" />
-                    <ArrowUpRight size={20} className="text-ink/50" />
-                  </div>
-                  <div className="relative">
-                    <h3 className="font-heading text-lg font-bold text-ink">{f.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-ink/70">{f.desc}</p>
-                  </div>
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
+            Trusted by professionals across India.
+          </Reveal>
+          <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
+            {STATS.map((s, i) => (
+              <Reveal key={s.label} delay={i * 0.08} className="text-center">
+                <s.icon size={24} strokeWidth={2} className="mx-auto text-primary" />
+                <div className="mt-4 font-heading text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+                  {s.value}
                 </div>
+                <p className="mx-auto mt-2 max-w-[12rem] text-sm text-white/60">{s.label}</p>
               </Reveal>
             ))}
           </div>
@@ -718,16 +847,43 @@ const Home = () => {
         </div>
       </section>
 
+      {/* ════════════════ WHO IS THIS FOR ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+            Who it's for
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+            If you sell your <span className="italic text-primary">time</span>, it's for you.
+          </Reveal>
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
+            Solo or a small team — if people book you, Book A Sloth quietly handles the booking, the payment and the reminders.
+          </Reveal>
+          <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {WHO_FOR.map((w, i) => (
+              <Reveal key={w.label} delay={(i % 4) * 0.06}>
+                <div className="group flex items-center gap-3 rounded-[20px] border border-black/5 bg-white p-4 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-black/10 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.18)] sm:p-5">
+                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <w.icon size={20} />
+                  </span>
+                  <span className="font-heading text-sm font-bold text-ink sm:text-base">{w.label}</span>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ════════════════ INDUSTRY DISCOVERY ════════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
             Industries we support
           </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-2xl text-center text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
             Built for your <span className="italic text-primary">profession.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-2xl text-center text-base text-neutral-500">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             From tech to coaching to wellness — explore an industry to see the roles already booking on Book A Sloth.
           </Reveal>
 
@@ -742,7 +898,7 @@ const Home = () => {
                   tabIndex={0}
                   role="group"
                   aria-label={`${ind.name} — show popular professions`}
-                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[24px] border border-white/60 bg-white/70 shadow-[0_8px_30px_rgba(26,26,26,0.05)] outline-none ring-1 ring-inset ring-white/50 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.22)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
+                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[20px] border border-white/60 bg-white/70 shadow-[0_8px_30px_rgba(26,26,26,0.05)] outline-none ring-1 ring-inset ring-white/50 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.22)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
                 >
                   {/* Big line icon bleeding from the top-left corner — card background */}
                   <ind.icon
@@ -940,16 +1096,48 @@ const Home = () => {
       </section>
       )}
 
-      {/* ════════════════ HOW THE CALM WORKS ════════════════ */}
-      <section id="how-it-works" className="px-5 py-20 sm:px-8 lg:py-32">
+      {/* ════════════════ PROBLEM → SOLUTION ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
-            How the calm works
+            Sound familiar?
           </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-4 max-w-xl text-center text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+            The busywork that eats your day — <span className="italic text-primary">gone.</span>
+          </Reveal>
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
+            You got into this to do your work, not to run admin. Here's what Book A Sloth quietly takes off your plate.
+          </Reveal>
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            {PROBLEMS.map((p, i) => (
+              <Reveal key={p.problem} delay={(i % 2) * 0.08}>
+                <div className="h-full rounded-[20px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-7">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-400">
+                      <p.icon size={18} />
+                    </span>
+                    <p className="text-sm font-semibold text-neutral-400 line-through decoration-neutral-300">
+                      {p.problem}
+                    </p>
+                  </div>
+                  <div className="mt-4 flex items-start gap-3 border-t border-dashed border-neutral-200 pt-4">
+                    <Check size={18} className="mt-0.5 flex-shrink-0 text-primary" />
+                    <p className="text-[15px] font-medium leading-relaxed text-ink">{p.solution}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════ HOW THE CALM WORKS ════════════════ */}
+      <section id="how-it-works" className="bg-neutral-800 px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <Reveal as="h2" className="mx-auto max-w-[750px] text-center text-4xl text-white sm:text-5xl">
             From link to paid. <span className="italic text-primary">Calmly.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-md text-center text-base text-neutral-500">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-300">
             No WhatsApp back-and-forth. No payment chasing. No calendar chaos.
           </Reveal>
 
@@ -958,27 +1146,27 @@ const Home = () => {
             <ArrowRight
               aria-hidden
               size={22}
-              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/40 md:block"
+              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/60 md:block"
             />
             <ArrowRight
               aria-hidden
               size={22}
-              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/40 md:block"
+              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/60 md:block"
             />
 
             <div className="grid gap-12 md:grid-cols-3 md:gap-6">
               {STEPS.map((s, i) => (
                 <Reveal key={s.title} delay={i * 0.12}>
-                  <div className="group relative flex h-full flex-col items-center rounded-[24px] border border-white/60 bg-white/60 p-8 text-center shadow-[0_8px_30px_rgba(26,26,26,0.05)] ring-1 ring-inset ring-white/50 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.25)]">
+                  <div className="group relative flex h-full flex-col items-center rounded-[24px] border border-white/10 bg-white/5 p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
                     {/* Vertical connector to the next step (mobile) */}
                     {i < STEPS.length - 1 && (
                       <span
                         aria-hidden
-                        className="absolute left-1/2 top-full z-20 h-12 w-px -translate-x-1/2 bg-neutral-200 md:hidden"
+                        className="absolute left-1/2 top-full z-20 h-12 w-px -translate-x-1/2 bg-white/15 md:hidden"
                       >
                         <ArrowRight
                           size={16}
-                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-canvas text-primary/40"
+                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-neutral-800 text-primary/60"
                         />
                       </span>
                     )}
@@ -997,10 +1185,10 @@ const Home = () => {
                       </span>
                     </div>
 
-                    <h3 className="mt-6 font-heading text-xl font-bold text-ink">{s.title}</h3>
-                    <p className="mx-auto mt-2 max-w-xs text-neutral-500">{s.desc}</p>
+                    <h3 className="mt-6 font-heading text-xl font-bold text-white">{s.title}</h3>
+                    <p className="mx-auto mt-2 max-w-xs text-neutral-300">{s.desc}</p>
 
-                    <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-sand px-3 py-1 text-xs font-semibold text-primary">
+                    <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
                       <Check size={13} />
                       {s.chip}
                     </span>
@@ -1103,80 +1291,117 @@ const Home = () => {
       </section>
       )}
 
-      {/* ════════════════ TESTIMONIALS (CENTERED CAROUSEL) ════════════════ */}
-      <section id="collective" className="overflow-hidden px-5 py-20 sm:px-8 lg:py-28">
+      {/* ════════════════ PRODUCT SCREENSHOTS ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+            See it in action
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+            Calm to look at. <span className="italic text-primary">Calm to use.</span>
+          </Reveal>
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
+            From your public page to your dashboard — every screen is clean, simple and built to get you booked.
+          </Reveal>
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            {PRODUCT_SHOTS.map((shot, i) => (
+              <Reveal key={shot.title} delay={(i % 2) * 0.08}>
+                <figure className="h-full">
+                  <div className="overflow-hidden rounded-[20px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.2)]">
+                    {/* browser chrome */}
+                    <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50 px-4 py-3">
+                      <span className="flex gap-1.5" aria-hidden>
+                        <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                      </span>
+                      <div className="ml-2 flex-1 truncate rounded-full bg-white px-3 py-1 text-[11px] text-neutral-400 ring-1 ring-inset ring-black/5">
+                        {shot.tab}
+                      </div>
+                    </div>
+                    <div className="p-5 sm:p-6">
+                      <ProductMock kind={shot.kind} />
+                    </div>
+                  </div>
+                  <figcaption className="mt-4 text-center text-sm font-semibold text-ink">{shot.title}</figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════ FEATURE BREAKDOWN ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+            Everything you need
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+            Four jobs. <span className="italic text-primary">One calm tool.</span>
+          </Reveal>
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
+            Not a pile of features — just the four things a service business actually needs, done well.
+          </Reveal>
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
+            {FEATURE_GROUPS.map((g, i) => (
+              <Reveal key={g.title} delay={(i % 4) * 0.07}>
+                <div className="flex h-full flex-col rounded-[20px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.18)] sm:p-7">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <g.icon size={22} />
+                  </span>
+                  <h3 className="mt-5 font-heading text-lg font-bold text-ink">{g.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{g.desc}</p>
+                  <ul className="mt-5 space-y-2.5 border-t border-neutral-100 pt-5">
+                    {g.items.map((it) => (
+                      <li key={it} className="flex items-start gap-2 text-sm text-ink">
+                        <Check size={15} className="mt-0.5 flex-shrink-0 text-primary" />
+                        {it}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════ TESTIMONIALS (3-up grid) ════════════════ */}
+      <section id="collective" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-3xl text-center">
-          <Reveal as="h2" className="text-5xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-6xl">
+          <Reveal as="h2" className="text-4xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-5xl">
             Don't just take our word for it
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-5 max-w-xl text-base text-neutral-500">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-5 max-w-[750px] text-base text-neutral-500">
             Our hosts are our best ambassadors. Discover why calm professionals across India choose Book A Sloth.
           </Reveal>
         </div>
 
-        <div className="relative mt-16">
-          {/* Blueprint guide lines (desktop) — at 28%/72% = the active card's edges */}
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-12 top-12 z-0 hidden lg:block">
-            <div className="absolute inset-x-0 top-0 border-t border-dashed border-neutral-200" />
-            <div className="absolute inset-x-0 bottom-0 border-t border-dashed border-neutral-200" />
-            <div className="absolute inset-y-0 left-[28%] border-l border-dashed border-neutral-200" />
-            <div className="absolute inset-y-0 left-[72%] border-l border-dashed border-neutral-200" />
-          </div>
-
-          {/* Transform track — Lenis blocks inner scrollLeft, so we translate.
-              Loops forward forever (tripled list, animation-off seamless reset). */}
-          <div
-            ref={tWrapRef}
-            onMouseEnter={() => { tPausedRef.current = true; }}
-            onMouseLeave={() => { tPausedRef.current = false; }}
-            className="relative z-10 overflow-hidden py-12"
-          >
-            <div
-              className={`flex ${tAnim ? "transition-transform duration-700 ease-out motion-reduce:transition-none" : ""}`}
-              style={{ transform: `translate3d(${tOffset}px, 0, 0)`, columnGap: `${T_GAP}px` }}
-            >
-              {tW > 0 &&
-                [...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => {
-                  const isActive = i === activeT;
-                  return (
-                    <figure
-                      key={i}
-                      style={{ width: `${tCardW}px` }}
-                      className={`flex h-[14rem] flex-shrink-0 flex-col justify-between rounded-[6px] p-7 text-left transition-[opacity,box-shadow,border-color] duration-500 sm:p-9 ${
-                        isActive
-                          ? "border border-black/5 bg-white opacity-100 shadow-[0_30px_70px_-30px_rgba(26,26,26,0.35)]"
-                          : "border border-transparent bg-transparent opacity-40"
-                      }`}
-                    >
-                      {/* Quote — top-left, full width (font ~50% of before) */}
-                      <blockquote className="text-[15px] font-semibold leading-snug text-ink sm:text-[18px]">
-                        “{t.quote}”
-                      </blockquote>
-                      {/* Photo · name · profession — bottom-left (size unchanged) */}
-                      <figcaption className="flex items-center gap-3">
-                        <TAvatar src={t.avatar} name={t.name} />
-                        <div>
-                          <div className="text-sm font-semibold text-ink">{t.name}</div>
-                          <div className="text-xs text-neutral-400">{t.role}</div>
-                        </div>
-                      </figcaption>
-                    </figure>
-                  );
-                })}
-            </div>
-          </div>
-
-          {/* Blueprint crosshairs (desktop) — at the middle cell's corners */}
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-12 top-12 z-20 hidden lg:block">
-            {[
-              "left-[28%] top-0 -translate-x-1/2 -translate-y-1/2",
-              "left-[72%] top-0 -translate-x-1/2 -translate-y-1/2",
-              "left-[28%] bottom-0 -translate-x-1/2 translate-y-1/2",
-              "left-[72%] bottom-0 -translate-x-1/2 translate-y-1/2",
-            ].map((pos) => (
-              <Plus key={pos} size={18} className={`absolute ${pos} text-neutral-300`} />
-            ))}
-          </div>
+        <div className="mt-14 grid gap-5 sm:gap-6 md:grid-cols-3">
+          {TESTIMONIALS.slice(0, 3).map((t, i) => (
+            <Reveal key={t.name} delay={(i % 3) * 0.1}>
+              <figure className="flex h-full flex-col justify-between rounded-[20px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8">
+                <div>
+                  <div className="flex gap-0.5" aria-hidden>
+                    {[0, 1, 2, 3, 4].map((s) => (
+                      <Star key={s} size={15} className="fill-primary text-primary" />
+                    ))}
+                  </div>
+                  <blockquote className="mt-4 text-[15px] font-semibold leading-relaxed text-ink sm:text-base">
+                    “{t.quote}”
+                  </blockquote>
+                </div>
+                <figcaption className="mt-6 flex items-center gap-3 border-t border-neutral-100 pt-5">
+                  <TAvatar src={t.avatar} name={t.name} />
+                  <div>
+                    <div className="text-sm font-semibold text-ink">{t.name}</div>
+                    <div className="text-xs text-neutral-400">{t.role}</div>
+                  </div>
+                </figcaption>
+              </figure>
+            </Reveal>
+          ))}
         </div>
       </section>
 
@@ -1224,13 +1449,41 @@ const Home = () => {
       </section>
       )}
 
+      {/* ════════════════ WHY BOOK A SLOTH ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+            Why Book A Sloth
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+            Made for you — <span className="italic text-primary">not borrowed from the West.</span>
+          </Reveal>
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
+            Plenty of tools can take a booking. Few are built for an Indian professional who wants to stay calm and keep everything they earn.
+          </Reveal>
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+            {WHY_CARDS.map((w, i) => (
+              <Reveal key={w.title} delay={(i % 3) * 0.07}>
+                <div className="flex h-full flex-col rounded-[20px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.18)] sm:p-7">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <w.icon size={22} />
+                  </span>
+                  <h3 className="mt-5 font-heading text-lg font-bold text-ink">{w.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{w.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ════════════════ PRICING (2 plans · yearly active) ════════════════ */}
       <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-4xl">
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
             Simple pricing. <span className="text-primary">Zero commission.</span>
           </Reveal>
-          <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-md text-center text-neutral-500">
+          <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-[750px] text-center text-neutral-500">
             Keep everything you earn. Start free — upgrade when you're ready.
           </Reveal>
 
@@ -1463,13 +1716,42 @@ const Home = () => {
       </section>
       )}
 
+      {/* ════════════════ FAQ ════════════════ */}
+      <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-3xl">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+            FAQ
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+            Questions, answered.
+          </Reveal>
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
+            Everything you might be wondering before you start. Still stuck?{" "}
+            <a href="mailto:team@timewheel.co.in" className="font-semibold text-primary hover:no-underline">Email us.</a>
+          </Reveal>
+          <div className="mt-12 space-y-3">
+            {FAQS.map((f, i) => (
+              <Reveal key={f.q} delay={Math.min(i * 0.04, 0.2)}>
+                <details className="group rounded-[20px] border border-black/5 bg-white px-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] [&_summary::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 font-heading text-base font-bold text-ink">
+                    {f.q}
+                    <Plus size={18} className="flex-shrink-0 text-primary transition-transform duration-300 group-open:rotate-45" />
+                  </summary>
+                  <p className="-mt-1 pb-5 text-sm leading-relaxed text-neutral-500">{f.a}</p>
+                </details>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ════════════════ COMPARISON / COMPETITORS (full-width dark band) ════════════════ */}
-      <section className="bg-ink px-5 py-16 text-white sm:px-8 lg:py-24">
+      <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <Reveal className="mx-auto max-w-7xl">
           <div className="lg:flex lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Compare</p>
-              <h2 className="mt-4 max-w-xl text-4xl leading-tight text-white sm:text-5xl">
+              <h2 className="mt-4 max-w-[750px] text-4xl leading-tight text-white sm:text-5xl">
                 A calmer alternative to the tools you know.
               </h2>
             </div>
@@ -1526,6 +1808,34 @@ const Home = () => {
         </Reveal>
       </section>
 
+      {/* ════════════════ TRUST & SECURITY ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+            Trust & security
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+            Your data and money, <span className="italic text-primary">handled with care.</span>
+          </Reveal>
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
+            The boring-but-important things, done right — so you and your clients can relax.
+          </Reveal>
+          <div className="mt-14 grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-5">
+            {TRUST.map((t, i) => (
+              <Reveal key={t.title} delay={(i % 5) * 0.06}>
+                <div className="flex h-full flex-col items-center rounded-[20px] border border-black/5 bg-white p-6 text-center shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <t.icon size={22} />
+                  </span>
+                  <h3 className="mt-4 font-heading text-sm font-bold text-ink">{t.title}</h3>
+                  <p className="mt-1.5 text-xs leading-relaxed text-neutral-500">{t.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ════════════════ NEWSLETTER ════════════════
          REMOVED from page (keep for later). Restore by deleting `{false && (`
          and its matching `)}` after </section>. */}
@@ -1580,11 +1890,8 @@ const Home = () => {
       </section>
       )}
 
-      {/* ════════════════ FINAL CTA ════════════════
-         REMOVED from page (keep for later). Restore by deleting `{false && (`
-         and its matching `)}` after </section>. */}
-      {false && (
-      <section ref={finalRef} className="relative px-5 py-20 sm:px-8">
+      {/* ════════════════ FINAL CTA ════════════════ */}
+      <section ref={finalRef} className="relative px-5 py-20 sm:px-8 lg:py-28">
         <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem]">
           <motion.img
             src={FINAL}
@@ -1596,9 +1903,9 @@ const Home = () => {
           <div className="absolute inset-0 bg-ink/60" />
           <div className="relative px-6 py-24 text-center sm:py-32">
             <Reveal as="h2" className="mx-auto max-w-2xl text-4xl leading-tight text-white sm:text-6xl">
-              You've done the hustle.
+              Get booked &amp; paid,
               <br />
-              <span className="italic text-white/70">Now try the flow.</span>
+              <span className="italic text-white/70">starting today.</span>
             </Reveal>
             <Reveal delay={0.1} className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
@@ -1614,10 +1921,12 @@ const Home = () => {
                 See how it works
               </a>
             </Reveal>
+            <Reveal as="p" delay={0.16} className="mt-6 text-sm text-white/60">
+              Free forever plan · No credit card · Set up in minutes
+            </Reveal>
           </div>
         </div>
       </section>
-      )}
 
       {/* ════════════════ FOOTER ════════════════ */}
       <footer className="px-5 pb-12 pt-10 sm:px-8">

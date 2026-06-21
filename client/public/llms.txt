@@ -1,0 +1,35 @@
+# Book A Sloth
+
+> Book A Sloth is an India-first appointment-booking platform for creators and professionals — coaches, tutors, consultants, designers, wellness practitioners and more (called "hosts"). Hosts publish services, share one short booking link, and get paid up-front at **0% commission**. Guests book in seconds via OTP or a free account; payments run through Razorpay (UPI, cards, netbanking).
+
+Key facts:
+
+- **0% commission** — hosts keep 100% of what they earn.
+- **Plans:** Free (Starter), Creator ₹199/mo, Pro ₹499/mo — annual billing available at a discount.
+- **India-native:** INR pricing, GST handling and UPI built in.
+- **Runs the whole booking:** payments up-front, email + WhatsApp reminders, two-way Google Calendar sync, and auto-generated video-call links.
+- **Personal page:** every host gets `bookasloth.com/their-username` — a mini-site that books, bills and brands them.
+- Positioned as a calmer, India-first alternative to tools like Topmate and Calendly.
+
+## Main pages
+
+- [Home](https://bookasloth.com/): What Book A Sloth is — features, pricing and how booking works.
+- [Become a host](https://bookasloth.com/be-a-sloth): Why and how to start taking bookings on Book A Sloth.
+- [About](https://bookasloth.com/about): The company, mission and the "calm economy" positioning.
+- [Help](https://bookasloth.com/help): Common questions for hosts and guests.
+
+## Comparisons
+
+- [Book A Sloth vs Topmate](https://bookasloth.com/lp/topmate-vs-bookasloth): The 0%-commission case versus Topmate.
+- [A calmer Calendly alternative](https://bookasloth.com/lp/calendly-alternative): Booking + payments + reminders in one place.
+
+## Legal
+
+- [Privacy Policy](https://bookasloth.com/privacy)
+- [Terms of Service](https://bookasloth.com/terms)
+- [Refund Policy](https://bookasloth.com/refund)
+
+## Notes for crawlers
+
+- Host profiles are public and live at `https://bookasloth.com/{username}`. The full, always-current list is in the [sitemap](https://bookasloth.com/sitemap.xml).
+- Private app surfaces — host dashboard, admin, and sign-in/sign-up flows — are not intended for indexing or training (see [robots.txt](https://bookasloth.com/robots.txt)).
