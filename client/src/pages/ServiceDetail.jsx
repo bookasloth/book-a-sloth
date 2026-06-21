@@ -647,8 +647,6 @@ export default function ServiceDetail() {
   const bookings    = service.total_bookings || 0;
   // Bestseller heuristic: proven volume + high rating
   const isBestseller = bookings >= 10 && rating >= 4.5;
-  const creatorCategory = service.category_label || service.category
-    || vendor?.profession || vendor?.tagline || '';
 
   // Admin-managed SEO → head tags + Service JSON-LD (canonical derived from URL).
   const seo = resolveServiceSeo({ service, vendor, siteUrl: SEO_SITE });
