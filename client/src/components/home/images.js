@@ -12,8 +12,8 @@
 export const u = (id, w = 800, h = 1000) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&h=${h}&q=80`;
 
-// Hero — calm professional at desk
-export const HERO = u("1573497019940-1c28c88b4f3e", 1100, 1320); // woman professional
+// Hero — Book A Sloth branded banner (company CDN)
+export const HERO = "https://company-assets.bookasloth.in/images/banner/hero-book-a-sloth.png";
 
 // "Who it's for" — Indian-looking professionals across roles
 export const PERSONAS = {

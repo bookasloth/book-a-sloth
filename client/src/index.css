@@ -334,6 +334,19 @@ table {
 .sloth-ink       { color: #1a1a1a; }
 .sloth-muted     { color: #6b6b6b; }
 
+/* Hero ambient aura — soft warm wash on the flat canvas (no palette change).
+   Painted inside the hero <section> box; gradients fade out before the edges,
+   so nothing bleeds into neighbouring sections. */
+.sloth-hero-aura {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(38rem 30rem at 82% 14%, rgba(254, 81, 0, 0.08), transparent 62%),
+    radial-gradient(40rem 32rem at 8% 4%, rgba(244, 241, 234, 0.85), transparent 58%);
+}
+
 /* Frosted glass cards (hero floating cards) */
 .sloth-glass {
   background: rgba(255, 255, 255, 0.72);
