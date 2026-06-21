@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCategoryRules, groupCategories } from '../utils/categoryUtils';
+import { getCategoryRules, groupCategories, categoryLabel } from '../utils/categoryUtils';
 
 describe('getCategoryRules', () => {
   it('locks free/starter/explorer', () => {
@@ -25,5 +25,18 @@ describe('groupCategories', () => {
     const groups = groupCategories(list);
     expect(groups.map((g) => g.group)).toEqual(['G1', 'G2']);
     expect(groups[0].items.map((i) => i.slug)).toEqual(['a', 'c']);
+  });
+});
+
+describe('categoryLabel', () => {
+  const list = [{ slug: 'career-coach', label: 'Career Coach' }];
+  it('returns the label from the list when present', () => {
+    expect(categoryLabel('career-coach', list)).toBe('Career Coach');
+  });
+  it('prettifies the slug when not in the list', () => {
+    expect(categoryLabel('life-coach', list)).toBe('Life Coach');
+  });
+  it('returns empty string for a falsy slug', () => {
+    expect(categoryLabel('', list)).toBe('');
   });
 });

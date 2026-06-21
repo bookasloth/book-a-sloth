@@ -18,3 +18,12 @@ export function groupCategories(list) {
   });
   return order.map((g) => ({ group: g, items: byGroup.get(g) }));
 }
+
+// Resolve a category slug to a human label using the active list, falling back
+// to a prettified slug ('career-coach' → 'Career Coach').
+export function categoryLabel(slug, list) {
+  if (!slug) return '';
+  const hit = (list || []).find((c) => c.slug === slug);
+  if (hit) return hit.label;
+  return slug.replace(/-/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+}
