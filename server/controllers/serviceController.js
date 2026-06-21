@@ -7,6 +7,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const { getConfig: getPlatformConfig } = require('../services/platformConfig');
 const { bustSitemapCache } = require('../utils/sitemapCache');
+const { resolveAndValidateCategory } = require('../lib/serviceCategory');
 
 // ─── Slug helpers ────────────────────────────────────────────────────────────
 
@@ -91,7 +92,7 @@ const V2_SELECT_COLS =
   'id,host_id,title,slug,short_description,long_description,description,' +
   'meeting_mode,type,price,duration,currency,grace_period_minutes,thumbnail_url,' +
   'included_items,excluded_items,faqs,important_note,rating,total_reviews,total_bookings,' +
-  'is_active,created_at,updated_at';
+  'category,is_active,created_at,updated_at';
 
 const LEGACY_SELECT_COLS =
   'id,host_id,title,slug,description,type,meeting_mode,price,duration,currency,' +
@@ -193,10 +194,15 @@ const createService = async (req, res) => {
     const { title } = req.body;
     if (!title) return res.status(400).json({ message: 'Title is required' });
 
+    // Service must sit inside one of the host's categories.
+    const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: true });
+    if (!chk.ok) return res.status(chk.status).json({ message: chk.message });
+
     const baseSlug = slugify(title);
     const slug = await uniqueSlug(baseSlug, req.user.id);
 
     const p = buildPayload(req.body);
+    p.category = chk.value;
     p.host_id  = req.user.id;
     p.slug     = slug;
     p.currency = p.currency || 'INR';
@@ -250,6 +256,11 @@ const getServiceById = async (req, res) => {
 const updateService = async (req, res) => {
   try {
     const updates = buildPayload(req.body);
+    if (req.body.category !== undefined) {
+      const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: false });
+      if (!chk.ok) return res.status(chk.status).json({ message: chk.message });
+      updates.category = chk.value;
+    }
     updates.updated_at = new Date().toISOString();
 
     // Re-slug if title changed
@@ -446,6 +457,14 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
       count: reviewList.filter((r) => r.rating === star).length,
     }));
 
+    // Resolve category slug → human label for the public service page.
+    const service = svc;
+    if (service && service.category) {
+      const { data: cat } = await supabaseAdmin
+        .from('categories').select('label').eq('slug', service.category).maybeSingle();
+      service.category_label = cat?.label || null;
+    }
+
     // Customer-facing booking charge = flat platform fee + GST (admin-editable).
     // Mirrors the breakdown shown on the booking/payment screen so the price the
     // guest sees here matches what they pay. Falls back to 0 on error.
@@ -456,7 +475,7 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
     } catch (_) { bookingFee = 0; }
 
     res.json({
-      service: svc,
+      service: service,
       vendor: vendor || {},
       totalServices: totalServices || 0,
       availability: availability || null,
