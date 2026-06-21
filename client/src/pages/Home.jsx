@@ -597,8 +597,49 @@ const Home = () => {
   });
   const finalImgY = useTransform(finalProg, [0, 1], [-40, 40]);
 
-  // Testimonials are a simple 3-up grid now (see TESTIMONIALS section) — the
-  // old transform-based infinite carousel was removed to cut visual repetition.
+  // ── Testimonials carousel: centred active card fills the 28%→72% middle cell.
+  //    Transform-based track (the page runs Lenis smooth-scroll, which blocks inner
+  //    scrollLeft — so we translate, not scroll). List is tripled; the auto-advance
+  //    walks FORWARD forever and, on reaching the 3rd copy, jumps back one copy with
+  //    animation OFF (identical frame) → seamless, never scrolls back. ──
+  const N_T = TESTIMONIALS.length;
+  const T_GAP = 20; // px gap between cards
+  const [activeT, setActiveT] = useState(N_T); // start in the middle copy
+  const [tAnim, setTAnim] = useState(false); // transition on? (off on mount + during the seamless jump)
+  const [tW, setTW] = useState(0);
+  const tWrapRef = useRef(null);
+  const tPausedRef = useRef(false);
+  useEffect(() => {
+    const el = tWrapRef.current;
+    if (!el) return;
+    const measure = () => setTW(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  // Enable the transition a frame AFTER the offset has applied instantly (covers first
+  // paint and the post-jump frame) so the track never animates in from the left.
+  useEffect(() => {
+    if (tAnim || !tW) return;
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setTAnim(true)));
+    return () => cancelAnimationFrame(id);
+  }, [tAnim, tW]);
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const id = setInterval(() => {
+      if (!tPausedRef.current) setActiveT((a) => a + 1);
+    }, 2500);
+    return () => clearInterval(id);
+  }, []);
+  useEffect(() => {
+    if (activeT < 2 * N_T) return;
+    const id = setTimeout(() => { setTAnim(false); setActiveT((a) => a - N_T); }, 700);
+    return () => clearTimeout(id);
+  }, [activeT, N_T]);
+  const tFrac = tW >= 1024 ? 0.44 : tW >= 640 ? 0.6 : 0.84;
+  const tCardW = tW ? tW * tFrac : 0;
+  const tOffset = tW ? (tW - tCardW) / 2 - activeT * (tCardW + T_GAP) : 0;
 
   // ── Pricing: 2 plans, Yearly active by default ──
   const [yearly, setYearly] = useState(true);
@@ -1367,8 +1408,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ════════════════ TESTIMONIALS (3-up grid) ════════════════ */}
-      <section id="collective" className="px-5 py-20 sm:px-8 lg:py-28">
+      {/* ════════════════ TESTIMONIALS (CENTERED CAROUSEL) ════════════════ */}
+      <section id="collective" className="overflow-hidden px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-3xl text-center">
           <Reveal as="h2" className="text-4xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-5xl">
             Don't just take our word for it
@@ -1378,30 +1419,69 @@ const Home = () => {
           </Reveal>
         </div>
 
-        <div className="mt-14 grid gap-5 sm:gap-6 md:grid-cols-3">
-          {TESTIMONIALS.slice(0, 3).map((t, i) => (
-            <Reveal key={t.name} delay={(i % 3) * 0.1}>
-              <figure className="flex h-full flex-col justify-between rounded-[20px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8">
-                <div>
-                  <div className="flex gap-0.5" aria-hidden>
-                    {[0, 1, 2, 3, 4].map((s) => (
-                      <Star key={s} size={15} className="fill-primary text-primary" />
-                    ))}
-                  </div>
-                  <blockquote className="mt-4 text-[15px] font-semibold leading-relaxed text-ink sm:text-base">
-                    “{t.quote}”
-                  </blockquote>
-                </div>
-                <figcaption className="mt-6 flex items-center gap-3 border-t border-neutral-100 pt-5">
-                  <TAvatar src={t.avatar} name={t.name} />
-                  <div>
-                    <div className="text-sm font-semibold text-ink">{t.name}</div>
-                    <div className="text-xs text-neutral-400">{t.role}</div>
-                  </div>
-                </figcaption>
-              </figure>
-            </Reveal>
-          ))}
+        <div className="relative mt-16">
+          {/* Blueprint guide lines (desktop) — at 28%/72% = the active card's edges */}
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-12 top-12 z-0 hidden lg:block">
+            <div className="absolute inset-x-0 top-0 border-t border-dashed border-neutral-200" />
+            <div className="absolute inset-x-0 bottom-0 border-t border-dashed border-neutral-200" />
+            <div className="absolute inset-y-0 left-[28%] border-l border-dashed border-neutral-200" />
+            <div className="absolute inset-y-0 left-[72%] border-l border-dashed border-neutral-200" />
+          </div>
+
+          {/* Transform track — Lenis blocks inner scrollLeft, so we translate.
+              Loops forward forever (tripled list, animation-off seamless reset). */}
+          <div
+            ref={tWrapRef}
+            onMouseEnter={() => { tPausedRef.current = true; }}
+            onMouseLeave={() => { tPausedRef.current = false; }}
+            className="relative z-10 overflow-hidden py-12"
+          >
+            <div
+              className={`flex ${tAnim ? "transition-transform duration-700 ease-out motion-reduce:transition-none" : ""}`}
+              style={{ transform: `translate3d(${tOffset}px, 0, 0)`, columnGap: `${T_GAP}px` }}
+            >
+              {tW > 0 &&
+                [...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => {
+                  const isActive = i === activeT;
+                  return (
+                    <figure
+                      key={i}
+                      style={{ width: `${tCardW}px` }}
+                      className={`flex h-[14rem] flex-shrink-0 flex-col justify-between rounded-[6px] p-7 text-left transition-[opacity,box-shadow,border-color] duration-500 sm:p-9 ${
+                        isActive
+                          ? "border border-black/5 bg-white opacity-100 shadow-[0_30px_70px_-30px_rgba(26,26,26,0.35)]"
+                          : "border border-transparent bg-transparent opacity-40"
+                      }`}
+                    >
+                      {/* Quote — top-left, full width (font ~50% of before) */}
+                      <blockquote className="text-[15px] font-semibold leading-snug text-ink sm:text-[18px]">
+                        “{t.quote}”
+                      </blockquote>
+                      {/* Photo · name · profession — bottom-left (size unchanged) */}
+                      <figcaption className="flex items-center gap-3">
+                        <TAvatar src={t.avatar} name={t.name} />
+                        <div>
+                          <div className="text-sm font-semibold text-ink">{t.name}</div>
+                          <div className="text-xs text-neutral-400">{t.role}</div>
+                        </div>
+                      </figcaption>
+                    </figure>
+                  );
+                })}
+            </div>
+          </div>
+
+          {/* Blueprint crosshairs (desktop) — at the middle cell's corners */}
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-12 top-12 z-20 hidden lg:block">
+            {[
+              "left-[28%] top-0 -translate-x-1/2 -translate-y-1/2",
+              "left-[72%] top-0 -translate-x-1/2 -translate-y-1/2",
+              "left-[28%] bottom-0 -translate-x-1/2 translate-y-1/2",
+              "left-[72%] bottom-0 -translate-x-1/2 translate-y-1/2",
+            ].map((pos) => (
+              <Plus key={pos} size={18} className={`absolute ${pos} text-neutral-300`} />
+            ))}
+          </div>
         </div>
       </section>
 
