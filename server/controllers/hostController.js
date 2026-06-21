@@ -6,6 +6,7 @@ const usernameService = require("../services/usernameService");
 const { bustSitemapCache } = require("../utils/sitemapCache");
 const planService = require('../services/planService');
 const { validateCategorySelection } = require('../lib/categoryRules');
+const { resolveAndValidateCategory } = require('../lib/serviceCategory');
 
 // Public host columns. SECURITY: explicit whitelist — never select('*') on a
 // public route. SEO override cols (v3.19) are appended with a fallback so a
@@ -49,13 +50,14 @@ const insertServiceSafe = async (payload) => {
   // Retry with fallback if schema cache doesn't recognize newer columns
   if (
     result.error &&
-    /Could not find the '(grace_period_minutes|thumbnail_url)' column|column.*does not exist/i.test(
+    /Could not find the '(grace_period_minutes|thumbnail_url|category)' column|column.*does not exist/i.test(
       result.error.message,
     )
   ) {
     const payloadCopy = { ...payload };
     delete payloadCopy.grace_period_minutes;
     delete payloadCopy.thumbnail_url;
+    delete payloadCopy.category;
     result = await supabaseAdmin
       .from("services")
       .insert(payloadCopy)
@@ -77,13 +79,14 @@ const updateServiceSafe = async (id, updates, userId) => {
   // Retry with fallback if schema cache doesn't recognize newer columns
   if (
     result.error &&
-    /Could not find the '(grace_period_minutes|thumbnail_url)' column|column.*does not exist/i.test(
+    /Could not find the '(grace_period_minutes|thumbnail_url|category)' column|column.*does not exist/i.test(
       result.error.message,
     )
   ) {
     const updatesCopy = { ...updates };
     delete updatesCopy.grace_period_minutes;
     delete updatesCopy.thumbnail_url;
+    delete updatesCopy.category;
     result = await supabaseAdmin
       .from("services")
       .update(updatesCopy)
@@ -340,6 +343,10 @@ const updateCategories = async (req, res) => {
 // POST /api/host/services
 const createService = async (req, res) => {
   try {
+    // Service must sit inside one of the host's categories.
+    const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: true });
+    if (!chk.ok) return res.status(chk.status).json({ message: chk.message });
+
     // Whitelist fields explicitly -- avoids Supabase schema-cache errors (e.g. thumbnail_url)
     const {
       title,
@@ -362,6 +369,7 @@ const createService = async (req, res) => {
       price: parseFloat(price) || 0,
       currency: currency || "INR",
       grace_period_minutes: parseInt(grace_period_minutes) || 10,
+      category: chk.value,
     };
     if (thumbnail_url !== undefined) payload.thumbnail_url = thumbnail_url;
 
@@ -402,6 +410,12 @@ const updateService = async (req, res) => {
     if (thumbnail_url !== undefined) updates.thumbnail_url = thumbnail_url;
     if (grace_period_minutes !== undefined)
       updates.grace_period_minutes = parseInt(grace_period_minutes) || 10;
+
+    if (req.body.category !== undefined) {
+      const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: false });
+      if (!chk.ok) return res.status(chk.status).json({ message: chk.message });
+      updates.category = chk.value;
+    }
 
     const { data, error } = await updateServiceSafe(
       req.params.id,
