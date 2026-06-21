@@ -1,5 +1,20 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-06-20_
+_Last updated: 2026-06-21_
+
+## Sprint: Service Categories (branch `feat/service-categories`) — built 2026-06-21
+
+> **Status: BUILT, tests green (server 626/626, client 177/177, client build clean). NOT merged. Migration `v3.22` NOT yet applied to either DB.**
+
+**Spec / plan:** `docs/superpowers/specs/2026-06-20-service-categories-design.md`; `docs/superpowers/plans/2026-06-21-service-categories.md`.
+
+Each **service** now carries one `category` slug, drawn from the host's own categories (`profiles.categories`, primary-first; from PR #107). Built on top of #107 — fills the gap it left (#107 reworked *host* categories only, never touched `services`).
+
+- **Migration `v3.22_service_category.sql` (NOT applied):** adds nullable `services.category TEXT` + `services_category_idx`. Additive/safe; no backfill.
+- **Validation:** shared pure validator `server/lib/serviceCategory.js` (`validateServiceCategory` + `resolveAndValidateCategory`). Enforced server-side in BOTH service backends — `serviceController` (`/services`, dashboard) and `hostController` (`/host/services`, onboarding), create + update. A category not in the host's `profiles.categories` → 400. `host_id` always `req.user.id`.
+- **Pre-migration tolerant:** `category` added to `V2_SELECT_COLS`; `hostController` safe-fallback regex broadened to include `category`; writes drop `category` gracefully until the column exists (currently load-bearing since v3.22 unapplied).
+- **Client:** `ServiceCategoryPicker` (auto-chip when host has 1 category, single-select chips when 2–3), wired into dashboard `ServiceForm` + onboarding `FirstServiceStep`, default = `primary_category`. Category **badge** on dashboard list (`Services.jsx`) + public page (`ServiceDetail.jsx`, server-resolved `category_label`). slug→label via `categoryUtils.categoryLabel`.
+- **Deferred (follow-ups):** Explore filter by category; sharpen `admin_category_stats()` to count by the service's own category; guard against null-wiping a category on update for a 0-category host; client retry if the host-categories fetch fails.
+- **Pending ops (founder):** apply `v3.22` to BOTH Supabase projects (prod Mumbai `ayjhlwyzszykqtnaktpb` + staging Tokyo `xwvciqkayammbvsidqig`) before/with deploy; feature is inert until then.
 
 ## Sprint: Industry Categories (branch `feat/category-system`) — built 2026-06-20
 
