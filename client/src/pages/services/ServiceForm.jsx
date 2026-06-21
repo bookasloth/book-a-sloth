@@ -4,7 +4,9 @@
  */
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { svcCreate, svcUpdate, uploadImage } from '../../services/api';
+import { svcCreate, svcUpdate, uploadImage, hostGetCategories, getCategories } from '../../services/api';
+import ServiceCategoryPicker from '../../components/services/ServiceCategoryPicker';
+import { categoryLabel } from '../../utils/categoryUtils';
 import toast from 'react-hot-toast';
 import FeatureGate from '../../components/common/FeatureGate';
 
@@ -41,6 +43,7 @@ const empty = () => ({
   excluded_items: [],
   faqs: [],
   important_note: '',
+  category: '',
 });
 
 // ─── Tiny Rich Text Editor ────────────────────────────────────────────────────
@@ -392,12 +395,34 @@ export default function ServiceForm({ initialData, serviceId }) {
         excluded_items:    Array.isArray(initialData.excluded_items) ? initialData.excluded_items : [],
         faqs:              Array.isArray(initialData.faqs) ? initialData.faqs : [],
         important_note:    initialData.important_note || '',
+        category:          initialData.category || '',
       };
     }
     return empty();
   });
 
   const [saving, setSaving] = useState(false);
+  const [hostCats, setHostCats] = useState([]); // [{ slug, label }]
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([hostGetCategories(), getCategories()])
+      .then(([h, c]) => {
+        if (!alive) return;
+        const list = c.data || [];
+        const slugs = h.data?.categories?.length
+          ? h.data.categories
+          : (h.data?.primary_category ? [h.data.primary_category] : []);
+        const items = slugs.map((s) => ({ slug: s, label: categoryLabel(s, list) }));
+        setHostCats(items);
+        setForm((f) => f.category
+          ? f
+          : { ...f, category: initialData?.category || h.data?.primary_category || items[0]?.slug || '' });
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const titleLen = (form.title || '').length;
@@ -431,6 +456,7 @@ export default function ServiceForm({ initialData, serviceId }) {
         excluded_items:    form.excluded_items,
         faqs:              form.faqs,
         important_note:    form.important_note,
+        category:          form.category || null,
       };
 
       if (isEdit) {
@@ -529,6 +555,13 @@ export default function ServiceForm({ initialData, serviceId }) {
                   className="fb-input pl-7"/>
               </div>
             </div>
+
+            {/* Category — drawn from the host's own categories */}
+            <ServiceCategoryPicker
+              categories={hostCats}
+              value={form.category}
+              onChange={(slug) => set('category', slug)}
+            />
           </div>
 
           {/* Right column */}
