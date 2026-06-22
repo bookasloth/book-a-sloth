@@ -12,6 +12,19 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const LinkedInIcon = () => (
+  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/>
+  </svg>
+);
+
+const MailIcon = () => (
+  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect width="20" height="16" x="2" y="4" rx="2" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+  </svg>
+);
+
 // ── Brand logo lockup (replaces the 🦥 emoji) ──────────────────────────────────
 // Uses the official manifest icon asset; the wordmark stays in our heading font.
 const Logo = ({ className = '' }) => (
@@ -69,7 +82,7 @@ const BeASloth = () => {
   return (
     <div className="grid min-h-[calc(100vh-72px)] w-full lg:grid-cols-[1.05fr_1fr]">
       {/* ── LEFT · colourful brand panel (lg+ only) ──────────────────────────── */}
-      <aside className="relative hidden overflow-hidden border-r border-black/5 bg-[#fffaf3] px-10 py-12 lg:flex lg:flex-col lg:justify-center xl:px-16">
+      <aside className="relative hidden overflow-hidden border-r border-black/5 bg-[#FFF8EE] px-10 py-12 lg:flex lg:flex-col lg:justify-center xl:px-16">
         {/* decorative colour wash */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
           <div className="absolute -left-16 -top-10 h-64 w-64 rounded-full bg-c-violet/10 blur-3xl" />
@@ -77,38 +90,33 @@ const BeASloth = () => {
           <div className="absolute -bottom-12 left-24 h-60 w-60 rounded-full bg-c-amber/10 blur-3xl" />
         </div>
 
-        <div className="relative max-w-md">
-          <div className="mb-10 flex items-center gap-2.5">
-            <Logo className="h-8 w-8" />
-            <span className="font-heading text-[15px] font-bold tracking-tight text-ink">Book A Sloth</span>
-          </div>
-
-          <h2 className="font-heading text-[2rem] font-extrabold leading-[1.15] tracking-tight text-ink xl:text-[2.4rem]">
+        <div className="relative max-w-2xl">
+          <h2 className="font-heading text-[2.1rem] font-extrabold leading-[1.12] tracking-tight text-ink xl:text-[2.7rem]">
             Whatever you’re great at,
             <br />
             <span className="text-primary">get booked for it.</span>
           </h2>
-          <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-gray-500">
+          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-gray-500 xl:text-[17px]">
             Coaches, consultants, tutors and more run their entire booking
             business on Book A Sloth — at 0% commission.
           </p>
 
-          {/* persona grid — one accent hue each */}
-          <div className="mt-9 grid grid-cols-2 gap-3">
+          {/* persona grid — one accent hue each · 3 across, 2 rows */}
+          <div className="mt-9 grid grid-cols-3 gap-2.5">
             {PERSONAS.map((p) => (
               <div
                 key={p.label}
-                className="flex items-center gap-3 rounded-[6px] border border-black/5 bg-white px-3.5 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-transform duration-200 motion-safe:hover:-translate-y-0.5"
+                className="flex items-center gap-2.5 rounded-[6px] border border-black/5 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-transform duration-200 motion-safe:hover:-translate-y-0.5"
               >
                 <span
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px]"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-[6px]"
                   style={{ backgroundColor: `${p.hue}1a`, color: p.hue }}
                 >
                   {p.icon}
                 </span>
-                <span className="leading-tight">
-                  <span className="block text-[10px] font-medium uppercase tracking-wide text-gray-500">bookasloth</span>
-                  <span className="block text-[14px] font-bold text-ink">{p.label}</span>
+                <span className="min-w-0 leading-tight">
+                  <span className="block text-[9px] font-medium uppercase tracking-wide text-gray-500">bookasloth</span>
+                  <span className="block truncate text-[13px] font-bold text-ink">{p.label}</span>
                 </span>
               </div>
             ))}
@@ -116,7 +124,7 @@ const BeASloth = () => {
 
           {/* trust strip */}
           <div className="mt-9 flex flex-wrap gap-2">
-            {['0% commission', 'Calendar synced', 'Paid instantly'].map((t) => (
+            {['0% commission', 'Calendar synced', 'Paid instantly', 'Google Meet built-in', 'No setup fees', 'Cancel anytime'].map((t) => (
               <span
                 key={t}
                 className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-gray-600 shadow-[0_1px_2px_rgba(16,24,40,0.05)] ring-1 ring-black/5"
@@ -131,7 +139,7 @@ const BeASloth = () => {
 
       {/* ── RIGHT · signup card ──────────────────────────────────────────────── */}
       <main className="flex items-center justify-center px-5 py-10 sm:py-12">
-        <div className="page-card w-full max-w-md p-6 text-center sm:p-8">
+        <div className="page-card w-full max-w-lg p-6 text-center sm:p-8">
           <Logo className="mx-auto h-14 w-14" />
 
           <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-cta">
@@ -161,6 +169,28 @@ const BeASloth = () => {
           >
             <GoogleIcon />
             {loading ? 'Opening Google…' : 'Continue with Google'}
+          </button>
+
+          {/* Secondary providers — not yet available, shown disabled */}
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            title="Coming soon"
+            className="btn btn--outline mt-3 flex w-full cursor-not-allowed items-center justify-center gap-3 border-black/10 bg-gray-100 py-3 text-sm font-semibold text-gray-400"
+          >
+            <LinkedInIcon />
+            Login with LinkedIn
+          </button>
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            title="Coming soon"
+            className="btn btn--outline mt-3 flex w-full cursor-not-allowed items-center justify-center gap-3 border-black/10 bg-gray-100 py-3 text-sm font-semibold text-gray-400"
+          >
+            <MailIcon />
+            Login with Email
           </button>
 
           <ul className="mt-6 space-y-2 text-left text-xs text-gray-500">
