@@ -16,6 +16,15 @@ export default {
         ink: "#1a1a1a",
         sand: "#f4f1ea",
         canvas: "#faf9f6",
+        // Accent palette — reusable multi-hue accents (Calendly-style colour).
+        // Mirrors --c-* in src/styles/design-tokens.css — keep both in sync.
+        // Literal hex (not var) so Tailwind's /opacity modifier can compute alpha.
+        "c-blue": "#2563eb",
+        "c-violet": "#7c3aed",
+        "c-cyan": "#0891b2",
+        "c-emerald": "#059669",
+        "c-amber": "#f59e0b",
+        "c-pink": "#db2777",
       },
       fontFamily: {
         sans: ["Poppins", "system-ui", "sans-serif"],
