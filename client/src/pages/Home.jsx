@@ -1140,45 +1140,24 @@ const Home = () => {
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             You didn't get into this to chase payments and send reminders. Book A Sloth handles the back-office so you don't have to.
           </Reveal>
-          <div ref={shotsRef} className="home-shots mx-auto mt-14 max-w-2xl">
-            {PRODUCT_SHOTS.map((shot, i) => (
-              <figure key={shot.title} className="home-shot" style={{ "--cc": shot.color, "--i": i }}>
-                <div
-                  className="flex h-[24rem] flex-col overflow-hidden rounded-[10px] bg-white transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    border: "1px solid color-mix(in srgb, var(--cc) 55%, transparent)",
-                    boxShadow: "0 20px 45px -24px color-mix(in srgb, var(--cc) 70%, transparent)",
-                  }}
-                >
-                  <div
-                    className="flex items-center gap-2 border-b px-4 py-3"
-                    style={{
-                      background: "color-mix(in srgb, var(--cc) 8%, white)",
-                      borderColor: "color-mix(in srgb, var(--cc) 16%, transparent)",
-                    }}
-                  >
-                    <span className="flex gap-1.5" aria-hidden>
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "color-mix(in srgb, var(--cc) 60%, white)" }} />
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "color-mix(in srgb, var(--cc) 40%, white)" }} />
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "color-mix(in srgb, var(--cc) 22%, white)" }} />
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            {PROBLEMS.map((p, i) => (
+              <Reveal key={p.problem} delay={(i % 2) * 0.08}>
+                <div className="h-full rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-7">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-400">
+                      <p.icon size={18} />
                     </span>
-                    <div className="ml-2 flex-1 truncate rounded-full bg-white px-3 py-1 text-[11px] text-neutral-400 ring-1 ring-inset ring-black/5">
-                      {shot.tab}
-                    </div>
+                    <p className="text-sm font-semibold text-neutral-400 line-through decoration-neutral-300">
+                      {p.problem}
+                    </p>
                   </div>
-                  <div className="flex-1 p-5 sm:p-6">
-                    <ProductMock kind={shot.kind} />
+                  <div className="mt-4 flex items-start gap-3 border-t border-dashed border-neutral-200 pt-4">
+                    <Check size={18} className="mt-0.5 flex-shrink-0 text-primary" />
+                    <p className="text-[15px] font-medium leading-relaxed text-ink">{p.solution}</p>
                   </div>
                 </div>
-                <figcaption className="mt-4 text-center text-sm font-semibold" style={{ color: "color-mix(in srgb, var(--cc) 80%, #1a1a1a)" }}>
-                  {shot.title}
-                </figcaption>
-                {shot.kind === "dashboard" && (
-                  <p className="mt-1.5 text-center text-sm italic text-primary">
-                    This is what your Monday morning looks like.
-                  </p>
-                )}
-              </figure>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -1366,34 +1345,45 @@ const Home = () => {
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             Your booking page, service pages, checkout and dashboard — all clean, all connected, all working while you're not.
           </Reveal>
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6">
+          <div ref={shotsRef} className="home-shots mx-auto mt-14 max-w-2xl">
             {PRODUCT_SHOTS.map((shot, i) => (
-              <Reveal key={shot.title} delay={(i % 2) * 0.08}>
-                <figure className="h-full">
-                  <div className="overflow-hidden rounded-[6px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.2)]">
-                    {/* browser chrome */}
-                    <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50 px-4 py-3">
-                      <span className="flex gap-1.5" aria-hidden>
-                        <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-                        <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-                        <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-                      </span>
-                      <div className="ml-2 flex-1 truncate rounded-full bg-white px-3 py-1 text-[11px] text-neutral-400 ring-1 ring-inset ring-black/5">
-                        {shot.tab}
-                      </div>
-                    </div>
-                    <div className="p-5 sm:p-6">
-                      <ProductMock kind={shot.kind} />
+              <figure key={shot.title} className="home-shot" style={{ "--cc": shot.color, "--i": i }}>
+                <div
+                  className="flex h-[24rem] flex-col overflow-hidden rounded-[10px] bg-white transition-all duration-300 hover:-translate-y-1"
+                  style={{
+                    border: "1px solid color-mix(in srgb, var(--cc) 55%, transparent)",
+                    boxShadow: "0 20px 45px -24px color-mix(in srgb, var(--cc) 70%, transparent)",
+                  }}
+                >
+                  <div
+                    className="flex items-center gap-2 border-b px-4 py-3"
+                    style={{
+                      background: "color-mix(in srgb, var(--cc) 8%, white)",
+                      borderColor: "color-mix(in srgb, var(--cc) 16%, transparent)",
+                    }}
+                  >
+                    <span className="flex gap-1.5" aria-hidden>
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "color-mix(in srgb, var(--cc) 60%, white)" }} />
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "color-mix(in srgb, var(--cc) 40%, white)" }} />
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "color-mix(in srgb, var(--cc) 22%, white)" }} />
+                    </span>
+                    <div className="ml-2 flex-1 truncate rounded-full bg-white px-3 py-1 text-[11px] text-neutral-400 ring-1 ring-inset ring-black/5">
+                      {shot.tab}
                     </div>
                   </div>
-                  <figcaption className="mt-4 text-center text-sm font-semibold text-ink">{shot.title}</figcaption>
-                  {shot.kind === "dashboard" && (
-                    <p className="mt-1.5 text-center text-sm italic text-primary">
-                      This is what your Monday morning looks like.
-                    </p>
-                  )}
-                </figure>
-              </Reveal>
+                  <div className="flex-1 p-5 sm:p-6">
+                    <ProductMock kind={shot.kind} />
+                  </div>
+                </div>
+                <figcaption className="mt-4 text-center text-sm font-semibold" style={{ color: "color-mix(in srgb, var(--cc) 80%, #1a1a1a)" }}>
+                  {shot.title}
+                </figcaption>
+                {shot.kind === "dashboard" && (
+                  <p className="mt-1.5 text-center text-sm italic text-primary">
+                    This is what your Monday morning looks like.
+                  </p>
+                )}
+              </figure>
             ))}
           </div>
         </div>
