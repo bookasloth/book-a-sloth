@@ -65,7 +65,7 @@ const EASE = [0.22, 1, 0.36, 1];
 /* ════════════════════════════════════════════════════════════
    LINE-DRAW ICON wrapper (How it works)
    ════════════════════════════════════════════════════════════ */
-const LineIcon = ({ children }) => {
+const LineIcon = ({ children, color = "#1a1a1a" }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, amount: 0.6 });
   return (
@@ -73,10 +73,10 @@ const LineIcon = ({ children }) => {
       ref={ref}
       viewBox="0 0 48 48"
       fill="none"
-      stroke="#1a1a1a"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      style={{ stroke: color }}
       className={`sloth-draw h-9 w-9 ${inView ? "is-visible" : ""}`}
     >
       {children}
@@ -280,7 +280,7 @@ const INDUSTRIES = [
     name: "Technology & Product",
     slug: "technology-product",
     icon: Cpu,
-    color: "#2563eb",
+    color: "var(--c-blue)",
     description: "Build products. Mentor makers.",
     professions: ["Software Engineer", "Product Manager", "UX Designer", "Data Scientist", "AI Engineer"],
   },
@@ -288,7 +288,7 @@ const INDUSTRIES = [
     name: "Coaching & Consulting",
     slug: "coaching-consulting",
     icon: Target,
-    color: "#7c3aed",
+    color: "var(--c-violet)",
     description: "Coach, advise, and transform.",
     professions: ["Career Coach", "Life Coach", "Executive Coach", "Leadership Coach", "Business Coach"],
   },
@@ -296,7 +296,7 @@ const INDUSTRIES = [
     name: "Health & Wellness",
     slug: "health-wellness",
     icon: HeartPulse,
-    color: "#0d9488",
+    color: "var(--c-emerald)",
     description: "Care for minds and bodies.",
     professions: ["Psychologist", "Nutritionist", "Speech Therapist"],
   },
@@ -304,7 +304,7 @@ const INDUSTRIES = [
     name: "Education",
     slug: "education",
     icon: GraduationCap,
-    color: "#f59e0b",
+    color: "var(--c-amber)",
     description: "Teach, mentor, and inspire.",
     professions: ["Language Tutor", "IELTS Coach", "Study Abroad Consultant"],
   },
@@ -312,7 +312,7 @@ const INDUSTRIES = [
     name: "Business Services",
     slug: "business-services",
     icon: Briefcase,
-    color: "#0891b2",
+    color: "var(--c-cyan)",
     description: "Advise, strategize, and grow.",
     professions: ["Financial Advisor", "Startup Advisor", "Business Consultant", "HR Consultant"],
   },
@@ -344,6 +344,7 @@ const STEPS = [
     title: "Share one link",
     desc: "Your services, availability and pricing — in a single SlothPage link.",
     chip: "Replaces 20 DMs",
+    color: "var(--c-blue)",
     draw: (
       <>
         <path d="M20 28a7 7 0 0 1 0-10l4-4a7 7 0 0 1 10 10l-2 2" />
@@ -355,6 +356,7 @@ const STEPS = [
     title: "Clients book & pay upfront",
     desc: "They self-book a slot and pay before the session. Money lands first.",
     chip: "Paid in advance",
+    color: "var(--c-amber)",
     draw: (
       <>
         <rect x="6" y="13" width="36" height="24" rx="4" />
@@ -367,6 +369,7 @@ const STEPS = [
     title: "You just show up",
     desc: "Auto reminders cut no-shows; receipts and follow-ups send themselves.",
     chip: "~0 no-shows",
+    color: "var(--c-emerald)",
     draw: (
       <>
         <path d="M8 28c6 0 6-8 12-8s6 8 12 8 8-6 8-6" />
@@ -433,12 +436,12 @@ const PRODUCT_SHOTS = [
 
 /* ── Why Book A Sloth — reasons to choose it ── */
 const WHY_CARDS = [
-  { icon: IndianRupee, title: "Built for India", desc: "INR, GST and UPI are native — not bolted on for a Western tool." },
-  { icon: Wallet, title: "0% commission", desc: "On every paid plan, you keep 100% of what you earn." },
-  { icon: CreditCard, title: "Razorpay inside", desc: "Payments, payouts and subscriptions your clients already trust." },
-  { icon: Zap, title: "Live in minutes", desc: "Claim your link, add a service, share. No setup project." },
-  { icon: Wind, title: "Calm by design", desc: "A clean, quiet experience for you and the people who book you." },
-  { icon: Target, title: "Made for services", desc: "Purpose-built for booked time — not retrofitted from a CRM." },
+  { icon: IndianRupee, title: "Built for India", desc: "INR, GST and UPI are native — not bolted on for a Western tool.", color: "var(--c-blue)" },
+  { icon: Wallet, title: "0% commission", desc: "On every paid plan, you keep 100% of what you earn.", color: "var(--c-emerald)" },
+  { icon: CreditCard, title: "Razorpay inside", desc: "Payments, payouts and subscriptions your clients already trust.", color: "var(--c-violet)" },
+  { icon: Zap, title: "Live in minutes", desc: "Claim your link, add a service, share. No setup project.", color: "var(--c-amber)" },
+  { icon: Wind, title: "Calm by design", desc: "A clean, quiet experience for you and the people who book you.", color: "var(--c-cyan)" },
+  { icon: Target, title: "Made for services", desc: "Purpose-built for booked time — not retrofitted from a CRM.", color: "var(--c-pink)" },
 ];
 
 /* ── FAQ — refine copy later ── */
@@ -457,11 +460,11 @@ const FAQS = [
 
 /* ── Trust & security badges ── */
 const TRUST = [
-  { icon: Lock, title: "Secure payments", desc: "Processed by Razorpay, India's trusted gateway." },
-  { icon: ShieldCheck, title: "SSL encrypted", desc: "Every page and payment is encrypted end to end." },
-  { icon: Eye, title: "Privacy-first", desc: "Your data is yours. Never sold, never shared." },
-  { icon: FileCheck, title: "You own your data", desc: "Clients, bookings and earnings always belong to you." },
-  { icon: Download, title: "Export anytime", desc: "Download your data whenever you want to." },
+  { icon: Lock, title: "Secure payments", desc: "Processed by Razorpay, India's trusted gateway.", color: "var(--c-blue)" },
+  { icon: ShieldCheck, title: "SSL encrypted", desc: "Every page and payment is encrypted end to end.", color: "var(--c-emerald)" },
+  { icon: Eye, title: "Privacy-first", desc: "Your data is yours. Never sold, never shared.", color: "var(--c-violet)" },
+  { icon: FileCheck, title: "You own your data", desc: "Clients, bookings and earnings always belong to you.", color: "var(--c-cyan)" },
+  { icon: Download, title: "Export anytime", desc: "Download your data whenever you want to.", color: "var(--c-amber)" },
 ];
 
 /* ════════════════════════════════════════════════════════════
@@ -883,7 +886,7 @@ const Home = () => {
                   <ind.icon
                     aria-hidden
                     strokeWidth={1.25}
-                    className="pointer-events-none absolute -left-5 -top-5 h-32 w-32 opacity-20 transition-opacity duration-300 group-hover:opacity-30 group-focus-within:opacity-30 motion-reduce:transition-none"
+                    className="pointer-events-none absolute -left-5 -top-5 h-32 w-32 opacity-25 transition-opacity duration-300 group-hover:opacity-40 group-focus-within:opacity-40 motion-reduce:transition-none"
                     style={{ color: ind.color }}
                   />
 
@@ -907,7 +910,12 @@ const Home = () => {
                       {ind.professions.map((p) => (
                         <span
                           key={p}
-                          className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-white/80"
+                          className="rounded-full border px-3 py-1 text-xs font-medium"
+                          style={{
+                            backgroundColor: `color-mix(in srgb, ${ind.color} 18%, transparent)`,
+                            borderColor: `color-mix(in srgb, ${ind.color} 35%, transparent)`,
+                            color: `color-mix(in srgb, ${ind.color} 60%, white)`,
+                          }}
                         >
                           {p}
                         </span>
@@ -1125,12 +1133,12 @@ const Home = () => {
             <ArrowRight
               aria-hidden
               size={22}
-              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/60 md:block"
+              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/35 md:block"
             />
             <ArrowRight
               aria-hidden
               size={22}
-              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/60 md:block"
+              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/35 md:block"
             />
 
             <div className="grid gap-12 md:grid-cols-3 md:gap-6">
@@ -1145,7 +1153,7 @@ const Home = () => {
                       >
                         <ArrowRight
                           size={16}
-                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-neutral-800 text-primary/60"
+                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-neutral-800 text-white/35"
                         />
                       </span>
                     )}
@@ -1154,12 +1162,16 @@ const Home = () => {
                     <div className="relative inline-flex h-16 w-16 items-center justify-center">
                       <span
                         aria-hidden
-                        className="absolute inset-0 rounded-2xl bg-primary/25 opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-100"
+                        className="absolute inset-0 rounded-2xl opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-100"
+                        style={{ backgroundColor: `color-mix(in srgb, ${s.color} 45%, transparent)` }}
                       />
                       <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_10px_30px_-10px_rgba(26,26,26,0.18)] ring-1 ring-black/5">
-                        <LineIcon>{s.draw}</LineIcon>
+                        <LineIcon color={s.color}>{s.draw}</LineIcon>
                       </span>
-                      <span className="absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary-cta text-[11px] font-bold text-white">
+                      <span
+                        className="absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-ink"
+                        style={{ backgroundColor: `color-mix(in srgb, ${s.color} 70%, white)` }}
+                      >
                         {i + 1}
                       </span>
                     </div>
@@ -1167,7 +1179,13 @@ const Home = () => {
                     <h3 className="mt-6 font-heading text-xl font-bold text-white">{s.title}</h3>
                     <p className="mx-auto mt-2 max-w-xs text-neutral-300">{s.desc}</p>
 
-                    <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
+                    <span
+                      className="mt-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+                      style={{
+                        backgroundColor: `color-mix(in srgb, ${s.color} 20%, transparent)`,
+                        color: `color-mix(in srgb, ${s.color} 62%, white)`,
+                      }}
+                    >
                       <Check size={13} />
                       {s.chip}
                     </span>
@@ -1483,7 +1501,13 @@ const Home = () => {
             {WHY_CARDS.map((w, i) => (
               <Reveal key={w.title} delay={(i % 3) * 0.07}>
                 <div className="flex h-full flex-col rounded-[20px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                  <span
+                    className="flex h-12 w-12 items-center justify-center rounded-xl"
+                    style={{
+                      backgroundColor: `color-mix(in srgb, ${w.color} 22%, transparent)`,
+                      color: `color-mix(in srgb, ${w.color} 60%, white)`,
+                    }}
+                  >
                     <w.icon size={22} />
                   </span>
                   <h3 className="mt-5 font-heading text-lg font-bold text-white">{w.title}</h3>
@@ -1842,7 +1866,13 @@ const Home = () => {
             {TRUST.map((t, i) => (
               <Reveal key={t.title} delay={(i % 5) * 0.06}>
                 <div className="flex h-full flex-col items-center rounded-[20px] border border-black/5 bg-white p-6 text-center shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <span
+                    className="flex h-12 w-12 items-center justify-center rounded-xl"
+                    style={{
+                      backgroundColor: `color-mix(in srgb, ${t.color} 12%, transparent)`,
+                      color: t.color,
+                    }}
+                  >
                     <t.icon size={22} />
                   </span>
                   <h3 className="mt-4 font-heading text-sm font-bold text-ink">{t.title}</h3>
