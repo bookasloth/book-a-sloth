@@ -12,6 +12,38 @@ const GoogleIcon = () => (
   </svg>
 );
 
+// ── Brand logo lockup (replaces the 🦥 emoji) ──────────────────────────────────
+// Uses the official manifest icon asset; the wordmark stays in our heading font.
+const Logo = ({ className = '' }) => (
+  <img
+    src="/web-app-manifest-192x192.png"
+    alt="Book A Sloth"
+    className={`block rounded-[6px] object-contain ${className}`}
+  />
+);
+
+// ── Stroke-icon wrapper (Lucide-style, no emoji) ───────────────────────────────
+const Glyph = ({ children }) => (
+  <svg
+    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+    className="h-5 w-5" aria-hidden="true"
+  >
+    {children}
+  </svg>
+);
+
+// Creator personas for the left panel — one accent hue each, echoing the
+// colourful logo-grid inspiration. Hues mirror --c-* (design-tokens.css).
+const PERSONAS = [
+  { label: 'Coaches',     hue: '#2563eb', icon: <Glyph><circle cx="12" cy="8" r="6"/><path d="M15.5 12.9 17 22l-5-3-5 3 1.5-9.1"/></Glyph> },
+  { label: 'Consultants', hue: '#7c3aed', icon: <Glyph><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></Glyph> },
+  { label: 'Wellness',    hue: '#059669', icon: <Glyph><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></Glyph> },
+  { label: 'Tutors',      hue: '#f59e0b', icon: <Glyph><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Glyph> },
+  { label: 'Astrologers', hue: '#db2777', icon: <Glyph><path d="M12 3 9.5 9.5 3 12l6.5 2.5L12 21l2.5-6.5L21 12l-6.5-2.5z"/></Glyph> },
+  { label: 'Designers',   hue: '#0891b2', icon: <Glyph><circle cx="13.5" cy="6.5" r=".7" fill="currentColor" stroke="none"/><circle cx="17" cy="10.5" r=".7" fill="currentColor" stroke="none"/><circle cx="8.5" cy="7.5" r=".7" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12.5" r=".7" fill="currentColor" stroke="none"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.6 1.6 0 0 1 1.6-1.6h2c3 0 5.5-2.5 5.5-5.6C22 6 17.5 2 12 2z"/></Glyph> },
+];
+
 // /be-a-sloth — vendor signup. Google-only: one consent screen grants identity
 // + calendar access, the account is created automatically in the callback.
 const BeASloth = () => {
@@ -35,43 +67,131 @@ const BeASloth = () => {
   };
 
   return (
-    <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
-      <div className="page-card w-full max-w-md p-5 sm:p-8 text-center">
-        <div className="text-4xl mb-3">🦥</div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Be a Sloth</h1>
-        <p className="text-sm text-gray-500 mb-8">
-          Publish your services, share your booking page and get paid —
-          calendar and Google Meet links set up automatically.
-        </p>
+    <div className="grid min-h-[calc(100vh-72px)] w-full lg:grid-cols-[1.05fr_1fr]">
+      {/* ── LEFT · colourful brand panel (lg+ only) ──────────────────────────── */}
+      <aside className="relative hidden overflow-hidden border-r border-black/5 bg-[#fffaf3] px-10 py-12 lg:flex lg:flex-col lg:justify-center xl:px-16">
+        {/* decorative colour wash */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-16 -top-10 h-64 w-64 rounded-full bg-c-violet/10 blur-3xl" />
+          <div className="absolute right-4 top-24 h-56 w-56 rounded-full bg-c-blue/10 blur-3xl" />
+          <div className="absolute -bottom-12 left-24 h-60 w-60 rounded-full bg-c-amber/10 blur-3xl" />
+        </div>
 
-        {desiredUsername && (
-          <p className="mb-6 inline-block rounded-full bg-primary-light px-3 py-1 text-xs font-medium text-ink">
-            Claiming <span className="font-semibold">bookasloth.com/{desiredUsername}</span>
+        <div className="relative max-w-md">
+          <div className="mb-10 flex items-center gap-2.5">
+            <Logo className="h-8 w-8" />
+            <span className="font-heading text-[15px] font-bold tracking-tight text-ink">Book A Sloth</span>
+          </div>
+
+          <h2 className="font-heading text-[2rem] font-extrabold leading-[1.15] tracking-tight text-ink xl:text-[2.4rem]">
+            Whatever you’re great at,
+            <br />
+            <span className="text-primary">get booked for it.</span>
+          </h2>
+          <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-gray-500">
+            Coaches, consultants, tutors and more run their entire booking
+            business on Book A Sloth — at 0% commission.
           </p>
-        )}
 
-        <button
-          onClick={handleGoogle}
-          disabled={loading}
-          className="btn btn--outline w-full flex items-center justify-center gap-3 bg-white py-3 text-sm font-semibold transition disabled:opacity-50"
-        >
-          <GoogleIcon />
-          {loading ? 'Opening Google…' : 'Continue with Google'}
-        </button>
+          {/* persona grid — one accent hue each */}
+          <div className="mt-9 grid grid-cols-2 gap-3">
+            {PERSONAS.map((p) => (
+              <div
+                key={p.label}
+                className="flex items-center gap-3 rounded-[6px] border border-black/5 bg-white px-3.5 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-transform duration-200 motion-safe:hover:-translate-y-0.5"
+              >
+                <span
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px]"
+                  style={{ backgroundColor: `${p.hue}1a`, color: p.hue }}
+                >
+                  {p.icon}
+                </span>
+                <span className="leading-tight">
+                  <span className="block text-[10px] font-medium uppercase tracking-wide text-gray-500">bookasloth</span>
+                  <span className="block text-[14px] font-bold text-ink">{p.label}</span>
+                </span>
+              </div>
+            ))}
+          </div>
 
-        <ul className="mt-6 text-left text-xs text-gray-500 space-y-2">
-          <li>✓ No password to remember — your Google account is your login</li>
-          <li>✓ Calendar connected instantly — busy times never get booked</li>
-          <li>✓ Google Meet links created for every online booking</li>
-        </ul>
+          {/* trust strip */}
+          <div className="mt-9 flex flex-wrap gap-2">
+            {['0% commission', 'Calendar synced', 'Paid instantly'].map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-gray-600 shadow-[0_1px_2px_rgba(16,24,40,0.05)] ring-1 ring-black/5"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-c-emerald" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      </aside>
 
-        <p className="mt-8 text-sm text-gray-500">
-          Already a sloth?{' '}
-          <Link to="/login-as-vendor" className="text-primary hover:underline">Log in</Link>
-        </p>
-      </div>
+      {/* ── RIGHT · signup card ──────────────────────────────────────────────── */}
+      <main className="flex items-center justify-center px-5 py-10 sm:py-12">
+        <div className="page-card w-full max-w-md p-6 text-center sm:p-8">
+          <Logo className="mx-auto h-14 w-14" />
+
+          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-cta">
+            Become a host
+          </p>
+          <h1 className="mt-1.5 font-heading text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+            Be a Sloth
+          </h1>
+          <p className="mt-1 text-base font-semibold text-gray-700">
+            Get booked. Get paid.
+          </p>
+          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-gray-500">
+            Publish your services, share your booking page and get paid —
+            calendar and Google Meet links set up automatically.
+          </p>
+
+          {desiredUsername && (
+            <p className="mt-6 inline-block rounded-full bg-primary-light px-3 py-1 text-xs font-medium text-ink">
+              Claiming <span className="font-semibold">bookasloth.com/{desiredUsername}</span>
+            </p>
+          )}
+
+          <button
+            onClick={handleGoogle}
+            disabled={loading}
+            className="btn btn--outline mt-7 flex w-full items-center justify-center gap-3 bg-white py-3 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition disabled:opacity-50"
+          >
+            <GoogleIcon />
+            {loading ? 'Opening Google…' : 'Continue with Google'}
+          </button>
+
+          <ul className="mt-6 space-y-2 text-left text-xs text-gray-500">
+            <li className="flex gap-2">
+              <Check />
+              <span>No password to remember — your Google account is your login</span>
+            </li>
+            <li className="flex gap-2">
+              <Check />
+              <span>Calendar connected instantly — busy times never get booked</span>
+            </li>
+            <li className="flex gap-2">
+              <Check />
+              <span>Google Meet links created for every online booking</span>
+            </li>
+          </ul>
+
+          <p className="mt-8 text-sm text-gray-500">
+            Already a sloth?{' '}
+            <Link to="/login-as-vendor" className="font-semibold text-primary hover:underline">Log in</Link>
+          </p>
+        </div>
+      </main>
     </div>
   );
 };
+
+const Check = () => (
+  <svg viewBox="0 0 24 24" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-c-emerald" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+);
 
 export default BeASloth;
