@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, Navigate, useNavigate, Link } from 'react-router-dom';
 import Ic from '../admin/Ic';
 import { IC, NAV, ROADMAP, PATH_LABELS, QUICK_ACTIONS, sessionCan } from '../admin/adminNav';
+import CommandPalette from '../admin/CommandPalette';
 
 // SECURITY: Admin session is completely isolated in 'bas_admin' localStorage key.
 // Guard checks type === 'super_admin' — a vendor/user session cannot pass this check.
@@ -30,6 +31,7 @@ const AdminLayout = ({ children }) => {
   const [darkMode,       setDarkMode]       = useState(false);
   const [showQuick,      setShowQuick]      = useState(false);
   const [showProfile,    setShowProfile]    = useState(false);
+  const [paletteOpen,    setPaletteOpen]    = useState(false);
   const quickRef   = useRef(null);
   const profileRef = useRef(null);
 
@@ -60,6 +62,14 @@ const AdminLayout = ({ children }) => {
     };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen(o => !o); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   const breadcrumbs = (() => {
@@ -238,7 +248,7 @@ const AdminLayout = ({ children }) => {
           </nav>
 
           <div className="flex items-center gap-1 ml-auto flex-shrink-0">
-            <button className="btn hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 transition-colors text-[12px] text-gray-400 w-44">
+            <button onClick={() => setPaletteOpen(true)} className="btn hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 transition-colors text-[12px] text-gray-400 w-44">
               <Ic d={IC.search} size={13} /><span>Search...</span>
               <span className="ml-auto text-[10px] text-gray-300 font-mono bg-gray-200 px-1 rounded">⌘K</span>
             </button>
@@ -314,6 +324,7 @@ const AdminLayout = ({ children }) => {
           <div className="max-w-[1360px] mx-auto">{children}</div>
         </main>
       </div>
+      <CommandPalette open={paletteOpen} session={session} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 };
