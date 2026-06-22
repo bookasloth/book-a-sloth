@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const { encrypt: encryptToken } = require("../utils/cryptoTokens");
+const profileSecrets = require("../utils/profileSecrets");
 
 // HMAC secret for the OAuth `state` parameter (CSRF protection on the Google
 // round-trip). Dedicated env var preferred; service-role key is a safe,
@@ -307,6 +308,18 @@ const attachGoogleToProfile = async (profileId, tokens, googleUser) => {
     ({ error } = await supabaseAdmin.from("profiles").update(base).eq("id", profileId));
   }
   if (error) throw error;
+
+  // Canonical home for tokens going forward: the server-only profile_private
+  // table (profiles.google_* is dropped in v3.24). Dual-write during the
+  // transition so the new reads and the not-yet-dropped columns stay in sync.
+  try {
+    await profileSecrets.setGoogleTokens(profileId, {
+      google_access_token: base.google_access_token,
+      google_refresh_token: base.google_refresh_token,
+    });
+  } catch (e) {
+    console.error("profile_private token write (non-fatal):", e.message);
+  }
 
   // Timezone: only seed if the vendor has no availability row yet (never
   // overwrite a timezone the vendor chose in the dashboard).

@@ -16,6 +16,7 @@ const razorpayConfig = require("../services/razorpayConfig");
 const { cadencePrice, cadenceGross, cadencePeriodDays, computeSwitch, normCadence } = require("../lib/subscriptionPricing");
 const { createCalendarEvent } = require("../config/google");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
+const profileSecrets = require("../utils/profileSecrets");
 const { verifySignature } = require("../utils/razorpaySignature");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { trackServer } = require("../utils/trackServer");
@@ -63,6 +64,7 @@ const createOrder = async (req, res) => {
         .from("profiles")
         .select("id, google_calendar_connected, google_access_token, google_refresh_token")
         .eq("id", booking.host_id).single();
+      await profileSecrets.attachGoogleTokens(payHost);
       const { data: payAvail } = await supabaseAdmin
         .from("availability").select("*").eq("host_id", booking.host_id).maybeSingle();
       const slotCheck = await availabilityService.validateSlot({
@@ -252,6 +254,7 @@ const verifyPayment = async (req, res) => {
           .from("profiles")
           .select("id, email, google_calendar_connected, google_access_token, google_refresh_token")
           .eq("id", booking.host_id).single();
+        await profileSecrets.attachGoogleTokens(host);
         const { data: avail } = await supabaseAdmin
           .from("availability").select("timezone").eq("host_id", booking.host_id).maybeSingle();
         if (host?.google_calendar_connected && host?.google_refresh_token) {
