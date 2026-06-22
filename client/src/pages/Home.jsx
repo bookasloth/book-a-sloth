@@ -394,7 +394,7 @@ const FOOTER_COLS = [
   ]},
   { h: "Support", links: [
     { t: "Help", href: "/help" },
-    { t: "Contact", href: "mailto:team@timewheel.co.in" },
+    { t: "Contact", href: "mailto:hello@bookasloth.com" },
   ]},
 ];
 
@@ -704,7 +704,7 @@ const Home = () => {
                   onClick={claim}
                   className="btn inline-flex min-h-[3.5rem] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[5px] bg-primary-cta px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:min-h-0 sm:py-3"
                 >
-                  Claim your link
+                  Let's Get Started
                   <ArrowRight size={15} />
                 </button>
               </div>
@@ -1599,7 +1599,7 @@ const Home = () => {
                           : "bg-ink text-white hover:bg-neutral-800"
                       }`}
                     >
-                      Start free
+                      Let's Get Started
                     </Link>
 
                     <p className="mt-7 text-sm font-semibold text-ink">{p.intro}</p>
@@ -1646,7 +1646,7 @@ const Home = () => {
                   to={ROUTE_START}
                   className="inline-flex w-full items-center justify-center rounded-[6px] bg-ink px-7 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-neutral-800 hover:no-underline lg:w-auto"
                 >
-                  Start free
+                  Let's Get Started
                 </Link>
               </div>
             </div>
@@ -1971,7 +1971,7 @@ const Home = () => {
                   to={ROUTE_START}
                   className="inline-flex items-center justify-center rounded-[5px] bg-white px-7 py-3 text-sm font-semibold text-ink transition-colors hover:bg-white/90 hover:no-underline"
                 >
-                  Start for free
+                  Let's Get Started
                 </Link>
                 <a
                   href="#how-it-works"
@@ -2019,7 +2019,7 @@ const Home = () => {
               <Link to="/terms" className="transition-colors hover:text-white hover:no-underline">Terms</Link>
               <Link to="/privacy" className="transition-colors hover:text-white hover:no-underline">Privacy</Link>
               <Link to="/refund" className="transition-colors hover:text-white hover:no-underline">Refund</Link>
-              <a href="mailto:team@timewheel.co.in" className="transition-colors hover:text-white hover:no-underline">team@timewheel.co.in</a>
+              <a href="mailto:hello@bookasloth.com" className="transition-colors hover:text-white hover:no-underline">hello@bookasloth.com</a>
             </div>
           </div>
         </div>
