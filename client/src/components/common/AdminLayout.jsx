@@ -125,7 +125,7 @@ const AdminLayout = ({ children }) => {
             title={collapsed ? item.label : undefined}
             className={`w-full flex items-center gap-2.5 rounded-lg text-[13px] transition-all duration-150
               ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2'}
-              ${anyActive ? 'text-white bg-[#FE5100]/[0.12] border-l-[2px] border-[#FE5100]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.04]'}`}>
+              ${anyActive ? 'text-white bg-[#FE5100]/[0.12] border-l-[2px] border-[#FE5100]' : 'text-gray-300 hover:text-gray-200 hover:bg-white/[0.04]'}`}>
             <Ic d={IC[item.icon]} size={15} />
             {!collapsed && <><span className="flex-1 text-left font-medium">{item.label}</span>
               <Ic d={IC.chevD} size={12} className={`text-gray-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} /></>}
@@ -161,7 +161,7 @@ const AdminLayout = ({ children }) => {
       <Link to={item.to} onClick={() => setMobileOpen(false)} title={collapsed ? item.label : undefined}
         className={`flex items-center gap-2.5 rounded-lg text-[13px] transition-all duration-150
           ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2'}
-          ${active ? 'text-white bg-[#FE5100]/[0.12] border-l-[2px] border-[#FE5100] font-medium' : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.04]'}`}>
+          ${active ? 'text-white bg-[#FE5100]/[0.12] border-l-[2px] border-[#FE5100] font-medium' : 'text-gray-300 hover:text-gray-200 hover:bg-white/[0.04]'}`}>
         <Ic d={IC[item.icon]} size={15} />
         {!collapsed && <span>{item.label}</span>}
       </Link>
@@ -188,7 +188,7 @@ const AdminLayout = ({ children }) => {
           return (
             <div key={sec.id}>
               {(!collapsed || mobile)
-                ? <p className="px-4 mb-1.5 text-[9.5px] font-bold text-gray-600 tracking-[0.14em] uppercase select-none">{sec.section}</p>
+                ? <p className="px-4 mb-1.5 text-[10.5px] font-bold text-gray-500 tracking-[0.14em] uppercase select-none">{sec.section}</p>
                 : <div className="w-5 h-px bg-gray-800/80 mx-auto my-2" />}
               <div className={`space-y-0.5 ${(!collapsed || mobile) ? 'px-2' : 'px-1.5'}`}>
                 {items.map((item, i) => <SidebarItem key={i} item={item} />)}
@@ -211,12 +211,12 @@ const AdminLayout = ({ children }) => {
 
   return (
     <div className={`admin-shell adm-canvas min-h-screen bg-[#F6F7F9] flex ${dark ? 'dark' : ''}`} style={{ fontFamily:"'Poppins',system-ui,sans-serif" }}>
-      <aside className={`hidden md:flex flex-col bg-[#1E1E1E] fixed inset-y-0 left-0 z-30 transition-all duration-300 overflow-hidden ${collapsed ? 'w-[70px]' : 'w-[258px]'}`}>
+      <aside className={`hidden md:flex flex-col bg-[#17171A] border-r border-[#232327] fixed inset-y-0 left-0 z-30 transition-all duration-300 overflow-hidden ${collapsed ? 'w-[70px]' : 'w-[258px]'}`}>
         <SidebarBody />
       </aside>
 
       {mobileOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setMobileOpen(false)} />}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-[258px] flex flex-col bg-[#1E1E1E] transition-transform duration-300 md:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-[258px] flex flex-col bg-[#17171A] transition-transform duration-300 md:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#1a1a1a]">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background:'#FE5100' }}>
@@ -251,7 +251,7 @@ const AdminLayout = ({ children }) => {
           </nav>
 
           <div className="flex items-center gap-1 ml-auto flex-shrink-0">
-            <button onClick={() => setPaletteOpen(true)} className="btn hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 transition-colors text-[12px] text-gray-400 w-44">
+            <button onClick={() => setPaletteOpen(true)} className="btn hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 transition-colors text-[12px] text-gray-400 w-40 max-w-[40vw]">
               <Ic d={IC.search} size={13} /><span>Search...</span>
               <span className="ml-auto text-[10px] text-gray-300 font-mono bg-gray-200 px-1 rounded">⌘K</span>
             </button>
