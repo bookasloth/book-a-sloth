@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, Navigate, useNavigate, Link } from 'react-router-dom';
+import Ic from '../admin/Ic';
 
 // SECURITY: Admin session is completely isolated in 'bas_admin' localStorage key.
 // Guard checks type === 'super_admin' — a vendor/user session cannot pass this check.
@@ -18,14 +19,6 @@ const sessionCan = (session, perm) => {
   return perms.includes(perm);
 };
 
-// ── Inline SVG renderer ───────────────────────────────────────
-const Ic = ({ d, size = 18, className = '', strokeWidth = 1.75 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"
-    className={`flex-shrink-0 ${className}`}>
-    {(Array.isArray(d) ? d : [d]).map((p, i) => <path key={i} d={p} />)}
-  </svg>
-);
 
 const IC = {
   grid:      'M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z',
