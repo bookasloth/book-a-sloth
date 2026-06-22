@@ -433,3 +433,17 @@ table {
 @media (prefers-reduced-motion: reduce) {
   .home-shot { opacity: 1 !important; transform: none !important; }
 }
+
+/* Admin shell — dark chrome (shell only; page interiors keep their own colours) */
+.admin-shell.dark.adm-canvas,
+.admin-shell.dark { background: #0f0f10; }
+.admin-shell.dark .adm-header {
+  background: rgba(23,23,26,0.95);
+  border-color: #232327;
+}
+.admin-shell.dark .adm-header,
+.admin-shell.dark .adm-header .text-gray-800 { color: #e7e7ea; }
+.admin-shell.dark .adm-header .text-gray-400,
+.admin-shell.dark .adm-header .text-gray-500 { color: #8a8a90; }
+.admin-shell.dark .adm-header .hover\:bg-gray-100:hover { background: #232327; }
+.admin-shell.dark main { color: #c9c9ce; }
