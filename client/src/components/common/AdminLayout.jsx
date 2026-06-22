@@ -74,6 +74,35 @@ const AdminLayout = ({ children }) => {
   })();
 
   const SidebarItem = ({ item }) => {
+    if (item.comingSoon) {
+      const open = expandedGroups[item.groupId] || false;
+      return (
+        <div>
+          <button onClick={() => !collapsed && setExpandedGroups(prev => ({ ...prev, [item.groupId]: !prev[item.groupId] }))}
+            title={collapsed ? item.label : undefined}
+            className={`w-full flex items-center gap-2.5 rounded-lg text-[13px] text-gray-500 transition-all duration-150
+              ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2'} hover:bg-white/[0.03]`}>
+            <Ic d={IC[item.icon]} size={15} className="opacity-50" />
+            {!collapsed && <>
+              <span className="flex-1 text-left">{item.label}</span>
+              <span className="flex items-center gap-0.5 text-[9px] font-bold text-gray-700 bg-gray-800/80 px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                <Ic d={IC.lock} size={8} />soon
+              </span>
+              <Ic d={IC.chevD} size={12} className={`ml-1 text-gray-700 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            </>}
+          </button>
+          {!collapsed && open && (
+            <div className="ml-6 pl-3 border-l border-gray-800/80 mt-0.5 mb-1 space-y-0.5">
+              {item.children.map(ch => (
+                <span key={ch.label} className="block px-3 py-1.5 rounded-md text-[12px] text-gray-600 opacity-50 cursor-not-allowed select-none">
+                  {ch.label}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
     if (item.children) {
       const open = expandedGroups[item.groupId] || false;
       const anyActive = item.children.some(ch => location.pathname === ch.to || location.pathname.startsWith(ch.to + '/'));

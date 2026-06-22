@@ -167,8 +167,8 @@ export const QUICK_ACTIONS = [
   { label:'View Bookings',   icon:'calCheck',  to:'/admin/bookings' },
 ];
 
-// Replaces the old flat `FUTURE MODULES` section. Disabled parents that expand
-// to disabled children — pure roadmap teasers, nothing navigates.
+// Replaces the old flat `FUTURE MODULES` section. Coming-soon parents (comingSoon: true)
+// that expand to inert children — pure roadmap teasers, nothing navigates.
 export const ROADMAP = [
   { id: 'roadmap', section: 'ROADMAP', items: [
     { comingSoon: true, groupId: 'cs-crm',       label: 'CRM',                  icon: 'users2',    children: [{ label: 'Leads' }, { label: 'Contacts' }, { label: 'Pipelines' }, { label: 'Deals' }] },
