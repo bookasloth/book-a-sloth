@@ -14,6 +14,7 @@ const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { runInBackground } = require("../utils/background");
 const { hostOf } = require("../utils/hostOf");
+const profileSecrets = require("../utils/profileSecrets");
 
 const emailHtml = (body) => `
   <div style="max-width:520px;margin:0 auto;padding:26px;border-radius:24px;background:#ffffff;font-family:'Plus Jakarta Sans','Poppins',sans-serif;color:#111827;box-shadow:0 24px 60px rgba(15,23,42,0.08);">
@@ -172,6 +173,7 @@ const getAvailableSlots = async (req, res) => {
     ]);
     if (!service) return res.status(404).json({ message: "Service not found" });
     if (!host) return res.status(404).json({ message: "Host not found" });
+    await profileSecrets.attachGoogleTokens(host);
 
     const result = await availabilityService.computeSlots({
       host, service, availability, dateStr: date,
@@ -218,6 +220,7 @@ const createBooking = async (req, res) => {
     ]);
     if (!service) return res.status(404).json({ message: "Service not found" });
     if (!host) return res.status(404).json({ message: "Host not found" });
+    await profileSecrets.attachGoogleTokens(host);
 
     // Resolve guest_id server-side (never from the body).
     //  - Logged-in user (optionalProtect set req.user) → their own id.
@@ -847,6 +850,7 @@ const rescheduleBooking = async (req, res) => {
 
     try {
       const hostRow = hostOf(booking);
+      await profileSecrets.attachGoogleTokens(hostRow);
       if (booking.google_event_id && hostRow.google_calendar_connected && hostRow.google_refresh_token) {
         await updateCalendarEvent(
           decryptToken(hostRow.google_access_token),
