@@ -22,16 +22,28 @@ const app = express();
 // hop count if more proxies sit in front.
 app.set('trust proxy', 1);
 
-// CORS: in production lock to CLIENT_URL. In dev, also accept any localhost port
-// so Vite drifting (5173 → 5174 → 5175 when ports are busy) doesn't break the
-// API with origin-mismatch failures that surface as "Could not start..." toasts.
+// CORS: in production lock to the canonical CLIENT_URL plus its www/apex
+// sibling and any CLIENT_URLS extras (see config/corsOrigins). In dev, also
+// accept any localhost port so Vite drifting (5173 → 5174 → 5175 when ports are
+// busy) doesn't break the API with origin-mismatch failures that surface as
+// "Could not start..." toasts.
 const isProd = process.env.NODE_ENV === 'production';
+const { buildAllowedOrigins, stripSlash } = require('./config/corsOrigins');
+const allowedOrigins = buildAllowedOrigins(process.env);
+const corsWarned = new Set(); // warn once per blocked origin, not per request
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true); // same-origin / curl / server-to-server
-    if (origin === process.env.CLIENT_URL) return cb(null, true);
+    if (allowedOrigins.has(stripSlash(origin))) return cb(null, true);
     if (!isProd && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) return cb(null, true);
-    return cb(new Error(`CORS blocked for origin: ${origin}`));
+    // Clean CORS denial (omit Access-Control-Allow-Origin) rather than throwing,
+    // which would 500 every blocked request and spam logs/Sentry. The browser
+    // still blocks it; we just don't treat a wrong origin as a server error.
+    if (!corsWarned.has(origin)) {
+      corsWarned.add(origin);
+      console.warn(`[cors] blocked origin: ${origin}`);
+    }
+    return cb(null, false);
   },
   credentials: true,
 }));
