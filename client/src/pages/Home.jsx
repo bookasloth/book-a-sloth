@@ -21,7 +21,6 @@ import {
   ArrowRight,
   Star,
   Check,
-  AtSign,
   MessageCircle,
   ArrowUpRight,
   Video,
@@ -42,11 +41,6 @@ import {
   Plus,
   TrendingUp,
   Smile,
-  Stethoscope,
-  Dumbbell,
-  Brain,
-  PenTool,
-  Compass,
   Clock,
   FolderKanban,
   Zap,
@@ -60,7 +54,7 @@ import { searchVendors, subscribeNewsletter } from "../services/api";
 import useLenis from "../hooks/useLenis";
 import Reveal from "../components/home/Reveal";
 import BrandPreloader from "../components/preloader/BrandPreloader";
-import { HERO, PERSONAS, FACES, FINAL, NEWSLETTER } from "../components/home/images";
+import { HERO, PERSONAS, FACES, NEWSLETTER } from "../components/home/images";
 
 /* Real funnel routes — do not point CTAs anywhere else. */
 const ROUTE_START = "/be-a-sloth";
@@ -382,54 +376,33 @@ const STEPS = [
   },
 ];
 
-/* Footer nav — every link resolves (route, on-page anchor, or mailto).
-   No dead "#" hrefs. Add columns/links here as pages ship. */
+/* Footer nav — every link resolves to a LIVE route, on-page anchor or mailto.
+   Disabled sections (#find / #manifesto / #newsletter) are excluded so there
+   are no dead anchors. Add columns/links here as pages ship. */
 const FOOTER_COLS = [
   { h: "Product", links: [
-    { t: "How It Works", href: "#how-it-works" },
-    { t: "Find Hosts", href: "#find" },
+    { t: "How it works", href: "#how-it-works" },
     { t: "Pricing", href: "#pricing" },
-    { t: "Be a Sloth", href: "/be-a-sloth" },
+    { t: "FAQ", href: "#faq" },
+    { t: "Be a Host", href: "/be-a-sloth" },
   ]},
   { h: "Company", links: [
     { t: "About", href: "/about" },
-    { t: "Manifesto", href: "#manifesto" },
+    { t: "Reviews", href: "#collective" },
     { t: "Log in", href: "/login-as-vendor" },
   ]},
-  { h: "Collective", links: [
-    { t: "The Collective", href: "#collective" },
-    { t: "Newsletter", href: "#newsletter" },
+  { h: "Support", links: [
+    { t: "Help", href: "/help" },
     { t: "Contact", href: "mailto:team@timewheel.co.in" },
   ]},
 ];
 
-/* Social — only real destinations. Founder: add Instagram/X/WhatsApp URLs here. */
-const SOCIAL = [
-  { Icon: AtSign, label: "Email Book A Sloth", href: "mailto:team@timewheel.co.in" },
-];
-
-/* ── Stats strip (placeholder numbers — refine before launch) ── */
+/* ── Stats strip — live launch numbers ── */
 const STATS = [
-  { icon: Users, value: "12,000+", label: "Professionals on Book A Sloth" },
-  { icon: CalendarCheck, value: "480K+", label: "Bookings completed" },
-  { icon: Wallet, value: "₹40 Cr+", label: "Payments processed" },
-  { icon: Smile, value: "4.9 / 5", label: "Average host rating" },
-];
-
-/* ── Who it's for — quick self-identification grid ── */
-const WHO_FOR = [
-  { icon: PenTool, label: "Freelancers" },
-  { icon: Target, label: "Coaches" },
-  { icon: Compass, label: "Consultants" },
-  { icon: GraduationCap, label: "Tutors" },
-  { icon: Brain, label: "Therapists" },
-  { icon: Stethoscope, label: "Doctors" },
-  { icon: Palette, label: "Designers" },
-  { icon: Code2, label: "Developers" },
-  { icon: Briefcase, label: "Agencies" },
-  { icon: Sparkles, label: "Studios" },
-  { icon: Dumbbell, label: "Trainers" },
-  { icon: HeartPulse, label: "Mentors" },
+  { icon: Users, value: "20+", label: "Professionals on Book A Sloth" },
+  { icon: CalendarCheck, value: "100+", label: "Bookings completed" },
+  { icon: Wallet, value: "₹40K+", label: "Payments processed" },
+  { icon: Smile, value: "5 / 5", label: "Average host rating" },
 ];
 
 /* ── Problem → solution pairs ── */
@@ -588,14 +561,6 @@ const Home = () => {
     offset: ["start start", "end start"],
   });
   const heroImgY = useTransform(heroProg, [0, 1], [0, 80]);
-
-  // ── Final CTA parallax ──
-  const finalRef = useRef(null);
-  const { scrollYProgress: finalProg } = useScroll({
-    target: finalRef,
-    offset: ["start end", "end start"],
-  });
-  const finalImgY = useTransform(finalProg, [0, 1], [-40, 40]);
 
   // ── Testimonials carousel: centred active card fills the 28%→72% middle cell.
   //    Transform-based track (the page runs Lenis smooth-scroll, which blocks inner
@@ -888,43 +853,16 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ════════════════ WHO IS THIS FOR ════════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
-            Who it's for
-          </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            If you sell your <span className="italic text-primary">time</span>, it's for you.
-          </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
-            Solo or a small team — if people book you, Book A Sloth quietly handles the booking, the payment and the reminders.
-          </Reveal>
-          <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {WHO_FOR.map((w, i) => (
-              <Reveal key={w.label} delay={(i % 4) * 0.06}>
-                <div className="group flex items-center gap-3 rounded-[20px] border border-black/5 bg-white p-4 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-black/10 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.18)] sm:p-5">
-                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <w.icon size={20} />
-                  </span>
-                  <span className="font-heading text-sm font-bold text-ink sm:text-base">{w.label}</span>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════ INDUSTRY DISCOVERY ════════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
+      {/* ════════════════ INDUSTRY DISCOVERY (dark) ════════════════ */}
+      <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
             Industries we support
           </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
             Built for your <span className="italic text-primary">profession.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             From tech to coaching to wellness — explore an industry to see the roles already booking on Book A Sloth.
           </Reveal>
 
@@ -939,37 +877,37 @@ const Home = () => {
                   tabIndex={0}
                   role="group"
                   aria-label={`${ind.name} — show popular professions`}
-                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[20px] border border-white/60 bg-white/70 shadow-[0_8px_30px_rgba(26,26,26,0.05)] outline-none ring-1 ring-inset ring-white/50 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.22)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
+                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[20px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
                 >
                   {/* Big line icon bleeding from the top-left corner — card background */}
                   <ind.icon
                     aria-hidden
                     strokeWidth={1.25}
-                    className="pointer-events-none absolute -left-5 -top-5 h-32 w-32 opacity-[0.13] transition-opacity duration-300 group-hover:opacity-20 group-focus-within:opacity-20 motion-reduce:transition-none"
+                    className="pointer-events-none absolute -left-5 -top-5 h-32 w-32 opacity-20 transition-opacity duration-300 group-hover:opacity-30 group-focus-within:opacity-30 motion-reduce:transition-none"
                     style={{ color: ind.color }}
                   />
 
                   {/* DEFAULT layer — title sits top-right next to the corner icon;
                       description + hint anchor to the bottom. Fades out on hover/focus. */}
                   <div className="absolute inset-0 flex flex-col p-6 transition-opacity duration-300 group-hover:opacity-0 group-focus-within:opacity-0 motion-reduce:transition-none">
-                    <h3 className="ml-auto max-w-[60%] text-right font-heading text-xl font-bold leading-tight text-ink">{ind.name}</h3>
-                    <p className="mt-auto text-sm leading-relaxed text-neutral-500">{ind.description}</p>
-                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-neutral-400">
+                    <h3 className="ml-auto max-w-[60%] text-right font-heading text-xl font-bold leading-tight text-white">{ind.name}</h3>
+                    <p className="mt-auto text-sm leading-relaxed text-white/60">{ind.description}</p>
+                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-white/50">
                       Explore roles <ArrowRight size={12} />
                     </span>
                   </div>
 
                   {/* DETAIL layer — frosted panel (bg + blur) fully hides/blurs the
                       back content; professions + CTA fade in over it. */}
-                  <div className="absolute inset-0 flex flex-col bg-white/60 p-6 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink">
+                  <div className="absolute inset-0 flex flex-col bg-ink/70 p-6 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
                       Popular professions
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {ind.professions.map((p) => (
                         <span
                           key={p}
-                          className="rounded-full border border-black/5 bg-white/80 px-3 py-1 text-xs font-medium text-neutral-700"
+                          className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-white/80"
                         >
                           {p}
                         </span>
@@ -1372,30 +1310,30 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ════════════════ FEATURE BREAKDOWN ════════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
+      {/* ════════════════ FEATURE BREAKDOWN (dark) ════════════════ */}
+      <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
             Everything you need
           </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
             Four jobs. <span className="italic text-primary">One calm tool.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             Not a pile of features — just the four things a service business actually needs, done well.
           </Reveal>
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
             {FEATURE_GROUPS.map((g, i) => (
               <Reveal key={g.title} delay={(i % 4) * 0.07}>
-                <div className="flex h-full flex-col rounded-[20px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.18)] sm:p-7">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <div className="flex h-full flex-col rounded-[20px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
                     <g.icon size={22} />
                   </span>
-                  <h3 className="mt-5 font-heading text-lg font-bold text-ink">{g.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{g.desc}</p>
-                  <ul className="mt-5 space-y-2.5 border-t border-neutral-100 pt-5">
+                  <h3 className="mt-5 font-heading text-lg font-bold text-white">{g.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-white/60">{g.desc}</p>
+                  <ul className="mt-5 space-y-2.5 border-t border-white/10 pt-5">
                     {g.items.map((it) => (
-                      <li key={it} className="flex items-start gap-2 text-sm text-ink">
+                      <li key={it} className="flex items-start gap-2 text-sm text-white/80">
                         <Check size={15} className="mt-0.5 flex-shrink-0 text-primary" />
                         {it}
                       </li>
@@ -1529,27 +1467,27 @@ const Home = () => {
       </section>
       )}
 
-      {/* ════════════════ WHY BOOK A SLOTH ════════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
+      {/* ════════════════ WHY BOOK A SLOTH (dark) ════════════════ */}
+      <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
             Why Book A Sloth
           </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
             Made for you — <span className="italic text-primary">not borrowed from the West.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             Plenty of tools can take a booking. Few are built for an Indian professional who wants to stay calm and keep everything they earn.
           </Reveal>
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {WHY_CARDS.map((w, i) => (
               <Reveal key={w.title} delay={(i % 3) * 0.07}>
-                <div className="flex h-full flex-col rounded-[20px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.18)] sm:p-7">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <div className="flex h-full flex-col rounded-[20px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
                     <w.icon size={22} />
                   </span>
-                  <h3 className="mt-5 font-heading text-lg font-bold text-ink">{w.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{w.desc}</p>
+                  <h3 className="mt-5 font-heading text-lg font-bold text-white">{w.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-white/60">{w.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -1970,82 +1908,49 @@ const Home = () => {
       </section>
       )}
 
-      {/* ════════════════ FINAL CTA ════════════════ */}
-      <section ref={finalRef} className="relative px-5 py-20 sm:px-8 lg:py-28">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem]">
-          <motion.img
-            src={FINAL}
-            alt=""
-            loading="lazy"
-            style={{ y: finalImgY }}
-            className="absolute inset-0 h-[120%] w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-ink/60" />
-          <div className="relative px-6 py-24 text-center sm:py-32">
-            <Reveal as="h2" className="mx-auto max-w-2xl text-4xl leading-tight text-white sm:text-6xl">
-              Get booked &amp; paid,
-              <br />
-              <span className="italic text-white/70">starting today.</span>
-            </Reveal>
-            <Reveal delay={0.1} className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link
-                to={ROUTE_START}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-cta px-8 py-4 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(254,81,0,0.4)] transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
-              >
-                Get Started <ArrowRight size={16} />
-              </Link>
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/10 px-8 py-4 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20 hover:no-underline"
-              >
-                See how it works
-              </a>
-            </Reveal>
-            <Reveal as="p" delay={0.16} className="mt-6 text-sm text-white/60">
-              Free forever plan · No credit card · Set up in minutes
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════ FOOTER ════════════════ */}
-      <footer className="px-5 pb-12 pt-10 sm:px-8">
+      {/* ════════════════ FOOTER (dark · Calendly-style layout) ════════════════ */}
+      <footer className="bg-ink px-5 pb-12 pt-16 text-white sm:px-8 lg:pt-20">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-10 border-t border-neutral-200 py-12 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="lg:col-span-2">
-              <a href="#top" className="flex items-center gap-2 hover:no-underline">
-                <span className="text-xl">🦥</span>
-                <span className="font-heading text-base font-extrabold text-ink">Book A Sloth</span>
-              </a>
-              <p className="mt-3 max-w-xs text-sm text-neutral-500">
-                The calm way to get booked and paid. Built with calm, in India.
-              </p>
-              <div className="mt-5 flex gap-3">
-                {SOCIAL.map(({ Icon, label, href }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    aria-label={label}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 transition-colors hover:bg-primary hover:text-white"
-                  >
-                    <Icon size={16} />
-                  </a>
-                ))}
+          {/* CTA band — heading + actions */}
+          <div className="flex flex-col gap-8 pb-14 lg:flex-row lg:items-center lg:justify-between">
+            <h2 className="font-heading text-3xl font-bold leading-[1.05] tracking-tight text-white sm:text-4xl">
+              Power up your
+              <br />
+              bookings.
+            </h2>
+            <div className="flex flex-col gap-4 sm:items-end">
+              <p className="text-sm text-white/50">Get started in seconds — for free.</p>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  to={ROUTE_START}
+                  className="inline-flex items-center justify-center rounded-[5px] bg-white px-7 py-3 text-sm font-semibold text-ink transition-colors hover:bg-white/90 hover:no-underline"
+                >
+                  Start for free
+                </Link>
+                <a
+                  href="#how-it-works"
+                  className="inline-flex items-center justify-center rounded-[5px] border border-white/25 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 hover:no-underline"
+                >
+                  See how it works
+                </a>
               </div>
             </div>
+          </div>
 
+          {/* Link columns */}
+          <div className="grid grid-cols-2 gap-8 border-t border-white/10 py-12 sm:grid-cols-3">
             {FOOTER_COLS.map((col) => (
               <div key={col.h}>
-                <p className="font-heading text-sm font-bold text-ink">{col.h}</p>
+                <p className="font-heading text-sm font-semibold text-white">{col.h}</p>
                 <ul className="mt-4 space-y-2.5">
                   {col.links.map((l) => (
                     <li key={l.t}>
                       {l.href.startsWith("/") ? (
-                        <Link to={l.href} className="text-sm text-neutral-500 hover:text-primary hover:no-underline">
+                        <Link to={l.href} className="text-sm text-white/55 transition-colors hover:text-white hover:no-underline">
                           {l.t}
                         </Link>
                       ) : (
-                        <a href={l.href} className="text-sm text-neutral-500 hover:text-primary hover:no-underline">
+                        <a href={l.href} className="text-sm text-white/55 transition-colors hover:text-white hover:no-underline">
                           {l.t}
                         </a>
                       )}
@@ -2056,13 +1961,19 @@ const Home = () => {
             ))}
           </div>
 
-          <div className="flex flex-col gap-2 border-t border-neutral-200 py-6 text-xs text-neutral-400 sm:flex-row sm:justify-between">
-            <p>© {new Date().getFullYear()} Book A Sloth. All rights reserved.</p>
+          {/* Bottom bar — wordmark · copyright · legal */}
+          <div className="flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <a href="#top" className="font-heading text-sm font-extrabold text-white/80 transition-colors hover:text-white hover:no-underline">
+                Book A Sloth
+              </a>
+              <span>© {new Date().getFullYear()} All rights reserved.</span>
+            </div>
             <div className="flex flex-wrap gap-5">
-              <Link to="/terms" className="hover:text-ink hover:no-underline">Terms</Link>
-              <Link to="/privacy" className="hover:text-ink hover:no-underline">Privacy</Link>
-              <Link to="/refund" className="hover:text-ink hover:no-underline">Refund</Link>
-              <a href="mailto:team@timewheel.co.in" className="hover:text-ink hover:no-underline">team@timewheel.co.in</a>
+              <Link to="/terms" className="transition-colors hover:text-white hover:no-underline">Terms</Link>
+              <Link to="/privacy" className="transition-colors hover:text-white hover:no-underline">Privacy</Link>
+              <Link to="/refund" className="transition-colors hover:text-white hover:no-underline">Refund</Link>
+              <a href="mailto:team@timewheel.co.in" className="transition-colors hover:text-white hover:no-underline">team@timewheel.co.in</a>
             </div>
           </div>
         </div>

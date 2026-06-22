@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
 import {
-  Home, Tag, UserPlus, HelpCircle,
+  Home, Tag, HelpCircle,
   CalendarCheck, MessageCircle, Bookmark, BarChart2,
   Briefcase, Bell, X, Menu, ChevronDown,
   Search, User, Settings, LogOut, TrendingUp,
@@ -16,10 +16,9 @@ import {
 // Only destinations that actually have routes are listed. Items pointing at
 // not-yet-built pages (Categories, How It Works, Messages, Saved) were removed
 // to avoid dead 404 links in the navbar.
-const PUBLIC_NAV = [
-  { label: 'Home',             href: '/',           icon: Home,    exact: true },
-  { label: 'Become a Creator', href: '/be-a-sloth', icon: UserPlus },
-];
+// Logged-out header shows no center nav links (Home + Become a Creator removed);
+// the logo (→ home) and the Get Started / Sign In actions cover those intents.
+const PUBLIC_NAV = [];
 
 const CUSTOMER_NAV = [
   { label: 'Home',     href: '/',            icon: Home,         exact: true },
