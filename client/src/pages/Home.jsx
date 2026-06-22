@@ -156,39 +156,52 @@ const ProductMock = ({ kind }) => {
   if (kind === "booking") {
     return (
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 flex-shrink-0 rounded-full bg-primary/15" />
-          <div className="flex-1 space-y-2">
-            <Bar w="w-28" h="h-3" />
-            <Bar w="w-20" c="bg-neutral-100" />
-          </div>
+        <div className="relative">
+          <div className="h-16 rounded-[8px]" style={{ background: "linear-gradient(110deg,#fb7185,#f59e0b,#a78bfa,#22d3ee)" }} />
+          <div className="absolute -bottom-6 left-3 h-14 w-14 rounded-2xl border-[3px] border-white bg-gradient-to-br from-neutral-200 to-neutral-300" />
         </div>
-        <div className="grid grid-cols-3 gap-2 pt-1">
-          {["10:00", "11:30", "2:00", "3:30", "4:00", "5:30"].map((t, i) => (
-            <div
-              key={t}
-              className={`rounded-[6px] px-2 py-1.5 text-center text-[10px] font-semibold ${
-                i === 2 ? "bg-primary text-white" : "bg-neutral-100 text-neutral-500"
-              }`}
-            >
-              {t}
+        <div className="space-y-1 pl-1 pt-4">
+          <div className="h-3 w-40 rounded bg-neutral-300" />
+          <div className="h-2 w-28 rounded bg-neutral-200" />
+          <span className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary">Startup Advisor</span>
+        </div>
+        <div className="space-y-2 pt-1">
+          {[["Strategy call", "Free"], ["Discovery call", "₹10"]].map(([t, p]) => (
+            <div key={t} className="flex items-center justify-between rounded-[6px] border border-neutral-100 bg-white p-2.5">
+              <div className="space-y-1">
+                <div className="h-2.5 w-24 rounded bg-neutral-300" />
+                <div className="h-2 w-14 rounded bg-neutral-200" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-ink">{p}</span>
+                <span className="rounded-[5px] bg-primary-cta px-2.5 py-1 text-[9px] font-bold text-white">Book</span>
+              </div>
             </div>
           ))}
         </div>
-        <div className="h-8 rounded-[6px] bg-primary-cta" />
       </div>
     );
   }
   if (kind === "service") {
     return (
       <div className="space-y-3">
-        <div className="h-20 rounded-[4px] bg-gradient-to-br from-primary/15 to-sand" />
-        <Bar w="w-32" h="h-3" />
-        <Bar w="w-full" c="bg-neutral-100" />
-        <Bar w="w-2/3" c="bg-neutral-100" />
-        <div className="flex items-center justify-between pt-1">
-          <div className="text-sm font-bold text-ink">₹1,500</div>
-          <div className="h-7 w-24 rounded-[6px] bg-primary-cta" />
+        <div className="rounded-[8px] p-4" style={{ background: "linear-gradient(135deg,#ffd2bf,#fff2ec)" }}>
+          <span className="text-[9px] font-bold uppercase tracking-wide text-primary">New · 20 min · Online</span>
+          <div className="mt-1.5 font-heading text-base font-extrabold leading-tight text-ink">
+            Let&apos;s talk about your <span className="text-primary">booking page</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 pl-0.5">
+          <div className="h-6 w-6 rounded-full bg-gradient-to-br from-neutral-200 to-neutral-300" />
+          <div className="h-2 w-24 rounded bg-neutral-200" />
+        </div>
+        <div className="flex items-center justify-between rounded-[6px] border border-neutral-100 p-3">
+          <span className="text-base font-extrabold text-ink">Free</span>
+          <span className="rounded-[6px] bg-primary-cta px-4 py-1.5 text-[10px] font-bold text-white">Book a Slot</span>
+        </div>
+        <div className="flex gap-4 pl-0.5 text-[9px] font-medium text-neutral-500">
+          <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Verified host</span>
+          <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Instant confirmation</span>
         </div>
       </div>
     );
@@ -196,41 +209,56 @@ const ProductMock = ({ kind }) => {
   if (kind === "checkout") {
     return (
       <div className="space-y-3">
-        <Bar w="w-24" h="h-3" />
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="flex items-center justify-between">
-            <Bar w="w-28" c="bg-neutral-100" />
-            <Bar w="w-12" c="bg-neutral-100" />
-          </div>
-        ))}
-        <div className="flex items-center justify-between border-t border-dashed border-neutral-200 pt-2.5">
-          <div className="text-xs font-semibold text-ink">Total</div>
-          <div className="text-sm font-bold text-primary">₹1,500</div>
+        <div className="flex items-center">
+          {["Time", "Details", "Verify", "Done"].map((s, i) => (
+            <span key={s} className={`flex items-center ${i < 3 ? "flex-1" : ""}`}>
+              <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[7px] font-bold ${i === 0 ? "bg-primary-cta text-white" : "bg-neutral-200 text-neutral-400"}`}>{i + 1}</span>
+              {i < 3 && <span className="mx-1 h-px flex-1 bg-neutral-200" />}
+            </span>
+          ))}
         </div>
-        <div className="flex h-8 items-center justify-center rounded-[6px] bg-primary-cta text-[10px] font-bold text-white">
-          Pay with UPI
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: 14 }).map((_, i) => (
+            <div key={i} className={`flex aspect-square items-center justify-center rounded-[4px] text-[8px] font-semibold ${i === 9 ? "bg-primary-cta text-white" : i === 8 ? "text-primary ring-1 ring-primary" : "bg-neutral-100 text-neutral-400"}`}>{i + 17}</div>
+          ))}
         </div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {["9:00", "11:30", "2:00"].map((t, i) => (
+            <div key={t} className={`rounded-[5px] py-1 text-center text-[9px] font-semibold ${i === 1 ? "bg-primary text-white" : "border border-neutral-200 text-neutral-500"}`}>{t}</div>
+          ))}
+        </div>
+        <div className="flex h-8 items-center justify-center rounded-[6px] bg-primary-cta text-[10px] font-bold text-white">Pay ₹1,500</div>
       </div>
     );
   }
   // dashboard
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-2">
-        {[["₹84k", "This month"], ["126", "Bookings"], ["4.9", "Rating"]].map(([v, l]) => (
-          <div key={l} className="rounded-[4px] bg-neutral-100 p-2">
-            <div className="text-sm font-bold text-ink">{v}</div>
-            <div className="text-[9px] text-neutral-400">{l}</div>
-          </div>
-        ))}
-      </div>
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="flex items-center gap-2">
-          <div className="h-7 w-7 flex-shrink-0 rounded-full bg-primary/15" />
-          <Bar w="w-32" c="bg-neutral-100" />
-          <div className="ml-auto h-4 w-10 rounded-full bg-primary/10" />
+    <div className="flex gap-3">
+      <div className="hidden w-20 flex-shrink-0 space-y-2 border-r border-neutral-100 pr-2 sm:block">
+        <div className="h-2.5 w-16 rounded bg-neutral-300" />
+        <div className="h-1.5 w-12 rounded bg-neutral-200" />
+        <div className="mt-2 space-y-1.5">
+          <div className="h-4 rounded-[4px] bg-primary/10" />
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-2 w-14 rounded bg-neutral-200" />
+          ))}
         </div>
-      ))}
+      </div>
+      <div className="flex-1 space-y-3">
+        <div className="space-y-1">
+          <div className="h-3 w-32 rounded bg-neutral-300" />
+          <div className="h-2 w-24 rounded bg-neutral-200" />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {[["1", "Upcoming", "#2563eb"], ["2", "Completed", "#059669"], ["1", "Cancelled", "#dc2626"], ["₹10", "Earnings", "#f59e0b"]].map(([v, l, c]) => (
+            <div key={l} className="rounded-[6px] border border-neutral-100 p-2">
+              <div className="h-4 w-4 rounded-md" style={{ background: c + "22" }} />
+              <div className="mt-1 text-sm font-extrabold text-ink">{v}</div>
+              <div className="text-[8px] text-neutral-400">{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
@@ -675,7 +703,7 @@ const Home = () => {
   ];
 
   return (
-    <div id="top" className="overflow-x-hidden bg-canvas text-ink">
+    <div id="top" className="overflow-x-clip bg-canvas text-ink">
       <BrandPreloader variant="homepage" ready={assetsReady} />
 
       {/* ════════════════ HERO ════════════════ */}
@@ -1115,7 +1143,7 @@ const Home = () => {
             {PRODUCT_SHOTS.map((shot, i) => (
               <figure key={shot.title} className="home-shot" style={{ "--cc": shot.color, "--i": i }}>
                 <div
-                  className="overflow-hidden rounded-[10px] bg-white transition-all duration-300 hover:-translate-y-1"
+                  className="flex min-h-[19rem] flex-col overflow-hidden rounded-[10px] bg-white transition-all duration-300 hover:-translate-y-1"
                   style={{
                     border: "1px solid color-mix(in srgb, var(--cc) 55%, transparent)",
                     boxShadow: "0 20px 45px -24px color-mix(in srgb, var(--cc) 70%, transparent)",
