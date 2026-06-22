@@ -11,6 +11,18 @@
     --danger: #EF4444;
     --border: #1E1E1E;
 
+    /* ── Accent palette ──────────────────────────────────────────────
+       Reusable multi-hue accents (distilled from the "...and so much more"
+       grid). Source of truth for the colourful homepage sections; use
+       anywhere via var(--c-*). Mirrored as Tailwind `c-*` colours in
+       client/tailwind.config.js — keep both in sync. */
+    --c-blue: #2563eb;
+    --c-violet: #7c3aed;
+    --c-cyan: #0891b2;
+    --c-emerald: #059669;
+    --c-amber: #f59e0b;
+    --c-pink: #db2777;
+
     /* Legacy mappings (keep for compatibility) */
     --color-ink: var(--text);
     --color-muted: #64748b;

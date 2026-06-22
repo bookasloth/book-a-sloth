@@ -64,7 +64,7 @@ const EASE = [0.22, 1, 0.36, 1];
 /* ════════════════════════════════════════════════════════════
    LINE-DRAW ICON wrapper (How it works)
    ════════════════════════════════════════════════════════════ */
-const LineIcon = ({ children }) => {
+const LineIcon = ({ children, color = "#1a1a1a" }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, amount: 0.6 });
   return (
@@ -72,10 +72,10 @@ const LineIcon = ({ children }) => {
       ref={ref}
       viewBox="0 0 48 48"
       fill="none"
-      stroke="#1a1a1a"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      style={{ stroke: color }}
       className={`sloth-draw h-9 w-9 ${inView ? "is-visible" : ""}`}
     >
       {children}
@@ -182,7 +182,7 @@ const ProductMock = ({ kind }) => {
   if (kind === "service") {
     return (
       <div className="space-y-3">
-        <div className="h-20 rounded-[8px] bg-gradient-to-br from-primary/15 to-sand" />
+        <div className="h-20 rounded-[4px] bg-gradient-to-br from-primary/15 to-sand" />
         <Bar w="w-32" h="h-3" />
         <Bar w="w-full" c="bg-neutral-100" />
         <Bar w="w-2/3" c="bg-neutral-100" />
@@ -218,7 +218,7 @@ const ProductMock = ({ kind }) => {
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
         {[["₹84k", "This month"], ["126", "Bookings"], ["4.9", "Rating"]].map(([v, l]) => (
-          <div key={l} className="rounded-[8px] bg-neutral-100 p-2">
+          <div key={l} className="rounded-[4px] bg-neutral-100 p-2">
             <div className="text-sm font-bold text-ink">{v}</div>
             <div className="text-[9px] text-neutral-400">{l}</div>
           </div>
@@ -278,7 +278,7 @@ const INDUSTRIES = [
     name: "Technology & Product",
     slug: "technology-product",
     icon: Cpu,
-    color: "#2563eb",
+    color: "var(--c-blue)",
     description: "Build products. Mentor makers.",
     professions: ["Software Engineer", "Product Manager", "UX Designer", "Data Scientist", "AI Engineer"],
   },
@@ -286,7 +286,7 @@ const INDUSTRIES = [
     name: "Coaching & Consulting",
     slug: "coaching-consulting",
     icon: Target,
-    color: "#7c3aed",
+    color: "var(--c-violet)",
     description: "Coach, advise, and transform.",
     professions: ["Career Coach", "Life Coach", "Executive Coach", "Leadership Coach", "Business Coach"],
   },
@@ -294,7 +294,7 @@ const INDUSTRIES = [
     name: "Health & Wellness",
     slug: "health-wellness",
     icon: HeartPulse,
-    color: "#0d9488",
+    color: "var(--c-emerald)",
     description: "Care for minds and bodies.",
     professions: ["Psychologist", "Nutritionist", "Speech Therapist"],
   },
@@ -302,7 +302,7 @@ const INDUSTRIES = [
     name: "Education",
     slug: "education",
     icon: GraduationCap,
-    color: "#f59e0b",
+    color: "var(--c-amber)",
     description: "Teach, mentor, and inspire.",
     professions: ["Language Tutor", "IELTS Coach", "Study Abroad Consultant"],
   },
@@ -310,7 +310,7 @@ const INDUSTRIES = [
     name: "Business Services",
     slug: "business-services",
     icon: Briefcase,
-    color: "#0891b2",
+    color: "var(--c-cyan)",
     description: "Advise, strategize, and grow.",
     professions: ["Financial Advisor", "Startup Advisor", "Business Consultant", "HR Consultant"],
   },
@@ -342,6 +342,7 @@ const STEPS = [
     title: "Share one link",
     desc: "Your services, availability and pricing — all in one SlothPage. Send it once, let it work forever.",
     chip: "Replaces 20+ DMs",
+    color: "var(--c-blue)",
     draw: (
       <>
         <path d="M20 28a7 7 0 0 1 0-10l4-4a7 7 0 0 1 10 10l-2 2" />
@@ -353,6 +354,7 @@ const STEPS = [
     title: "Clients book and pay upfront",
     desc: "They pick a slot and pay before the session. Money lands before you even open your calendar.",
     chip: "Paid before you show up",
+    color: "var(--c-amber)",
     draw: (
       <>
         <rect x="6" y="13" width="36" height="24" rx="4" />
@@ -365,6 +367,7 @@ const STEPS = [
     title: "Just show up",
     desc: "Reminders go out automatically. Receipts are sent. Follow-ups land. You do nothing.",
     chip: "Near-zero no-shows",
+    color: "var(--c-emerald)",
     draw: (
       <>
         <path d="M8 28c6 0 6-8 12-8s6 8 12 8 8-6 8-6" />
@@ -431,12 +434,12 @@ const PRODUCT_SHOTS = [
 
 /* ── Why Book A Sloth — reasons to choose it ── */
 const WHY_CARDS = [
-  { icon: IndianRupee, title: "Built for India", desc: "INR, GST, UPI — native." },
-  { icon: Wallet, title: "0% commission", desc: "You keep every rupee you earn." },
-  { icon: CreditCard, title: "Razorpay inside", desc: "Payments your clients already trust." },
-  { icon: Zap, title: "Live in minutes", desc: "Claim your link. Add a service. Done." },
-  { icon: Wind, title: "Calm by design", desc: "Clean for you. Clean for your clients." },
-  { icon: Target, title: "Made for services", desc: "Built for booked time — not bolted onto a CRM." },
+  { icon: IndianRupee, title: "Built for India", desc: "INR, GST, UPI — native.", color: "var(--c-blue)" },
+  { icon: Wallet, title: "0% commission", desc: "You keep every rupee you earn.", color: "var(--c-emerald)" },
+  { icon: CreditCard, title: "Razorpay inside", desc: "Payments your clients already trust.", color: "var(--c-violet)" },
+  { icon: Zap, title: "Live in minutes", desc: "Claim your link. Add a service. Done.", color: "var(--c-amber)" },
+  { icon: Wind, title: "Calm by design", desc: "Clean for you. Clean for your clients.", color: "var(--c-cyan)" },
+  { icon: Target, title: "Made for services", desc: "Built for booked time — not bolted onto a CRM.", color: "var(--c-pink)" },
 ];
 
 /* ── FAQ ── */
@@ -455,11 +458,11 @@ const FAQS = [
 
 /* ── Trust & security badges ── */
 const TRUST = [
-  { icon: Lock, title: "Secure payments", desc: "Processed by Razorpay, India's trusted gateway." },
-  { icon: ShieldCheck, title: "SSL encrypted", desc: "Every page and payment is encrypted end to end." },
-  { icon: Eye, title: "Privacy-first", desc: "Your data is yours. Never sold, never shared." },
-  { icon: FileCheck, title: "You own your data", desc: "Clients, bookings and earnings always belong to you." },
-  { icon: Download, title: "Export anytime", desc: "Download your data whenever you want to." },
+  { icon: Lock, title: "Secure payments", desc: "Processed by Razorpay, India's trusted gateway.", color: "var(--c-blue)" },
+  { icon: ShieldCheck, title: "SSL encrypted", desc: "Every page and payment is encrypted end to end.", color: "var(--c-emerald)" },
+  { icon: Eye, title: "Privacy-first", desc: "Your data is yours. Never sold, never shared.", color: "var(--c-violet)" },
+  { icon: FileCheck, title: "You own your data", desc: "Clients, bookings and earnings always belong to you.", color: "var(--c-cyan)" },
+  { icon: Download, title: "Export anytime", desc: "Download your data whenever you want to.", color: "var(--c-amber)" },
 ];
 
 /* ════════════════════════════════════════════════════════════
@@ -875,13 +878,13 @@ const Home = () => {
                   tabIndex={0}
                   role="group"
                   aria-label={`${ind.name} — show popular professions`}
-                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[20px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
+                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[6px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
                 >
                   {/* Big line icon bleeding from the top-left corner — card background */}
                   <ind.icon
                     aria-hidden
                     strokeWidth={1.25}
-                    className="pointer-events-none absolute -left-5 -top-5 h-32 w-32 opacity-20 transition-opacity duration-300 group-hover:opacity-30 group-focus-within:opacity-30 motion-reduce:transition-none"
+                    className="pointer-events-none absolute -left-5 -top-5 h-32 w-32 opacity-25 transition-opacity duration-300 group-hover:opacity-40 group-focus-within:opacity-40 motion-reduce:transition-none"
                     style={{ color: ind.color }}
                   />
 
@@ -905,7 +908,12 @@ const Home = () => {
                       {ind.professions.map((p) => (
                         <span
                           key={p}
-                          className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-white/80"
+                          className="rounded-full border px-3 py-1 text-xs font-medium"
+                          style={{
+                            backgroundColor: `color-mix(in srgb, ${ind.color} 18%, transparent)`,
+                            borderColor: `color-mix(in srgb, ${ind.color} 35%, transparent)`,
+                            color: `color-mix(in srgb, ${ind.color} 60%, white)`,
+                          }}
                         >
                           {p}
                         </span>
@@ -1088,7 +1096,7 @@ const Home = () => {
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6">
             {PROBLEMS.map((p, i) => (
               <Reveal key={p.problem} delay={(i % 2) * 0.08}>
-                <div className="h-full rounded-[20px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-7">
+                <div className="h-full rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-7">
                   <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-400">
                       <p.icon size={18} />
@@ -1123,18 +1131,18 @@ const Home = () => {
             <ArrowRight
               aria-hidden
               size={22}
-              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/60 md:block"
+              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/35 md:block"
             />
             <ArrowRight
               aria-hidden
               size={22}
-              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-primary/60 md:block"
+              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/35 md:block"
             />
 
             <div className="grid gap-12 md:grid-cols-3 md:gap-6">
               {STEPS.map((s, i) => (
                 <Reveal key={s.title} delay={i * 0.12}>
-                  <div className="group relative flex h-full flex-col items-center rounded-[24px] border border-white/10 bg-white/5 p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
+                  <div className="group relative flex h-full flex-col items-center rounded-[6px] border border-white/10 bg-white/5 p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
                     {/* Vertical connector to the next step (mobile) */}
                     {i < STEPS.length - 1 && (
                       <span
@@ -1143,7 +1151,7 @@ const Home = () => {
                       >
                         <ArrowRight
                           size={16}
-                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-neutral-800 text-primary/60"
+                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-neutral-800 text-white/35"
                         />
                       </span>
                     )}
@@ -1152,12 +1160,16 @@ const Home = () => {
                     <div className="relative inline-flex h-16 w-16 items-center justify-center">
                       <span
                         aria-hidden
-                        className="absolute inset-0 rounded-2xl bg-primary/25 opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-100"
+                        className="absolute inset-0 rounded-2xl opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-100"
+                        style={{ backgroundColor: `color-mix(in srgb, ${s.color} 45%, transparent)` }}
                       />
                       <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_10px_30px_-10px_rgba(26,26,26,0.18)] ring-1 ring-black/5">
-                        <LineIcon>{s.draw}</LineIcon>
+                        <LineIcon color={s.color}>{s.draw}</LineIcon>
                       </span>
-                      <span className="absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary-cta text-[11px] font-bold text-white">
+                      <span
+                        className="absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-ink"
+                        style={{ backgroundColor: `color-mix(in srgb, ${s.color} 70%, white)` }}
+                      >
                         {i + 1}
                       </span>
                     </div>
@@ -1165,7 +1177,13 @@ const Home = () => {
                     <h3 className="mt-6 font-heading text-xl font-bold text-white">{s.title}</h3>
                     <p className="mx-auto mt-2 max-w-xs text-neutral-300">{s.desc}</p>
 
-                    <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
+                    <span
+                      className="mt-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+                      style={{
+                        backgroundColor: `color-mix(in srgb, ${s.color} 20%, transparent)`,
+                        color: `color-mix(in srgb, ${s.color} 62%, white)`,
+                      }}
+                    >
                       <Check size={13} />
                       {s.chip}
                     </span>
@@ -1284,7 +1302,7 @@ const Home = () => {
             {PRODUCT_SHOTS.map((shot, i) => (
               <Reveal key={shot.title} delay={(i % 2) * 0.08}>
                 <figure className="h-full">
-                  <div className="overflow-hidden rounded-[20px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.2)]">
+                  <div className="overflow-hidden rounded-[6px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.2)]">
                     {/* browser chrome */}
                     <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50 px-4 py-3">
                       <span className="flex gap-1.5" aria-hidden>
@@ -1328,7 +1346,7 @@ const Home = () => {
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
             {FEATURE_GROUPS.map((g, i) => (
               <Reveal key={g.title} delay={(i % 4) * 0.07}>
-                <div className="flex h-full flex-col rounded-[20px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
+                <div className="flex h-full flex-col rounded-[6px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
                     <g.icon size={22} />
                   </span>
@@ -1485,8 +1503,14 @@ const Home = () => {
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {WHY_CARDS.map((w, i) => (
               <Reveal key={w.title} delay={(i % 3) * 0.07}>
-                <div className="flex h-full flex-col rounded-[20px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <div className="flex h-full flex-col rounded-[6px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
+                  <span
+                    className="flex h-12 w-12 items-center justify-center rounded-xl"
+                    style={{
+                      backgroundColor: `color-mix(in srgb, ${w.color} 22%, transparent)`,
+                      color: `color-mix(in srgb, ${w.color} 60%, white)`,
+                    }}
+                  >
                     <w.icon size={22} />
                   </span>
                   <h3 className="mt-5 font-heading text-lg font-bold text-white">{w.title}</h3>
@@ -1540,7 +1564,7 @@ const Home = () => {
               return (
                 <Reveal key={p.name} delay={i * 0.08}>
                   <div
-                    className={`relative flex h-full flex-col rounded-[24px] border bg-white p-7 sm:p-8 ${
+                    className={`relative flex h-full flex-col rounded-[6px] border bg-white p-7 sm:p-8 ${
                       p.recommended
                         ? "border-primary/30 shadow-[0_24px_60px_-30px_rgba(254,81,0,0.45)] ring-1 ring-primary/20"
                         : "border-black/5 shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
@@ -1595,7 +1619,7 @@ const Home = () => {
 
           {/* Free plan — horizontal on desktop, stacked (like the cards above) on mobile */}
           <Reveal delay={0.16} className="mt-5">
-            <div className="rounded-[24px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8 lg:flex lg:items-center lg:gap-8">
+            <div className="rounded-[6px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8 lg:flex lg:items-center lg:gap-8">
               <div className="lg:shrink-0">
                 <div className="flex items-center gap-2.5">
                   <h3 className="font-heading text-2xl font-bold text-ink">Free</h3>
@@ -1632,7 +1656,7 @@ const Home = () => {
             Not sure which plan? <span className="font-semibold text-ink">Start free</span> — you can upgrade in one click, anytime.
           </p>
           <p className="mt-3 text-center text-xs text-neutral-400">
-            Paid plans are 0% commission. Prices in INR, exclusive of GST. Cancel anytime.
+            0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
           </p>
         </div>
       </section>
@@ -1757,7 +1781,7 @@ const Home = () => {
           <div className="mt-12 space-y-3">
             {FAQS.map((f, i) => (
               <Reveal key={f.q} delay={Math.min(i * 0.04, 0.2)}>
-                <details className="group rounded-[20px] border border-black/5 bg-white px-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] [&_summary::-webkit-details-marker]:hidden">
+                <details className="group rounded-[6px] border border-black/5 bg-white px-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] [&_summary::-webkit-details-marker]:hidden">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 font-heading text-base font-bold text-ink">
                     {f.q}
                     <Plus size={18} className="flex-shrink-0 text-primary transition-transform duration-300 group-open:rotate-45" />
@@ -1853,8 +1877,14 @@ const Home = () => {
           <div className="mt-14 grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-5">
             {TRUST.map((t, i) => (
               <Reveal key={t.title} delay={(i % 5) * 0.06}>
-                <div className="flex h-full flex-col items-center rounded-[20px] border border-black/5 bg-white p-6 text-center shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <div className="flex h-full flex-col items-center rounded-[6px] border border-black/5 bg-white p-6 text-center shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
+                  <span
+                    className="flex h-12 w-12 items-center justify-center rounded-xl"
+                    style={{
+                      backgroundColor: `color-mix(in srgb, ${t.color} 12%, transparent)`,
+                      color: t.color,
+                    }}
+                  >
                     <t.icon size={22} />
                   </span>
                   <h3 className="mt-4 font-heading text-sm font-bold text-ink">{t.title}</h3>
