@@ -418,11 +418,14 @@ table {
    leaves each peeking). Mobile (<768px): fade + slide up on entry via the
    IntersectionObserver in Home.jsx. Per-card colour from inline var --cc.
    ════════════════════════════════════════════════════════════ */
-.home-shots { display: flex; flex-direction: column; gap: 28px; }
+.home-shots { display: flex; flex-direction: column; gap: 24px; }
 .home-shot { position: relative; }
 
 @media (min-width: 768px) {
   .home-shot { position: sticky; top: calc(88px + var(--i, 0) * 18px); }
+  /* Last card scrolls normally over the pinned stack so the section ends right
+     after it — kills the large empty gap a fully-pinned stack leaves below. */
+  .home-shot:last-child { position: relative; top: 0; }
 }
 
 @media (max-width: 767px) {

@@ -605,6 +605,10 @@ const Home = () => {
   const tWrapRef = useRef(null);
   const tPausedRef = useRef(false);
   const shotsRef = useRef(null);
+  // Drag-to-navigate (pointer): follow the finger live, snap to nearest card on release.
+  const [dragDX, setDragDX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef({ active: false, startX: 0 });
   useEffect(() => {
     const el = tWrapRef.current;
     if (!el) return;
@@ -631,6 +635,12 @@ const Home = () => {
   useEffect(() => {
     if (activeT < 2 * N_T) return;
     const id = setTimeout(() => { setTAnim(false); setActiveT((a) => a - N_T); }, 700);
+    return () => clearTimeout(id);
+  }, [activeT, N_T]);
+  // Mirror reset for backward (drag) travel — keep activeT in the middle copy.
+  useEffect(() => {
+    if (activeT >= N_T) return;
+    const id = setTimeout(() => { setTAnim(false); setActiveT((a) => a + N_T); }, 700);
     return () => clearTimeout(id);
   }, [activeT, N_T]);
 
@@ -715,8 +725,8 @@ const Home = () => {
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* LEFT */}
           <div>
-            <Reveal as="h1" delay={0.05} className="text-[2.7rem] font-bold leading-[1.02] tracking-[-0.025em] text-ink sm:text-[4.5rem]">
-              Get booked & paid
+            <Reveal as="h1" delay={0.05} className="text-[clamp(2rem,8vw,2.7rem)] font-bold leading-[1.1] tracking-[-0.02em] text-ink sm:text-[4.5rem] sm:leading-[1.04]">
+              Get booked &amp; paid
               <br />
               <span className="font-normal italic text-primary">before the first</span>
               <br />
@@ -808,7 +818,7 @@ const Home = () => {
               label="New booking"
               value="Confirmed · 4:30 PM"
               float="sloth-float"
-              className="-left-3 top-10 sm:-left-8"
+              className="hidden sm:flex top-10 sm:-left-8"
             />
             <GlassCard
               icon={Wallet}
@@ -816,14 +826,14 @@ const Home = () => {
               value="₹2,500"
               accent
               float="sloth-float--mid"
-              className="-right-2 top-1/2 sm:-right-6"
+              className="hidden sm:flex top-1/2 sm:-right-6"
             />
             <GlassCard
               icon={Wind}
               label="Upcoming session"
               value="Tomorrow · 11 AM"
               float="sloth-float--slow"
-              className="bottom-8 left-2 sm:left-6"
+              className="hidden sm:flex bottom-8 sm:left-6"
             />
           </Reveal>
         </div>
@@ -925,13 +935,13 @@ const Home = () => {
                   tabIndex={0}
                   role="group"
                   aria-label={`${ind.name} — show popular professions`}
-                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[6px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
+                  className="group relative h-full min-h-[13rem] overflow-hidden rounded-[6px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
                 >
-                  {/* Big line icon bleeding from the top-left corner — card background */}
+                  {/* Big line icon anchored to the top-left corner — card background */}
                   <ind.icon
                     aria-hidden
                     strokeWidth={1.25}
-                    className="pointer-events-none absolute -left-5 -top-5 h-32 w-32 opacity-25 transition-opacity duration-300 group-hover:opacity-40 group-focus-within:opacity-40 motion-reduce:transition-none"
+                    className="pointer-events-none absolute -left-3 -top-3 h-24 w-24 opacity-25 transition-opacity duration-300 group-hover:opacity-40 group-focus-within:opacity-40 motion-reduce:transition-none"
                     style={{ color: ind.color }}
                   />
 
@@ -1140,15 +1150,15 @@ const Home = () => {
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             You didn't get into this to chase payments and send reminders. Book A Sloth handles the back-office so you don't have to.
           </Reveal>
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6">
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 sm:gap-6">
             {PROBLEMS.map((p, i) => (
               <Reveal key={p.problem} delay={(i % 2) * 0.08}>
-                <div className="h-full rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-7">
+                <div className="h-full rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-black/10 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)] sm:p-7">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-400">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                       <p.icon size={18} />
                     </span>
-                    <p className="text-sm font-semibold text-neutral-400 line-through decoration-neutral-300">
+                    <p className="text-sm font-semibold text-neutral-500 line-through decoration-neutral-400 decoration-[1.5px]">
                       {p.problem}
                     </p>
                   </div>
@@ -1349,10 +1359,10 @@ const Home = () => {
             {PRODUCT_SHOTS.map((shot, i) => (
               <figure key={shot.title} className="home-shot" style={{ "--cc": shot.color, "--i": i }}>
                 <div
-                  className="flex h-[24rem] flex-col overflow-hidden rounded-[10px] bg-white transition-all duration-300 hover:-translate-y-1"
+                  className="flex min-h-[22rem] flex-col overflow-hidden rounded-[10px] bg-white transition-all duration-300 hover:-translate-y-1 sm:h-[24rem]"
                   style={{
-                    border: "1px solid color-mix(in srgb, var(--cc) 55%, transparent)",
-                    boxShadow: "0 20px 45px -24px color-mix(in srgb, var(--cc) 70%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--cc) 40%, transparent)",
+                    boxShadow: "0 18px 40px -26px color-mix(in srgb, var(--cc) 48%, transparent)",
                   }}
                 >
                   <div
@@ -1435,17 +1445,17 @@ const Home = () => {
       </section>
 
       {/* ════════════════ TESTIMONIALS (CENTERED CAROUSEL) ════════════════ */}
-      <section id="collective" className="overflow-hidden px-5 py-20 sm:px-8 lg:py-28">
+      <section id="collective" className="overflow-hidden px-5 pb-20 pt-14 sm:px-8 lg:pb-28 lg:pt-20">
         <div className="mx-auto max-w-3xl text-center">
           <Reveal as="h2" className="text-4xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-5xl">
             Don't take our word for it.
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-5 max-w-[750px] text-base text-neutral-500">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-base text-neutral-500">
             Real professionals. Real bookings. Real calm.
           </Reveal>
         </div>
 
-        <div className="relative mt-16">
+        <div className="relative mt-8">
           {/* Blueprint guide lines (desktop) — at 28%/72% = the active card's edges */}
           <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-12 top-12 z-0 hidden lg:block">
             <div className="absolute inset-x-0 top-0 border-t border-dashed border-neutral-200" />
@@ -1460,11 +1470,43 @@ const Home = () => {
             ref={tWrapRef}
             onMouseEnter={() => { tPausedRef.current = true; }}
             onMouseLeave={() => { tPausedRef.current = false; }}
-            className="relative z-10 overflow-hidden py-12"
+            onPointerDown={(e) => {
+              dragRef.current = { active: true, startX: e.clientX };
+              setDragging(true);
+              tPausedRef.current = true;
+              e.currentTarget.setPointerCapture?.(e.pointerId);
+            }}
+            onPointerMove={(e) => {
+              if (!dragRef.current.active) return;
+              setDragDX(e.clientX - dragRef.current.startX);
+            }}
+            onPointerUp={(e) => {
+              if (!dragRef.current.active) return;
+              const dx = e.clientX - dragRef.current.startX;
+              const step = tCardW + T_GAP;
+              let moved = step ? Math.round(-dx / step) : 0;
+              // A short flick (under half a card) still advances one in its direction.
+              if (moved === 0 && Math.abs(dx) > 48) moved = dx < 0 ? 1 : -1;
+              const lim = N_T - 1;
+              moved = Math.max(-lim, Math.min(lim, moved));
+              dragRef.current.active = false;
+              setDragging(false);
+              setDragDX(0);
+              if (moved !== 0) setActiveT((a) => a + moved);
+              tPausedRef.current = false;
+              e.currentTarget.releasePointerCapture?.(e.pointerId);
+            }}
+            onPointerCancel={() => {
+              dragRef.current.active = false;
+              setDragging(false);
+              setDragDX(0);
+              tPausedRef.current = false;
+            }}
+            className="relative z-10 cursor-grab touch-pan-y select-none overflow-hidden py-12 active:cursor-grabbing"
           >
             <div
-              className={`flex ${tAnim ? "transition-transform duration-700 ease-out motion-reduce:transition-none" : ""}`}
-              style={{ transform: `translate3d(${tOffset}px, 0, 0)`, columnGap: `${T_GAP}px` }}
+              className={`flex ${tAnim && !dragging ? "transition-transform duration-700 ease-out motion-reduce:transition-none" : ""}`}
+              style={{ transform: `translate3d(${tOffset + dragDX}px, 0, 0)`, columnGap: `${T_GAP}px` }}
             >
               {tW > 0 &&
                 [...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => {
@@ -1473,12 +1515,16 @@ const Home = () => {
                     <figure
                       key={i}
                       style={{ width: `${tCardW}px` }}
-                      className={`flex h-[14rem] flex-shrink-0 flex-col justify-between rounded-[6px] p-7 text-left transition-[opacity,box-shadow,border-color] duration-500 sm:p-9 ${
+                      className={`relative flex h-[14rem] flex-shrink-0 flex-col justify-between overflow-hidden rounded-[6px] p-7 text-left transition-[opacity,box-shadow,border-color] duration-500 sm:p-9 ${
                         isActive
                           ? "border border-black/5 bg-white opacity-100 shadow-[0_30px_70px_-30px_rgba(26,26,26,0.35)]"
                           : "border border-transparent bg-transparent opacity-40"
                       }`}
                     >
+                      {/* Subtle orange accent line — only on the active card */}
+                      {isActive && (
+                        <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-primary" />
+                      )}
                       {/* Quote — top-left, full width (font ~50% of before) */}
                       <blockquote className="text-[15px] font-semibold leading-snug text-ink sm:text-[18px]">
                         “{t.quote}”
@@ -1590,7 +1636,7 @@ const Home = () => {
       </section>
 
       {/* ════════════════ PRICING (2 plans · yearly active) ════════════════ */}
-      <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28">
+      <section id="pricing" className="px-5 pb-12 pt-20 sm:px-8 lg:pb-16 lg:pt-28">
         <div className="mx-auto max-w-4xl">
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
             Simple pricing. <span className="text-primary">Zero commission.</span>
@@ -1832,7 +1878,7 @@ const Home = () => {
       )}
 
       {/* ════════════════ FAQ ════════════════ */}
-      <section id="faq" className="px-5 py-20 sm:px-8 lg:py-28">
+      <section id="faq" className="px-5 pb-20 pt-12 sm:px-8 lg:pb-28 lg:pt-16">
         <div className="mx-auto max-w-3xl">
           <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
             FAQ

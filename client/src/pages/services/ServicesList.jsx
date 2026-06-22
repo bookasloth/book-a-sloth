@@ -18,6 +18,21 @@ const StatusBadge = ({ active }) => (
   </span>
 );
 
+// Shared action icons (used by both the desktop table and the mobile card list).
+const PATHS = {
+  view:    'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14',
+  edit:    'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
+  dup:     'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z',
+  disable: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636',
+  enable:  'M5 13l4 4L19 7',
+  del:     'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
+};
+const Icon = ({ d, className = 'w-4 h-4' }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={d} />
+  </svg>
+);
+
 export default function ServicesList() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -85,6 +100,22 @@ export default function ServicesList() {
 
   if (loading) return <div className="text-center py-16 text-gray-400">Loading...</div>;
 
+  const emptyState = (
+    <div className="py-14 text-center">
+      <div className="text-gray-300 mb-3">
+        <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+      </div>
+      <p className="text-gray-400 text-sm">No services found.</p>
+      {filter === 'all' && !search && (
+        <Link to="/dashboard/service/add-new" className="inline-block mt-3 text-primary text-sm font-medium hover:underline">
+          Create your first service →
+        </Link>
+      )}
+    </div>
+  );
+
   return (
     <div className="w-full max-w-6xl">
       {/* Confirm delete modal */}
@@ -132,8 +163,8 @@ export default function ServicesList() {
           className="fb-input sm:w-56" />
       </div>
 
-      {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+      {/* Table — desktop / tablet only (mobile uses the card list below) */}
+      <div className="hidden sm:block bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -240,6 +271,68 @@ export default function ServicesList() {
         <div className="px-4 py-3 border-t bg-gray-50 text-xs text-gray-400">
           Disabled services remain in historical booking records.
         </div>
+      </div>
+
+      {/* Mobile card list — actions are always visible (no horizontal scroll needed) */}
+      <div className="sm:hidden space-y-3">
+        {filtered.length === 0 ? (
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">{emptyState}</div>
+        ) : filtered.map(s => {
+          const typeLabel = TYPE_LABEL[s.meeting_mode] || TYPE_LABEL[s.service_type] || s.meeting_mode || '—';
+          return (
+            <div key={s.id} className={`bg-white border border-gray-200 rounded-2xl shadow-sm p-4 ${!s.is_active ? 'opacity-70' : ''}`}>
+              <div className="flex items-start gap-3">
+                {s.thumbnail_url
+                  ? <img src={s.thumbnail_url} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0"/>
+                  : <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300 text-sm font-bold flex-shrink-0">{(s.title||'?').charAt(0).toUpperCase()}</div>}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-gray-800 truncate">{s.title}</p>
+                    <StatusBadge active={s.is_active}/>
+                  </div>
+                  {(s.short_description || s.description) && (
+                    <p className="text-xs text-gray-400 truncate mt-0.5">{s.short_description || s.description}</p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5 text-xs text-gray-500">
+                    <span className="font-semibold text-primary">{s.price === 0 ? 'Free' : `₹${s.price}`}</span>
+                    <span>{typeLabel}</span>
+                    <span>{fmtDuration(s.duration)}</span>
+                    <span>{s.total_bookings || 0} bookings</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions — labeled buttons, always visible */}
+              <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-2 gap-2">
+                {s.slug && s.is_active && (
+                  <a href={`/${user?.username}/booking/${s.slug}`} target="_blank" rel="noreferrer"
+                    className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50">
+                    <Icon d={PATHS.view}/> View public page
+                  </a>
+                )}
+                <button onClick={() => navigate(`/dashboard/service/edit/${s.id}`)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                  <Icon d={PATHS.edit}/> Edit
+                </button>
+                <button onClick={() => handleDuplicate(s)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                  <Icon d={PATHS.dup}/> Duplicate
+                </button>
+                <button onClick={() => handleToggle(s)}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium ${s.is_active ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-700 hover:bg-green-50'}`}>
+                  <Icon d={s.is_active ? PATHS.disable : PATHS.enable}/> {s.is_active ? 'Disable' : 'Enable'}
+                </button>
+                <button onClick={() => setConfirmDelete(s)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50">
+                  <Icon d={PATHS.del}/> Delete
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        <p className="px-1 pt-1 text-xs text-gray-400">
+          Disabled services remain in historical booking records.
+        </p>
       </div>
     </div>
   );
