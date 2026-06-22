@@ -183,7 +183,7 @@ const AdminLayout = ({ children }) => {
         {[...NAV, ...ROADMAP].map(sec => {
           // Permission-aware: show an item if it's an inert "soon" teaser, or the
           // session grants its permission. Hide the whole section if nothing shows.
-          const items = sec.items.filter(item => item.disabled || sessionCan(session, item.perm));
+          const items = sec.items.filter(item => item.disabled || item.comingSoon || sessionCan(session, item.perm));
           if (items.length === 0) return null;
           return (
             <div key={sec.id}>
