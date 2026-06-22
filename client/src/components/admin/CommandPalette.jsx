@@ -36,14 +36,14 @@ const CommandPalette = ({ open, session, onClose }) => {
         <div className="flex items-center gap-2.5 px-4 border-b border-gray-100">
           <Ic d={IC.search} size={16} className="text-gray-400" />
           <input ref={inputRef} value={query} onChange={e => { setQuery(e.target.value); setActive(0); }} onKeyDown={onKeyDown}
-            placeholder="Search admin…" aria-label="Search admin"
+            placeholder="Search admin…" aria-label="Search admin" aria-controls="adm-cmd-listbox"
             className="flex-1 py-3.5 text-[14px] outline-none placeholder:text-gray-400" />
           <kbd className="text-[10px] text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded">ESC</kbd>
         </div>
-        <ul role="listbox" className="max-h-[50vh] overflow-y-auto py-1.5">
+        <ul id="adm-cmd-listbox" role="listbox" aria-label="Admin destinations" className="max-h-[50vh] overflow-y-auto py-1.5">
           {results.length === 0 && <li className="px-4 py-6 text-center text-[13px] text-gray-400">No matches</li>}
           {results.map((d, i) => (
-            <li key={i} role="option" aria-selected={i === active}
+            <li key={`${d.section}-${d.to}`} role="option" aria-selected={i === active}
               onMouseEnter={() => setActive(i)} onMouseDown={() => go(d)}
               className={`flex items-center gap-2.5 px-4 py-2 cursor-pointer text-[13px] ${i === active ? 'bg-[#FE5100]/10 text-[#FE5100]' : 'text-gray-700'}`}>
               <span className="flex-1 truncate">{d.label}</span>
