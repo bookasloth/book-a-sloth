@@ -247,7 +247,7 @@ git commit -m "refactor(admin): extract nav data, add roadmap groups + flatten h
 
 - [ ] **Step 1: Add the coming-soon render branch**
 
-In `SidebarItem`, BEFORE the existing `if (item.disabled)` branch, add a branch for `item.comingSoon`. It mirrors the active-group branch (expand/collapse via `expandedGroups[item.groupId]`) but renders greyed, shows a "soon" badge, and renders children as inert `<span>`s — no `<Link>`, no navigation.
+In `SidebarItem`, add a branch for `item.comingSoon` as the **FIRST** check — BEFORE the existing `if (item.children)` branch. This ordering is critical: coming-soon items also carry `children`, so if `if (item.children)` runs first they fall into the active-group branch and render `<Link to={undefined}>` (react-router v6 throws). The coming-soon branch mirrors the active-group branch (expand/collapse via `expandedGroups[item.groupId]`) but renders greyed, shows a "soon" badge, and renders children as inert `<span>`s — no `<Link>`, no navigation.
 
 ```jsx
 if (item.comingSoon) {
