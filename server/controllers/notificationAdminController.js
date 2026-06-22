@@ -8,13 +8,34 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const NotificationEngine = require('../services/notificationEngine');
 const aisensy = require('../services/aisensyService');
-const sendEmail = require('../utils/sendEmail');
 
 const maskKey = (key) => {
   if (!key) return '';
   const tail = key.slice(-6);
   return `${'*'.repeat(14)}${tail}`;
 };
+
+// notification_logs.status for an email is only the ENQUEUE-time snapshot
+// ('pending' for a queued send). The queue worker updates email_logs, never
+// notification_logs, so the true outcome lives in email_logs. Map it back to the
+// cross-channel vocabulary used by this screen.
+const EMAIL_STATUS_TO_NOTIF = {
+  sent: 'sent', failed: 'failed', queued: 'pending', suppressed: 'suppressed', test: 'sent',
+};
+
+/**
+ * Overlay the real email delivery status onto notification_logs rows.
+ * @param {object[]} rows            notification_logs rows
+ * @param {Object<string,string>} emailStatusById  email_logs.id → status
+ * Non-email rows and rows without a resolvable email_logs link pass through unchanged.
+ */
+const overlayEmailLogStatus = (rows, emailStatusById = {}) =>
+  (rows || []).map((r) => {
+    if (r.channel !== 'email') return r;
+    const logId = r.payload && r.payload.logId;
+    const real = logId ? emailStatusById[logId] : null;
+    return real ? { ...r, status: EMAIL_STATUS_TO_NOTIF[real] || r.status } : r;
+  });
 
 const isMasked = (v) => typeof v === 'string' && v.startsWith('****');
 
@@ -166,17 +187,36 @@ const testSend = async (req, res) => {
 const getLogs = async (req, res) => {
   try {
     const { event_key, channel, status, limit = 100 } = req.query;
+    const lim = Math.min(parseInt(limit) || 100, 500);
+
+    // Status is filtered AFTER overlay (below) so it matches the corrected status
+    // the screen shows. Without a status filter we only need `lim` rows; with one
+    // we pull the cap and trim post-filter so the count stays honest.
     let q = supabaseAdmin
       .from('notification_logs')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(Math.min(parseInt(limit) || 100, 500));
+      .limit(status ? 500 : lim);
     if (event_key) q = q.eq('event_key', event_key);
     if (channel)   q = q.eq('channel', channel);
-    if (status)    q = q.eq('status', status);
     const { data, error } = await q;
     if (error) return safeError(res, error);
-    res.json(data || []);
+    let rows = data || [];
+
+    // Reconcile email rows against their true delivery status in email_logs.
+    const ids = [...new Set(
+      rows.filter((r) => r.channel === 'email' && r.payload && r.payload.logId)
+          .map((r) => r.payload.logId)
+    )];
+    if (ids.length) {
+      const { data: logs } = await supabaseAdmin
+        .from('email_logs').select('id, status').in('id', ids);
+      const map = Object.fromEntries((logs || []).map((l) => [l.id, l.status]));
+      rows = overlayEmailLogStatus(rows, map);
+    }
+
+    if (status) rows = rows.filter((r) => r.status === status).slice(0, lim);
+    res.json(rows);
   } catch (err) {
     safeError(res, err);
   }
@@ -211,19 +251,23 @@ const retryLog = async (req, res) => {
     }
 
     if (log.channel === 'email') {
-      const subject = (log.payload && log.payload.subject) || `Book A Sloth — ${log.event_key}`;
-      try {
-        await sendEmail({
-          to: log.destination,
-          subject,
-          html: `<div style="font-family:sans-serif;padding:24px;"><p>Retried notification for event <strong>${log.event_key}</strong>.</p></div>`,
+      // Re-queue the ORIGINAL email_logs row (subject + rendered HTML are stored
+      // there) so the worker resends the real template — never a placeholder.
+      const logId = log.payload && log.payload.logId;
+      if (!logId) {
+        return res.status(400).json({
+          message: 'This email predates delivery tracking and cannot be retried here. Use Communications → Email Logs.',
         });
-        await NotificationEngine.logResult({ event: log.event_key, channel: 'email', destination: log.destination, status: 'sent', payload: log.payload });
-        return res.json({ message: 'Retried successfully' });
-      } catch (e) {
-        await NotificationEngine.logResult({ event: log.event_key, channel: 'email', destination: log.destination, status: 'failed', error: e.message, payload: log.payload });
-        return res.status(502).json({ message: 'Retry failed. Please try again.' });
       }
+      const { data: updated, error: upErr } = await supabaseAdmin
+        .from('email_logs')
+        .update({
+          status: 'queued', attempts: 0, error: null,
+          next_attempt_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        })
+        .eq('id', logId).select('id, status').single();
+      if (upErr || !updated) return res.status(404).json({ message: 'Linked email log not found' });
+      return res.json({ message: 'Re-queued for delivery' });
     }
 
     res.status(400).json({ message: `Unknown channel: ${log.channel}` });
@@ -232,4 +276,4 @@ const retryLog = async (req, res) => {
   }
 };
 
-module.exports = { getProvider, updateProvider, testProvider, getEvents, updateEvent, testSend, getLogs, retryLog, maskKey };
+module.exports = { getProvider, updateProvider, testProvider, getEvents, updateEvent, testSend, getLogs, retryLog, maskKey, overlayEmailLogStatus };
