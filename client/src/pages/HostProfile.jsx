@@ -330,17 +330,23 @@ const HostProfile = () => {
   }, [host, products, reviewData]);
 
   // Reveal service cards as they scroll into view (mobile fade-up; harmless on
-  // desktop where the sticky stack is always visible). One-shot per card.
+  // desktop where the sticky stack is always visible). Fails open: if the
+  // observer is unavailable or never fires (nothing revealed shortly after
+  // mount), a timeout reveals every card so none stay stuck hidden.
   useEffect(() => {
     const node = stackRef.current;
-    if (!node || !services.length || typeof IntersectionObserver === 'undefined') return;
+    if (!node || !services.length) return;
+    const cards = [...node.querySelectorAll('.svc-card')];
+    const reveal = (el) => el.classList.add('is-in');
+    if (typeof IntersectionObserver === 'undefined') { cards.forEach(reveal); return; }
     const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-      });
+      entries.forEach((e) => { if (e.isIntersecting) { reveal(e.target); io.unobserve(e.target); } });
     }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
-    node.querySelectorAll('.svc-card').forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    cards.forEach((el) => io.observe(el));
+    const failOpen = setTimeout(() => {
+      if (!cards.some((el) => el.classList.contains('is-in'))) cards.forEach(reveal);
+    }, 1500);
+    return () => { clearTimeout(failOpen); io.disconnect(); };
   }, [services]);
 
   // Derived values are null-safe: the component renders the preloader while
