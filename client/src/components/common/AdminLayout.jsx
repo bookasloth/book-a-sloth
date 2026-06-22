@@ -3,6 +3,7 @@ import { useLocation, Navigate, useNavigate, Link } from 'react-router-dom';
 import Ic from '../admin/Ic';
 import { IC, NAV, ROADMAP, PATH_LABELS, QUICK_ACTIONS, sessionCan } from '../admin/adminNav';
 import CommandPalette from '../admin/CommandPalette';
+import NotificationBell from '../admin/NotificationBell';
 
 // SECURITY: Admin session is completely isolated in 'bas_admin' localStorage key.
 // Guard checks type === 'super_admin' — a vendor/user session cannot pass this check.
@@ -253,10 +254,7 @@ const AdminLayout = ({ children }) => {
               <span className="ml-auto text-[10px] text-gray-300 font-mono bg-gray-200 px-1 rounded">⌘K</span>
             </button>
 
-            <button className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-              <Ic d={IC.bell} size={16} />
-              <span className="absolute top-[7px] right-[7px] w-[7px] h-[7px] rounded-full bg-[#FE5100] ring-2 ring-white" />
-            </button>
+            <NotificationBell />
 
             <div className="relative" ref={quickRef}>
               <button onClick={() => setShowQuick(o => !o)} title="Quick Actions"
