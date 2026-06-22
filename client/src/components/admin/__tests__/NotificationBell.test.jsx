@@ -1,5 +1,5 @@
 // client/src/components/admin/__tests__/NotificationBell.test.jsx
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -25,7 +25,9 @@ describe('NotificationBell', () => {
     renderBell();
     fireEvent.click(screen.getByLabelText(/notifications/i));
     await waitFor(() => expect(screen.getByText('Pending payouts')).toBeTruthy());
-    expect(screen.getByText('3')).toBeTruthy();
+    // Scope the count to its row — the dropdown header also shows the total (3).
+    const row = screen.getByText('Pending payouts').closest('a');
+    expect(within(row).getByText('3')).toBeTruthy();
   });
 
   it('shows empty state when nothing needs attention', async () => {

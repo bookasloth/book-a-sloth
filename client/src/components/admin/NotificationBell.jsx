@@ -44,6 +44,7 @@ const NotificationBell = () => {
         <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl w-72 z-50 overflow-hidden">
           <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5 border-b border-gray-100">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Needs attention</p>
+            {total > 0 && <span className="text-[11px] font-semibold text-[#FE5100]">{total}</span>}
           </div>
           {state === 'loading' && <p className="px-3 py-5 text-center text-[12px] text-gray-400">Loading…</p>}
           {state === 'error' && <p className="px-3 py-5 text-center text-[12px] text-red-400">Couldn't load</p>}
