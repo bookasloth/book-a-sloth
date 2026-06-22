@@ -183,7 +183,7 @@ const ProductMock = ({ kind }) => {
   if (kind === "service") {
     return (
       <div className="space-y-3">
-        <div className="h-20 rounded-[8px] bg-gradient-to-br from-primary/15 to-sand" />
+        <div className="h-20 rounded-[4px] bg-gradient-to-br from-primary/15 to-sand" />
         <Bar w="w-32" h="h-3" />
         <Bar w="w-full" c="bg-neutral-100" />
         <Bar w="w-2/3" c="bg-neutral-100" />
@@ -219,7 +219,7 @@ const ProductMock = ({ kind }) => {
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
         {[["₹84k", "This month"], ["126", "Bookings"], ["4.9", "Rating"]].map(([v, l]) => (
-          <div key={l} className="rounded-[8px] bg-neutral-100 p-2">
+          <div key={l} className="rounded-[4px] bg-neutral-100 p-2">
             <div className="text-sm font-bold text-ink">{v}</div>
             <div className="text-[9px] text-neutral-400">{l}</div>
           </div>
@@ -880,7 +880,7 @@ const Home = () => {
                   tabIndex={0}
                   role="group"
                   aria-label={`${ind.name} — show popular professions`}
-                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[20px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
+                  className="group relative h-full min-h-[16rem] overflow-hidden rounded-[6px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
                 >
                   {/* Big line icon bleeding from the top-left corner — card background */}
                   <ind.icon
@@ -1098,7 +1098,7 @@ const Home = () => {
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6">
             {PROBLEMS.map((p, i) => (
               <Reveal key={p.problem} delay={(i % 2) * 0.08}>
-                <div className="h-full rounded-[20px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-7">
+                <div className="h-full rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-7">
                   <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-400">
                       <p.icon size={18} />
@@ -1144,7 +1144,7 @@ const Home = () => {
             <div className="grid gap-12 md:grid-cols-3 md:gap-6">
               {STEPS.map((s, i) => (
                 <Reveal key={s.title} delay={i * 0.12}>
-                  <div className="group relative flex h-full flex-col items-center rounded-[24px] border border-white/10 bg-white/5 p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
+                  <div className="group relative flex h-full flex-col items-center rounded-[6px] border border-white/10 bg-white/5 p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
                     {/* Vertical connector to the next step (mobile) */}
                     {i < STEPS.length - 1 && (
                       <span
@@ -1304,7 +1304,7 @@ const Home = () => {
             {PRODUCT_SHOTS.map((shot, i) => (
               <Reveal key={shot.title} delay={(i % 2) * 0.08}>
                 <figure className="h-full">
-                  <div className="overflow-hidden rounded-[20px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.2)]">
+                  <div className="overflow-hidden rounded-[6px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(26,26,26,0.2)]">
                     {/* browser chrome */}
                     <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50 px-4 py-3">
                       <span className="flex gap-1.5" aria-hidden>
@@ -1343,7 +1343,7 @@ const Home = () => {
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
             {FEATURE_GROUPS.map((g, i) => (
               <Reveal key={g.title} delay={(i % 4) * 0.07}>
-                <div className="flex h-full flex-col rounded-[20px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
+                <div className="flex h-full flex-col rounded-[6px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
                     <g.icon size={22} />
                   </span>
@@ -1500,7 +1500,7 @@ const Home = () => {
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {WHY_CARDS.map((w, i) => (
               <Reveal key={w.title} delay={(i % 3) * 0.07}>
-                <div className="flex h-full flex-col rounded-[20px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
+                <div className="flex h-full flex-col rounded-[6px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
                   <span
                     className="flex h-12 w-12 items-center justify-center rounded-xl"
                     style={{
@@ -1561,7 +1561,7 @@ const Home = () => {
               return (
                 <Reveal key={p.name} delay={i * 0.08}>
                   <div
-                    className={`relative flex h-full flex-col rounded-[24px] border bg-white p-7 sm:p-8 ${
+                    className={`relative flex h-full flex-col rounded-[6px] border bg-white p-7 sm:p-8 ${
                       p.recommended
                         ? "border-primary/30 shadow-[0_24px_60px_-30px_rgba(254,81,0,0.45)] ring-1 ring-primary/20"
                         : "border-black/5 shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
@@ -1616,7 +1616,7 @@ const Home = () => {
 
           {/* Free plan — horizontal on desktop, stacked (like the cards above) on mobile */}
           <Reveal delay={0.16} className="mt-5">
-            <div className="rounded-[24px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8 lg:flex lg:items-center lg:gap-8">
+            <div className="rounded-[6px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8 lg:flex lg:items-center lg:gap-8">
               <div className="lg:shrink-0">
                 <div className="flex items-center gap-2.5">
                   <h3 className="font-heading text-2xl font-bold text-ink">Free</h3>
@@ -1774,7 +1774,7 @@ const Home = () => {
           <div className="mt-12 space-y-3">
             {FAQS.map((f, i) => (
               <Reveal key={f.q} delay={Math.min(i * 0.04, 0.2)}>
-                <details className="group rounded-[20px] border border-black/5 bg-white px-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] [&_summary::-webkit-details-marker]:hidden">
+                <details className="group rounded-[6px] border border-black/5 bg-white px-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] [&_summary::-webkit-details-marker]:hidden">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 font-heading text-base font-bold text-ink">
                     {f.q}
                     <Plus size={18} className="flex-shrink-0 text-primary transition-transform duration-300 group-open:rotate-45" />
@@ -1865,7 +1865,7 @@ const Home = () => {
           <div className="mt-14 grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-5">
             {TRUST.map((t, i) => (
               <Reveal key={t.title} delay={(i % 5) * 0.06}>
-                <div className="flex h-full flex-col items-center rounded-[20px] border border-black/5 bg-white p-6 text-center shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
+                <div className="flex h-full flex-col items-center rounded-[6px] border border-black/5 bg-white p-6 text-center shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
                   <span
                     className="flex h-12 w-12 items-center justify-center rounded-xl"
                     style={{
