@@ -1650,7 +1650,7 @@ const Home = () => {
           </Reveal>
 
           <p className="mt-8 text-center text-xs text-neutral-400">
-            Paid plans are 0% commission. Prices in INR, exclusive of GST. Cancel anytime.
+            0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
           </p>
         </div>
       </section>
