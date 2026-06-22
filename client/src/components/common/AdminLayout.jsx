@@ -4,6 +4,7 @@ import Ic from '../admin/Ic';
 import { IC, NAV, ROADMAP, PATH_LABELS, QUICK_ACTIONS, sessionCan } from '../admin/adminNav';
 import CommandPalette from '../admin/CommandPalette';
 import NotificationBell from '../admin/NotificationBell';
+import { useAdminTheme } from '../admin/useAdminTheme';
 
 // SECURITY: Admin session is completely isolated in 'bas_admin' localStorage key.
 // Guard checks type === 'super_admin' — a vendor/user session cannot pass this check.
@@ -29,7 +30,8 @@ const AdminLayout = ({ children }) => {
   const [collapsed,      setCollapsed]      = useState(() => localStorage.getItem('adm_sb_col') === '1');
   const [expandedGroups, setExpandedGroups] = useState({});
   const [mobileOpen,     setMobileOpen]     = useState(false);
-  const [darkMode,       setDarkMode]       = useState(false);
+  const [theme, toggleTheme] = useAdminTheme();
+  const dark = theme === 'dark';
   const [showQuick,      setShowQuick]      = useState(false);
   const [showProfile,    setShowProfile]    = useState(false);
   const [paletteOpen,    setPaletteOpen]    = useState(false);
@@ -208,7 +210,7 @@ const AdminLayout = ({ children }) => {
   );
 
   return (
-    <div className="admin-shell min-h-screen bg-[#F6F7F9] flex" style={{ fontFamily:"'Poppins',system-ui,sans-serif" }}>
+    <div className={`admin-shell adm-canvas min-h-screen bg-[#F6F7F9] flex ${dark ? 'dark' : ''}`} style={{ fontFamily:"'Poppins',system-ui,sans-serif" }}>
       <aside className={`hidden md:flex flex-col bg-[#1E1E1E] fixed inset-y-0 left-0 z-30 transition-all duration-300 overflow-hidden ${collapsed ? 'w-[70px]' : 'w-[258px]'}`}>
         <SidebarBody />
       </aside>
@@ -228,7 +230,7 @@ const AdminLayout = ({ children }) => {
       </aside>
 
       <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'md:ml-[70px]' : 'md:ml-[258px]'}`}>
-        <header className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-200/70 h-[54px] flex items-center gap-3 px-4 md:px-5 flex-shrink-0">
+        <header className="adm-header sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-200/70 h-[54px] flex items-center gap-3 px-4 md:px-5 flex-shrink-0">
           <button onClick={() => { if (window.innerWidth < 768) setMobileOpen(o => !o); else toggleSidebar(); }}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0">
             <Ic d={IC.hamb} size={17} />
@@ -277,9 +279,9 @@ const AdminLayout = ({ children }) => {
               )}
             </div>
 
-            <button onClick={() => setDarkMode(d => !d)} title={darkMode ? 'Light mode' : 'Dark mode'}
+            <button onClick={toggleTheme} title={dark ? 'Light mode' : 'Dark mode'}
               className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-              <Ic d={darkMode ? IC.sun : IC.moon} size={16} />
+              <Ic d={dark ? IC.sun : IC.moon} size={16} />
             </button>
 
             <div className="relative" ref={profileRef}>
