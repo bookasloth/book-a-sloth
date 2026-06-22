@@ -1374,15 +1374,24 @@ const Home = () => {
                   <div className="flex-1 p-5 sm:p-6">
                     <ProductMock kind={shot.kind} />
                   </div>
+                  {/* Caption lives INSIDE the opaque card so the sticky deck
+                      covers it like the body — keeps trailing text from
+                      piling up/overlapping during the stack scroll. */}
+                  <figcaption
+                    className="border-t px-5 py-3 text-center text-sm font-semibold"
+                    style={{
+                      borderColor: "color-mix(in srgb, var(--cc) 16%, transparent)",
+                      color: "color-mix(in srgb, var(--cc) 80%, #1a1a1a)",
+                    }}
+                  >
+                    {shot.title}
+                    {shot.kind === "dashboard" && (
+                      <span className="mt-0.5 block text-sm font-normal italic text-primary">
+                        This is what your Monday morning looks like.
+                      </span>
+                    )}
+                  </figcaption>
                 </div>
-                <figcaption className="mt-4 text-center text-sm font-semibold" style={{ color: "color-mix(in srgb, var(--cc) 80%, #1a1a1a)" }}>
-                  {shot.title}
-                </figcaption>
-                {shot.kind === "dashboard" && (
-                  <p className="mt-1.5 text-center text-sm italic text-primary">
-                    This is what your Monday morning looks like.
-                  </p>
-                )}
               </figure>
             ))}
           </div>
