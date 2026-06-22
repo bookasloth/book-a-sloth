@@ -411,3 +411,25 @@ table {
   .sloth-float, .sloth-float--slow, .sloth-float--mid,
   .sloth-marquee--left, .sloth-marquee--right { animation: none !important; }
 }
+
+/* ════════════════════════════════════════════════════════════
+   HOMEPAGE — "See it in action" colourful stacking product shots
+   Desktop (≥768px): cards pile via position: sticky (per-index offset
+   leaves each peeking). Mobile (<768px): fade + slide up on entry via the
+   IntersectionObserver in Home.jsx. Per-card colour from inline var --cc.
+   ════════════════════════════════════════════════════════════ */
+.home-shots { display: flex; flex-direction: column; gap: 28px; }
+.home-shot { position: relative; }
+
+@media (min-width: 768px) {
+  .home-shot { position: sticky; top: calc(88px + var(--i, 0) * 18px); }
+}
+
+@media (max-width: 767px) {
+  .home-shot { opacity: 0; transform: translateY(22px); transition: opacity 0.55s ease, transform 0.55s ease; }
+  .home-shot.is-in { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-shot { opacity: 1 !important; transform: none !important; }
+}
