@@ -35,7 +35,7 @@ const NavItem = ({ item, location, plan }) => {
   return (
     <NavLink key={item.to} to={isLocked ? '#' : item.to}
       onClick={isLocked ? e=>e.preventDefault() : undefined}
-      className={`flex items-center gap-3 px-5 py-2.5 text-sm transition-colors ${
+      className={`flex items-center gap-3 px-6 py-2.5 text-sm transition-colors ${
         active     ? 'text-primary bg-primary/5 border-r-2 border-primary font-medium'
         : isLocked ? 'text-gray-300 cursor-default'
                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
@@ -67,7 +67,7 @@ const DashboardLayout = ({ children }) => {
       {/* Sidebar */}
       <aside className="hidden md:flex w-60 flex-shrink-0 bg-white/95 border-r border-gray-200/80 flex-col shadow-sm">
         {/* User header */}
-        <div className="p-5 border-b">
+        <div className="px-6 py-5 border-b">
           <p className="font-bold text-sm truncate">{user?.name}</p>
           <p className="text-xs text-gray-400 truncate">{user?.email}</p>
           <div className="flex items-center justify-between mt-2">
@@ -107,11 +107,11 @@ const DashboardLayout = ({ children }) => {
             </div>
           )}
 
-          <div className="my-2 mx-5 border-t border-gray-100"/>
+          <div className="my-2 mx-6 border-t border-gray-100"/>
 
           {/* Coming soon items */}
           {BOTTOM_ITEMS.map(item=>(
-            <div key={item.to} className="flex items-center gap-3 px-5 py-2.5 text-sm text-gray-300 cursor-default">
+            <div key={item.to} className="flex items-center gap-3 px-6 py-2.5 text-sm text-gray-300 cursor-default">
               <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.icon}/>
               </svg>
