@@ -411,3 +411,56 @@ table {
   .sloth-float, .sloth-float--slow, .sloth-float--mid,
   .sloth-marquee--left, .sloth-marquee--right { animation: none !important; }
 }
+
+/* ════════════════════════════════════════════════════════════
+   HOST PROFILE — colourful service-card stack
+   Desktop (≥768px): cards pile up via position: sticky. The offset clears the
+   navbar (matching the left card's top-24); a small per-index increment leaves
+   a coloured sliver of each card peeking above the next.
+   Mobile (<768px): static column; each card fades + slides up on entry — the
+   .is-in class is toggled by an IntersectionObserver in HostProfile.jsx.
+   Per-card colours come from inline vars: --cc (base) / --ct (tint) / --cd (dark).
+   ════════════════════════════════════════════════════════════ */
+.svc-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.svc-card {
+  position: relative;
+  border-radius: 14px;
+  background: var(--ct, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--cc, #e5e5e5) 55%, transparent);
+  box-shadow:
+    inset 4px 0 0 var(--cc, transparent),
+    0 14px 30px -18px rgba(23, 32, 51, 0.22);
+}
+
+@media (min-width: 768px) {
+  .svc-card {
+    position: sticky;
+    top: calc(96px + var(--i, 0) * 10px);
+  }
+}
+
+@media (max-width: 767px) {
+  .svc-card {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .svc-card.is-in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Never leave a card invisible when motion is reduced (the global reduced-motion
+   block only neutralises transition duration, not the reveal's start opacity). */
+@media (prefers-reduced-motion: reduce) {
+  .svc-card {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

@@ -135,13 +135,6 @@ const Badge = ({ badge }) => {
 };
 
 // ─── Service tag derivation ───────────────────────────────────────────────────
-const TAG_STYLES = {
-  'Best Selling': { bg: '#FFFBEB', color: '#92400E' },
-  'Trending':     { bg: '#ECFDF5', color: '#065F46' },
-  'New':          { bg: '#EFF6FF', color: '#1D4ED8' },
-  'Premium':      { bg: '#F5F3FF', color: '#5B21B6' },
-};
-
 const getServiceTag = (service) => {
   if (!service.created_at) return null;
   const days = (Date.now() - new Date(service.created_at).getTime()) / 86400000;
@@ -149,101 +142,74 @@ const getServiceTag = (service) => {
   return null;
 };
 
-// ─── Meta columns helper ──────────────────────────────────────────────────────
-const MetaRow = ({ price, duration, mode }) => (
-  <div className="grid grid-cols-3 gap-2 py-3"
-    style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
-    {[
-      { val: price === 0 ? 'Free' : `₹${price}`, lbl: 'Price' },
-      { val: `${duration} min`,                   lbl: 'Duration' },
-      { val: mode === 'offline' ? 'In-person' : 'Online', lbl: 'Mode' },
-    ].map(({ val, lbl }) => (
-      <div key={lbl}>
-        <div className="text-sm font-semibold" style={{ color: C.text }}>{val}</div>
-        <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>{lbl}</div>
-      </div>
-    ))}
-  </div>
-);
+// ─── Colourful card palette ───────────────────────────────────────────────────
+// One colour per service card, cycled by index (wraps with %). Base hexes mirror
+// the --c-* tokens in styles/design-tokens.css; `tint` is the card wash and
+// `dark` is the readable text/accent stop on that wash.
+const CARD_PALETTE = [
+  { base: '#2563eb', tint: '#eff6ff', dark: '#1e40af' }, // blue
+  { base: '#7c3aed', tint: '#f5f3ff', dark: '#5b21b6' }, // violet
+  { base: '#0891b2', tint: '#ecfeff', dark: '#155e75' }, // cyan
+  { base: '#059669', tint: '#ecfdf5', dark: '#065f46' }, // emerald
+  { base: '#f59e0b', tint: '#fffbeb', dark: '#92400e' }, // amber
+  { base: '#db2777', tint: '#fdf2f8', dark: '#9d174d' }, // pink
+];
 
-// ─── Service Card ──────────────────────────────────────────────────────────────
-const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
+// ─── Service Card — colourful, stacks on scroll ───────────────────────────────
+const ServiceCard = ({ service: s, profileSlug, index = 0 }) => {
   const desc      = s.short_description || s.description || '';
   const detailUrl = s.slug ? `/${profileSlug}/${s.slug}` : null;
   const bookUrl   = s.slug ? `/${profileSlug}/booking/${s.slug}` : null;
   const tag       = getServiceTag(s);
-  const tagStyle  = tag ? TAG_STYLES[tag] : null;
+  const p         = CARD_PALETTE[index % CARD_PALETTE.length];
 
-  if (viewMode === 'list') {
-    return (
-      <div className="flex items-end gap-4 bg-white rounded-xl px-5 py-4 transition-shadow hover:shadow-sm"
-        style={{ border: `1px solid ${C.border}` }}>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 min-w-0">
-            {detailUrl
-              ? <Link to={detailUrl} className="font-semibold text-base hover:opacity-60 transition-opacity flex-shrink-0" style={{ color: C.text }}>{s.title}</Link>
-              : <span className="font-semibold text-base flex-shrink-0" style={{ color: C.text }}>{s.title}</span>}
-            {desc && <span className="flex-shrink-0 self-stretch w-px" style={{ background: C.border }} />}
-            {desc && <span className="text-sm truncate min-w-0 flex-1" style={{ color: C.secondary }}>{desc}</span>}
-          </div>
-          <div className="grid grid-cols-3 gap-3 mt-2">
-            {[
-              { val: s.price === 0 ? 'Free' : `₹${s.price}`, lbl: 'Price' },
-              { val: `${s.duration} min`,                      lbl: 'Duration' },
-              { val: s.meeting_mode === 'offline' ? 'In-person' : 'Online', lbl: 'Mode' },
-            ].map(({ val, lbl }) => (
-              <div key={lbl}>
-                <div className="text-sm font-semibold" style={{ color: C.text }}>{val}</div>
-                <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>{lbl}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        {bookUrl && (
-          <Link to={bookUrl}
-            className="btn flex-shrink-0 text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
-            style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 40, padding: '0 18px' }}>
-            Book Now
-          </Link>
-        )}
-      </div>
-    );
-  }
+  const meta = [
+    { val: s.price === 0 ? 'Free' : `₹${s.price}`, lbl: 'Price', accent: true },
+    { val: `${s.duration} min`,                     lbl: 'Duration' },
+    { val: s.meeting_mode === 'offline' ? 'In-person' : 'Online', lbl: 'Mode' },
+  ];
 
-  // Grid — fixed 250px height
   return (
-    <div className="flex flex-col bg-white rounded-xl transition-shadow hover:shadow-sm"
-      style={{ border: `1px solid ${C.border}`, height: 270, padding: '20px 20px 18px' }}>
+    <div className="svc-card flex flex-col"
+      style={{ '--cc': p.base, '--ct': p.tint, '--cd': p.dark, '--i': index, minHeight: 210, padding: '20px 22px 18px' }}>
 
       {/* Title + tag */}
       <div className="flex items-start justify-between gap-2 mb-2">
         {detailUrl
-          ? <Link to={detailUrl} className="font-semibold text-base leading-snug hover:opacity-60 transition-opacity line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</Link>
-          : <span className="font-semibold text-base leading-snug line-clamp-2 flex-1" style={{ color: C.text }}>{s.title}</span>}
-        {tagStyle && (
+          ? <Link to={detailUrl} className="font-semibold text-base leading-snug hover:opacity-70 transition-opacity line-clamp-2 flex-1" style={{ color: p.dark }}>{s.title}</Link>
+          : <span className="font-semibold text-base leading-snug line-clamp-2 flex-1" style={{ color: p.dark }}>{s.title}</span>}
+        {tag && (
           <span className="flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: tagStyle.bg, color: tagStyle.color }}>
+            style={{ background: 'rgba(255,255,255,0.8)', color: p.dark, border: `1px solid ${p.base}3d` }}>
             {tag}
           </span>
         )}
       </div>
 
       {/* Description */}
-      <p className="text-sm leading-relaxed line-clamp-2 flex-1 mb-1" style={{ color: C.secondary }}>
-        {desc || ' '}
+      <p className="text-sm leading-relaxed line-clamp-2 flex-1 mb-1" style={{ color: '#555555' }}>
+        {desc || ' '}
       </p>
 
       {/* Meta */}
-      <MetaRow price={s.price} duration={s.duration} mode={s.meeting_mode} />
+      <div className="grid grid-cols-3 gap-2 py-3"
+        style={{ borderTop: `1px solid ${p.base}29`, borderBottom: `1px solid ${p.base}29` }}>
+        {meta.map(({ val, lbl, accent }) => (
+          <div key={lbl}>
+            <div className="text-sm font-semibold" style={{ color: accent ? p.dark : '#1a1a1a' }}>{val}</div>
+            <div className="text-[11px] mt-0.5" style={{ color: '#8a8a8a' }}>{lbl}</div>
+          </div>
+        ))}
+      </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-3">
         {detailUrl
-          ? <Link to={detailUrl} className="text-sm font-medium transition-opacity hover:opacity-60" style={{ color: C.secondary }}>View Details →</Link>
+          ? <Link to={detailUrl} className="text-sm font-medium transition-opacity hover:opacity-70" style={{ color: p.dark }}>View Details →</Link>
           : <span />}
         {bookUrl && (
           <Link to={bookUrl}
-            className="btn text-sm font-semibold flex items-center transition-opacity hover:opacity-80"
+            className="btn text-sm font-semibold flex items-center transition-opacity hover:opacity-90"
             style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 40, padding: '0 18px' }}>
             Book Now
           </Link>
@@ -288,11 +254,11 @@ const HostProfile = () => {
   const { profileSlug } = useParams();
   const navigate = useNavigate();
   const pageRef         = useRef(null);
+  const stackRef        = useRef(null);
   const [host,        setHost]        = useState(null);
   const [services,    setServices]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState('');
-  const [viewMode,    setViewMode]    = useState('grid');
   const [reviewData,  setReviewData]  = useState({ reviews: [], count: 0, avg: 0 });
   const [showReviews, setShowReviews] = useState(false);
   const [products,    setProducts]    = useState([]);
@@ -362,6 +328,20 @@ const HostProfile = () => {
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, [host, products, reviewData]);
+
+  // Reveal service cards as they scroll into view (mobile fade-up; harmless on
+  // desktop where the sticky stack is always visible). One-shot per card.
+  useEffect(() => {
+    const node = stackRef.current;
+    if (!node || !services.length || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    node.querySelectorAll('.svc-card').forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [services]);
 
   // Derived values are null-safe: the component renders the preloader while
   // host is still loading, so these run before host exists.
@@ -602,34 +582,8 @@ const HostProfile = () => {
           <div className="w-full lg:flex-1 min-w-0">
 
             {/* Header row */}
-            <div className="flex items-center justify-between mb-5">
+            <div className="mb-5">
               <h2 className="text-lg font-bold" style={{ color: C.text }}>Services</h2>
-
-              {/* Grid / List toggle — hidden on mobile (no real value) */}
-              <div className="hidden sm:flex rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}`, background: C.card }}>
-                {[
-                  {
-                    mode: 'grid',
-                    icon: <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
-                      <path d="M1 2.5A1.5 1.5 0 012.5 1h3A1.5 1.5 0 017 2.5v3A1.5 1.5 0 015.5 7h-3A1.5 1.5 0 011 5.5v-3zm8 0A1.5 1.5 0 0110.5 1h3A1.5 1.5 0 0115 2.5v3A1.5 1.5 0 0113.5 7h-3A1.5 1.5 0 019 5.5v-3zm-8 8A1.5 1.5 0 012.5 9h3A1.5 1.5 0 017 10.5v3A1.5 1.5 0 015.5 15h-3A1.5 1.5 0 011 13.5v-3zm8 0A1.5 1.5 0 0110.5 9h3a1.5 1.5 0 011.5 1.5v3a1.5 1.5 0 01-1.5 1.5h-3A1.5 1.5 0 019 13.5v-3z" />
-                    </svg>,
-                  },
-                  {
-                    mode: 'list',
-                    icon: <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
-                      <path fillRule="evenodd" d="M2.5 12a.5.5 0 01.5-.5h10a.5.5 0 010 1H3a.5.5 0 01-.5-.5zm0-4a.5.5 0 01.5-.5h10a.5.5 0 010 1H3a.5.5 0 01-.5-.5zm0-4a.5.5 0 01.5-.5h10a.5.5 0 010 1H3a.5.5 0 01-.5-.5z" />
-                    </svg>,
-                  },
-                ].map(({ mode, icon }) => (
-                  <button key={mode} onClick={() => setViewMode(mode)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium capitalize transition-colors"
-                    style={viewMode === mode
-                      ? { background: C.text, color: C.btnText }
-                      : { color: C.secondary }}>
-                    {icon}{mode}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Service cards */}
@@ -639,11 +593,9 @@ const HostProfile = () => {
                 <p style={{ color: C.muted }}>No services available yet.</p>
               </div>
             ) : (
-              <div className={viewMode === 'grid'
-                ? 'grid grid-cols-1 md:grid-cols-2 gap-6'
-                : 'space-y-3'}>
-                {services.map(s => (
-                  <ServiceCard key={s.id} service={s} profileSlug={profileSlug} viewMode={viewMode} />
+              <div ref={stackRef} className="svc-stack">
+                {services.map((s, i) => (
+                  <ServiceCard key={s.id} service={s} profileSlug={profileSlug} index={i} />
                 ))}
               </div>
             )}
