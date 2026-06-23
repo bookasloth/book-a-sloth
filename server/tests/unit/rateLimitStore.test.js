@@ -97,3 +97,21 @@ describe('makeRateLimitStore — enabled', () => {
     expect(mockQuery.mock.calls[1][1][0]).toBe('admin');
   });
 });
+
+describe('cleanupExpired', () => {
+  test('is a no-op (returns 0, no pool) when the store is off', async () => {
+    const { cleanupExpired } = loadFresh({ RATE_LIMIT_STORE_URL: '' });
+    expect(await cleanupExpired()).toBe(0);
+    expect(MockPool).not.toHaveBeenCalled();
+  });
+
+  test('deletes expired rows and returns the count when enabled', async () => {
+    const { cleanupExpired } = loadFresh({ RATE_LIMIT_STORE_URL: 'postgresql://u:p@host:5432/db' });
+    mockQuery.mockResolvedValueOnce({ rowCount: 7 });
+
+    const n = await cleanupExpired();
+
+    expect(n).toBe(7);
+    expect(mockQuery.mock.calls[0][0]).toMatch(/DELETE FROM rate_limit_hits WHERE expires_at < now\(\)/);
+  });
+});

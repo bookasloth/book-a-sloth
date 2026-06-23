@@ -93,8 +93,23 @@ function makeRateLimitStore(prefix) {
   return new PostgresRateLimitStore(prefix);
 }
 
+/**
+ * Prune rows whose window has expired. No-op (returns 0) when the persistent
+ * store is disabled. increment() already resets an expired key in place, so this
+ * is pure housekeeping to stop the table growing once the store is enabled — run
+ * it from a low-frequency cron. Returns the number of rows deleted.
+ */
+async function cleanupExpired() {
+  if (!STORE_URL) return 0;
+  const { rowCount } = await getPool().query(
+    `DELETE FROM rate_limit_hits WHERE expires_at < now()`,
+  );
+  return rowCount || 0;
+}
+
 module.exports = {
   makeRateLimitStore,
+  cleanupExpired,
   PostgresRateLimitStore,
   // test-only
   _closePool: async () => { if (pool) { await pool.end(); pool = null; } },
