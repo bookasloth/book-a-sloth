@@ -57,6 +57,9 @@ const splitWhen = (scheduledAt, tz = "Asia/Kolkata") => {
   return {
     booking_date: d.toLocaleDateString("en-IN", { timeZone: tz, weekday: "short", day: "numeric", month: "short", year: "numeric" }),
     booking_time: d.toLocaleTimeString("en-IN", { timeZone: tz, hour: "2-digit", minute: "2-digit" }),
+    booking_day: d.toLocaleDateString("en-IN", { timeZone: tz, day: "2-digit" }),
+    booking_month: d.toLocaleDateString("en-IN", { timeZone: tz, month: "short" }).toUpperCase(),
+    booking_year: d.toLocaleDateString("en-IN", { timeZone: tz, year: "numeric" }),
   };
 };
 // Placeholder map shared by customer + vendor booking emails.

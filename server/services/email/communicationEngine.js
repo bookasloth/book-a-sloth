@@ -13,7 +13,7 @@
 'use strict';
 
 const { supabaseAdmin } = require('../../config/supabase');
-const { buildGlobals, resolveTemplate } = require('./placeholderResolver');
+const { buildGlobals, resolveTemplate, resolveString } = require('./placeholderResolver');
 const { renderLayout } = require('./emailLayout');
 const { getProvider } = require('./providers');
 const { makeToken } = require('./unsubscribeToken');
@@ -107,9 +107,11 @@ async function getTemplate(event, audience = 'all') {
 function renderEmail(template, { data = {}, user = {}, settings, audience = 'all' }) {
   const globals = buildGlobals(settings, user);
   const r = resolveTemplate(template, data, globals);
+  // Resolve the preheader too — otherwise raw {{tokens}} leak into the inbox preview.
+  const previewText = resolveString(data.preview_text || template.preview_text || '', { ...globals, ...data }).text;
   const html = renderLayout({
     audience,
-    bodyHtml: r.html, previewText: data.preview_text || template.preview_text || '',
+    bodyHtml: r.html, previewText,
     ctaLabel: r.ctaLabel, ctaUrl: r.ctaUrl, settings,
     emailCategory: template.email_category || '',
     data,

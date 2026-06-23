@@ -347,6 +347,9 @@ const verifyPayment = async (req, res) => {
         location: fullBooking.meeting_link ? "Online (link in your dashboard)" : "",
         booking_date: d.toLocaleDateString("en-IN", { timeZone: tz, weekday: "short", day: "numeric", month: "short", year: "numeric" }),
         booking_time: d.toLocaleTimeString("en-IN", { timeZone: tz, hour: "2-digit", minute: "2-digit" }),
+        booking_day: d.toLocaleDateString("en-IN", { timeZone: tz, day: "2-digit" }),
+        booking_month: d.toLocaleDateString("en-IN", { timeZone: tz, month: "short" }).toUpperCase(),
+        booking_year: d.toLocaleDateString("en-IN", { timeZone: tz, year: "numeric" }),
       };
       const ctx = {
         customer: [fullBooking.guest_name || "Customer", svc?.title || "Service", host.name || "Host", when],
