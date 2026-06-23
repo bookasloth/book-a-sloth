@@ -6,6 +6,8 @@ import {
   useTransform,
   useInView,
   AnimatePresence,
+  animate,
+  useReducedMotion,
 } from "framer-motion";
 import {
   Search,
@@ -80,6 +82,40 @@ const LineIcon = ({ children, color = "#1a1a1a" }) => {
     >
       {children}
     </svg>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════
+   COUNT-UP — odometer-style stat that counts 0→target on scroll-in.
+   Parses a stat string ("₹40K+", "5 / 5") into prefix + number + suffix so
+   affixes stay put. Honours prefers-reduced-motion (renders final value).
+   ════════════════════════════════════════════════════════════ */
+const parseStat = (v) => {
+  const m = String(v).match(/^(\D*)(\d[\d,]*)(.*)$/);
+  if (!m) return { prefix: "", target: 0, suffix: String(v) };
+  return { prefix: m[1], target: parseInt(m[2].replace(/,/g, ""), 10), suffix: m[3] };
+};
+
+const CountUp = ({ value, className }) => {
+  const reduce = useReducedMotion();
+  const { prefix, target, suffix } = parseStat(value);
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.5 });
+  const [display, setDisplay] = useState(reduce ? target : 0);
+  useEffect(() => {
+    if (reduce) { setDisplay(target); return; }
+    if (!inView) return;
+    const controls = animate(0, target, {
+      duration: 1.4,
+      ease: EASE,
+      onUpdate: (v) => setDisplay(Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [inView, target, reduce]);
+  return (
+    <div ref={ref} className={className}>
+      {prefix}{display.toLocaleString("en-IN")}{suffix}
+    </div>
   );
 };
 
@@ -423,7 +459,7 @@ const FOOTER_COLS = [
   ]},
   { h: "Support", links: [
     { t: "Help", href: "/help" },
-    { t: "Contact", href: "mailto:hello@bookasloth.com" },
+    { t: "Contact", href: "mailto:bolt@bookasloth.in" },
   ]},
 ];
 
@@ -431,7 +467,7 @@ const FOOTER_COLS = [
 const STATS = [
   { icon: Users, value: "20+", label: "Professionals already on Book A Sloth" },
   { icon: CalendarCheck, value: "100+", label: "Sessions booked" },
-  { icon: Wallet, value: "₹40,000+", label: "Processed through the platform" },
+  { icon: Wallet, value: "₹40K+", label: "Processed through the platform" },
   { icon: Smile, value: "5 / 5", label: "Average host rating" },
 ];
 
@@ -843,19 +879,17 @@ const Home = () => {
       {/* ════════════════ STATS STRIP (dark) ════════════════ */}
       <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
+          <Reveal as="p" className="text-center text-base font-semibold uppercase tracking-[0.2em] text-primary sm:text-lg">
             The calm starts here
           </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
+          <Reveal as="h2" delay={0.05} style={{ textWrap: "balance" }} className="mx-auto mt-3 max-w-[34rem] text-center text-4xl text-white sm:text-5xl">
             Early, intentional, and built to last.
           </Reveal>
-          <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
+          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4 lg:gap-x-0 lg:divide-x lg:divide-white/10">
             {STATS.map((s, i) => (
-              <Reveal key={s.label} delay={i * 0.08} className="text-center">
+              <Reveal key={s.label} delay={i * 0.08} className="text-center lg:px-6">
                 <s.icon size={24} strokeWidth={2} className="mx-auto text-primary" />
-                <div className="mt-4 font-heading text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-                  {s.value}
-                </div>
+                <CountUp value={s.value} className="mt-2 font-heading text-4xl font-extrabold tracking-tight text-white sm:text-5xl" />
                 <p className="mx-auto mt-2 max-w-[12rem] text-sm text-white/60">{s.label}</p>
               </Reveal>
             ))}
@@ -1180,7 +1214,7 @@ const Home = () => {
           <Reveal as="h2" className="mx-auto max-w-[750px] text-center text-4xl text-white sm:text-5xl">
             From link to paid. <span className="italic text-primary">In three steps.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-300">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-200">
             No back-and-forth. No payment awkwardness. No reminders to write.
           </Reveal>
 
@@ -1188,13 +1222,13 @@ const Home = () => {
             {/* Direction chevrons sitting in the gaps between cards (desktop) */}
             <ArrowRight
               aria-hidden
-              size={22}
-              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/35 md:block"
+              size={24}
+              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/55 md:block"
             />
             <ArrowRight
               aria-hidden
-              size={22}
-              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/35 md:block"
+              size={24}
+              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/55 md:block"
             />
 
             <div className="grid gap-12 md:grid-cols-3 md:gap-6">
@@ -1205,11 +1239,11 @@ const Home = () => {
                     {i < STEPS.length - 1 && (
                       <span
                         aria-hidden
-                        className="absolute left-1/2 top-full z-20 h-12 w-px -translate-x-1/2 bg-white/15 md:hidden"
+                        className="absolute left-1/2 top-full z-20 h-12 w-px -translate-x-1/2 bg-white/25 md:hidden"
                       >
                         <ArrowRight
                           size={16}
-                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-neutral-800 text-white/35"
+                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-neutral-800 text-white/55"
                         />
                       </span>
                     )}
@@ -1233,13 +1267,14 @@ const Home = () => {
                     </div>
 
                     <h3 className="mt-6 font-heading text-xl font-bold text-white">{s.title}</h3>
-                    <p className="mx-auto mt-2 max-w-xs text-neutral-300">{s.desc}</p>
+                    <p className="mx-auto mt-2 max-w-xs text-neutral-200">{s.desc}</p>
 
                     <span
-                      className="mt-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+                      className="mt-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
                       style={{
-                        backgroundColor: `color-mix(in srgb, ${s.color} 20%, transparent)`,
-                        color: `color-mix(in srgb, ${s.color} 62%, white)`,
+                        backgroundColor: `color-mix(in srgb, ${s.color} 26%, transparent)`,
+                        color: `color-mix(in srgb, ${s.color} 30%, white)`,
+                        boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${s.color} 45%, transparent)`,
                       }}
                     >
                       <Check size={13} />
@@ -1889,7 +1924,7 @@ const Home = () => {
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             Still stuck? Write to us at{" "}
-            <a href="mailto:hello@bookasloth.com" className="font-semibold text-primary hover:no-underline">hello@bookasloth.com</a>{" "}
+            <a href="mailto:bolt@bookasloth.in" className="font-semibold text-primary hover:no-underline">bolt@bookasloth.in</a>{" "}
             — we reply fast.
           </Reveal>
           <div className="mt-12 space-y-3">
@@ -1978,7 +2013,7 @@ const Home = () => {
 
           <p className="mt-8 text-sm text-white/60">
             More comparisons coming. Want to see one?{" "}
-            <a href="mailto:hello@bookasloth.com?subject=Comparison%20request" className="font-semibold text-primary hover:no-underline">Tell us →</a>
+            <a href="mailto:bolt@bookasloth.in?subject=Comparison%20request" className="font-semibold text-primary hover:no-underline">Tell us →</a>
           </p>
         </Reveal>
       </section>
@@ -2140,7 +2175,7 @@ const Home = () => {
               <Link to="/terms" className="transition-colors hover:text-white hover:no-underline">Terms</Link>
               <Link to="/privacy" className="transition-colors hover:text-white hover:no-underline">Privacy</Link>
               <Link to="/refund" className="transition-colors hover:text-white hover:no-underline">Refund</Link>
-              <a href="mailto:hello@bookasloth.com" className="transition-colors hover:text-white hover:no-underline">hello@bookasloth.com</a>
+              <a href="mailto:bolt@bookasloth.in" className="transition-colors hover:text-white hover:no-underline">bolt@bookasloth.in</a>
             </div>
           </div>
         </div>
