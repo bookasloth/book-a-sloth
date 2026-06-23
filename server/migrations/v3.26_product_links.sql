@@ -1,5 +1,6 @@
 -- ============================================================
--- v2.9 — Product links: external URL, uploaded-file metadata
+-- v3.26 — Product links: external URL, uploaded-file metadata
+-- (Renumbered from v2.9 on port to main — v2.9 is taken by v2.9_explore.sql.)
 --
 -- Purpose: Let products carry an external product URL plus the
 --          name and size of an uploaded file (file itself lives
