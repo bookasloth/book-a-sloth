@@ -84,7 +84,6 @@ const ProductPurchase = lazy(() => import('./pages/ProductPurchase'));
 
 // Admin — Dashboard
 const SuperDashboard = lazy(() => import('./pages/admin/SuperDashboard'));
-const AdminOverview  = lazy(() => import('./pages/admin/AdminOverview'));
 
 // Admin — Core
 const AdminUsers    = lazy(() => import('./pages/admin/AdminUsers'));
