@@ -132,6 +132,26 @@ const bookingLimiter = rateLimit({
   skip: skipWhenLoadTest,
 });
 
+// Companion to bookingLimiter, keyed by the guest CONTACT (email, else phone).
+// The IP-keyed limiter alone is bypassed by rotating source IPs → unlimited
+// bookings/notifications for one contact (security audit M-6). Caps per contact
+// regardless of IP. Stack BOTH on the route.
+const bookingContactLimiter = rateLimit({
+  store: makeRateLimitStore('booking_contact'),
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const email = String(req.body?.guest_email || '').toLowerCase().trim();
+    if (email) return `e:${email}`;
+    const phone = String(req.body?.guest_phone || '').replace(/[\s\-().]/g, '');
+    return phone ? `p:${phone}` : req.ip;
+  },
+  message: { message: 'Too many bookings for this contact. Please try again later.' },
+  skip: skipWhenLoadTest,
+});
+
 // Free digital-product download — keyed by EMAIL (falling back to IP) so an
 // attacker can't spam purchase rows / a victim's address by rotating IPs.
 const freeDownloadLimiter = rateLimit({
@@ -287,6 +307,7 @@ module.exports = {
   adminLimiter,
   paymentLimiter,
   bookingLimiter,
+  bookingContactLimiter,
   slugLimiter,
   slotsLimiter,
   freeDownloadLimiter,

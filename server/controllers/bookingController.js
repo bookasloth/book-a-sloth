@@ -686,11 +686,19 @@ const markBookingCompleted = async (booking, { notify = true } = {}) => {
 const completeBooking = async (req, res) => {
   try {
     // BUG-01 fixed: only the host can mark a booking complete
-    const { data: booking } = await supabaseAdmin
+    let { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("*, services(title), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
+      .select("*, services(title, duration, grace_period_minutes), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
       .eq("id", req.params.id)
       .single();
+    // Fallback for a schema-cache state without grace_period_minutes.
+    if (!booking) {
+      ({ data: booking } = await supabaseAdmin
+        .from("bookings")
+        .select("*, services(title, duration), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
+        .eq("id", req.params.id)
+        .single());
+    }
     if (!booking) return res.status(404).json({ message: "Booking not found" });
     if (req.user.id !== booking.host_id) {
       return res.status(403).json({ message: "Only the host can mark a booking as completed" });
@@ -698,6 +706,16 @@ const completeBooking = async (req, res) => {
     // Idempotent: re-completing must not re-stamp completed_at/revenue_recognized_at
     // (would silently shift revenue across a reporting period) or re-fire notifications.
     if (booking.status === "completed") return res.json(booking);
+
+    // Security audit M-1: a host may only complete a booking AFTER its session has
+    // ended (duration + grace). Otherwise a host could flip a far-future PAID
+    // booking to 'completed' — recognising revenue and making it eligible for
+    // settlement before the service is rendered, bypassing the post-session hold.
+    const sessionMin = (booking.services?.duration || 30) + (booking.services?.grace_period_minutes || 0);
+    const sessionEnd = new Date(booking.scheduled_at).getTime() + sessionMin * 60000;
+    if (Number.isFinite(sessionEnd) && Date.now() < sessionEnd) {
+      return res.status(409).json({ message: "You can mark this booking complete only after the session has ended." });
+    }
 
     const { data, error } = await markBookingCompleted(booking, { notify: true });
     if (error) return safeError(res, error);

@@ -66,3 +66,20 @@ test('pay: non-approved -> 409, no ledger post', async () => {
   expect(res.status).toHaveBeenCalledWith(409);
   expect(post).not.toHaveBeenCalled();
 });
+
+// Security audit M-3: segregation of duties on payouts.
+test('pay: the admin who approved cannot also release (SoD) -> 403, no post', async () => {
+  supabaseAdmin.from.mockReturnValue(fetchChain({ id: 'p1', status: 'approved', host_id: 'h1', amount: 500, approved_by: 'adm1' }));
+  const res = mockRes();
+  await ctrl.markPayoutPaid({ params: { id: 'p1' }, admin, body: { payment_reference: 'UTR9' } }, res);
+  expect(res.status).toHaveBeenCalledWith(403);
+  expect(post).not.toHaveBeenCalled();
+});
+
+test('pay: a different admin may release a payout approved by someone else', async () => {
+  supabaseAdmin.from.mockReturnValue(fetchChain({ id: 'p1', status: 'approved', host_id: 'h1', amount: 500, approved_by: 'adm2' }));
+  const res = mockRes();
+  await ctrl.markPayoutPaid({ params: { id: 'p1' }, admin, body: { payment_reference: 'UTR9' } }, res);
+  expect(post).toHaveBeenCalledTimes(1);
+  expect(res.json).toHaveBeenCalled();
+});

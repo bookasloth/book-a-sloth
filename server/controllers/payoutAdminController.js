@@ -76,6 +76,15 @@ const markPayoutPaid = async (req, res) => {
     if (!p) return res.status(404).json({ message: 'Payout request not found' });
     if (p.status !== 'approved') return res.status(409).json({ message: `Cannot pay a ${p.status} request` });
 
+    // Segregation of duties (security audit M-3): the admin who approved a payout
+    // may not also release it. Prevents a single compromised/rogue admin (or one
+    // holding both payouts.approve + payouts.release) from self-dealing a payout
+    // to a colluding host in one session. A superadmin can re-approve under a
+    // different account if a true single-operator release is ever required.
+    if (p.approved_by && p.approved_by === req.admin.id) {
+      return res.status(403).json({ message: 'A different admin must release a payout you approved.' });
+    }
+
     // Post the ledger entry FIRST (throwing). If it fails, the row stays
     // approved and the admin can retry — idempotent on (SETTLEMENT, p.id).
     await post({
