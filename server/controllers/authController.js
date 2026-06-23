@@ -411,6 +411,9 @@ const googleCallback = async (req, res) => {
           name: googleUser.name || googleEmail.split("@")[0],
           email: googleEmail,
           role: "host",
+          first_name: googleUser.given_name || null,
+          last_name:  googleUser.family_name || null,
+          avatar:     googleUser.picture     || null,
         });
         profileId = profile.id;
 
