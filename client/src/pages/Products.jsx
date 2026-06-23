@@ -6,6 +6,7 @@ import {
   deleteProduct,
   uploadProductFile,
   uploadImage,
+  getPublicPlans,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useFeature } from "../context/FeatureContext";
@@ -50,6 +51,7 @@ const emptyForm = {
 const Products = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState([]);
+  const [plans, setPlans] = useState(null); // DB subscription_plans; null = loading
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -60,10 +62,35 @@ const Products = () => {
   const [thumbUploading, setThumbUploading] = useState(false);
   const [thumbMode, setThumbMode] = useState("url"); // "url" | "upload"
 
-  const plan = user?.plan || "explorer";
-  // Plan-gated AND admin kill-switch gated. Off = no create surfaces shown.
+  // Admin kill-switch gate (fail-open: on unless an admin disabled it).
   const digitalProductsOn = useFeature("digital_products");
-  const canCreate = plan !== "explorer" && digitalProductsOn;
+
+  // Database-driven plan gate. A plan can sell digital products when its DB
+  // `digital_products` allowance is non-zero (-1 = unlimited). We gate on the
+  // real allowance, never on the slug — a higher tier must never be prompted to
+  // "upgrade" to a lower one. `explorer` is the legacy alias for the free tier.
+  const LEGACY_PLAN_ALIASES = { explorer: "starter" };
+  const rawPlan = (user?.plan || "starter").toLowerCase();
+  const planSlug = LEGACY_PLAN_ALIASES[rawPlan] || rawPlan;
+
+  const sortedPlans = [...(plans || [])].sort(
+    (a, b) => (a.sort_order || 0) - (b.sort_order || 0),
+  );
+  const myPlan = sortedPlans.find((p) => p.slug === planSlug);
+  const myProductLimit = Number(myPlan?.limits?.digital_products ?? 0);
+  // Fail open while plans load (null) or when the plan is unrecognised — mirrors
+  // FeatureContext, so we never wrongly block someone we can't classify.
+  const planIncludesProducts =
+    plans === null || !myPlan ? true : myProductLimit !== 0;
+  const canCreate = planIncludesProducts && digitalProductsOn;
+
+  // Cheapest strictly-higher tier that actually includes products — names the
+  // upgrade CTA. No hardcoded plan name or price (both drift over time).
+  const upgradePlan = sortedPlans.find(
+    (p) =>
+      Number(p.limits?.digital_products ?? 0) !== 0 &&
+      (p.sort_order || 0) > (myPlan?.sort_order || 0),
+  );
 
   const fetchProducts = async () => {
     try {
@@ -76,6 +103,9 @@ const Products = () => {
 
   useEffect(() => {
     fetchProducts();
+    getPublicPlans()
+      .then(({ data }) => setPlans(data || []))
+      .catch(() => setPlans([]));
   }, []);
 
   const openCreate = () => {
@@ -236,19 +266,19 @@ const Products = () => {
         )}
       </div>
 
-      {/* Explorer upgrade gate */}
+      {/* Plan gate — shown only when the plan has no product allowance (or the
+          feature is switched off). Names the entry plan; price lives on the
+          Upgrade page so it never goes stale here. */}
       {!canCreate && (
         <div className="fb-card p-6 mb-6 text-center border-2 border-dashed border-primary/30">
           <div className="text-3xl mb-3">📦</div>
-          <h3 className="font-semibold mb-1">
-            Digital Products — Creator & above
-          </h3>
+          <h3 className="font-semibold mb-1">Unlock Digital Products</h3>
           <p className="text-sm text-gray-500 mb-4">
             Sell PDFs, templates, ebooks, and resources directly from your
             profile.
           </p>
           <Link to="/dashboard/upgrade" className="fb-btn fb-btn--primary">
-            Upgrade to Creator — ₹999/mo
+            {upgradePlan ? `Upgrade to ${upgradePlan.name}` : "Upgrade your plan"}
           </Link>
         </div>
       )}

@@ -15,13 +15,14 @@ vi.mock('../services/api', () => ({
   deleteProduct: vi.fn().mockResolvedValue({ data: {} }),
   uploadProductFile: vi.fn().mockResolvedValue({ data: { url: 'https://cdn/x.pdf', name: 'x.pdf', size: 10 } }),
   uploadImage: vi.fn().mockResolvedValue({ data: { url: 'https://cdn/thumb.png' } }),
+  getPublicPlans: vi.fn().mockResolvedValue({ data: [] }),
 }));
 
 vi.mock('../context/AuthContext', () => ({ useAuth: vi.fn() }));
 vi.mock('../components/common/BackButton', () => ({ default: () => <div>Back</div> }));
 
 import { useAuth } from '../context/AuthContext';
-import { uploadProductFile } from '../services/api';
+import { uploadProductFile, getPublicPlans } from '../services/api';
 import Products from '../pages/Products';
 
 // Reset mock call-counts before every test so assertions like
@@ -95,5 +96,63 @@ describe('Products — thumbnail by URL', () => {
       expect(preview).toBeTruthy();
       expect(preview.getAttribute('src')).toBe('https://cdn.example/cover.png');
     });
+  });
+});
+
+// ── Plan-tier upgrade gate ────────────────────────────────────────────────────
+// The gate is driven by the user's actual plan `digital_products` allowance from
+// the DB (getPublicPlans), NOT a hardcoded slug. Any plan with a non-zero limit
+// can create; only a true 0-allowance plan sees the gate. The CTA names the
+// cheapest higher tier that includes products and carries no (drift-prone,
+// previously-wrong "₹999/mo") price.
+
+// Mirrors the prod subscription_plans config: every tier includes products.
+const PLANS_REAL = [
+  { slug: 'starter',      name: 'Starter',      sort_order: 1, limits: { digital_products: 3 } },
+  { slug: 'creator',      name: 'Creator',      sort_order: 2, limits: { digital_products: 10 } },
+  { slug: 'professional', name: 'Professional', sort_order: 3, limits: { digital_products: 20 } },
+];
+// A config where the free tier is genuinely blocked (0 allowance).
+const PLANS_FREE_BLOCKED = [
+  { slug: 'starter',      name: 'Starter',      sort_order: 1, limits: { digital_products: 0 } },
+  { slug: 'creator',      name: 'Creator',      sort_order: 2, limits: { digital_products: 10 } },
+  { slug: 'professional', name: 'Professional', sort_order: 3, limits: { digital_products: 20 } },
+];
+
+const renderWithPlan = (plan, plans) => {
+  useAuth.mockReturnValue({ user: { plan }, updateUser: vi.fn() });
+  getPublicPlans.mockResolvedValue({ data: plans });
+  render(<MemoryRouter><Products /></MemoryRouter>);
+};
+
+describe('Products — plan-tier upgrade gate', () => {
+  test('Professional plan (limit 20) is never prompted to upgrade', async () => {
+    renderWithPlan('professional', PLANS_REAL);
+    expect(await screen.findByRole('button', { name: /add product/i })).toBeTruthy();
+    expect(screen.queryByText(/upgrade to/i)).toBeNull();
+  });
+
+  test('free tier with a real product allowance (limit 3) can create — no gate', async () => {
+    renderWithPlan('starter', PLANS_REAL);
+    expect(await screen.findByRole('button', { name: /add product/i })).toBeTruthy();
+    expect(screen.queryByText(/upgrade to/i)).toBeNull();
+  });
+
+  test('a plan with a 0 product allowance shows the upgrade gate', async () => {
+    renderWithPlan('starter', PLANS_FREE_BLOCKED);
+    expect(await screen.findByText(/upgrade to creator/i)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /add product/i })).toBeNull();
+  });
+
+  test('legacy "explorer" slug resolves to the free tier for gating', async () => {
+    renderWithPlan('explorer', PLANS_FREE_BLOCKED);
+    expect(await screen.findByText(/upgrade to creator/i)).toBeTruthy();
+  });
+
+  test('upgrade CTA names the entry plan and carries no price label', async () => {
+    renderWithPlan('explorer', PLANS_FREE_BLOCKED);
+    const cta = await screen.findByText(/upgrade to creator/i);
+    expect(cta.textContent.trim()).toBe('Upgrade to Creator');
+    expect(cta.textContent).not.toMatch(/₹|\/mo|\/month|999/);
   });
 });
