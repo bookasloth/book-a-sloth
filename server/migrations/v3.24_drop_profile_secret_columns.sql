@@ -7,10 +7,12 @@
 --     the `otp_codes` table via utils/otpStore.js; these columns are unreferenced
 --     except defensive `delete user.otp_code` scrubs, which become harmless no-ops).
 --
--- Sequencing: applying this BEFORE the v3.23 code ships would 500 the running
--- server, which still SELECTs profiles.google_*. After this runs, also remove the
--- transitional dual-write in authController.attachGoogleToProfile and the
--- profiles.google_* fallback in utils/profileSecrets.getGoogleTokens.
+-- Sequencing: applying this BEFORE the cleanup code ships would 500 the running
+-- server, which still SELECTs profiles.google_*. As of branch fix/security-followup
+-- (2026-06-23) the dual-write in authController.attachGoogleToProfile and the
+-- profiles.google_* SELECTs (getAvailableSlots, paymentController) are REMOVED —
+-- tokens live only in profile_private — so this is safe to apply once that branch
+-- is deployed. profile_private verified in sync (prod 23/23, staging 3/3).
 
 alter table public.profiles drop column if exists google_access_token;
 alter table public.profiles drop column if exists google_refresh_token;

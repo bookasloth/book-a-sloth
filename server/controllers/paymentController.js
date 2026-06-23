@@ -62,7 +62,7 @@ const createOrder = async (req, res) => {
       const availabilityService = require("../services/availabilityService");
       const { data: payHost } = await supabaseAdmin
         .from("profiles")
-        .select("id, google_calendar_connected, google_access_token, google_refresh_token")
+        .select("id, google_calendar_connected")
         .eq("id", booking.host_id).single();
       await profileSecrets.attachGoogleTokens(payHost);
       const { data: payAvail } = await supabaseAdmin
@@ -252,7 +252,7 @@ const verifyPayment = async (req, res) => {
       if (isOnline && !meetingLink) {
         const { data: host } = await supabaseAdmin
           .from("profiles")
-          .select("id, email, google_calendar_connected, google_access_token, google_refresh_token")
+          .select("id, email, google_calendar_connected")
           .eq("id", booking.host_id).single();
         await profileSecrets.attachGoogleTokens(host);
         const { data: avail } = await supabaseAdmin

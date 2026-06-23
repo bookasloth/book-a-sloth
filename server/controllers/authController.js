@@ -300,9 +300,12 @@ const exchangeGoogleCode = async (code) => {
 const attachGoogleToProfile = async (profileId, tokens, googleUser) => {
   // Tokens are encrypted at rest (AES-256-GCM). Reads decrypt at point of use
   // in availabilityService + bookingController.
+  const encAccess = encryptToken(tokens.access_token);
+  const encRefresh = encryptToken(tokens.refresh_token);
+  // profiles stores only the connected flag now — the OAuth tokens live solely
+  // in the server-only profile_private table (profiles.google_* is dropped in
+  // v3.24, and was never anon-readable). Encrypted at rest (AES-256-GCM).
   const base = {
-    google_access_token: encryptToken(tokens.access_token),
-    google_refresh_token: encryptToken(tokens.refresh_token),
     google_calendar_connected: true,
     updated_at: new Date().toISOString(),
   };
@@ -316,13 +319,11 @@ const attachGoogleToProfile = async (profileId, tokens, googleUser) => {
   }
   if (error) throw error;
 
-  // Canonical home for tokens going forward: the server-only profile_private
-  // table (profiles.google_* is dropped in v3.24). Dual-write during the
-  // transition so the new reads and the not-yet-dropped columns stay in sync.
+  // Tokens are persisted ONLY to profile_private (RLS deny-all to anon/auth).
   try {
     await profileSecrets.setGoogleTokens(profileId, {
-      google_access_token: base.google_access_token,
-      google_refresh_token: base.google_refresh_token,
+      google_access_token: encAccess,
+      google_refresh_token: encRefresh,
     });
   } catch (e) {
     console.error("profile_private token write (non-fatal):", e.message);

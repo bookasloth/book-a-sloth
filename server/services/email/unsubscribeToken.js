@@ -26,12 +26,16 @@ const BASE =
   process.env.SUPER_ADMIN_JWT_SECRET ||
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   'dev-unsubscribe-secret';
-const SECRET =
-  process.env.UNSUBSCRIBE_SECRET ||
-  crypto.createHmac('sha256', BASE).update('unsubscribe-token-v1').digest('hex');
-// Backward-compat: when no dedicated secret is set, accept tokens that were
-// signed with the old raw-base fallback too. Null once UNSUBSCRIBE_SECRET is set.
-const LEGACY_SECRET = process.env.UNSUBSCRIBE_SECRET ? null : BASE;
+const DERIVED = crypto.createHmac('sha256', BASE).update('unsubscribe-token-v1').digest('hex');
+// New tokens are signed with the dedicated secret if set, else the
+// purpose-separated derived key (never the raw admin/service key — audit L1).
+const SECRET = process.env.UNSUBSCRIBE_SECRET || DERIVED;
+// verifyToken accepts ALL historical signing secrets, so setting a dedicated
+// UNSUBSCRIBE_SECRET later never invalidates already-sent unsubscribe links:
+//   - SECRET   (current: dedicated env, or derived when unset)
+//   - DERIVED  (links signed after purpose-separation, before a dedicated secret)
+//   - BASE     (oldest links signed with the raw admin/service key)
+const ACCEPT_SECRETS = [...new Set([SECRET, DERIVED, BASE])];
 
 const b64url = (buf) =>
   Buffer.from(buf).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -72,9 +76,10 @@ function verifyToken(token) {
     return null;
   }
   if (!email) return null;
-  if (safeEqual(sig, sign(email))) return email;
-  // Accept links signed with the legacy raw-base secret (pre purpose-separation).
-  if (LEGACY_SECRET && safeEqual(sig, signWith(email, LEGACY_SECRET))) return email;
+  // Accept a link signed with any historical secret (see ACCEPT_SECRETS).
+  for (const secret of ACCEPT_SECRETS) {
+    if (safeEqual(sig, signWith(email, secret))) return email;
+  }
   return null;
 }
 
