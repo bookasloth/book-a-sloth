@@ -1073,8 +1073,49 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// POST /api/auth/become-host — explicit, server-enforced guest→host opt-in.
+// The ONLY legitimate way an existing account's role becomes 'host'. Mirrors
+// markGoogleVendorOnboarding: reuse the (unique) username as onboarding_slug and
+// land the user on step 3 (/vendor-register/:slug/type). Idempotent for hosts.
+const becomeHost = async (req, res) => {
+  try {
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles").select("id, role, username").eq("id", req.user.id).single();
+    if (error || !profile) return res.status(404).json({ message: "Profile not found" });
+
+    if (profile.role === "host" || profile.role === "superadmin") {
+      const { data: full } = await supabaseAdmin
+        .from("profiles").select("*").eq("id", req.user.id).single();
+      return res.status(200).json(serializeProfile(full || profile, null));
+    }
+
+    const updates = {
+      role: "host",
+      onboarding_slug: profile.username,
+      onboarding_step_completed: 3, // next page = /vendor-register/:slug/type
+      onboarding_completed: false,
+      updated_at: new Date().toISOString(),
+    };
+    let result = await supabaseAdmin
+      .from("profiles").update(updates).eq("id", req.user.id).select("*").single();
+
+    // Graceful fallback if the onboarding_* columns don't exist on an older DB.
+    if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
+      result = await supabaseAdmin
+        .from("profiles")
+        .update({ role: "host", updated_at: new Date().toISOString() })
+        .eq("id", req.user.id).select("*").single();
+    }
+    if (result.error) return safeError(res, result.error);
+    return res.status(200).json(serializeProfile(result.data, null));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 module.exports = {
   registerVendor,
+  becomeHost,
   registerUser,
   googleAuth,
   googleVendorAuth,
