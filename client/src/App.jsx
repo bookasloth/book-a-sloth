@@ -20,6 +20,7 @@ const ResetPassword  = lazy(() => import('./pages/ResetPassword'));
 const VendorSignup   = lazy(() => import('./pages/VendorSignup'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
 const Help           = lazy(() => import('./pages/Help'));
+const Support        = lazy(() => import('./pages/Support'));
 const Privacy        = lazy(() => import('./pages/Privacy'));
 const Terms          = lazy(() => import('./pages/Terms'));
 const Refund         = lazy(() => import('./pages/Refund'));
@@ -313,6 +314,9 @@ function App() {
 
           {/* Explore page */}
           <Route path="/explore" element={<Explore />} />
+
+          {/* Support — placeholder; MUST precede the /:profileSlug catch-all */}
+          <Route path="/support" element={<Support />} />
 
           {/* Public host/service pages — specific before dynamic */}
           <Route path="/:profileSlug/badges" element={<BadgeShowcase />} />
