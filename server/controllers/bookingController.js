@@ -192,45 +192,46 @@ const createBooking = async (req, res) => {
   try {
     const {
       service_id,
-      host_id,
       guest_name,
       guest_email,
       guest_phone,
       scheduled_at,
       notes,
     } = req.body;
-    // SECURITY: guest_id is NEVER taken from the request body (that allowed
-    // attributing a booking to any victim's account — IDOR). It is resolved
-    // below from the authenticated session or the booking email.
+    // SECURITY: host_id is NEVER taken from the request body. The client could
+    // pass any host_id (mismatched from the service) to attach a booking to the
+    // wrong vendor, bypass that vendor's availability, or harvest another host's
+    // booking cap. host_id is derived below from the service the booking is for.
+    // guest_id is likewise never taken from the body (IDOR) — see resolvedGuestId.
 
-    // These four reads are independent — fetch them in one round-trip instead of
-    // four sequential awaits. The guest-profile lookup resolves guest_id (see
-    // below); it only runs for anonymous bookings with an email.
-    const lookupGuest = !req.user?.id && guest_email;
+    // Fetch the service first: it is the authority for host_id and must be a
+    // live, bookable service. A missing OR inactive service is "not available".
+    const { data: service } = await supabaseAdmin
+      .from("services").select("*").eq("id", service_id).single();
+    if (!service || service.is_active === false)
+      return res.status(404).json({ message: "Service not available" });
+
+    // Derive host_id from the service — the only trustworthy source.
+    const host_id = service.host_id;
+
+    // Host + availability are now keyed off the derived host_id. These two reads
+    // are independent → fetch them in one round-trip.
     const [
-      { data: service },
       { data: host },
       { data: avail },
-      guestRes,
     ] = await Promise.all([
-      supabaseAdmin.from("services").select("*").eq("id", service_id).single(),
       supabaseAdmin.from("profiles").select("*").eq("id", host_id).single(),
       supabaseAdmin.from("availability").select("*").eq("host_id", host_id).maybeSingle(),
-      lookupGuest
-        ? supabaseAdmin.from("profiles").select("id")
-            .eq("email", String(guest_email).toLowerCase().trim()).maybeSingle()
-        : Promise.resolve({ data: null }),
     ]);
-    if (!service) return res.status(404).json({ message: "Service not found" });
     if (!host) return res.status(404).json({ message: "Host not found" });
     await profileSecrets.attachGoogleTokens(host);
 
-    // Resolve guest_id server-side (never from the body).
-    //  - Logged-in user (optionalProtect set req.user) → their own id.
-    //  - Anonymous OTP guest → the profile that owns the booking email
-    //    (created during OTP verification). You can only attach a booking to a
-    //    profile whose email you are booking with — not to an arbitrary id.
-    const resolvedGuestId = req.user?.id || guestRes?.data?.id || null;
+    // Resolve guest_id server-side (never from the body, never from an email
+    // lookup). Only a logged-in user links to their own id; an anonymous booking
+    // gets guest_id = null and is identified solely by guest_email/name/phone.
+    // (Matching an arbitrary email to an existing profile would let an attacker
+    // file bookings under any victim's account.)
+    const resolvedGuestId = req.user?.id || null;
 
     const hostTimezone = avail?.timezone || "Asia/Kolkata";
 

@@ -223,7 +223,13 @@ const hppMiddleware = hpp({
   whitelist: ['tags', 'sort', 'filter'], // arrays allowed for these keys
 });
 
-// Strip dangerous characters from request body strings
+// Strip dangerous characters from request body strings.
+//
+// NOTE: deepSanitize / blockSuspiciousRequests below are defense-in-depth
+// regex blocklists ONLY. They are a coarse safety net, not the primary XSS /
+// SQLi control — never rely on them as such. Real protection comes from
+// parameterized queries (Supabase/PostgREST), output encoding, and explicit
+// per-field validation. Do not expand these patterns.
 const sanitizeBody = (req, res, next) => {
   if (req.body && typeof req.body === 'object') {
     req.body = deepSanitize(req.body);
@@ -232,6 +238,11 @@ const sanitizeBody = (req, res, next) => {
 };
 
 const deepSanitize = (obj) => {
+  // Raw webhook bodies (express.raw → Buffer, e.g. Razorpay) MUST survive
+  // intact: the handler verifies the HMAC over the exact bytes. Object.entries
+  // on a Buffer would shred it into a plain {0:..,1:..} object and break
+  // signature verification, so return Buffers untouched.
+  if (Buffer.isBuffer(obj)) return obj;
   if (typeof obj === 'string') {
     // Remove script tags and null bytes
     return obj
@@ -257,7 +268,10 @@ const blockSuspiciousRequests = (req, res, next) => {
     /(union\s+select|drop\s+table|insert\s+into)/i, // SQL injection hints
     /(<script|javascript:|vbscript:|data:text\/html)/i, // XSS
   ];
-  const payload = JSON.stringify(req.body) + req.url + JSON.stringify(req.query);
+  // A raw webhook body is a Buffer (express.raw); JSON.stringify would mangle
+  // it and it isn't a JSON payload to scan anyway — skip the body in that case.
+  const bodyStr = Buffer.isBuffer(req.body) ? '' : JSON.stringify(req.body);
+  const payload = bodyStr + req.url + JSON.stringify(req.query);
   if (suspicious.some(p => p.test(payload))) {
     return res.status(400).json({ message: 'Invalid request.' });
   }

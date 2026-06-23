@@ -16,10 +16,17 @@ const profileSecrets = require("../utils/profileSecrets");
 // HMAC secret for the OAuth `state` parameter (CSRF protection on the Google
 // round-trip). Dedicated env var preferred; service-role key is a safe,
 // always-present fallback (server-side only, never sent to the browser).
+// SECURITY (audit L1): dedicated env preferred; otherwise derive a
+// PURPOSE-SEPARATED key from the service-role key rather than using the raw key
+// itself, so the OAuth-state HMAC can never double as / reveal another secret.
+// State tokens are short-lived (15 min), so the derived fallback can't break
+// anything beyond in-flight OAuth round-trips.
 const OAUTH_STATE_SECRET =
-  process.env.OAUTH_STATE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  process.env.OAUTH_STATE_SECRET ||
+  crypto.createHmac('sha256', process.env.SUPABASE_SERVICE_ROLE_KEY || 'dev-oauth-state')
+    .update('oauth-state-v1').digest('hex');
 if (process.env.NODE_ENV === 'production' && !process.env.OAUTH_STATE_SECRET) {
-  console.warn('[security] OAUTH_STATE_SECRET not set — falling back to the service-role key. Set a dedicated OAUTH_STATE_SECRET in production.');
+  console.warn('[security] OAUTH_STATE_SECRET not set — using a derived fallback. Set a dedicated OAUTH_STATE_SECRET in production.');
 }
 const sendEmail = require("../utils/sendEmail");
 const otpStore = require("../utils/otpStore");

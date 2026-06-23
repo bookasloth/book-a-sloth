@@ -131,11 +131,19 @@ const getUserById = async (req, res) => {
   }
 };
 
+// Roles an admin may assign to a profile. Anything else (e.g. a privileged
+// internal role) is rejected so a crafted body can't escalate a profile.
+const ASSIGNABLE_USER_ROLES = ['guest', 'host'];
+
 const updateUser = async (req, res) => {
   try {
     const { role, is_verified, is_banned, admin_notes, name, email } = req.body;
     const updates = { updated_at: new Date().toISOString() };
-    if (role !== undefined) updates.role = role;
+    if (role !== undefined) {
+      if (!ASSIGNABLE_USER_ROLES.includes(role))
+        return res.status(400).json({ message: `Invalid role: ${role}` });
+      updates.role = role;
+    }
     if (is_verified !== undefined) updates.is_verified = is_verified;
     if (is_banned !== undefined) updates.is_banned = is_banned;
     if (admin_notes !== undefined) updates.admin_notes = admin_notes;
@@ -158,7 +166,8 @@ const updateUser = async (req, res) => {
     if (error) return safeError(res, error);
     if (visibilityChanged) bustSitemapCache();
     await audit(req, { action: 'user.update', resource_type: 'profile', resource_id: req.params.id,
-      after: { role: updates.role, is_verified: updates.is_verified, is_banned: updates.is_banned } });
+      after: { role: updates.role, is_verified: updates.is_verified, is_banned: updates.is_banned,
+        name: updates.name, email: updates.email } });
     res.json(data);
   } catch (error) {
     safeError(res, error);

@@ -40,6 +40,11 @@ const TYPE_LABELS = {
   other: "Digital Product",
 };
 
+// Only treat http(s) URLs as navigable. Anything else (javascript:, data:, …)
+// is rejected so a malicious stored URL can't be opened as a link.
+const safeUrl = (url) =>
+  /^https?:\/\//i.test(String(url || "")) ? url : null;
+
 const ProductPurchase = () => {
   const { profileSlug: username, productId } = useParams();
   const { user } = useAuth();
@@ -91,25 +96,27 @@ const ProductPurchase = () => {
     }
     setVerifying(true);
     try {
-      const { data: result } = await verifyOtp({ email, otp });
-      if (!result.verified) {
-        toast.error("Verification failed");
-        return;
-      }
-
       if (product.price === 0) {
-        // Free product — issue download token directly
+        // Free product — the server verifies the OTP itself (single-use), so we
+        // pass the raw code straight through rather than pre-consuming it via
+        // verify-otp. The download token is issued only on a valid OTP.
         const { data } = await freeDownloadProduct({
           product_id: product.id,
           buyer_name: name,
           buyer_email: email,
           buyer_phone: phone,
-          buyer_id: result.user?._id || null,
+          otp,
         });
         setDownloadToken(data.download_token);
         setStep("done");
         toast.success("Download ready!");
       } else {
+        // Paid product — verify the OTP here; payment is verified separately.
+        const { data: result } = await verifyOtp({ email, otp });
+        if (!result.verified) {
+          toast.error("Verification failed");
+          return;
+        }
         setStep("payment");
       }
     } catch (err) {
@@ -172,7 +179,12 @@ const ProductPurchase = () => {
     try {
       const { data } = await downloadProduct(downloadToken);
       setDownloadInfo(data);
-      window.open(data.file_url, "_blank");
+      const url = safeUrl(data.file_url);
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      } else {
+        toast.error("Download link is invalid. Contact the seller.");
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || "Download failed");
     } finally {

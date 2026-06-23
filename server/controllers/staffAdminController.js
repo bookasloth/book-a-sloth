@@ -91,10 +91,15 @@ const createStaff = async (req, res) => {
     if (!isValidRole(roleKey)) return res.status(400).json({ message: `Unknown role: ${roleKey}` });
 
     // Uniqueness pre-checks (DB also enforces UNIQUE — this gives a clean message).
-    const { data: clash } = await supabaseAdmin
-      .from('admin_users').select('id, email, username')
-      .or(`email.eq.${email},username.eq.${username}`).maybeSingle();
-    if (clash) return res.status(409).json({ message: 'Email or username already in use.' });
+    // Two parameterized .eq() lookups rather than one interpolated .or(): the
+    // loose isEmail regex permits commas/parentheses, which would otherwise inject
+    // into the PostgREST filter string.
+    const [{ data: emailClash }, { data: usernameClash }] = await Promise.all([
+      supabaseAdmin.from('admin_users').select('id').eq('email', email).maybeSingle(),
+      supabaseAdmin.from('admin_users').select('id').eq('username', username).maybeSingle(),
+    ]);
+    if (emailClash || usernameClash)
+      return res.status(409).json({ message: 'Email or username already in use.' });
 
     const tempPassword = req.body.password && String(req.body.password).length >= 8
       ? String(req.body.password)

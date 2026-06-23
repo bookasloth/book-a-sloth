@@ -14,7 +14,14 @@ const attachPlan = async (req, res, next) => {
     req.vendorPlan = planService.resolveVendorPlan(profile);
     req.vendorPlanData = await planService.getPlan(req.vendorPlan);
     next();
-  } catch { req.vendorPlan = 'starter'; next(); }
+  } catch (err) {
+    // Fail-SAFE: fall back to the most-restrictive 'starter' plan on error.
+    // This is intentionally NOT a hard deny — limit checks downstream are the
+    // ones that fail closed; this only chooses the safest plan to evaluate against.
+    console.error('attachPlan error:', err.message);
+    req.vendorPlan = 'starter';
+    next();
+  }
 };
 
 const blockResponse = (res, { message, plan, limit }) =>
@@ -39,7 +46,11 @@ const checkServiceLimit = async (req, res, next) => {
       });
     }
     next();
-  } catch { next(); }
+  } catch (err) {
+    // Fail CLOSED: a transient DB error must not let a caller exceed their cap.
+    console.error('checkServiceLimit error:', err.message);
+    return res.status(503).json({ message: 'Could not verify your plan limit. Please try again.' });
+  }
 };
 
 // Block product creation beyond the plan's digital_products limit
@@ -68,10 +79,18 @@ const checkProductLimit = async (req, res, next) => {
       });
     }
     next();
-  } catch { next(); }
+  } catch (err) {
+    // Fail CLOSED: a transient DB error must not let a caller exceed their cap.
+    console.error('checkProductLimit error:', err.message);
+    return res.status(503).json({ message: 'Could not verify your plan limit. Please try again.' });
+  }
 };
 
 // Yearly booking-receive limit (spec v1.1: bookings_per_year, all plans capped)
+// NOTE: this count→insert is still TOCTOU-racy — two concurrent bookings can
+// each read count = limit-1 and both insert, briefly exceeding the cap. We do
+// NOT add a DB transaction here; the database-level constraint/index is the
+// backstop for the rare race. This check fails closed only on errors (below).
 const checkBookingReceiveLimit = async (hostId) => {
   try {
     const { data: profile } = await supabaseAdmin
@@ -99,7 +118,12 @@ const checkBookingReceiveLimit = async (hostId) => {
       };
     }
     return { allowed: true };
-  } catch { return { allowed: true }; }
+  } catch (err) {
+    // Fail CLOSED: deny on a transient DB error rather than letting the host
+    // silently exceed their yearly booking cap.
+    console.error('checkBookingReceiveLimit error:', err.message);
+    return { allowed: false, message: 'Could not verify availability. Please try again.' };
+  }
 };
 
 module.exports = { attachPlan, checkServiceLimit, checkProductLimit, checkBookingReceiveLimit };
