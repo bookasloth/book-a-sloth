@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MessageCircle, MessageSquare, Phone, Mail, Sparkles } from "lucide-react";
+import { MessageCircle, MessageSquare, Phone, Mail, Sparkles, Copy, Check } from "lucide-react";
 
 /**
  * /help — Help Center. FAQ + support channels.
@@ -65,6 +66,49 @@ const ChannelCard = ({ icon: Icon, title, desc, action, disabled, badge }) => {
   );
 };
 
+/**
+ * Email support card. A bare mailto: strands users with no default mail app on a
+ * blank page, so the card body is inert: the address is selectable, a Copy button
+ * always works, and "Open mail app" is an explicit secondary action.
+ */
+const EmailSupportCard = ({ email }) => {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked — the address is still selectable above */
+    }
+  };
+  return (
+    <div className="relative bg-white border rounded-2xl p-5 h-full">
+      <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#FE5100]/10 text-[#FE5100] mb-3">
+        <Mail size={20} />
+      </span>
+      <p className="font-semibold text-gray-900">Email support</p>
+      <p className="text-sm text-gray-500 mt-1 break-all select-all">{email}</p>
+      <div className="flex flex-wrap gap-2 mt-3">
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#FE5100] border border-[#FE5100]/30 rounded-lg px-2.5 py-1 hover:bg-[#FE5100]/5"
+        >
+          {copied ? <Check size={13} /> : <Copy size={13} />}
+          {copied ? "Copied!" : "Copy"}
+        </button>
+        <a
+          href={`mailto:${email}`}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 border rounded-lg px-2.5 py-1 hover:bg-gray-50 hover:no-underline"
+        >
+          Open mail app
+        </a>
+      </div>
+    </div>
+  );
+};
+
 const Help = () => (
   <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
     <div className="app-container py-8 sm:py-12 max-w-3xl">
@@ -88,12 +132,7 @@ const Help = () => (
           desc="Message our support team directly on WhatsApp."
           action={`https://wa.me/${SUPPORT_WHATSAPP}`}
         />
-        <ChannelCard
-          icon={Mail}
-          title="Email support"
-          desc={SUPPORT_EMAIL}
-          action={`mailto:${SUPPORT_EMAIL}`}
-        />
+        <EmailSupportCard email={SUPPORT_EMAIL} />
         <ChannelCard
           icon={Phone}
           title="Call us"
