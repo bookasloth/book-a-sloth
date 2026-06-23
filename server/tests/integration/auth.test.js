@@ -87,7 +87,7 @@ describe('POST /api/auth/register/vendor', () => {
       .post('/api/auth/register/vendor')
       .send({ name: 'Jane', email: 'clash@test.com', password: 'pass123' });
     expect(res.status).toBe(409);
-    expect(res.body.message).toMatch(/user account/i);
+    expect(res.body.message).toMatch(/already exists/i);
   });
 
   test('201 — successful vendor registration returns full profile', async () => {
@@ -134,7 +134,7 @@ describe('POST /api/auth/register/user', () => {
       .post('/api/auth/register/user')
       .send({ name: 'Bob', email: 'clash@vendor.com', password: 'pass123' });
     expect(res.status).toBe(409);
-    expect(res.body.message).toMatch(/host account/i);
+    expect(res.body.message).toMatch(/already exists/i);
   });
 
   test('201 — successful user registration returns guest role', async () => {

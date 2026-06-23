@@ -184,12 +184,12 @@ const registerVendor = async (req, res) => {
     if (!name || !email || !password)
       return res.status(400).json({ message: 'Name, email and password are required' });
 
-    // Guard: prevent a guest account from being upgraded to vendor via re-registration
+    // One account per email (unified model). If an account already exists the
+    // user logs in — and a guest becomes a host via the in-app "Become a host"
+    // opt-in (POST /api/auth/become-host), not by re-registering here.
     const { data: existing } = await supabaseAdmin
       .from('profiles').select('id, role').eq('email', email.toLowerCase().trim()).maybeSingle();
     if (existing) {
-      if (existing.role === 'guest')
-        return res.status(409).json({ message: 'This email is registered as a user account. Hosts and users must use separate email addresses.' });
       return res.status(409).json({ message: 'An account with this email already exists. Please log in.' });
     }
 
@@ -460,12 +460,12 @@ const registerUser = async (req, res) => {
     if (!name || !email || !password)
       return res.status(400).json({ message: 'Name, email and password are required' });
 
-    // Guard: prevent a vendor from re-registering as a guest with the same email
+    // One account per email (unified model). Existing account → log in. A host
+    // can already book with their host account, so no separate user account is
+    // needed.
     const { data: existing } = await supabaseAdmin
       .from('profiles').select('id, role').eq('email', email.toLowerCase().trim()).maybeSingle();
     if (existing) {
-      if (existing.role === 'host')
-        return res.status(409).json({ message: 'This email belongs to a host account. Users and hosts must use separate email addresses.' });
       return res.status(409).json({ message: 'An account with this email already exists. Please log in.' });
     }
 
@@ -1073,8 +1073,49 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// POST /api/auth/become-host — explicit, server-enforced guest→host opt-in.
+// The ONLY legitimate way an existing account's role becomes 'host'. Mirrors
+// markGoogleVendorOnboarding: reuse the (unique) username as onboarding_slug and
+// land the user on step 3 (/vendor-register/:slug/type). Idempotent for hosts.
+const becomeHost = async (req, res) => {
+  try {
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles").select("id, role, username").eq("id", req.user.id).single();
+    if (error || !profile) return res.status(404).json({ message: "Profile not found" });
+
+    if (profile.role === "host" || profile.role === "superadmin") {
+      const { data: full } = await supabaseAdmin
+        .from("profiles").select("*").eq("id", req.user.id).single();
+      return res.status(200).json(serializeProfile(full || profile, null));
+    }
+
+    const updates = {
+      role: "host",
+      onboarding_slug: profile.username,
+      onboarding_step_completed: 3, // next page = /vendor-register/:slug/type
+      onboarding_completed: false,
+      updated_at: new Date().toISOString(),
+    };
+    let result = await supabaseAdmin
+      .from("profiles").update(updates).eq("id", req.user.id).select("*").single();
+
+    // Graceful fallback if the onboarding_* columns don't exist on an older DB.
+    if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
+      result = await supabaseAdmin
+        .from("profiles")
+        .update({ role: "host", updated_at: new Date().toISOString() })
+        .eq("id", req.user.id).select("*").single();
+    }
+    if (result.error) return safeError(res, result.error);
+    return res.status(200).json(serializeProfile(result.data, null));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 module.exports = {
   registerVendor,
+  becomeHost,
   registerUser,
   googleAuth,
   googleVendorAuth,

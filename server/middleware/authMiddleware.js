@@ -49,4 +49,31 @@ const optionalProtect = async (req, res, next) => {
   return next();
 };
 
-module.exports = { protect, optionalProtect };
+// Authorization guard for host-capability routes. Runs after `protect`.
+// Self-contained: reads the caller's role (or reuses req.user.role if an
+// earlier middleware attached it). FAIL-CLOSED — a lookup error or missing
+// profile yields 403, never an accidental pass. `superadmin` is allowed so
+// staff tooling keeps working.
+const requireHost = async (req, res, next) => {
+  if (!req.user?.id) {
+    return res.status(401).json({ message: 'Not authorized, no token' });
+  }
+  try {
+    let role = req.user.role;
+    if (!role) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles').select('role').eq('id', req.user.id).single();
+      role = profile?.role;
+      req.user.role = role;
+    }
+    if (role === 'host' || role === 'superadmin') return next();
+    return res.status(403).json({
+      message: 'Host account required. Turn on hosting to access this.',
+      host_required: true,
+    });
+  } catch (_) {
+    return res.status(403).json({ message: 'Host account required.', host_required: true });
+  }
+};
+
+module.exports = { protect, optionalProtect, requireHost };

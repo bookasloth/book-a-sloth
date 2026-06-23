@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { usePostHog } from '@posthog/react';
 import { analytics } from '../services/analytics';
-import { registerVendor, registerUser, loginUser, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe } from '../services/api';
+import { registerVendor, registerUser, loginUser, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, activateHost as apiActivateHost } from '../services/api';
 import supabase from '../services/supabaseClient';
 
 const AuthContext = createContext();
@@ -139,6 +139,18 @@ export const AuthProvider = ({ children }) => {
     return merged;
   };
 
+  // Explicit guest→host opt-in. Server flips role + seeds onboarding; we then
+  // re-fetch the profile (keeping the existing session tokens) so ProtectedRoute
+  // drives the user into host onboarding.
+  const activateHost = async () => {
+    await apiActivateHost();
+    const { data: fresh } = await getMe();
+    const merged = { ...user, ...fresh };
+    localStorage.setItem('user', JSON.stringify(merged));
+    setUser(merged);
+    return merged;
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
     localStorage.removeItem('user');
@@ -157,7 +169,7 @@ export const AuthProvider = ({ children }) => {
       loginWithPhone, loginWithOtp, setPassword,
       registerAsVendor, registerAsUser,
       connectGoogleCalendar,
-      startVendorGoogleAuth, adoptSession,
+      startVendorGoogleAuth, adoptSession, activateHost,
       logout, updateUser,
     }}>
       {children}

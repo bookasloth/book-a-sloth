@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -60,9 +60,29 @@ const PERSONAS = [
 // /be-a-sloth — vendor signup. Google-only: one consent screen grants identity
 // + calendar access, the account is created automatically in the callback.
 const BeASloth = () => {
-  const { startVendorGoogleAuth } = useAuth();
+  const { startVendorGoogleAuth, user, activateHost } = useAuth();
   const [loading, setLoading] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // A logged-in host has nothing to do here — send them to the dashboard.
+  useEffect(() => {
+    if (user?.role === 'host' || user?.role === 'superadmin') navigate('/dashboard', { replace: true });
+  }, [user, navigate]);
+
+  // A logged-in guest already has an account — opt in via the server-enforced
+  // switch rather than a fresh Google signup (which would reject their email).
+  const isLoggedInGuest = user && user.role !== 'host' && user.role !== 'superadmin';
+  const handleBecomeHost = async () => {
+    setLoading(true);
+    try {
+      await activateHost();
+      navigate('/dashboard');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not switch on hosting. Please try again.');
+      setLoading(false);
+    }
+  };
   // Handle typed on the homepage hero — carried via router state, sessionStorage as fallback.
   const desiredUsername =
     location.state?.desiredUsername ||
@@ -162,14 +182,24 @@ const BeASloth = () => {
             </p>
           )}
 
-          <button
-            onClick={handleGoogle}
-            disabled={loading}
-            className="btn btn--outline mt-7 flex w-full items-center justify-center gap-3 bg-white py-3 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition disabled:opacity-50"
-          >
-            <GoogleIcon />
-            {loading ? 'Opening Google…' : 'Continue with Google'}
-          </button>
+          {isLoggedInGuest ? (
+            <button
+              onClick={handleBecomeHost}
+              disabled={loading}
+              className="btn mt-7 flex w-full items-center justify-center gap-3 bg-primary py-3 text-sm font-bold text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition hover:bg-primary-dark disabled:opacity-50"
+            >
+              {loading ? 'Setting up…' : 'Become a host'}
+            </button>
+          ) : (
+            <button
+              onClick={handleGoogle}
+              disabled={loading}
+              className="btn btn--outline mt-7 flex w-full items-center justify-center gap-3 bg-white py-3 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition disabled:opacity-50"
+            >
+              <GoogleIcon />
+              {loading ? 'Opening Google…' : 'Continue with Google'}
+            </button>
+          )}
 
           {/* Secondary providers — not yet available, shown disabled */}
           <button
