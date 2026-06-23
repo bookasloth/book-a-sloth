@@ -138,8 +138,16 @@ app.use(require('./middleware/errorMiddleware'));
 const { processReminders, autoCompleteBookings } = require('./controllers/bookingController');
 const { cleanup: cleanupOtps } = require('./utils/otpStore');
 
+// Leader-election for the crons below. On one instance every job runs (the lock
+// fails open / always wins); on >1 instance only the lease holder runs each job,
+// so reminders/emails/campaigns aren't double-sent and the reconcilers don't
+// race. Each job leases for 2x its interval so the holder always renews in time.
+// See utils/jobLock.js + migrations/v3.25_job_locks.sql.
+const { runLocked } = require('./utils/jobLock');
+
 setInterval(async () => {
-  try { await processReminders(); } catch (err) { console.error('Reminder cron error:', err.message); }
+  try { await runLocked('reminders', () => processReminders(), { leaseMs: 10 * 60 * 1000 }); }
+  catch (err) { console.error('Reminder cron error:', err.message); }
 }, 5 * 60 * 1000);
 
 // Auto-complete elapsed bookings so the lifecycle closes (and revenue becomes
@@ -148,19 +156,23 @@ setInterval(async () => {
 // the controller (AUTO_COMPLETE_HOLD_MIN / AUTO_COMPLETE_CUTOFF).
 const AUTO_COMPLETE_INTERVAL_MIN = Number(process.env.AUTO_COMPLETE_INTERVAL_MIN) || 15;
 setInterval(async () => {
-  try { await autoCompleteBookings(); } catch (err) { console.error('Auto-complete cron error:', err.message); }
+  try { await runLocked('auto-complete', () => autoCompleteBookings(), { leaseMs: AUTO_COMPLETE_INTERVAL_MIN * 2 * 60 * 1000 }); }
+  catch (err) { console.error('Auto-complete cron error:', err.message); }
 }, AUTO_COMPLETE_INTERVAL_MIN * 60 * 1000);
 
 setInterval(async () => {
-  try { await cleanupOtps(); } catch (err) { console.error('OTP cleanup error:', err.message); }
+  try { await runLocked('otp-cleanup', () => cleanupOtps(), { leaseMs: 2 * 60 * 60 * 1000 }); }
+  catch (err) { console.error('OTP cleanup error:', err.message); }
 }, 60 * 60 * 1000);
 
 // Email queue worker — processes queued emails with retry backoff (every 60s)
 const communicationEngine = require('./services/email/communicationEngine');
 setInterval(async () => {
   try {
-    const r = await communicationEngine.processQueue();
-    if (r.sent || r.failed) console.log(`Email queue: ${r.sent} sent, ${r.retried} retried, ${r.failed} failed`);
+    await runLocked('email-queue', async () => {
+      const r = await communicationEngine.processQueue();
+      if (r.sent || r.failed) console.log(`Email queue: ${r.sent} sent, ${r.retried} retried, ${r.failed} failed`);
+    }, { leaseMs: 2 * 60 * 1000 });
   } catch (err) { console.error('Email queue worker error:', err.message); }
 }, 60 * 1000);
 
@@ -168,8 +180,10 @@ setInterval(async () => {
 const campaignWorker = require('./services/campaignWorker');
 setInterval(async () => {
   try {
-    const r = await campaignWorker.processDue();
-    if (r.enqueued || r.failed) console.log(`Campaign worker: ${r.enqueued} enqueued, ${r.failed} failed`);
+    await runLocked('campaign-worker', async () => {
+      const r = await campaignWorker.processDue();
+      if (r.enqueued || r.failed) console.log(`Campaign worker: ${r.enqueued} enqueued, ${r.failed} failed`);
+    }, { leaseMs: 2 * 60 * 1000 });
   } catch (err) { console.error('Campaign worker error:', err.message); }
 }, 60 * 1000);
 
@@ -178,8 +192,10 @@ const badgeEngine = require('./services/badgeEngine');
 const BADGE_EVAL_INTERVAL_MIN = parseInt(process.env.BADGE_EVAL_INTERVAL_MIN) || 60;
 setInterval(async () => {
   try {
-    const r = await badgeEngine.evaluate();
-    if (r.awarded || r.revoked) console.log(`Badge engine: +${r.awarded} awarded, -${r.revoked} revoked`);
+    await runLocked('badge-eval', async () => {
+      const r = await badgeEngine.evaluate();
+      if (r.awarded || r.revoked) console.log(`Badge engine: +${r.awarded} awarded, -${r.revoked} revoked`);
+    }, { leaseMs: BADGE_EVAL_INTERVAL_MIN * 2 * 60 * 1000 });
   } catch (err) { console.error('Badge engine cron error:', err.message); }
 }, BADGE_EVAL_INTERVAL_MIN * 60 * 1000);
 
@@ -188,8 +204,10 @@ const ledgerReconciler = require('./services/ledger/ledgerReconciler');
 const LEDGER_RECONCILE_MIN = Number(process.env.LEDGER_RECONCILE_INTERVAL_MIN || 60);
 setInterval(async () => {
   try {
-    const r = await ledgerReconciler.reconcile();
-    if (r.reposted > 0) console.log(`Ledger reconciler: reposted ${r.reposted} missed entries`);
+    await runLocked('ledger-reconcile', async () => {
+      const r = await ledgerReconciler.reconcile();
+      if (r.reposted > 0) console.log(`Ledger reconciler: reposted ${r.reposted} missed entries`);
+    }, { leaseMs: LEDGER_RECONCILE_MIN * 2 * 60 * 1000 });
   } catch (err) { console.error('Ledger reconciler cron error:', err.message); }
 }, LEDGER_RECONCILE_MIN * 60 * 1000);
 
@@ -199,8 +217,10 @@ const subscriptionReconciler = require('./services/subscriptionReconciler');
 const SUB_RECONCILE_MIN = Number(process.env.SUBSCRIPTION_RECONCILE_INTERVAL_MIN || 15);
 setInterval(async () => {
   try {
-    const r = await subscriptionReconciler.reconcile();
-    if (r.healed > 0) console.log(`Subscription reconciler: activated ${r.healed} pending subscriptions`);
+    await runLocked('subscription-reconcile', async () => {
+      const r = await subscriptionReconciler.reconcile();
+      if (r.healed > 0) console.log(`Subscription reconciler: activated ${r.healed} pending subscriptions`);
+    }, { leaseMs: SUB_RECONCILE_MIN * 2 * 60 * 1000 });
   } catch (err) { console.error('Subscription reconciler cron error:', err.message); }
 }, SUB_RECONCILE_MIN * 60 * 1000);
 
@@ -211,10 +231,25 @@ const bookingPaymentReconciler = require('./services/bookingPaymentReconciler');
 const BOOKING_RECONCILE_MIN = Number(process.env.BOOKING_RECONCILE_INTERVAL_MIN || 15);
 setInterval(async () => {
   try {
-    const r = await bookingPaymentReconciler.reconcile();
-    if (r.healed > 0) console.log(`Booking reconciler: confirmed ${r.healed} paid bookings (of ${r.checked} checked)`);
+    await runLocked('booking-reconcile', async () => {
+      const r = await bookingPaymentReconciler.reconcile();
+      if (r.healed > 0) console.log(`Booking reconciler: confirmed ${r.healed} paid bookings (of ${r.checked} checked)`);
+    }, { leaseMs: BOOKING_RECONCILE_MIN * 2 * 60 * 1000 });
   } catch (err) { console.error('Booking reconciler cron error:', err.message); }
 }, BOOKING_RECONCILE_MIN * 60 * 1000);
+
+// Rate-limit store housekeeping — prune expired rows so the rate_limit_hits table
+// can't grow unbounded once the persistent store is enabled (RATE_LIMIT_STORE_URL).
+// No-op while the store is off, so this is free on single-instance/in-memory setups.
+const { cleanupExpired: cleanupRateLimitHits } = require('./middleware/rateLimitStore');
+setInterval(async () => {
+  try {
+    await runLocked('rate-limit-cleanup', async () => {
+      const n = await cleanupRateLimitHits();
+      if (n > 0) console.log(`Rate-limit store: pruned ${n} expired rows`);
+    }, { leaseMs: 2 * 60 * 60 * 1000 });
+  } catch (err) { console.error('Rate-limit cleanup cron error:', err.message); }
+}, 60 * 60 * 1000);
 
 // Feature flags — seed any registry keys missing from the DB on boot (all ON,
 // never overwrites an admin's existing on/off choice). Best-effort; the admin
