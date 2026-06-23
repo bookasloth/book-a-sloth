@@ -5,6 +5,7 @@ import {
   Hash, IndianRupee, Video, RotateCcw, Star, Repeat,
 } from "lucide-react";
 import { getGuestBookings, cancelBooking, getBookingReview } from "../services/api";
+import { downloadReceipt } from "../utils/receipt";
 import { useAuth } from "../context/AuthContext";
 import useFeatureFlags from "../hooks/useFeatureFlags";
 import RescheduleModal from "../components/booking/RescheduleModal";
@@ -45,37 +46,24 @@ const amountPaid = (b) => {
   return "Unpaid";
 };
 
-// Client-side invoice — generates a printable HTML document and downloads it.
-// (A branded server-side PDF is a future enhancement — see gap list.)
+// Client-side receipt — uses the shared receipt builder (utils/receipt) so the
+// confirmation screen and My Bookings render identical documents.
 const downloadInvoice = (b, host) => {
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${shortId(b.id)}</title>
-<style>body{font-family:system-ui,sans-serif;color:#1E1E1E;max-width:640px;margin:40px auto;padding:0 20px}
-h1{color:#FE5100;margin:0 0 4px}.muted{color:#888;font-size:13px}
-table{width:100%;border-collapse:collapse;margin:24px 0}td{padding:8px 0;border-bottom:1px solid #eee;font-size:14px}
-td:last-child{text-align:right;font-weight:600}.total td{border-top:2px solid #1E1E1E;border-bottom:none;font-size:16px;padding-top:12px}</style>
-</head><body>
-<h1>Book A Sloth</h1><p class="muted">Booking invoice</p>
-<table>
-<tr><td>Invoice / Booking ID</td><td>${shortId(b.id)}</td></tr>
-<tr><td>Date</td><td>${fmtWhen(b.scheduled_at)}</td></tr>
-<tr><td>Service</td><td>${b.services?.title || "Service"}</td></tr>
-<tr><td>Host</td><td>${host?.name || "Host"}</td></tr>
-<tr><td>Status</td><td>${b.status}</td></tr>
-<tr><td>Payment status</td><td>${b.payment_status || "—"}</td></tr>
-<tr class="total"><td>Amount</td><td>${amountPaid(b)}</td></tr>
-</table>
-<p class="muted">Thank you for booking with Book A Sloth.</p>
-<script>window.onload=function(){window.print&&setTimeout(function(){window.print()},300)}</script>
-</body></html>`;
-  const blob = new Blob([html], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `invoice-${shortId(b.id).replace("#", "")}.html`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  downloadReceipt({
+    receiptId: shortId(b.id),
+    whenText: fmtWhen(b.scheduled_at),
+    serviceTitle: b.services?.title || "Service",
+    hostName: host?.name || "Host",
+    guestName: b.guest_name || "",
+    guestEmail: b.guest_email || "",
+    status: b.status,
+    paymentStatus: b.payment_status,
+    paymentId: b.payment_id,
+    price: Number(b.services?.price || 0),
+    platformFee: Number(b.platform_fee_amount || 0),
+    platformFeeGst: Number(b.platform_fee_gst || 0),
+    total: Number(b.customer_total || 0),
+  });
 };
 
 const CustomerBookings = () => {

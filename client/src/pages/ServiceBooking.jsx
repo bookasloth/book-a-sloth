@@ -22,6 +22,7 @@ import {
   isValidHex,
   applyProfileTheme,
 } from "../utils/themeUtils";
+import { downloadReceipt } from "../utils/receipt";
 
 const MONTHS = [
   "January",
@@ -1172,6 +1173,22 @@ const ServiceBooking = () => {
             const calLocation = confirmation.meeting_link || "Online";
             const gUrl = googleCalUrl({ title: calTitle, details: calDetails, location: calLocation, startISO: scheduledISO, durationMin: service.duration || 30 });
             const icsUrl = buildICS({ title: calTitle, details: calDetails, location: calLocation, startISO: scheduledISO, durationMin: service.duration || 30, uid: confirmation.id });
+            const isPaidBooking = confirmation.payment_status === "paid";
+            const receiptData = {
+              receiptId: confirmation.id ? `#${String(confirmation.id).replace(/-/g, "").slice(0, 8).toUpperCase()}` : "—",
+              whenText: `${selectedDate?.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} at ${formatTime(selectedTime)} (${tzAbbr})`,
+              serviceTitle: service.title,
+              hostName: host.name,
+              guestName: `${firstName} ${lastName}`.trim(),
+              guestEmail: email,
+              status: confirmation.status,
+              paymentStatus: confirmation.payment_status,
+              paymentId: confirmation.payment_id,
+              price: service.price,
+              platformFee: confirmation.platform_fee_amount,
+              platformFeeGst: confirmation.platform_fee_gst,
+              total: confirmation.customer_total,
+            };
             return (
             <div className="bg-white border rounded p-5 sm:p-7">
               <div className="max-w-md mx-auto text-center">
@@ -1208,6 +1225,13 @@ const ServiceBooking = () => {
                     Download iCal (.ics)
                   </a>
                 </div>
+                {isPaidBooking && (
+                  <button type="button" onClick={() => downloadReceipt(receiptData)}
+                    className="btn btn--outline mt-3 w-full inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                    style={{ color: tc }}>
+                    Download Receipt
+                  </button>
+                )}
                 <p className="text-xs text-gray-400 mt-4">Confirmation email sent to {email}</p>
                 <Link to={`/${profileSlug}`} className="block mt-3 text-sm hover:underline" style={{ color: tc }}>
                   Back to {host.name}'s profile
