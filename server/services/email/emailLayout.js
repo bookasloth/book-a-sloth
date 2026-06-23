@@ -29,6 +29,8 @@
 
 'use strict';
 
+const { themeForCategory } = require('./emailThemes');
+
 const esc = (s) => String(s == null ? '' : s).replace(/"/g, '&quot;');
 
 // Brand design tokens
@@ -67,31 +69,29 @@ function accentBar(brand) {
   return `<tr><td style="height:4px;line-height:4px;font-size:0;background:${esc(brand)};">&nbsp;</td></tr>`;
 }
 
-/** Header row: logo (left) + name + sub-label, optional pill chip (right). */
-function headerBlock({ logoHtml, name, subLabel, chip, brand }) {
-  const chipCell = chip
+/**
+ * Header: constant Book a Sloth logo (left) + accent category pill (right).
+ * The logo is the same FOOTER_LOGO asset for every email and every audience
+ * (per redesign decision #4). The pill is the one true capsule (999px) — its
+ * accent/tint/text + glyph come from the category theme.
+ */
+function headerBlock({ category, theme }) {
+  const glyph = theme.glyphUrl
+    ? `<img src="${esc(theme.glyphUrl)}" width="14" height="14" alt="" style="vertical-align:-2px;margin-right:5px;border:0;display:inline-block;">`
+    : '';
+  const pill = category
     ? `<td align="right" style="vertical-align:middle;white-space:nowrap;padding-left:12px;">
-         <span style="display:inline-block;padding:7px 12px;border-radius:999px;background:${tint(brand, 0.90)};color:${esc(brand)};font-size:12px;font-weight:600;font-family:${D.font};">${esc(chip)}</span>
+         <span style="display:inline-block;padding:6px 12px;border-radius:999px;background:${theme.tint};color:${theme.text};font-size:12px;font-weight:600;font-family:${D.font};">${glyph}${esc(category)}</span>
        </td>`
     : '';
-  const subEl = subLabel
-    ? `<div style="font-size:12px;color:${D.sub};padding-top:2px;font-family:${D.font};">${esc(subLabel)}</div>`
-    : '';
   return `<tr>
-    <td style="padding:22px 28px;border-bottom:1px solid ${D.border};">
+    <td style="padding:18px 28px;border-bottom:1px solid ${D.border};">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td align="left" style="vertical-align:middle;">
-            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-              <td style="vertical-align:middle;">${logoHtml}</td>
-              <td width="12"></td>
-              <td style="vertical-align:middle;">
-                <div style="font-size:15px;font-weight:600;line-height:1.4;color:${D.dark};font-family:${D.font};">${esc(name)}</div>
-                ${subEl}
-              </td>
-            </tr></table>
+            <img src="${esc(FOOTER_LOGO)}" alt="Book a Sloth" height="26" style="display:block;border:0;height:26px;">
           </td>
-          ${chipCell}
+          ${pill}
         </tr>
       </table>
     </td>
@@ -106,13 +106,6 @@ function ctaButton(label, url, brand) {
       <a href="${esc(url)}" style="display:block;text-align:center;padding:15px 24px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;font-family:${D.font};">${esc(label)}</a>
     </td></tr>
   </table>`;
-}
-
-/** Logo <img> with text-wordmark fallback. */
-function logoImg(src, alt, fallbackColor) {
-  return src
-    ? `<img src="${esc(src)}" alt="${esc(alt)}" width="48" style="display:block;border:0;border-radius:10px;">`
-    : `<span style="font-size:18px;font-weight:800;letter-spacing:-0.01em;color:${esc(fallbackColor)};font-family:${D.font};">${esc(alt)}</span>`;
 }
 
 /** Document shell + card open. Returns the HTML up to (and including) the accent bar. */
@@ -155,19 +148,15 @@ function shellClose({ bodyHtml, cta, footerRow }) {
 
 // ── Customer layout ──────────────────────────────────────────────────────────
 
-function renderCustomerLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, subLabel, chip, settings, data }) {
+function renderCustomerLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCategory, settings, data }) {
   const brand    = settings.brand_color   || '#FE5100';
   const website  = settings.website_url   || 'https://bookasloth.in';
   const support  = settings.support_email || 'support@bookasloth.in';
   const fromName = settings.from_name     || 'Book A Sloth';
-  const logo     = settings.logo_url      || '';
   const year     = new Date().getFullYear();
   const unsubToken = data.unsubscribe_token || '';
 
-  const header = headerBlock({
-    logoHtml: logoImg(logo, fromName, brand),
-    name: fromName, subLabel, chip, brand,
-  });
+  const header = headerBlock({ category: emailCategory, theme: themeForCategory(emailCategory) });
 
   const lk = (href, label) =>
     `<a href="${esc(href)}" style="color:${D.muted};text-decoration:none;font-size:12px;font-family:${D.font};">${label}</a>`;
@@ -197,20 +186,12 @@ function renderCustomerLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, subLabe
 
 // ── Vendor layout ────────────────────────────────────────────────────────────
 
-function renderVendorLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, subLabel, chip, settings, data }) {
+function renderVendorLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCategory, settings, data }) {
   const brand     = settings.brand_color   || '#FE5100';
   const fromName  = settings.from_name     || 'Book A Sloth';
-  const basLogo   = settings.logo_url      || '';
   const year      = new Date().getFullYear();
 
-  // Host's own brand leads; fall back to the platform brand if absent.
-  const hostLogo  = data.company_logo || basLogo;
-  const hostName  = data.company_name || fromName;
-
-  const header = headerBlock({
-    logoHtml: logoImg(hostLogo, hostName, brand),
-    name: hostName, subLabel, chip, brand,
-  });
+  const header = headerBlock({ category: emailCategory, theme: themeForCategory(emailCategory) });
 
   const footerRow = `<tr>
     <td style="padding:22px 20px;border-top:1px solid ${D.border};text-align:center;font-size:11px;line-height:1.7;color:${D.note};font-family:${D.font};">
@@ -257,8 +238,7 @@ function renderLayout({
 } = {}) {
   const args = {
     bodyHtml, previewText, ctaLabel, ctaUrl,
-    subLabel: emailCategory,
-    chip: headerChip || data.header_chip || '',
+    emailCategory,
     settings, data: data || {},
   };
   return audience === 'vendor' ? renderVendorLayout(args) : renderCustomerLayout(args);

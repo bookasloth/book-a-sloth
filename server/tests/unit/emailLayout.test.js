@@ -1,7 +1,8 @@
 /**
  * tests/unit/emailLayout.test.js
- * Two recipient-driven layouts: customer (BAS-branded, nav+legal footer)
- * vs vendor (host-branded, minimal footer). Selection by audience.
+ * Redesigned header: constant Book a Sloth logo (left) + accent category pill
+ * (right), identical across audiences. The customer/vendor distinction now lives
+ * ONLY in the footer (unchanged by the redesign — guarded below).
  */
 'use strict';
 
@@ -15,47 +16,63 @@ const settings = {
   logo_url: 'https://cdn.test/bas-logo.png',
 };
 
-const vendorData = { company_logo: 'https://cdn.test/host-logo.png', company_name: 'Asha Studio' };
+describe('renderLayout — header (logo left, accent pill right)', () => {
+  for (const audience of ['customer', 'vendor']) {
+    test(`${audience}: footer-logo on the left + accent category pill on the right`, () => {
+      const html = renderLayout({ audience, bodyHtml: '<p>hi</p>', emailCategory: 'Booking Confirmed', settings, data: {} });
+      expect(html).toContain('images/email/footer-logo.png');          // constant left logo
+      expect(html).toContain('Booking Confirmed');                     // pill label
+      expect(html).toContain('#e8fff1');                               // green tint (pill bg)
+      expect(html).toContain('images/email/icons/calendar-check.png'); // glyph PNG
+      expect(html).toContain('border-radius:999px');                   // true pill (the one >8px exception)
+    });
+  }
 
-describe('renderLayout — selection by audience', () => {
-  test("audience 'vendor' → vendor chrome (host logo, Powered by, no nav)", () => {
-    const html = renderLayout({ audience: 'vendor', bodyHtml: '<p>hi</p>', settings, data: vendorData });
-    expect(html).toContain('https://cdn.test/host-logo.png'); // host logo in header
-    expect(html).toContain('Asha Studio');                    // host name in header
-    expect(html).toMatch(/Powered by/i);                      // platform sign-off
-    expect(html).not.toMatch(/My Bookings/i);                 // no customer nav
+  test('pill degrades to text-only when the category has no glyph', () => {
+    const html = renderLayout({ audience: 'customer', bodyHtml: '<p>hi</p>', emailCategory: 'Nope', settings, data: {} });
+    expect(html).toContain('Nope');
+    expect(html).not.toContain('/icons/.png'); // no broken-image src
+  });
+});
+
+describe('renderLayout — footer distinction (UNCHANGED by redesign)', () => {
+  test("audience 'vendor' → minimal Powered-by footer, no customer nav", () => {
+    const html = renderLayout({ audience: 'vendor', bodyHtml: '<p>hi</p>', emailCategory: 'New Booking', settings, data: {} });
+    expect(html).toMatch(/Powered by/i);
+    expect(html).not.toMatch(/My Bookings/i);
     expect(html).not.toMatch(/Unsubscribe/i);
   });
 
-  test("audience 'customer' → customer chrome (BAS logo, nav, no Powered by)", () => {
-    const html = renderLayout({ audience: 'customer', bodyHtml: '<p>hi</p>', settings, data: {} });
-    expect(html).toContain('https://cdn.test/bas-logo.png');  // BAS logo in header
+  test("audience 'customer' → nav + legal footer, no Powered by", () => {
+    const html = renderLayout({ audience: 'customer', bodyHtml: '<p>hi</p>', emailCategory: 'Booking Confirmed', settings, data: {} });
     expect(html).toMatch(/My Bookings/i);
     expect(html).toMatch(/Help/i);
     expect(html).toMatch(/Privacy/i);
     expect(html).toMatch(/Unsubscribe/i);
-    expect(html).not.toMatch(/Powered by/i);                  // BAS is the sender, not powering
+    expect(html).not.toMatch(/Powered by/i);
   });
 
-  test("audience 'all' → customer chrome (safe default with unsubscribe)", () => {
-    const html = renderLayout({ audience: 'all', bodyHtml: '<p>hi</p>', settings, data: {} });
-    expect(html).toMatch(/My Bookings/i);
-    expect(html).toMatch(/Unsubscribe/i);
+  test("audience 'all' and missing → customer footer (safe default with unsubscribe)", () => {
+    expect(renderLayout({ audience: 'all', bodyHtml: '<p>hi</p>', settings, data: {} })).toMatch(/My Bookings/i);
+    expect(renderLayout({ bodyHtml: '<p>hi</p>', settings, data: {} })).toMatch(/Unsubscribe/i);
   });
 
-  test('missing audience → customer chrome', () => {
-    const html = renderLayout({ bodyHtml: '<p>hi</p>', settings, data: {} });
-    expect(html).toMatch(/My Bookings/i);
+  test('customer footer uses real routes and carries the unsubscribe token from data', () => {
+    const html = renderLayout({ audience: 'customer', bodyHtml: '', settings, data: { unsubscribe_token: 'TOK123' } });
+    expect(html).toContain('https://x.test/my-bookings');
+    expect(html).toContain('https://x.test/help');
+    expect(html).toContain('https://x.test/privacy');
+    expect(html).toContain('https://x.test/unsubscribe?u=TOK123');
   });
 });
 
 describe('renderLayout — shared structure', () => {
-  test('both layouts carry the 4px brand accent and 600px card', () => {
+  test('both layouts carry the 4px brand accent and the 600px card with the body', () => {
     for (const audience of ['customer', 'vendor']) {
-      const html = renderLayout({ audience, bodyHtml: '<p>x</p>', settings, data: vendorData });
-      expect(html).toContain('#FE5100');     // brand accent / chip
-      expect(html).toContain('600');         // card width
-      expect(html).toContain('<p>x</p>');    // body injected
+      const html = renderLayout({ audience, bodyHtml: '<p>x</p>', emailCategory: 'New Booking', settings, data: {} });
+      expect(html).toContain('#FE5100'); // accent bar / CTA brand
+      expect(html).toContain('600');     // card width
+      expect(html).toContain('<p>x</p>'); // body injected
     }
   });
 
@@ -66,23 +83,5 @@ describe('renderLayout — shared structure', () => {
 
     const noCta = renderLayout({ audience: 'customer', bodyHtml: '', ctaLabel: 'View', ctaUrl: '', settings, data: {} });
     expect(noCta).not.toMatch(/>View</);
-  });
-});
-
-describe('renderLayout — customer footer links', () => {
-  test('customer footer uses real routes and carries unsubscribe token from data', () => {
-    const html = renderLayout({ audience: 'customer', bodyHtml: '', settings, data: { unsubscribe_token: 'TOK123' } });
-    expect(html).toContain('https://x.test/my-bookings');
-    expect(html).toContain('https://x.test/help');
-    expect(html).toContain('https://x.test/privacy');
-    expect(html).toContain('https://x.test/unsubscribe?u=TOK123');
-  });
-});
-
-describe('renderLayout — vendor header fallbacks', () => {
-  test('vendor header falls back to BAS logo + from_name when host values absent', () => {
-    const html = renderLayout({ audience: 'vendor', bodyHtml: '', settings, data: {} });
-    expect(html).toContain('https://cdn.test/bas-logo.png');
-    expect(html).toContain('Book A Sloth');
   });
 });
