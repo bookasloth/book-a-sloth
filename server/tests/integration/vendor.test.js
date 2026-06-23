@@ -6,6 +6,7 @@
 jest.mock('../../config/supabase', () => require('./helpers').makeSbMock());
 jest.mock('../../middleware/authMiddleware', () => ({
   protect: (req, _res, next) => { req.user = { id: 'vendor-uuid' }; next(); },
+  requireHost: (_req, _res, next) => next(),
 }));
 jest.mock('../../middleware/planMiddleware', () => ({
   attachPlan:        (_r, _s, n) => n(),
