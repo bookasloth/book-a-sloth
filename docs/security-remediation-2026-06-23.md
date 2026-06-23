@@ -48,9 +48,12 @@ self-row RLS policies and the public anon key, any logged-in user could write
 
 ## Manual / ops actions required (cannot be done in code)
 
-- **M9 — Enable "Leaked Password Protection"** in the Supabase dashboard
-  (Auth → Providers/Policies, HaveIBeenPwned check) for both projects. No API/MCP
-  toggle exists. Also consider raising the minimum password strength.
+- **M9 — Enable "Leaked Password Protection"** (HaveIBeenPwned). This toggle is
+  **Supabase Pro-only** ($25/mo) — the Free tier rejects it ("available on Pro
+  Plans and up"). DECIDED 2026-06-23: founder upgrades to Pro, then enables it at
+  Auth → Sign In/Providers → Email → Password security on **both** projects.
+  (A free server-side HIBP k-anonymity check on the password-set endpoints was
+  offered and declined in favour of the native Pro toggle.)
 - **Deploy step for H4:** run `v3.28` on prod when this branch deploys.
 - **L1 (recommended):** set dedicated `OAUTH_STATE_SECRET` and `UNSUBSCRIBE_SECRET`
   env vars in prod (the code now uses purpose-separated derived fallbacks, so this
@@ -74,3 +77,18 @@ self-row RLS policies and the public anon key, any logged-in user could write
 - Server test suite: **passing** (exit 0) after all server-side changes.
 - Client build/tests: see branch CI.
 - Live DB grants re-verified post-revoke (write columns → `false`, reads intact).
+
+## Follow-up — 2026-06-23 (branch `fix/security-followup`)
+- **Unsubscribe secret hardening (L1):** `unsubscribeToken.verifyToken` now accepts
+  ALL historical signing secrets (dedicated env, derived, raw base), so setting a
+  dedicated `UNSUBSCRIBE_SECRET` later never invalidates already-sent links.
+- **v3.24 prep (drop dormant `profiles` secret columns):** removed the last code
+  that read/wrote `profiles.google_access_token`/`google_refresh_token`
+  (getAvailableSlots, paymentController createOrder + verifyPayment selects, and
+  the authController OAuth dual-write — tokens now live ONLY in `profile_private`).
+  Verified `profile_private` is fully in sync (**prod 23/23, staging 3/3,
+  missing_in_private=0**), so the drop loses nothing. `v3.24` is now safe to apply
+  **at deploy of this branch** (run on prod + staging after the new code is live;
+  the previously-deployed code still SELECTs the columns until then).
+- **Task 3 secrets:** set dedicated `OAUTH_STATE_SECRET` + `UNSUBSCRIBE_SECRET` on
+  Render (optional hardening; L1 already purpose-separated in code).

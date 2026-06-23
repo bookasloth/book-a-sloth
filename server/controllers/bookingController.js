@@ -171,7 +171,7 @@ const getAvailableSlots = async (req, res) => {
 
     const [{ data: service }, { data: host }, { data: availability }] = await Promise.all([
       supabaseAdmin.from("services").select("id, duration, grace_period_minutes").eq("id", service_id).single(),
-      supabaseAdmin.from("profiles").select("id, google_calendar_connected, google_access_token, google_refresh_token").eq("id", host_id).single(),
+      supabaseAdmin.from("profiles").select("id, google_calendar_connected").eq("id", host_id).single(),
       supabaseAdmin.from("availability").select("*").eq("host_id", host_id).maybeSingle(),
     ]);
     if (!service) return res.status(404).json({ message: "Service not found" });
