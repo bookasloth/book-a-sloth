@@ -91,7 +91,7 @@ const serializeProfile = (profile, session) => ({
   ...(session ? { token: session.access_token, refresh_token: session.refresh_token } : {}),
 });
 
-const upsertProfile = async ({ id, name, email, role, username }) => {
+const upsertProfile = async ({ id, name, email, role, username, first_name, last_name, avatar }) => {
   // Resolve the username. This upsert runs on every login (e.g. Google), so we
   // must NEVER regenerate over an existing one. Order: caller-supplied → the
   // row's current username (preserve it) → a fresh permanent username for a
@@ -103,19 +103,23 @@ const upsertProfile = async ({ id, name, email, role, username }) => {
     slug = existing?.username || await usernameService.createInitialUsername();
   }
 
+  const payload = {
+    id,
+    name,
+    email: email.toLowerCase().trim(),
+    role,
+    username: slug,
+    updated_at: new Date().toISOString(),
+    // name-split fields: only written when provided (never clobber with undefined)
+    ...(first_name !== undefined ? { first_name } : {}),
+    ...(last_name  !== undefined ? { last_name  } : {}),
+    // avatar maps to profile_image; only written when truthy (never null an existing photo)
+    ...(avatar ? { profile_image: avatar } : {}),
+  };
+
   const { data, error } = await supabaseAdmin
     .from("profiles")
-    .upsert(
-      {
-        id,
-        name,
-        email: email.toLowerCase().trim(),
-        role,
-        username: slug,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" },
-    )
+    .upsert(payload, { onConflict: "id" })
     .select("*")
     .single();
 
@@ -1122,6 +1126,7 @@ const becomeHost = async (req, res) => {
 };
 
 module.exports = {
+  upsertProfile,
   registerVendor,
   becomeHost,
   registerUser,
