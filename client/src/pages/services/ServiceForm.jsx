@@ -118,6 +118,7 @@ const RichEditor = ({ value, onChange }) => {
 
 const TagInput = ({ value, onChange, placeholder, color = 'green' }) => {
   const [input, setInput] = useState('');
+  const inputRef = useRef(null);
   const colors = {
     green: 'bg-green-50 text-green-800 border-green-200',
     red:   'bg-red-50 text-red-800 border-red-200',
@@ -138,7 +139,7 @@ const TagInput = ({ value, onChange, placeholder, color = 'green' }) => {
 
   return (
     <div className="min-h-[48px] border border-gray-200 rounded-xl p-2 flex flex-wrap gap-1.5 focus-within:ring-2 focus-within:ring-primary/30 bg-white cursor-text"
-      onClick={() => document.getElementById(`taginput-${placeholder}`)?.focus()}>
+      onClick={() => inputRef.current?.focus()}>
       {value.map(tag => (
         <span key={tag} className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border ${colors[color]}`}>
           {tag}
@@ -146,7 +147,7 @@ const TagInput = ({ value, onChange, placeholder, color = 'green' }) => {
         </span>
       ))}
       <input
-        id={`taginput-${placeholder}`}
+        ref={inputRef}
         value={input}
         onChange={e => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
