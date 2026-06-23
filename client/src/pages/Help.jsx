@@ -9,8 +9,9 @@ import { MessageCircle, MessageSquare, Phone, Mail, Sparkles } from "lucide-reac
  */
 
 // TODO: move to admin-configurable support settings.
-const SUPPORT_WHATSAPP = "919999999999"; // placeholder — replace with real number
-const SUPPORT_EMAIL = "support@bookasloth.in";
+const SUPPORT_WHATSAPP = "15559708785";
+const SUPPORT_EMAIL = "bolt@bookasloth.in";
+const SUPPORT_PHONE = "+15559708785";
 
 const FAQ = [
   {
@@ -51,7 +52,17 @@ const ChannelCard = ({ icon: Icon, title, desc, action, disabled, badge }) => {
     </div>
   );
   if (disabled || !action) return body;
-  return <a href={action} target="_blank" rel="noreferrer" className="block hover:no-underline">{body}</a>;
+  // mailto:/tel: must open in the same context — target="_blank" leaves a dead blank tab.
+  const newTab = /^https?:/i.test(action);
+  return (
+    <a
+      href={action}
+      {...(newTab ? { target: "_blank", rel: "noreferrer" } : {})}
+      className="block hover:no-underline"
+    >
+      {body}
+    </a>
+  );
 };
 
 const Help = () => (
@@ -86,9 +97,8 @@ const Help = () => (
         <ChannelCard
           icon={Phone}
           title="Call us"
-          desc="Phone support is not available yet."
-          badge="Inactive"
-          disabled
+          desc={SUPPORT_PHONE}
+          action={`tel:${SUPPORT_PHONE}`}
         />
       </div>
 

@@ -24,6 +24,7 @@ export default function LegalLayout({ title, updated = '20 June 2026', current, 
   useDocumentMeta({ title: `${title} | Book A Sloth` });
 
   return (
+    <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
     <div className="app-container py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <h1 className="text-2xl sm:text-3xl font-bold mb-1 text-ink">{title}</h1>
@@ -59,6 +60,7 @@ export default function LegalLayout({ title, updated = '20 June 2026', current, 
           Operated by Timewheel Internet Private Limited &middot; CIN U62012OD2026PTC052654 &middot; GSTIN 21AAMCT8270C1ZF
         </p>
       </div>
+    </div>
     </div>
   );
 }

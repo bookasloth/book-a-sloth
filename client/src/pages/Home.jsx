@@ -503,6 +503,7 @@ const Home = () => {
 
   // ── Preloader readiness: fonts loaded + hero image decoded (real, not timed) ──
   const [assetsReady, setAssetsReady] = useState(false);
+  const [openFaq, setOpenFaq] = useState(null); // FAQ: single-open accordion
   useEffect(() => {
     let done = false;
     const finish = () => { if (!done) { done = true; setAssetsReady(true); } };
@@ -1894,13 +1895,20 @@ const Home = () => {
           <div className="mt-12 space-y-3">
             {FAQS.map((f, i) => (
               <Reveal key={f.q} delay={Math.min(i * 0.04, 0.2)}>
-                <details className="group rounded-[6px] border border-black/5 bg-white px-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] [&_summary::-webkit-details-marker]:hidden">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 font-heading text-base font-bold text-ink">
+                <div className="rounded-[6px] border border-black/5 bg-white px-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    aria-expanded={openFaq === i}
+                    className="flex w-full cursor-pointer items-center justify-between gap-4 py-5 text-left font-heading text-base font-bold text-ink"
+                  >
                     {f.q}
-                    <Plus size={18} className="flex-shrink-0 text-primary transition-transform duration-300 group-open:rotate-45" />
-                  </summary>
-                  <p className="-mt-1 pb-5 text-sm leading-relaxed text-neutral-500">{f.a}</p>
-                </details>
+                    <Plus size={18} className={`flex-shrink-0 text-primary transition-transform duration-300 ${openFaq === i ? 'rotate-45' : ''}`} />
+                  </button>
+                  {openFaq === i && (
+                    <p className="-mt-1 pb-5 text-sm leading-relaxed text-neutral-500">{f.a}</p>
+                  )}
+                </div>
               </Reveal>
             ))}
           </div>
