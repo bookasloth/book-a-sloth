@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminLoginUser, admin2faSetup, admin2faConfirm, admin2faVerify } from "../services/api";
+import { adminLoginUser, adminChangePassword, admin2faSetup, admin2faConfirm, admin2faVerify } from "../services/api";
 import toast from "react-hot-toast";
 
 // SECURITY: Isolated admin login with TOTP 2FA.
@@ -52,7 +52,7 @@ const PasswordStep = ({ onResult }) => {
         identifier: form.identifier.trim(),
         password: form.password,
       });
-      onResult(data);
+      onResult(data, form.password);
     } catch (err) {
       toast.error(err.response?.data?.message || "Invalid credentials");
     } finally {
@@ -219,6 +219,68 @@ const EnrollStep = ({ qrDataUrl, secret, pendingToken, onSuccess }) => {
   );
 };
 
+// ─── Forced password change (first login with a temp password) ──────────────
+
+const ChangePasswordStep = ({ changeToken, currentPassword, onDone }) => {
+  const [pw, setPw] = useState({ next: "", confirm: "" });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (pw.next.length < 10) { toast.error("New password must be at least 10 characters"); return; }
+    if (pw.next !== pw.confirm) { toast.error("Passwords do not match"); return; }
+    setLoading(true);
+    try {
+      await adminChangePassword({
+        password_change_token: changeToken,
+        current_password: currentPassword,
+        new_password: pw.next,
+      });
+      toast.success("Password set — please log in again");
+      onDone();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not set password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <p className="text-sm text-gray-300">
+        Set a new password to finish securing your account. You'll then log in again and set up two-factor authentication.
+      </p>
+      <div>
+        <label htmlFor="admin-new-pw" className="block text-xs font-medium text-gray-400 mb-1.5">New password</label>
+        <input
+          id="admin-new-pw"
+          type="password"
+          required
+          autoFocus
+          autoComplete="new-password"
+          className="fb-input bg-gray-800 text-white border-gray-700"
+          value={pw.next}
+          onChange={(e) => setPw({ ...pw, next: e.target.value })}
+        />
+        <p className="text-xs text-gray-500 mt-1.5">At least 10 characters.</p>
+      </div>
+      <div>
+        <label htmlFor="admin-confirm-pw" className="block text-xs font-medium text-gray-400 mb-1.5">Confirm new password</label>
+        <input
+          id="admin-confirm-pw"
+          type="password"
+          required
+          autoComplete="new-password"
+          className="fb-input bg-gray-800 text-white border-gray-700"
+          value={pw.confirm}
+          onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
+        />
+      </div>
+      <OrangeBtn loading={loading} label="Set password" loadingLabel="Saving…" />
+    </form>
+  );
+};
+
 // ─── Phase 3: Recovery codes (shown once) ────────────────────────────────────
 
 const RecoveryStep = ({ codes, onContinue }) => (
@@ -256,10 +318,21 @@ const AdminLogin = () => {
   const [qrDataUrl,    setQrDataUrl]    = useState(null);
   const [secret,       setSecret]       = useState(null);
   const [session,      setSession]      = useState(null);   // full session from confirm
+  const [pwChangeToken, setPwChangeToken] = useState(null); // forced first-login password change
+  const [tempPassword,  setTempPassword]  = useState("");   // the temp pw, re-verified by the change endpoint
   const navigate = useNavigate();
 
   // Called when the server responds to POST /admin-auth/login
-  const handlePasswordResult = async (data) => {
+  const handlePasswordResult = async (data, password) => {
+    // Forced first-login password change — temp password must be replaced before
+    // any session or 2FA enrollment is issued (closes the enrollment race).
+    if (data.must_set_password) {
+      setPwChangeToken(data.password_change_token);
+      setTempPassword(password || "");
+      setStep("change-password");
+      return;
+    }
+
     if (data.token) {
       // Back-compat: server returned a full session directly (2FA not yet configured
       // for this admin or feature flag off). Store immediately.
@@ -315,6 +388,7 @@ const AdminLogin = () => {
   // Step header labels
   const stepLabel = {
     password: null,
+    "change-password": "Set your password",
     code:     "Two-factor authentication",
     enroll:   "Set up two-factor authentication",
     recovery: "Save your recovery codes",
@@ -340,6 +414,14 @@ const AdminLogin = () => {
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
           {step === "password" && (
             <PasswordStep onResult={handlePasswordResult} />
+          )}
+
+          {step === "change-password" && (
+            <ChangePasswordStep
+              changeToken={pwChangeToken}
+              currentPassword={tempPassword}
+              onDone={() => { setStep("password"); setPwChangeToken(null); setTempPassword(""); }}
+            />
           )}
 
           {step === "code" && (

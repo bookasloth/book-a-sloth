@@ -35,6 +35,14 @@ const resolveKey = () => {
     if (buf && buf.length === 32) { cachedKey = buf; return cachedKey; }
     console.warn('GOOGLE_TOKEN_KEY set but not a 32-byte base64/hex value — falling back to derived key.');
   }
+  // SECURITY (audit L2): in production never silently derive the at-rest key
+  // from the service-role key. validateEnv already requires GOOGLE_TOKEN_KEY in
+  // prod; this is a hard backstop so a misconfig fails loud instead of quietly
+  // encrypting Google tokens / admin 2FA / Razorpay secrets under a weaker
+  // derived key. (Dev/test keep the zero-config derive for convenience.)
+  if (process.env.NODE_ENV === 'production' && !raw) {
+    throw new Error('cryptoTokens: GOOGLE_TOKEN_KEY (32-byte base64/hex) is required in production.');
+  }
   const seed = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
   if (!seed) throw new Error('cryptoTokens: no GOOGLE_TOKEN_KEY and no SUPABASE_SERVICE_ROLE_KEY to derive from.');
   cachedKey = crypto.scryptSync(seed, 'bas-google-token-v1', 32);

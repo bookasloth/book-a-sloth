@@ -9,6 +9,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const platformConfig = require('../services/platformConfig');
 const { computeSettlementBalance } = require('../services/settlementService');
+const { sanitizeLikeTerm } = require('../utils/searchSanitize');
 
 // ─── TRANSACTIONS ─────────────────────────────────────────────────────────────
 
@@ -40,9 +41,13 @@ const getTransactions = async (req, res) => {
       .range(from, to);
 
     if (status) query = query.eq('status', status);
-    if (search) {
+    // Sanitize before interpolating into the PostgREST or() grammar — a raw
+    // term with commas/parens/wildcards could break out of its condition
+    // (filter injection). Skip the filter entirely if nothing usable remains.
+    const safeSearch = sanitizeLikeTerm(search);
+    if (safeSearch) {
       query = query.or(
-        `guest_name.ilike.%${search}%,guest_email.ilike.%${search}%`
+        `guest_name.ilike.%${safeSearch}%,guest_email.ilike.%${safeSearch}%`
       );
     }
 

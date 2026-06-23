@@ -212,7 +212,26 @@ const updateProfile = async (req, res) => {
     if (cover_image !== undefined) updates.cover_image = cover_image;
     if (profession !== undefined) updates.profession = profession;
     if (location !== undefined) updates.location = location;
-    if (social_links) updates.social_links = social_links;
+    if (social_links && typeof social_links === 'object') {
+      // SECURITY (audit M5): only persist http(s) links (and well-formed
+      // emails). Strip javascript:/data:/etc so a stored value can never become
+      // an XSS href on the public profile. Mirrors the client-side sanitiser.
+      const clean = {};
+      for (const [k, v] of Object.entries(social_links)) {
+        const val = String(v ?? '').trim();
+        if (!val) { clean[k] = ''; continue; }
+        if (k === 'email') {
+          clean[k] = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? val : '';
+        } else if (/^https?:\/\//i.test(val)) {
+          clean[k] = val;
+        } else if (/^[a-z][a-z0-9+.-]*:/i.test(val)) {
+          clean[k] = ''; // reject any non-http(s) scheme (javascript:, data:, …)
+        } else {
+          clean[k] = `https://${val}`; // bare domain → assume https
+        }
+      }
+      updates.social_links = clean;
+    }
     // Validate and store theme color. Plan-gated server-side (mirror of
     // client/src/utils/themeUtils.js — keep both palettes in sync):
     //   free/starter → 3 presets, creator → 16 presets, professional → any hex.

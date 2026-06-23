@@ -16,7 +16,7 @@
  */
 
 const { supabaseAdmin } = require('../config/supabase');
-const { jwtSign, jwtVerify, verifyPending, verifyPassword } = require('../services/adminAuthService');
+const { jwtSign, jwtVerify, verifyPending, verifyPassword, hashPassword } = require('../services/adminAuthService');
 const { encrypt, decrypt } = require('../utils/cryptoTokens');
 const twofa = require('../services/admin2faService');
 const { audit } = require('../services/auditService');
@@ -25,6 +25,8 @@ const { roleGrants } = require('../lib/adminPermissions');
 const MAX_FAILED  = 5;
 const LOCK_MS     = 15 * 60 * 1000; // 15 min
 const PENDING_TTL = 5 * 60;         // 5 min for 2FA/enroll pending tokens
+const PW_CHANGE_TTL = 10 * 60;      // 10 min for forced password-change tokens
+const MIN_PASSWORD_LEN = 10;        // minimum length for a self-chosen password
 
 const normalize = (s) => (s || '').toLowerCase().trim();
 
@@ -114,6 +116,17 @@ const adminLogin = async (req, res) => {
       .update({ failed_attempts: 0, locked_until: null, last_login_at: new Date().toISOString() })
       .eq('id', staff.id);
 
+    // FORCED PASSWORD CHANGE GATE: a creator-issued temp password is single-use.
+    // Until the intended owner picks their own password we issue NEITHER a full
+    // session NOR a 2FA/enroll token — this stops whoever logs in first with the
+    // temp password from binding their own authenticator (the enrollment race).
+    if (staff.must_set_password) {
+      return res.json({
+        must_set_password: true,
+        password_change_token: jwtSign({ type: 'admin_pw_change', sub: staff.id }, PW_CHANGE_TTL),
+      });
+    }
+
     // SECOND FACTOR GATE: never issue a full session from the password step alone.
     if (staff.totp_enabled) {
       return res.json({
@@ -144,8 +157,12 @@ const setup2fa = async (req, res) => {
     }
 
     const { data: staff } = await supabaseAdmin
-      .from('admin_users').select('id, email, is_active').eq('id', p.sub).maybeSingle();
+      .from('admin_users').select('id, email, is_active, must_set_password').eq('id', p.sub).maybeSingle();
     if (!staff || !staff.is_active) return res.status(401).json({ message: 'Invalid session.' });
+    // Defense in depth: no enrollment may begin until the owner has set their own
+    // password. (adminLogin won't mint an enroll token in this state, but a
+    // replayed/stale one must not slip through either.)
+    if (staff.must_set_password) return res.status(403).json({ message: 'Set your password before enrolling in 2FA.' });
 
     const { secret, otpauth } = twofa.newSecret(staff.email);
     // eslint-disable-next-line global-require
@@ -178,10 +195,18 @@ const confirm2fa = async (req, res) => {
     const { data: staff } = await supabaseAdmin
       .from('admin_users').select('*').eq('id', p.sub).maybeSingle();
     if (!staff || !staff.is_active) return res.status(401).json({ message: 'Invalid session.' });
+    // Defense in depth: forbid enabling 2FA before the owner sets their password.
+    if (staff.must_set_password) return res.status(403).json({ message: 'Set your password before enrolling in 2FA.' });
     if (!staff.totp_secret) return res.status(400).json({ message: 'Start enrollment first.' });
 
-    if (!twofa.verifyToken((req.body || {}).code, decrypt(staff.totp_secret))) {
+    const { valid, step } = twofa.verifyTokenStep((req.body || {}).code, decrypt(staff.totp_secret));
+    if (!valid) {
       return res.status(400).json({ message: 'Invalid code. Try the current 6 digits.' });
+    }
+    // Replay guard: reject a code whose step was already consumed (e.g. on a prior
+    // attempt), and stamp the new step so it can't be reused within the window.
+    if (staff.last_totp_step != null && step <= staff.last_totp_step) {
+      return res.status(400).json({ message: 'Code already used. Wait for the next code.' });
     }
 
     const codes  = twofa.generateRecoveryCodes(8);
@@ -191,6 +216,7 @@ const confirm2fa = async (req, res) => {
       totp_enabled:         true,
       totp_recovery_codes:  hashes,
       totp_enrolled_at:     new Date().toISOString(),
+      last_totp_step:       step,
       failed_attempts:      0,
       locked_until:         null,
       last_login_at:        new Date().toISOString(),
@@ -235,8 +261,14 @@ const verify2fa = async (req, res) => {
     }
 
     const code = (req.body || {}).code;
-    let ok           = twofa.verifyToken(code, decrypt(staff.totp_secret));
+    const totp = twofa.verifyTokenStep(code, decrypt(staff.totp_secret));
+    // Replay guard: a TOTP code is only accepted if its step is strictly newer
+    // than the last consumed one. A valid-but-replayed code is treated as a miss
+    // (it then fails recovery matching too and counts as a failed attempt).
+    const totpReplayed = totp.valid && staff.last_totp_step != null && totp.step <= staff.last_totp_step;
+    let ok           = totp.valid && !totpReplayed;
     let usedRecovery = false;
+    const totpStep   = ok ? totp.step : null;
 
     if (!ok) {
       const idx = await twofa.matchRecoveryCode(code, staff.totp_recovery_codes || []);
@@ -271,9 +303,12 @@ const verify2fa = async (req, res) => {
       return res.status(401).json({ message: 'Invalid code.' });
     }
 
-    // Success — reset failure counters, stamp login time.
+    // Success — reset failure counters, stamp login time. When a fresh TOTP code
+    // was used, also persist its step so the same code can't be replayed.
+    const successUpdate = { failed_attempts: 0, locked_until: null, last_login_at: new Date().toISOString() };
+    if (!usedRecovery && totpStep != null) successUpdate.last_totp_step = totpStep;
     await supabaseAdmin.from('admin_users')
-      .update({ failed_attempts: 0, locked_until: null, last_login_at: new Date().toISOString() })
+      .update(successUpdate)
       .eq('id', staff.id);
 
     try {
@@ -291,7 +326,92 @@ const verify2fa = async (req, res) => {
   }
 };
 
+// POST /api/admin-auth/change-password
+//   body: { password_change_token?, current_password, new_password }
+//   (or an admin Bearer session in the Authorization header instead of the token)
+//
+// Two callers:
+//   1. Forced first-login change — the account has must_set_password=true and
+//      login handed back a short-lived password_change_token (no session issued).
+//   2. A logged-in admin voluntarily rotating their own password — authenticated
+//      by their normal admin Bearer session.
+// In both cases we re-verify the *current* password before accepting a new one,
+// enforce a minimum length, then clear must_set_password so the next login can
+// proceed to the normal 2FA enrollment/verify flow.
+const changePassword = async (req, res) => {
+  try {
+    const body = req.body || {};
+
+    // Resolve the acting staff id from EITHER a password-change token (body) OR a
+    // normal admin Bearer session — never trust an id from the request body.
+    let staffId = null;
+    if (body.password_change_token) {
+      try {
+        staffId = verifyPending(body.password_change_token, 'admin_pw_change').sub;
+      } catch (_) {
+        return res.status(401).json({ message: 'Password-change session expired. Log in again.' });
+      }
+    } else {
+      const authHeader = req.headers.authorization || '';
+      if (!authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Authentication required.' });
+      }
+      try {
+        const payload = jwtVerify(authHeader.split(' ')[1]);
+        if (payload.type !== 'admin') return res.status(403).json({ message: 'Admin access required.' });
+        staffId = payload.sub;
+      } catch (_) {
+        return res.status(401).json({ message: 'Invalid or expired admin token.' });
+      }
+    }
+
+    const currentPassword = body.current_password;
+    const newPassword     = body.new_password;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'current_password and new_password are required.' });
+    }
+    if (String(newPassword).length < MIN_PASSWORD_LEN) {
+      return res.status(400).json({ message: `New password must be at least ${MIN_PASSWORD_LEN} characters.` });
+    }
+    if (String(newPassword) === String(currentPassword)) {
+      return res.status(400).json({ message: 'New password must be different from the current one.' });
+    }
+
+    const { data: staff } = await supabaseAdmin
+      .from('admin_users').select('id, password_hash, is_active').eq('id', staffId).maybeSingle();
+    if (!staff || !staff.is_active) return res.status(401).json({ message: 'Invalid session.' });
+
+    const ok = await verifyPassword(currentPassword, staff.password_hash);
+    if (!ok) {
+      try {
+        await audit(req, { action: 'admin.password.change_failed', resource_type: 'admin_user', resource_id: staff.id });
+      } catch (_) { /* swallowed */ }
+      return res.status(401).json({ message: 'Current password is incorrect.' });
+    }
+
+    const password_hash = await hashPassword(newPassword);
+    await supabaseAdmin.from('admin_users').update({
+      password_hash,
+      must_set_password: false,
+      failed_attempts:   0,
+      locked_until:      null,
+      updated_at:        new Date().toISOString(),
+    }).eq('id', staff.id);
+
+    try {
+      await audit(req, { action: 'admin.password.changed', resource_type: 'admin_user', resource_id: staff.id });
+    } catch (_) { /* swallowed */ }
+
+    // No session is issued here — the user logs in again, which then drives the
+    // normal 2FA enrollment/verification flow.
+    return res.json({ message: 'Password updated. Please log in again.' });
+  } catch (e) {
+    console.error('[changePassword]', e.message);
+    return res.status(500).json({ message: 'Internal error.' });
+  }
+};
+
 // GET /api/admin-auth/me — echo the session identity + permissions (behind requireAdmin).
 const adminMe = (req, res) => res.json({ admin: req.admin });
 
-module.exports = { adminLogin, adminMe, setup2fa, confirm2fa, verify2fa, jwtVerify };
+module.exports = { adminLogin, adminMe, setup2fa, confirm2fa, verify2fa, changePassword, jwtVerify };

@@ -10,7 +10,7 @@
  * relying on delivery/read status (the full delivery funnel is a v2 concern —
  * here we only acknowledge status events). The secret is read from
  * notification_providers.settings_json.webhook_secret (or AISENSY_WEBHOOK_SECRET)
- * and passed as ?secret= or the x-webhook-secret header.
+ * and passed as the x-webhook-secret header (preferred) or ?secret= (legacy).
  */
 'use strict';
 const crypto = require('crypto');
@@ -42,7 +42,9 @@ const handleWebhook = async (req, res) => {
     // FAIL CLOSED: with no secret configured the endpoint must NOT accept
     // unauthenticated requests (which could forge opt-out events for any phone).
     if (!expected) return res.status(503).json({ message: 'webhook not configured' });
-    const provided = req.query?.secret || req.headers?.['x-webhook-secret'];
+    // Prefer the x-webhook-secret header; query strings land in proxy/access
+    // logs. Fall back to ?secret= for backward compatibility.
+    const provided = req.headers?.['x-webhook-secret'] || req.query?.secret;
     if (!secretsMatch(provided, expected)) return res.status(401).json({ message: 'invalid secret' });
 
     const body = req.body || {};

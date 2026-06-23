@@ -83,13 +83,34 @@ const subscribePlanRules = [
 ];
 
 // ── Product validators ────────────────────────────────────────
+// URLs are stored and later rendered as <a href> / used as download targets, so
+// they must be http(s) only — reject javascript: and data: schemes (stored-XSS /
+// open-redirect / phishing guard).
+const productUrlRule = (field, label) =>
+  body(field)
+    .optional({ nullable: true })
+    .trim()
+    .isURL({ require_protocol: true, protocols: ['http', 'https'] })
+    .withMessage(`Invalid ${label}`);
+
 const createProductRules = [
   body('title').trim().notEmpty().withMessage('Title required').isLength({ min: 3, max: 200 }),
   body('description').optional().trim().isLength({ max: 2000 }),
   body('type').optional().isIn(['pdf','template','ebook','prompt_pack','resource','other']),
   body('price').isFloat({ min: 0, max: 100000 }).withMessage('Price must be 0–100000'),
-  body('file_url').optional().trim().isURL({ require_protocol: true }).withMessage('Invalid file URL'),
-  body('thumbnail_url').optional().trim().isURL({ require_protocol: true }).withMessage('Invalid thumbnail URL'),
+  productUrlRule('file_url', 'file URL'),
+  productUrlRule('thumbnail_url', 'thumbnail URL'),
+  productUrlRule('product_url', 'product URL'),
+];
+
+const updateProductRules = [
+  body('title').optional().trim().notEmpty().withMessage('Title required').isLength({ min: 3, max: 200 }),
+  body('description').optional().trim().isLength({ max: 2000 }),
+  body('type').optional().isIn(['pdf','template','ebook','prompt_pack','resource','other']),
+  body('price').optional().isFloat({ min: 0, max: 100000 }).withMessage('Price must be 0–100000'),
+  productUrlRule('file_url', 'file URL'),
+  productUrlRule('thumbnail_url', 'thumbnail URL'),
+  productUrlRule('product_url', 'product URL'),
 ];
 
 // ── Profile validators ────────────────────────────────────────
@@ -121,6 +142,6 @@ module.exports = {
   registerRules, loginRules, otpSendRules, otpVerifyRules,
   createBookingRules, rescheduleRules,
   createOrderRules, verifyPaymentRules, subscribePlanRules,
-  createProductRules,
+  createProductRules, updateProductRules,
   updateProfileRules, createServiceRules,
 };
