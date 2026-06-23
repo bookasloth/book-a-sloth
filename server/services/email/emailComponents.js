@@ -88,16 +88,6 @@ function banner(theme, { title, sub } = {}) {
   </td></tr></table>`;
 }
 
-/** Amount-paid block + optional line items. rows: [[label, value], ...]. */
-function receipt(theme, { amount, rows = [] } = {}) {
-  const lines = (rows || []).filter(Boolean).map(([k, v]) =>
-    `<tr><td style="padding:3px 0;font-size:13px;color:#5f6368;font-family:${FONT};">${esc(k)}</td><td align="right" style="padding:3px 0;font-size:13px;color:#202124;font-family:${FONT};">${esc(v)}</td></tr>`).join('');
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 4px;"><tr><td align="center" style="background:${theme.tint};border-radius:1px;padding:14px;">
-    <div style="font-size:13px;color:${theme.text};font-family:${FONT};">Amount paid</div>
-    <div style="font-size:22px;font-weight:700;color:${theme.text};font-family:${FONT};">${esc(amount)}</div>
-  </td></tr>${lines ? `<tr><td style="padding:10px 2px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lines}</table></td></tr>` : ''}</table>`;
-}
-
 /** Celebratory medallion hero (achievement, milestone, birthday, welcome). */
 function celebration(theme, { iconUrl, title } = {}) {
   const medal = iconUrl ? `<img src="${esc(iconUrl)}" width="40" height="40" alt="" style="display:block;margin:0 auto 8px;border:0;">` : '';
@@ -106,14 +96,4 @@ function celebration(theme, { iconUrl, title } = {}) {
   </td></tr></table>`;
 }
 
-/** Star row + optional quote. */
-function reviewStars(theme, n = 5, quote = '') {
-  const k = Math.max(0, Math.min(5, Number(n) || 0));
-  const stars = '★★★★★'.slice(0, k) + '☆☆☆☆☆'.slice(0, 5 - k);
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 4px;background:${theme.tint};border-radius:1px;"><tr><td align="center" style="padding:16px;">
-    <div style="font-size:22px;letter-spacing:3px;color:${theme.accent};">${stars}</div>
-    ${quote ? `<div style="font-size:13px;font-style:italic;color:${theme.text};padding-top:6px;font-family:${FONT};">&ldquo;${esc(quote)}&rdquo;</div>` : ''}
-  </td></tr></table>`;
-}
-
-module.exports = { statusTags, otpBox, heroDate, amountRow, infoCard, countdown, banner, receipt, celebration, reviewStars, TONES, FONT };
+module.exports = { statusTags, otpBox, heroDate, amountRow, infoCard, countdown, banner, celebration, TONES, FONT };

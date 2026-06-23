@@ -26,9 +26,8 @@ describe('emailComponents', () => {
     expect(C.statusTags([])).toBe('');
   });
 
-  test('amountRow / receipt / banner / countdown / celebration return strings with content', () => {
+  test('amountRow / banner / countdown / celebration return strings with content', () => {
     expect(C.amountRow(green, 'Earnings', '₹2,000')).toContain('₹2,000');
-    expect(C.receipt(green, { amount: '₹2,360', rows: [['GST', '₹360']] })).toContain('₹2,360');
     expect(C.banner(slate, { title: 'Cancelled' })).toContain('Cancelled');
     expect(C.countdown(green, { lead: 'in', big: '2 hours' })).toContain('2 hours');
     expect(C.celebration(green, { title: 'Nice!' })).toContain('Nice!');
