@@ -184,12 +184,12 @@ const registerVendor = async (req, res) => {
     if (!name || !email || !password)
       return res.status(400).json({ message: 'Name, email and password are required' });
 
-    // Guard: prevent a guest account from being upgraded to vendor via re-registration
+    // One account per email (unified model). If an account already exists the
+    // user logs in — and a guest becomes a host via the in-app "Become a host"
+    // opt-in (POST /api/auth/become-host), not by re-registering here.
     const { data: existing } = await supabaseAdmin
       .from('profiles').select('id, role').eq('email', email.toLowerCase().trim()).maybeSingle();
     if (existing) {
-      if (existing.role === 'guest')
-        return res.status(409).json({ message: 'This email is registered as a user account. Hosts and users must use separate email addresses.' });
       return res.status(409).json({ message: 'An account with this email already exists. Please log in.' });
     }
 
@@ -460,12 +460,12 @@ const registerUser = async (req, res) => {
     if (!name || !email || !password)
       return res.status(400).json({ message: 'Name, email and password are required' });
 
-    // Guard: prevent a vendor from re-registering as a guest with the same email
+    // One account per email (unified model). Existing account → log in. A host
+    // can already book with their host account, so no separate user account is
+    // needed.
     const { data: existing } = await supabaseAdmin
       .from('profiles').select('id, role').eq('email', email.toLowerCase().trim()).maybeSingle();
     if (existing) {
-      if (existing.role === 'host')
-        return res.status(409).json({ message: 'This email belongs to a host account. Users and hosts must use separate email addresses.' });
       return res.status(409).json({ message: 'An account with this email already exists. Please log in.' });
     }
 
