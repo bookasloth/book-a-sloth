@@ -78,7 +78,7 @@ drift. All colors are **precomputed solid hex** (no 8-digit alpha — Outlook).
 | Product Feedback | blue | `#2f7bd6` | `#e9f1fb` | `#185fa5` | message-dots | status pill + response card |
 | Newsletter | brand | `#FE5100` | `#fff1ea` | `#b8410f` | mail | editorial hero + CTA |
 
-> Result: **9 color families, ~13 glyphs** across the 15 categories that exist today.
+> Result: **9 color families, 15 glyphs** across the 15 categories that exist today.
 
 ### Body hero blocks (NEW `emailComponents.js`)
 Reusable, accent-aware, Outlook-safe (nested tables, solid hex, 1px radius, PNG-only imagery).
@@ -136,7 +136,7 @@ event → communicationEngine.send → getTemplate → renderEmail
 
 ### Icon assets (founder dependency — blocks visual completion)
 Header glyphs are **PNG**, hosted on the existing `company-assets.bookasloth.in` CDN, because
-Outlook desktop renders neither inline SVG nor icon-fonts. ~13 icons needed (one per glyph in
+Outlook desktop renders neither inline SVG nor icon-fonts. 15 icons needed (one per glyph in
 the registry), exported at 2× (e.g. 32px for 16px display), single-color to match `accent`
 (or a neutral dark that reads on any tint).
 
@@ -204,4 +204,39 @@ the registry), exported at 2× (e.g. 32px for 16px display), single-color to mat
 - `server/tests/unit/` — new `emailThemes` + `emailComponents` tests; updated `emailLayout` test
   (incl. footer-unchanged regression guard).
 - Re-seed both DBs via `server/scripts/seedEmailTemplates.js` (no code change to the seeder).
-- **Asset dependency:** ~13 glyph PNGs on `company-assets.bookasloth.in/images/email/icons/`.
+- **Asset dependency:** 15 glyph PNGs on `company-assets.bookasloth.in/images/email/icons/`.
+
+## Appendix: icon asset manifest (founder/design deliverable)
+
+Upload to `https://company-assets.bookasloth.in/images/email/icons/`.
+
+**Shared specs (every icon):**
+- **Canvas:** `48 × 48 px` (3× of the 16px display size — crisp on retina).
+- **Format:** PNG-24 with alpha (transparent background), sRGB, < 5 KB each.
+- **Style:** outline / line-icon (Tabler-outline equivalents), ~2px visual stroke weight, no fill.
+- **Color:** single solid color per icon (the family text-shade below) — matches the pill label.
+- **Padding:** ~3px safe margin inside the 48px canvas (glyph art ~42px).
+- **Display in email:** `width="16" height="16"`.
+
+| # | File | Glyph | Used by (email_category) | Color |
+|---|---|---|---|---|
+| 1 | `shield-lock.png` | shield + lock | Security Check | `#41506a` |
+| 2 | `shield-alert.png` | shield + ! | Security Alert | `#41506a` |
+| 3 | `calendar-check.png` | calendar + check | Booking Confirmed | `#056800` |
+| 4 | `calendar-plus.png` | calendar + plus | New Booking | `#b8410f` |
+| 5 | `bell.png` | bell | Reminder | `#534ab7` |
+| 6 | `circle-x.png` | circle + x | Booking Cancelled | `#a32d2d` |
+| 7 | `circle-check.png` | circle + check | Session Complete | `#0f6e56` |
+| 8 | `calendar-clock.png` | calendar + clock | Rescheduled | `#185fa5` |
+| 9 | `user-cog.png` | user + gear | Account Update | `#185fa5` |
+| 10 | `trophy.png` | trophy | Achievement Unlocked | `#854f0b` |
+| 11 | `credit-card.png` | credit card | Payment Receipt | `#056800` |
+| 12 | `gift.png` | gift box | Community Update | `#993556` |
+| 13 | `sparkles.png` | sparkles | Welcome | `#b8410f` |
+| 14 | `message-dots.png` | speech bubble + dots | Product Feedback | `#185fa5` |
+| 15 | `mail.png` | envelope | Newsletter | `#b8410f` |
+
+> Colors are the per-family **pill text-shade** (legible on the light tint background). If you
+> prefer fewer variants, a single neutral `#202124` for all 15 also works — less "alive" but
+> one less color axis. Source glyphs: Tabler Icons (outline) — names above match the set.
+
