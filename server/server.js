@@ -135,7 +135,7 @@ app.get('/', (req, res) => res.json({ message: 'Book A Sloth API v1.4 running' }
 
 app.use(require('./middleware/errorMiddleware'));
 
-const { processReminders, autoCompleteBookings } = require('./controllers/bookingController');
+const { processReminders, autoCompleteBookings, expireStalePendingBookings } = require('./controllers/bookingController');
 const { cleanup: cleanupOtps } = require('./utils/otpStore');
 
 // Leader-election for the crons below. On one instance every job runs (the lock
@@ -159,6 +159,15 @@ setInterval(async () => {
   try { await runLocked('auto-complete', () => autoCompleteBookings(), { leaseMs: AUTO_COMPLETE_INTERVAL_MIN * 2 * 60 * 1000 }); }
   catch (err) { console.error('Auto-complete cron error:', err.message); }
 }, AUTO_COMPLETE_INTERVAL_MIN * 60 * 1000);
+
+// Reap stale unpaid 'pending' bookings (security audit H-2) so abandoned or
+// maliciously-sprayed holds release the slot for real customers. Default every
+// 10 min; the hold window (default 30 min) lives in the controller.
+const PENDING_REAP_INTERVAL_MIN = Number(process.env.PENDING_REAP_INTERVAL_MIN) || 10;
+setInterval(async () => {
+  try { await runLocked('expire-pending-bookings', () => expireStalePendingBookings(), { leaseMs: PENDING_REAP_INTERVAL_MIN * 2 * 60 * 1000 }); }
+  catch (err) { console.error('Pending-hold reaper cron error:', err.message); }
+}, PENDING_REAP_INTERVAL_MIN * 60 * 1000);
 
 setInterval(async () => {
   try { await runLocked('otp-cleanup', () => cleanupOtps(), { leaseMs: 2 * 60 * 60 * 1000 }); }

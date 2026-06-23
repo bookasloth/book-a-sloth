@@ -30,6 +30,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.OAUTH_STATE_SECRET) {
 }
 const sendEmail = require("../utils/sendEmail");
 const otpStore = require("../utils/otpStore");
+const guestGrant = require("../utils/bookingGrant");
 const { sendOtpNotification } = require("../utils/notify");
 const NotificationEngine = require("../services/notificationEngine");
 const { runInBackground } = require("../utils/background");
@@ -580,9 +581,15 @@ const verifyOtp = async (req, res) => {
       console.error("verify-otp: ensureGuestProfile error (non-fatal):", e.message);
     }
 
+    // Security audit H-1: issue a short-lived grant bound to the verified contact.
+    // createBooking requires this for anonymous bookings so the API can no longer
+    // be driven with a bare guest_email/phone (notification relay + slot squatting).
+    const bookingGrant = guestGrant.issue({ email, phone });
+
     res.json({
       message: "OTP verified",
       verified: true,
+      bookingGrant,
       user: profile
         ? {
             _id: profile.id,

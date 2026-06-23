@@ -212,4 +212,17 @@ describe('otpStore (secure)', () => {
     const result = await verify(EMAIL, OTP);
     expect(result.valid).toBe(true);
   });
+
+  // Security audit M-2: a code is bound to the purpose it was issued for. A
+  // password-reset code must not be redeemable on the booking/login path.
+  test('rejects a code whose type does not match the expected purpose', async () => {
+    await set(EMAIL, OTP);                                  // stored as type 'booking'
+    supabaseAdmin._store.get(EMAIL).type = 'password_reset'; // becomes a reset code
+    const asBooking = await verify(EMAIL, OTP);             // default expectedType 'booking'
+    expect(asBooking.valid).toBe(false);
+    expect(asBooking.reason).toMatch(/no otp/i);
+    // Still valid when the caller expects that purpose.
+    const asReset = await verify(EMAIL, OTP, 'password_reset');
+    expect(asReset.valid).toBe(true);
+  });
 });

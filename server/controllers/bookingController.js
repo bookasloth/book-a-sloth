@@ -15,6 +15,7 @@ const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { runInBackground } = require("../utils/background");
 const { hostOf } = require("../utils/hostOf");
 const profileSecrets = require("../utils/profileSecrets");
+const guestGrant = require("../utils/bookingGrant");
 
 const emailHtml = (body) => `
   <div style="max-width:520px;margin:0 auto;padding:26px;border-radius:24px;background:#ffffff;font-family:'Plus Jakarta Sans','Poppins',sans-serif;color:#111827;box-shadow:0 24px 60px rgba(15,23,42,0.08);">
@@ -104,13 +105,18 @@ const selectServiceWithFallback = async (query) => {
   return result;
 };
 
-// GET /api/bookings/service/:id
+// GET /api/bookings/service/:id  (public, unauthenticated)
 const getServiceById = async (req, res) => {
   try {
+    // Security audit M-7: this endpoint is unauthenticated, so only ACTIVE
+    // services may be returned — otherwise anyone with a service UUID could read
+    // a draft/deactivated listing. (The authenticated host dashboards use other
+    // endpoints to preview their own inactive services.)
     let serviceResult = await supabaseAdmin
       .from("services")
       .select("*")
       .eq("id", req.params.id)
+      .eq("is_active", true)
       .single();
     // Fallback if schema cache is stale
     if (serviceResult.error && /Could not find the|column.*does not exist/i.test(serviceResult.error.message)) {
@@ -118,6 +124,7 @@ const getServiceById = async (req, res) => {
         .from("services")
         .select("id, host_id, title, description, type, duration, price, currency, meeting_mode, is_active, created_at, updated_at")
         .eq("id", req.params.id)
+        .eq("is_active", true)
         .single();
     }
     const { data: service, error } = serviceResult;
@@ -197,7 +204,37 @@ const createBooking = async (req, res) => {
       guest_phone,
       scheduled_at,
       notes,
+      booking_grant,
     } = req.body;
+
+    // ── Input validation (security audit M-5) — defence-in-depth; reject junk
+    // before any DB work and before user-controlled values reach notifications. ──
+    if (typeof service_id !== "string" || !service_id)
+      return res.status(400).json({ message: "A valid service is required." });
+    if (
+      guest_email != null &&
+      !(typeof guest_email === "string" &&
+        guest_email.length <= 254 &&
+        /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guest_email))
+    )
+      return res.status(400).json({ message: "Enter a valid email address." });
+    if (scheduled_at == null || Number.isNaN(new Date(scheduled_at).getTime()))
+      return res.status(400).json({ message: "Choose a valid time slot." });
+
+    // ── OTP gate (security audit H-1) ──
+    // An anonymous booking must present a short-lived grant issued by
+    // /auth/verify-otp, bound to the contact that received the code. Logged-in
+    // users (req.user, set by `protect`) are already authenticated. Without this
+    // the API trusts a bare guest_email/phone → anyone can create bookings for
+    // any address (notification/phishing relay + slot squatting).
+    if (!req.user) {
+      if (!guest_email && !guestGrant.normalizePhone(guest_phone))
+        return res.status(400).json({ message: "A valid email or mobile number is required." });
+      if (!guestGrant.verify(booking_grant, { email: guest_email, phone: guest_phone }))
+        return res
+          .status(401)
+          .json({ message: "Please verify your email or mobile with the code we sent, then book." });
+    }
     // SECURITY: host_id is NEVER taken from the request body. The client could
     // pass any host_id (mismatched from the service) to attach a booking to the
     // wrong vendor, bypass that vendor's availability, or harvest another host's
@@ -1150,6 +1187,50 @@ const autoCompleteBookings = async () => {
   return { completed };
 };
 
+// ── Stale unpaid-hold reaper (security audit H-2) ──────────────────────────
+// A paid-service booking is created status:'pending'/payment_status:'unpaid'
+// and immediately reserves the slot (it counts as busy in availability and is
+// covered by the bookings_no_overlap exclusion constraint). Nothing required
+// payment to hold the slot and abandoned holds never expired — so abandoned
+// checkouts (or an attacker spraying the API) could squat a host's whole
+// calendar and deny real customers. This sweep cancels unpaid pending holds
+// older than the hold window, releasing the slot for both the availability
+// picker and the DB constraint (both ignore status='cancelled').
+//
+// The window must comfortably exceed a real checkout (incl. redirect-based UPI)
+// so a genuine in-flight payment is never reaped mid-flow; the booking-payment
+// reconciler also heals actually-paid bookings within minutes, well before this
+// fires. Default 30 min, override with PENDING_BOOKING_HOLD_MIN.
+const PENDING_HOLD_MS = (Number(process.env.PENDING_BOOKING_HOLD_MIN) || 30) * 60 * 1000;
+const PENDING_REAP_BATCH = 200;
+
+const expireStalePendingBookings = async () => {
+  const cutoff = new Date(Date.now() - PENDING_HOLD_MS).toISOString();
+  const nowIso = new Date().toISOString();
+  const reap = (extra) =>
+    supabaseAdmin
+      .from("bookings")
+      .update({ status: "cancelled", updated_at: nowIso, ...extra })
+      .eq("status", "pending")
+      .eq("payment_status", "unpaid")
+      .lt("created_at", cutoff)
+      .select("id")
+      .limit(PENDING_REAP_BATCH);
+
+  let { data, error } = await reap({ cancelled_at: nowIso });
+  // Legacy DB without a cancelled_at column: retry with the minimal update.
+  if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+    ({ data, error } = await reap({}));
+  }
+  if (error) {
+    console.error("Pending-hold reaper error:", error.message);
+    return { expired: 0 };
+  }
+  const expired = (data || []).length;
+  if (expired) console.log(`Pending-hold reaper: expired ${expired} stale unpaid booking(s)`);
+  return { expired };
+};
+
 module.exports = {
   getServiceById,
   getBookedSlots,
@@ -1161,6 +1242,7 @@ module.exports = {
   completeBooking,
   markBookingCompleted,
   autoCompleteBookings,
+  expireStalePendingBookings,
   rescheduleBooking,
   confirmReschedule,
   processReminders,

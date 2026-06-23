@@ -30,6 +30,7 @@ jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: (...a) => moc
 
 const { createCalendarEvent } = require('../../config/google');
 const { createBooking } = require('../../controllers/bookingController');
+const guestGrant = require('../../utils/bookingGrant');
 
 const res = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
 
@@ -56,7 +57,7 @@ test('paid online service does NOT create a calendar event at booking time', asy
     host: { id: 'h1', email: 'h@x.com', google_calendar_connected: true, google_refresh_token: 'r', google_access_token: 'a' },
     avail: { timezone: 'Asia/Kolkata' },
   });
-  const req = { body: { service_id: 's1', host_id: 'h1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z' } };
+  const req = { body: { service_id: 's1', host_id: 'h1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z', booking_grant: guestGrant.issue({ email: 'g@x.com' }) } };
   await createBooking(req, res());
   expect(createCalendarEvent).not.toHaveBeenCalled();
 });
@@ -67,7 +68,46 @@ test('free online service STILL creates a calendar event at booking time', async
     host: { id: 'h1', email: 'h@x.com', google_calendar_connected: true, google_refresh_token: 'r', google_access_token: 'a' },
     avail: { timezone: 'Asia/Kolkata' },
   });
-  const req = { body: { service_id: 's1', host_id: 'h1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z' } };
+  const req = { body: { service_id: 's1', host_id: 'h1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z', booking_grant: guestGrant.issue({ email: 'g@x.com' }) } };
   await createBooking(req, res());
   expect(createCalendarEvent).toHaveBeenCalledTimes(1);
+});
+
+// ── Security audit H-1: server-side OTP gate ──
+test('anonymous booking WITHOUT a valid OTP grant is rejected 401', async () => {
+  wireSupabase({
+    service: { id: 's1', title: 'SEO', duration: 30, price: 500, meeting_mode: 'online' },
+    host: { id: 'h1', email: 'h@x.com' },
+    avail: { timezone: 'Asia/Kolkata' },
+  });
+  const r = res();
+  // No req.user, no booking_grant — the OTP gate must block before any insert.
+  const req = { body: { service_id: 's1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z' } };
+  await createBooking(req, r);
+  expect(r.status).toHaveBeenCalledWith(401);
+  expect(createCalendarEvent).not.toHaveBeenCalled();
+});
+
+test('anonymous booking with a grant for a DIFFERENT contact is rejected 401', async () => {
+  wireSupabase({
+    service: { id: 's1', title: 'SEO', duration: 30, price: 500, meeting_mode: 'online' },
+    host: { id: 'h1', email: 'h@x.com' },
+    avail: { timezone: 'Asia/Kolkata' },
+  });
+  const r = res();
+  const req = { body: { service_id: 's1', guest_name: 'G', guest_email: 'victim@x.com', scheduled_at: '2099-01-01T05:00:00.000Z', booking_grant: guestGrant.issue({ email: 'attacker@x.com' }) } };
+  await createBooking(req, r);
+  expect(r.status).toHaveBeenCalledWith(401);
+});
+
+test('logged-in booking needs no OTP grant (reaches insert → 201)', async () => {
+  wireSupabase({
+    service: { id: 's1', title: 'SEO', duration: 30, price: 500, meeting_mode: 'online' },
+    host: { id: 'h1', email: 'h@x.com' },
+    avail: { timezone: 'Asia/Kolkata' },
+  });
+  const r = res();
+  const req = { user: { id: 'u1' }, body: { service_id: 's1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z' } };
+  await createBooking(req, r);
+  expect(r.status).toHaveBeenCalledWith(201);
 });
