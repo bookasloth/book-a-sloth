@@ -18,6 +18,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const razorpayConfig = require('./razorpayConfig');
 const { trackServer } = require('../utils/trackServer');
 const { resolveGuestId } = require('../utils/posthog');
+const { finalizeBookingCapture } = require('./bookingCapture');
 
 // Only touch bookings whose order is old enough that the normal capture→webhook
 // path should already have completed — avoids racing a webhook that's in flight.
@@ -32,7 +33,7 @@ async function reconcile() {
 
   const { data: stuck } = await supabaseAdmin
     .from('bookings')
-    .select('id, razorpay_order_id, host_id, guest_id, guest_email, customer_total, services(title)')
+    .select('id, razorpay_order_id, host_id, guest_id, guest_email, customer_total, commission_applied, commission_gst, platform_fee_amount, platform_fee_gst, services(title, price)')
     .eq('payment_status', 'unpaid')
     .not('razorpay_order_id', 'is', null)
     .neq('status', 'cancelled')
@@ -59,21 +60,26 @@ async function reconcile() {
       const captured = (res.items || []).find((p) => p.status === 'captured');
       if (!captured) continue; // not actually paid — leave it
 
-      // Idempotent: only the unpaid→paid transition matches, so a late webhook
-      // that already flipped this row yields zero rows here (no double-fire).
-      const { data: paidRows } = await supabaseAdmin
-        .from('bookings')
-        .update({
-          payment_status: 'paid',
-          status: 'confirmed',
-          razorpay_payment_id: captured.id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', b.id)
-        .eq('payment_status', 'unpaid')
-        .select('id, host_id, guest_id, guest_email, customer_total, services(title)');
-
-      const paid = paidRows && paidRows[0];
+      // Single source of truth (security audit H-3): flip unpaid→paid/confirmed
+      // AND finalise the vendor payout (subtracting the fee from the captured
+      // payment) AND post the ORDER_PAYMENT ledger entry — previously this only
+      // flipped the status flags. Idempotent: a late webhook that already won the
+      // transition yields no row here (no double-fire).
+      const { updated: paid } = await finalizeBookingCapture({
+        bookingId: b.id,
+        paymentId: captured.id,
+        feePaise: captured.fee,
+        taxPaise: captured.tax,
+        pricing: {
+          commission_applied: b.commission_applied,
+          commission_gst: b.commission_gst,
+          platform_fee_amount: b.platform_fee_amount,
+          platform_fee_gst: b.platform_fee_gst,
+          customer_total: b.customer_total,
+          host_id: b.host_id,
+          service_price: b.services?.price || 0,
+        },
+      });
       if (!paid) continue; // someone else won the transition
 
       healed++;
