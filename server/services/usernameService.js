@@ -66,6 +66,54 @@ async function recordInitialUsername(userId, username) {
   }
 }
 
+// Claim a username during onboarding — replaces the throwaway auto name with
+// the host's first real choice. Intentionally bypasses the change_username RPC's
+// gating rules (WhatsApp gate, 2/365-day cap, 6-month gap) because:
+//   a) The host hasn't had a chance to verify WhatsApp yet (that's step 5+).
+//   b) This is not a "change" — it's the host's initial brand identity claim.
+//      The auto name recorded by upsertProfile was a placeholder, not a choice.
+// Atomically: retires the existing current row (is_current=false), inserts the
+// new row (source='onboarding', is_current=true), and updates profiles.username.
+// Returns { ok: true, username } or { ok: false, reason }.
+async function setOnboardingUsername(userId, newSlug) {
+  const clean = String(newSlug).toLowerCase().trim();
+
+  // Race-safe: if the name is already taken by someone else, the unique index on
+  // username_history will reject the INSERT and we catch unique_violation.
+  try {
+    // 1. Retire the current username_history row for this user (if any).
+    await supabaseAdmin
+      .from('username_history')
+      .update({ is_current: false, released_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('is_current', true);
+
+    // 2. Insert the new current row (source='onboarding' does NOT count toward
+    //    the 2/365-day user-initiated change allowance tracked by source='user').
+    const { error: insertErr } = await supabaseAdmin
+      .from('username_history')
+      .insert({ user_id: userId, username: clean, is_current: true, source: 'onboarding' });
+
+    if (insertErr) {
+      // Likely a unique_violation (name taken in history) — return structured error.
+      if (insertErr.code === '23505') return { ok: false, reason: 'taken' };
+      return { ok: false, reason: 'error', detail: insertErr.message };
+    }
+
+    // 3. Update the denormalized cache on profiles.
+    const { error: profileErr } = await supabaseAdmin
+      .from('profiles')
+      .update({ username: clean, updated_at: new Date().toISOString() })
+      .eq('id', userId);
+
+    if (profileErr) return { ok: false, reason: 'error', detail: profileErr.message };
+
+    return { ok: true, username: clean };
+  } catch (err) {
+    return { ok: false, reason: 'error', detail: err.message };
+  }
+}
+
 // Atomic, race-safe change via the change_username RPC (all rule enforcement
 // lives in SQL). Returns the RPC's jsonb verdict:
 //   { ok: true, username } | { ok: false, reason, next_eligible? }
@@ -83,5 +131,6 @@ module.exports = {
   resolve,
   createInitialUsername,
   recordInitialUsername,
+  setOnboardingUsername,
   changeUsername,
 };

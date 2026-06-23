@@ -6,6 +6,7 @@ const communicationEngine = require("../services/email/communicationEngine");
 const otpStore = require("../utils/otpStore");
 const razorpayConfig = require("../services/razorpayConfig");
 const { isReserved } = require("../utils/reservedUsernames");
+const usernameService = require("../services/usernameService");
 
 // ─── Slug validation & generation ───────────────────────────────────────
 const isValidSlug = (slug) => {
@@ -41,8 +42,15 @@ const generateUniqueSlug = async (baseName) => {
 
 // ─── Authed Slug Claim (Google flow, step 2) ─────────────────────────────
 // Called after Google auth confirms identity (step 1). Claims a slug for the
-// authenticated vendor, updates their profile username, and advances to step 2.
-// Uses the same reserved-word guard as changeUsername (usernameController.js).
+// authenticated vendor, advances to step 2, and makes /<slug> the host's live
+// public profile URL.
+//
+// Why we don't call usernameService.changeUsername here:
+//   The change_username RPC enforces WhatsApp-verified gate, 2/365-day cap, and
+//   6-month gap. None apply to onboarding — this is the host's FIRST real name
+//   choice (the auto name from upsertProfile was a placeholder). We call
+//   usernameService.setOnboardingUsername instead, which atomically swaps the
+//   history row (source='onboarding') without triggering the gating rules.
 const claimSlug = async (vendorId, slug) => {
   const clean = (slug || "").toLowerCase().trim();
   if (!isValidSlug(clean)) {
@@ -52,19 +60,36 @@ const claimSlug = async (vendorId, slug) => {
   if (isReserved(clean)) {
     throw new Error("That name is reserved");
   }
-  const { data: owner } = await supabaseAdmin
-    .from("profiles")
-    .select("id")
-    .eq("onboarding_slug", clean)
-    .maybeSingle();
-  if (owner && owner.id !== vendorId) {
-    throw new Error("Slug already taken");
+
+  // History-backed availability check: rejects names that are current OR retired
+  // in username_history, enforcing the global non-reuse invariant.
+  // Allow the caller's own current slug through (idempotent re-claim).
+  const taken = await usernameService.usernameExists(clean);
+  if (taken) {
+    // Check if it's taken by the caller themselves (idempotent re-claim allowed)
+    const { data: selfCheck } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("username", clean)
+      .maybeSingle();
+    if (!selfCheck || selfCheck.id !== vendorId) {
+      throw new Error("Slug already taken");
+    }
   }
+
+  // Atomic swap in username_history (retire auto row, insert onboarding row,
+  // update profiles.username). Does NOT run the change_username RPC's gating.
+  const result = await usernameService.setOnboardingUsername(vendorId, clean);
+  if (!result.ok) {
+    if (result.reason === "taken") throw new Error("Slug already taken");
+    throw new Error(result.detail || "Failed to claim slug");
+  }
+
+  // Record onboarding_slug and advance step (username already updated by service).
   const { data, error } = await supabaseAdmin
     .from("profiles")
     .update({
       onboarding_slug: clean,
-      username: clean,
       onboarding_step_completed: 2,
       updated_at: new Date().toISOString(),
     })
@@ -478,7 +503,7 @@ const activatePlan = async (vendorId, plan) => {
     .update({
       plan,
       plan_expires_at: planDetails[plan].expires,
-      onboarding_step_completed: 11, // Onboarding complete
+      onboarding_step_completed: 6, // Terminal step under the 7-step Google-first contract
       onboarding_completed: true,
       plan_activated_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
