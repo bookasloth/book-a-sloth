@@ -79,7 +79,7 @@ const BookingRow = ({ b }) => (
 );
 
 const Dashboard = () => {
-  const { user, connectGoogleCalendar, updateUser } = useAuth();
+  const { user, connectGoogleCalendar, updateUser, activateHost } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isHost = user?.role === 'host';
@@ -102,6 +102,21 @@ const Dashboard = () => {
   const dismissBanner = () => {
     localStorage.setItem('legacyPlanBannerDismissed', '1');
     setBannerDismissed(true);
+  };
+
+  // Explicit guest→host opt-in. The server enforces the role flip; on success we
+  // re-route so ProtectedRoute drives the user into host onboarding.
+  const [activatingHost, setActivatingHost] = useState(false);
+  const handleBecomeHost = async () => {
+    setActivatingHost(true);
+    try {
+      await activateHost();
+      navigate('/dashboard');
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Could not switch on hosting. Please try again.');
+    } finally {
+      setActivatingHost(false);
+    }
   };
 
   // Google-calendar return toast
@@ -167,6 +182,23 @@ const Dashboard = () => {
       <div className="w-full max-w-5xl">
         <h1 className="text-2xl sm:text-3xl font-bold mb-1">Welcome back, {user?.name?.split(' ')[0]}</h1>
         <p className="text-sm text-gray-400 mb-6">Here's what's happening with your bookings.</p>
+
+        {/* Become-a-host opt-in — the only legit guest→host switch */}
+        <div className="mb-6 flex items-start gap-3 bg-primary-light border border-primary/30 rounded p-4">
+          <LayoutGrid className="h-5 w-5 text-primary shrink-0 mt-0.5" strokeWidth={2.25} />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-gray-900">Want to offer services?</p>
+            <p className="text-xs text-gray-500 mt-0.5">Turn on hosting to publish services, share your booking page and get paid.</p>
+          </div>
+          <button
+            onClick={handleBecomeHost}
+            disabled={activatingHost}
+            className="btn shrink-0 px-3 py-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark transition-colors whitespace-nowrap disabled:opacity-60"
+          >
+            {activatingHost ? 'Setting up…' : 'Become a host'}
+          </button>
+        </div>
+
         <GuestBookings />
       </div>
     );

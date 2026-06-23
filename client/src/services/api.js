@@ -86,6 +86,8 @@ export const registerUser     = (data)         => API.post('/auth/register/user'
 export const loginUser        = (data)         => API.post('/auth/login', data);
 export const getMe            = ()             => API.get('/auth/me');
 export const updateMe         = (data)         => API.put('/auth/me', data);
+// Explicit guest→host opt-in (the only legit role switch).
+export const activateHost     = ()             => API.post('/auth/become-host');
 export const getGoogleAuthUrl = ()             => API.get('/auth/google');
 // Vendor Google auth (public): one consent screen = identity + calendar scopes
 export const getVendorGoogleUrl = (intent = 'login') => API.get('/auth/google/vendor', { params: { intent } });
