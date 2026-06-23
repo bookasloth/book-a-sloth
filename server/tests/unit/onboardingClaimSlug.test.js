@@ -4,11 +4,17 @@
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() }, signInWithPassword: jest.fn() }));
 jest.mock('../../utils/notify', () => ({ sendWhatsAppOtp: jest.fn() }));
 jest.mock('../../services/email/communicationEngine', () => ({ send: jest.fn(() => Promise.resolve()) }));
-// Mock the username service — all tests assert claimSlug goes through the
-// history-backed check (usernameExists) and the non-gated swap (setOnboardingUsername)
-// rather than touching profiles.username directly.
+// Mock the username service — all tests assert claimSlug goes through:
+//   1. usernameExists (history-backed, not profiles.username cache)
+//   2. usernameOwner  (history-backed ownership for idempotent self-check)
+//   3. setOnboardingUsername → delegates to the set_onboarding_username RPC
+//
+// NOTE: the RPC's atomicity (retire→insert→update in one transaction) is
+// enforced at the Postgres layer (v3.32_set_onboarding_username.sql) and is
+// NOT unit-tested here. These tests verify the JS orchestration only.
 jest.mock('../../services/usernameService', () => ({
   usernameExists: jest.fn(),
+  usernameOwner: jest.fn(),
   setOnboardingUsername: jest.fn(),
 }));
 
@@ -19,15 +25,12 @@ const { claimSlug, isValidSlug } = require('../../controllers/vendorOnboardingCo
 beforeEach(() => jest.clearAllMocks());
 
 // ─── Helper: wire the profiles.update().eq().select().single() chain ────────
-// This is the final step after the username service swap succeeds.
-const wireProfileUpdate = ({ updateResult = null, updateError = null, selfCheckData = null } = {}) => {
+// This is the final step in claimSlug after the username service swap succeeds
+// (writes onboarding_slug + onboarding_step_completed=2).
+const wireProfileUpdate = ({ updateResult = null, updateError = null } = {}) => {
   const updates = [];
   supabaseAdmin.from.mockImplementation((table) => {
     return {
-      // Used by the idempotency self-check (select id from profiles where username=clean)
-      select: () => ({
-        eq: () => ({ maybeSingle: () => Promise.resolve({ data: selfCheckData }) }),
-      }),
       update: (payload) => {
         updates.push(payload);
         return {
@@ -83,39 +86,56 @@ describe('claimSlug', () => {
   });
 
   it('uses the history-backed usernameExists check (not just onboarding_slug)', async () => {
-    // Simulate a slug that's retired in history (not in any onboarding_slug column)
-    // — usernameExists returns true, selfCheck returns null → should be rejected.
+    // A slug retired in history (not in any onboarding_slug column) is found by
+    // usernameExists. usernameOwner returns a different user → rejected.
     usernameService.usernameExists.mockResolvedValue(true);
-    wireProfileUpdate({ selfCheckData: null }); // no self-match
+    usernameService.usernameOwner.mockResolvedValue('other-vendor');
     await expect(claimSlug('vendor-1', 'retired-name')).rejects.toThrow(/already taken/i);
     expect(usernameService.usernameExists).toHaveBeenCalledWith('retired-name');
     expect(usernameService.setOnboardingUsername).not.toHaveBeenCalled();
   });
 
-  it('rejects a slug owned by a different profile (taken in history)', async () => {
+  it('rejects a slug owned by a different user via history ownership (not profiles cache)', async () => {
+    // Authoritative check: usernameOwner queries username_history, not profiles.username.
+    // This prevents a profiles.username cache-divergence window from being bypassed.
     usernameService.usernameExists.mockResolvedValue(true);
-    wireProfileUpdate({ selfCheckData: { id: 'other-vendor' } }); // different owner
+    usernameService.usernameOwner.mockResolvedValue('other-vendor');
     await expect(claimSlug('vendor-1', 'taken-slug')).rejects.toThrow(/already taken/i);
+    expect(usernameService.usernameOwner).toHaveBeenCalledWith('taken-slug');
     expect(usernameService.setOnboardingUsername).not.toHaveBeenCalled();
   });
 
-  it('allows re-claiming own slug (idempotent for same vendor)', async () => {
+  it('rejects a history-reserved name (owner is null — retired, never current) before calling the RPC', async () => {
+    // A name that existed historically but has no current owner (usernameOwner returns
+    // a user that isn't us) is blocked before the RPC is ever invoked.
     usernameService.usernameExists.mockResolvedValue(true);
+    usernameService.usernameOwner.mockResolvedValue('original-owner');
+    await expect(claimSlug('vendor-1', 'old-retired-name')).rejects.toThrow(/already taken/i);
+    expect(usernameService.setOnboardingUsername).not.toHaveBeenCalled();
+  });
+
+  it('allows re-claiming own slug (idempotent) via history ownership, not profiles.username cache', async () => {
+    // usernameOwner returns the SAME vendorId → idempotent re-claim proceeds.
+    // This is authoritative: even if profiles.username diverged, history is the source of truth.
+    usernameService.usernameExists.mockResolvedValue(true);
+    usernameService.usernameOwner.mockResolvedValue('vendor-1');
     usernameService.setOnboardingUsername.mockResolvedValue({ ok: true, username: 'my-slug' });
-    // selfCheck returns the SAME vendor id — idempotent re-claim should proceed
-    wireProfileUpdate({ selfCheckData: { id: 'vendor-1' } });
+    wireProfileUpdate();
     const result = await claimSlug('vendor-1', 'my-slug');
     expect(result.slug).toBe('my-slug');
+    expect(usernameService.usernameOwner).toHaveBeenCalledWith('my-slug');
     expect(usernameService.setOnboardingUsername).toHaveBeenCalledWith('vendor-1', 'my-slug');
   });
 
-  it('calls setOnboardingUsername (not a bare profiles.username write) on success', async () => {
+  it('calls setOnboardingUsername (which delegates to the set_onboarding_username RPC) on success', async () => {
+    // Verifies the JS layer calls the service (which wraps the atomic RPC) rather
+    // than performing any direct profiles.username write itself.
     usernameService.usernameExists.mockResolvedValue(false);
     usernameService.setOnboardingUsername.mockResolvedValue({ ok: true, username: 'cool-coach' });
     const { updates } = wireProfileUpdate();
     await claimSlug('vendor-1', 'cool-coach');
-    // The service handles username — the direct update must NOT include a username field
     expect(usernameService.setOnboardingUsername).toHaveBeenCalledWith('vendor-1', 'cool-coach');
+    // The controller's profiles.update must NOT contain a username field — the RPC owns that write.
     expect(updates[0]).not.toHaveProperty('username');
   });
 
@@ -144,10 +164,19 @@ describe('claimSlug', () => {
     await expect(claimSlug('vendor-1', 'good-slug')).rejects.toMatchObject({ message: 'DB error' });
   });
 
-  it('throws when setOnboardingUsername returns ok:false (race/taken)', async () => {
+  it('throws "Slug already taken" when the RPC signals a race (ok:false, reason:taken)', async () => {
+    // The set_onboarding_username RPC raises EXCEPTION 'username_taken' on
+    // unique-index conflict. usernameService maps that to { ok: false, reason: 'taken' }.
     usernameService.usernameExists.mockResolvedValue(false);
     usernameService.setOnboardingUsername.mockResolvedValue({ ok: false, reason: 'taken' });
     wireProfileUpdate();
     await expect(claimSlug('vendor-1', 'race-slug')).rejects.toThrow(/already taken/i);
+  });
+
+  it('throws a generic error when the RPC returns ok:false with a non-taken reason', async () => {
+    usernameService.usernameExists.mockResolvedValue(false);
+    usernameService.setOnboardingUsername.mockResolvedValue({ ok: false, reason: 'error', detail: 'connection reset' });
+    wireProfileUpdate();
+    await expect(claimSlug('vendor-1', 'some-slug')).rejects.toThrow(/connection reset/i);
   });
 });

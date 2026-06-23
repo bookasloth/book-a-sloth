@@ -63,18 +63,20 @@ const claimSlug = async (vendorId, slug) => {
 
   // History-backed availability check: rejects names that are current OR retired
   // in username_history, enforcing the global non-reuse invariant.
-  // Allow the caller's own current slug through (idempotent re-claim).
+  // Allow the caller's own slug through (idempotent re-claim).
+  //
+  // SECURITY NOTE: we check username_history ownership, NOT profiles.username.
+  // profiles.username is a denormalized cache that can temporarily diverge from
+  // username_history (e.g. after a partial write). Querying history directly is
+  // the authoritative check and prevents a divergence window from being exploited
+  // to bypass the "taken by someone else" guard.
   const taken = await usernameService.usernameExists(clean);
   if (taken) {
-    // Check if it's taken by the caller themselves (idempotent re-claim allowed)
-    const { data: selfCheck } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("username", clean)
-      .maybeSingle();
-    if (!selfCheck || selfCheck.id !== vendorId) {
+    const ownerId = await usernameService.usernameOwner(clean);
+    if (ownerId !== vendorId) {
       throw new Error("Slug already taken");
     }
+    // ownerId === vendorId: this is the caller's own name — idempotent re-claim.
   }
 
   // Atomic swap in username_history (retire auto row, insert onboarding row,
