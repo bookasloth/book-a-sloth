@@ -4,6 +4,8 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  uploadProductFile,
+  uploadImage,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useFeature } from "../context/FeatureContext";
@@ -20,6 +22,19 @@ const PRODUCT_TYPES = [
   { value: "other", label: "Other" },
 ];
 
+const PRODUCT_FILE_EXTS = [
+  "pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx",
+  "zip", "epub", "mp3", "png", "jpg",
+];
+const MAX_PRODUCT_FILE_BYTES = 2 * 1024 * 1024; // 2 MB
+
+const formatBytes = (n) => {
+  if (!n && n !== 0) return "";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 const emptyForm = {
   title: "",
   description: "",
@@ -27,6 +42,9 @@ const emptyForm = {
   price: 0,
   file_url: "",
   thumbnail_url: "",
+  product_url: "",
+  file_name: "",
+  file_size_bytes: null,
 };
 
 const Products = () => {
@@ -37,6 +55,10 @@ const Products = () => {
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
+  const [fileError, setFileError] = useState("");
+  const [thumbUploading, setThumbUploading] = useState(false);
+  const [thumbMode, setThumbMode] = useState("url"); // "url" | "upload"
 
   const plan = user?.plan || "explorer";
   // Plan-gated AND admin kill-switch gated. Off = no create surfaces shown.
@@ -70,10 +92,15 @@ const Products = () => {
       price: p.price,
       file_url: p.file_url || "",
       thumbnail_url: p.thumbnail_url || "",
+      product_url: p.product_url || "",
+      file_name: p.file_name || "",
+      file_size_bytes: p.file_size_bytes ?? null,
     });
     setEditingId(p.id);
     setShowForm(true);
     setDirty(false);
+    setFileError("");
+    setThumbMode("url");
   };
   const handleCancel = () => {
     if (dirty && !window.confirm("Discard changes?")) return;
@@ -84,6 +111,63 @@ const Products = () => {
   const handleChange = (f, v) => {
     setForm({ ...form, [f]: v });
     setDirty(true);
+  };
+
+  const handleFilePick = async (file) => {
+    if (!file) return;
+    setFileError("");
+    const ext = file.name.toLowerCase().split(".").pop();
+    if (!PRODUCT_FILE_EXTS.includes(ext)) {
+      setFileError(
+        "File type not supported. Allowed: PDF, DOC(X), PPT(X), XLS(X), ZIP, EPUB, MP3, PNG, JPG.",
+      );
+      return;
+    }
+    if (file.size > MAX_PRODUCT_FILE_BYTES) {
+      setFileError("File must be under 2 MB.");
+      return;
+    }
+    setFileUploading(true);
+    try {
+      const { data } = await uploadProductFile(file);
+      setForm((f) => ({
+        ...f,
+        file_url: data.url,
+        file_name: data.name,
+        file_size_bytes: data.size,
+      }));
+      setDirty(true);
+      toast.success("File uploaded");
+    } catch (err) {
+      setFileError(err.response?.data?.message || "Upload failed");
+    } finally {
+      setFileUploading(false);
+    }
+  };
+
+  const handleThumbPick = async (file) => {
+    if (!file) return;
+    if (!["png", "jpg", "jpeg", "webp"].includes(file.name.toLowerCase().split(".").pop())) {
+      toast.error("Thumbnail must be a PNG, JPG, or WEBP image.");
+      return;
+    }
+    if (file.size > MAX_PRODUCT_FILE_BYTES) {
+      toast.error("Image must be under 2 MB.");
+      return;
+    }
+    setThumbUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      const { data } = await uploadImage(fd, "products");
+      setForm((f) => ({ ...f, thumbnail_url: data.url }));
+      setDirty(true);
+      toast.success("Thumbnail uploaded");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Upload failed");
+    } finally {
+      setThumbUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -233,6 +317,23 @@ const Products = () => {
 
           <div>
             <label className="block text-sm font-medium mb-1">
+              Product URL{" "}
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="url"
+              placeholder="https://your-store.com/product"
+              className="fb-input"
+              value={form.product_url}
+              onChange={(e) => handleChange("product_url", e.target.value)}
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              A landing page or external store link for this product.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
               File URL{" "}
               <span className="text-gray-400 font-normal">
                 (Google Drive, Notion, Gumroad, Dropbox, etc.)
@@ -246,26 +347,100 @@ const Products = () => {
               onChange={(e) => handleChange("file_url", e.target.value)}
             />
             <p className="text-xs text-gray-400 mt-1">
-              Paste any shareable link. Guests get this link after purchase.
+              Paste any shareable link — or upload a file below.
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">
-              Cover Image URL{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
+              Upload File{" "}
+              <span className="text-gray-400 font-normal">
+                (PDF, DOC, PPT, XLS, ZIP, EPUB, MP3, PNG, JPG — max 2 MB)
+              </span>
             </label>
             <input
-              type="url"
-              placeholder="https://..."
+              type="file"
+              data-testid="product-file-input"
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.epub,.mp3,.png,.jpg"
               className="fb-input"
-              value={form.thumbnail_url}
-              onChange={(e) => handleChange("thumbnail_url", e.target.value)}
+              disabled={fileUploading}
+              onChange={(e) => handleFilePick(e.target.files?.[0])}
             />
+            {fileUploading && (
+              <p className="text-xs text-primary mt-1 animate-pulse">
+                Uploading…
+              </p>
+            )}
+            {fileError && (
+              <p className="text-xs text-red-500 mt-1">{fileError}</p>
+            )}
+            {!fileUploading && form.file_name && (
+              <p className="text-xs text-gray-500 mt-1">
+                {form.file_name}
+                {form.file_size_bytes
+                  ? ` · ${formatBytes(form.file_size_bytes)}`
+                  : ""}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Cover Image{" "}
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <div className="flex gap-2 mb-2">
+              <button
+                type="button"
+                onClick={() => setThumbMode("url")}
+                className={`text-xs px-3 py-1 rounded ${
+                  thumbMode === "url"
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 text-gray-500"
+                }`}
+              >
+                Paste URL
+              </button>
+              <button
+                type="button"
+                onClick={() => setThumbMode("upload")}
+                className={`text-xs px-3 py-1 rounded ${
+                  thumbMode === "upload"
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 text-gray-500"
+                }`}
+              >
+                Upload
+              </button>
+            </div>
+
+            {thumbMode === "url" ? (
+              <input
+                type="url"
+                placeholder="Paste an image URL — https://..."
+                className="fb-input"
+                value={form.thumbnail_url}
+                onChange={(e) => handleChange("thumbnail_url", e.target.value)}
+              />
+            ) : (
+              <input
+                type="file"
+                data-testid="product-thumb-input"
+                accept=".png,.jpg,.jpeg,.webp"
+                className="fb-input"
+                disabled={thumbUploading}
+                onChange={(e) => handleThumbPick(e.target.files?.[0])}
+              />
+            )}
+            {thumbUploading && (
+              <p className="text-xs text-primary mt-1 animate-pulse">
+                Uploading…
+              </p>
+            )}
             {form.thumbnail_url && (
               <img
                 src={form.thumbnail_url}
-                alt="Preview"
+                alt="Thumbnail preview"
                 className="mt-2 h-24 w-full object-cover rounded-lg"
                 onError={(e) => (e.target.style.display = "none")}
               />
