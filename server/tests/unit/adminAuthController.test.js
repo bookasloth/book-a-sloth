@@ -35,7 +35,10 @@ jest.mock('../../config/supabase', () => {
     supabaseAdmin: {
       from: jest.fn((table) => ({
         select: (...a) => buildSelect(table).select(...a),
-        update: jest.fn(() => ({ eq: jest.fn(() => Promise.resolve({ error: null })) })),
+        update: jest.fn((payload) => {
+          (globalThis.__updates || (globalThis.__updates = [])).push({ table, payload });
+          return { eq: jest.fn(() => Promise.resolve({ error: null })) };
+        }),
       })),
     },
   };
@@ -63,8 +66,14 @@ const seedStaff = (over = {}) => {
   globalThis.__rolePerms = ['ops.view', 'bookings.view'];
 };
 
+// Last write the controller pushed to the admin_users row (capture set up in the mock).
+const lastAdminWrite = () => {
+  const u = (globalThis.__updates || []).filter((x) => x.table === 'admin_users');
+  return u.length ? u[u.length - 1].payload : null;
+};
+
 describe('adminLogin (credential store)', () => {
-  beforeEach(() => { jest.clearAllMocks(); seedStaff(); });
+  beforeEach(() => { jest.clearAllMocks(); globalThis.__updates = []; seedStaff(); });
 
   test('400 — missing identifier or password', async () => {
     const res = mockRes();
@@ -139,5 +148,35 @@ describe('adminLogin (credential store)', () => {
     const decoded = jwtVerify(payload.pending_token);
     expect(decoded.type).toBe('admin_2fa');
     expect(decoded.sub).toBe('staff-1');
+  });
+});
+
+describe('adminLogin — lockout window resets after the lock expires', () => {
+  beforeEach(() => { jest.clearAllMocks(); globalThis.__updates = []; seedStaff(); });
+
+  // Regression: failed_attempts is only reset on a *successful* login, so once a
+  // lock elapses the stale counter (already at MAX) re-locks on the very next
+  // wrong password — pinning the account to one attempt per LOCK_MS forever.
+  test('a wrong password AFTER an expired lock opens a fresh window (no instant re-lock)', async () => {
+    seedStaff({ failed_attempts: 5, locked_until: new Date(Date.now() - 1000).toISOString() });
+    const res = mockRes();
+    await adminLogin(mockReq({ username: 'ops', password: 'wrong' }), res);
+
+    expect(res.status).toHaveBeenCalledWith(401);   // gate cleared (lock expired); creds wrong
+    const w = lastAdminWrite();
+    expect(w).not.toBeNull();
+    expect(w.failed_attempts).toBe(1);              // fresh count — NOT 6
+    expect(w.locked_until).toBeNull();              // must NOT re-lock on the first post-expiry try
+  });
+
+  // Guard: a genuine run of 5 fresh failures must still lock (brute-force defence intact).
+  test('the 5th consecutive failure in a fresh window still locks', async () => {
+    seedStaff({ failed_attempts: 4, locked_until: null });
+    const res = mockRes();
+    await adminLogin(mockReq({ username: 'ops', password: 'wrong' }), res);
+
+    const w = lastAdminWrite();
+    expect(w.failed_attempts).toBe(5);
+    expect(w.locked_until).toBeTruthy();
   });
 });

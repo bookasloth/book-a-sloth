@@ -93,9 +93,18 @@ const adminLogin = async (req, res) => {
 
     const ok = await verifyPassword(password, staff.password_hash);
     if (!ok) {
-      const failed = (staff.failed_attempts || 0) + 1;
-      const updates = { failed_attempts: failed, updated_at: new Date().toISOString() };
-      if (failed >= MAX_FAILED) updates.locked_until = new Date(Date.now() + LOCK_MS).toISOString();
+      // A lock that has already elapsed must open a FRESH attempt window. We only
+      // reach here after the gate above cleared, so a truthy locked_until now is
+      // necessarily in the past — counting on top of the stale (already-at-MAX)
+      // failed_attempts would re-lock on the first try and pin the account to one
+      // attempt per LOCK_MS until a *successful* login finally resets it.
+      const lockExpired = staff.locked_until && new Date(staff.locked_until).getTime() <= Date.now();
+      const failed = (lockExpired ? 0 : (staff.failed_attempts || 0)) + 1;
+      const updates = {
+        failed_attempts: failed,
+        locked_until: failed >= MAX_FAILED ? new Date(Date.now() + LOCK_MS).toISOString() : null,
+        updated_at: new Date().toISOString(),
+      };
       await supabaseAdmin.from('admin_users').update(updates).eq('id', staff.id);
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
@@ -246,9 +255,15 @@ const verify2fa = async (req, res) => {
     }
 
     if (!ok) {
-      const failed  = (staff.failed_attempts || 0) + 1;
-      const updates = { failed_attempts: failed, updated_at: new Date().toISOString() };
-      if (failed >= MAX_FAILED) updates.locked_until = new Date(Date.now() + LOCK_MS).toISOString();
+      // Same fresh-window rule as the password step: this counter is shared, and
+      // once a lock elapses the stale value would otherwise re-lock on attempt #1.
+      const lockExpired = staff.locked_until && new Date(staff.locked_until).getTime() <= Date.now();
+      const failed  = (lockExpired ? 0 : (staff.failed_attempts || 0)) + 1;
+      const updates = {
+        failed_attempts: failed,
+        locked_until: failed >= MAX_FAILED ? new Date(Date.now() + LOCK_MS).toISOString() : null,
+        updated_at: new Date().toISOString(),
+      };
       await supabaseAdmin.from('admin_users').update(updates).eq('id', staff.id);
       try {
         await audit(req, { action: 'admin.2fa.failed', resource_type: 'admin_user', resource_id: staff.id });
