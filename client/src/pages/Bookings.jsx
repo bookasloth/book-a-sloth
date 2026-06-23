@@ -10,13 +10,8 @@ import {
 import toast from "react-hot-toast";
 import ReviewModal from "../components/booking/ReviewModal";
 import useFeatureFlags from "../hooks/useFeatureFlags";
+import StatusChip from "../components/common/StatusChip";
 
-const STATUS_COLORS = {
-  pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  confirmed: "bg-green-100 text-green-700 border-green-200",
-  completed: "bg-blue-100 text-blue-600 border-blue-200",
-  cancelled: "bg-red-100 text-red-600 border-red-200",
-};
 const PAY_COLORS = {
   paid: "bg-emerald-100 text-emerald-700",
   unpaid: "bg-gray-100 text-gray-500",
@@ -319,11 +314,7 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span
-              className={`text-xs px-2.5 py-1 rounded-full border font-medium ${STATUS_COLORS[booking.status]}`}
-            >
-              {booking.status}
-            </span>
+            <StatusChip status={booking.status} />
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 ml-1"
@@ -743,11 +734,7 @@ const Bookings = () => {
                       </p>
                     </td>
                     <td data-label="Status" className="px-4 py-3">
-                      <span
-                        className={`inline-block text-[11px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[b.status]}`}
-                      >
-                        {b.status}
-                      </span>
+                      <StatusChip status={b.status} />
                     </td>
                     <td
                       data-label="Payment"

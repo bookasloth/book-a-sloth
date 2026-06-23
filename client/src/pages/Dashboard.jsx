@@ -10,15 +10,7 @@ import { getHostBookings, getMyServices, getGuestBookings } from '../services/ap
 import toast from 'react-hot-toast';
 import Modal from '../components/booking/Modal';
 import WhatsAppVerify from '../components/whatsapp/WhatsAppVerify';
-
-const STATUS_PILL = (status) => {
-  const map = {
-    confirmed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-600',
-    completed: 'bg-blue-100 text-blue-600',
-  };
-  return map[status] || 'bg-yellow-100 text-yellow-700';
-};
+import StatusChip from '../components/common/StatusChip';
 
 const fmtDate = (d) =>
   new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -55,9 +47,7 @@ const GuestBookings = () => {
                   {b['profiles!bookings_host_id_fkey']?.name || 'Host'} · {fmtDate(b.scheduled_at)}
                 </p>
               </div>
-              <span className={`self-start text-xs px-2.5 py-1 rounded-md font-medium sm:self-center ${STATUS_PILL(b.status)}`}>
-                {b.status}
-              </span>
+              <StatusChip status={b.status} className="self-start sm:self-center" />
             </div>
           ))}
         </div>
@@ -84,7 +74,7 @@ const BookingRow = ({ b }) => (
       <p className="font-medium text-sm text-gray-900 truncate">{b.guest_name || 'Guest'}</p>
       <p className="text-xs text-gray-400 truncate">{b.services?.title} · {fmtDate(b.scheduled_at)}</p>
     </div>
-    <span className={`shrink-0 text-xs px-2 py-0.5 rounded-md font-medium ${STATUS_PILL(b.status)}`}>{b.status}</span>
+    <StatusChip status={b.status} className="shrink-0" />
   </div>
 );
 

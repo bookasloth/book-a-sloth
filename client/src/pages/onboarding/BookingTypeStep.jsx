@@ -37,7 +37,7 @@ const BookingTypeStep = () => {
     updateOnboardingStep({ slug, step: 5, data: { booking_type: typeId } }).catch((error) => {
       toast.error(error.response?.data?.message || 'Could not save booking type');
     });
-    navigate(`/vendor-register/${slug}/calendar`);
+    navigate(`/vendor-register/${slug}/work-hours`);
   };
 
   return (

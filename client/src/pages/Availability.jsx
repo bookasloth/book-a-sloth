@@ -28,21 +28,32 @@ const Availability = () => {
   const [newBlockedDate, setNewBlockedDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
+
+  const fetchAvailability = async () => {
+    try {
+      const { data } = await getAvailability();
+      if (data) {
+        setSchedule(data.weekly_schedule || DEFAULT_SCHEDULE);
+        setTimezone(data.timezone || "Asia/Kolkata");
+        setBufferMinutes(data.buffer_minutes || 0);
+        setBlockedDates(Array.isArray(data.blocked_dates) ? data.blocked_dates : []);
+        // Any configured day means availability was set before → open in view mode.
+        const configured = Object.values(data.weekly_schedule || {}).some(
+          (slots) => Array.isArray(slots) && slots.length > 0
+        );
+        setHasSaved(configured);
+        setIsEditing(!configured);
+      } else {
+        setIsEditing(true);
+      }
+    } catch {
+      setIsEditing(true); /* no record yet — let them set it up */
+    }
+  };
 
   useEffect(() => {
-    const fetchAvailability = async () => {
-      try {
-        const { data } = await getAvailability();
-        if (data) {
-          setSchedule(data.weekly_schedule || DEFAULT_SCHEDULE);
-          setTimezone(data.timezone || "Asia/Kolkata");
-          setBufferMinutes(data.buffer_minutes || 0);
-          setBlockedDates(Array.isArray(data.blocked_dates) ? data.blocked_dates : []);
-        }
-      } catch {
-        /* use defaults */
-      }
-    };
     fetchAvailability();
   }, []);
 
@@ -89,6 +100,8 @@ const Availability = () => {
       });
       toast.success("Availability saved!");
       setDirty(false);
+      setHasSaved(true);
+      setIsEditing(false);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to save");
     } finally {
@@ -104,6 +117,43 @@ const Availability = () => {
         Define when guests can book time with you.
       </p>
 
+      {!isEditing ? (
+        <div className="space-y-4">
+          <div className="fb-card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-sm">Your weekly hours</h2>
+              <span className="text-xs text-gray-400">
+                {timezone}
+                {bufferMinutes ? ` · ${bufferMinutes}m buffer` : ""}
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {DAYS.map((day) => (
+                <div key={day} className="flex items-center justify-between text-sm">
+                  <span className="capitalize text-gray-700">{day}</span>
+                  <span className={schedule[day]?.length ? "text-gray-900 font-medium" : "text-gray-400"}>
+                    {schedule[day]?.length
+                      ? schedule[day].map((s) => `${s.start}–${s.end}`).join(", ")
+                      : "Unavailable"}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {blockedDates.length > 0 && (
+              <p className="mt-3 text-xs text-gray-500">
+                {blockedDates.length} blocked date{blockedDates.length > 1 ? "s" : ""}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark sm:w-auto sm:px-8"
+          >
+            Edit Availability
+          </button>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit}>
         {/* Timezone + Buffer settings */}
         <div className="fb-card p-4 mb-5">
@@ -284,14 +334,31 @@ const Availability = () => {
           )}
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn mt-6 w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
-        >
-          {loading ? "Saving..." : "Save Availability"}
-        </button>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
+          {hasSaved && (
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                fetchAvailability();
+                setIsEditing(false);
+                setDirty(false);
+              }}
+              className="btn w-full bg-gray-100 text-gray-700 py-2.5 text-sm font-medium hover:bg-gray-200 disabled:opacity-50 sm:w-auto sm:px-8"
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 sm:flex-1"
+          >
+            {loading ? "Saving..." : "Save Availability"}
+          </button>
+        </div>
       </form>
+      )}
     </div>
   );
 };

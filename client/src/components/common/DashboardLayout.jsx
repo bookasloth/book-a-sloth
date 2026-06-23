@@ -182,9 +182,9 @@ const DashboardLayout = ({ children }) => {
         <div className="mx-auto w-full max-w-6xl">{children}</div>
         <FeatureGate flag="vendor_feedback">
           <Link to="/dashboard/feedback"
-            className="hidden md:flex fixed bottom-6 right-6 z-40 items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-full shadow-lg hover:bg-primary/90 transition-colors text-sm font-medium">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
-            Feedback
+            title="Feedback" aria-label="Send feedback"
+            className="hidden md:flex fixed bottom-6 right-6 z-40 h-11 w-11 items-center justify-center bg-primary text-white rounded-full shadow-lg hover:bg-primary/90 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
           </Link>
         </FeatureGate>
       </main>

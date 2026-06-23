@@ -20,6 +20,7 @@ const ResetPassword  = lazy(() => import('./pages/ResetPassword'));
 const VendorSignup   = lazy(() => import('./pages/VendorSignup'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
 const Help           = lazy(() => import('./pages/Help'));
+const Support        = lazy(() => import('./pages/Support'));
 const Privacy        = lazy(() => import('./pages/Privacy'));
 const Terms          = lazy(() => import('./pages/Terms'));
 const Refund         = lazy(() => import('./pages/Refund'));
@@ -42,7 +43,7 @@ const PasswordStep     = lazy(() => import('./pages/onboarding/PasswordStep'));
 const VendorTypeStep   = lazy(() => import('./pages/onboarding/VendorTypeStep'));
 const CategoryStep     = lazy(() => import('./pages/onboarding/CategoryStep'));
 const BookingTypeStep  = lazy(() => import('./pages/onboarding/BookingTypeStep'));
-const CalendarStep     = lazy(() => import('./pages/onboarding/CalendarStep'));
+const WorkHoursStep    = lazy(() => import('./pages/onboarding/WorkHoursStep'));
 const WhatsAppStep     = lazy(() => import('./pages/onboarding/WhatsAppStep'));
 const ProfileStep      = lazy(() => import('./pages/onboarding/ProfileStep'));
 const FirstServiceStep = lazy(() => import('./pages/onboarding/FirstServiceStep'));
@@ -212,7 +213,7 @@ function App() {
           <Route path="/vendor-register/:slug/type" element={<VendorTypeStep />} />
           <Route path="/vendor-register/:slug/category" element={<CategoryStep />} />
           <Route path="/vendor-register/:slug/booking-type" element={<BookingTypeStep />} />
-          <Route path="/vendor-register/:slug/calendar" element={<CalendarStep />} />
+          <Route path="/vendor-register/:slug/work-hours" element={<WorkHoursStep />} />
           <Route path="/vendor-register/:slug/whatsapp" element={<WhatsAppStep />} />
           <Route path="/vendor-register/:slug/profile" element={<ProfileStep />} />
           <Route path="/vendor-register/:slug/first-service" element={<FirstServiceStep />} />
@@ -313,6 +314,9 @@ function App() {
 
           {/* Explore page */}
           <Route path="/explore" element={<Explore />} />
+
+          {/* Support — placeholder; MUST precede the /:profileSlug catch-all */}
+          <Route path="/support" element={<Support />} />
 
           {/* Public host/service pages — specific before dynamic */}
           <Route path="/:profileSlug/badges" element={<BadgeShowcase />} />
