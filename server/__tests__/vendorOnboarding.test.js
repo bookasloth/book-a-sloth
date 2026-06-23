@@ -2,6 +2,7 @@ const {
   isValidSlug,
   checkSlugAvailable,
   generateUniqueSlug,
+  claimSlug,
   sendOtpBothChannels,
   verifyOtp,
   createVendorAccount,
@@ -10,7 +11,6 @@ const {
   verifyRazorpayPayment,
   activatePlan,
   getOnboardingStatus,
-  getResumeStep,
 } = require('../controllers/vendorOnboardingController');
 
 describe('Vendor Onboarding', () => {
@@ -29,17 +29,8 @@ describe('Vendor Onboarding', () => {
     });
   });
 
-  describe('Resume Logic', () => {
-    it('should return correct resume step for completed steps', () => {
-      expect(getResumeStep(0)).toBe('/vendor-register');
-      expect(getResumeStep(1)).toBe('/vendor-register/:slug/verify');
-      expect(getResumeStep(2)).toBe('/vendor-onboarding/:slug/password');
-      expect(getResumeStep(5)).toBe('/vendor-onboarding/:slug/booking-type');
-      expect(getResumeStep(7)).toBe('/vendor-onboarding/:slug/whatsapp');
-      expect(getResumeStep(10)).toBe('/vendor-onboarding/:slug/plans');
-      expect(getResumeStep(11)).toBe('/explore-with-bolt');
-    });
-  });
+  // Resume logic is now handled client-side based on onboarding_step_completed
+  // from the /api/onboarding/status endpoint. getResumeStep was removed.
 
   describe('OTP Verification', () => {
     it('should reject invalid OTP', async () => {

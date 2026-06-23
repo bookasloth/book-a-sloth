@@ -5,6 +5,7 @@ const { sendWhatsAppOtp } = require("../utils/notify");
 const communicationEngine = require("../services/email/communicationEngine");
 const otpStore = require("../utils/otpStore");
 const razorpayConfig = require("../services/razorpayConfig");
+const { isReserved } = require("../utils/reservedUsernames");
 
 // ─── Slug validation & generation ───────────────────────────────────────
 const isValidSlug = (slug) => {
@@ -36,6 +37,42 @@ const generateUniqueSlug = async (baseName) => {
     if (available) return slug;
     slug = `${slug.slice(0, 45)}-${i++}`;
   }
+};
+
+// ─── Authed Slug Claim (Google flow, step 2) ─────────────────────────────
+// Called after Google auth confirms identity (step 1). Claims a slug for the
+// authenticated vendor, updates their profile username, and advances to step 2.
+// Uses the same reserved-word guard as changeUsername (usernameController.js).
+const claimSlug = async (vendorId, slug) => {
+  const clean = (slug || "").toLowerCase().trim();
+  if (!isValidSlug(clean)) {
+    throw new Error("Slug must be lowercase, 3-60 chars, alphanumeric with hyphens only");
+  }
+  // Reuse the same reserved-word set that guards changeUsername
+  if (isReserved(clean)) {
+    throw new Error("That name is reserved");
+  }
+  const { data: owner } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("onboarding_slug", clean)
+    .maybeSingle();
+  if (owner && owner.id !== vendorId) {
+    throw new Error("Slug already taken");
+  }
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update({
+      onboarding_slug: clean,
+      username: clean,
+      onboarding_step_completed: 2,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", vendorId)
+    .select()
+    .single();
+  if (error) throw error;
+  return { slug: clean, profile: data };
 };
 
 // ─── Send-cap constants (mirror otpStore.js) ────────────────────────────
@@ -298,29 +335,24 @@ const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
     updated_at: new Date().toISOString(),
   };
 
-  // Map step-specific data to columns
+  // Map step-specific data to columns (7-step Google-first flow)
   if (stepNumber === 3) {
-    updates.vendor_type = data.type; // 'individual' or 'organisation'
+    // About step: vendor_type + booking_type
+    updates.vendor_type  = data.vendor_type  || null;
+    updates.booking_type = data.booking_type || null;
   } else if (stepNumber === 4) {
+    // Category step: single primary category (plan-gated expansion handled client-side)
     const cats = Array.isArray(data.categories) ? data.categories.filter(Boolean) : [];
     const primary = data.primary_category || cats[0] || null;
     updates.primary_category = primary;
-    updates.categories = primary ? [primary] : []; // onboarding = single primary
+    updates.categories = primary ? [primary] : [];
   } else if (stepNumber === 5) {
-    updates.booking_type = data.booking_type; // 'online_only', 'offline_only', 'both'
-  } else if (stepNumber === 6) {
-    updates.calendar_connected = data.calendar_connected || false;
-    updates.calendar_skipped = data.calendar_skipped || false;
-  } else if (stepNumber === 7) {
     // WhatsApp step. Verified data is written by /api/whatsapp/verify-otp.
     // Only the skip path writes the "unverified" state here.
     if (data.whatsapp_skipped) {
       updates.whatsapp_verified = false;
       updates.whatsapp_number = null;
     }
-  } else if (stepNumber === 8) {
-    updates.profile_image = data.profile_image || null;
-    updates.bio = data.bio || "";
   }
 
   const { data: profile, error } = await supabaseAdmin
@@ -478,31 +510,11 @@ const getOnboardingStatus = async (vendorId) => {
   };
 };
 
-// ─── Resume Last Incomplete Step ────────────────────────────────────────
-const getResumeStep = (stepCompleted) => {
-  const steps = [
-    "/vendor-register",
-    "/vendor-register/:slug/verify",
-    "/vendor-onboarding/:slug/password",
-    "/vendor-onboarding/:slug/type",
-    "/vendor-onboarding/:slug/category",
-    "/vendor-onboarding/:slug/booking-type",
-    "/vendor-onboarding/:slug/calendar",
-    "/vendor-onboarding/:slug/whatsapp",
-    "/vendor-onboarding/:slug/profile",
-    "/vendor-onboarding/:slug/first-service",
-    "/vendor-onboarding/:slug/plans",
-    "/explore-with-bolt",
-  ];
-
-  // stepCompleted is 0-11, next step is stepCompleted + 1
-  return steps[stepCompleted] || steps[0];
-};
-
 module.exports = {
   isValidSlug,
   checkSlugAvailable,
   generateUniqueSlug,
+  claimSlug,
   sendOtpBothChannels,
   verifyOtp,
   createVendorAccount,
@@ -511,5 +523,4 @@ module.exports = {
   verifyRazorpayPayment,
   activatePlan,
   getOnboardingStatus,
-  getResumeStep,
 };

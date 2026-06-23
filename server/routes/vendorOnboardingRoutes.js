@@ -3,105 +3,34 @@ const router = express.Router();
 const {
   isValidSlug,
   checkSlugAvailable,
-  sendOtpBothChannels,
-  verifyOtp,
-  createVendorAccount,
+  claimSlug,
   updateOnboardingStep,
   createRazorpayOrder,
   verifyRazorpayPayment,
   activatePlan,
   getOnboardingStatus,
-  getResumeStep,
 } = require('../controllers/vendorOnboardingController');
 const { protect } = require('../middleware/authMiddleware');
-const { otpLimiter, authLimiter, slugLimiter } = require('../middleware/security');
+const { slugLimiter } = require('../middleware/security');
 
-// ── Public: Step 1 - Username/Slug Availability Check ──────────────────────
-// POST /api/onboarding/check-slug
-router.post('/check-slug', slugLimiter, async (req, res) => {
+// ── Public: Slug Availability Check ───────────────────────────────────────
+// POST /api/onboarding/slug-available
+router.post('/slug-available', slugLimiter, async (req, res) => {
+  try {
+    const { slug } = req.body;
+    if (!slug || !isValidSlug(slug)) return res.status(400).json({ message: 'Invalid slug' });
+    res.json({ available: await checkSlugAvailable(slug) });
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+// ── Protected: Claim Slug (step 2) ────────────────────────────────────────
+// POST /api/onboarding/claim-slug
+router.post('/claim-slug', protect, async (req, res) => {
   try {
     const { slug } = req.body;
     if (!slug) return res.status(400).json({ message: 'Slug is required' });
-
-    if (!isValidSlug(slug)) {
-      return res.status(400).json({
-        message: 'Slug must be lowercase, 3-60 chars, alphanumeric with hyphens only',
-      });
-    }
-
-    const available = await checkSlugAvailable(slug);
-    res.json({ available });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ── Public: Step 2 - Send OTP (Email + WhatsApp) ─────────────────────────
-// POST /api/onboarding/send-otp
-router.post('/send-otp', otpLimiter, async (req, res) => {
-  try {
-    const { slug, email, phone, name } = req.body;
-    if (!slug || !email) {
-      return res.status(400).json({ message: 'Slug and email are required' });
-    }
-
-    if (!isValidSlug(slug)) {
-      return res.status(400).json({ message: 'Invalid slug' });
-    }
-
-    const available = await checkSlugAvailable(slug);
-    if (!available) {
-      return res.status(409).json({ message: 'Slug already taken' });
-    }
-
-    await sendOtpBothChannels(slug, email, phone, name);
-    res.json({ message: 'OTPs sent to email and WhatsApp' });
-  } catch (error) {
-    console.error('send-otp error:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ── Public: Step 2 - Verify OTP (Email or Phone) ──────────────────────────
-// POST /api/onboarding/verify-otp
-router.post('/verify-otp', otpLimiter, async (req, res) => {
-  try {
-    const { slug, channel, otp } = req.body;
-    if (!slug || !channel || !otp) {
-      return res.status(400).json({ message: 'Slug, channel, and OTP are required' });
-    }
-
-    if (!['email', 'phone'].includes(channel)) {
-      return res.status(400).json({ message: 'Channel must be email or phone' });
-    }
-
-    await verifyOtp(slug, channel, otp);
-    res.json({ message: 'OTP verified', verified: true });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-// ── Public: Step 3 - Create Account (Password Step) ────────────────────────
-// POST /api/onboarding/create-account
-router.post('/create-account', authLimiter, async (req, res) => {
-  try {
-    const { slug, email, password, name } = req.body;
-    if (!slug || !email || !password || !name) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    const account = await createVendorAccount(slug, email, password, name);
-    res.status(201).json({
-      id: account.id,
-      token: account.token,
-      refresh_token: account.refresh_token,
-      slug: account.slug,
-      message: 'Account created successfully',
-    });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
+    res.json(await claimSlug(req.user.id, slug));
+  } catch (e) { res.status(400).json({ message: e.message }); }
 });
 
 // ── Protected: Step 3+ - Update Onboarding Step ───────────────────────────
@@ -206,7 +135,7 @@ router.post('/mark-complete', protect, async (req, res) => {
       .from('profiles')
       .update({
         onboarding_completed: true,
-        onboarding_step_completed: 11,
+        onboarding_step_completed: 6,
         updated_at: new Date().toISOString(),
       })
       .eq('id', req.user.id)
