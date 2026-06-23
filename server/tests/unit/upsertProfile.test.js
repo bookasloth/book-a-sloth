@@ -173,7 +173,7 @@ describe('upsertProfile — name-split + avatar fields', () => {
     expect('last_name' in arg).toBe(false);
   });
 
-  test('includes first_name when undefined is explicitly passed (undefined is omitted)', async () => {
+  test('omits first_name when undefined is explicitly passed', async () => {
     const getArg = captureUpsertArg();
 
     await upsertProfile({ ...BASE_ARGS, first_name: undefined });
