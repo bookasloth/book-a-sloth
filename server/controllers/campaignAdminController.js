@@ -5,6 +5,7 @@
 'use strict';
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const { sanitizeLikeTerm } = require('../utils/searchSanitize');
 const contactsService = require('../services/contactsService');
 const segmentService = require('../services/segmentService');
 const campaignService = require('../services/campaignService');
@@ -15,7 +16,8 @@ const listContacts = async (req, res) => {
     const { type, search, limit = 100 } = req.query;
     let q = supabaseAdmin.from('contacts').select('*').order('updated_at', { ascending: false }).limit(Math.min(parseInt(limit) || 100, 500));
     if (type) q = q.eq('contact_type', type);
-    if (search) q = q.ilike('email', `%${search}%`);
+    const safeSearch = sanitizeLikeTerm(search);
+    if (safeSearch) q = q.ilike('email', `%${safeSearch}%`);
     const { data, error } = await q;
     if (error) return safeError(res, error);
     res.json(data || []);

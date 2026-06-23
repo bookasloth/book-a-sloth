@@ -3,6 +3,7 @@
 // that closes the loop by emailing the vendor on planned/shipped/declined.
 const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require("../utils/httpError");
+const { sanitizeLikeTerm } = require("../utils/searchSanitize");
 const { runInBackground } = require("../utils/background");
 const NotificationEngine = require("../services/notificationEngine");
 
@@ -25,7 +26,8 @@ const listFeedback = async (req, res) => {
     if (status && STATUSES.includes(status)) q = q.eq("status", status);
     if (type) q = q.eq("type", type);
     if (area) q = q.eq("area", area);
-    if (search) q = q.ilike("body", `%${search}%`);
+    const safeSearch = sanitizeLikeTerm(search);
+    if (safeSearch) q = q.ilike("body", `%${safeSearch}%`);
 
     const { data, error } = await q;
     if (error) return safeError(res, error);

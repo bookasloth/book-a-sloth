@@ -5,6 +5,7 @@
  */
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const { sanitizeLikeTerm } = require('../utils/searchSanitize');
 const badgeEngine = require('../services/badgeEngine');
 
 const slugify = (text) =>
@@ -33,7 +34,8 @@ const listBadges = async (req, res) => {
       .from('badges')
       .select('*, badge_categories(name)')
       .order('created_at', { ascending: false });
-    if (search)      q = q.ilike('name', `%${search}%`);
+    const safeSearch = sanitizeLikeTerm(search);
+    if (safeSearch)  q = q.ilike('name', `%${safeSearch}%`);
     if (type)        q = q.eq('badge_type', type);
     if (status)      q = q.eq('status', status);
     if (category_id) q = q.eq('category_id', category_id);

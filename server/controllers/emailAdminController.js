@@ -5,6 +5,7 @@
  */
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const { sanitizeLikeTerm } = require('../utils/searchSanitize');
 const communicationEngine = require('../services/email/communicationEngine');
 const { renderEmail } = communicationEngine;
 const { getProvider } = require('../services/email/providers');
@@ -30,7 +31,8 @@ const listTemplates = async (req, res) => {
     let q = supabaseAdmin.from('email_templates').select('*').order('category').order('name');
     if (category) q = q.eq('category', category);
     if (status)   q = q.eq('status', status);
-    if (search)   q = q.ilike('name', `%${search}%`);
+    const safeSearch = sanitizeLikeTerm(search);
+    if (safeSearch) q = q.ilike('name', `%${safeSearch}%`);
     const { data, error } = await q;
     if (error) return safeError(res, error);
     res.json(data || []);
@@ -141,7 +143,8 @@ const listLogs = async (req, res) => {
     let q = supabaseAdmin.from('email_logs').select('*')
       .order('created_at', { ascending: false }).limit(Math.min(parseInt(limit) || 100, 500));
     if (!includeTest) q = q.eq('is_test', false);   // test sends excluded by default (PRD §15)
-    if (email)   q = q.ilike('recipient', `%${email}%`);
+    const safeEmail = sanitizeLikeTerm(email);
+    if (safeEmail) q = q.ilike('recipient', `%${safeEmail}%`);
     if (event)   q = q.eq('event_key', event);
     if (status)  q = q.eq('status', status);
     if (booking) q = q.eq('booking_id', booking);
