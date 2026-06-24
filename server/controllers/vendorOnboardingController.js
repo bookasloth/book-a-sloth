@@ -4,7 +4,6 @@ const { supabaseAdmin, signInWithPassword } = require("../config/supabase");
 const { sendWhatsAppOtp } = require("../utils/notify");
 const communicationEngine = require("../services/email/communicationEngine");
 const otpStore = require("../utils/otpStore");
-const razorpayConfig = require("../services/razorpayConfig");
 const { isReserved } = require("../utils/reservedUsernames");
 const usernameService = require("../services/usernameService");
 
@@ -417,129 +416,74 @@ const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
   return profile;
 };
 
-// ─── Razorpay Order Creation ────────────────────────────────────────────
-const createRazorpayOrder = async (vendorId, plan, amount) => {
-  // Create order in Razorpay
-  const razorpay = await razorpayConfig.getClient();
-  const order = await razorpay.orders.create({
-    amount: Math.round(amount * 100), // Convert to paise
-    currency: "INR",
-    receipt: `plan_${plan}_${vendorId.slice(0, 8)}_${Date.now()}`,
-  });
+// ─── Completion helpers (state-machine contract) ────────────────────────
+//
+// The /live screen sits between plan activation and dashboard. The contract:
+//   activatePlan (via /payment/subscription/*) → plan set, step stays < 6
+//   activateFreePlan / advanceToLive           → step = 6, onboarding_completed STAYS false
+//   markComplete (/live "Go to Dashboard")     → ONLY writer of onboarding_completed=true
+//
+// Why split: if activatePlan set onboarding_completed=true, the client guard
+// (done>=6 → show /live) would bounce the host past the celebration screen
+// directly to /dashboard. The /live screen must be reachable after plan choice.
 
-  // Store in database for webhook verification
-  const { data: orderRecord, error } = await supabaseAdmin
-    .from("razorpay_orders")
-    .insert({
-      vendor_id: vendorId,
-      order_id: order.id,
-      plan,
-      amount,
-      status: "pending",
-    })
+// Returns the host's currently-active plan slug, or null if none/expired.
+// Free 'explorer' counts as active (no expiry). Paid requires plan_expires_at
+// in the future.
+const getActivePlan = async (vendorId) => {
+  const { data: p } = await supabaseAdmin
+    .from("profiles")
+    .select("plan, plan_expires_at")
+    .eq("id", vendorId)
+    .maybeSingle();
+  if (!p || !p.plan) return null;
+  if (p.plan === "explorer") return "explorer";
+  if (p.plan_expires_at && new Date(p.plan_expires_at) > new Date()) return p.plan;
+  return null;
+};
+
+// Advance to the terminal step WITHOUT completing — lets /live render.
+// Throws if no plan has been activated yet (prevents bypassing plan step).
+const advanceToLive = async (vendorId) => {
+  const plan = await getActivePlan(vendorId);
+  if (!plan) throw new Error("Choose a plan first");
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update({ onboarding_step_completed: 6, updated_at: new Date().toISOString() })
+    .eq("id", vendorId)
     .select()
     .single();
-
   if (error) throw error;
-
-  return {
-    orderId: order.id,
-    amount,
-    currency: "INR",
-    key: await razorpayConfig.getKeyId(),
-  };
+  return data;
 };
 
-// ─── Razorpay Webhook Verification ──────────────────────────────────────
-const verifyRazorpayPayment = async (paymentId, orderId, vendorId) => {
-  try {
-    // SECURITY: look up the order WE created and assert it belongs to this
-    // vendor. Without the vendor_id scope, a vendor could submit another
-    // vendor's captured order id (IDOR / cross-account replay).
-    const { data: order, error: lookupError } = await supabaseAdmin
-      .from("razorpay_orders")
-      .select("*")
-      .eq("order_id", orderId)
-      .eq("vendor_id", vendorId)
-      .maybeSingle();
-    if (lookupError) throw lookupError;
-    if (!order) throw new Error("Order not found for this account");
-
-    // Replay guard: each order can be redeemed exactly once.
-    if (order.payment_verified) throw new Error("Order already processed");
-
-    // Confirm with Razorpay (the source of truth — never the client body).
-    const razorpay = await razorpayConfig.getClient();
-    const payment = await razorpay.payments.fetch(paymentId);
-    if (payment.status !== "captured") {
-      throw new Error("Payment not captured");
-    }
-    if (payment.order_id !== orderId) {
-      throw new Error("Order ID mismatch");
-    }
-
-    // Amount binding: the captured amount (paise) MUST equal the amount we
-    // stored for this order. Stops "pay for cheap plan, activate expensive
-    // plan" — the plan is derived from this order below, not from the client.
-    const expectedPaise = Math.round(Number(order.amount) * 100);
-    if (Number(payment.amount) !== expectedPaise) {
-      throw new Error("Payment amount mismatch");
-    }
-
-    // Mark completed — scoped to this vendor + the still-unverified row so a
-    // concurrent double-submit can only win once.
-    const { data: updated, error: updateError } = await supabaseAdmin
-      .from("razorpay_orders")
-      .update({
-        payment_id: paymentId,
-        payment_status: "captured",
-        payment_verified: true,
-        status: "completed",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("order_id", orderId)
-      .eq("vendor_id", vendorId)
-      .eq("payment_verified", false)
-      .select()
-      .single();
-
-    if (updateError) throw updateError;
-
-    return updated;
-  } catch (error) {
-    console.error("Payment verification failed:", error);
-    throw error;
-  }
+// Free plan: activate explorer, then advance to /live (NOT complete).
+// onboarding_completed is NOT set here — only markComplete sets it.
+const activateFreePlan = async (vendorId) => {
+  await supabaseAdmin
+    .from("profiles")
+    .update({ plan: "explorer", plan_activated_at: new Date().toISOString() })
+    .eq("id", vendorId);
+  return advanceToLive(vendorId);
 };
 
-// ─── Activate Plan ──────────────────────────────────────────────────────
-const activatePlan = async (vendorId, plan) => {
-  const planDetails = {
-    explorer: { price: 0, expires: null },
-    creator: { price: 99900, expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
-    professional: { price: 365000, expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
-  };
-
-  if (!planDetails[plan]) {
-    throw new Error("Invalid plan");
-  }
-
-  const { data: profile, error } = await supabaseAdmin
+// /live button — the ONLY writer of onboarding_completed.
+// Gated on the host having an active plan (free or paid).
+const markComplete = async (vendorId) => {
+  const plan = await getActivePlan(vendorId);
+  if (!plan) throw new Error("Choose and activate a plan before finishing");
+  const { data, error } = await supabaseAdmin
     .from("profiles")
     .update({
-      plan,
-      plan_expires_at: planDetails[plan].expires,
-      onboarding_step_completed: 6, // Terminal step under the 7-step Google-first contract
       onboarding_completed: true,
-      plan_activated_at: new Date().toISOString(),
+      onboarding_step_completed: 6,
       updated_at: new Date().toISOString(),
     })
     .eq("id", vendorId)
     .select()
     .single();
-
   if (error) throw error;
-  return profile;
+  return data;
 };
 
 // ─── Get Onboarding Status ──────────────────────────────────────────────
@@ -571,8 +515,9 @@ module.exports = {
   verifyOtp,
   createVendorAccount,
   updateOnboardingStep,
-  createRazorpayOrder,
-  verifyRazorpayPayment,
-  activatePlan,
+  getActivePlan,
+  advanceToLive,
+  activateFreePlan,
+  markComplete,
   getOnboardingStatus,
 };
