@@ -592,6 +592,54 @@ const createVendorSubscription = async (req, res) => {
     const onPaidPlan = prof && planService.normalizeSlug(prof.plan) !== "starter";
     const isSwitch = !!(onPaidPlan && prof.subscription_status === "active" && periodEndMs > nowMs);
 
+    // ── Idempotency guard: prevent double-charge on re-click ──────────────────
+    // If the host already has a PENDING mandate and clicks the SAME paid plan +
+    // cadence again (e.g. during webhook lag in onboarding, before the first
+    // subscription's authorization charge is confirmed), do NOT cancel+recreate.
+    // cancel+create would mint a SECOND Razorpay mandate, and if the first one
+    // already captured its authorization charge the host is charged twice.
+    //
+    // We can't rely on profiles.plan/billing_cadence to know which plan the
+    // pending mandate is for: a fresh free→paid upgrade keeps profiles.plan on the
+    // free tier until the mandate ACTIVATES (no access pre-authorization), so the
+    // target plan lives only in the Razorpay subscription's notes. So we fetch the
+    // existing subscription and compare its notes (vendor_id/plan/cadence) — the
+    // authoritative record of what it's for. When it still matches and is in a
+    // pre-authorization state, return the EXISTING subscription_id so the client's
+    // syncSubscription re-checks the one already in flight instead of creating a
+    // duplicate. Genuine switches (status='active', via isSwitch) or a DIFFERENT
+    // plan/cadence fall through to the cancel+create path below. (Mirrors
+    // verifySubscription's "already processed → return success" idempotency.)
+    if (prof?.razorpay_subscription_id && prof.subscription_status === "pending") {
+      try {
+        const existingSub = await razorpaySubscriptions.fetchSubscription(prof.razorpay_subscription_id);
+        // Razorpay subscription states before the first successful charge.
+        const PRE_AUTH_STATES = ["created", "authenticated", "pending"];
+        const n = existingSub?.notes || {};
+        const sameTarget =
+          PRE_AUTH_STATES.includes(existingSub?.status) &&
+          String(n.vendor_id) === String(req.user.id) &&
+          planService.normalizeSlug(n.plan) === planRecord.slug &&
+          normCadence(n.cadence) === cadence;
+        if (sameTarget) {
+          auditLog('SUBSCRIPTION_CREATE_IDEMPOTENT', req.user.id, {
+            plan: planRecord.slug, cadence, subscription_id: existingSub.id, status: existingSub.status,
+          });
+          return res.json({
+            subscription_id: existingSub.id,
+            key: await razorpayConfig.getKeyId(),
+            plan: planRecord.slug,
+            cadence,
+          });
+        }
+      } catch (fetchErr) {
+        // Can't confirm the existing mandate → fall through to cancel+create. The
+        // cancel step below tolerates an "already gone" subscription, so this is
+        // safe; the only cost is recreating a mandate we couldn't verify.
+        console.warn(`pending-subscription idempotency fetch failed for vendor ${req.user.id} (sub ${prof.razorpay_subscription_id}):`, fetchErr.message);
+      }
+    }
+
     let switchInfo = null, startAt;
     if (isSwitch) {
       const { gstRate } = await platformConfig.getConfig();
