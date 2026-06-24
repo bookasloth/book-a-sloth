@@ -69,7 +69,7 @@ export const PATH_LABELS = {
   footer:'Footer Builder', communication:'Communication', campaigns:'Campaigns', notifications:'Notification Settings', badges:'Badges',
   confirmed:'Confirmed', completed:'Completed', cancelled:'Cancelled', disputed:'Disputed',
   categories:'Categories', featured:'Featured',
-  staff:'Staff & Roles', system:'System', audit:'Audit Logs',
+  staff:'Staff & Roles', system:'System', audit:'Audit Logs', reserved:'Reserved Slugs',
   features:'Feature Status',
 };
 
@@ -152,6 +152,7 @@ export const NAV = [
   { id:'security', section:'SECURITY', items:[
     { label:'Audit Logs',          icon:'activity',  to:'/admin/system/audit', perm:'audit.view' },
     { label:'Roles & Permissions', icon:'shieldOk', to:'/admin/staff', perm:'staff.manage' },
+    { label:'Reserved Slugs',      icon:'lock',      to:'/admin/system/reserved', perm:'settings.manage' },
     { label:'API Keys',            icon:'key',       disabled:true },
   ]},
   { id:'control', section:'PLATFORM CONTROL', items:[

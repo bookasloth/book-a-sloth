@@ -34,6 +34,8 @@ const { sendOtpNotification } = require("../utils/notify");
 const NotificationEngine = require("../services/notificationEngine");
 const { runInBackground } = require("../utils/background");
 const usernameService = require("../services/usernameService");
+const { isReserved } = require("../utils/reservedUsernames");
+const { normalizeSlug } = require("../utils/slugNormalize");
 
 // ─── Per-account login lockout constants ───────────────────────────────────
 const LOGIN_MAX_FAILED = 5;
@@ -661,6 +663,13 @@ const findOrCreateProfileByPhone = async (normalizedPhone) => {
   const userId = created?.user?.id;
   if (!userId) throw new Error("Could not create account");
 
+  // Phone-derived username, run through the SAME reserved guard as every other
+  // write point — closes the prior bypass where `user-<digits>` was written with
+  // no check. In practice user-<digits> is never reserved; the fallback only
+  // triggers for the degenerate empty-digits case (normalizes to bare "user").
+  let username = normalizeSlug(`user-${digits}`);
+  if (isReserved(username)) username = await usernameService.createInitialUsername();
+
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .upsert(
@@ -669,7 +678,7 @@ const findOrCreateProfileByPhone = async (normalizedPhone) => {
         name: "Guest",
         email,
         role: "guest",
-        username: `user-${digits}`,
+        username,
         phone: normalizedPhone,
         password_set: false,
         updated_at: new Date().toISOString(),

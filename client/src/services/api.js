@@ -329,6 +329,12 @@ export const adminUpdateRazorpay = (data) => API.put('/admin/settings/payment/ra
 export const adminTestRazorpay   = (data) => API.post('/admin/settings/payment/razorpay/test', data);
 export const getPublicPlans    = ()         => API.get('/plans');
 
+// ── Admin: Reserved Slugs ────────────────────────────────────
+export const getReservedSlugs     = ()      => API.get('/admin/reserved-slugs');
+export const createReservedSlug   = (payload) => API.post('/admin/reserved-slugs', payload);
+export const releaseReservedSlug  = (id)    => API.delete(`/admin/reserved-slugs/${id}`);
+export const checkReservedSlug    = (slug)  => API.get(`/admin/reserved-slugs/check/${encodeURIComponent(slug)}`);
+
 // ── Admin: Email Communication Engine ────────────────────────
 export const adminEmailTemplates   = (params)   => API.get('/admin/email/templates', { params });
 export const adminEmailTemplate    = (id)       => API.get(`/admin/email/templates/${id}`);
