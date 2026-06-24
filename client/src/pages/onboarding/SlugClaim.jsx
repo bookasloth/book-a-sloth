@@ -25,6 +25,7 @@ const SlugClaim = () => {
   const [slug, setSlug] = useState(urlSlug || '');
   const [checking, setChecking] = useState(false);
   const [available, setAvailable] = useState(null);
+  const [unavailableReason, setUnavailableReason] = useState(null); // 'taken'|'reserved'|'invalid'|null
   const [tooShort, setTooShort] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const debounceRef = useRef(null);
@@ -49,6 +50,7 @@ const SlugClaim = () => {
     if (len < 3) {
       setChecking(false);
       setAvailable(false);
+      setUnavailableReason(null);
       setTooShort(len > 0 && len < 3);
       return;
     }
@@ -58,6 +60,7 @@ const SlugClaim = () => {
     if (!isValid) {
       setChecking(false);
       setAvailable(false);
+      setUnavailableReason('invalid');
       return;
     }
 
@@ -65,9 +68,15 @@ const SlugClaim = () => {
     setChecking(true);
     try {
       const { data } = await checkOnboardingSlug(value);
-      if (seq === requestSeq.current) setAvailable(data.available);
+      if (seq === requestSeq.current) {
+        setAvailable(data.available);
+        setUnavailableReason(data.available ? null : (data.reason || 'taken'));
+      }
     } catch {
-      if (seq === requestSeq.current) setAvailable(false);
+      if (seq === requestSeq.current) {
+        setAvailable(false);
+        setUnavailableReason('taken');
+      }
     } finally {
       if (seq === requestSeq.current) setChecking(false);
     }
@@ -177,7 +186,13 @@ const SlugClaim = () => {
               {slug && tooShort && (
                 <p className="text-amber-600 text-sm">Minimum 3 characters.</p>
               )}
-              {slug && !tooShort && available === false && !checking && (
+              {slug && !tooShort && available === false && !checking && unavailableReason === 'reserved' && (
+                <p className="text-red-500 text-sm">This URL is reserved and cannot be used.</p>
+              )}
+              {slug && !tooShort && available === false && !checking && unavailableReason === 'invalid' && (
+                <p className="text-red-500 text-sm">Only lowercase letters, numbers, and hyphens are allowed.</p>
+              )}
+              {slug && !tooShort && available === false && !checking && (!unavailableReason || unavailableReason === 'taken') && (
                 <p className="text-red-500 text-sm">This URL is taken. Try another.</p>
               )}
               {slug && available === true && (

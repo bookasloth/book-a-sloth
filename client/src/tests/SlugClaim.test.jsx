@@ -71,6 +71,21 @@ describe('SlugClaim', () => {
     expect(input.value).toBe('test-host');
   });
 
+  test('Continue is ENABLED on mount for the prefilled own slug (server returns available:true for self)', async () => {
+    // This is the core bug-fix test: when the server excludes the caller's own
+    // seeded name, available:true comes back and Continue must be enabled.
+    checkOnboardingSlug.mockResolvedValue({ data: { available: true } });
+    renderSlugClaim();
+
+    await screen.findByText(/Claim your URL/i); // guard ready
+    // Wait for the on-mount triggerCheck to complete
+    await waitFor(() => expect(checkOnboardingSlug).toHaveBeenCalledWith('test-host'));
+    await waitFor(() => {
+      const button = screen.getByRole('button', { name: /Continue/i });
+      expect(button).not.toBeDisabled();
+    });
+  });
+
   test('shows too-short warning for a 2-char slug', async () => {
     checkOnboardingSlug.mockResolvedValue({ data: { available: false } });
     renderSlugClaim();
@@ -86,8 +101,8 @@ describe('SlugClaim', () => {
     expect(screen.queryByText(/taken/i)).toBeNull();
   });
 
-  test('shows taken message for a slug that is not available', async () => {
-    checkOnboardingSlug.mockResolvedValue({ data: { available: false } });
+  test('shows taken message for a slug that is not available (reason:taken)', async () => {
+    checkOnboardingSlug.mockResolvedValue({ data: { available: false, reason: 'taken' } });
     renderSlugClaim();
 
     await screen.findByText(/Claim your URL/i);
@@ -97,6 +112,21 @@ describe('SlugClaim', () => {
     await waitFor(() => {
       expect(screen.getByText(/URL is taken/i)).toBeTruthy();
     });
+  });
+
+  test('shows reserved message for a reserved slug (reason:reserved)', async () => {
+    checkOnboardingSlug.mockResolvedValue({ data: { available: false, reason: 'reserved' } });
+    renderSlugClaim();
+
+    await screen.findByText(/Claim your URL/i);
+    const input = screen.getByPlaceholderText('yourslug');
+    fireEvent.change(input, { target: { value: 'admin' } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/reserved/i)).toBeTruthy();
+    });
+    // Should NOT say "taken"
+    expect(screen.queryByText(/taken/i)).toBeNull();
   });
 
   test('calls claimOnboardingSlug and navigates on Continue', async () => {

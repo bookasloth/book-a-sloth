@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   isValidSlug,
   checkSlugAvailable,
+  slugAvailableForUser,
   claimSlug,
   updateOnboardingStep,
   createRazorpayOrder,
@@ -13,13 +14,16 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 const { slugLimiter } = require('../middleware/security');
 
-// ── Public: Slug Availability Check ───────────────────────────────────────
+// ── Protected: Slug Availability Check (authed, history-backed, self-aware) ──
 // POST /api/onboarding/slug-available
-router.post('/slug-available', slugLimiter, async (req, res) => {
+// Requires auth so we can exclude the caller's own name from "taken" checks.
+// Uses usernameService.usernameOwner (history-backed) to match claimSlug's
+// enforcement — live feedback and the write path now agree on what's taken.
+router.post('/slug-available', protect, slugLimiter, async (req, res) => {
   try {
     const { slug } = req.body;
-    if (!slug || !isValidSlug(slug)) return res.status(400).json({ message: 'Invalid slug' });
-    res.json({ available: await checkSlugAvailable(slug) });
+    if (!slug) return res.status(400).json({ message: 'Slug is required' });
+    res.json(await slugAvailableForUser(req.user.id, slug));
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 

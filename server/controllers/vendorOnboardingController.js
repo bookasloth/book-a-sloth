@@ -40,6 +40,30 @@ const generateUniqueSlug = async (baseName) => {
   }
 };
 
+// ─── Authed Slug Availability (history-backed, self-aware) ─────────────────
+// Used by POST /api/onboarding/slug-available (requires auth).
+// Returns { available: true } when:
+//   a) the slug is free globally, OR
+//   b) the caller owns it (idempotent — lets them re-confirm the seeded name).
+// Returns { available: false, reason } for invalid/reserved/taken-by-someone-else.
+//
+// WHY this replaces checkSlugAvailable for the live-feedback route:
+//   checkSlugAvailable queries `profiles WHERE onboarding_slug = slug`.
+//   On Google signup markGoogleVendorOnboarding seeds onboarding_slug = auto-name.
+//   So the host's OWN pre-filled slug immediately returns available:false — bugged.
+//   Additionally checkSlugAvailable ignores username_history, disagreeing with
+//   claimSlug's authority on taken names (divergence between feedback and enforce).
+const slugAvailableForUser = async (vendorId, slug) => {
+  const clean = (slug || '').toLowerCase().trim();
+  if (!isValidSlug(clean)) return { available: false, reason: 'invalid' };
+  if (isReserved(clean))   return { available: false, reason: 'reserved' };
+  // History-backed: rejects names that are current OR retired in username_history.
+  // Allow the caller's own name through (self-aware / idempotent).
+  const owner = await usernameService.usernameOwner(clean);
+  if (owner && owner !== vendorId) return { available: false, reason: 'taken' };
+  return { available: true };
+};
+
 // ─── Authed Slug Claim (Google flow, step 2) ─────────────────────────────
 // Called after Google auth confirms identity (step 1). Claims a slug for the
 // authenticated vendor, advances to step 2, and makes /<slug> the host's live
@@ -540,6 +564,7 @@ const getOnboardingStatus = async (vendorId) => {
 module.exports = {
   isValidSlug,
   checkSlugAvailable,
+  slugAvailableForUser,
   generateUniqueSlug,
   claimSlug,
   sendOtpBothChannels,

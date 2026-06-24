@@ -34,7 +34,7 @@ export default function useOnboardingGuard() {
         }
         const done = data?.stepCompleted || 1;
         const target = done >= 6 ? null : RESUME[done];
-        const here = window.location.pathname.split('/').pop();
+        const here = window.location.pathname.replace(/\/$/, '').split('/').pop();
         if (target && target !== here) {
           navigate(`/vendor-register/${data.slug || slug}/${target}`, { replace: true });
           return;
