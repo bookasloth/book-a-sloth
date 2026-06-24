@@ -177,28 +177,42 @@ button {
         border-radius: var(--radius-lg);
     }
 
+    /* Each <td> becomes a "LABEL | value" grid row. Grid (not flex) so cells that
+       hold several stacked block children — Booking = ID/Date/Time, Customer =
+       Name/Email, Service = Title/Price — keep those children stacked vertically
+       in the value column instead of collapsing into one cramped horizontal row
+       (the mobile overlap bug). Single-value cells stay label-left/value-right. */
     .fb-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: minmax(7rem, 38%) 1fr;
+        column-gap: 0.75rem;
+        row-gap: 0.15rem;
+        align-items: start;
         padding: 0.5rem 0;
         white-space: normal;
+        text-align: right;
     }
 
     .fb-table td::before {
         content: attr(data-label);
-        flex: 1 1 34%;
+        grid-column: 1;
+        grid-row: 1;
+        text-align: left;
         color: var(--color-muted);
         font-size: 0.72rem;
-        margin-right: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 0.04em;
     }
 
-    .fb-table td:last-child {
-        justify-content: flex-start;
-        gap: 0.5rem;
-        flex-wrap: wrap;
+    /* All value nodes share the right-hand column and stack top-to-bottom.
+       justify-self:end keeps chips/pills/buttons at their natural width (no
+       full-column stretch) and right-aligned next to the label. */
+    .fb-table td > * {
+        grid-column: 2;
+        justify-self: end;
+        max-width: 100%;
+        min-width: 0;
+        word-break: break-word;
     }
 }
 
