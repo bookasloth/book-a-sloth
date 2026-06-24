@@ -59,6 +59,8 @@ const REGISTRY = [
   { key: 'guest_otp',            label: 'Guest OTP Verify',     category: 'Auth',     scope: 'customer', description: 'Email OTP for unauthenticated guests. Off = OTP flow blocked.' },
   { key: 'guest_signup',         label: 'Guest Signup',         category: 'Auth',     scope: 'customer', description: 'Customer account registration. Off = new guest signup blocked.' },
   { key: 'guest_login',          label: 'Guest Login',          category: 'Auth',     scope: 'customer', description: 'Customer sign-in. Off = customer login blocked.' },
+  // Opt-in (ships OFF — seeded disabled in v3.35). Unified identity Phase 3.
+  { key: 'unified_login',        label: 'Unified Login',        category: 'Auth',     scope: 'both',     description: 'Sign in by email OR phone to one account (any role). Off = phone login/OTP is guest-only (separate host/guest sign-in).' },
   { key: 'razorpay_payment',     label: 'Razorpay Payment',     category: 'Payments', scope: 'customer', description: 'Paid checkout via Razorpay. Off = paid bookings/purchases blocked.' },
   { key: 'product_purchase',     label: 'Product Purchase',     category: 'Payments', scope: 'customer', description: 'Buy digital products. Off = product checkout blocked.' },
   { key: 'review_submission',    label: 'Review Submission',    category: 'Engagement', scope: 'both', description: 'Guests and hosts review each other after a completed booking. Off = all new reviews blocked (both directions).' },

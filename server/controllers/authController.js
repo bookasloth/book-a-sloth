@@ -35,6 +35,7 @@ const { sendOtpNotification } = require("../utils/notify");
 const NotificationEngine = require("../services/notificationEngine");
 const { runInBackground } = require("../utils/background");
 const usernameService = require("../services/usernameService");
+const featureFlags = require("../services/featureFlags");
 const { isReserved } = require("../utils/reservedUsernames");
 const { normalizeSlug } = require("../utils/slugNormalize");
 
@@ -715,9 +716,12 @@ const loginWithPhone = async (req, res) => {
     const { data: profile } = await supabaseAdmin
       .from("profiles").select("*").eq("phone", normalized).maybeSingle();
 
-    // Enumeration-resistant: do NOT reveal whether the number exists or its role.
-    // No account and a non-guest account both return the same 401 as a wrong password.
-    if (!profile || profile.role !== "guest") {
+    // Unified login (flagged, Phase 3): when ON, ANY account may sign in by phone
+    // (one identity, email-or-phone). When OFF, phone login stays guest-only —
+    // the legacy separate-identity behavior. Enumeration-resistant either way.
+    const unifiedLogin = await featureFlags.isFeatureEnabled("unified_login");
+    // No account, or (legacy mode) a non-guest account → same 401 as wrong password.
+    if (!profile || (!unifiedLogin && profile.role !== "guest")) {
       // Equalize response time with the real wrong-password path (which makes a
       // signInWithPassword round-trip) so an attacker can't time-distinguish a
       // registered guest from an unknown/non-guest number.
@@ -775,7 +779,10 @@ const verifyOtpLogin = async (req, res) => {
     const profile = await findOrCreateProfileByPhone(normalized);
     if (!profile)
       return res.status(500).json({ message: "Could not access your account" });
-    if (profile.role !== "guest")
+    // Unified login (flagged, Phase 3): when ON, any account may OTP-login by
+    // phone. When OFF, a non-guest number is rejected (legacy separate identity).
+    const unifiedLogin = await featureFlags.isFeatureEnabled("unified_login");
+    if (!unifiedLogin && profile.role !== "guest")
       return res.status(409).json({ message: "This number is registered as a host. Please use host login." });
 
     const session = await mintSessionForEmail(profile.email);
