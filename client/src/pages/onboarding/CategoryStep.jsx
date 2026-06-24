@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { Search, Check, Plus, Loader2 } from 'lucide-react';
 import { getCategories, suggestCategory, updateOnboardingStep } from '../../services/api';
 import { groupCategories } from '../../utils/categoryUtils';
+import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
 
 // Fallback if the API is unreachable — keeps onboarding usable offline.
@@ -19,6 +20,7 @@ const FALLBACK = [
 const CategoryStep = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const ready = useOnboardingGuard();
 
   const [categories, setCategories] = useState([]);
   const [selected, setSelected] = useState(null); // single slug
@@ -60,19 +62,40 @@ const CategoryStep = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!selected) { toast.error('Please pick your primary category'); return; }
     setSaving(true);
-    updateOnboardingStep({ slug, step: 4, data: { primary_category: selected, categories: [selected] } })
-      .catch((error) => toast.error(error.response?.data?.message || 'Could not save category'));
-    navigate(`/vendor-register/${slug}/booking-type`);
+    try {
+      await updateOnboardingStep({ slug, step: 4, data: { primary_category: selected, categories: [selected] } });
+      navigate(`/vendor-register/${slug}/whatsapp`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not save category');
+      setSaving(false);
+    }
   };
+
+  if (!ready) {
+    return (
+      <>
+        <ProgressBar current={3} total={6} />
+        <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
-      <ProgressBar current={4} total={11} />
+      <ProgressBar current={3} total={6} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
         <div className="page-card w-full max-w-2xl p-5 sm:p-8">
+          <button
+            onClick={() => navigate(`/vendor-register/${slug}/about`)}
+            className="text-sm text-gray-500 hover:text-gray-800 mb-4 inline-block"
+          >
+            ← Back
+          </button>
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Pick Your Primary Service Category</h1>
           <p className="text-gray-500 text-sm mb-5">
             Choose the main service you offer. This drives your profile and how guests find you.

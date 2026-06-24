@@ -6,6 +6,10 @@ vi.mock('../services/api', () => ({
   getCategories: vi.fn(),
   suggestCategory: vi.fn(),
   updateOnboardingStep: vi.fn(() => Promise.resolve({ data: {} })),
+  // useOnboardingGuard needs this; resolve with correct step so guard sets ready=true
+  getOnboardingStatus: vi.fn(() =>
+    Promise.resolve({ data: { stepCompleted: 3, isComplete: false, slug: 'jane' } })
+  ),
 }));
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal();
@@ -23,6 +27,11 @@ const CATS = [
 beforeEach(() => {
   getCategories.mockResolvedValue({ data: CATS });
   updateOnboardingStep.mockResolvedValue({ data: {} });
+  // Set window.location so the guard's "here" segment matches 'category'
+  Object.defineProperty(window, 'location', {
+    writable: true,
+    value: { ...window.location, pathname: '/vendor-register/jane/category' },
+  });
 });
 
 test('shows the Primary Category heading', async () => {
