@@ -162,7 +162,7 @@ function renderCustomerLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCa
     `<a href="${esc(href)}" style="color:${D.muted};text-decoration:none;font-size:12px;font-family:${D.font};">${label}</a>`;
   const dot = `<span style="color:${D.note};margin:0 6px;">&middot;</span>`;
   const nav = [
-    lk(`${website}/my-bookings`, 'My Bookings'),
+    lk(`${website}/user/my-bookings`, 'My Bookings'),
     lk(`${website}/help`,        'Help'),
     lk(`${website}/privacy`,     'Privacy'),
     lk(`${website}/unsubscribe?u=${esc(unsubToken)}`, 'Unsubscribe'),

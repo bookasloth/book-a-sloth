@@ -13,7 +13,6 @@ vi.mock('../services/api', () => ({
   registerUser:   vi.fn(),
   getGoogleAuthUrl: vi.fn(),
   getMe:          vi.fn(),
-  activateHost:   vi.fn(),
 }));
 
 // Mock Supabase client
@@ -28,7 +27,7 @@ vi.mock('../services/supabaseClient', () => ({
   },
 }));
 
-import { loginUser, registerVendor, registerUser, getMe, activateHost } from '../services/api';
+import { loginUser, registerVendor, registerUser, getMe } from '../services/api';
 
 // Consumer component that exposes auth state
 const Consumer = () => {
@@ -42,7 +41,6 @@ const Consumer = () => {
       <button onClick={() => auth.logout()}>logout</button>
       <button onClick={() => auth.registerAsVendor('Jane', 'jane@v.com', 'p')}>regVendor</button>
       <button onClick={() => auth.registerAsUser('Bob', 'bob@u.com', 'p')}>regUser</button>
-      <button onClick={() => auth.activateHost().catch(() => {})}>becomeHost</button>
     </div>
   );
 };
@@ -142,25 +140,6 @@ describe('registerAsUser', () => {
     renderWithAuth();
     await act(async () => { screen.getByText('regUser').click(); });
     await waitFor(() => expect(screen.getByTestId('role').textContent).toBe('guest'));
-  });
-});
-
-// ── activateHost (guest → host opt-in) ─────────────────────────────────────────
-
-describe('activateHost', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    getMe.mockResolvedValue({ data: {} });
-  });
-
-  test('flips role to host via getMe refresh', async () => {
-    activateHost.mockResolvedValueOnce({ data: { ok: true } });
-    getMe.mockResolvedValueOnce({ data: { role: 'host', plan: 'creator' } });
-    renderWithAuth();
-    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
-    await act(async () => { screen.getByText('becomeHost').click(); });
-    await waitFor(() => expect(screen.getByTestId('role').textContent).toBe('host'));
-    expect(activateHost).toHaveBeenCalled();
   });
 });
 

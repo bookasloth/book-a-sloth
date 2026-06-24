@@ -9,10 +9,10 @@
 const RESERVED = new Set([
   // App routes (first segment)
   'login', 'logout', 'signin', 'signup', 'register', 'forgot-password',
-  'reset-password', 'help', 'about', 'privacy', 'terms', 'unsubscribe',
+  'reset-password', 'help', 'about', 'privacy', 'terms', 'refund', 'unsubscribe',
   'vendor', 'vendors', 'be-a-sloth', 'login-as-vendor', 'vendor-register',
   'auth', 'hello-sloth', 'dashboard', 'super-dashboard', 'admin', 'explore',
-  'my-bookings', 'profile', 'reviews', 'loyalty', 'settings', 'search',
+  'my-bookings', 'profile', 'review', 'reviews', 'loyalty', 'settings', 'search', 'lp',
   // Infra / API / common reserved handles
   'api', 'u', 'user', 'users', 'host', 'hosts', 'static', 'assets', 'public',
   'cdn', 'img', 'images', 'media', 'files', 'download', 'downloads', 'webhook',
