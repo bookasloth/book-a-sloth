@@ -11,6 +11,11 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Active dashboard mode for dual-capability accounts (Hosting vs Traveling).
+  // Persisted so a host returns to the space they last used. (Unified identity
+  // — Phase 1; the mode switch is rendered only when the user can host.)
+  const [mode, setModeState] = useState(() => localStorage.getItem('bas_active_mode') || 'traveling');
+  const setMode = (m) => { setModeState(m); localStorage.setItem('bas_active_mode', m); };
   const posthog = usePostHog();
   const wasIdentified = useRef(false);
 
@@ -154,6 +159,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       user, loading, login,
+      mode, setMode,
       loginWithPhone, loginWithOtp, setPassword,
       registerAsVendor, registerAsUser,
       connectGoogleCalendar,
