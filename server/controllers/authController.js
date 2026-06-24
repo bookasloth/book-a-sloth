@@ -196,8 +196,7 @@ const registerVendor = async (req, res) => {
       return res.status(400).json({ message: 'Name, email and password are required' });
 
     // One account per email (unified model). If an account already exists the
-    // user logs in — and a guest becomes a host via the in-app "Become a host"
-    // opt-in (POST /api/auth/become-host), not by re-registering here.
+    // user logs in rather than re-registering.
     const { data: existing } = await supabaseAdmin
       .from('profiles').select('id, role').eq('email', email.toLowerCase().trim()).maybeSingle();
     if (existing) {
@@ -1088,51 +1087,9 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// POST /api/auth/become-host — explicit, server-enforced guest→host opt-in.
-// The ONLY legitimate way an existing email/password account's role becomes 'host'.
-// Starts at step 3 (about/vendor-type) because identity, slug-claim, and password
-// are already done. Google-auth hosts use markGoogleVendorOnboarding (step 1) instead.
-// Idempotent for existing hosts.
-const becomeHost = async (req, res) => {
-  try {
-    const { data: profile, error } = await supabaseAdmin
-      .from("profiles").select("id, role, username").eq("id", req.user.id).single();
-    if (error || !profile) return res.status(404).json({ message: "Profile not found" });
-
-    if (profile.role === "host" || profile.role === "superadmin") {
-      const { data: full } = await supabaseAdmin
-        .from("profiles").select("*").eq("id", req.user.id).single();
-      return res.status(200).json(serializeProfile(full || profile, null));
-    }
-
-    const updates = {
-      role: "host",
-      onboarding_slug: profile.username,
-      onboarding_step_completed: 1, // step 1 = start of new flow (claim → about → category → whatsapp → plan → live)
-      onboarding_completed: false,
-      updated_at: new Date().toISOString(),
-    };
-    let result = await supabaseAdmin
-      .from("profiles").update(updates).eq("id", req.user.id).select("*").single();
-
-    // Graceful fallback if the onboarding_* columns don't exist on an older DB.
-    if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
-      result = await supabaseAdmin
-        .from("profiles")
-        .update({ role: "host", updated_at: new Date().toISOString() })
-        .eq("id", req.user.id).select("*").single();
-    }
-    if (result.error) return safeError(res, result.error);
-    return res.status(200).json(serializeProfile(result.data, null));
-  } catch (error) {
-    safeError(res, error);
-  }
-};
-
 module.exports = {
   upsertProfile,
   registerVendor,
-  becomeHost,
   registerUser,
   googleAuth,
   googleVendorAuth,

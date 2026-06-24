@@ -14,7 +14,6 @@ const {
   setPassword,
   getMe,
   updateMe,
-  becomeHost,
   forgotPassword,
   resetPassword,
 } = require('../controllers/authController');
@@ -49,8 +48,5 @@ router.post('/reset-password', authLimiter, resetPassword);
 router.post('/login', authLimiter, login);
 router.get('/me', protect, getMe);
 router.put('/me', protect, updateMe);
-
-// Explicit, server-enforced guest→host opt-in (the only legit role flip).
-router.post('/become-host', protect, becomeHost);
 
 module.exports = router;
