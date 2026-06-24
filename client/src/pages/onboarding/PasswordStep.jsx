@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { createVendorAccount } from '../../services/api';
+// removed in onboarding reshape — createVendorAccount deleted server-side
+// eslint-disable-next-line no-unused-vars
+const createVendorAccount = () => Promise.reject(new Error('removed in onboarding reshape'));
 import ProgressBar from './ProgressBar';
 
 const PasswordStep = () => {

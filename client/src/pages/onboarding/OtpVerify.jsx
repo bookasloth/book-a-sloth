@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import {
-  sendOnboardingOtp,
-  verifyOnboardingOtp,
-} from '../../services/api';
+// removed in onboarding reshape — sendOnboardingOtp, verifyOnboardingOtp deleted server-side
+// eslint-disable-next-line no-unused-vars
+const sendOnboardingOtp = () => Promise.reject(new Error('removed in onboarding reshape'));
+// eslint-disable-next-line no-unused-vars
+const verifyOnboardingOtp = () => Promise.reject(new Error('removed in onboarding reshape'));
 import ProgressBar from './ProgressBar';
 
 const OtpVerify = () => {

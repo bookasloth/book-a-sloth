@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { checkSlugAvailable } from '../../services/api';
+import { checkOnboardingSlug, claimOnboardingSlug } from '../../services/api';
 import { analytics, EVENTS } from '../../services/analytics';
 import ProgressBar from './ProgressBar';
 

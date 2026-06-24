@@ -167,11 +167,11 @@ export const adminApprovePayout  = (id)             => API.post(`/admin/payouts/
 export const adminRejectPayout   = (id, reason)     => API.post(`/admin/payouts/${id}/reject`, { reason });
 export const adminMarkPayoutPaid = (id, reference)  => API.post(`/admin/payouts/${id}/pay`, { payment_reference: reference });
 
-// ── Vendor Onboarding (10-step flow) ──────────────────────────
-export const checkSlugAvailable   = (slug)             => API.post('/onboarding/check-slug', { slug });
-export const sendOnboardingOtp    = (data)             => API.post('/onboarding/send-otp', data);
-export const verifyOnboardingOtp  = (data)             => API.post('/onboarding/verify-otp', data);
-export const createVendorAccount  = (data)             => API.post('/onboarding/create-account', data);
+// ── Vendor Onboarding (Google-first flow) ─────────────────────
+// Removed in onboarding reshape (server endpoints deleted):
+//   sendOnboardingOtp, verifyOnboardingOtp, createVendorAccount, checkSlugAvailable
+export const checkOnboardingSlug  = (slug)             => API.post('/onboarding/slug-available', { slug });
+export const claimOnboardingSlug  = (slug)             => API.post('/onboarding/claim-slug', { slug });
 export const updateOnboardingStep = (data)             => API.post('/onboarding/update-step', data);
 export const getOnboardingStatus  = ()                 => API.get('/onboarding/status');
 export const whatsappSendOtp      = (phone)            => API.post('/whatsapp/send-otp', { phone });
