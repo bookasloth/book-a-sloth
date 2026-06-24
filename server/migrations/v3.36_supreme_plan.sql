@@ -31,7 +31,7 @@ VALUES
    '{"services":-1,"bookings_per_year":-1,"digital_products":-1,"calendar_integrations":-1,"profile_theme_colors":-1,"reminder_flows":-1,"followup_flows":-1,"categories":-1}',
    '{"booking_page":true,"online_appointments":true,"offline_appointments":true,"payment_collection":true,"email_notifications":true,"whatsapp_notifications":true,"booking_confirmation":true,"booking_cancellation":true,"booking_completion_notifications":true,"client_records":true,"booking_history":true,"client_history":true,"client_notes":true,"auto_invoices":true,"invoice_history":true,"basic_reports":true,"advanced_reports":true,"data_export":true}',
    '{"calendar_apps":["google_calendar","zoom","ical"],"allow_primary_platform_selection":true}',
-   'priority', 99, true)
+   'priority', false, 99, true)
 ON CONFLICT (slug) DO UPDATE
   SET bypasses_kill_switches = true,
       active                 = false,
@@ -42,22 +42,28 @@ ON CONFLICT (slug) DO UPDATE
       updated_at             = now();
 
 -- 3. Allow 'supreme' as a profiles.plan value. The original CHECK
---    (v1.2 / v1.6_catchup) was `plan IN ('explorer','creator','professional')`
---    — created inline, so its name is auto-generated and not guaranteed. Find
---    and drop whatever CHECK references `plan`, then re-add an explicit one.
---    Also folds in 'starter' (planService normalizes explorer→starter; the
---    original CHECK never allowed the canonical 'starter' value).
+--    (v1.2 / v1.6_catchup) enumerated plan values inline; Postgres stores
+--    `plan IN (...)` normalized as `plan = ANY (ARRAY[...])` and auto-names the
+--    constraint `profiles_plan_check`. Drop it by name AND defensively drop any
+--    other CHECK that enumerates plan values (match the normalized form), then
+--    re-add. Also folds in 'starter' (planService normalizes explorer→starter;
+--    the original CHECK never allowed the canonical 'starter' value).
+--    Existing plan values (explorer/creator/professional/NULL) all satisfy the
+--    new set, so the ADD never trips on existing rows.
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_plan_check;
 DO $$
 DECLARE c text;
 BEGIN
-  SELECT conname INTO c
-    FROM pg_constraint
-   WHERE conrelid = 'profiles'::regclass
-     AND contype  = 'c'
-     AND pg_get_constraintdef(oid) ILIKE '%plan%IN%';
-  IF c IS NOT NULL THEN
+  FOR c IN
+    SELECT conname
+      FROM pg_constraint
+     WHERE conrelid = 'profiles'::regclass
+       AND contype  = 'c'
+       AND (pg_get_constraintdef(oid) ILIKE '%(plan = ANY%'
+         OR pg_get_constraintdef(oid) ILIKE '%plan % IN %')
+  LOOP
     EXECUTE format('ALTER TABLE profiles DROP CONSTRAINT %I', c);
-  END IF;
+  END LOOP;
 END $$;
 
 ALTER TABLE profiles
