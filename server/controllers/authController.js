@@ -12,6 +12,8 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const { encrypt: encryptToken } = require("../utils/cryptoTokens");
 const profileSecrets = require("../utils/profileSecrets");
+const planService = require("../services/planService");
+const { SAFETY_KEYS } = require("../config/featureRegistry");
 
 // HMAC secret for the OAuth `state` parameter (CSRF protection on the Google
 // round-trip). Dedicated env var preferred; service-role key is a safe,
@@ -61,7 +63,16 @@ const uniqueProfileSlug = async (base, excludeId = null) => {
 
 // Serialise a DB profile row into the shape stored in localStorage / returned by all auth endpoints.
 // Always include plan so the frontend can gate plan-based features.
-const serializeProfile = (profile, session) => ({
+// ASYNC: resolves the caller's plan to derive `bypasses_flags` — the Supreme
+// (bypasses_kill_switches) hint the client uses to keep gated UI visible even
+// when an admin kill-switch is off. Fails SAFE to false on any lookup error.
+const serializeProfile = async (profile, session) => {
+  let bypasses_flags = false;
+  try {
+    const plan = await planService.getPlan(planService.resolveVendorPlan(profile));
+    bypasses_flags = !!plan?.bypasses_kill_switches;
+  } catch (_) { /* fail-safe: no bypass hint, server still enforces */ }
+  return {
   _id:                      profile.id,
   id:                       profile.id,
   name:                     profile.name,
@@ -95,8 +106,13 @@ const serializeProfile = (profile, session) => ({
   whatsapp_verified:        !!profile.whatsapp_verified,
   whatsapp_number:          profile.whatsapp_number || null,
   badges:                   profile.badges || [],
+  // Supreme kill-switch bypass hint + the never-bypassable denylist, so the
+  // client's useFeature() can mirror the server's requireFeature() decision.
+  bypasses_flags,
+  safety_keys:              SAFETY_KEYS,
   ...(session ? { token: session.access_token, refresh_token: session.refresh_token } : {}),
-});
+  };
+};
 
 const upsertProfile = async ({ id, name, email, role, username, first_name, last_name, avatar }) => {
   // Resolve the username. This upsert runs on every login (e.g. Google), so we
@@ -234,7 +250,7 @@ const registerVendor = async (req, res) => {
     if (signInError)
       return res.status(500).json({ message: signInError.message });
 
-    res.status(201).json(serializeProfile(profile, signInData.session));
+    res.status(201).json(await serializeProfile(profile, signInData.session));
   } catch (error) {
     safeError(res, error);
   }
@@ -512,7 +528,7 @@ const registerUser = async (req, res) => {
     if (signInError)
       return res.status(500).json({ message: signInError.message });
 
-    res.status(201).json(serializeProfile(profile, signInData.session));
+    res.status(201).json(await serializeProfile(profile, signInData.session));
   } catch (error) {
     safeError(res, error);
   }
@@ -756,7 +772,7 @@ const loginWithPhone = async (req, res) => {
       .update({ failed_login_count: 0, login_locked_until: null })
       .eq('id', profile.id);
 
-    res.json(serializeProfile(profile, data.session));
+    res.json(await serializeProfile(profile, data.session));
   } catch (error) {
     safeError(res, error);
   }
@@ -786,7 +802,7 @@ const verifyOtpLogin = async (req, res) => {
       return res.status(409).json({ message: "This number is registered as a host. Please use host login." });
 
     const session = await mintSessionForEmail(profile.email);
-    res.json(serializeProfile(profile, session));
+    res.json(await serializeProfile(profile, session));
   } catch (error) {
     safeError(res, error);
   }
@@ -865,7 +881,7 @@ const login = async (req, res) => {
       .eq("id", data.user.id)
       .single();
 
-    res.json(serializeProfile(profile, data.session));
+    res.json(await serializeProfile(profile, data.session));
   } catch (error) {
     safeError(res, error);
   }
@@ -890,7 +906,7 @@ const getMe = async (req, res) => {
 
     if (error || !profile) return res.status(404).json({ message: "Profile not found" });
     // Return the same serialized shape as login/register so the client can merge it cleanly
-    res.json(serializeProfile(profile, null));
+    res.json(await serializeProfile(profile, null));
   } catch (error) {
     safeError(res, error);
   }
@@ -917,7 +933,7 @@ const updateMe = async (req, res) => {
       .select("*")
       .single();
     if (error || !profile) return safeError(res, error || new Error("Update failed"));
-    res.json(serializeProfile(profile, null));
+    res.json(await serializeProfile(profile, null));
   } catch (error) {
     safeError(res, error);
   }
@@ -961,7 +977,7 @@ const becomeHost = async (req, res) => {
     }
     if (upErr || !updated) return safeError(res, upErr || new Error("Could not enable hosting"));
 
-    res.json(serializeProfile(updated, null));
+    res.json(await serializeProfile(updated, null));
   } catch (error) {
     safeError(res, error);
   }

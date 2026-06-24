@@ -73,4 +73,21 @@ const REGISTRY = [
 
 const KEYS = REGISTRY.map((f) => f.key);
 
-module.exports = { REGISTRY, KEYS };
+/**
+ * SAFETY_KEYS — kill-switches that NO membership may bypass, not even Supreme
+ * (bypasses_kill_switches plans). These gate financial, auth, and platform-
+ * freeze paths where an admin "off" is an emergency/safety action, not a
+ * commercial gate. Enforced server-side in middleware/requireFeature.js and
+ * mirrored to the client via /auth/me `safety_keys`.
+ */
+const SAFETY_KEYS = [
+  'razorpay_payment',   // money movement
+  'product_purchase',   // money movement
+  'guest_login',        // auth
+  'guest_signup',       // auth
+  'guest_otp',          // auth
+  'guest_booking',      // platform-wide booking freeze
+  'reschedule_fee',     // money movement
+];
+
+module.exports = { REGISTRY, KEYS, SAFETY_KEYS };
