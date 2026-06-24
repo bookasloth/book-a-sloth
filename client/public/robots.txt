@@ -7,9 +7,7 @@ Allow: /
 Disallow: /admin
 Disallow: /super-dashboard
 Disallow: /dashboard
-Disallow: /user/my-bookings
-Disallow: /profile
-Disallow: /user/loyalty
+Disallow: /user/
 Disallow: /login
 Disallow: /signup
 Disallow: /login-as-vendor
