@@ -176,8 +176,8 @@ export const updateOnboardingStep = (data)             => API.post('/onboarding/
 export const getOnboardingStatus  = ()                 => API.get('/onboarding/status');
 export const whatsappSendOtp      = (phone)            => API.post('/whatsapp/send-otp', { phone });
 export const whatsappVerifyOtp    = (phone, otp)       => API.post('/whatsapp/verify-otp', { phone, otp });
-export const createRazorpayOrder  = (data)             => API.post('/onboarding/create-order', data);
-export const verifyOnboardingPayment = (data)          => API.post('/onboarding/verify-payment', data);
+export const activateFreePlan     = ()                 => API.post('/onboarding/activate-free');
+export const advanceToLive        = ()                 => API.post('/onboarding/advance-to-live');
 export const markOnboardingComplete = ()               => API.post('/onboarding/mark-complete');
 
 // ── Categories / professions ──────────────────────────────────
