@@ -796,7 +796,7 @@ const Home = () => {
                 </div>
                 <button
                   onClick={claim}
-                  className="btn inline-flex min-h-[3.5rem] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[5px] bg-primary-cta px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:min-h-0 sm:py-3"
+                  className="btn inline-flex min-h-[3.5rem] w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[5px] bg-primary-cta px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:min-h-0 sm:w-auto sm:py-3"
                 >
                   Let's Get Started
                   <ArrowRight size={15} />

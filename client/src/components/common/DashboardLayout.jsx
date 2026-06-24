@@ -1,6 +1,14 @@
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import FeatureGate from './FeatureGate';
+
+// Tabs already shown in the mobile bottom nav — excluded from the "More" sheet.
+const MOBILE_BOTTOM_TOS = [
+  '/dashboard', '/dashboard/bookings', '/dashboard/services',
+  '/dashboard/payments/payouts', '/dashboard/profile',
+];
 
 const NAV_ITEMS = [
   { to:'/dashboard',                label:'Overview',      icon:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1', exact:true },
@@ -52,6 +60,19 @@ const NavItem = ({ item, location, plan }) => {
 const DashboardLayout = ({ children }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
+
+  // Mobile "More" sheet — holds everything not on the 5-tab bottom bar (incl. Logout).
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreNav = NAV_ITEMS.filter((i) => !MOBILE_BOTTOM_TOS.includes(i.to));
+
+  // Close the sheet on navigation + lock body scroll while it is open.
+  useEffect(() => { setMoreOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [moreOpen]);
 
   const plan      = user?.plan || 'explorer';
   const planStyle = PLAN_STYLES[plan] || PLAN_STYLES.explorer;
@@ -176,6 +197,90 @@ const DashboardLayout = ({ children }) => {
           );
         })}
       </div>
+
+      {/* Mobile "More" menu — bottom-right burger holding hidden options + Logout.
+          Portaled to <body> so fixed positioning is immune to any filtered or
+          transformed ancestor (same reason as the Navbar drawer). */}
+      {createPortal(
+        <>
+      <button
+        type="button"
+        onClick={() => setMoreOpen((o) => !o)}
+        aria-label={moreOpen ? 'Close menu' : 'Open more menu'}
+        aria-expanded={moreOpen}
+        className="md:hidden fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform active:scale-95"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d={moreOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
+        </svg>
+      </button>
+
+      {moreOpen && (
+        <>
+          <div className="md:hidden fixed inset-0 z-40 bg-black/40" onClick={() => setMoreOpen(false)} aria-hidden="true" />
+          <div className="md:hidden fixed bottom-36 left-4 right-4 z-50 max-h-[60vh] overflow-y-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-2xl">
+            {moreNav.map((item) => {
+              const locked = item.locked && plan === 'explorer';
+              return (
+                <NavLink
+                  key={item.to}
+                  to={locked ? '#' : item.to}
+                  onClick={locked ? (e) => e.preventDefault() : () => setMoreOpen(false)}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${locked ? 'cursor-default text-gray-300' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <svg className="h-[18px] w-[18px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                  </svg>
+                  <span className="flex-1">{item.label}</span>
+                  {locked && (
+                    <svg className="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  )}
+                </NavLink>
+              );
+            })}
+
+            <div className="my-1 border-t border-gray-100" />
+
+            {user?.username && (
+              <a
+                href={`/${user.username}`}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setMoreOpen(false)}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50"
+              >
+                <svg className="h-[18px] w-[18px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                View public page
+              </a>
+            )}
+
+            {plan === 'explorer' && (
+              <Link to="/dashboard/upgrade" onClick={() => setMoreOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-primary hover:bg-primary/5">
+                <svg className="h-[18px] w-[18px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                Upgrade Plan
+              </Link>
+            )}
+
+            {user?.role === 'superadmin' && (
+              <NavLink to="/admin" onClick={() => setMoreOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-red-400 hover:bg-red-50">
+                <svg className="h-[18px] w-[18px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                Super Admin
+              </NavLink>
+            )}
+
+            <button
+              onClick={() => { setMoreOpen(false); logout(); }}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-red-500 hover:bg-red-50"
+            >
+              <svg className="h-[18px] w-[18px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+              Logout
+            </button>
+          </div>
+        </>
+      )}
+        </>,
+        document.body
+      )}
 
       {/* Main */}
       <main className="min-w-0 flex-1 overflow-y-auto px-4 py-6 pb-28 sm:px-6 md:px-8 md:pb-8">
