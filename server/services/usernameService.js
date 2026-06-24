@@ -3,6 +3,8 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 const { generateUnique } = require('../utils/usernameGenerator');
+const { normalizeSlug } = require('../utils/slugNormalize');
+const { isStaticReserved } = require('../config/reservedNamespaces');
 
 // True if a username has EVER been used (current or historical) — enforces
 // global non-reuse and feeds the generator's uniqueness loop.
@@ -101,7 +103,10 @@ async function recordInitialUsername(userId, username) {
 //
 // Returns { ok: true, username } or { ok: false, reason, detail? }.
 async function setOnboardingUsername(userId, newSlug) {
-  const clean = String(newSlug).toLowerCase().trim();
+  const clean = normalizeSlug(newSlug);
+  // Defense-in-depth: controllers already gate on the reserved guard, but reject
+  // L1 reserved names here too so any future direct caller cannot bypass it.
+  if (isStaticReserved(clean)) return { ok: false, reason: 'taken' };
 
   const { data, error } = await supabaseAdmin.rpc('set_onboarding_username', {
     p_user_id: userId,
@@ -125,9 +130,13 @@ async function setOnboardingUsername(userId, newSlug) {
 // lives in SQL). Returns the RPC's jsonb verdict:
 //   { ok: true, username } | { ok: false, reason, next_eligible? }
 async function changeUsername(userId, newSlug) {
+  const clean = normalizeSlug(newSlug);
+  // Defense-in-depth: the RPC also enforces L2 reserved; reject L1 here so a
+  // future direct caller (bypassing usernameController) cannot claim a route name.
+  if (isStaticReserved(clean)) return { ok: false, reason: 'taken' };
   const { data, error } = await supabaseAdmin.rpc('change_username', {
     p_user_id: userId,
-    p_new: String(newSlug).toLowerCase(),
+    p_new: clean,
   });
   if (error) return { ok: false, reason: 'error' };
   return data;

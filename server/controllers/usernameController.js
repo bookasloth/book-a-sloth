@@ -1,30 +1,27 @@
 const usernameService = require('../services/usernameService');
 const { isReserved } = require('../utils/reservedUsernames');
+const { normalizeSlug } = require('../utils/slugNormalize');
+const { formatError } = require('../utils/slugFormat');
 const { safeError } = require('../utils/httpError');
 const { bustSitemapCache } = require('../utils/sitemapCache');
 
-// Strict format: lowercase letters/digits in hyphen-separated groups, 3–30 chars.
-const USERNAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-function validateFormat(slug) {
-  if (!slug || slug.length < 3 || slug.length > 30) {
-    return 'Username must be 3–30 characters.';
-  }
-  if (!USERNAME_RE.test(slug)) {
-    return 'Use only lowercase letters, numbers, and single hyphens.';
-  }
-  if (isReserved(slug)) {
-    return 'That username is reserved.';
-  }
+// Validate an ALREADY-NORMALIZED slug: unified format gate (3–30, single
+// hyphens) then the L1 reserved guard. The full L2 (admin/premium) + L3 (taken)
+// enforcement happens atomically in the change_username RPC, so this controller
+// stays free of a DB round-trip on the hot path.
+function validateFormat(norm) {
+  const fmt = formatError(norm);
+  if (fmt) return fmt;
+  if (isReserved(norm)) return 'That username is reserved.';
   return null;
 }
 
 // GET /api/username/check/:slug  (auth) — live availability while typing.
 const checkUsername = async (req, res) => {
   try {
-    const slug = String(req.params.slug || '').toLowerCase().trim();
-    const formatError = validateFormat(slug);
-    if (formatError) return res.json({ available: false, reason: formatError });
+    const slug = normalizeSlug(req.params.slug);
+    const formatErr = validateFormat(slug);
+    if (formatErr) return res.json({ available: false, reason: formatErr });
     const taken = await usernameService.usernameExists(slug);
     return res.json({ available: !taken, reason: taken ? 'That username is taken.' : null });
   } catch (error) {
@@ -53,10 +50,12 @@ const changeUsername = async (req, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ message: 'Authentication required.' });
 
-    const slug = String(req.body?.username || '').toLowerCase().trim();
-    const formatError = validateFormat(slug);
-    if (formatError) return res.status(400).json({ message: formatError });
+    const slug = normalizeSlug(req.body?.username);
+    const formatErr = validateFormat(slug);
+    if (formatErr) return res.status(400).json({ message: formatErr });
 
+    // RPC enforces L2 reserved (is_reserved_slug), global non-reuse, WhatsApp
+    // gate, and the 2/365-day + 6-month rate window — atomically.
     const result = await usernameService.changeUsername(req.user.id, slug);
     if (result.ok) {
       bustSitemapCache(); // host + all their service URLs moved to the new username
