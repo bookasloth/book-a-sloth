@@ -5,6 +5,8 @@ import Navbar from './components/common/Navbar';
 import DashboardLayout from './components/common/DashboardLayout';
 import AdminLayout from './components/common/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import HostRoute from './components/common/HostRoute';
+import GuestRoute from './components/common/GuestRoute';
 import AnalyticsBridge from './components/common/AnalyticsBridge';
 import ConsentBanner from './components/common/ConsentBanner';
 
@@ -147,7 +149,7 @@ const PageLoader = () => (
 );
 
 function DashboardWrapper({ children }) {
-  return <ProtectedRoute><DashboardLayout>{children}</DashboardLayout></ProtectedRoute>;
+  return <HostRoute><DashboardLayout>{children}</DashboardLayout></HostRoute>;
 }
 
 // SECURITY: AdminWrapper does NOT use ProtectedRoute (which checks vendor/user session).
@@ -315,14 +317,23 @@ function App() {
           <Route path="/:profileSlug/:serviceSlug" element={<ServiceDetail />} />
           <Route path="/:profileSlug" element={<HostProfile />} />
 
-          {/* Guests land here after login — dedicated read-only bookings list
-              (no longer the vendor Dashboard). */}
-          <Route path="/my-bookings" element={<ProtectedRoute><CustomerBookings /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
-          <Route path="/reviews" element={<ProtectedRoute><CustomerReviews /></ProtectedRoute>} />
-          {/* Leave a review for one completed booking (target of the booking-completed email CTA) */}
+          {/* Guest (customer) space — /user/* . A host hitting these is bounced to
+              /dashboard by GuestRoute; a guest hitting /dashboard/* is bounced here. */}
+          <Route path="/user/my-bookings" element={<GuestRoute><CustomerBookings /></GuestRoute>} />
+          <Route path="/user/profile" element={<GuestRoute><CustomerProfile /></GuestRoute>} />
+          <Route path="/user/reviews" element={<GuestRoute><CustomerReviews /></GuestRoute>} />
+          <Route path="/user/loyalty" element={<GuestRoute><Loyalty /></GuestRoute>} />
+
+          {/* Leave a review for one completed booking (booking-completed email CTA).
+              Shared + ownership-checked: either party to a booking may use it, so it
+              stays role-agnostic and top-level — NOT under /user. */}
           <Route path="/review/:bookingId" element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
-          <Route path="/loyalty" element={<ProtectedRoute><Loyalty /></ProtectedRoute>} />
+
+          {/* Backward-compat: old flat guest paths → /user/* (in-flight emails, bookmarks). */}
+          <Route path="/my-bookings" element={<Navigate to="/user/my-bookings" replace />} />
+          <Route path="/profile" element={<Navigate to="/user/profile" replace />} />
+          <Route path="/reviews" element={<Navigate to="/user/reviews" replace />} />
+          <Route path="/loyalty" element={<Navigate to="/user/loyalty" replace />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
