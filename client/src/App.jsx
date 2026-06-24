@@ -231,6 +231,10 @@ function App() {
           <Route path="/dashboard/payments/payouts" element={<DashboardWrapper><Payouts /></DashboardWrapper>} />
           <Route path="/dashboard/payments/transactions" element={<DashboardWrapper><Transactions /></DashboardWrapper>} />
           <Route path="/dashboard/feedback" element={<DashboardWrapper><Feedback /></DashboardWrapper>} />
+          {/* Bookings the host MADE as a customer (unified account — a host can
+              book other creators too). Reuses the guest "My Bookings" screen,
+              backed by getGuestBookings. Host-gated like the rest of /dashboard. */}
+          <Route path="/dashboard/my-bookings" element={<DashboardWrapper><CustomerBookings /></DashboardWrapper>} />
 
           {/* Super Dashboard (main admin entry) */}
           <Route path="/super-dashboard" element={<AdminWrapper><SuperDashboard /></AdminWrapper>} />

@@ -22,6 +22,7 @@ function renderAt(path) {
       <Routes>
         <Route path="/dashboard" element={<div>DASHBOARD home</div>} />
         <Route path="/dashboard/bookings" element={<HostRoute><div>HOST bookings</div></HostRoute>} />
+        <Route path="/dashboard/my-bookings" element={<HostRoute><div>HOST my-bookings</div></HostRoute>} />
         <Route path="/dashboard/earnings" element={<HostRoute><div>HOST earnings</div></HostRoute>} />
         <Route path="/user/my-bookings" element={<GuestRoute><div>GUEST bookings</div></GuestRoute>} />
         <Route path="/user/profile" element={<GuestRoute><div>GUEST profile</div></GuestRoute>} />
@@ -55,6 +56,21 @@ describe('role route guards', () => {
     mockUser.current = { role: 'host' };
     renderAt('/dashboard/bookings');
     expect(screen.getByText('HOST bookings')).toBeInTheDocument();
+  });
+
+  // Unified account: a host can book other creators, so they get a host-space
+  // screen for the bookings they MADE (backed by getGuestBookings). It must be
+  // reachable by a host and NOT bounced into guest space.
+  it('lets a host load the my-bookings host route', () => {
+    mockUser.current = { role: 'host' };
+    renderAt('/dashboard/my-bookings');
+    expect(screen.getByText('HOST my-bookings')).toBeInTheDocument();
+  });
+
+  it('bounces a guest off the my-bookings host route to guest space', () => {
+    mockUser.current = { role: 'user' };
+    renderAt('/dashboard/my-bookings');
+    expect(screen.getByText('GUEST bookings')).toBeInTheDocument();
   });
 
   it('lets a guest load a guest route', () => {
