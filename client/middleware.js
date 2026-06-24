@@ -14,16 +14,15 @@
 // flaky API never takes down profile pages — at worst the client-side fallback
 // in HostProfile.jsx self-corrects the URL.
 
+import { RESERVED_FIRST_SEGMENTS } from './src/config/reservedSegments.js';
+
 const API_ORIGIN = process.env.API_ORIGIN || 'https://book-a-sloth.onrender.com';
 
-// High-traffic app routes — skip the API round-trip for these. Not exhaustive
-// (the resolve API returns 404 for any non-username anyway); this is just to
-// avoid needless lookups on the busiest non-profile paths.
-const SKIP = new Set([
-  'login', 'dashboard', 'super-dashboard', 'admin', 'explore', 'about', 'help',
-  'privacy', 'unsubscribe', 'signup', 'vendor', 'vendor-register', 'hello-sloth',
-  'my-bookings', 'profile', 'reviews', 'loyalty', 'be-a-sloth', 'login-as-vendor',
-]);
+// Skip the API round-trip for known app routes. Sourced from the single route
+// manifest (asserted ⊆ server L1 by CI), so this can never drift behind the
+// router. Not load-bearing for correctness — resolve() returns 404 for any
+// non-username — purely a latency optimization on busy non-profile paths.
+const SKIP = new Set(RESERVED_FIRST_SEGMENTS);
 
 export const config = {
   // Run only on first-segment paths. Exclude API, Vite assets, and any path with
