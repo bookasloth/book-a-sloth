@@ -119,8 +119,11 @@ still redirect for in-flight emails):
 - `server/tests/unit/emailLayout.test.js` — assertion `…/my-bookings` → `…/user/my-bookings`.
 - `client/public/robots.txt` — `Disallow: /my-bookings`, `/loyalty` → `/user/my-bookings`,
   `/user/loyalty`.
-- `server/services/sitemapService.js` — `/reviews` entry → `/user/reviews` (or drop; it is an
-  auth-gated page that arguably should not be in the sitemap — confirm during implementation).
+- `server/services/sitemapService.js` — **remove** the `/reviews` static entry. It points at the
+  auth-gated `CustomerReviews` page (a guest's own received reviews — different login, never
+  public). Public review content stays indexed via the per-host-profile pages
+  (`/:profileSlug`), which the dynamic sitemap already covers. Auth-gated `/user/*` pages are
+  never added to the sitemap.
 - `client/src/pages/Login.jsx` — default post-login redirect `"/my-bookings"` → `"/user/my-bookings"`.
 - In-app links to update: `Navbar.jsx` (CUSTOMER_NAV, CUSTOMER_DROPDOWN), `CustomerProfile.jsx`
   ("← Back to bookings"), `ReviewPage.jsx` (two "back to bookings" links).
