@@ -10,7 +10,6 @@ import { MemoryRouter } from 'react-router-dom';
 vi.mock('../services/api', () => ({
   getHostBookings:  vi.fn().mockResolvedValue({ data: [] }),
   getMyServices:    vi.fn().mockResolvedValue({ data: [] }),
-  getGuestBookings: vi.fn().mockResolvedValue({ data: [] }),
 }));
 
 vi.mock('../context/AuthContext', () => ({
@@ -117,13 +116,15 @@ describe('Dashboard — new vendor without username', () => {
 });
 
 // ── Guest (user) dashboard ────────────────────────────────────────────────────
+// Guests are now redirected to /user/my-bookings — the Dashboard renders nothing.
 
 describe('Dashboard — User (role:guest)', () => {
   const GUEST = { _id: 'u1', name: 'Bob Guest', role: 'guest', plan: 'explorer', username: null };
 
-  test('shows "My Bookings" heading (guest view)', async () => {
+  test('redirects guest: renders no visible content', () => {
     renderDashboard(GUEST);
-    await waitFor(() => expect(screen.getByText(/my bookings/i)).toBeTruthy());
+    // <Navigate replace to="/user/my-bookings" /> produces an empty div in MemoryRouter
+    expect(screen.queryByText(/welcome back/i)).toBeNull();
   });
 
   test('does NOT show host stat cards', async () => {
@@ -134,10 +135,5 @@ describe('Dashboard — User (role:guest)', () => {
   test('does NOT show profile URL banner', async () => {
     renderDashboard(GUEST);
     await waitFor(() => expect(screen.queryByText(/bookasloth\.com\//i)).toBeNull());
-  });
-
-  test('shows empty state when no bookings', async () => {
-    renderDashboard(GUEST);
-    await waitFor(() => expect(screen.getByText(/no bookings yet/i)).toBeTruthy());
   });
 });
