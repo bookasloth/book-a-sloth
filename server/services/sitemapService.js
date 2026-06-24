@@ -39,7 +39,6 @@ const STATIC_ROUTES = [
   { path: '/about',                    changefreq: 'monthly', priority: '0.5' },
   { path: '/help',                     changefreq: 'monthly', priority: '0.4' },
   { path: '/privacy',                  changefreq: 'yearly',  priority: '0.3' },
-  { path: '/reviews',                  changefreq: 'weekly',  priority: '0.5' },
   { path: '/lp/topmate-vs-bookasloth', changefreq: 'monthly', priority: '0.7' },
   { path: '/lp/calendly-alternative',  changefreq: 'monthly', priority: '0.7' },
 ];

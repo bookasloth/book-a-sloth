@@ -59,7 +59,7 @@ describe('renderLayout — footer distinction (UNCHANGED by redesign)', () => {
 
   test('customer footer uses real routes and carries the unsubscribe token from data', () => {
     const html = renderLayout({ audience: 'customer', bodyHtml: '', settings, data: { unsubscribe_token: 'TOK123' } });
-    expect(html).toContain('https://x.test/my-bookings');
+    expect(html).toContain('https://x.test/user/my-bookings');
     expect(html).toContain('https://x.test/help');
     expect(html).toContain('https://x.test/privacy');
     expect(html).toContain('https://x.test/unsubscribe?u=TOK123');
