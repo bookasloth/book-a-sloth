@@ -414,28 +414,15 @@ table {
 
 /* ════════════════════════════════════════════════════════════
    HOMEPAGE — "See it in action" colourful stacking product shots
-   Desktop (≥768px): cards pile via position: sticky (per-index offset
-   leaves each peeking). Mobile (<768px): fade + slide up on entry via the
-   IntersectionObserver in Home.jsx. Per-card colour from inline var --cc.
+   ALL viewports (mobile included): cards pile via position: sticky — each
+   card pins below the navbar with a per-index offset so the deck stacks as
+   you scroll, identical on phone and desktop. Per-card colour from var --cc.
    ════════════════════════════════════════════════════════════ */
 .home-shots { display: flex; flex-direction: column; gap: 24px; }
-.home-shot { position: relative; }
-
-@media (min-width: 768px) {
-  .home-shot { position: sticky; top: calc(88px + var(--i, 0) * 18px); }
-  /* Last card scrolls normally over the pinned stack so the section ends right
-     after it — kills the large empty gap a fully-pinned stack leaves below. */
-  .home-shot:last-child { position: relative; top: 0; }
-}
-
-@media (max-width: 767px) {
-  .home-shot { opacity: 0; transform: translateY(22px); transition: opacity 0.55s ease, transform 0.55s ease; }
-  .home-shot.is-in { opacity: 1; transform: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-shot { opacity: 1 !important; transform: none !important; }
-}
+.home-shot { position: sticky; top: calc(80px + var(--i, 0) * 16px); }
+/* Last card scrolls normally over the pinned stack so the section ends right
+   after it — kills the large empty gap a fully-pinned stack leaves below. */
+.home-shot:last-child { position: relative; top: 0; }
 
 /* Admin shell — dark chrome (shell only; page interiors keep their own colours) */
 .admin-shell.dark.adm-canvas,

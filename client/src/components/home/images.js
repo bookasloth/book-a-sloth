@@ -15,6 +15,15 @@ export const u = (id, w = 800, h = 1000) =>
 // Hero — Book A Sloth branded banner (company CDN)
 export const HERO = "https://company-assets.bookasloth.in/images/banner/hero-book-a-sloth.png";
 
+// Hero "5/5" social-proof faces (company CDN). Upload 3 square photos
+// (≈80×80, .jpg) to these exact paths. Until then the hero shows a graceful
+// neutral fallback chip instead of a broken image.
+export const HERO_FACES = [
+  "https://company-assets.bookasloth.in/images/hero/face-1.jpg",
+  "https://company-assets.bookasloth.in/images/hero/face-2.jpg",
+  "https://company-assets.bookasloth.in/images/hero/face-3.jpg",
+];
+
 // "Who it's for" — Indian-looking professionals across roles
 export const PERSONAS = {
   freelancer: u("1600880292203-757bb62b4baf", 900, 1100), // laptop creative
