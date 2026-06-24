@@ -1,11 +1,11 @@
 /**
  * ServiceDetail — public service page at /:username/:slug
- * Sections: Hero · Tabs (Overview, Deliverables, Instructor, FAQ, Reviews) · Sticky sidebar
+ * Sections: Hero · Tabs (Overview, Deliverables, Host, FAQ, How it Works, Reviews) · Sticky sidebar
  */
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
-import { svcGetPublicByProfile } from '../services/api';
+import { svcGetPublicByProfile, getAvailableSlots } from '../services/api';
 import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/themeUtils';
 import Seo from '../components/common/Seo';
 import { resolveServiceSeo, serviceJsonLd, SITE_URL } from '../utils/seo';
@@ -28,6 +28,32 @@ const fmtDuration = (min) => {
   const h = Math.floor(min / 60), m = min % 60;
   return m ? `${h}h ${m}m` : `${h}h`;
 };
+
+// "14:30" → "2:30 PM". Slots come back from the API as 24h "HH:MM" strings.
+const fmt12 = (hhmm) => {
+  const [h, m] = String(hhmm).split(':').map(Number);
+  if (Number.isNaN(h)) return hhmm;
+  const ap = h >= 12 ? 'PM' : 'AM';
+  const h12 = ((h + 11) % 12) + 1;
+  return `${h12}:${String(m || 0).padStart(2, '0')} ${ap}`;
+};
+
+// Friendly label for a date relative to today: Today / Tomorrow / "Wed".
+const dayLabel = (d) => {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const dd = new Date(d); dd.setHours(0, 0, 0, 0);
+  const diff = Math.round((dd - today) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Tomorrow';
+  return dd.toLocaleDateString('en-IN', { weekday: 'short' });
+};
+
+// "Jun 25" sub-label under the day name.
+const shortDate = (d) =>
+  new Date(d).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+
+// Map the service type enum to a human label for the hero eyebrow.
+const TYPE_LABEL = { '1-on-1': '1:1 Session', group: 'Group Session', paid_dm: 'Priority DM' };
 
 const Stars = ({ avg, count, size = 'sm' }) => {
   const sz = size === 'lg' ? 'w-5 h-5' : 'w-4 h-4';
@@ -187,8 +213,8 @@ const DeliverablesTab = ({ included = [], excluded = [] }) => (
   </div>
 );
 
-const InstructorTab = ({ vendor, totalServices }) => {
-  if (!vendor?.name) return <p className="text-gray-400 text-sm">No instructor info.</p>;
+const HostTab = ({ vendor, totalServices }) => {
+  if (!vendor?.name) return <p className="text-gray-400 text-sm">No host info.</p>;
   return (
     <div className="flex flex-col sm:flex-row gap-5 items-start">
       <div className="flex-shrink-0">
@@ -225,6 +251,99 @@ const InstructorTab = ({ vendor, totalServices }) => {
   );
 };
 
+// ─── How it Works — generic 4-step explainer, derived from service shape ──────
+const HowItWorksTab = ({ duration, online = true }) => {
+  const mins = duration ? `${duration} focused minutes` : 'A focused session';
+  const steps = [
+    { t: 'Book your slot',
+      d: duration ? `Pick a ${duration}-minute time that fits your schedule.` : 'Pick a time that fits your schedule.' },
+    { t: 'Share context',
+      d: 'A quick form so we skip the small talk and dive straight in.' },
+    { t: 'The session',
+      d: online ? `${mins}, 1:1 on Google Meet.` : `${mins}, in person at the host's location.` },
+    { t: 'Follow-up',
+      d: 'A short summary and clear next steps, sent after the session.' },
+  ];
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-7">
+      {steps.map((s, i) => (
+        <div key={i}>
+          <div className="h-0.5 w-full rounded-full mb-3"
+            style={{ background: 'color-mix(in srgb, var(--profile-accent, #FE5100) 35%, #e5e7eb)' }}/>
+          <div className="text-lg font-black mb-1.5" style={{ color: 'var(--profile-accent, #FE5100)' }}>{i + 1}</div>
+          <h4 className="text-sm font-bold text-gray-900 mb-1">{s.t}</h4>
+          <p className="text-sm text-gray-500 leading-relaxed">{s.d}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ─── Available Slots preview — real server slots, next 2 open days × 2 each ────
+// Self-contained: fetches only when mounted (i.e. when the Host tab is shown on
+// desktop, or inline on mobile). Scans up to 7 days, stops at 2 with openings.
+const AvailableSlotsPreview = ({ hostId, serviceId, onViewAll }) => {
+  const [days, setDays] = useState(null); // null = loading · [] = none found
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!hostId || !serviceId) { setDays([]); return; }
+      const found = [];
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      for (let i = 0; i < 7 && found.length < 2; i++) {
+        const d = new Date(today); d.setDate(today.getDate() + i);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        try {
+          const { data } = await getAvailableSlots(hostId, serviceId, dateStr);
+          const slots = Array.isArray(data?.slots) ? data.slots : [];
+          if (slots.length) found.push({ date: d, slots: slots.slice(0, 2) });
+        } catch { /* skip this day, keep scanning */ }
+      }
+      if (!cancelled) setDays(found);
+    })();
+    return () => { cancelled = true; };
+  }, [hostId, serviceId]);
+
+  return (
+    <div className="mt-6 pt-6 border-t border-gray-100">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-bold text-gray-900">Available slots</h3>
+        <button onClick={onViewAll} className="text-sm font-medium hover:underline"
+          style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          View all →
+        </button>
+      </div>
+      {days === null ? (
+        <div className="flex gap-2">
+          {[0, 1].map(i => <div key={i} className="h-14 flex-1 rounded-xl bg-gray-100 animate-pulse"/>)}
+        </div>
+      ) : days.length === 0 ? (
+        <p className="text-sm text-gray-400">No open slots in the next few days — tap “View all” for the full calendar.</p>
+      ) : (
+        <div className="space-y-3">
+          {days.map(({ date, slots }) => (
+            <div key={date.toISOString()} className="flex items-center gap-3">
+              <div className="w-20 flex-shrink-0">
+                <div className="text-sm font-semibold text-gray-900">{dayLabel(date)}</div>
+                <div className="text-xs text-gray-400">{shortDate(date)}</div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {slots.map(t => (
+                  <button key={t} onClick={onViewAll}
+                    className="btn btn--outline px-3.5 py-1.5 text-sm font-medium hover:border-gray-300">
+                    {fmt12(t)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const FAQTab = ({ faqs = [] }) => {
   const [open, setOpen] = useState(null);
   if (faqs.length === 0) return <p className="text-gray-400 text-sm">No FAQs provided.</p>;
@@ -253,19 +372,22 @@ const ReviewsTab = ({ reviews = [], avgRating, ratingBreakdown = [] }) => {
   const breakdown = ratingBreakdown.length
     ? ratingBreakdown
     : [5, 4, 3, 2, 1].map(star => ({ star, count: 0 }));
+  const accent = 'var(--profile-accent, #FE5100)';
   return (
     <div>
-      {/* Summary — compact score box + per-star bars (always shown) */}
-      <div className="flex items-stretch gap-4 mb-5 pb-5 border-b">
-        {/* Score box */}
-        <div className="flex flex-shrink-0 flex-col items-center justify-center rounded-xl bg-gray-100 px-5 py-3 text-center">
-          <div className="text-3xl font-black leading-none text-gray-900">{avg.toFixed(1)}</div>
-          <div className="mt-1.5 flex gap-0.5">
+      {/* Summary — score + per-star bars clubbed into one tinted panel */}
+      <div className="flex flex-col sm:flex-row items-stretch gap-5 rounded-2xl p-5 mb-6"
+        style={{ background: `color-mix(in srgb, ${accent} 7%, white)` }}>
+        {/* Score */}
+        <div className="flex flex-shrink-0 flex-col items-center justify-center text-center sm:border-r sm:pr-6"
+          style={{ borderColor: `color-mix(in srgb, ${accent} 16%, white)` }}>
+          <div className="text-5xl font-black leading-none text-gray-900">{avg.toFixed(1)}</div>
+          <div className="mt-2 flex gap-0.5">
             {[1,2,3,4,5].map(s => (
-              <svg key={s} className={`w-3 h-3 ${s <= Math.round(avg) ? 'text-[#7a1f2b]' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg key={s} className="w-3.5 h-3.5" style={{ color: s <= Math.round(avg) ? accent : '#e5d9d2' }} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
             ))}
           </div>
-          <p className="mt-1 text-[11px] font-semibold text-[#7a1f2b]">Service Ratings</p>
+          <p className="mt-1.5 text-xs text-gray-500">{total} review{total === 1 ? '' : 's'}</p>
         </div>
         {/* Per-star bars */}
         <div className="flex flex-1 flex-col justify-center gap-1.5">
@@ -273,13 +395,10 @@ const ReviewsTab = ({ reviews = [], avgRating, ratingBreakdown = [] }) => {
             const pct = total ? Math.round((count / total) * 100) : 0;
             return (
               <div key={star} className="flex items-center gap-2">
-                <div className="flex flex-shrink-0 gap-0.5">
-                  {[1,2,3,4,5].map(s => (
-                    <svg key={s} className="w-3 h-3" style={{ color: s <= star ? 'var(--profile-accent, #FE5100)' : '#d1d5db' }} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                  ))}
-                </div>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: 'var(--profile-accent, #FE5100)' }}/>
+                <span className="w-3 text-right text-xs font-medium text-gray-500">{star}</span>
+                <svg className="w-3 h-3 flex-shrink-0" style={{ color: accent }} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-white">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: accent }}/>
                 </div>
                 <span className="w-9 text-right text-xs text-gray-500">{pct}%</span>
               </div>
@@ -287,28 +406,33 @@ const ReviewsTab = ({ reviews = [], avgRating, ratingBreakdown = [] }) => {
           })}
         </div>
       </div>
-      {/* Review list */}
+      {/* Testimonials — quote cards under the summary */}
       {total === 0
         ? <p className="text-gray-400 text-sm">No reviews yet.</p>
-        : <div className="space-y-4">
-              {reviews.map(r => (
-                <div key={r.id} className="flex gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex-shrink-0 flex items-center justify-center text-sm font-bold text-primary">
+        : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {reviews.map(r => (
+              <div key={r.id} className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5">
+                <div className="mb-3 flex gap-0.5">
+                  {[1,2,3,4,5].map(s => (
+                    <svg key={s} className="w-3.5 h-3.5" style={{ color: s <= Math.round(r.rating) ? accent : '#e5e7eb' }} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                  ))}
+                </div>
+                {r.comment && <p className="flex-1 text-sm leading-relaxed text-gray-700">“{r.comment}”</p>}
+                <div className="mt-4 flex items-center gap-2.5 border-t border-gray-50 pt-3">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                    style={{ background: `color-mix(in srgb, ${accent} 12%, white)`, color: accent }}>
                     {r.profiles?.name?.charAt(0) || '?'}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium">{r.profiles?.name || 'Anonymous'}</span>
-                      <Stars avg={r.rating} count={0}/>
-                    </div>
-                    {r.comment && <p className="text-sm text-gray-600 leading-relaxed">{r.comment}</p>}
-                    <p className="text-xs text-gray-400 mt-1">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-gray-900">{r.profiles?.name || 'Anonymous'}</div>
+                    <div className="text-xs text-gray-400">
                       {new Date(r.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
-                    </p>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
       }
     </div>
   );
@@ -385,29 +509,17 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0 }) => {
   );
 };
 
-// ─── Ad Space Card — house promo slot under the booking card ───────────────────
+// ─── Sponsored slot — subtle native ad placeholder under the booking card ──────
 const AdSpaceCard = () => (
-  <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-white p-5 text-center">
-    {/* faint accent wash */}
-    <div className="pointer-events-none absolute inset-0"
-      style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--profile-accent, #FE5100) 8%, white), transparent 70%)' }}/>
-    <div className="relative">
-      {/* megaphone */}
-      <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl"
-        style={{ background: 'color-mix(in srgb, var(--profile-accent, #FE5100) 14%, white)', color: 'var(--profile-accent, #FE5100)' }}>
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 11l14-6v14L3 13v-2zM3 11v2m0-2H2a1 1 0 00-1 1v0a1 1 0 001 1h1m4 1v3a1 1 0 001 1h1a1 1 0 001-1v-2"/>
-        </svg>
-      </div>
-      <h3 className="text-sm font-bold text-gray-900">Ad Space for Sale</h3>
-      <p className="mt-1 text-xs leading-relaxed text-gray-500">
-        Put your brand in front of buyers actively booking services. Limited slots.
-      </p>
-      <a href="mailto:bookasloth@gmail.com?subject=Ad%20space%20enquiry"
-        className="btn cta-ghost mt-4 inline-flex items-center justify-center !rounded-full px-6 py-2.5 text-sm font-semibold no-underline">
-        Advertise Here
-      </a>
-    </div>
+  <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-5 py-6 text-center">
+    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">Sponsored</p>
+    <h3 className="mt-2 text-sm font-bold text-gray-900">Ad space available</h3>
+    <p className="mt-1 text-xs leading-relaxed text-gray-500">Reach buyers actively booking services.</p>
+    <a href="mailto:bookasloth@gmail.com?subject=Ad%20space%20enquiry"
+      className="mt-3 inline-flex items-center gap-1 text-sm font-semibold no-underline hover:underline"
+      style={{ color: 'var(--profile-accent, #FE5100)' }}>
+      Advertise here →
+    </a>
   </div>
 );
 
@@ -514,7 +626,7 @@ const DisplayAdCard = () => (
 );
 
 // ─── Profile Card (creator summary — sits below the booking card) ─────────────
-// Premium, vertical layout distinct from the InstructorTab. Excludes bio.
+// Premium, vertical layout distinct from the HostTab. Excludes bio.
 const ProfileCard = ({ vendor, rating, reviewCount, bookings }) => {
   const [btnHover, setBtnHover] = useState(false);
   if (!vendor?.name) return null;
@@ -595,7 +707,7 @@ const ProfileCard = ({ vendor, rating, reviewCount, bookings }) => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const TABS = ['Overview', 'Deliverables', 'Instructor', 'FAQ', 'Reviews'];
+const TABS = ['Overview', 'Deliverables', 'Host', 'FAQ', 'How it Works', 'Reviews'];
 
 export default function ServiceDetail() {
   const { profileSlug, serviceSlug } = useParams();
@@ -663,6 +775,8 @@ export default function ServiceDetail() {
   const bookings    = service.total_bookings || 0;
   // Bestseller heuristic: proven volume + high rating
   const isBestseller = bookings >= 10 && rating >= 4.5;
+  // Hero eyebrow — "Category · 1:1 Session"
+  const eyebrow = [service.category_label, TYPE_LABEL[service.type]].filter(Boolean).join(' · ');
 
   // Admin-managed SEO → head tags + Service JSON-LD (canonical derived from URL).
   const seo = resolveServiceSeo({ service, vendor, siteUrl: SEO_SITE });
@@ -718,6 +832,11 @@ export default function ServiceDetail() {
 
             {/* ── HERO ── theme-derived gradient band */}
             <section className="rounded-2xl p-6 sm:p-10 mb-6" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--profile-accent, #FE5100) 14%, white), color-mix(in srgb, var(--profile-accent, #FE5100) 4%, white))' }}>
+              {/* Eyebrow — category · session type */}
+              {eyebrow && (
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">{eyebrow}</p>
+              )}
+
               {/* Title — last word accent-highlighted */}
               <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight">
                 {(() => {
@@ -732,31 +851,15 @@ export default function ServiceDetail() {
                 <p className="text-base sm:text-lg text-gray-600 mb-6 leading-relaxed max-w-2xl">{service.short_description}</p>
               )}
 
-              {/* Meta — under the description — New · 15 min · Online · etc. */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm mb-6">
-                {isBestseller && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
+              {/* Meta pills — status · duration · mode · category */}
+              <div className="flex flex-wrap items-center gap-2 mb-6">
+                {isBestseller ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                     Bestseller
                   </span>
-                )}
-                <div className="flex items-center gap-2">
-                  {rating > 0 ? (
-                    <>
-                      <Stars avg={rating} count={0}/>
-                      <span className="text-gray-700">
-                        <strong className="font-semibold text-gray-900">{rating.toFixed(1)}</strong>
-                        {reviewCount > 0 && <span className="text-gray-500"> ({reviewCount})</span>}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-sm font-bold" style={{ color: 'var(--profile-accent, #FE5100)' }}>New</span>
-                  )}
-                </div>
-                {bookings > 0 && (
-                  <span className="flex items-center gap-1.5 text-gray-600">
-                    <strong className="font-semibold text-gray-900">{bookings}</strong> Bookings
-                  </span>
+                ) : rating <= 0 && (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-gray-900 text-white">New</span>
                 )}
                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-white text-gray-800 shadow-sm">
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -765,25 +868,36 @@ export default function ServiceDetail() {
                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-white text-gray-800 shadow-sm">
                   {service.meeting_mode === 'offline'
                     ? <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
-                    : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>Online</>}
+                    : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>Online · Google Meet</>}
                 </span>
                 {service.category_label && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-900/5 text-gray-700">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-900/5 text-gray-700">
                     {service.category_label}
                   </span>
                 )}
               </div>
 
-              {/* Creator — [photo] by Name */}
+              {/* Host — [photo] Hosted by Name · rating */}
               {vendor?.name && (
                 <div className="flex items-center gap-3">
                   {vendor.profile_image
                     ? <img src={vendor.profile_image} alt={vendor.name} className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-sm flex-shrink-0"/>
                     : <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary ring-2 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
-                  <p className="text-sm text-gray-600 flex items-center flex-wrap gap-x-1.5 gap-y-0.5 min-w-0">
-                    <span>by</span>
-                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-white transition-colors">{vendor.name}</Link>
-                  </p>
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-500 leading-tight">Hosted by</p>
+                    <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5">
+                      <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-primary transition-colors">{vendor.name}</Link>
+                      {rating > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Stars avg={rating} count={0}/>
+                          <span className="text-sm text-gray-700">
+                            <strong className="font-semibold text-gray-900">{rating.toFixed(1)}</strong>
+                            {reviewCount > 0 && <span className="text-gray-500"> ({reviewCount})</span>}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </section>
@@ -818,8 +932,14 @@ export default function ServiceDetail() {
               <div className="hidden lg:block p-6">
                 {tab === 'Overview'     && <OverviewTab html={service.long_description || service.description}/>}
                 {tab === 'Deliverables' && <DeliverablesTab included={service.included_items} excluded={service.excluded_items}/>}
-                {tab === 'Instructor'   && <InstructorTab vendor={vendor} totalServices={totalServices}/>}
+                {tab === 'Host'         && (
+                  <>
+                    <HostTab vendor={vendor} totalServices={totalServices}/>
+                    <AvailableSlotsPreview hostId={vendor?.id} serviceId={service.id} onViewAll={handleBookNow}/>
+                  </>
+                )}
                 {tab === 'FAQ'          && <FAQTab faqs={service.faqs}/>}
+                {tab === 'How it Works' && <HowItWorksTab duration={service.duration} online={service.meeting_mode !== 'offline'}/>}
                 {tab === 'Reviews'      && <ReviewsTab reviews={reviews} avgRating={avgRating} ratingBreakdown={ratingBreakdown}/>}
               </div>
 
@@ -834,12 +954,17 @@ export default function ServiceDetail() {
                   <DeliverablesTab included={service.included_items} excluded={service.excluded_items}/>
                 </section>
                 <section className="p-6">
-                  <h2 className="text-base font-bold text-gray-900 mb-4">Instructor</h2>
-                  <InstructorTab vendor={vendor} totalServices={totalServices}/>
+                  <h2 className="text-base font-bold text-gray-900 mb-4">Host</h2>
+                  <HostTab vendor={vendor} totalServices={totalServices}/>
+                  <AvailableSlotsPreview hostId={vendor?.id} serviceId={service.id} onViewAll={handleBookNow}/>
                 </section>
                 <section className="p-6">
                   <h2 className="text-base font-bold text-gray-900 mb-4">FAQ</h2>
                   <FAQTab faqs={service.faqs}/>
+                </section>
+                <section className="p-6">
+                  <h2 className="text-base font-bold text-gray-900 mb-4">How it Works</h2>
+                  <HowItWorksTab duration={service.duration} online={service.meeting_mode !== 'offline'}/>
                 </section>
                 <section className="p-6">
                   <h2 className="text-base font-bold text-gray-900 mb-4">Reviews</h2>
@@ -850,8 +975,8 @@ export default function ServiceDetail() {
           </div>
 
           {/* ── RIGHT: Sticky sidebar ── */}
-          <div className="hidden lg:block lg:w-[320px] flex-shrink-0 lg:mt-[130px]">
-            <div className="sticky top-24 flex flex-col gap-5">
+          <div className="hidden lg:block lg:w-[320px] flex-shrink-0 lg:mt-[64px]">
+            <div className="sticky top-20 flex flex-col gap-5">
               <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee}/>
               <AdSpaceCard/>
               {/* Hidden for now — keep for later
