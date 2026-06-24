@@ -1,32 +1,20 @@
-// Reserved usernames — MANDATORY guard because public profiles are served at the
-// ROOT path (`/:slug`), sharing the namespace with real app routes. A username
-// that matches a route would shadow it. Keep this in sync with the first path
-// segment of every top-level route in client/src/App.jsx, plus API/infra words.
-//
-// Used by BOTH the auto-generator (server/utils/usernameGenerator.js) and the
-// change endpoint (server/controllers/usernameController.js).
+// Reserved usernames — public guard kept for backward-compat (importers:
+// usernameGenerator, usernameController, vendorOnboardingController, authController).
+// Internals now delegate to the L1 registry (config/reservedNamespaces.js) and the
+// shared normalizer, so every caller gets the full route-derived list plus
+// unicode/separator/zero-width hardening for free. For the FULL availability
+// check (L1 + L2 admin/premium + L3 taken) use services/reservedSlugService.js.
+const { normalizeSlug } = require('./slugNormalize');
+const { isStaticReserved, RESERVED_SET } = require('../config/reservedNamespaces');
 
-const RESERVED = new Set([
-  // App routes (first segment)
-  'login', 'logout', 'signin', 'signup', 'register', 'forgot-password',
-  'reset-password', 'help', 'about', 'privacy', 'terms', 'refund', 'unsubscribe',
-  'vendor', 'vendors', 'be-a-sloth', 'login-as-vendor', 'vendor-register',
-  'auth', 'hello-sloth', 'dashboard', 'super-dashboard', 'admin', 'explore',
-  'my-bookings', 'profile', 'review', 'reviews', 'loyalty', 'settings', 'search', 'lp',
-  // Infra / API / common reserved handles
-  'api', 'u', 'user', 'users', 'host', 'hosts', 'static', 'assets', 'public',
-  'cdn', 'img', 'images', 'media', 'files', 'download', 'downloads', 'webhook',
-  'webhooks', 'app', 'www', 'mail', 'email', 'support', 'contact', 'pricing',
-  'plans', 'plan', 'upgrade', 'billing', 'payment', 'payments', 'checkout',
-  'book', 'booking', 'bookings', 'service', 'services', 'product', 'products',
-  'category', 'categories', 'notifications', 'campaigns', 'badges', 'home',
-  'index', 'null', 'undefined', 'true', 'false', 'me', 'guest',
-]);
-
-// Case-insensitive check on the full slug.
+// Synchronous L1-only check. Normalizes first, so case/unicode/separator/zero-
+// width variants of a reserved word are all caught. Empty/nullish => reserved.
 function isReserved(slug) {
-  if (!slug) return true;
-  return RESERVED.has(String(slug).toLowerCase().trim());
+  if (slug === null || slug === undefined || slug === '') return true;
+  const norm = normalizeSlug(slug);
+  if (!norm) return true;
+  return isStaticReserved(norm);
 }
 
-module.exports = { isReserved, RESERVED };
+// RESERVED kept as a named export for any legacy importer; it is now the L1 set.
+module.exports = { isReserved, RESERVED: RESERVED_SET };
