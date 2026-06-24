@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
@@ -163,6 +164,15 @@ const Navbar = () => {
     setSignInOpen(false);
   }, [location.pathname]);
 
+  // Lock body scroll while the mobile drawer is open so the page behind it
+  // cannot be scrolled/seen. Mirrors Modal.jsx.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [menuOpen]);
+
   const isActive = ({ href, exact }) =>
     exact ? location.pathname === href : location.pathname.startsWith(href);
 
@@ -249,7 +259,7 @@ const Navbar = () => {
                 {/* Notifications bell */}
                 <div ref={notifRef} className="relative">
                   <button
-                    onClick={() => { setNotifOpen(o => !o); setDropdownOpen(false); }}
+                    onClick={() => { setNotifOpen(o => !o); setDropdownOpen(false); setMenuOpen(false); }}
                     className="relative p-2.5 rounded-full text-gray-500 hover:text-[#FE5100] hover:bg-[#FE5100]/5 transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1"
                     aria-label={`Notifications${badges.notifications > 0 ? `, ${badges.notifications} unread` : ''}`}
                     aria-expanded={notifOpen}
@@ -283,7 +293,7 @@ const Navbar = () => {
                 {/* Profile avatar + dropdown */}
                 <div ref={dropdownRef} className="relative">
                   <button
-                    onClick={() => { setDropdownOpen(o => !o); setNotifOpen(false); }}
+                    onClick={() => { setDropdownOpen(o => !o); setNotifOpen(false); setMenuOpen(false); }}
                     className="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full hover:bg-gray-100 transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1"
                     aria-label="Profile and account menu"
                     aria-expanded={dropdownOpen}
@@ -351,7 +361,7 @@ const Navbar = () => {
                 {/* Sign In dropdown — separate customer vs vendor login */}
                 <div ref={signInRef} className="relative hidden sm:block">
                   <button
-                    onClick={() => { setSignInOpen(o => !o); }}
+                    onClick={() => { setSignInOpen(o => !o); setMenuOpen(false); }}
                     className="inline-flex items-center gap-1 px-3.5 py-2 text-[13px] font-medium text-gray-600 hover:text-[#FE5100] hover:bg-[#FE5100]/5 rounded-lg transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1"
                     aria-expanded={signInOpen}
                     aria-haspopup="menu"
@@ -376,7 +386,7 @@ const Navbar = () => {
                 </div>
                 <Link
                   to="/be-a-sloth"
-                  className="btn inline-flex items-center px-4 py-2 text-[13px] font-semibold text-white bg-primary-cta hover:bg-[#d94400] transition-colors duration-150 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1 hover:no-underline"
+                  className="btn hidden sm:inline-flex items-center px-4 py-2 text-[13px] font-semibold text-white bg-primary-cta hover:bg-[#d94400] transition-colors duration-150 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1 hover:no-underline"
                 >
                   Let's Get Started
                 </Link>
@@ -386,7 +396,7 @@ const Navbar = () => {
             {/* Mobile hamburger */}
             <button
               className="md:hidden p-2.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] ml-1"
-              onClick={() => setMenuOpen(o => !o)}
+              onClick={() => { setMenuOpen(o => !o); setDropdownOpen(false); setNotifOpen(false); setSignInOpen(false); }}
               aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
               aria-expanded={menuOpen}
               aria-controls="mobile-menu"
@@ -396,13 +406,24 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* ── Mobile menu ───────────────────────────────────────────────────── */}
-        {menuOpen && (
-          <div
-            id="mobile-menu"
-            className="md:hidden border-t border-gray-100 pb-3"
-            aria-label="Mobile navigation"
-          >
+        {/* ── Mobile drawer + backdrop ───────────────────────────────────────── */}
+        {/* Portaled to <body>: the nav's backdrop-blur makes it a containing block
+            for fixed descendants, which would otherwise clamp the drawer to the
+            56px bar height. Portaling resolves `fixed` against the viewport. */}
+        {menuOpen && createPortal(
+          <>
+            {/* Backdrop: dims + blocks the page behind the drawer (below the bar) */}
+            <div
+              className="fixed left-0 right-0 top-14 bottom-0 z-50 bg-black/40 md:hidden"
+              onClick={() => setMenuOpen(false)}
+              aria-hidden="true"
+            />
+            {/* Fixed full-height drawer */}
+            <div
+              id="mobile-menu"
+              className="fixed top-14 right-0 bottom-0 z-50 flex w-[82%] max-w-xs flex-col overflow-y-auto overscroll-contain bg-white pb-6 shadow-2xl md:hidden"
+              aria-label="Mobile navigation"
+            >
             {/* Nav links */}
             <div className="pt-2 space-y-0.5 px-1">
               {navItems.map((item) => {
@@ -511,7 +532,9 @@ const Navbar = () => {
                 </button>
               </div>
             )}
-          </div>
+            </div>
+          </>,
+          document.body
         )}
       </div>
     </nav>
