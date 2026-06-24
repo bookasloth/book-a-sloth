@@ -17,6 +17,9 @@ const loadRazorpay = () =>
 const GST_RATE = 0.18; // display only — server is authoritative
 const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
+// `explorer` is the legacy alias for the free tier (real slug: `starter`).
+const LEGACY_PLAN_ALIASES = { explorer: "starter" };
+
 // Build a concise, accurate feature list straight from the DB plan record.
 const featureLines = (plan) => {
   const L = plan.limits || {};
@@ -48,7 +51,12 @@ const UpgradePlan = () => {
   const [paying, setPaying] = useState(null);        // plan slug
   const [cancelling, setCancelling] = useState(false);
 
-  const currentPlan = user?.plan || "starter";
+  const rawPlan = (user?.plan || "starter").toLowerCase();
+  const currentPlan = LEGACY_PLAN_ALIASES[rawPlan] || rawPlan;
+  // Current tier rank, used to tell upgrades from downgrades. Falls back to 0
+  // when the current plan isn't in the public list (e.g. an archived/admin tier)
+  // — every paid plan then reads as a higher tier, never a bogus "downgrade".
+  const myOrder = plans.find((p) => p.slug === currentPlan)?.sort_order ?? 0;
 
   useEffect(() => {
     getPublicPlans()
@@ -232,6 +240,7 @@ const UpgradePlan = () => {
                     {paying === plan.slug ? "Opening payment…"
                       : !cadenceAvailable ? "Annual billing only"
                       : isCurrentTier ? `Switch to ${cadence}`
+                      : (plan.sort_order ?? 0) < myOrder ? `Downgrade to ${plan.name}`
                       : `Upgrade to ${plan.name}`}
                   </button>
                 )}
