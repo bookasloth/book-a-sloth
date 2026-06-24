@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import {
-  getProduct,
+  getProductPublic,
   sendOtp,
-  verifyOtp,
   createProductOrder,
   verifyProductPayment,
   freeDownloadProduct,
   downloadProduct,
+  resendProductLink,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { gaClientId } from "../services/analytics";
+import { isValidHex } from "../utils/themeUtils";
 import toast from "react-hot-toast";
 
 const loadRazorpay = () =>
@@ -47,6 +48,7 @@ const safeUrl = (url) =>
 
 const ProductPurchase = () => {
   const { profileSlug: username, productId } = useParams();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
   const [product, setProduct] = useState(null);
@@ -58,6 +60,7 @@ const ProductPurchase = () => {
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
+  const [order, setOrder] = useState(null); // Razorpay order, created at the OTP step (paid)
   const [otpSending, setOtpSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
@@ -65,12 +68,37 @@ const ProductPurchase = () => {
   const [downloadInfo, setDownloadInfo] = useState(null);
   const [downloading, setDownloading] = useState(false);
 
+  // Lost-link recovery (re-issue a lapsed download link).
+  const [resendOpen, setResendOpen] = useState(false);
+  const [resendStage, setResendStage] = useState("idle"); // 'idle' | 'otp'
+  const [resendOtp, setResendOtp] = useState("");
+  const [resending, setResending] = useState(false);
+
   useEffect(() => {
-    getProduct(productId)
+    getProductPublic(username, productId)
       .then(({ data }) => setProduct(data))
       .catch(() => toast.error("Product not found"))
       .finally(() => setLoading(false));
-  }, [productId]);
+  }, [productId, username]);
+
+  // Deep link from the download email (?dl=<token>) jumps straight to download.
+  useEffect(() => {
+    const dl = searchParams.get("dl");
+    if (dl) {
+      setDownloadToken(dl);
+      setStep("done");
+    }
+  }, [searchParams]);
+
+  // Host accent — themes the purchase page like the rest of the host's profile,
+  // instead of the old hardcoded indigo. Falls back to the brand orange.
+  const accent = isValidHex(product?.profiles?.theme_color)
+    ? product.profiles.theme_color
+    : "#FE5100";
+  // Platform fee comes from the server (never hardcoded here, so it can't drift
+  // from what's actually charged).
+  const fee = Number(product?.platform_fee ?? 0);
+  const total = product ? Number(product.price) + fee : 0;
 
   const handleSendOtp = async () => {
     if (!name || !email) {
@@ -97,9 +125,8 @@ const ProductPurchase = () => {
     setVerifying(true);
     try {
       if (product.price === 0) {
-        // Free product — the server verifies the OTP itself (single-use), so we
-        // pass the raw code straight through rather than pre-consuming it via
-        // verify-otp. The download token is issued only on a valid OTP.
+        // Free product — the server verifies the OTP itself (single-use) and
+        // issues the download token only on a valid code.
         const { data } = await freeDownloadProduct({
           product_id: product.id,
           buyer_name: name,
@@ -111,12 +138,17 @@ const ProductPurchase = () => {
         setStep("done");
         toast.success("Download ready!");
       } else {
-        // Paid product — verify the OTP here; payment is verified separately.
-        const { data: result } = await verifyOtp({ email, otp });
-        if (!result.verified) {
-          toast.error("Verification failed");
-          return;
-        }
+        // Paid product — the OTP is verified server-side as part of order
+        // creation, which also binds the verified buyer + the price-at-order
+        // into the Razorpay order. No separate verify-OTP round trip.
+        const { data } = await createProductOrder({
+          product_id: product.id,
+          buyer_name: name,
+          buyer_email: email,
+          buyer_phone: phone,
+          otp,
+        });
+        setOrder(data);
         setStep("payment");
       }
     } catch (err) {
@@ -132,11 +164,13 @@ const ProductPurchase = () => {
       toast.error("Payment gateway failed to load");
       return;
     }
+    if (!order) {
+      toast.error("Please verify your email first");
+      setStep("details");
+      return;
+    }
     setPaymentLoading(true);
     try {
-      const { data: order } = await createProductOrder({
-        product_id: product.id,
-      });
       const options = {
         key: order.key,
         amount: order.amount,
@@ -146,15 +180,14 @@ const ProductPurchase = () => {
         order_id: order.razorpay_order_id,
         handler: async (response) => {
           try {
+            // The server reads the buyer + amount from the order it created, so
+            // we only need to hand back the Razorpay payment proof.
             const { data } = await verifyProductPayment({
               product_id: product.id,
-              buyer_name: name,
-              buyer_email: email,
-              buyer_phone: phone,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
-              ga_client_id: gaClientId(),   // join server GA4 hit to this web session
+              ga_client_id: gaClientId(), // join server GA4 hit to this web session
             });
             setDownloadToken(data.download_token);
             setStep("done");
@@ -164,7 +197,7 @@ const ProductPurchase = () => {
           }
         },
         prefill: { name, email, contact: phone },
-        theme: { color: "#4f46e5" },
+        theme: { color: accent },
       };
       new window.Razorpay(options).open();
     } catch (err) {
@@ -189,6 +222,50 @@ const ProductPurchase = () => {
       toast.error(err.response?.data?.message || "Download failed");
     } finally {
       setDownloading(false);
+    }
+  };
+
+  // ── Lost-link recovery ───────────────────────────────────────
+  const handleResendStart = async () => {
+    if (!email) {
+      toast.error("Enter the email you purchased with");
+      return;
+    }
+    setResending(true);
+    try {
+      await sendOtp({ email, name });
+      setResendStage("otp");
+      toast.success("Verification code sent to your email");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send code");
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const handleResendConfirm = async () => {
+    if (resendOtp.length !== 6) {
+      toast.error("Enter the 6-digit code");
+      return;
+    }
+    setResending(true);
+    try {
+      const { data } = await resendProductLink({
+        product_id: product.id,
+        buyer_email: email,
+        otp: resendOtp,
+      });
+      if (data.download_token) {
+        setDownloadToken(data.download_token);
+        setStep("done");
+        toast.success("Download link restored!");
+      } else {
+        toast.success(data.message || "If a purchase exists, a link is on its way.");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not resend link");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -247,11 +324,11 @@ const ProductPurchase = () => {
                 <h1 className="text-xl font-bold">{product.title}</h1>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="text-2xl font-bold text-primary">
+                <p className="text-2xl font-bold" style={{ color: accent }}>
                   {product.price === 0 ? "Free" : `₹${product.price}`}
                 </p>
-                {product.price > 0 && (
-                  <p className="text-xs text-gray-400">+ ₹10 platform fee</p>
+                {product.price > 0 && fee > 0 && (
+                  <p className="text-xs text-gray-400">+ ₹{fee} platform fee</p>
                 )}
               </div>
             </div>
@@ -268,7 +345,10 @@ const ProductPurchase = () => {
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                  style={{ background: `${accent}1A`, color: accent }}
+                >
                   {host?.name?.charAt(0)}
                 </div>
               )}
@@ -344,25 +424,82 @@ const ProductPurchase = () => {
                       <span className="text-gray-500">Product</span>
                       <span>₹{product.price}</span>
                     </div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-gray-500">Platform fee</span>
-                      <span>₹10</span>
-                    </div>
+                    {fee > 0 && (
+                      <div className="flex justify-between mb-1">
+                        <span className="text-gray-500">Platform fee</span>
+                        <span>₹{fee}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between font-semibold pt-2 border-t">
                       <span>Total</span>
-                      <span className="text-primary">
-                        ₹{product.price + 10}
-                      </span>
+                      <span style={{ color: accent }}>₹{total}</span>
                     </div>
                   </div>
                 )}
                 <button
                   onClick={handleSendOtp}
                   disabled={otpSending || !name || !email}
-                  className="btn w-full bg-primary text-white py-3 text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50"
+                  className="btn w-full text-white py-3 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+                  style={{ background: accent }}
                 >
                   {otpSending ? "Sending..." : "Send OTP"}
                 </button>
+
+                {/* Lost-link recovery */}
+                <div className="text-center pt-1">
+                  {!resendOpen ? (
+                    <button
+                      type="button"
+                      onClick={() => setResendOpen(true)}
+                      className="text-xs text-gray-400 hover:text-gray-600 underline"
+                    >
+                      Already purchased? Resend my download link
+                    </button>
+                  ) : (
+                    <div className="bg-gray-50 rounded-xl p-4 text-left mt-2">
+                      <p className="text-sm font-medium mb-2">Resend download link</p>
+                      {resendStage === "idle" ? (
+                        <>
+                          <p className="text-xs text-gray-500 mb-3">
+                            We'll email a fresh link to the address you bought with above.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleResendStart}
+                            disabled={resending || !email}
+                            className="btn w-full text-white py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+                            style={{ background: accent }}
+                          >
+                            {resending ? "Sending..." : "Send verification code"}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs text-gray-500 mb-2">
+                            Enter the 6-digit code sent to <strong>{email}</strong>
+                          </p>
+                          <input
+                            type="text"
+                            maxLength={6}
+                            placeholder="000000"
+                            className="fb-input text-center tracking-[0.4em] font-mono mb-3"
+                            value={resendOtp}
+                            onChange={(e) => setResendOtp(e.target.value.replace(/\D/g, ""))}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleResendConfirm}
+                            disabled={resending || resendOtp.length !== 6}
+                            className="btn w-full text-white py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+                            style={{ background: accent }}
+                          >
+                            {resending ? "Verifying..." : "Verify & restore link"}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           )}
@@ -370,9 +507,13 @@ const ProductPurchase = () => {
           {/* Step: OTP */}
           {step === "otp" && (
             <div className="text-center max-w-xs mx-auto">
-              <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: `${accent}1A` }}
+              >
                 <svg
-                  className="w-7 h-7 text-primary"
+                  className="w-7 h-7"
+                  style={{ color: accent }}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -394,14 +535,18 @@ const ProductPurchase = () => {
                 maxLength={6}
                 placeholder="000000"
                 autoFocus
-                className="w-full border-2 rounded-xl px-4 py-4 text-center text-3xl tracking-[0.5em] font-mono focus:outline-none focus:border-primary mb-4"
+                className="w-full border-2 rounded-xl px-4 py-4 text-center text-3xl tracking-[0.5em] font-mono focus:outline-none mb-4"
+                style={{ borderColor: "#e5e7eb" }}
+                onFocus={(e) => (e.target.style.borderColor = accent)}
+                onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
               />
               <button
                 onClick={handleVerify}
                 disabled={verifying || otp.length !== 6}
-                className="btn w-full bg-primary text-white py-3 text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50"
+                className="btn w-full text-white py-3 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ background: accent }}
               >
                 {verifying
                   ? "Verifying..."
@@ -421,9 +566,13 @@ const ProductPurchase = () => {
           {/* Step: payment */}
           {step === "payment" && (
             <div className="text-center max-w-xs mx-auto">
-              <div className="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: `${accent}1A` }}
+              >
                 <svg
-                  className="w-7 h-7 text-indigo-600"
+                  className="w-7 h-7"
+                  style={{ color: accent }}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -443,17 +592,18 @@ const ProductPurchase = () => {
               <div className="bg-gray-50 rounded-xl p-4 text-sm text-left mb-5">
                 <div className="flex justify-between font-semibold text-base">
                   <span>Total</span>
-                  <span className="text-primary">₹{product.price + 10}</span>
+                  <span style={{ color: accent }}>₹{total}</span>
                 </div>
               </div>
               <button
                 onClick={handlePayment}
                 disabled={paymentLoading}
-                className="btn w-full bg-indigo-600 text-white py-3 text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="btn w-full text-white py-3 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ background: accent }}
               >
                 {paymentLoading
                   ? "Opening payment..."
-                  : `Pay ₹${product.price + 10} with Razorpay`}
+                  : `Pay ₹${total} with Razorpay`}
               </button>
               <p className="text-xs text-gray-400 mt-2">
                 UPI · Card · Wallet accepted
@@ -509,11 +659,12 @@ const ProductPurchase = () => {
               </button>
               <p className="text-xs text-gray-400">
                 Link expires in 24 hours · Max 3 downloads · A copy has been
-                sent to {email}
+                sent to {email || "your email"}
               </p>
               <Link
                 to={`/${username}`}
-                className="block mt-4 text-sm text-primary hover:underline"
+                className="block mt-4 text-sm hover:underline"
+                style={{ color: accent }}
               >
                 Back to {host?.name}'s profile
               </Link>

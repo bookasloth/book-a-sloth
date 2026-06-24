@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const {
   createProduct, getMyProducts, updateProduct, deleteProduct,
-  getHostProducts, getProduct, downloadProduct, freeDownload,
+  getHostProducts, getProduct, getProductPublic, downloadProduct,
+  freeDownload, resendDownloadLink,
 } = require('../controllers/productController');
 const { protect, optionalProtect, requireHost } = require('../middleware/authMiddleware');
 const { attachPlan, checkProductLimit } = require('../middleware/planMiddleware');
@@ -13,12 +14,17 @@ const { validate, createProductRules, updateProductRules } = require('../middlew
 // Public
 router.get('/host/:username', getHostProducts);
 router.get('/download/:token', downloadProduct);
+// Slug-first public detail (/p/:username/:slug) with id fallback. Declared
+// before '/:id' — distinct path depth, but kept explicit for clarity.
+router.get('/p/:username/:key', getProductPublic);
 router.get('/:id', getProduct);
 // optionalProtect: links the download to the logged-in buyer if present;
 // buyer_id is never taken from the body.
 // Stack both limiters: email-keyed (per-victim) + IP-keyed (stops buyer_email
 // rotation from spamming purchase rows from one IP).
 router.post('/free-download', freeDownloadIpLimiter, freeDownloadLimiter, optionalProtect, requireFeature('product_purchase'), freeDownload);
+// Re-issue a lapsed download link (OTP-gated, same limiters as free-download).
+router.post('/resend-link', freeDownloadIpLimiter, freeDownloadLimiter, optionalProtect, requireFeature('product_purchase'), resendDownloadLink);
 
 // Vendor (protected + plan-gated)
 // validate(...): URL fields are http(s)-only — rejects javascript:/data: schemes

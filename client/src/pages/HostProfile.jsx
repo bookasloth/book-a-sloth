@@ -285,7 +285,7 @@ const ProductCard = ({ product: p, profileSlug }) => {
       )}
       <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
         <span className="text-[10px]" style={{ color: C.muted }}>{p.purchase_count} purchase{p.purchase_count !== 1 ? 's' : ''}</span>
-        <Link to={`/${profileSlug}/product/${p.id}`}
+        <Link to={`/${profileSlug}/product/${p.slug || p.id}`}
           className="btn text-xs font-semibold flex items-center transition-opacity hover:opacity-80"
           style={{ background: 'var(--profile-accent, #FE5100)', color: 'var(--profile-accent-text, #ffffff)', height: 34, padding: '0 14px' }}>
           {p.price === 0 ? 'Get Free' : 'Buy Now'}

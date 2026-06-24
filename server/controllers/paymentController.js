@@ -22,6 +22,8 @@ const { finalizeBookingCapture } = require("../services/bookingCapture");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { trackServer } = require("../utils/trackServer");
 const { runInBackground } = require("../utils/background");
+const otpStore = require("../utils/otpStore");
+const { sendProductDownloadEmail } = require("../utils/productEmail");
 
 // Annual plan price in paise, read from subscription_plans (DB-driven, spec v1.1)
 const getPlanPricePaise = async (slug) => {
@@ -776,7 +778,23 @@ const cancelVendorSubscription = async (req, res) => {
 // ── POST /api/payment/create-product-order ───────────────────
 const createProductOrder = async (req, res) => {
   try {
-    const { product_id } = req.body;
+    const { product_id, buyer_name, buyer_phone, otp } = req.body;
+    // Email ownership is proven HERE, before any money moves: the buyer must
+    // present a valid OTP for buyer_email. The verified identity AND the price
+    // at order time are then baked into the Razorpay order notes, which
+    // verify-product and the webhook treat as the source of truth. This closes
+    // the hole where verify-product trusted an unverified buyer_email from the
+    // request body, and pins the charged amount so a mid-checkout price edit
+    // can't reject (or mischarge) a genuine payment.
+    const buyerEmail = String(req.body.buyer_email || '').toLowerCase().trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyerEmail)) {
+      return res.status(400).json({ message: 'A valid email is required' });
+    }
+    const otpResult = await otpStore.verify(buyerEmail, otp);
+    if (!otpResult.valid) {
+      return res.status(400).json({ message: otpResult.reason || 'Invalid or expired code' });
+    }
+
     const { data: product } = await supabaseAdmin
       .from("products").select("id, title, price, host_id, is_active").eq("id", product_id).single();
 
@@ -789,7 +807,11 @@ const createProductOrder = async (req, res) => {
     const order = await razorpay.orders.create({
       amount: totalPaise, currency: "INR",
       receipt: `prd_${product_id.slice(0, 20)}`,
-      notes: { product_id, title: product.title, platform_fee: productFee },
+      notes: {
+        product_id, title: product.title,
+        platform_fee: productFee, product_price: product.price,
+        buyer_name: buyer_name || '', buyer_email: buyerEmail, buyer_phone: buyer_phone || '',
+      },
     });
     res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency,
       key: await razorpayConfig.getKeyId(),
@@ -830,14 +852,61 @@ const createRescheduleFeeOrder = async (req, res) => {
   }
 };
 
+// Materialize a paid product purchase from a verified Razorpay order. Idempotent
+// on razorpay_order_id so verify-product and the webhook can both run without
+// double-issuing. `notes` is the order's notes (buyer + price snapshot, set at
+// order creation). Mints the download token and bumps purchase_count atomically.
+// Returns { reused, downloadToken, purchase }. Throws on insert error.
+const materializeProductPurchase = async ({ product, notes, orderId, paymentId, buyerId }) => {
+  const { data: existing } = await supabaseAdmin
+    .from("product_purchases")
+    .select("id, download_token, buyer_email")
+    .eq("razorpay_order_id", orderId).limit(1).maybeSingle();
+  if (existing) return { reused: true, downloadToken: existing.download_token, purchase: existing };
+
+  const downloadToken = crypto.randomUUID();
+  const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const productPrice = Number(notes.product_price);
+  const platformFee = Number(notes.platform_fee) || 0;
+
+  const { data: purchase, error } = await supabaseAdmin
+    .from("product_purchases").insert({
+      product_id: product.id, host_id: product.host_id,
+      buyer_id: buyerId || null,
+      buyer_name: notes.buyer_name || null,
+      buyer_email: String(notes.buyer_email || '').toLowerCase().trim() || null,
+      buyer_phone: notes.buyer_phone || null,
+      amount_paid: Number.isFinite(productPrice) ? productPrice : 0,
+      platform_fee: platformFee,
+      payment_status: "paid",
+      razorpay_order_id: orderId, razorpay_payment_id: paymentId,
+      download_token: downloadToken,
+      download_token_expires_at: tokenExpires.toISOString(),
+    }).select().single();
+  if (error) {
+    // Lost the race with the other writer (verify vs webhook). The unique index
+    // on razorpay_order_id (v1.10) guarantees exactly one winner — re-read its
+    // row and treat this as a no-op so neither path double-issues or errors.
+    if (error.code === '23505') {
+      const { data: winner } = await supabaseAdmin
+        .from("product_purchases").select("id, download_token, buyer_email")
+        .eq("razorpay_order_id", orderId).limit(1).maybeSingle();
+      if (winner) return { reused: true, downloadToken: winner.download_token, purchase: winner };
+    }
+    throw error;
+  }
+
+  // Atomic increment to avoid a race under concurrent purchases (BUG-15).
+  await supabaseAdmin.rpc("increment_product_purchase_count", { row_id: product.id });
+  return { reused: false, downloadToken, purchase };
+};
+
 // ── POST /api/payment/verify-product ────────────────────────
 const verifyProductPayment = async (req, res) => {
   try {
-    const { product_id, buyer_name, buyer_phone,
-      razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+    const { product_id, razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
     // buyer_id is never trusted from the body — derive from the session if any.
     const buyerId = req.user?.id || null;
-    const buyerEmail = String(req.body.buyer_email || '').toLowerCase().trim();
 
     const keySecret = await razorpayConfig.getKeySecret();
     if (!verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, keySecret)) {
@@ -846,15 +915,16 @@ const verifyProductPayment = async (req, res) => {
     }
 
     const { data: product } = await supabaseAdmin
-      .from("products").select("id, price, host_id").eq("id", product_id).single();
+      .from("products")
+      .select("id, price, host_id, title, profiles!products_host_id_fkey(username, name)")
+      .eq("id", product_id).single();
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    const productFee = calculatePlatformFee(product.price);
-
     // SECURITY: the signature only proves the order/payment pair is genuine —
-    // not WHAT it was for. Fetch the Razorpay order and assert it was created
-    // for THIS product and the correct amount; otherwise a buyer could pay for
-    // a cheap product and verify against an expensive product_id.
+    // not WHAT it was for. Fetch the Razorpay order, assert it was created for
+    // THIS product, then read the buyer + amount from the order notes (set and
+    // OTP-verified at order creation). Trusting the order — not the request
+    // body — is what makes buyer_email and the charged amount authoritative.
     let rzpOrder;
     try {
       const razorpay = await razorpayConfig.getClient();
@@ -862,55 +932,67 @@ const verifyProductPayment = async (req, res) => {
     } catch (_) {
       return res.status(400).json({ message: "Order not found." });
     }
-    const expectedPaise = Math.round((product.price + productFee) * 100);
-    if (String(rzpOrder?.notes?.product_id) !== String(product_id) || Number(rzpOrder?.amount) !== expectedPaise) {
+    const orderNotes = rzpOrder?.notes || {};
+    // Snapshot fields live in notes for orders created by the current code; the
+    // body fallbacks cover only orders already in flight across a deploy.
+    const notes = {
+      product_id,
+      product_price: orderNotes.product_price != null ? orderNotes.product_price : product.price,
+      platform_fee: orderNotes.platform_fee != null ? orderNotes.platform_fee : calculatePlatformFee(product.price),
+      buyer_name: orderNotes.buyer_name || req.body.buyer_name || '',
+      buyer_email: String(orderNotes.buyer_email || req.body.buyer_email || '').toLowerCase().trim(),
+      buyer_phone: orderNotes.buyer_phone || req.body.buyer_phone || '',
+    };
+    const expectedPaise = Math.round((Number(notes.product_price) + Number(notes.platform_fee)) * 100);
+    if (String(orderNotes.product_id) !== String(product_id) || Number(rzpOrder?.amount) !== expectedPaise) {
       securityLog('PRODUCT_PAYMENT_MISMATCH', { product_id, order_id: razorpay_order_id, ip: req.ip });
       return res.status(400).json({ message: "Payment does not match this product." });
     }
 
-    // Idempotent: never issue two purchases for the same order (replay guard).
-    const { data: existingPurchase } = await supabaseAdmin
-      .from("product_purchases").select("download_token")
-      .eq("razorpay_order_id", razorpay_order_id).limit(1).maybeSingle();
-    if (existingPurchase) {
-      return res.json({ message: "Payment verified", download_token: existingPurchase.download_token });
+    let issued;
+    try {
+      issued = await materializeProductPurchase({
+        product, notes, orderId: razorpay_order_id, paymentId: razorpay_payment_id, buyerId,
+      });
+    } catch (error) {
+      return safeError(res, error);
+    }
+    if (issued.reused) {
+      return res.json({ message: "Payment verified", download_token: issued.downloadToken });
     }
 
-    const downloadToken = crypto.randomUUID();
-    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const amount = Number(notes.product_price) || 0;
+    auditLog('PRODUCT_PURCHASED', buyerId, { product_id, amount });
 
-    const { data: purchase, error } = await supabaseAdmin
-      .from("product_purchases").insert({
-        product_id, host_id: product.host_id,
-        buyer_id: buyerId, buyer_name, buyer_email: buyerEmail, buyer_phone,
-        amount_paid: product.price, platform_fee: productFee,
-        payment_status: "paid", razorpay_order_id, razorpay_payment_id,
-        download_token: downloadToken,
-        download_token_expires_at: tokenExpires.toISOString(),
-      }).select().single();
+    // Deliver the secure download link by email (also makes the "a copy has been
+    // sent" line on the purchase page true). Deferred so SMTP never blocks the
+    // response; the in-app flow still gets the token in the JSON below.
+    runInBackground("product:download-email", () => sendProductDownloadEmail({
+      to: notes.buyer_email,
+      username: product.profiles?.username,
+      productId: product.id,
+      productTitle: product.title,
+      hostName: product.profiles?.name,
+      downloadToken: issued.downloadToken,
+      isFree: false,
+    }));
 
-    if (error) return safeError(res, error);
-    // BUG-15 fixed: atomic increment to avoid race condition under concurrent purchases
-    await supabaseAdmin.rpc("increment_product_purchase_count", { row_id: product_id });
-
-    auditLog('PRODUCT_PURCHASED', buyerId, { product_id, amount: product.price });
-
-    trackServer(resolveGuestId({ guestId: buyerId, guestEmail: buyerEmail }), "product_purchased", {
+    trackServer(resolveGuestId({ guestId: buyerId, guestEmail: notes.buyer_email }), "product_purchased", {
       product_id,
       host_id: product.host_id,
-      amount: Number(product.price) || 0,
+      amount,
       currency: "INR",
       razorpay_payment_id,
     }, {
-      value: Number(product.price) || 0,
+      value: amount,
       currency: "INR",
-      email: buyerEmail,
-      phone: buyer_phone,
+      email: notes.buyer_email,
+      phone: notes.buyer_phone,
       eventId: razorpay_payment_id,
       gaClientId: req.body?.ga_client_id,
     });
 
-    res.json({ message: "Payment verified", download_token: downloadToken, purchase });
+    res.json({ message: "Payment verified", download_token: issued.downloadToken, purchase: issued.purchase });
   } catch (error) {
     safeError(res, error);
   }
@@ -1022,6 +1104,48 @@ const handleWebhook = async (req, res) => {
             email: paid.guest_email,
             eventId: payment.id,              // same id browser pixel used → de-dupe
           });
+        }
+      } else if (notes.product_id) {
+        // Product-purchase safety net: verify-product may have died after Razorpay
+        // captured (DB blip, client closed the tab). The order notes carry the
+        // buyer + price snapshot, so reconcile straight from them. Idempotent on
+        // razorpay_order_id — if verify-product already issued the purchase, this
+        // is a no-op and no second email/analytics fire.
+        const { data: product } = await supabaseAdmin
+          .from("products")
+          .select("id, host_id, title, profiles!products_host_id_fkey(username, name)")
+          .eq("id", notes.product_id).single();
+        if (product) {
+          const issued = await materializeProductPurchase({
+            product, notes, orderId: payment.order_id, paymentId: payment.id, buyerId: null,
+          });
+          if (!issued.reused) {
+            auditLog('WEBHOOK_PRODUCT_PAID', null, { product_id: notes.product_id, payment_id: payment.id });
+            const buyerEmail = String(notes.buyer_email || '').toLowerCase().trim();
+            runInBackground("product:download-email", () => sendProductDownloadEmail({
+              to: buyerEmail,
+              username: product.profiles?.username,
+              productId: product.id,
+              productTitle: product.title,
+              hostName: product.profiles?.name,
+              downloadToken: issued.downloadToken,
+              isFree: false,
+            }));
+            trackServer(resolveGuestId({ guestId: null, guestEmail: buyerEmail }), "product_purchased", {
+              product_id: notes.product_id,
+              host_id: product.host_id,
+              amount: Number(notes.product_price) || 0,
+              currency: "INR",
+              razorpay_payment_id: payment.id,
+              source: "webhook",
+            }, {
+              value: Number(notes.product_price) || 0,
+              currency: "INR",
+              email: buyerEmail,
+              phone: notes.buyer_phone,
+              eventId: payment.id,            // same id verify path uses → de-dupe
+            });
+          }
         }
       }
     } else if (event.event === 'payment.failed') {
