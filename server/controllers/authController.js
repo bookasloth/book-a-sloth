@@ -68,6 +68,9 @@ const serializeProfile = (profile, session) => ({
   phone:                    profile.phone || null,
   password_set:             !!profile.password_set,
   role:                     profile.role,
+  // is_host: new capability flag (v3.34). role is the auto-mirrored shim until
+  // the Phase 4 cleanup; both are returned during the transition.
+  is_host:                  !!profile.is_host,
   plan:                     profile.plan || 'explorer',
   plan_expires_at:          profile.plan_expires_at || null,
   billing_cadence:          profile.billing_cadence || null,
@@ -1104,6 +1107,7 @@ const resetPassword = async (req, res) => {
 };
 
 module.exports = {
+  serializeProfile,
   upsertProfile,
   registerVendor,
   registerUser,
