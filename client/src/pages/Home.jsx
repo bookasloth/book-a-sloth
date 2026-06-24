@@ -1512,18 +1512,18 @@ const Home = () => {
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
             {FEATURE_GROUPS.map((g, i) => (
               <Reveal key={g.title} delay={(i % 4) * 0.07}>
-                {/* Hover inverts the whole card to solid orange: white text → black,
-                    orange accents (icon + ticks) → black. */}
-                <div className="group flex h-full flex-col rounded-[6px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-primary hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary transition-colors duration-300 group-hover:bg-black/15 group-hover:text-black">
+                {/* Subtle dark-theme hover: card lifts, border warms to orange, bg
+                    brightens slightly, icon chip warms. Text + orange accents stay — no invert. */}
+                <div className="group flex h-full flex-col rounded-[6px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-white/10 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary transition-colors duration-300 group-hover:bg-primary/25">
                     <g.icon size={22} />
                   </span>
-                  <h3 className="mt-5 font-heading text-lg font-bold text-white transition-colors duration-300 group-hover:text-black">{g.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-white/60 transition-colors duration-300 group-hover:text-black/70">{g.desc}</p>
-                  <ul className="mt-5 space-y-2.5 border-t border-white/10 pt-5 transition-colors duration-300 group-hover:border-black/20">
+                  <h3 className="mt-5 font-heading text-lg font-bold text-white">{g.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-white/60">{g.desc}</p>
+                  <ul className="mt-5 space-y-2.5 border-t border-white/10 pt-5 transition-colors duration-300 group-hover:border-white/20">
                     {g.items.map((it) => (
-                      <li key={it} className="flex items-start gap-2 text-sm text-white/80 transition-colors duration-300 group-hover:text-black/90">
-                        <Check size={15} className="mt-0.5 flex-shrink-0 text-primary transition-colors duration-300 group-hover:text-black" />
+                      <li key={it} className="flex items-start gap-2 text-sm text-white/80">
+                        <Check size={15} className="mt-0.5 flex-shrink-0 text-primary" />
                         {it}
                       </li>
                     ))}
