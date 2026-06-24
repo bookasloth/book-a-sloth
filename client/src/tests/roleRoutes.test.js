@@ -19,6 +19,12 @@ describe('isHost', () => {
   it('is true for host', () => { expect(isHost({ role: 'host' })).toBe(true); });
   it('is true for superadmin', () => { expect(isHost({ role: 'superadmin' })).toBe(true); });
   it('is false for a guest', () => { expect(isHost({ role: 'user' })).toBe(false); });
+  it('is true when the is_host capability is set (v3.34)', () => {
+    expect(isHost({ is_host: true })).toBe(true);
+  });
+  it('is false when is_host is false and there is no host role', () => {
+    expect(isHost({ is_host: false, role: 'guest' })).toBe(false);
+  });
   it('is false for null/undefined user', () => {
     expect(isHost(null)).toBe(false);
     expect(isHost(undefined)).toBe(false);
