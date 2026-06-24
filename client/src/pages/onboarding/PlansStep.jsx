@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Check } from 'lucide-react';
-import { getPublicPlans, createRazorpayOrder, createSubscription, syncSubscription } from '../../services/api';
+import { getPublicPlans, activateFreePlan, advanceToLive, createSubscription, syncSubscription, getMe } from '../../services/api';
 import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
 
@@ -41,12 +41,17 @@ const PlansStep = () => {
   const [loading, setLoading] = useState(true);
   const [cadence, setCadence] = useState('annual'); // 'monthly' | 'annual'
   const [busy, setBusy] = useState(null);            // plan slug | 'free' | null
+  const [me, setMe] = useState(null);               // fresh profile for Razorpay prefill
 
   useEffect(() => {
     getPublicPlans()
       .then((r) => setPlans(r.data || []))
       .catch(() => toast.error('Failed to load plans'))
       .finally(() => setLoading(false));
+    // Fetch fresh profile so the Razorpay prefill has name/email even after Google signup.
+    getMe()
+      .then((r) => setMe(r.data))
+      .catch(() => { /* non-fatal — prefill will be empty */ });
   }, []);
 
   const priceFor = (plan, c) => (c === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0);
@@ -54,16 +59,15 @@ const PlansStep = () => {
 
   const goNext = () => navigate(`/vendor-register/${slug}/live`);
 
-  // Free plan: activate immediately via the onboarding endpoint, then continue.
+  // Free plan: activate immediately via the new onboarding endpoint, then navigate to /live.
   const chooseFree = async () => {
     setBusy('free');
     try {
-      await createRazorpayOrder({ plan: 'explorer' });
+      await activateFreePlan();
       toast.success('Free plan activated');
       goNext();
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to activate plan');
-    } finally {
       setBusy(null);
     }
   };
@@ -78,26 +82,54 @@ const PlansStep = () => {
     setBusy(plan.slug);
     try {
       const { data: sub } = await createSubscription({ plan: plan.slug, cadence });
+
+      // Use fresh profile for prefill (me fetched on mount); fall back to localStorage.
+      const prefillData = me
+        ? { name: me.name, email: me.email, contact: me.phone }
+        : (() => {
+            try { const u = JSON.parse(localStorage.getItem('user') || '{}'); return { name: u.name, email: u.email }; }
+            catch { return {}; }
+          })();
+
       const options = {
         key: sub.key,
         subscription_id: sub.subscription_id,
         name: 'Book A Sloth',
         description: `${plan.name} — ${cadence} (auto-renews)`,
         handler: async () => {
-          try { await syncSubscription(); } catch { /* webhook finalizes shortly */ }
-          toast.success(`${plan.name} active — renews ${cadence}.`);
-          goNext();
+          try { await syncSubscription(); } catch { /* webhook will finalize shortly */ }
+          // Verify the plan is actually active before advancing.
+          try {
+            const { data: freshMe } = await getMe();
+            // Plan is active if it matches the paid plan slug and is not free/unset.
+            const FREE_SLUGS = ['explorer', 'starter', '', null, undefined];
+            if (!FREE_SLUGS.includes(freshMe.plan)) {
+              await advanceToLive();
+              toast.success(`${plan.name} active — renews ${cadence}.`);
+              goNext();
+            } else {
+              // Webhook lag: payment received but plan not yet updated.
+              toast.success('Payment received — finalizing your plan, please wait a moment.');
+              setBusy(null);
+            }
+          } catch {
+            toast.success(`${plan.name} activated! Taking you to the next step.`);
+            await advanceToLive();
+            goNext();
+          }
         },
-        prefill: (() => {
-          try { const u = JSON.parse(localStorage.getItem('user') || '{}'); return { name: u.name, email: u.email }; }
-          catch { return {}; }
-        })(),
+        modal: {
+          ondismiss: () => {
+            setBusy(null);
+            toast('Checkout closed — you can pick a plan when you\'re ready.');
+          },
+        },
+        prefill: prefillData,
         theme: { color: '#FE5100' },
       };
       new window.Razorpay(options).open();
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to start subscription');
-    } finally {
       setBusy(null);
     }
   };
