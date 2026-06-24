@@ -773,10 +773,7 @@ const verifyOtpLogin = async (req, res) => {
     if (!profile)
       return res.status(500).json({ message: "Could not access your account" });
     if (profile.role !== "guest")
-      return res.status(409).json({
-        message:
-          "This number is linked to a host account. Log in with your host email and password instead — you can book other creators from there too.",
-      });
+      return res.status(409).json({ message: "This number is registered as a host. Please use host login." });
 
     const session = await mintSessionForEmail(profile.email);
     res.json(serializeProfile(profile, session));
