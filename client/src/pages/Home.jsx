@@ -6,7 +6,6 @@ import {
   useTransform,
   useInView,
   AnimatePresence,
-  animate,
   useReducedMotion,
 } from "framer-motion";
 import {
@@ -55,7 +54,7 @@ import { searchVendors, subscribeNewsletter } from "../services/api";
 import useLenis from "../hooks/useLenis";
 import Reveal from "../components/home/Reveal";
 import BrandPreloader from "../components/preloader/BrandPreloader";
-import { HERO, PERSONAS, FACES, NEWSLETTER } from "../components/home/images";
+import { HERO, HERO_FACES, PERSONAS, NEWSLETTER } from "../components/home/images";
 
 /* Real funnel routes — do not point CTAs anywhere else. */
 const ROUTE_START = "/be-a-sloth";
@@ -86,36 +85,72 @@ const LineIcon = ({ children, color = "#1a1a1a" }) => {
 };
 
 /* ════════════════════════════════════════════════════════════
-   COUNT-UP — odometer-style stat that counts 0→target on scroll-in.
-   Parses a stat string ("₹40K+", "5 / 5") into prefix + number + suffix so
-   affixes stay put. Honours prefers-reduced-motion (renders final value).
+   ODOMETER — mechanical rolling-digit stat. Each numeric character rides a
+   0–9 column that rolls up to its target digit on scroll-in (staggered, so the
+   digits cascade like a real odometer). Non-digits (₹, /, +, K, spaces) stay
+   put. Honours prefers-reduced-motion (jumps straight to the final value).
    ════════════════════════════════════════════════════════════ */
-const parseStat = (v) => {
-  const m = String(v).match(/^(\D*)(\d[\d,]*)(.*)$/);
-  if (!m) return { prefix: "", target: 0, suffix: String(v) };
-  return { prefix: m[1], target: parseInt(m[2].replace(/,/g, ""), 10), suffix: m[3] };
+const OdometerDigit = ({ digit, delay, inView }) => {
+  const reduce = useReducedMotion();
+  const show = reduce || inView;
+  return (
+    <span className="relative inline-block h-[1em] w-[0.62em] overflow-hidden align-baseline">
+      <motion.span
+        className="absolute inset-x-0 top-0 flex flex-col"
+        initial={false}
+        animate={{ y: show ? `-${digit}em` : "0em" }}
+        transition={reduce ? { duration: 0 } : { duration: 1.2, ease: EASE, delay }}
+      >
+        {Array.from({ length: 10 }).map((_, n) => (
+          <span key={n} className="flex h-[1em] items-center justify-center leading-none">{n}</span>
+        ))}
+      </motion.span>
+    </span>
+  );
 };
 
-const CountUp = ({ value, className }) => {
-  const reduce = useReducedMotion();
-  const { prefix, target, suffix } = parseStat(value);
+const Odometer = ({ value, className }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
-  const [display, setDisplay] = useState(reduce ? target : 0);
-  useEffect(() => {
-    if (reduce) { setDisplay(target); return; }
-    if (!inView) return;
-    const controls = animate(0, target, {
-      duration: 1.4,
-      ease: EASE,
-      onUpdate: (v) => setDisplay(Math.round(v)),
-    });
-    return () => controls.stop();
-  }, [inView, target, reduce]);
+  const chars = String(value).split("");
+  let di = 0; // running index of digit columns, for the cascade stagger
   return (
-    <div ref={ref} className={className}>
-      {prefix}{display.toLocaleString("en-IN")}{suffix}
+    <div ref={ref} className={className} aria-label={String(value)}>
+      <span className="inline-flex items-center tabular-nums" aria-hidden="true">
+        {chars.map((c, i) => {
+          if (/\d/.test(c)) {
+            const delay = di * 0.12;
+            di += 1;
+            return <OdometerDigit key={i} digit={parseInt(c, 10)} delay={delay} inView={inView} />;
+          }
+          return (
+            <span key={i} className="inline-block">{c === " " ? " " : c}</span>
+          );
+        })}
+      </span>
     </div>
+  );
+};
+
+/* Stat icon — bigger glyph in a soft tile that pops in on scroll then bobs
+   gently forever. Disabled under prefers-reduced-motion. */
+const StatIcon = ({ icon: Icon, delay = 0 }) => {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      initial={reduce ? false : { scale: 0, rotate: -25, opacity: 0 }}
+      whileInView={reduce ? {} : { scale: 1, rotate: 0, opacity: 1 }}
+      viewport={{ once: true, amount: 0.5 }}
+      transition={{ type: "spring", stiffness: 200, damping: 13, delay }}
+      className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20"
+    >
+      <motion.span
+        animate={reduce ? {} : { y: [0, -5, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay }}
+      >
+        <Icon size={30} strokeWidth={2} className="text-primary" />
+      </motion.span>
+    </motion.div>
   );
 };
 
@@ -153,6 +188,27 @@ const TAvatar = ({ src, name }) => {
       alt={name}
       loading="lazy"
       className="h-11 w-11 flex-shrink-0 rounded-xl object-cover"
+    />
+  );
+};
+
+/* Hero "5/5" social-proof face — company-CDN photo with a neutral fallback
+   chip, so the row never shows a broken image before the 3 photos are
+   uploaded to company-assets …/images/hero/. */
+const HeroFace = ({ src }) => {
+  const [err, setErr] = useState(false);
+  if (err || !src) {
+    return (
+      <span className="h-10 w-10 flex-shrink-0 rounded-full border-2 border-canvas bg-gradient-to-br from-primary-light to-sand" />
+    );
+  }
+  return (
+    <img
+      src={src}
+      onError={() => setErr(true)}
+      alt=""
+      loading="lazy"
+      className="h-10 w-10 flex-shrink-0 rounded-full border-2 border-canvas object-cover"
     />
   );
 };
@@ -755,14 +811,14 @@ const Home = () => {
       <BrandPreloader variant="homepage" ready={assetsReady} />
 
       {/* ════════════════ HERO ════════════════ */}
-      <section ref={heroRef} className="relative px-5 pb-20 pt-12 sm:px-8 sm:pt-20 lg:pb-32 lg:pt-28">
+      <section ref={heroRef} className="relative px-5 pb-14 pt-8 sm:px-8 sm:pb-20 sm:pt-20 lg:pb-32 lg:pt-28">
         {/* Ambient warm aura — adds depth on the flat canvas without changing the palette */}
         <div aria-hidden className="sloth-hero-aura" />
 
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* LEFT */}
           <div>
-            <Reveal as="h1" delay={0.05} className="text-[clamp(2rem,8vw,2.7rem)] font-bold leading-[1.1] tracking-[-0.02em] text-ink sm:text-[4.5rem] sm:leading-[1.04]">
+            <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-bold leading-[1.1] tracking-[-0.02em] text-ink sm:text-[4.5rem] sm:leading-[1.04]">
               Get booked &amp; paid
               <br />
               <span className="font-normal italic text-primary">before the first</span>
@@ -770,13 +826,13 @@ const Home = () => {
               message.
             </Reveal>
 
-            <Reveal as="p" delay={0.12} className="mt-7 max-w-md text-lg leading-relaxed text-neutral-500">
+            <Reveal as="p" delay={0.12} className="mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg">
               Book A Sloth gives India's freelancers, tutors, coaches and studios
               one calm link — for bookings, payments and reminders.
             </Reveal>
 
             {/* URL creator */}
-            <Reveal delay={0.18} className="mt-9">
+            <Reveal delay={0.18} className="mt-6 sm:mt-9">
               <div className="flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 sm:rounded-[5px] sm:border sm:border-black/[0.07] sm:bg-white sm:p-1.5 sm:shadow-[0_10px_30px_-10px_rgba(26,26,26,0.18)]">
                 {/* URL prefix + input — own card on mobile, merges into pill on desktop */}
                 <div className="flex min-h-[3.5rem] flex-1 items-center min-w-0 rounded-[5px] border border-black/[0.07] bg-white px-5 shadow-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-4 sm:shadow-none">
@@ -809,16 +865,10 @@ const Home = () => {
             </Reveal>
 
             {/* Social proof */}
-            <Reveal delay={0.24} className="mt-9 flex items-center gap-4">
+            <Reveal delay={0.24} className="mt-7 flex items-center gap-4 sm:mt-9">
               <div className="flex -space-x-3">
-                {FACES.slice(0, 3).map((f, i) => (
-                  <img
-                    key={i}
-                    src={f}
-                    alt=""
-                    loading="lazy"
-                    className="h-10 w-10 rounded-full border-2 border-canvas object-cover"
-                  />
+                {HERO_FACES.map((f, i) => (
+                  <HeroFace key={i} src={f} />
                 ))}
               </div>
               <div>
@@ -835,8 +885,8 @@ const Home = () => {
             </Reveal>
           </div>
 
-          {/* RIGHT */}
-          <Reveal delay={0.1} className="relative">
+          {/* RIGHT — hero photo hidden on phones (mobile shows the compact left column only) */}
+          <Reveal delay={0.1} className="relative hidden sm:block">
             <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[6px] bg-sand shadow-[0_40px_90px_-25px_rgba(26,26,26,0.38)] ring-1 ring-black/5">
               <motion.img
                 src={HERO}
@@ -888,8 +938,8 @@ const Home = () => {
           <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4 lg:gap-x-0 lg:divide-x lg:divide-white/10">
             {STATS.map((s, i) => (
               <Reveal key={s.label} delay={i * 0.08} className="text-center lg:px-6">
-                <s.icon size={24} strokeWidth={2} className="mx-auto text-primary" />
-                <CountUp value={s.value} className="mt-2 font-heading text-4xl font-extrabold tracking-tight text-white sm:text-5xl" />
+                <StatIcon icon={s.icon} delay={i * 0.08} />
+                <Odometer value={s.value} className="mt-2 font-heading text-4xl font-extrabold tracking-tight text-white sm:text-5xl" />
                 <p className="mx-auto mt-2 max-w-[12rem] text-sm text-white/60">{s.label}</p>
               </Reveal>
             ))}
@@ -970,7 +1020,7 @@ const Home = () => {
                   tabIndex={0}
                   role="group"
                   aria-label={`${ind.name} — show popular professions`}
-                  className="group relative h-full min-h-[13rem] overflow-hidden rounded-[6px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
+                  className="group relative h-full min-h-[213px] overflow-hidden rounded-[6px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
                 >
                   {/* Big line icon anchored to the top-left corner — card background */}
                   <ind.icon
@@ -1219,19 +1269,22 @@ const Home = () => {
           </Reveal>
 
           <div className="relative mt-16">
-            {/* Direction chevrons sitting in the gaps between cards (desktop) */}
+            {/* Direction chevrons sitting in the gaps between cards (desktop).
+                Bigger glyphs; the wider md:gap-16 grid below leaves room. */}
             <ArrowRight
               aria-hidden
-              size={24}
-              className="absolute left-1/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/55 md:block"
+              size={40}
+              strokeWidth={2.25}
+              className="absolute left-1/3 top-[4.5rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/70 md:block"
             />
             <ArrowRight
               aria-hidden
-              size={24}
-              className="absolute left-2/3 top-[4.25rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/55 md:block"
+              size={40}
+              strokeWidth={2.25}
+              className="absolute left-2/3 top-[4.5rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/70 md:block"
             />
 
-            <div className="grid gap-12 md:grid-cols-3 md:gap-6">
+            <div className="grid gap-12 md:grid-cols-3 md:gap-16">
               {STEPS.map((s, i) => (
                 <Reveal key={s.title} delay={i * 0.12}>
                   <div className="group relative flex h-full flex-col items-center rounded-[6px] border border-white/10 bg-white/5 p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
@@ -1459,16 +1512,18 @@ const Home = () => {
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
             {FEATURE_GROUPS.map((g, i) => (
               <Reveal key={g.title} delay={(i % 4) * 0.07}>
-                <div className="flex h-full flex-col rounded-[6px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                {/* Hover inverts the whole card to solid orange: white text → black,
+                    orange accents (icon + ticks) → black. */}
+                <div className="group flex h-full flex-col rounded-[6px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-primary hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary transition-colors duration-300 group-hover:bg-black/15 group-hover:text-black">
                     <g.icon size={22} />
                   </span>
-                  <h3 className="mt-5 font-heading text-lg font-bold text-white">{g.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-white/60">{g.desc}</p>
-                  <ul className="mt-5 space-y-2.5 border-t border-white/10 pt-5">
+                  <h3 className="mt-5 font-heading text-lg font-bold text-white transition-colors duration-300 group-hover:text-black">{g.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-white/60 transition-colors duration-300 group-hover:text-black/70">{g.desc}</p>
+                  <ul className="mt-5 space-y-2.5 border-t border-white/10 pt-5 transition-colors duration-300 group-hover:border-black/20">
                     {g.items.map((it) => (
-                      <li key={it} className="flex items-start gap-2 text-sm text-white/80">
-                        <Check size={15} className="mt-0.5 flex-shrink-0 text-primary" />
+                      <li key={it} className="flex items-start gap-2 text-sm text-white/80 transition-colors duration-300 group-hover:text-black/90">
+                        <Check size={15} className="mt-0.5 flex-shrink-0 text-primary transition-colors duration-300 group-hover:text-black" />
                         {it}
                       </li>
                     ))}
