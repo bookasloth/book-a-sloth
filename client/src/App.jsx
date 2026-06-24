@@ -132,6 +132,7 @@ const AdminExplore    = lazy(() => import('./pages/admin/AdminExplore'));
 // Admin — System (M1: RBAC foundation)
 const AdminStaff = lazy(() => import('./pages/admin/AdminStaff'));
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
+const AdminReservedSlugs = lazy(() => import('./pages/admin/AdminReservedSlugs'));
 
 // Admin — Platform Control
 const AdminFeatureStatus = lazy(() => import('./pages/admin/AdminFeatureStatus'));
@@ -293,6 +294,7 @@ function App() {
           {/* System — Staff & Roles, Audit Logs (M1) */}
           <Route path="/admin/staff" element={<AdminWrapper><AdminStaff /></AdminWrapper>} />
           <Route path="/admin/system/audit" element={<AdminWrapper><AdminAudit /></AdminWrapper>} />
+          <Route path="/admin/system/reserved" element={<AdminWrapper><AdminReservedSlugs /></AdminWrapper>} />
 
           {/* Marketing & performance insights — now a SuperDashboard tab; keep old path as redirect */}
           <Route path="/admin/insights" element={<Navigate to="/super-dashboard/insights" replace />} />
