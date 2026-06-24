@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
+import ModeSwitch from './ModeSwitch';
+import { isHost } from '../../utils/roleRoutes';
+import toast from 'react-hot-toast';
 import {
   Home, Tag, HelpCircle,
   CalendarCheck, MessageCircle, Bookmark, BarChart2,
@@ -112,9 +115,10 @@ const TagPill = ({ text }) =>
 // ── Main component ────────────────────────────────────────────────────────────
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, mode, becomeHost } = useAuth();
   const appearance = useAppearance();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [menuOpen,    setMenuOpen]    = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -125,10 +129,27 @@ const Navbar = () => {
   const notifRef    = useRef(null);
   const signInRef   = useRef(null);
 
-  // Role detection
-  const isVendor   = user?.role === 'host';
-  const navItems   = !user ? PUBLIC_NAV : isVendor ? VENDOR_NAV : CUSTOMER_NAV;
-  const dropItems  = isVendor ? VENDOR_DROPDOWN : CUSTOMER_DROPDOWN;
+  // Mode-aware view (unified identity): a host sees the host nav only in Hosting
+  // mode; in Traveling mode — or as a pure guest — they see the customer nav.
+  const canHost     = isHost(user);
+  const hostingView = canHost && mode === 'hosting';
+  const navItems   = !user ? PUBLIC_NAV : hostingView ? VENDOR_NAV : CUSTOMER_NAV;
+  const dropItems  = hostingView ? VENDOR_DROPDOWN : CUSTOMER_DROPDOWN;
+
+  // "Become a host" — adds hosting to the CURRENT account, then enters the
+  // existing onboarding (no separate account). Errors surface as a toast.
+  const startHosting = async () => {
+    try {
+      const updated = await becomeHost();
+      setDropdownOpen(false);
+      setMenuOpen(false);
+      const slug = updated?.onboarding_slug || updated?.username;
+      if (updated?.onboarding_completed || !slug) navigate('/dashboard');
+      else navigate(`/vendor-register/${slug}/claim`);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Could not start hosting');
+    }
+  };
 
   // Placeholder badge counts — wire to real data/context when ready
   const badges = { messages: 0, notifications: 0 };
@@ -256,6 +277,9 @@ const Navbar = () => {
 
             {user ? (
               <>
+                {/* Hosting/Traveling switch — only for dual-capability accounts */}
+                <div className="hidden md:block mr-1"><ModeSwitch /></div>
+
                 {/* Notifications bell */}
                 <div ref={notifRef} className="relative">
                   <button
@@ -339,6 +363,20 @@ const Navbar = () => {
                           );
                         })}
                       </div>
+
+                      {/* Become a host (guests only) */}
+                      {!canHost && (
+                        <div className="border-t border-gray-100 py-1">
+                          <button
+                            onClick={startHosting}
+                            role="menuitem"
+                            className="flex w-full items-center gap-3 px-4 py-2.5 text-[13px] font-medium text-[#FE5100] hover:bg-[#FE5100]/5 transition-colors duration-150 outline-none"
+                          >
+                            <Briefcase size={15} className="flex-shrink-0" />
+                            Become a host
+                          </button>
+                        </div>
+                      )}
 
                       {/* Logout */}
                       <div className="border-t border-gray-100 py-1">
@@ -497,6 +535,9 @@ const Navbar = () => {
                   </div>
                 </div>
 
+                {/* Hosting/Traveling switch — only for dual-capability accounts */}
+                <div className="px-3 pb-2"><ModeSwitch /></div>
+
                 {/* Dropdown items */}
                 <div className="space-y-0.5">
                   {dropItems.map((item) => {
@@ -515,6 +556,17 @@ const Navbar = () => {
                     );
                   })}
                 </div>
+
+                {/* Become a host (guests only) */}
+                {!canHost && (
+                  <button
+                    onClick={startHosting}
+                    className="flex w-full items-center gap-3 px-3 py-2.5 mt-1 text-[13px] font-medium text-[#FE5100] hover:bg-[#FE5100]/5 rounded-lg transition-colors duration-150"
+                  >
+                    <Briefcase size={16} className="flex-shrink-0" />
+                    Become a host
+                  </button>
+                )}
 
                 {/* Logout */}
                 <button

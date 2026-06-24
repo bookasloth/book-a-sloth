@@ -14,6 +14,7 @@ const {
   setPassword,
   getMe,
   updateMe,
+  becomeHost,
   forgotPassword,
   resetPassword,
 } = require('../controllers/authController');
@@ -48,5 +49,7 @@ router.post('/reset-password', authLimiter, resetPassword);
 router.post('/login', authLimiter, login);
 router.get('/me', protect, getMe);
 router.put('/me', protect, updateMe);
+// Unified identity: add hosting capability to the current account.
+router.post('/become-host', protect, becomeHost);
 
 module.exports = router;

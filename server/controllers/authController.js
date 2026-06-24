@@ -68,6 +68,9 @@ const serializeProfile = (profile, session) => ({
   phone:                    profile.phone || null,
   password_set:             !!profile.password_set,
   role:                     profile.role,
+  // is_host: new capability flag (v3.34). role is the auto-mirrored shim until
+  // the Phase 4 cleanup; both are returned during the transition.
+  is_host:                  !!profile.is_host,
   plan:                     profile.plan || 'explorer',
   plan_expires_at:          profile.plan_expires_at || null,
   billing_cadence:          profile.billing_cadence || null,
@@ -913,6 +916,50 @@ const updateMe = async (req, res) => {
   }
 };
 
+// POST /api/auth/become-host
+// Unified identity: add the hosting capability to the CURRENT logged-in account
+// (no separate host account). Flips is_host=true — the v3.34 trigger mirrors
+// role='host' — and seeds onboarding state so the client can walk the existing
+// /vendor-register steps on this same id. Idempotent: a host who already finished
+// onboarding just gets their profile back unchanged (no reset).
+const becomeHost = async (req, res) => {
+  try {
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, username, is_host, onboarding_slug, onboarding_step_completed, onboarding_completed")
+      .eq("id", req.user.id)
+      .single();
+    if (error || !profile) return res.status(404).json({ message: "Profile not found" });
+
+    const patch = { is_host: true, updated_at: new Date().toISOString() };
+    // Seed onboarding only when it hasn't been completed — never reset a host
+    // who is mid-flow or already live.
+    if (!profile.onboarding_completed) {
+      if (!profile.onboarding_slug) patch.onboarding_slug = profile.username || null;
+      if (!profile.onboarding_step_completed || profile.onboarding_step_completed < 1) {
+        patch.onboarding_step_completed = 1;
+      }
+      patch.onboarding_completed = false;
+    }
+
+    let { data: updated, error: upErr } = await supabaseAdmin
+      .from("profiles").update(patch).eq("id", req.user.id).select("*").single();
+    // Schema fallback: pre-onboarding DBs lack the onboarding_* columns — retry
+    // with just the capability flip so become-host still works.
+    if (upErr && /Could not find the|column.*does not exist/i.test(upErr.message || "")) {
+      ({ data: updated, error: upErr } = await supabaseAdmin
+        .from("profiles")
+        .update({ is_host: true, updated_at: new Date().toISOString() })
+        .eq("id", req.user.id).select("*").single());
+    }
+    if (upErr || !updated) return safeError(res, upErr || new Error("Could not enable hosting"));
+
+    res.json(serializeProfile(updated, null));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 // ============================================
 // PASSWORD RESET (OTP-based, all user types)
 // ==========================================
@@ -1104,6 +1151,7 @@ const resetPassword = async (req, res) => {
 };
 
 module.exports = {
+  serializeProfile,
   upsertProfile,
   registerVendor,
   registerUser,
@@ -1118,6 +1166,7 @@ module.exports = {
   setPassword,
   getMe,
   updateMe,
+  becomeHost,
   forgotPassword,
   resetPassword,
 };

@@ -8,8 +8,9 @@ export function hostPathToGuestPath(pathname) {
   return '/user/my-bookings';
 }
 
-// True for accounts that own the host space (/dashboard/*). superadmin is
+// True for accounts that own the host space (/dashboard/*). is_host (v3.34) is
+// the source of truth; role is the auto-mirrored shim + fallback. superadmin is
 // included so platform admins are never bounced into guest space by the guards.
 export function isHost(user) {
-  return user?.role === 'host' || user?.role === 'superadmin';
+  return user?.is_host === true || user?.role === 'host' || user?.role === 'superadmin';
 }

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { usePostHog } from '@posthog/react';
 import { analytics } from '../services/analytics';
-import { registerVendor, registerUser, loginUser, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe } from '../services/api';
+import { registerVendor, registerUser, loginUser, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost } from '../services/api';
 import supabase from '../services/supabaseClient';
 
 const AuthContext = createContext();
@@ -11,6 +11,19 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Active dashboard mode for dual-capability accounts (Hosting vs Traveling).
+  // Persisted so a host returns to the space they last used. First load with no
+  // saved pref: hosts default to 'hosting' (so existing hosts aren't dropped into
+  // guest space), everyone else 'traveling'. (Unified identity — Phase 1/2.)
+  const [mode, setModeState] = useState(() => {
+    const saved = localStorage.getItem('bas_active_mode');
+    if (saved) return saved;
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || 'null');
+      return u?.is_host ? 'hosting' : 'traveling';
+    } catch { return 'traveling'; }
+  });
+  const setMode = (m) => { setModeState(m); localStorage.setItem('bas_active_mode', m); };
   const posthog = usePostHog();
   const wasIdentified = useRef(false);
 
@@ -139,6 +152,16 @@ export const AuthProvider = ({ children }) => {
     return merged;
   };
 
+  // Unified identity: add hosting capability to the CURRENT account, flip to
+  // hosting mode, and return the updated profile (with onboarding seed) so the
+  // caller can route into the existing onboarding steps.
+  const becomeHost = async () => {
+    const { data } = await apiBecomeHost();
+    updateUser(data);
+    setMode('hosting');
+    return data;
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
     localStorage.removeItem('user');
@@ -154,10 +177,12 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       user, loading, login,
+      mode, setMode,
       loginWithPhone, loginWithOtp, setPassword,
       registerAsVendor, registerAsUser,
       connectGoogleCalendar,
       startVendorGoogleAuth, adoptSession,
+      becomeHost,
       logout, updateUser,
     }}>
       {children}
