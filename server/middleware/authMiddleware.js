@@ -59,14 +59,19 @@ const requireHost = async (req, res, next) => {
     return res.status(401).json({ message: 'Not authorized, no token' });
   }
   try {
-    let role = req.user.role;
-    if (!role) {
+    // is_host (v3.34) is the source of truth; role is the auto-mirrored shim and
+    // the fallback for any path that hasn't been migrated yet. superadmin (role)
+    // is always allowed so staff tooling keeps working.
+    let { is_host: isHost, role } = req.user;
+    if (isHost === undefined && !role) {
       const { data: profile } = await supabaseAdmin
-        .from('profiles').select('role').eq('id', req.user.id).single();
+        .from('profiles').select('is_host, role').eq('id', req.user.id).single();
+      isHost = profile?.is_host;
       role = profile?.role;
+      req.user.is_host = isHost;
       req.user.role = role;
     }
-    if (role === 'host' || role === 'superadmin') return next();
+    if (isHost === true || role === 'host' || role === 'superadmin') return next();
     return res.status(403).json({
       message: 'Host account required. Turn on hosting to access this.',
       host_required: true,
