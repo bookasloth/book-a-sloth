@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CalendarClock, CheckCircle2, XCircle, CalendarDays, LayoutGrid, IndianRupee,
   UserCheck, Activity, Camera, UserCog, Tag, CalendarCheck, CreditCard, ShieldCheck,
   Check, ArrowRight, Copy, Link2, MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getHostBookings, getMyServices, getGuestBookings } from '../services/api';
+import { getHostBookings, getMyServices } from '../services/api';
 import toast from 'react-hot-toast';
 import Modal from '../components/booking/Modal';
 import WhatsAppVerify from '../components/whatsapp/WhatsAppVerify';
@@ -14,47 +14,6 @@ import StatusChip from '../components/common/StatusChip';
 
 const fmtDate = (d) =>
   new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-
-// ── Guest view (non-host) — unchanged behaviour ─────────────────────────
-const GuestBookings = () => {
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getGuestBookings().then(({ data }) => setBookings(data || [])).catch(() => {}).finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="text-center py-8 text-gray-400 text-sm">Loading your bookings…</div>;
-
-  return (
-    <div>
-      <h2 className="text-xl font-bold mb-4">My Bookings</h2>
-      {bookings.length === 0 ? (
-        <div className="bg-white border rounded p-8 text-center">
-          <p className="text-lg font-semibold mb-2">No bookings yet</p>
-          <p className="text-sm text-gray-500 mb-4">Browse services and book a session to get started.</p>
-          <Link to="/" className="btn bg-primary text-white px-6 py-2.5 text-sm font-medium hover:bg-primary-dark inline-block">
-            Explore Services
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {bookings.map((b) => (
-            <div key={b.id} className="bg-white border rounded p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <p className="font-semibold text-sm">{b.services?.title || 'Service'}</p>
-                <p className="text-xs text-gray-400">
-                  {b['profiles!bookings_host_id_fkey']?.name || 'Host'} · {fmtDate(b.scheduled_at)}
-                </p>
-              </div>
-              <StatusChip status={b.status} className="self-start sm:self-center" />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 // ── Stat tile ───────────────────────────────────────────────────────────
 const Stat = ({ Icon, label, value, tint }) => (
@@ -79,7 +38,7 @@ const BookingRow = ({ b }) => (
 );
 
 const Dashboard = () => {
-  const { user, connectGoogleCalendar, updateUser, activateHost } = useAuth();
+  const { user, connectGoogleCalendar, updateUser } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isHost = user?.role === 'host';
@@ -102,21 +61,6 @@ const Dashboard = () => {
   const dismissBanner = () => {
     localStorage.setItem('legacyPlanBannerDismissed', '1');
     setBannerDismissed(true);
-  };
-
-  // Explicit guest→host opt-in. The server enforces the role flip; on success we
-  // re-route so ProtectedRoute drives the user into host onboarding.
-  const [activatingHost, setActivatingHost] = useState(false);
-  const handleBecomeHost = async () => {
-    setActivatingHost(true);
-    try {
-      await activateHost();
-      navigate('/dashboard');
-    } catch (e) {
-      toast.error(e?.response?.data?.message || 'Could not switch on hosting. Please try again.');
-    } finally {
-      setActivatingHost(false);
-    }
   };
 
   // Google-calendar return toast
@@ -178,32 +122,7 @@ const Dashboard = () => {
   const completion = Math.round((checklist.filter((c) => c.done).length / checklist.length) * 100);
   const allDone = completion === 100;
 
-  if (!isHost) {
-    return (
-      <div className="w-full max-w-5xl">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Welcome back, {user?.name?.split(' ')[0]}</h1>
-        <p className="text-sm text-gray-400 mb-6">Here's what's happening with your bookings.</p>
-
-        {/* Become-a-host opt-in — the only legit guest→host switch */}
-        <div className="mb-6 flex items-start gap-3 bg-primary-light border border-primary/30 rounded p-4">
-          <LayoutGrid className="h-5 w-5 text-primary shrink-0 mt-0.5" strokeWidth={2.25} />
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-gray-900">Want to offer services?</p>
-            <p className="text-xs text-gray-500 mt-0.5">Turn on hosting to publish services, share your booking page and get paid.</p>
-          </div>
-          <button
-            onClick={handleBecomeHost}
-            disabled={activatingHost}
-            className="btn shrink-0 px-3 py-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark transition-colors whitespace-nowrap disabled:opacity-60"
-          >
-            {activatingHost ? 'Setting up…' : 'Become a host'}
-          </button>
-        </div>
-
-        <GuestBookings />
-      </div>
-    );
-  }
+  if (!isHost) return <Navigate to="/user/my-bookings" replace />;
 
   return (
     <div className="w-full max-w-5xl">
