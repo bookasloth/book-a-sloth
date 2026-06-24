@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from './ProtectedRoute';
-import { hostPathToGuestPath } from '../../utils/roleRoutes';
+import { hostPathToGuestPath, isHost } from '../../utils/roleRoutes';
 
 // Role wall for host-space routes (/dashboard/*). Auth + host-onboarding resume
 // are owned by ProtectedRoute; this only enforces role: a non-host who reaches a
@@ -9,8 +9,7 @@ import { hostPathToGuestPath } from '../../utils/roleRoutes';
 const HostGate = ({ children }) => {
   const { user } = useAuth();
   const location = useLocation();
-  const isHost = user?.role === 'host' || user?.role === 'superadmin';
-  if (!isHost) return <Navigate to={hostPathToGuestPath(location.pathname)} replace />;
+  if (!isHost(user)) return <Navigate to={hostPathToGuestPath(location.pathname)} replace />;
   return children;
 };
 
