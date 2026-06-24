@@ -36,7 +36,8 @@ const BeASloth       = lazy(() => import('./pages/BeASloth'));
 const VendorLogin    = lazy(() => import('./pages/VendorLogin'));
 const GoogleAuthDone = lazy(() => import('./pages/GoogleAuthDone'));
 
-// Vendor Onboarding (10-step flow)
+// Vendor Onboarding (Google-first flow)
+const GoogleStart      = lazy(() => import('./pages/onboarding/GoogleStart'));
 const SlugClaim        = lazy(() => import('./pages/onboarding/SlugClaim'));
 const OtpVerify        = lazy(() => import('./pages/onboarding/OtpVerify'));
 const PasswordStep     = lazy(() => import('./pages/onboarding/PasswordStep'));
@@ -205,8 +206,9 @@ function App() {
           <Route path="/login-as-vendor" element={<VendorLogin />} />
           <Route path="/auth/google/done" element={<GoogleAuthDone />} />
 
-          {/* Vendor Onboarding (10-step flow) */}
-          <Route path="/vendor-register" element={<SlugClaim />} />
+          {/* Vendor Onboarding (Google-first flow) */}
+          <Route path="/vendor-register" element={<GoogleStart />} />
+          <Route path="/vendor-register/:slug/claim" element={<SlugClaim />} />
           <Route path="/vendor-register/:slug/verify" element={<OtpVerify />} />
           <Route path="/vendor-register/:slug/password" element={<PasswordStep />} />
           <Route path="/vendor-register/:slug/type" element={<VendorTypeStep />} />
