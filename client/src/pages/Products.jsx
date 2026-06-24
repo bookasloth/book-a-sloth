@@ -381,6 +381,14 @@ const Products = () => {
             </p>
           </div>
 
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+            <strong>Heads up:</strong> an external <em>File URL</em> is public — anyone
+            with the link can open it, and it never expires. The secure 24-hour,
+            single-link, max-3-downloads protection only applies to files you
+            <strong> upload below</strong> (max 2&nbsp;MB). For paid products, prefer
+            uploading the file here.
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1">
               Upload File{" "}

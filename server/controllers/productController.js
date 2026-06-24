@@ -3,6 +3,11 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const otpStore = require('../utils/otpStore');
 const crypto = require('crypto');
+const { calculatePlatformFee } = require('../lib/pricingEngine');
+const { sendProductDownloadEmail } = require('../utils/productEmail');
+const { runInBackground } = require('../utils/background');
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const PRODUCTS_BUCKET = 'products';
 const SIGNED_URL_TTL_SECONDS = 60; // short-lived: link is single-use-ish, expires fast
@@ -30,6 +35,24 @@ const signProductFile = async (fileUrl) => {
   return signed.signedUrl;
 };
 
+// Build a slug that is unique within a host's catalogue, so a product can be
+// addressed by /:username/:slug. Two products with the same title under one host
+// get -2, -3 … suffixes. Uniqueness is per host (the public route is scoped by
+// username), so two different hosts may share a slug.
+const slugify = (title) =>
+  String(title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'product';
+
+const uniqueHostSlug = async (hostId, title) => {
+  const base = slugify(title);
+  const { data: rows } = await supabaseAdmin
+    .from('products').select('slug').eq('host_id', hostId).like('slug', `${base}%`);
+  const used = new Set((rows || []).map((r) => r.slug));
+  if (!used.has(base)) return base;
+  let n = 2;
+  while (used.has(`${base}-${n}`)) n++;
+  return `${base}-${n}`;
+};
+
 // ── POST /api/products ────────────────────────────────────────
 const createProduct = async (req, res) => {
   try {
@@ -39,7 +62,7 @@ const createProduct = async (req, res) => {
     } = req.body;
     if (!title || price == null) return res.status(400).json({ message: 'title and price are required' });
 
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = await uniqueHostSlug(req.user.id, title);
 
     const payload = {
       host_id: req.user.id, title, description, type: type || 'pdf', price,
@@ -205,11 +228,21 @@ const freeDownload = async (req, res) => {
     const buyerId = req.user?.id || null;
 
     const { data: product } = await supabaseAdmin
-      .from('products').select('id, price, host_id, file_url').eq('id', product_id).single();
+      .from('products')
+      .select('id, title, price, host_id, file_url, profiles!products_host_id_fkey(username, name)')
+      .eq('id', product_id).single();
 
     if (!product) return res.status(404).json({ message: 'Product not found' });
     if (product.price !== 0) return res.status(400).json({ message: 'This product requires payment' });
     if (!product.file_url) return res.status(404).json({ message: 'File not available' });
+
+    // Email the secure link (deferred) — same delivery the paid path uses, so the
+    // "a copy has been sent to you" promise on the page holds for free products too.
+    const emailLink = (downloadToken) => runInBackground('product:free-download-email', () =>
+      sendProductDownloadEmail({
+        to: buyerEmail, username: product.profiles?.username, productId: product.id,
+        productTitle: product.title, hostName: product.profiles?.name, downloadToken, isFree: true,
+      }));
 
     // Dedupe: reuse a still-valid token for the same product+email instead of
     // spawning a new purchase row on every call (anti-spam / DB-bloat guard).
@@ -219,6 +252,7 @@ const freeDownload = async (req, res) => {
       .eq('product_id', product_id).eq('buyer_email', buyerEmail)
       .order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (existing && new Date(existing.download_token_expires_at) > new Date()) {
+      emailLink(existing.download_token);
       return res.json({ download_token: existing.download_token, reused: true });
     }
 
@@ -233,8 +267,104 @@ const freeDownload = async (req, res) => {
       download_token_expires_at: tokenExpires.toISOString(),
     }).select().single();
 
+    emailLink(downloadToken);
     res.json({ download_token: downloadToken, purchase });
   } catch (error) { safeError(res, error); }
 };
 
-module.exports = { createProduct, getMyProducts, updateProduct, deleteProduct, getHostProducts, getProduct, downloadProduct, freeDownload };
+// Public detail columns + the host's theme_color (purchase page accent) and a
+// server-computed platform_fee so the client never hardcodes the fee.
+const PUBLIC_PRODUCT_COLS =
+  'id, title, description, type, price, thumbnail_url, slug, purchase_count, ' +
+  'profiles!products_host_id_fkey(name, username, profile_image, tagline, theme_color)';
+
+// ── GET /api/products/p/:username/:key ───────────────────────
+// Public — resolve a product by host username + slug, falling back to id so
+// existing /:profileSlug/product/:id links (and emailed ?dl deep links) keep
+// working through the slug migration.
+const getProductPublic = async (req, res) => {
+  try {
+    const { username, key } = req.params;
+    const { data: host } = await supabaseAdmin
+      .from('profiles').select('id').eq('username', username).single();
+    if (!host) return res.status(404).json({ message: 'Product not found' });
+
+    let { data } = await supabaseAdmin.from('products')
+      .select(PUBLIC_PRODUCT_COLS)
+      .eq('host_id', host.id).eq('slug', key).eq('is_active', true).maybeSingle();
+
+    if (!data && UUID_RE.test(key)) {
+      ({ data } = await supabaseAdmin.from('products')
+        .select(PUBLIC_PRODUCT_COLS)
+        .eq('id', key).eq('host_id', host.id).eq('is_active', true).maybeSingle());
+    }
+    if (!data) return res.status(404).json({ message: 'Product not found' });
+
+    res.json({ ...data, platform_fee: calculatePlatformFee(data.price) });
+  } catch (error) { safeError(res, error); }
+};
+
+// ── POST /api/products/resend-link ───────────────────────────
+// Public — re-issue a download link for a buyer's existing PAID purchase when
+// the 24h / 3-download grant has lapsed. Email ownership is proven by OTP
+// (logged-in buyers who own the row skip it). The OTP gate runs BEFORE the
+// existence check returns anything distinguishable, so this can't be used to
+// probe which emails bought which product.
+const resendDownloadLink = async (req, res) => {
+  try {
+    const { product_id, otp } = req.body;
+    const buyerEmail = String(req.body.buyer_email || '').toLowerCase().trim();
+    if (!product_id || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyerEmail)) {
+      return res.status(400).json({ message: 'A valid email and product are required' });
+    }
+
+    const { data: purchase } = await supabaseAdmin
+      .from('product_purchases')
+      .select('id, buyer_id')
+      .eq('product_id', product_id).eq('buyer_email', buyerEmail).eq('payment_status', 'paid')
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+    // A logged-in buyer who owns the row skips OTP; everyone else must present a
+    // valid code. The OTP check happens regardless of whether a purchase exists,
+    // so the response is identical (400 on bad code) either way — no oracle.
+    const owns = purchase && req.user?.id && purchase.buyer_id && req.user.id === purchase.buyer_id;
+    if (!owns) {
+      const otpResult = await otpStore.verify(buyerEmail, otp);
+      if (!otpResult.valid) return res.status(400).json({ message: otpResult.reason || 'Invalid or expired code' });
+    }
+
+    const genericOk = { message: 'If a purchase exists for that email, a fresh download link is on its way.' };
+    if (!purchase) return res.json(genericOk);
+
+    const { data: product } = await supabaseAdmin
+      .from('products')
+      .select('id, title, file_url, profiles!products_host_id_fkey(username, name)')
+      .eq('id', product_id).single();
+    if (!product?.file_url) return res.status(404).json({ message: 'File no longer available. Contact the seller.' });
+
+    const downloadToken = crypto.randomUUID();
+    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await supabaseAdmin.from('product_purchases')
+      .update({
+        download_token: downloadToken,
+        download_token_expires_at: tokenExpires.toISOString(),
+        download_count: 0,
+      })
+      .eq('id', purchase.id);
+
+    runInBackground('product:resend-link-email', () => sendProductDownloadEmail({
+      to: buyerEmail, username: product.profiles?.username, productId: product.id,
+      productTitle: product.title, hostName: product.profiles?.name, downloadToken, isFree: false,
+    }));
+
+    // The caller proved ownership (session or OTP), so it's safe to hand back the
+    // token for an immediate in-page download in addition to the email.
+    res.json({ ...genericOk, download_token: downloadToken });
+  } catch (error) { safeError(res, error); }
+};
+
+module.exports = {
+  createProduct, getMyProducts, updateProduct, deleteProduct,
+  getHostProducts, getProduct, getProductPublic, downloadProduct,
+  freeDownload, resendDownloadLink,
+};

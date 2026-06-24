@@ -270,8 +270,12 @@ export const updateProduct       = (id, data) => API.put(`/products/${id}`, data
 export const deleteProduct       = (id)       => API.delete(`/products/${id}`);
 export const getHostProducts     = (username) => API.get(`/products/host/${username}`);
 export const getProduct          = (id)       => API.get(`/products/${id}`);
+// Slug-first public detail (host username + slug-or-id); themed + fee included.
+export const getProductPublic    = (username, key) => API.get(`/products/p/${encodeURIComponent(username)}/${encodeURIComponent(key)}`);
 export const downloadProduct     = (token)    => API.get(`/products/download/${token}`);
 export const freeDownloadProduct = (data)     => API.post('/products/free-download', data);
+// Re-issue a lapsed download link (OTP-gated server-side).
+export const resendProductLink   = (data)     => API.post('/products/resend-link', data);
 
 // ── Admin ─────────────────────────────────────────────────────
 export const adminGetStats       = ()          => API.get('/admin/stats');

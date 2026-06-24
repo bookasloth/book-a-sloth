@@ -26,6 +26,12 @@ describe('createProduct — v2.9 link fields', () => {
   test('inserts product_url/file_name/file_size_bytes when columns exist', async () => {
     let inserted;
     supabaseAdmin.from.mockReturnValue({
+      // uniqueHostSlug() looks up the host's existing slugs first.
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          like: jest.fn().mockResolvedValue({ data: [] }),
+        }),
+      }),
       insert: jest.fn().mockImplementation((p) => {
         inserted = p;
         return {
@@ -54,6 +60,11 @@ describe('createProduct — v2.9 link fields', () => {
   test('falls back (drops new fields) and still creates when columns missing', async () => {
     const calls = [];
     supabaseAdmin.from.mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          like: jest.fn().mockResolvedValue({ data: [] }),
+        }),
+      }),
       insert: jest.fn().mockImplementation((p) => {
         calls.push(p);
         const first = calls.length === 1;
