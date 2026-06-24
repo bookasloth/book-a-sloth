@@ -157,6 +157,29 @@ describe('paid plan success path', () => {
     expect(screen.queryByTestId('live-page')).toBeNull();
   });
 
+  test('handler does NOT navigate or call advanceToLive when getMe ERRORS after payment (transient failure)', async () => {
+    const getCapture = makeRazorpayCapture();
+    // Mount getMe resolves (so the page renders); the post-payment getMe rejects.
+    getMe
+      .mockResolvedValueOnce({ data: { name: 'Test Host', email: 'host@example.com', plan: 'creator' } })
+      .mockRejectedValue(new Error('network'));
+
+    renderStep();
+    await waitFor(() => screen.getByText('Creator'));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose Creator' }));
+    await waitFor(() => expect(createSubscription).toHaveBeenCalled());
+
+    const opts = getCapture();
+    await act(async () => {
+      await opts.handler();
+    });
+
+    // A transient getMe error must NOT be treated as success: no optimistic advance…
+    expect(advanceToLive).not.toHaveBeenCalled();
+    // …and no optimistic navigation to /live.
+    expect(screen.queryByTestId('live-page')).toBeNull();
+  });
+
   test('Razorpay options include modal.ondismiss', async () => {
     const getCapture = makeRazorpayCapture();
 

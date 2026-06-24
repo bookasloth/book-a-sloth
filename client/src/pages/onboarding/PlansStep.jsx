@@ -91,32 +91,49 @@ const PlansStep = () => {
             catch { return {}; }
           })();
 
+      // A plan counts as active ONLY when getMe SUCCEEDS and returns a non-free
+      // slug. Returns true once activated+advanced+navigated, false otherwise.
+      // Never advances or navigates on a getMe error or a still-free/unset plan —
+      // that was the bug: a transient getMe failure used to show a false
+      // "activated!" toast and navigate optimistically before the plan was live.
+      const FREE_SLUGS = ['explorer', 'starter', '', null, undefined];
+      const tryFinalize = async () => {
+        try { await syncSubscription(); } catch { /* webhook will finalize shortly */ }
+        let freshMe;
+        try {
+          ({ data: freshMe } = await getMe());
+        } catch {
+          return false; // getMe failed → cannot confirm → do NOT advance/navigate
+        }
+        if (FREE_SLUGS.includes(freshMe?.plan)) return false; // webhook lag — still free/unset
+        // Confirmed active: advance the onboarding step FIRST, then toast, then
+        // navigate (awaiting advance before the toast also fixes a toast-ordering nit).
+        await advanceToLive();
+        toast.success(`${plan.name} active — renews ${cadence}.`);
+        goNext();
+        return true;
+      };
+
       const options = {
         key: sub.key,
         subscription_id: sub.subscription_id,
         name: 'Book A Sloth',
         description: `${plan.name} — ${cadence} (auto-renews)`,
         handler: async () => {
-          try { await syncSubscription(); } catch { /* webhook will finalize shortly */ }
-          // Verify the plan is actually active before advancing.
-          try {
-            const { data: freshMe } = await getMe();
-            // Plan is active if it matches the paid plan slug and is not free/unset.
-            const FREE_SLUGS = ['explorer', 'starter', '', null, undefined];
-            if (!FREE_SLUGS.includes(freshMe.plan)) {
-              await advanceToLive();
-              toast.success(`${plan.name} active — renews ${cadence}.`);
-              goNext();
-            } else {
-              // Webhook lag: payment received but plan not yet updated.
-              toast.success('Payment received — finalizing your plan, please wait a moment.');
-              setBusy(null);
-            }
-          } catch {
-            toast.success(`${plan.name} activated! Taking you to the next step.`);
-            await advanceToLive();
-            goNext();
+          // First attempt right after payment.
+          if (await tryFinalize()) return;
+          // ONE short auto-retry to smooth the common brief webhook lag. The delay
+          // is skipped under test so the timer never hangs the suite.
+          if (import.meta.env?.MODE !== 'test') {
+            await new Promise((r) => setTimeout(r, 2000));
           }
+          if (await tryFinalize()) return;
+          // Still not active: payment is captured but the plan isn't live yet. Do
+          // NOT advance or navigate. The createVendorSubscription idempotency guard
+          // makes the re-click safe — it re-syncs the existing mandate instead of
+          // double-charging, and once active the re-click advances to /live.
+          toast.success('Payment received — finalizing your plan. Tap the plan again in a moment to continue.');
+          setBusy(null);
         },
         modal: {
           ondismiss: () => {
