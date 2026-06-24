@@ -31,7 +31,12 @@ Add a fourth membership tier, **Supreme**, beyond Free/Creator/Professional. Sup
 
 The **only** genuinely new behaviour is the kill-switch bypass, applied at the two existing enforcement points.
 
-## Data model — migration `server/migrations/v3.34_supreme_plan.sql`
+## Data model — migration `server/migrations/v3.36_supreme_plan.sql`
+
+> Migration number: origin/main already carries `v3.34_host_capability` and
+> `v3.35_unified_login_flag` (the unified-identity line, PRs #156/#157), so this
+> lands as **v3.36**. The unified-identity work added `profiles.is_host` but does
+> not touch plans or kill-switches, so it's orthogonal to Supreme.
 
 1. **Add capability column** to `subscription_plans`:
    `bypasses_kill_switches BOOLEAN NOT NULL DEFAULT false`.
@@ -101,7 +106,7 @@ One-line widen of the assign dropdown filter ([AdminPlans.jsx:212](../../../clie
 
 ## Deploy
 
-1. Apply `v3.34_supreme_plan.sql` via Supabase MCP to **both** DBs (Mumbai prod + Tokyo staging). **Gated on explicit go-ahead** — touches live prod.
+1. Apply `v3.36_supreme_plan.sql` via Supabase MCP to **both** DBs (Mumbai prod + Tokyo staging). **Gated on explicit go-ahead** — touches live prod.
 2. `planService.clearCache()` + `featureFlags.clearCache()` are called on the relevant admin writes; a server restart also clears them.
 3. Ship code (server + client). Code is safe to deploy before/after the migration thanks to the fallback.
 
@@ -109,7 +114,7 @@ One-line widen of the assign dropdown filter ([AdminPlans.jsx:212](../../../clie
 
 | File | Change |
 |------|--------|
-| `server/migrations/v3.34_supreme_plan.sql` | **new** — column + supreme row + CHECK relax |
+| `server/migrations/v3.36_supreme_plan.sql` | **new** — column + supreme row + CHECK relax |
 | `server/config/featureRegistry.js` | export `SAFETY_KEYS` |
 | `server/middleware/requireFeature.js` | off-path bypass + `callerBypassesFlags` helper |
 | `server/controllers/authController.js` | `serializeProfile` async + `bypasses_flags`/`safety_keys`; `await` at call sites |

@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getFeatureFlags } from '../services/api';
+import { useAuth } from './AuthContext';
+import { resolveFeature } from '../utils/featureBypass';
 
 /**
  * FeatureContext — loads the public feature-flag map once and exposes it app-wide.
@@ -36,5 +38,15 @@ export const FeatureProvider = ({ children }) => {
 
 export const useFeatures = () => useContext(FeatureContext);
 
-/** Convenience hook: `const showCover = useFeature('cover_photo')`. */
-export const useFeature = (key) => useContext(FeatureContext).isOn(key);
+/**
+ * Convenience hook: `const showCover = useFeature('cover_photo')`.
+ * Layers the Supreme kill-switch bypass on top of the flag map: a holder whose
+ * /auth/me carried `bypasses_flags` sees an OFF feature unless its key is on the
+ * server-supplied `safety_keys` denylist. `useAuth()` is undefined outside an
+ * AuthProvider (e.g. isolated tests) → no user → plain flag-map behaviour.
+ */
+export const useFeature = (key) => {
+  const base = useContext(FeatureContext).isOn(key);
+  const auth = useAuth();
+  return resolveFeature(base, key, auth?.user);
+};

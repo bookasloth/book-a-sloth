@@ -209,7 +209,9 @@ const AdminPlans = () => {
             value={assignQuery} onChange={(e) => setAssignQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchVendors()} />
           <select className="fb-input text-sm w-44" value={assignPlanSlug} onChange={(e) => setAssignPlanSlug(e.target.value)}>
             <option value="">Target plan…</option>
-            {plans.filter((p) => p.active).map((p) => <option key={p.id} value={p.slug}>{p.name}</option>)}
+            {/* Active plans + hidden bypass tiers (Supreme): assignable here only.
+                Supreme stays active=false so it's invisible everywhere else. */}
+            {plans.filter((p) => p.active || p.bypasses_kill_switches).map((p) => <option key={p.id} value={p.slug}>{p.name}{p.bypasses_kill_switches ? ' (hidden)' : ''}</option>)}
           </select>
           <button onClick={searchVendors} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Search</button>
         </div>
