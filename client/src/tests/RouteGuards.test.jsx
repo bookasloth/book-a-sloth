@@ -45,10 +45,12 @@ describe('role route guards', () => {
     expect(screen.getByText('GUEST bookings')).toBeInTheDocument();
   });
 
-  it('redirects a host off a guest route to the dashboard', () => {
+  it('lets a host load a guest route (traveling space)', () => {
+    // Unified identity: a host may browse/book as a customer in Traveling mode,
+    // so the guest space is no longer walled off by identity.
     mockUser.current = { role: 'host' };
     renderAt('/user/my-bookings');
-    expect(screen.getByText('DASHBOARD home')).toBeInTheDocument();
+    expect(screen.getByText('GUEST bookings')).toBeInTheDocument();
   });
 
   it('lets a host load a host route', () => {
@@ -63,9 +65,9 @@ describe('role route guards', () => {
     expect(screen.getByText('GUEST profile')).toBeInTheDocument();
   });
 
-  it('treats superadmin as host (off guest routes)', () => {
+  it('lets superadmin load a guest route', () => {
     mockUser.current = { role: 'superadmin' };
     renderAt('/user/profile');
-    expect(screen.getByText('DASHBOARD home')).toBeInTheDocument();
+    expect(screen.getByText('GUEST profile')).toBeInTheDocument();
   });
 });

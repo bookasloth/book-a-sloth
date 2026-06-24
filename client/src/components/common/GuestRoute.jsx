@@ -1,21 +1,10 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from './ProtectedRoute';
-import { isHost } from '../../utils/roleRoutes';
 
-// Role wall for guest-space routes (/user/*). Auth is owned by ProtectedRoute;
-// this only enforces role: a host/superadmin has no guest space, so send them to
-// their dashboard.
-const GuestGate = ({ children }) => {
-  const { user } = useAuth();
-  if (isHost(user)) return <Navigate to="/dashboard" replace />;
-  return children;
-};
-
-const GuestRoute = ({ children }) => (
-  <ProtectedRoute>
-    <GuestGate>{children}</GuestGate>
-  </ProtectedRoute>
-);
+// Guest-space routes (/user/*) are open to ANY logged-in user. Unified identity:
+// a host browsing or booking as a customer lives here in Traveling mode, so the
+// wall is now MODE (a UI preference via the navbar switch), not identity. Auth is
+// still owned by ProtectedRoute; HostRoute continues to gate /dashboard/* by the
+// is_host capability.
+const GuestRoute = ({ children }) => <ProtectedRoute>{children}</ProtectedRoute>;
 
 export default GuestRoute;

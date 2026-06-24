@@ -411,14 +411,45 @@ git commit -m "feat(client): Hosting/Traveling mode switch in navbar (Phase 1)"
 
 ---
 
-## PHASE 2 — Relax the wall (the doctor flow goes live) — *own detailed plan*
+## PHASE 2a — Relax the wall (the DOCTOR flow goes live)
 
-Roadmap (write the full task-by-task plan after Phase 1 lands; requires reading the Google-first onboarding controllers first):
-1. **`GuestRoute` opens to hosts.** A logged-in host may view `/user/*` (Traveling mode). Remove the `isHost → /dashboard` bounce in `GuestRoute`/`GuestGate`; keep auth via `ProtectedRoute`. Update `RouteGuards.test.jsx`.
-2. **`HostRoute` gated by capability.** `HostRoute` requires `isHost(user)` (already does via `roleRoutes`); non-host → "Become a host" CTA instead of a guest-bounce.
-3. **Spike: become-host attach.** Read `server/controllers/onboardingController.*` + the `/vendor-register/*` flow. Decide how "Become a host" sets `is_host=true` on the **current** account and enters onboarding (Calendar connect + plan) without creating a new row. Then: `POST /api/auth/become-host` (re-added, sets `is_host=true` for `req.user`, seeds onboarding state) + client CTA.
-4. **Host "Trips" view.** Re-add the reverted #154 view as the Traveling-mode "My Bookings" (reuse `CustomerBookings` + `getGuestBookings`), reachable from the mode switch / `/user/my-bookings` (now host-accessible).
-5. Tests + deploy-verify; this is the phase that closes the doctor case on one login.
+Spike result (read `vendorOnboardingController.js` + routes): every `/api/onboarding/*` step is `protect`-guarded and mutates `req.user.id`'s own profile row. So nothing structurally blocks a host from also being a guest; the doctor (already a host) just needs the guest space unblocked. "Become a host" (the reverse) is split to 2b.
+
+### Task 2a.1: `GuestRoute` opens to hosts
+
+**Files:**
+- Modify: `client/src/components/common/GuestRoute.jsx` (`GuestGate`)
+- Test: `client/src/tests/RouteGuards.test.jsx`
+
+- [ ] **Step 1: Update the guard tests (TDD).** Change the two host-bounce expectations to host-allowed:
+  - `'redirects a host off a guest route to the dashboard'` → `'lets a host load a guest route (traveling space)'`, expecting `GUEST bookings`.
+  - `'treats superadmin as host (off guest routes)'` → `'lets superadmin load a guest route'`, expecting `GUEST profile`.
+- [ ] **Step 2: Run — expect FAIL** (`npm --prefix client test -- src/tests/RouteGuards.test.jsx`); current GuestRoute still bounces hosts.
+- [ ] **Step 3: Make `GuestGate` a pass-through.**
+
+```jsx
+// Guest-space routes (/user/*) are open to ANY logged-in user. Unified identity:
+// a host browsing/booking as a customer lives here in Traveling mode; the wall is
+// now mode (a UI preference), not identity. Auth is still owned by ProtectedRoute.
+const GuestGate = ({ children }) => children;
+```
+(Remove the now-unused `useAuth`/`isHost` imports.)
+
+- [ ] **Step 4: Run — expect PASS.**
+- [ ] **Step 5: Commit** `feat(client): open /user/* guest space to hosts (Phase 2a)`.
+
+### Task 2a.2: Confirm the host Trips view works end-to-end
+
+`/user/my-bookings` (`CustomerBookings`) already calls `getGuestBookings` (any logged-in user) and renders cancel/reschedule/receipt/rebook by `guest_id` ownership — which is the host's own id for bookings they made. No code change expected.
+
+- [ ] **Step 1:** Full client suite + `vite build` green.
+- [ ] **Step 2:** Deploy-verify after merge: a host in Traveling mode reaches `/user/my-bookings`; a booking made while logged in as a host appears.
+
+Deferred polish (needs Open Q2 "default mode"): make the Navbar nav-set mode-aware (host in Traveling mode shows customer nav). Out of 2a to avoid surprising existing hosts with a default-mode flip.
+
+## PHASE 2b — "Become a host" (guest → host) — *own detailed plan*
+
+Now unblocked by the spike. Sketch: `POST /api/auth/become-host` sets `is_host=true` on `req.user.id` (trigger mirrors role) + seeds onboarding state (`onboarding_slug` from current username, `onboarding_step_completed=1`, `onboarding_completed=false`); client routes the logged-in user into the EXISTING `/vendor-register/:slug/*` steps (which already operate on `req.user.id`), including Google Calendar connect via the legacy `GET /api/auth/google` (calendar_connect) flow. Resolve Open Q3 (plan-up-front vs free host shell) before writing the task-by-task plan.
 
 ## PHASE 3 — Unify login/identity — *own detailed plan, after Open Questions*
 
