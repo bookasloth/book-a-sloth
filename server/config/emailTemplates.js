@@ -203,8 +203,8 @@ const TEMPLATES = [
       eyebrow(t.text, 'Session complete') + h('Thanks, {{first_name}}!') +
       lead('We hope your session with {{vendor_name}} went well.') +
       C.infoCard(t, [['Service', '{{service_name}}'], ['When', '{{booking_date}} at {{booking_time}}']]) +
-      lead("We'd love your feedback — leave a review on {{vendor_name}}'s profile."),
-    cta_label: 'Leave a review', cta_url: '{{profile_url}}',
+      lead("We'd love your feedback — share a quick review of your session with {{vendor_name}}."),
+    cta_label: 'Leave a review', cta_url: '{{review_url}}',
   }; })(),
 
   (() => { const t = themeForCategory('Session Complete'); return {

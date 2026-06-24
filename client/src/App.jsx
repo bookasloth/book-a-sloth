@@ -69,6 +69,7 @@ const EditService  = lazy(() => import('./pages/services/EditService'));
 const CustomerBookings = lazy(() => import('./pages/CustomerBookings'));
 const CustomerProfile  = lazy(() => import('./pages/CustomerProfile'));
 const CustomerReviews  = lazy(() => import('./pages/CustomerReviews'));
+const ReviewPage       = lazy(() => import('./pages/ReviewPage'));
 const Loyalty          = lazy(() => import('./pages/Loyalty'));
 
 // Public host / service pages
@@ -319,6 +320,8 @@ function App() {
           <Route path="/my-bookings" element={<ProtectedRoute><CustomerBookings /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
           <Route path="/reviews" element={<ProtectedRoute><CustomerReviews /></ProtectedRoute>} />
+          {/* Leave a review for one completed booking (target of the booking-completed email CTA) */}
+          <Route path="/review/:bookingId" element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
           <Route path="/loyalty" element={<ProtectedRoute><Loyalty /></ProtectedRoute>} />
 
           <Route path="*" element={<NotFound />} />

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   const [onboardingStatus, setOnboardingStatus] = useState(null);
   const [statusLoading, setStatusLoading] = useState(true);
 
@@ -38,7 +39,10 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Preserve the intended destination so login can return the user there
+    // (e.g. the booking-completed email -> /review/:id while logged out).
+    const next = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?redirect=${next}`} replace />;
   }
 
   // A host is forced into onboarding ONLY if they have an in-progress, slug-based

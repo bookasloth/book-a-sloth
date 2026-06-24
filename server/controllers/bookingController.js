@@ -609,11 +609,14 @@ const markBookingCompleted = async (booking, { notify = true } = {}) => {
         serviceTitle: booking.services?.title, hostName: host.name, hostPhone: host.phone,
         guestName: booking.guest_name, scheduledAt: booking.scheduled_at, bookingId: booking.id,
       });
-      // Point the review CTA ({{profile_url}}) at the host's public profile.
+      // The review CTA ({{review_url}}) opens the dedicated review page for THIS
+      // booking. Keep profile_url too (still referenced elsewhere / as fallback).
       const websiteBase = process.env.CLIENT_URL || "https://bookasloth.in";
-      const completedCustomerData = host.username
-        ? { ...emailData, profile_url: `${websiteBase}/${host.username}` }
-        : emailData;
+      const completedCustomerData = {
+        ...emailData,
+        review_url: `${websiteBase}/review/${booking.id}`,
+        ...(host.username ? { profile_url: `${websiteBase}/${host.username}` } : {}),
+      };
       await NotificationEngine.send({
         event: "BOOKING_COMPLETED_CUSTOMER",
         data: {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { sendOtp } from "../services/api";
 import toast from "react-hot-toast";
@@ -12,6 +12,10 @@ const isPhoneValid = (p) => /^\+?[\d\s\-()]{8,17}$/.test(p.trim());
 const Login = () => {
   const { loginWithPhone, loginWithOtp, setPassword } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Honour ?redirect= only for internal single-slash paths (avoid open-redirects).
+  const rawRedirect = searchParams.get("redirect") || "";
+  const redirectTo = /^\/(?!\/)/.test(rawRedirect) ? rawRedirect : "/my-bookings";
 
   const [step, setStep] = useState("phone"); // 'phone' | 'otp' | 'setpw'
   const [phone, setPhone] = useState("");
@@ -22,7 +26,7 @@ const Login = () => {
 
   const finish = () => {
     toast.success("Welcome back!");
-    navigate("/my-bookings");
+    navigate(redirectTo);
   };
 
   // Send the OTP and move to the verify step (shared by the "OTP instead" button
