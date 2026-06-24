@@ -133,7 +133,7 @@ const CategoryStep = () => {
       {/* Full-viewport column; no page-level scroll */}
       <div
         className="app-container flex flex-col"
-        style={{ height: 'calc(100dvh - 56px)' }}
+        style={{ height: 'calc(100dvh - 72px)' }}
       >
         <div className="flex flex-col h-full max-w-md mx-auto w-full px-4 py-4 sm:py-6">
 
