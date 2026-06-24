@@ -88,7 +88,7 @@ export default function ReviewPage() {
       <Shell>
         <h1 className="mb-2 text-xl font-bold">Review unavailable</h1>
         <p className="text-sm text-gray-500">{error}</p>
-        <Link to="/my-bookings" className="mt-4 inline-block text-sm text-primary hover:underline">
+        <Link to="/user/my-bookings" className="mt-4 inline-block text-sm text-primary hover:underline">
           Go to my bookings
         </Link>
       </Shell>
@@ -104,7 +104,7 @@ export default function ReviewPage() {
         <p className="text-sm text-gray-500">
           You can leave a review once this booking is marked completed.
         </p>
-        <Link to="/my-bookings" className="mt-4 inline-block text-sm text-primary hover:underline">
+        <Link to="/user/my-bookings" className="mt-4 inline-block text-sm text-primary hover:underline">
           Go to my bookings
         </Link>
       </Shell>

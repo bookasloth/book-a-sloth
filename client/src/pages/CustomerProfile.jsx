@@ -167,7 +167,7 @@ const CustomerProfile = () => {
         <p className="flex items-center gap-1.5 text-xs text-gray-400 mt-4">
           <Lock size={12} /> Your details are private and never shown to hosts beyond your bookings.
         </p>
-        <Link to="/my-bookings" className="text-sm text-[#FE5100] hover:underline mt-3 inline-block">← Back to bookings</Link>
+        <Link to="/user/my-bookings" className="text-sm text-[#FE5100] hover:underline mt-3 inline-block">← Back to bookings</Link>
       </div>
     </div>
   );

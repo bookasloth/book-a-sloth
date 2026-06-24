@@ -24,7 +24,7 @@ const PUBLIC_NAV = [];
 const CUSTOMER_NAV = [
   { label: 'Home',     href: '/',            icon: Home,         exact: true },
   { label: 'Explore',  href: '/explore',     icon: Search,       tag: 'Soon' },
-  { label: 'Bookings', href: '/my-bookings', icon: CalendarCheck },
+  { label: 'Bookings', href: '/user/my-bookings', icon: CalendarCheck },
 ];
 
 const VENDOR_NAV = [
@@ -35,12 +35,12 @@ const VENDOR_NAV = [
 ];
 
 const CUSTOMER_DROPDOWN = [
-  { label: 'My Bookings',     href: '/my-bookings', icon: CalendarCheck },
-  { label: 'My Profile',      href: '/profile',     icon: User },
-  { label: 'Help',            href: '/help',        icon: HelpCircle },
-  { label: 'Loyalty Program', href: '/loyalty',     icon: Gift },
-  { label: 'Reviews',         href: '/reviews',     icon: Star },
-  { label: 'About',           href: '/about',       icon: Info },
+  { label: 'My Bookings',     href: '/user/my-bookings', icon: CalendarCheck },
+  { label: 'My Profile',      href: '/user/profile',     icon: User },
+  { label: 'Help',            href: '/help',             icon: HelpCircle },
+  { label: 'Loyalty Program', href: '/user/loyalty',     icon: Gift },
+  { label: 'Reviews',         href: '/user/reviews',     icon: Star },
+  { label: 'About',           href: '/about',            icon: Info },
 ];
 
 const VENDOR_DROPDOWN = [
