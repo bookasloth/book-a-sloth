@@ -55,6 +55,13 @@ router.put('/providers/:id/seo', requireAdmin('users.edit'), updateProviderSeo);
 router.get('/settings', requireAdmin('settings.manage'), getSettings);
 router.put('/settings', requireAdmin('settings.manage'), updateSettings);
 
+// ── Reserved namespace — L2 slug reservations (admin / premium / prefix) ──
+const reservedSlugs = require('../controllers/reservedSlugAdminController');
+router.get('/reserved-slugs',             requireAdmin('settings.manage'), reservedSlugs.list);
+router.post('/reserved-slugs',            requireAdmin('settings.manage'), reservedSlugs.create);
+router.get('/reserved-slugs/check/:slug', requireAdmin('settings.manage'), reservedSlugs.check);
+router.delete('/reserved-slugs/:id',      requireAdmin('settings.manage'), reservedSlugs.release);
+
 // ── Appearance — navbar logo (mode + image URLs) ───────────────
 const appearance = require('../controllers/appearanceController');
 router.get('/appearance', requireAdmin('settings.manage'), appearance.getAdmin);
