@@ -1,5 +1,21 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-06-21_
+_Last updated: 2026-06-24_
+
+## Sprint: Guest/Host URL Separation (branch `feat/guest-host-url-separation`) — built 2026-06-24
+
+> **Status: BUILT, tests green (client 254/254, server 758/758, client build clean). NOT merged. No DB migration.**
+
+**Spec / plan:** `docs/superpowers/specs/2026-06-24-guest-host-url-separation-design.md`; `docs/superpowers/plans/2026-06-24-guest-host-url-separation.md`.
+
+Separate-account model enforced at the routing layer (**supersedes** the unified-account decision in the 2026-06-23 account-role-separation spec). Guest = phone identity, host = email identity; one identity = one type.
+
+- **Guest space → `/user/*`:** `/user/my-bookings`, `/user/profile`, `/user/reviews`, `/user/loyalty`. Old flat paths are bare `<Navigate replace>` redirects (in-flight email links / bookmarks keep working).
+- **Two-way role wall:** new `HostRoute`/`GuestRoute` (`client/src/components/common/`) compose the existing `ProtectedRoute` (auth + onboarding-resume untouched) and add a role gate. Guest on `/dashboard/*` → guest equivalent (`hostPathToGuestPath`); host on `/user/*` → `/dashboard`. Shared `isHost(user)` + path map in `client/src/utils/roleRoutes.js`. No feature flag — the wall is un-toggleable.
+- **Leave-review `/review/:bookingId` stays shared** (role-agnostic, ownership-checked, top-level — NOT under /user) so either party can use the booking-completed email CTA.
+- **`become-host` in-place role flip removed** (client `activateHost` + CTAs in BeASloth/Dashboard; server `POST /auth/become-host` route + `becomeHost` handler + its test). "Become a host" now routes to host signup (separate email/Google account). Dashboard's dead guest branch → `<Navigate to="/user/my-bookings">`.
+- **Server/static:** email footer link → `/user/my-bookings`; `robots.txt` → `Disallow: /user/`; removed the auth-gated `/reviews` entry from the sitemap.
+- **Reserved usernames** extended (`review`, `refund`, `lp`) so a host slug can't shadow a top-level route (`user` was already reserved).
+- **Verification note:** E2E preview of the wall is blocked headlessly — `supabase.auth.onAuthStateChange` emits `SIGNED_OUT` and wipes any injected `localStorage` session. Covered instead by `RouteGuards.test.jsx` (real guard components, both directions + superadmin) + `roleRoutes.test.js`.
 
 ## Sprint: Service Categories (branch `feat/service-categories`) — built 2026-06-21
 
