@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Check } from 'lucide-react';
 import { getPublicPlans, createRazorpayOrder, createSubscription, syncSubscription } from '../../services/api';
+import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
 
 const GST_RATE = 0.18; // display only — server is authoritative
@@ -35,6 +36,7 @@ const featureLines = (plan) => {
 const PlansStep = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const ready = useOnboardingGuard();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cadence, setCadence] = useState('annual'); // 'monthly' | 'annual'
@@ -50,7 +52,7 @@ const PlansStep = () => {
   const priceFor = (plan, c) => (c === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0);
   const isPaid = (plan) => priceFor(plan, 'monthly') > 0 || priceFor(plan, 'annual') > 0;
 
-  const goNext = () => navigate(`/vendor-register/${slug}/explore`);
+  const goNext = () => navigate(`/vendor-register/${slug}/live`);
 
   // Free plan: activate immediately via the onboarding endpoint, then continue.
   const chooseFree = async () => {
@@ -100,11 +102,28 @@ const PlansStep = () => {
     }
   };
 
+  if (!ready) {
+    return (
+      <>
+        <ProgressBar current={5} total={6} />
+        <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <ProgressBar current={10} total={11} />
+      <ProgressBar current={5} total={6} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
         <div className="page-card w-full max-w-4xl p-5 sm:p-8">
+          <button
+            onClick={() => navigate(`/vendor-register/${slug}/whatsapp`)}
+            className="text-sm text-gray-500 hover:text-gray-800 mb-4 inline-block"
+          >
+            ← Back
+          </button>
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Choose your plan</h1>
           <p className="text-gray-500 text-sm mb-6">
             Paid plans auto-renew. Cancel anytime — you keep access until the period ends.

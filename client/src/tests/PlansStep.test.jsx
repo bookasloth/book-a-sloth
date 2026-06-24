@@ -7,6 +7,10 @@ vi.mock('../services/api', () => ({
   createRazorpayOrder: vi.fn(() => Promise.resolve({ data: { skipPayment: true } })),
   createSubscription: vi.fn(() => Promise.resolve({ data: { key: 'k', subscription_id: 'sub_1' } })),
   syncSubscription: vi.fn(() => Promise.resolve({ data: {} })),
+  // useOnboardingGuard needs this; stepCompleted>=6 means guard sees target=null → no redirect
+  getOnboardingStatus: vi.fn(() =>
+    Promise.resolve({ data: { stepCompleted: 6, isComplete: false, slug: 'test' } })
+  ),
 }));
 vi.mock('react-hot-toast', () => ({ default: Object.assign(() => {}, { success: () => {}, error: () => {} }) }));
 
@@ -28,6 +32,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   getPublicPlans.mockResolvedValue({ data: PLANS });
   window.Razorpay = vi.fn(() => ({ open: vi.fn() }));
+  // Set window.location so the guard's "here" segment matches 'plans'
+  Object.defineProperty(window, 'location', {
+    writable: true,
+    value: { ...window.location, pathname: '/vendor-register/test/plans' },
+  });
 });
 
 test('renders DB plans + monthly/annual cadence toggle', async () => {
