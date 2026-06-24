@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
+import ModeSwitch from './ModeSwitch';
 import {
   Home, Tag, HelpCircle,
   CalendarCheck, MessageCircle, Bookmark, BarChart2,
@@ -256,6 +257,9 @@ const Navbar = () => {
 
             {user ? (
               <>
+                {/* Hosting/Traveling switch — only for dual-capability accounts */}
+                <div className="hidden md:block mr-1"><ModeSwitch /></div>
+
                 {/* Notifications bell */}
                 <div ref={notifRef} className="relative">
                   <button
@@ -496,6 +500,9 @@ const Navbar = () => {
                     <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
                   </div>
                 </div>
+
+                {/* Hosting/Traveling switch — only for dual-capability accounts */}
+                <div className="px-3 pb-2"><ModeSwitch /></div>
 
                 {/* Dropdown items */}
                 <div className="space-y-0.5">
