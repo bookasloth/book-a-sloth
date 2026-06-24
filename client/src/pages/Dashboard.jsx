@@ -171,7 +171,8 @@ const Dashboard = () => {
     { key: 'gcal',    label: 'Connect Google Calendar',  done: !!user?.google_calendar_connected,      Icon: CalendarCheck, onClick: connectGoogleCalendar },
     { key: 'plan',    label: 'Choose a plan',            done: !!user?.plan,                           Icon: CreditCard,   to: '/dashboard/upgrade' },
     { key: 'verify',  label: 'Verify contact details',   done: !!user?.is_verified,                    Icon: ShieldCheck,  to: '/dashboard/profile' },
-    { key: 'whatsapp', label: 'Add WhatsApp for Booking Updates', done: !!user?.whatsapp_verified, Icon: MessageCircle, onClick: () => setWhatsappModalOpen(true) },
+    // When already verified, no onClick — item renders as a static "done" badge
+    { key: 'whatsapp', label: 'Add WhatsApp for Booking Updates', done: !!user?.whatsapp_verified, Icon: MessageCircle, ...(user?.whatsapp_verified ? {} : { onClick: () => setWhatsappModalOpen(true) }) },
   ], [user, services, connectGoogleCalendar]);
 
   const completion = Math.round((checklist.filter((c) => c.done).length / checklist.length) * 100);
@@ -349,7 +350,8 @@ const Dashboard = () => {
         </section>
       </div>
 
-      <Modal open={whatsappModalOpen} title="Verify WhatsApp" onClose={() => setWhatsappModalOpen(false)}>
+      {/* Only render the modal when the host is not yet verified — belt-and-suspenders guard */}
+      <Modal open={whatsappModalOpen && !user?.whatsapp_verified} title="Verify WhatsApp" onClose={() => setWhatsappModalOpen(false)}>
         <p className="text-sm text-gray-500 mb-4">
           Receive booking confirmations and important updates directly on WhatsApp.
         </p>

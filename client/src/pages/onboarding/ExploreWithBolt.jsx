@@ -1,29 +1,23 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { PartyPopper, CalendarClock, ArrowRight, Check } from 'lucide-react';
+import { PartyPopper, ArrowRight, Check } from 'lucide-react';
 import { markOnboardingComplete } from '../../services/api';
+import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
-
-// Public booking page of the Book A Sloth team (demo).
-const DEMO_BOOKING_PATH = '/sndatarkar';
 
 const ExploreWithBolt = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const ready = useOnboardingGuard();
   const [loading, setLoading] = useState(false);
 
-  const handleActionComplete = async (action) => {
+  const handleGoDashboard = async () => {
     setLoading(true);
     try {
       await markOnboardingComplete();
       toast.success('Onboarding complete!');
-
-      if (action === 'demo') {
-        navigate(DEMO_BOOKING_PATH);
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to complete');
     } finally {
@@ -31,9 +25,20 @@ const ExploreWithBolt = () => {
     }
   };
 
+  if (!ready) {
+    return (
+      <>
+        <ProgressBar current={6} total={6} />
+        <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <ProgressBar current={11} total={11} />
+      <ProgressBar current={6} total={6} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
         <div className="page-card w-full max-w-md p-5 sm:p-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-light">
@@ -44,25 +49,14 @@ const ExploreWithBolt = () => {
             Your onboarding is complete. You're all set to accept bookings and grow your business.
           </p>
 
-          <div className="space-y-3">
-            <button
-              onClick={() => handleActionComplete('demo')}
-              disabled={loading}
-              className="btn w-full flex items-center justify-center gap-2 bg-primary text-white py-3 font-medium hover:bg-primary-dark disabled:opacity-50 transition"
-            >
-              <CalendarClock className="h-5 w-5" strokeWidth={2} />
-              Book a Demo with the Book a Sloth Team
-            </button>
-
-            <button
-              onClick={() => handleActionComplete('dashboard')}
-              disabled={loading}
-              className="btn btn--outline w-full flex items-center justify-center gap-2 bg-white text-primary py-3 font-medium hover:bg-primary-light disabled:opacity-50 transition"
-            >
-              Go to My Dashboard
-              <ArrowRight className="h-5 w-5" strokeWidth={2} />
-            </button>
-          </div>
+          <button
+            onClick={handleGoDashboard}
+            disabled={loading}
+            className="btn w-full flex items-center justify-center gap-2 bg-primary text-white py-3 font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+          >
+            Go to My Dashboard
+            <ArrowRight className="h-5 w-5" strokeWidth={2} />
+          </button>
 
           <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-md text-left">
             <h3 className="font-semibold text-blue-900 mb-2">What's next?</h3>

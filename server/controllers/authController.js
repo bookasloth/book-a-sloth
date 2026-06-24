@@ -91,7 +91,7 @@ const serializeProfile = (profile, session) => ({
   ...(session ? { token: session.access_token, refresh_token: session.refresh_token } : {}),
 });
 
-const upsertProfile = async ({ id, name, email, role, username }) => {
+const upsertProfile = async ({ id, name, email, role, username, first_name, last_name, avatar }) => {
   // Resolve the username. This upsert runs on every login (e.g. Google), so we
   // must NEVER regenerate over an existing one. Order: caller-supplied → the
   // row's current username (preserve it) → a fresh permanent username for a
@@ -103,19 +103,23 @@ const upsertProfile = async ({ id, name, email, role, username }) => {
     slug = existing?.username || await usernameService.createInitialUsername();
   }
 
+  const payload = {
+    id,
+    name,
+    email: email.toLowerCase().trim(),
+    role,
+    username: slug,
+    updated_at: new Date().toISOString(),
+    // name-split fields: only written when provided (never clobber with undefined)
+    ...(first_name !== undefined ? { first_name } : {}),
+    ...(last_name  !== undefined ? { last_name  } : {}),
+    // avatar maps to profile_image; only written when truthy (never null an existing photo)
+    ...(avatar ? { profile_image: avatar } : {}),
+  };
+
   const { data, error } = await supabaseAdmin
     .from("profiles")
-    .upsert(
-      {
-        id,
-        name,
-        email: email.toLowerCase().trim(),
-        role,
-        username: slug,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" },
-    )
+    .upsert(payload, { onConflict: "id" })
     .select("*")
     .single();
 
@@ -257,19 +261,21 @@ const googleVendorAuth = (req, res) => {
   res.json({ url: getAuthUrl(state) });
 };
 
-// Seed onboarding state for a brand-new Google vendor so ProtectedRoute walks
-// them through the remaining steps (type → category → booking-type → [calendar
-// auto-skips] → profile → first-service → plans). onboarding_slug = username
-// (already unique). Schema-guarded: if the onboarding columns don't exist
-// (pre-onboarding DB) the vendor simply lands on the dashboard — no crash.
+// Seed onboarding state for a brand-new Google vendor. Step 1 = Google identity
+// confirmed. The next step (2) is slug claim, handled by the authed claim-slug
+// endpoint. onboarding_slug is pre-seeded with the auto-generated username so
+// the client can resume before they pick a custom slug. calendar_skipped=true
+// because they connected Google OAuth here. Schema-guarded: if the onboarding
+// columns don't exist (pre-onboarding DB) the vendor lands on dashboard — no crash.
 const markGoogleVendorOnboarding = async (profileId, username) => {
   try {
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({
         onboarding_slug: username,
-        onboarding_step_completed: 3, // next page = /vendor-register/:slug/type
+        onboarding_step_completed: 1, // step 1 = Google identity done; next = claim slug
         onboarding_completed: false,
+        calendar_skipped: true,
         updated_at: new Date().toISOString(),
       })
       .eq("id", profileId);
@@ -407,14 +413,15 @@ const googleCallback = async (req, res) => {
           name: googleUser.name || googleEmail.split("@")[0],
           email: googleEmail,
           role: "host",
+          first_name: googleUser.given_name || null,
+          last_name:  googleUser.family_name || null,
+          avatar:     googleUser.picture     || null,
         });
         profileId = profile.id;
 
-        // Drop the new Google vendor into a SLIM onboarding: identity + password
-        // (steps 1–2) are satisfied by Google, and the calendar step (6)
-        // auto-skips because google_calendar_connected is set below. They
-        // resume at step 3 (vendor type). onboarding_step_completed = 3 makes
-        // ProtectedRoute route them to /vendor-register/:slug/type next.
+        // Drop the new Google vendor into onboarding at step 1 (Google identity
+        // confirmed). Next step (2) is slug claim via the authed claim-slug
+        // endpoint. calendar_skipped=true because they connected via Google here.
         await markGoogleVendorOnboarding(profileId, profile.username);
       }
 
@@ -1082,9 +1089,10 @@ const resetPassword = async (req, res) => {
 };
 
 // POST /api/auth/become-host — explicit, server-enforced guest→host opt-in.
-// The ONLY legitimate way an existing account's role becomes 'host'. Mirrors
-// markGoogleVendorOnboarding: reuse the (unique) username as onboarding_slug and
-// land the user on step 3 (/vendor-register/:slug/type). Idempotent for hosts.
+// The ONLY legitimate way an existing email/password account's role becomes 'host'.
+// Starts at step 3 (about/vendor-type) because identity, slug-claim, and password
+// are already done. Google-auth hosts use markGoogleVendorOnboarding (step 1) instead.
+// Idempotent for existing hosts.
 const becomeHost = async (req, res) => {
   try {
     const { data: profile, error } = await supabaseAdmin
@@ -1100,7 +1108,7 @@ const becomeHost = async (req, res) => {
     const updates = {
       role: "host",
       onboarding_slug: profile.username,
-      onboarding_step_completed: 3, // next page = /vendor-register/:slug/type
+      onboarding_step_completed: 1, // step 1 = start of new flow (claim → about → category → whatsapp → plan → live)
       onboarding_completed: false,
       updated_at: new Date().toISOString(),
     };
@@ -1122,6 +1130,7 @@ const becomeHost = async (req, res) => {
 };
 
 module.exports = {
+  upsertProfile,
   registerVendor,
   becomeHost,
   registerUser,

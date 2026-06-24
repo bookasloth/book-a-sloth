@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Check } from 'lucide-react';
-import { getPublicPlans, createRazorpayOrder, createSubscription, syncSubscription } from '../../services/api';
+import { getPublicPlans, activateFreePlan, advanceToLive, createSubscription, syncSubscription, getMe } from '../../services/api';
+import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
 
 const GST_RATE = 0.18; // display only — server is authoritative
@@ -35,33 +36,38 @@ const featureLines = (plan) => {
 const PlansStep = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const ready = useOnboardingGuard();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cadence, setCadence] = useState('annual'); // 'monthly' | 'annual'
   const [busy, setBusy] = useState(null);            // plan slug | 'free' | null
+  const [me, setMe] = useState(null);               // fresh profile for Razorpay prefill
 
   useEffect(() => {
     getPublicPlans()
       .then((r) => setPlans(r.data || []))
       .catch(() => toast.error('Failed to load plans'))
       .finally(() => setLoading(false));
+    // Fetch fresh profile so the Razorpay prefill has name/email even after Google signup.
+    getMe()
+      .then((r) => setMe(r.data))
+      .catch(() => { /* non-fatal — prefill will be empty */ });
   }, []);
 
   const priceFor = (plan, c) => (c === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0);
   const isPaid = (plan) => priceFor(plan, 'monthly') > 0 || priceFor(plan, 'annual') > 0;
 
-  const goNext = () => navigate(`/vendor-register/${slug}/explore`);
+  const goNext = () => navigate(`/vendor-register/${slug}/live`);
 
-  // Free plan: activate immediately via the onboarding endpoint, then continue.
+  // Free plan: activate immediately via the new onboarding endpoint, then navigate to /live.
   const chooseFree = async () => {
     setBusy('free');
     try {
-      await createRazorpayOrder({ plan: 'explorer' });
+      await activateFreePlan();
       toast.success('Free plan activated');
       goNext();
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to activate plan');
-    } finally {
       setBusy(null);
     }
   };
@@ -76,35 +82,97 @@ const PlansStep = () => {
     setBusy(plan.slug);
     try {
       const { data: sub } = await createSubscription({ plan: plan.slug, cadence });
+
+      // Use fresh profile for prefill (me fetched on mount); fall back to localStorage.
+      const prefillData = me
+        ? { name: me.name, email: me.email, contact: me.phone }
+        : (() => {
+            try { const u = JSON.parse(localStorage.getItem('user') || '{}'); return { name: u.name, email: u.email }; }
+            catch { return {}; }
+          })();
+
+      // A plan counts as active ONLY when getMe SUCCEEDS and returns a non-free
+      // slug. Returns true once activated+advanced+navigated, false otherwise.
+      // Never advances or navigates on a getMe error or a still-free/unset plan —
+      // that was the bug: a transient getMe failure used to show a false
+      // "activated!" toast and navigate optimistically before the plan was live.
+      const FREE_SLUGS = ['explorer', 'starter', '', null, undefined];
+      const tryFinalize = async () => {
+        try { await syncSubscription(); } catch { /* webhook will finalize shortly */ }
+        let freshMe;
+        try {
+          ({ data: freshMe } = await getMe());
+        } catch {
+          return false; // getMe failed → cannot confirm → do NOT advance/navigate
+        }
+        if (FREE_SLUGS.includes(freshMe?.plan)) return false; // webhook lag — still free/unset
+        // Confirmed active: advance the onboarding step FIRST, then toast, then
+        // navigate (awaiting advance before the toast also fixes a toast-ordering nit).
+        await advanceToLive();
+        toast.success(`${plan.name} active — renews ${cadence}.`);
+        goNext();
+        return true;
+      };
+
       const options = {
         key: sub.key,
         subscription_id: sub.subscription_id,
         name: 'Book A Sloth',
         description: `${plan.name} — ${cadence} (auto-renews)`,
         handler: async () => {
-          try { await syncSubscription(); } catch { /* webhook finalizes shortly */ }
-          toast.success(`${plan.name} active — renews ${cadence}.`);
-          goNext();
+          // First attempt right after payment.
+          if (await tryFinalize()) return;
+          // ONE short auto-retry to smooth the common brief webhook lag. The delay
+          // is skipped under test so the timer never hangs the suite.
+          if (import.meta.env?.MODE !== 'test') {
+            await new Promise((r) => setTimeout(r, 2000));
+          }
+          if (await tryFinalize()) return;
+          // Still not active: payment is captured but the plan isn't live yet. Do
+          // NOT advance or navigate. The createVendorSubscription idempotency guard
+          // makes the re-click safe — it re-syncs the existing mandate instead of
+          // double-charging, and once active the re-click advances to /live.
+          toast.success('Payment received — finalizing your plan. Tap the plan again in a moment to continue.');
+          setBusy(null);
         },
-        prefill: (() => {
-          try { const u = JSON.parse(localStorage.getItem('user') || '{}'); return { name: u.name, email: u.email }; }
-          catch { return {}; }
-        })(),
+        modal: {
+          ondismiss: () => {
+            setBusy(null);
+            toast('Checkout closed — you can pick a plan when you\'re ready.');
+          },
+        },
+        prefill: prefillData,
         theme: { color: '#FE5100' },
       };
       new window.Razorpay(options).open();
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to start subscription');
-    } finally {
       setBusy(null);
     }
   };
 
+  if (!ready) {
+    return (
+      <>
+        <ProgressBar current={5} total={6} />
+        <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <ProgressBar current={10} total={11} />
+      <ProgressBar current={5} total={6} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
         <div className="page-card w-full max-w-4xl p-5 sm:p-8">
+          <button
+            onClick={() => navigate(`/vendor-register/${slug}/whatsapp`)}
+            className="text-sm text-gray-500 hover:text-gray-800 mb-4 inline-block"
+          >
+            ← Back
+          </button>
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Choose your plan</h1>
           <p className="text-gray-500 text-sm mb-6">
             Paid plans auto-renew. Cancel anytime — you keep access until the period ends.

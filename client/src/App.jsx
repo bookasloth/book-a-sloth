@@ -36,19 +36,14 @@ const BeASloth       = lazy(() => import('./pages/BeASloth'));
 const VendorLogin    = lazy(() => import('./pages/VendorLogin'));
 const GoogleAuthDone = lazy(() => import('./pages/GoogleAuthDone'));
 
-// Vendor Onboarding (10-step flow)
-const SlugClaim        = lazy(() => import('./pages/onboarding/SlugClaim'));
-const OtpVerify        = lazy(() => import('./pages/onboarding/OtpVerify'));
-const PasswordStep     = lazy(() => import('./pages/onboarding/PasswordStep'));
-const VendorTypeStep   = lazy(() => import('./pages/onboarding/VendorTypeStep'));
-const CategoryStep     = lazy(() => import('./pages/onboarding/CategoryStep'));
-const BookingTypeStep  = lazy(() => import('./pages/onboarding/BookingTypeStep'));
-const WorkHoursStep    = lazy(() => import('./pages/onboarding/WorkHoursStep'));
-const WhatsAppStep     = lazy(() => import('./pages/onboarding/WhatsAppStep'));
-const ProfileStep      = lazy(() => import('./pages/onboarding/ProfileStep'));
-const FirstServiceStep = lazy(() => import('./pages/onboarding/FirstServiceStep'));
-const PlansStep        = lazy(() => import('./pages/onboarding/PlansStep'));
-const ExploreWithBolt  = lazy(() => import('./pages/onboarding/ExploreWithBolt'));
+// Vendor Onboarding (Google-first 7-step flow)
+const GoogleStart     = lazy(() => import('./pages/onboarding/GoogleStart'));
+const SlugClaim       = lazy(() => import('./pages/onboarding/SlugClaim'));
+const AboutYouStep    = lazy(() => import('./pages/onboarding/AboutYouStep'));
+const CategoryStep    = lazy(() => import('./pages/onboarding/CategoryStep'));
+const WhatsAppStep    = lazy(() => import('./pages/onboarding/WhatsAppStep'));
+const PlansStep       = lazy(() => import('./pages/onboarding/PlansStep'));
+const ExploreWithBolt = lazy(() => import('./pages/onboarding/ExploreWithBolt'));
 
 // Admin login
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
@@ -205,19 +200,14 @@ function App() {
           <Route path="/login-as-vendor" element={<VendorLogin />} />
           <Route path="/auth/google/done" element={<GoogleAuthDone />} />
 
-          {/* Vendor Onboarding (10-step flow) */}
-          <Route path="/vendor-register" element={<SlugClaim />} />
-          <Route path="/vendor-register/:slug/verify" element={<OtpVerify />} />
-          <Route path="/vendor-register/:slug/password" element={<PasswordStep />} />
-          <Route path="/vendor-register/:slug/type" element={<VendorTypeStep />} />
+          {/* Vendor Onboarding (Google-first 7-step flow) */}
+          <Route path="/vendor-register" element={<GoogleStart />} />
+          <Route path="/vendor-register/:slug/claim"    element={<SlugClaim />} />
+          <Route path="/vendor-register/:slug/about"    element={<AboutYouStep />} />
           <Route path="/vendor-register/:slug/category" element={<CategoryStep />} />
-          <Route path="/vendor-register/:slug/booking-type" element={<BookingTypeStep />} />
-          <Route path="/vendor-register/:slug/work-hours" element={<WorkHoursStep />} />
           <Route path="/vendor-register/:slug/whatsapp" element={<WhatsAppStep />} />
-          <Route path="/vendor-register/:slug/profile" element={<ProfileStep />} />
-          <Route path="/vendor-register/:slug/first-service" element={<FirstServiceStep />} />
-          <Route path="/vendor-register/:slug/plans" element={<PlansStep />} />
-          <Route path="/vendor-register/:slug/explore" element={<ExploreWithBolt />} />
+          <Route path="/vendor-register/:slug/plan"     element={<PlansStep />} />
+          <Route path="/vendor-register/:slug/live"     element={<ExploreWithBolt />} />
 
           {/* Admin login */}
           <Route path="/hello-sloth" element={<AdminLogin />} />

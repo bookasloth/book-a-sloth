@@ -6,13 +6,30 @@ const { generateUnique } = require('../utils/usernameGenerator');
 
 // True if a username has EVER been used (current or historical) — enforces
 // global non-reuse and feeds the generator's uniqueness loop.
+// Uses an exact match on the stored lower-cased value so that SQL wildcard
+// characters (% and _) in the slug are treated literally. isValidSlug()
+// already blocks those characters upstream; this is defence-in-depth.
 async function usernameExists(slug) {
+  const normalized = String(slug).toLowerCase().trim();
   const { data } = await supabaseAdmin
     .from('username_history')
     .select('id')
-    .ilike('username', String(slug))
+    .eq('username', normalized)
     .maybeSingle();
   return !!data;
+}
+
+// Returns the user_id that owns a given username (current OR historical),
+// or null if the name has never been used. Used by claimSlug to distinguish
+// "taken by someone else" from "taken by me — idempotent re-claim".
+async function usernameOwner(slug) {
+  const normalized = String(slug).toLowerCase().trim();
+  const { data } = await supabaseAdmin
+    .from('username_history')
+    .select('user_id')
+    .eq('username', normalized)
+    .maybeSingle();
+  return data?.user_id ?? null;
 }
 
 // Resolve a slug to its owner + the owner's CURRENT username.
@@ -66,6 +83,44 @@ async function recordInitialUsername(userId, username) {
   }
 }
 
+// Claim a username during onboarding — replaces the throwaway auto name with
+// the host's first real choice. Intentionally bypasses the change_username RPC's
+// gating rules (WhatsApp gate, 2/365-day cap, 6-month gap) because:
+//   a) The host hasn't had a chance to verify WhatsApp yet (that's step 5+).
+//   b) This is not a "change" — it's the host's initial brand identity claim.
+//      The auto name recorded by upsertProfile was a placeholder, not a choice.
+//
+// Delegates to the set_onboarding_username Postgres RPC (v3.32), which executes
+// the retire→insert→update sequence inside a single function body (one implicit
+// transaction). This eliminates the partial-failure window that existed when the
+// three steps were separate Supabase client calls.
+//
+// The RPC raises EXCEPTION 'username_taken' on unique-index conflict; Supabase
+// surfaces this as error.message containing 'username_taken'. We map that to the
+// { ok: false, reason: 'taken' } contract that claimSlug already handles.
+//
+// Returns { ok: true, username } or { ok: false, reason, detail? }.
+async function setOnboardingUsername(userId, newSlug) {
+  const clean = String(newSlug).toLowerCase().trim();
+
+  const { data, error } = await supabaseAdmin.rpc('set_onboarding_username', {
+    p_user_id: userId,
+    p_username: clean,
+  });
+
+  if (error) {
+    // The RPC raises EXCEPTION 'username_taken' on unique-index conflict.
+    // Supabase wraps this as error.message = 'username_taken'.
+    if (error.message && error.message.includes('username_taken')) {
+      return { ok: false, reason: 'taken' };
+    }
+    return { ok: false, reason: 'error', detail: error.message };
+  }
+
+  // RPC returns jsonb: { ok: true, username } or { ok: false, reason }.
+  return data;
+}
+
 // Atomic, race-safe change via the change_username RPC (all rule enforcement
 // lives in SQL). Returns the RPC's jsonb verdict:
 //   { ok: true, username } | { ok: false, reason, next_eligible? }
@@ -80,8 +135,10 @@ async function changeUsername(userId, newSlug) {
 
 module.exports = {
   usernameExists,
+  usernameOwner,
   resolve,
   createInitialUsername,
   recordInitialUsername,
+  setOnboardingUsername,
   changeUsername,
 };

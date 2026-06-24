@@ -3,105 +3,38 @@ const router = express.Router();
 const {
   isValidSlug,
   checkSlugAvailable,
-  sendOtpBothChannels,
-  verifyOtp,
-  createVendorAccount,
+  slugAvailableForUser,
+  claimSlug,
   updateOnboardingStep,
-  createRazorpayOrder,
-  verifyRazorpayPayment,
-  activatePlan,
+  activateFreePlan,
+  advanceToLive,
+  markComplete,
   getOnboardingStatus,
-  getResumeStep,
 } = require('../controllers/vendorOnboardingController');
 const { protect } = require('../middleware/authMiddleware');
-const { otpLimiter, authLimiter, slugLimiter } = require('../middleware/security');
+const { slugLimiter } = require('../middleware/security');
 
-// ── Public: Step 1 - Username/Slug Availability Check ──────────────────────
-// POST /api/onboarding/check-slug
-router.post('/check-slug', slugLimiter, async (req, res) => {
+// ── Protected: Slug Availability Check (authed, history-backed, self-aware) ──
+// POST /api/onboarding/slug-available
+// Requires auth so we can exclude the caller's own name from "taken" checks.
+// Uses usernameService.usernameOwner (history-backed) to match claimSlug's
+// enforcement — live feedback and the write path now agree on what's taken.
+router.post('/slug-available', protect, slugLimiter, async (req, res) => {
   try {
     const { slug } = req.body;
     if (!slug) return res.status(400).json({ message: 'Slug is required' });
-
-    if (!isValidSlug(slug)) {
-      return res.status(400).json({
-        message: 'Slug must be lowercase, 3-60 chars, alphanumeric with hyphens only',
-      });
-    }
-
-    const available = await checkSlugAvailable(slug);
-    res.json({ available });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+    res.json(await slugAvailableForUser(req.user.id, slug));
+  } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-// ── Public: Step 2 - Send OTP (Email + WhatsApp) ─────────────────────────
-// POST /api/onboarding/send-otp
-router.post('/send-otp', otpLimiter, async (req, res) => {
+// ── Protected: Claim Slug (step 2) ────────────────────────────────────────
+// POST /api/onboarding/claim-slug
+router.post('/claim-slug', protect, async (req, res) => {
   try {
-    const { slug, email, phone, name } = req.body;
-    if (!slug || !email) {
-      return res.status(400).json({ message: 'Slug and email are required' });
-    }
-
-    if (!isValidSlug(slug)) {
-      return res.status(400).json({ message: 'Invalid slug' });
-    }
-
-    const available = await checkSlugAvailable(slug);
-    if (!available) {
-      return res.status(409).json({ message: 'Slug already taken' });
-    }
-
-    await sendOtpBothChannels(slug, email, phone, name);
-    res.json({ message: 'OTPs sent to email and WhatsApp' });
-  } catch (error) {
-    console.error('send-otp error:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ── Public: Step 2 - Verify OTP (Email or Phone) ──────────────────────────
-// POST /api/onboarding/verify-otp
-router.post('/verify-otp', otpLimiter, async (req, res) => {
-  try {
-    const { slug, channel, otp } = req.body;
-    if (!slug || !channel || !otp) {
-      return res.status(400).json({ message: 'Slug, channel, and OTP are required' });
-    }
-
-    if (!['email', 'phone'].includes(channel)) {
-      return res.status(400).json({ message: 'Channel must be email or phone' });
-    }
-
-    await verifyOtp(slug, channel, otp);
-    res.json({ message: 'OTP verified', verified: true });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-// ── Public: Step 3 - Create Account (Password Step) ────────────────────────
-// POST /api/onboarding/create-account
-router.post('/create-account', authLimiter, async (req, res) => {
-  try {
-    const { slug, email, password, name } = req.body;
-    if (!slug || !email || !password || !name) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    const account = await createVendorAccount(slug, email, password, name);
-    res.status(201).json({
-      id: account.id,
-      token: account.token,
-      refresh_token: account.refresh_token,
-      slug: account.slug,
-      message: 'Account created successfully',
-    });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
+    const { slug } = req.body;
+    if (!slug) return res.status(400).json({ message: 'Slug is required' });
+    res.json(await claimSlug(req.user.id, slug));
+  } catch (e) { res.status(400).json({ message: e.message }); }
 });
 
 // ── Protected: Step 3+ - Update Onboarding Step ───────────────────────────
@@ -135,63 +68,28 @@ router.get('/status', protect, async (req, res) => {
   }
 });
 
-// ── Protected: Create Razorpay Order ──────────────────────────────────────
-// POST /api/onboarding/create-order
-router.post('/create-order', protect, async (req, res) => {
+// ── Protected: Activate Free Plan ─────────────────────────────────────────
+// POST /api/onboarding/activate-free
+// Sets plan='explorer', advances onboarding_step_completed to 6.
+// Does NOT set onboarding_completed — /live button (mark-complete) does that.
+router.post('/activate-free', protect, async (req, res) => {
   try {
-    const { plan } = req.body;
-    if (!plan) return res.status(400).json({ message: 'Plan is required' });
-
-    const planPrices = {
-      explorer: 0,
-      creator: 999,
-      professional: 3650,
-    };
-
-    if (!planPrices.hasOwnProperty(plan)) {
-      return res.status(400).json({ message: 'Invalid plan' });
-    }
-
-    const amount = planPrices[plan];
-    if (amount === 0) {
-      // Free plan: activate immediately
-      await activatePlan(req.user.id, plan);
-      return res.json({
-        plan,
-        amount: 0,
-        message: 'Free plan activated',
-        skipPayment: true,
-      });
-    }
-
-    const order = await createRazorpayOrder(req.user.id, plan, amount);
-    res.json(order);
+    await activateFreePlan(req.user.id);
+    res.json({ ok: true });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 });
 
-// ── Protected: Verify Payment and Activate Plan ─────────────────────────
-// POST /api/onboarding/verify-payment
-router.post('/verify-payment', protect, async (req, res) => {
+// ── Protected: Advance to /live (paid path) ───────────────────────────────
+// POST /api/onboarding/advance-to-live
+// Called AFTER the paid subscription is confirmed active (via /payment/subscription/*).
+// Sets onboarding_step_completed=6 WITHOUT setting onboarding_completed.
+// Throws 400 if no active plan is found (prevents bypassing the plan step).
+router.post('/advance-to-live', protect, async (req, res) => {
   try {
-    const { paymentId, orderId } = req.body;
-    if (!paymentId || !orderId) {
-      return res.status(400).json({ message: 'Payment ID and Order ID are required' });
-    }
-
-    // Verify payment with Razorpay (binds order to this vendor, blocks replay,
-    // checks the captured amount). Returns the stored order row.
-    const order = await verifyRazorpayPayment(paymentId, orderId, req.user.id);
-
-    // Activate the plan recorded ON THE ORDER — never a client-supplied plan.
-    const profile = await activatePlan(req.user.id, order.plan);
-
-    res.json({
-      message: 'Payment verified and plan activated',
-      plan: profile.plan,
-      onboarding_completed: profile.onboarding_completed,
-    });
+    await advanceToLive(req.user.id);
+    res.json({ ok: true });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -199,28 +97,15 @@ router.post('/verify-payment', protect, async (req, res) => {
 
 // ── Protected: Mark Onboarding Complete ──────────────────────────────────
 // POST /api/onboarding/mark-complete
+// The ONLY endpoint that sets onboarding_completed=true.
+// Gated on the host having an active plan (free or paid).
+// Client calls this when the user clicks "Go to Dashboard" on /live.
 router.post('/mark-complete', protect, async (req, res) => {
   try {
-    const { supabaseAdmin } = require('../config/supabase');
-    const { data: profile, error } = await supabaseAdmin
-      .from('profiles')
-      .update({
-        onboarding_completed: true,
-        onboarding_step_completed: 11,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', req.user.id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    res.json({
-      message: 'Onboarding marked complete',
-      onboarding_completed: profile.onboarding_completed,
-    });
+    await markComplete(req.user.id);
+    res.json({ onboarding_completed: true });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 });
 

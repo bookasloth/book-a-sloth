@@ -4,7 +4,9 @@ const { supabaseAdmin, signInWithPassword } = require("../config/supabase");
 const { sendWhatsAppOtp } = require("../utils/notify");
 const communicationEngine = require("../services/email/communicationEngine");
 const otpStore = require("../utils/otpStore");
-const razorpayConfig = require("../services/razorpayConfig");
+const { isReserved } = require("../utils/reservedUsernames");
+const usernameService = require("../services/usernameService");
+const planService = require("../services/planService");
 
 // ─── Slug validation & generation ───────────────────────────────────────
 const isValidSlug = (slug) => {
@@ -36,6 +38,92 @@ const generateUniqueSlug = async (baseName) => {
     if (available) return slug;
     slug = `${slug.slice(0, 45)}-${i++}`;
   }
+};
+
+// ─── Authed Slug Availability (history-backed, self-aware) ─────────────────
+// Used by POST /api/onboarding/slug-available (requires auth).
+// Returns { available: true } when:
+//   a) the slug is free globally, OR
+//   b) the caller owns it (idempotent — lets them re-confirm the seeded name).
+// Returns { available: false, reason } for invalid/reserved/taken-by-someone-else.
+//
+// WHY this replaces checkSlugAvailable for the live-feedback route:
+//   checkSlugAvailable queries `profiles WHERE onboarding_slug = slug`.
+//   On Google signup markGoogleVendorOnboarding seeds onboarding_slug = auto-name.
+//   So the host's OWN pre-filled slug immediately returns available:false — bugged.
+//   Additionally checkSlugAvailable ignores username_history, disagreeing with
+//   claimSlug's authority on taken names (divergence between feedback and enforce).
+const slugAvailableForUser = async (vendorId, slug) => {
+  const clean = (slug || '').toLowerCase().trim();
+  if (!isValidSlug(clean)) return { available: false, reason: 'invalid' };
+  if (isReserved(clean))   return { available: false, reason: 'reserved' };
+  // History-backed: rejects names that are current OR retired in username_history.
+  // Allow the caller's own name through (self-aware / idempotent).
+  const owner = await usernameService.usernameOwner(clean);
+  if (owner && owner !== vendorId) return { available: false, reason: 'taken' };
+  return { available: true };
+};
+
+// ─── Authed Slug Claim (Google flow, step 2) ─────────────────────────────
+// Called after Google auth confirms identity (step 1). Claims a slug for the
+// authenticated vendor, advances to step 2, and makes /<slug> the host's live
+// public profile URL.
+//
+// Why we don't call usernameService.changeUsername here:
+//   The change_username RPC enforces WhatsApp-verified gate, 2/365-day cap, and
+//   6-month gap. None apply to onboarding — this is the host's FIRST real name
+//   choice (the auto name from upsertProfile was a placeholder). We call
+//   usernameService.setOnboardingUsername instead, which atomically swaps the
+//   history row (source='onboarding') without triggering the gating rules.
+const claimSlug = async (vendorId, slug) => {
+  const clean = (slug || "").toLowerCase().trim();
+  if (!isValidSlug(clean)) {
+    throw new Error("Slug must be lowercase, 3-60 chars, alphanumeric with hyphens only");
+  }
+  // Reuse the same reserved-word set that guards changeUsername
+  if (isReserved(clean)) {
+    throw new Error("That name is reserved");
+  }
+
+  // History-backed availability check: rejects names that are current OR retired
+  // in username_history, enforcing the global non-reuse invariant.
+  // Allow the caller's own slug through (idempotent re-claim).
+  //
+  // SECURITY NOTE: we check username_history ownership, NOT profiles.username.
+  // profiles.username is a denormalized cache that can temporarily diverge from
+  // username_history (e.g. after a partial write). Querying history directly is
+  // the authoritative check and prevents a divergence window from being exploited
+  // to bypass the "taken by someone else" guard.
+  const taken = await usernameService.usernameExists(clean);
+  if (taken) {
+    const ownerId = await usernameService.usernameOwner(clean);
+    if (ownerId !== vendorId) {
+      throw new Error("Slug already taken");
+    }
+    // ownerId === vendorId: this is the caller's own name — idempotent re-claim.
+  }
+
+  // Atomic swap in username_history (retire auto row, insert onboarding row,
+  // update profiles.username). Does NOT run the change_username RPC's gating.
+  const result = await usernameService.setOnboardingUsername(vendorId, clean);
+  if (!result.ok) {
+    if (result.reason === "taken") throw new Error("Slug already taken");
+    throw new Error(result.detail || "Failed to claim slug");
+  }
+
+  // Record onboarding_slug and advance step (username already updated by service).
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update({
+      onboarding_slug: clean,
+      onboarding_step_completed: 2,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", vendorId)
+    .select()
+    .single();
+  if (error) throw error;
+  return { slug: clean, profile: data };
 };
 
 // ─── Send-cap constants (mirror otpStore.js) ────────────────────────────
@@ -298,29 +386,24 @@ const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
     updated_at: new Date().toISOString(),
   };
 
-  // Map step-specific data to columns
+  // Map step-specific data to columns (7-step Google-first flow)
   if (stepNumber === 3) {
-    updates.vendor_type = data.type; // 'individual' or 'organisation'
+    // About step: vendor_type + booking_type
+    updates.vendor_type  = data.vendor_type  || null;
+    updates.booking_type = data.booking_type || null;
   } else if (stepNumber === 4) {
+    // Category step: single primary category (plan-gated expansion handled client-side)
     const cats = Array.isArray(data.categories) ? data.categories.filter(Boolean) : [];
     const primary = data.primary_category || cats[0] || null;
     updates.primary_category = primary;
-    updates.categories = primary ? [primary] : []; // onboarding = single primary
+    updates.categories = primary ? [primary] : [];
   } else if (stepNumber === 5) {
-    updates.booking_type = data.booking_type; // 'online_only', 'offline_only', 'both'
-  } else if (stepNumber === 6) {
-    updates.calendar_connected = data.calendar_connected || false;
-    updates.calendar_skipped = data.calendar_skipped || false;
-  } else if (stepNumber === 7) {
     // WhatsApp step. Verified data is written by /api/whatsapp/verify-otp.
     // Only the skip path writes the "unverified" state here.
     if (data.whatsapp_skipped) {
       updates.whatsapp_verified = false;
       updates.whatsapp_number = null;
     }
-  } else if (stepNumber === 8) {
-    updates.profile_image = data.profile_image || null;
-    updates.bio = data.bio || "";
   }
 
   const { data: profile, error } = await supabaseAdmin
@@ -334,129 +417,77 @@ const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
   return profile;
 };
 
-// ─── Razorpay Order Creation ────────────────────────────────────────────
-const createRazorpayOrder = async (vendorId, plan, amount) => {
-  // Create order in Razorpay
-  const razorpay = await razorpayConfig.getClient();
-  const order = await razorpay.orders.create({
-    amount: Math.round(amount * 100), // Convert to paise
-    currency: "INR",
-    receipt: `plan_${plan}_${vendorId.slice(0, 8)}_${Date.now()}`,
-  });
+// ─── Completion helpers (state-machine contract) ────────────────────────
+//
+// The /live screen sits between plan activation and dashboard. The contract:
+//   activatePlan (via /payment/subscription/*) → plan set, step stays < 6
+//   activateFreePlan / advanceToLive           → step = 6, onboarding_completed STAYS false
+//   markComplete (/live "Go to Dashboard")     → ONLY writer of onboarding_completed=true
+//
+// Why split: if activatePlan set onboarding_completed=true, the client guard
+// (done>=6 → show /live) would bounce the host past the celebration screen
+// directly to /dashboard. The /live screen must be reachable after plan choice.
 
-  // Store in database for webhook verification
-  const { data: orderRecord, error } = await supabaseAdmin
-    .from("razorpay_orders")
-    .insert({
-      vendor_id: vendorId,
-      order_id: order.id,
-      plan,
-      amount,
-      status: "pending",
-    })
+// Returns the host's currently-active plan slug, or null if none/expired.
+// The canonical free tier counts as active (no expiry). Paid requires
+// plan_expires_at in the future.
+const getActivePlan = async (vendorId) => {
+  const { data: p } = await supabaseAdmin
+    .from("profiles")
+    .select("plan, plan_expires_at")
+    .eq("id", vendorId)
+    .maybeSingle();
+  if (!p || !p.plan) return null;
+  // Free tier is always active. Resolve via planService so the legacy 'explorer'
+  // alias AND the canonical 'starter' slug both count (normalizeSlug maps
+  // explorer→starter), instead of hardcoding a single literal.
+  if (planService.normalizeSlug(p.plan) === "starter") return p.plan;
+  if (p.plan_expires_at && new Date(p.plan_expires_at) > new Date()) return p.plan;
+  return null;
+};
+
+// Advance to the terminal step WITHOUT completing — lets /live render.
+// Throws if no plan has been activated yet (prevents bypassing plan step).
+const advanceToLive = async (vendorId) => {
+  const plan = await getActivePlan(vendorId);
+  if (!plan) throw new Error("Choose a plan first");
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update({ onboarding_step_completed: 6, updated_at: new Date().toISOString() })
+    .eq("id", vendorId)
     .select()
     .single();
-
   if (error) throw error;
-
-  return {
-    orderId: order.id,
-    amount,
-    currency: "INR",
-    key: await razorpayConfig.getKeyId(),
-  };
+  return data;
 };
 
-// ─── Razorpay Webhook Verification ──────────────────────────────────────
-const verifyRazorpayPayment = async (paymentId, orderId, vendorId) => {
-  try {
-    // SECURITY: look up the order WE created and assert it belongs to this
-    // vendor. Without the vendor_id scope, a vendor could submit another
-    // vendor's captured order id (IDOR / cross-account replay).
-    const { data: order, error: lookupError } = await supabaseAdmin
-      .from("razorpay_orders")
-      .select("*")
-      .eq("order_id", orderId)
-      .eq("vendor_id", vendorId)
-      .maybeSingle();
-    if (lookupError) throw lookupError;
-    if (!order) throw new Error("Order not found for this account");
-
-    // Replay guard: each order can be redeemed exactly once.
-    if (order.payment_verified) throw new Error("Order already processed");
-
-    // Confirm with Razorpay (the source of truth — never the client body).
-    const razorpay = await razorpayConfig.getClient();
-    const payment = await razorpay.payments.fetch(paymentId);
-    if (payment.status !== "captured") {
-      throw new Error("Payment not captured");
-    }
-    if (payment.order_id !== orderId) {
-      throw new Error("Order ID mismatch");
-    }
-
-    // Amount binding: the captured amount (paise) MUST equal the amount we
-    // stored for this order. Stops "pay for cheap plan, activate expensive
-    // plan" — the plan is derived from this order below, not from the client.
-    const expectedPaise = Math.round(Number(order.amount) * 100);
-    if (Number(payment.amount) !== expectedPaise) {
-      throw new Error("Payment amount mismatch");
-    }
-
-    // Mark completed — scoped to this vendor + the still-unverified row so a
-    // concurrent double-submit can only win once.
-    const { data: updated, error: updateError } = await supabaseAdmin
-      .from("razorpay_orders")
-      .update({
-        payment_id: paymentId,
-        payment_status: "captured",
-        payment_verified: true,
-        status: "completed",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("order_id", orderId)
-      .eq("vendor_id", vendorId)
-      .eq("payment_verified", false)
-      .select()
-      .single();
-
-    if (updateError) throw updateError;
-
-    return updated;
-  } catch (error) {
-    console.error("Payment verification failed:", error);
-    throw error;
-  }
+// Free plan: activate explorer, then advance to /live (NOT complete).
+// onboarding_completed is NOT set here — only markComplete sets it.
+const activateFreePlan = async (vendorId) => {
+  await supabaseAdmin
+    .from("profiles")
+    .update({ plan: "explorer", plan_activated_at: new Date().toISOString() })
+    .eq("id", vendorId);
+  return advanceToLive(vendorId);
 };
 
-// ─── Activate Plan ──────────────────────────────────────────────────────
-const activatePlan = async (vendorId, plan) => {
-  const planDetails = {
-    explorer: { price: 0, expires: null },
-    creator: { price: 99900, expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
-    professional: { price: 365000, expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
-  };
-
-  if (!planDetails[plan]) {
-    throw new Error("Invalid plan");
-  }
-
-  const { data: profile, error } = await supabaseAdmin
+// /live button — the ONLY writer of onboarding_completed.
+// Gated on the host having an active plan (free or paid).
+const markComplete = async (vendorId) => {
+  const plan = await getActivePlan(vendorId);
+  if (!plan) throw new Error("Choose and activate a plan before finishing");
+  const { data, error } = await supabaseAdmin
     .from("profiles")
     .update({
-      plan,
-      plan_expires_at: planDetails[plan].expires,
-      onboarding_step_completed: 11, // Onboarding complete
       onboarding_completed: true,
-      plan_activated_at: new Date().toISOString(),
+      onboarding_step_completed: 6,
       updated_at: new Date().toISOString(),
     })
     .eq("id", vendorId)
     .select()
     .single();
-
   if (error) throw error;
-  return profile;
+  return data;
 };
 
 // ─── Get Onboarding Status ──────────────────────────────────────────────
@@ -478,38 +509,19 @@ const getOnboardingStatus = async (vendorId) => {
   };
 };
 
-// ─── Resume Last Incomplete Step ────────────────────────────────────────
-const getResumeStep = (stepCompleted) => {
-  const steps = [
-    "/vendor-register",
-    "/vendor-register/:slug/verify",
-    "/vendor-onboarding/:slug/password",
-    "/vendor-onboarding/:slug/type",
-    "/vendor-onboarding/:slug/category",
-    "/vendor-onboarding/:slug/booking-type",
-    "/vendor-onboarding/:slug/calendar",
-    "/vendor-onboarding/:slug/whatsapp",
-    "/vendor-onboarding/:slug/profile",
-    "/vendor-onboarding/:slug/first-service",
-    "/vendor-onboarding/:slug/plans",
-    "/explore-with-bolt",
-  ];
-
-  // stepCompleted is 0-11, next step is stepCompleted + 1
-  return steps[stepCompleted] || steps[0];
-};
-
 module.exports = {
   isValidSlug,
   checkSlugAvailable,
+  slugAvailableForUser,
   generateUniqueSlug,
+  claimSlug,
   sendOtpBothChannels,
   verifyOtp,
   createVendorAccount,
   updateOnboardingStep,
-  createRazorpayOrder,
-  verifyRazorpayPayment,
-  activatePlan,
+  getActivePlan,
+  advanceToLive,
+  activateFreePlan,
+  markComplete,
   getOnboardingStatus,
-  getResumeStep,
 };
