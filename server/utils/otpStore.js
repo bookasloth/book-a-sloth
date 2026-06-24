@@ -101,8 +101,16 @@ const set = async (email, otp) => {
 /**
  * Verify an OTP. Returns { valid: true } or { valid: false, reason }.
  * Deletes the row on success (single-use). Locks out after MAX_ATTEMPTS.
+ *
+ * `expectedType` (security audit M-2): a code is bound to the purpose it was
+ * issued for. There is one otp_codes row per email (onConflict:'email'), shared
+ * between booking/login codes (type 'booking') and password-reset codes (type
+ * 'password_reset'). Without this gate a password-reset code could be redeemed
+ * on the booking/login path (account-takeover-adjacent). All booking/login/
+ * product/whatsapp callers use the 'booking' default; the reset path verifies
+ * its own type separately.
  */
-const verify = async (email, otp) => {
+const verify = async (email, otp, expectedType = 'booking') => {
   const key = normalizeEmail(email);
   const now = Date.now();
 
@@ -113,6 +121,12 @@ const verify = async (email, otp) => {
     .maybeSingle();
 
   if (error || !record) {
+    return { valid: false, reason: 'No OTP found. Request a new one.' };
+  }
+
+  // Reject a code issued for a different purpose (e.g. a password_reset code
+  // presented to the booking/login verifier). Legacy rows without `type` pass.
+  if (record.type && record.type !== expectedType) {
     return { valid: false, reason: 'No OTP found. Request a new one.' };
   }
 

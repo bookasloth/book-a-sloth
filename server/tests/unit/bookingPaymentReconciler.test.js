@@ -5,6 +5,9 @@ jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }
 jest.mock('../../services/razorpayConfig', () => ({ getClient: jest.fn() }));
 jest.mock('../../utils/trackServer', () => ({ trackServer: jest.fn() }));
 jest.mock('../../utils/posthog', () => ({ resolveGuestId: jest.fn(() => 'guest-1') }));
+// Ledger is exercised by the shared finalizer; keep this test hermetic.
+jest.mock('../../services/ledger/journalTemplates', () => ({ orderPaymentEntry: jest.fn(() => ({ description: 'ORDER_PAYMENT', lines: [] })) }));
+jest.mock('../../services/ledger/postingService', () => ({ postSafe: jest.fn(() => Promise.resolve('je-1')) }));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const razorpayConfig = require('../../services/razorpayConfig');

@@ -23,7 +23,12 @@ INSERT INTO platform_settings (key, value) VALUES
   ('maintenance_mode', 'false')
 ON CONFLICT (key) DO NOTHING;
 
--- RLS for platform_settings (only superadmin via service role)
+-- RLS for platform_settings.
+-- NOTE: the original `USING (true)` policy below let ANY anon client read every
+-- row (incl. encrypted Razorpay secrets). Superseded by migration
+-- v3.31_platform_settings_hide_secrets.sql which scopes the public read to
+-- non-secret keys only. Server writes/reads use the service_role key (bypasses
+-- RLS). Keep this file for historical context; v3.31 is the live policy.
 ALTER TABLE platform_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Settings readable by all" ON platform_settings FOR SELECT USING (true);
 

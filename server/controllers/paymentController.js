@@ -18,6 +18,7 @@ const { createCalendarEvent } = require("../config/google");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const profileSecrets = require("../utils/profileSecrets");
 const { verifySignature } = require("../utils/razorpaySignature");
+const { finalizeBookingCapture } = require("../services/bookingCapture");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { trackServer } = require("../utils/trackServer");
 const { runInBackground } = require("../utils/background");
@@ -165,82 +166,76 @@ const verifyPayment = async (req, res) => {
       return res.status(400).json({ message: "Payment verification failed — invalid signature." });
     }
 
-    // Record the ACTUAL Razorpay fee + tax (vendor-borne) and finalise the payout.
-    // Razorpay's `fee` (paise) INCLUDES `tax`; we store them split (PRD §19).
-    let razorpayFeeTotal = 0, razorpayTax = 0;
+    // M-8: bind the captured amount to the order we created — belt-and-suspenders
+    // on top of the server-generated + signature-verified order id above. Skipped
+    // under load-test mode (no real Razorpay order behind the stubbed signature).
+    if (!isLoadTestMode()) {
+      try {
+        const rzp = await razorpayConfig.getClient();
+        const rzpOrder = await rzp.orders.fetch(razorpay_order_id);
+        const expectedPaise = Math.round((Number(booking.customer_total) || 0) * 100);
+        if (expectedPaise > 0 && Number(rzpOrder.amount) !== expectedPaise) {
+          securityLog('PAYMENT_AMOUNT_MISMATCH', { booking_id, expected: expectedPaise, order: rzpOrder.amount, ip: req.ip });
+          return res.status(400).json({ message: "Payment verification failed." });
+        }
+      } catch (ordErr) {
+        // A transient orders.fetch failure must not block a signature-valid payment.
+        console.error("verifyPayment: order amount re-check skipped:", ordErr.message);
+      }
+    }
+
+    // Fetch the ACTUAL Razorpay fee + tax (vendor-borne). Razorpay's `fee` (paise)
+    // INCLUDES `tax`. Retry a few times so a transient blip doesn't silently
+    // finalise the payout with fee=0 (M-4); if it still fails, alert an admin and
+    // proceed (the booking must not be left stuck).
+    let feePaise = null, taxPaise = null;
+    if (!isLoadTestMode()) {
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const rzp = await razorpayConfig.getClient();
+          const payment = await rzp.payments.fetch(razorpay_payment_id);
+          if (payment && payment.fee != null) feePaise = Number(payment.fee);
+          if (payment && payment.tax != null) taxPaise = Number(payment.tax);
+          break;
+        } catch (feeErr) {
+          if (attempt === 3) {
+            adminAlert({
+              key: 'rzp_fee_fetch_failed',
+              subject: `Razorpay fee fetch failed for booking ${booking_id}`,
+              lines: [
+                `Could not fetch the gateway fee for payment ${razorpay_payment_id} after 3 tries.`,
+                `The payout was finalised WITHOUT subtracting the fee — post a manual ADJUSTMENT once the real fee is known.`,
+                `Error: ${feeErr.message}`,
+              ],
+            });
+          }
+        }
+      }
+    }
+
+    // Single source of truth for paid→confirmed + payout finalisation + ledger
+    // (shared with the webhook + reconciler so the money logic can't drift).
+    let updated;
     try {
-      const razorpay = await razorpayConfig.getClient();
-      const payment = await razorpay.payments.fetch(razorpay_payment_id);
-      if (payment && payment.fee != null) razorpayFeeTotal = Number(payment.fee) / 100;
-      if (payment && payment.tax != null) razorpayTax = Number(payment.tax) / 100;
-    } catch (feeErr) {
-      // No self-heal re-fetches this fee: payout finalises with 0 and needs a
-      // manual admin ADJUSTMENT entry once the real fee is known.
-      console.error("Razorpay fee fetch failed — fee recorded as 0, manual correction needed:", feeErr.message);
-    }
-    // Tax is a component of fee; clamp so excl-tax + tax always reconstitutes the total.
-    razorpayTax = Math.min(razorpayTax, razorpayFeeTotal);
-    const razorpayFeeExclTax = Math.max(0, Math.round((razorpayFeeTotal - razorpayTax) * 100) / 100);
-    const servicePrice  = booking.services?.price || 0;
-    const commission    = Number(booking.commission_applied) || 0;
-    const commissionGst = Number(booking.commission_gst) || 0;
-    const finalPayout   = calculateVendorPayout(servicePrice, commission, commissionGst, razorpayFeeTotal);
-
-    const paidAt = new Date().toISOString();
-    const fullUpdate = {
-      payment_status: "paid", status: "confirmed", razorpay_payment_id,
-      razorpay_fee_actual: razorpayFeeExclTax, razorpay_tax_actual: razorpayTax,
-      vendor_amount: finalPayout, paid_at: paidAt,
-      updated_at: paidAt,
-    };
-    // .neq guard: two concurrent verifies can both pass the read check above;
-    // only the first matches this conditional update (zero rows = already paid).
-    let { data: updated, error } = await supabaseAdmin
-      .from("bookings").update(fullUpdate)
-      .eq("id", booking_id).neq("payment_status", "paid").select().single();
-
-    // Legacy DB without the v2.2/v2.8 columns: retry without the new fields
-    if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
-      const { razorpay_fee_actual: _drop, razorpay_tax_actual: _drop2, paid_at: _drop3, ...coreUpdate } = fullUpdate;
-      ({ data: updated, error } = await supabaseAdmin
-        .from("bookings").update(coreUpdate)
-        .eq("id", booking_id).neq("payment_status", "paid").select().single());
-    }
-
-    if (error && error.code === "PGRST116") {
-      return res.status(400).json({ message: "Already paid" });
-    }
-    if (error) return safeError(res, error);
-
-    // ── Ledger: post ORDER_PAYMENT (non-fatal — payment already recorded;
-    // the reconciler cron retries missed posts). Pre-v2.2 rows have no
-    // customer_total snapshot → entry can't balance → skip (reconciler skips too).
-    // Deferred to background: the reconciler is the durability backstop, so this
-    // never needs to block the payment response.
-    runInBackground("verifyPayment:ledger", async () => {
-      const ledgerCustomerTotal = Number(booking.customer_total) || 0;
-      if (ledgerCustomerTotal <= 0) return;
-      const { orderPaymentEntry } = require("../services/ledger/journalTemplates");
-      const { postSafe } = require("../services/ledger/postingService");
-      await postSafe({
-        sourceType: "ORDER_PAYMENT",
-        sourceId: booking_id,
-        journalDate: paidAt.slice(0, 10),
-        template: orderPaymentEntry({
-          booking_id,
+      const r = await finalizeBookingCapture({
+        bookingId: booking_id,
+        paymentId: razorpay_payment_id,
+        feePaise, taxPaise,
+        pricing: {
+          commission_applied: booking.commission_applied,
+          commission_gst: booking.commission_gst,
+          platform_fee_amount: booking.platform_fee_amount,
+          platform_fee_gst: booking.platform_fee_gst,
+          customer_total: booking.customer_total,
           host_id: booking.host_id,
-          service_price: servicePrice,
-          platform_fee_amount: Number(booking.platform_fee_amount) || 0,
-          platform_fee_gst: Number(booking.platform_fee_gst) || 0,
-          commission_applied: commission,
-          commission_gst: commissionGst,
-          razorpay_fee_actual: razorpayFeeExclTax,
-          razorpay_tax_actual: razorpayTax,
-          vendor_amount: finalPayout,
-          customer_total: ledgerCustomerTotal,
-        }),
+          service_price: booking.services?.price || 0,
+        },
       });
-    });
+      updated = r.updated;
+    } catch (error) {
+      return safeError(res, error);
+    }
+    if (!updated) return res.status(400).json({ message: "Already paid" });
 
     // Payment captured → now create the Google Calendar event (deferred from
     // booking time for paid services). A calendar failure must NOT fail an
@@ -998,16 +993,20 @@ const handleWebhook = async (req, res) => {
     if (event.event === 'payment.captured') {
       const notes = payment.notes || {};
       if (notes.booking_id) {
-        // idempotent: only the unpaid→paid transition matches; .select() lets us
-        // tell whether THIS call did the transition (vs verifyPayment already did)
-        // so the analytics event fires exactly once even though both paths run.
-        const { data: paidRows } = await supabaseAdmin.from("bookings")
-          .update({ payment_status: "paid", status: "confirmed",
-            razorpay_payment_id: payment.id, updated_at: new Date().toISOString() })
-          .eq("id", notes.booking_id).eq("payment_status", "unpaid")
-          .select("id, host_id, guest_id, guest_email, customer_total, services(title)");
+        // Single source of truth (security audit H-3): flip unpaid→paid/confirmed
+        // AND finalise the vendor payout (subtracting the gateway fee) AND post the
+        // ORDER_PAYMENT ledger entry. Previously the webhook only flipped the status
+        // flags, over-crediting the host by the fee and skipping the ledger. The
+        // captured event payload carries fee/tax, so no extra Razorpay call.
+        // Idempotent: only the unpaid→paid transition matches, so analytics fire
+        // exactly once even though verify + webhook + reconciler can all run.
+        const { updated: paid } = await finalizeBookingCapture({
+          bookingId: notes.booking_id,
+          paymentId: payment.id,
+          feePaise: payment.fee,
+          taxPaise: payment.tax,
+        });
         auditLog('WEBHOOK_BOOKING_PAID', null, { booking_id: notes.booking_id, payment_id: payment.id });
-        const paid = paidRows && paidRows[0];
         if (paid) {
           trackServer(resolveGuestId({ guestId: paid.guest_id, guestEmail: paid.guest_email }), "booking_paid", {
             booking_id: paid.id,

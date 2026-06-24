@@ -458,6 +458,9 @@ const ServiceBooking = () => {
         guest_phone: phone,
         scheduled_at: scheduledAt,
         notes,
+        // H-1: short-lived grant proving this contact just passed OTP. The server
+        // requires it for anonymous bookings (logged-in users use bookDirectly).
+        booking_grant: otpResult.bookingGrant,
       });
 
       setConfirmation(bookingResult);
