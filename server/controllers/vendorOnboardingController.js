@@ -6,6 +6,7 @@ const communicationEngine = require("../services/email/communicationEngine");
 const otpStore = require("../utils/otpStore");
 const { isReserved } = require("../utils/reservedUsernames");
 const usernameService = require("../services/usernameService");
+const planService = require("../services/planService");
 
 // ─── Slug validation & generation ───────────────────────────────────────
 const isValidSlug = (slug) => {
@@ -428,8 +429,8 @@ const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
 // directly to /dashboard. The /live screen must be reachable after plan choice.
 
 // Returns the host's currently-active plan slug, or null if none/expired.
-// Free 'explorer' counts as active (no expiry). Paid requires plan_expires_at
-// in the future.
+// The canonical free tier counts as active (no expiry). Paid requires
+// plan_expires_at in the future.
 const getActivePlan = async (vendorId) => {
   const { data: p } = await supabaseAdmin
     .from("profiles")
@@ -437,7 +438,10 @@ const getActivePlan = async (vendorId) => {
     .eq("id", vendorId)
     .maybeSingle();
   if (!p || !p.plan) return null;
-  if (p.plan === "explorer") return "explorer";
+  // Free tier is always active. Resolve via planService so the legacy 'explorer'
+  // alias AND the canonical 'starter' slug both count (normalizeSlug maps
+  // explorer→starter), instead of hardcoding a single literal.
+  if (planService.normalizeSlug(p.plan) === "starter") return p.plan;
   if (p.plan_expires_at && new Date(p.plan_expires_at) > new Date()) return p.plan;
   return null;
 };
