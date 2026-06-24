@@ -31,7 +31,7 @@ test('guest is flipped to host with onboarding seeded', async () => {
     })
     .mockReturnValueOnce({
       update: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: { id: 'g1', role: 'host', username: 'cool-otter-7', plan: 'explorer', onboarding_slug: 'cool-otter-7', onboarding_step_completed: 3 }, error: null }),
+      single: jest.fn().mockResolvedValue({ data: { id: 'g1', role: 'host', username: 'cool-otter-7', plan: 'explorer', onboarding_slug: 'cool-otter-7', onboarding_step_completed: 1 }, error: null }),
     });
   const r = res();
   await becomeHost({ user: { id: 'g1' } }, r);

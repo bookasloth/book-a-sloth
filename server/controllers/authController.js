@@ -1108,7 +1108,7 @@ const becomeHost = async (req, res) => {
     const updates = {
       role: "host",
       onboarding_slug: profile.username,
-      onboarding_step_completed: 3, // next page = /vendor-register/:slug/type
+      onboarding_step_completed: 1, // step 1 = start of new flow (claim → about → category → whatsapp → plan → live)
       onboarding_completed: false,
       updated_at: new Date().toISOString(),
     };
