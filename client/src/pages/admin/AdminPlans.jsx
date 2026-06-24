@@ -50,6 +50,7 @@ const AdminPlans = () => {
   const [assignQuery, setAssignQuery] = useState('');
   const [assignResults, setAssignResults] = useState([]);
   const [assignPlanSlug, setAssignPlanSlug] = useState('');
+  const [assignReason, setAssignReason] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -134,8 +135,9 @@ const AdminPlans = () => {
     if (!assignPlanSlug) return toast.error('Select a plan first');
     if (!window.confirm(`Move ${vendor.name} to "${assignPlanSlug}"?`)) return;
     try {
-      const r = await adminAssignPlan({ vendor_id: vendor.id, plan_slug: assignPlanSlug });
+      const r = await adminAssignPlan({ vendor_id: vendor.id, plan_slug: assignPlanSlug, reason: assignReason.trim() || undefined });
       toast.success(r.data.message);
+      setAssignReason('');
       load();
     } catch (e) { toast.error(e?.response?.data?.message || 'Assignment failed'); }
   };
@@ -215,6 +217,8 @@ const AdminPlans = () => {
           </select>
           <button onClick={searchVendors} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Search</button>
         </div>
+        <input className="fb-input text-sm w-full mb-3" placeholder="Reason (optional) — saved to the audit log"
+          value={assignReason} onChange={(e) => setAssignReason(e.target.value)} />
         <div className="space-y-1.5">
           {assignResults.map((v) => (
             <div key={v.id} className="flex items-center justify-between text-sm px-3 py-2 rounded-lg bg-gray-50">

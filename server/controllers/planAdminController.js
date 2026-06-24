@@ -9,6 +9,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const planService = require('../services/planService');
 const razorpaySubscriptions = require('../services/razorpaySubscriptions');
+const { audit } = require('../services/auditService');
 
 const RULES = { min_active_plans: 2, max_active_plans: 3 };
 
@@ -222,16 +223,23 @@ const reorderPlans = async (req, res) => {
   }
 };
 
-// ── POST /api/admin/plans/assign  { vendor_id, plan_slug, expires_at? } ──
-// Manual admin assignment / upgrade / downgrade (comp plans, support fixes)
+// ── POST /api/admin/plans/assign  { vendor_id, plan_slug, expires_at?, reason? } ──
+// Manual admin assignment / upgrade / downgrade (comp plans, support fixes).
+// Records an immutable admin_audit_logs entry (who/before/after/reason) — this
+// is a high-privilege action, especially for the Supreme god-tier plan.
 const assignPlan = async (req, res) => {
   try {
-    const { vendor_id, plan_slug, expires_at } = req.body;
+    const { vendor_id, plan_slug, expires_at, reason } = req.body;
     if (!vendor_id || !plan_slug) return res.status(400).json({ message: 'vendor_id and plan_slug are required' });
 
     const plan = await planService.getPlan(plan_slug);
     if (!plan || plan.slug !== planService.normalizeSlug(plan_slug))
       return res.status(404).json({ message: 'Plan not found' });
+
+    // Snapshot the current plan BEFORE the update for the audit before/after.
+    const { data: prev } = await supabaseAdmin
+      .from('profiles').select('plan').eq('id', vendor_id).maybeSingle();
+    const previousPlan = prev?.plan || null;
 
     const isFree = Number(plan.annual_price) === 0;
     const { data, error } = await supabaseAdmin
@@ -246,6 +254,15 @@ const assignPlan = async (req, res) => {
       .eq('id', vendor_id)
       .select('id, name, email, plan, plan_expires_at').single();
     if (error || !data) return res.status(404).json({ message: 'Host not found' });
+
+    await audit(req, {
+      action: 'plan.assign',
+      resource_type: 'profile',
+      resource_id: vendor_id,
+      before: { plan: previousPlan },
+      after: { plan: plan.slug, plan_expires_at: data.plan_expires_at, reason: reason ? String(reason).trim() : null },
+    });
+
     res.json({ message: `Host moved to ${plan.name}`, vendor: data });
   } catch (err) {
     safeError(res, err);
