@@ -1,12 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
+import { uploadImage } from '../../services/api';
 
 const ALLOWED = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
 
 /**
- * ImageCropper — horizontal layout, direct Supabase Storage upload
+ * ImageCropper — horizontal layout, uploads via the backend (service-role)
  *
  * Props:
  *   aspect      - crop aspect ratio: 1 = square, 16/9, 3/1, etc.
@@ -72,45 +72,32 @@ const ImageCropper = ({ aspect = 1, folder = 'uploads', currentUrl, onUploaded, 
     if (!canvasRef.current || !imgEl) return;
     setUploading(true);
     try {
-      // Read token from localStorage WITHOUT touching the global Supabase client.
-      // Using setSession() on the global client fires onAuthStateChange and can
-      // wipe the app's auth state, breaking subsequent API calls.
-      const stored   = JSON.parse(localStorage.getItem('user') || '{}');
-      const token    = stored.token || '';
-      const userId   = stored._id || stored.id || 'user';
-
-      if (!token) throw new Error('Not logged in. Please refresh and try again.');
-
-      // Export the cropped canvas as a JPEG blob
+      // Export the cropped canvas as a JPEG blob.
       const blob = await new Promise((resolve) =>
         canvasRef.current.toBlob(resolve, 'image/jpeg', 0.92)
       );
       if (!blob) throw new Error('Failed to process image');
 
-      const path = `${folder}/${userId}_${Date.now()}.jpg`;
+      // Upload via the backend (/api/upload/image), which writes with the
+      // service-role key — so it bypasses Storage RLS and never depends on the
+      // browser holding a fresh, same-project Supabase access token. The shared
+      // API client also attaches auth and refreshes/retries on a 401.
+      //
+      // A direct browser -> Supabase Storage upload here failed with "new row
+      // violates row-level security policy" whenever that token was stale or had
+      // been minted against a different Supabase project than the client points
+      // at (anon role has no INSERT policy on the 'images' bucket).
+      const file = new File([blob], `${folder}-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      const fd = new FormData();
+      fd.append('image', file);
 
-      // Create a one-shot Supabase client with the user's JWT baked into headers.
-      // This never modifies the global `supabase` instance or its auth state.
-      const uploadClient = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY,
-        { global: { headers: { Authorization: `Bearer ${token}` } } }
-      );
+      const { data } = await uploadImage(fd, folder);
 
-      const { error: uploadError } = await uploadClient.storage
-        .from('images')
-        .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
-
-      if (uploadError) throw new Error(uploadError.message);
-
-      // Public URL does not require auth — use the upload client's helper
-      const { data: { publicUrl } } = uploadClient.storage.from('images').getPublicUrl(path);
-
-      onUploaded(publicUrl);
+      onUploaded(data.url);
       toast.success(label + ' saved!');
       onClose();
     } catch (err) {
-      toast.error('Upload failed: ' + (err.message || 'Unknown error'));
+      toast.error('Upload failed: ' + (err.response?.data?.message || err.message || 'Unknown error'));
     } finally {
       setUploading(false);
     }
