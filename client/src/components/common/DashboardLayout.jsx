@@ -18,6 +18,9 @@ const NAV_ITEMS = [
   { to:'/dashboard/availability',   label:'Availability',  icon:'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
   { to:'/dashboard/products',       label:'Products',      icon:'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', locked:'creator' },
   { to:'/dashboard/earnings',       label:'Earnings',      icon:'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  // Bookings the host MADE on other creators (unified account). Distinct from
+  // 'Bookings' above, which is bookings RECEIVED on the host's own services.
+  { to:'/dashboard/my-bookings',    label:'My Bookings',   icon:'M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z' },
   { to:'/dashboard/profile',        label:'Profile',       icon:'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
   { to:'/dashboard/feedback',       label:'Feedback',      icon:'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z' },
 ];
