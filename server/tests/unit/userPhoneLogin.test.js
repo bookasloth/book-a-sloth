@@ -24,10 +24,14 @@ jest.mock('../../utils/otpStore',  () => ({
   verify:   jest.fn(),
   generate: jest.fn(() => '123456'),
 }));
+// unified_login gate (Phase 3). Default OFF so the legacy guest-only behavior is
+// exercised; individual tests flip it ON. Mocked so it never hits the DB.
+jest.mock('../../services/featureFlags', () => ({ isFeatureEnabled: jest.fn().mockResolvedValue(false) }));
 
 const supa      = require('../../config/supabase');
 const { supabaseAdmin, signInWithPassword, mintSessionForEmail } = supa;
 const otpStore  = require('../../utils/otpStore');
+const featureFlags = require('../../services/featureFlags');
 const {
   loginWithPhone, verifyOtpLogin, setPassword,
 } = require('../../controllers/authController');
@@ -77,6 +81,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   signInWithPassword.mockReset();
   mintSessionForEmail.mockReset();
+  featureFlags.isFeatureEnabled.mockResolvedValue(false); // legacy default per test
 });
 
 // ── loginWithPhone ─────────────────────────────────────────────────────────────
@@ -136,6 +141,20 @@ describe('loginWithPhone', () => {
     expect(payload.role).toBe('guest');
     expect(payload.phone).toBe('+919876543210');
     expect(signInWithPassword).toHaveBeenCalledWith(GUEST.email, 'secret12');
+  });
+
+  test('unified_login ON: a non-guest (host) can sign in by phone', async () => {
+    featureFlags.isFeatureEnabled.mockResolvedValue(true);
+    queueFrom(chain({ data: { ...GUEST, role: 'host' } }));
+    signInWithPassword.mockResolvedValue({
+      data: { user: { id: GUEST.id }, session: { access_token: 'tok', refresh_token: 'ref' } },
+      error: null,
+    });
+    const r = res();
+    await loginWithPhone(req({ phone: '+919876543210', password: 'secret12' }), r);
+    const payload = r.json.mock.calls[0][0];
+    expect(payload.token).toBe('tok');
+    expect(payload.role).toBe('host');
   });
 });
 
@@ -210,6 +229,18 @@ describe('verifyOtpLogin', () => {
     const r = res();
     await verifyOtpLogin(req({ phone: '+919876543210', otp: '123456' }), r);
     expect(r.status).toHaveBeenCalledWith(409);
+  });
+
+  test('unified_login ON: a host phone OTP-logs in (no 409)', async () => {
+    featureFlags.isFeatureEnabled.mockResolvedValue(true);
+    otpStore.verify.mockResolvedValue({ valid: true });
+    queueFrom(chain({ data: { ...GUEST, role: 'host' } }));
+    mintSessionForEmail.mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' });
+    const r = res();
+    await verifyOtpLogin(req({ phone: '+919876543210', otp: '123456' }), r);
+    const payload = r.json.mock.calls[0][0];
+    expect(payload.token).toBe('tok');
+    expect(payload.role).toBe('host');
   });
 });
 
