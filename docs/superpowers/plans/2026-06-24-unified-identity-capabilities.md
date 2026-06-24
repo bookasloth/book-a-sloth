@@ -455,9 +455,9 @@ Now unblocked by the spike. Sketch: `POST /api/auth/become-host` sets `is_host=t
 
 Resolve spec Open Questions (#1 password model, #2 default mode) first. One account holds email+phone; login-by-either resolves to one row; new signups never create duplicate guest/host rows; retire synthetic phone-emails for new accounts. Feature-flag the new resolution; full auth regression + staging pass before prod.
 
-## PHASE 4 — Cleanup + legacy — *own detailed plan*
+## PHASE 4 — Cleanup + legacy — *FUTURE / OPTIONAL, deferred indefinitely*
 
-Full RLS/`role` audit (spec §4); migrate remaining consumers off `role`; drop `role` + the `sync_host_role` trigger. Optional opt-in "link accounts" flow for pre-existing duplicate humans (ownership-verified; never automatic).
+Drop the `role` shim + the `sync_host_role` trigger, and an optional opt-in "link accounts" flow for legacy duplicate humans. **Optional cleanup, not capability** — the shipped model (0–3) works without it; the `role` mirror can live on harmlessly forever. Full executable-cold write-up (audit checklist, drop migration, rollback, link-flow): [`2026-06-24-unified-identity-phase4-drop-role.md`](2026-06-24-unified-identity-phase4-drop-role.md).
 
 ---
 
