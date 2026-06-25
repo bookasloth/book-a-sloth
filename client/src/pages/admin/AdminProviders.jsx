@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { adminGetUsers, adminUpdateUser, adminGetUser } from '../../services/api';
+import { adminGetUsers, adminUpdateUser, adminGetUser, adminDeleteUser } from '../../services/api';
 import toast from 'react-hot-toast';
 import AdminEmptyState from '../../components/admin/AdminEmptyState';
 import SeoDrawer from '../../components/admin/SeoDrawer';
@@ -13,6 +13,135 @@ const STATUS_FILTER = {
   suspended: { label: 'Suspended', role: 'host', verified: null,  banned: true },
 };
 
+// Row-level actions collapsed into one "Manage" overflow menu. The menu is
+// fixed-positioned (anchored to the trigger via getBoundingClientRect) so it
+// escapes the table's overflow-x-auto / overflow-hidden clipping.
+const MENU_W = 168;
+const RowActions = ({ p, onEdit, onVerify, onBan, onSeo, onDelete }) => {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef(null);
+
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 4, left: Math.max(8, r.right - MENU_W) });
+    }
+    setOpen(o => !o);
+  };
+
+  // Close on scroll/resize — the fixed menu would otherwise detach from the row.
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => {
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
+  }, [open]);
+
+  const item = 'block w-full text-left px-3 py-2 text-[12px] hover:bg-gray-50';
+  return (
+    <>
+      <button ref={btnRef} type="button" onClick={toggle}
+        className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50">
+        Manage
+        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="fixed z-50 rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
+            style={{ top: pos.top, left: pos.left, width: MENU_W }}>
+            {p.username && (
+              <a href={`/${p.username}`} target="_blank" rel="noreferrer" className={`${item} text-gray-700`}>View profile</a>
+            )}
+            <button onClick={() => { setOpen(false); onEdit(p); }} className={`${item} text-gray-700`}>Edit</button>
+            <button onClick={() => { setOpen(false); onVerify(p); }} className={`${item} text-gray-700`}>
+              {p.is_verified ? 'Unverify' : 'Verify'}
+            </button>
+            <button onClick={() => { setOpen(false); onBan(p); }} className={`${item} text-amber-600`}>
+              {p.is_banned ? 'Unban' : 'Suspend'}
+            </button>
+            <button onClick={() => { setOpen(false); onSeo(p); }} className={`${item} text-gray-700`}>SEO</button>
+            <div className="my-1 border-t border-gray-100" />
+            <button onClick={() => { setOpen(false); onDelete(p); }} className={`${item} text-red-600`}>Delete</button>
+          </div>
+        </>
+      )}
+    </>
+  );
+};
+
+// Compact edit modal. Only the fields the server's updateUser whitelist accepts
+// (name / email / admin_notes). Role, verify, ban have their own menu actions.
+const ProviderEditModal = ({ entity, onClose, onSaved }) => {
+  const [form, setForm] = useState({
+    name: entity.name || '',
+    email: entity.email || '',
+    admin_notes: entity.admin_notes || '',
+  });
+  const [saving, setSaving] = useState(false);
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      await adminUpdateUser(entity.id, { name: form.name, email: form.email, admin_notes: form.admin_notes });
+      toast.success('Saved');
+      onSaved?.();
+      onClose();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Save failed');
+    } finally { setSaving(false); }
+  };
+
+  const input = 'mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#FE5100] focus:outline-none';
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <h2 className="text-base font-bold text-gray-900">Edit provider</h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100" aria-label="Close">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div className="space-y-4 px-5 py-5">
+          <label className="block">
+            <span className="text-[12px] font-semibold text-gray-700">Name</span>
+            <input value={form.name} onChange={set('name')} className={input} />
+          </label>
+          <label className="block">
+            <span className="text-[12px] font-semibold text-gray-700">Email</span>
+            <span className="block text-[11px] text-gray-400">Changing this updates their login email.</span>
+            <input value={form.email} onChange={set('email')} className={input} />
+          </label>
+          <label className="block">
+            <span className="text-[12px] font-semibold text-gray-700">Admin notes</span>
+            <span className="block text-[11px] text-gray-400">Internal only — never shown to the host.</span>
+            <textarea value={form.admin_notes} onChange={set('admin_notes')} rows={3} className={input} />
+          </label>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-gray-100 px-5 py-4">
+          <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100">Cancel</button>
+          <button onClick={submit} disabled={saving} className="rounded-lg bg-[#FE5100] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e04800] disabled:opacity-50">
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminProviders = () => {
   const { status = 'active' } = useParams();
   const [providers, setProviders] = useState([]);
@@ -20,6 +149,7 @@ const AdminProviders = () => {
   const [total, setTotal]         = useState(0);
   const [page, setPage]           = useState(1);
   const [seoEntity, setSeoEntity] = useState(null);
+  const [editEntity, setEditEntity] = useState(null);
 
   // List rows lack the SEO columns, so load the full profile before opening.
   const openSeo = async (p) => {
@@ -27,6 +157,14 @@ const AdminProviders = () => {
       const { data } = await adminGetUser(p.id);
       setSeoEntity(data.user);
     } catch { toast.error('Failed to load SEO'); }
+  };
+
+  // Edit opens the full profile (list rows omit admin_notes).
+  const openEdit = async (p) => {
+    try {
+      const { data } = await adminGetUser(p.id);
+      setEditEntity(data.user);
+    } catch { toast.error('Failed to load'); }
   };
 
   const fetchProviders = async () => {
@@ -60,6 +198,15 @@ const AdminProviders = () => {
     try {
       await adminUpdateUser(u.id, { is_banned: !u.is_banned });
       toast.success(u.is_banned ? 'Unbanned' : 'Suspended');
+      fetchProviders();
+    } catch { toast.error('Failed'); }
+  };
+
+  const handleDelete = async (u) => {
+    if (!window.confirm(`Permanently delete ${u.name}? This cannot be undone.`)) return;
+    try {
+      await adminDeleteUser(u.id);
+      toast.success('Deleted');
       fetchProviders();
     } catch { toast.error('Failed'); }
   };
@@ -128,17 +275,7 @@ const AdminProviders = () => {
                       {new Date(p.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => handleVerify(p)} className="text-[11px] text-[#FE5100] hover:underline">
-                          {p.is_verified ? 'Unverify' : 'Verify'}
-                        </button>
-                        <button onClick={() => handleBan(p)} className="text-[11px] text-amber-600 hover:underline">
-                          {p.is_banned ? 'Unban' : 'Suspend'}
-                        </button>
-                        <button onClick={() => openSeo(p)} className="text-[11px] text-[#FE5100] hover:underline">
-                          SEO
-                        </button>
-                      </div>
+                      <RowActions p={p} onEdit={openEdit} onVerify={handleVerify} onBan={handleBan} onSeo={openSeo} onDelete={handleDelete} />
                     </td>
                   </tr>
                 ))}
@@ -153,6 +290,14 @@ const AdminProviders = () => {
           kind="provider"
           entity={seoEntity}
           onClose={() => setSeoEntity(null)}
+        />
+      )}
+
+      {editEntity && (
+        <ProviderEditModal
+          entity={editEntity}
+          onClose={() => setEditEntity(null)}
+          onSaved={fetchProviders}
         />
       )}
     </div>

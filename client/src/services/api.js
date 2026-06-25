@@ -280,7 +280,7 @@ export const resendProductLink   = (data)     => API.post('/products/resend-link
 // ── Admin ─────────────────────────────────────────────────────
 export const adminGetStats       = ()          => API.get('/admin/stats');
 export const adminGetInsights    = ()          => API.get('/admin/insights/kpis');
-export const adminGetProviderPlanAnalytics = () => API.get('/admin/provider-plan-analytics');
+export const adminGetProviderPlanAnalytics = (params) => API.get('/admin/provider-plan-analytics', { params });
 export const adminGetUsers       = (params)    => API.get('/admin/users', { params });
 export const adminGetUser        = (id)        => API.get(`/admin/users/${id}`);
 export const adminUpdateUser     = (id, data)  => API.put(`/admin/users/${id}`, data);

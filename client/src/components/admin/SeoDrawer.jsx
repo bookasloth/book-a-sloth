@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { adminUpdateServiceSeo, adminUpdateProviderSeo, adminUploadImage } from '../../services/api';
 import { SITE_URL } from '../../utils/seo';
@@ -39,6 +39,14 @@ const SeoDrawer = ({ kind, entity, onClose, onSaved }) => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [busyIndex, setBusyIndex] = useState(false);
+
+  // Lock the page scroll while the drawer is mounted so only the panel scrolls.
+  // Without this the body and the panel both show a scrollbar (double bars).
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   const username = isService ? entity.profiles?.username : entity.username;
   const canonical = isService
