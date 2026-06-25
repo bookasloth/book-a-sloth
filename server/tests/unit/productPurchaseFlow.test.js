@@ -32,6 +32,7 @@ jest.mock('../../utils/trackServer', () => ({ trackServer: jest.fn() }));
 jest.mock('../../utils/background', () => ({ runInBackground: (label, fn) => { fn(); } }));
 jest.mock('../../utils/otpStore', () => ({ verify: jest.fn() }));
 jest.mock('../../utils/productEmail', () => ({ sendProductDownloadEmail: jest.fn() }));
+jest.mock('../../services/ledger/postingService', () => ({ postSafe: jest.fn() }));
 jest.mock('../../lib/subscriptionPricing', () => ({
   cadencePrice: jest.fn(), cadenceGross: jest.fn(), cadencePeriodDays: jest.fn(),
   computeSwitch: jest.fn(), normCadence: jest.fn(),
@@ -42,6 +43,7 @@ const otpStore = require('../../utils/otpStore');
 const razorpayConfig = require('../../services/razorpayConfig');
 const { verifySignature } = require('../../utils/razorpaySignature');
 const { sendProductDownloadEmail } = require('../../utils/productEmail');
+const { postSafe } = require('../../services/ledger/postingService');
 const { createProductOrder, verifyProductPayment } = require('../../controllers/paymentController');
 
 const res = () => {
@@ -134,7 +136,7 @@ describe('verifyProductPayment — trusts order notes', () => {
     buyer_email: 'buyer@x.com', buyer_name: 'Bee', buyer_phone: '+91',
   };
 
-  const wire = ({ notes = goodNotes, amount = 20900, existing = null } = {}) => {
+  const wire = ({ notes = goodNotes, amount = 20900, existing = null, fee = null, tax = 0 } = {}) => {
     let inserted;
     supabaseAdmin.from.mockImplementation((table) => {
       if (table === 'products') {
@@ -148,9 +150,11 @@ describe('verifyProductPayment — trusts order notes', () => {
       }
       throw new Error(`unexpected table ${table}`);
     });
-    razorpayConfig.getClient.mockResolvedValue({
-      orders: { fetch: jest.fn().mockResolvedValue({ id: 'order_1', amount, notes }) },
-    });
+    const client = { orders: { fetch: jest.fn().mockResolvedValue({ id: 'order_1', amount, notes }) } };
+    // Add payments.fetch only when a fee is supplied — otherwise materialize's
+    // best-effort fetch fails and records a 0 gateway fee (the default path).
+    if (fee != null) client.payments = { fetch: jest.fn().mockResolvedValue({ fee, tax }) };
+    razorpayConfig.getClient.mockResolvedValue(client);
     verifySignature.mockReturnValue(true);
     return () => inserted;
   };
@@ -211,5 +215,21 @@ describe('verifyProductPayment — trusts order notes', () => {
     const r = res();
     await verifyProductPayment({ body: reqBody }, r);
     expect(r.status).toHaveBeenCalledWith(400);
+  });
+
+  test('snapshots vendor-borne gateway fee and posts PRODUCT_PAYMENT to the ledger', async () => {
+    // Razorpay returns fee 1204 paise (incl 184 tax) = ₹12.04 gateway.
+    const getInserted = wire({ fee: 1204, tax: 184 });
+    const r = res();
+    await verifyProductPayment({ body: reqBody }, r);
+
+    const inserted = getInserted();
+    expect(inserted.razorpay_fee_actual).toBe(10.2);   // fee excl tax
+    expect(inserted.razorpay_tax_actual).toBe(1.84);
+    expect(inserted.customer_total).toBe(209);          // price 199 + fee 10
+    expect(inserted.vendor_amount).toBe(186.96);        // 199 − 12.04 (vendor bears gateway)
+    expect(postSafe).toHaveBeenCalledWith(expect.objectContaining({
+      sourceType: 'PRODUCT_PAYMENT', sourceId: 'pp1',
+    }));
   });
 });

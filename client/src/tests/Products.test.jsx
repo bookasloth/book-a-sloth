@@ -20,8 +20,12 @@ vi.mock('../services/api', () => ({
 
 vi.mock('../context/AuthContext', () => ({ useAuth: vi.fn() }));
 vi.mock('../components/common/BackButton', () => ({ default: () => <div>Back</div> }));
+// useFeature drives the admin kill-switch gate. Default ON; a test flips it OFF
+// to assert the kill-switch branch (distinct from the plan-tier gate).
+vi.mock('../context/FeatureContext', () => ({ useFeature: vi.fn(() => true) }));
 
 import { useAuth } from '../context/AuthContext';
+import { useFeature } from '../context/FeatureContext';
 import { uploadProductFile, getPublicPlans } from '../services/api';
 import Products from '../pages/Products';
 
@@ -31,6 +35,9 @@ import Products from '../pages/Products';
 // implementations intact, so no re-establishment is needed.
 beforeEach(() => {
   vi.clearAllMocks();
+  // Re-establish the default-ON kill switch so a prior test's OFF override
+  // (mockReturnValue) can't leak into the next test.
+  useFeature.mockReturnValue(true);
 });
 
 // jsdom has no URL.createObjectURL; the thumbnail-upload preview uses it.
@@ -154,5 +161,28 @@ describe('Products — plan-tier upgrade gate', () => {
     const cta = await screen.findByText(/upgrade to creator/i);
     expect(cta.textContent.trim()).toBe('Upgrade to Creator');
     expect(cta.textContent).not.toMatch(/₹|\/mo|\/month|999/);
+  });
+});
+
+// ── Admin kill-switch gate (digital_products feature OFF) ─────────────────────
+// When the global kill switch is off, products are unavailable to EVERY plan.
+// The gate must NOT show an "Upgrade to X" CTA — upgrading the plan can't unlock
+// a globally-disabled feature. It shows a neutral "temporarily unavailable"
+// notice instead. This is independent of, and takes precedence over, the
+// plan-tier gate.
+describe('Products — kill-switch gate (feature off)', () => {
+  test('a Professional (plan allows products) sees the unavailable notice, no upgrade CTA', async () => {
+    useFeature.mockReturnValue(false);
+    renderWithPlan('professional', PLANS_REAL);
+    expect(await screen.findByText(/temporarily unavailable/i)).toBeTruthy();
+    expect(screen.queryByText(/upgrade to/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /add product/i })).toBeNull();
+  });
+
+  test('kill switch wins over the plan gate — a 0-allowance plan still sees the notice, not "Upgrade to Creator"', async () => {
+    useFeature.mockReturnValue(false);
+    renderWithPlan('starter', PLANS_FREE_BLOCKED);
+    expect(await screen.findByText(/temporarily unavailable/i)).toBeTruthy();
+    expect(screen.queryByText(/upgrade to creator/i)).toBeNull();
   });
 });

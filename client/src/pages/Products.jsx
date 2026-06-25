@@ -266,20 +266,38 @@ const Products = () => {
         )}
       </div>
 
-      {/* Plan gate — shown only when the plan has no product allowance (or the
-          feature is switched off). Names the entry plan; price lives on the
-          Upgrade page so it never goes stale here. */}
+      {/* Gate — two distinct reasons, two distinct messages:
+          • kill switch OFF → products are globally unavailable; an upgrade can't
+            unlock them, so show a neutral notice with NO upgrade CTA.
+          • plan has no product allowance → show the upgrade CTA, naming the
+            cheapest higher tier (price lives on the Upgrade page, never here). */}
       {!canCreate && (
         <div className="fb-card p-6 mb-6 text-center border-2 border-dashed border-primary/30">
           <div className="text-3xl mb-3">📦</div>
-          <h3 className="font-semibold mb-1">Unlock Digital Products</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Sell PDFs, templates, ebooks, and resources directly from your
-            profile.
-          </p>
-          <Link to="/dashboard/upgrade" className="fb-btn fb-btn--primary">
-            {upgradePlan ? `Upgrade to ${upgradePlan.name}` : "Upgrade your plan"}
-          </Link>
+          {!digitalProductsOn ? (
+            <>
+              <h3 className="font-semibold mb-1">
+                Digital Products are temporarily unavailable
+              </h3>
+              <p className="text-sm text-gray-500">
+                This feature is switched off right now. It’ll be back soon — no
+                plan change needed.
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 className="font-semibold mb-1">Unlock Digital Products</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Sell PDFs, templates, ebooks, and resources directly from your
+                profile.
+              </p>
+              <Link to="/dashboard/upgrade" className="fb-btn fb-btn--primary">
+                {upgradePlan
+                  ? `Upgrade to ${upgradePlan.name}`
+                  : "Upgrade your plan"}
+              </Link>
+            </>
+          )}
         </div>
       )}
 

@@ -7,7 +7,7 @@
 'use strict';
 
 const { supabaseAdmin } = require('../../config/supabase');
-const { orderPaymentEntry, subscriptionPaymentEntry } = require('./journalTemplates');
+const { orderPaymentEntry, subscriptionPaymentEntry, productPaymentEntry } = require('./journalTemplates');
 const { postSafe } = require('./postingService');
 
 const SCAN_LIMIT = 200;
@@ -86,6 +86,43 @@ async function reconcile() {
     } catch (err) {
       console.error(`Reconciler skipped subscription ${s.id}:`, err.message);
     }
+  }
+
+  // ── Paid product purchases without a PRODUCT_PAYMENT entry ──
+  // Wrapped in its own try/catch so a pre-v3.37 DB (snapshot columns absent)
+  // can't abort the booking/subscription heal that already ran above.
+  try {
+    const { data: products, error: pErr } = await supabaseAdmin
+      .from('product_purchases')
+      .select('id, host_id, created_at, amount_paid, platform_fee, customer_total, vendor_amount, razorpay_fee_actual, razorpay_tax_actual')
+      .eq('payment_status', 'paid')
+      .gt('amount_paid', 0)            // free products move no money → no entry
+      .order('created_at', { ascending: false })
+      .limit(SCAN_LIMIT);
+    if (pErr) throw new Error(`reconciler product scan failed: ${pErr.message}`);
+
+    const missingProducts = await missingSourceIds('PRODUCT_PAYMENT', (products || []).map((p) => p.id));
+    for (const p of products || []) {
+      if (!missingProducts.has(p.id)) continue;
+      try {
+        const id = await postSafe({
+          sourceType: 'PRODUCT_PAYMENT',
+          sourceId: p.id,
+          journalDate: (p.created_at || '').slice(0, 10) || null,
+          template: productPaymentEntry({
+            purchase_id: p.id, host_id: p.host_id,
+            product_price: p.amount_paid, platform_fee: p.platform_fee,
+            customer_total: p.customer_total, vendor_amount: p.vendor_amount,
+            razorpay_fee_actual: p.razorpay_fee_actual, razorpay_tax_actual: p.razorpay_tax_actual,
+          }),
+        });
+        if (id) reposted += 1;
+      } catch (err) {
+        console.error(`Reconciler skipped product purchase ${p.id}:`, err.message);
+      }
+    }
+  } catch (err) {
+    console.error('Reconciler product scan skipped:', err.message);
   }
 
   return { reposted };
