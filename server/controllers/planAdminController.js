@@ -275,8 +275,8 @@ const publicPlans = async (req, res) => {
     const plans = await planService.loadPlans();
     res.json([...plans.values()].filter((p) => p.active !== false)
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-      .map(({ id, name, slug, annual_price, monthly_price, billing_cycle, commission_percentage, limits, features, integrations, support_type }) =>
-        ({ id, name, slug, annual_price, monthly_price: Number(monthly_price) || 0, billing_cycle, commission_percentage, limits, features, integrations, support_type })));
+      .map(({ id, name, slug, sort_order, annual_price, monthly_price, billing_cycle, commission_percentage, limits, features, integrations, support_type }) =>
+        ({ id, name, slug, sort_order, annual_price, monthly_price: Number(monthly_price) || 0, billing_cycle, commission_percentage, limits, features, integrations, support_type })));
   } catch (err) {
     safeError(res, err);
   }
