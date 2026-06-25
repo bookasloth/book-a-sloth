@@ -52,38 +52,38 @@ function razorpayInterval(cadence) {
   throw new Error(`unknown cadence: ${cadence}`);
 }
 
-// ─── UPI AutoPay mandate ceiling ──────────────────────────────────────────────
-// Razorpay rejects recurring mandates whose end_time exceeds ~2121-01-01
-// (max end_time = 4765046400 unix seconds). A subscription's mandate must cover
-// every scheduled cycle: end ≈ start + total_count × period. A naive "until
-// cancelled" count (annual × 100 ≈ 2126) overshoots the cap, so Razorpay refuses
-// the mandate at checkout: "end_time must be between 946684800 and 4765046400".
-const MANDATE_END_CEILING_UNIX = 4765046400;
-// Per-cycle length, deliberately OVER-estimated (31d month / 366d year) so the
-// computed cap can never sit above the real schedule.
-const CYCLE_SECONDS = { monthly: 31 * 86400, annual: 366 * 86400 };
-// "Effectively until cancelled" target counts (Razorpay requires a finite
-// total_count). subscriptionTotalCount clamps these down when they'd breach the cap.
+// ─── UPI AutoPay mandate duration cap ────────────────────────────────────────
+// A Razorpay subscription's UPI AutoPay mandate spans total_count × period and
+// must satisfy TWO independent limits:
+//   1. Razorpay subscription max ≈ 100 years (end_time ≤ 4765046400, ~2121),
+//      validated at subscriptions.create. A naive annual × 100 = ~2126 fails this.
+//   2. UPI AutoPay mandate validity ≈ 10 YEARS, enforced by the bank/NPCI at
+//      checkout (POST .../payments/create/ajax). THIS is the binding limit — even
+//      a 93-year annual mandate (which clears limit #1) is rejected here with a
+//      400 before any payment is created.
+// Capping the SPAN to 10 years satisfies both (10yr ≪ 2121) and matches the
+// monthly cadence, which already authorizes fine at 120 × 1mo = 10yr. The span is
+// start-independent (count × period), so the cap never drifts over time.
+const UPI_MANDATE_MAX_YEARS = 10;
+const CYCLES_PER_YEAR = { monthly: 12, annual: 1 };
+// "Effectively until cancelled" targets (Razorpay requires a finite total_count).
+// The UPI cap brings annual down to 10; monthly already sits at the 10yr cap.
 const DESIRED_TOTAL_COUNT = { monthly: 120, annual: 100 };
 
 /**
- * total_count for a Razorpay subscription, capped so the derived UPI AutoPay
- * mandate end (base + count × period) stays under MANDATE_END_CEILING_UNIX.
- * Without the cap, annual subscriptions overshoot the ~2121 ceiling and Razorpay
- * rejects the mandate at checkout.
+ * total_count for a Razorpay subscription, capped so the UPI AutoPay mandate
+ * spans at most UPI_MANDATE_MAX_YEARS (~10yr) — the validity limit the bank
+ * enforces at checkout. monthly → 120 (10yr, unchanged), annual → 10 (10yr).
  *
- * @param {string} cadence    'monthly' | 'annual' | 'yearly'
- * @param {number} baseUnix   subscription start in unix seconds (start_at, else now)
+ * @param {string} cadence  'monthly' | 'annual' | 'yearly'
  * @returns {number} total_count ≥ 1
  */
-function subscriptionTotalCount(cadence, baseUnix) {
+function subscriptionTotalCount(cadence) {
   const c = normCadence(cadence);
-  const cycle = CYCLE_SECONDS[c];
+  const cyclesPerYear = CYCLES_PER_YEAR[c];
   const desired = DESIRED_TOTAL_COUNT[c];
-  if (!cycle || !desired) throw new Error(`unknown cadence: ${cadence}`);
-  const base = Number.isFinite(Number(baseUnix)) ? Number(baseUnix) : Math.floor(Date.now() / 1000);
-  // −1 cycle of headroom keeps the mandate end safely below the hard ceiling.
-  const maxCycles = Math.floor((MANDATE_END_CEILING_UNIX - base) / cycle) - 1;
+  if (!cyclesPerYear || !desired) throw new Error(`unknown cadence: ${cadence}`);
+  const maxCycles = UPI_MANDATE_MAX_YEARS * cyclesPerYear; // monthly 120, annual 10
   return Math.max(1, Math.min(desired, maxCycles));
 }
 
@@ -175,7 +175,7 @@ module.exports = {
   exceedsAutoDebitThreshold,
   razorpayInterval,
   subscriptionTotalCount,
-  MANDATE_END_CEILING_UNIX,
+  UPI_MANDATE_MAX_YEARS,
   cadencePeriodDays,
   computeProrationCredit,
   computeSwitchCharge,
