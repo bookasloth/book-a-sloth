@@ -55,6 +55,9 @@ coverage/
 .temp/
 tmp/
 
+# Superpowers brainstorm artifacts — local only
+.superpowers/
+
 # Graphify — commit graph + report, skip local/machine-specific files
 graphify-out/cost.json
 graphify-out/cache/
