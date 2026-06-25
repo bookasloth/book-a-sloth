@@ -382,8 +382,9 @@ const getPublicServiceBySlug = async (req, res) => {
     // Fetch reviews for this service (via bookings)
     const { data: reviews } = await supabaseAdmin
       .from('reviews')
-      .select('id,rating,comment,created_at,profiles(name,profile_image)')
+      .select('id,rating,comment,created_at,profiles!reviews_reviewer_id_fkey(name,profile_image)')
       .eq('service_id', svc.id)
+      .eq('direction', 'guest_to_host')
       .order('created_at', { ascending: false })
       .limit(20);
 
@@ -444,7 +445,7 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
     ] = await Promise.all([
       supabaseAdmin.from('services').select('id', { count: 'exact', head: true }).eq('host_id', vendor.id).eq('is_active', true),
       supabaseAdmin.from('availability').select('*').eq('host_id', vendor.id).single(),
-      supabaseAdmin.from('reviews').select('id,rating,comment,created_at,profiles(name,profile_image)').eq('service_id', svc.id).order('created_at', { ascending: false }).limit(20),
+      supabaseAdmin.from('reviews').select('id,rating,comment,created_at,profiles!reviews_reviewer_id_fkey(name,profile_image)').eq('service_id', svc.id).eq('direction', 'guest_to_host').order('created_at', { ascending: false }).limit(20),
     ]);
 
     const reviewList = reviews || [];

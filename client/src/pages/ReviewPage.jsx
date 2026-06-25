@@ -34,6 +34,7 @@ export default function ReviewPage() {
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(null);
   const [existing, setExisting] = useState(null);
+  const [otherCompleted, setOtherCompleted] = useState(0);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,6 +51,9 @@ export default function ReviewPage() {
         if (!active) return;
         if (!b) { setError("We couldn't find this booking on your account."); return; }
         setBooking(b);
+        setOtherCompleted(
+          list.filter((x) => x.id !== bookingId && x.status === "completed").length
+        );
         if (b.status === "completed") {
           try {
             const { data: r } = await getBookingReview(bookingId);
@@ -125,6 +129,14 @@ export default function ReviewPage() {
             <Link to={`/${host.username}`} className="text-sm text-primary hover:underline">
               View {host.name || "host"}'s profile
             </Link>
+          )}
+          {otherCompleted > 0 && (
+            <p className="mt-4 border-t pt-4 text-sm text-gray-500">
+              You have {otherCompleted} other completed booking{otherCompleted > 1 ? "s" : ""} to review.{" "}
+              <Link to="/user/my-bookings" className="font-medium text-primary hover:underline">
+                Review another →
+              </Link>
+            </p>
           )}
         </div>
       </Shell>

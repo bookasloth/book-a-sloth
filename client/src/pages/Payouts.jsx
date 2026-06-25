@@ -138,6 +138,13 @@ const Payouts = () => {
         <StatCard label="Total Withdrawn" value={fmtMoney(balance?.paidOut, { decimals: true })} icon={Banknote} tone="info" />
       </div>
 
+      <p className="-mt-3 mb-6 text-xs text-gray-500">
+        Minimum withdrawal amount is <span className="font-semibold text-gray-700">₹100</span>.{" "}
+        {balance?.available != null && balance.available < 100
+          ? `${fmtMoney(100 - balance.available, { decimals: true })} more to unlock withdrawals.`
+          : "You can request a withdrawal once your available balance reaches it."}
+      </p>
+
       <Section title="Withdrawal History">
         <DataTable
           columns={HISTORY_COLUMNS}

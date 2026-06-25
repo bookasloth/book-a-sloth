@@ -27,11 +27,26 @@ export const Textarea = forwardRef(function Textarea({ className = '', invalid =
   );
 });
 
+// On-brand native <select>: orange chevron + accent instead of the OS default
+// (grey arrow / blue highlight). The dropdown popup is OS-rendered and only
+// partially stylable, but the control itself now reads on-theme.
+const SELECT_STYLE = {
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  MozAppearance: 'none',
+  accentColor: 'var(--primary)',
+  backgroundImage:
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23FE5100' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 0.7rem center',
+};
+
 export const Select = forwardRef(function Select({ className = '', invalid = false, children, ...props }, ref) {
   return (
     <select
       ref={ref}
-      className={cn(fieldBase, 'h-10 px-3 pr-8', invalid && 'border-red-400 focus:ring-red-200', className)}
+      style={SELECT_STYLE}
+      className={cn(fieldBase, 'h-10 cursor-pointer px-3 pr-8', invalid && 'border-red-400 focus:ring-red-200', className)}
       {...props}
     >
       {children}
