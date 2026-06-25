@@ -10,6 +10,7 @@ import HostRoute from './components/common/HostRoute';
 import GuestRoute from './components/common/GuestRoute';
 import AnalyticsBridge from './components/common/AnalyticsBridge';
 import ConsentBanner from './components/common/ConsentBanner';
+import { useAuth } from './context/AuthContext';
 
 // ── Route-level lazy loading ──────────────────────────────────────────────────
 // Layout / guard components stay eager (always needed, small).
@@ -164,6 +165,7 @@ function AdminWrapper({ children }) {
 
 function App() {
   const location = useLocation();
+  const { user } = useAuth();
   const hideNavbar =
     location.pathname.startsWith('/dashboard') ||
     location.pathname.startsWith('/admin') ||
@@ -172,7 +174,7 @@ function App() {
     location.pathname.startsWith('/lp') ||
     location.pathname === '/hello-sloth';
 
-  const hideFooter = hideNavbar; // footer follows the same public/app boundary as the navbar
+  const hideFooter = hideNavbar || !!user; // public/app boundary AND only when logged out
 
   return (
     <>
