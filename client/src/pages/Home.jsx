@@ -1942,9 +1942,11 @@ const Home = () => {
 
       {/* ════════════════ PRICING (legacy, hidden) ════════════════
          REMOVED from page (keep for later). Restore by deleting `{false && (`
-         and its matching `)}` after </section>. */}
+         and its matching `)}` after </section>. Its id is `pricing-legacy` so it
+         does not clash with the active section's `#pricing` — rename it back to
+         `pricing` if you restore this as the canonical pricing section. */}
       {false && (
-      <section id="pricing" className="px-5 py-20 sm:px-8 lg:py-28">
+      <section id="pricing-legacy" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl">
           <Reveal as="h2" className="text-center text-4xl text-ink sm:text-5xl">
             Calm plans, no contracts.
