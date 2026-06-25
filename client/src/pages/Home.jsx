@@ -498,26 +498,6 @@ const STEPS = [
   },
 ];
 
-/* Footer nav — every link resolves to a LIVE route, on-page anchor or mailto.
-   Disabled sections (#find / #manifesto / #newsletter) are excluded so there
-   are no dead anchors. Add columns/links here as pages ship. */
-const FOOTER_COLS = [
-  { h: "Product", links: [
-    { t: "How it works", href: "#how-it-works" },
-    { t: "Pricing", href: "#pricing" },
-    { t: "FAQ", href: "#faq" },
-    { t: "Be a Host", href: "/be-a-sloth" },
-  ]},
-  { h: "Company", links: [
-    { t: "About", href: "/about" },
-    { t: "Reviews", href: "#collective" },
-    { t: "Log in", href: "/login-as-vendor" },
-  ]},
-  { h: "Support", links: [
-    { t: "Help", href: "/help" },
-    { t: "Contact", href: "mailto:bolt@bookasloth.in" },
-  ]},
-];
 
 /* ── Stats strip — live launch numbers ── */
 const STATS = [
@@ -2240,76 +2220,6 @@ const Home = () => {
       </section>
       )}
 
-      {/* ════════════════ FOOTER (dark · Calendly-style layout) ════════════════ */}
-      <footer className="bg-ink px-5 pb-12 pt-16 text-white sm:px-8 lg:pt-20">
-        <div className="mx-auto max-w-6xl">
-          {/* CTA band — heading + actions */}
-          <div className="flex flex-col gap-8 pb-14 lg:flex-row lg:items-center lg:justify-between">
-            <h2 className="font-heading text-3xl font-bold leading-[1.05] tracking-tight text-white sm:text-4xl">
-              Power up your
-              <br />
-              bookings.
-            </h2>
-            <div className="flex flex-col gap-4 sm:items-end">
-              <p className="text-sm text-white/50">Get started in seconds — for free.</p>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  to={ROUTE_START}
-                  className="inline-flex items-center justify-center rounded-[5px] bg-white px-7 py-3 text-sm font-semibold text-ink transition-colors hover:bg-white/90 hover:no-underline"
-                >
-                  Let's Get Started
-                </Link>
-                <a
-                  href="#how-it-works"
-                  className="inline-flex items-center justify-center rounded-[5px] border border-white/25 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 hover:no-underline"
-                >
-                  See how it works
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Link columns */}
-          <div className="grid grid-cols-2 gap-8 border-t border-white/10 py-12 sm:grid-cols-3">
-            {FOOTER_COLS.map((col) => (
-              <div key={col.h}>
-                <p className="font-heading text-sm font-semibold text-white">{col.h}</p>
-                <ul className="mt-4 space-y-2.5">
-                  {col.links.map((l) => (
-                    <li key={l.t}>
-                      {l.href.startsWith("/") ? (
-                        <Link to={l.href} className="text-sm text-white/55 transition-colors hover:text-white hover:no-underline">
-                          {l.t}
-                        </Link>
-                      ) : (
-                        <a href={l.href} className="text-sm text-white/55 transition-colors hover:text-white hover:no-underline">
-                          {l.t}
-                        </a>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          {/* Bottom bar — wordmark · copyright · legal */}
-          <div className="flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <a href="#top" className="font-heading text-sm font-extrabold text-white/80 transition-colors hover:text-white hover:no-underline">
-                Book A Sloth
-              </a>
-              <span>© {new Date().getFullYear()} All rights reserved.</span>
-            </div>
-            <div className="flex flex-wrap gap-5">
-              <Link to="/terms" className="transition-colors hover:text-white hover:no-underline">Terms</Link>
-              <Link to="/privacy" className="transition-colors hover:text-white hover:no-underline">Privacy</Link>
-              <Link to="/refund" className="transition-colors hover:text-white hover:no-underline">Refund</Link>
-              <a href="mailto:bolt@bookasloth.in" className="transition-colors hover:text-white hover:no-underline">bolt@bookasloth.in</a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
