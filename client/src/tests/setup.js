@@ -21,6 +21,17 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+// Stub IntersectionObserver — jsdom lacks it; framer-motion `whileInView`
+// (used by the About page sections + Reveal) calls it on mount and crashes otherwise.
+global.IntersectionObserver = class {
+  constructor() {}
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() { return []; }
+};
+window.IntersectionObserver = global.IntersectionObserver;
+
 // Only stub clipboard — do NOT replace navigator entirely.
 // ReactDOM reads navigator.userAgent.indexOf() internally; wiping navigator crashes all suites.
 Object.defineProperty(window.navigator, 'clipboard', {
