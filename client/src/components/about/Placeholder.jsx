@@ -28,8 +28,8 @@ export default function Placeholder({ label = "", swap, shape = "tile", classNam
       className={`relative flex items-center justify-center overflow-hidden ${round} ${className}`}
       style={{ background: grad }}
     >
-      <span className="font-heading text-2xl font-extrabold text-ink/50">{initials}</span>
-      <span className="absolute bottom-1 right-2 text-[9px] font-semibold uppercase tracking-wide text-ink/30">
+      <span className="font-heading text-2xl font-extrabold text-ink/80">{initials}</span>
+      <span className="absolute bottom-1 right-2 text-[9px] font-semibold uppercase tracking-wide text-ink/55">
         placeholder
       </span>
     </div>

@@ -18,16 +18,13 @@ export default function FinalCta() {
         <Reveal as="p" delay={0.08} className="mt-4 text-lg text-ink/70">
           {finalCta.sub}
         </Reveal>
-        <Reveal delay={0.16} className="mt-8 flex flex-wrap justify-center gap-3">
+        <Reveal delay={0.16} className="mt-8 flex justify-center">
           <Link
             to={ROUTE_START}
             className="btn inline-flex items-center justify-center gap-1.5 bg-primary-cta px-7 py-3 text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark"
           >
             {finalCta.ctaPrimary}
             <ArrowRight size={16} />
-          </Link>
-          <Link to={ROUTE_START} className="btn btn--outline px-7 py-3">
-            {finalCta.ctaGhost}
           </Link>
         </Reveal>
       </div>

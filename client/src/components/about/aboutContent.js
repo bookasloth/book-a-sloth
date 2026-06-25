@@ -19,16 +19,6 @@ export const problem = {
   ],
 };
 
-export const story = {
-  heading: "From a weekend hack to your calmest booking tool.",
-  nodes: [
-    { title: "The idea", body: "We were tired of watching creators lose time and money to clunky tools.", swap: "story-origin" },
-    { title: "The prototype", body: "First booking link, built in a weekend." },
-    { title: "First host", body: "Someone got paid before the first message. It worked." },
-    { title: "Today", body: "Building the calmest way to run a booking business." },
-  ],
-};
-
 export const beliefs = {
   heading: "What we believe.",
   items: [
@@ -110,7 +100,6 @@ export const finalCta = {
   heading: "Your calmer booking business starts today.",
   sub: "Set up your page in minutes. Keep 100% of what you earn.",
   ctaPrimary: "Let's Get Started",
-  ctaGhost: "Become a host",
 };
 
 // Reused verbatim from homepage TESTIMONIALS (Home.jsx). Round-2: de-dup into a shared module.

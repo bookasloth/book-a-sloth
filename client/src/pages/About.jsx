@@ -1,7 +1,6 @@
 import Seo from "../components/common/Seo";
 import AboutHero from "../components/about/AboutHero";
 import ProblemSplit from "../components/about/ProblemSplit";
-import StoryTimeline from "../components/about/StoryTimeline";
 import BeliefGrid from "../components/about/BeliefGrid";
 import BehindProduct from "../components/about/BehindProduct";
 import StatStrip from "../components/about/StatStrip";
@@ -31,7 +30,6 @@ export default function About() {
       />
       <AboutHero />
       <ProblemSplit />
-      <StoryTimeline />
       <BeliefGrid />
       <BehindProduct />
       <StatStrip />
