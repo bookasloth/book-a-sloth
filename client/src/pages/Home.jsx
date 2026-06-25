@@ -928,12 +928,13 @@ const Home = () => {
       </section>
 
       {/* ════════════════ HERO — MOBILE ONLY (centered) ════════════════ */}
-      {/* Same left-column content as the sm+ hero, centered. Shares username/claim state. */}
-      <section className="relative px-5 pb-14 pt-8 sm:hidden">
+      {/* Same left-column content as the sm+ hero, centered. Full-viewport
+          height so the hero fills the first screen; content vertically centered. */}
+      <section className="relative flex min-h-screen flex-col justify-center px-5 pb-14 pt-8 sm:hidden">
         <div aria-hidden className="sloth-hero-aura" />
 
         <div className="relative z-10 mx-auto max-w-md text-center">
-          <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-bold leading-[1.1] tracking-[-0.02em] text-ink">
+          <Reveal as="h1" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-bold leading-[1.08] tracking-[-0.02em] text-ink">
             Get booked &amp; paid
             <br />
             <span className="font-normal italic text-primary">before the first</span>
@@ -1094,7 +1095,7 @@ const Home = () => {
                   tabIndex={0}
                   role="group"
                   aria-label={`${ind.name} — show popular professions`}
-                  className="group relative h-full min-h-[213px] overflow-hidden rounded-[6px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
+                  className="group relative h-full min-h-[233px] overflow-hidden rounded-[6px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
                 >
                   {/* Big line icon anchored to the top-left corner — card background */}
                   <ind.icon
@@ -1349,13 +1350,13 @@ const Home = () => {
               aria-hidden
               size={40}
               strokeWidth={2.25}
-              className="absolute left-1/3 top-[4.5rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/70 md:block"
+              className="absolute left-1/3 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/70 md:block"
             />
             <ArrowRight
               aria-hidden
               size={40}
               strokeWidth={2.25}
-              className="absolute left-2/3 top-[4.5rem] z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/70 md:block"
+              className="absolute left-2/3 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/70 md:block"
             />
 
             <div className="grid gap-12 md:grid-cols-3 md:gap-16">
