@@ -19,7 +19,7 @@ const COLUMNS = [
   { h: 'Support', links: [
     { t: 'Help', href: '/help' },
     { t: 'Contact', href: `mailto:${EMAIL}` },
-    { t: 'Support', href: '/support' },
+    { t: 'Get support', href: '/support' },
   ] },
 ];
 
@@ -100,10 +100,10 @@ export default function Footer() {
         </div>
 
         {/* Link columns */}
-        <div className="grid grid-cols-2 gap-8 border-t border-white/10 py-12 sm:grid-cols-3">
+        <nav aria-label="Footer" className="grid grid-cols-2 gap-8 border-t border-white/10 py-12 sm:grid-cols-3">
           {COLUMNS.map((col) => (
             <div key={col.h}>
-              <p className="font-heading text-sm font-semibold text-white">{col.h}</p>
+              <h3 className="font-heading text-sm font-semibold text-white">{col.h}</h3>
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((l) => (
                   <li key={l.t}>
@@ -115,7 +115,7 @@ export default function Footer() {
               </ul>
             </div>
           ))}
-        </div>
+        </nav>
 
         {/* Trust line */}
         <p className="border-t border-white/10 py-6 text-xs text-white/40">
