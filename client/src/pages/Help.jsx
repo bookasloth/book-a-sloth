@@ -10,9 +10,9 @@ import { MessageCircle, MessageSquare, Phone, Mail, Sparkles, Copy, Check } from
  */
 
 // TODO: move to admin-configurable support settings.
-const SUPPORT_WHATSAPP = "15559708785";
+const SUPPORT_WHATSAPP = "15559708785"; // WhatsApp deep-link only (number not shown)
 const SUPPORT_EMAIL = "bolt@bookasloth.in";
-const SUPPORT_PHONE = "+15559708785";
+const SUPPORT_PHONE = "+917904109359";
 
 const FAQ = [
   {

@@ -2126,6 +2126,24 @@ const Home = () => {
           <p className="mt-8 text-sm text-white/60">
             More comparisons coming. Want to see one?{" "}
             <a href="mailto:bolt@bookasloth.in?subject=Comparison%20request" className="font-semibold text-primary hover:no-underline">Tell us →</a>
+            <span className="mt-2 block text-xs text-white/40">
+              No mail app?{" "}
+              <button
+                type="button"
+                onClick={(e) => {
+                  navigator.clipboard?.writeText("bolt@bookasloth.in");
+                  const b = e.currentTarget;
+                  const prev = b.textContent;
+                  b.textContent = "Copied!";
+                  setTimeout(() => { b.textContent = prev; }, 1600);
+                }}
+                className="font-semibold text-white/70 underline underline-offset-2 hover:text-white"
+              >
+                Copy our email
+              </button>{" "}
+              or visit the{" "}
+              <Link to="/help" className="font-semibold text-white/70 underline underline-offset-2 hover:text-white">Help Center</Link>.
+            </span>
           </p>
         </Reveal>
       </section>

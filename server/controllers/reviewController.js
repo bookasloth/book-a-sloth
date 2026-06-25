@@ -20,7 +20,7 @@ const createReview = async (req, res) => {
 
     const { data: booking, error: bErr } = await supabaseAdmin
       .from("bookings")
-      .select("id, guest_id, host_id, status")
+      .select("id, guest_id, host_id, status, service_id")
       .eq("id", booking_id)
       .single();
 
@@ -57,6 +57,7 @@ const createReview = async (req, res) => {
         booking_id,
         reviewer_id: req.user.id,
         host_id: booking.host_id,   // always the booking's host (used by host-profile queries)
+        service_id: booking.service_id, // ties the review to the booked service (service-page rating)
         subject_id: subjectId,
         direction,
         rating,
