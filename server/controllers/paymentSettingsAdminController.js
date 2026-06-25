@@ -12,6 +12,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const razorpayConfig = require('../services/razorpayConfig');
 const razorpaySubscriptions = require('../services/razorpaySubscriptions');
+const subscriptionReconciler = require('../services/subscriptionReconciler');
 const { auditLog } = require('../utils/logger');
 
 const { KEYS } = razorpayConfig;
@@ -26,6 +27,7 @@ const upsertSetting = async (key, value) =>
 const getRazorpay = async (req, res) => {
   try {
     const cfg = await razorpayConfig.getConfig();
+    const reconciler = await subscriptionReconciler.getStatus().catch(() => null);
     res.json({
       key_id: cfg.keyId || '',
       key_secret_set: !!cfg.keySecret,
@@ -35,6 +37,8 @@ const getRazorpay = async (req, res) => {
       mode: cfg.mode || 'test',
       // The webhook URL the admin must paste into the Razorpay dashboard.
       webhook_url: `${process.env.API_URL || ''}/api/payment/webhook`,
+      // Subscription reconciler last-run summary (orphan cleanup activity).
+      reconciler,
     });
   } catch (err) {
     safeError(res, err);

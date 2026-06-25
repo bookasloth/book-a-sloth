@@ -25,10 +25,20 @@ const { supabaseAdmin } = require('../../config/supabase');
 const razorpaySubscriptions = require('../../services/razorpaySubscriptions');
 const subscriptionService = require('../../services/subscriptionService');
 
-// Wire profiles: the pending scan returns `rows`; capture every profiles.update.
-const wire = (rows) => {
+// Wire profiles (pending scan returns `rows`; captures profiles.update) and the
+// platform_settings status read/write the reconciler records at the end.
+const wire = (rows, { priorStatus = null } = {}) => {
   const updates = [];
+  updates.status = [];   // captured platform_settings status upserts (parsed)
   supabaseAdmin.from.mockImplementation((table) => {
+    if (table === 'platform_settings') {
+      const c = {};
+      c.select = jest.fn(() => c);
+      c.eq = jest.fn(() => c);
+      c.maybeSingle = jest.fn(() => Promise.resolve({ data: priorStatus ? { value: JSON.stringify(priorStatus) } : null, error: null }));
+      c.upsert = jest.fn((row) => { try { updates.status.push(JSON.parse(row.value)); } catch { /* ignore */ } return Promise.resolve({ error: null }); });
+      return c;
+    }
     if (table !== 'profiles') throw new Error(`unexpected table ${table}`);
     const c = {};
     c.select = jest.fn(() => c);
@@ -99,6 +109,21 @@ describe('subscriptionReconciler — orphan cleanup', () => {
 
     expect(updates).toHaveLength(0);
     expect(r).toEqual({ healed: 0, released: 0 });
+  });
+
+  test('records a status summary with the cumulative released total', async () => {
+    const updates = wire(
+      [{ id: 'v5', razorpay_subscription_id: 'sub_GONE', updated_at: iso(2 * HOUR) }],
+      { priorStatus: { released_total: 3, healed_total: 1 } },
+    );
+    razorpaySubscriptions.fetchSubscription.mockRejectedValue({ error: { description: 'The id provided does not exist' } });
+
+    const { reconcile } = require('../../services/subscriptionReconciler');
+    await reconcile();
+
+    expect(updates.status).toHaveLength(1);
+    expect(updates.status[0]).toMatchObject({ last_released: 1, released_total: 4, healed_total: 1 });
+    expect(updates.status[0].last_run_at).toBeTruthy();
   });
 
   test('active subscription still heals (existing behaviour intact)', async () => {

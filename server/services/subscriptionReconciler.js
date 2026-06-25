@@ -26,6 +26,10 @@ const subscriptionService = require('./subscriptionService');
 const PENDING_TTL_MIN = Number(process.env.SUBSCRIPTION_PENDING_TTL_MIN || 60);
 const PRE_AUTH_STATES = ['created', 'authenticated', 'pending'];
 
+// platform_settings row holding the last-run summary, surfaced read-only in
+// Admin → Settings → Payment so an operator can see orphan cleanup activity.
+const STATUS_KEY = 'subscription_reconciler_status';
+
 // Razorpay's "this id doesn't exist under this account" signal. Matched
 // conservatively so transient/auth/network errors never release a live mandate.
 const isNotFound = (e) => {
@@ -99,7 +103,47 @@ async function reconcile() {
       }
     }
   }
+
+  await recordStatus({ healed, released, scanned: (pending || []).length });
   return { healed, released };
 }
 
-module.exports = { reconcile };
+/**
+ * Persist a running summary (last run + cumulative totals) to platform_settings.
+ * Best-effort: a write failure never fails the reconcile pass.
+ */
+async function recordStatus({ healed, released, scanned }) {
+  try {
+    const { data } = await supabaseAdmin
+      .from('platform_settings').select('value').eq('key', STATUS_KEY).maybeSingle();
+    let prev = {};
+    if (data?.value) { try { prev = JSON.parse(data.value); } catch { prev = {}; } }
+    const now = new Date().toISOString();
+    const next = {
+      last_run_at: now,
+      last_scanned: scanned,
+      last_healed: healed,
+      last_released: released,
+      healed_total: (Number(prev.healed_total) || 0) + healed,
+      released_total: (Number(prev.released_total) || 0) + released,
+    };
+    await supabaseAdmin.from('platform_settings')
+      .upsert({ key: STATUS_KEY, value: JSON.stringify(next), updated_at: now }, { onConflict: 'key' });
+  } catch (e) {
+    console.error('subscription reconciler status write failed:', e.message);
+  }
+}
+
+/** Read the last-run summary for the admin payment settings panel (null if none). */
+async function getStatus() {
+  try {
+    const { data } = await supabaseAdmin
+      .from('platform_settings').select('value').eq('key', STATUS_KEY).maybeSingle();
+    if (!data?.value) return null;
+    return JSON.parse(data.value);
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { reconcile, getStatus };

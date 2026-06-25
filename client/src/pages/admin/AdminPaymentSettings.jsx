@@ -144,6 +144,35 @@ const AdminPaymentSettings = () => {
           </button>
         </div>
       </div>
+
+      {/* Subscription reconciler — read-only health, surfaces orphan cleanup */}
+      {cfg?.reconciler && (
+        <div className="bg-white border rounded-xl p-5 mt-6">
+          <h2 className="text-sm font-semibold mb-1">Subscription reconciler</h2>
+          <p className="text-xs text-gray-400 mb-3">
+            Heals pending subscriptions whose activation webhook was missed, and releases orphaned
+            mandates — ones that never authorized or pointed at a rotated key — so the vendor can retry.
+          </p>
+          <dl className="text-sm text-gray-700 grid grid-cols-2 gap-x-6 gap-y-2">
+            <div className="flex justify-between border-b border-gray-100 pb-1">
+              <dt className="text-gray-500">Orphans released (total)</dt>
+              <dd className="font-mono font-medium">{cfg.reconciler.released_total ?? 0}</dd>
+            </div>
+            <div className="flex justify-between border-b border-gray-100 pb-1">
+              <dt className="text-gray-500">Released last run</dt>
+              <dd className="font-mono font-medium">{cfg.reconciler.last_released ?? 0}</dd>
+            </div>
+            <div className="flex justify-between border-b border-gray-100 pb-1">
+              <dt className="text-gray-500">Pending healed (total)</dt>
+              <dd className="font-mono font-medium">{cfg.reconciler.healed_total ?? 0}</dd>
+            </div>
+            <div className="flex justify-between border-b border-gray-100 pb-1">
+              <dt className="text-gray-500">Last run</dt>
+              <dd>{cfg.reconciler.last_run_at ? new Date(cfg.reconciler.last_run_at).toLocaleString() : "—"}</dd>
+            </div>
+          </dl>
+        </div>
+      )}
     </div>
   );
 };
