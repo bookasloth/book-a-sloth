@@ -810,8 +810,9 @@ const Home = () => {
     <div id="top" className="overflow-x-clip bg-canvas text-ink">
       <BrandPreloader variant="homepage" ready={assetsReady} />
 
-      {/* ════════════════ HERO ════════════════ */}
-      <section ref={heroRef} className="relative px-5 pb-14 pt-8 sm:px-8 sm:pb-20 sm:pt-20 lg:pb-32 lg:pt-28">
+      {/* ════════════════ HERO — DESKTOP/TABLET (sm+) ════════════════ */}
+      {/* Mobile gets its own centered section below; this whole block is sm:block. */}
+      <section ref={heroRef} className="relative hidden px-5 pb-14 pt-8 sm:block sm:px-8 sm:pb-20 sm:pt-20 lg:pb-32 lg:pt-28">
         {/* Ambient warm aura — adds depth on the flat canvas without changing the palette */}
         <div aria-hidden className="sloth-hero-aura" />
 
@@ -885,7 +886,7 @@ const Home = () => {
             </Reveal>
           </div>
 
-          {/* RIGHT — hero photo hidden on phones (mobile shows the compact left column only) */}
+          {/* RIGHT — hero photo (sm+ only; mobile uses the dedicated centered section below) */}
           <Reveal delay={0.1} className="relative hidden sm:block">
             <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[6px] bg-sand shadow-[0_40px_90px_-25px_rgba(26,26,26,0.38)] ring-1 ring-black/5">
               <motion.img
@@ -922,6 +923,79 @@ const Home = () => {
               float="sloth-float--slow"
               className="hidden sm:flex bottom-8 sm:left-6"
             />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ════════════════ HERO — MOBILE ONLY (centered) ════════════════ */}
+      {/* Same left-column content as the sm+ hero, centered. Shares username/claim state. */}
+      <section className="relative px-5 pb-14 pt-8 sm:hidden">
+        <div aria-hidden className="sloth-hero-aura" />
+
+        <div className="relative z-10 mx-auto max-w-md text-center">
+          <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-bold leading-[1.1] tracking-[-0.02em] text-ink">
+            Get booked &amp; paid
+            <br />
+            <span className="font-normal italic text-primary">before the first</span>
+            <br />
+            message.
+          </Reveal>
+
+          <Reveal as="p" delay={0.12} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500">
+            Book A Sloth gives India's freelancers, tutors, coaches and studios
+            one calm link — for bookings, payments and reminders.
+          </Reveal>
+
+          {/* URL creator */}
+          <Reveal delay={0.18} className="mt-6">
+            <div className="mx-auto flex max-w-lg flex-col gap-2">
+              <div className="flex min-h-[3.5rem] flex-1 items-center min-w-0 rounded-[5px] border border-black/[0.07] bg-white px-5 shadow-sm">
+                <span className="select-none whitespace-nowrap text-sm font-medium text-neutral-400 shrink-0">
+                  bookasloth.com/
+                </span>
+                <input
+                  aria-label="Your SlothPage username"
+                  value={username}
+                  onChange={(e) =>
+                    setUsername(e.target.value.replace(/[^a-z0-9-]/gi, "").toLowerCase())
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && claim()}
+                  placeholder="yourname"
+                  className="!min-h-0 !w-auto flex-1 min-w-0 !border-0 !bg-transparent !p-0 py-3.5 text-sm font-medium text-ink placeholder:font-normal placeholder:text-neutral-400 !shadow-none focus:!ring-0"
+                />
+              </div>
+              <button
+                onClick={claim}
+                className="btn inline-flex min-h-[3.5rem] w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[5px] bg-primary-cta px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark"
+              >
+                Let's Get Started
+                <ArrowRight size={15} />
+              </button>
+            </div>
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-neutral-400">
+              <Check size={13} className="text-primary" />
+              Free forever · No card needed
+            </p>
+          </Reveal>
+
+          {/* Social proof */}
+          <Reveal delay={0.24} className="mt-7 flex items-center justify-center gap-4">
+            <div className="flex -space-x-3">
+              {HERO_FACES.map((f, i) => (
+                <HeroFace key={i} src={f} />
+              ))}
+            </div>
+            <div className="text-left">
+              <div className="flex items-center gap-1">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <Star key={i} size={13} className="fill-amber-400 text-amber-400" />
+                ))}
+                <span className="ml-1 text-sm font-semibold text-ink">5/5</span>
+              </div>
+              <p className="text-xs text-neutral-400">
+                Loved by India's first calm professionals.
+              </p>
+            </div>
           </Reveal>
         </div>
       </section>
