@@ -8,52 +8,29 @@ import {
   getBookedSlots,
 } from "../services/api";
 import toast from "react-hot-toast";
+import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import ReviewModal from "../components/booking/ReviewModal";
 import useFeatureFlags from "../hooks/useFeatureFlags";
 import StatusChip from "../components/common/StatusChip";
+import {
+  PageHeader, Card, Button, SearchInput, FilterBar,
+  StatusBadge, Modal, SkeletonCard, cn,
+} from "../components/dashboard/ui";
 
-const PAY_COLORS = {
-  paid: "bg-emerald-100 text-emerald-700",
-  unpaid: "bg-gray-100 text-gray-500",
-  refunded: "bg-orange-100 text-orange-600",
-};
-
-const fmt = (iso, tz) =>
-  new Date(iso).toLocaleString("en-IN", {
-    timeZone: tz || "Asia/Kolkata",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 const fmtDate = (iso) =>
-  new Date(iso).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 const fmtTime = (iso) =>
-  new Date(iso).toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
+const Row = ({ label, value, mono }) => (
+  <div className="flex items-start justify-between gap-4">
+    <span className="flex-shrink-0 text-xs text-gray-500">{label}</span>
+    <span className={cn("text-right text-xs font-medium text-gray-800", mono && "font-mono")}>{value}</span>
+  </div>
+);
 
 // ------ RESCHEDULE MODAL ------
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const DS = ["S", "M", "T", "W", "T", "F", "S"];
 
 const RescheduleModal = ({ booking, onClose, onDone }) => {
@@ -64,7 +41,6 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
   const [selDate, setSelDate] = useState(null);
   const [selTime, setSelTime] = useState("");
   const [saving, setSaving] = useState(false);
-  // BUG-14 fixed: fetch availability so only valid slots are shown
   const [avail, setAvail] = useState(null);
   const [bookedSlots, setBookedSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -88,7 +64,7 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
 
   const getAvailSlots = () => {
     if (!selDate || !avail?.weekly_schedule) return [];
-    const dayName = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][selDate.getDay()];
+    const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][selDate.getDay()];
     const daySlots = avail.weekly_schedule[dayName] || [];
     const bufferMin = avail.buffer_minutes || 0;
     const stepMin = svcDuration + bufferMin;
@@ -105,7 +81,7 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
       while (cur + svcDuration <= endMin) {
         if (!isToday || cur >= nowMin) {
           const h = Math.floor(cur / 60), m = cur % 60;
-          const tStr = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+          const tStr = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
           const sStart = new Date(selDate.getFullYear(), selDate.getMonth(), selDate.getDate(), h, m);
           const sEnd = new Date(sStart.getTime() + svcDuration * 60000);
           const blocked = bookedSlots.some((b) => {
@@ -131,7 +107,7 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
     const date = new Date(calYear, calMonth, d);
     if (date < today) return false;
     if (!avail?.weekly_schedule) return true;
-    const name = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][date.getDay()];
+    const name = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
     return (avail.weekly_schedule[name] || []).length > 0;
   };
 
@@ -158,84 +134,69 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
   const formatSlot = (t) => {
     const [h, m] = t.split(":").map(Number);
     const ampm = h >= 12 ? "PM" : "AM", hr = h % 12 || 12;
-    return `${hr}:${String(m).padStart(2,"0")} ${ampm}`;
+    return `${hr}:${String(m).padStart(2, "0")} ${ampm}`;
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="font-semibold text-sm">Reschedule Booking</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="p-5">
-          <p className="text-xs text-gray-400 mb-4">{booking.services?.title} &bull; {booking.guest_name}</p>
+    <Modal open onClose={onClose} title="Reschedule Booking" size="sm">
+      <p className="mb-4 text-xs text-gray-400">{booking.services?.title} &bull; {booking.guest_name}</p>
 
-          {/* Calendar */}
-          <div className="flex items-center justify-between mb-3">
-            <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); } else setCalMonth(m => m - 1); }} className="p-1.5 hover:bg-gray-100 rounded-lg">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+      {/* Calendar */}
+      <div className="mb-3 flex items-center justify-between">
+        <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); } else setCalMonth(m => m - 1); }} className="rounded-lg p-1.5 hover:bg-gray-100">
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <span className="text-sm font-semibold">{MONTHS[calMonth]} {calYear}</span>
+        <button onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); } else setCalMonth(m => m + 1); }} className="rounded-lg p-1.5 hover:bg-gray-100">
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="mb-1 grid grid-cols-7 text-center text-[10px] font-medium text-gray-400">
+        {DS.map((d, i) => <div key={i}>{d}</div>)}
+      </div>
+      <div className="mb-4 grid grid-cols-7 gap-0.5 text-center">
+        {cells.map((day, i) => {
+          if (!day) return <div key={"e" + i} />;
+          const ok = isDateSelectable(day);
+          return (
+            <button key={day} disabled={!ok}
+              onClick={() => { if (ok) { setSelDate(new Date(calYear, calMonth, day)); setSelTime(""); } }}
+              className={cn("rounded-lg py-1.5 text-xs transition-colors", isSel(day) ? "bg-primary font-semibold text-white" : !ok ? "cursor-default text-gray-300" : "hover:bg-gray-100")}>
+              {day}
             </button>
-            <span className="text-sm font-semibold">{MONTHS[calMonth]} {calYear}</span>
-            <button onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); } else setCalMonth(m => m + 1); }} className="p-1.5 hover:bg-gray-100 rounded-lg">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </div>
-          <div className="grid grid-cols-7 text-center text-[10px] font-medium text-gray-400 mb-1">
-            {DS.map((d, i) => <div key={i}>{d}</div>)}
-          </div>
-          <div className="grid grid-cols-7 gap-0.5 text-center mb-4">
-            {cells.map((day, i) => {
-              if (!day) return <div key={"e" + i} />;
-              const ok = isDateSelectable(day);
-              return (
-                <button key={day} disabled={!ok}
-                  onClick={() => { if (ok) { setSelDate(new Date(calYear, calMonth, day)); setSelTime(""); } }}
-                  className={`py-1.5 rounded-lg text-xs transition-colors ${isSel(day) ? "bg-primary text-white font-semibold" : !ok ? "text-gray-300 cursor-default" : "hover:bg-gray-100"}`}>
-                  {day}
+          );
+        })}
+      </div>
+
+      {/* Time slots from availability */}
+      {selDate && (
+        <div className="mb-4">
+          <p className="mb-2 text-xs font-medium text-gray-500">
+            Available times
+            {avail?.timezone ? <span className="ml-1 text-gray-400">({avail.timezone.split("/")[1] || avail.timezone})</span> : ""}
+          </p>
+          {loadingSlots ? (
+            <p className="py-2 text-xs text-gray-400">Loading slots…</p>
+          ) : slots.length === 0 ? (
+            <p className="py-2 text-xs text-gray-400">No available slots for this date.</p>
+          ) : (
+            <div className="grid max-h-40 grid-cols-3 gap-1.5 overflow-y-auto pr-1">
+              {slots.map((t) => (
+                <button key={t} onClick={() => setSelTime(t)}
+                  className={cn("rounded-lg border py-2 text-xs font-medium transition-colors", selTime === t ? "border-primary bg-primary text-white" : "hover:border-gray-400")}>
+                  {formatSlot(t)}
                 </button>
-              );
-            })}
-          </div>
-
-          {/* Time slots from availability */}
-          {selDate && (
-            <div className="mb-4">
-              <p className="text-xs font-medium text-gray-500 mb-2">
-                Available times
-                {avail?.timezone ? <span className="ml-1 text-gray-400">({avail.timezone.split("/")[1] || avail.timezone})</span> : ""}
-              </p>
-              {loadingSlots ? (
-                <p className="text-xs text-gray-400 py-2">Loading slots…</p>
-              ) : slots.length === 0 ? (
-                <p className="text-xs text-gray-400 py-2">No available slots for this date.</p>
-              ) : (
-                <div className="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto pr-1">
-                  {slots.map((t) => (
-                    <button key={t} onClick={() => setSelTime(t)}
-                      className={`py-2 rounded-lg text-xs font-medium border transition-colors ${selTime === t ? "bg-primary text-white border-primary" : "hover:border-gray-400"}`}>
-                      {formatSlot(t)}
-                    </button>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
           )}
-
-          <div className="flex gap-2">
-            <button onClick={onClose} className="btn btn--outline flex-1 py-2.5 text-sm text-gray-500">Cancel</button>
-            <button onClick={save} disabled={saving || !selDate || !selTime}
-              className="btn flex-1 bg-primary text-white py-2.5 text-sm font-semibold disabled:opacity-40">
-              {saving ? "Saving…" : "Confirm"}
-            </button>
-          </div>
         </div>
+      )}
+
+      <div className="flex gap-2">
+        <Button variant="outline" full onClick={onClose}>Cancel</Button>
+        <Button full onClick={save} disabled={saving || !selDate || !selTime}>{saving ? "Saving…" : "Confirm"}</Button>
       </div>
-    </div>
+    </Modal>
   );
 };
 
@@ -269,20 +230,14 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
   };
 
   const dt = new Date(booking.scheduled_at);
-  const endDt = new Date(
-    dt.getTime() + (booking.services?.duration || 30) * 60000,
-  );
+  const endDt = new Date(dt.getTime() + (booking.services?.duration || 30) * 60000);
 
   if (showReschedule)
     return (
       <RescheduleModal
         booking={booking}
         onClose={() => setShowReschedule(false)}
-        onDone={() => {
-          setShowReschedule(false);
-          onAction();
-          onClose();
-        }}
+        onDone={() => { setShowReschedule(false); onAction(); onClose(); }}
       />
     );
 
@@ -298,254 +253,109 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
     );
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-white flex items-center justify-between px-5 py-4 border-b z-10">
-          <div>
-            <h3 className="font-bold text-base">Booking Details</h3>
-            <p className="text-xs text-gray-400 font-mono">
-              #{booking.id.slice(0, 8).toUpperCase()}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <StatusChip status={booking.status} />
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 ml-1"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+    <Modal open onClose={onClose} title="Booking Details" size="lg">
+      <div className="space-y-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-mono text-xs text-gray-400">#{booking.id.slice(0, 8).toUpperCase()}</p>
+          <StatusChip status={booking.status} />
         </div>
 
-        <div className="p-5 space-y-5">
-          {/* Service */}
-          <section>
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              Service
-            </h4>
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-              <Row label="Service" value={booking.services?.title || "N/A"} />
-              <Row
-                label="Duration"
-                value={(booking.services?.duration || 30) + " min"}
-              />
-              <Row
-                label="Price"
-                value={
-                  booking.services?.price === 0
-                    ? "Free"
-                    : `Rs.${booking.services?.price}`
-                }
-              />
-              <Row
-                label="Mode"
-                value={
-                  booking.services?.meeting_mode === "offline"
-                    ? "In-person"
-                    : "Online"
-                }
-              />
-            </div>
-          </section>
+        {/* Service */}
+        <section>
+          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Service</h4>
+          <div className="space-y-2 rounded-xl bg-gray-50 p-4">
+            <Row label="Service" value={booking.services?.title || "N/A"} />
+            <Row label="Duration" value={(booking.services?.duration || 30) + " min"} />
+            <Row label="Price" value={booking.services?.price === 0 ? "Free" : `₹${booking.services?.price}`} />
+            <Row label="Mode" value={booking.services?.meeting_mode === "offline" ? "In-person" : "Online"} />
+          </div>
+        </section>
 
-          {/* Booking Date & Time */}
-          <section>
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              Booking Date & Time
-            </h4>
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-              <Row label="Date" value={fmtDate(booking.scheduled_at)} />
-              <Row
-                label="Time Slot"
-                value={fmtTime(dt) + " - " + fmtTime(endDt)}
-              />
-              <Row label="Booked on" value={fmtDate(booking.created_at)} />
-              {booking.notes && <Row label="Notes" value={booking.notes} />}
-            </div>
-          </section>
+        {/* Booking Date & Time */}
+        <section>
+          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Booking Date & Time</h4>
+          <div className="space-y-2 rounded-xl bg-gray-50 p-4">
+            <Row label="Date" value={fmtDate(booking.scheduled_at)} />
+            <Row label="Time Slot" value={fmtTime(dt) + " - " + fmtTime(endDt)} />
+            <Row label="Booked on" value={fmtDate(booking.created_at)} />
+            {booking.notes && <Row label="Notes" value={booking.notes} />}
+          </div>
+        </section>
 
-          {/* Customer */}
-          <section>
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              Customer Details
-            </h4>
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-              <Row label="Name" value={booking.guest_name || "Guest"} />
-              <Row label="Email" value={booking.guest_email || "-"} />
-              <Row label="Phone" value={booking.guest_phone || "-"} />
-            </div>
-          </section>
+        {/* Customer */}
+        <section>
+          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Customer Details</h4>
+          <div className="space-y-2 rounded-xl bg-gray-50 p-4">
+            <Row label="Name" value={booking.guest_name || "Guest"} />
+            <Row label="Email" value={booking.guest_email || "-"} />
+            <Row label="Phone" value={booking.guest_phone || "-"} />
+          </div>
+        </section>
 
-          {/* Payment */}
-          <section>
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              Payment Details
-            </h4>
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+        {/* Payment */}
+        <section>
+          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Payment Details</h4>
+          <div className="space-y-2 rounded-xl bg-gray-50 p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">Payment Status</span>
+              <StatusBadge status={booking.payment_status} />
+            </div>
+            <Row label="Total Amount" value={booking.services?.price === 0 ? "Free" : `₹${booking.services?.price}`} />
+            {booking.vendor_amount != null && <Row label="Your Earnings" value={`₹${booking.vendor_amount}`} />}
+            {booking.platform_fee_amount != null && <Row label="Platform Fee" value={`₹${booking.platform_fee_amount}`} />}
+            {booking.razorpay_order_id && <Row label="Order Ref" value={booking.razorpay_order_id} mono />}
+            {booking.razorpay_payment_id && <Row label="Payment Ref" value={booking.razorpay_payment_id} mono />}
+            {booking.meeting_link && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Payment Status</span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${PAY_COLORS[booking.payment_status]}`}
-                >
-                  {booking.payment_status}
-                </span>
-              </div>
-              <Row
-                label="Total Amount"
-                value={
-                  booking.services?.price === 0
-                    ? "Free"
-                    : `Rs.${booking.services?.price}`
-                }
-              />
-              {booking.vendor_amount != null && (
-                <Row
-                  label="Your Earnings"
-                  value={`Rs.${booking.vendor_amount}`}
-                />
-              )}
-              {booking.platform_fee_amount != null && (
-                <Row
-                  label="Platform Fee"
-                  value={`Rs.${booking.platform_fee_amount}`}
-                />
-              )}
-              {booking.razorpay_order_id && (
-                <Row label="Order Ref" value={booking.razorpay_order_id} mono />
-              )}
-              {booking.razorpay_payment_id && (
-                <Row
-                  label="Payment Ref"
-                  value={booking.razorpay_payment_id}
-                  mono
-                />
-              )}
-              {booking.meeting_link && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Meet Link</span>
-                  <a
-                    href={booking.meeting_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Join
-                  </a>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* Reschedule status */}
-          {booking.reschedule_status &&
-            booking.reschedule_status !== "none" && (
-              <div
-                className={`px-4 py-3 rounded-xl text-xs font-medium ${booking.reschedule_status === "acknowledged" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}
-              >
-                {booking.reschedule_status === "awaiting_guest_ack"
-                  ? "Awaiting guest acknowledgement of reschedule"
-                  : "Guest acknowledged the new time"}
+                <span className="text-xs text-gray-500">Meet Link</span>
+                <a href={booking.meeting_link} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">Join</a>
               </div>
             )}
+          </div>
+        </section>
 
-          {/* Actions */}
-          {confirming ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <p className="text-sm text-red-700 mb-3 font-medium">
-                {confirming === "cancel"
-                  ? "Cancel this booking? The guest will be notified."
-                  : "Mark as completed?"}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setConfirming(null)}
-                  className="btn btn--outline flex-1 py-2 text-sm text-gray-500"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={() => doAction(confirming)}
-                  disabled={busy}
-                  className={`btn flex-1 py-2 text-sm font-semibold text-white disabled:opacity-50 ${confirming === "cancel" ? "bg-red-500" : "bg-primary"}`}
-                >
-                  {busy ? "..." : `Yes, ${confirming}`}
-                </button>
-              </div>
+        {/* Reschedule status */}
+        {booking.reschedule_status && booking.reschedule_status !== "none" && (
+          <div className={cn("rounded-xl px-4 py-3 text-xs font-medium", booking.reschedule_status === "acknowledged" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700")}>
+            {booking.reschedule_status === "awaiting_guest_ack"
+              ? "Awaiting guest acknowledgement of reschedule"
+              : "Guest acknowledged the new time"}
+          </div>
+        )}
+
+        {/* Actions */}
+        {confirming ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="mb-3 text-sm font-medium text-red-700">
+              {confirming === "cancel" ? "Cancel this booking? The guest will be notified." : "Mark as completed?"}
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" full onClick={() => setConfirming(null)}>Back</Button>
+              <Button full variant={confirming === "cancel" ? "danger" : "primary"} onClick={() => doAction(confirming)} disabled={busy}>
+                {busy ? "..." : `Yes, ${confirming}`}
+              </Button>
             </div>
-          ) : (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {booking.status === "confirmed" &&
-                new Date(booking.scheduled_at) > new Date() && (
-                  <button
-                    onClick={() => setShowReschedule(true)}
-                    className="btn btn--outline flex-1 min-w-[120px] text-primary py-2 text-sm font-medium hover:bg-primary/5"
-                  >
-                    Reschedule
-                  </button>
-                )}
-              {booking.status === "confirmed" &&
-                new Date(booking.scheduled_at) <= new Date() && (
-                  <button
-                    onClick={() => setConfirming("complete")}
-                    className="btn flex-1 min-w-[120px] bg-primary text-white py-2 text-sm font-medium"
-                  >
-                    Mark Completed
-                  </button>
-                )}
-              {booking.status !== "cancelled" &&
-                booking.status !== "completed" && (
-                  <button
-                    onClick={() => setConfirming("cancel")}
-                    className="btn btn--outline flex-1 min-w-[120px] text-red-500 py-2 text-sm font-medium hover:bg-red-50"
-                  >
-                    Cancel Booking
-                  </button>
-                )}
-              {booking.status === "completed" && on("review_submission") && booking.guest_id && (
-                <button
-                  onClick={() => setShowReview(true)}
-                  className="btn flex-1 min-w-[120px] bg-primary text-white py-2 text-sm font-medium"
-                >
-                  Review Guest
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {booking.status === "confirmed" && new Date(booking.scheduled_at) > new Date() && (
+              <Button variant="outline" className="min-w-[120px] flex-1 text-primary" onClick={() => setShowReschedule(true)}>Reschedule</Button>
+            )}
+            {booking.status === "confirmed" && new Date(booking.scheduled_at) <= new Date() && (
+              <Button className="min-w-[120px] flex-1" onClick={() => setConfirming("complete")}>Mark Completed</Button>
+            )}
+            {booking.status !== "cancelled" && booking.status !== "completed" && (
+              <Button variant="danger-outline" className="min-w-[120px] flex-1" onClick={() => setConfirming("cancel")}>Cancel Booking</Button>
+            )}
+            {booking.status === "completed" && on("review_submission") && booking.guest_id && (
+              <Button className="min-w-[120px] flex-1" onClick={() => setShowReview(true)}>Review Guest</Button>
+            )}
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };
-
-const Row = ({ label, value, mono }) => (
-  <div className="flex items-start justify-between gap-4">
-    <span className="text-xs text-gray-500 flex-shrink-0">{label}</span>
-    <span
-      className={`text-xs text-gray-800 font-medium text-right ${mono ? "font-mono" : ""}`}
-    >
-      {value}
-    </span>
-  </div>
-);
 
 // ------ MAIN BOOKINGS PAGE ------
 const PAGE_SIZE = 10;
@@ -569,22 +379,15 @@ const Bookings = () => {
     }
   };
 
-  useEffect(() => {
-    fetch();
-  }, []);
+  useEffect(() => { fetch(); }, []);
 
-  // BUG-19 fixed: `now` is recalculated inside useMemo so past/upcoming is always current
   const filtered = useMemo(() => {
     const now = new Date();
     let list = bookings;
     if (filter === "upcoming")
-      list = list.filter(
-        (b) => b.status !== "cancelled" && new Date(b.scheduled_at) > now,
-      );
+      list = list.filter((b) => b.status !== "cancelled" && new Date(b.scheduled_at) > now);
     else if (filter === "past")
-      list = list.filter(
-        (b) => b.status !== "cancelled" && new Date(b.scheduled_at) <= now,
-      );
+      list = list.filter((b) => b.status !== "cancelled" && new Date(b.scheduled_at) <= now);
     else if (filter === "cancelled")
       list = list.filter((b) => b.status === "cancelled");
     if (search) {
@@ -603,7 +406,6 @@ const Bookings = () => {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // BUG-19: recalculate now for counts too
   const counts = (() => {
     const now = new Date();
     return {
@@ -614,163 +416,91 @@ const Bookings = () => {
     };
   })();
 
-  if (loading)
-    return <div className="text-center py-16 text-gray-400">Loading...</div>;
+  if (loading) {
+    return (
+      <div>
+        <PageHeader title="Bookings" subtitle="Manage your appointments." />
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full max-w-6xl">
-      {selected && (
-        <DetailsModal
-          booking={selected}
-          onClose={() => setSelected(null)}
-          onAction={fetch}
-        />
-      )}
+    <div>
+      {selected && <DetailsModal booking={selected} onClose={() => setSelected(null)} onAction={fetch} />}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Bookings</h1>
-          <p className="text-sm text-gray-400">
-            {bookings.length} total bookings
-          </p>
-        </div>
-        <input
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          placeholder="Search customer, service..."
-          className="fb-input sm:w-64"
-        />
-      </div>
+      <PageHeader
+        title="Bookings"
+        subtitle={`${bookings.length} total bookings`}
+        actions={
+          <SearchInput
+            value={search}
+            onChange={(v) => { setSearch(v); setPage(1); }}
+            placeholder="Search customer, service…"
+            className="sm:w-64"
+          />
+        }
+      />
 
       {/* Filter tabs */}
-      <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
+      <FilterBar className="mb-5 flex-nowrap overflow-x-auto pb-1">
         {["all", "upcoming", "past", "cancelled"].map((f) => (
           <button
             key={f}
-            onClick={() => {
-              setFilter(f);
-              setPage(1);
-            }}
-            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${filter === f ? "bg-gray-900 text-white" : "bg-white border text-gray-500 hover:bg-gray-50"}`}
+            onClick={() => { setFilter(f); setPage(1); }}
+            className={cn(
+              "whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors",
+              filter === f ? "bg-gray-900 text-white" : "border bg-white text-gray-500 hover:bg-gray-50",
+            )}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)} ({counts[f]})
           </button>
         ))}
-      </div>
+      </FilterBar>
 
       {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+      <Card padded={false} className="overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm fb-table">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+              <tr className="border-b bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                 <th className="px-4 py-3 text-left font-semibold">Booking</th>
                 <th className="px-4 py-3 text-left font-semibold">Customer</th>
-                <th className="px-4 py-3 text-left font-semibold hidden md:table-cell">
-                  Phone
-                </th>
-                <th className="px-4 py-3 text-left font-semibold hidden sm:table-cell">
-                  Service
-                </th>
+                <th className="hidden px-4 py-3 text-left font-semibold md:table-cell">Phone</th>
+                <th className="hidden px-4 py-3 text-left font-semibold sm:table-cell">Service</th>
                 <th className="px-4 py-3 text-left font-semibold">Status</th>
-                <th className="px-4 py-3 text-left font-semibold hidden md:table-cell">
-                  Payment
-                </th>
+                <th className="hidden px-4 py-3 text-left font-semibold md:table-cell">Payment</th>
                 <th className="px-4 py-3 text-center font-semibold">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {paged.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="py-12 text-center text-gray-400 text-sm"
-                  >
-                    No bookings found.
-                  </td>
-                </tr>
+                <tr><td colSpan={7} className="py-12 text-center text-sm text-gray-400">No bookings found.</td></tr>
               ) : (
                 paged.map((b) => (
-                  <tr key={b.id} className="hover:bg-gray-50 transition-colors">
-                    <td data-label="Booking" className="px-4 py-3">
-                      <p className="font-mono text-xs text-gray-400">
-                        #{b.id.slice(0, 8).toUpperCase()}
-                      </p>
-                      <p className="text-xs text-gray-600 mt-0.5">
-                        {fmtDate(b.scheduled_at)}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {fmtTime(new Date(b.scheduled_at))}
-                      </p>
+                  <tr key={b.id} className="transition-colors hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <p className="font-mono text-xs text-gray-400">#{b.id.slice(0, 8).toUpperCase()}</p>
+                      <p className="mt-0.5 text-xs text-gray-600">{fmtDate(b.scheduled_at)}</p>
+                      <p className="text-xs text-gray-400">{fmtTime(new Date(b.scheduled_at))}</p>
                     </td>
-                    <td data-label="Customer" className="px-4 py-3">
-                      <p className="font-medium text-gray-800">
-                        {b.guest_name || "Guest"}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate max-w-[160px]">
-                        {b.guest_email || "-"}
-                      </p>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-800">{b.guest_name || "Guest"}</p>
+                      <p className="max-w-[160px] truncate text-xs text-gray-400">{b.guest_email || "-"}</p>
                     </td>
-                    <td
-                      data-label="Phone"
-                      className="px-4 py-3 hidden md:table-cell text-xs text-gray-500"
-                    >
-                      {b.guest_phone || "-"}
+                    <td className="hidden px-4 py-3 text-xs text-gray-500 md:table-cell">{b.guest_phone || "-"}</td>
+                    <td className="hidden px-4 py-3 sm:table-cell">
+                      <p className="max-w-[140px] truncate text-xs text-gray-700">{b.services?.title || "-"}</p>
+                      <p className="text-xs text-gray-400">{b.services?.price === 0 ? "Free" : `₹${b.services?.price}`}</p>
                     </td>
-                    <td
-                      data-label="Service"
-                      className="px-4 py-3 hidden sm:table-cell"
-                    >
-                      <p className="text-xs text-gray-700 max-w-[140px] truncate">
-                        {b.services?.title || "-"}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {b.services?.price === 0
-                          ? "Free"
-                          : `Rs.${b.services?.price}`}
-                      </p>
-                    </td>
-                    <td data-label="Status" className="px-4 py-3">
-                      <StatusChip status={b.status} />
-                    </td>
-                    <td
-                      data-label="Payment"
-                      className="px-4 py-3 hidden md:table-cell"
-                    >
-                      <span
-                        className={`inline-block text-[11px] px-2 py-0.5 rounded-full font-medium ${PAY_COLORS[b.payment_status]}`}
-                      >
-                        {b.payment_status}
-                      </span>
-                    </td>
-                    <td data-label="Action" className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => setSelected(b)}
-                        title="View details"
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-500 hover:text-primary transition-colors"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
+                    <td className="px-4 py-3"><StatusChip status={b.status} /></td>
+                    <td className="hidden px-4 py-3 md:table-cell"><StatusBadge status={b.payment_status} /></td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => setSelected(b)} title="View details"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary">
+                        <Eye className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -782,43 +512,24 @@ const Bookings = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t text-sm text-gray-500">
+          <div className="flex items-center justify-between border-t px-4 py-3 text-sm text-gray-500">
             <span className="text-xs">
-              Showing {(page - 1) * PAGE_SIZE + 1}-
-              {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+              Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
             </span>
             <div className="flex gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="btn btn--outline px-3 py-1 text-xs disabled:opacity-40 hover:bg-gray-50"
-              >
-                Prev
-              </button>
+              <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const p = page <= 3 ? i + 1 : page + i - 2;
                 if (p < 1 || p > totalPages) return null;
                 return (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`btn px-3 py-1 text-xs ${p === page ? "bg-primary text-white" : "btn--outline hover:bg-gray-50"}`}
-                  >
-                    {p}
-                  </button>
+                  <Button key={p} size="sm" variant={p === page ? "primary" : "outline"} onClick={() => setPage(p)}>{p}</Button>
                 );
               })}
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="btn btn--outline px-3 py-1 text-xs disabled:opacity-40 hover:bg-gray-50"
-              >
-                Next
-              </button>
+              <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
             </div>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };
