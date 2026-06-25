@@ -1,4 +1,5 @@
-import Reveal from "../home/Reveal";
+import { useRef } from "react";
+import { gsap, useGSAP, EASE } from "./gsapSetup";
 import { testimonials } from "./aboutContent";
 
 function Avatar({ name, src }) {
@@ -18,28 +19,81 @@ function Avatar({ name, src }) {
   );
 }
 
-export default function AboutTestimonials() {
-  if (!testimonials.items.length) return null;
+function Card({ t, clone }) {
   return (
-    <section className="px-5 py-20 sm:px-8 lg:py-28">
-      <div className="mx-auto max-w-6xl">
-        <Reveal as="h2" className="font-heading text-3xl font-bold sm:text-4xl">
-          {testimonials.heading}
-        </Reveal>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {testimonials.items.map((t, i) => (
-            <Reveal key={i} delay={(i % 3) * 0.05} className="rounded-[6px] border border-ink/10 bg-surface p-6">
-              <p className="text-ink/80">“{t.quote}”</p>
-              <div className="mt-4 flex items-center gap-3">
-                <Avatar name={t.name} src={t.avatar} />
-                <div>
-                  <div className="font-semibold text-ink">{t.name}</div>
-                  <div className="text-sm text-ink/50">{t.role}</div>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+    <figure
+      aria-hidden={clone || undefined}
+      className={`${clone ? "js-clone hidden" : ""} w-80 shrink-0 rounded-[6px] border border-ink/10 bg-surface p-6`}
+    >
+      <p className="text-ink/80">“{t.quote}”</p>
+      <figcaption className="mt-4 flex items-center gap-3">
+        <Avatar name={t.name} src={t.avatar} />
+        <span>
+          <span className="block font-semibold text-ink">{t.name}</span>
+          <span className="block text-sm text-ink/50">{t.role}</span>
+        </span>
+      </figcaption>
+    </figure>
+  );
+}
+
+export default function AboutTestimonials() {
+  const root = useRef(null);
+  const track = useRef(null);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.from(".js-head", {
+          opacity: 0,
+          y: 28,
+          duration: 0.8,
+          ease: EASE,
+          scrollTrigger: { trigger: root.current, start: "top 82%" },
+        });
+
+        // Reveal clones + switch to a seamless single-row marquee.
+        gsap.set(".js-clone", { display: "block" });
+        gsap.set(track.current, { flexWrap: "nowrap", justifyContent: "flex-start", width: "max-content" });
+
+        const loop = gsap.to(track.current, {
+          xPercent: -50,
+          duration: 28,
+          ease: "none",
+          repeat: -1,
+        });
+
+        const enter = () => gsap.to(loop, { timeScale: 0, duration: 0.4 });
+        const leave = () => gsap.to(loop, { timeScale: 1, duration: 0.4 });
+        root.current.addEventListener("pointerenter", enter);
+        root.current.addEventListener("pointerleave", leave);
+
+        return () => {
+          root.current?.removeEventListener("pointerenter", enter);
+          root.current?.removeEventListener("pointerleave", leave);
+          gsap.set(track.current, { clearProps: "all" });
+          gsap.set(".js-clone", { clearProps: "display" });
+        };
+      });
+    },
+    { scope: root }
+  );
+
+  if (!testimonials.items.length) return null;
+
+  return (
+    <section ref={root} className="overflow-hidden px-0 py-20 sm:py-28">
+      <div className="mx-auto mb-10 max-w-6xl px-5 sm:px-8">
+        <h2 className="js-head font-heading text-3xl font-bold sm:text-4xl">{testimonials.heading}</h2>
+      </div>
+      <div ref={track} className="flex flex-wrap justify-center gap-5 px-5 sm:px-8">
+        {testimonials.items.map((t, i) => (
+          <Card key={i} t={t} />
+        ))}
+        {testimonials.items.map((t, i) => (
+          <Card key={`c${i}`} t={t} clone />
+        ))}
       </div>
     </section>
   );

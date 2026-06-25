@@ -10,7 +10,8 @@ describe("About page", () => {
         <About />
       </MemoryRouter>
     );
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toMatch(/worth protecting/i);
+    const h1 = screen.getByRole("heading", { level: 1 }).textContent.replace(/\s+/g, " ");
+    expect(h1).toMatch(/worth protecting/i);
     expect(screen.getByText(/what we believe/i)).toBeInTheDocument();
     expect(screen.getByText(/how we build/i)).toBeInTheDocument();
     expect(screen.getByText(/questions, answered/i)).toBeInTheDocument();

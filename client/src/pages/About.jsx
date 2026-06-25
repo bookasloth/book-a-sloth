@@ -1,4 +1,5 @@
 import Seo from "../components/common/Seo";
+import useAboutMotion from "../components/about/useAboutMotion";
 import AboutHero from "../components/about/AboutHero";
 import ProblemSplit from "../components/about/ProblemSplit";
 import BeliefGrid from "../components/about/BeliefGrid";
@@ -21,6 +22,7 @@ const JSON_LD = {
 };
 
 export default function About() {
+  useAboutMotion();
   return (
     <main className="bg-[var(--bg)]">
       <Seo

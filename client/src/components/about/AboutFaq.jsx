@@ -1,21 +1,45 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus } from "lucide-react";
-import Reveal from "../home/Reveal";
+import { gsap, useGSAP, EASE } from "./gsapSetup";
 import { faq } from "./aboutContent";
 
 export default function AboutFaq() {
+  const root = useRef(null);
   const [open, setOpen] = useState(-1);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.from(".js-head", {
+          opacity: 0,
+          y: 28,
+          duration: 0.8,
+          ease: EASE,
+          scrollTrigger: { trigger: root.current, start: "top 82%" },
+        });
+        gsap.from(".js-row", {
+          opacity: 0,
+          y: 24,
+          duration: 0.6,
+          ease: EASE,
+          stagger: 0.08,
+          scrollTrigger: { trigger: ".js-list", start: "top 80%" },
+        });
+      });
+    },
+    { scope: root }
+  );
+
   return (
-    <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
+    <section ref={root} className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
       <div className="mx-auto max-w-3xl">
-        <Reveal as="h2" className="font-heading text-3xl font-bold sm:text-4xl">
-          {faq.heading}
-        </Reveal>
-        <div className="mt-8 divide-y divide-white/10 border-y border-white/10">
+        <h2 className="js-head font-heading text-3xl font-bold sm:text-4xl">{faq.heading}</h2>
+        <div className="js-list mt-8 divide-y divide-white/10 border-y border-white/10">
           {faq.items.map((item, i) => {
             const isOpen = open === i;
             return (
-              <div key={i}>
+              <div key={i} className="js-row">
                 <button
                   type="button"
                   aria-expanded={isOpen}
@@ -24,7 +48,7 @@ export default function AboutFaq() {
                 >
                   <span className="font-heading text-lg font-semibold">{item.q}</span>
                   <Plus
-                    className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-45" : ""}`}
+                    className={`h-5 w-5 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-45" : ""}`}
                   />
                 </button>
                 <div
