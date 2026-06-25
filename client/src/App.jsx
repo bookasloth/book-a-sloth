@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
 import DashboardLayout from './components/common/DashboardLayout';
 import AdminLayout from './components/common/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -169,6 +170,8 @@ function App() {
     location.pathname.startsWith('/vendor-register') ||
     location.pathname.startsWith('/lp') ||
     location.pathname === '/hello-sloth';
+
+  const hideFooter = hideNavbar; // footer follows the same public/app boundary as the navbar
 
   return (
     <>
@@ -340,6 +343,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      {!hideFooter && <Footer />}
     </>
   );
 }
