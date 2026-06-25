@@ -19,9 +19,9 @@ export const HERO = "https://company-assets.bookasloth.in/images/banner/hero-boo
 // (≈80×80, .jpg) to these exact paths. Until then the hero shows a graceful
 // neutral fallback chip instead of a broken image.
 export const HERO_FACES = [
-  "https://company-assets.bookasloth.in/images/hero/face-1.jpg",
-  "https://company-assets.bookasloth.in/images/hero/face-2.jpg",
-  "https://company-assets.bookasloth.in/images/hero/face-3.jpg",
+  "https://company-assets.bookasloth.in/images/hero/face-1.png",
+  "https://company-assets.bookasloth.in/images/hero/face-2.png",
+  "https://company-assets.bookasloth.in/images/hero/face-3.png",
 ];
 
 // "Who it's for" — Indian-looking professionals across roles
