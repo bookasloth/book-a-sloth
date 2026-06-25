@@ -229,7 +229,7 @@ const AdminLayout = ({ children }) => {
         <div className="flex-1 overflow-hidden"><SidebarBody mobile /></div>
       </aside>
 
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'md:ml-[70px]' : 'md:ml-[258px]'}`}>
+      <div className={`flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'md:ml-[70px]' : 'md:ml-[258px]'}`}>
         <header className="adm-header sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-200/70 h-[54px] flex items-center gap-3 px-4 md:px-5 flex-shrink-0">
           <button onClick={() => { if (window.innerWidth < 768) setMobileOpen(o => !o); else toggleSidebar(); }}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0">

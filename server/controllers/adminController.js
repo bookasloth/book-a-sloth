@@ -443,6 +443,10 @@ const planService = require('../services/planService');
 
 const getProviderPlanAnalytics = async (req, res) => {
   try {
+    // Optional period filter — bounds the EARNINGS queries by paid_at. The plan
+    // headcount distribution is always "current" (a snapshot), so it ignores this.
+    const since = req.query.since && !isNaN(Date.parse(req.query.since)) ? req.query.since : null;
+
     // ── Hosts: one fetch drives both headcount distribution and host→plan map ──
     const { data: hostRows, error: hostErr } = await supabaseAdmin
       .from('profiles').select('id, plan').eq('role', 'host');
@@ -459,10 +463,12 @@ const getProviderPlanAnalytics = async (req, res) => {
     // ── Earning from plans: collected subscription payments, net of gateway ──
     // net = plan_price − razorpay_fee − razorpay_tax (GST excluded: pass-through).
     const planEarnings = { creator: 0, professional: 0 };
-    const { data: subs } = await supabaseAdmin
+    let subsQuery = supabaseAdmin
       .from('subscription_payments')
       .select('plan_type, plan_price, razorpay_fee, razorpay_tax, status')
       .eq('status', 'paid');
+    if (since) subsQuery = subsQuery.gte('paid_at', since);
+    const { data: subs } = await subsQuery;
     (subs || []).forEach((s) => {
       const slug = planService.normalizeSlug(s.plan_type);
       if (planEarnings[slug] == null) return; // ignore starter / unknown
@@ -471,15 +477,16 @@ const getProviderPlanAnalytics = async (req, res) => {
     });
 
     // ── Earning from their bookings: platform net take, grouped by host plan ──
-    let bookingsRes = await supabaseAdmin
+    const filterPaid = (q) => (since ? q.gte('paid_at', since) : q);
+    let bookingsRes = await filterPaid(supabaseAdmin
       .from('bookings')
       .select('host_id, payment_status, commission_applied, platform_fee_amount')
-      .eq('payment_status', 'paid');
+      .eq('payment_status', 'paid'));
     if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
-      bookingsRes = await supabaseAdmin
+      bookingsRes = await filterPaid(supabaseAdmin
         .from('bookings')
         .select('host_id, payment_status, platform_fee_amount')
-        .eq('payment_status', 'paid');
+        .eq('payment_status', 'paid'));
     }
     const bookingEarnings = { starter: 0, creator: 0, professional: 0 };
     (bookingsRes.data || []).forEach((b) => {

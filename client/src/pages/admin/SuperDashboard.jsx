@@ -246,6 +246,7 @@ const PLAN_META = {
   professional: { label: '₹3,650',    color: '#FE5100' },
 };
 const PIE_BORDER = '#374151'; // gray-700 — keeps the white slice readable on a white card
+const PLAN_NAME = { starter: 'Free', creator: 'Creator', professional: 'Professional' };
 
 const polar = (cx, cy, r, deg) => {
   const rad = ((deg - 90) * Math.PI) / 180;
@@ -262,6 +263,7 @@ const arcPath = (cx, cy, r, start, end) => {
 const PlanSharePie = ({ distribution }) => {
   const data = PLAN_ORDER.map((k) => ({ key: k, ...PLAN_META[k], value: distribution?.[k] || 0 }));
   const total = data.reduce((s, d) => s + d.value, 0);
+  const top = data.reduce((a, b) => (b.value > a.value ? b : a), data[0]);
   const cx = 90, cy = 90, r = 80;
 
   return (
@@ -271,18 +273,28 @@ const PlanSharePie = ({ distribution }) => {
       {total === 0 ? (
         <div className="py-10 text-center text-[12px] text-gray-400">No providers on any plan yet.</div>
       ) : (
+        <>
         <div className="flex flex-col sm:flex-row items-center gap-5">
           <svg width="180" height="180" viewBox="0 0 180 180" className="flex-shrink-0">
-            {data.filter((d) => d.value > 0).length === 1 ? (
+            {data.filter((d) => d.value > 0).length === 1 ? (() => {
               // Single plan holds 100% — an arc would collapse, so draw a full circle.
-              <circle cx={cx} cy={cy} r={r} fill={data.find((d) => d.value > 0).color} stroke={PIE_BORDER} strokeWidth="2" />
-            ) : (() => {
+              const only = data.find((d) => d.value > 0);
+              return (
+                <circle cx={cx} cy={cy} r={r} fill={only.color} stroke={PIE_BORDER} strokeWidth="2">
+                  <title>{PLAN_NAME[only.key]}: {only.value} (100%)</title>
+                </circle>
+              );
+            })() : (() => {
               let acc = 0;
               return data.filter((d) => d.value > 0).map((d) => {
                 const start = (acc / total) * 360;
                 acc += d.value;
                 const end = (acc / total) * 360;
-                return <path key={d.key} d={arcPath(cx, cy, r, start, end)} fill={d.color} stroke={PIE_BORDER} strokeWidth="1.5" strokeLinejoin="round" />;
+                return (
+                  <path key={d.key} d={arcPath(cx, cy, r, start, end)} fill={d.color} stroke={PIE_BORDER} strokeWidth="1.5" strokeLinejoin="round">
+                    <title>{PLAN_NAME[d.key]}: {d.value} ({Math.round((d.value / total) * 100)}%)</title>
+                  </path>
+                );
               });
             })()}
             {/* crisp outer rim */}
@@ -299,13 +311,19 @@ const PlanSharePie = ({ distribution }) => {
             ))}
           </ul>
         </div>
+        <p className="mt-4 pt-3 border-t border-gray-100 text-[11px] text-gray-500">
+          Largest group: <span className="font-semibold text-gray-700">{PLAN_NAME[top.key]}</span> — {top.value} provider{top.value !== 1 ? 's' : ''} ({Math.round((top.value / total) * 100)}%).
+        </p>
+        </>
       )}
     </div>
   );
 };
 
 // Grouped (double) bar — per plan: earning from plans vs from their bookings.
-const PlanEarningsBars = ({ planEarnings, bookingEarnings }) => {
+const EARN_PERIODS = [['all', 'All'], ['12m', '12m'], ['90d', '90d'], ['30d', '30d']];
+
+const PlanEarningsBars = ({ planEarnings, bookingEarnings, period, onPeriod }) => {
   const groups = [
     { key: 'creator',      label: 'Creator (₹999)' },
     { key: 'professional', label: 'Professional (₹3,650)' },
@@ -314,58 +332,106 @@ const PlanEarningsBars = ({ planEarnings, bookingEarnings }) => {
     { key: 'plans',    label: 'Earning from Plans',    color: '#FE5100', data: planEarnings },
     { key: 'bookings', label: 'Earning from Bookings', color: '#1E1E1E', data: bookingEarnings },
   ];
-  const max = Math.max(1, ...groups.flatMap((g) => series.map((s) => Number(s.data?.[g.key]) || 0)));
-  const H = 150; // px plot height
+  const valueOf = (g, s) => Number(s.data?.[g.key]) || 0;
+  const max = Math.max(1, ...groups.flatMap((g) => series.map((s) => valueOf(g, s))));
+  const grand = groups.reduce((t, g) => t + series.reduce((a, s) => a + valueOf(g, s), 0), 0);
+  const H = 176; // px plot height
+  const hasData = grand > 0;
 
   return (
     <div className="bg-white border border-gray-200/80 rounded-2xl p-5">
-      <p className="text-sm font-semibold text-gray-800 mb-0.5">Earnings by Plan</p>
-      <p className="text-[12px] text-gray-400 mb-4">Subscription revenue vs booking commission</p>
-      <div className="flex items-end justify-around gap-6" style={{ height: H + 28 }}>
-        {groups.map((g) => (
-          <div key={g.key} className="flex-1 flex flex-col items-center">
-            <div className="flex items-end justify-center gap-3" style={{ height: H }}>
-              {series.map((s) => {
-                const v = Number(s.data?.[g.key]) || 0;
-                const h = Math.max(v > 0 ? 3 : 0, (v / max) * H);
-                return (
-                  <div key={s.key} className="flex flex-col items-center justify-end" style={{ height: H }}>
-                    <span className="text-[10px] font-semibold text-gray-600 tabular-nums mb-1 whitespace-nowrap">{inr(v)}</span>
-                    <div className="w-9 rounded-t-md" style={{ height: h, background: s.color }} title={`${s.label}: ${inr(v)}`} />
-                  </div>
-                );
-              })}
-            </div>
-            <span className="mt-2 text-[11px] font-medium text-gray-500 text-center">{g.label}</span>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <p className="text-sm font-semibold text-gray-800 mb-0.5">Earnings by Plan</p>
+          <p className="text-[12px] text-gray-400">Subscription revenue vs booking commission</p>
+        </div>
+        {onPeriod && (
+          <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
+            {EARN_PERIODS.map(([k, lbl]) => (
+              <button key={k} onClick={() => onPeriod(k)}
+                className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${period === k ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                {lbl}
+              </button>
+            ))}
           </div>
-        ))}
+        )}
       </div>
-      <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-gray-100">
-        {series.map((s) => (
-          <span key={s.key} className="flex items-center gap-1.5 text-[11px] text-gray-500">
-            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: s.color }} />{s.label}
-          </span>
-        ))}
+
+      <div className="mb-4">
+        <p className="text-2xl font-bold text-gray-900 tabular-nums">{inr(grand)}</p>
+        <p className="text-[11px] text-gray-400">Total platform earnings{period && period !== 'all' ? ' in selected period' : ''}</p>
       </div>
+
+      {!hasData ? (
+        <div className="flex items-center justify-center text-center text-[12px] text-gray-400" style={{ height: H + 28 }}>
+          {period && period !== 'all' ? 'No earnings in this period.' : 'No earnings to show yet.'}
+        </div>
+      ) : (
+        <>
+          <div className="flex items-end justify-around gap-6" style={{ height: H + 28 }}>
+            {groups.map((g) => (
+              <div key={g.key} className="flex-1 flex flex-col items-center">
+                <div className="flex items-end justify-center gap-3" style={{ height: H }}>
+                  {series.map((s) => {
+                    const v = valueOf(g, s);
+                    const h = Math.max(v > 0 ? 3 : 0, (v / max) * H);
+                    const pct = grand ? Math.round((v / grand) * 100) : 0;
+                    return (
+                      <div key={s.key} className="group relative flex flex-col items-center justify-end" style={{ height: H }}>
+                        <span className="text-[10px] font-semibold text-gray-600 tabular-nums mb-1 whitespace-nowrap">{inr(v)}</span>
+                        <div className="w-9 rounded-t-md transition-opacity group-hover:opacity-80" style={{ height: h, background: s.color }} />
+                        <div className="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 z-10">
+                          {s.label}: {inr(v)} ({pct}%)
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <span className="mt-2 text-[11px] font-medium text-gray-500 text-center">{g.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-gray-100">
+            {series.map((s) => (
+              <span key={s.key} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                <span className="w-2.5 h-2.5 rounded-sm" style={{ background: s.color }} />{s.label}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
 // ── Providers Tab ─────────────────────────────────────────────
+const PERIOD_DAYS = { all: null, '12m': 365, '90d': 90, '30d': 30 };
+const periodSince = (key) => {
+  const days = PERIOD_DAYS[key];
+  if (!days) return undefined;
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString();
+};
+
 const ProvidersTab = ({ stats }) => {
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
+  const [period, setPeriod] = useState('all');
 
   useEffect(() => {
     adminGetUsers({ page: 1, limit: 10, role: 'host' })
       .then(r => setProviders(r.data.users || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-    adminGetProviderPlanAnalytics()
+  }, []);
+
+  useEffect(() => {
+    adminGetProviderPlanAnalytics({ since: periodSince(period) })
       .then(r => setAnalytics(r.data))
       .catch(() => {});
-  }, []);
+  }, [period]);
 
   return (
     <div className="space-y-5">
@@ -386,7 +452,7 @@ const ProvidersTab = ({ stats }) => {
       {/* Plan analytics — two columns: share pie + earnings bars */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <PlanSharePie distribution={analytics?.distribution} />
-        <PlanEarningsBars planEarnings={analytics?.planEarnings} bookingEarnings={analytics?.bookingEarnings} />
+        <PlanEarningsBars planEarnings={analytics?.planEarnings} bookingEarnings={analytics?.bookingEarnings} period={period} onPeriod={setPeriod} />
       </div>
 
       <div className="bg-white border border-gray-200/80 rounded-2xl overflow-hidden">
@@ -406,12 +472,15 @@ const ProvidersTab = ({ stats }) => {
                   {(p.name || p.email || '?')[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{p.name || '—'}</p>
-                  <p className="text-[11px] text-gray-400">@{p.username || p.email}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-800 truncate">{p.name || '—'}</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${p.is_verified ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+                      {p.is_verified ? 'Verified' : 'Unverified'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-400 truncate">@{p.username || p.email}</p>
                 </div>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${p.is_verified ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
-                  {p.is_verified ? 'Verified' : 'Unverified'}
-                </span>
+                <span className="text-[11px] text-gray-400 flex-shrink-0 capitalize">{p.plan || 'explorer'}</span>
               </div>
             ))}
           </div>

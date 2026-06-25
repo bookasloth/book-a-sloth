@@ -139,7 +139,7 @@ const AdminUsers = () => {
                 setFilter(r);
                 setPage(1);
               }}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize ${filter === r ? "bg-gray-900 text-white" : "bg-white border text-gray-500"}`}
+              className={`min-w-[76px] inline-flex justify-center px-3 py-1.5 rounded-full text-xs font-medium capitalize ${filter === r ? "bg-gray-900 text-white" : "bg-white border text-gray-500"}`}
             >
               {r}
             </button>
@@ -174,6 +174,13 @@ const AdminUsers = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">
+                        No {filter === "all" ? "" : filter + " "}accounts found.
+                      </td>
+                    </tr>
+                  )}
                   {users.map((u) => (
                     <tr
                       key={u.id}

@@ -60,7 +60,7 @@ const getSummary = async (req, res) => {
       { key: 'failed_notifications',  label: 'Failed WhatsApp/notifs', count: failedNotifications,  to: '/admin/notifications?tab=logs&status=failed', severity: failedNotifications ? 'danger' : 'ok' },
       { key: 'stale_unpaid_bookings', label: 'Abandoned bookings',     count: staleUnpaidBookings,  to: '/admin/bookings?status=pending',            severity: staleUnpaidBookings ? 'warning' : 'ok' },
       { key: 'pending_reviews',       label: 'Reviews to moderate',    count: pendingReviews,       to: '/admin/support/reviews?status=pending',     severity: pendingReviews ? 'warning' : 'ok' },
-      { key: 'pending_verifications', label: 'Pending verifications',  count: pendingVerifications, to: '/admin/professionals?status=pending',       severity: pendingVerifications ? 'warning' : 'ok' },
+      { key: 'pending_verifications', label: 'Pending verifications',  count: pendingVerifications, to: '/admin/providers/pending',       severity: pendingVerifications ? 'warning' : 'ok' },
     ];
 
     const totalAttention = attention.reduce((s, a) => s + a.count, 0);
