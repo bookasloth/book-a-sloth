@@ -1,13 +1,13 @@
 /**
  * razorpaySubscriptions.test.js — call-site guard for the UPI AutoPay mandate
- * end_time ceiling.
+ * duration cap.
  *
- * BUG: createSubscription passed a fixed total_count (annual = 100). Razorpay
- * derives the UPI AutoPay mandate end = start + total_count × period; annual × 100
- * lands ~2126, past Razorpay's ~2121 cap, so the mandate is rejected at checkout
- * with "end_time must be between 946684800 and 4765046400". These tests assert the
- * count handed to Razorpay is clamped under the ceiling (annual) and otherwise
- * unchanged (monthly).
+ * BUG: createSubscription passed a fixed total_count (annual = 100), producing a
+ * ~100-year UPI AutoPay mandate. UPI mandates are valid for at most ~10 years
+ * (enforced by the bank/NPCI at checkout), so the mandate was rejected on
+ * POST .../payments/create/ajax before any payment was created. These tests assert
+ * the count handed to Razorpay caps the mandate at the 10-year window: annual → 10,
+ * monthly → 120 (unchanged — already 10yr and proven to authorize).
  */
 'use strict';
 
@@ -25,36 +25,30 @@ jest.mock('../../services/razorpayConfig', () => {
 
 const razorpayConfig = require('../../services/razorpayConfig');
 const create = razorpayConfig.__create;
-const { subscriptionTotalCount, MANDATE_END_CEILING_UNIX } = require('../../lib/subscriptionPricing');
+const { subscriptionTotalCount } = require('../../lib/subscriptionPricing');
 const razorpaySubscriptions = require('../../services/razorpaySubscriptions');
-
-const YEAR = 366 * 86400;
 
 beforeEach(() => jest.clearAllMocks());
 
-describe('createSubscription — total_count stays under the mandate end_time ceiling', () => {
-  test('annual is clamped well below the old fixed 100 and keeps the mandate end under the cap', async () => {
+describe('createSubscription — total_count capped to the 10-year UPI mandate window', () => {
+  test('annual is capped to 10 cycles (10 years), not the naive 100', async () => {
     await razorpaySubscriptions.createSubscription({ planId: 'plan_a', cadence: 'annual' });
     const arg = create.mock.calls[0][0];
     expect(arg.plan_id).toBe('plan_a');
-    expect(arg.total_count).toBeLessThan(100);      // the bug: was a flat 100
-    expect(arg.total_count).toBeGreaterThan(1);
-    // The derived mandate end must sit under Razorpay's hard ceiling.
-    const now = Math.floor(Date.now() / 1000);
-    expect(now + arg.total_count * YEAR).toBeLessThanOrEqual(MANDATE_END_CEILING_UNIX);
+    expect(arg.total_count).toBe(10);
+    expect(arg.total_count).toBe(subscriptionTotalCount('annual'));
   });
 
-  test('monthly is unchanged at 120 cycles', async () => {
+  test('monthly is unchanged at 120 cycles (10 years)', async () => {
     await razorpaySubscriptions.createSubscription({ planId: 'plan_m', cadence: 'monthly' });
     expect(create.mock.calls[0][0].total_count).toBe(120);
   });
 
-  test('a deferred start_at base shrinks the count to keep the mandate under the ceiling', async () => {
-    const startAt = Math.floor(Date.now() / 1000) + 200 * 86400;
+  test('a deferred start_at (switch) is passed through; the count stays cadence-based', async () => {
+    const startAt = 1782000000 + 200 * 86400;
     await razorpaySubscriptions.createSubscription({ planId: 'plan_a', cadence: 'annual', startAt });
     const arg = create.mock.calls[0][0];
     expect(arg.start_at).toBe(startAt);
-    expect(arg.total_count).toBe(subscriptionTotalCount('annual', startAt));
-    expect(startAt + arg.total_count * YEAR).toBeLessThanOrEqual(MANDATE_END_CEILING_UNIX);
+    expect(arg.total_count).toBe(10); // span cap is start-independent
   });
 });

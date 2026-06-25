@@ -124,14 +124,13 @@ async function ensureRazorpayPlan(planRow, cadence) {
 async function createSubscription({ planId, cadence, notes = {}, startAt }) {
   const c = normCadence(cadence);
   const razorpay = await razorpayConfig.getClient();
-  // total_count is clamped so the derived UPI AutoPay mandate end (start +
-  // count × period) stays under Razorpay's ~2121 ceiling — otherwise annual
-  // mandates are rejected at checkout. Base on start_at when deferring (switch),
-  // else "now".
-  const base = startAt || Math.floor(Date.now() / 1000);
+  // total_count is capped so the UPI AutoPay mandate spans at most ~10 years —
+  // the validity limit banks enforce at checkout. A longer mandate (e.g. annual
+  // × 100) is rejected on the payments/create/ajax step before any payment is
+  // created. monthly → 120, annual → 10.
   return razorpay.subscriptions.create({
     plan_id: planId,
-    total_count: subscriptionTotalCount(c, base),
+    total_count: subscriptionTotalCount(c),
     customer_notify: 1,
     ...(startAt ? { start_at: startAt } : {}),
     notes,
