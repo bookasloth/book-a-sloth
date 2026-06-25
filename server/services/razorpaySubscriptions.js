@@ -11,12 +11,9 @@ const planService = require('./planService');
 const platformConfig = require('./platformConfig');
 const razorpayConfig = require('./razorpayConfig');
 const { supabaseAdmin } = require('../config/supabase');
-const { cadenceAmountPaise, razorpayInterval, normCadence } = require('../lib/subscriptionPricing');
+const { cadenceAmountPaise, razorpayInterval, normCadence, subscriptionTotalCount } = require('../lib/subscriptionPricing');
 
 const PLAN_ID_COLUMN = { monthly: 'razorpay_plan_id_monthly', annual: 'razorpay_plan_id_annual' };
-// total_count is required by Razorpay; cap cycles high enough to be effectively
-// "until cancelled" (monthly → ~10 years, annual → 100 years).
-const TOTAL_COUNT = { monthly: 120, annual: 100 };
 
 // In-process memo of plan ids confirmed to exist under the ACTIVE key, so each id
 // is fetch-verified at most once per server lifetime (and re-verified after a key
@@ -127,9 +124,14 @@ async function ensureRazorpayPlan(planRow, cadence) {
 async function createSubscription({ planId, cadence, notes = {}, startAt }) {
   const c = normCadence(cadence);
   const razorpay = await razorpayConfig.getClient();
+  // total_count is clamped so the derived UPI AutoPay mandate end (start +
+  // count × period) stays under Razorpay's ~2121 ceiling — otherwise annual
+  // mandates are rejected at checkout. Base on start_at when deferring (switch),
+  // else "now".
+  const base = startAt || Math.floor(Date.now() / 1000);
   return razorpay.subscriptions.create({
     plan_id: planId,
-    total_count: TOTAL_COUNT[c] || 120,
+    total_count: subscriptionTotalCount(c, base),
     customer_notify: 1,
     ...(startAt ? { start_at: startAt } : {}),
     notes,

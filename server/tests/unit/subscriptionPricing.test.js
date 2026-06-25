@@ -21,6 +21,8 @@ const {
   computeProrationCredit,
   computeSwitchCharge,
   computeSwitch,
+  subscriptionTotalCount,
+  MANDATE_END_CEILING_UNIX,
 } = require('../../lib/subscriptionPricing');
 
 const PLAN = { monthly_price: 99, annual_price: 999 };
@@ -169,5 +171,56 @@ describe('computeSwitchCharge — forfeit excess (Decision #4)', () => {
   test('no credit → full charge', () => {
     expect(computeSwitchCharge({ credit: 0, newPeriodGross: 1178.82 }))
       .toEqual({ creditApplied: 0, forfeited: 0, chargeNow: 1178.82 });
+  });
+});
+
+describe('subscriptionTotalCount — UPI AutoPay mandate end_time ceiling guard', () => {
+  // Razorpay rejects UPI AutoPay mandates whose end_time exceeds ~2121
+  // (end_time ≤ 4765046400 unix seconds). A subscription's mandate must span all
+  // scheduled cycles, end ≈ start + total_count × period, so an "until cancelled"
+  // cycle count (esp. annual) can push the mandate past the cap and Razorpay
+  // rejects it at checkout: "end_time must be between 946684800 and 4765046400".
+  const BASE_2026 = 1782000000;            // ~2026-06, a representative "now"
+  const YEAR = 366 * 86400;                // conservative annual cycle (matches impl)
+  const MONTH = 31 * 86400;                // conservative monthly cycle (matches impl)
+
+  test('the ceiling constant matches Razorpay’s documented max (~2121)', () => {
+    expect(MANDATE_END_CEILING_UNIX).toBe(4765046400);
+  });
+
+  test('annual is capped below the naive 100 cycles and keeps the mandate end under the ceiling', () => {
+    const count = subscriptionTotalCount('annual', BASE_2026);
+    expect(count).toBeLessThan(100);                 // the cap engaged
+    expect(count).toBeGreaterThan(0);
+    expect(BASE_2026 + count * YEAR).toBeLessThanOrEqual(MANDATE_END_CEILING_UNIX);
+  });
+
+  test('regression: the old fixed annual=100 WOULD have overflowed the ceiling', () => {
+    // Documents the bug — proves the cap is load-bearing, not cosmetic.
+    expect(BASE_2026 + 100 * (365 * 86400)).toBeGreaterThan(MANDATE_END_CEILING_UNIX);
+  });
+
+  test('monthly keeps its full 120 cycles (10yr — never near the ceiling)', () => {
+    const count = subscriptionTotalCount('monthly', BASE_2026);
+    expect(count).toBe(120);
+    expect(BASE_2026 + count * MONTH).toBeLessThanOrEqual(MANDATE_END_CEILING_UNIX);
+  });
+
+  test('honours a deferred start_at base (switch) and still stays under the ceiling', () => {
+    const deferred = BASE_2026 + 200 * 86400; // ~200 free days deferred start
+    const count = subscriptionTotalCount('annual', deferred);
+    expect(deferred + count * YEAR).toBeLessThanOrEqual(MANDATE_END_CEILING_UNIX);
+  });
+
+  test('never returns less than 1 even if the base sits at the ceiling', () => {
+    expect(subscriptionTotalCount('annual', MANDATE_END_CEILING_UNIX)).toBeGreaterThanOrEqual(1);
+  });
+
+  test('yearly is an alias for annual', () => {
+    expect(subscriptionTotalCount('yearly', BASE_2026)).toBe(subscriptionTotalCount('annual', BASE_2026));
+  });
+
+  test('unknown cadence throws', () => {
+    expect(() => subscriptionTotalCount('weekly', BASE_2026)).toThrow('unknown cadence');
   });
 });
