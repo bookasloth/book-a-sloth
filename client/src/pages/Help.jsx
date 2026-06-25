@@ -10,7 +10,8 @@ import { MessageCircle, MessageSquare, Phone, Mail, Sparkles, Copy, Check } from
  */
 
 // TODO: move to admin-configurable support settings.
-const SUPPORT_WHATSAPP = "15559708785"; // WhatsApp deep-link only (number not shown)
+const SUPPORT_WHATSAPP = "15559708785"; // support WhatsApp (number hidden; link only)
+const SUPPORT_WHATSAPP_MSG = "Namaste, I want to talk about Book A Sloth";
 const SUPPORT_EMAIL = "bolt@bookasloth.in";
 const SUPPORT_PHONE = "+917904109359";
 
@@ -130,7 +131,7 @@ const Help = () => (
           icon={MessageCircle}
           title="WhatsApp us"
           desc="Message our support team directly on WhatsApp."
-          action={`https://wa.me/${SUPPORT_WHATSAPP}`}
+          action={`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(SUPPORT_WHATSAPP_MSG)}`}
         />
         <EmailSupportCard email={SUPPORT_EMAIL} />
         <ChannelCard
