@@ -979,20 +979,20 @@ const Home = () => {
           </Reveal>
 
           {/* Social proof */}
-          <Reveal delay={0.24} className="mt-7 flex items-center justify-center gap-4">
+          <Reveal delay={0.24} className="mt-7 flex flex-col items-center gap-3">
             <div className="flex -space-x-3">
               {HERO_FACES.map((f, i) => (
                 <HeroFace key={i} src={f} />
               ))}
             </div>
-            <div className="text-left">
+            <div className="flex flex-col items-center">
               <div className="flex items-center gap-1">
                 {[0, 1, 2, 3, 4].map((i) => (
                   <Star key={i} size={13} className="fill-amber-400 text-amber-400" />
                 ))}
                 <span className="ml-1 text-sm font-semibold text-ink">5/5</span>
               </div>
-              <p className="text-xs text-neutral-400">
+              <p className="text-center text-xs text-neutral-400">
                 Loved by India's first calm professionals.
               </p>
             </div>
