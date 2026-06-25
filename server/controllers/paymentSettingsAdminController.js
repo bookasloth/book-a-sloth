@@ -11,6 +11,7 @@ const Razorpay = require('razorpay');
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const razorpayConfig = require('../services/razorpayConfig');
+const razorpaySubscriptions = require('../services/razorpaySubscriptions');
 const { auditLog } = require('../utils/logger');
 
 const { KEYS } = razorpayConfig;
@@ -47,6 +48,11 @@ const updateRazorpay = async (req, res) => {
   try {
     const { key_id, key_secret, webhook_secret, enabled, mode } = req.body;
 
+    // Snapshot the resolved credentials BEFORE writing so we can detect a
+    // key/mode switch — cached Razorpay plan ids are account- and mode-scoped and
+    // must be dropped, or checkout 404s loading a plan from the old account.
+    const prev = await razorpayConfig.getConfig();
+
     if (key_id != null) await upsertSetting(KEYS.keyId, String(key_id).trim());
     if (typeof key_secret === 'string' && key_secret.trim()) {
       await upsertSetting(KEYS.keySecret, razorpayConfig.encryptSecret(key_secret.trim()));
@@ -58,7 +64,19 @@ const updateRazorpay = async (req, res) => {
     if (mode != null) await upsertSetting(KEYS.mode, String(mode));
 
     razorpayConfig.clearCache();
-    auditLog('RAZORPAY_SETTINGS_UPDATED', req.admin?.id || null, { key_id_set: key_id != null, enabled });
+
+    // Re-resolve and compare. On a key or mode change, wipe the per-cadence plan
+    // ids so they re-mint under the new account on the next subscription.
+    const next = await razorpayConfig.getConfig();
+    const keyChanged = prev.keyId !== next.keyId || prev.mode !== next.mode;
+    if (keyChanged) {
+      const r = await razorpaySubscriptions.clearCachedPlanIds();
+      auditLog('RAZORPAY_PLAN_IDS_CLEARED', req.admin?.id || null, {
+        from_key: prev.keyId || null, to_key: next.keyId || null,
+        from_mode: prev.mode || null, to_mode: next.mode || null, cleared: !!r.cleared,
+      });
+    }
+    auditLog('RAZORPAY_SETTINGS_UPDATED', req.admin?.id || null, { key_id_set: key_id != null, enabled, key_changed: keyChanged });
 
     return getRazorpay(req, res);
   } catch (err) {

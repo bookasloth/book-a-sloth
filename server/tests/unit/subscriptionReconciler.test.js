@@ -1,0 +1,115 @@
+/**
+ * subscriptionReconciler.test.js — orphan cleanup + heal paths.
+ *
+ * The reconciler is the safety net for vendors stuck at subscription_status=
+ * 'pending'. Beyond healing missed activation webhooks, it must RELEASE orphaned
+ * mandates so they don't poll forever and so the vendor can retry:
+ *   • a mandate that never authorized within the grace window (abandoned), and
+ *   • a subscription Razorpay can't find (minted under a since-rotated key/mode).
+ */
+'use strict';
+
+jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
+jest.mock('../../services/razorpaySubscriptions', () => ({
+  fetchSubscription: jest.fn(),
+  cancelSubscription: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('../../services/subscriptionService', () => ({
+  activateFromSubscription: jest.fn(() => Promise.resolve({ activated: true })),
+  markHalted: jest.fn(() => Promise.resolve()),
+  markCancelled: jest.fn(() => Promise.resolve()),
+  ACTIVE_STATES: ['active', 'authenticated'],
+}));
+
+const { supabaseAdmin } = require('../../config/supabase');
+const razorpaySubscriptions = require('../../services/razorpaySubscriptions');
+const subscriptionService = require('../../services/subscriptionService');
+
+// Wire profiles: the pending scan returns `rows`; capture every profiles.update.
+const wire = (rows) => {
+  const updates = [];
+  supabaseAdmin.from.mockImplementation((table) => {
+    if (table !== 'profiles') throw new Error(`unexpected table ${table}`);
+    const c = {};
+    c.select = jest.fn(() => c);
+    c.eq = jest.fn(() => c);
+    c.not = jest.fn(() => c);
+    c.limit = jest.fn(() => Promise.resolve({ data: rows, error: null }));
+    c.update = jest.fn((payload) => {
+      const chain = { eq: jest.fn((_, id) => { updates.push({ id, payload }); return Promise.resolve({ error: null }); }) };
+      return chain;
+    });
+    return c;
+  });
+  return updates;
+};
+
+const HOUR = 3600 * 1000;
+const iso = (msAgo) => new Date(Date.now() - msAgo).toISOString();
+
+beforeEach(() => { jest.clearAllMocks(); });
+
+describe('subscriptionReconciler — orphan cleanup', () => {
+  test('aged-out pre-auth mandate is cancelled and released', async () => {
+    const updates = wire([{ id: 'v1', razorpay_subscription_id: 'sub_OLD', updated_at: iso(3 * HOUR) }]);
+    razorpaySubscriptions.fetchSubscription.mockResolvedValue({ id: 'sub_OLD', status: 'created' });
+
+    const { reconcile } = require('../../services/subscriptionReconciler');
+    const r = await reconcile();
+
+    expect(razorpaySubscriptions.cancelSubscription).toHaveBeenCalledWith('sub_OLD', false);
+    expect(updates).toHaveLength(1);
+    expect(updates[0]).toMatchObject({ id: 'v1', payload: { subscription_status: 'cancelled', razorpay_subscription_id: null } });
+    expect(r).toEqual({ healed: 0, released: 1 });
+  });
+
+  test('recent pre-auth mandate (inside grace window) is left pending', async () => {
+    const updates = wire([{ id: 'v1', razorpay_subscription_id: 'sub_NEW', updated_at: iso(5 * 60 * 1000) }]);
+    razorpaySubscriptions.fetchSubscription.mockResolvedValue({ id: 'sub_NEW', status: 'created' });
+
+    const { reconcile } = require('../../services/subscriptionReconciler');
+    const r = await reconcile();
+
+    expect(razorpaySubscriptions.cancelSubscription).not.toHaveBeenCalled();
+    expect(updates).toHaveLength(0);
+    expect(r).toEqual({ healed: 0, released: 0 });
+  });
+
+  test('subscription Razorpay cannot find is released WITHOUT a cancel call', async () => {
+    const updates = wire([{ id: 'v2', razorpay_subscription_id: 'sub_GHOST', updated_at: iso(2 * HOUR) }]);
+    razorpaySubscriptions.fetchSubscription.mockRejectedValue({
+      statusCode: 400, error: { description: 'The id provided does not exist' },
+    });
+
+    const { reconcile } = require('../../services/subscriptionReconciler');
+    const r = await reconcile();
+
+    expect(razorpaySubscriptions.cancelSubscription).not.toHaveBeenCalled();
+    expect(updates).toHaveLength(1);
+    expect(updates[0].payload).toMatchObject({ subscription_status: 'cancelled', razorpay_subscription_id: null });
+    expect(r).toEqual({ healed: 0, released: 1 });
+  });
+
+  test('transient fetch error leaves the row pending (no release)', async () => {
+    const updates = wire([{ id: 'v3', razorpay_subscription_id: 'sub_X', updated_at: iso(2 * HOUR) }]);
+    razorpaySubscriptions.fetchSubscription.mockRejectedValue(new Error('ETIMEDOUT'));
+
+    const { reconcile } = require('../../services/subscriptionReconciler');
+    const r = await reconcile();
+
+    expect(updates).toHaveLength(0);
+    expect(r).toEqual({ healed: 0, released: 0 });
+  });
+
+  test('active subscription still heals (existing behaviour intact)', async () => {
+    wire([{ id: 'v4', razorpay_subscription_id: 'sub_OK', updated_at: iso(2 * HOUR) }]);
+    razorpaySubscriptions.fetchSubscription.mockResolvedValue({ id: 'sub_OK', status: 'active' });
+
+    const { reconcile } = require('../../services/subscriptionReconciler');
+    const r = await reconcile();
+
+    expect(subscriptionService.activateFromSubscription).toHaveBeenCalledWith({ rzpSub: { id: 'sub_OK', status: 'active' } });
+    expect(razorpaySubscriptions.cancelSubscription).not.toHaveBeenCalled();
+    expect(r).toEqual({ healed: 1, released: 0 });
+  });
+});
