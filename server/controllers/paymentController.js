@@ -7,7 +7,7 @@ const { securityLog, auditLog } = require("../utils/logger");
 const sendEmail = require("../utils/sendEmail");
 const { adminAlert } = require("../utils/adminAlert");
 const NotificationEngine = require("../services/notificationEngine");
-const { computeBreakdown, calculateVendorPayout, calculatePlatformFee, computeSubscriptionBreakdown } = require("../lib/pricingEngine");
+const { computeBreakdown, calculateVendorPayout, calculatePlatformFee, computeSubscriptionBreakdown, round2 } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
 const platformConfig = require("../services/platformConfig");
 const razorpaySubscriptions = require("../services/razorpaySubscriptions");
@@ -867,22 +867,58 @@ const materializeProductPurchase = async ({ product, notes, orderId, paymentId, 
   const downloadToken = crypto.randomUUID();
   const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const productPrice = Number(notes.product_price);
+  const price = Number.isFinite(productPrice) ? productPrice : 0;
   const platformFee = Number(notes.platform_fee) || 0;
 
-  const { data: purchase, error } = await supabaseAdmin
-    .from("product_purchases").insert({
-      product_id: product.id, host_id: product.host_id,
-      buyer_id: buyerId || null,
-      buyer_name: notes.buyer_name || null,
-      buyer_email: String(notes.buyer_email || '').toLowerCase().trim() || null,
-      buyer_phone: notes.buyer_phone || null,
-      amount_paid: Number.isFinite(productPrice) ? productPrice : 0,
-      platform_fee: platformFee,
-      payment_status: "paid",
-      razorpay_order_id: orderId, razorpay_payment_id: paymentId,
-      download_token: downloadToken,
-      download_token_expires_at: tokenExpires.toISOString(),
-    }).select().single();
+  // Actual Razorpay gateway fee+tax — VENDOR-borne for products (mirrors
+  // bookings). Razorpay's `fee` (paise) INCLUDES `tax`. Best-effort: a fetch
+  // failure records 0 (the reconciler / a manual ADJUSTMENT can correct it) and
+  // never blocks delivery of a captured purchase.
+  let feeTotal = 0, tax = 0;
+  if (paymentId && !isLoadTestMode()) {
+    try {
+      const rzp = await razorpayConfig.getClient();
+      const payment = await rzp.payments.fetch(paymentId);
+      if (payment && payment.fee != null) feeTotal = Number(payment.fee) / 100;
+      if (payment && payment.tax != null) tax = Number(payment.tax) / 100;
+    } catch (feeErr) {
+      console.error("Product fee fetch failed (recorded 0):", feeErr.message);
+    }
+  }
+  tax = Math.min(tax, feeTotal);
+  const feeExclTax = Math.max(0, round2(feeTotal - tax));
+  const gatewayTotal = round2(feeExclTax + tax);
+  const customerTotal = round2(price + platformFee);
+  const vendorAmount = round2(price - gatewayTotal);
+
+  const baseRow = {
+    product_id: product.id, host_id: product.host_id,
+    buyer_id: buyerId || null,
+    buyer_name: notes.buyer_name || null,
+    buyer_email: String(notes.buyer_email || '').toLowerCase().trim() || null,
+    buyer_phone: notes.buyer_phone || null,
+    amount_paid: price,
+    platform_fee: platformFee,
+    payment_status: "paid",
+    razorpay_order_id: orderId, razorpay_payment_id: paymentId,
+    download_token: downloadToken,
+    download_token_expires_at: tokenExpires.toISOString(),
+  };
+  // v3.37 money-snapshot columns — dropped via schema fallback until applied.
+  const fullRow = {
+    ...baseRow,
+    customer_total: customerTotal,
+    vendor_amount: vendorAmount,
+    razorpay_fee_actual: feeExclTax,
+    razorpay_tax_actual: tax,
+  };
+
+  const insertRow = (body) =>
+    supabaseAdmin.from("product_purchases").insert(body).select().single();
+  let { data: purchase, error } = await insertRow(fullRow);
+  if (error && /Could not find the|column.*does not exist/i.test(error.message || '')) {
+    ({ data: purchase, error } = await insertRow(baseRow));
+  }
   if (error) {
     // Lost the race with the other writer (verify vs webhook). The unique index
     // on razorpay_order_id (v1.10) guarantees exactly one winner — re-read its
@@ -898,6 +934,27 @@ const materializeProductPurchase = async ({ product, notes, orderId, paymentId, 
 
   // Atomic increment to avoid a race under concurrent purchases (BUG-15).
   await supabaseAdmin.rpc("increment_product_purchase_count", { row_id: product.id });
+
+  // Double-entry ledger (PRODUCT_PAYMENT), idempotent on (source_type, id).
+  // postSafe never throws — a captured payment must not fail on a ledger miss;
+  // the hourly reconciler self-heals any gap.
+  try {
+    const { productPaymentEntry } = require("../services/ledger/journalTemplates");
+    const { postSafe } = require("../services/ledger/postingService");
+    await postSafe({
+      sourceType: "PRODUCT_PAYMENT",
+      sourceId: purchase.id,
+      template: productPaymentEntry({
+        purchase_id: purchase.id, host_id: product.host_id,
+        product_price: price, platform_fee: platformFee,
+        customer_total: customerTotal, vendor_amount: vendorAmount,
+        razorpay_fee_actual: feeExclTax, razorpay_tax_actual: tax,
+      }),
+    });
+  } catch (ledgerErr) {
+    console.error("Product ledger post error (non-fatal):", ledgerErr.message);
+  }
+
   return { reused: false, downloadToken, purchase };
 };
 

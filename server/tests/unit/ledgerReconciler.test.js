@@ -2,6 +2,7 @@ jest.mock('../../services/ledger/postingService', () => ({ postSafe: jest.fn() }
 jest.mock('../../services/ledger/journalTemplates', () => ({
   orderPaymentEntry: jest.fn(() => ({ description: 'o', lines: [] })),
   subscriptionPaymentEntry: jest.fn(() => ({ description: 's', lines: [] })),
+  productPaymentEntry: jest.fn(() => ({ description: 'p', lines: [] })),
 }));
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 
@@ -50,6 +51,37 @@ test('skips a booking that already has a journal entry', async () => {
     if (table === 'bookings') return makeChain({ data: [booking], error: null });
     if (table === 'journal_entries') return makeChain({ data: [{ source_id: 'b1' }], error: null }); // already posted
     if (table === 'subscription_payments') return makeChain({ data: [], error: null });
+    return makeChain({ data: [], error: null });
+  });
+  const result = await reconciler.reconcile();
+  expect(postSafe).not.toHaveBeenCalled();
+  expect(result.reposted).toBe(0);
+});
+
+test('reposts a paid product purchase with no journal entry', async () => {
+  const purchase = {
+    id: 'pp1', host_id: 'v1', created_at: '2026-06-25T00:00:00Z',
+    amount_paid: 500, platform_fee: 10, customer_total: 510, vendor_amount: 487.96,
+    razorpay_fee_actual: 10.2, razorpay_tax_actual: 1.84,
+  };
+  supabaseAdmin.from.mockImplementation((table) => {
+    if (table === 'product_purchases') return makeChain({ data: [purchase], error: null });
+    if (table === 'journal_entries') return makeChain({ data: [], error: null });
+    return makeChain({ data: [], error: null });
+  });
+  postSafe.mockResolvedValue('e');
+  const result = await reconciler.reconcile();
+  expect(postSafe).toHaveBeenCalledTimes(1);
+  expect(postSafe.mock.calls[0][0].sourceType).toBe('PRODUCT_PAYMENT');
+  expect(postSafe.mock.calls[0][0].sourceId).toBe('pp1');
+  expect(result.reposted).toBe(1);
+});
+
+test('skips a product purchase that already has a journal entry', async () => {
+  const purchase = { id: 'pp1', host_id: 'v1', created_at: '2026-06-25T00:00:00Z', amount_paid: 500, platform_fee: 10, customer_total: 510, vendor_amount: 487.96, razorpay_fee_actual: 10.2, razorpay_tax_actual: 1.84 };
+  supabaseAdmin.from.mockImplementation((table) => {
+    if (table === 'product_purchases') return makeChain({ data: [purchase], error: null });
+    if (table === 'journal_entries') return makeChain({ data: [{ source_id: 'pp1' }], error: null });
     return makeChain({ data: [], error: null });
   });
   const result = await reconciler.reconcile();

@@ -76,6 +76,42 @@ function subscriptionPaymentEntry(payment) {
   };
 }
 
+/**
+ * PRODUCT_PAYMENT — paid digital product. Customer pays price + platform_fee.
+ * Products carry NO commission and the checkout charges NO GST, so those legs
+ * are absent. Gateway fee is VENDOR-borne (mirrors orderPaymentEntry): the
+ * expense nets to 0 and is already subtracted from vendor_amount.
+ * customer_total / vendor_amount fall back to derivation from price + fee when
+ * the snapshot omits them (pre-v3.37 rows healed by the reconciler).
+ */
+function productPaymentEntry(snapshot) {
+  const tags = { vendor_id: snapshot.host_id, order_item_id: snapshot.purchase_id };
+  const price = Number(snapshot.product_price || 0);
+  const platformFee = round2(Number(snapshot.platform_fee || 0));
+  const gatewayTotal = round2(Number(snapshot.razorpay_fee_actual || 0) + Number(snapshot.razorpay_tax_actual || 0));
+  const customerTotal = round2(snapshot.customer_total != null ? snapshot.customer_total : price + platformFee);
+  const vendorAmount = round2(snapshot.vendor_amount != null ? snapshot.vendor_amount : price - gatewayTotal);
+
+  const lines = [
+    line(ACCOUNTS.RAZORPAY_RECEIVABLE, 'debit', customerTotal, tags),
+    line(ACCOUNTS.VENDOR_PAYABLES, 'credit', vendorAmount, tags),
+  ];
+  if (platformFee > 0) {
+    lines.push(line(ACCOUNTS.PLATFORM_FEE_REVENUE, 'credit', platformFee, tags));
+  }
+  if (gatewayTotal > 0) {
+    // Gateway deducts its fee from the remittance (relieve receivable)…
+    lines.push(line(ACCOUNTS.RZP_CHARGES_ORDERS, 'debit', gatewayTotal, tags));
+    lines.push(line(ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit', gatewayTotal, tags));
+    // …and the vendor bears it (already netted out of vendor_amount).
+    lines.push(line(ACCOUNTS.RZP_CHARGES_ORDERS, 'credit', gatewayTotal, tags));
+  }
+  return {
+    description: `Product payment — purchase ${snapshot.purchase_id}`,
+    lines,
+  };
+}
+
 /** BANK_TRANSFER — Razorpay settlement remitted to the bank (PRD §11.6). */
 function bankTransferEntry({ amount, reference }) {
   return {
@@ -146,6 +182,7 @@ function reversalEntry(original) {
 module.exports = {
   orderPaymentEntry,
   subscriptionPaymentEntry,
+  productPaymentEntry,
   bankTransferEntry,
   payoutEntry,
   rescheduleFeeEntry,

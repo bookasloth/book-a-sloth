@@ -1,5 +1,5 @@
 const {
-  orderPaymentEntry, subscriptionPaymentEntry, bankTransferEntry, reversalEntry,
+  orderPaymentEntry, subscriptionPaymentEntry, productPaymentEntry, bankTransferEntry, reversalEntry,
 } = require('../../services/ledger/journalTemplates');
 const { ACCOUNTS } = require('../../lib/ledgerAccounts');
 
@@ -62,6 +62,57 @@ describe('subscriptionPaymentEntry', () => {
     expect(lineFor(lines, ACCOUNTS.RZP_CHARGES_SUBS, 'debit').debit).toBe(27.82); // platform expense stays
     expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit').credit).toBe(27.82);
     expect(lines.every((l) => l.subscription_payment_id === 's1')).toBe(true);
+  });
+});
+
+describe('productPaymentEntry', () => {
+  // Paid product: price ₹500 + platform fee ₹10. Gateway ₹12.04 (fee 10.20 +
+  // tax 1.84), VENDOR-borne (mirrors orderPaymentEntry). No commission, no GST.
+  const snapshot = {
+    purchase_id: 'p1', host_id: 'v1',
+    product_price: 500, platform_fee: 10,
+    razorpay_fee_actual: 10.2, razorpay_tax_actual: 1.84,
+    customer_total: 510, vendor_amount: 487.96, // 500 − 12.04
+  };
+
+  test('balances; vendor bears gateway; no commission/GST legs', () => {
+    const { lines, description } = productPaymentEntry(snapshot);
+    expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
+    expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'debit').debit).toBe(510);
+    expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit').credit).toBe(12.04); // gateway relief
+    expect(lineFor(lines, ACCOUNTS.VENDOR_PAYABLES, 'credit').credit).toBe(487.96);
+    expect(lineFor(lines, ACCOUNTS.PLATFORM_FEE_REVENUE, 'credit').credit).toBe(10);
+    expect(lineFor(lines, ACCOUNTS.RZP_CHARGES_ORDERS, 'debit').debit).toBe(12.04);
+    expect(lineFor(lines, ACCOUNTS.RZP_CHARGES_ORDERS, 'credit').credit).toBe(12.04); // vendor-borne, nets 0
+    expect(lines.find((l) => l.account_code === ACCOUNTS.COMMISSION_REVENUE)).toBeUndefined();
+    expect(lines.find((l) => l.account_code === ACCOUNTS.GST_PAYABLE)).toBeUndefined();
+    expect(lines.find((l) => l.account_code === ACCOUNTS.SUBSCRIPTION_REVENUE)).toBeUndefined();
+    expect(description).toContain('p1');
+    expect(lines.every((l) => l.order_item_id === 'p1')).toBe(true);
+    expect(lines.every((l) => l.vendor_id === 'v1')).toBe(true);
+  });
+
+  test('zero gateway fee (fetch failed) omits charge lines; vendor gets full price', () => {
+    const { lines } = productPaymentEntry({ ...snapshot, razorpay_fee_actual: 0, razorpay_tax_actual: 0, vendor_amount: 500 });
+    expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
+    expect(lines.find((l) => l.account_code === ACCOUNTS.RZP_CHARGES_ORDERS)).toBeUndefined();
+    expect(lineFor(lines, ACCOUNTS.VENDOR_PAYABLES, 'credit').credit).toBe(500);
+  });
+
+  test('no platform fee (₹0 product fee tier) omits the revenue line, stays balanced', () => {
+    const { lines } = productPaymentEntry({ ...snapshot, platform_fee: 0, customer_total: 500, vendor_amount: 487.96 });
+    expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
+    expect(lines.find((l) => l.account_code === ACCOUNTS.PLATFORM_FEE_REVENUE)).toBeUndefined();
+  });
+
+  test('derives customer_total and vendor_amount when the snapshot omits them', () => {
+    const { lines } = productPaymentEntry({
+      purchase_id: 'p2', host_id: 'v2', product_price: 500, platform_fee: 10,
+      razorpay_fee_actual: 10.2, razorpay_tax_actual: 1.84,
+    });
+    expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
+    expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'debit').debit).toBe(510);
+    expect(lineFor(lines, ACCOUNTS.VENDOR_PAYABLES, 'credit').credit).toBe(487.96);
   });
 });
 
