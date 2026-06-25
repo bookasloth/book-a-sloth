@@ -11,18 +11,19 @@ import toast from 'react-hot-toast';
 import Modal from '../components/booking/Modal';
 import WhatsAppVerify from '../components/whatsapp/WhatsAppVerify';
 import StatusChip from '../components/common/StatusChip';
+import { PageHeader, Card, buttonClasses, fmtMoney, cn } from '../components/dashboard/ui';
 
 const fmtDate = (d) =>
   new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-// ── Stat tile ───────────────────────────────────────────────────────────
+// ── Stat tile (flat — lives inside a Card panel) ─────────────────────────
 const Stat = ({ Icon, label, value, tint }) => (
-  <div className="rounded border border-gray-200 bg-white p-3 sm:p-4">
-    <div className={`mb-2 inline-flex h-8 w-8 items-center justify-center rounded-md ${tint}`}>
+  <div className="rounded-md border border-gray-100 bg-gray-50/60 p-3 sm:p-4">
+    <div className={cn('mb-2 inline-flex h-8 w-8 items-center justify-center rounded-md', tint)}>
       <Icon className="h-4 w-4" strokeWidth={2.25} />
     </div>
-    <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{value}</p>
-    <p className="text-xs text-gray-500 mt-1">{label}</p>
+    <p className="text-xl font-bold leading-none text-gray-900 sm:text-2xl">{value}</p>
+    <p className="mt-1 text-xs text-gray-500">{label}</p>
   </div>
 );
 
@@ -30,8 +31,8 @@ const Stat = ({ Icon, label, value, tint }) => (
 const BookingRow = ({ b }) => (
   <div className="flex items-center justify-between gap-3 py-2.5">
     <div className="min-w-0">
-      <p className="font-medium text-sm text-gray-900 truncate">{b.guest_name || 'Guest'}</p>
-      <p className="text-xs text-gray-400 truncate">{b.services?.title} · {fmtDate(b.scheduled_at)}</p>
+      <p className="truncate text-sm font-medium text-gray-900">{b.guest_name || 'Guest'}</p>
+      <p className="truncate text-xs text-gray-400">{b.services?.title} · {fmtDate(b.scheduled_at)}</p>
     </div>
     <StatusChip status={b.status} className="shrink-0" />
   </div>
@@ -125,23 +126,22 @@ const Dashboard = () => {
   if (!isHost) return <Navigate to="/user/my-bookings" replace />;
 
   return (
-    <div className="w-full max-w-5xl">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-1">Welcome back, {user?.name?.split(' ')[0]}</h1>
-      <p className="text-sm text-gray-400 mb-6">Here's what's happening with your bookings.</p>
+    <div className="mx-auto max-w-5xl">
+      <PageHeader title={`Welcome back, ${user?.name?.split(' ')[0]}`} subtitle="Here's what's happening with your bookings." />
 
       {/* Legacy plan → auto-renew migration nudge */}
       {showLegacyBanner && (
-        <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded p-4">
-          <CreditCard className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" strokeWidth={2.25} />
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-gray-900 capitalize">Your {user.plan} plan won't auto-renew</p>
-            <p className="text-xs text-gray-600 mt-0.5">Set up auto-renew so you never lose access when your current period ends.</p>
+        <div className="mb-5 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-4">
+          <CreditCard className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" strokeWidth={2.25} />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold capitalize text-gray-900">Your {user.plan} plan won't auto-renew</p>
+            <p className="mt-0.5 text-xs text-gray-600">Set up auto-renew so you never lose access when your current period ends.</p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link to="/dashboard/upgrade" className="btn px-3 py-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 transition-colors whitespace-nowrap">
+          <div className="flex shrink-0 items-center gap-2">
+            <Link to="/dashboard/upgrade" className="whitespace-nowrap rounded bg-amber-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-amber-700">
               Set up auto-renew
             </Link>
-            <button onClick={dismissBanner} aria-label="Dismiss" className="text-amber-500 hover:text-amber-700 p-1">
+            <button onClick={dismissBanner} aria-label="Dismiss" className="p-1 text-amber-500 hover:text-amber-700">
               <XCircle className="h-4 w-4" strokeWidth={2.25} />
             </button>
           </div>
@@ -150,110 +150,110 @@ const Dashboard = () => {
 
       {/* Profile URL pill */}
       {user?.username ? (
-        <div className="mb-5 flex items-center gap-2 bg-white border border-gray-200 rounded px-4 py-2.5">
-          <Link2 className="h-3.5 w-3.5 text-gray-400 shrink-0" strokeWidth={2.25} />
-          <span className="text-xs text-gray-400 shrink-0">Your profile:</span>
-          <a href={`/${user.username}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:underline truncate">
+        <div className="mb-5 flex items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5">
+          <Link2 className="h-3.5 w-3.5 shrink-0 text-gray-400" strokeWidth={2.25} />
+          <span className="shrink-0 text-xs text-gray-400">Your profile:</span>
+          <a href={`/${user.username}`} target="_blank" rel="noreferrer" className="truncate text-xs font-semibold text-primary hover:underline">
             bookasloth.com/{user.username}
           </a>
           <button
             onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/${user.username}`); toast.success('Link copied!'); }}
-            className="ml-auto shrink-0 text-gray-400 hover:text-gray-700 transition-colors p-1" title="Copy link"
+            className="ml-auto shrink-0 p-1 text-gray-400 transition-colors hover:text-gray-700" title="Copy link"
           >
             <Copy className="h-3.5 w-3.5" strokeWidth={2.25} />
           </button>
         </div>
       ) : (
-        <div className="mb-5 flex items-start gap-3 bg-primary-light border border-primary/30 rounded p-4">
-          <Link2 className="h-5 w-5 text-primary shrink-0 mt-0.5" strokeWidth={2.25} />
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-gray-900">Set up your public profile</p>
-            <p className="text-xs text-gray-500 mt-0.5">Add a username so clients can find and book you.</p>
+        <div className="mb-5 flex items-start gap-3 rounded-md border border-primary/30 bg-primary-light p-4">
+          <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" strokeWidth={2.25} />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-gray-900">Set up your public profile</p>
+            <p className="mt-0.5 text-xs text-gray-500">Add a username so clients can find and book you.</p>
           </div>
-          <Link to="/dashboard/profile" className="btn shrink-0 px-3 py-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark transition-colors whitespace-nowrap">
+          <Link to="/dashboard/profile" className={cn(buttonClasses({ variant: 'primary', size: 'sm' }), 'shrink-0 whitespace-nowrap')}>
             Set username
           </Link>
         </div>
       )}
 
       {/* 2 rows × 2 columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
         {/* Top-Left: bookings stats (2×2) */}
-        <section className="rounded border border-gray-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Bookings overview</h2>
+        <Card as="section">
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">Bookings overview</h2>
           <div className="grid grid-cols-2 gap-3">
             <Stat Icon={CalendarClock} label="Upcoming"       value={m.upcoming}  tint="bg-blue-50 text-blue-600" />
             <Stat Icon={CheckCircle2}  label="Completed"      value={m.completed} tint="bg-green-50 text-green-600" />
             <Stat Icon={XCircle}       label="Cancelled"      value={m.cancelled} tint="bg-red-50 text-red-600" />
             <Stat Icon={CalendarDays}  label="Total Bookings" value={m.total}     tint="bg-gray-100 text-gray-600" />
           </div>
-        </section>
+        </Card>
 
         {/* Top-Right: business stats (2×2) */}
-        <section className="rounded border border-gray-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Your business</h2>
+        <Card as="section">
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">Your business</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Stat Icon={LayoutGrid}  label="Total Services"      value={m.services}        tint="bg-purple-50 text-purple-600" />
-            <Stat Icon={IndianRupee} label="Total Earnings"      value={`₹${m.earnings}`}  tint="bg-primary-light text-primary" />
-            <Stat Icon={UserCheck}   label="Profile Completion"  value={`${completion}%`}  tint="bg-amber-50 text-amber-600" />
-            <Stat Icon={Activity}    label="Active Bookings"     value={m.active}          tint="bg-teal-50 text-teal-600" />
+            <Stat Icon={LayoutGrid}  label="Total Services"      value={m.services}            tint="bg-purple-50 text-purple-600" />
+            <Stat Icon={IndianRupee} label="Total Earnings"      value={fmtMoney(m.earnings)}  tint="bg-primary-light text-primary" />
+            <Stat Icon={UserCheck}   label="Profile Completion"  value={`${completion}%`}      tint="bg-amber-50 text-amber-600" />
+            <Stat Icon={Activity}    label="Active Bookings"     value={m.active}              tint="bg-teal-50 text-teal-600" />
           </div>
-        </section>
+        </Card>
 
         {/* Bottom-Left: upcoming + recent (1 col, 2 rows) */}
-        <section className="rounded border border-gray-200 bg-white p-4 flex flex-col gap-4">
+        <Card as="section" className="flex flex-col gap-4">
           <div>
-            <div className="flex items-center justify-between mb-1">
+            <div className="mb-1 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-700">Upcoming Bookings</h2>
               <Link to="/dashboard/bookings" className="text-xs text-primary hover:underline">View all</Link>
             </div>
             {m.upcomingList.length === 0 ? (
-              <p className="text-xs text-gray-400 py-3">No upcoming bookings. Share your profile to get booked.</p>
+              <p className="py-3 text-xs text-gray-400">No upcoming bookings. Share your profile to get booked.</p>
             ) : (
               <div className="divide-y divide-gray-100">{m.upcomingList.map((b) => <BookingRow key={b.id} b={b} />)}</div>
             )}
           </div>
           <div className="border-t border-gray-100 pt-3">
-            <h2 className="text-sm font-semibold text-gray-700 mb-1">Recent Bookings</h2>
+            <h2 className="mb-1 text-sm font-semibold text-gray-700">Recent Bookings</h2>
             {m.recentList.length === 0 ? (
-              <p className="text-xs text-gray-400 py-3">No past bookings yet.</p>
+              <p className="py-3 text-xs text-gray-400">No past bookings yet.</p>
             ) : (
               <div className="divide-y divide-gray-100">{m.recentList.map((b) => <BookingRow key={b.id} b={b} />)}</div>
             )}
           </div>
-        </section>
+        </Card>
 
         {/* Bottom-Right: checklist or success */}
-        <section className="rounded border border-gray-200 bg-white p-4">
+        <Card as="section">
           {allDone ? (
-            <div className="flex h-full flex-col items-center justify-center text-center py-6">
+            <div className="flex h-full flex-col items-center justify-center py-6 text-center">
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
                 <CheckCircle2 className="h-7 w-7 text-green-600" strokeWidth={2} />
               </div>
               <p className="font-semibold text-gray-900">Everything is set.</p>
-              <p className="text-xs text-gray-500 mt-1">Your account is fully configured. You're ready to grow.</p>
+              <p className="mt-1 text-xs text-gray-500">Your account is fully configured. You're ready to grow.</p>
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between mb-3">
+              <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-gray-700">Finish setup</h2>
                 <span className="text-xs font-medium text-gray-500">{completion}%</span>
               </div>
-              <div className="h-1.5 w-full rounded-full bg-gray-100 mb-4 overflow-hidden">
+              <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
                 <div className="h-full bg-primary transition-all" style={{ width: `${completion}%` }} />
               </div>
               <ul className="space-y-1.5">
                 {checklist.map((c) => {
                   const inner = (
                     <>
-                      <span className={`flex h-7 w-7 items-center justify-center rounded-md shrink-0 ${c.done ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
+                      <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-md', c.done ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500')}>
                         {c.done ? <Check className="h-4 w-4" strokeWidth={3} /> : <c.Icon className="h-4 w-4" strokeWidth={2.25} />}
                       </span>
-                      <span className={`flex-1 text-sm ${c.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{c.label}</span>
-                      {!c.done && <ArrowRight className="h-4 w-4 text-gray-300 shrink-0" strokeWidth={2.25} />}
+                      <span className={cn('flex-1 text-sm', c.done ? 'text-gray-400 line-through' : 'text-gray-700')}>{c.label}</span>
+                      {!c.done && <ArrowRight className="h-4 w-4 shrink-0 text-gray-300" strokeWidth={2.25} />}
                     </>
                   );
-                  const cls = 'flex items-center gap-3 w-full rounded p-1.5 text-left transition hover:bg-gray-50 disabled:hover:bg-transparent';
+                  const cls = 'flex w-full items-center gap-3 rounded p-1.5 text-left transition hover:bg-gray-50 disabled:hover:bg-transparent';
                   if (c.done) return <li key={c.key}><div className="flex items-center gap-3 p-1.5">{inner}</div></li>;
                   return (
                     <li key={c.key}>
@@ -266,12 +266,12 @@ const Dashboard = () => {
               </ul>
             </>
           )}
-        </section>
+        </Card>
       </div>
 
       {/* Only render the modal when the host is not yet verified — belt-and-suspenders guard */}
       <Modal open={whatsappModalOpen && !user?.whatsapp_verified} title="Verify WhatsApp" onClose={() => setWhatsappModalOpen(false)}>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="mb-4 text-sm text-gray-500">
           Receive booking confirmations and important updates directly on WhatsApp.
         </p>
         <WhatsAppVerify

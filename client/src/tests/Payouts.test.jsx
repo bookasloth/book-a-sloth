@@ -15,10 +15,10 @@ describe('Payouts breakdown', () => {
   it('shows available, clearing and pending-completion figures', async () => {
     render(<Payouts />);
     await waitFor(() => expect(screen.getByText(/Available Balance/i)).toBeInTheDocument());
-    expect(screen.getByText('Rs.900.00')).toBeInTheDocument();
+    expect(screen.getByText('₹900.00')).toBeInTheDocument();
     expect(screen.getByText(/Clearing/i)).toBeInTheDocument();
-    expect(screen.getByText('Rs.300.00')).toBeInTheDocument();
+    expect(screen.getByText('₹300.00')).toBeInTheDocument();
     expect(screen.getByText(/Pending Completion/i)).toBeInTheDocument();
-    expect(screen.getByText('Rs.200.00')).toBeInTheDocument();
+    expect(screen.getByText('₹200.00')).toBeInTheDocument();
   });
 });

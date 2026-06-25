@@ -1,7 +1,12 @@
 // client/src/pages/Feedback.jsx
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { MessageSquarePlus } from 'lucide-react';
 import { submitFeedback, getMyFeedback } from '../services/api';
+import {
+  PageHeader, Card, Section, Button, FormField, Select, Input, Textarea,
+  StatusBadge, EmptyState, SkeletonCard, cn,
+} from '../components/dashboard/ui';
 
 const TYPES = [
   { v: 'idea', label: '💡 Idea' },
@@ -11,11 +16,6 @@ const TYPES = [
   { v: 'other', label: 'Other' },
 ];
 const AREAS = ['booking', 'payments', 'dashboard', 'profile', 'availability', 'other'];
-const STATUS_STYLE = {
-  new: 'bg-gray-100 text-gray-600', reviewing: 'bg-blue-100 text-blue-700',
-  planned: 'bg-amber-100 text-amber-700', shipped: 'bg-green-100 text-green-700',
-  declined: 'bg-red-100 text-red-600',
-};
 
 export default function Feedback() {
   const [type, setType] = useState('idea');
@@ -48,60 +48,86 @@ export default function Feedback() {
   };
 
   return (
-    <div className="space-y-8">
-      <header>
-        <h1 className="text-2xl font-bold">Feedback</h1>
-        <p className="text-sm text-gray-500">Tell us what's working, what's not, and what you'd love to see. We read everything.</p>
-      </header>
+    <div>
+      <PageHeader
+        title="Feedback"
+        subtitle="Tell us what's working, what's not, and what you'd love to see. We read everything."
+      />
 
-      <form onSubmit={submit} className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4 max-w-2xl">
-        <div className="flex flex-wrap gap-2">
-          {TYPES.map((t) => (
-            <button type="button" key={t.v} onClick={() => setType(t.v)}
-              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${type === t.v ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-              {t.label}
-            </button>
-          ))}
+      <Card as="form" onSubmit={submit} className="mb-8 max-w-2xl space-y-4">
+        <FormField label="What kind of feedback?" className="mb-0">
+          <div className="flex flex-wrap gap-2">
+            {TYPES.map((t) => (
+              <button
+                type="button"
+                key={t.v}
+                onClick={() => setType(t.v)}
+                aria-pressed={type === t.v}
+                className={cn(
+                  'rounded-full border px-3 py-1.5 text-sm transition-colors',
+                  type === t.v
+                    ? 'border-primary bg-primary text-white'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50',
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </FormField>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormField label="Area" htmlFor="fb-area" hint="Optional" className="mb-0">
+            <Select id="fb-area" value={area} onChange={(e) => setArea(e.target.value)}>
+              <option value="">Choose an area…</option>
+              {AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
+            </Select>
+          </FormField>
+          <FormField label="Title" htmlFor="fb-subject" hint="Optional" className="mb-0">
+            <Input id="fb-subject" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={160} placeholder="Short title" />
+          </FormField>
         </div>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <select value={area} onChange={(e) => setArea(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
-            <option value="">Which area? (optional)</option>
-            {AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
-          <input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={160}
-            placeholder="Short title (optional)" className="border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-        </div>
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={4000} rows={5}
-          placeholder="Your feedback…" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-        <button type="submit" disabled={saving}
-          className="btn bg-primary text-white px-5 py-2 text-sm font-medium disabled:opacity-60">
+
+        <FormField label="Your feedback" htmlFor="fb-body" required className="mb-0">
+          <Textarea id="fb-body" value={body} onChange={(e) => setBody(e.target.value)} maxLength={4000} rows={5} placeholder="Your feedback…" />
+        </FormField>
+
+        <Button type="submit" disabled={saving}>
           {saving ? 'Sending…' : 'Send feedback'}
-        </button>
-      </form>
+        </Button>
+      </Card>
 
-      <section className="max-w-2xl">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Your feedback</h2>
-        {loading ? <p className="text-sm text-gray-400">Loading…</p>
-          : items.length === 0 ? <p className="text-sm text-gray-400">You haven't sent any feedback yet.</p>
-          : (
-            <ul className="space-y-3">
-              {items.map((f) => (
-                <li key={f.id} className="bg-white rounded-xl border border-gray-200 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-medium text-sm">{f.subject || f.type}</span>
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${STATUS_STYLE[f.status] || 'bg-gray-100 text-gray-600'}`}>{f.status}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{f.body}</p>
-                  {f.admin_response && (
-                    <p className="text-xs text-gray-500 mt-2 border-l-2 border-primary/40 pl-2">
-                      <span className="font-semibold">Team:</span> {f.admin_response}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-      </section>
+      <Section title="Your feedback" className="max-w-2xl">
+        {loading ? (
+          <div className="space-y-3">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon={MessageSquarePlus}
+            title="No feedback yet"
+            description="Anything you send shows up here, along with our response."
+          />
+        ) : (
+          <ul className="space-y-3">
+            {items.map((f) => (
+              <Card as="li" key={f.id}>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-gray-900">{f.subject || f.type}</span>
+                  <StatusBadge status={f.status} />
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600">{f.body}</p>
+                {f.admin_response && (
+                  <p className="mt-2 border-l-2 border-primary/40 pl-2 text-xs text-gray-500">
+                    <span className="font-semibold">Team:</span> {f.admin_response}
+                  </p>
+                )}
+              </Card>
+            ))}
+          </ul>
+        )}
+      </Section>
     </div>
   );
 }

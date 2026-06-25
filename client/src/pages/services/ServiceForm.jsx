@@ -4,11 +4,13 @@
  */
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, Plus } from 'lucide-react';
 import { svcCreate, svcUpdate, uploadImage, hostGetCategories, getCategories } from '../../services/api';
 import ServiceCategoryPicker from '../../components/services/ServiceCategoryPicker';
 import { categoryLabel } from '../../utils/categoryUtils';
 import toast from 'react-hot-toast';
 import FeatureGate from '../../components/common/FeatureGate';
+import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -45,6 +47,8 @@ const empty = () => ({
   important_note: '',
   category: '',
 });
+
+const fieldLabel = "mb-1 block text-sm font-medium text-gray-700";
 
 // ─── Tiny Rich Text Editor ────────────────────────────────────────────────────
 
@@ -83,17 +87,17 @@ const RichEditor = ({ value, onChange }) => {
   };
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary/30">
+    <div className="overflow-hidden rounded-xl border border-gray-200 focus-within:ring-2 focus-within:ring-primary/30">
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-1 p-2 bg-gray-50 border-b border-gray-200">
+      <div className="flex flex-wrap gap-1 border-b border-gray-200 bg-gray-50 p-2">
         {tools.map(t => (
           <button key={t.cmd + (t.val||'')} type="button" title={t.title}
             onMouseDown={e => { e.preventDefault(); exec(t.cmd, t.val || null); }}
-            className="px-2 py-1 rounded text-xs font-medium text-gray-600 hover:bg-white hover:shadow-sm transition-all"
+            className="rounded px-2 py-1 text-xs font-medium text-gray-600 transition-all hover:bg-white hover:shadow-sm"
             dangerouslySetInnerHTML={{ __html: t.icon }}/>
         ))}
         <button type="button" title="Link" onMouseDown={e => { e.preventDefault(); handleLink(); }}
-          className="px-2 py-1 rounded text-xs font-medium text-gray-600 hover:bg-white hover:shadow-sm transition-all">
+          className="rounded px-2 py-1 text-xs font-medium text-gray-600 transition-all hover:bg-white hover:shadow-sm">
           🔗
         </button>
       </div>
@@ -105,7 +109,7 @@ const RichEditor = ({ value, onChange }) => {
         onCompositionStart={() => { isComposing.current = true; }}
         onCompositionEnd={() => { isComposing.current = false; onChange(ref.current?.innerHTML || ''); }}
         onInput={() => { if (!isComposing.current) onChange(ref.current?.innerHTML || ''); }}
-        className="min-h-[200px] p-4 text-sm text-gray-700 focus:outline-none prose prose-sm max-w-none"
+        className="prose prose-sm min-h-[200px] max-w-none p-4 text-sm text-gray-700 focus:outline-none"
         style={{ lineHeight: 1.7 }}
         data-placeholder="Write a detailed overview of your service…"
       />
@@ -138,10 +142,10 @@ const TagInput = ({ value, onChange, placeholder, color = 'green' }) => {
   };
 
   return (
-    <div className="min-h-[48px] border border-gray-200 rounded-xl p-2 flex flex-wrap gap-1.5 focus-within:ring-2 focus-within:ring-primary/30 bg-white cursor-text"
+    <div className="flex min-h-[48px] cursor-text flex-wrap gap-1.5 rounded-xl border border-gray-200 bg-white p-2 focus-within:ring-2 focus-within:ring-primary/30"
       onClick={() => inputRef.current?.focus()}>
       {value.map(tag => (
-        <span key={tag} className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border ${colors[color]}`}>
+        <span key={tag} className={cn('inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium', colors[color])}>
           {tag}
           <button type="button" onClick={() => remove(tag)} className="hover:opacity-70">×</button>
         </span>
@@ -153,7 +157,7 @@ const TagInput = ({ value, onChange, placeholder, color = 'green' }) => {
         onKeyDown={handleKeyDown}
         onBlur={() => { if (input.trim()) add(input); }}
         placeholder={value.length === 0 ? placeholder : ''}
-        className="flex-1 min-w-[120px] outline-none text-sm bg-transparent text-gray-700 placeholder-gray-400"
+        className="min-w-[120px] flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder-gray-400"
       />
     </div>
   );
@@ -185,42 +189,30 @@ const FAQBuilder = ({ value, onChange }) => {
   return (
     <div className="space-y-3">
       {value.map((faq, i) => (
-        <div key={i} className="border border-gray-200 rounded-xl p-4 bg-gray-50">
-          <div className="flex items-center justify-between mb-3">
+        <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div className="mb-3 flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500">FAQ {i + 1}</span>
             <div className="flex gap-1">
               <button type="button" onClick={() => moveUp(i)} disabled={i === 0}
-                className="p-1 rounded hover:bg-white text-gray-400 hover:text-gray-700 disabled:opacity-30 transition-colors">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7"/></svg>
+                className="rounded p-1 text-gray-400 transition-colors hover:bg-white hover:text-gray-700 disabled:opacity-30">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7"/></svg>
               </button>
               <button type="button" onClick={() => moveDown(i)} disabled={i === value.length - 1}
-                className="p-1 rounded hover:bg-white text-gray-400 hover:text-gray-700 disabled:opacity-30 transition-colors">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                className="rounded p-1 text-gray-400 transition-colors hover:bg-white hover:text-gray-700 disabled:opacity-30">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
               </button>
               <button type="button" onClick={() => remove(i)}
-                className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                className="rounded p-1 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
           </div>
-          <input
-            type="text" value={faq.question}
-            onChange={e => update(i, 'question', e.target.value)}
-            placeholder="Question"
-            className="fb-input mb-2 bg-white"
-          />
-          <textarea
-            rows={3} value={faq.answer}
-            onChange={e => update(i, 'answer', e.target.value)}
-            placeholder="Answer"
-            className="fb-input resize-none bg-white w-full"
-          />
+          <Input type="text" value={faq.question} onChange={e => update(i, 'question', e.target.value)} placeholder="Question" className="mb-2 bg-white" />
+          <Textarea rows={3} value={faq.answer} onChange={e => update(i, 'answer', e.target.value)} placeholder="Answer" className="bg-white" />
         </div>
       ))}
-      <button type="button" onClick={add}
-        className="flex items-center gap-2 text-sm text-primary font-medium hover:opacity-80 transition-opacity mt-1">
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
-        Add FAQ
+      <button type="button" onClick={add} className="mt-1 flex items-center gap-2 text-sm font-medium text-primary transition-opacity hover:opacity-80">
+        <Plus className="h-4 w-4" /> Add FAQ
       </button>
     </div>
   );
@@ -306,30 +298,28 @@ const ThumbnailCropper = ({ currentUrl, onUploaded }) => {
 
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-        Thumbnail <span className="text-red-500">*</span>
-      </label>
+      <label className={fieldLabel}>Thumbnail <span className="text-red-500">*</span></label>
 
       {/* Preview if no new file selected */}
       {!imgEl && (
         <div
-          className="relative group cursor-pointer rounded-xl overflow-hidden border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center"
+          className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50"
           style={{ width: '100%', aspectRatio: '16/9', maxHeight: 220 }}
           onClick={() => fileRef.current?.click()}
         >
           {preview
-            ? <img src={preview} alt="" className="w-full h-full object-cover"/>
-            : <div className="text-center text-gray-400 p-6">
-                <svg className="w-10 h-10 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ? <img src={preview} alt="" className="h-full w-full object-cover"/>
+            : <div className="p-6 text-center text-gray-400">
+                <svg className="mx-auto mb-2 h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
                 <p className="text-sm font-medium">Click to upload thumbnail</p>
-                <p className="text-xs mt-1">JPG, PNG, WEBP · Max 2MB · 16:9 recommended</p>
+                <p className="mt-1 text-xs">JPG, PNG, WEBP · Max 2MB · 16:9 recommended</p>
               </div>
           }
           {preview && (
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <span className="text-white text-sm font-medium">Change thumbnail</span>
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+              <span className="text-sm font-medium text-white">Change thumbnail</span>
             </div>
           )}
         </div>
@@ -342,23 +332,18 @@ const ThumbnailCropper = ({ currentUrl, onUploaded }) => {
             ref={canvasRef}
             width={CANVAS_W}
             height={CANVAS_H}
-            className="w-full rounded-xl border border-gray-200 cursor-move"
+            className="w-full cursor-move rounded-xl border border-gray-200"
             style={{ aspectRatio: '16/9' }}
             onMouseDown={onMouse} onMouseMove={onMouse} onMouseUp={onMouse} onMouseLeave={onMouse}
             onTouchStart={onTouch} onTouchMove={onTouch} onTouchEnd={onTouch}
           />
           <div className="flex items-center gap-3">
-            <label className="text-xs text-gray-500 whitespace-nowrap">Zoom</label>
-            <input type="range" min={0.1} max={4} step={0.05} value={scale}
-              onChange={e => setScale(parseFloat(e.target.value))}
-              className="flex-1"/>
+            <label className="whitespace-nowrap text-xs text-gray-500">Zoom</label>
+            <input type="range" min={0.1} max={4} step={0.05} value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="flex-1"/>
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setImgEl(null)} className="fb-btn fb-btn--secondary text-sm">Cancel</button>
-            <button type="button" onClick={upload} disabled={uploading}
-              className="fb-btn fb-btn--primary text-sm flex-1">
-              {uploading ? 'Uploading…' : 'Save Thumbnail'}
-            </button>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setImgEl(null)}>Cancel</Button>
+            <Button type="button" size="sm" className="flex-1" onClick={upload} disabled={uploading}>{uploading ? 'Uploading…' : 'Save Thumbnail'}</Button>
           </div>
         </div>
       )}
@@ -367,8 +352,9 @@ const ThumbnailCropper = ({ currentUrl, onUploaded }) => {
         onChange={e => { if (e.target.files?.[0]) loadFile(e.target.files[0]); e.target.value = ''; }}/>
 
       {!imgEl && (
-        <button type="button" onClick={() => fileRef.current?.click()}
-          className="mt-2 text-xs text-primary hover:underline">{preview ? 'Replace thumbnail' : 'Choose file'}</button>
+        <button type="button" onClick={() => fileRef.current?.click()} className="mt-2 text-xs text-primary hover:underline">
+          {preview ? 'Replace thumbnail' : 'Choose file'}
+        </button>
       )}
     </div>
   );
@@ -476,66 +462,50 @@ export default function ServiceForm({ initialData, serviceId }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-6xl">
+    <form onSubmit={handleSubmit}>
       {/* Page header */}
-      <div className="flex items-center gap-3 mb-6">
-        <button type="button" onClick={() => navigate('/dashboard/services')}
-          className="p-2 rounded-lg hover:bg-gray-200 text-gray-500 transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/>
-          </svg>
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold">{isEdit ? 'Edit Service' : 'Add New Service'}</h1>
-          <p className="text-sm text-gray-400">{isEdit ? 'Update your service details' : 'Create a new service to offer to clients'}</p>
-        </div>
-      </div>
+      <button type="button" onClick={() => navigate('/dashboard/services')}
+        className="mb-3 inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-800">
+        <ChevronLeft className="h-4 w-4" /> Back to services
+      </button>
+      <PageHeader
+        title={isEdit ? 'Edit Service' : 'Add New Service'}
+        subtitle={isEdit ? 'Update your service details' : 'Create a new service to offer to clients'}
+      />
 
       {/* ── ABOVE THE FOLD: Basic info ── */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
-        <h2 className="text-base font-bold mb-5 text-gray-800">Basic Information</h2>
+      <Card padded={false} className="mb-6 p-6">
+        <h2 className="mb-5 text-base font-bold text-gray-800">Basic Information</h2>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Left column */}
           <div className="space-y-5">
             {/* Title */}
             <div>
-              <div className="flex justify-between mb-1">
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Service Title <span className="text-red-500">*</span>
-                </label>
-                <span className={`text-xs ${titleLen > 55 ? 'text-red-500' : 'text-gray-400'}`}>{titleLen}/60</span>
+              <div className="mb-1 flex justify-between">
+                <label className="block text-sm font-medium text-gray-700">Service Title <span className="text-red-500">*</span></label>
+                <span className={cn('text-xs', titleLen > 55 ? 'text-red-500' : 'text-gray-400')}>{titleLen}/60</span>
               </div>
-              <input type="text" value={form.title} maxLength={60} required
-                onChange={e => set('title', e.target.value)}
-                placeholder="e.g. SEO Consultancy by Shubham Datarkar"
-                className="fb-input"/>
+              <Input type="text" value={form.title} maxLength={60} required onChange={e => set('title', e.target.value)} placeholder="e.g. SEO Consultancy by Shubham Datarkar" />
             </div>
 
             {/* Short description */}
             <div>
-              <div className="flex justify-between mb-1">
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Short Description <span className="text-red-500">*</span>
-                </label>
-                <span className={`text-xs ${shortLen > 150 ? 'text-red-500' : 'text-gray-400'}`}>{shortLen}/160</span>
+              <div className="mb-1 flex justify-between">
+                <label className="block text-sm font-medium text-gray-700">Short Description <span className="text-red-500">*</span></label>
+                <span className={cn('text-xs', shortLen > 150 ? 'text-red-500' : 'text-gray-400')}>{shortLen}/160</span>
               </div>
-              <textarea rows={3} value={form.short_description} maxLength={160} required
-                onChange={e => set('short_description', e.target.value)}
-                placeholder="Used for service cards, search results and meta description"
-                className="fb-input resize-none"/>
+              <Textarea rows={3} value={form.short_description} maxLength={160} required onChange={e => set('short_description', e.target.value)} placeholder="Used for service cards, search results and meta description" />
             </div>
 
             {/* Service Type — offline option gated; off = online only */}
             <FeatureGate flag="service_offline_type">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  Service Type
-                </label>
+                <label className={fieldLabel}>Service Type</label>
                 <div className="flex gap-3">
                   {['online','offline'].map(t => (
                     <button key={t} type="button" onClick={() => set('service_type', t)}
-                      className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ${form.service_type === t ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                      className={cn('flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all', form.service_type === t ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-500 hover:border-gray-300')}>
                       {t === 'online' ? '🌐 Online' : '📍 Offline'}
                     </button>
                   ))}
@@ -545,127 +515,102 @@ export default function ServiceForm({ initialData, serviceId }) {
 
             {/* Price */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                Price <span className="text-red-500">*</span>
-              </label>
+              <label className={fieldLabel}>Price <span className="text-red-500">*</span></label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₹</span>
-                <input type="number" min={0} step={1} required value={form.price}
-                  onChange={e => set('price', e.target.value)}
-                  placeholder="1999"
-                  className="fb-input pl-7"/>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-medium text-gray-500">₹</span>
+                <Input type="number" min={0} step={1} required value={form.price} onChange={e => set('price', e.target.value)} placeholder="1999" className="pl-7" />
               </div>
             </div>
 
             {/* Category — drawn from the host's own categories */}
-            <ServiceCategoryPicker
-              categories={hostCats}
-              value={form.category}
-              onChange={(slug) => set('category', slug)}
-            />
+            <ServiceCategoryPicker categories={hostCats} value={form.category} onChange={(slug) => set('category', slug)} />
           </div>
 
           {/* Right column */}
           <div className="space-y-5">
             {/* Duration */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                Duration <span className="text-red-500">*</span>
-              </label>
-              <select value={form.duration} onChange={e => set('duration', parseInt(e.target.value))} className="fb-input">
+              <label className={fieldLabel}>Duration <span className="text-red-500">*</span></label>
+              <Select value={form.duration} onChange={e => set('duration', parseInt(e.target.value))}>
                 {DURATIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-              </select>
+              </Select>
               {form.duration === 0 && (
-                <input type="number" min={1} max={480} value={form.custom_duration}
-                  onChange={e => set('custom_duration', e.target.value)}
-                  placeholder="Enter minutes e.g. 75"
-                  className="fb-input mt-2"/>
+                <Input type="number" min={1} max={480} value={form.custom_duration} onChange={e => set('custom_duration', e.target.value)} placeholder="Enter minutes e.g. 75" className="mt-2" />
               )}
             </div>
 
             {/* Grace Period */}
             <FeatureGate flag="service_grace_period">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                  Grace Period (buffer before/after)
-                </label>
-                <select value={form.grace_period} onChange={e => set('grace_period', parseInt(e.target.value))} className="fb-input">
+                <label className={fieldLabel}>Grace Period (buffer before/after)</label>
+                <Select value={form.grace_period} onChange={e => set('grace_period', parseInt(e.target.value))}>
                   {GRACE_PERIODS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
-                </select>
+                </Select>
               </div>
             </FeatureGate>
 
             {/* Thumbnail */}
             <FeatureGate flag="service_thumbnail">
-              <ThumbnailCropper
-                currentUrl={form.thumbnail_url}
-                onUploaded={url => set('thumbnail_url', url)}
-              />
+              <ThumbnailCropper currentUrl={form.thumbnail_url} onUploaded={url => set('thumbnail_url', url)} />
             </FeatureGate>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* ── BELOW THE FOLD: Two-column layout ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Left: Long Description */}
         <FeatureGate flag="service_rich_overview">
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-base font-bold mb-1 text-gray-800">Overview</h2>
-            <p className="text-xs text-gray-400 mb-4">Shown on the Overview tab of your public service page</p>
+          <Card padded={false} className="p-6">
+            <h2 className="mb-1 text-base font-bold text-gray-800">Overview</h2>
+            <p className="mb-4 text-xs text-gray-400">Shown on the Overview tab of your public service page</p>
             <RichEditor value={form.long_description} onChange={v => set('long_description', v)}/>
-          </div>
+          </Card>
         </FeatureGate>
 
         {/* Right: Inclusions, Exclusions, FAQ, Notes */}
         <div className="space-y-6">
           {/* Included / Excluded */}
           <FeatureGate flag="service_inclusions">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-base font-bold mb-1 text-gray-800">What's Included</h2>
-              <p className="text-xs text-gray-400 mb-3">Press Enter or comma after each item</p>
-              <TagInput value={form.included_items} onChange={v => set('included_items', v)}
-                placeholder="Type and press Enter…" color="green"/>
-            </div>
+            <Card padded={false} className="p-6">
+              <h2 className="mb-1 text-base font-bold text-gray-800">What's Included</h2>
+              <p className="mb-3 text-xs text-gray-400">Press Enter or comma after each item</p>
+              <TagInput value={form.included_items} onChange={v => set('included_items', v)} placeholder="Type and press Enter…" color="green"/>
+            </Card>
           </FeatureGate>
 
           <FeatureGate flag="service_inclusions">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-base font-bold mb-1 text-gray-800">Not Included</h2>
-              <p className="text-xs text-gray-400 mb-3">Press Enter or comma after each item</p>
-              <TagInput value={form.excluded_items} onChange={v => set('excluded_items', v)}
-                placeholder="Type and press Enter…" color="red"/>
-            </div>
+            <Card padded={false} className="p-6">
+              <h2 className="mb-1 text-base font-bold text-gray-800">Not Included</h2>
+              <p className="mb-3 text-xs text-gray-400">Press Enter or comma after each item</p>
+              <TagInput value={form.excluded_items} onChange={v => set('excluded_items', v)} placeholder="Type and press Enter…" color="red"/>
+            </Card>
           </FeatureGate>
 
           {/* FAQ */}
           <FeatureGate flag="service_faqs">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-base font-bold mb-1 text-gray-800">FAQs</h2>
-              <p className="text-xs text-gray-400 mb-4">Optional · Add as many as you need</p>
+            <Card padded={false} className="p-6">
+              <h2 className="mb-1 text-base font-bold text-gray-800">FAQs</h2>
+              <p className="mb-4 text-xs text-gray-400">Optional · Add as many as you need</p>
               <FAQBuilder value={form.faqs} onChange={v => set('faqs', v)}/>
-            </div>
+            </Card>
           </FeatureGate>
 
           {/* Important Note */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-base font-bold mb-1 text-gray-800">Important Notes</h2>
-            <p className="text-xs text-gray-400 mb-3">Optional · Shown to clients before booking</p>
-            <textarea rows={4} value={form.important_note} onChange={e => set('important_note', e.target.value)}
-              placeholder="e.g. Please bring Search Console access. Calls are recorded."
-              className="fb-input resize-none w-full"/>
-          </div>
+          <Card padded={false} className="p-6">
+            <h2 className="mb-1 text-base font-bold text-gray-800">Important Notes</h2>
+            <p className="mb-3 text-xs text-gray-400">Optional · Shown to clients before booking</p>
+            <Textarea rows={4} value={form.important_note} onChange={e => set('important_note', e.target.value)} placeholder="e.g. Please bring Search Console access. Calls are recorded." />
+          </Card>
         </div>
       </div>
 
       {/* Submit bar */}
-      <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur border-t border-gray-200 -mx-4 px-4 sm:-mx-6 sm:px-6 py-4 flex items-center justify-between gap-4">
-        <button type="button" onClick={() => navigate('/dashboard/services')}
-          className="fb-btn fb-btn--secondary">Cancel</button>
-        <button type="submit" disabled={saving}
-          className="fb-btn fb-btn--primary min-w-[140px]">
+      <div className="sticky bottom-0 z-20 -mx-4 flex items-center justify-between gap-4 border-t border-gray-200 bg-white/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6">
+        <Button type="button" variant="secondary" onClick={() => navigate('/dashboard/services')}>Cancel</Button>
+        <Button type="submit" disabled={saving} className="min-w-[140px]">
           {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Publish Service'}
-        </button>
+        </Button>
       </div>
     </form>
   );

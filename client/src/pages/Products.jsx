@@ -12,7 +12,12 @@ import { useAuth } from "../context/AuthContext";
 import { useFeature } from "../context/FeatureContext";
 import BackButton from "../components/common/BackButton";
 import { Link } from "react-router-dom";
+import { Plus, Package } from "lucide-react";
 import toast from "react-hot-toast";
+import {
+  PageHeader, Card, Button, buttonClasses, FormField, Input, Select, Textarea,
+  Badge, StatusBadge, EmptyState, cn,
+} from "../components/dashboard/ui";
 
 const PRODUCT_TYPES = [
   { value: "pdf", label: "PDF" },
@@ -35,6 +40,12 @@ const formatBytes = (n) => {
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 };
+
+// Native file inputs keep their testids + accept attrs; styled to match the kit.
+const fileInputCls =
+  "block w-full rounded border border-gray-300 bg-white text-sm text-gray-700 shadow-sm " +
+  "file:mr-3 file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-600 " +
+  "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60";
 
 const emptyForm = {
   title: "",
@@ -249,22 +260,21 @@ const Products = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl">
+    <div className="mx-auto max-w-4xl">
       <BackButton hasUnsavedChanges={dirty} />
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Digital Products</h1>
-          <p className="text-gray-500 text-sm">
-            Sell PDFs, templates, ebooks, and more.
-          </p>
-        </div>
-        {!showForm && canCreate && (
-          <button onClick={openCreate} className="fb-btn fb-btn--primary">
-            + Add Product
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="Digital Products"
+        subtitle="Sell PDFs, templates, ebooks, and more."
+        actions={
+          !showForm && canCreate ? (
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4" />
+              Add Product
+            </Button>
+          ) : null
+        }
+      />
 
       {/* Gate — two distinct reasons, two distinct messages:
           • kill switch OFF → products are globally unavailable; an upgrade can't
@@ -272,334 +282,164 @@ const Products = () => {
           • plan has no product allowance → show the upgrade CTA, naming the
             cheapest higher tier (price lives on the Upgrade page, never here). */}
       {!canCreate && (
-        <div className="fb-card p-6 mb-6 text-center border-2 border-dashed border-primary/30">
-          <div className="text-3xl mb-3">📦</div>
+        <Card className="mb-6 border-2 border-dashed border-primary/30 text-center">
+          <div className="mb-3 text-3xl">📦</div>
           {!digitalProductsOn ? (
             <>
-              <h3 className="font-semibold mb-1">
-                Digital Products are temporarily unavailable
-              </h3>
+              <h3 className="mb-1 font-semibold text-gray-900">Digital Products are temporarily unavailable</h3>
               <p className="text-sm text-gray-500">
-                This feature is switched off right now. It’ll be back soon — no
-                plan change needed.
+                This feature is switched off right now. It’ll be back soon — no plan change needed.
               </p>
             </>
           ) : (
             <>
-              <h3 className="font-semibold mb-1">Unlock Digital Products</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Sell PDFs, templates, ebooks, and resources directly from your
-                profile.
+              <h3 className="mb-1 font-semibold text-gray-900">Unlock Digital Products</h3>
+              <p className="mb-4 text-sm text-gray-500">
+                Sell PDFs, templates, ebooks, and resources directly from your profile.
               </p>
-              <Link to="/dashboard/upgrade" className="fb-btn fb-btn--primary">
-                {upgradePlan
-                  ? `Upgrade to ${upgradePlan.name}`
-                  : "Upgrade your plan"}
+              <Link to="/dashboard/upgrade" className={buttonClasses({ variant: "primary" })}>
+                {upgradePlan ? `Upgrade to ${upgradePlan.name}` : "Upgrade your plan"}
               </Link>
             </>
           )}
-        </div>
+        </Card>
       )}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="fb-card p-5 mb-6 space-y-4">
-          <h2 className="font-semibold">
-            {editingId ? "Edit Product" : "New Product"}
-          </h2>
+        <Card as="form" onSubmit={handleSubmit} className="mb-6 space-y-4">
+          <h2 className="font-semibold text-gray-900">{editingId ? "Edit Product" : "New Product"}</h2>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Title</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. UI Component Kit"
-              className="fb-input"
-              value={form.title}
-              onChange={(e) => handleChange("title", e.target.value)}
-            />
+          <FormField label="Title" htmlFor="prod-title" className="mb-0">
+            <Input id="prod-title" type="text" required placeholder="e.g. UI Component Kit" value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
+          </FormField>
+
+          <FormField label="Description" htmlFor="prod-desc" className="mb-0">
+            <Textarea id="prod-desc" rows={3} placeholder="What's included?" value={form.description} onChange={(e) => handleChange("description", e.target.value)} />
+          </FormField>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormField label="Type" htmlFor="prod-type" className="mb-0">
+              <Select id="prod-type" value={form.type} onChange={(e) => handleChange("type", e.target.value)}>
+                {PRODUCT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </Select>
+            </FormField>
+            <FormField label="Price (₹) — 0 for free" htmlFor="prod-price" className="mb-0">
+              <Input id="prod-price" type="number" min={0} value={form.price} onChange={(e) => handleChange("price", parseFloat(e.target.value) || 0)} />
+            </FormField>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Description
-            </label>
-            <textarea
-              rows={3}
-              placeholder="What's included?"
-              className="fb-input resize-none"
-              value={form.description}
-              onChange={(e) => handleChange("description", e.target.value)}
-            />
-          </div>
+          <FormField
+            label={<>Product URL <span className="font-normal text-gray-400">(optional)</span></>}
+            htmlFor="prod-url"
+            hint="A landing page or external store link for this product."
+            className="mb-0"
+          >
+            <Input id="prod-url" type="url" placeholder="https://your-store.com/product" value={form.product_url} onChange={(e) => handleChange("product_url", e.target.value)} />
+          </FormField>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Type</label>
-              <select
-                className="fb-input"
-                value={form.type}
-                onChange={(e) => handleChange("type", e.target.value)}
-              >
-                {PRODUCT_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Price (₹) — 0 for free
-              </label>
-              <input
-                type="number"
-                min={0}
-                className="fb-input"
-                value={form.price}
-                onChange={(e) =>
-                  handleChange("price", parseFloat(e.target.value) || 0)
-                }
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Product URL{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <input
-              type="url"
-              placeholder="https://your-store.com/product"
-              className="fb-input"
-              value={form.product_url}
-              onChange={(e) => handleChange("product_url", e.target.value)}
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              A landing page or external store link for this product.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              File URL{" "}
-              <span className="text-gray-400 font-normal">
-                (Google Drive, Notion, Gumroad, Dropbox, etc.)
-              </span>
-            </label>
-            <input
-              type="url"
-              placeholder="https://drive.google.com/..."
-              className="fb-input"
-              value={form.file_url}
-              onChange={(e) => handleChange("file_url", e.target.value)}
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Paste any shareable link — or upload a file below.
-            </p>
-          </div>
+          <FormField
+            label={<>File URL <span className="font-normal text-gray-400">(Google Drive, Notion, Gumroad, Dropbox, etc.)</span></>}
+            htmlFor="prod-file-url"
+            hint="Paste any shareable link — or upload a file below."
+            className="mb-0"
+          >
+            <Input id="prod-file-url" type="url" placeholder="https://drive.google.com/..." value={form.file_url} onChange={(e) => handleChange("file_url", e.target.value)} />
+          </FormField>
 
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
-            <strong>Heads up:</strong> an external <em>File URL</em> is public — anyone
-            with the link can open it, and it never expires. The secure 24-hour,
-            single-link, max-3-downloads protection only applies to files you
-            <strong> upload below</strong> (max 2&nbsp;MB). For paid products, prefer
-            uploading the file here.
+            <strong>Heads up:</strong> an external <em>File URL</em> is public — anyone with the link can open it, and it never expires. The secure 24-hour, single-link, max-3-downloads protection only applies to files you <strong>upload below</strong> (max 2&nbsp;MB). For paid products, prefer uploading the file here.
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Upload File{" "}
-              <span className="text-gray-400 font-normal">
-                (PDF, DOC, PPT, XLS, ZIP, EPUB, MP3, PNG, JPG — max 2 MB)
-              </span>
-            </label>
+          <FormField
+            label={<>Upload File <span className="font-normal text-gray-400">(PDF, DOC, PPT, XLS, ZIP, EPUB, MP3, PNG, JPG — max 2 MB)</span></>}
+            className="mb-0"
+          >
             <input
               type="file"
               data-testid="product-file-input"
               accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.epub,.mp3,.png,.jpg"
-              className="fb-input"
+              className={fileInputCls}
               disabled={fileUploading}
               onChange={(e) => handleFilePick(e.target.files?.[0])}
             />
-            {fileUploading && (
-              <p className="text-xs text-primary mt-1 animate-pulse">
-                Uploading…
-              </p>
-            )}
-            {fileError && (
-              <p className="text-xs text-red-500 mt-1">{fileError}</p>
-            )}
+            {fileUploading && <p className="mt-1 animate-pulse text-xs text-primary">Uploading…</p>}
+            {fileError && <p className="mt-1 text-xs text-red-500">{fileError}</p>}
             {!fileUploading && form.file_name && (
-              <p className="text-xs text-gray-500 mt-1">
-                {form.file_name}
-                {form.file_size_bytes
-                  ? ` · ${formatBytes(form.file_size_bytes)}`
-                  : ""}
+              <p className="mt-1 text-xs text-gray-500">
+                {form.file_name}{form.file_size_bytes ? ` · ${formatBytes(form.file_size_bytes)}` : ""}
               </p>
             )}
-          </div>
+          </FormField>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Cover Image{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <div className="flex gap-2 mb-2">
-              <button
-                type="button"
-                onClick={() => setThumbMode("url")}
-                className={`text-xs px-3 py-1 rounded ${
-                  thumbMode === "url"
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-gray-500"
-                }`}
-              >
-                Paste URL
-              </button>
-              <button
-                type="button"
-                onClick={() => setThumbMode("upload")}
-                className={`text-xs px-3 py-1 rounded ${
-                  thumbMode === "upload"
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-gray-500"
-                }`}
-              >
-                Upload
-              </button>
+          <FormField label={<>Cover Image <span className="font-normal text-gray-400">(optional)</span></>} className="mb-0">
+            <div className="mb-2 flex gap-2">
+              <button type="button" onClick={() => setThumbMode("url")} className={cn("rounded px-3 py-1 text-xs", thumbMode === "url" ? "bg-primary text-white" : "bg-gray-100 text-gray-500")}>Paste URL</button>
+              <button type="button" onClick={() => setThumbMode("upload")} className={cn("rounded px-3 py-1 text-xs", thumbMode === "upload" ? "bg-primary text-white" : "bg-gray-100 text-gray-500")}>Upload</button>
             </div>
-
             {thumbMode === "url" ? (
-              <input
-                type="url"
-                placeholder="Paste an image URL — https://..."
-                className="fb-input"
-                value={form.thumbnail_url}
-                onChange={(e) => handleChange("thumbnail_url", e.target.value)}
-              />
+              <Input type="url" placeholder="Paste an image URL — https://..." value={form.thumbnail_url} onChange={(e) => handleChange("thumbnail_url", e.target.value)} />
             ) : (
               <input
                 type="file"
                 data-testid="product-thumb-input"
                 accept=".png,.jpg,.jpeg,.webp"
-                className="fb-input"
+                className={fileInputCls}
                 disabled={thumbUploading}
                 onChange={(e) => handleThumbPick(e.target.files?.[0])}
               />
             )}
-            {thumbUploading && (
-              <p className="text-xs text-primary mt-1 animate-pulse">
-                Uploading…
-              </p>
-            )}
+            {thumbUploading && <p className="mt-1 animate-pulse text-xs text-primary">Uploading…</p>}
             {form.thumbnail_url && (
-              <img
-                src={form.thumbnail_url}
-                alt="Thumbnail preview"
-                className="mt-2 h-24 w-full object-cover rounded-lg"
-                onError={(e) => (e.target.style.display = "none")}
-              />
+              <img src={form.thumbnail_url} alt="Thumbnail preview" className="mt-2 h-24 w-full rounded-lg object-cover" onError={(e) => (e.target.style.display = "none")} />
             )}
-          </div>
+          </FormField>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              type="submit"
-              disabled={loading}
-              className="fb-btn fb-btn--primary"
-            >
-              {loading
-                ? "Saving..."
-                : editingId
-                  ? "Save Changes"
-                  : "Create Product"}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="fb-btn fb-btn--secondary"
-            >
-              Cancel
-            </button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving..." : editingId ? "Save Changes" : "Create Product"}
+            </Button>
+            <Button type="button" variant="secondary" onClick={handleCancel}>Cancel</Button>
           </div>
-        </form>
+        </Card>
       )}
 
       {products.length === 0 && !showForm ? (
-        <div className="fb-card text-center py-12">
-          <p className="text-gray-400 mb-2">No products yet</p>
-          {canCreate && (
-            <p className="text-sm text-gray-400">
-              Click "+ Add Product" to list your first digital product.
-            </p>
-          )}
-        </div>
+        <EmptyState
+          icon={Package}
+          title="No products yet"
+          description={canCreate ? 'Click "Add Product" to list your first digital product.' : undefined}
+        />
       ) : (
-        <div className="space-y-3">
+        <ul className="space-y-3">
           {products.map((p) => (
-            <div key={p.id} className="fb-card overflow-hidden">
+            <Card as="li" key={p.id} padded={false} className="overflow-hidden">
               <div className="flex gap-4">
                 {p.thumbnail_url && (
-                  <img
-                    src={p.thumbnail_url}
-                    alt={p.title}
-                    className="w-24 h-20 object-cover flex-shrink-0"
-                  />
+                  <img src={p.thumbnail_url} alt={p.title} className="h-20 w-24 flex-shrink-0 object-cover" />
                 )}
-                <div className="flex-1 p-4 min-w-0">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div className="min-w-0 flex-1 p-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-medium truncate">{p.title}</h3>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                          {p.type.replace("_", " ")}
-                        </span>
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full ${p.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}
-                        >
-                          {p.is_active ? "Active" : "Inactive"}
-                        </span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate font-medium text-gray-900">{p.title}</h3>
+                        <Badge tone="neutral">{p.type.replace("_", " ")}</Badge>
+                        <StatusBadge status={p.is_active ? "active" : "inactive"} label={p.is_active ? "Active" : "Inactive"} />
                       </div>
-                      {p.description && (
-                        <p className="text-sm text-gray-400 mt-0.5 line-clamp-1">
-                          {p.description}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-1">
-                        {p.purchase_count} purchase
-                        {p.purchase_count !== 1 ? "s" : ""}
-                      </p>
+                      {p.description && <p className="mt-0.5 line-clamp-1 text-sm text-gray-400">{p.description}</p>}
+                      <p className="mt-1 text-xs text-gray-400">{p.purchase_count} purchase{p.purchase_count !== 1 ? "s" : ""}</p>
                     </div>
-                    <p className="font-semibold text-primary flex-shrink-0">
-                      {p.price === 0 ? "Free" : `₹${p.price}`}
-                    </p>
+                    <p className="flex-shrink-0 font-semibold text-primary">{p.price === 0 ? "Free" : `₹${p.price}`}</p>
                   </div>
-                  <div className="flex gap-3 mt-3 pt-3 border-t">
-                    <button
-                      onClick={() => openEdit(p)}
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleToggle(p)}
-                      className="text-sm text-gray-400 hover:underline"
-                    >
-                      {p.is_active ? "Deactivate" : "Activate"}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="text-sm text-red-500 hover:underline"
-                    >
-                      Delete
-                    </button>
+                  <div className="mt-3 flex gap-4 border-t pt-3 text-sm">
+                    <button onClick={() => openEdit(p)} className="font-medium text-primary hover:underline">Edit</button>
+                    <button onClick={() => handleToggle(p)} className="text-gray-500 hover:underline">{p.is_active ? "Deactivate" : "Activate"}</button>
+                    <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:underline">Delete</button>
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

@@ -1,24 +1,17 @@
 import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
 import {
   setAvailability as saveAvailability,
   getAvailability,
 } from "../services/api";
 import BackButton from "../components/common/BackButton";
 import toast from "react-hot-toast";
+import {
+  PageHeader, Card, Button, FormField, Select, Input, cn,
+} from "../components/dashboard/ui";
 
-const DAYS = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
-const DEFAULT_SCHEDULE = DAYS.reduce((acc, day) => {
-  acc[day] = [];
-  return acc;
-}, {});
+const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const DEFAULT_SCHEDULE = DAYS.reduce((acc, day) => { acc[day] = []; return acc; }, {});
 
 const Availability = () => {
   const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
@@ -53,22 +46,14 @@ const Availability = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAvailability();
-  }, []);
+  useEffect(() => { fetchAvailability(); }, []);
 
   const addSlot = (day) => {
-    setSchedule({
-      ...schedule,
-      [day]: [...schedule[day], { start: "09:00", end: "17:00" }],
-    });
+    setSchedule({ ...schedule, [day]: [...schedule[day], { start: "09:00", end: "17:00" }] });
     setDirty(true);
   };
   const removeSlot = (day, idx) => {
-    setSchedule({
-      ...schedule,
-      [day]: schedule[day].filter((_, i) => i !== idx),
-    });
+    setSchedule({ ...schedule, [day]: schedule[day].filter((_, i) => i !== idx) });
     setDirty(true);
   };
   const updateSlot = (day, idx, field, val) => {
@@ -80,9 +65,7 @@ const Availability = () => {
   const copyToAll = (sourceDay) => {
     const src = schedule[sourceDay];
     const newSch = {};
-    DAYS.forEach((d) => {
-      newSch[d] = src.map((s) => ({ ...s }));
-    });
+    DAYS.forEach((d) => { newSch[d] = src.map((s) => ({ ...s })); });
     setSchedule(newSch);
     toast.success("Copied to all days");
     setDirty(true);
@@ -110,31 +93,25 @@ const Availability = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl">
+    <div className="mx-auto max-w-3xl">
       <BackButton hasUnsavedChanges={dirty} />
-      <h1 className="text-2xl font-bold mb-2">Set Your Availability</h1>
-      <p className="text-gray-500 text-sm mb-6">
-        Define when guests can book time with you.
-      </p>
+      <PageHeader title="Set Your Availability" subtitle="Define when guests can book time with you." />
 
       {!isEditing ? (
         <div className="space-y-4">
-          <div className="fb-card p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-sm">Your weekly hours</h2>
+          <Card>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-gray-900">Your weekly hours</h2>
               <span className="text-xs text-gray-400">
-                {timezone}
-                {bufferMinutes ? ` · ${bufferMinutes}m buffer` : ""}
+                {timezone}{bufferMinutes ? ` · ${bufferMinutes}m buffer` : ""}
               </span>
             </div>
             <div className="space-y-1.5">
               {DAYS.map((day) => (
                 <div key={day} className="flex items-center justify-between text-sm">
                   <span className="capitalize text-gray-700">{day}</span>
-                  <span className={schedule[day]?.length ? "text-gray-900 font-medium" : "text-gray-400"}>
-                    {schedule[day]?.length
-                      ? schedule[day].map((s) => `${s.start}–${s.end}`).join(", ")
-                      : "Unavailable"}
+                  <span className={schedule[day]?.length ? "font-medium text-gray-900" : "text-gray-400"}>
+                    {schedule[day]?.length ? schedule[day].map((s) => `${s.start}–${s.end}`).join(", ") : "Unavailable"}
                   </span>
                 </div>
               ))}
@@ -144,220 +121,143 @@ const Availability = () => {
                 {blockedDates.length} blocked date{blockedDates.length > 1 ? "s" : ""}
               </p>
             )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsEditing(true)}
-            className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark sm:w-auto sm:px-8"
-          >
-            Edit Availability
-          </button>
+          </Card>
+          <Button onClick={() => setIsEditing(true)} className="w-full sm:w-auto sm:px-8">Edit Availability</Button>
         </div>
       ) : (
-      <form onSubmit={handleSubmit}>
-        {/* Timezone + Buffer settings */}
-        <div className="fb-card p-4 mb-5">
-          <h2 className="font-semibold text-sm mb-4">Settings</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Timezone</label>
-              <select
-                className="fb-input"
-                value={timezone}
-                onChange={(e) => {
-                  setTimezone(e.target.value);
-                  setDirty(true);
-                }}
+        <form onSubmit={handleSubmit}>
+          {/* Timezone + Buffer settings */}
+          <Card className="mb-5">
+            <h2 className="mb-4 text-base font-semibold text-gray-900">Settings</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField label="Timezone" htmlFor="av-tz" className="mb-0">
+                <Select id="av-tz" value={timezone} onChange={(e) => { setTimezone(e.target.value); setDirty(true); }}>
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                  <option value="America/New_York">America/New_York (EST)</option>
+                  <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+                  <option value="Europe/London">Europe/London (GMT)</option>
+                  <option value="Europe/Berlin">Europe/Berlin (CET)</option>
+                  <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                  <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+                </Select>
+              </FormField>
+              <FormField
+                label={<>Buffer Between Sessions <span className="ml-1 font-normal text-gray-400">(break after each booking)</span></>}
+                htmlFor="av-buffer"
+                className="mb-0"
               >
-                <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
-                <option value="America/New_York">America/New_York (EST)</option>
-                <option value="America/Los_Angeles">
-                  America/Los_Angeles (PST)
-                </option>
-                <option value="Europe/London">Europe/London (GMT)</option>
-                <option value="Europe/Berlin">Europe/Berlin (CET)</option>
-                <option value="Asia/Dubai">Asia/Dubai (GST)</option>
-                <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
-              </select>
+                <Select id="av-buffer" value={bufferMinutes} onChange={(e) => { setBufferMinutes(parseInt(e.target.value)); setDirty(true); }}>
+                  <option value={0}>No buffer</option>
+                  <option value={5}>5 minutes</option>
+                  <option value={10}>10 minutes</option>
+                  <option value={15}>15 minutes</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={60}>1 hour</option>
+                </Select>
+                {bufferMinutes > 0 && (
+                  <p className="mt-1 text-xs text-blue-600">Guests will see {bufferMinutes} min gaps between available slots.</p>
+                )}
+              </FormField>
             </div>
-            {/* Task 13: buffer time */}
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Buffer Between Sessions
-                <span className="text-xs text-gray-400 font-normal ml-1">
-                  (break after each booking)
-                </span>
-              </label>
-              <select
-                className="fb-input"
-                value={bufferMinutes}
-                onChange={(e) => {
-                  setBufferMinutes(parseInt(e.target.value));
-                  setDirty(true);
-                }}
-              >
-                <option value={0}>No buffer</option>
-                <option value={5}>5 minutes</option>
-                <option value={10}>10 minutes</option>
-                <option value={15}>15 minutes</option>
-                <option value={30}>30 minutes</option>
-                <option value={60}>1 hour</option>
-              </select>
-              {bufferMinutes > 0 && (
-                <p className="text-xs text-blue-600 mt-1">
-                  Guests will see {bufferMinutes} min gaps between available
-                  slots.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+          </Card>
 
-        {/* Weekly schedule */}
-        <div className="space-y-4">
-          {DAYS.map((day) => (
-            <div key={day} className="fb-card p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
-                <h3 className="font-medium capitalize">{day}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {schedule[day].length > 0 && (
+          {/* Weekly schedule */}
+          <div className="space-y-4">
+            {DAYS.map((day) => (
+              <Card key={day}>
+                <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="font-medium capitalize text-gray-900">{day}</h3>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {schedule[day].length > 0 && (
+                      <button type="button" onClick={() => copyToAll(day)} className="text-xs font-medium text-primary hover:underline">Copy to all</button>
+                    )}
+                    <Button type="button" variant="secondary" size="sm" onClick={() => addSlot(day)}>
+                      <Plus className="h-3.5 w-3.5" /> Add slot
+                    </Button>
+                  </div>
+                </div>
+                {schedule[day].length === 0 ? (
+                  <p className="text-sm text-gray-400">Unavailable</p>
+                ) : (
+                  <div className="space-y-2">
+                    {schedule[day].map((slot, i) => (
+                      <div key={i} className="grid items-center gap-2 sm:grid-cols-[1fr_auto_1fr_auto]">
+                        <Input type="time" value={slot.start} onChange={(e) => updateSlot(day, i, "start", e.target.value)} />
+                        <span className="text-center text-gray-400">to</span>
+                        <Input type="time" value={slot.end} onChange={(e) => updateSlot(day, i, "end", e.target.value)} />
+                        <button type="button" onClick={() => removeSlot(day, i)} className="justify-self-start text-sm text-red-500 hover:text-red-600 sm:ml-1">Remove</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+
+          {/* Blocked dates — full days guests can never book */}
+          <Card className="mt-5">
+            <h2 className="mb-1 text-base font-semibold text-gray-900">Blocked Dates</h2>
+            <p className="mb-3 text-xs text-gray-400">Holidays, time off — these dates show no slots regardless of your weekly schedule.</p>
+            <div className="mb-3 flex gap-2">
+              <Input
+                type="date"
+                className="flex-1"
+                min={new Date().toISOString().slice(0, 10)}
+                value={newBlockedDate}
+                onChange={(e) => setNewBlockedDate(e.target.value)}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  if (!newBlockedDate) return;
+                  if (blockedDates.includes(newBlockedDate)) { toast.error("Date already blocked"); return; }
+                  setBlockedDates([...blockedDates, newBlockedDate].sort());
+                  setNewBlockedDate("");
+                  setDirty(true);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" /> Block date
+              </Button>
+            </div>
+            {blockedDates.length === 0 ? (
+              <p className="text-sm text-gray-400">No blocked dates</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {blockedDates.map((d) => (
+                  <span key={d} className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700">
+                    {d}
                     <button
                       type="button"
-                      onClick={() => copyToAll(day)}
-                      className="text-xs text-primary hover:underline"
+                      onClick={() => { setBlockedDates(blockedDates.filter((x) => x !== d)); setDirty(true); }}
+                      className="font-bold text-red-400 hover:text-red-600"
+                      aria-label={`Unblock ${d}`}
                     >
-                      Copy to all
+                      ×
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => addSlot(day)}
-                    className="btn text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1"
-                  >
-                    + Add slot
-                  </button>
-                </div>
+                  </span>
+                ))}
               </div>
-              {schedule[day].length === 0 ? (
-                <p className="text-sm text-gray-400">Unavailable</p>
-              ) : (
-                <div className="space-y-2">
-                  {schedule[day].map((slot, i) => (
-                    <div
-                      key={i}
-                      className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] items-center"
-                    >
-                      <input
-                        type="time"
-                        value={slot.start}
-                        onChange={(e) =>
-                          updateSlot(day, i, "start", e.target.value)
-                        }
-                        className="border rounded px-2 py-1 text-sm"
-                      />
-                      <span className="text-gray-400">to</span>
-                      <input
-                        type="time"
-                        value={slot.end}
-                        onChange={(e) =>
-                          updateSlot(day, i, "end", e.target.value)
-                        }
-                        className="border rounded px-2 py-1 text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeSlot(day, i)}
-                        className="justify-self-start text-red-500 hover:text-red-600 text-sm sm:ml-1"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+            )}
+          </Card>
 
-        {/* Blocked dates — full days guests can never book */}
-        <div className="fb-card p-4 mt-5">
-          <h2 className="font-semibold text-sm mb-1">Blocked Dates</h2>
-          <p className="text-xs text-gray-400 mb-3">
-            Holidays, time off — these dates show no slots regardless of your weekly schedule.
-          </p>
-          <div className="flex gap-2 mb-3">
-            <input
-              type="date"
-              className="fb-input flex-1"
-              min={new Date().toISOString().slice(0, 10)}
-              value={newBlockedDate}
-              onChange={(e) => setNewBlockedDate(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                if (!newBlockedDate) return;
-                if (blockedDates.includes(newBlockedDate)) {
-                  toast.error("Date already blocked");
-                  return;
-                }
-                setBlockedDates([...blockedDates, newBlockedDate].sort());
-                setNewBlockedDate("");
-                setDirty(true);
-              }}
-              className="btn text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1"
-            >
-              + Block date
-            </button>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
+            {hasSaved && (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={loading}
+                onClick={() => { fetchAvailability(); setIsEditing(false); setDirty(false); }}
+                className="w-full sm:w-auto sm:px-8"
+              >
+                Cancel
+              </Button>
+            )}
+            <Button type="submit" disabled={loading} className="w-full sm:flex-1">
+              {loading ? "Saving..." : "Save Availability"}
+            </Button>
           </div>
-          {blockedDates.length === 0 ? (
-            <p className="text-sm text-gray-400">No blocked dates</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {blockedDates.map((d) => (
-                <span key={d} className="inline-flex items-center gap-1.5 text-xs bg-red-50 border border-red-200 text-red-700 px-2.5 py-1 rounded-lg">
-                  {d}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBlockedDates(blockedDates.filter((x) => x !== d));
-                      setDirty(true);
-                    }}
-                    className="text-red-400 hover:text-red-600 font-bold"
-                    aria-label={`Unblock ${d}`}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
-          {hasSaved && (
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => {
-                fetchAvailability();
-                setIsEditing(false);
-                setDirty(false);
-              }}
-              className="btn w-full bg-gray-100 text-gray-700 py-2.5 text-sm font-medium hover:bg-gray-200 disabled:opacity-50 sm:w-auto sm:px-8"
-            >
-              Cancel
-            </button>
-          )}
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 sm:flex-1"
-          >
-            {loading ? "Saving..." : "Save Availability"}
-          </button>
-        </div>
-      </form>
+        </form>
       )}
     </div>
   );

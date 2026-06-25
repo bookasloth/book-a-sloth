@@ -18,6 +18,9 @@ import {
   FREE_COLORS,
   CREATOR_COLORS,
 } from "../utils/themeUtils";
+import {
+  PageHeader, Card, Button, FormField, Input, Select, Textarea, cn,
+} from "../components/dashboard/ui";
 
 // ─── Minimal plan label for display ─────────────────────────────────────────
 const PLAN_LABEL = { explorer: 'Explorer', creator: 'Creator', professional: 'Professional' };
@@ -70,7 +73,7 @@ const Swatch = ({ color, selected, onClick }) => (
     type="button"
     onClick={() => onClick(color.hex)}
     title={color.name}
-    className="relative w-8 h-8 rounded-lg border-2 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-400"
+    className="relative h-8 w-8 rounded-lg border-2 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
     style={{
       backgroundColor: color.hex,
       borderColor: selected ? '#111827' : 'transparent',
@@ -79,7 +82,7 @@ const Swatch = ({ color, selected, onClick }) => (
   >
     {selected && (
       <span className="absolute inset-0 flex items-center justify-center">
-        <svg style={{ color: getContrastColor(color.hex) }} className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg style={{ color: getContrastColor(color.hex) }} className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
         </svg>
       </span>
@@ -94,39 +97,28 @@ const ProfilePreview = ({ form, themeColor }) => {
   const borderColor = getPlanBorderColor('explorer'); // preview always uses explorer
 
   return (
-    <div className="rounded-2xl border bg-white overflow-hidden shadow-sm w-full max-w-[240px] mx-auto text-xs select-none">
+    <div className="mx-auto w-full max-w-[240px] select-none overflow-hidden rounded-2xl border bg-white text-xs shadow-sm">
       {/* Cover */}
-      <div className="h-16 relative" style={{ background: form.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)` }}>
-        {form.cover_image && (
-          <img src={form.cover_image} alt="" className="w-full h-full object-cover" />
-        )}
+      <div className="relative h-16" style={{ background: form.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)` }}>
+        {form.cover_image && <img src={form.cover_image} alt="" className="h-full w-full object-cover" />}
       </div>
       {/* Avatar */}
-      <div className="flex justify-center -mt-7">
-        <div className="w-14 h-14 rounded-xl border-2 overflow-hidden bg-gray-100 flex-shrink-0" style={{ borderColor }}>
+      <div className="-mt-7 flex justify-center">
+        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border-2 bg-gray-100" style={{ borderColor }}>
           {form.profile_image
-            ? <img src={form.profile_image} alt="" className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center text-lg font-bold text-gray-400">
-                {form.name?.charAt(0)?.toUpperCase() || '?'}
-              </div>
-          }
+            ? <img src={form.profile_image} alt="" className="h-full w-full object-cover" />
+            : <div className="flex h-full w-full items-center justify-center text-lg font-bold text-gray-400">{form.name?.charAt(0)?.toUpperCase() || '?'}</div>}
         </div>
       </div>
       {/* Info */}
       <div className="px-3 pb-3 pt-1.5 text-center">
-        <p className="font-bold text-gray-900 truncate">{form.name || 'Your Name'}</p>
+        <p className="truncate font-bold text-gray-900">{form.name || 'Your Name'}</p>
         {(form.profession || form.tagline) && (
-          <p className="text-[10px] font-medium mt-0.5 truncate" style={{ color: tc }}>
-            {form.profession || form.tagline}
-          </p>
+          <p className="mt-0.5 truncate text-[10px] font-medium" style={{ color: tc }}>{form.profession || form.tagline}</p>
         )}
-        {form.bio && (
-          <p className="text-[10px] text-gray-400 mt-1 line-clamp-2 leading-relaxed">{form.bio}</p>
-        )}
+        {form.bio && <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-gray-400">{form.bio}</p>}
         {/* CTA Preview */}
-        <div className="mt-3 rounded-lg px-3 py-1.5 font-bold text-[10px]" style={{ background: tc, color: textOnTheme }}>
-          Book a Session
-        </div>
+        <div className="mt-3 rounded-lg px-3 py-1.5 text-[10px] font-bold" style={{ background: tc, color: textOnTheme }}>Book a Session</div>
       </div>
     </div>
   );
@@ -266,31 +258,31 @@ const ProfileSetup = () => {
 
   const tc = isValidHex(form.theme_color) ? form.theme_color : DEFAULT_THEME_COLOR;
 
-  // ── Section tab helper ──
+  // ── Section tab helper ── (plain <button> so role="button" queries resolve)
   const Tab = ({ id, label }) => (
     <button
       type="button"
       onClick={() => setActiveSection(id)}
-      className={`btn px-4 py-2 text-sm font-medium transition-colors ${
-        activeSection === id
-          ? 'bg-gray-900 text-white'
-          : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-      }`}
+      className={cn(
+        'relative whitespace-nowrap px-1 pb-3 text-sm font-medium transition-colors',
+        activeSection === id ? 'text-primary' : 'text-gray-500 hover:text-gray-800',
+      )}
     >
       {label}
+      {activeSection === id && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary" />}
     </button>
   );
 
   return (
-    <div className="w-full max-w-5xl">
+    <div className="mx-auto max-w-5xl">
       <BackButton hasUnsavedChanges={dirty} />
-      <h1 className="text-2xl font-bold mb-1">Creator Profile</h1>
-      <p className="text-gray-500 text-sm mb-6">
-        How guests discover and book you. Plan: <span className="font-semibold text-gray-700">{PLAN_LABEL[plan]}</span>
-      </p>
+      <PageHeader
+        title="Creator Profile"
+        subtitle={<>How guests discover and book you. Plan: <span className="font-semibold text-gray-700">{PLAN_LABEL[plan]}</span></>}
+      />
 
       {/* Section tabs */}
-      <div className="flex flex-wrap gap-2 mb-6 border-b pb-3">
+      <div className="dash-noscrollbar mb-6 flex flex-wrap gap-5 overflow-x-auto border-b border-gray-200">
         <Tab id="info"         label="Profile Info" />
         <Tab id="categories"   label="Categories" />
         <Tab id="social"       label="Social Links" />
@@ -309,87 +301,70 @@ const ProfileSetup = () => {
                 onClose={() => setCropper(null)} label="Profile Photo" />
             )}
             {/* Cover photo uses a plain file input — no editor */}
-            <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp"
-              className="hidden" onChange={handleCoverFile} />
+            <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleCoverFile} />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium mb-1">Profile Photo</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Profile Photo</label>
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-16 h-16 rounded-xl border-2 bg-gray-50 overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                    className="h-16 w-16 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border-2 bg-gray-50 transition-opacity hover:opacity-80"
                     style={{ borderColor: getPlanBorderColor(plan) }}
                     onClick={() => setCropper("profile")}
                   >
                     {form.profile_image
-                      ? <img src={form.profile_image} alt="" className="w-full h-full object-cover" />
-                      : <svg className="w-6 h-6 m-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                    }
+                      ? <img src={form.profile_image} alt="" className="h-full w-full object-cover" />
+                      : <svg className="m-5 h-6 w-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
                   </div>
                   <div>
-                    <button type="button" onClick={() => setCropper("profile")}
-                      className="btn btn--outline text-xs text-primary hover:underline px-3 py-1.5 block">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setCropper("profile")}>
                       {form.profile_image ? "Change photo" : "Upload photo"}
-                    </button>
-                    <p className="text-[10px] text-gray-400 mt-1">Border colour reflects your plan tier</p>
+                    </Button>
+                    <p className="mt-1 text-[10px] text-gray-400">Border colour reflects your plan tier</p>
                   </div>
                 </div>
               </div>
               <FeatureGate flag="cover_photo">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Cover Photo</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Cover Photo</label>
                   <div
-                    className="rounded-xl border bg-gray-50 h-16 overflow-hidden relative cursor-pointer hover:opacity-80 transition-opacity"
+                    className="relative h-16 cursor-pointer overflow-hidden rounded-xl border bg-gray-50 transition-opacity hover:opacity-80"
                     onClick={() => !coverUploading && coverInputRef.current?.click()}
                   >
                     {coverUploading
-                      ? <div className="flex items-center justify-center h-full text-xs text-gray-400">Uploading…</div>
+                      ? <div className="flex h-full items-center justify-center text-xs text-gray-400">Uploading…</div>
                       : form.cover_image
-                        ? <img src={form.cover_image} alt="" className="w-full h-full object-cover" />
-                        : <div className="flex items-center justify-center h-full text-xs text-gray-400">Click to upload cover photo</div>
-                    }
+                        ? <img src={form.cover_image} alt="" className="h-full w-full object-cover" />
+                        : <div className="flex h-full items-center justify-center text-xs text-gray-400">Click to upload cover photo</div>}
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1">JPG/PNG/WebP up to 2MB — shown full-width, auto-cropped to fit</p>
+                  <p className="mt-1 text-[10px] text-gray-400">JPG/PNG/WebP up to 2MB — shown full-width, auto-cropped to fit</p>
                 </div>
               </FeatureGate>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="ps-name" className="block text-sm font-medium mb-1">Creator Name</label>
-                <input id="ps-name" type="text" name="name" required className="fb-input" value={form.name} onChange={handleChange} />
-              </div>
-              <UsernameField
-                user={user}
-                onChanged={(u) => updateUser({ ...user, username: u })}
-              />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField label="Creator Name" htmlFor="ps-name" className="mb-0">
+                <Input id="ps-name" type="text" name="name" required value={form.name} onChange={handleChange} />
+              </FormField>
+              <UsernameField user={user} onChanged={(u) => updateUser({ ...user, username: u })} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Creator Title</label>
-                <input type="text" name="profession" placeholder="e.g. Founder and Developer" className="fb-input" value={form.profession} onChange={handleChange} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Location</label>
-                <input type="text" name="location" placeholder="e.g. Nagpur, Maharashtra" className="fb-input" value={form.location} onChange={handleChange} />
-              </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField label="Creator Title" className="mb-0">
+                <Input type="text" name="profession" placeholder="e.g. Founder and Developer" value={form.profession} onChange={handleChange} />
+              </FormField>
+              <FormField label="Location" className="mb-0">
+                <Input type="text" name="location" placeholder="e.g. Nagpur, Maharashtra" value={form.location} onChange={handleChange} />
+              </FormField>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Tagline</label>
-              <input type="text" name="tagline" placeholder="Short one-liner about you" className="fb-input" value={form.tagline} onChange={handleChange} maxLength={100} />
-            </div>
+            <FormField label="Tagline" className="mb-0">
+              <Input type="text" name="tagline" placeholder="Short one-liner about you" value={form.tagline} onChange={handleChange} maxLength={100} />
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Bio <span className="text-gray-400">({form.bio.length}/500)</span>
-              </label>
-              <textarea name="bio" rows={4} placeholder="Tell people about yourself..."
-                className="fb-input resize-none" value={form.bio} onChange={handleChange} maxLength={500} />
-            </div>
+            <FormField label={<>Bio <span className="text-gray-400">({form.bio.length}/500)</span></>} className="mb-0">
+              <Textarea name="bio" rows={4} placeholder="Tell people about yourself..." value={form.bio} onChange={handleChange} maxLength={500} />
+            </FormField>
           </div>
         )}
 
@@ -403,18 +378,14 @@ const ProfileSetup = () => {
 
         {/* ── SECTION: Social Links ── */}
         {activeSection === 'social' && (
-          <FeatureGate flag="social_links" fallback={
-            <p className="text-sm text-gray-400">Social links are currently disabled.</p>
-          }>
+          <FeatureGate flag="social_links" fallback={<p className="text-sm text-gray-400">Social links are currently disabled.</p>}>
             <div className="space-y-4">
               <p className="text-sm text-gray-500">Add your social profiles. Only filled links appear on your public page.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 {SOCIAL_PLATFORMS.map(({ key, label, placeholder, type }) => (
-                  <div key={key}>
-                    <label htmlFor={`sl-${key}`} className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-                    <input id={`sl-${key}`} type={type} name={key} placeholder={placeholder}
-                      className="fb-input text-sm" value={form.social_links[key] || ''} onChange={handleSocialChange} />
-                  </div>
+                  <FormField key={key} label={label} htmlFor={`sl-${key}`} className="mb-0">
+                    <Input id={`sl-${key}`} type={type} name={key} placeholder={placeholder} value={form.social_links[key] || ''} onChange={handleSocialChange} />
+                  </FormField>
                 ))}
               </div>
             </div>
@@ -423,55 +394,38 @@ const ProfileSetup = () => {
 
         {/* ── SECTION: Appearance & Branding ── */}
         {activeSection === 'appearance' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
             {/* Left: controls */}
             <div className="space-y-6">
               {/* Theme Color */}
               <FeatureGate flag="theme_colors">
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="mb-3 flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-semibold text-gray-800">Theme Color</h3>
-                      <p className="text-xs text-gray-400 mt-0.5">Applied to buttons, accents, and CTAs on your profile</p>
+                      <p className="mt-0.5 text-xs text-gray-400">Applied to buttons, accents, and CTAs on your profile</p>
                     </div>
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                      {PLAN_LABEL[plan]}
-                    </span>
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">{PLAN_LABEL[plan]}</span>
                   </div>
 
                   {/* Swatches */}
-                  <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="mb-3 flex flex-wrap gap-2">
                     {availableColors.map(color => (
-                      <Swatch
-                        key={color.hex}
-                        color={color}
-                        selected={form.theme_color === color.hex}
-                        onClick={handleColorSelect}
-                      />
+                      <Swatch key={color.hex} color={color} selected={form.theme_color === color.hex} onClick={handleColorSelect} />
                     ))}
                   </div>
 
                   {/* Pro custom hex */}
                   {customHexAllowed ? (
                     <FeatureGate flag="custom_hex_color">
-                      <div className="flex items-center gap-2 mt-2">
-                        <div
-                          className="w-8 h-8 rounded-lg border flex-shrink-0"
-                          style={{ background: isValidHex(customHex) ? customHex : '#e5e7eb' }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="#4F46E5"
-                          maxLength={7}
-                          className="fb-input text-sm font-mono flex-1"
-                          value={customHex}
-                          onChange={handleCustomHex}
-                        />
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="h-8 w-8 flex-shrink-0 rounded-lg border" style={{ background: isValidHex(customHex) ? customHex : '#e5e7eb' }} />
+                        <Input type="text" placeholder="#4F46E5" maxLength={7} className="flex-1 font-mono" value={customHex} onChange={handleCustomHex} />
                         <span className="text-xs text-gray-400">Custom</span>
                       </div>
                     </FeatureGate>
                   ) : (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="mt-1 text-xs text-gray-400">
                       {plan === 'creator' ? '16 colours available. Upgrade to Pro for custom hex.' : 'Upgrade to Creator for more colours.'}
                     </p>
                   )}
@@ -479,25 +433,25 @@ const ProfileSetup = () => {
               </FeatureGate>
 
               {/* Profile Border Info */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-gray-800 mb-1">Profile Photo Border</h3>
-                <div className="flex items-center gap-3 mt-2">
-                  <div className="w-10 h-10 rounded-xl border-2 bg-white flex-shrink-0" style={{ borderColor: getPlanBorderColor(plan) }} />
+              <div className="rounded-xl bg-gray-50 p-4">
+                <h3 className="mb-1 text-sm font-semibold text-gray-800">Profile Photo Border</h3>
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="h-10 w-10 flex-shrink-0 rounded-xl border-2 bg-white" style={{ borderColor: getPlanBorderColor(plan) }} />
                   <div>
                     <p className="text-xs text-gray-600">
                       Your border is <span className="font-semibold" style={{ color: getPlanBorderColor(plan) }}>
                         {plan === 'professional' ? 'Gold (Pro)' : plan === 'creator' ? 'Orange (Creator)' : 'Grey (Explorer)'}
                       </span>
                     </p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">Border updates automatically with your plan tier</p>
+                    <p className="mt-0.5 text-[10px] text-gray-400">Border updates automatically with your plan tier</p>
                   </div>
                 </div>
               </div>
 
               {/* Upcoming Features */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-amber-800 mb-1">Coming Soon</h3>
-                <ul className="text-xs text-amber-700 space-y-0.5">
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <h3 className="mb-1 text-sm font-semibold text-amber-800">Coming Soon</h3>
+                <ul className="space-y-0.5 text-xs text-amber-700">
                   <li>• Gradient backgrounds</li>
                   <li>• Custom font selection</li>
                   <li>• Theme packs &amp; presets</li>
@@ -508,24 +462,18 @@ const ProfileSetup = () => {
 
             {/* Right: live preview */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-800 mb-3">Live Preview</h3>
+              <h3 className="mb-3 text-sm font-semibold text-gray-800">Live Preview</h3>
               <ProfilePreview form={form} themeColor={tc} />
-              <p className="text-center text-xs text-gray-400 mt-3">Updates as you type</p>
+              <p className="mt-3 text-center text-xs text-gray-400">Updates as you type</p>
 
               {/* Booking CTA preview */}
-              <div className="mt-5 rounded-2xl border p-4 bg-white">
-                <p className="text-xs text-gray-400 mb-2 font-medium">Booking Button Preview</p>
-                <button
-                  type="button"
-                  className="btn w-full py-2.5 font-bold text-sm transition-all"
-                  style={{ background: tc, color: getContrastColor(tc) }}
-                >
+              <Card className="mt-5">
+                <p className="mb-2 text-xs font-medium text-gray-400">Booking Button Preview</p>
+                <button type="button" className="w-full rounded py-2.5 text-sm font-bold transition-all" style={{ background: tc, color: getContrastColor(tc) }}>
                   Book a Session
                 </button>
-                <p className="text-[10px] text-gray-400 mt-2 text-center">
-                  Text auto-adjusts for readability (WCAG AA)
-                </p>
-              </div>
+                <p className="mt-2 text-center text-[10px] text-gray-400">Text auto-adjusts for readability (WCAG AA)</p>
+              </Card>
             </div>
           </div>
         )}
@@ -535,12 +483,12 @@ const ProfileSetup = () => {
           <div className="space-y-5">
             {/* Google Calendar */}
             <FeatureGate flag="google_calendar">
-              <div className="bg-white border rounded-2xl p-5">
+              <Card padded={false} className="p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     {/* Google icon */}
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 border flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border bg-gray-50">
+                      <svg className="h-5 w-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -549,12 +497,10 @@ const ProfileSetup = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-900">Google Calendar</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Auto-create Google Meet links for every confirmed online booking.
-                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500">Auto-create Google Meet links for every confirmed online booking.</p>
                       {user?.google_calendar_connected && (
-                        <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                        <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
                           Connected
                         </span>
                       )}
@@ -566,58 +512,53 @@ const ProfileSetup = () => {
                       if (user?.google_calendar_connected) {
                         toast('To disconnect, contact support or revoke access in your Google account settings.', { icon: 'ℹ️' });
                       } else {
-                        // Trigger Google OAuth — same as Dashboard connect button
                         import('../services/api').then(({ getGoogleAuthUrl }) =>
                           getGoogleAuthUrl().then(({ data }) => { window.location.href = data.url; })
                         );
                       }
                     }}
-                    className={`btn btn--outline flex-shrink-0 px-4 py-2 text-xs font-semibold transition-colors whitespace-nowrap ${
-                      user?.google_calendar_connected
-                        ? 'text-gray-500 hover:bg-gray-50'
-                        : 'text-[#FE5100] hover:bg-[#FFF4EE]'
-                    }`}
+                    className={cn(
+                      'flex-shrink-0 whitespace-nowrap rounded border px-4 py-2 text-xs font-semibold transition-colors',
+                      user?.google_calendar_connected ? 'border-gray-300 text-gray-500 hover:bg-gray-50' : 'border-primary/40 text-primary hover:bg-primary/5',
+                    )}
                   >
                     {user?.google_calendar_connected ? 'Connected ✓' : 'Connect'}
                   </button>
                 </div>
-                <div className="mt-3 pt-3 border-t text-xs text-gray-400 space-y-1">
+                <div className="mt-3 space-y-1 border-t pt-3 text-xs text-gray-400">
                   <p>• Works with online services only (not in-person)</p>
                   <p>• Guests receive the Meet link in their confirmation email</p>
                   <p>• Bookings appear on your Google Calendar automatically</p>
                 </div>
-              </div>
+              </Card>
             </FeatureGate>
 
             {/* Reschedule fee */}
-            <div className="bg-white border rounded-2xl p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Booking Policy</h3>
-              <div>
-                <label className="block text-sm font-medium mb-1" htmlFor="reschedule_fee">Guest reschedule fee</label>
-                <select
+            <Card padded={false} className="p-5">
+              <h3 className="mb-3 text-sm font-semibold text-gray-900">Booking Policy</h3>
+              <FormField label="Guest reschedule fee" htmlFor="reschedule_fee" hint="The platform keeps this fee. The guest's first reschedule is always free." className="mb-0">
+                <Select
                   id="reschedule_fee"
-                  className="fb-input"
                   value={form.reschedule_fee ?? 0}
                   onChange={(e) => { setForm({ ...form, reschedule_fee: Number(e.target.value) }); setDirty(true); }}
                 >
                   <option value={0}>Free (₹0)</option>
                   <option value={10}>₹10 per reschedule (from the 2nd)</option>
-                </select>
-                <p className="text-xs text-gray-400 mt-1">The platform keeps this fee. The guest's first reschedule is always free.</p>
-              </div>
-            </div>
+                </Select>
+              </FormField>
+            </Card>
 
             {/* Coming soon integrations */}
-            <div className="bg-gray-50 border border-dashed rounded-2xl p-5">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Coming Soon</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-dashed bg-gray-50 p-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Coming Soon</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {[
                   { name: 'Zoom', desc: 'Auto-create Zoom meeting links', icon: '🎥' },
                   { name: 'Notion', desc: 'Log bookings to a Notion database', icon: '📝' },
                   { name: 'Razorpay Payouts', desc: 'Instant payout scheduling', icon: '💸' },
                   { name: 'WhatsApp Business', desc: 'Send reminders via WhatsApp', icon: '💬' },
                 ].map(i => (
-                  <div key={i.name} className="flex items-center gap-3 bg-white border rounded-xl p-3 opacity-60">
+                  <div key={i.name} className="flex items-center gap-3 rounded-xl border bg-white p-3 opacity-60">
                     <span className="text-xl">{i.icon}</span>
                     <div>
                       <p className="text-xs font-semibold text-gray-700">{i.name}</p>
@@ -631,22 +572,16 @@ const ProfileSetup = () => {
         )}
 
         {/* Save button — always visible */}
-        <div className="mt-8 pt-5 border-t flex gap-3">
+        <div className="mt-8 flex gap-3 border-t pt-5">
           <button
             type="submit"
             disabled={loading}
-            className="btn flex-1 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition-colors"
+            className="flex-1 rounded py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
             style={{ background: tc }}
           >
             {loading ? "Saving…" : "Save Profile"}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate("/dashboard")}
-            className="btn btn--outline px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
+          <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>Cancel</Button>
         </div>
       </form>
     </div>

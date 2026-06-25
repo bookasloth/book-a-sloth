@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { getPublicPlans, createSubscription, syncSubscription, cancelSubscription } from "../services/api";
 import toast from "react-hot-toast";
 import BackButton from "../components/common/BackButton";
+import { PageHeader, Card, Button, cn } from "../components/dashboard/ui";
 
 const loadRazorpay = () =>
   new Promise((resolve) => {
@@ -38,7 +39,7 @@ const featureLines = (plan) => {
 };
 
 const Check = () => (
-  <svg className="w-4 h-4 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className="h-4 w-4 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
   </svg>
 );
@@ -138,21 +139,23 @@ const UpgradePlan = () => {
   const hasActiveSub = user?.has_payment_mandate && (status === "active" || status === "cancelled") && currentPlan !== "starter";
 
   return (
-    <div className="w-full max-w-5xl">
+    <div className="mx-auto max-w-5xl">
       <BackButton />
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Upgrade Your Plan</h1>
-        <p className="text-sm text-gray-400">
-          You're on the <span className="font-semibold capitalize text-gray-700">{currentPlan}</span> plan
-          {expiry && daysLeft > 0 && ` · renews in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`}
-          {expiry && daysLeft <= 0 && <span className="text-red-500"> · expired</span>}
-          {user?.billing_cadence && ` · ${user.billing_cadence}`}
-        </p>
-      </div>
+      <PageHeader
+        title="Upgrade Your Plan"
+        subtitle={
+          <>
+            You're on the <span className="font-semibold capitalize text-gray-700">{currentPlan}</span> plan
+            {expiry && daysLeft > 0 && ` · renews in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`}
+            {expiry && daysLeft <= 0 && <span className="text-red-500"> · expired</span>}
+            {user?.billing_cadence && ` · ${user.billing_cadence}`}
+          </>
+        }
+      />
 
       {/* Manage current subscription */}
       {hasActiveSub && (
-        <div className="mb-6 fb-card p-4 flex flex-wrap items-center justify-between gap-3">
+        <Card className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-gray-600">
             {status === "cancelled" ? (
               <>Auto-renew is <strong className="text-amber-600">off</strong>. Access ends {expiry ? expiry.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "at period end"}.</>
@@ -161,31 +164,30 @@ const UpgradePlan = () => {
             )}
           </div>
           {status === "active" && (
-            <button onClick={handleCancel} disabled={cancelling}
-              className="btn btn--outline text-sm font-semibold text-red-600 hover:bg-red-50 px-4 py-2 disabled:opacity-50">
+            <Button variant="danger-outline" size="sm" onClick={handleCancel} disabled={cancelling}>
               {cancelling ? "Cancelling…" : "Cancel auto-renew"}
-            </button>
+            </Button>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Cadence toggle */}
-      <div className="flex items-center justify-center gap-2 mb-7">
-        <div className="inline-flex bg-gray-100 rounded-full p-1">
+      <div className="mb-7 flex items-center justify-center gap-2">
+        <div className="inline-flex rounded-full bg-gray-100 p-1">
           {["monthly", "annual"].map((c) => (
             <button key={c} onClick={() => setCadence(c)}
-              className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-colors ${cadence === c ? "bg-white shadow text-gray-900" : "text-gray-500"}`}>
+              className={cn("rounded-full px-5 py-1.5 text-sm font-semibold transition-colors", cadence === c ? "bg-white text-gray-900 shadow" : "text-gray-500")}>
               {c === "monthly" ? "Monthly" : "Annual"}
-              {c === "annual" && <span className="ml-1.5 text-[10px] text-emerald-600 font-bold">save more</span>}
+              {c === "annual" && <span className="ml-1.5 text-[10px] font-bold text-emerald-600">save more</span>}
             </button>
           ))}
         </div>
       </div>
 
       {loading ? (
-        <p className="text-center text-sm text-gray-400 py-10">Loading plans…</p>
+        <p className="py-10 text-center text-sm text-gray-400">Loading plans…</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {plans.map((plan) => {
             const isCurrentTier = currentPlan === plan.slug;
             // "Current Plan" only when tier AND cadence match — otherwise the
@@ -199,9 +201,9 @@ const UpgradePlan = () => {
               ? annualEquivOfMonthly - Number(plan.annual_price) : 0;
 
             return (
-              <div key={plan.slug} className={`rounded-2xl border-2 p-6 flex flex-col relative bg-white ${isCurrentTier ? "border-primary ring-2 ring-primary/20" : "border-gray-200"}`}>
+              <div key={plan.slug} className={cn("relative flex flex-col rounded-2xl border-2 bg-white p-6 dash-elev-1", isCurrentTier ? "border-primary ring-2 ring-primary/20" : "border-gray-200")}>
                 <div className="mb-4">
-                  <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-primary/10 text-primary">{plan.name}</span>
+                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{plan.name}</span>
                   <div className="mt-3">
                     {!paid ? (
                       <p className="text-3xl font-bold">Free</p>
@@ -209,40 +211,37 @@ const UpgradePlan = () => {
                       <>
                         <p className="text-3xl font-bold">
                           {inr(price)}
-                          <span className="text-sm font-normal ml-1 text-gray-400">/ {cadence === "monthly" ? "month" : "year"}</span>
+                          <span className="ml-1 text-sm font-normal text-gray-400">/ {cadence === "monthly" ? "month" : "year"}</span>
                         </p>
-                        <p className="text-[11px] mt-1 text-gray-500">
-                          + 18% GST · {inr(Math.round(price * (1 + GST_RATE)))} billed
-                        </p>
+                        <p className="mt-1 text-[11px] text-gray-500">+ 18% GST · {inr(Math.round(price * (1 + GST_RATE)))} billed</p>
                         {cadence === "annual" && savings > 0 && (
-                          <p className="text-[11px] mt-0.5 text-emerald-600 font-semibold">Save {inr(savings)}/yr vs monthly</p>
+                          <p className="mt-0.5 text-[11px] font-semibold text-emerald-600">Save {inr(savings)}/yr vs monthly</p>
                         )}
                       </>
                     ) : (
-                      <p className="text-sm font-semibold text-gray-400 py-2">Annual billing only</p>
+                      <p className="py-2 text-sm font-semibold text-gray-400">Annual billing only</p>
                     )}
                   </div>
                 </div>
 
-                <ul className="space-y-2 flex-1 mb-6">
+                <ul className="mb-6 flex-1 space-y-2">
                   {featureLines(plan).map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-gray-600"><Check /> {f}</li>
                   ))}
                 </ul>
 
                 {isCurrentExact ? (
-                  <div className="text-center py-2.5 rounded-xl text-sm font-medium bg-gray-100 text-gray-500">Current Plan</div>
+                  <div className="rounded-xl bg-gray-100 py-2.5 text-center text-sm font-medium text-gray-500">Current Plan</div>
                 ) : !paid ? (
-                  <div className="text-center py-2.5 rounded-xl text-sm text-gray-400 border border-gray-200">Default (free)</div>
+                  <div className="rounded-xl border border-gray-200 py-2.5 text-center text-sm text-gray-400">Default (free)</div>
                 ) : (
-                  <button onClick={() => handleUpgrade(plan)} disabled={paying === plan.slug || !cadenceAvailable}
-                    className="btn py-2.5 text-sm font-semibold bg-primary text-white hover:bg-primary-dark disabled:opacity-50">
+                  <Button full onClick={() => handleUpgrade(plan)} disabled={paying === plan.slug || !cadenceAvailable}>
                     {paying === plan.slug ? "Opening payment…"
                       : !cadenceAvailable ? "Annual billing only"
                       : isCurrentTier ? `Switch to ${cadence}`
                       : (plan.sort_order ?? 0) < myOrder ? `Downgrade to ${plan.name}`
                       : `Upgrade to ${plan.name}`}
-                  </button>
+                  </Button>
                 )}
               </div>
             );
@@ -250,9 +249,9 @@ const UpgradePlan = () => {
         </div>
       )}
 
-      <div className="mt-8 fb-card p-4 text-sm text-gray-500 text-center">
+      <Card className="mt-8 text-center text-sm text-gray-500">
         Plans auto-renew {cadence}. Cancel anytime — you keep access until the period ends. GST charged on top. · Powered by Razorpay.
-      </div>
+      </Card>
     </div>
   );
 };
