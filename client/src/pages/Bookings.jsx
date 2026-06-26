@@ -3,6 +3,7 @@ import {
   getHostBookings,
   cancelBooking,
   completeBooking,
+  markNoShow,
   rescheduleBooking,
   getAvailability,
   getBookedSlots,
@@ -216,6 +217,10 @@ const DetailsModal = ({ booking, onClose, onAction, review, onReviewDone }) => {
         await completeBooking(booking.id);
         toast.success("Marked as completed");
       }
+      if (action === "no_show") {
+        await markNoShow(booking.id);
+        toast.success("Marked as no-show");
+      }
       if (action === "cancel") {
         await cancelBooking(booking.id);
         toast.success("Booking cancelled");
@@ -329,12 +334,16 @@ const DetailsModal = ({ booking, onClose, onAction, review, onReviewDone }) => {
         {confirming ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4">
             <p className="mb-3 text-sm font-medium text-red-700">
-              {confirming === "cancel" ? "Cancel this booking? The guest will be notified." : "Mark as completed?"}
+              {confirming === "cancel"
+                ? "Cancel this booking? The guest will be notified."
+                : confirming === "no_show"
+                ? "Mark this booking as a no-show? Use this when the guest did not attend."
+                : "Mark as completed?"}
             </p>
             <div className="flex gap-2">
               <Button variant="outline" full onClick={() => setConfirming(null)}>Back</Button>
               <Button full variant={confirming === "cancel" ? "danger" : "primary"} onClick={() => doAction(confirming)} disabled={busy}>
-                {busy ? "..." : `Yes, ${confirming}`}
+                {busy ? "..." : confirming === "cancel" ? "Yes, cancel" : confirming === "no_show" ? "Yes, no-show" : "Yes, complete"}
               </Button>
             </div>
           </div>
@@ -346,7 +355,10 @@ const DetailsModal = ({ booking, onClose, onAction, review, onReviewDone }) => {
             {booking.status === "confirmed" && new Date(booking.scheduled_at) <= new Date() && (
               <Button className="min-w-[120px] flex-1" onClick={() => setConfirming("complete")}>Mark Completed</Button>
             )}
-            {booking.status !== "cancelled" && booking.status !== "completed" && (
+            {booking.status === "confirmed" && new Date(booking.scheduled_at) <= new Date() && (
+              <Button variant="outline" className="min-w-[120px] flex-1" onClick={() => setConfirming("no_show")}>No-show</Button>
+            )}
+            {booking.status !== "cancelled" && booking.status !== "completed" && booking.status !== "no_show" && (
               <Button variant="danger-outline" className="min-w-[120px] flex-1" onClick={() => setConfirming("cancel")}>Cancel Booking</Button>
             )}
             {booking.status === "completed" && on("review_submission") && booking.guest_id && !review && (

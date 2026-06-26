@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const { calculatePlatformFee } = require('../lib/pricingEngine');
 const { sendProductDownloadEmail } = require('../utils/productEmail');
 const { runInBackground } = require('../utils/background');
+const { canActivateMore } = require('../middleware/planMiddleware');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -100,6 +101,18 @@ const updateProduct = async (req, res) => {
       title, description, type, price, file_url, thumbnail_url, is_active,
       product_url, file_name, file_size_bytes,
     } = req.body;
+    // P1-1: activating a product (is_active false→true) must respect the plan's
+    // active-product cap. Only gate on a real transition so editing an
+    // already-active product (which re-sends is_active:true) isn't blocked.
+    if (is_active === true) {
+      const { data: current } = await supabaseAdmin
+        .from('products').select('is_active').eq('id', req.params.id).eq('host_id', req.user.id).single();
+      if (current && current.is_active === false) {
+        const gate = await canActivateMore(req.user.id, 'digital_products');
+        if (!gate.ok) return res.status(gate.status).json({ message: gate.message, upgrade_required: true });
+      }
+    }
+
     const updates = { updated_at: new Date().toISOString() };
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;

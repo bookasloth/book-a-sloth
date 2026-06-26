@@ -7,6 +7,49 @@ const { bustSitemapCache } = require("../utils/sitemapCache");
 const planService = require('../services/planService');
 const { validateCategorySelection } = require('../lib/categoryRules');
 const { resolveAndValidateCategory } = require('../lib/serviceCategory');
+const { canActivateMore } = require('../middleware/planMiddleware');
+
+// Clamp service money/time fields to safe bounds (audit P1-11). Mirrors
+// serviceController — the controller-level backstop so a negative/oversized
+// price or absurd duration can never be persisted, even via direct API.
+const clampPrice = (v) => Math.min(500000, Math.max(0, Number.isFinite(parseFloat(v)) ? parseFloat(v) : 0));
+const clampDuration = (v) => Math.min(480, Math.max(5, parseInt(v, 10) || 30));
+const clampGrace = (v) => Math.min(1440, Math.max(0, parseInt(v, 10) || 0));
+
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/; // HH:MM 24h
+const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+// Validate a weekly_schedule payload (audit P1-10). A host could previously save
+// end<=start, overlapping, or malformed windows; computeSlots then silently
+// produced ZERO bookable slots — the host looked "open" but every guest saw an
+// empty calendar (invisible lost bookings). Returns null if ok, else a message.
+const validateWeeklySchedule = (ws) => {
+  if (ws == null) return null; // not being updated
+  if (typeof ws !== 'object' || Array.isArray(ws)) return 'Invalid weekly schedule.';
+  for (const day of Object.keys(ws)) {
+    if (!DAY_KEYS.includes(String(day).toLowerCase())) return `Unknown day "${day}".`;
+    const windows = ws[day];
+    if (windows == null) continue;
+    if (!Array.isArray(windows)) return `Schedule for ${day} must be a list of time windows.`;
+    const ranges = [];
+    for (const w of windows) {
+      if (!w || typeof w !== 'object') return `Invalid time window on ${day}.`;
+      const { start, end } = w;
+      if (!TIME_RE.test(String(start)) || !TIME_RE.test(String(end)))
+        return `Use HH:MM 24-hour times on ${day}.`;
+      const [sh, sm] = String(start).split(':').map(Number);
+      const [eh, em] = String(end).split(':').map(Number);
+      const s = sh * 60 + sm, e = eh * 60 + em;
+      if (e <= s) return `On ${day}, the end time must be after the start time.`;
+      ranges.push([s, e]);
+    }
+    ranges.sort((a, b) => a[0] - b[0]);
+    for (let i = 1; i < ranges.length; i++) {
+      if (ranges[i][0] < ranges[i - 1][1]) return `Overlapping time windows on ${day}.`;
+    }
+  }
+  return null;
+};
 
 // Public host columns. SECURITY: explicit whitelist — never select('*') on a
 // public route. SEO override cols (v3.19) are appended with a fallback so a
@@ -387,10 +430,10 @@ const createService = async (req, res) => {
       description: description || "",
       type: type || "one_on_one",
       meeting_mode: meeting_mode || "online",
-      duration: parseInt(duration) || 30,
-      price: parseFloat(price) || 0,
+      duration: clampDuration(duration),
+      price: clampPrice(price),
       currency: currency || "INR",
-      grace_period_minutes: parseInt(grace_period_minutes) || 10,
+      grace_period_minutes: grace_period_minutes !== undefined ? clampGrace(grace_period_minutes) : 10,
       category: chk.value,
     };
     if (thumbnail_url !== undefined) payload.thumbnail_url = thumbnail_url;
@@ -421,18 +464,29 @@ const updateService = async (req, res) => {
       thumbnail_url,
       grace_period_minutes,
     } = req.body;
+    // P1-1: this endpoint can flip is_active. Gate a real false→true transition
+    // against the plan's active-service cap (mirrors the toggle route).
+    if (is_active === true) {
+      const { data: current } = await supabaseAdmin
+        .from('services').select('is_active').eq('id', req.params.id).eq('host_id', req.user.id).single();
+      if (current && current.is_active === false) {
+        const gate = await canActivateMore(req.user.id, 'services');
+        if (!gate.ok) return res.status(gate.status).json({ message: gate.message, upgrade_required: true });
+      }
+    }
+
     const updates = { updated_at: new Date().toISOString() };
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
     if (type !== undefined) updates.type = type;
     if (meeting_mode !== undefined) updates.meeting_mode = meeting_mode;
-    if (duration !== undefined) updates.duration = duration;
-    if (price !== undefined) updates.price = price;
+    if (duration !== undefined) updates.duration = clampDuration(duration);
+    if (price !== undefined) updates.price = clampPrice(price);
     if (currency !== undefined) updates.currency = currency;
     if (is_active !== undefined) updates.is_active = is_active;
     if (thumbnail_url !== undefined) updates.thumbnail_url = thumbnail_url;
     if (grace_period_minutes !== undefined)
-      updates.grace_period_minutes = parseInt(grace_period_minutes) || 10;
+      updates.grace_period_minutes = clampGrace(grace_period_minutes);
 
     if (req.body.category !== undefined) {
       const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: false });
@@ -505,6 +559,15 @@ const setAvailability = async (req, res) => {
   try {
     const { weekly_schedule, blocked_dates, timezone, buffer_minutes } =
       req.body;
+
+    // P1-10: reject malformed/contradictory schedules before they silently
+    // produce an empty calendar (host appears open, guests see no slots).
+    const scheduleError = validateWeeklySchedule(weekly_schedule);
+    if (scheduleError) return res.status(400).json({ message: scheduleError });
+    if (blocked_dates != null && !Array.isArray(blocked_dates))
+      return res.status(400).json({ message: 'blocked_dates must be a list of dates.' });
+    if (buffer_minutes != null && (!Number.isFinite(Number(buffer_minutes)) || Number(buffer_minutes) < 0 || Number(buffer_minutes) > 480))
+      return res.status(400).json({ message: 'buffer_minutes must be between 0 and 480.' });
 
     // Upsert -- insert if not exists, update if exists
     const { data, error } = await supabaseAdmin

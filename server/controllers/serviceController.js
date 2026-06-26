@@ -8,6 +8,15 @@ const { safeError } = require('../utils/httpError');
 const { getConfig: getPlatformConfig } = require('../services/platformConfig');
 const { bustSitemapCache } = require('../utils/sitemapCache');
 const { resolveAndValidateCategory } = require('../lib/serviceCategory');
+const { canActivateMore } = require('../middleware/planMiddleware');
+
+// Clamp service money/time fields to safe bounds (audit P1-11). parseFloat/parseInt
+// alone let a negative price through (parseFloat('-500') === -500), which breaks
+// commission math and can yield a negative vendor payout. These match the
+// validate.js bounds and are the controller-level backstop.
+const clampPrice = (v) => Math.min(500000, Math.max(0, Number.isFinite(parseFloat(v)) ? parseFloat(v) : 0));
+const clampDuration = (v) => Math.min(480, Math.max(5, parseInt(v, 10) || 30));
+const clampGrace = (v) => Math.min(1440, Math.max(0, parseInt(v, 10) || 0));
 
 // ─── Slug helpers ────────────────────────────────────────────────────────────
 
@@ -74,10 +83,10 @@ const buildPayload = (body) => {
   if (service_type !== undefined)       p.meeting_mode = service_type;
   if (meeting_mode !== undefined)       p.meeting_mode = meeting_mode;
   if (type !== undefined)               p.type = type;
-  if (price !== undefined)              p.price = parseFloat(price) || 0;
-  if (duration !== undefined)           p.duration = parseInt(duration) || 30;
-  if (grace_period !== undefined)       p.grace_period_minutes = parseInt(grace_period) || 0;
-  if (grace_period_minutes !== undefined) p.grace_period_minutes = parseInt(grace_period_minutes) || 0;
+  if (price !== undefined)              p.price = clampPrice(price);
+  if (duration !== undefined)           p.duration = clampDuration(duration);
+  if (grace_period !== undefined)       p.grace_period_minutes = clampGrace(grace_period);
+  if (grace_period_minutes !== undefined) p.grace_period_minutes = clampGrace(grace_period_minutes);
   if (thumbnail_url !== undefined)      p.thumbnail_url = thumbnail_url || '';
   if (included_items !== undefined)     p.included_items = Array.isArray(included_items) ? included_items : [];
   if (excluded_items !== undefined)     p.excluded_items = Array.isArray(excluded_items) ? excluded_items : [];
@@ -331,6 +340,12 @@ const toggleService = async (req, res) => {
   try {
     const { data: svc } = await supabaseAdmin.from('services').select('is_active').eq('id', req.params.id).eq('host_id', req.user.id).single();
     if (!svc) return res.status(404).json({ message: 'Service not found' });
+
+    // P1-1: activating (inactive→active) must respect the plan's active-service cap.
+    if (!svc.is_active) {
+      const gate = await canActivateMore(req.user.id, 'services');
+      if (!gate.ok) return res.status(gate.status).json({ message: gate.message, upgrade_required: true });
+    }
 
     const { error } = await supabaseAdmin
       .from('services')

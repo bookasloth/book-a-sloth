@@ -1,4 +1,4 @@
-import { Clock, Check, CheckCircle2, X } from "lucide-react";
+import { Clock, Check, CheckCircle2, X, UserX } from "lucide-react";
 
 /**
  * Unified booking-status chip. Icon-only on mobile (< sm) so narrow columns
@@ -10,6 +10,7 @@ const STATUS_MAP = {
   confirmed: { label: "Confirmed", Icon: Check,        cls: "bg-green-100 text-green-700 border-green-200" },
   completed: { label: "Completed", Icon: CheckCircle2, cls: "bg-blue-100 text-blue-600 border-blue-200" },
   cancelled: { label: "Cancelled", Icon: X,            cls: "bg-red-100 text-red-600 border-red-200" },
+  no_show:   { label: "No-show",   Icon: UserX,        cls: "bg-orange-100 text-orange-700 border-orange-200" },
 };
 
 const StatusChip = ({ status, className = "" }) => {

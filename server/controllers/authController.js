@@ -1086,6 +1086,7 @@ const forgotPassword = async (req, res) => {
       .from("otp_codes")
       .select("locked_until")
       .eq("email", normalizedEmail)
+      .eq("type", "password_reset")
       .maybeSingle();
     if (existingOtp?.locked_until && new Date(existingOtp.locked_until) > new Date()) {
       return res.json({ message: "If that email exists, an OTP has been sent." });
@@ -1095,38 +1096,40 @@ const forgotPassword = async (req, res) => {
     const otp = crypto.randomInt(100000, 1000000).toString();
     const otpHash = await bcrypt.hash(otp, 10);
 
-    const { error: otpError } = await supabaseAdmin
-      .from("otp_codes")
-      .upsert(
-        {
-          email: normalizedEmail,
-          otp: "",                 // legacy plaintext column kept empty
-          otp_hash: otpHash,
-          attempts: 0,
-          locked_until: null,
-          type: "password_reset",
-          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-          created_at: new Date().toISOString(),
-        },
-        { onConflict: "email" }
-      );
+    // Upsert the reset code on the composite key (email, type) (audit P1-9) so a
+    // booking/login OTP for the same email can no longer overwrite it (and can't
+    // clear its brute-force lockout). Falls back to the (email) conflict target if
+    // the v3.44 migration isn't applied yet.
+    const upsertReset = async (row) => {
+      let r = await supabaseAdmin.from("otp_codes").upsert(row, { onConflict: "email,type" });
+      if (r.error && /no unique or exclusion constraint matching the ON CONFLICT/i.test(r.error.message || "")) {
+        r = await supabaseAdmin.from("otp_codes").upsert(row, { onConflict: "email" });
+      }
+      return r;
+    };
+
+    const { error: otpError } = await upsertReset({
+      email: normalizedEmail,
+      otp: "",                 // legacy plaintext column kept empty
+      otp_hash: otpHash,
+      attempts: 0,
+      locked_until: null,
+      type: "password_reset",
+      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      created_at: new Date().toISOString(),
+    });
 
     if (otpError) {
       // Pre-v1.9 DB without otp_hash/attempts/locked_until — degrade to the
       // legacy plaintext column so reset still works (resetPassword reads both).
       if (/Could not find the|column.*does not exist/i.test(otpError.message || "")) {
-        const { error: legacyErr } = await supabaseAdmin
-          .from("otp_codes")
-          .upsert(
-            {
-              email: normalizedEmail,
-              otp,
-              type: "password_reset",
-              expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-              created_at: new Date().toISOString(),
-            },
-            { onConflict: "email" }
-          );
+        const { error: legacyErr } = await upsertReset({
+          email: normalizedEmail,
+          otp,
+          type: "password_reset",
+          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString(),
+        });
         if (legacyErr) {
           console.error("forgot-password: OTP store error:", legacyErr.message);
           return res.status(500).json({ message: "Failed to send reset code. Please try again." });
@@ -1178,7 +1181,8 @@ const resetPassword = async (req, res) => {
       .from("otp_codes")
       .select("*")
       .eq("email", normalizedEmail)
-      .single();
+      .eq("type", "password_reset")
+      .maybeSingle();
 
     if (!record)
       return res.status(400).json({ message: "No reset code found. Request a new one." });
@@ -1193,7 +1197,7 @@ const resetPassword = async (req, res) => {
       return res.status(429).json({ message: `Too many attempts. Try again in ${mins} minute(s).` });
     }
     if (new Date(record.expires_at) < new Date()) {
-      await supabaseAdmin.from("otp_codes").delete().eq("email", normalizedEmail);
+      await supabaseAdmin.from("otp_codes").delete().eq("email", normalizedEmail).eq("type", "password_reset");
       return res.status(400).json({ message: "Reset code expired. Request a new one." });
     }
 
@@ -1209,15 +1213,16 @@ const resetPassword = async (req, res) => {
         await supabaseAdmin
           .from("otp_codes")
           .update({ attempts, locked_until: new Date(Date.now() + LOCKOUT_MS).toISOString() })
-          .eq("email", normalizedEmail);
+          .eq("email", normalizedEmail)
+          .eq("type", "password_reset");
         return res.status(429).json({ message: "Too many incorrect attempts. Try again in 15 minutes." });
       }
       // Best-effort attempt increment (no-op on pre-v1.9 schemas without the column).
-      await supabaseAdmin.from("otp_codes").update({ attempts }).eq("email", normalizedEmail);
+      await supabaseAdmin.from("otp_codes").update({ attempts }).eq("email", normalizedEmail).eq("type", "password_reset");
       return res.status(400).json({ message: "Invalid reset code." });
     }
 
-    await supabaseAdmin.from("otp_codes").delete().eq("email", normalizedEmail);
+    await supabaseAdmin.from("otp_codes").delete().eq("email", normalizedEmail).eq("type", "password_reset");
 
     // BUG-06 fixed: use profile.id (= Supabase auth user id) instead of listUsers() which only returns first 1000
     const { data: profileForReset } = await supabaseAdmin

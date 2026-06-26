@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireHost } = require('../middleware/authMiddleware');
 const {
   getTransactions,
   getPayoutBalance,
@@ -20,7 +20,7 @@ router.get('/payout/balance', getPayoutBalance);
 router.get('/payout/requests', getPayoutRequests);
 router.post('/payout/request', requestPayout);
 
-// Service toggle (soft-disable / enable)
-router.put('/services/:id/toggle', toggleService);
+// Service toggle (soft-disable / enable) — requireHost (P1-1: was protect-only)
+router.put('/services/:id/toggle', requireHost, toggleService);
 
 module.exports = router;

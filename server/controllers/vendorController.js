@@ -10,6 +10,7 @@ const { safeError } = require('../utils/httpError');
 const platformConfig = require('../services/platformConfig');
 const { computeSettlementBalance } = require('../services/settlementService');
 const { sanitizeLikeTerm } = require('../utils/searchSanitize');
+const { canActivateMore } = require('../middleware/planMiddleware');
 
 // ─── TRANSACTIONS ─────────────────────────────────────────────────────────────
 
@@ -153,6 +154,12 @@ const toggleService = async (req, res) => {
 
     if (fetchError || !service) {
       return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // P1-1: activating (inactive→active) must respect the plan's active-service cap.
+    if (!service.is_active) {
+      const gate = await canActivateMore(req.user.id, 'services');
+      if (!gate.ok) return res.status(gate.status).json({ message: gate.message, upgrade_required: true });
     }
 
     const { data, error } = await supabaseAdmin

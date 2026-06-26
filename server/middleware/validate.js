@@ -137,11 +137,33 @@ const createServiceRules = [
   body('thumbnail_url').optional().trim().isURL({ require_protocol: true }),
 ];
 
+// Bounded write rules shared by BOTH service backends (serviceController via
+// /api/services and hostController via /api/host/services) on create AND update
+// (audit P1-11). Every field is optional so a partial update isn't rejected, but
+// when present it must be in range — the route-level guard that returns a clean
+// 422. Accepts both naming conventions the two controllers read
+// (service_type/meeting_mode, grace_period/grace_period_minutes). Controllers
+// also clamp these values as a hard backstop.
+const serviceWriteRules = [
+  body('title').optional().trim().isLength({ min: 3, max: 200 }).withMessage('Title must be 3–200 characters'),
+  body('description').optional().trim().isLength({ max: 2000 }),
+  body('short_description').optional().trim().isLength({ max: 2000 }),
+  body('long_description').optional().trim().isLength({ max: 5000 }),
+  body('duration').optional().isInt({ min: 5, max: 480 }).withMessage('Duration must be 5–480 minutes'),
+  body('price').optional().isFloat({ min: 0, max: 500000 }).withMessage('Price must be 0–500000'),
+  body('grace_period').optional().isInt({ min: 0, max: 1440 }).withMessage('Grace period must be 0–1440 minutes'),
+  body('grace_period_minutes').optional().isInt({ min: 0, max: 1440 }).withMessage('Grace period must be 0–1440 minutes'),
+  body('meeting_mode').optional().isIn(['online', 'offline', 'hybrid']),
+  body('service_type').optional().isIn(['online', 'offline', 'hybrid']),
+  body('type').optional().isIn(['one_on_one', 'group', 'paid_dm']),
+  body('thumbnail_url').optional({ checkFalsy: true }).trim().isURL({ require_protocol: true, protocols: ['http', 'https'] }).withMessage('Invalid thumbnail URL'),
+];
+
 module.exports = {
   validate,
   registerRules, loginRules, otpSendRules, otpVerifyRules,
   createBookingRules, rescheduleRules,
   createOrderRules, verifyPaymentRules, subscribePlanRules,
   createProductRules, updateProductRules,
-  updateProfileRules, createServiceRules,
+  updateProfileRules, createServiceRules, serviceWriteRules,
 };

@@ -37,15 +37,21 @@ const generate = () => (isLoadTestMode() ? '000000' : crypto.randomInt(100000, 1
  * Returns { ok: true } or { ok: false, reason }.
  * Throws only on unexpected DB errors.
  */
-const set = async (email, otp) => {
+const _isMissingConflictTarget = (error) =>
+  error && /no unique or exclusion constraint matching the ON CONFLICT/i.test(error.message || '');
+
+const set = async (email, otp, type = 'booking') => {
   const key = normalizeEmail(email);
   const now = Date.now();
 
-  // Read existing row for rate-limit state
+  // Read existing row for rate-limit state. Scoped by `type` (audit P1-9): the
+  // otp_codes PK is (email, type), so booking and password-reset codes live in
+  // separate rows and a booking send never clobbers an in-flight reset code.
   const { data: existing } = await supabaseAdmin
     .from('otp_codes')
     .select('*')
     .eq('email', key)
+    .eq('type', type)
     .maybeSingle();
 
   if (existing) {
@@ -60,7 +66,8 @@ const set = async (email, otp) => {
       await supabaseAdmin
         .from('otp_codes')
         .update({ locked_until: new Date(now + LOCKOUT_MS).toISOString() })
-        .eq('email', key);
+        .eq('email', key)
+        .eq('type', type);
       return { ok: false, reason: 'Too many OTP requests. Try again in 15 minutes.' };
     }
     var sendCount   = inWindow ? (existing.send_count || 0) + 1 : 1;
@@ -80,18 +87,27 @@ const set = async (email, otp) => {
     first_send_at: firstSendAt,
     locked_until: null,
     expires_at: new Date(now + TTL_MS).toISOString(),
-    type: 'booking',
+    type,
   };
 
-  let { error } = await supabaseAdmin
-    .from('otp_codes')
-    .upsert(payload, { onConflict: 'email' });
+  // Upsert on the composite key (email, type) (audit P1-9). If the v3.44
+  // migration isn't applied yet (composite PK absent), fall back to the legacy
+  // (email) conflict target so a brief deploy-before-migrate gap still works.
+  const upsert = async (row) => {
+    let r = await supabaseAdmin.from('otp_codes').upsert(row, { onConflict: 'email,type' });
+    if (_isMissingConflictTarget(r.error)) {
+      r = await supabaseAdmin.from('otp_codes').upsert(row, { onConflict: 'email' });
+    }
+    return r;
+  };
+
+  let { error } = await upsert(payload);
 
   if (_isMissingSchema(error)) {
     // Pre-v1.9 DB: fall back to legacy plaintext storage
     const { otp_hash, attempts, send_count, first_send_at, locked_until, ...legacy } = payload;
     legacy.otp = String(otp).trim();
-    ({ error } = await supabaseAdmin.from('otp_codes').upsert(legacy, { onConflict: 'email' }));
+    ({ error } = await upsert(legacy));
   }
 
   if (error) throw new Error(`OTP store error: ${error.message}`);
@@ -114,10 +130,13 @@ const verify = async (email, otp, expectedType = 'booking') => {
   const key = normalizeEmail(email);
   const now = Date.now();
 
+  // Scope the read to this purpose's row (audit P1-9): a booking code and a
+  // password-reset code for the same email are now separate rows.
   const { data: record, error } = await supabaseAdmin
     .from('otp_codes')
     .select('*')
     .eq('email', key)
+    .eq('type', expectedType)
     .maybeSingle();
 
   if (error || !record) {
@@ -136,7 +155,7 @@ const verify = async (email, otp, expectedType = 'booking') => {
   }
 
   if (new Date(record.expires_at).getTime() < now) {
-    await supabaseAdmin.from('otp_codes').delete().eq('email', key);
+    await supabaseAdmin.from('otp_codes').delete().eq('email', key).eq('type', expectedType);
     return { valid: false, reason: 'OTP expired. Request a new one.' };
   }
 
@@ -155,15 +174,16 @@ const verify = async (email, otp, expectedType = 'booking') => {
       await supabaseAdmin
         .from('otp_codes')
         .update({ attempts, locked_until: new Date(now + LOCKOUT_MS).toISOString() })
-        .eq('email', key);
+        .eq('email', key)
+        .eq('type', expectedType);
       return { valid: false, reason: 'Too many incorrect attempts. Try again in 15 minutes.' };
     }
-    await supabaseAdmin.from('otp_codes').update({ attempts }).eq('email', key);
+    await supabaseAdmin.from('otp_codes').update({ attempts }).eq('email', key).eq('type', expectedType);
     return { valid: false, reason: `Invalid OTP. ${MAX_ATTEMPTS - attempts} attempt(s) left.` };
   }
 
   // Single-use: delete after successful verification
-  await supabaseAdmin.from('otp_codes').delete().eq('email', key);
+  await supabaseAdmin.from('otp_codes').delete().eq('email', key).eq('type', expectedType);
   return { valid: true };
 };
 
