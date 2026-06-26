@@ -10,6 +10,7 @@ import HostRoute from './components/common/HostRoute';
 import GuestRoute from './components/common/GuestRoute';
 import AnalyticsBridge from './components/common/AnalyticsBridge';
 import ConsentBanner from './components/common/ConsentBanner';
+import ScrollToTop from './components/common/ScrollToTop';
 import { useAuth } from './context/AuthContext';
 
 // ── Route-level lazy loading ──────────────────────────────────────────────────
@@ -180,6 +181,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop />
       <Toaster position="top-right" />
       <AnalyticsBridge />
       <ConsentBanner />
