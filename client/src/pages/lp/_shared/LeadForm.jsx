@@ -14,12 +14,16 @@ import { analytics, EVENTS } from "../../../services/analytics";
  * Kept in one place so the conversion-critical path (validation, event names,
  * handoff) is identical across all LPs. Pass a unique `slug` per page and a
  * `slot` per instance ("hero" / "final") for funnel attribution.
+ *
+ * `mode="email"` (default) renders the email field + "or continue with Google".
+ * `mode="google-only"` renders a single one-click Google CTA (no email field).
  */
 export default function LeadForm({
   slug,
   slot,
   dark = false,
   ctaLabel = "Start free — ₹0 to begin",
+  mode = "email",
 }) {
   const { startVendorGoogleAuth } = useAuth();
   const utm = useUtm();
@@ -66,6 +70,29 @@ export default function LeadForm({
 
   const labelId = `lead-email-${slot}`;
 
+  // Shared CTA pill style — single source so the two render paths can't drift.
+  const ctaBtn =
+    "inline-flex h-12 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-white shadow-[0_12px_30px_-8px_rgba(254,81,0,0.5)] transition-all hover:-translate-y-0.5 hover:bg-primary-dark disabled:opacity-60 disabled:hover:translate-y-0";
+
+  if (mode === "google-only") {
+    return (
+      <div className="w-full max-w-md">
+        <button
+          type="button"
+          onClick={() => handoff(false)}
+          disabled={busy}
+          className={`${ctaBtn} w-full`}
+        >
+          {busy ? "Opening…" : ctaLabel}
+          {!busy && <ArrowRight size={15} />}
+        </button>
+        <p className={`mt-2.5 text-center text-xs ${dark ? "text-white/60" : "text-neutral-500"}`}>
+          No card · Free plan available · Cancel anytime
+        </p>
+      </div>
+    );
+  }
+
   return (
     <form
       onSubmit={(e) => {
@@ -91,7 +118,7 @@ export default function LeadForm({
         <button
           type="submit"
           disabled={busy}
-          className="inline-flex h-12 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-white shadow-[0_12px_30px_-8px_rgba(254,81,0,0.5)] transition-all hover:-translate-y-0.5 hover:bg-primary-dark disabled:opacity-60 disabled:hover:translate-y-0"
+          className={`${ctaBtn} shrink-0`}
         >
           {busy ? "Opening…" : ctaLabel}
           {!busy && <ArrowRight size={15} />}

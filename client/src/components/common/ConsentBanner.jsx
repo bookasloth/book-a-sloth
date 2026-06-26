@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { analytics } from '../../services/analytics';
 
-export default function ConsentBanner() {
+export default function ConsentBanner({ variant = "full" }) {
   const [decided, setDecided] = useState(() => analytics.hasDecided());
 
   if (decided) return null;
@@ -13,6 +13,23 @@ export default function ConsentBanner() {
     analytics.setConsent(granted);
     setDecided(true);
   };
+
+  if (variant === "slim") {
+    return (
+      <div
+        role="dialog"
+        aria-label="Cookie and analytics consent"
+        className="fixed inset-x-0 bottom-0 z-[9999] flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-black/10 bg-white/95 px-4 py-2.5 text-xs text-[#252525] shadow-[0_-2px_12px_rgba(0,0,0,0.08)] backdrop-blur"
+      >
+        <span>We use cookies for analytics &amp; marketing. Essential analytics always run.</span>
+        <span className="flex items-center gap-2">
+          <button type="button" onClick={() => choose(true)} className="rounded-full bg-[#009D28] px-3 py-1 font-semibold text-white">Agree</button>
+          <button type="button" onClick={() => choose(false)} className="rounded-full border border-black/20 px-3 py-1 font-medium">Decline</button>
+          <a href="/privacy" className="underline-offset-2 hover:underline">Learn more</a>
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div
