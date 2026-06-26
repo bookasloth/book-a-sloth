@@ -10,6 +10,7 @@
 export const RESERVED_FIRST_SEGMENTS = [
   'login', 'logout', 'signin', 'signup', 'register', 'forgot-password', 'reset-password',
   'help', 'about', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore',
+  'contact', 'get-in-touch',
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'lp',
   'my-bookings', 'profile', 'reviews', 'loyalty', 'sitemap', 'robots', 'health',
