@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { createReview, updateReview } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -7,6 +7,11 @@ export default function ReviewModal({ open, booking, onClose, onDone, direction 
   const [rating, setRating] = useState(existing?.rating || 0);
   const [comment, setComment] = useState(existing?.comment || '');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setRating(existing?.rating || 0);
+    setComment(existing?.comment || '');
+  }, [existing]);
 
   const isEdit = !!existing;
   const isHostReviewing = direction === 'host_to_guest';
