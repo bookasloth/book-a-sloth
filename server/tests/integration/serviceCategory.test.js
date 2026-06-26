@@ -260,6 +260,16 @@ describe('PUT /api/admin/service-categories/:id', () => {
     expect(res.body.slug).toBe('yoga');
   });
 
+  test('400 when parent_id equals the category id (self-parent guard)', async () => {
+    const res = await request(app)
+      .put('/api/admin/service-categories/cat-1')
+      .set(adminAuth())
+      .send({ parent_id: 'cat-1' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/can't be its own parent/i);
+  });
+
   test('404 when category not found', async () => {
     supabaseAdmin.from.mockReturnValueOnce({
       update:      jest.fn().mockReturnThis(),

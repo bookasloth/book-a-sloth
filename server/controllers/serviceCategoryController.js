@@ -27,18 +27,19 @@ const slugify = (str) =>
 /**
  * Build a unique slug derived from `base`, avoiding collisions against the DB.
  * Tries base, base-2, base-3, … until one is free.
+ * Throws if more than 1000 attempts are needed to prevent infinite loops.
  */
 const uniqueSlug = async (base) => {
   let candidate = base;
   let suffix = 2;
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
+  while (suffix <= 1001) {
     const { data } = await supabaseAdmin
       .from('service_categories')
       .select('id')
       .eq('slug', candidate)
       .maybeSingle();
     if (!data) return candidate;
+    if (suffix > 1000) throw new Error(`Could not generate a unique slug for "${base}" after 1000 attempts`);
     candidate = `${base}-${suffix}`;
     suffix += 1;
   }
@@ -160,6 +161,9 @@ const create = async (req, res) => {
 // PUT /api/admin/service-categories/:id
 const update = async (req, res) => {
   try {
+    if (req.body.parent_id && req.body.parent_id === req.params.id)
+      return res.status(400).json({ message: "A category can't be its own parent" });
+
     const updates = { updated_at: new Date().toISOString() };
 
     // Patch only the fields the caller supplies.
