@@ -1,4 +1,4 @@
-// All Careers-page copy + open roles. Round-2: swap [bracketed] placeholders,
+// All Careers-page copy + open roles. Round-2: swap placeholder copy,
 // real compensation bands, and culture photos before public launch.
 import { Rocket, HeartHandshake, Sprout, Clock, Globe2, TrendingUp } from 'lucide-react';
 

@@ -13,7 +13,10 @@ describe('careersContent', () => {
     for (const j of jobs) {
       expect(j.slug).toMatch(/^[a-z0-9-]+$/);
       expect(typeof j.title).toBe('string');
-      expect(j.team && j.location && j.type && j.comp).toBeTruthy();
+      expect(j.team).toBeTruthy();
+      expect(j.location).toBeTruthy();
+      expect(j.type).toBeTruthy();
+      expect(j.comp).toBeTruthy();
       expect(typeof j.summary).toBe('string');
       expect(Array.isArray(j.responsibilities)).toBe(true);
       expect(Array.isArray(j.requirements)).toBe(true);
@@ -23,6 +26,7 @@ describe('careersContent', () => {
   });
 
   it('getOpenJobs returns only open roles', () => {
+    expect(getOpenJobs().length).toBeGreaterThan(0);
     expect(getOpenJobs().every((j) => j.status === 'open')).toBe(true);
   });
 
