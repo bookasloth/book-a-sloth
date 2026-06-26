@@ -607,8 +607,8 @@ const cancelBooking = async (req, res) => {
           recipientUserId: booking.host_id, bookingId: booking.id,
         },
       });
-      // In-app: notify both sides of the cancellation.
-      if (booking.guest_id) {
+      // In-app: notify the OTHER party about the cancellation (not the actor).
+      if (booking.guest_id && booking.guest_id !== req.user.id) {
         inAppNotify({
           userId: booking.guest_id,
           role: 'guest',
@@ -619,15 +619,17 @@ const cancelBooking = async (req, res) => {
           data: { bookingId: booking.id },
         });
       }
-      inAppNotify({
-        userId: booking.host_id,
-        role: 'host',
-        type: 'BOOKING_CANCELLED',
-        title: 'Booking cancelled',
-        body: `${booking.guest_name}'s booking for ${booking.services?.title || 'a service'} was cancelled`,
-        link: '/dashboard/bookings',
-        data: { bookingId: booking.id },
-      });
+      if (booking.host_id !== req.user.id) {
+        inAppNotify({
+          userId: booking.host_id,
+          role: 'host',
+          type: 'BOOKING_CANCELLED',
+          title: 'Booking cancelled',
+          body: `${booking.guest_name}'s booking for ${booking.services?.title || 'a service'} was cancelled`,
+          link: '/dashboard/bookings',
+          data: { bookingId: booking.id },
+        });
+      }
     } catch (notifyError) {
       console.error("Cancel notification error:", notifyError.message);
     }
@@ -1050,8 +1052,8 @@ const rescheduleBooking = async (req, res) => {
           },
         });
       }
-      // In-app: notify both sides of the reschedule.
-      if (booking.guest_id) {
+      // In-app: notify the OTHER party about the reschedule (not the actor).
+      if (booking.guest_id && booking.guest_id !== req.user.id) {
         inAppNotify({
           userId: booking.guest_id,
           role: 'guest',
@@ -1062,15 +1064,17 @@ const rescheduleBooking = async (req, res) => {
           data: { bookingId: booking.id },
         });
       }
-      inAppNotify({
-        userId: booking.host_id,
-        role: 'host',
-        type: 'BOOKING_RESCHEDULED',
-        title: 'Booking rescheduled',
-        body: `New time: ${newWhen}`,
-        link: '/dashboard/bookings',
-        data: { bookingId: booking.id },
-      });
+      if (booking.host_id !== req.user.id) {
+        inAppNotify({
+          userId: booking.host_id,
+          role: 'host',
+          type: 'BOOKING_RESCHEDULED',
+          title: 'Booking rescheduled',
+          body: `New time: ${newWhen}`,
+          link: '/dashboard/bookings',
+          data: { bookingId: booking.id },
+        });
+      }
     } catch (emailError) {
       console.error("Reschedule email error:", emailError.message);
     }
