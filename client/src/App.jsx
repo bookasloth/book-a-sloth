@@ -31,6 +31,8 @@ const Terms          = lazy(() => import('./pages/Terms'));
 const Refund         = lazy(() => import('./pages/Refund'));
 const Unsubscribe    = lazy(() => import('./pages/Unsubscribe'));
 const About          = lazy(() => import('./pages/About'));
+const Careers        = lazy(() => import('./pages/Careers'));
+const JobDetail      = lazy(() => import('./pages/JobDetail'));
 
 // Paid-traffic landing pages (/lp/*) — own header/footer, global nav hidden
 const TopmateVsBookASloth = lazy(() => import('./pages/lp/TopmateVsBookASloth'));
@@ -196,6 +198,8 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/help" element={<Help />} />
           <Route path="/about" element={<About />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/careers/:jobSlug" element={<JobDetail />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/refund" element={<Refund />} />

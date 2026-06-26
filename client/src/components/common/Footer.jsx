@@ -14,6 +14,7 @@ const COLUMNS = [
   ] },
   { h: 'Company', links: [
     { t: 'About', href: '/about' },
+    { t: 'Careers', href: '/careers' },
     { t: 'Reviews', href: '/#collective' },
     { t: 'Log in', href: '/login-as-vendor' },
   ] },

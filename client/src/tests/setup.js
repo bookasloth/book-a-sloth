@@ -93,5 +93,20 @@ beforeAll(() => {
           `expected element ${pass ? 'not ' : ''}to be an empty DOM element but received: ${element ? element.innerHTML : element}`,
       };
     },
+    toHaveAttribute(element, attr, value) {
+      const hasAttr = element !== null && element !== undefined && element.hasAttribute(attr);
+      const pass = value === undefined
+        ? hasAttr
+        : hasAttr && element.getAttribute(attr) === value;
+      return {
+        pass,
+        message: () => {
+          if (value === undefined) {
+            return `expected element ${pass ? 'not ' : ''}to have attribute "${attr}"`;
+          }
+          return `expected element ${pass ? 'not ' : ''}to have attribute "${attr}" with value "${value}" but got "${element ? element.getAttribute(attr) : undefined}"`;
+        },
+      };
+    },
   });
 });
