@@ -9,6 +9,7 @@ const {
   sendOtp,
   verifyOtp,
   login,
+  loginUnified,
   loginWithPhone,
   verifyOtpLogin,
   setPassword,
@@ -47,6 +48,8 @@ router.post('/reset-password', authLimiter, resetPassword);
 
 // Shared
 router.post('/login', authLimiter, login);
+// Unified login door (Phase B): email OR phone + password, any role.
+router.post('/login-unified', authLimiter, loginUnified);
 router.get('/me', protect, getMe);
 router.put('/me', protect, updateMe);
 // Unified identity: add hosting capability to the current account.

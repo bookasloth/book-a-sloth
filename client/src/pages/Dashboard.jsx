@@ -42,7 +42,7 @@ const Dashboard = () => {
   const { user, connectGoogleCalendar, updateUser } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const isHost = user?.role === 'host';
+  const isHost = user?.is_host === true || user?.role === 'host';
 
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
