@@ -93,7 +93,7 @@ export const NAV = [
     ]},
     { label:'Services', icon:'layers', groupId:'op-services', perm:'services.view', children:[
       { label:'All Services', to:'/admin/services' },
-      { label:'Categories',   to:'/admin/services/categories' },
+      { label:'Service Categories', to:'/admin/services/categories' },
       { label:'Featured',     to:'/admin/services/featured' },
     ]},
     { label:'Addons',             icon:'package', to:'/admin/addons', perm:'plans.manage' },
