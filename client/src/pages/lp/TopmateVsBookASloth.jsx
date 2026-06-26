@@ -8,7 +8,6 @@ import {
   CalendarCheck,
   Video,
   IndianRupee,
-  MessageCircle,
   LogIn,
   Share2,
   Sparkles,
@@ -17,11 +16,18 @@ import useUtm from "../../hooks/useUtm";
 import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
 import LeadForm from "./_shared/LeadForm";
+import { HERO_FACES } from "../../components/home/images";
 
 /* ════════════════════════════════════════════════════════════════════
    /lp/topmate-vs-bookasloth
    Conversion landing page for paid ad traffic (Topmate switchers).
-   Single goal: start a 0%-commission vendor signup.
+
+   Design judo: this page is built to LOOK like Topmate's own warm,
+   playful, creator-first homepage — cream canvas, peach bands, rounded
+   floaty cards — but every place Topmate takes a cut is marked in
+   Topmate's OWN brand red (#E44332). The copy sells against them.
+
+   Single goal: start a 0%-commission host signup (one-click Google).
    No global Navbar/footer (App.jsx hides nav on /lp). No exit links.
    ════════════════════════════════════════════════════════════════════ */
 
@@ -64,9 +70,9 @@ const COMPARE = [
 const Cell = ({ good, children, strong }) => (
   <span className="inline-flex items-center gap-1.5">
     {good ? (
-      <Check size={15} className={strong ? "text-primary" : "text-emerald-600"} />
+      <Check size={15} className="text-[#009D28]" />
     ) : (
-      <X size={15} className="text-neutral-400" />
+      <X size={15} className="text-[#E44332]" />
     )}
     <span className={strong ? "font-semibold text-ink" : "text-neutral-600"}>
       {children}
@@ -111,20 +117,20 @@ function SavingsCalc() {
       </div>
 
       <div className="mt-7 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl bg-neutral-100 p-5">
-          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+        <div className="rounded-2xl bg-[#E44332]/10 p-5">
+          <div className="text-xs font-medium uppercase tracking-wide text-[#E44332]">
             Topmate takes / year
           </div>
-          <div className="mt-1 text-2xl font-bold text-neutral-700 [font-variant-numeric:tabular-nums]">
+          <div className="mt-1 text-2xl font-bold text-[#E44332] [font-variant-numeric:tabular-nums]">
             {inr(figures.tmLo)} – {inr(figures.tmHi)}
           </div>
           <div className="mt-1 text-xs text-neutral-500">at 10–30% commission</div>
         </div>
-        <div className="rounded-2xl bg-primary/10 p-5 ring-1 ring-primary/20">
-          <div className="text-xs font-medium uppercase tracking-wide text-primary">
+        <div className="rounded-2xl bg-[#009D28]/10 p-5">
+          <div className="text-xs font-medium uppercase tracking-wide text-[#009D28]">
             Book A Sloth takes / year
           </div>
-          <div className="mt-1 text-2xl font-bold text-primary [font-variant-numeric:tabular-nums]">
+          <div className="mt-1 text-2xl font-bold text-[#009D28] [font-variant-numeric:tabular-nums]">
             ₹0 <span className="text-sm font-medium text-neutral-500">commission</span>
           </div>
           <div className="mt-1 text-xs text-neutral-500">
@@ -135,7 +141,7 @@ function SavingsCalc() {
 
       <p className="mt-6 text-center text-lg text-ink sm:text-xl">
         You could keep{" "}
-        <span className="font-bold text-primary [font-variant-numeric:tabular-nums]">
+        <span className="font-bold text-[#009D28] [font-variant-numeric:tabular-nums]">
           up to {inr(figures.keepMore)}
         </span>{" "}
         more every year.
@@ -175,6 +181,46 @@ const FAQ = [
   },
 ];
 
+/* ─── Signature judo mockup: two Topmate-style booking cards stacked ─── */
+function JudoCards() {
+  return (
+    <div className="relative mx-auto w-full max-w-sm select-none">
+      {/* Card B (behind) — Topmate: takes a cut, marked in their own red */}
+      <div className="absolute inset-x-3 top-6 rotate-3 rounded-[1.75rem] border border-black/5 bg-[#FFE4D6] p-6 opacity-70 shadow-[0_20px_60px_-25px_rgba(26,26,26,0.25)]">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-bold text-ink/70">Topmate</span>
+          <span className="rounded-full bg-[#E44332]/15 px-2.5 py-0.5 text-[11px] font-bold text-[#E44332]">
+            –30% commission
+          </span>
+        </div>
+        <div className="mt-5 text-sm text-ink/60">₹1,000 booking</div>
+        <div className="mt-1 text-3xl font-extrabold text-[#E44332] [font-variant-numeric:tabular-nums]">
+          You keep ₹700
+        </div>
+        <div className="mt-1 text-xs font-medium text-[#E44332]">₹300 skimmed off the top</div>
+      </div>
+
+      {/* Card A (front) — Book A Sloth: you keep it all, marked in win green */}
+      <div className="relative rounded-[1.75rem] border border-black/5 bg-white p-6 shadow-[0_20px_60px_-25px_rgba(26,26,26,0.25)]">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-bold text-ink">Book A Sloth</span>
+          <span className="rounded-full bg-[#009D28]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#009D28]">
+            0% commission
+          </span>
+        </div>
+        <div className="mt-5 text-sm text-neutral-500">₹1,000 booking</div>
+        <div className="mt-1 text-3xl font-extrabold text-[#009D28] [font-variant-numeric:tabular-nums]">
+          You keep ₹1,000
+        </div>
+        <div className="mt-1 text-xs font-medium text-[#009D28]">Every rupee, yours</div>
+      </div>
+
+      {/* spacer so the rotated back card is never clipped */}
+      <div aria-hidden className="h-20" />
+    </div>
+  );
+}
+
 /* ════════════════════════════════ PAGE ════════════════════════════════ */
 const TopmateVsBookASloth = () => {
   const utm = useUtm();
@@ -192,15 +238,15 @@ const TopmateVsBookASloth = () => {
   }, []);
 
   return (
-    <div className="min-h-dvh overflow-x-hidden bg-canvas text-ink">
+    <div className="min-h-dvh overflow-x-hidden bg-[#FFF6EF] text-ink">
       {/* ───── Minimal header (no nav links = no exit) ───── */}
-      <header className="sticky top-0 z-40 border-b border-black/5 bg-canvas/90 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-black/5 bg-[#FFF6EF]/90 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3 sm:px-8">
           <div className="flex items-center gap-2">
             <span className="font-heading text-base font-extrabold tracking-tight text-ink">
               Book A Sloth
             </span>
-            <span className="hidden rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary sm:inline">
+            <span className="hidden rounded-full bg-[#009D28]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#009D28] sm:inline">
               0% commission
             </span>
           </div>
@@ -215,48 +261,81 @@ const TopmateVsBookASloth = () => {
 
       {/* ───── HERO (Attention) ───── */}
       <section className="px-5 pb-16 pt-12 sm:px-8 sm:pt-16">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-black/5 bg-white px-3.5 py-1.5 text-xs font-medium text-neutral-600 shadow-sm">
-            <Sparkles size={13} className="text-primary" /> The Topmate alternative · Built for India
-          </span>
+        <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-2 lg:gap-10">
+          {/* Hero copy */}
+          <div className="text-center lg:text-left">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-black/5 bg-white px-3.5 py-1.5 text-xs font-semibold text-ink shadow-sm">
+              Coming from Topmate? 👋
+            </span>
 
-          <h1 className="mt-6 text-[2.4rem] leading-[1.05] sm:text-6xl">
-            Every booking,
-            <br />
-            <span className="text-primary">100% yours.</span>
-          </h1>
+            <h1 className="mt-6 font-heading text-[2.6rem] font-extrabold leading-[1.02] tracking-tight sm:text-6xl">
+              Your storefront.
+              <br />
+              <span className="text-primary">Without the 30% tax.</span>
+            </h1>
 
-          <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-neutral-600">
-            Book A Sloth is the <strong className="text-ink">0% commission</strong>{" "}
-            alternative to Topmate. A flat ₹499/month — keep every rupee your clients
-            pay, instead of losing up to 30% on every single booking.
-          </p>
+            <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-neutral-600 lg:mx-0">
+              Book A Sloth is the <strong className="text-ink">0% commission</strong>{" "}
+              alternative to Topmate. Flat ₹499/month — keep every rupee your clients
+              pay, instead of losing up to 30% on every booking.
+            </p>
 
-          <div id="start" className="mt-9 flex scroll-mt-24 flex-col items-center">
-            <LeadForm slug={SLUG} slot="hero" ctaLabel="Start free — 0% commission" />
+            <div id="start" className="mt-9 flex scroll-mt-24 flex-col items-center lg:items-start">
+              <LeadForm
+                slug={SLUG}
+                slot="hero"
+                mode="google-only"
+                ctaLabel="Continue with Google"
+              />
+            </div>
+
+            {/* Social proof — honest, no invented counts */}
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:items-center lg:justify-start">
+              {HERO_FACES.length > 0 && (
+                <div className="flex -space-x-3">
+                  {HERO_FACES.map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt=""
+                      loading="lazy"
+                      className="h-9 w-9 rounded-full object-cover ring-2 ring-white"
+                    />
+                  ))}
+                </div>
+              )}
+              <p className="text-sm font-medium text-neutral-600">
+                Loved by creators who keep 100% of what they earn.
+              </p>
+            </div>
+
+            {/* Trust strip */}
+            <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5 lg:justify-start">
+              {TRUST.map((t) => (
+                <li key={t.label} className="flex items-center gap-1.5 text-xs font-medium text-neutral-500">
+                  <t.icon size={15} className="text-neutral-400" />
+                  {t.label}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Trust strip */}
-          <ul className="mx-auto mt-10 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2.5">
-            {TRUST.map((t) => (
-              <li key={t.label} className="flex items-center gap-1.5 text-xs font-medium text-neutral-500">
-                <t.icon size={15} className="text-neutral-400" />
-                {t.label}
-              </li>
-            ))}
-          </ul>
+          {/* Signature judo mockup */}
+          <div className="mx-auto w-full max-w-md lg:mx-0">
+            <JudoCards />
+          </div>
         </div>
       </section>
 
       {/* ───── THE MATH (Interest → Desire) ───── */}
-      <section className="bg-sand px-5 py-20 sm:px-8">
+      <section className="bg-[#FFE4D6] px-5 py-20 sm:px-8">
         <div className="mx-auto max-w-3xl">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#E44332]">
               The commission math
             </p>
-            <h2 className="mx-auto mt-3 max-w-xl text-3xl sm:text-4xl">
-              See what commission is quietly costing you.
+            <h2 className="mx-auto mt-3 max-w-xl font-heading text-3xl font-extrabold leading-tight sm:text-4xl">
+              See what Topmate quietly takes.
             </h2>
           </div>
           <div className="mt-10">
@@ -272,13 +351,15 @@ const TopmateVsBookASloth = () => {
       {/* ───── COMPARISON TABLE (Desire) ───── */}
       <section className="px-5 py-20 sm:px-8">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-center text-3xl sm:text-4xl">Book A Sloth vs Topmate</h2>
+          <h2 className="text-center font-heading text-3xl font-extrabold leading-tight sm:text-4xl">
+            Book A Sloth vs Topmate
+          </h2>
           <p className="mx-auto mt-3 max-w-md text-center text-neutral-600">
             Same booking page. Same payments. One of them takes a cut of everything
             you earn.
           </p>
 
-          <div className="mt-10 overflow-hidden rounded-[1.5rem] border border-black/5 bg-white shadow-[0_16px_50px_-24px_rgba(26,26,26,0.25)]">
+          <div className="mt-10 overflow-hidden rounded-[2rem] border border-black/5 bg-white shadow-[0_20px_60px_-25px_rgba(26,26,26,0.25)]">
             <table className="w-full text-left text-sm">
               <caption className="sr-only">
                 Feature comparison between Book A Sloth and Topmate
@@ -288,7 +369,7 @@ const TopmateVsBookASloth = () => {
                   <th scope="col" className="px-4 py-4 font-semibold text-neutral-500 sm:px-6">
                     Feature
                   </th>
-                  <th scope="col" className="bg-primary/5 px-4 py-4 font-bold text-primary sm:px-6">
+                  <th scope="col" className="bg-[#009D28]/10 px-4 py-4 font-bold text-[#009D28] sm:px-6">
                     Book A Sloth
                   </th>
                   <th scope="col" className="px-4 py-4 font-semibold text-neutral-500 sm:px-6">
@@ -298,14 +379,14 @@ const TopmateVsBookASloth = () => {
               </thead>
               <tbody>
                 {COMPARE.map((row, i) => (
-                  <tr key={row.f} className={i % 2 ? "bg-neutral-50/60" : ""}>
+                  <tr key={row.f} className={i % 2 ? "bg-[#FFF6EF]/60" : ""}>
                     <th
                       scope="row"
                       className="px-4 py-3.5 font-medium text-ink sm:px-6"
                     >
                       {row.f}
                     </th>
-                    <td className="bg-primary/5 px-4 py-3.5 sm:px-6">
+                    <td className="bg-[#009D28]/[0.06] px-4 py-3.5 sm:px-6">
                       <Cell good={row.bas.good} strong>
                         {row.bas.t}
                       </Cell>
@@ -322,13 +403,18 @@ const TopmateVsBookASloth = () => {
       </section>
 
       {/* ───── HOW SWITCHING WORKS (Action setup) ───── */}
-      <section className="bg-sand px-5 py-20 sm:px-8">
+      <section className="bg-[#FFE4D6] px-5 py-20 sm:px-8">
         <div className="mx-auto max-w-5xl">
-          <h2 className="text-center text-3xl sm:text-4xl">Switch in 2 minutes.</h2>
-          <div className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">
+          <h2 className="text-center font-heading text-3xl font-extrabold leading-tight sm:text-4xl">
+            Switch in 2 minutes.
+          </h2>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
             {STEPS.map((s, i) => (
-              <div key={s.t} className="text-center md:text-left">
-                <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-primary shadow-[0_10px_30px_-12px_rgba(26,26,26,0.25)] md:mx-0">
+              <div
+                key={s.t}
+                className="rounded-[1.75rem] border border-black/5 bg-white p-7 text-center shadow-[0_20px_60px_-25px_rgba(26,26,26,0.25)] md:text-left"
+              >
+                <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFF6EF] text-primary md:mx-0">
                   <s.icon size={22} />
                 </div>
                 <div className="mt-4 text-xs font-bold text-neutral-400">0{i + 1}</div>
@@ -343,8 +429,10 @@ const TopmateVsBookASloth = () => {
       {/* ───── FAQ (objection handling) ───── */}
       <section className="px-5 py-20 sm:px-8">
         <div className="mx-auto max-w-2xl">
-          <h2 className="text-center text-3xl sm:text-4xl">Questions, answered.</h2>
-          <div className="mt-10 divide-y divide-black/5 rounded-[1.5rem] border border-black/5 bg-white px-6 shadow-sm">
+          <h2 className="text-center font-heading text-3xl font-extrabold leading-tight sm:text-4xl">
+            Questions, answered.
+          </h2>
+          <div className="mt-10 divide-y divide-black/5 rounded-[2rem] border border-black/5 bg-white px-6 shadow-[0_20px_60px_-25px_rgba(26,26,26,0.25)]">
             {FAQ.map((item) => (
               <details key={item.q} className="group py-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-heading text-base font-semibold text-ink marker:content-none">
@@ -363,7 +451,7 @@ const TopmateVsBookASloth = () => {
       {/* ───── FINAL CTA (Action) ───── */}
       <section className="px-5 py-16 sm:px-8">
         <div className="mx-auto max-w-4xl rounded-[2.5rem] bg-ink px-6 py-16 text-center text-white sm:py-20">
-          <h2 className="mx-auto max-w-xl text-3xl leading-tight text-white sm:text-5xl">
+          <h2 className="mx-auto max-w-xl font-heading text-3xl font-extrabold leading-tight text-white sm:text-5xl">
             Stop paying commission on your own work.
           </h2>
           <p className="mx-auto mt-4 max-w-md text-white/60">
@@ -371,7 +459,13 @@ const TopmateVsBookASloth = () => {
             booking.
           </p>
           <div className="mt-9 flex flex-col items-center">
-            <LeadForm slug={SLUG} slot="final" dark ctaLabel="Start free — 0% commission" />
+            <LeadForm
+              slug={SLUG}
+              slot="final"
+              mode="google-only"
+              dark
+              ctaLabel="Continue with Google"
+            />
           </div>
         </div>
       </section>
