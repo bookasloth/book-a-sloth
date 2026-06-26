@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, Sparkles, Loader2 } from "lucide-react";
 import { getReceivedReviews } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import { isHost } from "../utils/roleRoutes";
 
-// /reviews — reviews the current user has RECEIVED (from hosts, or from guests
-// if they also host). Submission of reviews is gated by the `review_submission`
-// kill switch; this page only displays what's been received.
+// /reviews — reviews the current user has RECEIVED.
+// Guests see only host→guest reviews (as traveler).
+// Hosts get a tab bar: "As Traveler" (host_to_guest) | "As Host" (guest_to_host).
 
 const fmtDate = (iso) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
@@ -17,17 +19,28 @@ const Stars = ({ n }) => (
 );
 
 const CustomerReviews = () => {
+  const { user, mode } = useAuth();
+  const canHost = isHost(user);
+
+  // Default to hosting tab if the user is currently in hosting mode, else traveling.
+  const [tab, setTab] = useState(canHost && mode === "hosting" ? "hosting" : "traveling");
   const [data, setData] = useState({ reviews: [], count: 0, avg: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getReceivedReviews()
+    setLoading(true);
+    const direction = tab === "hosting" ? "guest_to_host" : "host_to_guest";
+    getReceivedReviews(direction)
       .then(({ data }) => setData(data || { reviews: [], count: 0, avg: 0 }))
       .catch(() => setData({ reviews: [], count: 0, avg: 0 }))
       .finally(() => setLoading(false));
-  }, []);
+  }, [tab]);
 
   const { reviews, count, avg } = data;
+
+  const subcopy = tab === "hosting"
+    ? "What guests say about you as a host."
+    : "What hosts say about you after a session.";
 
   return (
     <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
@@ -35,7 +48,7 @@ const CustomerReviews = () => {
         <div className="flex items-end justify-between gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold">Reviews</h1>
-            <p className="text-sm text-gray-500 mt-0.5">What others say about you after a session.</p>
+            <p className="text-sm text-gray-500 mt-0.5">{subcopy}</p>
           </div>
           {count > 0 && (
             <div className="text-right">
@@ -44,6 +57,18 @@ const CustomerReviews = () => {
             </div>
           )}
         </div>
+
+        {/* Tab bar — only visible for hosts */}
+        {canHost && (
+          <div className="inline-grid grid-cols-2 gap-1 mb-5 rounded-full border bg-white p-0.5 text-xs font-medium">
+            {[["traveling", "As Traveler"], ["hosting", "As Host"]].map(([k, label]) => (
+              <button key={k} onClick={() => setTab(k)}
+                className={`px-4 py-1.5 rounded-full ${tab === k ? "bg-gray-900 text-white" : "text-gray-500"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-16"><Loader2 className="w-7 h-7 animate-spin mx-auto text-gray-400" /></div>
@@ -54,14 +79,18 @@ const CustomerReviews = () => {
             </span>
             <p className="font-semibold text-gray-900">No reviews yet</p>
             <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
-              After your sessions, hosts can leave a rating and a note about you. They'll show up here.
+              {tab === "hosting"
+                ? "Guests can leave a review after a completed session with you. They'll show up here."
+                : "After your sessions, hosts can leave a rating and a note about you. They'll show up here."}
             </p>
             <div className="inline-flex items-center gap-1.5 text-xs text-gray-400 mt-4 px-3 py-1.5 rounded-full bg-gray-50 border">
               <Sparkles size={12} /> Reviews open up as you complete bookings
             </div>
-            <div className="mt-6">
-              <Link to="/" className="text-sm font-medium text-[#FE5100] hover:underline">Book a session →</Link>
-            </div>
+            {tab === "traveling" && (
+              <div className="mt-6">
+                <Link to="/" className="text-sm font-medium text-[#FE5100] hover:underline">Book a session →</Link>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-3">

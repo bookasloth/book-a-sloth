@@ -50,6 +50,7 @@ const VENDOR_DROPDOWN = [
   { label: 'View Public Profile', href: '__profile__',                   icon: ExternalLink },
   { label: 'Dashboard',           href: '/dashboard',                    icon: LayoutDashboard },
   { label: 'Earnings',            href: '/dashboard/earnings',           icon: TrendingUp },
+  { label: 'Reviews',             href: '/user/reviews',                 icon: Star },
   { label: 'Availability',        href: '/dashboard/availability',       icon: Clock },
   { label: 'Payouts',             href: '/dashboard/payments/payouts',   icon: Wallet },
   { label: 'Settings',            href: '/dashboard/profile',            icon: Settings },

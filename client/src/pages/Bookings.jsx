@@ -6,9 +6,10 @@ import {
   rescheduleBooking,
   getAvailability,
   getBookedSlots,
+  getBookingReview,
 } from "../services/api";
 import toast from "react-hot-toast";
-import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Star } from "lucide-react";
 import ReviewModal from "../components/booking/ReviewModal";
 import useFeatureFlags from "../hooks/useFeatureFlags";
 import StatusChip from "../components/common/StatusChip";
@@ -201,7 +202,7 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
 };
 
 // ------ DETAILS MODAL ------
-const DetailsModal = ({ booking, onClose, onAction }) => {
+const DetailsModal = ({ booking, onClose, onAction, review, onReviewDone }) => {
   const { on } = useFeatureFlags();
   const [confirming, setConfirming] = useState(null); // 'cancel' | 'delete' | 'complete'
   const [busy, setBusy] = useState(false);
@@ -247,8 +248,9 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
         open
         booking={booking}
         direction="host_to_guest"
+        existing={review || null}
         onClose={() => setShowReview(false)}
-        onDone={() => { setShowReview(false); onClose(); }}
+        onDone={(saved) => { setShowReview(false); if (onReviewDone) onReviewDone(saved); }}
       />
     );
 
@@ -347,9 +349,27 @@ const DetailsModal = ({ booking, onClose, onAction }) => {
             {booking.status !== "cancelled" && booking.status !== "completed" && (
               <Button variant="danger-outline" className="min-w-[120px] flex-1" onClick={() => setConfirming("cancel")}>Cancel Booking</Button>
             )}
-            {booking.status === "completed" && on("review_submission") && booking.guest_id && (
+            {booking.status === "completed" && on("review_submission") && booking.guest_id && !review && (
               <Button className="min-w-[120px] flex-1" onClick={() => setShowReview(true)}>Review Guest</Button>
             )}
+          </div>
+        )}
+
+        {/* Review submitted card — host's existing review of this guest */}
+        {booking.status === "completed" && on("review_submission") && booking.guest_id && review && (
+          <div className="mt-3 rounded-xl border bg-green-50/60 border-green-200 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-700">
+                <Star size={14} className="fill-green-600 text-green-600" /> Review submitted
+              </span>
+              <button onClick={() => setShowReview(true)} className="text-xs font-medium text-[#FE5100] hover:underline">
+                Edit review
+              </button>
+            </div>
+            <p className="mt-1 text-[#FE5100] text-sm tracking-tight">
+              {"★".repeat(review.rating)}<span className="text-gray-300">{"★".repeat(5 - review.rating)}</span>
+            </p>
+            {review.comment && <p className="mt-1 text-sm text-gray-600 leading-relaxed">{review.comment}</p>}
           </div>
         )}
       </div>
@@ -367,11 +387,20 @@ const Bookings = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  const [reviews, setReviews] = useState({});
 
   const fetch = async () => {
     try {
       const { data } = await getHostBookings();
-      setBookings(data || []);
+      const list = data || [];
+      setBookings(list);
+      // Load host's existing reviews for completed bookings that have an account guest.
+      const completedWithGuest = list.filter((b) => b.status === "completed" && b.guest_id);
+      Promise.all(
+        completedWithGuest.map((b) =>
+          getBookingReview(b.id).then(({ data: r }) => [b.id, r]).catch(() => [b.id, null])
+        )
+      ).then((pairs) => setReviews(Object.fromEntries(pairs)));
     } catch {
       toast.error("Failed to load bookings");
     } finally {
@@ -429,7 +458,15 @@ const Bookings = () => {
 
   return (
     <div>
-      {selected && <DetailsModal booking={selected} onClose={() => setSelected(null)} onAction={fetch} />}
+      {selected && (
+        <DetailsModal
+          booking={selected}
+          onClose={() => setSelected(null)}
+          onAction={fetch}
+          review={reviews[selected.id] || null}
+          onReviewDone={(saved) => setReviews((m) => ({ ...m, [selected.id]: saved }))}
+        />
+      )}
 
       <PageHeader
         title="Bookings"
