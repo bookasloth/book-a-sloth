@@ -173,7 +173,10 @@ const updateSafe = async (id, hostId, updates) => {
     .single();
   if (r.error && /Could not find the/i.test(r.error.message)) {
     const safe = {};
-    const legacyCols = ['title','description','type','meeting_mode','duration','price','currency','grace_period_minutes','thumbnail_url','slug','is_active','updated_at','service_category_id'];
+    // Mirror `category`: the newer marketplace columns are deliberately excluded
+    // from the legacy fallback so a stale/pre-migration schema still writes (if
+    // service_category_id is itself the missing column, keeping it would re-fail).
+    const legacyCols = ['title','description','type','meeting_mode','duration','price','currency','grace_period_minutes','thumbnail_url','slug','is_active','updated_at'];
     legacyCols.forEach(k => { if (updates[k] !== undefined) safe[k] = updates[k]; });
     if (updates.short_description) safe.description = updates.short_description;
     if (updates.meeting_mode)      safe.meeting_mode = updates.meeting_mode;
