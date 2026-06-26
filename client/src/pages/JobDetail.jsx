@@ -51,6 +51,7 @@ export default function JobDetail() {
     '@type': 'JobPosting',
     title: job.title,
     description: job.summary,
+    datePosted: job.postedDate,
     employmentType: job.type,
     hiringOrganization: { '@type': 'Organization', name: 'Book A Sloth', sameAs: 'https://bookasloth.com' },
     jobLocation: { '@type': 'Place', address: { '@type': 'PostalAddress', addressCountry: 'IN' } },

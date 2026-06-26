@@ -55,6 +55,7 @@ export const jobs = [
       'Basic design skills (Canva/Figma) for quick assets.',
       'SEO/content-led growth experience.',
     ],
+    postedDate: '2026-06-26',
     status: 'open',
   },
   {
@@ -83,6 +84,7 @@ export const jobs = [
       'An eye for UI polish and motion.',
       'Worked on a payments or scheduling product.',
     ],
+    postedDate: '2026-06-26',
     status: 'open',
   },
   {
@@ -111,6 +113,7 @@ export const jobs = [
       'Experience with a CRM and outbound tooling.',
       'Regional language fluency.',
     ],
+    postedDate: '2026-06-26',
     status: 'open',
   },
 ];
