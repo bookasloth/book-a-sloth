@@ -396,7 +396,9 @@ export default function ServiceForm({ initialData, serviceId }) {
 
   useEffect(() => {
     let alive = true;
-    Promise.all([hostGetCategories(), getCategories(), listServiceCategories()])
+    // The service-category picker is optional — never let its fetch failing
+    // block the whole form load, so it resolves to an empty list on error.
+    Promise.all([hostGetCategories(), getCategories(), listServiceCategories().catch(() => ({ data: { categories: [] } }))])
       .then(([h, c, sc]) => {
         if (!alive) return;
         const list = c.data || [];
