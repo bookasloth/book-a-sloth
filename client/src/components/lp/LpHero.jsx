@@ -1,4 +1,3 @@
-import { Star } from "lucide-react";
 import { CtaButton, Avatar } from "./LpKit";
 import { HERO_COL_A, HERO_COL_B } from "./lpData";
 
@@ -74,14 +73,6 @@ export default function LpHero() {
           <div className="mt-8 flex flex-col items-center gap-5 sm:flex-row lg:items-center">
             <CtaButton slot="hero" />
             <div className="flex flex-col gap-1.5 text-sm">
-              <span className="inline-flex items-center gap-1.5 rounded-[4px] border border-black/5 bg-white/70 px-3 py-1 font-medium text-neutral-700">
-                <span className="flex">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
-                  ))}
-                </span>
-                Loved by hosts across India
-              </span>
               <span className="inline-flex items-center justify-center rounded-[4px] border border-black/5 bg-white/70 px-3 py-1 font-medium text-neutral-700">
                 0% commission · just Rs. 10 / Day
               </span>
