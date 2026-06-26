@@ -2,9 +2,9 @@ import { useRef } from "react";
 import useGsapReveal from "./useGsapReveal";
 import { caseStudies } from "./aboutContent";
 
-function Tile({ t, className }) {
+function Tile({ t }) {
   return (
-    <article className={`js-item group relative flex min-h-[220px] flex-col justify-end overflow-hidden rounded-[14px] bg-ink p-6 text-white ${className}`} data-swap={t.swap}>
+    <article className="js-item group relative flex min-h-[220px] flex-col justify-end overflow-hidden rounded-[14px] bg-ink p-6 text-white" data-swap={t.swap}>
       <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70 transition-opacity group-hover:opacity-90" />
       <div className="relative">
         <h3 className="font-heading text-xl font-bold">{t.title}</h3>
