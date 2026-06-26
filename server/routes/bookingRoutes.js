@@ -10,7 +10,7 @@ const { requireFeature } = require('../middleware/requireFeature');
 const { slotsLimiter, bookingLimiter, bookingContactLimiter } = require('../middleware/security');
 
 router.get('/service/:id', getServiceById);
-router.get('/slots', getBookedSlots);              // Task 3: ?host_id=&date= (legacy)
+router.get('/slots', slotsLimiter, getBookedSlots);  // Task 3: ?host_id=&date= (legacy) — P2-3: throttle public enum
 router.get('/available-slots', slotsLimiter, getAvailableSlots); // v2.5: server-computed availability
 // optionalProtect: sets req.user if logged in; createBooking derives guest_id
 // server-side and never trusts a client-supplied id.

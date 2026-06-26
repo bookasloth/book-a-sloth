@@ -9,20 +9,35 @@ import {
 const Earnings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(false);
 
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const { data } = await getHostBookings();
-        setBookings(data || []);
-      } catch {
-        /* ignore */
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
-  }, []);
+  const load = async () => {
+    setErr(false);
+    setLoading(true);
+    try {
+      const { data } = await getHostBookings();
+      setBookings(data || []);
+    } catch {
+      setErr(true); // P2-9: surface load failure instead of showing empty
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { load(); }, []);
+
+  if (err) {
+    return (
+      <div>
+        <PageHeader title="Earnings" subtitle="Track your revenue and per-service performance." />
+        <Card>
+          <div className="p-6 text-center">
+            <p className="mb-3 text-sm text-gray-600">Couldn't load your earnings. Check your connection and retry.</p>
+            <button onClick={load} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark">Retry</button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

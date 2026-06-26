@@ -14,8 +14,15 @@ const ResetPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    // Mirror the server policy (8–128 chars, 1 uppercase, 1 number) so the form
+    // doesn't accept a password the API will reject (audit P2-11).
+    if (
+      newPassword.length < 8 ||
+      newPassword.length > 128 ||
+      !/[A-Z]/.test(newPassword) ||
+      !/[0-9]/.test(newPassword)
+    ) {
+      toast.error("Password must be 8–128 characters and include an uppercase letter and a number");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -75,11 +82,11 @@ const ResetPassword = () => {
             <input
               type="password"
               required
-              minLength={6}
+              minLength={8}
               className="fb-input"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder="8+ chars, 1 uppercase, 1 number"
             />
           </div>
           <div>

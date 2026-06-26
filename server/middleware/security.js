@@ -152,6 +152,27 @@ const bookingContactLimiter = rateLimit({
   skip: skipWhenLoadTest,
 });
 
+// Companion to otpLimiter, keyed by the target CONTACT (email, else phone), not
+// the IP (audit P2-2). otpLimiter alone (per-IP) is bypassed by rotating source
+// IPs → an attacker can spray OTP sends at one victim's email/phone (SMS/email
+// bombing) or brute-force verify across IPs. This caps per contact regardless of
+// IP. Stack BOTH on /send-otp, /verify-otp, /verify-otp-login.
+const otpContactLimiter = rateLimit({
+  store: makeRateLimitStore('otp_contact'),
+  windowMs: 60 * 60 * 1000,
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const email = String(req.body?.email || '').toLowerCase().trim();
+    if (email) return `e:${email}`;
+    const phone = String(req.body?.phone || req.body?.identifier || '').replace(/[\s\-().]/g, '');
+    return phone ? `p:${phone}` : req.ip;
+  },
+  message: { message: 'Too many code requests for this contact. Please wait before trying again.' },
+  skip: skipWhenLoadTest,
+});
+
 // Free digital-product download — keyed by EMAIL (falling back to IP) so an
 // attacker can't spam purchase rows / a victim's address by rotating IPs.
 const freeDownloadLimiter = rateLimit({
@@ -308,6 +329,7 @@ module.exports = {
   paymentLimiter,
   bookingLimiter,
   bookingContactLimiter,
+  otpContactLimiter,
   slugLimiter,
   slotsLimiter,
   freeDownloadLimiter,

@@ -33,9 +33,13 @@ const generateUniqueSlug = async (baseName) => {
     .slice(0, 50);
 
   let i = 2;
+  let attempts = 0;
   while (true) {
     const available = await checkSlugAvailable(slug);
     if (available) return slug;
+    // Bound the loop (audit P3): after 50 tries, append a random suffix and stop
+    // rather than spinning forever on a pathological collision set.
+    if (++attempts > 50) return `${slug.slice(0, 40)}-${crypto.randomBytes(3).toString("hex")}`;
     slug = `${slug.slice(0, 45)}-${i++}`;
   }
 };
@@ -381,6 +385,17 @@ const createVendorAccount = async (slug, email, password, name) => {
 
 // ─── Update Onboarding Step ──────────────────────────────────────────────
 const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
+  // P2-7: enforce monotonic progression server-side. The client guard sequences
+  // steps, but a scripted call could jump (e.g. step 2 → 6) and land in the
+  // dashboard with no category/about. Allow re-saving the current step or
+  // advancing by exactly one; reject a forward jump.
+  const { data: cur } = await supabaseAdmin
+    .from("profiles").select("onboarding_step_completed").eq("id", vendorId).maybeSingle();
+  const current = cur?.onboarding_step_completed || 0;
+  if (stepNumber > current + 1) {
+    throw new Error("Please complete the previous step first.");
+  }
+
   const updates = {
     onboarding_step_completed: stepNumber,
     updated_at: new Date().toISOString(),
@@ -476,6 +491,12 @@ const activateFreePlan = async (vendorId) => {
 const markComplete = async (vendorId) => {
   const plan = await getActivePlan(vendorId);
   if (!plan) throw new Error("Choose and activate a plan before finishing");
+  // P2-7: don't complete onboarding without the required profile data. A missing
+  // primary_category lands the host in a broken state (createService later fails
+  // category validation). markComplete is the sole writer of onboarding_completed.
+  const { data: prof } = await supabaseAdmin
+    .from("profiles").select("primary_category").eq("id", vendorId).maybeSingle();
+  if (!prof?.primary_category) throw new Error("Add your category before finishing onboarding.");
   const { data, error } = await supabaseAdmin
     .from("profiles")
     .update({

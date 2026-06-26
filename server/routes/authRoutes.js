@@ -20,7 +20,7 @@ const {
   resetPassword,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
-const { otpLimiter, authLimiter } = require('../middleware/security');
+const { otpLimiter, otpContactLimiter, authLimiter } = require('../middleware/security');
 const { requireFeature } = require('../middleware/requireFeature');
 
 // Separate registration
@@ -33,13 +33,13 @@ router.get('/google', protect, googleAuth);                 // legacy: calendar 
 router.get('/google/vendor', authLimiter, googleVendorAuth); // vendor signup/login entry (public)
 router.get('/google/callback', googleCallback);
 
-// OTP (for guest booking)
-router.post('/send-otp', otpLimiter, sendOtp);
-router.post('/verify-otp', otpLimiter, verifyOtp);
+// OTP (for guest booking) — IP-keyed + contact-keyed limiters stacked (P2-2)
+router.post('/send-otp', otpLimiter, otpContactLimiter, sendOtp);
+router.post('/verify-otp', otpLimiter, otpContactLimiter, verifyOtp);
 
 // Phone-primary user login: phone+password, OTP login, set-password
 router.post('/login-phone', authLimiter, loginWithPhone);
-router.post('/verify-otp-login', otpLimiter, verifyOtpLogin);
+router.post('/verify-otp-login', otpLimiter, otpContactLimiter, verifyOtpLogin);
 router.post('/set-password', protect, setPassword);
 
 // Password reset (OTP-based, works for user/vendor/admin)

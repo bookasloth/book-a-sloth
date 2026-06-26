@@ -77,12 +77,16 @@ const Dashboard = () => {
     }
   }, [searchParams]);
 
-  useEffect(() => {
+  const [loadErr, setLoadErr] = useState(false);
+  const loadData = () => {
     if (!isHost) return;
+    setLoadErr(false);
     Promise.all([getHostBookings(), getMyServices()])
       .then(([b, s]) => { setBookings(b.data || []); setServices(s.data || []); })
-      .catch(() => {});
-  }, [isHost]);
+      .catch(() => setLoadErr(true)); // P2-9: surface failure, don't render empty-as-error
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadData(); }, [isHost]);
 
   // Derived stats — all from real data, nothing hardcoded.
   const m = useMemo(() => {
@@ -100,7 +104,7 @@ const Dashboard = () => {
       cancelled: bookings.filter((b) => b.status === 'cancelled').length,
       total: bookings.length,
       services: services.length,
-      earnings: bookings.filter((b) => b.payment_status === 'paid').reduce((s, b) => s + (b.services?.price || 0), 0),
+      earnings: bookings.filter((b) => b.payment_status === 'paid').reduce((s, b) => s + (b.vendor_amount != null ? b.vendor_amount : (b.services?.price || 0)), 0),
       active: bookings.filter((b) => b.status === 'confirmed' && future(b)).length,
       upcomingList: upcomingList.slice(0, 2),
       recentList: recentList.slice(0, 2),
@@ -128,6 +132,14 @@ const Dashboard = () => {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader title={`Welcome back, ${user?.name?.split(' ')[0]}`} subtitle="Here's what's happening with your bookings." />
+
+      {/* P2-9: data load failed — distinct from an empty (new) account */}
+      {loadErr && (
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-sm font-medium text-red-700">Couldn't load your dashboard. Check your connection and retry.</p>
+          <button onClick={loadData} className="shrink-0 rounded bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700">Retry</button>
+        </div>
+      )}
 
       {/* Legacy plan → auto-renew migration nudge */}
       {showLegacyBanner && (

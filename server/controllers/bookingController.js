@@ -1056,6 +1056,9 @@ const rescheduleBooking = async (req, res) => {
       reminder_1h_sent: false,
       reschedule_status: isHostReschedule ? "awaiting_guest_ack" : "none",
       reschedule_ack_token: ackToken,
+      // P3-1: ack tokens now expire (7 days). A leaked/emailed link can no longer
+      // be used indefinitely. Null when there's no token (guest-initiated move).
+      reschedule_ack_token_expires_at: ackToken ? new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString() : null,
       reschedule_acknowledged_at: null,
       reschedule_count: (Number(booking.reschedule_count) || 0) + (isGuestReschedule ? 1 : 0),
       updated_at: new Date().toISOString(),
@@ -1071,7 +1074,7 @@ const rescheduleBooking = async (req, res) => {
       rescheduleResult.error &&
       /Could not find the|column.*does not exist/i.test(rescheduleResult.error.message)
     ) {
-      const { end_at: _e, reschedule_count: _rc, ...coreUpdate } = rescheduleUpdate;
+      const { end_at: _e, reschedule_count: _rc, reschedule_ack_token_expires_at: _rae, ...coreUpdate } = rescheduleUpdate;
       rescheduleResult = await supabaseAdmin
         .from("bookings").update(coreUpdate).eq("id", req.params.id).select().single();
     }
@@ -1220,6 +1223,15 @@ const confirmReschedule = async (req, res) => {
       return res
         .status(404)
         .send("This confirmation link is invalid or expired.");
+
+    // P3-1: reject an expired ack token (column absent on a legacy DB → skip).
+    if (
+      booking.reschedule_ack_token_expires_at &&
+      new Date(booking.reschedule_ack_token_expires_at) < new Date()
+    )
+      return res
+        .status(410)
+        .send("This confirmation link has expired. Please ask the host to resend the new time.");
 
     const { error: updateError } = await supabaseAdmin
       .from("bookings")
