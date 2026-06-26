@@ -10,24 +10,26 @@ vi.mock("../../services/analytics", () => ({
   analytics: { page: vi.fn(), track: vi.fn() },
   EVENTS: { LP_VIEWED: "LP_VIEWED", LEAD_CAPTURED: "LEAD_CAPTURED", LP_CTA_CLICKED: "LP_CTA_CLICKED" },
 }));
-vi.mock("../../components/home/images", () => ({ HERO_FACES: [] }));
 
 const renderPage = () => render(<MemoryRouter><TopmateVsBookASloth /></MemoryRouter>);
 
-describe("TopmateVsBookASloth", () => {
-  it("renders the anti-Topmate hero and comparison", () => {
+describe("TopmateVsBookASloth (Topmate-style rebuild)", () => {
+  it("renders the Creator Storefront hero", () => {
     renderPage();
     expect(screen.getByRole("heading", { level: 1 })).toBeTruthy();
-    expect(screen.getByText(/Without the 30% tax/i)).toBeTruthy();
-    expect(screen.getByText(/Book A Sloth vs Topmate/i)).toBeTruthy();
+    expect(screen.getByText(/Storefront/i)).toBeTruthy();
   });
-  it("uses one-click Google CTAs and no email field", () => {
+
+  it("uses single-button CTAs to /be-a-sloth and no email field", () => {
     renderPage();
     expect(screen.queryByPlaceholderText("you@email.com")).toBeNull();
-    expect(screen.getAllByRole("button", { name: /continue with google/i }).length).toBeGreaterThanOrEqual(1);
+    const ctas = screen.getAllByRole("link", { name: /start my page/i });
+    expect(ctas.length).toBeGreaterThanOrEqual(1);
+    expect(ctas.every((a) => a.getAttribute("href") === "/be-a-sloth")).toBe(true);
   });
-  it("keeps the date-stamped commission disclaimer", () => {
+
+  it("renders the creators showcase block", () => {
     renderPage();
-    expect(screen.getByText(/as of/i)).toBeTruthy();
+    expect(screen.getByText(/See what the best creators build/i)).toBeTruthy();
   });
 });

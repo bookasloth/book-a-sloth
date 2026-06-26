@@ -10,6 +10,7 @@ import HostRoute from './components/common/HostRoute';
 import GuestRoute from './components/common/GuestRoute';
 import AnalyticsBridge from './components/common/AnalyticsBridge';
 import ConsentBanner from './components/common/ConsentBanner';
+import ScrollToTop from './components/common/ScrollToTop';
 import RouteErrorBoundary from './components/common/RouteErrorBoundary';
 import { useAuth } from './context/AuthContext';
 import lazyWithRetry from './utils/lazyWithRetry';
@@ -187,6 +188,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop />
       <Toaster position="top-right" />
       <AnalyticsBridge />
       <ConsentBanner variant={location.pathname.startsWith('/lp') ? 'slim' : 'full'} />
