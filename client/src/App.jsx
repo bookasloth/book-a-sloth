@@ -180,7 +180,7 @@ function App() {
     <>
       <Toaster position="top-right" />
       <AnalyticsBridge />
-      <ConsentBanner />
+      <ConsentBanner variant={location.pathname.startsWith('/lp') ? 'slim' : 'full'} />
       {!hideNavbar && <Navbar />}
       <Suspense fallback={<PageLoader />}>
         <Routes>
