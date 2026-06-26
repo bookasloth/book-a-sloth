@@ -15,7 +15,7 @@ import LpFaq from "../../components/lp/LpFaq";
 
 /* ════════════════════════════════════════════════════════════════════
    /lp/topmate-vs-bookasloth — Topmate-style conversion landing page.
-   Single goal: start a 0%-commission host signup (→ /vendor-register).
+   Single goal: start a 0%-commission host signup (→ /be-a-sloth).
    No global Navbar/footer (App.jsx hides nav on /lp). No exit links.
    Blocks live in client/src/components/lp/*; content in lpData.js.
    ════════════════════════════════════════════════════════════════════ */

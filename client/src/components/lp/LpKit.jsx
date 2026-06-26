@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { analytics, EVENTS } from "../../services/analytics";
 
 const SLUG = "topmate-vs-bookasloth";
-const DEST = "/vendor-register";
+const DEST = "/be-a-sloth";
 
 /* Primary CTA — fires LP_CTA_CLICKED then routes to host signup.
    variant: "dark" (default) | "light" | "link" */
