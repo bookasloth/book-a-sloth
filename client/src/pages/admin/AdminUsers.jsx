@@ -131,7 +131,7 @@ const AdminUsers = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-5">
-        <div className="flex gap-1">
+        <div className="inline-grid grid-cols-4 gap-1">
           {["all", "guest", "host", "superadmin"].map((r) => (
             <button
               key={r}
@@ -139,7 +139,7 @@ const AdminUsers = () => {
                 setFilter(r);
                 setPage(1);
               }}
-              className={`min-w-[76px] inline-flex justify-center px-3 py-1.5 rounded-full text-xs font-medium capitalize ${filter === r ? "bg-gray-900 text-white" : "bg-white border text-gray-500"}`}
+              className={`w-full inline-flex justify-center px-3 py-1.5 rounded-full text-xs font-medium capitalize ${filter === r ? "bg-gray-900 text-white" : "bg-white border text-gray-500"}`}
             >
               {r}
             </button>

@@ -4,7 +4,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
 import ModeSwitch from './ModeSwitch';
-import { isHost } from '../../utils/roleRoutes';
+import { isHost, routeRole } from '../../utils/roleRoutes';
 import toast from 'react-hot-toast';
 import {
   Home, Tag, HelpCircle,
@@ -115,7 +115,7 @@ const TagPill = ({ text }) =>
 // ── Main component ────────────────────────────────────────────────────────────
 
 const Navbar = () => {
-  const { user, logout, mode, becomeHost } = useAuth();
+  const { user, logout, mode, setMode, becomeHost } = useAuth();
   const appearance = useAppearance();
   const location = useLocation();
   const navigate = useNavigate();
@@ -184,6 +184,16 @@ const Navbar = () => {
     setNotifOpen(false);
     setSignInOpen(false);
   }, [location.pathname]);
+
+  // Keep active role in sync with the route. Browser back/forward changes the
+  // URL but not the persisted mode, which previously left the toggle + profile
+  // menu showing Hosting on a Traveling page. Only snaps for dual-capability
+  // accounts and only on role-specific paths (neutral paths leave mode as-is).
+  useEffect(() => {
+    if (!canHost) return;
+    const role = routeRole(location.pathname);
+    if (role && role !== mode) setMode(role);
+  }, [location.pathname, canHost, mode, setMode]);
 
   // Lock body scroll while the mobile drawer is open so the page behind it
   // cannot be scrolled/seen. Mirrors Modal.jsx.
@@ -296,7 +306,7 @@ const Navbar = () => {
                   {/* Notifications panel */}
                   {notifOpen && (
                     <div
-                      className="absolute right-0 top-full mt-1.5 w-80 bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden"
+                      className="absolute right-0 top-full mt-1.5 w-[calc(100vw-1.5rem)] max-w-[20rem] sm:w-80 bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden"
                       role="dialog"
                       aria-label="Notifications"
                     >

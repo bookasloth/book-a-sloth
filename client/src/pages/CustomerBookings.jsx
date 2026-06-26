@@ -137,7 +137,7 @@ const CustomerBookings = () => {
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-gray-400">
               <span className="inline-flex items-center gap-1"><Hash size={12} />{shortId(b.id)}</span>
-              <span className="inline-flex items-center gap-1"><IndianRupee size={12} />{amountPaid(b)}</span>
+              <span className="inline-flex items-center gap-1">{amountPaid(b)}</span>
             </div>
           </div>
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full border whitespace-nowrap ${STATUS_STYLE[b.status] || STATUS_STYLE.pending}`}>
