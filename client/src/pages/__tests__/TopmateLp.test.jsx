@@ -18,7 +18,7 @@ describe("TopmateVsBookASloth", () => {
   it("renders the anti-Topmate hero and comparison", () => {
     renderPage();
     expect(screen.getByRole("heading", { level: 1 })).toBeTruthy();
-    expect(screen.getAllByText(/topmate/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Without the 30% tax/i)).toBeTruthy();
     expect(screen.getByText(/Book A Sloth vs Topmate/i)).toBeTruthy();
   });
   it("uses one-click Google CTAs and no email field", () => {

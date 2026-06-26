@@ -216,7 +216,7 @@ function JudoCards() {
       </div>
 
       {/* spacer so the rotated back card is never clipped */}
-      <div aria-hidden className="h-20" />
+      <div aria-hidden="true" className="h-20" />
     </div>
   );
 }
@@ -293,9 +293,9 @@ const TopmateVsBookASloth = () => {
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:items-center lg:justify-start">
               {HERO_FACES.length > 0 && (
                 <div className="flex -space-x-3">
-                  {HERO_FACES.map((src, i) => (
+                  {HERO_FACES.map((src) => (
                     <img
-                      key={i}
+                      key={src}
                       src={src}
                       alt=""
                       loading="lazy"
