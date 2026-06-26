@@ -13,6 +13,7 @@ export const RESERVED_FIRST_SEGMENTS = [
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'lp',
   'my-bookings', 'profile', 'reviews', 'loyalty', 'sitemap', 'robots', 'health',
+  'contact', 'get-in-touch',
 ];
 
 export default RESERVED_FIRST_SEGMENTS;

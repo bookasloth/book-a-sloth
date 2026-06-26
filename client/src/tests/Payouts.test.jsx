@@ -14,7 +14,9 @@ vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() 
 describe('Payouts breakdown', () => {
   it('shows available, clearing and pending-completion figures', async () => {
     render(<Payouts />);
-    await waitFor(() => expect(screen.getByText(/Available Balance/i)).toBeInTheDocument());
+    // Exact match: the StatCard label is "Available Balance" — a regex would also
+    // catch the helper prose ("…your available balance reaches it") and throw.
+    await waitFor(() => expect(screen.getByText('Available Balance')).toBeInTheDocument());
     expect(screen.getByText('₹900.00')).toBeInTheDocument();
     expect(screen.getByText(/Clearing/i)).toBeInTheDocument();
     expect(screen.getByText('₹300.00')).toBeInTheDocument();
