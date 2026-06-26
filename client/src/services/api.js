@@ -433,3 +433,8 @@ export const adminListFeedback   = (params)   => API.get('/admin/feedback', { pa
 export const adminUpdateFeedback = (id, data) => API.patch(`/admin/feedback/${id}`, data);
 // ── Reschedule fee ────────────────────────────────────────────
 export const createRescheduleFeeOrder = (bookingId) => API.post('/payment/reschedule-fee/create-order', { booking_id: bookingId });
+
+// ── In-app Notifications ──────────────────────────────────────
+export const getNotifications         = (role) => API.get('/notifications', { params: { role } });
+export const markAllNotificationsRead = (role) => API.post('/notifications/read-all', null, { params: { role } });
+export const markNotificationRead     = (id)   => API.patch(`/notifications/${id}/read`);
