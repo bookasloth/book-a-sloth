@@ -58,10 +58,10 @@ export default function ReviewPage() {
           try {
             const { data: r } = await getBookingReview(bookingId);
             if (active) {
-            setExisting(r);
-            if (r?.rating) setRating(r.rating);
-            if (r?.comment) setComment(r.comment);
-          }
+              setExisting(r);
+              if (r?.rating) setRating(r.rating);
+              if (r?.comment) setComment(r.comment);
+            }
           } catch { /* no existing review */ }
         }
       } catch {
