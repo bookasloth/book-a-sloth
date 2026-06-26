@@ -345,7 +345,12 @@ const Navbar = () => {
                             <li key={n.id}>
                               <Link
                                 to={n.link || '#'}
-                                onClick={() => { markNotificationRead(n.id).catch(() => {}); setNotifOpen(false); }}
+                                onClick={() => {
+                                  if (!n.read_at) setUnread((u) => Math.max(0, u - 1));
+                                  setNotifs((list) => list.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x)));
+                                  markNotificationRead(n.id).catch(() => {});
+                                  setNotifOpen(false);
+                                }}
                                 className={`block px-4 py-3 hover:bg-gray-50 hover:no-underline ${n.read_at ? '' : 'bg-[#FE5100]/4'}`}
                               >
                                 <p className="text-sm font-medium text-[#1E1E1E]">{n.title}</p>
