@@ -1,15 +1,20 @@
 import Seo from "../components/common/Seo";
 import useAboutMotion from "../components/about/useAboutMotion";
-import AboutHero from "../components/about/AboutHero";
+import HeroV2 from "../components/about/HeroV2";
+import LogoMarquee from "../components/about/LogoMarquee";
+import JoinSplit from "../components/about/JoinSplit";
+import StackingCards from "../components/about/StackingCards";
+import CaseStudyGrid from "../components/about/CaseStudyGrid";
+import TestimonialsFlip from "../components/about/TestimonialsFlip";
+import FaqAccordion from "../components/about/FaqAccordion";
+import TeamMasonry from "../components/about/TeamMasonry";
+// Appended (kept) original sections:
 import ProblemSplit from "../components/about/ProblemSplit";
 import BeliefGrid from "../components/about/BeliefGrid";
 import BehindProduct from "../components/about/BehindProduct";
 import StatStrip from "../components/about/StatStrip";
-import TeamGrid from "../components/about/TeamGrid";
 import BuildFlow from "../components/about/BuildFlow";
 import TrustGrid from "../components/about/TrustGrid";
-import AboutTestimonials from "../components/about/AboutTestimonials";
-import AboutFaq from "../components/about/AboutFaq";
 import FinalCta from "../components/about/FinalCta";
 
 const JSON_LD = {
@@ -30,16 +35,22 @@ export default function About() {
         description="Why we exist, who we are, and how we help creators get booked and paid without commission."
         jsonLd={JSON_LD}
       />
-      <AboutHero />
+      {/* New design block */}
+      <HeroV2 />
+      <LogoMarquee />
+      <JoinSplit />
+      <StackingCards />
+      <CaseStudyGrid />
+      <TestimonialsFlip />
+      <FaqAccordion />
+      <TeamMasonry />
+      {/* Appended original sections */}
       <ProblemSplit />
       <BeliefGrid />
       <BehindProduct />
       <StatStrip />
-      <TeamGrid />
       <BuildFlow />
       <TrustGrid />
-      <AboutTestimonials />
-      <AboutFaq />
       <FinalCta />
     </main>
   );

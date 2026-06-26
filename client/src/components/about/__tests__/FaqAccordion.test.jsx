@@ -1,12 +1,12 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
-import AboutFaq from "../AboutFaq";
+import FaqAccordion from "../FaqAccordion";
 
-describe("AboutFaq", () => {
+describe("FaqAccordion", () => {
   const expanded = (el) => el.getAttribute("aria-expanded");
 
   it("opens one panel on click and toggles closed", () => {
-    render(<AboutFaq />);
+    render(<FaqAccordion />);
     const first = screen.getByRole("button", { name: /who are you/i });
     expect(expanded(first)).toBe("false");
     fireEvent.click(first);
@@ -16,7 +16,7 @@ describe("AboutFaq", () => {
   });
 
   it("single-open: opening a second closes the first", () => {
-    render(<AboutFaq />);
+    render(<FaqAccordion />);
     const a = screen.getByRole("button", { name: /who are you/i });
     const b = screen.getByRole("button", { name: /where are you based/i });
     fireEvent.click(a);
