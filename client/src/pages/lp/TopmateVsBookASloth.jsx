@@ -26,9 +26,9 @@ const TopmateVsBookASloth = () => {
   const utm = useUtm();
 
   useDocumentMeta({
-    title: "Book A Sloth — the 0% commission Topmate alternative",
+    title: "Topmate Alternative — 0% Commission Booking Page | Book A Sloth",
     description:
-      "Switching from Topmate? Keep what you earn — 0% commission, just Rs. 10 / Day, UPI & GST built in. Start free.",
+      "Book A Sloth is the 0% commission Topmate alternative for Indian creators. Just Rs. 10 / Day — UPI & GST built in. Switch and keep 100% of every booking.",
   });
 
   useEffect(() => {
