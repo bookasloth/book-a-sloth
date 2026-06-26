@@ -3,6 +3,7 @@
 // `review_submission` feature flag gates submission in both directions.
 const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require('../utils/httpError');
+const { inAppNotify } = require("../utils/inAppNotify");
 
 const DIRECTIONS = ["guest_to_host", "host_to_guest"];
 
@@ -74,6 +75,16 @@ const createReview = async (req, res) => {
         .evaluate({ vendorIds: [booking.host_id] })
         .catch((e) => console.error("Badge evaluation error:", e.message));
     }
+
+    // In-app: notify the review subject.
+    inAppNotify({
+      userId: subjectId,
+      role: direction === "guest_to_host" ? "host" : "guest",
+      type: "REVIEW_RECEIVED",
+      title: "New review received",
+      body: `${rating}★`,
+      link: "/user/reviews",
+    });
 
     res.status(201).json(review);
   } catch (error) {
