@@ -31,7 +31,7 @@ export default function LpCreatorsCarousel() {
               type="button"
               onClick={() => scroll(-1)}
               aria-label="Previous creators"
-              className="grid h-11 w-11 place-items-center rounded-xl bg-white text-ink transition-transform hover:-translate-y-0.5"
+              className="grid h-11 w-11 place-items-center rounded-[6px] bg-white text-ink transition-transform hover:-translate-y-0.5"
             >
               <ChevronLeft size={20} />
             </button>
@@ -39,7 +39,7 @@ export default function LpCreatorsCarousel() {
               type="button"
               onClick={() => scroll(1)}
               aria-label="Next creators"
-              className="grid h-11 w-11 place-items-center rounded-xl bg-white text-ink transition-transform hover:-translate-y-0.5"
+              className="grid h-11 w-11 place-items-center rounded-[6px] bg-white text-ink transition-transform hover:-translate-y-0.5"
             >
               <ChevronRight size={20} />
             </button>
@@ -54,18 +54,18 @@ export default function LpCreatorsCarousel() {
             <article
               key={c.title}
               data-card
-              className="flex min-h-[20rem] w-[19rem] flex-none snap-start flex-col rounded-3xl bg-neutral-900 p-6 text-white sm:w-[21rem]"
+              className="flex min-h-[20rem] w-[19rem] flex-none snap-start flex-col rounded-[8px] bg-neutral-900 p-6 text-white sm:w-[21rem]"
             >
               <h3 className="text-xl font-bold leading-snug">{c.title}</h3>
               <p className="mt-2 text-sm text-white/55">{c.blurb}</p>
 
               <div className="mt-auto flex items-center gap-3 pt-6">
-                <span className="rounded-md bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/80">
+                <span className="rounded-[4px] bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/80">
                   {c.tag}
                 </span>
               </div>
               <div className="mt-4 flex items-center gap-3 border-t border-white/10 pt-4">
-                <Avatar src={c.img} name={c.name} className="h-10 w-10 rounded-full" />
+                <Avatar src={c.img} name={c.name} className="h-10 w-10 rounded-[6px]" />
                 <span className="flex-1 text-sm font-semibold">{c.name}</span>
                 <ArrowRight size={16} className="text-white/60" />
               </div>

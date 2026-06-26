@@ -29,7 +29,7 @@ export function CtaButton({ slot, children = "Start My Page", variant = "dark", 
   }
 
   const base =
-    "group inline-flex items-center gap-2.5 rounded-2xl px-6 py-3.5 text-[15px] font-semibold transition-all hover:-translate-y-0.5 hover:no-underline";
+    "group inline-flex items-center gap-2.5 rounded-[6px] px-6 py-3.5 text-[15px] font-semibold transition-all hover:-translate-y-0.5 hover:no-underline";
   const skin =
     variant === "light"
       ? "bg-white text-ink shadow-[0_10px_30px_-12px_rgba(0,0,0,0.5)] hover:bg-white"
@@ -38,7 +38,7 @@ export function CtaButton({ slot, children = "Start My Page", variant = "dark", 
   return (
     <a href={DEST} onClick={go} className={`${base} ${skin} ${className}`}>
       {children}
-      <span className="grid h-7 w-7 place-items-center rounded-lg bg-white/15 transition-transform group-hover:translate-x-0.5">
+      <span className="grid h-7 w-7 place-items-center rounded-[4px] bg-white/15 transition-transform group-hover:translate-x-0.5">
         <ArrowRight size={15} className={variant === "light" ? "text-ink" : "text-white"} />
       </span>
     </a>
@@ -46,7 +46,7 @@ export function CtaButton({ slot, children = "Start My Page", variant = "dark", 
 }
 
 /* Avatar with graceful initials fallback (CDN image may be unset). */
-export function Avatar({ src, name, className = "h-11 w-11 rounded-xl" }) {
+export function Avatar({ src, name, className = "h-11 w-11 rounded-[6px]" }) {
   const [err, setErr] = useState(false);
   if (err || !src) {
     return (
