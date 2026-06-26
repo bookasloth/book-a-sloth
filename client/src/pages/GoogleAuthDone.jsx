@@ -18,7 +18,9 @@ const GoogleAuthDone = () => {
     const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     const token = params.get('access_token');
     const refresh = params.get('refresh_token');
-    const isNew = params.get('new') === '1';
+    const newFlag = params.get('new'); // '1' new vendor · 'upgrade' customer→host · '0' returning
+    const isNew = newFlag === '1';
+    const isUpgrade = newFlag === 'upgrade';
 
     // Scrub tokens from the address bar immediately
     window.history.replaceState(null, '', '/auth/google/done');
@@ -30,7 +32,13 @@ const GoogleAuthDone = () => {
 
     adoptSession({ token, refresh_token: refresh })
       .then(() => {
-        toast.success(isNew ? 'Welcome to Book A Sloth! 🦥' : 'Welcome back!');
+        toast.success(
+          isNew ? 'Welcome to Book A Sloth! 🦥'
+            : isUpgrade ? "Let's set up your hosting 🦥"
+            : 'Welcome back!'
+        );
+        // /dashboard is onboarding-guarded — a new or just-upgraded host is
+        // auto-routed into the /vendor-register steps by ProtectedRoute.
         navigate('/dashboard', { replace: true });
       })
       .catch(() => {

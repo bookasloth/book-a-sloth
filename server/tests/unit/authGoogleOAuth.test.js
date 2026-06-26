@@ -10,7 +10,8 @@
  *   - signup (new vendor): creates auth user + host profile, attaches tokens,
  *     seeds slim onboarding, mints session, redirects to /auth/google/done
  *   - login (existing host): no create, attaches, mints, redirects
- *   - customer email rejection (existing guest → /login-as-vendor)
+ *   - existing customer upgraded to host in-flow (no dead-end) → new=upgrade
+ *   - superadmin NOT upgraded (capability preserved) → new=0
  *   - forged/invalid state → /login-as-vendor?error=invalid_state (CSRF)
  *   - missing code → 400
  *   - session mint throws → vendor lands on /login-as-vendor (NOT /dashboard)
@@ -152,7 +153,7 @@ describe('googleCallback — vendor signup (new)', () => {
 
 describe('googleCallback — vendor login (existing host)', () => {
   test('does NOT create a user, mints session, new=0', async () => {
-    supa.__state.existing = { id: 'p-1', role: 'host', email: 'new@vendor.com' };
+    supa.__state.existing = { id: 'p-1', role: 'host', is_host: true, email: 'new@vendor.com' };
     const r = res();
     await googleCallback({ query: { code: 'abc', state: signState({ flow: 'vendor_auth', intent: 'login' }) } }, r);
 
@@ -162,14 +163,27 @@ describe('googleCallback — vendor login (existing host)', () => {
   });
 });
 
-describe('googleCallback — customer email rejected', () => {
-  test('existing guest cannot vendor-auth', async () => {
-    supa.__state.existing = { id: 'u-1', role: 'guest', email: 'new@vendor.com' };
+describe('googleCallback — existing customer upgraded to host', () => {
+  test('existing guest gains hosting in-flow (no dead-end), mints session, new=upgrade', async () => {
+    supa.__state.existing = { id: 'u-1', role: 'guest', is_host: false, email: 'new@vendor.com' };
     const r = res();
     await googleCallback({ query: { code: 'abc', state: signState({ flow: 'vendor_auth', intent: 'login' }) } }, r);
 
-    expect(mockMintSession).not.toHaveBeenCalled();
-    expect(r.redirect.mock.calls[0][0]).toContain('/login-as-vendor?error=customer_email');
+    // Unified identity: no separate account is created — hosting is attached to
+    // the SAME profile, a session is minted, and the client routes through
+    // onboarding via the new=upgrade flag.
+    expect(supa.supabaseAdmin.auth.admin.createUser).not.toHaveBeenCalled();
+    expect(mockMintSession).toHaveBeenCalledWith('new@vendor.com');
+    expect(r.redirect.mock.calls[0][0]).toContain('new=upgrade');
+  });
+
+  test('superadmin is NOT upgraded (capability preserved)', async () => {
+    supa.__state.existing = { id: 'sa-1', role: 'superadmin', is_host: false, email: 'new@vendor.com' };
+    const r = res();
+    await googleCallback({ query: { code: 'abc', state: signState({ flow: 'vendor_auth', intent: 'login' }) } }, r);
+
+    // No in-flow host upgrade for a superadmin; they still get a session (new=0).
+    expect(r.redirect.mock.calls[0][0]).toContain('new=0');
   });
 });
 
