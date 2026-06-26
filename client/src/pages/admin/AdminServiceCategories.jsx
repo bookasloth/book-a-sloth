@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, ChevronRight, Image as ImageIcon, X } from 'lucide-react';
 import {
@@ -490,9 +490,8 @@ const AdminServiceCategories = () => {
                 </tr>
               ) : (
                 tree.map((parent) => (
-                  <>
+                  <Fragment key={parent.id}>
                     <CategoryRow
-                      key={parent.id}
                       cat={parent}
                       depth={0}
                       onEdit={openEdit}
@@ -509,7 +508,7 @@ const AdminServiceCategories = () => {
                         onDelete={handleDelete}
                       />
                     ))}
-                  </>
+                  </Fragment>
                 ))
               )}
             </tbody>
