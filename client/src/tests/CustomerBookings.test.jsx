@@ -34,14 +34,14 @@ test('upcoming → Details modal shows Reschedule + Cancel', async () => {
   expect(screen.getByRole('button', { name: /Cancel booking/i })).toBeInTheDocument();
 });
 
-test('completed → Details modal shows Leave a review + Rebook', async () => {
+test('completed → Details modal shows Write a review + Rebook', async () => {
   getGuestBookings.mockResolvedValue({ data: [done] });
   getBookingReview.mockResolvedValue({ data: null });
   renderPage();
   await waitFor(() => screen.getByText('Old'));
   fireEvent.click(screen.getByRole('button', { name: /Details/i }));
   await waitFor(() => screen.getByText('Booking details'));
-  expect(screen.getByRole('button', { name: /Leave a review/i })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Write a review/i })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /Rebook/i })).toBeInTheDocument();
 });
 
@@ -64,5 +64,5 @@ test('review button hidden in Details when review flag off', async () => {
   await waitFor(() => screen.getByText('Old'));
   fireEvent.click(screen.getByRole('button', { name: /Details/i }));
   await waitFor(() => screen.getByText('Booking details'));
-  expect(screen.queryByRole('button', { name: /Leave a review/i })).toBeNull();
+  expect(screen.queryByRole('button', { name: /Write a review/i })).toBeNull();
 });

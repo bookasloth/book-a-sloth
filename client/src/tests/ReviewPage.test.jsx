@@ -11,13 +11,14 @@ vi.mock('../services/api', () => ({
   getGuestBookings: vi.fn(),
   getBookingReview: vi.fn(),
   createReview:     vi.fn(),
+  updateReview:     vi.fn(),
 }));
 
 vi.mock('../hooks/useFeatureFlags', () => ({
   default: () => ({ on: () => true, flags: {}, loading: false }),
 }));
 
-import { getGuestBookings, getBookingReview, createReview } from '../services/api';
+import { getGuestBookings, getBookingReview, createReview, updateReview } from '../services/api';
 import ReviewPage from '../pages/ReviewPage';
 
 const booking = (over = {}) => ({
@@ -64,13 +65,15 @@ test('renders the form for a completed, unreviewed booking and submits with the 
   expect(await screen.findByText(/thank you/i)).toBeInTheDocument();
 });
 
-test('shows already-reviewed state when a review exists', async () => {
+test('shows edit form (prefilled) when a review already exists', async () => {
   getGuestBookings.mockResolvedValue({ data: [booking()] });
-  getBookingReview.mockResolvedValue({ data: { id: 'r1', rating: 4 } });
+  getBookingReview.mockResolvedValue({ data: { id: 'r1', rating: 4, comment: 'Great!' } });
+  updateReview.mockResolvedValue({ data: { id: 'r1', rating: 4, comment: 'Great!' } });
 
   renderAt('b1');
 
-  expect(await screen.findByRole('heading', { name: /already reviewed/i })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: /edit your review/i })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /update review/i })).toBeInTheDocument();
   expect(createReview).not.toHaveBeenCalled();
 });
 

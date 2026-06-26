@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getGuestBookings, getBookingReview, createReview } from "../services/api";
+import { getGuestBookings, getBookingReview, createReview, updateReview } from "../services/api";
 import useFeatureFlags from "../hooks/useFeatureFlags";
 import toast from "react-hot-toast";
 
@@ -57,7 +57,11 @@ export default function ReviewPage() {
         if (b.status === "completed") {
           try {
             const { data: r } = await getBookingReview(bookingId);
-            if (active) setExisting(r);
+            if (active) {
+            setExisting(r);
+            if (r?.rating) setRating(r.rating);
+            if (r?.comment) setComment(r.comment);
+          }
           } catch { /* no existing review */ }
         }
       } catch {
@@ -69,13 +73,20 @@ export default function ReviewPage() {
     return () => { active = false; };
   }, [bookingId]);
 
+  const isEdit = !!existing;
+
   const submit = async () => {
     if (rating < 1) { toast.error("Pick a rating"); return; }
     setBusy(true);
     try {
-      await createReview({ booking_id: bookingId, rating, comment, direction: "guest_to_host" });
+      if (isEdit) {
+        await updateReview(bookingId, { rating, comment });
+        toast.success("Review updated");
+      } else {
+        await createReview({ booking_id: bookingId, rating, comment, direction: "guest_to_host" });
+        toast.success("Thanks for your review!");
+      }
       setDone(true);
-      toast.success("Thanks for your review!");
     } catch (err) {
       toast.error(err?.response?.data?.message || "Could not submit review");
     } finally {
@@ -115,15 +126,14 @@ export default function ReviewPage() {
     );
   }
 
-  if (done || existing) {
+  if (done) {
     return (
       <Shell>
         <div className="text-center">
           <div className="mb-2 text-3xl text-[#FE5100]">★</div>
-          <h1 className="mb-1 text-xl font-bold">{done ? "Thank you!" : "Already reviewed"}</h1>
+          <h1 className="mb-1 text-xl font-bold">Thank you!</h1>
           <p className="mb-4 text-sm text-gray-500">
-            {done ? "Your review has been shared for " : "You've already reviewed "}
-            {host.name || "your host"}.
+            Your review has been shared for {host.name || "your host"}.
           </p>
           {host.username && (
             <Link to={`/${host.username}`} className="text-sm text-primary hover:underline">
@@ -145,7 +155,7 @@ export default function ReviewPage() {
 
   return (
     <Shell>
-      <h1 className="mb-1 text-2xl font-bold">Leave a review</h1>
+      <h1 className="mb-1 text-2xl font-bold">{isEdit ? "Edit your review" : "Leave a review"}</h1>
       <p className="mb-1 text-sm text-gray-500">
         How was your {booking.services?.title || "session"} with {host.name || "your host"}?
       </p>
@@ -188,7 +198,7 @@ export default function ReviewPage() {
         disabled={busy || !reviewsOn}
         className="btn w-full bg-primary py-2.5 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-50"
       >
-        {busy ? "Submitting…" : "Submit review"}
+        {busy ? "Saving…" : (isEdit ? "Update review" : "Submit review")}
       </button>
     </Shell>
   );
