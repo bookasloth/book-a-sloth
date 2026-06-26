@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/common/Navbar';
@@ -11,7 +11,14 @@ import GuestRoute from './components/common/GuestRoute';
 import AnalyticsBridge from './components/common/AnalyticsBridge';
 import ConsentBanner from './components/common/ConsentBanner';
 import ScrollToTop from './components/common/ScrollToTop';
+import RouteErrorBoundary from './components/common/RouteErrorBoundary';
 import { useAuth } from './context/AuthContext';
+import lazyWithRetry from './utils/lazyWithRetry';
+
+// lazyWithRetry wraps React.lazy: it retries transient chunk-fetch failures and,
+// on a stale-chunk-after-deploy 404, does a one-shot full reload to pull the
+// fresh build — instead of throwing an unrecoverable white screen.
+const lazy = lazyWithRetry;
 
 // ── Route-level lazy loading ──────────────────────────────────────────────────
 // Layout / guard components stay eager (always needed, small).
@@ -184,8 +191,9 @@ function App() {
       <ScrollToTop />
       <Toaster position="top-right" />
       <AnalyticsBridge />
-      <ConsentBanner />
+      <ConsentBanner variant={location.pathname.startsWith('/lp') ? 'slim' : 'full'} />
       {!hideNavbar && <Navbar />}
+      <RouteErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public */}
@@ -354,6 +362,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      </RouteErrorBoundary>
       {!hideFooter && <Footer />}
     </>
   );
