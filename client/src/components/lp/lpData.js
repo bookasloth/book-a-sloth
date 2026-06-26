@@ -49,7 +49,7 @@ export const CAPABILITIES = [
   {
     title: "Host a webinar",
     body: "Connect with hundreds at once — classes, group calls, workshops. One link, one price.",
-    preview: { kind: "webinar", title: "Personal Branding Workshop", meta: "Sat · 11:00am · 120 seats", price: "₹499", accent: "c-amber" },
+    preview: { kind: "webinar", title: "Personal Branding Workshop", meta: "Sat · 11:00am · 120 seats", price: "₹599", accent: "c-amber" },
   },
   {
     title: "Bundle your services",
@@ -77,7 +77,7 @@ export const TESTIMONIALS = [
 
 /* ─── Block 6: bento stat grid ("Earn & Convert more") ─── */
 export const BENTO = [
-  { big: "0%",   label: "commission on every booking", sub: "Flat ₹499/mo on Pro — never a cut of what you earn.", color: "c-pink",    span: false },
+  { big: "0%",   label: "commission on every booking", sub: "Just Rs. 10 / Day — never a cut of what you earn.", color: "c-pink",    span: false },
   { big: "40%",  label: "more trust with testimonials", sub: "Showcase guest & host reviews right on your page.",   color: "c-violet",  span: false },
   { big: "100%", label: "yours — clients & data",       sub: "Your client list stays yours. No lock-in, ever.",     color: "c-emerald", span: false },
   { big: "UPI",  label: "GST · INR-native payouts",      sub: "Razorpay up-front payments, settled straight to bank.", color: "c-blue",    span: false },
@@ -88,7 +88,7 @@ export const BENTO = [
 /* ─── Block 7: FAQ (objection handling) ─── */
 export const FAQ = [
   { q: "Is it really 0% commission?", a: "Yes — on every paid plan, Book A Sloth takes 0% commission. The only per-booking cost is a flat ₹10 platform fee plus your payment gateway's standard charge. Nothing is skimmed as commission." },
-  { q: "What does ₹499/month include?", a: "Unlimited bookings, up-front payments, WhatsApp + email reminders, your own SlothPage, and automatic Google Calendar + Meet. One flat price — it never scales with how much you earn." },
+  { q: "What does Rs. 10 / Day include?", a: "Unlimited bookings, up-front payments, WhatsApp + email reminders, your own SlothPage, and automatic Google Calendar + Meet. One flat price — it never scales with how much you earn." },
   { q: "Can I move my existing clients over?", a: "Yes. Share your new SlothPage link — your clients book in seconds. No migration, no lock-in. Your client list stays yours." },
   { q: "Is there a free plan?", a: "Yes. The Starter plan is free with a small 5% commission — still far below Topmate. Upgrade to a 0%-commission paid plan whenever you're ready." },
   { q: "How do payouts work?", a: "Clients pay up-front through Razorpay when they book. Your earnings are settled to you after the session completes." },

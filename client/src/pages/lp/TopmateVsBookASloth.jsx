@@ -28,7 +28,7 @@ const TopmateVsBookASloth = () => {
   useDocumentMeta({
     title: "Book A Sloth — the 0% commission Topmate alternative",
     description:
-      "Switching from Topmate? Keep what you earn — 0% commission, flat ₹499/month, UPI & GST built in. Start free.",
+      "Switching from Topmate? Keep what you earn — 0% commission, just Rs. 10 / Day, UPI & GST built in. Start free.",
   });
 
   useEffect(() => {
@@ -75,7 +75,7 @@ const TopmateVsBookASloth = () => {
             Stop paying commission on your own work.
           </h2>
           <p className="mx-auto mt-4 max-w-md text-white/60">
-            Move to flat ₹499/month. Keep what you earn — starting with your next
+            Move to just Rs. 10 / Day. Keep what you earn — starting with your next
             booking.
           </p>
           <div className="mt-9 flex justify-center">

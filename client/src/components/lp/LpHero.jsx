@@ -83,7 +83,7 @@ export default function LpHero() {
                 Loved by hosts across India
               </span>
               <span className="inline-flex items-center justify-center rounded-[4px] border border-black/5 bg-white/70 px-3 py-1 font-medium text-neutral-700">
-                0% commission · flat ₹499/mo
+                0% commission · just Rs. 10 / Day
               </span>
             </div>
           </div>
