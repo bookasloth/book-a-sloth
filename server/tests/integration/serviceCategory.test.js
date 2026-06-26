@@ -243,10 +243,10 @@ describe('PUT /api/admin/service-categories/:id', () => {
     };
 
     supabaseAdmin.from.mockReturnValueOnce({
-      update: jest.fn().mockReturnThis(),
-      eq:     jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: updated, error: null }),
+      update:      jest.fn().mockReturnThis(),
+      eq:          jest.fn().mockReturnThis(),
+      select:      jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: updated, error: null }),
     });
 
     const res = await request(app)
@@ -262,10 +262,10 @@ describe('PUT /api/admin/service-categories/:id', () => {
 
   test('404 when category not found', async () => {
     supabaseAdmin.from.mockReturnValueOnce({
-      update: jest.fn().mockReturnThis(),
-      eq:     jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      update:      jest.fn().mockReturnThis(),
+      eq:          jest.fn().mockReturnThis(),
+      select:      jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
     });
 
     const res = await request(app)

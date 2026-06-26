@@ -180,7 +180,7 @@ const update = async (req, res) => {
       .update(updates)
       .eq('id', req.params.id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ message: 'Service category not found' });
