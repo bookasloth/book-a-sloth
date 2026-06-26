@@ -13,10 +13,17 @@
 -- authController forgotPassword/resetPassword) is updated to scope every
 -- read/write/delete by `type`, and to upsert ON CONFLICT (email, type).
 --
--- DEPLOY ORDER: this migration MUST be applied BEFORE deploying the matching
--- server build (the new code upserts ON CONFLICT (email,type)). The server code
--- keeps a fallback to ON CONFLICT (email) if the composite key is absent, so a
--- brief ordering gap degrades to the old single-row behaviour rather than erroring.
+-- DEPLOY ORDER — apply this migration AFTER the new server build is live, NOT
+-- before:
+--   * The NEW code is backward-compatible: it upserts ON CONFLICT (email,type)
+--     and falls back to ON CONFLICT (email) when the composite key is absent, so
+--     it runs correctly on the OLD (email-PK) schema.
+--   * The OLD code only does ON CONFLICT (email). Once this migration drops the
+--     single-column PK, `email` is no longer a standalone unique key, so the old
+--     code's send-otp / forgot-password upserts would error (42P10).
+-- Therefore: deploy the new build first (it tolerates both schemas), then run
+-- this migration. On Render free tier a deploy is a full restart (no old+new
+-- overlap), so there is no window of old code meeting the new schema.
 
 ALTER TABLE public.otp_codes ALTER COLUMN type SET DEFAULT 'booking';
 UPDATE public.otp_codes SET type = 'booking' WHERE type IS NULL;
