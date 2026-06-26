@@ -56,9 +56,9 @@ export const team = {
   heading: "The people behind Book A Sloth.",
   sub: "Small team, big care. Real faces coming soon.",
   members: [
-    { name: "Founder Name", role: "Founder", quip: "Believes the best software disappears.", swap: "team-1" },
-    { name: "Team Member", role: "Product & Design", quip: "Removes a tap a day.", swap: "team-2" },
-    { name: "Team Member", role: "Engineering", quip: "Ships on Fridays anyway.", swap: "team-3" },
+    { name: "Founder Name", role: "Founder", quip: "Believes the best software disappears.", swap: "team-1", username: "founder", bio: "Building the calmest way for creators to get booked and paid. [Swap with real bio round-2.]", socials: [{ type: "x", href: "#" }, { type: "linkedin", href: "#" }] },
+    { name: "Team Member", role: "Product & Design", quip: "Removes a tap a day.", swap: "team-2", username: "design", bio: "[Swap with real bio round-2.]", socials: [{ type: "x", href: "#" }, { type: "linkedin", href: "#" }] },
+    { name: "Team Member", role: "Engineering", quip: "Ships on Fridays anyway.", swap: "team-3", username: "eng", bio: "[Swap with real bio round-2.]", socials: [{ type: "x", href: "#" }, { type: "linkedin", href: "#" }] },
   ],
 };
 
@@ -119,3 +119,63 @@ export const testimonials = {
 
 // Shared CTA destination — matches homepage ROUTE_START.
 export const ROUTE_START = "/be-a-sloth";
+
+// ── New rebuild sections (2026-06-26). [TBD] assets marked data-swap. ──
+
+// Section 2 — logo marquee. Placeholder names until real customer logos land.
+export const logos = {
+  eyebrow: "Trusted by calm professionals",
+  row1: [
+    { name: "Acme", swap: "logo-1" },
+    { name: "Northwind", swap: "logo-2" },
+    { name: "Globex", swap: "logo-3" },
+    { name: "Umbra", swap: "logo-4" },
+    { name: "Initech", swap: "logo-5" },
+    { name: "Hooli", swap: "logo-6" },
+  ],
+  row2: [
+    { name: "Soylent", swap: "logo-7" },
+    { name: "Vehement", swap: "logo-8" },
+    { name: "Massive", swap: "logo-9" },
+    { name: "Pied Piper", swap: "logo-10" },
+    { name: "Stark", swap: "logo-11" },
+    { name: "Wayne", swap: "logo-12" },
+  ],
+};
+
+// Section 3 — join / recruiting split (30/70). [COPY + IMAGE TBD]
+export const join = {
+  heading: "Join our team",
+  body: "We're a small team building the calm way to get booked. Come build it with us.",
+  cta: "Join the moment",
+  href: "/careers",
+  imageSwap: "join-hero",
+};
+
+// Section 4 — stacking cards. Big feature card + 4 sticky-stacking cards.
+export const stackCards = {
+  heading: "Everything you need. Nothing you don't.",
+  feature: {
+    title: "One calm link does the whole job.",
+    body: "Publish your services, share one link, and let bookings, payments and reminders run themselves.",
+    swap: "stack-feature",
+  },
+  cards: [
+    { title: "Get booked", body: "Your page is live 24/7. Clients book while you sleep.", more: "Personal booking page, availability rules and two-way calendar sync — all in one place.", swap: "stack-1" },
+    { title: "Get paid", body: "Money in before the session. No invoicing, no chasing.", more: "Razorpay UPI, cards and netbanking. Advance or full payment. Auto GST invoices.", swap: "stack-2" },
+    { title: "Stay organized", body: "Every client, booking and rupee in one place.", more: "Client history, private notes, and bookings & revenue reports — zero spreadsheets.", swap: "stack-3" },
+    { title: "Reduce no-shows", body: "Gentle reminders go out automatically.", more: "Email + WhatsApp reminders, instant confirmations and post-session follow-ups.", swap: "stack-4" },
+  ],
+};
+
+// Section 5 — case studies asymmetric grid (top 70/30, bottom 30/30/30). [TBD]
+export const caseStudies = {
+  heading: "Stories from the calm.",
+  tiles: [
+    { title: "Coworking space cut no-shows", blurb: "Members book cabins themselves now.", swap: "case-1" },
+    { title: "Clinic stopped chasing", blurb: "Patients pay upfront and turn up.", swap: "case-2" },
+    { title: "Mentor on autopilot", blurb: "Weekend slots fill, money's in.", swap: "case-3" },
+    { title: "GST season, sane", blurb: "Clients book instead of calling.", swap: "case-4" },
+    { title: "One link in bio", blurb: "Looks better than a GPay QR.", swap: "case-5" },
+  ],
+};
