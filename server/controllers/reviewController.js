@@ -81,14 +81,48 @@ const createReview = async (req, res) => {
   }
 };
 
+// PUT /api/reviews/booking/:id — author updates THEIR review for a booking.
+const updateReview = async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    if (rating != null && (rating < 1 || rating > 5))
+      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+
+    const { data: existing } = await supabaseAdmin
+      .from("reviews")
+      .select("id, reviewer_id, host_id, direction")
+      .eq("booking_id", req.params.id)
+      .eq("reviewer_id", req.user.id)
+      .maybeSingle();
+    if (!existing) return res.status(404).json({ message: "No review to edit" });
+
+    const patch = {};
+    if (rating != null) patch.rating = rating;
+    if (comment !== undefined) patch.comment = comment;
+
+    const { data: review, error } = await supabaseAdmin
+      .from("reviews").update(patch).eq("id", existing.id).select().single();
+    if (error) return safeError(res, error);
+
+    if (existing.direction === "guest_to_host") {
+      require("../services/badgeEngine")
+        .evaluate({ vendorIds: [existing.host_id] })
+        .catch((e) => console.error("Badge evaluation error:", e.message));
+    }
+    res.json(review);
+  } catch (error) { safeError(res, error); }
+};
+
 // GET /api/reviews/received — reviews the current user has RECEIVED (any direction)
 const getReceivedReviews = async (req, res) => {
   try {
-    const { data: reviews, error } = await supabaseAdmin
+    let q = supabaseAdmin
       .from("reviews")
       .select("id, rating, comment, created_at, direction, profiles!reviews_reviewer_id_fkey(name, profile_image), bookings(services(title))")
-      .eq("subject_id", req.user.id)
-      .order("created_at", { ascending: false });
+      .eq("subject_id", req.user.id);
+    const dir = req.query.direction;
+    if (dir === "guest_to_host" || dir === "host_to_guest") q = q.eq("direction", dir);
+    const { data: reviews, error } = await q.order("created_at", { ascending: false });
 
     if (error) return safeError(res, error);
 
@@ -162,4 +196,4 @@ const getBookingReview = async (req, res) => {
   }
 };
 
-module.exports = { createReview, getReceivedReviews, getHostReviews, getBookingReview };
+module.exports = { createReview, updateReview, getReceivedReviews, getHostReviews, getBookingReview };

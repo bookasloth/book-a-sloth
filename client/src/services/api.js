@@ -232,7 +232,8 @@ export const verifyProductPayment = (data) => API.post('/payment/verify-product'
 
 // ── Reviews ───────────────────────────────────────────────────
 export const createReview       = (data)      => API.post('/reviews', data);
-export const getReceivedReviews = ()          => API.get('/reviews/received');
+export const updateReview       = (id, data)  => API.put(`/reviews/booking/${id}`, data);
+export const getReceivedReviews = (direction) => API.get('/reviews/received', { params: direction ? { direction } : {} });
 export const getHostReviews     = (username)  => API.get(`/reviews/${username}`);
 export const getBookingReview   = (id)        => API.get(`/reviews/booking/${id}`);
 
