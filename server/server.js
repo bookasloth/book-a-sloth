@@ -108,10 +108,14 @@ app.use('/api/upload',      require('./routes/uploadRoutes'));
 app.use('/api/vendor',      require('./routes/vendorRoutes'));
 app.use('/api/services',    require('./routes/serviceRoutes'));
 app.use('/api/categories',  require('./routes/categoryRoutes'));
+const { adminRouter: scAdminRouter, publicRouter: scPublicRouter } = require('./routes/serviceCategoryRoutes');
+app.use('/api/admin/service-categories', adminLimiter, scAdminRouter);
+app.use('/api/service-categories',       scPublicRouter);
 app.use('/api/explore',     require('./routes/exploreRoutes'));
 app.use('/api/vendors',        require('./routes/badgePublicRoutes'));
 app.use('/api/feature-flags',  require('./routes/featureFlagRoutes'));
 app.use('/api/notifications', require('./routes/notificationWebhookRoutes')); // public AiSensy webhook (secret-gated)
+app.use('/api/notifications', require('./routes/notificationRoutes'));         // in-app feed (bell panel, auth-gated)
 app.use('/api/email',         require('./routes/emailRoutes')); // public unsubscribe (signed-token gated)
 app.use('/api/whatsapp',      require('./routes/whatsappRoutes'));
 app.use('/api/username',      require('./routes/usernameRoutes')); // public resolve (edge 301) + auth check

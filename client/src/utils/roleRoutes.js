@@ -14,3 +14,12 @@ export function hostPathToGuestPath(pathname) {
 export function isHost(user) {
   return user?.is_host === true || user?.role === 'host' || user?.role === 'superadmin';
 }
+
+// Maps a pathname to the role-space it belongs to, or null if neutral
+// (home, public profile, marketing pages). Used to keep the Hosting/Traveling
+// toggle + profile menu in sync after browser back/forward navigation.
+export function routeRole(pathname) {
+  if (pathname.startsWith('/dashboard')) return 'hosting';
+  if (pathname.startsWith('/user')) return 'traveling';
+  return null;
+}

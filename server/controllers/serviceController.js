@@ -83,6 +83,7 @@ const buildPayload = (body) => {
   if (excluded_items !== undefined)     p.excluded_items = Array.isArray(excluded_items) ? excluded_items : [];
   if (faqs !== undefined)               p.faqs = Array.isArray(faqs) ? faqs : [];
   if (important_note !== undefined)     p.important_note = important_note || '';
+  if (body.service_category_id !== undefined) p.service_category_id = body.service_category_id || null;
   return p;
 };
 
@@ -92,7 +93,7 @@ const V2_SELECT_COLS =
   'id,host_id,title,slug,short_description,long_description,description,' +
   'meeting_mode,type,price,duration,currency,grace_period_minutes,thumbnail_url,' +
   'included_items,excluded_items,faqs,important_note,rating,total_reviews,total_bookings,' +
-  'category,is_active,created_at,updated_at';
+  'category,service_category_id,is_active,created_at,updated_at';
 
 const LEGACY_SELECT_COLS =
   'id,host_id,title,slug,description,type,meeting_mode,price,duration,currency,' +
@@ -172,6 +173,9 @@ const updateSafe = async (id, hostId, updates) => {
     .single();
   if (r.error && /Could not find the/i.test(r.error.message)) {
     const safe = {};
+    // Mirror `category`: the newer marketplace columns are deliberately excluded
+    // from the legacy fallback so a stale/pre-migration schema still writes (if
+    // service_category_id is itself the missing column, keeping it would re-fail).
     const legacyCols = ['title','description','type','meeting_mode','duration','price','currency','grace_period_minutes','thumbnail_url','slug','is_active','updated_at'];
     legacyCols.forEach(k => { if (updates[k] !== undefined) safe[k] = updates[k]; });
     if (updates.short_description) safe.description = updates.short_description;

@@ -140,6 +140,7 @@ const Explore         = lazy(() => import('./pages/Explore'));
 const AdminPlans  = lazy(() => import('./pages/admin/AdminPlans'));
 const AdminAddons = lazy(() => import('./pages/admin/AdminAddons'));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const AdminServiceCategories = lazy(() => import('./pages/admin/AdminServiceCategories'));
 const AdminExplore    = lazy(() => import('./pages/admin/AdminExplore'));
 
 // Admin — System (M1: RBAC foundation)
@@ -265,7 +266,7 @@ function App() {
 
           {/* Operations — Services */}
           <Route path="/admin/services" element={<AdminWrapper><AdminServices /></AdminWrapper>} />
-          <Route path="/admin/services/categories" element={<AdminWrapper><AdminServices /></AdminWrapper>} />
+          <Route path="/admin/services/categories" element={<AdminWrapper><AdminServiceCategories /></AdminWrapper>} />
           <Route path="/admin/services/featured" element={<AdminWrapper><AdminServices /></AdminWrapper>} />
 
           {/* Operations */}

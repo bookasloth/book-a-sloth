@@ -5,7 +5,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
-import { svcCreate, svcUpdate, uploadImage, hostGetCategories, getCategories } from '../../services/api';
+import { svcCreate, svcUpdate, uploadImage, hostGetCategories, getCategories, listServiceCategories } from '../../services/api';
 import ServiceCategoryPicker from '../../components/services/ServiceCategoryPicker';
 import { categoryLabel } from '../../utils/categoryUtils';
 import toast from 'react-hot-toast';
@@ -46,6 +46,7 @@ const empty = () => ({
   faqs: [],
   important_note: '',
   category: '',
+  service_category_id: '',
 });
 
 const fieldLabel = "mb-1 block text-sm font-medium text-gray-700";
@@ -383,6 +384,7 @@ export default function ServiceForm({ initialData, serviceId }) {
         faqs:              Array.isArray(initialData.faqs) ? initialData.faqs : [],
         important_note:    initialData.important_note || '',
         category:          initialData.category || '',
+        service_category_id: initialData.service_category_id || '',
       };
     }
     return empty();
@@ -390,11 +392,14 @@ export default function ServiceForm({ initialData, serviceId }) {
 
   const [saving, setSaving] = useState(false);
   const [hostCats, setHostCats] = useState([]); // [{ slug, label }]
+  const [svcCats, setSvcCats] = useState([]);   // [{ id, name, slug, ... }]
 
   useEffect(() => {
     let alive = true;
-    Promise.all([hostGetCategories(), getCategories()])
-      .then(([h, c]) => {
+    // The service-category picker is optional — never let its fetch failing
+    // block the whole form load, so it resolves to an empty list on error.
+    Promise.all([hostGetCategories(), getCategories(), listServiceCategories().catch(() => ({ data: { categories: [] } }))])
+      .then(([h, c, sc]) => {
         if (!alive) return;
         const list = c.data || [];
         const slugs = h.data?.categories?.length
@@ -402,6 +407,7 @@ export default function ServiceForm({ initialData, serviceId }) {
           : (h.data?.primary_category ? [h.data.primary_category] : []);
         const items = slugs.map((s) => ({ slug: s, label: categoryLabel(s, list) }));
         setHostCats(items);
+        setSvcCats(sc.data?.categories || []);
         setForm((f) => f.category
           ? f
           : { ...f, category: initialData?.category || h.data?.primary_category || items[0]?.slug || '' });
@@ -444,6 +450,7 @@ export default function ServiceForm({ initialData, serviceId }) {
         faqs:              form.faqs,
         important_note:    form.important_note,
         category:          form.category || null,
+        service_category_id: form.service_category_id || null,
       };
 
       if (isEdit) {
@@ -524,6 +531,20 @@ export default function ServiceForm({ initialData, serviceId }) {
 
             {/* Category — drawn from the host's own categories */}
             <ServiceCategoryPicker categories={hostCats} value={form.category} onChange={(slug) => set('category', slug)} />
+
+            {/* Service Category — admin-managed taxonomy; read-only picker */}
+            <div>
+              <label className={fieldLabel}>Service Category</label>
+              <Select
+                value={form.service_category_id}
+                onChange={e => set('service_category_id', e.target.value)}
+              >
+                <option value="">None</option>
+                {svcCats.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </Select>
+            </div>
           </div>
 
           {/* Right column */}

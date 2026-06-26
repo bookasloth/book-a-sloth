@@ -16,6 +16,7 @@ const { runInBackground } = require("../utils/background");
 const { hostOf } = require("../utils/hostOf");
 const profileSecrets = require("../utils/profileSecrets");
 const guestGrant = require("../utils/bookingGrant");
+const { inAppNotify } = require("../utils/inAppNotify");
 
 const emailHtml = (body) => `
   <div style="max-width:520px;margin:0 auto;padding:26px;border-radius:24px;background:#ffffff;font-family:'Plus Jakarta Sans','Poppins',sans-serif;color:#111827;box-shadow:0 24px 60px rgba(15,23,42,0.08);">
@@ -431,6 +432,17 @@ const createBooking = async (req, res) => {
     // best-effort side-effects that should not add seconds to the user's wait.
     res.status(201).json(booking);
 
+    // In-app: notify the host of the new booking (fires for both free + paid).
+    inAppNotify({
+      userId: host_id,
+      role: 'host',
+      type: 'BOOKING_NEW',
+      title: 'New booking request',
+      body: `${guest_name} booked ${service.title}`,
+      link: '/dashboard/bookings',
+      data: { bookingId: booking.id },
+    });
+
     const when = new Date(scheduled_at).toLocaleString("en-IN", {
       timeZone: hostTimezone,
     });
@@ -464,6 +476,17 @@ const createBooking = async (req, res) => {
             recipientUserId: host_id, bookingId: booking.id,
           },
         });
+        // In-app: notify the guest their free booking is confirmed (account holders only).
+        if (resolvedGuestId) {
+          inAppNotify({
+            userId: resolvedGuestId,
+            role: 'guest',
+            type: 'BOOKING_CONFIRMED',
+            title: 'Booking confirmed',
+            link: '/user/my-bookings',
+            data: { bookingId: booking.id },
+          });
+        }
       });
     }
 
@@ -584,6 +607,29 @@ const cancelBooking = async (req, res) => {
           recipientUserId: booking.host_id, bookingId: booking.id,
         },
       });
+      // In-app: notify the OTHER party about the cancellation (not the actor).
+      if (booking.guest_id && booking.guest_id !== req.user.id) {
+        inAppNotify({
+          userId: booking.guest_id,
+          role: 'guest',
+          type: 'BOOKING_CANCELLED',
+          title: 'Booking cancelled',
+          body: `${booking.services?.title || 'Your booking'} has been cancelled`,
+          link: '/user/my-bookings',
+          data: { bookingId: booking.id },
+        });
+      }
+      if (booking.host_id !== req.user.id) {
+        inAppNotify({
+          userId: booking.host_id,
+          role: 'host',
+          type: 'BOOKING_CANCELLED',
+          title: 'Booking cancelled',
+          body: `${booking.guest_name}'s booking for ${booking.services?.title || 'a service'} was cancelled`,
+          link: '/dashboard/bookings',
+          data: { bookingId: booking.id },
+        });
+      }
     } catch (notifyError) {
       console.error("Cancel notification error:", notifyError.message);
     }
@@ -672,6 +718,18 @@ const markBookingCompleted = async (booking, { notify = true } = {}) => {
           recipientUserId: booking.host_id, bookingId: booking.id,
         },
       });
+      // In-app: notify the guest their session is complete and prompt a review.
+      if (booking.guest_id) {
+        inAppNotify({
+          userId: booking.guest_id,
+          role: 'guest',
+          type: 'BOOKING_COMPLETED',
+          title: 'Session completed',
+          body: 'Leave a review',
+          link: `/review/${booking.id}`,
+          data: { bookingId: booking.id },
+        });
+      }
     } catch (notifyError) {
       console.error("Complete notification error:", notifyError.message);
     }
@@ -992,6 +1050,29 @@ const rescheduleBooking = async (req, res) => {
             emailUser: { name: host.name, email: host.email, username: host.username },
             recipientUserId: booking.host_id, bookingId: booking.id,
           },
+        });
+      }
+      // In-app: notify the OTHER party about the reschedule (not the actor).
+      if (booking.guest_id && booking.guest_id !== req.user.id) {
+        inAppNotify({
+          userId: booking.guest_id,
+          role: 'guest',
+          type: 'BOOKING_RESCHEDULED',
+          title: 'Booking rescheduled',
+          body: `New time: ${newWhen}`,
+          link: '/user/my-bookings',
+          data: { bookingId: booking.id },
+        });
+      }
+      if (booking.host_id !== req.user.id) {
+        inAppNotify({
+          userId: booking.host_id,
+          role: 'host',
+          type: 'BOOKING_RESCHEDULED',
+          title: 'Booking rescheduled',
+          body: `New time: ${newWhen}`,
+          link: '/dashboard/bookings',
+          data: { bookingId: booking.id },
         });
       }
     } catch (emailError) {

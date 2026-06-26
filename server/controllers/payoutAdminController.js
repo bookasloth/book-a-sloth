@@ -12,6 +12,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { audit } = require('../services/auditService');
 const { post } = require('../services/ledger/postingService');
 const { payoutEntry } = require('../services/ledger/journalTemplates');
+const { inAppNotify } = require('../utils/inAppNotify');
 
 const now = () => new Date().toISOString();
 
@@ -46,6 +47,7 @@ const approvePayout = async (req, res) => {
       .eq('id', p.id).eq('status', 'pending').select().single();
     if (error) return safeError(res, error);
     await audit(req, { action: 'payout.approve', resource_type: 'payout_request', resource_id: p.id, before: { status: p.status }, after: { status: 'approved' } });
+    inAppNotify({ userId: p.host_id, role: 'host', type: 'PAYOUT_UPDATE', title: 'Payout approved', link: '/dashboard/payments/payouts' });
     res.json(data);
   } catch (e) { safeError(res, e); }
 };
@@ -63,6 +65,7 @@ const rejectPayout = async (req, res) => {
       .eq('id', p.id).eq('status', 'pending').select().single();
     if (error) return safeError(res, error);
     await audit(req, { action: 'payout.reject', resource_type: 'payout_request', resource_id: p.id, before: { status: p.status }, after: { status: 'rejected', reason } });
+    inAppNotify({ userId: p.host_id, role: 'host', type: 'PAYOUT_UPDATE', title: 'Payout rejected', link: '/dashboard/payments/payouts' });
     res.json(data);
   } catch (e) { safeError(res, e); }
 };
@@ -98,6 +101,7 @@ const markPayoutPaid = async (req, res) => {
       .eq('id', p.id).eq('status', 'approved').select().single();
     if (error) return safeError(res, error);
     await audit(req, { action: 'payout.pay', resource_type: 'payout_request', resource_id: p.id, before: { status: p.status }, after: { status: 'paid', reference } });
+    inAppNotify({ userId: p.host_id, role: 'host', type: 'PAYOUT_UPDATE', title: 'Payout paid', link: '/dashboard/payments/payouts' });
     res.json(data);
   } catch (e) { safeError(res, e); }
 };

@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
 import ModeSwitch from './ModeSwitch';
-import { isHost } from '../../utils/roleRoutes';
+import { isHost, routeRole } from '../../utils/roleRoutes';
+import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../services/api';
 import toast from 'react-hot-toast';
 import {
   Home, Tag, HelpCircle,
@@ -50,6 +51,7 @@ const VENDOR_DROPDOWN = [
   { label: 'View Public Profile', href: '__profile__',                   icon: ExternalLink },
   { label: 'Dashboard',           href: '/dashboard',                    icon: LayoutDashboard },
   { label: 'Earnings',            href: '/dashboard/earnings',           icon: TrendingUp },
+  { label: 'Reviews',             href: '/user/reviews',                 icon: Star },
   { label: 'Availability',        href: '/dashboard/availability',       icon: Clock },
   { label: 'Payouts',             href: '/dashboard/payments/payouts',   icon: Wallet },
   { label: 'Settings',            href: '/dashboard/profile',            icon: Settings },
@@ -115,7 +117,7 @@ const TagPill = ({ text }) =>
 // ── Main component ────────────────────────────────────────────────────────────
 
 const Navbar = () => {
-  const { user, logout, mode, becomeHost } = useAuth();
+  const { user, logout, mode, setMode, becomeHost } = useAuth();
   const appearance = useAppearance();
   const location = useLocation();
   const navigate = useNavigate();
@@ -124,6 +126,8 @@ const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen,   setNotifOpen]   = useState(false);
   const [signInOpen,  setSignInOpen]  = useState(false);
+  const [notifs,      setNotifs]      = useState([]);
+  const [unread,      setUnread]      = useState(0);
 
   const dropdownRef = useRef(null);
   const notifRef    = useRef(null);
@@ -135,6 +139,18 @@ const Navbar = () => {
   const hostingView = canHost && mode === 'hosting';
   const navItems   = !user ? PUBLIC_NAV : hostingView ? VENDOR_NAV : CUSTOMER_NAV;
   const dropItems  = hostingView ? VENDOR_DROPDOWN : CUSTOMER_DROPDOWN;
+
+  // Notification feed — role-filtered (host vs guest), loaded on mount and on panel open
+  const notifRole = hostingView ? 'host' : 'guest';
+  const loadNotifs = useCallback(() => {
+    if (!user) return;
+    getNotifications(notifRole)
+      .then(({ data }) => { setNotifs(data.notifications || []); setUnread(data.unreadCount || 0); })
+      .catch(() => {});
+  }, [user, notifRole]);
+  useEffect(() => { loadNotifs(); }, [loadNotifs]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (notifOpen) loadNotifs(); }, [notifOpen]);
 
   // "Become a host" — adds hosting to the CURRENT account, then enters the
   // existing onboarding (no separate account). Errors surface as a toast.
@@ -151,8 +167,7 @@ const Navbar = () => {
     }
   };
 
-  // Placeholder badge counts — wire to real data/context when ready
-  const badges = { messages: 0, notifications: 0 };
+  const badges = { messages: 0, notifications: unread };
 
   // Close popups on outside click + ESC
   useEffect(() => {
@@ -184,6 +199,16 @@ const Navbar = () => {
     setNotifOpen(false);
     setSignInOpen(false);
   }, [location.pathname]);
+
+  // Keep active role in sync with the route. Browser back/forward changes the
+  // URL but not the persisted mode, which previously left the toggle + profile
+  // menu showing Hosting on a Traveling page. Only snaps for dual-capability
+  // accounts and only on role-specific paths (neutral paths leave mode as-is).
+  useEffect(() => {
+    if (!canHost) return;
+    const role = routeRole(location.pathname);
+    if (role && role !== mode) setMode(role);
+  }, [location.pathname, canHost, mode, setMode]);
 
   // Lock body scroll while the mobile drawer is open so the page behind it
   // cannot be scrolled/seen. Mirrors Modal.jsx.
@@ -296,20 +321,45 @@ const Navbar = () => {
                   {/* Notifications panel */}
                   {notifOpen && (
                     <div
-                      className="absolute right-0 top-full mt-1.5 w-80 bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden"
+                      className="absolute right-0 top-full mt-1.5 w-[calc(100vw-1.5rem)] max-w-[20rem] sm:w-80 bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden"
                       role="dialog"
                       aria-label="Notifications"
                     >
                       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                         <span className="text-sm font-semibold text-[#1E1E1E]">Notifications</span>
-                        <button className="text-[11px] text-[#FE5100] font-medium hover:underline focus:outline-none">
+                        <button
+                          className="text-[11px] text-[#FE5100] font-medium hover:underline focus:outline-none"
+                          onClick={() => markAllNotificationsRead(notifRole).then(loadNotifs).catch(() => {})}
+                        >
                           Mark all read
                         </button>
                       </div>
-                      <div className="py-10 text-center">
-                        <Bell size={28} className="mx-auto text-gray-200 mb-2" />
-                        <p className="text-sm text-gray-400">No new notifications</p>
-                      </div>
+                      {notifs.length === 0 ? (
+                        <div className="py-10 text-center">
+                          <Bell size={28} className="mx-auto text-gray-200 mb-2" />
+                          <p className="text-sm text-gray-400">No new notifications</p>
+                        </div>
+                      ) : (
+                        <ul className="max-h-96 overflow-y-auto divide-y divide-gray-50">
+                          {notifs.map((n) => (
+                            <li key={n.id}>
+                              <Link
+                                to={n.link || '#'}
+                                onClick={() => {
+                                  if (!n.read_at) setUnread((u) => Math.max(0, u - 1));
+                                  setNotifs((list) => list.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x)));
+                                  markNotificationRead(n.id).catch(() => {});
+                                  setNotifOpen(false);
+                                }}
+                                className={`block px-4 py-3 hover:bg-gray-50 hover:no-underline ${n.read_at ? '' : 'bg-[#FE5100]/4'}`}
+                              >
+                                <p className="text-sm font-medium text-[#1E1E1E]">{n.title}</p>
+                                {n.body && <p className="text-xs text-gray-500 mt-0.5">{n.body}</p>}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   )}
                 </div>

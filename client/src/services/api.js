@@ -187,6 +187,15 @@ export const adminListCategories = (params)  => API.get('/admin/categories', { p
 export const adminCreateCategory = (data)    => API.post('/admin/categories', data);
 export const adminUpdateCategory = (id, data) => API.put(`/admin/categories/${id}`, data);
 export const adminDeleteCategory = (id)      => API.delete(`/admin/categories/${id}`);
+
+// ── Service Categories (admin CRUD + public picker) ───────────
+export const adminListServiceCategories    = ()           => API.get('/admin/service-categories');
+export const adminCreateServiceCategory    = (d)          => API.post('/admin/service-categories', d);
+export const adminUpdateServiceCategory    = (id, d)      => API.put(`/admin/service-categories/${id}`, d);
+export const adminDeleteServiceCategory    = (id)         => API.delete(`/admin/service-categories/${id}`);
+export const adminReorderServiceCategories = (rows)       => API.put('/admin/service-categories/reorder', { rows });
+export const listServiceCategories         = ()           => API.get('/service-categories');
+
 export const hostGetCategories      = ()         => API.get('/host/categories');
 export const hostUpdateCategories   = (payload)  => API.put('/host/categories', payload);
 export const adminSetUserCategories = (id, data) => API.patch(`/admin/users/${id}/categories`, data);
@@ -232,7 +241,8 @@ export const verifyProductPayment = (data) => API.post('/payment/verify-product'
 
 // ── Reviews ───────────────────────────────────────────────────
 export const createReview       = (data)      => API.post('/reviews', data);
-export const getReceivedReviews = ()          => API.get('/reviews/received');
+export const updateReview       = (id, data)  => API.put(`/reviews/booking/${id}`, data);
+export const getReceivedReviews = (direction) => API.get('/reviews/received', { params: direction ? { direction } : {} });
 export const getHostReviews     = (username)  => API.get(`/reviews/${username}`);
 export const getBookingReview   = (id)        => API.get(`/reviews/booking/${id}`);
 
@@ -432,3 +442,8 @@ export const adminListFeedback   = (params)   => API.get('/admin/feedback', { pa
 export const adminUpdateFeedback = (id, data) => API.patch(`/admin/feedback/${id}`, data);
 // ── Reschedule fee ────────────────────────────────────────────
 export const createRescheduleFeeOrder = (bookingId) => API.post('/payment/reschedule-fee/create-order', { booking_id: bookingId });
+
+// ── In-app Notifications ──────────────────────────────────────
+export const getNotifications         = (role) => API.get('/notifications', { params: { role } });
+export const markAllNotificationsRead = (role) => API.post('/notifications/read-all', null, { params: { role } });
+export const markNotificationRead     = (id)   => API.patch(`/notifications/${id}/read`);

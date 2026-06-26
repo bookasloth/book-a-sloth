@@ -137,7 +137,7 @@ const CustomerBookings = () => {
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-gray-400">
               <span className="inline-flex items-center gap-1"><Hash size={12} />{shortId(b.id)}</span>
-              <span className="inline-flex items-center gap-1"><IndianRupee size={12} />{amountPaid(b)}</span>
+              <span className="inline-flex items-center gap-1">{amountPaid(b)}</span>
             </div>
           </div>
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full border whitespace-nowrap ${STATUS_STYLE[b.status] || STATUS_STYLE.pending}`}>
@@ -248,7 +248,8 @@ const CustomerBookings = () => {
           }} />
       )}
       {reviewFor && (
-        <ReviewModal open booking={reviewFor} onClose={() => setReviewFor(null)}
+        <ReviewModal open booking={reviewFor} existing={reviews[reviewFor.id] || null}
+          onClose={() => setReviewFor(null)}
           onDone={(review) => { setReviews((m) => ({ ...m, [reviewFor.id]: review })); setReviewFor(null); }} />
       )}
     </div>
@@ -302,14 +303,29 @@ const DetailsModal = ({ b, host, review, onClose, canReschedule, canReview, canC
                 <RotateCcw size={15} /> Reschedule
               </button>
             )}
-            {b.status === "completed" && !review && canReview && (
+            {b.status === "completed" && canReview && !review && (
               <button onClick={onReview}
                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 border rounded-xl hover:bg-gray-50">
-                <Star size={15} /> Leave a review
+                <Star size={15} /> Write a review
               </button>
             )}
             {b.status === "completed" && review && (
-              <p className="text-center text-sm text-gray-500 py-1">Your review {"★".repeat(review.rating)}</p>
+              <div className="rounded-xl border bg-green-50/60 border-green-200 px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-700">
+                    <Star size={14} className="fill-green-600 text-green-600" /> Review submitted
+                  </span>
+                  {canReview && (
+                    <button onClick={onReview} className="text-xs font-medium text-[#FE5100] hover:underline">
+                      Edit review
+                    </button>
+                  )}
+                </div>
+                <p className="mt-1 text-[#FE5100] text-sm tracking-tight">
+                  {"★".repeat(review.rating)}<span className="text-gray-300">{"★".repeat(5 - review.rating)}</span>
+                </p>
+                {review.comment && <p className="mt-1 text-sm text-gray-600 leading-relaxed">{review.comment}</p>}
+              </div>
             )}
             {(b.status === "completed" || b.status === "cancelled") && host.username && svc.slug && (
               <Link to={`/${host.username}/booking/${svc.slug}`}
