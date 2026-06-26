@@ -42,7 +42,9 @@ const GoogleAuthDone = () => {
         navigate('/dashboard', { replace: true });
       })
       .catch(() => {
-        navigate('/login-as-vendor?error=auth_failed', { replace: true });
+        // Tokens were valid (account exists) — adopting the session failed, so
+        // nudge to sign in rather than showing a hard "sign-in failed" dead-end.
+        navigate('/login-as-vendor?error=signin_needed', { replace: true });
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

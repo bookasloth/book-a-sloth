@@ -741,4 +741,5 @@ module.exports = {
   getAvailability,
   getServiceBySlug,
   searchVendors,
+  validateWeeklySchedule, // exported for unit testing (P1-10)
 };

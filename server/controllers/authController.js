@@ -517,7 +517,16 @@ const googleCallback = async (req, res) => {
 
       // Mint a Supabase session without a password (magiclink redeem on a
       // disposable client). Tokens travel in the URL FRAGMENT — never logged.
-      const session = await mintSessionForEmail(googleEmail);
+      // UX rec: by this point the profile is already created/upgraded. If the
+      // session mint fails here, the account IS ready — route to a "you're set up,
+      // please sign in" message, not a generic "Google sign-in failed" dead-end.
+      let session;
+      try {
+        session = await mintSessionForEmail(googleEmail);
+      } catch (mintErr) {
+        console.error("google mint failed (account ready):", mintErr.message);
+        return res.redirect(`${clientUrl}/login-as-vendor?error=signin_needed`);
+      }
       // new=1 brand-new vendor · new=upgrade existing customer just gained
       // hosting · new=0 returning host. The client routes new!=0 through
       // onboarding (ProtectedRoute does the slug-based redirect either way).

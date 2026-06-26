@@ -28,4 +28,24 @@ describe('isLoadTestMode', () => {
     process.env.LOAD_TEST_MODE = '1';
     expect(isLoadTestMode()).toBe(false);
   });
+
+  // P3-8: fail-closed unless NODE_ENV is explicitly development/test, so a
+  // misconfigured host (NODE_ENV unset or 'staging') can never accept the bypass.
+  test('OFF when NODE_ENV is unset even when "true"', () => {
+    delete process.env.NODE_ENV;
+    process.env.LOAD_TEST_MODE = 'true';
+    expect(isLoadTestMode()).toBe(false);
+  });
+
+  test('OFF in a non-dev/test env (staging) even when "true"', () => {
+    process.env.NODE_ENV = 'staging';
+    process.env.LOAD_TEST_MODE = 'true';
+    expect(isLoadTestMode()).toBe(false);
+  });
+
+  test('ON in test env when "true"', () => {
+    process.env.NODE_ENV = 'test';
+    process.env.LOAD_TEST_MODE = 'true';
+    expect(isLoadTestMode()).toBe(true);
+  });
 });

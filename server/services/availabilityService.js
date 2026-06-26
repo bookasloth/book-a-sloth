@@ -82,7 +82,7 @@ const getPlatformBusy = async (hostId, windowStart, windowEnd) => {
     .select(select)
     .eq("host_id", hostId)
     .neq("status", "cancelled")
-    .gte("scheduled_at", new Date(windowStart.getTime() - 24 * 3600 * 1000).toISOString())
+    .gte("scheduled_at", new Date(windowStart.getTime() - 26 * 3600 * 1000).toISOString())
     .lte("scheduled_at", windowEnd.toISOString());
   if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
     result = await supabaseAdmin
@@ -90,7 +90,7 @@ const getPlatformBusy = async (hostId, windowStart, windowEnd) => {
       .select("scheduled_at, services(duration)")
       .eq("host_id", hostId)
       .neq("status", "cancelled")
-      .gte("scheduled_at", new Date(windowStart.getTime() - 24 * 3600 * 1000).toISOString())
+      .gte("scheduled_at", new Date(windowStart.getTime() - 26 * 3600 * 1000).toISOString())
       .lte("scheduled_at", windowEnd.toISOString());
   }
   if (result.error) throw new Error(result.error.message);
@@ -293,8 +293,8 @@ const getPlatformBusyExcluding = async (hostId, windowStart, windowEnd, excludeB
       .select(select)
       .eq("host_id", hostId)
       .neq("status", "cancelled")
-      .gte("scheduled_at", new Date(windowStart.getTime() - 24 * 3600 * 1000).toISOString())
-      .lte("scheduled_at", new Date(windowEnd.getTime() + 24 * 3600 * 1000).toISOString());
+      .gte("scheduled_at", new Date(windowStart.getTime() - 26 * 3600 * 1000).toISOString())
+      .lte("scheduled_at", new Date(windowEnd.getTime() + 26 * 3600 * 1000).toISOString());
     if (excludeBookingId) q = q.neq("id", excludeBookingId);
     return q;
   };

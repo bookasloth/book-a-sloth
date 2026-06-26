@@ -19,6 +19,7 @@ const ERROR_COPY = {
   customer_email: "We couldn't sign you in with that Google account. Please try again.",
   create_failed: "We could not create your account. Please try again.",
   auth_failed: "Google sign-in failed. Please try again.",
+  signin_needed: "You're all set! Please sign in to continue.",
   no_email: "Google did not share an email address. Check your account permissions.",
 };
 
@@ -50,7 +51,11 @@ const Login = () => {
   // Surface a Google-callback error (this page is also the /login-as-vendor target).
   useEffect(() => {
     const err = searchParams.get("error");
-    if (err) toast.error(ERROR_COPY[err] || "Sign-in failed. Please try again.");
+    if (!err) return;
+    const msg = ERROR_COPY[err] || "Sign-in failed. Please try again.";
+    // signin_needed isn't a failure (the account is ready) — show a neutral nudge.
+    if (err === "signin_needed") toast(msg, { icon: "👋" });
+    else toast.error(msg);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

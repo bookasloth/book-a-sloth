@@ -335,7 +335,9 @@ const DetailsModal = ({ booking, onClose, onAction, review, onReviewDone }) => {
           <div className="rounded-xl border border-red-200 bg-red-50 p-4">
             <p className="mb-3 text-sm font-medium text-red-700">
               {confirming === "cancel"
-                ? "Cancel this booking? The guest will be notified."
+                ? booking.payment_status === "paid"
+                  ? "Cancel this paid booking? The guest will be notified. Cancelling does NOT refund automatically — process any refund manually."
+                  : "Cancel this booking? The guest will be notified."
                 : confirming === "no_show"
                 ? "Mark this booking as a no-show? Use this when the guest did not attend."
                 : "Mark as completed?"}
