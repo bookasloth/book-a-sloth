@@ -15,6 +15,7 @@ import BehindProduct from "../components/about/BehindProduct";
 import StatStrip from "../components/about/StatStrip";
 import BuildFlow from "../components/about/BuildFlow";
 import TrustGrid from "../components/about/TrustGrid";
+import FinalCta from "../components/about/FinalCta";
 
 const JSON_LD = {
   "@context": "https://schema.org",
@@ -50,6 +51,7 @@ export default function About() {
       <StatStrip />
       <BuildFlow />
       <TrustGrid />
+      <FinalCta />
     </main>
   );
 }
