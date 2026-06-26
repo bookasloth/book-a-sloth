@@ -16,7 +16,7 @@ const ROUTES = [
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'lp',
   'my-bookings', 'profile', 'reviews', 'loyalty', 'settings', 'search',
-  'sitemap', 'robots', 'health', 'manifest', 'favicon',
+  'sitemap', 'robots', 'health', 'manifest', 'favicon', 'get-in-touch',
 ];
 
 // Infrastructure / technical reserved handles.
