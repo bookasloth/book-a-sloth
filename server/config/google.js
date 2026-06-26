@@ -136,12 +136,30 @@ const updateCalendarEvent = async (accessToken, refreshToken, eventId, { startTi
   };
 };
 
+// Cancel/remove an event from the host's calendar; notifies attendees so the
+// ghost event disappears from everyone's calendar. Used by cancelBooking (P1-7).
+// Best-effort: a 404/410 (already gone) is treated as success.
+const deleteCalendarEvent = async (accessToken, refreshToken, eventId) => {
+  if (isLoadTestMode()) return { deleted: true };
+  const auth = buildOAuthClient(accessToken, refreshToken);
+  const calendar = google.calendar({ version: 'v3', auth });
+  try {
+    await calendar.events.delete({ calendarId: 'primary', eventId, sendUpdates: 'all' });
+  } catch (err) {
+    const code = err?.code || err?.response?.status;
+    if (code === 404 || code === 410) return { deleted: true }; // already gone
+    throw err;
+  }
+  return { deleted: true };
+};
+
 module.exports = {
   oauth2Client,
   getAuthUrl,
   getTokensFromCode,
   createCalendarEvent,
   updateCalendarEvent,
+  deleteCalendarEvent,
   getFreeBusy,
   getCalendarTimezone,
 };

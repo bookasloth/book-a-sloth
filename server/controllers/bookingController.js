@@ -1,6 +1,6 @@
 const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require('../utils/httpError');
-const { createCalendarEvent, updateCalendarEvent } = require("../config/google");
+const { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } = require("../config/google");
 const featureFlags = require("../services/featureFlags");
 const sendEmail = require("../utils/sendEmail");
 const NotificationEngine = require("../services/notificationEngine");
@@ -50,6 +50,21 @@ const vendorParams = ({ guestName, serviceTitle, hostName, when, actionLink }) =
   const p = [hostName || "Host", guestName || "Customer", serviceTitle || "Service", when];
   if (actionLink) p.push(actionLink);
   return p;
+};
+
+// Resolve a host's display timezone from their availability row (audit P1-8).
+// The cancel/complete/reschedule-ack/reminder notifications used to format the
+// "when" string with a bare toLocaleString("en-IN") (no timeZone) → it rendered
+// in the SERVER's timezone (Render = UTC), showing guests a time 5.5h off what
+// they booked and causing missed sessions. Defaults to IST.
+const resolveHostTz = async (hostId) => {
+  try {
+    const { data } = await supabaseAdmin
+      .from("availability").select("timezone").eq("host_id", hostId).maybeSingle();
+    return data?.timezone || "Asia/Kolkata";
+  } catch (_) {
+    return "Asia/Kolkata";
+  }
 };
 
 // ── Email placeholder data for the Communication Engine templates ──
@@ -200,13 +215,13 @@ const createBooking = async (req, res) => {
   try {
     const {
       service_id,
-      guest_name,
-      guest_email,
-      guest_phone,
       scheduled_at,
       notes,
       booking_grant,
     } = req.body;
+    // guest contact is mutable: for an authenticated booker it is overridden
+    // below with the account's verified contact (audit P1-4).
+    let { guest_name, guest_email, guest_phone } = req.body;
 
     // ── Input validation (security audit M-5) — defence-in-depth; reject junk
     // before any DB work and before user-controlled values reach notifications. ──
@@ -270,6 +285,18 @@ const createBooking = async (req, res) => {
     // (Matching an arbitrary email to an existing profile would let an attacker
     // file bookings under any victim's account.)
     const resolvedGuestId = req.user?.id || null;
+
+    // P1-4: an authenticated booker's notification contact is their own verified
+    // account contact, never the request body. Without this a logged-in user
+    // could put any victim's email/phone in the body and the platform would send
+    // host-branded "booking confirmed" emails/WhatsApp to them (auth'd relay).
+    if (req.user) {
+      const { data: gp } = await supabaseAdmin
+        .from("profiles").select("name, email, phone").eq("id", req.user.id).single();
+      guest_email = gp?.email || req.user.email || guest_email;
+      guest_phone = gp?.phone || guest_phone || null;
+      guest_name = guest_name || gp?.name || "Guest";
+    }
 
     const hostTimezone = avail?.timezone || "Asia/Kolkata";
 
@@ -398,10 +425,14 @@ const createBooking = async (req, res) => {
       bookingResult.error &&
       /Could not find the|column.*does not exist/i.test(bookingResult.error.message)
     ) {
-      // Drop v1.7 + v2.2 + v2.5 + v2.8 columns if the migrations haven't been applied yet
+      // Drop v1.7 + v2.2 + v2.8 columns if the migrations haven't been applied yet.
+      // P0-4: end_at is DELIBERATELY kept — it backs the bookings_no_overlap
+      // exclusion constraint (the only hard double-booking guarantee), whose
+      // predicate requires end_at IS NOT NULL. Stripping it here silently disabled
+      // that backstop. end_at has existed since v2.5; both DBs are well past it.
       const {
         commission_applied: _c, platform_fee_gst: _g, customer_total: _t,
-        gst_rate: _r, razorpay_fee_actual: _f, razorpay_tax_actual: _rt, end_at: _e,
+        gst_rate: _r, razorpay_fee_actual: _f, razorpay_tax_actual: _rt,
         commission_gst: _cg, commission_percentage: _cp, vendor_plan_type: _vp,
         google_event_id: _gei,
         ...payloadCore
@@ -564,13 +595,19 @@ const cancelBooking = async (req, res) => {
     // BUG-01 fixed: verify caller owns this booking before allowing cancel
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("*, services(title), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
+      .select("*, services(title), profiles!bookings_host_id_fkey(name, email, phone, username, location, google_calendar_connected)")
       .eq("id", req.params.id)
       .single();
     if (!booking) return res.status(404).json({ message: "Booking not found" });
     if (req.user.id !== booking.host_id && req.user.id !== booking.guest_id) {
       return res.status(403).json({ message: "Not authorized to cancel this booking" });
     }
+    // P1-5: status guard + idempotency. A repeat cancel is a no-op (don't re-fire
+    // notifications); a completed booking can't be walked back to cancelled (it
+    // would diverge the ledger from the booking with no reversal).
+    if (booking.status === "cancelled") return res.json(booking);
+    if (booking.status === "completed" || booking.status === "no_show")
+      return res.status(409).json({ message: "This booking is already closed and can't be cancelled." });
 
     const { data, error } = await supabaseAdmin
       .from("bookings")
@@ -580,14 +617,33 @@ const cancelBooking = async (req, res) => {
       .single();
     if (error) return safeError(res, error);
 
+    // P1-7: remove the Google Calendar event so a cancelled booking doesn't leave
+    // a ghost event (with Meet link) on the host's + guest's calendars. Best-effort.
+    if (booking.google_event_id && hostOf(booking).google_calendar_connected) {
+      try {
+        const calHost = { id: booking.host_id };
+        await profileSecrets.attachGoogleTokens(calHost);
+        if (calHost.google_refresh_token) {
+          await deleteCalendarEvent(
+            decryptToken(calHost.google_access_token),
+            decryptToken(calHost.google_refresh_token),
+            booking.google_event_id,
+          );
+        }
+      } catch (calErr) {
+        console.error("Cancel calendar delete (non-fatal):", calErr.message);
+      }
+    }
+
     // Notify both sides (engine decides channels per admin config)
     try {
       const host = hostOf(booking);
-      const when = new Date(booking.scheduled_at).toLocaleString("en-IN");
+      const tz = await resolveHostTz(booking.host_id);
+      const when = new Date(booking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
       const ctx = { guestName: booking.guest_name, serviceTitle: booking.services?.title, hostName: host.name, when };
       const emailData = bookingEmailData({
         serviceTitle: booking.services?.title, hostName: host.name, hostPhone: host.phone,
-        guestName: booking.guest_name, scheduledAt: booking.scheduled_at, bookingId: booking.id,
+        guestName: booking.guest_name, scheduledAt: booking.scheduled_at, tz, bookingId: booking.id,
       });
       await NotificationEngine.send({
         event: "BOOKING_CANCELLED_CUSTOMER",
@@ -686,11 +742,12 @@ const markBookingCompleted = async (booking, { notify = true } = {}) => {
   if (notify) {
     try {
       const host = hostOf(booking);
-      const when = new Date(booking.scheduled_at).toLocaleString("en-IN");
+      const tz = await resolveHostTz(booking.host_id);
+      const when = new Date(booking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
       const ctx = { guestName: booking.guest_name, serviceTitle: booking.services?.title, hostName: host.name, when };
       const emailData = bookingEmailData({
         serviceTitle: booking.services?.title, hostName: host.name, hostPhone: host.phone,
-        guestName: booking.guest_name, scheduledAt: booking.scheduled_at, bookingId: booking.id,
+        guestName: booking.guest_name, scheduledAt: booking.scheduled_at, tz, bookingId: booking.id,
       });
       // The review CTA ({{review_url}}) opens the dedicated review page for THIS
       // booking. Keep profile_url too (still referenced elsewhere / as fallback).
@@ -767,6 +824,13 @@ const completeBooking = async (req, res) => {
     // Idempotent: re-completing must not re-stamp completed_at/revenue_recognized_at
     // (would silently shift revenue across a reporting period) or re-fire notifications.
     if (booking.status === "completed") return res.json(booking);
+    // P0-2: only a CONFIRMED booking may be completed. Without this a cancelled,
+    // paid booking could be force-completed via the API — re-stamping revenue
+    // recognition and re-entering the host's settlement balance for a session
+    // that was cancelled (and, with no refund, paying the host for it). Also
+    // blocks completing a pending/unpaid booking.
+    if (booking.status !== "confirmed")
+      return res.status(409).json({ message: "Only a confirmed booking can be completed." });
 
     // Security audit M-1: a host may only complete a booking AFTER its session has
     // ended (duration + grace). Otherwise a host could flip a far-future PAID
@@ -780,6 +844,73 @@ const completeBooking = async (req, res) => {
 
     const { data, error } = await markBookingCompleted(booking, { notify: true });
     if (error) return safeError(res, error);
+    res.json(data);
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// PUT /api/bookings/:id/no-show  (audit P1-6)
+// Host records that the guest did not attend. Distinct, auditable terminal state
+// — previously no-shows were silently auto-completed, so the host was paid and
+// the guest was prompted to review a session that never happened.
+const markNoShow = async (req, res) => {
+  try {
+    let { data: booking } = await supabaseAdmin
+      .from("bookings")
+      .select("*, services(title, duration, grace_period_minutes), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
+      .eq("id", req.params.id)
+      .single();
+    // Fallback for a schema-cache state without grace_period_minutes.
+    if (!booking) {
+      ({ data: booking } = await supabaseAdmin
+        .from("bookings")
+        .select("*, services(title, duration), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
+        .eq("id", req.params.id)
+        .single());
+    }
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (req.user.id !== booking.host_id)
+      return res.status(403).json({ message: "Only the host can mark a booking as no-show" });
+    if (booking.status === "no_show") return res.json(booking); // idempotent
+    if (booking.status !== "confirmed")
+      return res.status(409).json({ message: "Only a confirmed booking can be marked no-show." });
+
+    // Same time-gate as completion: can't mark no-show before the session window
+    // (duration + grace) has fully elapsed.
+    const sessionMin = (booking.services?.duration || 30) + (booking.services?.grace_period_minutes || 0);
+    const sessionEnd = new Date(booking.scheduled_at).getTime() + sessionMin * 60000;
+    if (Number.isFinite(sessionEnd) && Date.now() < sessionEnd)
+      return res.status(409).json({ message: "You can mark a no-show only after the session window has passed." });
+
+    const nowIso = new Date().toISOString();
+    // Host-favourable: a paid no-show stays settlement-eligible (the host showed
+    // up), but it is recorded as no_show — never silently "completed".
+    const noShowUpdate = {
+      status: "no_show",
+      completed_at: nowIso,
+      revenue_recognized_at: nowIso,
+      revenue_recognition_status: "recognized",
+      settlement_status: booking.payment_status === "paid" ? "eligible_for_settlement" : "not_eligible",
+      updated_at: nowIso,
+    };
+    let { data, error } = await supabaseAdmin
+      .from("bookings").update(noShowUpdate).eq("id", booking.id).select().single();
+    // Legacy DB without the v2.8 settlement columns: retry with a minimal update.
+    if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+      ({ data, error } = await supabaseAdmin
+        .from("bookings").update({ status: "no_show", updated_at: nowIso }).eq("id", booking.id).select().single());
+    }
+    if (error) return safeError(res, error);
+
+    // In-app note to the host (no guest-facing no_show template by design).
+    inAppNotify({
+      userId: booking.host_id, role: 'host', type: 'BOOKING_NO_SHOW',
+      title: 'Marked as no-show',
+      body: `${booking.guest_name || 'Guest'} — ${booking.services?.title || 'booking'}`,
+      link: '/dashboard/bookings', data: { bookingId: booking.id },
+    });
+
     res.json(data);
   } catch (error) {
     safeError(res, error);
@@ -818,9 +949,9 @@ const rescheduleBooking = async (req, res) => {
 
     const { data: avail } = await supabaseAdmin
       .from("availability")
-      .select("buffer_minutes, timezone")
+      .select("*")
       .eq("host_id", booking.host_id)
-      .single();
+      .maybeSingle();
     const hostTimezone = avail?.timezone || "Asia/Kolkata";
     const newStart = new Date(scheduled_at);
 
@@ -831,41 +962,27 @@ const rescheduleBooking = async (req, res) => {
         .json({ message: "Cannot reschedule to a time in the past." });
     }
 
-    const graceMin = booking.services?.grace_period_minutes ?? 10;
     const newEnd = new Date(
       newStart.getTime() + (booking.services?.duration || 30) * 60000,
     );
-    const windowStart = new Date(newStart.getTime() - 24 * 3600 * 1000);
 
-    const { data: conflicts, error: conflictsError } =
-      await selectBookingServiceRows((select) =>
-        supabaseAdmin
-          .from("bookings")
-          .select(select)
-          .eq("host_id", booking.host_id)
-          .neq("status", "cancelled")
-          .neq("id", req.params.id)
-          .gte("scheduled_at", windowStart.toISOString())
-          .lte(
-            "scheduled_at",
-            new Date(newEnd.getTime() + graceMin * 60000).toISOString(),
-          ),
-      );
-    if (conflictsError)
-      return res.status(500).json({ message: conflictsError.message });
-    for (const c of conflicts || []) {
-      const cStart = new Date(c.scheduled_at);
-      const cGrace = c.services?.grace_period_minutes ?? 10;
-      const cEnd = new Date(
-        cStart.getTime() + (c.services?.duration || 30) * 60000,
-      );
-      if (
-        newStart < cEnd.getTime() + cGrace * 60000 &&
-        newEnd > cStart.getTime() - cGrace * 60000
-      )
-        return res
-          .status(409)
-          .json({ message: "That time slot is already taken." });
+    // P1-3: route reschedule through the SAME full availability validation as a
+    // new booking — blocked dates, working-hours window, platform double-booking
+    // (grace-aware) AND the host's live Google Calendar — instead of the old
+    // hand-rolled conflict scan that checked none of those. Exclude this booking
+    // so it can't collide with itself.
+    const rescheduleHost = hostOf(booking);
+    await profileSecrets.attachGoogleTokens(rescheduleHost);
+    const slotCheck = await availabilityService.validateSlot({
+      host: rescheduleHost,
+      service: booking.services,
+      availability: avail,
+      scheduledAtUTC: scheduled_at,
+      excludeBookingId: req.params.id,
+    });
+    if (!slotCheck.ok) {
+      const status = /past/i.test(slotCheck.reason) ? 400 : 409;
+      return res.status(status).json({ message: slotCheck.reason });
     }
 
     const isHostReschedule = req.user?.id === booking.host_id;
@@ -939,6 +1056,9 @@ const rescheduleBooking = async (req, res) => {
       reminder_1h_sent: false,
       reschedule_status: isHostReschedule ? "awaiting_guest_ack" : "none",
       reschedule_ack_token: ackToken,
+      // P3-1: ack tokens now expire (7 days). A leaked/emailed link can no longer
+      // be used indefinitely. Null when there's no token (guest-initiated move).
+      reschedule_ack_token_expires_at: ackToken ? new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString() : null,
       reschedule_acknowledged_at: null,
       reschedule_count: (Number(booking.reschedule_count) || 0) + (isGuestReschedule ? 1 : 0),
       updated_at: new Date().toISOString(),
@@ -954,7 +1074,7 @@ const rescheduleBooking = async (req, res) => {
       rescheduleResult.error &&
       /Could not find the|column.*does not exist/i.test(rescheduleResult.error.message)
     ) {
-      const { end_at: _e, reschedule_count: _rc, ...coreUpdate } = rescheduleUpdate;
+      const { end_at: _e, reschedule_count: _rc, reschedule_ack_token_expires_at: _rae, ...coreUpdate } = rescheduleUpdate;
       rescheduleResult = await supabaseAdmin
         .from("bookings").update(coreUpdate).eq("id", req.params.id).select().single();
     }
@@ -1104,6 +1224,15 @@ const confirmReschedule = async (req, res) => {
         .status(404)
         .send("This confirmation link is invalid or expired.");
 
+    // P3-1: reject an expired ack token (column absent on a legacy DB → skip).
+    if (
+      booking.reschedule_ack_token_expires_at &&
+      new Date(booking.reschedule_ack_token_expires_at) < new Date()
+    )
+      return res
+        .status(410)
+        .send("This confirmation link has expired. Please ask the host to resend the new time.");
+
     const { error: updateError } = await supabaseAdmin
       .from("bookings")
       .update({
@@ -1121,7 +1250,8 @@ const confirmReschedule = async (req, res) => {
 
     const s = booking.services;
     const host = hostOf(booking);
-    const when = new Date(booking.scheduled_at).toLocaleString("en-IN");
+    const tz = await resolveHostTz(booking.host_id);
+    const when = new Date(booking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
 
     try {
       if (host.email) {
@@ -1131,7 +1261,7 @@ const confirmReschedule = async (req, res) => {
             email: host.email, name: host.name,
             emailData: bookingEmailData({
               serviceTitle: s?.title, hostName: host.name, hostPhone: host.phone,
-              guestName: booking.guest_name, scheduledAt: booking.scheduled_at, bookingId: booking.id,
+              guestName: booking.guest_name, scheduledAt: booking.scheduled_at, tz, bookingId: booking.id,
             }),
             emailUser: { name: host.name, email: host.email, username: host.username },
             recipientUserId: booking.host_id, bookingId: booking.id,
@@ -1162,6 +1292,13 @@ const confirmReschedule = async (req, res) => {
 const processReminders = async () => {
   if (!(await featureFlags.isFeatureEnabled("booking_reminders"))) return;
   const now = new Date();
+  // P1-8: render reminder times in each host's timezone, not the server's (UTC).
+  // Cache per host so a batch doesn't re-query availability for every booking.
+  const tzCache = new Map();
+  const tzFor = async (hostId) => {
+    if (!tzCache.has(hostId)) tzCache.set(hostId, await resolveHostTz(hostId));
+    return tzCache.get(hostId);
+  };
   for (const windowHours of [24, 1]) {
     const rangeStart = new Date(
       now.getTime() + (windowHours * 60 - 10) * 60000,
@@ -1182,7 +1319,8 @@ const processReminders = async () => {
     for (const b of bookings || []) {
       const s = b.services;
       const host = hostOf(b);
-      const when = new Date(b.scheduled_at).toLocaleString("en-IN");
+      const tz = await tzFor(b.host_id);
+      const when = new Date(b.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
       try {
         // Mode of truth = service.meeting_mode (NOT meeting_link presence — the
         // Meet link may not be minted yet). Online → join link; offline → dashboard
@@ -1193,7 +1331,7 @@ const processReminders = async () => {
         const ctx = { guestName: b.guest_name, serviceTitle: s?.title, hostName: host.name, when, actionLink };
         const emailData = bookingEmailData({
           serviceTitle: s?.title, hostName: host.name, hostPhone: host.phone,
-          guestName: b.guest_name, scheduledAt: b.scheduled_at, bookingId: b.id,
+          guestName: b.guest_name, scheduledAt: b.scheduled_at, tz, bookingId: b.id,
           online: isOnline, actionLink: isOnline && b.meeting_link ? b.meeting_link : "",
         });
         await NotificationEngine.send({
@@ -1342,6 +1480,7 @@ module.exports = {
   getGuestBookings,
   cancelBooking,
   completeBooking,
+  markNoShow,
   markBookingCompleted,
   autoCompleteBookings,
   expireStalePendingBookings,

@@ -76,7 +76,8 @@ describe('markComplete', () => {
       select: () => ({
         eq: () => ({
           maybeSingle: () => Promise.resolve({
-            data: callIndex++ === 0 ? { plan: 'explorer', plan_expires_at: null } : null,
+            // call 0 = getActivePlan; call 1 = primary_category required-field check (P2-7)
+            data: callIndex++ === 0 ? { plan: 'explorer', plan_expires_at: null } : { primary_category: 'coaching' },
           }),
         }),
       }),

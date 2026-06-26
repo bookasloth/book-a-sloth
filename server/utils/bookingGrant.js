@@ -27,7 +27,9 @@ const SECRET =
     .digest('hex');
 
 const PURPOSE = 'guest_booking';
-const TTL = '20m';
+// 30m so a guest who verifies then takes their time on the details/payment step
+// doesn't get a 401 at submit. Matches the 30-min pending-hold window (UX rec).
+const TTL = '30m';
 
 // Mirrors authController's OTP identifier normalisation (phone-first, email
 // fallback) so the grant subject lines up with what was actually verified.

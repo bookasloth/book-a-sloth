@@ -223,6 +223,7 @@ export const getHostBookings   = ()                => API.get('/bookings/host');
 export const getGuestBookings  = ()                => API.get('/bookings/guest');
 export const cancelBooking     = (id)              => API.put(`/bookings/${id}/cancel`);
 export const completeBooking   = (id)              => API.put(`/bookings/${id}/complete`);
+export const markNoShow        = (id)              => API.put(`/bookings/${id}/no-show`);
 export const rescheduleBooking = (id, data)        => API.put(`/bookings/${id}/reschedule`, data);
 export const getBookedSlots    = (host_id, date)   => API.get('/bookings/slots', { params: { host_id, date } });
 // v2.5: server-computed availability (working hours − bookings − Google busy − blocked dates)

@@ -71,8 +71,30 @@ const Availability = () => {
     setDirty(true);
   };
 
+  // Mirror the server validation (P1-10) for instant feedback: each window must
+  // have end > start and windows on a day must not overlap. HH:MM strings from
+  // <input type="time"> compare lexically, so string comparison is correct.
+  const validateSchedule = () => {
+    for (const day of DAYS) {
+      const windows = schedule[day] || [];
+      const ranges = [];
+      for (const w of windows) {
+        if (!w.start || !w.end) return `Fill in both times on ${day}.`;
+        if (w.end <= w.start) return `On ${day}, the end time must be after the start time.`;
+        ranges.push([w.start, w.end]);
+      }
+      ranges.sort((a, b) => (a[0] < b[0] ? -1 : 1));
+      for (let i = 1; i < ranges.length; i++) {
+        if (ranges[i][0] < ranges[i - 1][1]) return `Overlapping time windows on ${day}.`;
+      }
+    }
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const scheduleErr = validateSchedule();
+    if (scheduleErr) { toast.error(scheduleErr); return; }
     setLoading(true);
     try {
       await saveAvailability({

@@ -206,7 +206,9 @@ describe('googleCallback — CSRF / errors', () => {
     const r = res();
     await googleCallback({ query: { code: 'abc', state: signState({ flow: 'vendor_auth', intent: 'signup' }) } }, r);
     const target = r.redirect.mock.calls[0][0];
-    expect(target).toContain('/login-as-vendor?error=auth_failed');
+    // UX rec: the account is already created/upgraded by this point, so a mint
+    // failure nudges to sign in (signin_needed) rather than a hard auth_failed.
+    expect(target).toContain('/login-as-vendor?error=signin_needed');
     expect(target).not.toContain('/dashboard');
   });
 });

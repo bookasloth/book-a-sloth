@@ -108,7 +108,9 @@ const SlugClaim = () => {
       await claimOnboardingSlug(slug);
       navigate(`/vendor-register/${slug}/about`);
     } catch (err) {
-      const msg = err?.response?.data?.error || err?.message || 'Could not claim this slug. Try another.';
+      // Server sends { message }, not { error } — read message first (audit P2-10)
+      // so the real reason ("Slug already taken") surfaces instead of a generic axios string.
+      const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Could not claim this slug. Try another.';
       toast.error(msg);
       setAvailable(false);
     } finally {

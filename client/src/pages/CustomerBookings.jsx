@@ -95,7 +95,11 @@ const CustomerBookings = () => {
   useEffect(load, []);
 
   const handleCancel = async (id) => {
-    if (!window.confirm("Cancel this booking? This cannot be undone.")) return;
+    const b = bookings.find((x) => x.id === id);
+    const msg = b?.payment_status === "paid"
+      ? "Cancel this paid booking? Cancelling does not refund automatically — contact the host or support for a refund. This cannot be undone."
+      : "Cancel this booking? This cannot be undone.";
+    if (!window.confirm(msg)) return;
     setCancelling(id);
     try {
       await cancelBooking(id);

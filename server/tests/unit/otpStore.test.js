@@ -24,14 +24,20 @@ jest.mock('../../config/supabase', () => {
         },
 
         update(changes) {
-          return {
-            eq(col, val) {
-              for (const [k, v] of _store.entries()) {
-                if (v[col] === val) _store.set(k, { ...v, ...changes });
-              }
-              return Promise.resolve({ error: null });
-            },
+          // Supports chained .eq().eq() (AND across all filters), like the real
+          // PostgREST filter builder. Applies on await (thenable).
+          const filters = {};
+          const apply = () => {
+            for (const [k, v] of _store.entries()) {
+              if (Object.entries(filters).every(([fc, fv]) => v[fc] === fv)) _store.set(k, { ...v, ...changes });
+            }
+            return { error: null };
           };
+          const chain = {
+            eq(col, val) { filters[col] = val; return chain; },
+            then(resolve) { resolve(apply()); },
+          };
+          return chain;
         },
 
         select(_cols) {
@@ -54,13 +60,17 @@ jest.mock('../../config/supabase', () => {
         },
 
         delete() {
+          // .eq() chains (AND) and applies on await; .lt().or()/.then() kept for cleanup.
+          const filters = {};
+          const applyEq = () => {
+            for (const [k, v] of _store.entries()) {
+              if (Object.entries(filters).every(([fc, fv]) => v[fc] === fv)) _store.delete(k);
+            }
+            return { error: null };
+          };
           const delBuilder = {
-            eq(col, val) {
-              for (const [k, v] of _store.entries()) {
-                if (v[col] === val) _store.delete(k);
-              }
-              return Promise.resolve({ error: null });
-            },
+            eq(col, val) { filters[col] = val; return delBuilder; },
+            then(resolve) { resolve(applyEq()); },
             lt(col, val) {
               const ltChain = {
                 or() {

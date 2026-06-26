@@ -86,6 +86,39 @@ const checkProductLimit = async (req, res, next) => {
   }
 };
 
+// Re-usable activation gate for the toggle/update paths (audit P1-1). The create
+// routes run checkServiceLimit/checkProductLimit as middleware, but flipping an
+// existing row's is_active false→true (PUT /:id/toggle, PUT /:id) had NO cap
+// check — so create-up-to-cap → deactivate → create-more → reactivate-all let a
+// host exceed their paid-tier limit. Controllers call this BEFORE activating.
+//   kind: 'services' | 'digital_products'
+// Returns { ok:true } or { ok:false, status, message }. Fails CLOSED on error.
+const canActivateMore = async (hostId, kind) => {
+  try {
+    const { data: profile } = await supabaseAdmin
+      .from('profiles').select('plan, plan_expires_at, plan_activated_at, created_at').eq('id', hostId).single();
+    const plan = planService.resolveVendorPlan(profile);
+    const planData = await planService.getPlan(plan);
+    const limit = planData.limits?.[kind] ?? 0;
+    if (limit === -1) return { ok: true };               // unlimited
+    const noun = kind === 'services' ? 'service' : 'digital product';
+    if (limit === 0)
+      return { ok: false, status: 403, message: `${noun[0].toUpperCase() + noun.slice(1)}s are not included in your plan. Upgrade to activate.` };
+
+    const table = kind === 'services' ? 'services' : 'products';
+    const { count } = await supabaseAdmin
+      .from(table).select('id', { count: 'exact', head: true })
+      .eq('host_id', hostId).eq('is_active', true);
+    if ((count || 0) >= limit)
+      return { ok: false, status: 403, message: `You've reached your ${limit}-${noun} limit on the ${planData.name} plan. Deactivate another or upgrade to activate more.` };
+    return { ok: true };
+  } catch (err) {
+    // Fail CLOSED: a transient DB error must not let a caller exceed their cap.
+    console.error('canActivateMore error:', err.message);
+    return { ok: false, status: 503, message: 'Could not verify your plan limit. Please try again.' };
+  }
+};
+
 // Yearly booking-receive limit (spec v1.1: bookings_per_year, all plans capped)
 // NOTE: this count→insert is still TOCTOU-racy — two concurrent bookings can
 // each read count = limit-1 and both insert, briefly exceeding the cap. We do
@@ -126,4 +159,4 @@ const checkBookingReceiveLimit = async (hostId) => {
   }
 };
 
-module.exports = { attachPlan, checkServiceLimit, checkProductLimit, checkBookingReceiveLimit };
+module.exports = { attachPlan, checkServiceLimit, checkProductLimit, checkBookingReceiveLimit, canActivateMore };
