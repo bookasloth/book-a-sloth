@@ -71,8 +71,8 @@ const uploadImage = async (req, res) => {
     // account being used as free file hosting. Admin sessions (req.admin) pass.
     if (!req.admin) {
       const { data: prof } = await supabaseAdmin
-        .from('profiles').select('role').eq('id', req.user?.id).maybeSingle();
-      if (!prof || prof.role !== 'host') {
+        .from('profiles').select('is_host, role').eq('id', req.user?.id).maybeSingle();
+      if (!prof || !(prof.is_host || prof.role === 'host')) {
         return res.status(403).json({ message: 'Only hosts can upload images.' });
       }
     }
@@ -130,8 +130,8 @@ const uploadProductFile = async (req, res) => {
     // Authorization: only vendors (hosts) and admins may upload.
     if (!req.admin) {
       const { data: prof } = await supabaseAdmin
-        .from('profiles').select('role').eq('id', req.user?.id).maybeSingle();
-      if (!prof || prof.role !== 'host') {
+        .from('profiles').select('is_host, role').eq('id', req.user?.id).maybeSingle();
+      if (!prof || !(prof.is_host || prof.role === 'host')) {
         return res.status(403).json({ message: 'Only vendors can upload files.' });
       }
     }

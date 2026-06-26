@@ -45,6 +45,29 @@ const { normalizeSlug } = require("../utils/slugNormalize");
 const LOGIN_MAX_FAILED = 5;
 const LOGIN_LOCK_MS = 15 * 60 * 1000;
 
+// Shared per-account lockout helpers — deduped across login / loginWithPhone /
+// loginUnified (Phase C). `profile` only needs id, failed_login_count and
+// login_locked_until.
+const lockoutActive = (profile) => {
+  const until = profile?.login_locked_until;
+  if (until && new Date(until).getTime() > Date.now()) {
+    return { locked: true, mins: Math.ceil((new Date(until).getTime() - Date.now()) / 60000) };
+  }
+  return { locked: false, mins: 0 };
+};
+const recordLoginFailure = async (profile) => {
+  const failed = (profile.failed_login_count || 0) + 1;
+  const patch = { failed_login_count: failed };
+  if (failed >= LOGIN_MAX_FAILED) {
+    patch.login_locked_until = new Date(Date.now() + LOGIN_LOCK_MS).toISOString();
+  }
+  await supabaseAdmin.from('profiles').update(patch).eq('id', profile.id);
+};
+const resetLoginCounters = async (id) => {
+  await supabaseAdmin.from('profiles')
+    .update({ failed_login_count: 0, login_locked_until: null }).eq('id', id);
+};
+
 // ─── Profile slug helpers (inline to avoid circular deps) ──────────────────
 const slugifyUsername = (text) =>
   text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/--+/g, '-').slice(0, 60);
@@ -781,9 +804,12 @@ const loginWithPhone = async (req, res) => {
     // Unified login (flagged, Phase 3): when ON, ANY account may sign in by phone
     // (one identity, email-or-phone). When OFF, phone login stays guest-only —
     // the legacy separate-identity behavior. Enumeration-resistant either way.
+    // Capability is read from is_host (v3.34 source of truth); superadmin is a
+    // platform-admin flag still carried on `role` until the Phase D cleanup.
     const unifiedLogin = await featureFlags.isFeatureEnabled("unified_login");
-    // No account, or (legacy mode) a non-guest account → same 401 as wrong password.
-    if (!profile || (!unifiedLogin && profile.role !== "guest")) {
+    const isHostAccount = !!profile?.is_host || profile?.role === "superadmin";
+    // No account, or (legacy mode) a host/admin account → same 401 as wrong password.
+    if (!profile || (!unifiedLogin && isHostAccount)) {
       // Equalize response time with the real wrong-password path (which makes a
       // signInWithPassword round-trip) so an attacker can't time-distinguish a
       // registered guest from an unknown/non-guest number.
@@ -794,29 +820,16 @@ const loginWithPhone = async (req, res) => {
       return res.status(409).json({ needsPassword: true, message: "Set a password to continue." });
     }
 
-    // ── Per-account lockout check ─────────────────────────────────────────────
-    if (profile.login_locked_until && new Date(profile.login_locked_until).getTime() > Date.now()) {
-      const mins = Math.ceil((new Date(profile.login_locked_until).getTime() - Date.now()) / 60000);
-      return res.status(429).json({ message: `Too many attempts. Try again in ${mins} minute(s).` });
-    }
-    // ─────────────────────────────────────────────────────────────────────────
+    const lock = lockoutActive(profile);
+    if (lock.locked)
+      return res.status(429).json({ message: `Too many attempts. Try again in ${lock.mins} minute(s).` });
 
     const { data, error } = await signInWithPassword(profile.email, password);
     if (error) {
-      const failed = (profile.failed_login_count || 0) + 1;
-      const patch = { failed_login_count: failed };
-      if (failed >= LOGIN_MAX_FAILED) {
-        patch.login_locked_until = new Date(Date.now() + LOGIN_LOCK_MS).toISOString();
-      }
-      await supabaseAdmin.from('profiles').update(patch).eq('id', profile.id);
+      await recordLoginFailure(profile);
       return res.status(401).json({ message: "Invalid phone or password" });
     }
-
-    // Reset counters on success
-    await supabaseAdmin
-      .from('profiles')
-      .update({ failed_login_count: 0, login_locked_until: null })
-      .eq('id', profile.id);
+    await resetLoginCounters(profile.id);
 
     res.json(await serializeProfile(profile, data.session));
   } catch (error) {
@@ -842,9 +855,10 @@ const verifyOtpLogin = async (req, res) => {
     if (!profile)
       return res.status(500).json({ message: "Could not access your account" });
     // Unified login (flagged, Phase 3): when ON, any account may OTP-login by
-    // phone. When OFF, a non-guest number is rejected (legacy separate identity).
+    // phone. When OFF, a host/admin number is rejected (legacy separate identity).
+    // Capability via is_host (v3.34); superadmin still on `role` until Phase D.
     const unifiedLogin = await featureFlags.isFeatureEnabled("unified_login");
-    if (!unifiedLogin && profile.role !== "guest")
+    if (!unifiedLogin && (profile.is_host || profile.role === "superadmin"))
       return res.status(409).json({ message: "This number is registered as a host. Please use host login." });
 
     const session = await mintSessionForEmail(profile.email);
@@ -896,36 +910,74 @@ const login = async (req, res) => {
       .eq('email', emailKey)
       .maybeSingle();
 
-    if (pre?.login_locked_until && new Date(pre.login_locked_until).getTime() > Date.now()) {
-      const mins = Math.ceil((new Date(pre.login_locked_until).getTime() - Date.now()) / 60000);
-      return res.status(429).json({ message: `Too many attempts. Try again in ${mins} minute(s).` });
-    }
-    // ─────────────────────────────────────────────────────────────────────────
+    const lock = lockoutActive(pre);
+    if (lock.locked)
+      return res.status(429).json({ message: `Too many attempts. Try again in ${lock.mins} minute(s).` });
 
     const { data, error } = await signInWithPassword(email, password);
     if (error) {
-      if (pre) {
-        const failed = (pre.failed_login_count || 0) + 1;
-        const patch = { failed_login_count: failed };
-        if (failed >= LOGIN_MAX_FAILED) {
-          patch.login_locked_until = new Date(Date.now() + LOGIN_LOCK_MS).toISOString();
-        }
-        await supabaseAdmin.from('profiles').update(patch).eq('id', pre.id);
-      }
+      if (pre) await recordLoginFailure(pre);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Reset counters on success
-    await supabaseAdmin
-      .from('profiles')
-      .update({ failed_login_count: 0, login_locked_until: null })
-      .eq('id', data.user.id);
+    await resetLoginCounters(data.user.id);
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("*")
       .eq("id", data.user.id)
       .single();
+
+    res.json(await serializeProfile(profile, data.session));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// POST /api/auth/login-unified — single login door (Phase B). Accepts an
+// identifier that is EITHER an email OR a phone number, plus a password, and
+// signs the matching account in regardless of role (unified identity — one
+// account books AND hosts). The legacy /login (email) and /login-phone (phone)
+// endpoints remain as thin aliases for older clients.
+const loginUnified = async (req, res) => {
+  try {
+    const { identifier, password } = req.body;
+    if (!identifier || !password)
+      return res.status(400).json({ message: "Email or phone and password are required" });
+
+    const id = String(identifier).trim();
+    const looksEmail = id.includes("@");
+    const phone = looksEmail ? null : normalizePhone(id);
+    if (!looksEmail && !phone)
+      return res.status(400).json({ message: "Enter a valid email or mobile number" });
+
+    // Resolve the account by phone (digits) or email — one identity either way.
+    const { data: profile } = phone
+      ? await supabaseAdmin.from("profiles").select("*").eq("phone", phone).maybeSingle()
+      : await supabaseAdmin.from("profiles").select("*").eq("email", id.toLowerCase()).maybeSingle();
+
+    if (!profile) {
+      // Equalize timing with the real signin round-trip (enumeration resistance).
+      await signInWithPassword("nonexistent@bookasloth.invalid", String(password)).catch(() => {});
+      return res.status(401).json({ message: "Invalid login or password" });
+    }
+    // A phone-only account that never set a password → actionable prompt (the
+    // client sends an OTP so they can sign in and set one). Email accounts always
+    // have a usable password, so this gate only applies to the phone path.
+    if (phone && !profile.password_set) {
+      return res.status(409).json({ needsPassword: true, message: "Set a password to continue." });
+    }
+
+    const lock = lockoutActive(profile);
+    if (lock.locked)
+      return res.status(429).json({ message: `Too many attempts. Try again in ${lock.mins} minute(s).` });
+
+    const { data, error } = await signInWithPassword(profile.email, password);
+    if (error) {
+      await recordLoginFailure(profile);
+      return res.status(401).json({ message: "Invalid login or password" });
+    }
+    await resetLoginCounters(profile.id);
 
     res.json(await serializeProfile(profile, data.session));
   } catch (error) {
@@ -1204,6 +1256,7 @@ module.exports = {
   sendOtp,
   verifyOtp,
   login,
+  loginUnified,
   loginWithPhone,
   verifyOtpLogin,
   setPassword,

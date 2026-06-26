@@ -33,7 +33,7 @@ const { supabaseAdmin, signInWithPassword, mintSessionForEmail } = supa;
 const otpStore  = require('../../utils/otpStore');
 const featureFlags = require('../../services/featureFlags');
 const {
-  loginWithPhone, verifyOtpLogin, setPassword,
+  loginWithPhone, verifyOtpLogin, setPassword, loginUnified,
 } = require('../../controllers/authController');
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ describe('loginWithPhone', () => {
   });
 
   test('401 when phone belongs to a non-guest account (enumeration-resistant)', async () => {
-    queueFrom(chain({ data: { ...GUEST, role: 'host' } }));
+    queueFrom(chain({ data: { ...GUEST, role: 'host', is_host: true } }));
     signInWithPassword.mockResolvedValue({ data: null, error: { message: 'x' } });
     const r = res();
     await loginWithPhone(req({ phone: '+919876543210', password: 'secret12' }), r);
@@ -225,7 +225,7 @@ describe('verifyOtpLogin', () => {
 
   test('409 when phone resolves to a vendor profile', async () => {
     otpStore.verify.mockResolvedValue({ valid: true });
-    queueFrom(chain({ data: { ...GUEST, role: 'host' } }));
+    queueFrom(chain({ data: { ...GUEST, role: 'host', is_host: true } }));
     const r = res();
     await verifyOtpLogin(req({ phone: '+919876543210', otp: '123456' }), r);
     expect(r.status).toHaveBeenCalledWith(409);
@@ -241,6 +241,85 @@ describe('verifyOtpLogin', () => {
     const payload = r.json.mock.calls[0][0];
     expect(payload.token).toBe('tok');
     expect(payload.role).toBe('host');
+  });
+});
+
+// ── loginUnified (Phase B: one door, email OR phone, any role) ────────────────
+
+describe('loginUnified', () => {
+  test('400 when identifier or password missing', async () => {
+    const r = res();
+    await loginUnified(req({ identifier: 'a@x.com' }), r);
+    expect(r.status).toHaveBeenCalledWith(400);
+  });
+
+  test('400 when identifier is neither a valid email nor phone', async () => {
+    const r = res();
+    await loginUnified(req({ identifier: 'not-valid', password: 'secret12' }), r);
+    expect(r.status).toHaveBeenCalledWith(400);
+  });
+
+  test('email path: resolves by email and returns session on success', async () => {
+    const HOST = { ...GUEST, email: 'host@x.com', role: 'host', is_host: true };
+    queueFrom(chain({ data: HOST }));
+    signInWithPassword.mockResolvedValue({
+      data: { user: { id: HOST.id }, session: { access_token: 'tok', refresh_token: 'ref' } },
+      error: null,
+    });
+    const r = res();
+    await loginUnified(req({ identifier: 'host@x.com', password: 'secret12' }), r);
+    const payload = r.json.mock.calls[0][0];
+    expect(payload.token).toBe('tok');
+    expect(payload.role).toBe('host'); // unified door: any role logs in
+    expect(signInWithPassword).toHaveBeenCalledWith('host@x.com', 'secret12');
+  });
+
+  test('phone path: resolves by phone and returns session on success', async () => {
+    queueFrom(chain({ data: GUEST }));
+    signInWithPassword.mockResolvedValue({
+      data: { user: { id: GUEST.id }, session: { access_token: 'tok', refresh_token: 'ref' } },
+      error: null,
+    });
+    const r = res();
+    await loginUnified(req({ identifier: '+919876543210', password: 'secret12' }), r);
+    const payload = r.json.mock.calls[0][0];
+    expect(payload.token).toBe('tok');
+    expect(payload.phone).toBe('+919876543210');
+    expect(signInWithPassword).toHaveBeenCalledWith(GUEST.email, 'secret12');
+  });
+
+  test('401 + dummy signin when no account (enumeration-resistant)', async () => {
+    queueFrom(chain({ data: null }));
+    signInWithPassword.mockResolvedValue({ data: null, error: { message: 'x' } });
+    const r = res();
+    await loginUnified(req({ identifier: 'ghost@x.com', password: 'secret12' }), r);
+    expect(r.status).toHaveBeenCalledWith(401);
+    expect(signInWithPassword).toHaveBeenCalled();
+  });
+
+  test('409 needsPassword when a phone account has no password set', async () => {
+    queueFrom(chain({ data: { ...GUEST, password_set: false } }));
+    const r = res();
+    await loginUnified(req({ identifier: '+919876543210', password: 'secret12' }), r);
+    expect(r.status).toHaveBeenCalledWith(409);
+    expect(r.json.mock.calls[0][0].needsPassword).toBe(true);
+  });
+
+  test('401 on wrong password', async () => {
+    queueFrom(chain({ data: GUEST }));
+    signInWithPassword.mockResolvedValue({ data: null, error: { message: 'bad' } });
+    const r = res();
+    await loginUnified(req({ identifier: '+919876543210', password: 'wrongpas' }), r);
+    expect(r.status).toHaveBeenCalledWith(401);
+  });
+
+  test('429 when the account is locked', async () => {
+    const locked = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    queueFrom(chain({ data: { ...GUEST, login_locked_until: locked, failed_login_count: 5 } }));
+    const r = res();
+    await loginUnified(req({ identifier: '+919876543210', password: 'secret12' }), r);
+    expect(r.status).toHaveBeenCalledWith(429);
+    expect(signInWithPassword).not.toHaveBeenCalled();
   });
 });
 
