@@ -7,7 +7,7 @@ function Tile({ t }) {
     <article className="js-item group relative flex min-h-[220px] flex-col justify-end overflow-hidden rounded-[14px] bg-ink p-6 text-white" data-swap={t.swap}>
       <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70 transition-opacity group-hover:opacity-90" />
       <div className="relative">
-        <h3 className="font-heading text-xl font-bold">{t.title}</h3>
+        <h3 className="font-heading text-xl font-bold text-white">{t.title}</h3>
         <p className="mt-1 text-sm text-white/70">{t.blurb}</p>
       </div>
     </article>

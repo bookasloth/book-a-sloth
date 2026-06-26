@@ -29,7 +29,7 @@ export default function StackingCards() {
         <h2 className="js-head mt-3 font-heading text-3xl font-bold sm:text-4xl">{stackCards.heading}</h2>
 
         <div className="mt-10 overflow-hidden rounded-[16px] bg-ink p-8 text-white sm:p-12" data-swap={stackCards.feature.swap}>
-          <h3 className="font-heading text-2xl font-bold sm:text-3xl">{stackCards.feature.title}</h3>
+          <h3 className="font-heading text-2xl font-bold text-white sm:text-3xl">{stackCards.feature.title}</h3>
           <p className="mt-3 max-w-xl text-white/70">{stackCards.feature.body}</p>
         </div>
 
