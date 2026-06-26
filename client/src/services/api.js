@@ -84,6 +84,8 @@ API.interceptors.response.use(
 export const registerVendor   = (data)         => API.post('/auth/register/vendor', data);
 export const registerUser     = (data)         => API.post('/auth/register/user', data);
 export const loginUser        = (data)         => API.post('/auth/login', data);
+// Unified login door (Phase B): { identifier (email|phone), password }, any role
+export const loginUnified     = (data)         => API.post('/auth/login-unified', data);
 export const getMe            = ()             => API.get('/auth/me');
 export const updateMe         = (data)         => API.put('/auth/me', data);
 export const getGoogleAuthUrl = ()             => API.get('/auth/google');

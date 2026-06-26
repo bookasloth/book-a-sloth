@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { usePostHog } from '@posthog/react';
 import { analytics } from '../services/analytics';
-import { registerVendor, registerUser, loginUser, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost } from '../services/api';
+import { registerVendor, registerUser, loginUser, loginUnified as apiLoginUnified, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost } from '../services/api';
 import supabase from '../services/supabaseClient';
 
 const AuthContext = createContext();
@@ -86,6 +86,15 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const { data } = await loginUser({ email, password });
+    localStorage.setItem('user', JSON.stringify(data));
+    setUser(data);
+    return data;
+  };
+
+  // Unified login door (Phase B): one field accepts email OR phone. Throws on
+  // 401/409 (caller inspects err.response to branch to OTP / "set password").
+  const loginUnified = async (identifier, password) => {
+    const { data } = await apiLoginUnified({ identifier, password });
     localStorage.setItem('user', JSON.stringify(data));
     setUser(data);
     return data;
@@ -176,7 +185,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{
-      user, loading, login,
+      user, loading, login, loginUnified,
       mode, setMode,
       loginWithPhone, loginWithOtp, setPassword,
       registerAsVendor, registerAsUser,

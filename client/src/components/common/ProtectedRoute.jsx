@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { isHost } from '../../utils/roleRoutes';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -14,8 +15,8 @@ const ProtectedRoute = ({ children }) => {
       return;
     }
 
-    // For vendor users, check onboarding status
-    if (user.role === 'host') {
+    // For host accounts, check onboarding status (is_host = v3.34 source of truth)
+    if (isHost(user)) {
       // Import here to avoid circular deps
       import('../../services/api')
         .then(({ getOnboardingStatus }) => {
@@ -59,7 +60,7 @@ const ProtectedRoute = ({ children }) => {
   //   6 = complete              → no redirect (isComplete should be true)
   const RESUME = { 1: 'claim', 2: 'about', 3: 'category', 4: 'whatsapp', 5: 'plan' };
 
-  if (user.role === 'host' && onboardingStatus && !onboardingStatus.isComplete && onboardingStatus.slug) {
+  if (isHost(user) && onboardingStatus && !onboardingStatus.isComplete && onboardingStatus.slug) {
     const done = onboardingStatus.stepCompleted || 1;
     if (done < 6) {
       return <Navigate to={`/vendor-register/${onboardingStatus.slug}/${RESUME[done]}`} replace />;

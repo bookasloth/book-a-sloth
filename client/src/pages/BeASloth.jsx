@@ -67,7 +67,7 @@ const BeASloth = () => {
 
   // A logged-in host has nothing to do here — send them to the dashboard.
   useEffect(() => {
-    if (user?.role === 'host' || user?.role === 'superadmin') navigate('/dashboard', { replace: true });
+    if (user?.is_host === true || user?.role === 'host' || user?.role === 'superadmin') navigate('/dashboard', { replace: true });
   }, [user, navigate]);
 
   // Handle typed on the homepage hero — carried via router state, sessionStorage as fallback.
