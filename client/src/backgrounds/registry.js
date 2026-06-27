@@ -73,6 +73,18 @@ export const BACKGROUNDS = [
       { key: 'rate', label: 'Fall speed', type: 'select', options: ['calm', 'normal', 'lively'] },
     ],
   },
+  {
+    key: 'mesh',
+    label: 'Mesh Gradient',
+    seasonal: false,
+    thumbnail: '/backgrounds/mesh.svg',
+    Component: lazy(() => import('./engines/MeshGradient.jsx')),
+    defaultParams: { speed: 'calm', blur: 'soft' },
+    paramSchema: [
+      { key: 'speed', label: 'Drift', type: 'select', options: ['calm', 'normal', 'lively'] },
+      { key: 'blur', label: 'Softness', type: 'select', options: ['soft', 'med', 'strong'] },
+    ],
+  },
 ];
 
 export const backgroundKeys = BACKGROUNDS.map((b) => b.key);
