@@ -65,6 +65,7 @@ const PLAN_STYLES = {
   explorer: { label: 'Starter', bg: 'bg-gray-100', text: 'text-gray-600' },
   creator: { label: 'Host+', bg: 'bg-primary/10', text: 'text-primary' },
   professional: { label: 'Studio', bg: 'bg-amber-100', text: 'text-amber-700' },
+  supreme: { label: 'Supreme', bg: 'bg-violet-100', text: 'text-violet-700' },
 };
 
 const startsWithAny = (pathname, prefix) =>
@@ -148,29 +149,34 @@ const DashboardLayout = ({ children }) => {
     <div className="dash flex min-h-screen overflow-x-hidden bg-[#f7f5ef]">
       {/* Sidebar: md = 64px icon rail, lg = 256px full */}
       <aside className="hidden flex-shrink-0 flex-col border-r border-gray-200/80 bg-white/95 shadow-sm md:flex md:w-16 lg:w-64">
-        {/* User header */}
+        {/* Identity: avatar + name + plan badge */}
         <div className="flex items-center gap-3 border-b border-gray-100 px-3 py-4 lg:px-5">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-            {initial}
-          </div>
-          <div className="hidden min-w-0 lg:block">
+          {user?.profile_image ? (
+            <img
+              src={user.profile_image}
+              alt={user?.name || 'Profile'}
+              className="h-9 w-9 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+              {initial}
+            </div>
+          )}
+          <div className="hidden min-w-0 flex-1 lg:block">
             <p className="truncate text-sm font-bold text-gray-900">{user?.name}</p>
-            <p className="truncate text-xs text-gray-400">{user?.email}</p>
+            <div className="mt-1 flex items-center gap-2">
+              <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', planStyle.bg, planStyle.text)}>
+                {(plan === 'professional' || plan === 'supreme') && '★ '}{planStyle.label}
+              </span>
+              {expireSoon || expired ? (
+                <span className={cn('text-[10px] font-medium', expired ? 'text-red-500' : 'text-amber-600')}>
+                  {expired ? 'Expired' : `${daysLeft}d left`}
+                </span>
+              ) : plan === 'explorer' ? (
+                <Link to="/dashboard/upgrade" className="text-[10px] font-medium text-primary hover:underline">Upgrade</Link>
+              ) : null}
+            </div>
           </div>
-        </div>
-
-        {/* Plan badge (full only) */}
-        <div className="hidden items-center justify-between px-5 py-2.5 lg:flex">
-          <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', planStyle.bg, planStyle.text)}>
-            {plan === 'professional' && '★ '}{planStyle.label}
-          </span>
-          {expireSoon || expired ? (
-            <span className={cn('text-[10px] font-medium', expired ? 'text-red-500' : 'text-amber-600')}>
-              {expired ? 'Expired' : `${daysLeft}d left`}
-            </span>
-          ) : plan === 'explorer' ? (
-            <Link to="/dashboard/upgrade" className="text-[10px] font-medium text-primary hover:underline">Upgrade</Link>
-          ) : null}
         </div>
 
         {/* Nav groups */}
