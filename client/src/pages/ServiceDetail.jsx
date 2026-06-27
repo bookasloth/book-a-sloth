@@ -8,7 +8,7 @@ import DOMPurify from 'dompurify';
 import { svcGetPublicByProfile, getAvailableSlots } from '../services/api';
 import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/themeUtils';
 import Seo from '../components/common/Seo';
-import DotGrid from '../components/DotGrid';
+import HostBackground from '../backgrounds/HostBackground';
 import { resolveServiceSeo, serviceJsonLd, SITE_URL } from '../utils/seo';
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
@@ -789,27 +789,8 @@ export default function ServiceDetail() {
   return (
     <div className="min-h-screen bg-[#f7f5ef] relative">
       <Seo {...seo} jsonLd={jsonLd} />
-      {/* ── Above-the-fold backdrop — host-themed interactive dot grid ──
-           Covers the top 70% of the fold (from navbar down) and fades from
-           full opacity at the top to transparent at the bottom edge. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[70vh] overflow-hidden"
-        style={{
-          WebkitMaskImage: 'linear-gradient(to bottom, #000, transparent)',
-          maskImage: 'linear-gradient(to bottom, #000, transparent)',
-        }}>
-        <DotGrid
-          dotSize={5}
-          gap={24}
-          baseColor={dotColor}
-          activeColor={dotColor}
-          proximity={120}
-          shockRadius={220}
-          shockStrength={4}
-          returnDuration={1.4}
-        />
-      </div>
+      {/* ── Above-the-fold backdrop — host-themed background type ── */}
+      <HostBackground typeKey="dotgrid" color={dotColor} />
 
       <div className="app-container py-8 pb-28 lg:pb-8 relative z-10">
         <div className="flex flex-col lg:flex-row gap-8">
