@@ -53,6 +53,7 @@ export const IC = {
   hamb:      ['M4 6h16','M4 12h16','M4 18h16'],
   x:         ['M18 6L6 18','M6 6l12 12'],
   affiliate: ['M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71','M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71'],
+  ban:       ['M12 2a10 10 0 100 20A10 10 0 0012 2z','M5.64 5.64l12.72 12.72'],
 };
 
 export const PATH_LABELS = {
@@ -71,6 +72,7 @@ export const PATH_LABELS = {
   categories:'Categories', featured:'Featured',
   staff:'Staff & Roles', system:'System', audit:'Audit Logs', reserved:'Reserved Slugs',
   features:'Feature Status',
+  security:'Security', 'blocked-ips':'Blocked IPs',
 };
 
 export const NAV = [
@@ -153,6 +155,7 @@ export const NAV = [
     { label:'Audit Logs',          icon:'activity',  to:'/admin/system/audit', perm:'audit.view' },
     { label:'Roles & Permissions', icon:'shieldOk', to:'/admin/staff', perm:'staff.manage' },
     { label:'Reserved Slugs',      icon:'lock',      to:'/admin/system/reserved', perm:'settings.manage' },
+    { label:'Blocked IPs',         icon:'ban',       to:'/admin/security/blocked-ips', perm:'settings.manage' },
     { label:'API Keys',            icon:'key',       disabled:true },
   ]},
   { id:'control', section:'PLATFORM CONTROL', items:[

@@ -450,3 +450,11 @@ export const createRescheduleFeeOrder = (bookingId) => API.post('/payment/resche
 export const getNotifications         = (role) => API.get('/notifications', { params: { role } });
 export const markAllNotificationsRead = (role) => API.post('/notifications/read-all', null, { params: { role } });
 export const markNotificationRead     = (id)   => API.patch(`/notifications/${id}/read`);
+
+// ── Admin: IP blocking (super-only) ───────────────────────────
+export const adminGetBlockedIps     = ()      => API.get('/admin/security/blocked-ips');
+export const adminCreateBlockedIp   = (data)  => API.post('/admin/security/blocked-ips', data);
+export const adminDeleteBlockedIp   = (ip)    => API.delete(`/admin/security/blocked-ips/${encodeURIComponent(ip)}`);
+export const adminGetAllowlist      = ()      => API.get('/admin/security/allowlist');
+export const adminCreateAllowlistIp = (data)  => API.post('/admin/security/allowlist', data);
+export const adminDeleteAllowlistIp = (ip)    => API.delete(`/admin/security/allowlist/${encodeURIComponent(ip)}`);

@@ -21,6 +21,8 @@ const { encrypt, decrypt } = require('../utils/cryptoTokens');
 const twofa = require('../services/admin2faService');
 const { audit } = require('../services/auditService');
 const { roleGrants } = require('../lib/adminPermissions');
+const { getClientIp } = require('../lib/clientIp');
+const ipBlocklist = require('../lib/ipBlocklist');
 
 const MAX_FAILED  = 5;
 const LOCK_MS     = 15 * 60 * 1000; // 15 min
@@ -84,6 +86,9 @@ const adminLogin = async (req, res) => {
 
     // Generic message on lookup failure — never reveal whether the account exists.
     if (!staff || !staff.is_active) {
+      // IP-level brute-force tracker (complements the per-account lockout below):
+      // catches an attacker spraying many usernames from one IP. Fire-and-forget.
+      ipBlocklist.recordAdminLoginFailure(getClientIp(req)).catch(() => {});
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
@@ -108,6 +113,7 @@ const adminLogin = async (req, res) => {
         updated_at: new Date().toISOString(),
       };
       await supabaseAdmin.from('admin_users').update(updates).eq('id', staff.id);
+      ipBlocklist.recordAdminLoginFailure(getClientIp(req)).catch(() => {});
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
@@ -115,6 +121,7 @@ const adminLogin = async (req, res) => {
     await supabaseAdmin.from('admin_users')
       .update({ failed_attempts: 0, locked_until: null, last_login_at: new Date().toISOString() })
       .eq('id', staff.id);
+    ipBlocklist.resetAdminLoginFailures(getClientIp(req));
 
     // FORCED PASSWORD CHANGE GATE: a creator-issued temp password is single-use.
     // Until the intended owner picks their own password we issue NEITHER a full

@@ -146,6 +146,7 @@ const AdminExplore    = lazy(() => import('./pages/admin/AdminExplore'));
 const AdminStaff = lazy(() => import('./pages/admin/AdminStaff'));
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
 const AdminReservedSlugs = lazy(() => import('./pages/admin/AdminReservedSlugs'));
+const AdminBlockedIps = lazy(() => import('./pages/admin/AdminBlockedIps'));
 
 // Admin — Platform Control
 const AdminFeatureStatus = lazy(() => import('./pages/admin/AdminFeatureStatus'));
@@ -316,6 +317,7 @@ function App() {
           <Route path="/admin/staff" element={<AdminWrapper><AdminStaff /></AdminWrapper>} />
           <Route path="/admin/system/audit" element={<AdminWrapper><AdminAudit /></AdminWrapper>} />
           <Route path="/admin/system/reserved" element={<AdminWrapper><AdminReservedSlugs /></AdminWrapper>} />
+          <Route path="/admin/security/blocked-ips" element={<AdminWrapper><AdminBlockedIps /></AdminWrapper>} />
 
           {/* Marketing & performance insights — now a SuperDashboard tab; keep old path as redirect */}
           <Route path="/admin/insights" element={<Navigate to="/super-dashboard/insights" replace />} />
