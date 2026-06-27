@@ -66,6 +66,15 @@ describe('dashboard topbar profile menu', () => {
       expect(btn).toBeDisabled();
     });
   });
+
+  it('holds View public page + Logout (moved out of the sidebar)', () => {
+    renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
+    // Not present until the menu is opened — they no longer live in the sidebar.
+    expect(screen.queryByText('Logout')).toBeNull();
+    openProfile();
+    expect(screen.getByText('View public page')).toBeInTheDocument();
+    expect(screen.getByText('Logout')).toBeInTheDocument();
+  });
 });
 
 describe('dashboard topbar actions', () => {
@@ -78,32 +87,18 @@ describe('dashboard topbar actions', () => {
   });
 });
 
-describe('dashboard sidebar premium section', () => {
+describe('dashboard sidebar — no premium / manage-plan card', () => {
   beforeEach(() => { mockAuth.current = {}; });
 
-  it('free tier sees the upgrade card with a discount CTA', () => {
+  it('never renders the old premium upsell card', () => {
     renderLayout({ name: 'Free User', plan: 'explorer', role: 'host' });
-    expect(screen.getByText('Upgrade to Host+')).toBeInTheDocument();
-    expect(screen.getByText('Upgrade — 20% off')).toBeInTheDocument();
-  });
-
-  it('paid tier sees a plan-aware card with a manage CTA, not an upsell', () => {
-    renderLayout({ name: 'Pro User', plan: 'supreme', role: 'host' });
-    expect(screen.getByText('Supreme access')).toBeInTheDocument();
-    expect(screen.getByText('Manage plan')).toBeInTheDocument();
+    expect(screen.queryByText('Upgrade to Host+')).toBeNull();
     expect(screen.queryByText('Upgrade — 20% off')).toBeNull();
   });
 
-  it('a lapsing paid plan flips the card to a renew prompt', () => {
-    const past = new Date(Date.now() - 2 * 86400000).toISOString();
-    renderLayout({ name: 'Lapsed', plan: 'creator', role: 'host', plan_expires_at: past });
-    expect(screen.getByText('Plan expired')).toBeInTheDocument();
-    expect(screen.getByText('Renew now')).toBeInTheDocument();
-  });
-
-  it('keeps View public page + Logout pinned in the footer', () => {
-    renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
-    expect(screen.getByText('View public page')).toBeInTheDocument();
-    expect(screen.getByText('Logout')).toBeInTheDocument();
+  it('shows no plan card for paid tiers either', () => {
+    renderLayout({ name: 'Pro User', plan: 'supreme', role: 'host' });
+    expect(screen.queryByText('Supreme access')).toBeNull();
+    expect(screen.queryByText('Manage plan')).toBeNull();
   });
 });

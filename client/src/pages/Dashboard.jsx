@@ -33,14 +33,17 @@ const relWhen = (iso) => {
 const Stat = ({ Icon, label, value, tint, to, title }) => {
   const inner = (
     <>
-      <div className={cn('mb-2 inline-flex h-8 w-8 items-center justify-center rounded-md', tint)}>
-        <Icon className="h-4 w-4" strokeWidth={2.25} />
+      {/* Compact: icon + number share a row, title sits under — shorter card. */}
+      <div className="flex items-center gap-2">
+        <span className={cn('inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md', tint)}>
+          <Icon className="h-4 w-4" strokeWidth={2.25} />
+        </span>
+        <span className="text-lg font-bold leading-none text-gray-900 sm:text-xl">{value}</span>
       </div>
-      <p className="text-xl font-bold leading-none text-gray-900 sm:text-2xl">{value}</p>
-      <p className="mt-1 text-xs text-gray-500">{label}</p>
+      <p className="mt-1.5 text-xs text-gray-500">{label}</p>
     </>
   );
-  const base = 'rounded-md border border-gray-100 bg-gray-50/60 p-3 sm:p-4';
+  const base = 'rounded-md border border-gray-100 bg-gray-50/60 p-2.5 sm:p-3';
   if (!to) return <div className={base} title={title}>{inner}</div>;
   return (
     <Link to={to} title={title} className={cn(base, 'block transition hover:border-primary/30 hover:bg-primary-light/40 hover:no-underline')}>
