@@ -32,9 +32,8 @@ export const getContrastColor = (hex) => {
 
 // ─── Plan-gated color palettes ───────────────────────────────────────────────
 
+// Starter (free) tier: brand orange only — no choice, keeps free profiles on-brand.
 export const FREE_COLORS = [
-  { name: 'Milk White',   hex: '#F8F7F2' },
-  { name: 'Grey',         hex: '#6B7280' },
   { name: 'Brand Orange', hex: '#FE5100' },
 ];
 
@@ -57,22 +56,61 @@ export const CREATOR_COLORS = [
   { name: 'Charcoal',      hex: '#1F2937' },
 ];
 
+// Studio (+ Supreme) tier: full hue-ordered palette + custom hex picker.
+// No pure black/white. Approximated from the design swatch sheet — tweak hex freely.
+export const STUDIO_COLORS = [
+  // warm → green
+  { name: 'Pink',         hex: '#EC4899' },
+  { name: 'Rose',         hex: '#F43F5E' },
+  { name: 'Coral',        hex: '#FB7185' },
+  { name: 'Red',          hex: '#DC2626' },
+  { name: 'Orange',       hex: '#F97316' },
+  { name: 'Brand Orange', hex: '#FE5100' },
+  { name: 'Amber',        hex: '#F59E0B' },
+  { name: 'Gold',         hex: '#EAB308' },
+  { name: 'Yellow',       hex: '#FACC15' },
+  { name: 'Lime',         hex: '#84CC16' },
+  { name: 'Light Green',  hex: '#4ADE80' },
+  { name: 'Green',        hex: '#22C55E' },
+  { name: 'Emerald',      hex: '#10B981' },
+  { name: 'Forest Green', hex: '#15803D' },
+  // cool → neutral
+  { name: 'Teal',         hex: '#14B8A6' },
+  { name: 'Cyan',         hex: '#06B6D4' },
+  { name: 'Sky Blue',     hex: '#0EA5E9' },
+  { name: 'Royal Blue',   hex: '#2563EB' },
+  { name: 'Indigo',       hex: '#4F46E5' },
+  { name: 'Violet',       hex: '#7C3AED' },
+  { name: 'Purple',       hex: '#9333EA' },
+  { name: 'Fuchsia',      hex: '#C026D3' },
+  { name: 'Brown',        hex: '#92400E' },
+  { name: 'Dark Brown',   hex: '#78350F' },
+  { name: 'Slate',        hex: '#475569' },
+  { name: 'Grey',         hex: '#6B7280' },
+  { name: 'Cool Grey',    hex: '#9CA3AF' },
+  { name: 'Taupe',        hex: '#A8A29E' },
+];
+
 export const DEFAULT_THEME_COLOR = '#FE5100';
 
 /**
  * Returns the color swatches available for the given plan.
- * Professional plan gets CREATOR_COLORS + custom hex input.
+ *   Starter        → brand orange only (1)
+ *   Host+          → CREATOR_COLORS (16)
+ *   Studio/Supreme → STUDIO_COLORS (full palette) + custom hex input
  */
 export const getColorsForPlan = (plan) => {
-  if (plan === 'creator' || plan === 'professional') return CREATOR_COLORS;
+  if (plan === 'professional' || plan === 'supreme') return STUDIO_COLORS;
+  if (plan === 'creator') return CREATOR_COLORS;
   return FREE_COLORS;
 };
 
-export const canUseCustomHex = (plan) => plan === 'professional';
+export const canUseCustomHex = (plan) => plan === 'professional' || plan === 'supreme';
 
 // ─── Profile photo border color by plan ─────────────────────────────────────
 
 export const getPlanBorderColor = (plan) => {
+  if (plan === 'supreme')      return '#D4AF37'; // gold (top tier, shares Studio)
   if (plan === 'professional') return '#D4AF37'; // gold
   if (plan === 'creator')      return '#FE5100'; // brand orange
   return '#6B7280';                               // grey
@@ -104,6 +142,7 @@ export const normalizePlan = (slug) => {
 };
 
 export const getPlanBorderLabel = (plan) => {
+  if (plan === 'supreme')      return 'Supreme';
   if (plan === 'professional') return 'Studio';
   if (plan === 'creator')      return 'Host+';
   return 'Starter';

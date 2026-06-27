@@ -23,7 +23,7 @@ import {
 } from "../components/dashboard/ui";
 
 // ─── Minimal plan label for display ─────────────────────────────────────────
-const PLAN_LABEL = { starter: 'Starter', explorer: 'Starter', creator: 'Host+', professional: 'Studio' };
+const PLAN_LABEL = { starter: 'Starter', explorer: 'Starter', creator: 'Host+', professional: 'Studio', supreme: 'Supreme' };
 
 // ─── Social platform config ──────────────────────────────────────────────────
 const SOCIAL_PLATFORMS = [
@@ -156,8 +156,8 @@ const ProfilePreview = ({ form, themeColor }) => {
       <div className="relative h-16" style={{ background: form.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)` }}>
         {form.cover_image && <img src={form.cover_image} alt="" className="h-full w-full object-cover" />}
       </div>
-      {/* Avatar */}
-      <div className="-mt-7 flex justify-center">
+      {/* Avatar — relative+z-10 so it paints above the positioned cover (else cover overlaps photo) */}
+      <div className="relative z-10 -mt-7 flex justify-center">
         <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border-2 bg-gray-100" style={{ borderColor }}>
           {form.profile_image
             ? <img src={form.profile_image} alt="" className="h-full w-full object-cover" />
@@ -488,7 +488,7 @@ const ProfileSetup = () => {
                     </FeatureGate>
                   ) : (
                     <p className="mt-1 text-xs text-gray-400">
-                      {plan === 'creator' ? '16 colours available. Upgrade to Studio for custom hex.' : 'Upgrade to Host+ for more colours.'}
+                      {plan === 'creator' ? '16 colours available. Upgrade to Studio for the full palette + custom hex.' : 'Starter uses the brand colour. Upgrade to Host+ for 16 colours.'}
                     </p>
                   )}
                 </div>
@@ -502,7 +502,7 @@ const ProfileSetup = () => {
                   <div>
                     <p className="text-xs text-gray-600">
                       Your border is <span className="font-semibold" style={{ color: getPlanBorderColor(plan) }}>
-                        {plan === 'professional' ? 'Gold (Studio)' : plan === 'creator' ? 'Orange (Host+)' : 'Grey (Starter)'}
+                        {plan === 'supreme' ? 'Gold (Supreme)' : plan === 'professional' ? 'Gold (Studio)' : plan === 'creator' ? 'Orange (Host+)' : 'Grey (Starter)'}
                       </span>
                     </p>
                     <p className="mt-0.5 text-[10px] text-gray-400">Border updates automatically with your plan tier</p>

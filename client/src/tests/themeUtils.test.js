@@ -11,6 +11,7 @@ import {
   isValidHex,
   FREE_COLORS,
   CREATOR_COLORS,
+  STUDIO_COLORS,
   DEFAULT_THEME_COLOR,
 } from '../utils/themeUtils';
 
@@ -83,10 +84,11 @@ describe('getContrastColor', () => {
 // ── getColorsForPlan ──────────────────────────────────────────────────────────
 
 describe('getColorsForPlan', () => {
-  test('explorer → FREE_COLORS (3 swatches)', () => {
+  test('explorer → FREE_COLORS (brand colour only)', () => {
     const colors = getColorsForPlan('explorer');
-    expect(colors).toHaveLength(3);
+    expect(colors).toHaveLength(1);
     expect(colors).toEqual(FREE_COLORS);
+    expect(colors[0].hex).toBe(DEFAULT_THEME_COLOR);
   });
 
   test('creator → CREATOR_COLORS (16 swatches)', () => {
@@ -95,9 +97,13 @@ describe('getColorsForPlan', () => {
     expect(colors).toEqual(CREATOR_COLORS);
   });
 
-  test('professional → CREATOR_COLORS (same palette)', () => {
+  test('professional → STUDIO_COLORS (full palette)', () => {
     const colors = getColorsForPlan('professional');
-    expect(colors).toEqual(CREATOR_COLORS);
+    expect(colors).toEqual(STUDIO_COLORS);
+  });
+
+  test('supreme → STUDIO_COLORS (top tier, full palette)', () => {
+    expect(getColorsForPlan('supreme')).toEqual(STUDIO_COLORS);
   });
 
   test('unknown plan → FREE_COLORS (safe default)', () => {
@@ -106,9 +112,17 @@ describe('getColorsForPlan', () => {
   });
 
   test('all swatches have name and valid hex', () => {
-    [...FREE_COLORS, ...CREATOR_COLORS].forEach(({ name, hex }) => {
+    [...FREE_COLORS, ...CREATOR_COLORS, ...STUDIO_COLORS].forEach(({ name, hex }) => {
       expect(typeof name).toBe('string');
       expect(hex).toMatch(/^#[0-9a-fA-F]{6}$/);
+    });
+  });
+
+  test('no pure black or white in any palette', () => {
+    [...FREE_COLORS, ...CREATOR_COLORS, ...STUDIO_COLORS].forEach(({ hex }) => {
+      const h = hex.toLowerCase();
+      expect(h).not.toBe('#000000');
+      expect(h).not.toBe('#ffffff');
     });
   });
 });
@@ -118,6 +132,10 @@ describe('getColorsForPlan', () => {
 describe('canUseCustomHex', () => {
   test('professional → true', () => {
     expect(canUseCustomHex('professional')).toBe(true);
+  });
+
+  test('supreme → true', () => {
+    expect(canUseCustomHex('supreme')).toBe(true);
   });
 
   test('creator → false', () => {
@@ -132,6 +150,10 @@ describe('canUseCustomHex', () => {
 // ── getPlanBorderColor ────────────────────────────────────────────────────────
 
 describe('getPlanBorderColor', () => {
+  test('supreme → gold #D4AF37 (shares Studio)', () => {
+    expect(getPlanBorderColor('supreme')).toBe('#D4AF37');
+  });
+
   test('professional → gold #D4AF37', () => {
     expect(getPlanBorderColor('professional')).toBe('#D4AF37');
   });
