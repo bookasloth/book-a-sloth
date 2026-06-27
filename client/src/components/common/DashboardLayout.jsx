@@ -8,6 +8,7 @@ import {
   Bell, LifeBuoy, Gift, Code2, Award, Headset, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import useIsMobile from '../../hooks/useIsMobile';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../services/api';
 import FeatureGate from './FeatureGate';
 import { normalizePlan } from '../../utils/themeUtils';
@@ -145,6 +146,58 @@ const REVERSE_GHOST =
 const REVERSE_PRIMARY =
   'border border-primary bg-primary text-white hover:bg-transparent hover:text-primary';
 
+// Lock body scroll while a mobile sheet is open (no-op when inactive).
+const useBodyScrollLock = (active) => {
+  useEffect(() => {
+    if (!active) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [active]);
+};
+
+// One popup surface, two shapes: an anchored dropdown on desktop, an app-style
+// bottom sheet on mobile (portaled to body so the topbar's backdrop-blur — which
+// would otherwise become the containing block for `fixed` — can't trap it).
+const MenuSurface = ({ open, onClose, isMobile, title, align = 'right', width = 'w-72', role = 'menu', children }) => {
+  if (!open) return null;
+  if (isMobile) {
+    return createPortal(
+      <div className="md:hidden">
+        <div className="fixed inset-0 z-[60] bg-black/40" onClick={onClose} aria-hidden="true" />
+        <div
+          className="fixed inset-x-0 bottom-0 z-[60] max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-gray-100 bg-white pb-[max(1rem,env(safe-area-inset-bottom))] dash-elev-3"
+          role={role}
+          aria-label={title}
+        >
+          <div className="mx-auto mt-2 h-1 w-9 rounded-full bg-gray-200" aria-hidden="true" />
+          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+            <span className="text-base font-semibold text-gray-900">{title}</span>
+            <button type="button" onClick={onClose} aria-label="Close" className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          {children}
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+  return (
+    <div
+      className={cn(
+        'absolute top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]',
+        align === 'right' ? 'right-0' : 'left-0',
+        width,
+      )}
+      role={role}
+      aria-label={title}
+    >
+      {children}
+    </div>
+  );
+};
+
 /** Sloth Support — leftmost topbar action. Routes to the Help centre. */
 const SupportButton = () => (
   <Link
@@ -157,12 +210,13 @@ const SupportButton = () => (
   </Link>
 );
 
-/** Notification bell + dropdown panel. Host-scoped feed, loaded on mount/open. */
+/** Notification bell. Anchored panel on desktop, bottom sheet on mobile. */
 const NotifBell = () => {
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [unread, setUnread] = useState(0);
   const ref = useRef(null);
+  const isMobile = useIsMobile();
 
   const load = () => {
     getNotifications('host')
@@ -173,16 +227,20 @@ const NotifBell = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (open) load(); }, [open]);
 
+  // ESC closes on any size; outside-click only matters for the desktop dropdown
+  // (the mobile sheet is portaled and closes via its backdrop / close button).
   useEffect(() => {
-    const onPointer = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('pointerdown', onPointer);
     document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
+    return () => document.removeEventListener('keydown', onKey);
   }, []);
+  useEffect(() => {
+    if (isMobile) return undefined;
+    const onPointer = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('pointerdown', onPointer);
+    return () => document.removeEventListener('pointerdown', onPointer);
+  }, [isMobile]);
+  useBodyScrollLock(open && isMobile);
 
   return (
     <div ref={ref} className="relative">
@@ -202,69 +260,66 @@ const NotifBell = () => {
         )}
       </button>
 
-      {open && (
-        <div
-          className="absolute right-0 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)] sm:w-80"
-          role="dialog"
-          aria-label="Notifications"
-        >
-          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <span className="text-sm font-semibold text-gray-900">Notifications</span>
-            <button
-              type="button"
-              className="text-[11px] font-medium text-primary hover:underline"
-              onClick={() => markAllNotificationsRead('host').then(load).catch(() => {})}
-            >
-              Mark all read
-            </button>
-          </div>
-          {notifs.length === 0 ? (
-            <div className="py-10 text-center">
-              <Bell className="mx-auto mb-2 h-7 w-7 text-gray-200" />
-              <p className="text-sm text-gray-400">No new notifications</p>
-            </div>
-          ) : (
-            <ul className="max-h-80 overflow-y-auto">
-              {notifs.map((n) => (
-                <li key={n.id}>
-                  <button
-                    type="button"
-                    onClick={() => { markNotificationRead(n.id).then(load).catch(() => {}); }}
-                    className={cn(
-                      'flex w-full flex-col items-start gap-0.5 border-b border-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-50',
-                      !n.read_at && 'bg-primary/5',
-                    )}
-                  >
-                    <span className="text-sm font-medium text-gray-800">{n.title || n.message}</span>
-                    {n.title && n.message && <span className="text-xs text-gray-500">{n.message}</span>}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+      <MenuSurface open={open} onClose={() => setOpen(false)} isMobile={isMobile} title="Notifications" width="w-80" role="dialog">
+        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 md:py-3">
+          {!isMobile && <span className="text-sm font-semibold text-gray-900">Notifications</span>}
+          <button
+            type="button"
+            className="ml-auto text-xs font-medium text-primary hover:underline"
+            onClick={() => markAllNotificationsRead('host').then(load).catch(() => {})}
+          >
+            Mark all read
+          </button>
         </div>
-      )}
+        {notifs.length === 0 ? (
+          <div className="py-10 text-center">
+            <Bell className="mx-auto mb-2 h-7 w-7 text-gray-200" />
+            <p className="text-sm text-gray-400">No new notifications</p>
+          </div>
+        ) : (
+          <ul className="max-h-80 overflow-y-auto md:max-h-80">
+            {notifs.map((n) => (
+              <li key={n.id}>
+                <button
+                  type="button"
+                  onClick={() => { markNotificationRead(n.id).then(load).catch(() => {}); }}
+                  className={cn(
+                    'flex w-full flex-col items-start gap-0.5 border-b border-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-50',
+                    !n.read_at && 'bg-primary/5',
+                  )}
+                >
+                  <span className="text-sm font-medium text-gray-800">{n.title || n.message}</span>
+                  {n.title && n.message && <span className="text-xs text-gray-500">{n.message}</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </MenuSurface>
     </div>
   );
 };
 
-/** Profile avatar + dropdown — rightmost topbar action. */
+/** Profile avatar — anchored menu on desktop, bottom sheet on mobile. */
 const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const isMobile = useIsMobile();
   const category = humanizeCategory(user?.category || user?.primary_category);
   const isPaid = plan === 'professional' || plan === 'supreme';
 
   useEffect(() => {
-    const onPointer = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('pointerdown', onPointer);
     document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
+    return () => document.removeEventListener('keydown', onKey);
   }, []);
+  useEffect(() => {
+    if (isMobile) return undefined;
+    const onPointer = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('pointerdown', onPointer);
+    return () => document.removeEventListener('pointerdown', onPointer);
+  }, [isMobile]);
+  useBodyScrollLock(open && isMobile);
 
   const Avatar = ({ size }) =>
     user?.profile_image ? (
@@ -296,92 +351,87 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
         <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', open && 'rotate-180')} />
       </button>
 
-      {open && (
-        <div
-          className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
-          role="menu"
-        >
-          {/* Top block: avatar + name + category */}
-          <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-4">
-            <Avatar size="h-12 w-12 text-base" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-gray-900">{user?.name || 'Host'}</p>
-              <p className="truncate text-xs text-gray-500">{category}</p>
-              <span className={cn('mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold', planStyle.bg, planStyle.text)}>
-                {isPaid && '★ '}{planStyle.label}
-              </span>
-            </div>
-          </div>
-
-          {/* Primary actions — reverse-hover buttons */}
-          <div className="grid gap-2 px-4 py-3">
-            <Link
-              to={user?.username ? `/${user.username}` : '/dashboard/profile'}
-              onClick={() => setOpen(false)}
-              className={cn('flex h-9 items-center justify-center rounded-lg text-xs font-semibold transition-colors', REVERSE_GHOST)}
-            >
-              View Profile
-            </Link>
-            <Link
-              to="/dashboard/upgrade"
-              onClick={() => setOpen(false)}
-              className={cn('flex h-9 items-center justify-center rounded-lg text-xs font-semibold transition-colors', REVERSE_PRIMARY)}
-            >
-              Upgrade Plan
-            </Link>
-          </div>
-
-          {/* Inactive / coming-soon */}
-          <div className="border-t border-gray-100 py-1.5">
-            {inactive.map(({ label, icon: Icon }) => (
-              <button
-                key={label}
-                type="button"
-                disabled
-                title="Coming soon"
-                className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300"
-              >
-                <Icon className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-                <span className="flex-1">{label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Account actions — moved here from the sidebar footer. */}
-          <div className="border-t border-gray-100 py-1.5">
-            {user?.username && (
-              <a
-                href={`/${user.username}`}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
-              >
-                <ExternalLink className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-                <span className="flex-1">View public page</span>
-              </a>
-            )}
-            {user?.role === 'superadmin' && (
-              <NavLink
-                to="/admin"
-                onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-red-50"
-              >
-                <ShieldCheck className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-                <span className="flex-1">Super Admin</span>
-              </NavLink>
-            )}
-            <button
-              type="button"
-              onClick={() => { setOpen(false); logout?.(); }}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-              <span className="flex-1">Logout</span>
-            </button>
+      <MenuSurface open={open} onClose={() => setOpen(false)} isMobile={isMobile} title="Account" width="w-72">
+        {/* Top block: avatar + name + category */}
+        <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-4">
+          <Avatar size="h-12 w-12 text-base" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-gray-900">{user?.name || 'Host'}</p>
+            <p className="truncate text-xs text-gray-500">{category}</p>
+            <span className={cn('mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold', planStyle.bg, planStyle.text)}>
+              {isPaid && '★ '}{planStyle.label}
+            </span>
           </div>
         </div>
-      )}
+
+        {/* Primary actions — reverse-hover buttons */}
+        <div className="grid gap-2 px-4 py-3">
+          <Link
+            to={user?.username ? `/${user.username}` : '/dashboard/profile'}
+            onClick={() => setOpen(false)}
+            className={cn('flex h-9 items-center justify-center rounded-lg text-xs font-semibold transition-colors', REVERSE_GHOST)}
+          >
+            View Profile
+          </Link>
+          <Link
+            to="/dashboard/upgrade"
+            onClick={() => setOpen(false)}
+            className={cn('flex h-9 items-center justify-center rounded-lg text-xs font-semibold transition-colors', REVERSE_PRIMARY)}
+          >
+            Upgrade Plan
+          </Link>
+        </div>
+
+        {/* Inactive / coming-soon */}
+        <div className="border-t border-gray-100 py-1.5">
+          {inactive.map(({ label, icon: Icon }) => (
+            <button
+              key={label}
+              type="button"
+              disabled
+              title="Coming soon"
+              className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300"
+            >
+              <Icon className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+              <span className="flex-1">{label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Account actions — moved here from the sidebar footer. */}
+        <div className="border-t border-gray-100 py-1.5">
+          {user?.username && (
+            <a
+              href={`/${user.username}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              <ExternalLink className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+              <span className="flex-1">View public page</span>
+            </a>
+          )}
+          {user?.role === 'superadmin' && (
+            <NavLink
+              to="/admin"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-red-50"
+            >
+              <ShieldCheck className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+              <span className="flex-1">Super Admin</span>
+            </NavLink>
+          )}
+          <button
+            type="button"
+            onClick={() => { setOpen(false); logout?.(); }}
+            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-red-50"
+          >
+            <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+            <span className="flex-1">Logout</span>
+          </button>
+        </div>
+      </MenuSurface>
     </div>
   );
 };
@@ -499,41 +549,12 @@ const DashboardLayout = ({ children }) => {
                   <X className="h-5 w-5" />
                 </button>
               </div>
+              {/* Nav overflow only — account actions (View public page, Logout,
+                  Super Admin) live in the topbar profile sheet, not here. */}
               <div className="p-2">
                 {MORE_LINKS.map((item) => (
                   <SheetLink key={item.to} item={item} plan={plan} onNavigate={() => setMoreOpen(false)} />
                 ))}
-                <div className="my-1 border-t border-gray-100" />
-                {user?.username && (
-                  <a
-                    href={`/${user.username}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => setMoreOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <ExternalLink className="h-5 w-5 shrink-0" strokeWidth={1.8} />
-                    <span className="flex-1">View public page</span>
-                  </a>
-                )}
-                {user?.role === 'superadmin' && (
-                  <NavLink
-                    to="/admin"
-                    onClick={() => setMoreOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-500 hover:bg-red-50"
-                  >
-                    <ShieldCheck className="h-5 w-5 shrink-0" strokeWidth={1.8} />
-                    <span className="flex-1">Super Admin</span>
-                  </NavLink>
-                )}
-                <button
-                  type="button"
-                  onClick={() => { setMoreOpen(false); logout(); }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-500 hover:bg-red-50"
-                >
-                  <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.8} />
-                  <span className="flex-1 text-left">Logout</span>
-                </button>
               </div>
             </div>
           </div>
