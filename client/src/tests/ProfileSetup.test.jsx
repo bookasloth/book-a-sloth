@@ -131,18 +131,18 @@ describe('ProfileSetup — Social Links', () => {
 // ── Appearance tab — plan-gated colors ───────────────────────────────────────
 
 describe('ProfileSetup — Appearance (explorer plan)', () => {
-  test('shows only 3 color swatches for explorer', async () => {
+  test('shows single brand swatch for explorer', async () => {
     renderSetup('explorer');
     await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
-    // FREE_COLORS has 3 swatches — count swatch buttons (color-picker buttons)
-    const swatches = screen.getAllByTitle(/.+/); // titled swatches
-    expect(swatches.length).toBeGreaterThanOrEqual(3);
+    // FREE_COLORS has 1 swatch (brand orange) — at least one titled swatch renders
+    const swatches = document.querySelectorAll('button[title]');
+    expect(swatches.length).toBeGreaterThanOrEqual(1);
   });
 
   test('shows upgrade hint for explorer', async () => {
     renderSetup('explorer');
     await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
-    expect(screen.getByText(/upgrade to host\+ for more colours/i)).toBeTruthy();
+    expect(screen.getByText(/upgrade to host\+ for 16 colours/i)).toBeTruthy();
   });
 
   test('shows "Book a Session" CTA preview button', async () => {
