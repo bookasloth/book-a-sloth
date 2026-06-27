@@ -61,6 +61,18 @@ export const BACKGROUNDS = [
       { key: 'rate', label: 'Fireworks', type: 'select', options: ['calm', 'normal', 'lively'] },
     ],
   },
+  {
+    key: 'celebration',
+    label: 'Celebration',
+    seasonal: true,
+    thumbnail: '/backgrounds/celebration.svg',
+    Component: lazy(() => import('./engines/Celebration.jsx')),
+    defaultParams: { density: 'medium', rate: 'normal' },
+    paramSchema: [
+      { key: 'density', label: 'Density', type: 'select', options: ['low', 'medium', 'high'] },
+      { key: 'rate', label: 'Fall speed', type: 'select', options: ['calm', 'normal', 'lively'] },
+    ],
+  },
 ];
 
 export const backgroundKeys = BACKGROUNDS.map((b) => b.key);
