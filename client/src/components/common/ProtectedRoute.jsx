@@ -9,14 +9,24 @@ const ProtectedRoute = ({ children }) => {
   const [onboardingStatus, setOnboardingStatus] = useState(null);
   const [statusLoading, setStatusLoading] = useState(true);
 
+  // The onboarding-resume gate applies ONLY at the host-space entry (/dashboard).
+  // Once a host intentionally opens a specific page — a deep dashboard route,
+  // their guest space, a review link — we honor that destination instead of
+  // re-running a completeness check that could bounce them away. Auth and host
+  // role are still enforced below; onboarding-completeness is a soft nudge, not
+  // a permission. This also avoids a "Loading…" flash on every navigation.
+  const isHostEntry = location.pathname === '/dashboard';
+
   useEffect(() => {
     if (loading || !user) {
       setStatusLoading(false);
       return;
     }
 
-    // For host accounts, check onboarding status (is_host = v3.34 source of truth)
-    if (isHost(user)) {
+    // For host accounts, check onboarding status (is_host = v3.34 source of
+    // truth) — but only at the host-space entry. Elsewhere, skip the fetch so
+    // intentional navigation is instant and never risks an unintended redirect.
+    if (isHost(user) && isHostEntry) {
       // Import here to avoid circular deps
       import('../../services/api')
         .then(({ getOnboardingStatus }) => {
@@ -33,7 +43,7 @@ const ProtectedRoute = ({ children }) => {
     } else {
       setStatusLoading(false);
     }
-  }, [user, loading]);
+  }, [user, loading, isHostEntry]);
 
   if (loading || statusLoading) {
     return <div className="text-center py-10">Loading...</div>;
@@ -60,7 +70,7 @@ const ProtectedRoute = ({ children }) => {
   //   6 = complete              → no redirect (isComplete should be true)
   const RESUME = { 1: 'claim', 2: 'about', 3: 'category', 4: 'whatsapp', 5: 'plan' };
 
-  if (isHost(user) && onboardingStatus && !onboardingStatus.isComplete && onboardingStatus.slug) {
+  if (isHostEntry && isHost(user) && onboardingStatus && !onboardingStatus.isComplete && onboardingStatus.slug) {
     const done = onboardingStatus.stepCompleted || 1;
     if (done < 6) {
       return <Navigate to={`/vendor-register/${onboardingStatus.slug}/${RESUME[done]}`} replace />;
