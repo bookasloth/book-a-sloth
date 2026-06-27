@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import FeatureGate from './FeatureGate';
+import { normalizePlan } from '../../utils/themeUtils';
 import { cn } from '../dashboard/ui/cn';
 import '../dashboard/ui/tokens.css';
 
@@ -25,7 +26,7 @@ const NAV_GROUPS = [
     label: 'Catalog',
     items: [
       { to: '/dashboard/services', label: 'Services', icon: LayoutGrid, matchPrefix: '/dashboard/service' },
-      { to: '/dashboard/products', label: 'Products', icon: Package, locked: 'creator' },
+      { to: '/dashboard/products', label: 'Products', icon: Package, locked: 'supreme' },
     ],
   },
   {
@@ -55,14 +56,17 @@ const MOBILE_TABS = [
 // "More" sheet — everything not on the bottom bar.
 const MORE_LINKS = [
   { to: '/dashboard/availability', label: 'Availability', icon: Clock },
-  { to: '/dashboard/products', label: 'Products', icon: Package, locked: 'creator' },
+  { to: '/dashboard/products', label: 'Products', icon: Package, locked: 'supreme' },
   { to: '/dashboard/payments/payouts', label: 'Payouts', icon: Banknote },
   { to: '/dashboard/payments/transactions', label: 'Transactions', icon: Receipt },
   { to: '/dashboard/profile', label: 'Profile', icon: User },
 ];
 
+// Keyed by canonical plan slug (see normalizePlan) — legacy aliases like
+// `explorer`/`free`/`pro` are collapsed before lookup, so a Studio host on the
+// `pro` slug no longer falls through to the Starter badge.
 const PLAN_STYLES = {
-  explorer: { label: 'Starter', bg: 'bg-gray-100', text: 'text-gray-600' },
+  starter: { label: 'Starter', bg: 'bg-gray-100', text: 'text-gray-600' },
   creator: { label: 'Host+', bg: 'bg-primary/10', text: 'text-primary' },
   professional: { label: 'Studio', bg: 'bg-amber-100', text: 'text-amber-700' },
   supreme: { label: 'Supreme', bg: 'bg-violet-100', text: 'text-violet-700' },
@@ -77,7 +81,9 @@ const isActive = (item, pathname) =>
 /** Sidebar item — icon-only on the md rail, icon + label on lg. */
 const SidebarItem = ({ item, pathname, plan }) => {
   const active = isActive(item, pathname);
-  const locked = item.locked && plan === 'explorer';
+  // item.locked holds the canonical plan slug required to unlock; anyone below
+  // it sees the lock. (Products is Supreme-only for now.)
+  const locked = item.locked && plan !== item.locked;
   const Icon = item.icon;
   const node = (
     <NavLink
@@ -103,7 +109,7 @@ const SidebarItem = ({ item, pathname, plan }) => {
 };
 
 const SheetLink = ({ item, plan, onNavigate }) => {
-  const locked = item.locked && plan === 'explorer';
+  const locked = item.locked && plan !== item.locked;
   const Icon = item.icon;
   const node = (
     <NavLink
@@ -125,9 +131,9 @@ const SheetLink = ({ item, plan, onNavigate }) => {
 // Plan-aware copy for the bottom-of-sidebar premium section. Each tier gets its
 // own headline, value prop and call-to-action; the renew state overrides these
 // when a paid plan is lapsing. Class strings are full literals so Tailwind keeps
-// them. (free=explorer, Host+=creator, Studio=professional, Supreme=supreme.)
+// them. (free=starter, Host+=creator, Studio=professional, Supreme=supreme.)
 const PLAN_CARD = {
-  explorer: {
+  starter: {
     title: 'Upgrade to Host+',
     blurb: 'Lower fees, digital products & more.',
     cta: 'Upgrade — 20% off',
@@ -167,8 +173,8 @@ const PLAN_CARD = {
 
 /** Premium section pinned at the bottom of the sidebar — dynamic per plan. */
 const PremiumCard = ({ plan, daysLeft, expired, expireSoon, onNavigate }) => {
-  const cfg = PLAN_CARD[plan] || PLAN_CARD.explorer;
-  const renew = (expireSoon || expired) && plan !== 'explorer';
+  const cfg = PLAN_CARD[plan] || PLAN_CARD.starter;
+  const renew = (expireSoon || expired) && plan !== 'starter';
   const Icon = renew ? Clock : cfg.Icon;
   const title = renew ? (expired ? 'Plan expired' : 'Plan expiring soon') : cfg.title;
   const blurb = renew
@@ -215,13 +221,13 @@ const DashboardLayout = ({ children }) => {
     return () => { document.body.style.overflow = prev; };
   }, [moreOpen]);
 
-  const plan = user?.plan || 'explorer';
-  const planStyle = PLAN_STYLES[plan] || PLAN_STYLES.explorer;
+  const plan = normalizePlan(user?.plan);
+  const planStyle = PLAN_STYLES[plan] || PLAN_STYLES.starter;
   const planExpiry = user?.plan_expires_at ? new Date(user.plan_expires_at) : null;
   const daysLeft = planExpiry ? Math.ceil((planExpiry - new Date()) / (1000 * 60 * 60 * 24)) : null;
   const expireSoon = daysLeft !== null && daysLeft <= 7 && daysLeft > 0;
   const expired = daysLeft !== null && daysLeft <= 0;
-  const showRenew = (expireSoon || expired) && plan !== 'explorer';
+  const showRenew = (expireSoon || expired) && plan !== 'starter';
   const initial = (user?.name || user?.email || 'U').trim().charAt(0).toUpperCase();
 
   return (
@@ -253,7 +259,7 @@ const DashboardLayout = ({ children }) => {
                 <span className={cn('text-[10px] font-medium', expired ? 'text-red-500' : 'text-amber-600')}>
                   {expired ? 'Expired' : `${daysLeft}d left`}
                 </span>
-              ) : plan === 'explorer' ? (
+              ) : plan === 'starter' ? (
                 <Link to="/dashboard/upgrade" className="text-[10px] font-medium text-primary hover:underline">Upgrade</Link>
               ) : null}
             </div>
@@ -288,13 +294,13 @@ const DashboardLayout = ({ children }) => {
           </div>
           <Link
             to="/dashboard/upgrade"
-            title={showRenew ? 'Renew plan' : plan === 'explorer' ? 'Upgrade plan' : 'Manage plan'}
+            title={showRenew ? 'Renew plan' : plan === 'starter' ? 'Upgrade plan' : 'Manage plan'}
             className={cn(
               'flex h-9 items-center justify-center rounded-md transition-colors lg:hidden',
               showRenew ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-primary/10 text-primary hover:bg-primary/15',
             )}
           >
-            {showRenew ? <Clock className="h-4 w-4" /> : plan === 'explorer' ? <Sparkles className="h-4 w-4" /> : <Crown className="h-4 w-4" />}
+            {showRenew ? <Clock className="h-4 w-4" /> : plan === 'starter' ? <Sparkles className="h-4 w-4" /> : <Crown className="h-4 w-4" />}
           </Link>
           {user?.username && (
             <a

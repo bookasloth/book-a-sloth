@@ -2,11 +2,12 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CalendarClock, CheckCircle2, XCircle, CalendarDays, LayoutGrid, IndianRupee,
-  UserCheck, Activity, Camera, UserCog, Tag, CalendarCheck, CreditCard, ShieldCheck,
+  UserCheck, Hourglass, Camera, UserCog, Tag, CalendarCheck, CreditCard, ShieldCheck,
   Check, ArrowRight, Copy, Link2, MessageCircle, Wallet,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getHostBookings, getMyServices, getPayoutBalance } from '../services/api';
+import { normalizePlan } from '../utils/themeUtils';
 import toast from 'react-hot-toast';
 import Modal from '../components/booking/Modal';
 import WhatsAppVerify from '../components/whatsapp/WhatsAppVerify';
@@ -29,7 +30,7 @@ const relWhen = (iso) => {
 
 // ── Stat tile (flat — lives inside a Card panel). Clickable when `to` is set:
 // a count should lead somewhere, not just sit there. ─────────────────────────
-const Stat = ({ Icon, label, value, tint, to }) => {
+const Stat = ({ Icon, label, value, tint, to, title }) => {
   const inner = (
     <>
       <div className={cn('mb-2 inline-flex h-8 w-8 items-center justify-center rounded-md', tint)}>
@@ -40,9 +41,9 @@ const Stat = ({ Icon, label, value, tint, to }) => {
     </>
   );
   const base = 'rounded-md border border-gray-100 bg-gray-50/60 p-3 sm:p-4';
-  if (!to) return <div className={base}>{inner}</div>;
+  if (!to) return <div className={base} title={title}>{inner}</div>;
   return (
-    <Link to={to} className={cn(base, 'block transition hover:border-primary/30 hover:bg-primary-light/40 hover:no-underline')}>
+    <Link to={to} title={title} className={cn(base, 'block transition hover:border-primary/30 hover:bg-primary-light/40 hover:no-underline')}>
       {inner}
     </Link>
   );
@@ -67,6 +68,25 @@ const BookingRow = ({ b }) => (
   </div>
 );
 
+// ── Loading skeleton — shown while bookings/services load, so a mid-fetch
+// dashboard never looks like an empty (zeros) new account. ────────────────
+const Bar = ({ className }) => <div className={cn('animate-pulse rounded bg-gray-100', className)} />;
+const DashboardSkeleton = () => (
+  <>
+    <Bar className="mb-5 h-16 w-full" />
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
+      {[0, 1, 2, 3].map((i) => (
+        <Card key={i} as="section">
+          <Bar className="mb-3 h-4 w-32" />
+          <div className="grid grid-cols-2 gap-3">
+            {[0, 1, 2, 3].map((j) => <Bar key={j} className="h-20 w-full" />)}
+          </div>
+        </Card>
+      ))}
+    </div>
+  </>
+);
+
 const Dashboard = () => {
   const { user, connectGoogleCalendar, updateUser } = useAuth();
   const [searchParams] = useSearchParams();
@@ -76,6 +96,7 @@ const Dashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
   const [balance, setBalance] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(
     () => localStorage.getItem('legacyPlanBannerDismissed') === '1'
   );
@@ -84,8 +105,10 @@ const Dashboard = () => {
 
   // Legacy paid vendors were backfilled to subscription_status='active' but have
   // NO auto-renew mandate — nudge them onto auto-renew before their period ends.
+  // Normalize the slug first: the free tier is `starter` but legacy aliases
+  // (`explorer`/`free`) must not read as paid here.
   const showLegacyBanner =
-    isHost && user?.plan && user.plan !== 'starter' &&
+    isHost && user?.plan && normalizePlan(user.plan) !== 'starter' &&
     user.subscription_status === 'active' && !user.has_payment_mandate &&
     !bannerDismissed;
 
@@ -111,9 +134,11 @@ const Dashboard = () => {
   const loadData = () => {
     if (!isHost) return;
     setLoadErr(false);
+    setLoading(true);
     Promise.all([getHostBookings(), getMyServices()])
       .then(([b, s]) => { setBookings(b.data || []); setServices(s.data || []); })
-      .catch(() => setLoadErr(true)); // P2-9: surface failure, don't render empty-as-error
+      .catch(() => setLoadErr(true)) // P2-9: surface failure, don't render empty-as-error
+      .finally(() => setLoading(false));
     // Settlement balance — fetched independently so a payout-balance hiccup
     // never blanks the whole dashboard.
     getPayoutBalance().then(({ data }) => setBalance(data)).catch(() => {});
@@ -131,9 +156,11 @@ const Dashboard = () => {
     const recentList = [...bookings]
       .filter((b) => b.status === 'completed' || !future(b))
       .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
-    // Past sessions still open (not completed/cancelled) — the host's to-do.
+    // Confirmed sessions that have passed but aren't wrapped up — the host's
+    // to-do. Excludes never-confirmed (pending) past slots: those are no-shows /
+    // abandoned holds, not work the host owes a completion on.
     const needsActionList = bookings
-      .filter((b) => b.status !== 'cancelled' && b.status !== 'completed' && !future(b));
+      .filter((b) => b.status === 'confirmed' && !future(b));
     return {
       nextUp: upcomingList[0] || null,
       needsAction: needsActionList.length,
@@ -142,8 +169,14 @@ const Dashboard = () => {
       cancelled: bookings.filter((b) => b.status === 'cancelled').length,
       total: bookings.length,
       services: services.length,
-      earnings: bookings.filter((b) => b.payment_status === 'paid').reduce((s, b) => s + (b.vendor_amount != null ? b.vendor_amount : (b.services?.price || 0)), 0),
-      active: bookings.filter((b) => b.status === 'confirmed' && future(b)).length,
+      // Lifetime gross host earnings from paid bookings. Excludes cancelled
+      // (a cancelled-but-paid booking is pending refund, not earned).
+      earnings: bookings
+        .filter((b) => b.payment_status === 'paid' && b.status !== 'cancelled')
+        .reduce((s, b) => s + (b.vendor_amount != null ? b.vendor_amount : (b.services?.price || 0)), 0),
+      // Pending requests awaiting the host's confirmation — distinct from
+      // "Upcoming" (which already counts confirmed + pending future slots).
+      pending: bookings.filter((b) => b.status === 'pending' && future(b)).length,
       upcomingList: upcomingList.slice(0, 2),
       recentList: recentList.slice(0, 2),
     };
@@ -156,7 +189,8 @@ const Dashboard = () => {
     { key: 'service', label: 'Add a service',            done: services.length > 0,                    Icon: LayoutGrid,   to: '/dashboard/services' },
     { key: 'pricing', label: 'Set service pricing',      done: services.some((s) => Number(s.price) > 0), Icon: Tag,        to: '/dashboard/services' },
     { key: 'gcal',    label: 'Connect Google Calendar',  done: !!user?.google_calendar_connected,      Icon: CalendarCheck, onClick: connectGoogleCalendar },
-    { key: 'plan',    label: 'Choose a plan',            done: !!user?.plan,                           Icon: CreditCard,   to: '/dashboard/upgrade' },
+    // 'Choose a plan' removed — every host defaults to the free `starter` tier,
+    // so it was always "done" and only padded the completion %.
     { key: 'verify',  label: 'Verify contact details',   done: !!user?.is_verified,                    Icon: ShieldCheck,  to: '/dashboard/profile' },
     // When already verified, no onClick — item renders as a static "done" badge
     { key: 'whatsapp', label: 'Add WhatsApp for Booking Updates', done: !!user?.whatsapp_verified, Icon: MessageCircle, ...(user?.whatsapp_verified ? {} : { onClick: () => setWhatsappModalOpen(true) }) },
@@ -226,6 +260,8 @@ const Dashboard = () => {
         </div>
       )}
 
+      {loading ? <DashboardSkeleton /> : (
+      <>
       {/* Next session — the host's "what now" at a glance */}
       {m.nextUp && (
         <div className="mb-5 flex flex-col gap-3 rounded-md border border-primary/20 bg-primary-light/50 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -298,9 +334,11 @@ const Dashboard = () => {
           <h2 className="mb-3 text-sm font-semibold text-gray-700">Your business</h2>
           <div className="grid grid-cols-2 gap-3">
             <Stat Icon={LayoutGrid}  label="Total Services"      value={m.services}            tint="bg-purple-50 text-purple-600" to="/dashboard/services" />
-            <Stat Icon={IndianRupee} label="Total Earnings"      value={fmtMoney(m.earnings)}  tint="bg-primary-light text-primary" to="/dashboard/earnings" />
+            <Stat Icon={IndianRupee} label="Total Earnings"      value={fmtMoney(m.earnings)}  tint="bg-primary-light text-primary" to="/dashboard/earnings"
+              title="Lifetime gross from paid bookings. See Money for your settlement balance (available / clearing / pending)." />
             <Stat Icon={UserCheck}   label="Profile Completion"  value={`${completion}%`}      tint="bg-amber-50 text-amber-600"   to="/dashboard/profile" />
-            <Stat Icon={Activity}    label="Active Bookings"     value={m.active}              tint="bg-teal-50 text-teal-600"     to="/dashboard/bookings" />
+            <Stat Icon={Hourglass}   label="Pending Requests"    value={m.pending}             tint="bg-teal-50 text-teal-600"     to="/dashboard/bookings"
+              title="Bookings awaiting your confirmation." />
           </div>
         </Card>
 
@@ -372,6 +410,8 @@ const Dashboard = () => {
           )}
         </Card>
       </div>
+      </>
+      )}
 
       {/* Only render the modal when the host is not yet verified — belt-and-suspenders guard */}
       <Modal open={whatsappModalOpen && !user?.whatsapp_verified} title="Verify WhatsApp" onClose={() => setWhatsappModalOpen(false)}>

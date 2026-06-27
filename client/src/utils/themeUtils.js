@@ -91,6 +91,18 @@ export const PLAN_DISPLAY = {
 export const planLabel = (slug, fallback) =>
   PLAN_DISPLAY[String(slug || '').toLowerCase()] || fallback || slug || '';
 
+// Collapse legacy plan aliases to the canonical DB slug so UI lookups
+// (badges, premium cards, lock gates) never miss on a synonym. The free tier's
+// real slug is `starter`; `explorer`/`free` are legacy aliases. `pro` ===
+// `professional`. Unknown slugs fall through to `starter`.
+const PLAN_ALIASES = { explorer: 'starter', free: 'starter', pro: 'professional' };
+export const CANONICAL_PLANS = ['starter', 'creator', 'professional', 'supreme'];
+export const normalizePlan = (slug) => {
+  const s = String(slug || '').toLowerCase();
+  const canon = PLAN_ALIASES[s] || s;
+  return CANONICAL_PLANS.includes(canon) ? canon : 'starter';
+};
+
 export const getPlanBorderLabel = (plan) => {
   if (plan === 'professional') return 'Studio';
   if (plan === 'creator')      return 'Host+';
