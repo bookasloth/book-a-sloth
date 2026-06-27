@@ -281,6 +281,9 @@ export function buildReceiptHTML(d = {}) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>${esc(docTitle)} ${esc(receiptId)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#f5f5f6; --paper:#ffffff;
@@ -296,7 +299,7 @@ export function buildReceiptHTML(d = {}) {
   html{-webkit-text-size-adjust:100%}
   body{
     margin:0; background:var(--bg); color:var(--ink);
-    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:"Poppins",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased; line-height:1.5;
     font-feature-settings:"tnum" 0;
   }
@@ -311,8 +314,7 @@ export function buildReceiptHTML(d = {}) {
   .brand-lock{display:flex; align-items:center; gap:12px}
   .logo{
     width:40px; height:40px; border-radius:11px; flex:none;
-    background:var(--accent); color:#fff; font-weight:800; font-size:20px;
-    display:flex; align-items:center; justify-content:center; letter-spacing:-.02em;
+    display:block; object-fit:cover; background:#fff;
   }
   .wordmark{font-size:17px; font-weight:700; letter-spacing:-.01em; color:var(--ink)}
   .doc-kind{font-size:13px; font-weight:600; color:var(--accent); margin-top:1px}
@@ -416,7 +418,7 @@ export function buildReceiptHTML(d = {}) {
     <header class="head">
       <div class="brand">
         <div class="brand-lock">
-          <span class="logo" aria-hidden="true">B</span>
+          <img class="logo" src="https://company-assets.bookasloth.in/images/email/sloth-icon-sqr.png" alt="Book A Sloth logo" width="40" height="40">
           <span>
             <div class="wordmark">Book A Sloth</div>
             <div class="doc-kind">${esc(docTitle)}</div>
