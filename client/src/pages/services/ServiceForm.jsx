@@ -2,7 +2,7 @@
  * ServiceForm — shared component for Add and Edit service pages.
  * Handles: basic info, thumbnail crop/zoom, rich text, inclusions/exclusions, FAQ builder, notes.
  */
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { svcCreate, svcUpdate, uploadImage, hostGetCategories, getCategories, listServiceCategories } from '../../services/api';
@@ -392,7 +392,26 @@ export default function ServiceForm({ initialData, serviceId }) {
 
   const [saving, setSaving] = useState(false);
   const [hostCats, setHostCats] = useState([]); // [{ slug, label }]
-  const [svcCats, setSvcCats] = useState([]);   // [{ id, name, slug, ... }]
+  const [svcCats, setSvcCats] = useState([]);   // [{ id, name, slug, parent_id, ... }]
+
+  // Group the admin taxonomy under its parent categories so the picker reads as
+  // a clean, organised list. The 8 parents each share the same 5 child names
+  // (1:1 Consultation, Mentorship, …) — flat, those looked like dozens of
+  // duplicates; under optgroups each is disambiguated by its parent.
+  const groupedCats = useMemo(() => {
+    const parents = svcCats.filter((c) => !c.parent_id);
+    const parentIds = new Set(parents.map((p) => p.id));
+    const childrenOf = {};
+    for (const c of svcCats) {
+      if (c.parent_id) {
+        if (!childrenOf[c.parent_id]) childrenOf[c.parent_id] = [];
+        childrenOf[c.parent_id].push(c);
+      }
+    }
+    const groups = parents.map((p) => ({ ...p, children: childrenOf[p.id] || [] }));
+    const orphans = svcCats.filter((c) => c.parent_id && !parentIds.has(c.parent_id));
+    return { groups, orphans };
+  }, [svcCats]);
 
   useEffect(() => {
     let alive = true;
@@ -532,7 +551,7 @@ export default function ServiceForm({ initialData, serviceId }) {
             {/* Category — drawn from the host's own categories */}
             <ServiceCategoryPicker categories={hostCats} value={form.category} onChange={(slug) => set('category', slug)} />
 
-            {/* Service Category — admin-managed taxonomy; read-only picker */}
+            {/* Service Category — admin-managed taxonomy, grouped by parent. */}
             <div>
               <label className={fieldLabel}>Service Category</label>
               <Select
@@ -540,7 +559,18 @@ export default function ServiceForm({ initialData, serviceId }) {
                 onChange={e => set('service_category_id', e.target.value)}
               >
                 <option value="">None</option>
-                {svcCats.map(cat => (
+                {groupedCats.groups.map((g) =>
+                  g.children.length ? (
+                    <optgroup key={g.id} label={g.name}>
+                      {g.children.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </optgroup>
+                  ) : (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ),
+                )}
+                {groupedCats.orphans.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </Select>
@@ -578,20 +608,31 @@ export default function ServiceForm({ initialData, serviceId }) {
         </div>
       </Card>
 
-      {/* ── BELOW THE FOLD: Two-column layout ── */}
-      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Left: Long Description */}
-        <FeatureGate flag="service_rich_overview">
-          <Card padded={false} className="p-6">
-            <h2 className="mb-1 text-base font-bold text-gray-800">Overview</h2>
-            <p className="mb-4 text-xs text-gray-400">Shown on the Overview tab of your public service page</p>
-            <RichEditor value={form.long_description} onChange={v => set('long_description', v)}/>
-          </Card>
-        </FeatureGate>
+      {/* ── BELOW THE FOLD: balanced two-column layout. Columns stretch to equal
+          height; FAQ sits directly below Overview on the left. ── */}
+      <div className="mb-6 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
+        {/* Left: Overview, then FAQ directly below it */}
+        <div className="flex flex-col gap-6">
+          <FeatureGate flag="service_rich_overview">
+            <Card padded={false} className="p-6">
+              <h2 className="mb-1 text-base font-bold text-gray-800">Overview</h2>
+              <p className="mb-4 text-xs text-gray-400">Shown on the Overview tab of your public service page</p>
+              <RichEditor value={form.long_description} onChange={v => set('long_description', v)}/>
+            </Card>
+          </FeatureGate>
 
-        {/* Right: Inclusions, Exclusions, FAQ, Notes */}
-        <div className="space-y-6">
-          {/* Included / Excluded */}
+          {/* FAQ — directly below Overview */}
+          <FeatureGate flag="service_faqs">
+            <Card padded={false} className="p-6">
+              <h2 className="mb-1 text-base font-bold text-gray-800">FAQs</h2>
+              <p className="mb-4 text-xs text-gray-400">Optional · Add as many as you need</p>
+              <FAQBuilder value={form.faqs} onChange={v => set('faqs', v)}/>
+            </Card>
+          </FeatureGate>
+        </div>
+
+        {/* Right: Inclusions, Exclusions, Notes */}
+        <div className="flex flex-col gap-6">
           <FeatureGate flag="service_inclusions">
             <Card padded={false} className="p-6">
               <h2 className="mb-1 text-base font-bold text-gray-800">What's Included</h2>
@@ -608,17 +649,8 @@ export default function ServiceForm({ initialData, serviceId }) {
             </Card>
           </FeatureGate>
 
-          {/* FAQ */}
-          <FeatureGate flag="service_faqs">
-            <Card padded={false} className="p-6">
-              <h2 className="mb-1 text-base font-bold text-gray-800">FAQs</h2>
-              <p className="mb-4 text-xs text-gray-400">Optional · Add as many as you need</p>
-              <FAQBuilder value={form.faqs} onChange={v => set('faqs', v)}/>
-            </Card>
-          </FeatureGate>
-
           {/* Important Note */}
-          <Card padded={false} className="p-6">
+          <Card padded={false} className="flex-1 p-6">
             <h2 className="mb-1 text-base font-bold text-gray-800">Important Notes</h2>
             <p className="mb-3 text-xs text-gray-400">Optional · Shown to clients before booking</p>
             <Textarea rows={4} value={form.important_note} onChange={e => set('important_note', e.target.value)} placeholder="e.g. Please bring Search Console access. Calls are recorded." />
