@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -84,6 +84,34 @@ describe('dashboard topbar actions', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host' });
     expect(screen.getByLabelText('Sloth Support')).toBeInTheDocument();
     expect(screen.getByLabelText(/Notifications/)).toBeInTheDocument();
+  });
+});
+
+describe('mobile — popups open as bottom sheets', () => {
+  const setMobile = (matches) => {
+    window.matchMedia = vi.fn().mockImplementation((q) => ({
+      matches, media: q, onchange: null,
+      addListener: vi.fn(), removeListener: vi.fn(),
+      addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+    }));
+  };
+  beforeEach(() => { mockAuth.current = {}; setMobile(true); });
+  afterEach(() => setMobile(false));
+
+  it('profile opens as a sheet with a Close control + account actions', () => {
+    renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
+    fireEvent.click(screen.getByLabelText('Profile menu'));
+    expect(screen.getByLabelText('Close')).toBeInTheDocument();     // sheet chrome
+    expect(screen.getByText('View public page')).toBeInTheDocument();
+    expect(screen.getByText('Logout')).toBeInTheDocument();
+  });
+
+  it('the More sheet is nav-only (no duplicated account actions)', () => {
+    renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
+    fireEvent.click(screen.getByLabelText('More'));
+    expect(screen.getByLabelText('Close')).toBeInTheDocument();      // sheet is open
+    expect(screen.queryByText('Logout')).toBeNull();                 // moved to profile
+    expect(screen.queryByText('View public page')).toBeNull();
   });
 });
 
