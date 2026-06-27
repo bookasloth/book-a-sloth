@@ -41,6 +41,9 @@ export const EVENTS = Object.freeze({
   PRODUCT_PURCHASED:  'product_purchased',
   SUBSCRIPTION_STARTED:'subscription_started',
   USER_REGISTERED:    'user_registered',
+
+  // ── System / reliability (client-only) ──
+  ERROR_PAGE_VIEWED:  'error_page_viewed',   // a branded error/offline page rendered
 });
 
 // Dev guard: reject unknown event names so a typo throws in dev instead of

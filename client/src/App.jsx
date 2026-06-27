@@ -1,5 +1,6 @@
-import { Suspense } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import ChromeContext from './context/ChromeContext';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
@@ -31,7 +32,8 @@ const Login          = lazy(() => import('./pages/Login'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword  = lazy(() => import('./pages/ResetPassword'));
 const VendorSignup   = lazy(() => import('./pages/VendorSignup'));
-const NotFound       = lazy(() => import('./pages/NotFound'));
+const ErrorPage      = lazy(() => import('./pages/ErrorPage'));
+const Offline        = lazy(() => import('./pages/Offline'));
 const Help           = lazy(() => import('./pages/Help'));
 const Support        = lazy(() => import('./pages/Support'));
 const Contact        = lazy(() => import('./pages/Contact'));
@@ -180,7 +182,15 @@ function AdminWrapper({ children }) {
 function App() {
   const location = useLocation();
   const { user } = useAuth();
+
+  // Full-bleed pages (error / offline) flip this on via ChromeContext so the
+  // global Navbar + Footer drop — even the catch-all 404, whose URL is unknown
+  // ahead of time and so can't be matched by a pathname prefix.
+  const [chromeHidden, setChromeHidden] = useState(false);
+  const chromeValue = useMemo(() => ({ setChromeHidden }), []);
+
   const hideNavbar =
+    chromeHidden ||
     location.pathname.startsWith('/dashboard') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/super-dashboard') ||
@@ -191,11 +201,15 @@ function App() {
   const hideFooter = hideNavbar || !!user; // public/app boundary AND only when logged out
 
   return (
-    <>
+    <ChromeContext.Provider value={chromeValue}>
       <ScrollToTop />
       <Toaster position="top-right" />
       <AnalyticsBridge />
-      <ConsentBanner variant={location.pathname.startsWith('/lp') ? 'slim' : 'full'} />
+      {/* Keep error / offline pages a clean single card — consent is still
+          surfaced on every normal page. */}
+      {!chromeHidden && (
+        <ConsentBanner variant={location.pathname.startsWith('/lp') ? 'slim' : 'full'} />
+      )}
       {!hideNavbar && <Navbar />}
       <RouteErrorBoundary>
       <Suspense fallback={<PageLoader />}>
@@ -341,6 +355,33 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/get-in-touch" element={<Contact />} />
 
+          {/* Branded error pages — config-driven (see config/errorCatalog.js).
+              One <ErrorPage> component renders all of them; adding a code = a
+              catalog entry + a <Route> here + the segment in reservedSegments.js.
+              Static paths out-rank the /:profileSlug catch-all in RR v6, but they
+              MUST precede it (and be reserved) so a user can't claim "/404". */}
+          <Route path="/400" element={<ErrorPage code={400} />} />
+          <Route path="/401" element={<ErrorPage code={401} />} />
+          <Route path="/403" element={<ErrorPage code={403} />} />
+          <Route path="/404" element={<ErrorPage code={404} />} />
+          <Route path="/405" element={<ErrorPage code={405} />} />
+          <Route path="/408" element={<ErrorPage code={408} />} />
+          <Route path="/409" element={<ErrorPage code={409} />} />
+          <Route path="/410" element={<ErrorPage code={410} />} />
+          <Route path="/413" element={<ErrorPage code={413} />} />
+          <Route path="/415" element={<ErrorPage code={415} />} />
+          <Route path="/422" element={<ErrorPage code={422} />} />
+          <Route path="/429" element={<ErrorPage code={429} />} />
+          <Route path="/500" element={<ErrorPage code={500} />} />
+          <Route path="/502" element={<ErrorPage code={502} />} />
+          <Route path="/503" element={<ErrorPage code={503} />} />
+          <Route path="/504" element={<ErrorPage code={504} />} />
+          {/* /maintenance is a friendly alias for the 503 maintenance page. */}
+          <Route path="/maintenance" element={<ErrorPage code={503} />} />
+          {/* /offline — reachable now; the Service Worker will serve it from
+              cache in a follow-up branch. */}
+          <Route path="/offline" element={<Offline />} />
+
           {/* Public host/service pages — specific before dynamic */}
           <Route path="/:profileSlug/badges" element={<BadgeShowcase />} />
           <Route path="/:profileSlug/product/:productId" element={<ProductPurchase />} />
@@ -369,12 +410,13 @@ function App() {
           <Route path="/reviews" element={<Navigate to="/user/reviews" replace />} />
           <Route path="/loyalty" element={<Navigate to="/user/loyalty" replace />} />
 
-          <Route path="*" element={<NotFound />} />
+          {/* Unknown URL → branded 404 (same component as the /404 route). */}
+          <Route path="*" element={<ErrorPage code={404} />} />
         </Routes>
       </Suspense>
       </RouteErrorBoundary>
       {!hideFooter && <Footer />}
-    </>
+    </ChromeContext.Provider>
   );
 }
 
