@@ -43,9 +43,8 @@ const CustomerReviews = () => {
     : "What hosts say about you after a session.";
 
   return (
-    <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
-      <div className="app-container py-8 max-w-2xl">
-        <div className="flex items-end justify-between gap-3 mb-6">
+    <>
+      <div className="flex items-end justify-between gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold">Reviews</h1>
             <p className="text-sm text-gray-500 mt-0.5">{subcopy}</p>
@@ -123,8 +122,7 @@ const CustomerReviews = () => {
             })}
           </div>
         )}
-      </div>
-    </div>
+    </>
   );
 };
 

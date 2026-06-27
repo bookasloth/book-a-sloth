@@ -8,6 +8,7 @@ import AdminLayout from './components/common/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import HostRoute from './components/common/HostRoute';
 import GuestRoute from './components/common/GuestRoute';
+import GuestLayout from './components/common/GuestLayout';
 import AnalyticsBridge from './components/common/AnalyticsBridge';
 import ConsentBanner from './components/common/ConsentBanner';
 import ScrollToTop from './components/common/ScrollToTop';
@@ -345,11 +346,14 @@ function App() {
           <Route path="/:profileSlug" element={<HostProfile />} />
 
           {/* Guest (customer) space — /user/* . A host hitting these is bounced to
-              /dashboard by GuestRoute; a guest hitting /dashboard/* is bounced here. */}
-          <Route path="/user/my-bookings" element={<GuestRoute><CustomerBookings /></GuestRoute>} />
-          <Route path="/user/profile" element={<GuestRoute><CustomerProfile /></GuestRoute>} />
-          <Route path="/user/reviews" element={<GuestRoute><CustomerReviews /></GuestRoute>} />
-          <Route path="/user/loyalty" element={<GuestRoute><Loyalty /></GuestRoute>} />
+              /dashboard by GuestRoute; a guest hitting /dashboard/* is bounced here.
+              GuestLayout wraps them in the traveler shell (persistent tab bar). */}
+          <Route element={<GuestRoute><GuestLayout /></GuestRoute>}>
+            <Route path="/user/my-bookings" element={<CustomerBookings />} />
+            <Route path="/user/profile" element={<CustomerProfile />} />
+            <Route path="/user/reviews" element={<CustomerReviews />} />
+            <Route path="/user/loyalty" element={<Loyalty />} />
+          </Route>
 
           {/* Leave a review for one completed booking (booking-completed email CTA).
               Shared + ownership-checked: either party to a booking may use it, so it

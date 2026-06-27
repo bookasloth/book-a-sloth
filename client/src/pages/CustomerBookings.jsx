@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Eye, HelpCircle, ChevronDown, Download, X, Calendar, Clock,
-  Hash, IndianRupee, Video, RotateCcw, Star, Repeat,
+  Hash, IndianRupee, Video, RotateCcw, Star, Repeat, CalendarClock,
 } from "lucide-react";
 import { getGuestBookings, cancelBooking, getBookingReview } from "../services/api";
 import { downloadReceipt } from "../utils/receipt";
@@ -35,6 +35,17 @@ const fmtWhen = (iso) =>
     weekday: "short", day: "numeric", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit",
   });
+
+// Human "in 3 days" / "in 5 hr" / "in 20 min" countdown for the next-session hero.
+const relWhen = (iso) => {
+  const min = Math.round((new Date(iso) - new Date()) / 60000);
+  if (min < 1) return "starting now";
+  if (min < 60) return `in ${min} min`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `in ${hr} hr`;
+  const d = Math.round(hr / 24);
+  return d === 1 ? "tomorrow" : `in ${d} days`;
+};
 
 const shortId = (id) => (id ? `#${String(id).replace(/-/g, "").slice(0, 8).toUpperCase()}` : "—");
 
@@ -71,6 +82,38 @@ const downloadInvoice = (b, host) => {
     platformFeeGst: Number(b.platform_fee_gst || 0),
     total: Number(b.customer_total || 0),
   });
+};
+
+// Hero card for the soonest upcoming session — the guest's "what now" at a glance.
+const HeroNext = ({ b, host, count, onDetails }) => {
+  const svc = b.services || {};
+  return (
+    <div className="rounded-2xl p-5 sm:p-6 mb-5 text-white relative overflow-hidden"
+      style={{ background: "linear-gradient(135deg,#FE5100,#ff7a3c)" }}>
+      <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide opacity-90">
+        <CalendarClock size={14} /> Your next session · {relWhen(b.scheduled_at)}
+      </p>
+      <p className="text-lg sm:text-xl font-bold mt-1.5 truncate">{svc.title || "Service"}</p>
+      <p className="text-sm opacity-90 mt-0.5">
+        with {host.name || "Host"} · {fmtWhen(b.scheduled_at)}
+      </p>
+      <div className="flex flex-wrap items-center gap-2 mt-4">
+        {b.meeting_link && (
+          <a href={b.meeting_link} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#FE5100] bg-white rounded-xl px-4 py-2 hover:bg-white/90 hover:no-underline">
+            <Video size={15} /> Join
+          </a>
+        )}
+        <button onClick={onDetails}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-white border border-white/40 rounded-xl px-4 py-2 hover:bg-white/10">
+          <Eye size={15} /> Details
+        </button>
+        {count > 1 && (
+          <span className="text-xs opacity-80 ml-auto">+{count - 1} more upcoming</span>
+        )}
+      </div>
+    </div>
+  );
 };
 
 const CustomerBookings = () => {
@@ -130,6 +173,12 @@ const CustomerBookings = () => {
 
   const hostOf = (b) => b["profiles!bookings_host_id_fkey"] || b.profiles || {};
 
+  // Soonest future session — drives the hero card at the top of the page.
+  const nextUp = bookings
+    .filter(isUpcoming)
+    .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+  const next = nextUp[0];
+
   const Row = ({ b }) => {
     const host = hostOf(b);
     const svc = b.services || {};
@@ -179,9 +228,8 @@ const CustomerBookings = () => {
   const activeFilterLabel = FILTERS.find((f) => f.key === filter)?.label;
 
   return (
-    <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
-      <div className="app-container py-8 max-w-2xl">
-        <div className="flex items-start justify-between gap-3 mb-6">
+    <>
+      <div className="flex items-start justify-between gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold">My Bookings</h1>
             <p className="text-sm text-gray-500 mt-0.5">
@@ -208,6 +256,11 @@ const CustomerBookings = () => {
           </div>
         </div>
 
+        {next && (
+          <HeroNext b={next} host={hostOf(next)} count={nextUp.length}
+            onDetails={() => setDetailsFor(next)} />
+        )}
+
         {loading ? (
           <div className="text-center py-16 text-gray-400">
             <div className="w-7 h-7 border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin mx-auto" />
@@ -231,7 +284,6 @@ const CustomerBookings = () => {
         <div className="text-center mt-6">
           <Link to="/" className="text-sm text-[#FE5100] hover:underline">Browse creators →</Link>
         </div>
-      </div>
 
       {/* Details drawer/modal */}
       {detailsFor && (
@@ -263,7 +315,7 @@ const CustomerBookings = () => {
           onClose={() => setReviewFor(null)}
           onDone={(review) => { setReviews((m) => ({ ...m, [reviewFor.id]: review })); setReviewFor(null); }} />
       )}
-    </div>
+    </>
   );
 };
 

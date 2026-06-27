@@ -27,8 +27,9 @@ test('upcoming → Details modal shows Reschedule + Cancel', async () => {
   getGuestBookings.mockResolvedValue({ data: [upcoming] });
   getBookingReview.mockResolvedValue({ data: null });
   renderPage();
-  await waitFor(() => screen.getByText('Coaching'));
-  fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+  // Upcoming booking now appears twice: the "next session" hero + the list row.
+  await waitFor(() => screen.getAllByText('Coaching'));
+  fireEvent.click(screen.getAllByRole('button', { name: /Details/i })[0]);
   await waitFor(() => screen.getByText('Booking details'));
   expect(screen.getByRole('button', { name: /Reschedule/i })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Cancel booking/i })).toBeInTheDocument();
@@ -50,8 +51,8 @@ test('reschedule hidden in Details when flag off', async () => {
   getGuestBookings.mockResolvedValue({ data: [upcoming] });
   getBookingReview.mockResolvedValue({ data: null });
   renderPage();
-  await waitFor(() => screen.getByText('Coaching'));
-  fireEvent.click(screen.getByRole('button', { name: /Details/i }));
+  await waitFor(() => screen.getAllByText('Coaching'));
+  fireEvent.click(screen.getAllByRole('button', { name: /Details/i })[0]);
   await waitFor(() => screen.getByText('Booking details'));
   expect(screen.queryByRole('button', { name: /Reschedule/i })).toBeNull();
 });
