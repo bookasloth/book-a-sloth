@@ -31,9 +31,8 @@ const Loyalty = () => {
   const spent = 0;
 
   return (
-    <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
-      <div className="app-container py-8 max-w-3xl">
-        {/* Header / coming soon banner */}
+    <>
+      {/* Header / coming soon banner */}
         <div className="rounded-2xl p-6 sm:p-8 mb-6 text-white relative overflow-hidden"
           style={{ background: "linear-gradient(135deg,#FE5100,#ff7a3c)" }}>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-90">
@@ -84,8 +83,7 @@ const Loyalty = () => {
           </p>
           <Link to="/" className="inline-block text-sm font-medium text-[#FE5100] hover:underline mt-3">Explore creators →</Link>
         </div>
-      </div>
-    </div>
+    </>
   );
 };
 

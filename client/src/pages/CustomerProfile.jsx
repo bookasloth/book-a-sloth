@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { Camera, Loader2, Mail, Phone, User, Calendar, Users, Lock } from "lucide-react";
 import { getMe, updateMe, uploadImage } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -88,9 +87,8 @@ const CustomerProfile = () => {
     "w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:border-[#FE5100] focus:ring-1 focus:ring-[#FE5100] outline-none disabled:bg-gray-50 disabled:text-gray-400";
 
   return (
-    <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
-      <div className="app-container py-8 max-w-2xl">
-        <div className="flex items-center justify-between mb-6">
+    <>
+      <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">My Profile</h1>
             <p className="text-sm text-gray-500 mt-0.5">Manage your personal details.</p>
@@ -167,9 +165,7 @@ const CustomerProfile = () => {
         <p className="flex items-center gap-1.5 text-xs text-gray-400 mt-4">
           <Lock size={12} /> Your details are private and never shown to hosts beyond your bookings.
         </p>
-        <Link to="/user/my-bookings" className="text-sm text-[#FE5100] hover:underline mt-3 inline-block">← Back to bookings</Link>
-      </div>
-    </div>
+    </>
   );
 };
 
