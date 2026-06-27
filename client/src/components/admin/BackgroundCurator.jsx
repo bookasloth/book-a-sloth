@@ -42,7 +42,7 @@ export default function BackgroundCurator({ value, onChange }) {
               <label key={p.key} className="mt-2 flex items-center justify-between gap-2 text-sm">
                 {p.label}
                 <select
-                  value={params[p.key]}
+                  value={params[p.key] ?? p.options[0]}
                   onChange={(e) => patch(b.key, { params: { ...params, [p.key]: e.target.value } })}
                   className="rounded border-gray-300 text-sm">
                   {p.options.map((o) => <option key={o} value={o}>{o}</option>)}

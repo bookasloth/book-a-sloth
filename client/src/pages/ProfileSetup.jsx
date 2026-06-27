@@ -513,7 +513,7 @@ const ProfileSetup = () => {
               {/* Page background */}
               <div>
                 <h3 className="mb-1 text-sm font-semibold text-gray-800">Page background</h3>
-                <p className="mb-3 text-xs text-gray-400">Animated backdrop shown at the top of your public profile.</p>
+                <p className="mb-3 text-xs text-gray-400">Animated backdrop shown at the top of your service pages, in your brand colour.</p>
                 <BackgroundPicker
                   color={tc}
                   enabled={enabledBackgrounds}
