@@ -11,6 +11,41 @@ const TAG_STYLES = {
   Security: { bg: 'rgba(124,58,237,0.10)', fg: '#7c3aed' },
 };
 
+// Decorative animated mesh backdrop for the changelog.
+// Brief composition (top → bottom): orange dominant (~50%), with blue,
+// green-yellow, white, black and pink accents woven in as soft radial
+// "blobs" that slowly drift + breathe for a fluid, organic feel. Top is
+// kept lighter so the dark header stays legible; orange deepens through
+// the middle; cooler/darker notes settle low. Motion = cheap GPU
+// transforms only; honours prefers-reduced-motion (see <style> below).
+const BASE_WASH =
+  'linear-gradient(180deg, #FFE7D2 0%, #FF8A3D 24%, #FE5100 55%, #D64400 84%, #B23800 100%)';
+
+// Each blob: position + size + radial fill + which drift animation it rides.
+const BLOBS = [
+  // white highlight, top-left — lifts the header (dominant readability zone)
+  { top: '-8%',  left: '-6%',  w: '60%', h: '55%', anim: 'clDrift1', dur: '17s', delay: '0s',
+    fill: 'radial-gradient(closest-side, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%)' },
+  // pink accent, top-right
+  { top: '-10%', left: '58%',  w: '55%', h: '50%', anim: 'clDrift2', dur: '21s', delay: '-4s',
+    fill: 'radial-gradient(closest-side, rgba(255,77,141,0.6) 0%, rgba(255,77,141,0) 70%)' },
+  // bright orange core, upper-mid (dominant)
+  { top: '12%',  left: '20%',  w: '75%', h: '60%', anim: 'clDrift3', dur: '19s', delay: '-2s',
+    fill: 'radial-gradient(closest-side, rgba(255,122,46,0.85) 0%, rgba(255,122,46,0) 72%)' },
+  // green-yellow accent, mid-right
+  { top: '42%',  left: '66%',  w: '52%', h: '48%', anim: 'clDrift1', dur: '23s', delay: '-7s',
+    fill: 'radial-gradient(closest-side, rgba(185,217,0,0.5) 0%, rgba(185,217,0,0) 70%)' },
+  // blue accent, mid-left
+  { top: '52%',  left: '-12%', w: '55%', h: '50%', anim: 'clDrift2', dur: '20s', delay: '-9s',
+    fill: 'radial-gradient(closest-side, rgba(37,99,235,0.45) 0%, rgba(37,99,235,0) 70%)' },
+  // deep orange pool, lower-mid (dominant)
+  { top: '64%',  left: '28%',  w: '80%', h: '60%', anim: 'clDrift3', dur: '18s', delay: '-5s',
+    fill: 'radial-gradient(closest-side, rgba(214,68,0,0.95) 0%, rgba(214,68,0,0) 72%)' },
+  // black settle, bottom-right
+  { top: '74%',  left: '70%',  w: '55%', h: '50%', anim: 'clDrift1', dur: '25s', delay: '-3s',
+    fill: 'radial-gradient(closest-side, rgba(11,11,11,0.5) 0%, rgba(11,11,11,0) 68%)' },
+];
+
 const RELEASES = [
   {
     date: 'Jun 27, 2026', version: 'v3.5',
@@ -219,7 +254,39 @@ const Changelog = () => {
   }, []);
 
   return (
-    <div className="app-container py-12 sm:py-16">
+    <div className="relative isolate">
+      {/* Decorative animated mesh backdrop (fixed, full-bleed) */}
+      <style>{`
+        @keyframes clDrift1 { 0%,100% { transform: translate3d(0,0,0) scale(1); }
+          50% { transform: translate3d(4%,6%,0) scale(1.12); } }
+        @keyframes clDrift2 { 0%,100% { transform: translate3d(0,0,0) scale(1.05); }
+          50% { transform: translate3d(-5%,4%,0) scale(0.92); } }
+        @keyframes clDrift3 { 0%,100% { transform: translate3d(0,0,0) scale(0.96); }
+          50% { transform: translate3d(3%,-5%,0) scale(1.1); } }
+        @media (prefers-reduced-motion: reduce) {
+          .cl-blob { animation: none !important; }
+        }
+      `}</style>
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 -z-10 overflow-hidden"
+        style={{ backgroundColor: '#FF5A12', backgroundImage: BASE_WASH }}
+      >
+        {BLOBS.map((b, i) => (
+          <span
+            key={i}
+            className="cl-blob absolute"
+            style={{
+              top: b.top, left: b.left, width: b.w, height: b.h,
+              backgroundImage: b.fill,
+              animation: `${b.anim} ${b.dur} ease-in-out ${b.delay} infinite`,
+              willChange: 'transform',
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="app-container py-12 sm:py-16">
       <div className="mx-auto max-w-3xl">
         {/* Header */}
         <header className="text-center">
@@ -293,6 +360,7 @@ const Changelog = () => {
             Become a host
           </Link>
         </div>
+      </div>
       </div>
     </div>
   );
