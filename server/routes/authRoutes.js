@@ -42,8 +42,11 @@ router.post('/login-phone', authLimiter, loginWithPhone);
 router.post('/verify-otp-login', otpLimiter, otpContactLimiter, verifyOtpLogin);
 router.post('/set-password', protect, setPassword);
 
-// Password reset (OTP-based, works for user/vendor/admin)
-router.post('/forgot-password', otpLimiter, forgotPassword);
+// Password reset (OTP-based, works for user/vendor/admin) — IP-keyed +
+// contact-keyed limiters stacked (P2-2): otpLimiter alone (per-IP) is bypassed
+// by rotating source IPs to spray reset codes at one victim's email
+// (email bombing). otpContactLimiter caps per-email regardless of IP.
+router.post('/forgot-password', otpLimiter, otpContactLimiter, forgotPassword);
 router.post('/reset-password', authLimiter, resetPassword);
 
 // Shared

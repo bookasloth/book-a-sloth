@@ -233,6 +233,22 @@ const newsletterIpLimiter = rateLimit({
   skip: skipWhenLoadTest,
 });
 
+// File uploads — each call streams up to 2MB into Supabase Storage, so cap
+// them tighter than the global apiLimiter to stop an authenticated account from
+// burning storage/bandwidth. Keyed per ACCOUNT (req.user.id), set by `protect`
+// which MUST run before this limiter, so legit hosts sharing an IP (corporate /
+// carrier-grade NAT) don't collide; falls back to IP if somehow unauthenticated.
+const uploadLimiter = rateLimit({
+  store: makeRateLimitStore('upload'),
+  windowMs: 15 * 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id || req.ip,
+  message: { message: 'Too many uploads. Please wait a few minutes and try again.' },
+  skip: skipWhenLoadTest,
+});
+
 // Slow down abusive request floods — secondary to apiLimiter (100/min hard cap).
 //
 // PROVEN BUG (fixed): the old config (delayAfter:50, delayMs: hits*200, no cap)
@@ -332,6 +348,7 @@ module.exports = {
   otpContactLimiter,
   slugLimiter,
   slotsLimiter,
+  uploadLimiter,
   freeDownloadLimiter,
   freeDownloadIpLimiter,
   newsletterEmailLimiter,
