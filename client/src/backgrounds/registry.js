@@ -37,6 +37,18 @@ export const BACKGROUNDS = [
       { key: 'speed', label: 'Speed', type: 'select', options: ['calm', 'normal', 'lively'] },
     ],
   },
+  {
+    key: 'holi',
+    label: 'Holi',
+    seasonal: true,
+    thumbnail: '/backgrounds/holi.svg',
+    Component: lazy(() => import('./engines/Holi.jsx')),
+    defaultParams: { intensity: 'med', speed: 'calm' },
+    paramSchema: [
+      { key: 'intensity', label: 'Intensity', type: 'select', options: ['soft', 'med', 'vivid'] },
+      { key: 'speed', label: 'Speed', type: 'select', options: ['calm', 'normal', 'lively'] },
+    ],
+  },
 ];
 
 export const backgroundKeys = BACKGROUNDS.map((b) => b.key);
