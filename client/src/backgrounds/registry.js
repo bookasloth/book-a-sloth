@@ -49,6 +49,18 @@ export const BACKGROUNDS = [
       { key: 'speed', label: 'Speed', type: 'select', options: ['calm', 'normal', 'lively'] },
     ],
   },
+  {
+    key: 'diwali',
+    label: 'Diwali',
+    seasonal: true,
+    thumbnail: '/backgrounds/diwali.svg',
+    Component: lazy(() => import('./engines/Diwali.jsx')),
+    defaultParams: { glow: 'med', rate: 'calm' },
+    paramSchema: [
+      { key: 'glow', label: 'Glow', type: 'select', options: ['soft', 'med', 'bright'] },
+      { key: 'rate', label: 'Fireworks', type: 'select', options: ['calm', 'normal', 'lively'] },
+    ],
+  },
 ];
 
 export const backgroundKeys = BACKGROUNDS.map((b) => b.key);
