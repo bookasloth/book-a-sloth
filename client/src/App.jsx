@@ -50,6 +50,7 @@ const CalendlyAlternative  = lazy(() => import('./pages/lp/CalendlyAlternative')
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
 const HostLogin      = lazy(() => import('./pages/HostLogin'));
+const Changelog      = lazy(() => import('./pages/Changelog'));
 const GoogleAuthDone = lazy(() => import('./pages/GoogleAuthDone'));
 
 // Vendor Onboarding (Google-first 7-step flow)
@@ -210,6 +211,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/help" element={<Help />} />
+          <Route path="/changelog" element={<Changelog />} />
           <Route path="/about" element={<About />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/careers/:jobSlug" element={<JobDetail />} />
