@@ -101,14 +101,8 @@ const VendorSignup = () => {
 
         <p className="text-sm text-gray-500 mt-4 text-center">
           Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline">
+          <Link to="/login-as-vendor" className="text-primary hover:underline">
             Login
-          </Link>
-        </p>
-        <p className="text-sm text-gray-500 mt-1 text-center">
-          Want to book services instead?{" "}
-          <Link to="/signup" className="text-primary hover:underline">
-            Sign up as a user
           </Link>
         </p>
       </div>

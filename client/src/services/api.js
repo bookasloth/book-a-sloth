@@ -71,10 +71,14 @@ API.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+      // Route by capability: an expired host always lands on the host login
+      // door, never the generic guest /login.
+      const expired = JSON.parse(localStorage.getItem('user') || 'null');
+      const wasHost = expired?.is_host === true || expired?.role === 'host' || expired?.role === 'superadmin';
       localStorage.removeItem('user');
       refreshQueue.forEach((p) => p.reject(new Error('Session expired')));
       refreshQueue = [];
-      window.location.href = '/login';
+      window.location.href = wasHost ? '/login-as-vendor' : '/login';
     }
     return Promise.reject(error);
   }

@@ -168,9 +168,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    // Route by capability BEFORE clearing: a host always lands back on the
+    // host login door (never the generic guest /login); everyone else → home.
+    const wasHost = user?.is_host === true || user?.role === 'host' || user?.role === 'superadmin';
     await supabase.auth.signOut();
     localStorage.removeItem('user');
     setUser(null);
+    window.location.assign(wasHost ? '/login-as-vendor' : '/');
   };
 
   const updateUser = (updatedData) => {
