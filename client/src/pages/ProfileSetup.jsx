@@ -288,6 +288,14 @@ const ProfileSetup = () => {
         <Tab id="social"       label="Social Links" />
         <Tab id="appearance"   label="Appearance" />
         <Tab id="integrations" label="Integrations" />
+        {/* Plan lives on its own page; this tab just links out. */}
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard/upgrade')}
+          className="relative whitespace-nowrap px-1 pb-3 text-sm font-medium text-gray-500 transition-colors hover:text-gray-800"
+        >
+          Plan
+        </button>
       </div>
 
       <form onSubmit={handleSubmit}>

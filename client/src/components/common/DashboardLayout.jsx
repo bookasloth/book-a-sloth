@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Clock, LayoutGrid, Package, LineChart,
-  Banknote, Receipt, User, Crown, MessageSquare, Menu, X,
+  Banknote, Receipt, User, Menu, X,
   ExternalLink, ShieldCheck, LogOut, Lock, ArrowUpRight, Wallet,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -40,8 +40,6 @@ const NAV_GROUPS = [
     label: 'Account',
     items: [
       { to: '/dashboard/profile', label: 'Profile', icon: User },
-      { to: '/dashboard/upgrade', label: 'Plan', icon: Crown },
-      { to: '/dashboard/feedback', label: 'Feedback', icon: MessageSquare, flag: 'vendor_feedback' },
     ],
   },
 ];
@@ -61,8 +59,6 @@ const MORE_LINKS = [
   { to: '/dashboard/payments/payouts', label: 'Payouts', icon: Banknote },
   { to: '/dashboard/payments/transactions', label: 'Transactions', icon: Receipt },
   { to: '/dashboard/profile', label: 'Profile', icon: User },
-  { to: '/dashboard/upgrade', label: 'Plan', icon: Crown },
-  { to: '/dashboard/feedback', label: 'Feedback', icon: MessageSquare, flag: 'vendor_feedback' },
 ];
 
 const PLAN_STYLES = {
