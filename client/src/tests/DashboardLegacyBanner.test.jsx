@@ -6,6 +6,7 @@ vi.mock('../services/api', () => ({
   getHostBookings: vi.fn(() => Promise.resolve({ data: [] })),
   getMyServices: vi.fn(() => Promise.resolve({ data: [] })),
   getGuestBookings: vi.fn(() => Promise.resolve({ data: [] })),
+  getPayoutBalance: vi.fn(() => Promise.resolve({ data: {} })),
 }));
 vi.mock('react-hot-toast', () => ({ default: Object.assign(() => {}, { success: () => {}, error: () => {} }) }));
 

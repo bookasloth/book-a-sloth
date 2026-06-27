@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
 import ModeSwitch from './ModeSwitch';
 import { isHost, routeRole } from '../../utils/roleRoutes';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../services/api';
-import toast from 'react-hot-toast';
 import {
   Home, Tag, HelpCircle,
   CalendarCheck, MessageCircle, Bookmark, BarChart2,
@@ -117,10 +116,9 @@ const TagPill = ({ text }) =>
 // ── Main component ────────────────────────────────────────────────────────────
 
 const Navbar = () => {
-  const { user, logout, mode, setMode, becomeHost } = useAuth();
+  const { user, logout, mode, setMode } = useAuth();
   const appearance = useAppearance();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const [menuOpen,    setMenuOpen]    = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -152,20 +150,6 @@ const Navbar = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (notifOpen) loadNotifs(); }, [notifOpen]);
 
-  // "Become a host" — adds hosting to the CURRENT account, then enters the
-  // existing onboarding (no separate account). Errors surface as a toast.
-  const startHosting = async () => {
-    try {
-      const updated = await becomeHost();
-      setDropdownOpen(false);
-      setMenuOpen(false);
-      const slug = updated?.onboarding_slug || updated?.username;
-      if (updated?.onboarding_completed || !slug) navigate('/dashboard');
-      else navigate(`/vendor-register/${slug}/claim`);
-    } catch (e) {
-      toast.error(e.response?.data?.message || 'Could not start hosting');
-    }
-  };
 
   const badges = { messages: 0, notifications: unread };
 
@@ -414,20 +398,6 @@ const Navbar = () => {
                         })}
                       </div>
 
-                      {/* Become a host (guests only) */}
-                      {!canHost && (
-                        <div className="border-t border-gray-100 py-1">
-                          <button
-                            onClick={startHosting}
-                            role="menuitem"
-                            className="flex w-full items-center gap-3 px-4 py-2.5 text-[13px] font-medium text-[#FE5100] hover:bg-[#FE5100]/5 transition-colors duration-150 outline-none"
-                          >
-                            <Briefcase size={15} className="flex-shrink-0" />
-                            Become a host
-                          </button>
-                        </div>
-                      )}
-
                       {/* Logout */}
                       <div className="border-t border-gray-100 py-1">
                         <button
@@ -606,17 +576,6 @@ const Navbar = () => {
                     );
                   })}
                 </div>
-
-                {/* Become a host (guests only) */}
-                {!canHost && (
-                  <button
-                    onClick={startHosting}
-                    className="flex w-full items-center gap-3 px-3 py-2.5 mt-1 text-[13px] font-medium text-[#FE5100] hover:bg-[#FE5100]/5 rounded-lg transition-colors duration-150"
-                  >
-                    <Briefcase size={16} className="flex-shrink-0" />
-                    Become a host
-                  </button>
-                )}
 
                 {/* Logout */}
                 <button

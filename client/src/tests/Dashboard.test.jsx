@@ -10,6 +10,7 @@ import { MemoryRouter } from 'react-router-dom';
 vi.mock('../services/api', () => ({
   getHostBookings:  vi.fn().mockResolvedValue({ data: [] }),
   getMyServices:    vi.fn().mockResolvedValue({ data: [] }),
+  getPayoutBalance: vi.fn().mockResolvedValue({ data: {} }),
 }));
 
 vi.mock('../context/AuthContext', () => ({

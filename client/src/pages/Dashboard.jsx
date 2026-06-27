@@ -3,10 +3,10 @@ import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CalendarClock, CheckCircle2, XCircle, CalendarDays, LayoutGrid, IndianRupee,
   UserCheck, Activity, Camera, UserCog, Tag, CalendarCheck, CreditCard, ShieldCheck,
-  Check, ArrowRight, Copy, Link2, MessageCircle,
+  Check, ArrowRight, Copy, Link2, MessageCircle, Wallet,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getHostBookings, getMyServices } from '../services/api';
+import { getHostBookings, getMyServices, getPayoutBalance } from '../services/api';
 import toast from 'react-hot-toast';
 import Modal from '../components/booking/Modal';
 import WhatsAppVerify from '../components/whatsapp/WhatsAppVerify';
@@ -48,6 +48,14 @@ const Stat = ({ Icon, label, value, tint, to }) => {
   );
 };
 
+// ── Money bit (one figure in the money-clarity strip) ────────────────────
+const MoneyBit = ({ label, value, tone }) => (
+  <span className="inline-flex flex-col">
+    <span className={cn('text-sm font-bold leading-none', tone)}>{value}</span>
+    <span className="mt-0.5 text-[11px] text-gray-400">{label}</span>
+  </span>
+);
+
 // ── Booking row (compact) ───────────────────────────────────────────────
 const BookingRow = ({ b }) => (
   <div className="flex items-center justify-between gap-3 py-2.5">
@@ -67,6 +75,7 @@ const Dashboard = () => {
 
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
+  const [balance, setBalance] = useState(null);
   const [bannerDismissed, setBannerDismissed] = useState(
     () => localStorage.getItem('legacyPlanBannerDismissed') === '1'
   );
@@ -105,6 +114,9 @@ const Dashboard = () => {
     Promise.all([getHostBookings(), getMyServices()])
       .then(([b, s]) => { setBookings(b.data || []); setServices(s.data || []); })
       .catch(() => setLoadErr(true)); // P2-9: surface failure, don't render empty-as-error
+    // Settlement balance — fetched independently so a payout-balance hiccup
+    // never blanks the whole dashboard.
+    getPayoutBalance().then(({ data }) => setBalance(data)).catch(() => {});
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, [isHost]);
@@ -252,6 +264,20 @@ const Dashboard = () => {
             Review
           </Link>
         </div>
+      )}
+
+      {/* Money — settlement balance at a glance */}
+      {balance && (balance.available != null || balance.clearing != null || balance.pendingCompletion != null) && (
+        <Link to="/dashboard/payments/payouts"
+          className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-md border border-gray-200 bg-white px-4 py-3 transition-colors hover:border-primary/30 hover:no-underline">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <Wallet className="h-4 w-4 text-primary" strokeWidth={2.25} /> Money
+          </span>
+          <MoneyBit label="Available" value={fmtMoney(balance.available, { decimals: true })} tone="text-primary" />
+          <MoneyBit label="Clearing" value={fmtMoney(balance.clearing, { decimals: true })} tone="text-amber-600" />
+          <MoneyBit label="Pending" value={fmtMoney(balance.pendingCompletion, { decimals: true })} tone="text-gray-700" />
+          <ArrowRight className="ml-auto h-4 w-4 text-gray-300" strokeWidth={2.25} />
+        </Link>
       )}
 
       {/* 2 rows × 2 columns */}
