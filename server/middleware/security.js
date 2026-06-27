@@ -8,6 +8,8 @@ const slowDown = require('express-slow-down');
 const hpp = require('hpp');
 const { isLoadTestMode } = require('../config/loadTestMode');
 const { makeRateLimitStore } = require('./rateLimitStore');
+const { getClientIp } = require('../lib/clientIp');
+const ipBlocklist = require('../lib/ipBlocklist');
 
 // Load-test bypass: a single JMeter IP would trip every per-IP limiter
 // instantly. Off by default (isLoadTestMode() is false) → every limiter
@@ -314,6 +316,9 @@ const blockSuspiciousRequests = (req, res, next) => {
   const bodyStr = Buffer.isBuffer(req.body) ? '' : JSON.stringify(req.body);
   const payload = bodyStr + req.url + JSON.stringify(req.query);
   if (suspicious.some(p => p.test(payload))) {
+    // Unambiguous attack signature (SQLi/XSS/path-traversal) → auto-ban the source
+    // IP immediately (no repeat threshold). Fire-and-forget; never block the 400.
+    ipBlocklist.recordAttack(getClientIp(req), 'pattern').catch(() => {});
     return res.status(400).json({ message: 'Invalid request.' });
   }
   next();

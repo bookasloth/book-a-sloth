@@ -48,6 +48,16 @@ app.use(cors({
   credentials: true,
 }));
 
+// IP blocking — reject banned IPs early (after CORS so the 403 still carries CORS
+// headers, before the rate limiters) and feed the general auto-ban counter on
+// 429s. No-op when IP_BLOCK_ENABLED=false or under load-test mode; fails open if
+// the in-memory blocklist can't load (e.g. before migration v3.51 is applied), so
+// it can never take the site down. See middleware/ipGuard.js + lib/ipBlocklist.js.
+const { ipGuard, offenseTracker } = require('./middleware/ipGuard');
+const ipBlocklist = require('./lib/ipBlocklist');
+app.use(ipGuard);
+app.use(offenseTracker);
+
 // Raw body for Razorpay webhook (must come before express.json)
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
 
@@ -111,6 +121,7 @@ app.use('/api/categories',  require('./routes/categoryRoutes'));
 const { adminRouter: scAdminRouter, publicRouter: scPublicRouter } = require('./routes/serviceCategoryRoutes');
 app.use('/api/admin/service-categories', adminLimiter, scAdminRouter);
 app.use('/api/service-categories',       scPublicRouter);
+app.use('/api/admin/security', adminLimiter, require('./routes/adminSecurityRoutes')); // IP blocking mgmt (super-only)
 app.use('/api/explore',     require('./routes/exploreRoutes'));
 app.use('/api/vendors',        require('./routes/badgePublicRoutes'));
 app.use('/api/feature-flags',  require('./routes/featureFlagRoutes'));
@@ -265,12 +276,31 @@ setInterval(async () => {
   } catch (err) { console.error('Rate-limit cleanup cron error:', err.message); }
 }, 60 * 60 * 1000);
 
+// IP blocklist housekeeping — prune expired (non-permanent) bans so the table
+// can't grow unbounded under a sustained attack. Hourly; the cache already ignores
+// expired rows, so this is pure DB cleanup. No-op if the tables don't exist yet.
+setInterval(async () => {
+  try {
+    await runLocked('ip-block-prune', async () => {
+      const n = await ipBlocklist.pruneExpired();
+      if (n > 0) console.log(`IP blocklist: pruned ${n} expired bans`);
+    }, { leaseMs: 2 * 60 * 60 * 1000 });
+  } catch (err) { console.error('IP blocklist prune cron error:', err.message); }
+}, 60 * 60 * 1000);
+
 // Feature flags — seed any registry keys missing from the DB on boot (all ON,
 // never overwrites an admin's existing on/off choice). Best-effort; the admin
 // GET also re-syncs, so a transient boot failure self-heals.
 require('./controllers/featureFlagController').syncRegistry()
   .then(() => console.log('Feature flags synced'))
   .catch((err) => console.error('Feature flag sync error:', err.message));
+
+// IP blocklist — load active bans + allowlist into memory and start the periodic
+// re-sync. Best-effort: if the tables don't exist yet (pre-migration) it logs and
+// runs with an empty cache (fail-open), so boot never breaks.
+ipBlocklist.init()
+  .then(() => console.log('IP blocklist loaded'))
+  .catch((err) => console.error('IP blocklist init error:', err.message));
 
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => console.log('Server running on port ' + PORT));
