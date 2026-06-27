@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { adminGetAppearance, adminUpdateAppearance, adminUploadImage } from "../../services/api";
 import toast from "react-hot-toast";
+import BackgroundCurator from "../../components/admin/BackgroundCurator";
 
 const MODES = [
   { key: "icon_text", label: "Icon + Text", hint: "Brand mark plus the “Book A Sloth” wordmark." },
@@ -22,10 +23,22 @@ const AdminAppearance = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState("");
+  const [backgrounds, setBackgrounds] = useState({});
+  const [defaultBackground, setDefaultBackground] = useState("dotgrid");
+
+  // The save response returns `backgrounds` as an enabled-only array, so we
+  // re-seed the editable raw map from a fresh appearance payload instead.
+  const seedBackgrounds = (data) => {
+    setBackgrounds(data?.backgrounds || {});
+    setDefaultBackground(data?.default_background || "dotgrid");
+  };
 
   useEffect(() => {
     adminGetAppearance()
-      .then(({ data }) => setForm(data))
+      .then(({ data }) => {
+        setForm(data);
+        seedBackgrounds(data);
+      })
       .catch(() => toast.error("Failed to load appearance settings"))
       .finally(() => setLoading(false));
   }, []);
@@ -49,9 +62,21 @@ const AdminAppearance = () => {
   const save = async () => {
     setSaving(true);
     try {
-      const { data } = await adminUpdateAppearance(form);
+      const { data } = await adminUpdateAppearance({
+        ...form,
+        backgrounds,
+        default_background: defaultBackground,
+      });
       setForm(data);
-      toast.success("Logo settings saved");
+      // Refetch to restore the full raw backgrounds map (save response returns
+      // it as an enabled-only array, not the editable map).
+      try {
+        const { data: fresh } = await adminGetAppearance();
+        seedBackgrounds(fresh);
+      } catch {
+        /* keep current background state if the refetch fails */
+      }
+      toast.success("Appearance saved");
     } catch (e) {
       toast.error(e?.response?.data?.message || "Save failed");
     } finally {
@@ -138,13 +163,28 @@ const AdminAppearance = () => {
           ))}
         </div>
 
+        {/* Backgrounds */}
+        <div className="border-t pt-4">
+          <label className="block text-sm font-medium mb-1">Backgrounds</label>
+          <p className="text-xs text-gray-400 mb-3">
+            Curate the animated host-page backgrounds. Enable a type, tune its look, and pick a default.
+          </p>
+          <BackgroundCurator
+            value={{ backgrounds, default_background: defaultBackground }}
+            onChange={(v) => {
+              setBackgrounds(v.backgrounds);
+              setDefaultBackground(v.default_background);
+            }}
+          />
+        </div>
+
         <div className="flex justify-end pt-2 border-t">
           <button
             onClick={save}
             disabled={saving}
             className="btn bg-gray-900 text-white px-6 py-2.5 text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
           >
-            {saving ? "Saving…" : "Save logo settings"}
+            {saving ? "Saving…" : "Save appearance settings"}
           </button>
         </div>
       </div>
