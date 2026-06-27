@@ -10,7 +10,7 @@ import {
   getBookingReview,
 } from "../services/api";
 import toast from "react-hot-toast";
-import { ChevronLeft, ChevronRight, Eye, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Star, CalendarDays, User, Briefcase, CreditCard, Link2, Copy } from "lucide-react";
 import ReviewModal from "../components/booking/ReviewModal";
 import useFeatureFlags from "../hooks/useFeatureFlags";
 import StatusChip from "../components/common/StatusChip";
@@ -27,9 +27,26 @@ const fmtTime = (iso) =>
 const Row = ({ label, value, mono }) => (
   <div className="flex items-start justify-between gap-4">
     <span className="flex-shrink-0 text-xs text-gray-500">{label}</span>
-    <span className={cn("text-right text-xs font-medium text-gray-800", mono && "font-mono")}>{value}</span>
+    <span className={cn("text-right text-xs font-medium text-gray-800", mono && "break-all font-mono")}>{value}</span>
   </div>
 );
+
+// Icon-led card used to group booking-detail fields into clean sections.
+// On the details modal these sit in a 2-col grid on desktop and stack on mobile.
+const Section = ({ icon: Icon, title, children }) => (
+  <section className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+    <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+      <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+      {title}
+    </h4>
+    <div className="space-y-2">{children}</div>
+  </section>
+);
+
+const copy = (text, label) => {
+  if (!text) return;
+  navigator.clipboard?.writeText(String(text)).then(() => toast.success(`${label} copied`)).catch(() => {});
+};
 
 // ------ RESCHEDULE MODAL ------
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -259,134 +276,143 @@ const DetailsModal = ({ booking, onClose, onAction, review, onReviewDone }) => {
       />
     );
 
+  const isFree = booking.services?.price === 0;
+
   return (
-    <Modal open onClose={onClose} title="Booking Details" size="lg">
-      <div className="space-y-5">
-        <div className="flex items-center justify-between gap-3">
-          <p className="font-mono text-xs text-gray-400">#{booking.id.slice(0, 8).toUpperCase()}</p>
-          <StatusChip status={booking.status} />
+    <Modal open onClose={onClose} title="Booking Details" size="xl">
+      {/* Summary band — service, when, status, copyable id */}
+      <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-gray-100 bg-gradient-to-br from-primary/[0.06] to-transparent p-4">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-gray-900">{booking.services?.title || "Service"}</p>
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
+            <span>{fmtDate(booking.scheduled_at)}</span>
+            <span className="text-gray-300">&middot;</span>
+            <span>{fmtTime(dt)} &ndash; {fmtTime(endDt)}</span>
+            <span className="text-gray-300">&middot;</span>
+            <span>{booking.services?.duration || 30} min</span>
+          </p>
+          <button
+            type="button"
+            onClick={() => copy(booking.id, "Booking ID")}
+            title="Copy booking ID"
+            className="mt-1.5 inline-flex items-center gap-1 font-mono text-[11px] text-gray-400 transition-colors hover:text-primary"
+          >
+            #{booking.id.slice(0, 8).toUpperCase()}
+            <Copy className="h-3 w-3" />
+          </button>
         </div>
-
-        {/* Service */}
-        <section>
-          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Service</h4>
-          <div className="space-y-2 rounded-xl bg-gray-50 p-4">
-            <Row label="Service" value={booking.services?.title || "N/A"} />
-            <Row label="Duration" value={(booking.services?.duration || 30) + " min"} />
-            <Row label="Price" value={booking.services?.price === 0 ? "Free" : `₹${booking.services?.price}`} />
-            <Row label="Mode" value={booking.services?.meeting_mode === "offline" ? "In-person" : "Online"} />
-          </div>
-        </section>
-
-        {/* Booking Date & Time */}
-        <section>
-          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Booking Date & Time</h4>
-          <div className="space-y-2 rounded-xl bg-gray-50 p-4">
-            <Row label="Date" value={fmtDate(booking.scheduled_at)} />
-            <Row label="Time Slot" value={fmtTime(dt) + " - " + fmtTime(endDt)} />
-            <Row label="Booked on" value={fmtDate(booking.created_at)} />
-            {booking.notes && <Row label="Notes" value={booking.notes} />}
-          </div>
-        </section>
-
-        {/* Customer */}
-        <section>
-          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Customer Details</h4>
-          <div className="space-y-2 rounded-xl bg-gray-50 p-4">
-            <Row label="Name" value={booking.guest_name || "Guest"} />
-            <Row label="Email" value={booking.guest_email || "-"} />
-            <Row label="Phone" value={booking.guest_phone || "-"} />
-          </div>
-        </section>
-
-        {/* Payment */}
-        <section>
-          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Payment Details</h4>
-          <div className="space-y-2 rounded-xl bg-gray-50 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">Payment Status</span>
-              <StatusBadge status={booking.payment_status} />
-            </div>
-            <Row label="Total Amount" value={booking.services?.price === 0 ? "Free" : `₹${booking.services?.price}`} />
-            {booking.vendor_amount != null && <Row label="Your Earnings" value={`₹${booking.vendor_amount}`} />}
-            {booking.platform_fee_amount != null && <Row label="Platform Fee" value={`₹${booking.platform_fee_amount}`} />}
-            {booking.razorpay_order_id && <Row label="Order Ref" value={booking.razorpay_order_id} mono />}
-            {booking.razorpay_payment_id && <Row label="Payment Ref" value={booking.razorpay_payment_id} mono />}
-            {booking.meeting_link && (
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Meet Link</span>
-                <a href={booking.meeting_link} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">Join</a>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Reschedule status */}
-        {booking.reschedule_status && booking.reschedule_status !== "none" && (
-          <div className={cn("rounded-xl px-4 py-3 text-xs font-medium", booking.reschedule_status === "acknowledged" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700")}>
-            {booking.reschedule_status === "awaiting_guest_ack"
-              ? "Awaiting guest acknowledgement of reschedule"
-              : "Guest acknowledged the new time"}
-          </div>
-        )}
-
-        {/* Actions */}
-        {confirming ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-            <p className="mb-3 text-sm font-medium text-red-700">
-              {confirming === "cancel"
-                ? booking.payment_status === "paid"
-                  ? "Cancel this paid booking? The guest will be notified. Cancelling does NOT refund automatically — process any refund manually."
-                  : "Cancel this booking? The guest will be notified."
-                : confirming === "no_show"
-                ? "Mark this booking as a no-show? Use this when the guest did not attend."
-                : "Mark as completed?"}
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" full onClick={() => setConfirming(null)}>Back</Button>
-              <Button full variant={confirming === "cancel" ? "danger" : "primary"} onClick={() => doAction(confirming)} disabled={busy}>
-                {busy ? "..." : confirming === "cancel" ? "Yes, cancel" : confirming === "no_show" ? "Yes, no-show" : "Yes, complete"}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {booking.status === "confirmed" && new Date(booking.scheduled_at) > new Date() && (
-              <Button variant="outline" className="min-w-[120px] flex-1 text-primary" onClick={() => setShowReschedule(true)}>Reschedule</Button>
-            )}
-            {booking.status === "confirmed" && new Date(booking.scheduled_at) <= new Date() && (
-              <Button className="min-w-[120px] flex-1" onClick={() => setConfirming("complete")}>Mark Completed</Button>
-            )}
-            {booking.status === "confirmed" && new Date(booking.scheduled_at) <= new Date() && (
-              <Button variant="outline" className="min-w-[120px] flex-1" onClick={() => setConfirming("no_show")}>No-show</Button>
-            )}
-            {booking.status !== "cancelled" && booking.status !== "completed" && booking.status !== "no_show" && (
-              <Button variant="danger-outline" className="min-w-[120px] flex-1" onClick={() => setConfirming("cancel")}>Cancel Booking</Button>
-            )}
-            {booking.status === "completed" && on("review_submission") && booking.guest_id && !review && (
-              <Button className="min-w-[120px] flex-1" onClick={() => setShowReview(true)}>Review Guest</Button>
-            )}
-          </div>
-        )}
-
-        {/* Review submitted card — host's existing review of this guest */}
-        {booking.status === "completed" && on("review_submission") && booking.guest_id && review && (
-          <div className="mt-3 rounded-xl border bg-green-50/60 border-green-200 px-4 py-3">
-            <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-700">
-                <Star size={14} className="fill-green-600 text-green-600" /> Review submitted
-              </span>
-              <button onClick={() => setShowReview(true)} className="text-xs font-medium text-[#FE5100] hover:underline">
-                Edit review
-              </button>
-            </div>
-            <p className="mt-1 text-[#FE5100] text-sm tracking-tight">
-              {"★".repeat(review.rating)}<span className="text-gray-300">{"★".repeat(5 - review.rating)}</span>
-            </p>
-            {review.comment && <p className="mt-1 text-sm text-gray-600 leading-relaxed">{review.comment}</p>}
-          </div>
-        )}
+        <StatusChip status={booking.status} />
       </div>
+
+      {/* Two-column section grid on desktop; stacks on mobile. Equal-height
+          rows come for free from the grid's default stretch alignment. */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Section icon={CalendarDays} title="Schedule">
+          <Row label="Date" value={fmtDate(booking.scheduled_at)} />
+          <Row label="Time Slot" value={fmtTime(dt) + " - " + fmtTime(endDt)} />
+          <Row label="Booked on" value={fmtDate(booking.created_at)} />
+          {booking.notes && <Row label="Notes" value={booking.notes} />}
+        </Section>
+
+        <Section icon={User} title="Customer">
+          <Row label="Name" value={booking.guest_name || "Guest"} />
+          <Row label="Email" value={booking.guest_email || "-"} />
+          <Row label="Phone" value={booking.guest_phone || "-"} />
+        </Section>
+
+        <Section icon={Briefcase} title="Service">
+          <Row label="Service" value={booking.services?.title || "N/A"} />
+          <Row label="Duration" value={(booking.services?.duration || 30) + " min"} />
+          <Row label="Price" value={isFree ? "Free" : `₹${booking.services?.price}`} />
+          <Row label="Mode" value={booking.services?.meeting_mode === "offline" ? "In-person" : "Online"} />
+        </Section>
+
+        <Section icon={CreditCard} title="Payment">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500">Status</span>
+            <StatusBadge status={booking.payment_status} />
+          </div>
+          <Row label="Total Amount" value={isFree ? "Free" : `₹${booking.services?.price}`} />
+          {booking.vendor_amount != null && <Row label="Your Earnings" value={`₹${booking.vendor_amount}`} />}
+          {booking.platform_fee_amount != null && <Row label="Platform Fee" value={`₹${booking.platform_fee_amount}`} />}
+          {booking.razorpay_order_id && <Row label="Order Ref" value={booking.razorpay_order_id} mono />}
+          {booking.razorpay_payment_id && <Row label="Payment Ref" value={booking.razorpay_payment_id} mono />}
+          {booking.meeting_link && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">Meet Link</span>
+              <a href={booking.meeting_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                <Link2 className="h-3 w-3" /> Join
+              </a>
+            </div>
+          )}
+        </Section>
+      </div>
+
+      {/* Reschedule status */}
+      {booking.reschedule_status && booking.reschedule_status !== "none" && (
+        <div className={cn("mt-3 rounded-xl px-4 py-3 text-xs font-medium", booking.reschedule_status === "acknowledged" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700")}>
+          {booking.reschedule_status === "awaiting_guest_ack"
+            ? "Awaiting guest acknowledgement of reschedule"
+            : "Guest acknowledged the new time"}
+        </div>
+      )}
+
+      {/* Actions */}
+      {confirming ? (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+          <p className="mb-3 text-sm font-medium text-red-700">
+            {confirming === "cancel"
+              ? booking.payment_status === "paid"
+                ? "Cancel this paid booking? The guest will be notified. Cancelling does NOT refund automatically — process any refund manually."
+                : "Cancel this booking? The guest will be notified."
+              : confirming === "no_show"
+              ? "Mark this booking as a no-show? Use this when the guest did not attend."
+              : "Mark as completed?"}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" full onClick={() => setConfirming(null)}>Back</Button>
+            <Button full variant={confirming === "cancel" ? "danger" : "primary"} onClick={() => doAction(confirming)} disabled={busy}>
+              {busy ? "..." : confirming === "cancel" ? "Yes, cancel" : confirming === "no_show" ? "Yes, no-show" : "Yes, complete"}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {booking.status === "confirmed" && new Date(booking.scheduled_at) > new Date() && (
+            <Button variant="outline" className="min-w-[120px] flex-1 text-primary" onClick={() => setShowReschedule(true)}>Reschedule</Button>
+          )}
+          {booking.status === "confirmed" && new Date(booking.scheduled_at) <= new Date() && (
+            <Button className="min-w-[120px] flex-1" onClick={() => setConfirming("complete")}>Mark Completed</Button>
+          )}
+          {booking.status === "confirmed" && new Date(booking.scheduled_at) <= new Date() && (
+            <Button variant="outline" className="min-w-[120px] flex-1" onClick={() => setConfirming("no_show")}>No-show</Button>
+          )}
+          {booking.status !== "cancelled" && booking.status !== "completed" && booking.status !== "no_show" && (
+            <Button variant="danger-outline" className="min-w-[120px] flex-1" onClick={() => setConfirming("cancel")}>Cancel Booking</Button>
+          )}
+          {booking.status === "completed" && on("review_submission") && booking.guest_id && !review && (
+            <Button className="min-w-[120px] flex-1" onClick={() => setShowReview(true)}>Review Guest</Button>
+          )}
+        </div>
+      )}
+
+      {/* Review submitted card — host's existing review of this guest */}
+      {booking.status === "completed" && on("review_submission") && booking.guest_id && review && (
+        <div className="mt-3 rounded-xl border bg-green-50/60 border-green-200 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-700">
+              <Star size={14} className="fill-green-600 text-green-600" /> Review submitted
+            </span>
+            <button onClick={() => setShowReview(true)} className="text-xs font-medium text-[#FE5100] hover:underline">
+              Edit review
+            </button>
+          </div>
+          <p className="mt-1 text-[#FE5100] text-sm tracking-tight">
+            {"★".repeat(review.rating)}<span className="text-gray-300">{"★".repeat(5 - review.rating)}</span>
+          </p>
+          {review.comment && <p className="mt-1 text-sm text-gray-600 leading-relaxed">{review.comment}</p>}
+        </div>
+      )}
     </Modal>
   );
 };
@@ -443,7 +469,10 @@ const Bookings = () => {
           (b.id || "").toLowerCase().includes(q),
       );
     }
-    return list;
+    // Newest → oldest on every tab. The API returns scheduled_at ascending;
+    // present the most recent first (purely display-side — the source list is
+    // untouched, so other consumers keep their order). Clone before sorting.
+    return [...list].sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
   }, [bookings, filter, search]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
