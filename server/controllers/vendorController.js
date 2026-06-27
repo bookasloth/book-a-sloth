@@ -14,7 +14,7 @@ const { canActivateMore } = require('../middleware/planMiddleware');
 
 // ─── TRANSACTIONS ─────────────────────────────────────────────────────────────
 
-// GET /api/vendor/transactions?page=1&limit=20&search=&status=&sort=desc
+// GET /api/vendor/transactions?page=1&limit=20&search=&status=&sort=desc&dateFrom=&dateTo=
 const getTransactions = async (req, res) => {
   try {
     const {
@@ -23,6 +23,8 @@ const getTransactions = async (req, res) => {
       search = '',
       status = '',
       sort = 'desc',
+      dateFrom = '',
+      dateTo = '',
     } = req.query;
 
     const from = (parseInt(page) - 1) * parseInt(limit);
@@ -42,6 +44,10 @@ const getTransactions = async (req, res) => {
       .range(from, to);
 
     if (status) query = query.eq('status', status);
+    // Optional date-range narrowing on the transaction (payment) date. Both
+    // bounds are independent ISO timestamps; either may be omitted.
+    if (dateFrom) query = query.gte('created_at', dateFrom);
+    if (dateTo)   query = query.lte('created_at', dateTo);
     // Sanitize before interpolating into the PostgREST or() grammar — a raw
     // term with commas/parens/wildcards could break out of its condition
     // (filter injection). Skip the filter entirely if nothing usable remains.

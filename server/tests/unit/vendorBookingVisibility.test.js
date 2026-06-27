@@ -10,6 +10,8 @@ jest.mock('../../config/supabase', () => {
   const makeBuilder = (result) => {
     const b = {
       eqCalls: [],
+      gteCalls: [],
+      lteCalls: [],
       select: jest.fn(function () { return this; }),
       neq:    jest.fn(function () { return this; }),
       order:  jest.fn(function () { return this; }),
@@ -17,6 +19,8 @@ jest.mock('../../config/supabase', () => {
       or:     jest.fn(function () { return this; }),
       ilike:  jest.fn(function () { return this; }),
       eq:     jest.fn(function (col, val) { this.eqCalls.push([col, val]); return this; }),
+      gte:    jest.fn(function (col, val) { this.gteCalls.push([col, val]); return this; }),
+      lte:    jest.fn(function (col, val) { this.lteCalls.push([col, val]); return this; }),
       // Thenable so `await query` (and `await ...order()`) resolves to `result`.
       then:   (resolve) => resolve(result),
     };
@@ -82,5 +86,19 @@ describe('vendor booking visibility — paid-only', () => {
     // never be used to surface unpaid rows via payment_status.
     expect(builder.eqCalls).toContainEqual(['status', 'unpaid']);
     expect(builder.eqCalls).not.toContainEqual(['payment_status', 'unpaid']);
+  });
+
+  test('getTransactions applies date-range bounds on created_at (paid filter intact)', async () => {
+    const req = {
+      user: { id: 'host-1' },
+      query: { dateFrom: '2026-06-01T00:00:00.000Z', dateTo: '2026-06-30T23:59:59.000Z' },
+    };
+    await getTransactions(req, res());
+
+    const builder = supabaseAdmin.__builders[0];
+    expect(builder.gteCalls).toContainEqual(['created_at', '2026-06-01T00:00:00.000Z']);
+    expect(builder.lteCalls).toContainEqual(['created_at', '2026-06-30T23:59:59.000Z']);
+    // The hard paid-only filter is never relaxed by the date params.
+    expect(hasPaidFilter(builder)).toBe(true);
   });
 });
