@@ -133,11 +133,13 @@ const fetchPublicServiceSeo = async ({ hostId, slug }) => {
 // fallback so a pre-migration DB still resolves the vendor (404 otherwise).
 const VENDOR_PUBLIC_COLS =
   'id,name,username,profession,tagline,profile_image,cover_image,bio,is_verified,' +
-  'google_calendar_connected,badges,social_links,theme_color,background_key,plan';
+  'google_calendar_connected,badges,social_links,theme_color,plan';
 const fetchPublicVendor = async (username) => {
   const make = (cols) =>
     supabaseAdmin.from('profiles').select(cols).eq('username', username).eq('role', 'host').single();
-  let r = await make(`${VENDOR_PUBLIC_COLS},seo_image,is_indexable`);
+  // background_key + SEO cols are migration-sensitive — keep them OUT of the
+  // fallback set so a pre-migration DB still resolves the vendor (404 otherwise).
+  let r = await make(`${VENDOR_PUBLIC_COLS},background_key,seo_image,is_indexable`);
   if (schemaMissing(r.error)) r = await make(VENDOR_PUBLIC_COLS);
   return r;
 };
