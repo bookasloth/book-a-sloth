@@ -60,7 +60,7 @@ describe('ProfileSetup — tab navigation', () => {
 
   test('Profile Info tab is active by default', () => {
     renderSetup();
-    expect(screen.getByLabelText(/creator name/i)).toBeTruthy();
+    expect(screen.getByLabelText(/host name/i)).toBeTruthy();
   });
 
   test('clicking Social Links tab shows social inputs', async () => {
@@ -142,7 +142,7 @@ describe('ProfileSetup — Appearance (explorer plan)', () => {
   test('shows upgrade hint for explorer', async () => {
     renderSetup('explorer');
     await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
-    expect(screen.getByText(/upgrade to creator for more colours/i)).toBeTruthy();
+    expect(screen.getByText(/upgrade to host\+ for more colours/i)).toBeTruthy();
   });
 
   test('shows "Book a Session" CTA preview button', async () => {

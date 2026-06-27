@@ -23,7 +23,7 @@ import {
 } from "../components/dashboard/ui";
 
 // ─── Minimal plan label for display ─────────────────────────────────────────
-const PLAN_LABEL = { explorer: 'Explorer', creator: 'Creator', professional: 'Professional' };
+const PLAN_LABEL = { starter: 'Starter', explorer: 'Starter', creator: 'Host+', professional: 'Studio' };
 
 // ─── Social platform config ──────────────────────────────────────────────────
 const SOCIAL_PLATFORMS = [
@@ -277,7 +277,7 @@ const ProfileSetup = () => {
     <div className="mx-auto max-w-5xl">
       <BackButton hasUnsavedChanges={dirty} />
       <PageHeader
-        title="Creator Profile"
+        title="Host Profile"
         subtitle={<>How guests discover and book you. Plan: <span className="font-semibold text-gray-700">{PLAN_LABEL[plan]}</span></>}
       />
 
@@ -343,14 +343,14 @@ const ProfileSetup = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField label="Creator Name" htmlFor="ps-name" className="mb-0">
+              <FormField label="Host Name" htmlFor="ps-name" className="mb-0">
                 <Input id="ps-name" type="text" name="name" required value={form.name} onChange={handleChange} />
               </FormField>
               <UsernameField user={user} onChanged={(u) => updateUser({ ...user, username: u })} />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField label="Creator Title" className="mb-0">
+              <FormField label="Host Title" className="mb-0">
                 <Input type="text" name="profession" placeholder="e.g. Founder and Developer" value={form.profession} onChange={handleChange} />
               </FormField>
               <FormField label="Location" className="mb-0">
@@ -426,7 +426,7 @@ const ProfileSetup = () => {
                     </FeatureGate>
                   ) : (
                     <p className="mt-1 text-xs text-gray-400">
-                      {plan === 'creator' ? '16 colours available. Upgrade to Pro for custom hex.' : 'Upgrade to Creator for more colours.'}
+                      {plan === 'creator' ? '16 colours available. Upgrade to Studio for custom hex.' : 'Upgrade to Host+ for more colours.'}
                     </p>
                   )}
                 </div>
@@ -440,7 +440,7 @@ const ProfileSetup = () => {
                   <div>
                     <p className="text-xs text-gray-600">
                       Your border is <span className="font-semibold" style={{ color: getPlanBorderColor(plan) }}>
-                        {plan === 'professional' ? 'Gold (Pro)' : plan === 'creator' ? 'Orange (Creator)' : 'Grey (Explorer)'}
+                        {plan === 'professional' ? 'Gold (Studio)' : plan === 'creator' ? 'Orange (Host+)' : 'Grey (Starter)'}
                       </span>
                     </p>
                     <p className="mt-0.5 text-[10px] text-gray-400">Border updates automatically with your plan tier</p>

@@ -8,6 +8,7 @@ import {
   uploadImage,
   getPublicPlans,
 } from "../services/api";
+import { planLabel } from "../utils/themeUtils";
 import { useAuth } from "../context/AuthContext";
 import { useFeature } from "../context/FeatureContext";
 import BackButton from "../components/common/BackButton";
@@ -298,7 +299,7 @@ const Products = () => {
                 Sell PDFs, templates, ebooks, and resources directly from your profile.
               </p>
               <Link to="/dashboard/upgrade" className={buttonClasses({ variant: "primary" })}>
-                {upgradePlan ? `Upgrade to ${upgradePlan.name}` : "Upgrade your plan"}
+                {upgradePlan ? `Upgrade to ${planLabel(upgradePlan.slug, upgradePlan.name)}` : "Upgrade your plan"}
               </Link>
             </>
           )}

@@ -4,6 +4,7 @@ import { getPublicPlans, createSubscription, syncSubscription, cancelSubscriptio
 import toast from "react-hot-toast";
 import BackButton from "../components/common/BackButton";
 import { PageHeader, Card, Button, cn } from "../components/dashboard/ui";
+import { planLabel } from "../utils/themeUtils";
 
 const loadRazorpay = () =>
   new Promise((resolve) => {
@@ -88,7 +89,7 @@ const UpgradePlan = () => {
         key: sub.key,
         subscription_id: sub.subscription_id,
         name: "Book A Sloth",
-        description: `${plan.name} — ${cadence} (auto-renews)`,
+        description: `${planLabel(plan.slug, plan.name)} — ${cadence} (auto-renews)`,
         handler: async () => {
           try {
             const { data } = await syncSubscription();
@@ -100,7 +101,7 @@ const UpgradePlan = () => {
                 subscription_status: data.profile.subscription_status,
               });
             }
-            toast.success(`🎉 ${plan.name} active — renews ${cadence}.`);
+            toast.success(`🎉 ${planLabel(plan.slug, plan.name)} active — renews ${cadence}.`);
           } catch {
             toast.success("Mandate set up. Activation may take a moment — refresh shortly.");
           }
@@ -145,7 +146,7 @@ const UpgradePlan = () => {
         title="Upgrade Your Plan"
         subtitle={
           <>
-            You're on the <span className="font-semibold capitalize text-gray-700">{currentPlan}</span> plan
+            You're on the <span className="font-semibold text-gray-700">{planLabel(currentPlan, currentPlan)}</span> plan
             {expiry && daysLeft > 0 && ` · renews in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`}
             {expiry && daysLeft <= 0 && <span className="text-red-500"> · expired</span>}
             {user?.billing_cadence && ` · ${user.billing_cadence}`}
@@ -203,7 +204,7 @@ const UpgradePlan = () => {
             return (
               <div key={plan.slug} className={cn("relative flex flex-col rounded-2xl border-2 bg-white p-6 dash-elev-1", isCurrentTier ? "border-primary ring-2 ring-primary/20" : "border-gray-200")}>
                 <div className="mb-4">
-                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{plan.name}</span>
+                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{planLabel(plan.slug, plan.name)}</span>
                   <div className="mt-3">
                     {!paid ? (
                       <p className="text-3xl font-bold">Free</p>
@@ -233,14 +234,14 @@ const UpgradePlan = () => {
                 {isCurrentExact ? (
                   <div className="rounded-xl bg-gray-100 py-2.5 text-center text-sm font-medium text-gray-500">Current Plan</div>
                 ) : !paid ? (
-                  <div className="rounded-xl border border-gray-200 py-2.5 text-center text-sm text-gray-400">Default (free)</div>
+                  <div className="rounded-xl border border-gray-200 py-2.5 text-center text-sm text-gray-400">Default plan</div>
                 ) : (
                   <Button full onClick={() => handleUpgrade(plan)} disabled={paying === plan.slug || !cadenceAvailable}>
                     {paying === plan.slug ? "Opening payment…"
                       : !cadenceAvailable ? "Annual billing only"
                       : isCurrentTier ? `Switch to ${cadence}`
-                      : (plan.sort_order ?? 0) < myOrder ? `Downgrade to ${plan.name}`
-                      : `Upgrade to ${plan.name}`}
+                      : (plan.sort_order ?? 0) < myOrder ? `Downgrade to ${planLabel(plan.slug, plan.name)}`
+                      : `Upgrade to ${planLabel(plan.slug, plan.name)}`}
                   </Button>
                 )}
               </div>

@@ -241,12 +241,12 @@ const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 // Professional = brand orange. Slice + outer rim share one border colour.
 const PLAN_ORDER = ['starter', 'creator', 'professional'];
 const PLAN_META = {
-  starter:      { label: 'Free',      color: '#ffffff' },
+  starter:      { label: 'Starter',   color: '#ffffff' },
   creator:      { label: '₹999',      color: '#9ca3af' },
   professional: { label: '₹3,650',    color: '#FE5100' },
 };
 const PIE_BORDER = '#374151'; // gray-700 — keeps the white slice readable on a white card
-const PLAN_NAME = { starter: 'Free', creator: 'Creator', professional: 'Professional' };
+const PLAN_NAME = { starter: 'Starter', creator: 'Host+', professional: 'Studio' };
 
 const polar = (cx, cy, r, deg) => {
   const rad = ((deg - 90) * Math.PI) / 180;
@@ -325,8 +325,8 @@ const EARN_PERIODS = [['all', 'All'], ['12m', '12m'], ['90d', '90d'], ['30d', '3
 
 const PlanEarningsBars = ({ planEarnings, bookingEarnings, period, onPeriod }) => {
   const groups = [
-    { key: 'creator',      label: 'Creator (₹999)' },
-    { key: 'professional', label: 'Professional (₹3,650)' },
+    { key: 'creator',      label: 'Host+ (₹999)' },
+    { key: 'professional', label: 'Studio (₹3,650)' },
   ];
   const series = [
     { key: 'plans',    label: 'Earning from Plans',    color: '#FE5100', data: planEarnings },

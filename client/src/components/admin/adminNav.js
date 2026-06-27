@@ -65,7 +65,7 @@ export const PATH_LABELS = {
   finance:'Finance', transactions:'Transactions', payouts:'Payouts', earnings:'Provider Earnings', refunds:'Refunds',
   content:'Content', pages:'Pages', blogs:'Blogs', newsletter:'Newsletter',
   faq:'FAQ', testimonials:'Testimonials',
-  support:'Support', tickets:'Tickets', disputes:'Disputes', reviews:'Reviews', feedback:'Vendor Feedback',
+  support:'Support', tickets:'Tickets', disputes:'Disputes', reviews:'Reviews', feedback:'Host Feedback',
   platform:'Platform', appearance:'Appearance', menu:'Menu Builder',
   footer:'Footer Builder', communication:'Communication', campaigns:'Campaigns', notifications:'Notification Settings', badges:'Badges',
   confirmed:'Confirmed', completed:'Completed', cancelled:'Cancelled', disputed:'Disputed',
@@ -139,7 +139,7 @@ export const NAV = [
     { label:'Tickets',            icon:'chat',  to:'/admin/support/tickets', perm:'support.view' },
     { label:'Disputes',           icon:'alert', to:'/admin/support/disputes', perm:'disputes.view' },
     { label:'Reviews Moderation', icon:'msgSq', to:'/admin/support/reviews', perm:'reviews.moderate' },
-    { label:'Vendor Feedback',    icon:'msgSq', to:'/admin/feedback', perm:'feedback.view' },
+    { label:'Host Feedback',    icon:'msgSq', to:'/admin/feedback', perm:'feedback.view' },
   ]},
   { id:'platform', section:'PLATFORM', items:[
     { label:'Appearance',       icon:'palette', to:'/admin/platform/appearance', perm:'branding.manage' },
