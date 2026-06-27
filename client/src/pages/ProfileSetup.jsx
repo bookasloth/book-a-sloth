@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { updateProfile, uploadImage } from "../services/api";
+import { updateProfile, uploadImage, getAppearance } from "../services/api";
 import BackButton from "../components/common/BackButton";
+import BackgroundPicker from "../components/BackgroundPicker";
 import ImageCropper from "../components/common/ImageCropper";
 import FeatureGate from "../components/common/FeatureGate";
 import UsernameField from "../components/dashboard/UsernameField";
@@ -211,6 +212,20 @@ const ProfileSetup = () => {
   });
   const [customHex, setCustomHex] = useState('');
   const [loading, setLoading] = useState(false);
+  const [backgroundKey, setBackgroundKey] = useState(null);
+  const [enabledBackgrounds, setEnabledBackgrounds] = useState([]);
+
+  // Enabled background types come from the public appearance config (enabled-only array).
+  useEffect(() => {
+    let alive = true;
+    getAppearance()
+      .then(({ data }) => {
+        const bgs = data?.backgrounds || [];
+        if (alive && bgs.length) setEnabledBackgrounds(bgs);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -239,6 +254,7 @@ const ProfileSetup = () => {
         },
       });
       if (user.theme_color) setCustomHex(user.theme_color);
+      setBackgroundKey(user.background_key || null);
     }
   }, [user]);
 
@@ -297,7 +313,7 @@ const ProfileSetup = () => {
     try {
       // Strip any non-http(s) scheme (javascript:, data:, …) before persisting —
       // these values render as href on public pages and would be stored XSS.
-      const payload = { ...form, social_links: sanitizeSocialLinks(form.social_links) };
+      const payload = { ...form, background_key: backgroundKey, social_links: sanitizeSocialLinks(form.social_links) };
       const { data } = await updateProfile(payload);
       updateUser({ ...data, token: user.token, refresh_token: user.refresh_token });
       toast.success("Profile saved!");
@@ -493,6 +509,18 @@ const ProfileSetup = () => {
                   )}
                 </div>
               </FeatureGate>
+
+              {/* Page background */}
+              <div>
+                <h3 className="mb-1 text-sm font-semibold text-gray-800">Page background</h3>
+                <p className="mb-3 text-xs text-gray-400">Animated backdrop shown at the top of your service pages, in your brand colour.</p>
+                <BackgroundPicker
+                  color={tc}
+                  enabled={enabledBackgrounds}
+                  value={backgroundKey}
+                  onChange={(k) => { setBackgroundKey(k); setDirty(true); }}
+                />
+              </div>
 
               {/* Profile Border Info */}
               <div className="rounded-xl bg-gray-50 p-4">

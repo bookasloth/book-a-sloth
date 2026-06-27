@@ -29,20 +29,21 @@ function hexToRgb(hex) {
   };
 }
 
-const DotGrid = ({
-  dotSize = 16,
-  gap = 32,
-  baseColor = '#5227FF',
-  activeColor = '#5227FF',
-  proximity = 150,
-  speedTrigger = 100,
-  shockRadius = 250,
-  shockStrength = 5,
-  maxSpeed = 5000,
-  returnDuration = 1.5,
-  className = '',
-  style,
-}) => {
+const DENSITY = { low: { dotSize: 4, gap: 34 }, medium: { dotSize: 5, gap: 24 }, high: { dotSize: 6, gap: 16 } };
+const SPEED = { calm: 2.0, normal: 1.4, lively: 0.9 }; // returnDuration seconds
+
+const DotGrid = ({ color = '#5227FF', params = {} }) => {
+  const { dotSize, gap } = DENSITY[params.density] || DENSITY.medium;
+  const returnDuration = SPEED[params.speed] || SPEED.normal;
+  const baseColor = color;
+  const activeColor = color;
+  const proximity = 120;
+  const speedTrigger = 100;
+  const shockRadius = 220;
+  const shockStrength = 4;
+  const maxSpeed = 5000;
+  const className = '';
+  const style = undefined;
   const wrapperRef = useRef(null);
   const canvasRef = useRef(null);
   const dotsRef = useRef([]);

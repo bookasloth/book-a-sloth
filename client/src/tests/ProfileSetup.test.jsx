@@ -11,6 +11,8 @@ import { MemoryRouter } from 'react-router-dom';
 vi.mock('../services/api', () => ({
   updateProfile: vi.fn(),
   getGoogleAuthUrl: vi.fn(),
+  uploadImage: vi.fn(),
+  getAppearance: vi.fn(() => Promise.resolve({ data: { backgrounds: [] } })),
 }));
 
 vi.mock('../context/AuthContext', () => ({
