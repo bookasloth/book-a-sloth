@@ -8,6 +8,8 @@ const planService = require('../services/planService');
 const { validateCategorySelection } = require('../lib/categoryRules');
 const { resolveAndValidateCategory } = require('../lib/serviceCategory');
 const { canActivateMore } = require('../middleware/planMiddleware');
+const { isBackgroundKey } = require('../config/backgroundKeys');
+const cleanBackgroundKey = (v) => (isBackgroundKey(v) ? v : null);
 
 // Clamp service money/time fields to safe bounds (audit P1-11). Mirrors
 // serviceController — the controller-level backstop so a negative/oversized
@@ -234,6 +236,7 @@ const updateProfile = async (req, res) => {
       profession,
       location,
       theme_color,
+      background_key,
       reschedule_fee,
     } = req.body;
 
@@ -305,6 +308,8 @@ const updateProfile = async (req, res) => {
       }
       updates.theme_color = hex;
     }
+
+    if (background_key !== undefined) updates.background_key = cleanBackgroundKey(background_key);
 
     if (reschedule_fee !== undefined) {
       const rf = Number(reschedule_fee);
@@ -742,4 +747,5 @@ module.exports = {
   getServiceBySlug,
   searchVendors,
   validateWeeklySchedule, // exported for unit testing (P1-10)
+  cleanBackgroundKey, // exported for unit testing
 };
