@@ -13,6 +13,18 @@ export const BACKGROUNDS = [
       { key: 'speed', label: 'Speed', type: 'select', options: ['calm', 'normal', 'lively'] },
     ],
   },
+  {
+    key: 'galaxy',
+    label: 'Galaxy',
+    seasonal: false,
+    thumbnail: '/backgrounds/galaxy.svg',
+    Component: lazy(() => import('./engines/Galaxy.jsx')),
+    defaultParams: { starCount: 'medium', speed: 'calm' },
+    paramSchema: [
+      { key: 'starCount', label: 'Stars', type: 'select', options: ['low', 'medium', 'high'] },
+      { key: 'speed', label: 'Drift', type: 'select', options: ['calm', 'normal', 'lively'] },
+    ],
+  },
 ];
 
 export const backgroundKeys = BACKGROUNDS.map((b) => b.key);
