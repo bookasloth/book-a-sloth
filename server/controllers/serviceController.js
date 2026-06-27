@@ -9,6 +9,7 @@ const { getConfig: getPlatformConfig } = require('../services/platformConfig');
 const { bustSitemapCache } = require('../utils/sitemapCache');
 const { resolveAndValidateCategory } = require('../lib/serviceCategory');
 const { canActivateMore } = require('../middleware/planMiddleware');
+const { getPublicAppearanceData } = require('./appearanceController');
 
 // Clamp service money/time fields to safe bounds (audit P1-11). parseFloat/parseInt
 // alone let a negative price through (parseFloat('-500') === -500), which breaks
@@ -132,7 +133,7 @@ const fetchPublicServiceSeo = async ({ hostId, slug }) => {
 // fallback so a pre-migration DB still resolves the vendor (404 otherwise).
 const VENDOR_PUBLIC_COLS =
   'id,name,username,profession,tagline,profile_image,cover_image,bio,is_verified,' +
-  'google_calendar_connected,badges,social_links,theme_color,plan';
+  'google_calendar_connected,badges,social_links,theme_color,background_key,plan';
 const fetchPublicVendor = async (username) => {
   const make = (cols) =>
     supabaseAdmin.from('profiles').select(cols).eq('username', username).eq('role', 'host').single();
@@ -494,9 +495,16 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
       bookingFee = Math.round(platformFee * (1 + gstRate) * 100) / 100;
     } catch (_) { bookingFee = 0; }
 
+    // Embed the host's appearance (enabled backgrounds + default) so the service
+    // page can render the right background without a second request. Decorative —
+    // non-fatal on error so the page still loads.
+    let appearance = { backgrounds: [], default_background: 'dotgrid' };
+    try { appearance = await getPublicAppearanceData(); } catch (_) { /* non-fatal: decorative */ }
+
     res.json({
       service: service,
       vendor: vendor || {},
+      appearance,
       totalServices: totalServices || 0,
       availability: availability || null,
       reviews: reviewList,

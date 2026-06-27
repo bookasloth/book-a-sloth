@@ -81,6 +81,17 @@ const publicShape = (row) => {
   };
 };
 
+/**
+ * Reusable getter for the public appearance data (enabled backgrounds + default).
+ * Lets other controllers (e.g. the public service page) embed appearance without
+ * an extra round-trip. Reuses loadRow() + publicShape() so shaping stays in sync.
+ */
+async function getPublicAppearanceData() {
+  const row = await loadRow();
+  const shaped = publicShape(row);
+  return { backgrounds: shaped.backgrounds, default_background: shaped.default_background };
+}
+
 /** GET /api/appearance — public; navbar reads this (no auth). */
 async function getPublic(req, res) {
   const row = await loadRow();
@@ -138,4 +149,5 @@ module.exports = {
   DEFAULTS,
   sanitizeBackgrounds,
   resolveDefaultBackground,
+  getPublicAppearanceData,
 };
