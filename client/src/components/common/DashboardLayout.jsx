@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Clock, LayoutGrid, Package, LineChart,
   Banknote, Receipt, User, Menu, X,
   ExternalLink, ShieldCheck, LogOut, Lock, Wallet, Sparkles, Gem, Crown,
+  Bell, LifeBuoy, Gift, Code2, Award, Headset, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../services/api';
 import FeatureGate from './FeatureGate';
 import { normalizePlan } from '../../utils/themeUtils';
 import { cn } from '../dashboard/ui/cn';
@@ -207,6 +209,239 @@ const PremiumCard = ({ plan, daysLeft, expired, expireSoon, onNavigate }) => {
   );
 };
 
+// Humanize a category slug ("career-coaching" -> "Career Coaching"). Falls back
+// to a plain role label so the profile block always has a subtitle.
+const humanizeCategory = (raw) => {
+  const v = (raw || '').toString().trim();
+  if (!v) return 'Host';
+  return v.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
+// Reverse-hover buttons for the profile dropdown: each one morphs into the
+// other's look on hover. Ghost = outline that fills; Primary = filled that hollows.
+const REVERSE_GHOST =
+  'border border-primary text-primary bg-transparent hover:bg-primary hover:text-white';
+const REVERSE_PRIMARY =
+  'border border-primary bg-primary text-white hover:bg-transparent hover:text-primary';
+
+/** Sloth Support — leftmost topbar action. Routes to the Help centre. */
+const SupportButton = () => (
+  <Link
+    to="/help"
+    title="Sloth Support"
+    aria-label="Sloth Support"
+    className="grid h-9 w-9 place-items-center rounded-full text-gray-500 transition-colors hover:bg-primary/5 hover:text-primary"
+  >
+    <LifeBuoy className="h-[19px] w-[19px]" strokeWidth={1.7} />
+  </Link>
+);
+
+/** Notification bell + dropdown panel. Host-scoped feed, loaded on mount/open. */
+const NotifBell = () => {
+  const [open, setOpen] = useState(false);
+  const [notifs, setNotifs] = useState([]);
+  const [unread, setUnread] = useState(0);
+  const ref = useRef(null);
+
+  const load = () => {
+    getNotifications('host')
+      .then(({ data }) => { setNotifs(data.notifications || []); setUnread(data.unreadCount || 0); })
+      .catch(() => {});
+  };
+  useEffect(() => { load(); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (open) load(); }, [open]);
+
+  useEffect(() => {
+    const onPointer = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="relative grid h-9 w-9 place-items-center rounded-full text-gray-500 transition-colors hover:bg-primary/5 hover:text-primary"
+        aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+      >
+        <Bell className="h-[19px] w-[19px]" strokeWidth={1.7} />
+        {unread > 0 && (
+          <span className="absolute right-1 top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)] sm:w-80"
+          role="dialog"
+          aria-label="Notifications"
+        >
+          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+            <span className="text-sm font-semibold text-gray-900">Notifications</span>
+            <button
+              type="button"
+              className="text-[11px] font-medium text-primary hover:underline"
+              onClick={() => markAllNotificationsRead('host').then(load).catch(() => {})}
+            >
+              Mark all read
+            </button>
+          </div>
+          {notifs.length === 0 ? (
+            <div className="py-10 text-center">
+              <Bell className="mx-auto mb-2 h-7 w-7 text-gray-200" />
+              <p className="text-sm text-gray-400">No new notifications</p>
+            </div>
+          ) : (
+            <ul className="max-h-80 overflow-y-auto">
+              {notifs.map((n) => (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    onClick={() => { markNotificationRead(n.id).then(load).catch(() => {}); }}
+                    className={cn(
+                      'flex w-full flex-col items-start gap-0.5 border-b border-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-50',
+                      !n.read_at && 'bg-primary/5',
+                    )}
+                  >
+                    <span className="text-sm font-medium text-gray-800">{n.title || n.message}</span>
+                    {n.title && n.message && <span className="text-xs text-gray-500">{n.message}</span>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** Profile avatar + dropdown — rightmost topbar action. */
+const ProfileMenu = ({ user, plan, planStyle, initial }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const category = humanizeCategory(user?.category || user?.primary_category);
+  const isPaid = plan === 'professional' || plan === 'supreme';
+
+  useEffect(() => {
+    const onPointer = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  const Avatar = ({ size }) =>
+    user?.profile_image ? (
+      <img src={user.profile_image} alt={user?.name || 'Profile'} className={cn('shrink-0 rounded-full object-cover', size)} />
+    ) : (
+      <div className={cn('grid shrink-0 place-items-center rounded-full bg-primary/10 font-bold text-primary', size)}>
+        {initial}
+      </div>
+    );
+
+  const inactive = [
+    { label: 'Refer a Friend', icon: Gift },
+    { label: 'Add BaS to Website', icon: Code2 },
+    { label: 'Badges', icon: Award },
+    { label: 'Talk to Account Manager', icon: Headset },
+  ];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 rounded-full p-0.5 transition-colors hover:bg-gray-100"
+        aria-label="Profile menu"
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        <Avatar size="h-9 w-9 text-sm" />
+        <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+          role="menu"
+        >
+          {/* Top block: avatar + name + category */}
+          <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-4">
+            <Avatar size="h-12 w-12 text-base" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-gray-900">{user?.name || 'Host'}</p>
+              <p className="truncate text-xs text-gray-500">{category}</p>
+              <span className={cn('mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold', planStyle.bg, planStyle.text)}>
+                {isPaid && '★ '}{planStyle.label}
+              </span>
+            </div>
+          </div>
+
+          {/* Primary actions — reverse-hover buttons */}
+          <div className="grid gap-2 px-4 py-3">
+            <Link
+              to={user?.username ? `/${user.username}` : '/dashboard/profile'}
+              onClick={() => setOpen(false)}
+              className={cn('flex h-9 items-center justify-center rounded-lg text-xs font-semibold transition-colors', REVERSE_GHOST)}
+            >
+              View Profile
+            </Link>
+            <Link
+              to="/dashboard/upgrade"
+              onClick={() => setOpen(false)}
+              className={cn('flex h-9 items-center justify-center rounded-lg text-xs font-semibold transition-colors', REVERSE_PRIMARY)}
+            >
+              Upgrade Plan
+            </Link>
+          </div>
+
+          {/* Inactive / coming-soon */}
+          <div className="border-t border-gray-100 py-1.5">
+            {inactive.map(({ label, icon: Icon }) => (
+              <button
+                key={label}
+                type="button"
+                disabled
+                title="Coming soon"
+                className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300"
+              >
+                <Icon className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+                <span className="flex-1">{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** Sticky dashboard topbar. Right-to-left: Profile, Notifications, Support. */
+const DashTopbar = ({ user, plan, planStyle, initial }) => (
+  <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center border-b border-gray-200/80 bg-white/95 px-4 backdrop-blur sm:px-6 md:px-8">
+    <div className="ml-auto flex items-center gap-1">
+      <SupportButton />
+      <NotifBell />
+      <ProfileMenu user={user} plan={plan} planStyle={planStyle} initial={initial} />
+    </div>
+  </header>
+);
+
 const DashboardLayout = ({ children }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -236,35 +471,15 @@ const DashboardLayout = ({ children }) => {
           height so the premium card, View-public and Logout stay pinned to the
           bottom no matter how tall the page content is. */}
       <aside className="hidden flex-shrink-0 flex-col border-r border-gray-200/80 bg-white/95 shadow-sm md:sticky md:top-0 md:flex md:h-screen md:w-16 lg:w-64">
-        {/* Identity: avatar + name + plan badge */}
-        <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-3 py-4 lg:px-5">
-          {user?.profile_image ? (
-            <img
-              src={user.profile_image}
-              alt={user?.name || 'Profile'}
-              className="h-9 w-9 shrink-0 rounded-full object-cover"
-            />
-          ) : (
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-              {initial}
-            </div>
-          )}
-          <div className="hidden min-w-0 flex-1 lg:block">
-            <p className="truncate text-sm font-bold text-gray-900">{user?.name}</p>
-            <div className="mt-1 flex items-center gap-2">
-              <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', planStyle.bg, planStyle.text)}>
-                {(plan === 'professional' || plan === 'supreme') && '★ '}{planStyle.label}
-              </span>
-              {expireSoon || expired ? (
-                <span className={cn('text-[10px] font-medium', expired ? 'text-red-500' : 'text-amber-600')}>
-                  {expired ? 'Expired' : `${daysLeft}d left`}
-                </span>
-              ) : plan === 'starter' ? (
-                <Link to="/dashboard/upgrade" className="text-[10px] font-medium text-primary hover:underline">Upgrade</Link>
-              ) : null}
-            </div>
-          </div>
-        </div>
+        {/* Brand — identity (avatar/name/plan) now lives in the topbar profile menu. */}
+        <Link
+          to="/dashboard"
+          title="Book A Sloth"
+          className="flex h-14 shrink-0 items-center gap-2 border-b border-gray-100 px-3 lg:px-5"
+        >
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-base font-black text-primary">B</span>
+          <span className="hidden text-sm font-extrabold tracking-tight text-gray-900 lg:inline">Book A Sloth</span>
+        </Link>
 
         {/* Nav groups */}
         <nav className="dash-noscrollbar flex-1 overflow-y-auto py-2">
@@ -430,8 +645,12 @@ const DashboardLayout = ({ children }) => {
       )}
 
       {/* Main */}
-      <main className="min-w-0 flex-1 overflow-y-auto px-4 py-6 pb-28 sm:px-6 md:px-8 md:pb-8">
-        <div className="mx-auto w-full max-w-6xl">{children}</div>
+      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto">
+        {/* Sticky topbar — right-to-left: Profile, Notifications, Support. */}
+        <DashTopbar user={user} plan={plan} planStyle={planStyle} initial={initial} />
+        <div className="px-4 py-6 pb-28 sm:px-6 md:px-8 md:pb-8">
+          <div className="mx-auto w-full max-w-6xl">{children}</div>
+        </div>
       </main>
     </div>
   );
