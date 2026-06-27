@@ -87,10 +87,10 @@ async function getPublic(req, res) {
   res.json(publicShape(row));
 }
 
-/** GET /api/admin/appearance — admin; full row. */
+/** GET /api/admin/appearance — admin; full raw backgrounds map for curation. */
 async function getAdmin(req, res) {
   const row = await loadRow();
-  res.json(publicShape(row));
+  res.json({ ...publicShape(row), backgrounds: row?.backgrounds || {} });
 }
 
 /** PUT /api/admin/appearance — admin; update mode + image URLs. */

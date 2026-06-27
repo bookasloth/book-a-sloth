@@ -32,3 +32,15 @@ describe('resolveDefaultBackground', () => {
     expect(resolveDefaultBackground('x', {})).toBe('dotgrid');
   });
 });
+
+describe('admin vs public backgrounds shape', () => {
+  const { sanitizeBackgrounds } = require('../controllers/appearanceController');
+  it('sanitizeBackgrounds preserves disabled entries (full map for admin editing)', () => {
+    const out = sanitizeBackgrounds({
+      dotgrid: { enabled: false, order: 1, params: { density: 'low' } },
+      galaxy: { enabled: true, order: 2, params: {} },
+    });
+    expect(out.dotgrid).toEqual({ enabled: false, order: 1, params: { density: 'low' } });
+    expect(out.galaxy.enabled).toBe(true);
+  });
+});
