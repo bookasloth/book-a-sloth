@@ -60,9 +60,9 @@ export const PATH_LABELS = {
   'super-dashboard':'Dashboard', revenue:'Revenue', pending:'Pending Actions',
   admin:null, bookings:'Bookings', users:'Users', services:'Services',
   settings:'General Settings', payment:'Payment Settings', plans:'Subscription Plans', addons:'Addons',
-  providers:'Providers', active:'Active', suspended:'Suspended',
+  providers:'Hosts', active:'Active', suspended:'Suspended',
   kyc:'KYC', approved:'Approved', rejected:'Rejected',
-  finance:'Finance', transactions:'Transactions', payouts:'Payouts', earnings:'Provider Earnings', refunds:'Refunds',
+  finance:'Finance', transactions:'Transactions', payouts:'Payouts', earnings:'Host Earnings', refunds:'Refunds',
   content:'Content', pages:'Pages', blogs:'Blogs', newsletter:'Newsletter',
   faq:'FAQ', testimonials:'Testimonials',
   support:'Support', tickets:'Tickets', disputes:'Disputes', reviews:'Reviews', feedback:'Host Feedback',
@@ -81,7 +81,7 @@ export const NAV = [
     { label:'Revenue',         icon:'trendUp',  to:'/super-dashboard/revenue', perm:'analytics.view' },
     { label:'Marketing Insights', icon:'trendUp', to:'/super-dashboard/insights', perm:'analytics.view' },
     { label:'Users',           icon:'users',    to:'/super-dashboard/users', perm:'users.view' },
-    { label:'Providers',       icon:'building', to:'/super-dashboard/providers', perm:'professionals.view' },
+    { label:'Hosts',           icon:'building', to:'/super-dashboard/providers', perm:'professionals.view' },
     { label:'Bookings',        icon:'calendar', to:'/super-dashboard/bookings', perm:'bookings.view' },
     { label:'Pending Actions', icon:'clock',    to:'/super-dashboard/pending', perm:'ops.view' },
   ]},
@@ -105,7 +105,7 @@ export const NAV = [
     { label:'Explore Page',        icon:'search',  to:'/admin/explore',      perm:'settings.manage' },
   ]},
   { id:'people', section:'PEOPLE', items:[
-    { label:'Providers', icon:'userCheck', groupId:'ppl-providers', perm:'professionals.view', children:[
+    { label:'Hosts', icon:'userCheck', groupId:'ppl-providers', perm:'professionals.view', children:[
       { label:'Active',    to:'/admin/providers/active' },
       { label:'Pending',   to:'/admin/providers/pending' },
       { label:'Suspended', to:'/admin/providers/suspended' },
@@ -164,7 +164,7 @@ export const NAV = [
 ];
 
 export const QUICK_ACTIONS = [
-  { label:'Add Provider',    icon:'userCheck', to:'/admin/providers/pending' },
+  { label:'Add Host',        icon:'userCheck', to:'/admin/providers/pending' },
   { label:'Create Blog',     icon:'news',      to:'/admin/content/blogs' },
   { label:'Create Page',     icon:'file',      to:'/admin/content/pages' },
   { label:'Send Newsletter', icon:'mail',      to:'/admin/content/newsletter' },

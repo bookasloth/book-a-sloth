@@ -211,14 +211,14 @@ const AdminProviders = () => {
     } catch { toast.error('Failed'); }
   };
 
-  const titles = { active: 'Active Providers', pending: 'Pending Providers', suspended: 'Suspended Providers' };
+  const titles = { active: 'Active Hosts', pending: 'Pending Hosts', suspended: 'Suspended Hosts' };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{titles[status] || 'Providers'}</h1>
-          <p className="text-[12px] text-gray-400 mt-0.5">{total} provider{total !== 1 ? 's' : ''}</p>
+          <h1 className="text-xl font-bold text-gray-900">{titles[status] || 'Hosts'}</h1>
+          <p className="text-[12px] text-gray-400 mt-0.5">{total} host{total !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1">
           {Object.keys(STATUS_FILTER).map(s => (
@@ -235,13 +235,13 @@ const AdminProviders = () => {
         <div className="bg-white border border-gray-200/80 rounded-2xl py-12 text-center text-gray-400 text-sm">Loading...</div>
       ) : providers.length === 0 ? (
         <AdminEmptyState icon={PROVIDER_ICON} iconBg="bg-blue-50" iconColor="text-blue-500"
-          title={`No ${status} providers`} description={`No providers with ${status} status found.`} />
+          title={`No ${status} hosts`} description={`No hosts with ${status} status found.`} />
       ) : (
         <div className="bg-white border border-gray-200/80 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>{['Provider','Username','Plan','Status','Joined','Actions'].map(h => (
+                <tr>{['Host','Username','Plan','Status','Joined','Actions'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">{h}</th>
                 ))}</tr>
               </thead>
