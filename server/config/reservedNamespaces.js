@@ -62,7 +62,20 @@ const SHORT = ['a', 'i', 'u', 's', 'p', 'c', 'e', 'r', 'o', 'x', 'm'];
 // Literal hazards that must never be a slug.
 const HAZARD = ['null', 'undefined', 'true', 'false', 'nan', 'none', 'nil', 'void'];
 
-const CATEGORIES = { ROUTES, INFRA, FUTURE, ACCOUNT, BRAND, SHORT, HAZARD };
+// Branded error / status pages — each has its own /<code> route on the client
+// (config/errorCatalog.js), plus offline + maintenance. Reserved so a user can
+// never claim "/404" and shadow an error page. Includes the common non-routed
+// codes too, future-proofing new error pages (brief: "reserve any future error
+// routes").
+const STATUS = [
+  '400', '401', '402', '403', '404', '405', '406', '408', '409', '410',
+  '411', '412', '413', '414', '415', '418', '422', '423', '425', '426',
+  '429', '431', '451',
+  '500', '501', '502', '503', '504', '505', '507', '508', '511',
+  'offline', 'maintenance', 'waitlist',
+];
+
+const CATEGORIES = { ROUTES, INFRA, FUTURE, ACCOUNT, BRAND, SHORT, HAZARD, STATUS };
 
 // Normalized set of every L1 reserved name.
 const RESERVED_SET = new Set(
