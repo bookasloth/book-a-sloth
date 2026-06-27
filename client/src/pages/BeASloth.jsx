@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import WhatsNewLink from '../components/auth/WhatsNewLink';
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -145,7 +146,7 @@ const BeASloth = () => {
       </aside>
 
       {/* ── RIGHT · signup card ──────────────────────────────────────────────── */}
-      <main className="flex items-center justify-center px-5 py-10 sm:py-12">
+      <main className="flex flex-col items-center justify-center px-5 py-10 sm:py-12">
         <div className="page-card w-full max-w-lg p-6 text-center sm:p-8">
           <Logo className="mx-auto h-14 w-14" />
 
@@ -220,6 +221,9 @@ const BeASloth = () => {
             <Link to="/login-as-vendor" className="font-semibold text-primary hover:underline">Log in</Link>
           </p>
         </div>
+
+        {/* Outside the card */}
+        <WhatsNewLink className="mt-6" />
       </main>
     </div>
   );

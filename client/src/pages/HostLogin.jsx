@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import AuthBrandPanel from "../components/auth/AuthBrandPanel";
+import WhatsNewLink from "../components/auth/WhatsNewLink";
 import toast from "react-hot-toast";
 
 // /login-as-vendor — the host login door. Hosts authenticate with Google only
@@ -72,9 +74,14 @@ const HostLogin = () => {
   };
 
   return (
-    <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
-      <div className="page-card w-full max-w-md p-6 text-center sm:p-8">
-        <Logo className="mx-auto h-14 w-14" />
+    <div className="grid min-h-[calc(100vh-72px)] w-full lg:grid-cols-[1.05fr_1fr]">
+      {/* ── LEFT · colourful brand panel (lg+ only) ──────────────────────────── */}
+      <AuthBrandPanel />
+
+      {/* ── RIGHT · login card + outside-the-box link ────────────────────────── */}
+      <main className="flex flex-col items-center justify-center px-5 py-10 sm:py-12">
+        <div className="page-card w-full max-w-md p-6 text-center sm:p-8">
+          <Logo className="mx-auto h-14 w-14" />
 
         <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-cta">
           Host login
@@ -106,11 +113,15 @@ const HostLogin = () => {
           </li>
         </ul>
 
-        <p className="mt-8 text-sm text-gray-500">
-          New here?{" "}
-          <Link to="/be-a-sloth" className="font-semibold text-primary hover:underline">Sign up as a Host</Link>
-        </p>
-      </div>
+          <p className="mt-8 text-sm text-gray-500">
+            New here?{" "}
+            <Link to="/be-a-sloth" className="font-semibold text-primary hover:underline">Sign up as a Host</Link>
+          </p>
+        </div>
+
+        {/* Outside the card */}
+        <WhatsNewLink className="mt-6" />
+      </main>
     </div>
   );
 };

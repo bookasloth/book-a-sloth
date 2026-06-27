@@ -1,0 +1,301 @@
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
+// /changelog — public "What's New" timeline. Marketing-facing product updates,
+// newest first. Entries are curated release notes (backdated to launch window).
+// Tags drive the colour chip: New / Improved / Fixed / Security.
+const TAG_STYLES = {
+  New:      { bg: 'rgba(5,150,105,0.10)',  fg: '#059669' },
+  Improved: { bg: 'rgba(37,99,235,0.10)',  fg: '#2563eb' },
+  Fixed:    { bg: 'rgba(245,158,11,0.12)', fg: '#b45309' },
+  Security: { bg: 'rgba(124,58,237,0.10)', fg: '#7c3aed' },
+};
+
+const RELEASES = [
+  {
+    date: 'Jun 27, 2026', version: 'v3.5',
+    title: 'A dashboard that actually works the way you do',
+    tags: ['Improved', 'Fixed'],
+    points: [
+      'Rebuilt the host dashboard: sticky sidebar, sticky top bar with profile, notifications and one-tap support.',
+      'Mobile menus now open as native-feeling bottom sheets instead of cramped dropdowns.',
+      'Earnings, pending payouts and “needs action” counts are now accurate to the rupee — cancelled bookings no longer inflate your numbers.',
+    ],
+  },
+  {
+    date: 'Jun 25, 2026', version: 'v3.37',
+    title: 'Sell digital products alongside your sessions',
+    tags: ['New'],
+    points: [
+      'Upload an e-book, template or guide and sell it straight from your booking page — no extra tools.',
+      'Buyers get an instant, secure download link by email the moment payment clears.',
+      'Every sale lands in your ledger with a clean GST invoice.',
+    ],
+  },
+  {
+    date: 'Jun 24, 2026', version: 'v3.31',
+    title: 'Become a host in under 60 seconds',
+    tags: ['New', 'Improved'],
+    points: [
+      'New Google-first onboarding: one tap connects your identity, calendar and Meet links — no passwords to invent.',
+      'Claim your booking link (bookasloth.com/yourname) right at the start and keep it forever.',
+      'Smoother mobile navigation with a full-screen drawer and faster page loads.',
+    ],
+  },
+  {
+    date: 'Jun 23, 2026', version: 'v3.28',
+    title: 'Receipts your customers will actually keep',
+    tags: ['Improved', 'Security'],
+    points: [
+      'Premium, wallet-style invoices with your branding, GST breakup and a one-tap download.',
+      'Refreshed every transactional email with a cleaner, friendlier identity.',
+      'Hardened the platform after a full security review — tighter data access across the board.',
+    ],
+  },
+  {
+    date: 'Jun 22, 2026', version: 'v3.23',
+    title: 'A homepage that tells your story',
+    tags: ['New', 'Fixed'],
+    points: [
+      'Reimagined homepage with live counters, real creator stories and a clearer path to “Let’s Get Started”.',
+      'Fixed a sign-in hiccup for visitors arriving on the www. version of the site.',
+    ],
+  },
+  {
+    date: 'Jun 20, 2026', version: 'v3.21',
+    title: '60 industries, one booking page',
+    tags: ['New'],
+    points: [
+      'Pick from 60+ industry categories so guests instantly understand what you offer.',
+      'Tag each service with its own category for cleaner, more discoverable pages.',
+    ],
+  },
+  {
+    date: 'Jun 19, 2026', version: 'v3.18',
+    title: 'Book A Sloth goes live 🚀',
+    tags: ['New'],
+    points: [
+      'Production launch — payments, calendars and notifications running on hardened, monitored infrastructure.',
+      'Automated backups, error tracking and a documented deploy pipeline behind the scenes.',
+    ],
+  },
+  {
+    date: 'Jun 18, 2026', version: 'v3.17',
+    title: 'Your link is yours, forever',
+    tags: ['New', 'Improved'],
+    points: [
+      'Permanent usernames: change your handle and old links keep redirecting — never lose a booking.',
+      'Big speed-ups on public booking pages: lighter scripts, self-hosted fonts, snappier first paint.',
+    ],
+  },
+  {
+    date: 'Jun 17, 2026', version: 'v3.16',
+    title: 'Two-way reviews + a home for your bookings',
+    tags: ['New', 'Security'],
+    points: [
+      'Guests and hosts can now review each other — build trust both ways.',
+      'A dedicated dashboard for guests to track upcoming and past bookings.',
+      'Admin accounts are now protected with mandatory two-factor authentication.',
+    ],
+  },
+  {
+    date: 'Jun 16, 2026', version: 'v3.12',
+    title: 'Get paid, then get paid again',
+    tags: ['New'],
+    points: [
+      'Subscriptions with auto-renew — monthly or annual — powered by Razorpay UPI AutoPay.',
+      'New settlement engine tracks your clearing balance from booking to payout.',
+      'Hosts can verify their WhatsApp number for trusted, branded notifications.',
+    ],
+  },
+  {
+    date: 'Jun 15, 2026', version: 'v3.7',
+    title: 'Respect for the inbox',
+    tags: ['New'],
+    points: [
+      'One-click unsubscribe for marketing emails — booking and payment emails always get through.',
+      'Added clear Help, Privacy and Unsubscribe pages.',
+    ],
+  },
+  {
+    date: 'Jun 14, 2026', version: 'v3.2',
+    title: 'Log in with just your phone',
+    tags: ['New', 'Improved'],
+    points: [
+      'Phone-first login — your number is your identity, a one-time code is your key.',
+      'Behind the scenes: feature switches let us roll out and roll back safely without downtime.',
+    ],
+  },
+  {
+    date: 'Jun 10, 2026',
+    title: 'Notifications that reach people',
+    tags: ['New'],
+    points: [
+      'A unified notification engine sends booking confirmations and reminders over email and WhatsApp.',
+      'Queued, retried and logged — so the right message lands at the right time.',
+    ],
+  },
+  {
+    date: 'Jun 5, 2026',
+    title: 'Reviews land on Book A Sloth',
+    tags: ['New'],
+    points: [
+      'Guests can leave a rating and a few words after every session.',
+      'Your best reviews shine right on your public profile.',
+    ],
+  },
+  {
+    date: 'Jun 1, 2026',
+    title: 'Calendars and Meet links, on autopilot',
+    tags: ['New'],
+    points: [
+      'Connect Google Calendar once — busy times are blocked automatically, double-bookings disappear.',
+      'Every online session gets a Google Meet link created for you.',
+    ],
+  },
+  {
+    date: 'May 24, 2026',
+    title: 'A booking flow guests breeze through',
+    tags: ['Improved'],
+    points: [
+      'Cleaner date and time picker with real-time availability.',
+      'Guests can book with a quick WhatsApp code — no account, no friction.',
+    ],
+  },
+  {
+    date: 'May 18, 2026',
+    title: 'Payments are live with Razorpay',
+    tags: ['New'],
+    points: [
+      'Take secure card, UPI and netbanking payments at checkout.',
+      'Money flows to verified hosts with GST-ready invoices on every order.',
+    ],
+  },
+  {
+    date: 'May 12, 2026',
+    title: 'Publish your services',
+    tags: ['New'],
+    points: [
+      'Create services with pricing, duration and a description — your storefront in minutes.',
+      'Share one link and let guests book the slots you choose.',
+    ],
+  },
+  {
+    date: 'May 6, 2026',
+    title: 'Sign in over WhatsApp',
+    tags: ['New'],
+    points: [
+      'One-time codes delivered to WhatsApp — the fastest way for guests to verify and book.',
+    ],
+  },
+  {
+    date: 'May 1, 2026',
+    title: 'Hello, Book A Sloth 🦥',
+    tags: ['New'],
+    points: [
+      'The very first build: a home for creators and professionals to get booked and get paid at 0% commission.',
+      'Thanks for being here this early — the best is still ahead.',
+    ],
+  },
+];
+
+const Tag = ({ label }) => {
+  const s = TAG_STYLES[label] || TAG_STYLES.New;
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+      style={{ backgroundColor: s.bg, color: s.fg }}
+    >
+      {label}
+    </span>
+  );
+};
+
+const Changelog = () => {
+  useEffect(() => {
+    const prev = document.title;
+    document.title = "What's New · Book A Sloth";
+    return () => { document.title = prev; };
+  }, []);
+
+  return (
+    <div className="app-container py-12 sm:py-16">
+      <div className="mx-auto max-w-3xl">
+        {/* Header */}
+        <header className="text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-cta">
+            Product updates
+          </p>
+          <h1 className="mt-2 font-heading text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">
+            What’s New
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-gray-500 sm:text-base">
+            Every improvement we’ve shipped to help you get booked and get paid —
+            newest first. We’re just getting started.
+          </p>
+        </header>
+
+        {/* Timeline */}
+        <ol className="relative mt-12 border-l border-gray-200 sm:mt-16">
+          {RELEASES.map((r) => (
+            <li key={r.date + r.title} className="relative ml-5 pb-10 last:pb-0 sm:ml-7">
+              {/* node */}
+              <span
+                aria-hidden="true"
+                className="absolute -left-[26px] top-1.5 grid h-3.5 w-3.5 place-items-center rounded-full border-2 border-white bg-primary shadow-[0_0_0_3px_rgba(254,81,0,0.12)] sm:-left-[34px]"
+              />
+              <div className="page-card p-5 sm:p-6">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <time className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    {r.date}
+                  </time>
+                  {r.version && (
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+                      {r.version}
+                    </span>
+                  )}
+                  <span className="flex flex-wrap gap-1.5">
+                    {r.tags.map((t) => <Tag key={t} label={t} />)}
+                  </span>
+                </div>
+
+                <h2 className="mt-2.5 font-heading text-lg font-bold tracking-tight text-ink sm:text-xl">
+                  {r.title}
+                </h2>
+
+                <ul className="mt-3 space-y-2">
+                  {r.points.map((p, i) => (
+                    <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-gray-600">
+                      <svg viewBox="0 0 24 24" className="mt-1 h-3.5 w-3.5 shrink-0 text-c-emerald" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        {/* Footer CTA */}
+        <div className="mt-12 rounded-2xl border border-black/5 bg-[#FFF8EE] px-6 py-10 text-center">
+          <h3 className="font-heading text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Want all of this for your bookings?
+          </h3>
+          <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+            Set up your page, sync your calendar and start getting paid — at 0% commission.
+          </p>
+          <Link
+            to="/be-a-sloth"
+            className="btn mt-5 inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-primary-cta hover:bg-[#d94400] transition-colors duration-150 shadow-sm hover:no-underline"
+          >
+            Become a host
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Changelog;

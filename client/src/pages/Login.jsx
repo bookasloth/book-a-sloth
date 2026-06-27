@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { sendOtp } from "../services/api";
+import WhatsNewLink from "../components/auth/WhatsNewLink";
 import toast from "react-hot-toast";
 
 // Guest login door. WhatsApp number only — enter the number, get a one-time
@@ -67,7 +68,7 @@ const Login = () => {
   };
 
   return (
-    <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
+    <div className="app-container flex min-h-[calc(100vh-72px)] flex-col items-center justify-center py-8 sm:py-12">
       <div className="page-card w-full max-w-md p-5 sm:p-8">
         {/* STEP: WhatsApp number */}
         {step === "phone" && (
@@ -140,6 +141,9 @@ const Login = () => {
           </>
         )}
       </div>
+
+      {/* Outside the card */}
+      <WhatsNewLink className="mt-6" />
     </div>
   );
 };
