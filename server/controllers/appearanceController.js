@@ -13,8 +13,38 @@
 'use strict';
 
 const { supabaseAdmin } = require('../config/supabase');
+const { isBackgroundKey, BACKGROUND_KEYS } = require('../config/backgroundKeys');
 
 const MODES = ['icon_text', 'image', 'festive'];
+
+/**
+ * Validate an admin-supplied backgrounds map: keep only known background keys
+ * and coerce each entry to the canonical { enabled, order, params } shape.
+ */
+function sanitizeBackgrounds(input) {
+  const out = {};
+  if (!input || typeof input !== 'object') return out;
+  for (const key of Object.keys(input)) {
+    if (!isBackgroundKey(key)) continue;
+    const v = input[key] || {};
+    out[key] = {
+      enabled: !!v.enabled,
+      order: Number.isFinite(+v.order) ? +v.order : 0,
+      params: v.params && typeof v.params === 'object' && !Array.isArray(v.params) ? v.params : {},
+    };
+  }
+  return out;
+}
+
+/**
+ * Resolve a usable default background: keep the requested one if it is a known,
+ * enabled key; otherwise fall back to the first enabled key, then to 'dotgrid'.
+ */
+function resolveDefaultBackground(requested, backgrounds) {
+  if (isBackgroundKey(requested) && backgrounds?.[requested]?.enabled) return requested;
+  const firstEnabled = BACKGROUND_KEYS.find((k) => backgrounds?.[k]?.enabled);
+  return firstEnabled || 'dotgrid';
+}
 
 const DEFAULTS = {
   navbar_logo_mode: 'icon_text',
@@ -35,12 +65,21 @@ async function loadRow() {
   }
 }
 
-const publicShape = (row) => ({
-  navbar_logo_mode: row.navbar_logo_mode || DEFAULTS.navbar_logo_mode,
-  icon_url: row.icon_url || DEFAULTS.icon_url,
-  logo_image_url: row.logo_image_url || '',
-  festive_logo_url: row.festive_logo_url || '',
-});
+const publicShape = (row) => {
+  const _all = row?.backgrounds || {};
+  const _enabled = Object.entries(_all)
+    .filter(([, v]) => v?.enabled)
+    .sort((a, b) => (a[1].order || 0) - (b[1].order || 0))
+    .map(([key, v]) => ({ key, params: v.params || {} }));
+  return {
+    navbar_logo_mode: row.navbar_logo_mode || DEFAULTS.navbar_logo_mode,
+    icon_url: row.icon_url || DEFAULTS.icon_url,
+    logo_image_url: row.logo_image_url || '',
+    festive_logo_url: row.festive_logo_url || '',
+    backgrounds: _enabled,
+    default_background: row?.default_background || 'dotgrid',
+  };
+};
 
 /** GET /api/appearance — public; navbar reads this (no auth). */
 async function getPublic(req, res) {
@@ -69,6 +108,15 @@ async function update(req, res) {
   if (logo_image_url != null)   patch.logo_image_url = String(logo_image_url);
   if (festive_logo_url != null) patch.festive_logo_url = String(festive_logo_url);
 
+  // Background library: validate the supplied map and pin a usable default.
+  if (req.body && req.body.backgrounds != null) {
+    const backgrounds = sanitizeBackgrounds(req.body.backgrounds);
+    patch.backgrounds = backgrounds;
+    patch.default_background = resolveDefaultBackground(req.body.default_background, backgrounds);
+  } else if (req.body && req.body.default_background != null) {
+    patch.default_background = String(req.body.default_background);
+  }
+
   try {
     const { data, error } = await supabaseAdmin
       .from('appearance_settings')
@@ -82,4 +130,12 @@ async function update(req, res) {
   }
 }
 
-module.exports = { getPublic, getAdmin, update, MODES, DEFAULTS };
+module.exports = {
+  getPublic,
+  getAdmin,
+  update,
+  MODES,
+  DEFAULTS,
+  sanitizeBackgrounds,
+  resolveDefaultBackground,
+};
