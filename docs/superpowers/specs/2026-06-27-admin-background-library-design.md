@@ -233,6 +233,31 @@ section — confirm exact tab during planning):
 - **ServiceDetail** (vitest): given a profile `background_key`, mounts the right
   type; given an invalid one, mounts the default. Mock `services/api`.
 
+## Premium Quality Bar (non-negotiable)
+
+Every type and every screen must feel high-end, not a toy. Acceptance:
+
+- **Motion**: steady 60fps; DPR-correct canvas (sharp on retina); ease-based, not
+  linear; subtle and slow by default (premium = restrained, not busy). Each engine
+  fades in on mount (no hard pop). No visible aliasing, banding, or tearing.
+- **Palette**: festive types use refined, harmonious palettes derived from the host
+  color (controlled hue rotation + tasteful tints), never raw saturated rainbow.
+  Ambient types stay elegant and minimal.
+- **Density default**: defaults tuned to look expensive — sparse/clean beats dense.
+  High-density is opt-in.
+- **Admin + host UI**: matches the existing admin shell polish (spacing, cards,
+  toggles, radios) — consistent, not bolted-on. Crisp thumbnails (hand-tuned SVG/
+  PNG, not screenshots). Live preview framed cleanly. Smooth control interactions.
+- **Host gallery**: cards with real previews in the host's color, hover lift,
+  selected state clearly indicated; feels like choosing a theme in a premium product.
+- **Degradation**: reduced-motion fallback is itself tasteful (soft tinted gradient),
+  not a blank box. Lazy-load shows nothing jarring (no layout shift).
+- **Performance**: particle/dot counts capped; offscreen/hidden tab pauses cleanly;
+  no memory growth over time; listeners + RAF fully torn down on unmount.
+
+The plan must include a polish pass per engine and a final design-review checkpoint
+against this bar before each PR.
+
 ## Implementation Phases (for the plan)
 
 1. **Foundation** — registry + `HostBackground` + `palette.js`; move/refactor
