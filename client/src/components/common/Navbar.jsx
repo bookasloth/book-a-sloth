@@ -6,23 +6,43 @@ import useAppearance from '../../hooks/useAppearance';
 import ModeSwitch from './ModeSwitch';
 import { isHost, routeRole } from '../../utils/roleRoutes';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../services/api';
+import { planLabel } from '../../utils/themeUtils';
 import {
   Home, Tag, HelpCircle,
   CalendarCheck, MessageCircle, Bookmark, BarChart2,
-  Briefcase, Bell, X, Menu, ChevronDown,
+  Briefcase, Bell, X, Menu, ChevronDown, ChevronRight,
   Search, User, Settings, LogOut, TrendingUp,
   Clock, Wallet, LayoutDashboard, ExternalLink,
-  Gift, Star, Info,
+  Gift, Star, Info, Compass, Cpu, HeartPulse,
+  GraduationCap, Sparkles, Mail, Award, Layers,
 } from 'lucide-react';
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
+// Every destination below resolves to a real route or a homepage section anchor
+// — no dead 404 links. Use Cases point at /explore (gated) with a category hint
+// so they pre-filter once Explore ships.
 
-// Only destinations that actually have routes are listed. Items pointing at
-// not-yet-built pages (Categories, How It Works, Messages, Saved) were removed
-// to avoid dead 404 links in the navbar.
-// Logged-out header shows no center nav links (Home + Become a Creator removed);
-// the logo (→ home) and the Get Started / Sign In actions cover those intents.
-const PUBLIC_NAV = [];
+// Public center: Use Cases mega-dropdown (4 primary industries, colour-coded),
+// Pricing (homepage anchor), and a More dropdown of real info pages.
+const USE_CASES = [
+  { label: 'Coaching & Consulting', desc: 'Career, life & business coaches', href: '/explore?category=coaching-consulting', icon: Compass,
+    iconCls: 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white', rowCls: 'hover:bg-indigo-50/60' },
+  { label: 'Technology & Product', desc: 'Engineers, PMs & designers', href: '/explore?category=technology-product', icon: Cpu,
+    iconCls: 'bg-sky-50 text-sky-600 group-hover:bg-sky-600 group-hover:text-white', rowCls: 'hover:bg-sky-50/60' },
+  { label: 'Health & Wellness', desc: 'Therapists & nutritionists', href: '/explore?category=health-wellness', icon: HeartPulse,
+    iconCls: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white', rowCls: 'hover:bg-emerald-50/60' },
+  { label: 'Education', desc: 'Tutors & study-abroad mentors', href: '/explore?category=education', icon: GraduationCap,
+    iconCls: 'bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white', rowCls: 'hover:bg-amber-50/60' },
+];
+
+const MORE_MENU = [
+  { label: 'How It Works', href: '/#how-it-works', icon: Sparkles },
+  { label: 'FAQ',          href: '/#faq',          icon: MessageCircle },
+  { label: 'Help Center',  href: '/help',          icon: HelpCircle },
+  { label: 'Contact',      href: '/contact',       icon: Mail },
+  { label: 'Careers',      href: '/careers',       icon: Briefcase },
+  { label: 'About',        href: '/about',         icon: Info },
+];
 
 const CUSTOMER_NAV = [
   { label: 'Home',     href: '/',            icon: Home,         exact: true },
@@ -30,30 +50,50 @@ const CUSTOMER_NAV = [
   { label: 'Bookings', href: '/user/my-bookings', icon: CalendarCheck },
 ];
 
+// Host quick-links — only shown OUTSIDE /dashboard/* (the sidebar owns nav inside
+// the dashboard). "Dashboard" replaces the old mislabelled "Analytics".
 const VENDOR_NAV = [
   { label: 'Home',      href: '/',                   icon: Home,         exact: true },
   { label: 'Bookings',  href: '/dashboard/bookings', icon: CalendarCheck },
   { label: 'Services',  href: '/dashboard/services', icon: Briefcase },
-  { label: 'Analytics', href: '/dashboard',          icon: BarChart2,    exact: true },
+  { label: 'Dashboard', href: '/dashboard',          icon: LayoutDashboard, exact: true },
 ];
 
-const CUSTOMER_DROPDOWN = [
-  { label: 'My Bookings',     href: '/user/my-bookings', icon: CalendarCheck },
-  { label: 'My Profile',      href: '/user/profile',     icon: User },
-  { label: 'Help',            href: '/help',             icon: HelpCircle },
-  { label: 'Loyalty Program', href: '/user/loyalty',     icon: Gift },
-  { label: 'Reviews',         href: '/user/reviews',     icon: Star },
-  { label: 'About',           href: '/about',            icon: Info },
+// Grouped profile dropdown — sectioned for scannability (#3/#5). Bookings lives
+// in the center nav, so it is NOT repeated here (#6). __profile__/__badges__ are
+// resolved to the user's public username routes at render time.
+const CUSTOMER_SECTIONS = [
+  { title: 'Account', items: [
+    { label: 'My Profile',        href: '/user/profile',  icon: User },
+    { label: 'Reviews',           href: '/user/reviews',  icon: Star },
+    { label: 'Loyalty & Rewards', href: '/user/loyalty',  icon: Gift },
+  ] },
+  { title: 'Resources', items: [
+    { label: 'Help Center', href: '/help',    icon: HelpCircle },
+    { label: 'Contact',     href: '/contact', icon: Mail },
+    { label: 'About',       href: '/about',   icon: Info },
+  ] },
 ];
 
-const VENDOR_DROPDOWN = [
-  { label: 'View Public Profile', href: '__profile__',                   icon: ExternalLink },
-  { label: 'Dashboard',           href: '/dashboard',                    icon: LayoutDashboard },
-  { label: 'Earnings',            href: '/dashboard/earnings',           icon: TrendingUp },
-  { label: 'Reviews',             href: '/user/reviews',                 icon: Star },
-  { label: 'Availability',        href: '/dashboard/availability',       icon: Clock },
-  { label: 'Payouts',             href: '/dashboard/payments/payouts',   icon: Wallet },
-  { label: 'Settings',            href: '/dashboard/profile',            icon: Settings },
+const VENDOR_SECTIONS = [
+  { title: 'Workspace', items: [
+    { label: 'Dashboard',           href: '/dashboard',              icon: LayoutDashboard },
+    { label: 'Public Booking Page', href: '__profile__',             icon: ExternalLink },
+    { label: 'Availability',        href: '/dashboard/availability', icon: Clock },
+    { label: 'Settings',            href: '/dashboard/profile',      icon: Settings },
+  ] },
+  { title: 'Money', items: [
+    { label: 'Earnings', href: '/dashboard/earnings',         icon: TrendingUp },
+    { label: 'Payouts',  href: '/dashboard/payments/payouts', icon: Wallet },
+  ] },
+  { title: 'Account', items: [
+    { label: 'Reviews', href: '/user/reviews', icon: Star },
+    { label: 'Badges',  href: '__badges__',    icon: Award },
+  ] },
+  { title: 'Resources', items: [
+    { label: 'Help Center', href: '/help',    icon: HelpCircle },
+    { label: 'Contact',     href: '/contact', icon: Mail },
+  ] },
 ];
 
 // ── Brand logo (admin-managed: icon_text | image | festive) ───────────────────
@@ -113,6 +153,99 @@ const TagPill = ({ text }) =>
     </span>
   ) : null;
 
+// ── Self-contained header dropdown (Use Cases / More) ────────────────────────
+// Owns its open state + outside-click/ESC/route-change close, so the public
+// center nav can host several independent menus without shared wiring.
+const NavDropdown = ({ label, icon: Icon, wide = false, children }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const location = useLocation();
+  useEffect(() => { setOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointer = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('pointerdown', onPointer); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+  return (
+    <div ref={ref} className="relative flex items-stretch">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={[
+          'group relative flex items-center gap-1 px-3.5 text-[12.5px] font-medium transition-colors outline-none',
+          'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FE5100]',
+          open ? 'text-[#FE5100]' : 'text-gray-500 hover:text-[#FE5100]',
+        ].join(' ')}
+      >
+        {Icon && <Icon size={16} className={open ? 'text-[#FE5100]' : 'text-gray-400 group-hover:text-[#FE5100]/80'} />}
+        {label}
+        <ChevronDown size={13} strokeWidth={2.5} className={`text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div
+          className={`absolute left-0 top-full mt-0 ${wide ? 'w-[32rem]' : 'w-56'} bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden`}
+          role="menu"
+          onClick={() => setOpen(false)}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── Public center nav (logged-out): Use Cases mega + Pricing + More ──────────
+const PublicCenterNav = () => (
+  <>
+    <NavDropdown label="Use Cases" icon={Layers} wide>
+      <div className="p-2">
+        <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Browse by industry</p>
+        <div className="grid grid-cols-2 gap-1">
+          {USE_CASES.map((u) => {
+            const Icon = u.icon;
+            return (
+              <Link key={u.label} to={u.href} className={`group flex items-start gap-3 rounded-lg p-3 transition-colors hover:no-underline ${u.rowCls}`}>
+                <span className={`mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${u.iconCls}`}>
+                  <Icon size={18} strokeWidth={2} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-semibold text-gray-900">{u.label}</span>
+                  <span className="block text-[11px] leading-snug text-gray-500">{u.desc}</span>
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+        <Link to="/explore" className="mt-1 flex items-center justify-center gap-1.5 border-t border-gray-100 px-3 py-2.5 text-[13px] font-medium text-[#FE5100] hover:bg-[#FE5100]/5 hover:no-underline">
+          Browse all creators <ChevronRight size={14} />
+        </Link>
+      </div>
+    </NavDropdown>
+
+    <Link to="/#pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
+      Pricing
+    </Link>
+
+    <NavDropdown label="More">
+      <div className="py-1">
+        {MORE_MENU.map((m) => {
+          const Icon = m.icon;
+          return (
+            <Link key={m.label} to={m.href} role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-600 transition-colors hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+              <Icon size={15} className="flex-shrink-0 text-gray-400" /> {m.label}
+            </Link>
+          );
+        })}
+      </div>
+    </NavDropdown>
+  </>
+);
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 const Navbar = () => {
@@ -135,8 +268,11 @@ const Navbar = () => {
   // mode; in Traveling mode — or as a pure guest — they see the customer nav.
   const canHost     = isHost(user);
   const hostingView = canHost && mode === 'hosting';
-  const navItems   = !user ? PUBLIC_NAV : hostingView ? VENDOR_NAV : CUSTOMER_NAV;
-  const dropItems  = hostingView ? VENDOR_DROPDOWN : CUSTOMER_DROPDOWN;
+  const onDashboard = location.pathname.startsWith('/dashboard');
+  // Inside /dashboard/* the sidebar owns navigation, so the host center links are
+  // hidden to avoid a duplicate nav (#2). Logged-out users render PublicCenterNav.
+  const navItems     = !user ? [] : hostingView ? (onDashboard ? [] : VENDOR_NAV) : CUSTOMER_NAV;
+  const dropSections = hostingView ? VENDOR_SECTIONS : CUSTOMER_SECTIONS;
 
   // Notification feed — role-filtered (host vs guest), loaded on mount and on panel open
   const notifRole = hostingView ? 'host' : 'guest';
@@ -209,6 +345,7 @@ const Navbar = () => {
   // Resolve dropdown href (vendor public profile uses dynamic username)
   const resolveHref = (item) => {
     if (item.href === '__profile__') return user?.username ? `/${user.username}` : null;
+    if (item.href === '__badges__')  return user?.username ? `/${user.username}/badges` : null;
     return item.href;
   };
 
@@ -232,7 +369,7 @@ const Navbar = () => {
 
           {/* Center nav (desktop only) */}
           <div className="hidden md:flex items-stretch flex-1 justify-center" role="list">
-            {navItems.map((item) => {
+            {!user ? <PublicCenterNav /> : navItems.map((item) => {
               const active = isActive(item);
               const Icon   = item.icon;
               return (
@@ -373,29 +510,54 @@ const Navbar = () => {
                       aria-label="Profile options"
                     >
                       {/* User info header */}
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="text-[13px] font-semibold text-[#1E1E1E] truncate">{user.name}</p>
-                        <p className="text-[11px] text-gray-400 truncate mt-0.5">{user.email}</p>
+                      <div className="px-4 py-3.5 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                          <Avatar name={user.name} size={9} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-semibold text-[#1E1E1E] truncate">{user.name}</p>
+                            <p className="text-[11px] text-gray-400 truncate">{user.username ? `@${user.username}` : user.email}</p>
+                          </div>
+                          {user.plan && (
+                            <span className="shrink-0 rounded-full bg-[#FE5100]/10 px-2 py-0.5 text-[10px] font-bold text-[#FE5100]">
+                              {planLabel(user.plan, user.plan)}
+                            </span>
+                          )}
+                        </div>
+                        {hostingView && user.username && (
+                          <a
+                            href={`/${user.username}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2.5 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-[12px] font-medium text-gray-700 transition-colors hover:border-[#FE5100]/40 hover:text-[#FE5100] hover:no-underline"
+                          >
+                            <ExternalLink size={13} /> View public profile
+                          </a>
+                        )}
                       </div>
 
-                      {/* Nav items */}
-                      <div className="py-1">
-                        {dropItems.map((item) => {
-                          const Icon = item.icon;
-                          const href = resolveHref(item);
-                          if (!href) return null;
-                          return (
-                            <Link
-                              key={item.label}
-                              to={href}
-                              role="menuitem"
-                              className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] transition-colors duration-150 outline-none focus-visible:bg-[#FE5100]/5 focus-visible:text-[#FE5100]"
-                            >
-                              <Icon size={15} className="flex-shrink-0" />
-                              {item.label}
-                            </Link>
-                          );
-                        })}
+                      {/* Grouped nav sections */}
+                      <div className="max-h-[60vh] overflow-y-auto py-1">
+                        {dropSections.map((sec, si) => (
+                          <div key={sec.title} className={si > 0 ? 'mt-1 border-t border-gray-100 pt-1' : ''}>
+                            <p className="px-4 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{sec.title}</p>
+                            {sec.items.map((item) => {
+                              const Icon = item.icon;
+                              const href = resolveHref(item);
+                              if (!href) return null;
+                              return (
+                                <Link
+                                  key={item.label}
+                                  to={href}
+                                  role="menuitem"
+                                  className="flex items-center gap-3 px-4 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] transition-colors duration-150 outline-none focus-visible:bg-[#FE5100]/5 focus-visible:text-[#FE5100]"
+                                >
+                                  <Icon size={15} className="flex-shrink-0 text-gray-400" />
+                                  {item.label}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        ))}
                       </div>
 
                       {/* Logout */}
@@ -523,6 +685,34 @@ const Navbar = () => {
               })}
             </div>
 
+            {/* Public: browse by industry + info pages (mobile) */}
+            {!user && (
+              <div className="px-1 pt-2 space-y-0.5">
+                <p className="px-3 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Browse by industry</p>
+                {USE_CASES.map((u) => {
+                  const Icon = u.icon;
+                  return (
+                    <Link key={u.label} to={u.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                      <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${u.iconCls}`}><Icon size={15} /></span>
+                      {u.label}
+                    </Link>
+                  );
+                })}
+                <Link to="/#pricing" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                  <Tag size={16} className="flex-shrink-0 text-gray-400" /> Pricing
+                </Link>
+                <div className="my-1 border-t border-gray-100" />
+                {MORE_MENU.map((m) => {
+                  const Icon = m.icon;
+                  return (
+                    <Link key={m.label} to={m.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                      <Icon size={16} className="flex-shrink-0 text-gray-400" /> {m.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Public: Sign In (customer + vendor) + Get Started */}
             {!user && (
               <div className="px-2 pt-3 mt-1 border-t border-gray-100 space-y-2">
@@ -558,23 +748,28 @@ const Navbar = () => {
                 {/* Hosting/Traveling switch — only for dual-capability accounts */}
                 <div className="px-3 pb-2"><ModeSwitch /></div>
 
-                {/* Dropdown items */}
+                {/* Grouped nav sections */}
                 <div className="space-y-0.5">
-                  {dropItems.map((item) => {
-                    const Icon = item.icon;
-                    const href = resolveHref(item);
-                    if (!href) return null;
-                    return (
-                      <Link
-                        key={item.label}
-                        to={href}
-                        className="flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-600 hover:text-[#FE5100] hover:bg-[#FE5100]/5 rounded-lg transition-colors duration-150 hover:no-underline"
-                      >
-                        <Icon size={16} className="flex-shrink-0 text-gray-400" />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
+                  {dropSections.map((sec, si) => (
+                    <div key={sec.title} className={si > 0 ? 'mt-1 border-t border-gray-100 pt-1' : ''}>
+                      <p className="px-3 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{sec.title}</p>
+                      {sec.items.map((item) => {
+                        const Icon = item.icon;
+                        const href = resolveHref(item);
+                        if (!href) return null;
+                        return (
+                          <Link
+                            key={item.label}
+                            to={href}
+                            className="flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-600 hover:text-[#FE5100] hover:bg-[#FE5100]/5 rounded-lg transition-colors duration-150 hover:no-underline"
+                          >
+                            <Icon size={16} className="flex-shrink-0 text-gray-400" />
+                            {item.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
 
                 {/* Logout */}
