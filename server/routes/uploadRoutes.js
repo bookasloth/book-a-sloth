@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { protect } = require('../middleware/authMiddleware');
+const { uploadLimiter } = require('../middleware/security');
 const { uploadImage, uploadProductFile } = require('../controllers/uploadController');
 
 // Store in memory (buffer) — we upload directly to Supabase Storage
@@ -43,9 +44,10 @@ const handleProductFileUpload = (req, res, next) => {
 };
 
 // POST /api/upload/image?folder=profiles|covers|services
-router.post('/image', protect, handleSingleUpload, uploadImage);
+// protect first so uploadLimiter can key per-account (req.user.id).
+router.post('/image', protect, uploadLimiter, handleSingleUpload, uploadImage);
 
 // POST /api/upload/product-file
-router.post('/product-file', protect, handleProductFileUpload, uploadProductFile);
+router.post('/product-file', protect, uploadLimiter, handleProductFileUpload, uploadProductFile);
 
 module.exports = router;
