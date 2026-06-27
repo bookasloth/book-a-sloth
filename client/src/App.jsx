@@ -49,6 +49,7 @@ const CalendlyAlternative  = lazy(() => import('./pages/lp/CalendlyAlternative')
 
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
+const HostLogin      = lazy(() => import('./pages/HostLogin'));
 const GoogleAuthDone = lazy(() => import('./pages/GoogleAuthDone'));
 
 // Vendor Onboarding (Google-first 7-step flow)
@@ -223,8 +224,8 @@ function App() {
 
           {/* Vendor auth — Google-only */}
           <Route path="/be-a-sloth" element={<BeASloth />} />
-          {/* Legacy host-login URL → unified login (also the Google-callback error target). */}
-          <Route path="/login-as-vendor" element={<Login />} />
+          {/* Host login door (Google-only) — also the Google-callback error target. */}
+          <Route path="/login-as-vendor" element={<HostLogin />} />
           <Route path="/auth/google/done" element={<GoogleAuthDone />} />
 
           {/* Vendor Onboarding (Google-first 7-step flow) */}
