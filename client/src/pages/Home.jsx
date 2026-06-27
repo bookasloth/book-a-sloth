@@ -787,7 +787,7 @@ const Home = () => {
   ];
 
   return (
-    <div id="top" className="overflow-x-clip bg-canvas text-ink">
+    <main id="top" className="overflow-x-clip bg-canvas text-ink">
       <BrandPreloader variant="homepage" ready={assetsReady} />
 
       {/* ════════════════ HERO — DESKTOP/TABLET (sm+) ════════════════ */}
@@ -2240,7 +2240,7 @@ const Home = () => {
       </section>
       )}
 
-    </div>
+    </main>
   );
 };
 

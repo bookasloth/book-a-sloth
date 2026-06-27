@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { usePostHog } from '@posthog/react';
 import { analytics } from '../services/analytics';
 import { registerVendor, registerUser, loginUser, loginUnified as apiLoginUnified, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost } from '../services/api';
 import supabase from '../services/supabaseClient';
@@ -24,34 +23,31 @@ export const AuthProvider = ({ children }) => {
     } catch { return 'traveling'; }
   });
   const setMode = (m) => { setModeState(m); localStorage.setItem('bas_active_mode', m); };
-  const posthog = usePostHog();
   const wasIdentified = useRef(false);
 
-  // Link PostHog events to the known user. One central watcher covers every
-  // login path (password, phone, OTP, Google, register) plus refresh-rehydrate.
-  // reset() fires ONLY on the logout transition (identified -> null), never for
-  // a plain anonymous visitor — otherwise the anon distinct_id would churn on
-  // every page load and break anonymous funnels. distinct_id MUST match what the
-  // backend will send later (posthog-node) so events join on one person.
+  // Link analytics events to the known user via the central bus. One watcher covers
+  // every login path (password, phone, OTP, Google, register) plus refresh-rehydrate.
+  // The bus fans identity to all active adapters (PostHog gets email + fields; GA4
+  // ignores props; Clarity uses name/role/plan). reset() fires ONLY on the logout
+  // transition (identified -> null), never for a plain anonymous visitor — otherwise
+  // the anon distinct_id would churn on every page load and break anonymous funnels.
+  // distinct_id MUST match what the backend sends later (posthog-node) so events
+  // join on one person.
   useEffect(() => {
-    if (!posthog) return;
     const id = user?.id || user?._id;
     if (id) {
-      posthog.identify(String(id), {
+      analytics.identify(String(id), {
         email: user.email,
         name: user.name,
         role: user.role,
         plan: user.plan,
       });
-      // Fan the same identity to the gated adapters (GA4 user_id, Clarity tags).
-      // PostHog is skipped inside analytics.identify — it's owned by the line above.
-      analytics.identify(String(id), { name: user.name, role: user.role, plan: user.plan });
       wasIdentified.current = true;
     } else if (wasIdentified.current) {
-      posthog.reset();
+      analytics.reset();
       wasIdentified.current = false;
     }
-  }, [posthog, user?.id, user?._id]);
+  }, [user?.id, user?._id]);
 
   useEffect(() => {
     const stored = localStorage.getItem('user');

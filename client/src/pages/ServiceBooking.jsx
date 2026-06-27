@@ -23,6 +23,7 @@ import {
   applyProfileTheme,
 } from "../utils/themeUtils";
 import { downloadReceipt } from "../utils/receipt";
+import loadRazorpay from "../utils/loadRazorpay";
 
 const MONTHS = [
   "January",
@@ -39,16 +40,6 @@ const MONTHS = [
   "December",
 ];
 const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-const loadRazorpay = () =>
-  new Promise((resolve) => {
-    if (window.Razorpay) return resolve(true);
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
 
 // Build a Google Calendar "add event" URL from a UTC start ISO + duration (min).
 const googleCalUrl = ({ title, details, location, startISO, durationMin }) => {

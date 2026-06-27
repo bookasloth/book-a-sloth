@@ -15,8 +15,11 @@ import './preloader.css';
 //   <BrandPreloader variant="profile"  ready={!loading} profileName={name} accentColor={tc} />
 // ───────────────────────────────────────────────────────────────────────────
 
-const TOTAL_MS = 2500; // fixed total on-screen duration
-const CYCLE_MS = 520;  // greeting swap cadence
+const CYCLE_MS = 380;  // greeting swap cadence
+
+// Show the branded intro at most once per browser session — every public-page
+// load after the first skips straight to content.
+const SESSION_KEY = 'bas_intro_shown';
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
@@ -28,29 +31,43 @@ export default function BrandPreloader({
   profileName = null,
   accentColor = '#fe5100',
   minDuration,
-  maxDuration = 3000,
+  maxDuration,
   onDone,
 }) {
   const reduce = useMemo(prefersReducedMotion, []);
 
-  // Fixed 2.5s experience: greet → brand → exit always sum to TOTAL_MS,
-  // regardless of how fast the page loads (content loads behind the overlay).
-  const brandMs = reduce ? 420 : 520;
-  const exitMs = reduce ? 300 : 520;
-  const greetMs = minDuration ?? Math.max(0, TOTAL_MS - brandMs - exitMs);
+  // Skip the intro entirely for reduced-motion users and for any load after the
+  // first this session — it must never sit on the LCP critical path twice.
+  const skipIntro = useMemo(() => {
+    if (reduce) return true;
+    try { return sessionStorage.getItem(SESSION_KEY) === '1'; } catch (_) { return false; }
+  }, [reduce]);
+
+  // Snappy + readiness-gated: a brief greeting, then exit as soon as the page
+  // reports `ready` (hard-capped so a slow network never hangs the hero behind
+  // it). Content loads under the fixed overlay, so there's zero layout shift.
+  const greetMs = minDuration ?? 400;
+  const capMs = maxDuration ?? 1200;
+  const brandMs = 400;
+  const exitMs = 320;
 
   const [skipped, setSkipped] = useState(false);
   const phase = usePreloader({
-    ready: true, // duration is fixed; readiness no longer gates exit
-    minDuration: skipped ? 0 : greetMs,
-    maxDuration: skipped ? 0 : greetMs,
-    brandDuration: brandMs,
-    exitDuration: exitMs,
+    // When skipping, drive the machine to 'hidden' immediately so onDone (if any)
+    // still fires for callers that gate on it.
+    ready: skipIntro ? true : ready,
+    minDuration: (skipIntro || skipped) ? 0 : greetMs,
+    maxDuration: (skipIntro || skipped) ? 0 : capMs,
+    brandDuration: skipIntro ? 0 : brandMs,
+    exitDuration: skipIntro ? 0 : exitMs,
     onDone,
   });
 
-  // Inject greeting Noto subsets once (only ever on pages using the preloader).
-  useEffect(() => { ensureGreetingFonts(); }, []);
+  // Mark the session so later public-page loads skip the intro.
+  useEffect(() => { try { sessionStorage.setItem(SESSION_KEY, '1'); } catch (_) {} }, []);
+
+  // Inject greeting Noto subsets only when we'll actually show greetings.
+  useEffect(() => { if (!skipIntro) ensureGreetingFonts(); }, [skipIntro]);
 
   // Greeting cycling — only while greeting.
   const greetings = useMemo(() => resolveGreetings({ variant }), [variant]);
@@ -63,7 +80,7 @@ export default function BrandPreloader({
 
   // Body scroll lock + aria-busy while the overlay is up.
   useEffect(() => {
-    if (phase === 'hidden') return undefined;
+    if (skipIntro || phase === 'hidden') return undefined;
     const root = document.getElementById('root');
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -72,7 +89,7 @@ export default function BrandPreloader({
       document.body.style.overflow = prev;
       root?.removeAttribute('aria-busy');
     };
-  }, [phase]);
+  }, [phase, skipIntro]);
 
   // ESC = skip for power users.
   const onKey = useCallback((e) => { if (e.key === 'Escape') setSkipped(true); }, []);
@@ -81,7 +98,7 @@ export default function BrandPreloader({
     return () => window.removeEventListener('keydown', onKey);
   }, [onKey]);
 
-  if (phase === 'hidden') return null;
+  if (skipIntro || phase === 'hidden') return null;
 
   const g = greetings[gi % greetings.length] || greetings[0];
   const showBrand = phase === 'brand' || phase === 'exit';

@@ -1,11 +1,10 @@
 import { render, screen, act } from '@testing-library/react';
 import { vi, test, expect, beforeEach } from 'vitest';
 
-// AuthProvider pulls in PostHog, analytics, the api layer, and the supabase
-// client at import time — stub them so we can mount the provider in isolation
-// and assert only the new Hosting/Traveling mode state.
-vi.mock('@posthog/react', () => ({ usePostHog: () => null }));
-vi.mock('../services/analytics', () => ({ analytics: { identify: vi.fn() } }));
+// AuthProvider pulls in the analytics bus, the api layer, and the supabase client
+// at import time — stub them so we can mount the provider in isolation and assert
+// only the new Hosting/Traveling mode state.
+vi.mock('../services/analytics', () => ({ analytics: { identify: vi.fn(), reset: vi.fn() } }));
 vi.mock('../services/api', () => ({
   registerVendor: vi.fn(), registerUser: vi.fn(), loginUser: vi.fn(),
   loginWithPhone: vi.fn(), verifyOtpLogin: vi.fn(), setUserPassword: vi.fn(),

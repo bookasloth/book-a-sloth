@@ -6,19 +6,10 @@ import { getPublicPlans, activateFreePlan, advanceToLive, createSubscription, sy
 import { planLabel } from '../../utils/themeUtils';
 import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
+import loadRazorpay from '../../utils/loadRazorpay';
 
 const GST_RATE = 0.18; // display only — server is authoritative
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
-
-const loadRazorpay = () =>
-  new Promise((resolve) => {
-    if (window.Razorpay) return resolve(true);
-    const s = document.createElement('script');
-    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.body.appendChild(s);
-  });
 
 // Concise feature list straight from the DB plan record (mirrors UpgradePlan).
 const featureLines = (plan) => {

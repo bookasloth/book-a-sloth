@@ -8,8 +8,7 @@ const { becomeHostMock } = vi.hoisted(() => ({
     Promise.resolve({ data: { id: 'g1', is_host: true, role: 'host', onboarding_slug: 'doc' } })
   ),
 }));
-vi.mock('@posthog/react', () => ({ usePostHog: () => null }));
-vi.mock('../services/analytics', () => ({ analytics: { identify: vi.fn() } }));
+vi.mock('../services/analytics', () => ({ analytics: { identify: vi.fn(), reset: vi.fn() } }));
 vi.mock('../services/api', () => ({
   registerVendor: vi.fn(), registerUser: vi.fn(), loginUser: vi.fn(),
   loginWithPhone: vi.fn(), verifyOtpLogin: vi.fn(), setUserPassword: vi.fn(),
