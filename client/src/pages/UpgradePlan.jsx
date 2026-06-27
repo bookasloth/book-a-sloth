@@ -5,16 +5,7 @@ import toast from "react-hot-toast";
 import BackButton from "../components/common/BackButton";
 import { PageHeader, Card, Button, cn } from "../components/dashboard/ui";
 import { planLabel } from "../utils/themeUtils";
-
-const loadRazorpay = () =>
-  new Promise((resolve) => {
-    if (window.Razorpay) return resolve(true);
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.body.appendChild(s);
-  });
+import loadRazorpay from "../utils/loadRazorpay";
 
 const GST_RATE = 0.18; // display only — server is authoritative
 const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;

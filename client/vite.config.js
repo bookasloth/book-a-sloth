@@ -1,8 +1,15 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Dev-only bundle analysis. Off by default — set ANALYZE=1 to emit
+    // dist/stats.html (treemap of chunk contents). Never affects normal builds.
+    process.env.ANALYZE &&
+      visualizer({ filename: 'dist/stats.html', gzipSize: true, brotliSize: true, template: process.env.ANALYZE_JSON ? 'raw-data' : 'treemap' }),
+  ].filter(Boolean),
 
   server: {
     // Honor a PORT env override (used by the preview harness) so the

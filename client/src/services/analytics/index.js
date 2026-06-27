@@ -9,7 +9,9 @@
 //   analytics.track(EVENTS.BOOKING_STARTED, { service_id });
 //
 // Consent model:
-//   - PostHog (needsConsent:false) is always-on, inits at app boot.
+//   - PostHog (needsConsent:false) is always-on; its SDK is dynamically imported
+//     and initialised on first idle (see AnalyticsBridge) so it stays out of the
+//     initial bundle and off the first-paint critical path.
 //   - GA4 / Pixel / Clarity / GTM (needsConsent:true) load ONLY after the user
 //     grants marketing consent. Events fired before consent are dropped for those
 //     tools (not replayed) — we never backfill pre-consent activity into ad networks.
@@ -39,7 +41,8 @@ function activeAdapters() {
   return ADAPTERS.filter((a) => !a.needsConsent || isGranted());
 }
 
-// Boot: always-on adapters now; gated adapters when (and if) consent is granted.
+// Boot (call on first idle): always-on adapters now; gated adapters when (and if)
+// consent is granted.
 export function initAnalytics() {
   ADAPTERS.filter((a) => !a.needsConsent).forEach(initAdapter);
   if (isGranted()) ADAPTERS.filter((a) => a.needsConsent).forEach(initAdapter);
@@ -51,14 +54,18 @@ export function initAnalytics() {
 }
 
 export const analytics = {
-  // Link events to a known user. PostHog identity is owned by AuthContext's central
-  // watcher, so this fans to the OTHER adapters only (avoids a double identify).
+  // Link events to a known user, fanning to every active adapter (incl. PostHog).
+  // AuthContext's central watcher is the only caller — see its useEffect.
   identify(id, props = {}) {
     if (!id) return;
     lastIdentify = { id, props };
-    activeAdapters()
-      .filter((a) => a.name !== 'posthog')
-      .forEach((a) => { try { a.identify?.(id, props); } catch (_) {} });
+    activeAdapters().forEach((a) => { try { a.identify?.(id, props); } catch (_) {} });
+  },
+
+  // Unlink on logout. Fires the reset hook on adapters that support it (PostHog).
+  reset() {
+    lastIdentify = null;
+    activeAdapters().forEach((a) => { try { a.reset?.(); } catch (_) {} });
   },
 
   track(event, props = {}) {

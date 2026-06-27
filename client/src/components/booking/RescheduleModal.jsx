@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Modal from './Modal';
 import { getAvailableSlots, rescheduleBooking, createRescheduleFeeOrder } from '../../services/api';
 import useFeatureFlags from '../../hooks/useFeatureFlags';
+import loadRazorpay from '../../utils/loadRazorpay';
 import toast from 'react-hot-toast';
 
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -54,6 +55,8 @@ export default function RescheduleModal({ open, booking, onClose, onDone }) {
   // Razorpay checkout for the reschedule fee. Resolves with payment refs.
   const payFee = () => new Promise(async (resolve, reject) => {
     try {
+      const ok = await loadRazorpay();
+      if (!ok) return reject(new Error('Could not load payment SDK'));
       const { data } = await createRescheduleFeeOrder(booking.id);
       const rzp = new window.Razorpay({
         key: data.key,

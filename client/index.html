@@ -28,12 +28,18 @@
     <meta name="twitter:title" content="Book A Sloth — booked &amp; paid at 0% commission" />
     <meta name="twitter:description" content="Keep what you earn — 0% commission, flat pricing, UPI &amp; GST built in. Built for India." />
     <meta name="twitter:image" content="https://bookasloth.com/og-image.png" />
-    <!-- Poppins — admin panel font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" />
-    <!-- Razorpay Checkout — required for window.Razorpay in onboarding plan purchase -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- Self-hosted fonts (see src/styles/fonts.css). Preload only the two
+         above-the-fold weights — heading (Plus Jakarta Sans) + body (Poppins 400) —
+         so the hero gets them fastest; the rest load on demand via @font-face. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/plus-jakarta-sans-latin-var.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/poppins-latin-400.woff2" />
+    <!-- Homepage hero (desktop LCP). Mobile uses a text-only hero, so this is
+         media-gated to sm+ and costs mobile nothing. Keep in sync with HERO in
+         src/components/home/images.js. -->
+    <link rel="preload" as="image" media="(min-width: 640px)" fetchpriority="high"
+          href="https://company-assets.bookasloth.in/images/banner/hero-book-a-sloth.png" />
+    <!-- Razorpay Checkout is loaded on demand at checkout (src/utils/loadRazorpay.js),
+         not here — it used to render-block every page including public marketing pages. -->
 
     <!-- Marketing tags (Meta Pixel, GA4, Microsoft Clarity) are loaded by the
          consent-gated analytics bus (src/services/analytics/) ONLY after the user
