@@ -78,10 +78,23 @@ export const getPlanBorderColor = (plan) => {
   return '#6B7280';                               // grey
 };
 
+// ─── Plan display labels (UI ONLY — DB slugs/names are unchanged) ────────────
+// Maps the internal plan slug to the user-facing brand name. Internal code,
+// routes, DB values, feature flags, and analytics keep their original slugs.
+export const PLAN_DISPLAY = {
+  starter: 'Starter', explorer: 'Starter', free: 'Starter',
+  creator: 'Host+',
+  professional: 'Studio', pro: 'Studio',
+};
+
+// Render-time plan label. Pass the slug; optional fallback for unknown slugs.
+export const planLabel = (slug, fallback) =>
+  PLAN_DISPLAY[String(slug || '').toLowerCase()] || fallback || slug || '';
+
 export const getPlanBorderLabel = (plan) => {
-  if (plan === 'professional') return 'Pro';
-  if (plan === 'creator')      return 'Creator';
-  return 'Explorer';
+  if (plan === 'professional') return 'Studio';
+  if (plan === 'creator')      return 'Host+';
+  return 'Starter';
 };
 
 // ─── Social platform brand colors ────────────────────────────────────────────

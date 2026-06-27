@@ -336,7 +336,7 @@ const HostProfile = () => {
         getHostProducts(profileSlug).then(r => setProducts(r.data || [])).catch(() => {});
         getVendorBadges(profileSlug).then(r => setBadgeList(r.data?.badges || [])).catch(() => {});
       } catch (err) {
-        setError(err.response?.status === 404 ? 'Creator not found' : 'Something went wrong');
+        setError(err.response?.status === 404 ? 'Host not found' : 'Something went wrong');
       } finally {
         setLoading(false);
       }

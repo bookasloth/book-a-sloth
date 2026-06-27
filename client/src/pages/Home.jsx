@@ -741,7 +741,7 @@ const Home = () => {
   const [yearly, setYearly] = useState(true);
   const PLANS = [
     {
-      name: "Creator",
+      name: "Host+",
       tagline: "For solo creators & freelancers.",
       monthly: 199,
       yearly: 999,
@@ -759,12 +759,12 @@ const Home = () => {
       ],
     },
     {
-      name: "Professional",
+      name: "Studio",
       tagline: "Top tier, for growing practices & studios.",
       monthly: 499,
       yearly: 3650,
       recommended: true,
-      intro: "Everything in Creator, plus:",
+      intro: "Everything in Host+, plus:",
       features: [
         "Up to 30 services",
         "3,000 bookings a year",
@@ -1881,7 +1881,7 @@ const Home = () => {
             <div className="rounded-[6px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8 lg:flex lg:items-center lg:gap-8">
               <div className="lg:shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <h3 className="font-heading text-2xl font-bold text-ink">Free</h3>
+                  <h3 className="font-heading text-2xl font-bold text-ink">Starter</h3>
                   <span className="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-primary">5% per booking</span>
                 </div>
                 <p className="mt-1 text-sm text-neutral-500">For professionals just getting started.</p>

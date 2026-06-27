@@ -84,7 +84,7 @@ export const serviceJsonLd = ({ service = {}, vendor = {}, siteUrl = SITE_URL, a
 
 export const resolveProfileSeo = ({ host = {}, siteUrl = SITE_URL } = {}) => {
   const site = trimSlash(siteUrl);
-  const name = host.name || 'Creator';
+  const name = host.name || 'Host';
 
   const title = host.seo_title
     || `${name}${host.profession ? ` — ${host.profession}` : ''} | Book A Sloth`;
@@ -108,7 +108,7 @@ export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [] } =
   const url = host.username ? `${site}/${host.username}` : site;
   const person = {
     '@type': 'Person',
-    name: host.name || 'Creator',
+    name: host.name || 'Host',
     url,
     jobTitle: host.profession || undefined,
     description: host.seo_description || host.bio || undefined,

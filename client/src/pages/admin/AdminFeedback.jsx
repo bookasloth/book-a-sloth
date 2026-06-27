@@ -39,7 +39,7 @@ export default function AdminFeedback() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-bold">Vendor Feedback</h1>
+        <h1 className="text-lg font-bold">Host Feedback</h1>
         <select value={filter} onChange={(e) => setFilter(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
           <option value="">All statuses</option>
           {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -52,7 +52,7 @@ export default function AdminFeedback() {
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                <tr><th className="text-left px-4 py-2">Vendor</th><th className="text-left px-4 py-2">Type</th><th className="text-left px-4 py-2">Feedback</th><th className="text-left px-4 py-2">Status</th><th className="px-4 py-2"></th></tr>
+                <tr><th className="text-left px-4 py-2">Host</th><th className="text-left px-4 py-2">Type</th><th className="text-left px-4 py-2">Feedback</th><th className="text-left px-4 py-2">Status</th><th className="px-4 py-2"></th></tr>
               </thead>
               <tbody>
                 {items.map((f) => (

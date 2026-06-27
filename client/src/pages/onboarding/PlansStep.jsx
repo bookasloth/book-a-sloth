@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Check } from 'lucide-react';
 import { getPublicPlans, activateFreePlan, advanceToLive, createSubscription, syncSubscription, getMe } from '../../services/api';
+import { planLabel } from '../../utils/themeUtils';
 import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
 
@@ -64,7 +65,7 @@ const PlansStep = () => {
     setBusy('free');
     try {
       await activateFreePlan();
-      toast.success('Free plan activated');
+      toast.success('Starter plan activated');
       goNext();
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to activate plan');
@@ -109,7 +110,7 @@ const PlansStep = () => {
         // Confirmed active: advance the onboarding step FIRST, then toast, then
         // navigate (awaiting advance before the toast also fixes a toast-ordering nit).
         await advanceToLive();
-        toast.success(`${plan.name} active — renews ${cadence}.`);
+        toast.success(`${planLabel(plan.slug, plan.name)} active — renews ${cadence}.`);
         goNext();
         return true;
       };
@@ -118,7 +119,7 @@ const PlansStep = () => {
         key: sub.key,
         subscription_id: sub.subscription_id,
         name: 'Book A Sloth',
-        description: `${plan.name} — ${cadence} (auto-renews)`,
+        description: `${planLabel(plan.slug, plan.name)} — ${cadence} (auto-renews)`,
         handler: async () => {
           // First attempt right after payment.
           if (await tryFinalize()) return;
@@ -209,7 +210,7 @@ const PlansStep = () => {
                       </div>
                     )}
 
-                    <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
+                    <h3 className="text-lg font-bold mb-2">{planLabel(plan.slug, plan.name)}</h3>
                     {!paid ? (
                       <p className="text-2xl font-bold text-primary mb-1">Free</p>
                     ) : cadenceAvailable ? (
@@ -237,9 +238,9 @@ const PlansStep = () => {
                       disabled={busy !== null || (paid && !cadenceAvailable)}
                       className="btn w-full mt-6 bg-primary text-white py-2.5 text-sm font-semibold hover:bg-primary-dark disabled:opacity-50 transition">
                       {isBusy ? 'Processing…'
-                        : !paid ? 'Continue Free'
+                        : !paid ? 'Get started'
                         : !cadenceAvailable ? 'Annual only'
-                        : `Choose ${plan.name}`}
+                        : `Choose ${planLabel(plan.slug, plan.name)}`}
                     </button>
                   </div>
                 );

@@ -32,7 +32,7 @@ const TABS = [
   { id: 'overview',   label: 'Overview',        to: '/super-dashboard' },
   { id: 'revenue',    label: 'Revenue',          to: '/super-dashboard/revenue' },
   { id: 'users',      label: 'Users',            to: '/super-dashboard/users' },
-  { id: 'providers',  label: 'Providers',        to: '/super-dashboard/providers' },
+  { id: 'providers',  label: 'Hosts',            to: '/super-dashboard/providers' },
   { id: 'bookings',   label: 'Bookings',         to: '/super-dashboard/bookings' },
   { id: 'pending',    label: 'Pending Actions',  to: '/super-dashboard/pending' },
   { id: 'insights',   label: 'Insights',         to: '/super-dashboard/insights' },
@@ -84,7 +84,7 @@ const OverviewTab = ({ stats, ops }) => {
   const cards = [
     { label: 'Platform Revenue',  value: `₹${(s.revenue || 0).toLocaleString('en-IN')}`, sub: 'Fees + commission collected', icon: 'dollar',  iconColor: 'bg-[#FE5100]', to: '/super-dashboard/revenue' },
     { label: 'Total Bookings',    value: (s.bookings || 0).toLocaleString(),              sub: `${s.confirmed || 0} paid`,    icon: 'calendar', iconColor: 'bg-[#1E1E1E]', to: '/super-dashboard/bookings' },
-    { label: 'Active Providers',  value: (s.vendors || 0).toLocaleString(),               sub: 'Registered hosts',            icon: 'building', iconColor: 'bg-[#1E1E1E]', to: '/super-dashboard/providers' },
+    { label: 'Active Hosts',      value: (s.vendors || 0).toLocaleString(),               sub: 'Registered hosts',            icon: 'building', iconColor: 'bg-[#1E1E1E]', to: '/super-dashboard/providers' },
     { label: 'Total Users',       value: (s.users || 0).toLocaleString(),                 sub: 'Guests + hosts',              icon: 'users',    iconColor: 'bg-[#1E1E1E]', to: '/super-dashboard/users' },
     { label: 'Active Services',   value: (s.services || 0).toLocaleString(),              sub: 'Published listings',          icon: 'grid',     iconColor: 'bg-[#1E1E1E]', to: '/admin/services' },
     { label: 'Pending Actions',   value: (ops?.totalAttention ?? 0).toLocaleString(),     sub: 'Requires review',             icon: 'alert',    iconColor: ops?.totalAttention ? 'bg-[#FE5100]' : 'bg-[#1E1E1E]', to: '/super-dashboard/pending' },
@@ -191,7 +191,7 @@ const UsersTab = ({ stats }) => {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {[
           { label: 'Total Guests',     value: (stats?.users || 0).toLocaleString(),    sub: 'Guest accounts' },
-          { label: 'Total Providers',  value: (stats?.vendors || 0).toLocaleString(),  sub: 'Host accounts' },
+          { label: 'Total Hosts',      value: (stats?.vendors || 0).toLocaleString(),  sub: 'Host accounts' },
           { label: 'Total Accounts',   value: ((stats?.users || 0) + (stats?.vendors || 0)).toLocaleString(), sub: 'Combined' },
         ].map(c => (
           <div key={c.label} className="bg-white border border-gray-200/80 rounded-2xl p-5">
@@ -241,12 +241,12 @@ const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 // Professional = brand orange. Slice + outer rim share one border colour.
 const PLAN_ORDER = ['starter', 'creator', 'professional'];
 const PLAN_META = {
-  starter:      { label: 'Free',      color: '#ffffff' },
+  starter:      { label: 'Starter',   color: '#ffffff' },
   creator:      { label: '₹999',      color: '#9ca3af' },
   professional: { label: '₹3,650',    color: '#FE5100' },
 };
 const PIE_BORDER = '#374151'; // gray-700 — keeps the white slice readable on a white card
-const PLAN_NAME = { starter: 'Free', creator: 'Creator', professional: 'Professional' };
+const PLAN_NAME = { starter: 'Starter', creator: 'Host+', professional: 'Studio' };
 
 const polar = (cx, cy, r, deg) => {
   const rad = ((deg - 90) * Math.PI) / 180;
@@ -269,9 +269,9 @@ const PlanSharePie = ({ distribution }) => {
   return (
     <div className="bg-white border border-gray-200/80 rounded-2xl p-5">
       <p className="text-sm font-semibold text-gray-800 mb-0.5">Plan Share</p>
-      <p className="text-[12px] text-gray-400 mb-4">Providers by subscription plan</p>
+      <p className="text-[12px] text-gray-400 mb-4">Hosts by subscription plan</p>
       {total === 0 ? (
-        <div className="py-10 text-center text-[12px] text-gray-400">No providers on any plan yet.</div>
+        <div className="py-10 text-center text-[12px] text-gray-400">No hosts on any plan yet.</div>
       ) : (
         <>
         <div className="flex flex-col sm:flex-row items-center gap-5">
@@ -312,7 +312,7 @@ const PlanSharePie = ({ distribution }) => {
           </ul>
         </div>
         <p className="mt-4 pt-3 border-t border-gray-100 text-[11px] text-gray-500">
-          Largest group: <span className="font-semibold text-gray-700">{PLAN_NAME[top.key]}</span> — {top.value} provider{top.value !== 1 ? 's' : ''} ({Math.round((top.value / total) * 100)}%).
+          Largest group: <span className="font-semibold text-gray-700">{PLAN_NAME[top.key]}</span> — {top.value} host{top.value !== 1 ? 's' : ''} ({Math.round((top.value / total) * 100)}%).
         </p>
         </>
       )}
@@ -325,8 +325,8 @@ const EARN_PERIODS = [['all', 'All'], ['12m', '12m'], ['90d', '90d'], ['30d', '3
 
 const PlanEarningsBars = ({ planEarnings, bookingEarnings, period, onPeriod }) => {
   const groups = [
-    { key: 'creator',      label: 'Creator (₹999)' },
-    { key: 'professional', label: 'Professional (₹3,650)' },
+    { key: 'creator',      label: 'Host+ (₹999)' },
+    { key: 'professional', label: 'Studio (₹3,650)' },
   ];
   const series = [
     { key: 'plans',    label: 'Earning from Plans',    color: '#FE5100', data: planEarnings },
@@ -437,7 +437,7 @@ const ProvidersTab = ({ stats }) => {
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total Providers', value: (stats?.vendors || 0).toLocaleString(), sub: 'Registered hosts' },
+          { label: 'Total Hosts', value: (stats?.vendors || 0).toLocaleString(), sub: 'Registered hosts' },
           { label: 'Active Services', value: (stats?.services || 0).toLocaleString(), sub: 'Published listings' },
           { label: 'Bookings Made',   value: (stats?.bookings || 0).toLocaleString(), sub: 'All-time' },
         ].map(c => (
@@ -457,13 +457,13 @@ const ProvidersTab = ({ stats }) => {
 
       <div className="bg-white border border-gray-200/80 rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <p className="font-semibold text-gray-800 text-sm">Active Providers</p>
+          <p className="font-semibold text-gray-800 text-sm">Active Hosts</p>
           <Link to="/admin/providers/active" className="text-[12px] text-[#FE5100] hover:underline font-medium">View all</Link>
         </div>
         {loading ? (
           <div className="py-10 text-center text-gray-400 text-sm">Loading...</div>
         ) : providers.length === 0 ? (
-          <Empty icon="building" title="No providers yet" desc="Providers will appear here once they register." />
+          <Empty icon="building" title="No hosts yet" desc="Hosts will appear here once they register." />
         ) : (
           <div className="divide-y divide-gray-100">
             {providers.map(p => (

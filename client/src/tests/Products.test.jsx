@@ -147,19 +147,19 @@ describe('Products — plan-tier upgrade gate', () => {
 
   test('a plan with a 0 product allowance shows the upgrade gate', async () => {
     renderWithPlan('starter', PLANS_FREE_BLOCKED);
-    expect(await screen.findByText(/upgrade to creator/i)).toBeTruthy();
+    expect(await screen.findByText(/upgrade to host\+/i)).toBeTruthy();
     expect(screen.queryByRole('button', { name: /add product/i })).toBeNull();
   });
 
   test('legacy "explorer" slug resolves to the free tier for gating', async () => {
     renderWithPlan('explorer', PLANS_FREE_BLOCKED);
-    expect(await screen.findByText(/upgrade to creator/i)).toBeTruthy();
+    expect(await screen.findByText(/upgrade to host\+/i)).toBeTruthy();
   });
 
   test('upgrade CTA names the entry plan and carries no price label', async () => {
     renderWithPlan('explorer', PLANS_FREE_BLOCKED);
-    const cta = await screen.findByText(/upgrade to creator/i);
-    expect(cta.textContent.trim()).toBe('Upgrade to Creator');
+    const cta = await screen.findByText(/upgrade to host\+/i);
+    expect(cta.textContent.trim()).toBe('Upgrade to Host+');
     expect(cta.textContent).not.toMatch(/₹|\/mo|\/month|999/);
   });
 });
@@ -179,10 +179,10 @@ describe('Products — kill-switch gate (feature off)', () => {
     expect(screen.queryByRole('button', { name: /add product/i })).toBeNull();
   });
 
-  test('kill switch wins over the plan gate — a 0-allowance plan still sees the notice, not "Upgrade to Creator"', async () => {
+  test('kill switch wins over the plan gate — a 0-allowance plan still sees the notice, not "Upgrade to Host+"', async () => {
     useFeature.mockReturnValue(false);
     renderWithPlan('starter', PLANS_FREE_BLOCKED);
     expect(await screen.findByText(/temporarily unavailable/i)).toBeTruthy();
-    expect(screen.queryByText(/upgrade to creator/i)).toBeNull();
+    expect(screen.queryByText(/upgrade to host\+/i)).toBeNull();
   });
 });

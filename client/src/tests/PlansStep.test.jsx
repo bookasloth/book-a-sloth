@@ -58,7 +58,7 @@ beforeEach(() => {
 
 test('renders DB plans + monthly/annual cadence toggle', async () => {
   renderStep();
-  await waitFor(() => screen.getByText('Creator'));
+  await waitFor(() => screen.getByText('Host+'));
   expect(screen.getByRole('button', { name: 'Monthly' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Annual/ })).toBeInTheDocument();
   expect(screen.getByText('Starter')).toBeInTheDocument();
@@ -66,16 +66,16 @@ test('renders DB plans + monthly/annual cadence toggle', async () => {
 
 test('paid plan opens an auto-renew subscription with the selected cadence', async () => {
   renderStep();
-  await waitFor(() => screen.getByText('Creator'));
-  fireEvent.click(screen.getByRole('button', { name: 'Choose Creator' }));
+  await waitFor(() => screen.getByText('Host+'));
+  fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
   await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'creator', cadence: 'annual' }));
 });
 
 test('switching to monthly passes monthly cadence', async () => {
   renderStep();
-  await waitFor(() => screen.getByText('Creator'));
+  await waitFor(() => screen.getByText('Host+'));
   fireEvent.click(screen.getByRole('button', { name: 'Monthly' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Choose Creator' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
   await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'creator', cadence: 'monthly' }));
 });
 
@@ -83,7 +83,7 @@ describe('free plan path', () => {
   test('calls activateFreePlan then navigates to /live', async () => {
     renderStep();
     await waitFor(() => screen.getByText('Starter'));
-    fireEvent.click(screen.getByRole('button', { name: 'Continue Free' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Get started' }));
     await waitFor(() => expect(activateFreePlan).toHaveBeenCalled());
     // After navigation the /live sentinel route renders
     await waitFor(() => expect(screen.getByTestId('live-page')).toBeInTheDocument());
@@ -92,7 +92,7 @@ describe('free plan path', () => {
   test('does NOT call advanceToLive or markOnboardingComplete on free path', async () => {
     renderStep();
     await waitFor(() => screen.getByText('Starter'));
-    fireEvent.click(screen.getByRole('button', { name: 'Continue Free' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Get started' }));
     await waitFor(() => expect(activateFreePlan).toHaveBeenCalled());
     // Navigates but does NOT call advanceToLive (activate-free handles step advance server-side)
     expect(advanceToLive).not.toHaveBeenCalled();
@@ -116,8 +116,8 @@ describe('paid plan success path', () => {
     getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'creator' } });
 
     renderStep();
-    await waitFor(() => screen.getByText('Creator'));
-    fireEvent.click(screen.getByRole('button', { name: 'Choose Creator' }));
+    await waitFor(() => screen.getByText('Host+'));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
     await waitFor(() => expect(createSubscription).toHaveBeenCalled());
 
     const opts = getCapture();
@@ -142,8 +142,8 @@ describe('paid plan success path', () => {
     getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: null } });
 
     renderStep();
-    await waitFor(() => screen.getByText('Creator'));
-    fireEvent.click(screen.getByRole('button', { name: 'Choose Creator' }));
+    await waitFor(() => screen.getByText('Host+'));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
     await waitFor(() => expect(createSubscription).toHaveBeenCalled());
 
     const opts = getCapture();
@@ -165,8 +165,8 @@ describe('paid plan success path', () => {
       .mockRejectedValue(new Error('network'));
 
     renderStep();
-    await waitFor(() => screen.getByText('Creator'));
-    fireEvent.click(screen.getByRole('button', { name: 'Choose Creator' }));
+    await waitFor(() => screen.getByText('Host+'));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
     await waitFor(() => expect(createSubscription).toHaveBeenCalled());
 
     const opts = getCapture();
@@ -184,8 +184,8 @@ describe('paid plan success path', () => {
     const getCapture = makeRazorpayCapture();
 
     renderStep();
-    await waitFor(() => screen.getByText('Creator'));
-    fireEvent.click(screen.getByRole('button', { name: 'Choose Creator' }));
+    await waitFor(() => screen.getByText('Host+'));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
     await waitFor(() => expect(createSubscription).toHaveBeenCalled());
 
     const opts = getCapture();
@@ -197,8 +197,8 @@ describe('paid plan success path', () => {
     getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'creator' } });
 
     renderStep();
-    await waitFor(() => screen.getByText('Creator'));
-    fireEvent.click(screen.getByRole('button', { name: 'Choose Creator' }));
+    await waitFor(() => screen.getByText('Host+'));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
     await waitFor(() => expect(createSubscription).toHaveBeenCalled());
 
     const opts = getCapture();

@@ -48,10 +48,10 @@ describe('HostProfile — loading/error', () => {
     expect(document.querySelector('.pl-overlay')).toBeTruthy();
   });
 
-  test('shows "Creator not found" on 404', async () => {
+  test('shows "Host not found" on 404', async () => {
     getHostProfile.mockRejectedValueOnce({ response: { status: 404 } });
     renderProfile('ghost-user');
-    await waitFor(() => expect(screen.getByText(/creator not found/i)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/host not found/i)).toBeTruthy());
   });
 });
 

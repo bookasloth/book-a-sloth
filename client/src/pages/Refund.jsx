@@ -50,7 +50,7 @@ const Refund = () => (
         <li><strong>Change of mind, no-shows, or late arrival by the guest.</strong></li>
         <li><strong>Bookings the guest cancels</strong> outside the circumstances in Section 2.</li>
         <li><strong>Services already delivered</strong> or partially delivered as described.</li>
-        <li><strong>Plan / subscription fees</strong> paid by hosts (e.g. Creator or Professional plans), including any applicable GST, once the plan has been activated. These give immediate access to plan features and are non-refundable.</li>
+        <li><strong>Plan / subscription fees</strong> paid by hosts (e.g. Host+ or Studio plans), including any applicable GST, once the plan has been activated. These give immediate access to plan features and are non-refundable.</li>
         <li><strong>Digital products</strong> that have been delivered or for which a download link has been issued.</li>
         <li><strong>Payment gateway charges</strong>, where these are non-recoverable from the processor.</li>
       </ul>

@@ -38,14 +38,14 @@ beforeEach(() => {
 const renderFor = async (plan) => {
   useAuth.mockReturnValue({ user: { plan }, updateUser: vi.fn() });
   render(<MemoryRouter><UpgradePlan /></MemoryRouter>);
-  await waitFor(() => expect(screen.getByText('Professional')).toBeTruthy());
+  await waitFor(() => expect(screen.getByText('Studio')).toBeTruthy());
 };
 
 describe('UpgradePlan — tier-aware CTAs', () => {
   test('Professional sees the lower Creator tier as a downgrade, not an upgrade', async () => {
     await renderFor('professional');
-    expect(screen.getByRole('button', { name: /downgrade to creator/i })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /upgrade to creator/i })).toBeNull();
+    expect(screen.getByRole('button', { name: /downgrade to host\+/i })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /upgrade to host\+/i })).toBeNull();
   });
 
   test('Professional sees its own tier as the current plan', async () => {
@@ -55,15 +55,15 @@ describe('UpgradePlan — tier-aware CTAs', () => {
 
   test('Starter sees higher tiers as upgrades', async () => {
     await renderFor('starter');
-    expect(screen.getByRole('button', { name: /upgrade to creator/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /upgrade to professional/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /upgrade to host\+/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /upgrade to studio/i })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /downgrade/i })).toBeNull();
   });
 
   test('legacy "explorer" alias is treated as the free starter tier (all paid plans are upgrades)', async () => {
     await renderFor('explorer');
-    expect(screen.getByRole('button', { name: /upgrade to creator/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /upgrade to professional/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /upgrade to host\+/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /upgrade to studio/i })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /downgrade/i })).toBeNull();
   });
 });

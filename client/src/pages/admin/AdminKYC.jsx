@@ -13,7 +13,7 @@ const AdminKYC = () => {
         <p className="text-[12px] text-gray-400 mt-0.5">Identity verification management</p>
       </div>
       <AdminEmptyState icon={ICON} iconBg="bg-blue-50" iconColor="text-blue-500"
-        title="KYC Module" description="Provider identity verification and document review will be managed from here. KYC submissions will appear once the collection flow is implemented." />
+        title="KYC Module" description="Host identity verification and document review will be managed from here. KYC submissions will appear once the collection flow is implemented." />
     </div>
   );
 };

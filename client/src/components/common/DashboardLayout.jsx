@@ -66,9 +66,9 @@ const MORE_LINKS = [
 ];
 
 const PLAN_STYLES = {
-  explorer: { label: 'Explorer', bg: 'bg-gray-100', text: 'text-gray-600' },
-  creator: { label: 'Creator', bg: 'bg-primary/10', text: 'text-primary' },
-  professional: { label: 'Professional', bg: 'bg-amber-100', text: 'text-amber-700' },
+  explorer: { label: 'Starter', bg: 'bg-gray-100', text: 'text-gray-600' },
+  creator: { label: 'Host+', bg: 'bg-primary/10', text: 'text-primary' },
+  professional: { label: 'Studio', bg: 'bg-amber-100', text: 'text-amber-700' },
 };
 
 const startsWithAny = (pathname, prefix) =>
