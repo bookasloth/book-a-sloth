@@ -48,9 +48,35 @@ function renderProtectedAt(initialPath = '/dashboard') {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
-        {/* The protected route the user is trying to reach */}
+        {/* The protected routes the user is trying to reach. The resume gate
+            only fires at the host-space ENTRY (/dashboard); deep dashboard
+            routes and guest/review pages must always render their child. */}
         <Route
           path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Child />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/profile"
+          element={
+            <ProtectedRoute>
+              <Child />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/bookings"
+          element={
+            <ProtectedRoute>
+              <Child />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/review/:bookingId"
           element={
             <ProtectedRoute>
               <Child />
@@ -151,6 +177,55 @@ describe('ProtectedRoute resume map', () => {
     await waitFor(() => {
       expect(screen.getByTestId('child')).toBeTruthy();
     });
+    expect(getOnboardingStatus).not.toHaveBeenCalled();
+  });
+
+  // ── Resume gate is confined to the host-space entry (/dashboard) ──────────
+  // An incomplete host who intentionally opens a DEEP dashboard route must stay
+  // there — the dashboard must never bounce a page the host chose to open.
+  test('incomplete host on a deep dashboard route renders the page (no bounce, no status fetch)', async () => {
+    mockUser.mockReturnValue({ role: 'host' });
+    getOnboardingStatus.mockResolvedValue({
+      data: { stepCompleted: 3, isComplete: false, slug: 'me' },
+    });
+
+    renderProtectedAt('/dashboard/profile');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('child')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('land-category')).toBeNull();
+    // No onboarding check happens away from the entry route.
+    expect(getOnboardingStatus).not.toHaveBeenCalled();
+  });
+
+  test('incomplete host on /dashboard/bookings renders the page (no bounce)', async () => {
+    mockUser.mockReturnValue({ role: 'host' });
+    getOnboardingStatus.mockResolvedValue({
+      data: { stepCompleted: 1, isComplete: false, slug: 'me' },
+    });
+
+    renderProtectedAt('/dashboard/bookings');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('child')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('land-claim')).toBeNull();
+    expect(getOnboardingStatus).not.toHaveBeenCalled();
+  });
+
+  test('incomplete host on a /review link renders the page (no bounce)', async () => {
+    mockUser.mockReturnValue({ role: 'host' });
+    getOnboardingStatus.mockResolvedValue({
+      data: { stepCompleted: 2, isComplete: false, slug: 'me' },
+    });
+
+    renderProtectedAt('/review/abc123');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('child')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('land-about')).toBeNull();
     expect(getOnboardingStatus).not.toHaveBeenCalled();
   });
 });
