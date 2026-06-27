@@ -25,6 +25,18 @@ export const BACKGROUNDS = [
       { key: 'speed', label: 'Drift', type: 'select', options: ['calm', 'normal', 'lively'] },
     ],
   },
+  {
+    key: 'rain',
+    label: 'Rain',
+    seasonal: false,
+    thumbnail: '/backgrounds/rain.svg',
+    Component: lazy(() => import('./engines/Rain.jsx')),
+    defaultParams: { density: 'medium', speed: 'normal' },
+    paramSchema: [
+      { key: 'density', label: 'Density', type: 'select', options: ['low', 'medium', 'high'] },
+      { key: 'speed', label: 'Speed', type: 'select', options: ['calm', 'normal', 'lively'] },
+    ],
+  },
 ];
 
 export const backgroundKeys = BACKGROUNDS.map((b) => b.key);
