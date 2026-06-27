@@ -4,7 +4,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Clock, LayoutGrid, Package, LineChart,
   Banknote, Receipt, User, Menu, X,
-  ExternalLink, ShieldCheck, LogOut, Lock, Wallet, Sparkles, Gem, Crown,
+  ExternalLink, ShieldCheck, LogOut, Lock, Wallet,
   Bell, LifeBuoy, Gift, Code2, Award, Headset, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -130,85 +130,6 @@ const SheetLink = ({ item, plan, onNavigate }) => {
   return item.flag ? <FeatureGate flag={item.flag}>{node}</FeatureGate> : node;
 };
 
-// Plan-aware copy for the bottom-of-sidebar premium section. Each tier gets its
-// own headline, value prop and call-to-action; the renew state overrides these
-// when a paid plan is lapsing. Class strings are full literals so Tailwind keeps
-// them. (free=starter, Host+=creator, Studio=professional, Supreme=supreme.)
-const PLAN_CARD = {
-  starter: {
-    title: 'Upgrade to Host+',
-    blurb: 'Lower fees, digital products & more.',
-    cta: 'Upgrade — 20% off',
-    card: 'from-primary/10 to-transparent ring-primary/20',
-    iconCls: 'text-primary',
-    ctaCls: 'bg-primary text-white hover:bg-primary/90',
-    Icon: Sparkles,
-  },
-  creator: {
-    title: 'Host+ active',
-    blurb: 'Manage billing, invoices & perks.',
-    cta: 'Manage plan',
-    card: 'from-primary/10 to-transparent ring-primary/15',
-    iconCls: 'text-primary',
-    ctaCls: 'bg-white text-primary ring-1 ring-primary/20 hover:bg-primary/5',
-    Icon: Gem,
-  },
-  professional: {
-    title: 'Studio plan',
-    blurb: 'Every pro feature is switched on.',
-    cta: 'Manage plan',
-    card: 'from-amber-100 to-transparent ring-amber-200',
-    iconCls: 'text-amber-600',
-    ctaCls: 'bg-white text-amber-700 ring-1 ring-amber-200 hover:bg-amber-50',
-    Icon: Crown,
-  },
-  supreme: {
-    title: 'Supreme access',
-    blurb: 'God-tier — every feature unlocked.',
-    cta: 'Manage plan',
-    card: 'from-violet-100 to-transparent ring-violet-200',
-    iconCls: 'text-violet-600',
-    ctaCls: 'bg-white text-violet-700 ring-1 ring-violet-200 hover:bg-violet-50',
-    Icon: Crown,
-  },
-};
-
-/** Premium section pinned at the bottom of the sidebar — dynamic per plan. */
-const PremiumCard = ({ plan, daysLeft, expired, expireSoon, onNavigate }) => {
-  const cfg = PLAN_CARD[plan] || PLAN_CARD.starter;
-  const renew = (expireSoon || expired) && plan !== 'starter';
-  const Icon = renew ? Clock : cfg.Icon;
-  const title = renew ? (expired ? 'Plan expired' : 'Plan expiring soon') : cfg.title;
-  const blurb = renew
-    ? expired
-      ? 'Renew to keep your features.'
-      : `Expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`
-    : cfg.blurb;
-  const cta = renew ? 'Renew now' : cfg.cta;
-  const card = renew ? 'from-amber-50 to-transparent ring-amber-200' : cfg.card;
-  const iconCls = renew ? 'text-amber-600' : cfg.iconCls;
-  const ctaCls = renew ? 'bg-amber-600 text-white hover:bg-amber-700' : cfg.ctaCls;
-
-  return (
-    <Link
-      to="/dashboard/upgrade"
-      onClick={onNavigate}
-      className={cn('block rounded-xl bg-gradient-to-br p-3 ring-1 transition-shadow hover:shadow-sm', card)}
-    >
-      <div className="flex items-center gap-2">
-        <span className={cn('grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/80', iconCls)}>
-          <Icon className="h-4 w-4" />
-        </span>
-        <p className="text-xs font-bold text-gray-900">{title}</p>
-      </div>
-      <p className="mt-1.5 text-[11px] leading-snug text-gray-500">{blurb}</p>
-      <span className={cn('mt-2.5 flex h-8 items-center justify-center rounded-lg text-[11px] font-semibold transition-colors', ctaCls)}>
-        {cta}
-      </span>
-    </Link>
-  );
-};
-
 // Humanize a category slug ("career-coaching" -> "Career Coaching"). Falls back
 // to a plain role label so the profile block always has a subtitle.
 const humanizeCategory = (raw) => {
@@ -328,7 +249,7 @@ const NotifBell = () => {
 };
 
 /** Profile avatar + dropdown — rightmost topbar action. */
-const ProfileMenu = ({ user, plan, planStyle, initial }) => {
+const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const category = humanizeCategory(user?.category || user?.primary_category);
@@ -425,6 +346,40 @@ const ProfileMenu = ({ user, plan, planStyle, initial }) => {
               </button>
             ))}
           </div>
+
+          {/* Account actions — moved here from the sidebar footer. */}
+          <div className="border-t border-gray-100 py-1.5">
+            {user?.username && (
+              <a
+                href={`/${user.username}`}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                <ExternalLink className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+                <span className="flex-1">View public page</span>
+              </a>
+            )}
+            {user?.role === 'superadmin' && (
+              <NavLink
+                to="/admin"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-red-50"
+              >
+                <ShieldCheck className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+                <span className="flex-1">Super Admin</span>
+              </NavLink>
+            )}
+            <button
+              type="button"
+              onClick={() => { setOpen(false); logout?.(); }}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+              <span className="flex-1">Logout</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -432,12 +387,12 @@ const ProfileMenu = ({ user, plan, planStyle, initial }) => {
 };
 
 /** Sticky dashboard topbar. Right-to-left: Profile, Notifications, Support. */
-const DashTopbar = ({ user, plan, planStyle, initial }) => (
+const DashTopbar = ({ user, plan, planStyle, initial, logout }) => (
   <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center border-b border-gray-200/80 bg-white/95 px-4 backdrop-blur sm:px-6 md:px-8">
     <div className="ml-auto flex items-center gap-1">
       <SupportButton />
       <NotifBell />
-      <ProfileMenu user={user} plan={plan} planStyle={planStyle} initial={initial} />
+      <ProfileMenu user={user} plan={plan} planStyle={planStyle} initial={initial} logout={logout} />
     </div>
   </header>
 );
@@ -458,19 +413,14 @@ const DashboardLayout = ({ children }) => {
 
   const plan = normalizePlan(user?.plan);
   const planStyle = PLAN_STYLES[plan] || PLAN_STYLES.starter;
-  const planExpiry = user?.plan_expires_at ? new Date(user.plan_expires_at) : null;
-  const daysLeft = planExpiry ? Math.ceil((planExpiry - new Date()) / (1000 * 60 * 60 * 24)) : null;
-  const expireSoon = daysLeft !== null && daysLeft <= 7 && daysLeft > 0;
-  const expired = daysLeft !== null && daysLeft <= 0;
-  const showRenew = (expireSoon || expired) && plan !== 'starter';
   const initial = (user?.name || user?.email || 'U').trim().charAt(0).toUpperCase();
 
   return (
     <div className="dash flex min-h-screen overflow-x-hidden bg-[#f7f5ef]">
-      {/* Sidebar: md = 64px icon rail, lg = 256px full. Sticky + full viewport
-          height so the premium card, View-public and Logout stay pinned to the
-          bottom no matter how tall the page content is. */}
-      <aside className="hidden flex-shrink-0 flex-col border-r border-gray-200/80 bg-white/95 shadow-sm md:sticky md:top-0 md:flex md:h-screen md:w-16 lg:w-64">
+      {/* Sidebar: md = 64px icon rail, lg = 256px full. Fixed to the viewport
+          (out of the page flow) so it's pinned top-to-bottom on the left and
+          never scrolls with the page. Main content is offset by its width. */}
+      <aside className="hidden flex-col border-r border-gray-200/80 bg-white/95 shadow-sm md:fixed md:inset-y-0 md:left-0 md:z-40 md:flex md:w-16 lg:w-64">
         {/* Brand — identity (avatar/name/plan) now lives in the topbar profile menu. */}
         <Link
           to="/dashboard"
@@ -500,55 +450,6 @@ const DashboardLayout = ({ children }) => {
           ))}
         </nav>
 
-        {/* Footer — pinned to the bottom of the sticky sidebar. Premium section
-            first, then View-public + Logout stay as the bottom-most actions. */}
-        <div className="shrink-0 space-y-1.5 border-t border-gray-100 px-2 pb-4 pt-2 lg:px-3">
-          {/* Premium plan section — plan-aware. Full card on lg; compact pill on the md rail. */}
-          <div className="hidden lg:block">
-            <PremiumCard plan={plan} daysLeft={daysLeft} expired={expired} expireSoon={expireSoon} />
-          </div>
-          <Link
-            to="/dashboard/upgrade"
-            title={showRenew ? 'Renew plan' : plan === 'starter' ? 'Upgrade plan' : 'Manage plan'}
-            className={cn(
-              'flex h-9 items-center justify-center rounded-md transition-colors lg:hidden',
-              showRenew ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-primary/10 text-primary hover:bg-primary/15',
-            )}
-          >
-            {showRenew ? <Clock className="h-4 w-4" /> : plan === 'starter' ? <Sparkles className="h-4 w-4" /> : <Crown className="h-4 w-4" />}
-          </Link>
-          {user?.username && (
-            <a
-              href={`/${user.username}`}
-              target="_blank"
-              rel="noreferrer"
-              title="View public page"
-              className="flex h-9 items-center justify-center gap-2 rounded-md px-0 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary lg:justify-start lg:px-3"
-            >
-              <ExternalLink className="h-4 w-4 shrink-0" />
-              <span className="hidden lg:inline">View public page</span>
-            </a>
-          )}
-          {user?.role === 'superadmin' && (
-            <NavLink
-              to="/admin"
-              title="Super Admin"
-              className="flex h-9 items-center justify-center gap-2 rounded-md px-0 text-xs font-medium text-red-400 transition-colors hover:bg-red-50 hover:text-red-500 lg:justify-start lg:px-3"
-            >
-              <ShieldCheck className="h-4 w-4 shrink-0" />
-              <span className="hidden lg:inline">Super Admin</span>
-            </NavLink>
-          )}
-          <button
-            type="button"
-            onClick={logout}
-            title="Logout"
-            className="flex h-9 w-full items-center justify-center gap-2 rounded-md px-0 text-xs font-medium text-gray-500 transition-colors hover:bg-red-50 hover:text-red-500 lg:justify-start lg:px-3"
-          >
-            <LogOut className="h-4 w-4 shrink-0" />
-            <span className="hidden lg:inline">Logout</span>
-          </button>
-        </div>
       </aside>
 
       {/* Mobile bottom nav */}
@@ -599,10 +500,6 @@ const DashboardLayout = ({ children }) => {
                 </button>
               </div>
               <div className="p-2">
-                {/* Premium plan section — also surfaced for mobile/touch users. */}
-                <div className="px-1 pb-2">
-                  <PremiumCard plan={plan} daysLeft={daysLeft} expired={expired} expireSoon={expireSoon} onNavigate={() => setMoreOpen(false)} />
-                </div>
                 {MORE_LINKS.map((item) => (
                   <SheetLink key={item.to} item={item} plan={plan} onNavigate={() => setMoreOpen(false)} />
                 ))}
@@ -644,10 +541,10 @@ const DashboardLayout = ({ children }) => {
         document.body,
       )}
 
-      {/* Main */}
-      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto">
+      {/* Main — offset by the fixed sidebar width on md+ (it's out of flow). */}
+      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto md:ml-16 lg:ml-64">
         {/* Sticky topbar — right-to-left: Profile, Notifications, Support. */}
-        <DashTopbar user={user} plan={plan} planStyle={planStyle} initial={initial} />
+        <DashTopbar user={user} plan={plan} planStyle={planStyle} initial={initial} logout={logout} />
         <div className="px-4 py-6 pb-28 sm:px-6 md:px-8 md:pb-8">
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </div>
