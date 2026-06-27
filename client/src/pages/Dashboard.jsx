@@ -16,16 +16,37 @@ import { PageHeader, Card, buttonClasses, fmtMoney, cn } from '../components/das
 const fmtDate = (d) =>
   new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-// ── Stat tile (flat — lives inside a Card panel) ─────────────────────────
-const Stat = ({ Icon, label, value, tint }) => (
-  <div className="rounded-md border border-gray-100 bg-gray-50/60 p-3 sm:p-4">
-    <div className={cn('mb-2 inline-flex h-8 w-8 items-center justify-center rounded-md', tint)}>
-      <Icon className="h-4 w-4" strokeWidth={2.25} />
-    </div>
-    <p className="text-xl font-bold leading-none text-gray-900 sm:text-2xl">{value}</p>
-    <p className="mt-1 text-xs text-gray-500">{label}</p>
-  </div>
-);
+// Human "in 3 days" / "in 5 hr" / "in 20 min" countdown for the next-session strip.
+const relWhen = (iso) => {
+  const min = Math.round((new Date(iso) - new Date()) / 60000);
+  if (min < 1) return 'now';
+  if (min < 60) return `in ${min} min`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `in ${hr} hr`;
+  const d = Math.round(hr / 24);
+  return d === 1 ? 'tomorrow' : `in ${d} days`;
+};
+
+// ── Stat tile (flat — lives inside a Card panel). Clickable when `to` is set:
+// a count should lead somewhere, not just sit there. ─────────────────────────
+const Stat = ({ Icon, label, value, tint, to }) => {
+  const inner = (
+    <>
+      <div className={cn('mb-2 inline-flex h-8 w-8 items-center justify-center rounded-md', tint)}>
+        <Icon className="h-4 w-4" strokeWidth={2.25} />
+      </div>
+      <p className="text-xl font-bold leading-none text-gray-900 sm:text-2xl">{value}</p>
+      <p className="mt-1 text-xs text-gray-500">{label}</p>
+    </>
+  );
+  const base = 'rounded-md border border-gray-100 bg-gray-50/60 p-3 sm:p-4';
+  if (!to) return <div className={base}>{inner}</div>;
+  return (
+    <Link to={to} className={cn(base, 'block transition hover:border-primary/30 hover:bg-primary-light/40 hover:no-underline')}>
+      {inner}
+    </Link>
+  );
+};
 
 // ── Booking row (compact) ───────────────────────────────────────────────
 const BookingRow = ({ b }) => (
@@ -98,7 +119,12 @@ const Dashboard = () => {
     const recentList = [...bookings]
       .filter((b) => b.status === 'completed' || !future(b))
       .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
+    // Past sessions still open (not completed/cancelled) — the host's to-do.
+    const needsActionList = bookings
+      .filter((b) => b.status !== 'cancelled' && b.status !== 'completed' && !future(b));
     return {
+      nextUp: upcomingList[0] || null,
+      needsAction: needsActionList.length,
       upcoming: upcomingList.length,
       completed: bookings.filter((b) => b.status === 'completed').length,
       cancelled: bookings.filter((b) => b.status === 'cancelled').length,
@@ -188,16 +214,56 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Next session — the host's "what now" at a glance */}
+      {m.nextUp && (
+        <div className="mb-5 flex flex-col gap-3 rounded-md border border-primary/20 bg-primary-light/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
+              <CalendarClock className="h-3.5 w-3.5" strokeWidth={2.5} /> Next session · {relWhen(m.nextUp.scheduled_at)}
+            </p>
+            <p className="mt-1 truncate text-sm font-semibold text-gray-900">
+              {m.nextUp.guest_name || 'Guest'} · {m.nextUp.services?.title || 'Session'}
+            </p>
+            <p className="text-xs text-gray-500">{fmtDate(m.nextUp.scheduled_at)}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {m.nextUp.meeting_link && (
+              <a href={m.nextUp.meeting_link} target="_blank" rel="noreferrer"
+                className={cn(buttonClasses({ variant: 'primary', size: 'sm' }), 'whitespace-nowrap')}>
+                Join
+              </a>
+            )}
+            <Link to="/dashboard/bookings"
+              className="whitespace-nowrap rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:no-underline">
+              View
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Past sessions still open — needs-action nudge */}
+      {m.needsAction > 0 && (
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-medium text-amber-800">
+            {m.needsAction} {m.needsAction === 1 ? 'session has' : 'sessions have'} passed and need wrapping up.
+          </p>
+          <Link to="/dashboard/bookings"
+            className="shrink-0 whitespace-nowrap rounded bg-amber-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-amber-700 hover:no-underline">
+            Review
+          </Link>
+        </div>
+      )}
+
       {/* 2 rows × 2 columns */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
         {/* Top-Left: bookings stats (2×2) */}
         <Card as="section">
           <h2 className="mb-3 text-sm font-semibold text-gray-700">Bookings overview</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Stat Icon={CalendarClock} label="Upcoming"       value={m.upcoming}  tint="bg-blue-50 text-blue-600" />
-            <Stat Icon={CheckCircle2}  label="Completed"      value={m.completed} tint="bg-green-50 text-green-600" />
-            <Stat Icon={XCircle}       label="Cancelled"      value={m.cancelled} tint="bg-red-50 text-red-600" />
-            <Stat Icon={CalendarDays}  label="Total Bookings" value={m.total}     tint="bg-gray-100 text-gray-600" />
+            <Stat Icon={CalendarClock} label="Upcoming"       value={m.upcoming}  tint="bg-blue-50 text-blue-600"   to="/dashboard/bookings" />
+            <Stat Icon={CheckCircle2}  label="Completed"      value={m.completed} tint="bg-green-50 text-green-600" to="/dashboard/bookings" />
+            <Stat Icon={XCircle}       label="Cancelled"      value={m.cancelled} tint="bg-red-50 text-red-600"     to="/dashboard/bookings" />
+            <Stat Icon={CalendarDays}  label="Total Bookings" value={m.total}     tint="bg-gray-100 text-gray-600"  to="/dashboard/bookings" />
           </div>
         </Card>
 
@@ -205,10 +271,10 @@ const Dashboard = () => {
         <Card as="section">
           <h2 className="mb-3 text-sm font-semibold text-gray-700">Your business</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Stat Icon={LayoutGrid}  label="Total Services"      value={m.services}            tint="bg-purple-50 text-purple-600" />
-            <Stat Icon={IndianRupee} label="Total Earnings"      value={fmtMoney(m.earnings)}  tint="bg-primary-light text-primary" />
-            <Stat Icon={UserCheck}   label="Profile Completion"  value={`${completion}%`}      tint="bg-amber-50 text-amber-600" />
-            <Stat Icon={Activity}    label="Active Bookings"     value={m.active}              tint="bg-teal-50 text-teal-600" />
+            <Stat Icon={LayoutGrid}  label="Total Services"      value={m.services}            tint="bg-purple-50 text-purple-600" to="/dashboard/services" />
+            <Stat Icon={IndianRupee} label="Total Earnings"      value={fmtMoney(m.earnings)}  tint="bg-primary-light text-primary" to="/dashboard/earnings" />
+            <Stat Icon={UserCheck}   label="Profile Completion"  value={`${completion}%`}      tint="bg-amber-50 text-amber-600"   to="/dashboard/profile" />
+            <Stat Icon={Activity}    label="Active Bookings"     value={m.active}              tint="bg-teal-50 text-teal-600"     to="/dashboard/bookings" />
           </div>
         </Card>
 
