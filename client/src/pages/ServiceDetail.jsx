@@ -8,6 +8,7 @@ import DOMPurify from 'dompurify';
 import { svcGetPublicByProfile, getAvailableSlots } from '../services/api';
 import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/themeUtils';
 import Seo from '../components/common/Seo';
+import DotGrid from '../components/DotGrid';
 import { resolveServiceSeo, serviceJsonLd, SITE_URL } from '../utils/seo';
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
@@ -758,6 +759,9 @@ export default function ServiceDetail() {
 
   const { service, vendor, totalServices, reviews, avgRating, ratingBreakdown, bookingFee } = data;
 
+  // Host-picked brand colour drives the above-the-fold dot-grid backdrop.
+  const dotColor = isValidHex(vendor?.theme_color) ? vendor.theme_color : DEFAULT_THEME_COLOR;
+
   const handleBookNow = () => {
     // Navigate to /:profileSlug/booking/:serviceSlug
     const pSlug = vendor?.username || profileSlug;
@@ -785,44 +789,26 @@ export default function ServiceDetail() {
   return (
     <div className="min-h-screen bg-[#f7f5ef] relative">
       <Seo {...seo} jsonLd={jsonLd} />
-      {/* ── Above-the-fold decoration — original theme-tinted shapes, fades out ── */}
+      {/* ── Above-the-fold backdrop — host-themed interactive dot grid ──
+           Covers the top 70% of the fold (from navbar down) and fades from
+           full opacity at the top to transparent at the bottom edge. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[400px] overflow-hidden"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[70vh] overflow-hidden"
         style={{
-          color: 'var(--profile-accent, #FE5100)',
-          WebkitMaskImage: 'linear-gradient(to bottom, #000 60%, transparent)',
-          maskImage: 'linear-gradient(to bottom, #000 60%, transparent)',
+          WebkitMaskImage: 'linear-gradient(to bottom, #000, transparent)',
+          maskImage: 'linear-gradient(to bottom, #000, transparent)',
         }}>
-        {/* coral wash — cooler, lighter; left to right */}
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(to right, #ff7a66, #ff8f73)' }}
+        <DotGrid
+          dotSize={5}
+          gap={24}
+          baseColor={dotColor}
+          activeColor={dotColor}
+          proximity={120}
+          shockRadius={220}
+          shockStrength={4}
+          returnDuration={1.4}
         />
-        <svg
-          className="absolute inset-0 w-full h-full"
-          viewBox="0 0 1440 560"
-          preserveAspectRatio="xMidYMin slice"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg">
-          {/* concentric rings, top-right */}
-          <circle cx="1290" cy="20" r="300" fill="currentColor" opacity="0.05" />
-          <circle cx="1290" cy="20" r="210" stroke="currentColor" strokeWidth="2" opacity="0.12" />
-          <circle cx="1290" cy="20" r="140" stroke="currentColor" strokeWidth="2" opacity="0.10" />
-          <circle cx="1290" cy="20" r="78"  stroke="currentColor" strokeWidth="2" opacity="0.08" />
-          {/* large soft blob, left */}
-          <circle cx="60" cy="360" r="240" fill="currentColor" opacity="0.05" />
-          {/* floating accents */}
-          <circle cx="430" cy="90"  r="8"  fill="currentColor" opacity="0.18" />
-          <circle cx="880" cy="150" r="5"  fill="currentColor" opacity="0.15" />
-          <circle cx="300" cy="240" r="14" stroke="currentColor" strokeWidth="2" opacity="0.14" />
-          <circle cx="980" cy="60"  r="22" stroke="currentColor" strokeWidth="2" opacity="0.10" />
-          {/* sweeping arcs, mid-left */}
-          <path d="M-40 470 Q 360 300 760 460" stroke="currentColor" strokeWidth="2" opacity="0.10" />
-          <path d="M-40 520 Q 420 340 880 500" stroke="currentColor" strokeWidth="2" opacity="0.07" />
-          {/* rounded squircle, drifting */}
-          <rect x="640" y="300" width="120" height="120" rx="34" transform="rotate(18 700 360)" stroke="currentColor" strokeWidth="2" opacity="0.09" />
-        </svg>
       </div>
 
       <div className="app-container py-8 pb-28 lg:pb-8 relative z-10">
