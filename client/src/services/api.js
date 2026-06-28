@@ -195,12 +195,13 @@ export const adminUpdateCategory = (id, data) => API.put(`/admin/categories/${id
 export const adminDeleteCategory = (id)      => API.delete(`/admin/categories/${id}`);
 
 // ── Service Categories (admin CRUD + public picker) ───────────
-export const adminListServiceCategories    = ()           => API.get('/admin/service-categories');
+export const adminListServiceCategories    = (primary)    => API.get('/admin/service-categories', { params: primary ? { primary } : {} });
 export const adminCreateServiceCategory    = (d)          => API.post('/admin/service-categories', d);
 export const adminUpdateServiceCategory    = (id, d)      => API.put(`/admin/service-categories/${id}`, d);
 export const adminDeleteServiceCategory    = (id)         => API.delete(`/admin/service-categories/${id}`);
 export const adminReorderServiceCategories = (rows)       => API.put('/admin/service-categories/reorder', { rows });
-export const listServiceCategories         = ()           => API.get('/service-categories');
+// Profession-scoped: pass the host's primary_category slug to get its service list.
+export const listServiceCategories         = (primary)    => API.get('/service-categories', { params: primary ? { primary } : {} });
 
 export const hostGetCategories      = ()         => API.get('/host/categories');
 export const hostUpdateCategories   = (payload)  => API.put('/host/categories', payload);

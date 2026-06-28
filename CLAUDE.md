@@ -64,6 +64,11 @@ cd client && npm test             # Vitest
 Run `server/migrations/v1.7_pricing_snapshot.sql` in Supabase SQL Editor.
 Adds `commission_applied` column to `bookings`. Code has fallback until applied.
 
+**Service Category redesign (v3.53):** Run `server/migrations/v3.53_service_category_redesign.sql`
+in Supabase (BOTH DBs), then `node server/scripts/seedServiceCategories.js` to populate the new
+profession-scoped `service_categories` table from `server/config/serviceCategorySeed.js`. Drops the
+old `services.service_category_id` and clears stale `services.category` values (hosts re-pick).
+
 ## Documentation Map
 | File | Purpose |
 |---|---|

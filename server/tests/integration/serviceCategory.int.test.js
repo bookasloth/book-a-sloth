@@ -34,45 +34,57 @@ const chain = (resolved) => ({
   maybeSingle: jest.fn().mockResolvedValue(resolved),
 });
 
+// awaitable list stub (no terminal single) — resolves when awaited directly
+const list = (resolved) => {
+  const obj = {};
+  ['select', 'eq', 'order'].forEach((m) => { obj[m] = jest.fn().mockReturnValue(obj); });
+  obj.then = (resolve, reject) => Promise.resolve(resolved).then(resolve, reject);
+  return obj;
+};
+
 afterEach(() => jest.clearAllMocks());
 
-describe('POST /api/services — category validation', () => {
-  test('201 — persists a category the host owns', async () => {
+describe('POST /api/services — service category validation', () => {
+  test('201 — persists a category valid for the host profession', async () => {
     supabaseAdmin.from
-      .mockReturnValueOnce(chain({ data: { categories: ['career-coach'], primary_category: 'career-coach' }, error: null })) // profiles load
-      .mockReturnValueOnce(chain({ data: null, error: null })) // uniqueSlug check (slug free)
-      .mockReturnValueOnce(chain({ data: { id: 'svc-9', category: 'career-coach' }, error: null })); // insert
+      .mockReturnValueOnce(chain({ data: { primary_category: 'photographer' }, error: null }))       // profiles load
+      .mockReturnValueOnce(list({ data: [{ slug: 'wedding-photography' }], error: null }))            // service_categories list
+      .mockReturnValueOnce(chain({ data: null, error: null }))                                        // uniqueSlug check (slug free)
+      .mockReturnValueOnce(chain({ data: { id: 'svc-9', category: 'wedding-photography' }, error: null })); // insert
     const res = await request(app).post('/api/services')
-      .send({ title: 'Resume Review', category: 'career-coach', price: 500, duration: 30 });
+      .send({ title: 'Wedding Shoot', category: 'wedding-photography', price: 500, duration: 30 });
     expect(res.status).toBe(201);
-    expect(res.body.category).toBe('career-coach');
+    expect(res.body.category).toBe('wedding-photography');
   });
 
-  test('400 — category the host does not own', async () => {
+  test('400 — category not valid for the host profession', async () => {
     supabaseAdmin.from
-      .mockReturnValueOnce(chain({ data: { categories: ['career-coach'], primary_category: 'career-coach' }, error: null }));
+      .mockReturnValueOnce(chain({ data: { primary_category: 'photographer' }, error: null }))
+      .mockReturnValueOnce(list({ data: [{ slug: 'wedding-photography' }], error: null }));
     const res = await request(app).post('/api/services')
-      .send({ title: 'Tattoo', category: 'tattoo-artist', price: 500, duration: 30 });
+      .send({ title: 'Tattoo', category: 'tribal-tattoo', price: 500, duration: 30 });
     expect(res.status).toBe(400);
   });
 });
 
-describe('POST /api/host/services — category validation', () => {
-  test('201 — persists a category the host owns', async () => {
+describe('POST /api/host/services — service category validation', () => {
+  test('201 — persists a category valid for the host profession', async () => {
     supabaseAdmin.from
-      .mockReturnValueOnce(chain({ data: { categories: ['life-coach'], primary_category: 'life-coach' }, error: null })) // profiles load
-      .mockReturnValueOnce(chain({ data: { id: 'svc-h', category: 'life-coach' }, error: null })); // insert
+      .mockReturnValueOnce(chain({ data: { primary_category: 'life-coach' }, error: null }))          // profiles load
+      .mockReturnValueOnce(list({ data: [{ slug: '1-1-coaching-session' }], error: null }))           // service_categories list
+      .mockReturnValueOnce(chain({ data: { id: 'svc-h', category: '1-1-coaching-session' }, error: null })); // insert
     const res = await request(app).post('/api/host/services')
-      .send({ title: 'Life Session', category: 'life-coach', price: 0, duration: 45 });
+      .send({ title: 'Life Session', category: '1-1-coaching-session', price: 0, duration: 45 });
     expect(res.status).toBe(201);
-    expect(res.body.category).toBe('life-coach');
+    expect(res.body.category).toBe('1-1-coaching-session');
   });
 
-  test('400 — category the host does not own', async () => {
+  test('400 — category not valid for the host profession', async () => {
     supabaseAdmin.from
-      .mockReturnValueOnce(chain({ data: { categories: ['life-coach'], primary_category: 'life-coach' }, error: null }));
+      .mockReturnValueOnce(chain({ data: { primary_category: 'life-coach' }, error: null }))
+      .mockReturnValueOnce(list({ data: [{ slug: '1-1-coaching-session' }], error: null }));
     const res = await request(app).post('/api/host/services')
-      .send({ title: 'Nope', category: 'dentist', price: 0, duration: 45 });
+      .send({ title: 'Nope', category: 'dental-checkup', price: 0, duration: 45 });
     expect(res.status).toBe(400);
   });
 });

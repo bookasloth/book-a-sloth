@@ -7,44 +7,34 @@ vi.mock('../services/api', () => ({
   svcUpdate: vi.fn(),
   uploadImage: vi.fn(),
   hostGetCategories: vi.fn(),
-  getCategories: vi.fn(),
   listServiceCategories: vi.fn(),
 }));
 // FeatureGate → render children so the gated sections (Overview, FAQ, etc.) show.
 vi.mock('../components/common/FeatureGate', () => ({ default: ({ children }) => children }));
 
-import { hostGetCategories, getCategories, listServiceCategories } from '../services/api';
+import { hostGetCategories, listServiceCategories } from '../services/api';
 import ServiceForm from '../pages/services/ServiceForm';
 
-// Two parents that share child names — flat this looked like duplicate options.
-const TAXONOMY = [
-  { id: 'p1', name: 'Technology & Engineering', slug: 'tech', parent_id: null },
-  { id: 'p2', name: 'Health & Wellness', slug: 'health', parent_id: null },
-  { id: 'c1', name: '1:1 Consultation', slug: 'tech-consult', parent_id: 'p1' },
-  { id: 'c2', name: 'Mentorship', slug: 'tech-mentor', parent_id: 'p1' },
-  { id: 'c3', name: '1:1 Consultation', slug: 'health-consult', parent_id: 'p2' },
-  { id: 'c4', name: 'Mentorship', slug: 'health-mentor', parent_id: 'p2' },
+// The host's profession + its bookable service categories.
+const SERVICE_CATS = [
+  { id: 'sc1', slug: 'wedding-photography', name: 'Wedding Photography' },
+  { id: 'sc2', slug: 'portrait-photography', name: 'Portrait Photography' },
 ];
 
 beforeEach(() => {
   vi.clearAllMocks();
-  hostGetCategories.mockResolvedValue({ data: { categories: [], primary_category: null } });
-  getCategories.mockResolvedValue({ data: [] });
-  listServiceCategories.mockResolvedValue({ data: { categories: TAXONOMY } });
+  hostGetCategories.mockResolvedValue({ data: { categories: ['photographer'], primary_category: 'photographer' } });
+  listServiceCategories.mockResolvedValue({ data: { categories: SERVICE_CATS } });
 });
 
-test('service category dropdown groups children under their parent (no flat duplicates)', async () => {
-  const { container } = render(<MemoryRouter><ServiceForm /></MemoryRouter>);
+test('service category picker is scoped to the host profession', async () => {
+  render(<MemoryRouter><ServiceForm /></MemoryRouter>);
 
-  await waitFor(() => expect(container.querySelectorAll('optgroup').length).toBeGreaterThan(0));
+  // The picker fetches by the host's primary_category slug.
+  await waitFor(() => expect(listServiceCategories).toHaveBeenCalledWith('photographer'));
 
-  const labels = Array.from(container.querySelectorAll('optgroup')).map((g) => g.label);
-  expect(labels).toContain('Technology & Engineering');
-  expect(labels).toContain('Health & Wellness');
-
-  // The shared child name appears once per parent — now disambiguated by group,
-  // not a flat run of identical options.
-  expect(screen.getAllByRole('option', { name: '1:1 Consultation' }).length).toBe(2);
+  await screen.findByText('Wedding Photography');
+  expect(screen.getByText('Portrait Photography')).toBeInTheDocument();
 });
 
 test('Overview and FAQ sections both render (FAQ moved beside Overview)', async () => {
