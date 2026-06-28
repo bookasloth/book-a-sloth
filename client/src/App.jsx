@@ -53,6 +53,8 @@ const CalendlyAlternative  = lazy(() => import('./pages/lp/CalendlyAlternative')
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
 const HostLogin      = lazy(() => import('./pages/HostLogin'));
 const Changelog      = lazy(() => import('./pages/Changelog'));
+const Blog           = lazy(() => import('./pages/Blog'));
+const BlogPost       = lazy(() => import('./pages/BlogPost'));
 const GoogleAuthDone = lazy(() => import('./pages/GoogleAuthDone'));
 
 // Vendor Onboarding (Google-first 7-step flow)
@@ -226,6 +228,8 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/help" element={<Help />} />
           <Route path="/changelog" element={<Changelog />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/about" element={<About />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/careers/:jobSlug" element={<JobDetail />} />
