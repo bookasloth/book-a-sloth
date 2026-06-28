@@ -1,27 +1,37 @@
 import { useRef } from "react";
 import { gsap, useGSAP } from "./gsapSetup";
 import { logos } from "./aboutContent";
+import ImgWithSkeleton from "./ImgWithSkeleton";
 
 function LogoChip({ item }) {
   return (
-    <span
-      data-swap={item.swap}
-      className="flex h-12 shrink-0 items-center justify-center rounded-[8px] border border-ink/10 bg-surface px-7 font-heading text-lg font-bold text-ink/40 grayscale transition-all duration-300 hover:text-primary hover:grayscale-0"
+    <div
+      title={item.name}
+      className="group flex h-16 w-44 shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-ink/10 bg-white p-3"
     >
-      {item.name}
-    </span>
+      <ImgWithSkeleton
+        src={item.src}
+        alt={item.name}
+        fallbackLabel={item.name}
+        objectFit="contain"
+        className="grayscale transition-all duration-300 group-hover:grayscale-0"
+      />
+    </div>
   );
 }
 
-function Row({ items, dir }) {
+// Single track scrolling right → left (content drifts leftward).
+function Marquee({ items }) {
   const track = useRef(null);
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        const from = dir === "rtl" ? 0 : -50;
-        const to = dir === "rtl" ? -50 : 0;
-        gsap.fromTo(track.current, { xPercent: from }, { xPercent: to, duration: 30, ease: "none", repeat: -1 });
+        gsap.fromTo(
+          track.current,
+          { xPercent: 0 },
+          { xPercent: -50, duration: 45, ease: "none", repeat: -1 }
+        );
       });
     },
     { scope: track }
@@ -37,14 +47,11 @@ function Row({ items, dir }) {
 
 export default function LogoMarquee() {
   return (
-    <section className="overflow-hidden py-14">
+    <section className="overflow-hidden py-10">
       <p className="mb-8 px-5 text-center text-sm font-medium uppercase tracking-[0.2em] text-ink/40 sm:px-8">
         {logos.eyebrow}
       </p>
-      <div className="space-y-4">
-        <Row items={logos.row1} dir="ltr" />
-        <Row items={logos.row2} dir="rtl" />
-      </div>
+      <Marquee items={logos.brands} />
     </section>
   );
 }

@@ -3,12 +3,13 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import useGsapReveal from "./useGsapReveal";
 import { join } from "./aboutContent";
+import ImgWithSkeleton from "./ImgWithSkeleton";
 
 export default function JoinSplit() {
   const root = useRef(null);
   useGsapReveal(root);
   return (
-    <section ref={root} className="px-5 py-20 sm:px-8 lg:py-28">
+    <section ref={root} className="px-5 py-12 sm:px-8 lg:py-16">
       <div className="mx-auto grid max-w-6xl items-stretch gap-6 lg:grid-cols-[3fr_7fr]">
         <div className="js-item flex flex-col justify-center">
           <h2 className="js-head font-heading text-3xl font-bold sm:text-4xl">{join.heading}</h2>
@@ -19,7 +20,7 @@ export default function JoinSplit() {
           </Link>
         </div>
         <div className="js-item relative aspect-[16/10] overflow-hidden rounded-[12px] bg-sand ring-1 ring-black/5" data-swap={join.imageSwap}>
-          <div className="flex h-full w-full items-center justify-center text-ink/30">Team photo</div>
+          <ImgWithSkeleton src={join.image} alt="The Book A Sloth team" fallbackLabel="Book A Sloth" />
         </div>
       </div>
     </section>

@@ -4,18 +4,13 @@ import HeroV2 from "../components/about/HeroV2";
 import LogoMarquee from "../components/about/LogoMarquee";
 import JoinSplit from "../components/about/JoinSplit";
 import StackingCards from "../components/about/StackingCards";
-import CaseStudyGrid from "../components/about/CaseStudyGrid";
+// import CaseStudyGrid from "../components/about/CaseStudyGrid"; // hidden for now
 import TestimonialsFlip from "../components/about/TestimonialsFlip";
 import FaqAccordion from "../components/about/FaqAccordion";
 import TeamMasonry from "../components/about/TeamMasonry";
 // Appended (kept) original sections:
-import ProblemSplit from "../components/about/ProblemSplit";
 import BeliefGrid from "../components/about/BeliefGrid";
-import BehindProduct from "../components/about/BehindProduct";
-import StatStrip from "../components/about/StatStrip";
-import BuildFlow from "../components/about/BuildFlow";
-import TrustGrid from "../components/about/TrustGrid";
-import FinalCta from "../components/about/FinalCta";
+// Removed: ProblemSplit, BehindProduct, StatStrip, BuildFlow, FinalCta, TrustGrid
 
 const JSON_LD = {
   "@context": "https://schema.org",
@@ -35,23 +30,15 @@ export default function About() {
         description="Why we exist, who we are, and how we help creators get booked and paid without commission."
         jsonLd={JSON_LD}
       />
-      {/* New design block */}
+      {/* Sequence: Hero → Brands → How it works → Team → Belief → Join → Testimonials → FAQ */}
       <HeroV2 />
       <LogoMarquee />
-      <JoinSplit />
       <StackingCards />
-      <CaseStudyGrid />
+      <TeamMasonry />
+      <BeliefGrid />
+      <JoinSplit />
       <TestimonialsFlip />
       <FaqAccordion />
-      <TeamMasonry />
-      {/* Appended original sections */}
-      <ProblemSplit />
-      <BeliefGrid />
-      <BehindProduct />
-      <StatStrip />
-      <BuildFlow />
-      <TrustGrid />
-      <FinalCta />
     </main>
   );
 }
