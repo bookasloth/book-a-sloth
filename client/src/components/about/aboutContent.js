@@ -104,7 +104,7 @@ export const team = {
     {
       name: "Arjun Ravikumar",
       position: "Performance Marketer",
-      role: "Performance Marketing",
+      role: "Performance",
       photo: `${ABOUT_ASSETS}/arjun-ravikumar.jpg`,
       bio: "Finds the calm creators wherever they scroll and brings them home — every rupee spent earns its keep.",
       socials: [{ type: "linkedin" }, { type: "instagram" }, { type: "x" }, { type: "sloth" }],

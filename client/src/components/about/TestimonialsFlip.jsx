@@ -41,7 +41,9 @@ function FlipCard({ t }) {
 export default function TestimonialsFlip() {
   const root = useRef(null);
   const track = useRef(null);
-  const items = testimonials.items;
+  // Hide team members who also appear as testimonial authors on the About page.
+  const HIDE = new Set(["Arjun Ravikumar", "Happy Singh"]);
+  const items = testimonials.items.filter((t) => !HIDE.has(t.name));
 
   useGSAP(
     () => {
