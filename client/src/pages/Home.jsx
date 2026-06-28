@@ -53,36 +53,17 @@ import {
 import { searchVendors, subscribeNewsletter } from "../services/api";
 import useLenis from "../hooks/useLenis";
 import Reveal from "../components/home/Reveal";
+import HowItWorks from "../components/home/HowItWorks";
 import BrandPreloader from "../components/preloader/BrandPreloader";
 import { HERO, HERO_FACES, PERSONAS, NEWSLETTER } from "../components/home/images";
+import { PAID_PLANS, STARTER_PLAN } from "../data/plans";
+import { TESTIMONIALS } from "../data/testimonials";
 
 /* Real funnel routes — do not point CTAs anywhere else. */
 const ROUTE_START = "/be-a-sloth";
 const ROUTE_LOGIN = "/login-as-vendor";
 
 const EASE = [0.22, 1, 0.36, 1];
-
-/* ════════════════════════════════════════════════════════════
-   LINE-DRAW ICON wrapper (How it works)
-   ════════════════════════════════════════════════════════════ */
-const LineIcon = ({ children, color = "#1a1a1a" }) => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.6 });
-  return (
-    <svg
-      ref={ref}
-      viewBox="0 0 48 48"
-      fill="none"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{ stroke: color }}
-      className={`sloth-draw h-9 w-9 ${inView ? "is-visible" : ""}`}
-    >
-      {children}
-    </svg>
-  );
-};
 
 /* ════════════════════════════════════════════════════════════
    ODOMETER — mechanical rolling-digit stat. Each numeric character rides a
@@ -157,20 +138,6 @@ const StatIcon = ({ icon: Icon, delay = 0 }) => {
 /* ════════════════════════════════════════════════════════════
    TESTIMONIAL marquee row
    ════════════════════════════════════════════════════════════ */
-/* Testimonials — real hosts. Quotes reflect each profession's use of Book A Sloth.
-   Avatars are served from the company asset CDN by name-slug; TAvatar falls back
-   to initials until each image is uploaded. */
-const TESTIMONIALS = [
-  { quote: "Half my day used to go in 'is a cabin free at 4?' WhatsApps. Now people just book it themselves.", name: "Mukesh Tidke", role: "Coworking Space Owner", avatar: "https://company-assets.bookasloth.in/images/testimonials/mukesh-tidke.jpg" },
-  { quote: "Clients book site-visit slots straight off my link and pay upfront. No more chasing dates over WhatsApp.", name: "Ar. Pranav Kadoo", role: "Architect", avatar: "https://company-assets.bookasloth.in/images/testimonials/pranav-kadoo.jpg" },
-  { quote: "I send the link, they pick a slot, payment's sorted before the call. No more awkward money talk.", name: "Vishal Chaware", role: "Salesforce Developer", avatar: "https://company-assets.bookasloth.in/images/testimonials/vishal-chaware.jpg" },
-  { quote: "Set up my weekend mentoring in one evening and kind of forgot about it. Slots fill, money's already in.", name: "Sangharata Somkuvar", role: "DevOps Engineer", avatar: "https://company-assets.bookasloth.in/images/testimonials/sangharata-somkuvar.jpg" },
-  { quote: "My patients forget appointments easily. The reminder texts have honestly been a lifesaver.", name: "Dr. Yukta Bawankar", role: "Physiotherapist", avatar: "https://company-assets.bookasloth.in/images/testimonials/yukta-bawankar.jpg" },
-  { quote: "Stuck the link in my Insta bio. Looks way better than sending a GPay QR after the call.", name: "Happy Singh", role: "Creative Lead", avatar: "https://company-assets.bookasloth.in/images/testimonials/happy-singh.jpg" },
-  { quote: "Honestly I picked it because 0% commission. I charge for audits and Sloth doesn't take a cut.", name: "Arjun Ravikumar", role: "Performance Marketeer", avatar: "https://company-assets.bookasloth.in/images/testimonials/arjun-ravikumar.jpg" },
-  { quote: "I run mentoring calls on the side — slots fill, payment's sorted, zero admin after work hours.", name: "Tushar Malvi", role: "Management Trainee, ECL", avatar: "https://company-assets.bookasloth.in/images/testimonials/tushar-malvi.jpg" },
-];
-
 /* Avatar with graceful initials fallback (CDN image may be unset during setup). */
 const TAvatar = ({ src, name }) => {
   const [err, setErr] = useState(false);
@@ -456,49 +423,6 @@ const TRENDING = [
   "Business consultant",
 ];
 
-/* "How it works" — outcome-led pipeline (Share → Book & Pay → Focus).
-   Line-draw glyphs reuse the LineIcon stroke style. */
-const STEPS = [
-  {
-    title: "Share one link",
-    desc: "Your services, availability and pricing — all in one SlothPage. Send it once, let it work forever.",
-    chip: "Replaces 20+ DMs",
-    color: "var(--c-blue)",
-    draw: (
-      <>
-        <path d="M20 28a7 7 0 0 1 0-10l4-4a7 7 0 0 1 10 10l-2 2" />
-        <path d="M28 20a7 7 0 0 1 0 10l-4 4a7 7 0 0 1-10-10l2-2" />
-      </>
-    ),
-  },
-  {
-    title: "Clients book and pay upfront",
-    desc: "They pick a slot and pay before the session. Money lands before you even open your calendar.",
-    chip: "Paid before you show up",
-    color: "var(--c-amber)",
-    draw: (
-      <>
-        <rect x="6" y="13" width="36" height="24" rx="4" />
-        <line x1="6" y1="21" x2="42" y2="21" />
-        <circle cx="14" cy="29" r="2.5" />
-      </>
-    ),
-  },
-  {
-    title: "Just show up",
-    desc: "Reminders go out automatically. Receipts are sent. Follow-ups land. You do nothing.",
-    chip: "Near-zero no-shows",
-    color: "var(--c-emerald)",
-    draw: (
-      <>
-        <path d="M8 28c6 0 6-8 12-8s6 8 12 8 8-6 8-6" />
-        <circle cx="24" cy="14" r="4" />
-      </>
-    ),
-  },
-];
-
-
 /* ── Stats strip — live launch numbers ── */
 const STATS = [
   { icon: Users, value: "20+", label: "Professionals already on Book A Sloth" },
@@ -739,44 +663,8 @@ const Home = () => {
 
   // ── Pricing: 2 plans, Yearly active by default ──
   const [yearly, setYearly] = useState(true);
-  const PLANS = [
-    {
-      name: "Host+",
-      tagline: "For solo creators & freelancers.",
-      monthly: 199,
-      yearly: 999,
-      intro: "What's included:",
-      features: [
-        "0% commission on bookings",
-        "Up to 20 services",
-        "2,000 bookings a year",
-        "2 calendar integrations (Google Calendar + Zoom)",
-        "1 service category",
-        "Auto invoices",
-        "Basic reports",
-        "Client history",
-        "Priority email support",
-      ],
-    },
-    {
-      name: "Studio",
-      tagline: "Top tier, for growing practices & studios.",
-      monthly: 499,
-      yearly: 3650,
-      recommended: true,
-      intro: "Everything in Host+, plus:",
-      features: [
-        "Up to 30 services",
-        "3,000 bookings a year",
-        "3 calendar integrations (Google Calendar + Zoom + iCal)",
-        "3 service categories",
-        "Client notes",
-        "Advanced reports",
-        "Data export",
-        "Priority support",
-      ],
-    },
-  ];
+  // Pricing data lives in src/data/plans.js — single source shared with landing pages.
+  const PLANS = PAID_PLANS;
 
   // ── Competitor comparison tiles (favicons via Google's favicon service) ──
   const COMPETITORS = [
@@ -1323,76 +1211,7 @@ const Home = () => {
             No back-and-forth. No payment awkwardness. No reminders to write.
           </Reveal>
 
-          <div className="relative mt-16">
-            {/* Direction chevrons sitting in the gaps between cards (desktop).
-                Bigger glyphs; the wider md:gap-16 grid below leaves room. */}
-            <ArrowRight
-              aria-hidden
-              size={40}
-              strokeWidth={2.25}
-              className="absolute left-1/3 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/70 md:block"
-            />
-            <ArrowRight
-              aria-hidden
-              size={40}
-              strokeWidth={2.25}
-              className="absolute left-2/3 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/70 md:block"
-            />
-
-            <div className="grid gap-12 md:grid-cols-3 md:gap-16">
-              {STEPS.map((s, i) => (
-                <Reveal key={s.title} delay={i * 0.12}>
-                  <div className="group relative flex h-full flex-col items-center rounded-[6px] border border-white/10 bg-white/5 p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
-                    {/* Vertical connector to the next step (mobile) */}
-                    {i < STEPS.length - 1 && (
-                      <span
-                        aria-hidden
-                        className="absolute left-1/2 top-full z-20 h-12 w-px -translate-x-1/2 bg-white/25 md:hidden"
-                      >
-                        <ArrowRight
-                          size={16}
-                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-neutral-800 text-white/55"
-                        />
-                      </span>
-                    )}
-
-                    {/* Node: icon box + step number + hover glow */}
-                    <div className="relative inline-flex h-16 w-16 items-center justify-center">
-                      <span
-                        aria-hidden
-                        className="absolute inset-0 rounded-2xl opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-100"
-                        style={{ backgroundColor: `color-mix(in srgb, ${s.color} 45%, transparent)` }}
-                      />
-                      <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_10px_30px_-10px_rgba(26,26,26,0.18)] ring-1 ring-black/5">
-                        <LineIcon color={s.color}>{s.draw}</LineIcon>
-                      </span>
-                      <span
-                        className="absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-ink"
-                        style={{ backgroundColor: `color-mix(in srgb, ${s.color} 70%, white)` }}
-                      >
-                        {i + 1}
-                      </span>
-                    </div>
-
-                    <h3 className="mt-6 font-heading text-xl font-bold text-white">{s.title}</h3>
-                    <p className="mx-auto mt-2 max-w-xs text-neutral-200">{s.desc}</p>
-
-                    <span
-                      className="mt-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
-                      style={{
-                        backgroundColor: `color-mix(in srgb, ${s.color} 26%, transparent)`,
-                        color: `color-mix(in srgb, ${s.color} 30%, white)`,
-                        boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${s.color} 45%, transparent)`,
-                      }}
-                    >
-                      <Check size={13} />
-                      {s.chip}
-                    </span>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
+          <HowItWorks />
         </div>
       </section>
 
@@ -1881,10 +1700,10 @@ const Home = () => {
             <div className="rounded-[6px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8 lg:flex lg:items-center lg:gap-8">
               <div className="lg:shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <h3 className="font-heading text-2xl font-bold text-ink">Starter</h3>
-                  <span className="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-primary">5% per booking</span>
+                  <h3 className="font-heading text-2xl font-bold text-ink">{STARTER_PLAN.name}</h3>
+                  <span className="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-primary">{STARTER_PLAN.badge}</span>
                 </div>
-                <p className="mt-1 text-sm text-neutral-500">For professionals just getting started.</p>
+                <p className="mt-1 text-sm text-neutral-500">{STARTER_PLAN.tagline}</p>
                 <div className="mt-4 flex items-end gap-2">
                   <span className="text-4xl font-extrabold text-ink">₹0</span>
                   <span className="mb-1 text-sm text-neutral-400">/ forever</span>
@@ -1892,7 +1711,7 @@ const Home = () => {
               </div>
 
               <ul className="mt-6 grid gap-3 lg:mt-0 lg:flex-1 lg:grid-cols-2 lg:gap-x-8">
-                {["Up to 5 services", "200 bookings a year", "1 calendar integration", "Email reminders"].map((f) => (
+                {STARTER_PLAN.features.map((f) => (
                   <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
                     <Check size={16} className="mt-0.5 flex-shrink-0 text-primary" />
                     <span>{f}</span>

@@ -37,7 +37,7 @@ export default function StackingCards() {
         </div>
 
         <div className="mt-10">
-          {stackCards.cards.map((c, i) => {
+          {stackCards.cards.slice(0, 3).map((c, i) => {
             const open = openIdx === i;
             return (
               <div key={i} className="sticky" style={{ top: `${6 + i * 1.5}rem` }}>
