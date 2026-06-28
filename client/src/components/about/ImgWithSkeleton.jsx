@@ -12,6 +12,7 @@ export default function ImgWithSkeleton({
   imgClassName = "",
   fallbackLabel = "",
   loading = "lazy",
+  objectFit = "cover", // "cover" | "contain"
 }) {
   // No src → go straight to the initials fallback (empty src never fires onError).
   const [status, setStatus] = useState(src ? "loading" : "error"); // loading | loaded | error
@@ -51,7 +52,9 @@ export default function ImgWithSkeleton({
           loading={loading}
           onLoad={() => setStatus("loaded")}
           onError={() => setStatus("error")}
-          className={`h-full w-full object-cover transition-opacity duration-500 ${
+          className={`h-full w-full ${
+            objectFit === "contain" ? "object-contain" : "object-cover"
+          } transition-opacity duration-500 ${
             status === "loaded" ? "opacity-100" : "opacity-0"
           } ${imgClassName}`}
         />

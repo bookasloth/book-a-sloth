@@ -7,16 +7,15 @@ function LogoChip({ item }) {
   return (
     <div
       title={item.name}
-      className="group flex h-20 w-40 shrink-0 items-center justify-center rounded-[10px] border border-ink/10 bg-surface px-6"
+      className="group flex h-16 w-44 shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-ink/10 bg-white p-3"
     >
-      <div className="h-10 w-full grayscale transition-all duration-300 group-hover:grayscale-0">
-        <ImgWithSkeleton
-          src={item.src}
-          alt={item.name}
-          fallbackLabel={item.name}
-          imgClassName="object-contain"
-        />
-      </div>
+      <ImgWithSkeleton
+        src={item.src}
+        alt={item.name}
+        fallbackLabel={item.name}
+        objectFit="contain"
+        className="grayscale transition-all duration-300 group-hover:grayscale-0"
+      />
     </div>
   );
 }
