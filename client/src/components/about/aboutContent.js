@@ -2,11 +2,18 @@
 // Swappable image/data slots are marked with a `swap` field rendered as data-swap="…".
 // Find them all: grep -r 'data-swap' client/src/components/about
 
+// Public company-assets bucket base for About-page imagery.
+export const ABOUT_ASSETS = "https://company-assets.bookasloth.in/images/about";
+
 export const hero = {
-  h1: "Your time is worth protecting. So we built the calm way to get booked.",
+  leadPre: "Built for people who'd rather",
+  // Typewriter cycles these one word at a time (type → hold → erase).
+  typeWords: ["Create.", "Teach.", "Heal.", "Coach.", "Perform."],
+  leadPost: "than chase bookings.",
   sub: "Book A Sloth helps creators publish their services, get booked, and get paid — without chasing DMs or losing a cut to commission.",
   ctaPrimary: "Let's Get Started",
   ctaGhost: "See how it works",
+  image: `${ABOUT_ASSETS}/book-a-sloth-about-hero.png`,
 };
 
 export const problem = {
@@ -52,13 +59,56 @@ export const stats = {
   ],
 };
 
+// Order is intentional (3 across, 2 rows):
+//   Durga · Happy · Mohini  /  Sujata · Aastha · Shubham
+// Photos live in company-assets/images/about. Shubham has no photo yet → fallback initials.
+// Socials: linkedin + facebook + sloth (their Book A Sloth page). Swap "#" hrefs for real ones.
 export const team = {
   heading: "The people behind Book A Sloth.",
-  sub: "Small team, big care. Real faces coming soon.",
+  sub: "A small team that sweats the calm so you don't have to.",
   members: [
-    { name: "Founder Name", role: "Founder", quip: "Believes the best software disappears.", swap: "team-1", username: "founder", bio: "Building the calmest way for creators to get booked and paid. [Swap with real bio round-2.]", socials: [{ type: "x", href: "#" }, { type: "linkedin", href: "#" }] },
-    { name: "Team Member", role: "Product & Design", quip: "Removes a tap a day.", swap: "team-2", username: "design", bio: "[Swap with real bio round-2.]", socials: [{ type: "x", href: "#" }, { type: "linkedin", href: "#" }] },
-    { name: "Team Member", role: "Engineering", quip: "Ships on Fridays anyway.", swap: "team-3", username: "eng", bio: "[Swap with real bio round-2.]", socials: [{ type: "x", href: "#" }, { type: "linkedin", href: "#" }] },
+    {
+      name: "Durga Laxne",
+      role: "Marketing",
+      photo: `${ABOUT_ASSETS}/durga-laxne.jpg`,
+      bio: "Tells the Book A Sloth story so the right creators find us — and feel calmer the moment they land.",
+      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+    },
+    {
+      name: "Happy Singh",
+      role: "Content",
+      photo: `${ABOUT_ASSETS}/happy-singh.jpg`,
+      bio: "Turns the product into words people actually enjoy reading. Believes good content respects your time.",
+      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+    },
+    {
+      name: "Mohini Daf",
+      role: "Automation",
+      photo: `${ABOUT_ASSETS}/mohini-daf.jpg`,
+      bio: "Makes the boring parts vanish. If a task can run itself, she's probably already automated it.",
+      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+    },
+    {
+      name: "Sujata Mishra",
+      role: "Operations",
+      photo: `${ABOUT_ASSETS}/sujata-mishra.jpg`,
+      bio: "Keeps the whole machine humming behind the scenes so nothing — and no one — slips through the cracks.",
+      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+    },
+    {
+      name: "Aastha Nikhare",
+      role: "Product",
+      photo: `${ABOUT_ASSETS}/aastha-nikhare.jpg`,
+      bio: "Obsesses over every tap so you never have to think twice. Removes friction for a living.",
+      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+    },
+    {
+      name: "Shubham",
+      role: "Engineering",
+      photo: "",
+      bio: "Builds the calm under the hood — fast, reliable, and quietly out of your way.",
+      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+    },
   ],
 };
 
