@@ -75,7 +75,7 @@ export const team = {
       position: "Social Media Manager",
       role: "Social",
       photo: `${ABOUT_ASSETS}/durga-laxne.jpg`,
-      bio: "Tells the Book A Sloth story so the right creators find us — and feel calmer the moment they land.",
+      bio: "Durga tells the Book A Sloth story across every feed, turning posts, reels and replies into calm moments that help the right creators find their home.",
       socials: [{ type: "linkedin" }, { type: "instagram" }, { type: "sloth" }],
     },
     {
@@ -83,7 +83,7 @@ export const team = {
       position: "Content Lead",
       role: "Content",
       photo: `${ABOUT_ASSETS}/happy-singh.jpg`,
-      bio: "Turns the product into words people actually enjoy reading. Believes good content respects your time.",
+      bio: "Happy turns the product into words people actually enjoy reading, shaping guides, emails and pages that respect your time and never waste a tap on it.",
       socials: [{ type: "instagram" }, { type: "x" }, { type: "sloth" }],
     },
     {
@@ -91,15 +91,15 @@ export const team = {
       position: "Automation Engineer",
       role: "Automation",
       photo: `${ABOUT_ASSETS}/mohini-daf.jpg`,
-      bio: "Makes the boring parts vanish. If a task can run itself, she's probably already automated it.",
+      bio: "Mohini makes the boring parts quietly vanish, wiring up flows so reminders, payouts and follow-ups run by themselves while you focus on the real work.",
       socials: [{ type: "linkedin" }, { type: "x" }, { type: "sloth" }],
     },
     {
       name: "Sujata Mishra",
-      position: "Operations Manager",
+      position: "Director of Ops",
       role: "Operations",
       photo: `${ABOUT_ASSETS}/sujata-mishra.jpg`,
-      bio: "Keeps the whole machine humming behind the scenes so nothing — and no one — slips through the cracks.",
+      bio: "Sujata keeps the whole machine humming behind the scenes steering the operations so no one slips through the cracks on any given day, week or quarter.",
       socials: [{ type: "linkedin" }, { type: "sloth" }],
     },
     {
@@ -107,7 +107,7 @@ export const team = {
       position: "Performance Marketer",
       role: "Performance",
       photo: `${ABOUT_ASSETS}/arjun-ravikumar.jpg`,
-      bio: "Finds the calm creators wherever they scroll and brings them home — every rupee spent earns its keep.",
+      bio: "Arjun finds calm creators wherever they scroll and brings them home, tuning every campaign so each rupee spent earns its keep, and then some more too.",
       socials: [{ type: "linkedin" }, { type: "instagram" }, { type: "x" }, { type: "sloth" }],
     },
     {
@@ -115,7 +115,7 @@ export const team = {
       position: "Admin Executive",
       role: "Admin",
       photo: `${ABOUT_ASSETS}/sariga-suresh.jpg`,
-      bio: "Keeps the back office spotless so the team can stay on creators — payouts, paperwork and the small stuff, handled.",
+      bio: "Sariga keeps the back office spotless so the team stays on creators, handling payouts, paperwork and all the small stuff before it becomes a big mess.",
       socials: [{ type: "linkedin" }, { type: "sloth" }],
     },
     {
@@ -123,7 +123,7 @@ export const team = {
       position: "Product Designer",
       role: "Product",
       photo: `${ABOUT_ASSETS}/aastha-nikhare.jpg`,
-      bio: "Obsesses over every tap so you never have to think twice. Removes friction for a living.",
+      bio: "Aastha obsesses over each tap so you never think twice, removing friction for a living and shaping a product that feels calm, quick and humane in use.",
       socials: [{ type: "linkedin" }, { type: "x" }, { type: "sloth" }],
     },
     {
@@ -131,7 +131,7 @@ export const team = {
       position: "Founding Engineer",
       role: "Engineering",
       photo: `${ABOUT_ASSETS}/shubham-datarkar.jpg`,
-      bio: "Builds the calm under the hood — fast, reliable, and quietly out of your way.",
+      bio: "Shubham builds all the calm under the hood, shipping fast reliable systems that stay quietly out of your way so booking and payments simply just work.",
       socials: [{ type: "linkedin" }, { type: "x" }, { type: "sloth" }],
     },
   ],
