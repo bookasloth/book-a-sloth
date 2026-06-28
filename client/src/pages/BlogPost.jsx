@@ -90,6 +90,34 @@ const Block = ({ block, accent }) => {
       </blockquote>
     );
   }
+  if (block.table) {
+    return (
+      <div className="mt-8 overflow-x-auto rounded-xl border" style={{ borderColor: 'rgba(255,255,255,0.10)' }}>
+        <table className="w-full text-sm">
+          <thead>
+            <tr style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+              {block.table.head.map((h, i) => (
+                <th key={i} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: accent }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {block.table.rows.map((row, ri) => (
+              <tr key={ri} style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                {row.map((cell, ci) => (
+                  <td key={ci} className="px-4 py-3 leading-relaxed" style={{ color: ci === 0 ? HEAD_TX : BODY_TX }}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
   if (block.info) {
     return (
       <div className="mt-8 rounded-xl border p-4 sm:p-5" style={{ borderColor: 'rgba(255,255,255,0.10)', backgroundColor: 'rgba(255,255,255,0.03)' }}>
