@@ -9,14 +9,12 @@ import {
   MessageCircle,
   FileText,
   Shield,
-  Sparkles,
 } from "lucide-react";
 import useUtm from "../../hooks/useUtm";
 import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
-import { useAuth } from "../../context/AuthContext";
-import toast from "react-hot-toast";
 import HowItWorks from "../../components/home/HowItWorks";
+import LogoMarquee from "../../components/about/LogoMarquee";
 import { ALL_PLANS } from "../../data/plans";
 import { TESTIMONIALS } from "../../data/testimonials";
 
@@ -29,6 +27,7 @@ import { TESTIMONIALS } from "../../data/testimonials";
 */
 
 const SLUG = "calendly-alternative";
+const ROUTE_START = "/be-a-sloth"; // every CTA hands off to the real signup funnel
 
 /* Hybrid palette — BAS brand + a Calendly-blue trust accent */
 const CAL_BLUE = "#006BFF"; // Calendly-blue accent (familiarity)
@@ -49,28 +48,15 @@ const fmtINR = (n) => `₹${n.toLocaleString("en-IN")}`;
    No email form anywhere: every CTA hands off straight to Google.
    ───────────────────────────────────────────── */
 function CalCta({ slot, label = "Get started", variant = "primary", className = "" }) {
-  const { startVendorGoogleAuth } = useAuth();
   const utm = useUtm();
-  const [busy, setBusy] = useState(false);
-
-  const handleClick = async () => {
-    if (busy) return;
-    analytics.track(EVENTS.LP_CTA_CLICKED, { slug: SLUG, slot, ...utm });
-    setBusy(true);
-    try {
-      await startVendorGoogleAuth("signup");
-    } catch (err) {
-      setBusy(false);
-      toast.error(err?.response?.data?.message || "Could not sign in. Try again.");
-    }
-  };
+  const track = () => analytics.track(EVENTS.LP_CTA_CLICKED, { slug: SLUG, slot, ...utm });
 
   if (variant === "google") {
     return (
-      <button
-        onClick={handleClick}
-        disabled={busy}
-        className={`flex w-full items-center justify-center gap-3 rounded-[6px] border-2 border-black/10 bg-white py-3 text-sm font-semibold text-ink shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition hover:-translate-y-0.5 hover:border-black/20 disabled:opacity-60 ${className}`}
+      <Link
+        to={ROUTE_START}
+        onClick={track}
+        className={`flex w-full items-center justify-center gap-3 rounded-[6px] border-2 border-black/10 bg-white py-3 text-sm font-semibold text-ink shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition hover:-translate-y-0.5 hover:border-black/20 hover:no-underline ${className}`}
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
@@ -78,21 +64,21 @@ function CalCta({ slot, label = "Get started", variant = "primary", className = 
           <path d="M3.964 10.707A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
           <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
         </svg>
-        {busy ? "Opening…" : label}
-      </button>
+        {label}
+      </Link>
     );
   }
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={busy}
-      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:opacity-95 disabled:opacity-60 ${className}`}
+    <Link
+      to={ROUTE_START}
+      onClick={track}
+      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:opacity-95 hover:no-underline ${className}`}
       style={{ background: BAS_CTA }}
     >
-      {busy ? "Opening…" : label}
-      {!busy && <ArrowRight size={14} />}
-    </button>
+      {label}
+      <ArrowRight size={14} />
+    </Link>
   );
 }
 
@@ -148,8 +134,39 @@ function Avatar({ src, name, accent = CAL_BLUE }) {
   );
 }
 
-/* Hero product mock — Calendly-style "workflow" card on a brand blob */
+/* Hero product visual — image from the company asset CDN (founder uploads it),
+   with the workflow mock as a graceful fallback until the PNG is in place. */
+const HERO_IMG = "https://company-assets.bookasloth.in/images/lp/calendly-alternative-hero.png";
+
+function HeroWorkflowMock() {
+  return (
+    <div className="rounded-[6px] border border-white/30 bg-white p-5 shadow-[0_24px_80px_-8px_rgba(0,0,0,0.3)]">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: BAS_ORANGE }}>Workflow</span>
+        <span className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: BAS_ORANGE }}>✓</span>
+      </div>
+      <div className="mb-3 font-heading text-sm font-bold" style={{ color: CAL_NAVY }}>Reduce no-shows and stay on track</div>
+      <div className="space-y-2">
+        {[
+          { t: "Send WhatsApp reminder", sub: "24 hours before event starts", arrow: "→ Send to invitees" },
+          { t: "Send GST invoice", sub: "Immediately after payment", arrow: "→ Send to client" },
+          { t: "Send follow-up email", sub: "2 hours after event ends", arrow: "→ Send to invitees" },
+        ].map((w) => (
+          <div key={w.t} className="rounded-[6px] border border-gray-100 p-2.5" style={{ background: CAL_LIGHT }}>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold" style={{ color: CAL_NAVY }}>{w.t}</span>
+              <span className="text-[10px]" style={{ color: CAL_BLUE }}>{w.arrow}</span>
+            </div>
+            <div className="mt-0.5 text-[10px] text-gray-400">{w.sub}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HeroProductCard() {
+  const [imgOk, setImgOk] = useState(true);
   return (
     <div className="relative py-10 px-6">
       <div
@@ -160,28 +177,16 @@ function HeroProductCard() {
           transform: "scale(1.08)",
         }}
       />
-      <div className="rounded-[6px] border border-white/30 bg-white p-5 shadow-[0_24px_80px_-8px_rgba(0,0,0,0.3)]">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: BAS_ORANGE }}>Workflow</span>
-          <span className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: BAS_ORANGE }}>✓</span>
-        </div>
-        <div className="mb-3 font-heading text-sm font-bold" style={{ color: CAL_NAVY }}>Reduce no-shows and stay on track</div>
-        <div className="space-y-2">
-          {[
-            { t: "Send WhatsApp reminder", sub: "24 hours before event starts", arrow: "→ Send to invitees" },
-            { t: "Send GST invoice", sub: "Immediately after payment", arrow: "→ Send to client" },
-            { t: "Send follow-up email", sub: "2 hours after event ends", arrow: "→ Send to invitees" },
-          ].map((w) => (
-            <div key={w.t} className="rounded-[6px] border border-gray-100 p-2.5" style={{ background: CAL_LIGHT }}>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold" style={{ color: CAL_NAVY }}>{w.t}</span>
-                <span className="text-[10px]" style={{ color: CAL_BLUE }}>{w.arrow}</span>
-              </div>
-              <div className="mt-0.5 text-[10px] text-gray-400">{w.sub}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {imgOk ? (
+        <img
+          src={HERO_IMG}
+          alt="Book A Sloth — reduce no-shows and stay on track"
+          onError={() => setImgOk(false)}
+          className="w-full rounded-[6px] border border-white/30 bg-white shadow-[0_24px_80px_-8px_rgba(0,0,0,0.3)]"
+        />
+      ) : (
+        <HeroWorkflowMock />
+      )}
     </div>
   );
 }
@@ -189,19 +194,20 @@ function HeroProductCard() {
 /* ─────────────────────────────────────────────
    Data
    ───────────────────────────────────────────── */
+/* Real tool favicons via Google's favicon service (same pattern as the homepage). */
 const INTEGRATIONS = [
-  { name: "Google Meet", abbr: "G", color: "#4285F4" },
-  { name: "Calendar", abbr: "Cal", color: "#34A853" },
-  { name: "Razorpay", abbr: "R", color: "#2D81F7" },
-  { name: "WhatsApp", abbr: "WA", color: "#25D366" },
-  { name: "Gmail", abbr: "M", color: "#EA4335" },
-  { name: "Zoom", abbr: "Z", color: "#2D8CFF" },
-  { name: "PhonePe", abbr: "₹", color: "#5F259F" },
-  { name: "Paytm", abbr: "P", color: "#00BAF2" },
-  { name: "Outlook", abbr: "O", color: "#0078D4" },
-  { name: "Slack", abbr: "S", color: "#4A154B" },
-  { name: "Stripe", abbr: "St", color: "#635BFF" },
-  { name: "Zapier", abbr: "Zap", color: "#FF4A00" },
+  { name: "Google Meet", domain: "meet.google.com" },
+  { name: "Google Calendar", domain: "calendar.google.com" },
+  { name: "Razorpay", domain: "razorpay.com" },
+  { name: "WhatsApp", domain: "whatsapp.com" },
+  { name: "Gmail", domain: "gmail.com" },
+  { name: "Zoom", domain: "zoom.us" },
+  { name: "PhonePe", domain: "phonepe.com" },
+  { name: "Paytm", domain: "paytm.com" },
+  { name: "Outlook", domain: "outlook.com" },
+  { name: "Slack", domain: "slack.com" },
+  { name: "Stripe", domain: "stripe.com" },
+  { name: "Zapier", domain: "zapier.com" },
 ];
 
 const COMPARE = [
@@ -291,15 +297,15 @@ const CalendlyAlternative = () => {
           {/* Left */}
           <div>
             <h1
-              className="font-heading text-[2.8rem] font-extrabold leading-[1.08] tracking-tight sm:text-[3.6rem]"
+              className="font-heading text-[2.6rem] font-extrabold leading-[1.08] tracking-tight sm:text-[3.4rem]"
               style={{ color: CAL_NAVY }}
             >
-              Easy scheduling<br />
-              <span style={{ color: BAS_ORANGE }}>ahead.</span>
+              Everything Calendly does —<br />
+              <span style={{ color: BAS_ORANGE }}>and gets you paid in ₹</span>
             </h1>
             <p className="mt-5 max-w-lg text-lg leading-relaxed" style={{ color: CAL_BODY }}>
-              Join 2,000+ Indian professionals who easily book meetings, collect ₹ payments,
-              and auto-send GST invoices — with the #1 scheduling tool built for India.
+              Book meetings, take payments the moment clients book, and send GST invoices
+              automatically. Scheduling built for how India works.
             </p>
 
             {/* Google-only signup */}
@@ -332,17 +338,10 @@ const CalendlyAlternative = () => {
         </div>
       </section>
 
-      {/* ══════ TRUSTED BY ══════ */}
-      <section className="border-y border-gray-100 bg-white px-5 py-7 sm:px-8">
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
-          Trusted by professionals across India
-        </p>
-        <div className="mx-auto mt-5 flex max-w-4xl flex-wrap items-center justify-center gap-x-8 gap-y-3">
-          {["Career Coaches", "Astrologers", "Fitness Trainers", "Consultants", "Teachers", "Therapists", "Designers", "Photographers"].map((c) => (
-            <span key={c} className="text-sm font-semibold text-gray-300">{c}</span>
-          ))}
-        </div>
-      </section>
+      {/* ══════ "USED BY PEOPLE WHO WORK WITH…" — reused brand marquee ══════ */}
+      <div className="border-y border-gray-100 bg-white">
+        <LogoMarquee />
+      </div>
 
       {/* ══════ HOW IT WORKS — reuses the homepage cards on a dark band ══════ */}
       <section id="how-it-works" className="scroll-mt-16 bg-neutral-900 px-5 py-20 sm:px-8 lg:py-24">
@@ -361,27 +360,6 @@ const CalendlyAlternative = () => {
           </div>
 
           <HowItWorks />
-        </div>
-      </section>
-
-      {/* ══════ INDIA DIFFERENTIATORS ══════ */}
-      <section className="px-5 py-16 sm:px-8" style={{ background: CAL_NAVY }}>
-        <div className="mx-auto max-w-6xl">
-          <div className="grid gap-6 lg:grid-cols-3">
-            {[
-              { icon: IndianRupee, color: "#0AE8F0", h: "Calendly schedules.\nWe get you paid.", b: "Clients pay via UPI, cards or wallets the moment they book. Settled directly to your bank. No chasing, no separate payment links." },
-              { icon: FileText, color: "#FE5100", h: "GST invoices.\nAutomatic. Always.", b: "Every booking triggers a compliant GST invoice, sent to your client instantly. Your CA will finally stop calling." },
-              { icon: MessageCircle, color: "#25D366", h: "WhatsApp reminders.\nWhere India reads.", b: "Automated nudges on WhatsApp 24h before every session. Fewer no-shows, zero manual follow-up. Indian by design." },
-            ].map((item) => (
-              <AccentCard key={item.h} accent={item.color} className="rounded-[6px] border border-white/10 p-7">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[6px]" style={{ background: `${item.color}20` }}>
-                  <item.icon size={20} style={{ color: item.color }} />
-                </div>
-                <h3 className="whitespace-pre-line font-heading text-lg font-bold leading-snug text-white">{item.h}</h3>
-                <p className="mt-2 text-sm leading-relaxed" style={{ color: "#9CA3AF" }}>{item.b}</p>
-              </AccentCard>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -415,11 +393,13 @@ const CalendlyAlternative = () => {
                     key={int.name}
                     className="flex flex-col items-center gap-1.5 rounded-[6px] border border-gray-100 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                   >
-                    <div
-                      className="flex h-9 w-9 items-center justify-center rounded-[6px] text-xs font-bold text-white"
-                      style={{ background: int.color }}
-                    >
-                      {int.abbr}
+                    <div className="flex h-9 w-9 items-center justify-center rounded-[6px] border border-gray-100 bg-white">
+                      <img
+                        src={`https://www.google.com/s2/favicons?sz=64&domain=${int.domain}`}
+                        alt={int.name}
+                        loading="lazy"
+                        className="h-6 w-6 object-contain"
+                      />
                     </div>
                     <span className="text-center text-[10px] font-medium leading-tight text-gray-500">
                       {int.name}
@@ -491,37 +471,40 @@ const CalendlyAlternative = () => {
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr style={{ borderTop: "2px solid #EAD7CC" }}>
+                  <td className="hidden px-5 py-5 align-top text-xs font-semibold uppercase tracking-wide text-gray-400 sm:table-cell">
+                    The verdict
+                  </td>
+                  <td className="px-4 py-5 align-top sm:px-5" style={{ background: BAS_PEACH }}>
+                    <div className="font-heading text-sm font-extrabold leading-snug sm:text-base" style={{ color: CAL_NAVY }}>
+                      Say Yes to<br />Book A Sloth.
+                    </div>
+                    <p className="mt-1 hidden text-xs sm:block" style={{ color: CAL_BODY }}>
+                      Built for India. Paid in ₹ from day one.
+                    </p>
+                    <div className="mt-3 sm:max-w-[220px]">
+                      <CalCta slot="compare-yes" label="Sign up with Google" variant="google" />
+                    </div>
+                  </td>
+                  <td className="px-4 py-5 align-top sm:px-5">
+                    <div className="font-heading text-sm font-bold leading-snug text-gray-400 line-through sm:text-base">
+                      Say No to Calendly.
+                    </div>
+                    <p className="mt-1 hidden text-xs text-gray-400 sm:block">
+                      USD billing. No payments. No GST.
+                    </p>
+                    <span className="mt-3 inline-flex items-center gap-1.5 rounded-[6px] border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-300">
+                      <X size={13} /> No thanks
+                    </span>
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
           <p className="mt-2 text-center text-xs text-gray-400">
             Calendly Pro approx US$12–16/mo, billed in USD, as of Jun 2026.
           </p>
-        </div>
-      </section>
-
-      {/* ══════ STRONG CTA — after comparison ══════ */}
-      <section className="px-5 py-16 sm:px-8" style={{ background: CAL_NAVY }}>
-        <div className="mx-auto max-w-4xl">
-          <AccentCard
-            accent={BAS_ORANGE}
-            className="rounded-[6px] border border-white/10 px-6 py-12 text-center sm:px-12"
-          >
-            <span className="mb-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: `${BAS_ORANGE}26`, color: "#FFB088" }}>
-              <Sparkles size={13} /> Made in India, for India
-            </span>
-            <h2 className="font-heading text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Say No to Calendly.<br />
-              <span style={{ color: BAS_ORANGE }}>Say Yes to Book A Sloth.</span>
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-neutral-300">
-              Build your professional booking page, automate your schedule, and grow your
-              business with a platform designed for Indian professionals.
-            </p>
-            <div className="mx-auto mt-8 max-w-xs">
-              <CalCta slot="comparison-cta" label="Sign up with Google" variant="google" />
-              <p className="mt-2.5 text-xs text-neutral-400">Free to start · UPI payments from day one</p>
-            </div>
-          </AccentCard>
         </div>
       </section>
 
@@ -535,36 +518,29 @@ const CalendlyAlternative = () => {
             All plans billed in ₹. 0% commission on paid plans. No USD, no surprises.
           </p>
 
-          {/* Billing toggle */}
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <button
-              onClick={() => setBillingAnnual(false)}
-              className="text-sm font-semibold transition-colors"
-              style={{ color: !billingAnnual ? BAS_CTA : "#9CA3AF" }}
-            >
-              Billed monthly
-            </button>
-            <button
-              onClick={() => setBillingAnnual((v) => !v)}
-              className="relative h-5 w-9 rounded-full transition-colors"
-              style={{ background: billingAnnual ? BAS_ORANGE : "#D1D5DB" }}
-              aria-label="Toggle billing period"
-            >
-              <span
-                className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
-                style={{ left: billingAnnual ? "calc(100% - 18px)" : "2px" }}
-              />
-            </button>
-            <button
-              onClick={() => setBillingAnnual(true)}
-              className="text-sm font-semibold transition-colors"
-              style={{ color: billingAnnual ? BAS_CTA : "#9CA3AF" }}
-            >
-              Billed yearly{" "}
-              <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] text-emerald-700">
-                Save up to 58%
-              </span>
-            </button>
+          {/* Billing toggle — compact segmented control */}
+          <div className="mt-6 flex justify-center">
+            <div className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setBillingAnnual(false)}
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${!billingAnnual ? "text-white" : "text-neutral-500 hover:text-ink"}`}
+                style={!billingAnnual ? { background: BAS_CTA } : undefined}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingAnnual(true)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${billingAnnual ? "text-white" : "text-neutral-500 hover:text-ink"}`}
+                style={billingAnnual ? { background: BAS_CTA } : undefined}
+              >
+                Yearly
+                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${billingAnnual ? "bg-white/20 text-white" : "bg-primary/10 text-primary"}`}>
+                  Save 58%
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="mt-10 grid gap-5 md:grid-cols-3">
@@ -619,9 +595,8 @@ const CalendlyAlternative = () => {
 
                   <CalCta
                     slot={`pricing-${plan.name}`}
-                    label={isFree ? "Get started free" : "Start free trial"}
-                    variant="google"
-                    className="mt-5"
+                    label={isFree ? "Start for Free" : "Get Started Now"}
+                    className="mt-5 w-full !justify-center"
                   />
 
                   <ul className="mt-6 space-y-2.5">
@@ -673,6 +648,33 @@ const CalendlyAlternative = () => {
                 </AccentCard>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ INDIA DIFFERENTIATORS — full section, under testimonials ══════ */}
+      <section className="px-5 py-16 sm:px-8 lg:py-20" style={{ background: CAL_NAVY }}>
+        <div className="mx-auto max-w-6xl">
+          <p className="mb-3 text-center text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: BAS_ORANGE }}>
+            The India difference
+          </p>
+          <h2 className="mb-10 text-center font-heading text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+            Built for India, end to end.
+          </h2>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {[
+              { icon: IndianRupee, color: "#0AE8F0", h: "Calendly schedules.\nWe get you paid.", b: "Clients pay via UPI, cards or wallets the moment they book. Settled directly to your bank. No chasing, no separate payment links." },
+              { icon: FileText, color: "#FE5100", h: "GST invoices.\nAutomatic. Always.", b: "Every booking triggers a compliant GST invoice, sent to your client instantly. Your CA will finally stop calling." },
+              { icon: MessageCircle, color: "#25D366", h: "WhatsApp reminders.\nWhere India reads.", b: "Automated nudges on WhatsApp 24h before every session. Fewer no-shows, zero manual follow-up. Indian by design." },
+            ].map((item) => (
+              <AccentCard key={item.h} accent={item.color} className="rounded-[6px] border border-white/10 p-7">
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[6px]" style={{ background: `${item.color}20` }}>
+                  <item.icon size={20} style={{ color: item.color }} />
+                </div>
+                <h3 className="whitespace-pre-line font-heading text-lg font-bold leading-snug text-white">{item.h}</h3>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: "#9CA3AF" }}>{item.b}</p>
+              </AccentCard>
+            ))}
           </div>
         </div>
       </section>
