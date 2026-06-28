@@ -4,6 +4,8 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
 import ModeSwitch from './ModeSwitch';
+import UseCasesMegaMenu from './UseCasesMegaMenu';
+import { USE_CASES_CONFIG } from './useCasesConfig';
 import { isHost, routeRole } from '../../utils/roleRoutes';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../services/api';
 import { planLabel } from '../../utils/themeUtils';
@@ -18,22 +20,6 @@ import {
 } from 'lucide-react';
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
-// Every destination below resolves to a real route or a homepage section anchor
-// — no dead 404 links. Use Cases point at /explore (gated) with a category hint
-// so they pre-filter once Explore ships.
-
-// Public center: Use Cases mega-dropdown (4 primary industries, colour-coded),
-// Pricing (homepage anchor), and a More dropdown of real info pages.
-const USE_CASES = [
-  { label: 'Coaching & Consulting', desc: 'Career, life & business coaches', href: '/explore?category=coaching-consulting', icon: Compass,
-    iconCls: 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white', rowCls: 'hover:bg-indigo-50/60' },
-  { label: 'Technology & Product', desc: 'Engineers, PMs & designers', href: '/explore?category=technology-product', icon: Cpu,
-    iconCls: 'bg-sky-50 text-sky-600 group-hover:bg-sky-600 group-hover:text-white', rowCls: 'hover:bg-sky-50/60' },
-  { label: 'Health & Wellness', desc: 'Therapists & nutritionists', href: '/explore?category=health-wellness', icon: HeartPulse,
-    iconCls: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white', rowCls: 'hover:bg-emerald-50/60' },
-  { label: 'Education', desc: 'Tutors & study-abroad mentors', href: '/explore?category=education', icon: GraduationCap,
-    iconCls: 'bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white', rowCls: 'hover:bg-amber-50/60' },
-];
 
 const MORE_MENU = [
   { label: 'How It Works', href: '/#how-it-works', icon: Sparkles },
@@ -202,30 +188,7 @@ const NavDropdown = ({ label, icon: Icon, wide = false, children }) => {
 // ── Public center nav (logged-out): Use Cases mega + Pricing + More ──────────
 const PublicCenterNav = () => (
   <>
-    <NavDropdown label="Use Cases" icon={Layers} wide>
-      <div className="p-2">
-        <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Browse by industry</p>
-        <div className="grid grid-cols-2 gap-1">
-          {USE_CASES.map((u) => {
-            const Icon = u.icon;
-            return (
-              <Link key={u.label} to={u.href} className={`group flex items-start gap-3 rounded-lg p-3 transition-colors hover:no-underline ${u.rowCls}`}>
-                <span className={`mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${u.iconCls}`}>
-                  <Icon size={18} strokeWidth={2} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[13px] font-semibold text-gray-900">{u.label}</span>
-                  <span className="block text-[11px] leading-snug text-gray-500">{u.desc}</span>
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-        <Link to="/explore" className="mt-1 flex items-center justify-center gap-1.5 border-t border-gray-100 px-3 py-2.5 text-[13px] font-medium text-[#FE5100] hover:bg-[#FE5100]/5 hover:no-underline">
-          Browse all creators <ChevronRight size={14} />
-        </Link>
-      </div>
-    </NavDropdown>
+    <UseCasesMegaMenu />
 
     <Link to="/#pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
       Pricing
@@ -578,32 +541,6 @@ const Navbar = () => {
             ) : (
               /* Public CTAs */
               <>
-                {/* Sign In dropdown — separate customer vs vendor login */}
-                <div ref={signInRef} className="relative hidden sm:block">
-                  <button
-                    onClick={() => { setSignInOpen(o => !o); setMenuOpen(false); }}
-                    className="inline-flex items-center gap-1 px-3.5 py-2 text-[13px] font-medium text-gray-600 hover:text-[#FE5100] hover:bg-[#FE5100]/5 rounded-lg transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1"
-                    aria-expanded={signInOpen}
-                    aria-haspopup="menu"
-                  >
-                    Sign In
-                    <ChevronDown size={13} strokeWidth={2.5} className={`text-gray-400 transition-transform duration-200 ${signInOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {signInOpen && (
-                    <div
-                      className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden"
-                      role="menu"
-                      aria-label="Sign in options"
-                    >
-                      <Link to="/login" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] transition-colors duration-150 hover:no-underline">
-                        <User size={15} className="flex-shrink-0" /> Sign in as Customer
-                      </Link>
-                      <Link to="/login-as-vendor" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] transition-colors duration-150 border-t border-gray-100 hover:no-underline">
-                        <Briefcase size={15} className="flex-shrink-0" /> Sign in as Host
-                      </Link>
-                    </div>
-                  )}
-                </div>
                 <Link
                   to="/be-a-sloth"
                   className="btn hidden md:inline-flex items-center px-4 py-2 text-[13px] font-semibold text-white bg-primary-cta hover:bg-[#d94400] transition-colors duration-150 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1 hover:no-underline"
@@ -689,11 +626,13 @@ const Navbar = () => {
             {!user && (
               <div className="px-1 pt-2 space-y-0.5">
                 <p className="px-3 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Browse by industry</p>
-                {USE_CASES.map((u) => {
+                {USE_CASES_CONFIG.map((u) => {
                   const Icon = u.icon;
                   return (
                     <Link key={u.label} to={u.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-                      <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${u.iconCls}`}><Icon size={15} /></span>
+                      <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${u.iconBg} ${u.iconColor}`}>
+                        <Icon size={15} />
+                      </span>
                       {u.label}
                     </Link>
                   );
