@@ -2,12 +2,11 @@
  * ServiceForm — shared component for Add and Edit service pages.
  * Handles: basic info, thumbnail crop/zoom, rich text, inclusions/exclusions, FAQ builder, notes.
  */
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
-import { svcCreate, svcUpdate, uploadImage, hostGetCategories, getCategories, listServiceCategories } from '../../services/api';
+import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCategories } from '../../services/api';
 import ServiceCategoryPicker from '../../components/services/ServiceCategoryPicker';
-import { categoryLabel } from '../../utils/categoryUtils';
 import toast from 'react-hot-toast';
 import FeatureGate from '../../components/common/FeatureGate';
 import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
@@ -46,7 +45,6 @@ const empty = () => ({
   faqs: [],
   important_note: '',
   category: '',
-  service_category_id: '',
 });
 
 const fieldLabel = "mb-1 block text-sm font-medium text-gray-700";
@@ -384,52 +382,33 @@ export default function ServiceForm({ initialData, serviceId }) {
         faqs:              Array.isArray(initialData.faqs) ? initialData.faqs : [],
         important_note:    initialData.important_note || '',
         category:          initialData.category || '',
-        service_category_id: initialData.service_category_id || '',
       };
     }
     return empty();
   });
 
   const [saving, setSaving] = useState(false);
-  const [hostCats, setHostCats] = useState([]); // [{ slug, label }]
-  const [svcCats, setSvcCats] = useState([]);   // [{ id, name, slug, parent_id, ... }]
-
-  // Group the admin taxonomy under its parent categories so the picker reads as
-  // a clean, organised list. The 8 parents each share the same 5 child names
-  // (1:1 Consultation, Mentorship, …) — flat, those looked like dozens of
-  // duplicates; under optgroups each is disambiguated by its parent.
-  const groupedCats = useMemo(() => {
-    const parents = svcCats.filter((c) => !c.parent_id);
-    const parentIds = new Set(parents.map((p) => p.id));
-    const childrenOf = {};
-    for (const c of svcCats) {
-      if (c.parent_id) {
-        if (!childrenOf[c.parent_id]) childrenOf[c.parent_id] = [];
-        childrenOf[c.parent_id].push(c);
-      }
-    }
-    const groups = parents.map((p) => ({ ...p, children: childrenOf[p.id] || [] }));
-    const orphans = svcCats.filter((c) => c.parent_id && !parentIds.has(c.parent_id));
-    return { groups, orphans };
-  }, [svcCats]);
+  const [svcCats, setSvcCats] = useState([]);   // [{ id, name, slug }] for the host's profession
 
   useEffect(() => {
     let alive = true;
-    // The service-category picker is optional — never let its fetch failing
-    // block the whole form load, so it resolves to an empty list on error.
-    Promise.all([hostGetCategories(), getCategories(), listServiceCategories().catch(() => ({ data: { categories: [] } }))])
-      .then(([h, c, sc]) => {
+    // Service categories are scoped to the host's primary profession. Fetch the
+    // host's primary_category, then its active service-category list. Failures
+    // resolve to an empty picker (category stays optional) rather than blocking.
+    hostGetCategories()
+      .then((h) => {
+        const primary = h.data?.primary_category || null;
+        return Promise.all([
+          primary,
+          listServiceCategories(primary).catch(() => ({ data: { categories: [] } })),
+        ]);
+      })
+      .then(([primary, sc]) => {
         if (!alive) return;
-        const list = c.data || [];
-        const slugs = h.data?.categories?.length
-          ? h.data.categories
-          : (h.data?.primary_category ? [h.data.primary_category] : []);
-        const items = slugs.map((s) => ({ slug: s, label: categoryLabel(s, list) }));
-        setHostCats(items);
-        setSvcCats(sc.data?.categories || []);
-        setForm((f) => f.category
-          ? f
-          : { ...f, category: initialData?.category || h.data?.primary_category || items[0]?.slug || '' });
+        const list = sc.data?.categories || [];
+        setSvcCats(list);
+        // Default to the existing value (edit) or the first available category.
+        setForm((f) => (f.category ? f : { ...f, category: initialData?.category || list[0]?.slug || '' }));
       })
       .catch(() => {});
     return () => { alive = false; };
@@ -469,7 +448,6 @@ export default function ServiceForm({ initialData, serviceId }) {
         faqs:              form.faqs,
         important_note:    form.important_note,
         category:          form.category || null,
-        service_category_id: form.service_category_id || null,
       };
 
       if (isEdit) {
@@ -548,33 +526,8 @@ export default function ServiceForm({ initialData, serviceId }) {
               </div>
             </div>
 
-            {/* Category — drawn from the host's own categories */}
-            <ServiceCategoryPicker categories={hostCats} value={form.category} onChange={(slug) => set('category', slug)} />
-
-            {/* Service Category — admin-managed taxonomy, grouped by parent. */}
-            <div>
-              <label className={fieldLabel}>Service Category</label>
-              <Select
-                value={form.service_category_id}
-                onChange={e => set('service_category_id', e.target.value)}
-              >
-                <option value="">None</option>
-                {groupedCats.groups.map((g) =>
-                  g.children.length ? (
-                    <optgroup key={g.id} label={g.name}>
-                      {g.children.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </optgroup>
-                  ) : (
-                    <option key={g.id} value={g.id}>{g.name}</option>
-                  ),
-                )}
-                {groupedCats.orphans.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </Select>
-            </div>
+            {/* Service Category — the actual service, scoped to the host's profession */}
+            <ServiceCategoryPicker categories={svcCats} value={form.category} onChange={(slug) => set('category', slug)} />
           </div>
 
           {/* Right column */}

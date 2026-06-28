@@ -2,25 +2,25 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 import ServiceCategoryPicker from '../components/services/ServiceCategoryPicker';
 
-const TWO = [
-  { slug: 'career-coach', label: 'Career Coach' },
-  { slug: 'life-coach', label: 'Life Coach' },
+const SVC = [
+  { id: '1', slug: 'wedding-photography', name: 'Wedding Photography' },
+  { id: '2', slug: 'portrait-photography', name: 'Portrait Photography' },
 ];
 
-test('single category renders a read-only chip (no buttons)', () => {
-  render(<ServiceCategoryPicker categories={[{ slug: 'career-coach', label: 'Career Coach' }]} value="career-coach" onChange={() => {}} />);
-  expect(screen.getByText('Career Coach')).toBeTruthy();
-  expect(screen.queryByRole('button')).toBeNull();
+test('renders a selectable chip per service category', () => {
+  render(<ServiceCategoryPicker categories={SVC} value="wedding-photography" onChange={() => {}} />);
+  expect(screen.getByText('Wedding Photography')).toBeTruthy();
+  expect(screen.getByText('Portrait Photography')).toBeTruthy();
 });
 
-test('multiple categories are selectable and fire onChange', () => {
+test('clicking a category fires onChange with its slug', () => {
   const onChange = vi.fn();
-  render(<ServiceCategoryPicker categories={TWO} value="career-coach" onChange={onChange} />);
-  fireEvent.click(screen.getByText('Life Coach'));
-  expect(onChange).toHaveBeenCalledWith('life-coach');
+  render(<ServiceCategoryPicker categories={SVC} value="wedding-photography" onChange={onChange} />);
+  fireEvent.click(screen.getByText('Portrait Photography'));
+  expect(onChange).toHaveBeenCalledWith('portrait-photography');
 });
 
-test('renders nothing when the host has no categories', () => {
+test('renders nothing when the profession has no service categories', () => {
   const { container } = render(<ServiceCategoryPicker categories={[]} value="" onChange={() => {}} />);
   expect(container.firstChild).toBeNull();
 });

@@ -95,7 +95,7 @@ const insertServiceSafe = async (payload) => {
   // Retry with fallback if schema cache doesn't recognize newer columns
   if (
     result.error &&
-    /Could not find the '(grace_period_minutes|thumbnail_url|category|service_category_id)' column|column.*does not exist/i.test(
+    /Could not find the '(grace_period_minutes|thumbnail_url|category)' column|column.*does not exist/i.test(
       result.error.message,
     )
   ) {
@@ -103,7 +103,6 @@ const insertServiceSafe = async (payload) => {
     delete payloadCopy.grace_period_minutes;
     delete payloadCopy.thumbnail_url;
     delete payloadCopy.category;
-    delete payloadCopy.service_category_id;
     result = await supabaseAdmin
       .from("services")
       .insert(payloadCopy)
@@ -125,7 +124,7 @@ const updateServiceSafe = async (id, updates, userId) => {
   // Retry with fallback if schema cache doesn't recognize newer columns
   if (
     result.error &&
-    /Could not find the '(grace_period_minutes|thumbnail_url|category|service_category_id)' column|column.*does not exist/i.test(
+    /Could not find the '(grace_period_minutes|thumbnail_url|category)' column|column.*does not exist/i.test(
       result.error.message,
     )
   ) {
@@ -133,7 +132,6 @@ const updateServiceSafe = async (id, updates, userId) => {
     delete updatesCopy.grace_period_minutes;
     delete updatesCopy.thumbnail_url;
     delete updatesCopy.category;
-    delete updatesCopy.service_category_id;
     result = await supabaseAdmin
       .from("services")
       .update(updatesCopy)
@@ -412,7 +410,7 @@ const updateCategories = async (req, res) => {
 // POST /api/host/services
 const createService = async (req, res) => {
   try {
-    // Service must sit inside one of the host's categories.
+    // Service must use one of the active service categories for the host's profession.
     const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: true });
     if (!chk.ok) return res.status(chk.status).json({ message: chk.message });
 
@@ -427,7 +425,6 @@ const createService = async (req, res) => {
       currency,
       thumbnail_url,
       grace_period_minutes,
-      service_category_id,
     } = req.body;
     const payload = {
       host_id: req.user.id,
@@ -442,7 +439,6 @@ const createService = async (req, res) => {
       category: chk.value,
     };
     if (thumbnail_url !== undefined) payload.thumbnail_url = thumbnail_url;
-    if (service_category_id !== undefined) payload.service_category_id = service_category_id || null;
 
     const { data, error } = await insertServiceSafe(payload);
 
@@ -497,9 +493,6 @@ const updateService = async (req, res) => {
       const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: false });
       if (!chk.ok) return res.status(chk.status).json({ message: chk.message });
       updates.category = chk.value;
-    }
-    if (req.body.service_category_id !== undefined) {
-      updates.service_category_id = req.body.service_category_id || null;
     }
 
     const { data, error } = await updateServiceSafe(
