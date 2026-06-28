@@ -5,16 +5,18 @@ import { hero, ROUTE_START } from "./aboutContent";
 import ImgWithSkeleton from "./ImgWithSkeleton";
 
 const WORDS = hero.typeWords;
+// One colour per word — Pink · Blue · Green · Orange · Yellow (PBGOY).
+const TYPE_COLORS = ["#FF4D93", "#269CEF", "#4AB765", "#FE5100", "#FFCC1C"];
 
 function useTypewriter(words) {
-  const [text, setText] = useState(words[0]);
+  const [state, setState] = useState({ text: words[0], wi: 0 });
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     let wi = 0, ci = 0, deleting = false, raf;
     const tick = () => {
       const word = words[wi];
       ci += deleting ? -1 : 1;
-      setText(word.slice(0, ci));
+      setState({ text: word.slice(0, ci), wi });
       let delay = deleting ? 45 : 95;
       if (!deleting && ci === word.length) { deleting = true; delay = 1300; }
       else if (deleting && ci === 0) { deleting = false; wi = (wi + 1) % words.length; delay = 260; }
@@ -23,28 +25,27 @@ function useTypewriter(words) {
     raf = window.setTimeout(tick, 700);
     return () => window.clearTimeout(raf);
   }, [words]);
-  return text;
+  return state;
 }
 
 export default function HeroV2() {
-  const typed = useTypewriter(WORDS);
+  const { text: typed, wi } = useTypewriter(WORDS);
   const aura = useRef(null);
+  const color = TYPE_COLORS[wi % TYPE_COLORS.length];
 
   return (
     <section className="relative overflow-hidden px-5 py-12 sm:px-8 lg:py-16">
       <div ref={aura} aria-hidden className="pointer-events-none absolute inset-0 -z-10" style={{ background: "radial-gradient(55% 50% at 30% 30%, #FFE9DD 0%, transparent 70%)" }} />
-      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[3fr_2fr]">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold leading-[1.08] sm:text-5xl lg:text-6xl">
-            {hero.leadPre}
-            <br />
-            <span className="text-primary">
-              <span aria-hidden="true">{typed}</span>
-              <span aria-hidden="true" className="ml-0.5 inline-block w-[2px] animate-pulse bg-primary align-middle" style={{ height: "0.9em" }} />
-              <span data-testid="hero-typeword" className="sr-only">{WORDS.join(" ")}</span>
-            </span>
-            <br />
+          <h1 className="font-heading text-4xl font-extrabold leading-[1.12] sm:text-5xl lg:text-6xl">
+            {hero.leadPre}{" "}
+            <span className="whitespace-nowrap">
+              <span aria-hidden="true" style={{ color }}>{typed}</span>
+              <span aria-hidden="true" className="ml-0.5 inline-block w-[2px] animate-pulse align-middle" style={{ height: "0.9em", backgroundColor: color }} />
+            </span>{" "}
             <span className="text-ink/80">{hero.leadPost}</span>
+            <span data-testid="hero-typeword" className="sr-only">{WORDS.join(" ")}</span>
           </h1>
           <p className="mt-5 max-w-md text-lg text-ink/70">{hero.sub}</p>
           <div className="mt-9 flex flex-wrap gap-3">

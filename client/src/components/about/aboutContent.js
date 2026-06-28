@@ -7,8 +7,9 @@ export const ABOUT_ASSETS = "https://company-assets.bookasloth.in/images/about";
 
 export const hero = {
   leadPre: "Built for people who'd rather",
-  // Typewriter cycles these one word at a time (type → hold → erase).
-  typeWords: ["Create.", "Teach.", "Heal.", "Coach.", "Perform."],
+  // Typewriter cycles these one word at a time (type → hold → erase),
+  // each word in its own brand colour (see HeroV2 TYPE_COLORS).
+  typeWords: ["Create", "Teach", "Heal", "Coach", "Perform"],
   leadPost: "than chase bookings.",
   sub: "Book A Sloth helps creators publish their services, get booked, and get paid — without chasing DMs or losing a cut to commission.",
   ctaPrimary: "Let's Get Started",
@@ -71,8 +72,8 @@ export const team = {
   members: [
     {
       name: "Durga Laxne",
-      position: "Marketing Lead",
-      role: "Marketing",
+      position: "Social Media Manager",
+      role: "Social",
       photo: `${ABOUT_ASSETS}/durga-laxne.jpg`,
       bio: "Tells the Book A Sloth story so the right creators find us — and feel calmer the moment they land.",
       socials: [{ type: "linkedin" }, { type: "instagram" }, { type: "sloth" }],
