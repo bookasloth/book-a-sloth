@@ -54,7 +54,7 @@ export default function TeamSocials({ socials = [], name = "" }) {
             className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-ink/10 bg-white transition-transform hover:-translate-y-0.5 hover:shadow-md"
           >
             {isSloth ? (
-              <img src={meta.icon} alt="" className="h-full w-full scale-[1.3] object-cover" />
+              <img src={meta.icon} alt="" className="h-full w-full scale-[1.1] object-cover" />
             ) : (
               <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill={meta.color} aria-hidden="true">
                 <path d={meta.d} />
