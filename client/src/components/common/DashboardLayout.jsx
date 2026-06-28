@@ -4,8 +4,8 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Clock, LayoutGrid, Package, LineChart,
   Banknote, Receipt, User, Menu, X,
-  ExternalLink, ShieldCheck, LogOut, Lock, Wallet,
-  Bell, LifeBuoy, Gift, Code2, Award, Headset, ChevronDown,
+  ExternalLink, LogOut, Lock, Wallet,
+  Bell, LifeBuoy, Headset, ChevronDown, Sparkles, Settings,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
@@ -139,12 +139,9 @@ const humanizeCategory = (raw) => {
   return v.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
-// Reverse-hover buttons for the profile dropdown: each one morphs into the
-// other's look on hover. Ghost = outline that fills; Primary = filled that hollows.
-const REVERSE_GHOST =
-  'border border-primary text-primary bg-transparent hover:bg-primary hover:text-white';
-const REVERSE_PRIMARY =
-  'border border-primary bg-primary text-white hover:bg-transparent hover:text-primary';
+// Shared row style for the profile-menu links.
+const MENU_ROW =
+  'flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50';
 
 // Lock body scroll while a mobile sheet is open (no-op when inactive).
 const useBodyScrollLock = (active) => {
@@ -306,7 +303,6 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
   const ref = useRef(null);
   const isMobile = useIsMobile();
   const category = humanizeCategory(user?.category || user?.primary_category);
-  const isPaid = plan === 'professional' || plan === 'supreme';
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
@@ -330,13 +326,6 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
       </div>
     );
 
-  const inactive = [
-    { label: 'Refer a Friend', icon: Gift },
-    { label: 'Add BaS to Website', icon: Code2 },
-    { label: 'Badges', icon: Award },
-    { label: 'Talk to Account Manager', icon: Headset },
-  ];
-
   return (
     <div ref={ref} className="relative">
       <button
@@ -352,76 +341,67 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
       </button>
 
       <MenuSurface open={open} onClose={() => setOpen(false)} isMobile={isMobile} title="Account" width="w-72">
-        {/* Top block: avatar + name + category */}
+        {/* Top block: photo + name + @username */}
         <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-4">
           <Avatar size="h-12 w-12 text-base" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold text-gray-900">{user?.name || 'Host'}</p>
-            <p className="truncate text-xs text-gray-500">{category}</p>
-            <span className={cn('mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold', planStyle.bg, planStyle.text)}>
-              {isPaid && '★ '}{planStyle.label}
-            </span>
+            <p className="truncate text-xs text-gray-500">{user?.username ? `@${user.username}` : category}</p>
           </div>
         </div>
 
-        {/* Primary actions — reverse-hover buttons */}
-        <div className="grid gap-2 px-4 py-3">
-          <Link
-            to={user?.username ? `/${user.username}` : '/dashboard/profile'}
-            onClick={() => setOpen(false)}
-            className={cn('flex h-9 items-center justify-center rounded-lg text-xs font-semibold transition-colors', REVERSE_GHOST)}
-          >
-            View Profile
-          </Link>
+        {/* Membership button */}
+        <div className="px-4 py-3">
           <Link
             to="/dashboard/upgrade"
             onClick={() => setOpen(false)}
-            className={cn('flex h-9 items-center justify-center rounded-lg text-xs font-semibold transition-colors', REVERSE_PRIMARY)}
+            className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-primary/10 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
           >
-            Upgrade Plan
+            <Sparkles className="h-4 w-4 shrink-0" strokeWidth={2} />
+            You are a {planStyle.label} Member
           </Link>
         </div>
 
-        {/* Inactive / coming-soon */}
+        {/* Host shortcuts */}
         <div className="border-t border-gray-100 py-1.5">
-          {inactive.map(({ label, icon: Icon }) => (
-            <button
-              key={label}
-              type="button"
-              disabled
-              title="Coming soon"
-              className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300"
-            >
-              <Icon className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-              <span className="flex-1">{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Account actions — moved here from the sidebar footer. */}
-        <div className="border-t border-gray-100 py-1.5">
+          <NavLink to="/dashboard/bookings" onClick={() => setOpen(false)} className={MENU_ROW}>
+            <CalendarDays className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+            <span className="flex-1">Upcoming Bookings</span>
+          </NavLink>
+          <NavLink to="/dashboard/availability" onClick={() => setOpen(false)} className={MENU_ROW}>
+            <Clock className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+            <span className="flex-1">Availability</span>
+          </NavLink>
           {user?.username && (
             <a
               href={`/${user.username}`}
               target="_blank"
               rel="noreferrer"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+              className={MENU_ROW}
             >
               <ExternalLink className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-              <span className="flex-1">View public page</span>
+              <span className="flex-1">View Public Profile</span>
             </a>
           )}
-          {user?.role === 'superadmin' && (
-            <NavLink
-              to="/admin"
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-red-50"
-            >
-              <ShieldCheck className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-              <span className="flex-1">Super Admin</span>
-            </NavLink>
-          )}
+          <a
+            href="/bolt958"
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setOpen(false)}
+            className={MENU_ROW}
+          >
+            <Headset className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+            <span className="flex-1">Talk to Account Manager</span>
+          </a>
+          <NavLink to="/dashboard/profile" onClick={() => setOpen(false)} className={MENU_ROW}>
+            <Settings className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+            <span className="flex-1">Settings</span>
+          </NavLink>
+        </div>
+
+        {/* Logout */}
+        <div className="border-t border-gray-100 py-1.5">
           <button
             type="button"
             onClick={() => { setOpen(false); logout?.(); }}
