@@ -206,8 +206,8 @@ export const logos = {
     { name: "Nike", file: "nike.png" },
     { name: "Samsung", file: "samsung.png" },
     { name: "Netflix", file: "netflix.png" },
-    { name: "Toyota", file: "toyota.png" },
-    { name: "McDonald's", file: "mcdonalds.png" },
+    { name: "Spotify", file: "spotify.png" },
+    { name: "Facebook", file: "facebook.png" },
     // Indian
     { name: "Tata", file: "tata.png" },
     { name: "Reliance", file: "reliance.png" },
