@@ -34,6 +34,7 @@ export const beliefs = {
     { title: "Creators should own their audience.", body: "Your customers are yours. Always." },
     { title: "Automation should feel invisible.", body: "The best tool is the one you forget is there." },
     { title: "Calm beats hustle.", body: "Work slower. Earn smarter." },
+    { title: "You keep what you earn.", body: "0% commission. Your money is yours." },
   ],
 };
 

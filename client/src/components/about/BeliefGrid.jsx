@@ -1,9 +1,9 @@
 import { useRef } from "react";
-import { Clock, Wand2, Users, EyeOff, Leaf } from "lucide-react";
+import { Clock, Wand2, Users, EyeOff, Leaf, Wallet } from "lucide-react";
 import { beliefs } from "./aboutContent";
 import useGsapReveal from "./useGsapReveal";
 
-const ICONS = [Clock, Wand2, Users, EyeOff, Leaf];
+const ICONS = [Clock, Wand2, Users, EyeOff, Leaf, Wallet];
 const ACCENTS = ["var(--c-blue)", "var(--c-violet)", "var(--c-cyan)", "var(--c-emerald)", "var(--c-amber)", "var(--c-pink)"];
 
 export default function BeliefGrid() {
