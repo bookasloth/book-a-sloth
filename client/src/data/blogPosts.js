@@ -19,7 +19,7 @@ export const BLOG_POSTS = [
     slug: 'building-in-public-why-we-blog',
     title: 'Building in public: why we’re writing this down',
     date: 'Jun 28, 2026',
-    author: 'Team Book A Sloth',
+    author: 'Bolt 958',
     readMins: 3,
     tag: 'Story',
     excerpt:
@@ -41,7 +41,7 @@ export const BLOG_POSTS = [
     slug: 'zero-commission-bet',
     title: 'The 0% commission bet',
     date: 'Jun 26, 2026',
-    author: 'Team Book A Sloth',
+    author: 'Bolt 958',
     readMins: 4,
     tag: 'Story',
     excerpt:
@@ -63,7 +63,7 @@ export const BLOG_POSTS = [
     slug: 'payments-and-calendars-on-autopilot',
     title: 'Payments and calendars, on autopilot',
     date: 'Jun 22, 2026',
-    author: 'Engineering',
+    author: 'Bolt 958',
     readMins: 5,
     tag: 'Engineering',
     excerpt:
@@ -82,7 +82,7 @@ export const BLOG_POSTS = [
     slug: 'booking-in-under-a-minute',
     title: 'Designing a booking flow guests breeze through',
     date: 'Jun 18, 2026',
-    author: 'Product',
+    author: 'Bolt 958',
     readMins: 4,
     tag: 'Product',
     excerpt:
@@ -103,7 +103,7 @@ export const BLOG_POSTS = [
     slug: 'onboarding-a-host-in-60-seconds',
     title: 'From sign-up to live in 60 seconds',
     date: 'Jun 24, 2026',
-    author: 'Product',
+    author: 'Bolt 958',
     readMins: 4,
     tag: 'Product',
     excerpt:
@@ -121,7 +121,7 @@ export const BLOG_POSTS = [
     slug: 'notifications-that-actually-arrive',
     title: 'Notifications that actually arrive',
     date: 'Jun 14, 2026',
-    author: 'Engineering',
+    author: 'Bolt 958',
     readMins: 4,
     tag: 'Engineering',
     excerpt:
@@ -142,7 +142,7 @@ export const BLOG_POSTS = [
     slug: 'going-live',
     title: 'Book A Sloth goes live',
     date: 'Jun 19, 2026',
-    author: 'Team Book A Sloth',
+    author: 'Bolt 958',
     readMins: 3,
     tag: 'Build log',
     excerpt:
