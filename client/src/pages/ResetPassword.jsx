@@ -33,7 +33,7 @@ const ResetPassword = () => {
     try {
       await resetPassword({ email, otp, newPassword });
       toast.success("Password reset! Please log in with your new password.");
-      navigate("/login");
+      navigate("/login-as-vendor");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to reset password");
     } finally {
@@ -115,7 +115,7 @@ const ResetPassword = () => {
             Request a new code
           </Link>
           {" · "}
-          <Link to="/login" className="text-primary hover:underline">
+          <Link to="/login-as-vendor" className="text-primary hover:underline">
             Back to login
           </Link>
         </p>

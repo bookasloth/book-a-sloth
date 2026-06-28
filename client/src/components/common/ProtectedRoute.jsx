@@ -53,7 +53,8 @@ const ProtectedRoute = ({ children }) => {
     // Preserve the intended destination so login can return the user there
     // (e.g. the booking-completed email -> /review/:id while logged out).
     const next = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/login?redirect=${next}`} replace />;
+    const loginPath = location.pathname.startsWith('/dashboard') ? '/login-as-vendor' : '/login';
+    return <Navigate to={`${loginPath}?redirect=${next}`} replace />;
   }
 
   // A host is forced into onboarding ONLY if they have an in-progress, slug-based

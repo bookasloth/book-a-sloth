@@ -45,7 +45,7 @@ export default function ErrorPage({ code = 404 }) {
         navigate('/dashboard');
         break;
       case ACTIONS.LOGIN:
-        navigate('/login');
+        navigate('/login-as-vendor');
         break;
       case ACTIONS.RELOAD:
         window.location.reload();
