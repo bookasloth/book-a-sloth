@@ -110,6 +110,13 @@ export const team = {
       bio: "Builds the calm under the hood — fast, reliable, and quietly out of your way.",
       socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
     },
+    {
+      name: "Arjun Ravikumar",
+      role: "Performance Marketing",
+      photo: "https://company-assets.bookasloth.in/images/testimonials/arjun-ravikumar.jpg",
+      bio: "Finds the calm creators wherever they scroll and brings them home — every rupee spent earns its keep.",
+      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+    },
   ],
 };
 

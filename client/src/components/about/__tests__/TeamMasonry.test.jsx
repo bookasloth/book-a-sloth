@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
 import TeamMasonry from "../TeamMasonry";
@@ -7,20 +7,28 @@ import { team } from "../aboutContent";
 const setup = () => render(<TeamMasonry />, { wrapper: MemoryRouter });
 
 describe("TeamMasonry", () => {
-  it("renders every member with name, role and bio", () => {
+  it("renders a clickable card per member (name + role)", () => {
     setup();
     team.members.forEach((m) => {
-      expect(screen.getByText(m.name)).toBeInTheDocument();
-      expect(screen.getByText(m.bio)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: new RegExp(`${m.name}.*${m.role}`, "i") })).toBeInTheDocument();
     });
   });
 
-  it("shows social icon links (linkedin, facebook, sloth) per member, no CTA buttons", () => {
+  it("opens a modal with bio and social icons, no CTA buttons", () => {
     setup();
-    const first = team.members[0];
-    const card = screen.getByText(first.name).closest("article");
-    const socials = within(card).getAllByRole("link");
-    expect(socials.length).toBe(first.socials.length);
-    expect(within(card).queryByRole("button")).toBeNull();
+    const m = team.members[0];
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`${m.name}.*${m.role}`, "i") }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText(m.bio)).toBeInTheDocument();
+    expect(within(dialog).getAllByRole("link").length).toBe(m.socials.length);
+  });
+
+  it("closes the modal on Escape", () => {
+    setup();
+    const m = team.members[0];
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`${m.name}.*${m.role}`, "i") }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
