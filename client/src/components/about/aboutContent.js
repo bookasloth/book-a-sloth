@@ -173,25 +173,38 @@ export const ROUTE_START = "/be-a-sloth";
 
 // ── New rebuild sections (2026-06-26). [TBD] assets marked data-swap. ──
 
-// Section 2 — logo marquee. Placeholder names until real customer logos land.
+// Section 2 — logo marquee. PNG logos live in company-assets/images/about/brands.
+// Greyscale by default, full colour on hover; single track scrolls right → left.
+// Mix of top global + Indian brands across industries. Drop matching PNGs in the
+// folder (transparent background preferred) — filenames below are the contract.
+export const BRAND_ASSETS = `${ABOUT_ASSETS}/brands`;
+
 export const logos = {
-  eyebrow: "Trusted by calm professionals",
-  row1: [
-    { name: "Acme", swap: "logo-1" },
-    { name: "Northwind", swap: "logo-2" },
-    { name: "Globex", swap: "logo-3" },
-    { name: "Umbra", swap: "logo-4" },
-    { name: "Initech", swap: "logo-5" },
-    { name: "Hooli", swap: "logo-6" },
-  ],
-  row2: [
-    { name: "Soylent", swap: "logo-7" },
-    { name: "Vehement", swap: "logo-8" },
-    { name: "Massive", swap: "logo-9" },
-    { name: "Pied Piper", swap: "logo-10" },
-    { name: "Stark", swap: "logo-11" },
-    { name: "Wayne", swap: "logo-12" },
-  ],
+  eyebrow: "Used by people who work with",
+  brands: [
+    // Global
+    { name: "Apple", file: "apple.png" },
+    { name: "Google", file: "google.png" },
+    { name: "Microsoft", file: "microsoft.png" },
+    { name: "Amazon", file: "amazon.png" },
+    { name: "Coca-Cola", file: "coca-cola.png" },
+    { name: "Nike", file: "nike.png" },
+    { name: "Samsung", file: "samsung.png" },
+    { name: "Netflix", file: "netflix.png" },
+    { name: "Toyota", file: "toyota.png" },
+    { name: "McDonald's", file: "mcdonalds.png" },
+    // Indian
+    { name: "Tata", file: "tata.png" },
+    { name: "Reliance", file: "reliance.png" },
+    { name: "Infosys", file: "infosys.png" },
+    { name: "HDFC Bank", file: "hdfc-bank.png" },
+    { name: "Mahindra", file: "mahindra.png" },
+    { name: "Asian Paints", file: "asian-paints.png" },
+    { name: "Zomato", file: "zomato.png" },
+    { name: "Flipkart", file: "flipkart.png" },
+    { name: "Airtel", file: "airtel.png" },
+    { name: "Wipro", file: "wipro.png" },
+  ].map((b) => ({ ...b, src: `${BRAND_ASSETS}/${b.file}` })),
 };
 
 // Section 3 — join / recruiting split (30/70). [COPY + IMAGE TBD]

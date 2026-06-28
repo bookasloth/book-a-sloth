@@ -4,9 +4,17 @@ import LogoMarquee from "../LogoMarquee";
 import { logos } from "../aboutContent";
 
 describe("LogoMarquee", () => {
-  it("renders both rows of logos (duplicated track)", () => {
+  it("renders the brand track duplicated for a seamless loop", () => {
     render(<LogoMarquee />);
-    expect(screen.getAllByText(logos.row1[0].name).length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText(logos.row2[0].name).length).toBeGreaterThanOrEqual(2);
+    // Each brand appears twice (track is rendered [...items, ...items]).
+    const first = logos.brands[0].name;
+    expect(screen.getAllByAltText(first).length).toBe(2);
+  });
+
+  it("points every logo at the brands asset folder", () => {
+    render(<LogoMarquee />);
+    logos.brands.forEach((b) => {
+      expect(b.src).toContain("/about/brands/");
+    });
   });
 });
