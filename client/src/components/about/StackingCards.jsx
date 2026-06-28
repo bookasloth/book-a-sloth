@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { gsap, useGSAP, EASE } from "./gsapSetup";
@@ -9,6 +9,8 @@ const ACCENTS = ["var(--c-blue)", "var(--c-emerald)", "var(--c-violet)", "var(--
 
 export default function StackingCards() {
   const root = useRef(null);
+  const [openIdx, setOpenIdx] = useState(null);
+  const toggle = (i) => setOpenIdx((cur) => (cur === i ? null : i));
 
   useGSAP(
     () => {
@@ -35,32 +37,40 @@ export default function StackingCards() {
         </div>
 
         <div className="mt-10">
-          {stackCards.cards.map((c, i) => (
-            <div key={i} className="sticky" style={{ top: `${6 + i * 1.5}rem` }}>
-              <div
-                className="group relative mb-6 overflow-hidden rounded-[16px] border border-ink/10 bg-surface p-8 shadow-[0_20px_45px_-25px_rgba(26,26,26,0.4)]"
-                style={{ borderTopColor: ACCENTS[i], borderTopWidth: 3 }}
-              >
-                <div className="h-[240px] overflow-hidden rounded-[10px] bg-sand sm:h-[300px] lg:h-[360px]" data-swap={c.swap}>
-                  <ImgWithSkeleton src={c.image} alt={c.title} fallbackLabel={c.title} />
-                </div>
-                <h3 className="mt-5 font-heading text-xl font-bold">{c.title}</h3>
-                <p className="mt-2 text-ink/70">{c.body}</p>
+          {stackCards.cards.map((c, i) => {
+            const open = openIdx === i;
+            return (
+              <div key={i} className="sticky" style={{ top: `${6 + i * 1.5}rem` }}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={open}
+                  onClick={() => toggle(i)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(i); } }}
+                  className="relative mb-6 cursor-pointer overflow-hidden rounded-[16px] border border-ink/10 bg-surface p-8 shadow-[0_20px_45px_-25px_rgba(26,26,26,0.4)]"
+                  style={{ borderTopColor: ACCENTS[i], borderTopWidth: 3 }}
+                >
+                  <div className="h-[200px] overflow-hidden rounded-[10px] bg-sand sm:h-[260px] lg:h-[310px]" data-swap={c.swap}>
+                    <ImgWithSkeleton src={c.image} alt={c.title} fallbackLabel={c.title} />
+                  </div>
+                  <h3 className="mt-5 font-heading text-xl font-bold">{c.title}</h3>
+                  <p className="mt-2 text-ink/70">{c.body}</p>
 
-                <div className="absolute inset-x-0 bottom-0 translate-y-full rounded-t-[16px] bg-ink p-8 text-white transition-transform duration-300 group-hover:translate-y-0 group-focus-within:translate-y-0">
-                  <p className="text-sm text-white/80">{c.more}</p>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Link to={ROUTE_START} className="btn inline-flex items-center gap-1.5 bg-primary-cta px-5 py-2.5 text-sm text-white transition-colors hover:bg-primary-dark">
-                      Get started <ArrowRight size={14} />
-                    </Link>
-                    <Link to={ROUTE_START} className="btn btn--outline inline-flex items-center px-5 py-2.5 text-sm text-white">
-                      Learn more
-                    </Link>
+                  <div className={`absolute inset-x-0 bottom-0 rounded-t-[16px] bg-ink p-8 text-white transition-transform duration-300 ${open ? "translate-y-0" : "translate-y-full"}`}>
+                    <p className="text-sm text-white/80">{c.more}</p>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Link to={ROUTE_START} onClick={(e) => e.stopPropagation()} className="btn inline-flex items-center gap-1.5 bg-primary-cta px-5 py-2.5 text-sm text-white transition-colors hover:bg-primary-dark">
+                        {c.ctaPrimary} <ArrowRight size={14} />
+                      </Link>
+                      <Link to={ROUTE_START} onClick={(e) => e.stopPropagation()} className="btn btn--outline inline-flex items-center px-5 py-2.5 text-sm text-white">
+                        {c.ctaSecondary}
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
