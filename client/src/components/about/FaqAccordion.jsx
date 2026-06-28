@@ -32,7 +32,7 @@ export default function FaqAccordion() {
   );
 
   return (
-    <section ref={root} className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
+    <section ref={root} className="bg-ink px-5 py-12 text-white sm:px-8 lg:py-16">
       <div className="mx-auto max-w-3xl">
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Questions</p>
         <h2 className="js-head mt-3 font-heading text-3xl font-bold text-white sm:text-4xl">{faq.heading}</h2>

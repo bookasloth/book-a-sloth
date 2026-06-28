@@ -24,7 +24,7 @@ export default function StackingCards() {
   );
 
   return (
-    <section id="about-how" ref={root} className="px-5 py-20 sm:px-8 lg:py-28">
+    <section id="about-how" ref={root} className="px-5 py-12 sm:px-8 lg:py-16">
       <div className="mx-auto max-w-6xl">
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">How it works</p>
         <h2 className="js-head mt-3 font-heading text-3xl font-bold sm:text-4xl">{stackCards.heading}</h2>
@@ -41,7 +41,7 @@ export default function StackingCards() {
                 className="group relative mb-6 overflow-hidden rounded-[16px] border border-ink/10 bg-surface p-8 shadow-[0_20px_45px_-25px_rgba(26,26,26,0.4)]"
                 style={{ borderTopColor: ACCENTS[i], borderTopWidth: 3 }}
               >
-                <div className="h-[280px] overflow-hidden rounded-[10px] bg-sand sm:h-[360px] lg:h-[420px]" data-swap={c.swap}>
+                <div className="h-[240px] overflow-hidden rounded-[10px] bg-sand sm:h-[300px] lg:h-[360px]" data-swap={c.swap}>
                   <ImgWithSkeleton src={c.image} alt={c.title} fallbackLabel={c.title} />
                 </div>
                 <h3 className="mt-5 font-heading text-xl font-bold">{c.title}</h3>

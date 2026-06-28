@@ -9,7 +9,7 @@ export default function JoinSplit() {
   const root = useRef(null);
   useGsapReveal(root);
   return (
-    <section ref={root} className="px-5 py-20 sm:px-8 lg:py-28">
+    <section ref={root} className="px-5 py-12 sm:px-8 lg:py-16">
       <div className="mx-auto grid max-w-6xl items-stretch gap-6 lg:grid-cols-[3fr_7fr]">
         <div className="js-item flex flex-col justify-center">
           <h2 className="js-head font-heading text-3xl font-bold sm:text-4xl">{join.heading}</h2>

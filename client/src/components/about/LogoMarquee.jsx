@@ -48,7 +48,7 @@ function Marquee({ items }) {
 
 export default function LogoMarquee() {
   return (
-    <section className="overflow-hidden py-14">
+    <section className="overflow-hidden py-10">
       <p className="mb-8 px-5 text-center text-sm font-medium uppercase tracking-[0.2em] text-ink/40 sm:px-8">
         {logos.eyebrow}
       </p>

@@ -30,17 +30,15 @@ export default function About() {
         description="Why we exist, who we are, and how we help creators get booked and paid without commission."
         jsonLd={JSON_LD}
       />
-      {/* New design block */}
+      {/* Sequence: Hero → Brands → How it works → Team → Belief → Testimonials → FAQ → Join */}
       <HeroV2 />
       <LogoMarquee />
-      <JoinSplit />
       <StackingCards />
-      {/* <CaseStudyGrid /> — hidden for now */}
+      <TeamMasonry />
+      <BeliefGrid />
       <TestimonialsFlip />
       <FaqAccordion />
-      <TeamMasonry />
-      {/* Appended original sections */}
-      <BeliefGrid />
+      <JoinSplit />
     </main>
   );
 }

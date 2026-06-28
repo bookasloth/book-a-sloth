@@ -59,7 +59,7 @@ export default function TestimonialsFlip() {
   );
 
   return (
-    <section ref={root} className="overflow-hidden px-0 py-20 lg:py-28">
+    <section ref={root} className="overflow-hidden px-0 py-12 lg:py-16">
       <div className="mx-auto mb-10 max-w-6xl px-5 sm:px-8">
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Loved by hosts</p>
         <h2 className="mt-3 font-heading text-3xl font-bold sm:text-4xl">{testimonials.heading}</h2>

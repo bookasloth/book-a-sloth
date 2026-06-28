@@ -31,7 +31,7 @@ export default function HeroV2() {
   const aura = useRef(null);
 
   return (
-    <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:py-28">
+    <section className="relative overflow-hidden px-5 py-12 sm:px-8 lg:py-16">
       <div ref={aura} aria-hidden className="pointer-events-none absolute inset-0 -z-10" style={{ background: "radial-gradient(55% 50% at 30% 30%, #FFE9DD 0%, transparent 70%)" }} />
       <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
         <div>

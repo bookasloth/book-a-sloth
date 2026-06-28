@@ -60,10 +60,11 @@ export const stats = {
   ],
 };
 
-// Order is intentional (3 across, 2 rows):
-//   Durga · Happy · Mohini  /  Sujata · Aastha · Shubham
-// Photos live in company-assets/images/about. Shubham has no photo yet → fallback initials.
-// Socials: linkedin + facebook + sloth (their Book A Sloth page). Swap "#" hrefs for real ones.
+// Order is intentional (4 across, 2 rows):
+//   Durga · Happy · Mohini · Sujata  /  Arjun · Sariga · Aastha · Shubham
+// Photos live in company-assets/images/about. Members without a photo → initials fallback.
+// Socials vary by profession; hrefs resolve to Book A Sloth's own pages for now
+// (TeamSocials fills the default per type) until individual links are provided.
 export const team = {
   heading: "The people behind Book A Sloth.",
   sub: "A small team that sweats the calm so you don't have to.",
@@ -73,49 +74,56 @@ export const team = {
       role: "Marketing",
       photo: `${ABOUT_ASSETS}/durga-laxne.jpg`,
       bio: "Tells the Book A Sloth story so the right creators find us — and feel calmer the moment they land.",
-      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+      socials: [{ type: "linkedin" }, { type: "instagram" }, { type: "sloth" }],
     },
     {
       name: "Happy Singh",
       role: "Content",
       photo: `${ABOUT_ASSETS}/happy-singh.jpg`,
       bio: "Turns the product into words people actually enjoy reading. Believes good content respects your time.",
-      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+      socials: [{ type: "instagram" }, { type: "x" }, { type: "sloth" }],
     },
     {
       name: "Mohini Daf",
       role: "Automation",
       photo: `${ABOUT_ASSETS}/mohini-daf.jpg`,
       bio: "Makes the boring parts vanish. If a task can run itself, she's probably already automated it.",
-      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+      socials: [{ type: "linkedin" }, { type: "x" }, { type: "sloth" }],
     },
     {
       name: "Sujata Mishra",
       role: "Operations",
       photo: `${ABOUT_ASSETS}/sujata-mishra.jpg`,
       bio: "Keeps the whole machine humming behind the scenes so nothing — and no one — slips through the cracks.",
-      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
-    },
-    {
-      name: "Aastha Nikhare",
-      role: "Product",
-      photo: `${ABOUT_ASSETS}/aastha-nikhare.jpg`,
-      bio: "Obsesses over every tap so you never have to think twice. Removes friction for a living.",
-      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
-    },
-    {
-      name: "Shubham",
-      role: "Engineering",
-      photo: "",
-      bio: "Builds the calm under the hood — fast, reliable, and quietly out of your way.",
-      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+      socials: [{ type: "linkedin" }, { type: "sloth" }],
     },
     {
       name: "Arjun Ravikumar",
       role: "Performance Marketing",
       photo: "https://company-assets.bookasloth.in/images/testimonials/arjun-ravikumar.jpg",
       bio: "Finds the calm creators wherever they scroll and brings them home — every rupee spent earns its keep.",
-      socials: [{ type: "linkedin", href: "#" }, { type: "facebook", href: "#" }, { type: "sloth", href: "#" }],
+      socials: [{ type: "linkedin" }, { type: "instagram" }, { type: "x" }, { type: "sloth" }],
+    },
+    {
+      name: "Sariga Suresh",
+      role: "Admin",
+      photo: "",
+      bio: "Keeps the back office spotless so the team can stay on creators — payouts, paperwork and the small stuff, handled.",
+      socials: [{ type: "linkedin" }, { type: "sloth" }],
+    },
+    {
+      name: "Aastha Nikhare",
+      role: "Product",
+      photo: `${ABOUT_ASSETS}/aastha-nikhare.jpg`,
+      bio: "Obsesses over every tap so you never have to think twice. Removes friction for a living.",
+      socials: [{ type: "linkedin" }, { type: "x" }, { type: "sloth" }],
+    },
+    {
+      name: "Shubham",
+      role: "Engineering",
+      photo: "",
+      bio: "Builds the calm under the hood — fast, reliable, and quietly out of your way.",
+      socials: [{ type: "linkedin" }, { type: "x" }, { type: "sloth" }],
     },
   ],
 };

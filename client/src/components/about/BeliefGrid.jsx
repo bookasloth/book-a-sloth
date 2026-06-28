@@ -11,7 +11,7 @@ export default function BeliefGrid() {
   useGsapReveal(root);
 
   return (
-    <section ref={root} className="px-5 py-20 sm:px-8 lg:py-28">
+    <section ref={root} className="px-5 py-12 sm:px-8 lg:py-16">
       <div className="mx-auto max-w-6xl">
         <h2 className="js-head font-heading text-3xl font-bold sm:text-4xl">{beliefs.heading}</h2>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
