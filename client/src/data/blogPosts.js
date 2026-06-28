@@ -3,17 +3,16 @@
 // When the real blog CMS lands, this file is the single thing to replace.
 //
 // Each post:
-//   slug        — URL segment (/blog/:slug). Must be unique + URL-safe.
-//   title       — headline
-//   date        — display string (also sort order, newest first below)
-//   author      — byline
-//   readMins    — rough read time, shown on cards
-//   tag         — single category chip (Build log / Product / Engineering / Story)
-//   excerpt     — 1–2 line summary for the index card + post hero subtitle
-//   color       — hero band theme key. One of the About-hero palette:
-//                 blue | orange | pink | green | yellow | black | white
-//   bottomColor — bottom CTA band theme key (pick a DIFFERENT colour to hero)
-//   body        — array of blocks. Supported renderers (see BlogPost.jsx):
+//   slug      — URL segment (/blog/:slug). Must be unique + URL-safe.
+//   title     — headline
+//   date      — display string (also sort order, newest first below)
+//   author    — byline (links to AUTHOR_URL on the post page)
+//   readMins  — rough read time, shown on cards
+//   category  — drives the post-hero colour. Must be a key of CATEGORY_THEME.
+//   image     — hero image URL (right half of the split hero). null → a
+//               branded fallback panel is shown. Hidden on mobile either way.
+//   excerpt   — 1–2 line summary for the index card + post hero subtitle
+//   body      — array of blocks. Supported renderers (see BlogPost.jsx):
 //                 { p }                        paragraph
 //                 { h2 }                       section heading
 //                 { ul: [..] }                 bullet list
@@ -24,6 +23,23 @@
 //
 // Posts are listed newest-first; keep that order when adding.
 
+// Author backlink — the byline + Author meta link out here.
+export const AUTHOR_URL = 'https://bolt958.xyz';
+
+// One colour theme per blog category. The post hero (+ bottom CTA band) use
+// `band`; the dark reading body uses `accent`; index chips use chip*.
+// `light: true` flips band text to ink (Growth / yellow).
+export const CATEGORY_THEME = {
+  News:             { band: '#FE5100', accent: '#FF8A3D', light: false, chipBg: 'rgba(254,81,0,0.10)',  chipFg: '#c2410c' },
+  Product:          { band: '#FE5100', accent: '#FF8A3D', light: false, chipBg: 'rgba(254,81,0,0.10)',  chipFg: '#c2410c' },
+  'Feature Update': { band: '#1E63C9', accent: '#5BA8F5', light: false, chipBg: 'rgba(30,99,201,0.10)', chipFg: '#1e63c9' },
+  Guide:            { band: '#2E9D58', accent: '#5FD089', light: false, chipBg: 'rgba(46,157,88,0.12)', chipFg: '#1f7a43' },
+  Growth:           { band: '#FFCC1C', accent: '#B98900', light: true,  chipBg: 'rgba(255,204,28,0.18)',chipFg: '#9a7400' },
+  Engineering:      { band: '#1E63C9', accent: '#5BA8F5', light: false, chipBg: 'rgba(30,99,201,0.10)', chipFg: '#1e63c9' },
+  Internal:         { band: '#E63B82', accent: '#FF7DAE', light: false, chipBg: 'rgba(230,59,130,0.10)',chipFg: '#c2326f' },
+};
+export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME.News;
+
 export const BLOG_POSTS = [
   {
     slug: 'building-in-public-why-we-blog',
@@ -31,9 +47,8 @@ export const BLOG_POSTS = [
     date: 'Jun 28, 2026',
     author: 'Bolt 958',
     readMins: 3,
-    tag: 'Story',
-    color: 'orange',
-    bottomColor: 'black',
+    category: 'Internal',
+    image: null,
     excerpt:
       'We’re building a 0% commission booking platform in the open. Here’s why we’re sharing the messy middle, not just the launch.',
     body: [
@@ -55,9 +70,8 @@ export const BLOG_POSTS = [
     date: 'Jun 26, 2026',
     author: 'Bolt 958',
     readMins: 4,
-    tag: 'Story',
-    color: 'green',
-    bottomColor: 'orange',
+    category: 'Growth',
+    image: null,
     excerpt:
       'Every booking platform takes a cut. We decided not to. Here’s the reasoning — and how the math actually works.',
     body: [
@@ -80,9 +94,8 @@ export const BLOG_POSTS = [
     date: 'Jun 22, 2026',
     author: 'Bolt 958',
     readMins: 5,
-    tag: 'Engineering',
-    color: 'blue',
-    bottomColor: 'pink',
+    category: 'Engineering',
+    image: null,
     excerpt:
       'Two systems make or break a booking product: taking money safely and never double-booking. Here’s how we wired them.',
     body: [
@@ -106,9 +119,8 @@ export const BLOG_POSTS = [
     date: 'Jun 18, 2026',
     author: 'Bolt 958',
     readMins: 4,
-    tag: 'Product',
-    color: 'pink',
-    bottomColor: 'blue',
+    category: 'Product',
+    image: null,
     excerpt:
       'The fastest booking is the one a guest doesn’t have to think about. How we cut friction down to a phone number.',
     body: [
@@ -130,9 +142,8 @@ export const BLOG_POSTS = [
     date: 'Jun 24, 2026',
     author: 'Bolt 958',
     readMins: 4,
-    tag: 'Product',
-    color: 'yellow',
-    bottomColor: 'green',
+    category: 'Feature Update',
+    image: null,
     excerpt:
       'We rebuilt host onboarding around a single Google tap — no passwords to invent, no setup maze.',
     body: [
@@ -155,9 +166,8 @@ export const BLOG_POSTS = [
     date: 'Jun 14, 2026',
     author: 'Bolt 958',
     readMins: 4,
-    tag: 'Engineering',
-    color: 'black',
-    bottomColor: 'orange',
+    category: 'Engineering',
+    image: null,
     excerpt:
       'A confirmation that never lands is worse than no confirmation. How we built a notification engine we trust.',
     body: [
@@ -179,9 +189,8 @@ export const BLOG_POSTS = [
     date: 'Jun 19, 2026',
     author: 'Bolt 958',
     readMins: 3,
-    tag: 'Build log',
-    color: 'orange',
-    bottomColor: 'blue',
+    category: 'News',
+    image: null,
     excerpt:
       'The day the “coming soon” came down. What launch day actually looked like behind the scenes.',
     body: [

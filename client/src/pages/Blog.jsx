@@ -1,24 +1,19 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BLOG_POSTS } from '../data/blogPosts';
+import { BLOG_POSTS, themeFor } from '../data/blogPosts';
 
 // /blog — static index of progress posts (build-in-public). Content lives in
 // src/data/blogPosts.js. Each card links to /blog/:slug (pages/BlogPost.jsx).
 // No DB / no server yet — this is the placeholder until the real CMS lands.
-
-const TAG_STYLES = {
-  'Build log':   { bg: 'rgba(254,81,0,0.10)',  fg: '#c2410c' },
-  Product:       { bg: 'rgba(37,99,235,0.10)',  fg: '#2563eb' },
-  Engineering:   { bg: 'rgba(5,150,105,0.10)',  fg: '#059669' },
-  Story:         { bg: 'rgba(124,58,237,0.10)',  fg: '#7c3aed' },
-};
+// The index stays on the brand orange accent / white bg / black text; each
+// post's category shows through its coloured chip (see CATEGORY_THEME).
 
 const Tag = ({ label }) => {
-  const s = TAG_STYLES[label] || TAG_STYLES.Story;
+  const s = themeFor(label);
   return (
     <span
       className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-      style={{ backgroundColor: s.bg, color: s.fg }}
+      style={{ backgroundColor: s.chipBg, color: s.chipFg }}
     >
       {label}
     </span>
@@ -57,7 +52,7 @@ const Blog = () => {
           className="page-card group mt-12 block p-6 transition-shadow hover:shadow-md hover:no-underline sm:mt-16 sm:p-8"
         >
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <Tag label={featured.tag} />
+            <Tag label={featured.category} />
             <time className="text-xs font-semibold uppercase tracking-wide text-gray-400">
               {featured.date}
             </time>
@@ -86,7 +81,7 @@ const Blog = () => {
               className="page-card group flex flex-col p-5 transition-shadow hover:shadow-md hover:no-underline sm:p-6"
             >
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                <Tag label={post.tag} />
+                <Tag label={post.category} />
                 <time className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                   {post.date}
                 </time>

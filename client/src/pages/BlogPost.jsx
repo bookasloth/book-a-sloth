@@ -1,36 +1,43 @@
 import { useEffect } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { getPost, BLOG_POSTS } from '../data/blogPosts';
+import { getPost, BLOG_POSTS, themeFor, AUTHOR_URL } from '../data/blogPosts';
 
-// /blog/:slug — immersive post page. A full-bleed coloured hero (theme from
-// the About-hero palette) over a dark reading body, finished with a share row
-// and a bottom CTA band in a second colour. Content lives in data/blogPosts.js.
+// /blog/:slug — immersive post page. A split hero (left = category colour +
+// text, right = image, hidden on mobile) over a dark reading body, finished
+// with a share row and a bottom CTA band in the same category colour.
+// Colour comes from the post category (see CATEGORY_THEME in data/blogPosts.js).
 // Unknown slug → redirect to /blog index.
-
-// Hero / band themes — keys match post.color / post.bottomColor.
-// `light: true` means the band is a light colour, so band text flips to ink.
-const THEMES = {
-  blue:   { band: '#1E63C9', accent: '#5BA8F5', light: false },
-  orange: { band: '#FE5100', accent: '#FF8A3D', light: false },
-  pink:   { band: '#E63B82', accent: '#FF7DAE', light: false },
-  green:  { band: '#2E9D58', accent: '#5FD089', light: false },
-  yellow: { band: '#FFCC1C', accent: '#B98900', light: true  },
-  black:  { band: '#121214', accent: '#FF8A3D', light: false },
-  white:  { band: '#F4F1EC', accent: '#FE5100', light: true  },
-};
-const theme = (key) => THEMES[key] || THEMES.orange;
 
 const BODY_BG = '#0E0E10';
 const BODY_TX = '#DCDCE1';
 const BODY_DIM = 'rgba(220,220,225,0.55)';
 const HEAD_TX = '#F5F5F7';
 
-// Band (hero / bottom) text colours derived from light/dark.
+// Band (hero / bottom) text colours derived from light/dark theme.
 const bandText = (t) =>
   t.light
     ? { title: '#141416', soft: 'rgba(0,0,0,0.66)', faint: 'rgba(0,0,0,0.5)', rule: 'rgba(0,0,0,0.12)' }
     : { title: '#FFFFFF', soft: 'rgba(255,255,255,0.74)', faint: 'rgba(255,255,255,0.6)', rule: 'rgba(255,255,255,0.18)' };
+
+// Right-hand hero visual: the post image, or a branded fallback panel.
+const HeroVisual = ({ post, t }) => (
+  <div className="relative hidden overflow-hidden lg:block" style={{ backgroundColor: t.band }}>
+    {post.image ? (
+      <img src={post.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+    ) : (
+      <>
+        <div
+          className="absolute inset-0"
+          style={{ backgroundImage: `radial-gradient(60% 60% at 70% 30%, ${t.light ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.18)'} 0%, transparent 70%)` }}
+        />
+        <div className="absolute inset-0 grid place-items-center">
+          <span aria-hidden="true" className="select-none" style={{ fontSize: '11rem', opacity: t.light ? 0.22 : 0.18 }}>🦥</span>
+        </div>
+      </>
+    )}
+  </div>
+);
 
 // ── Body block renderer ─────────────────────────────────────────────
 const Block = ({ block, accent }) => {
@@ -138,6 +145,12 @@ const ShareRow = ({ title }) => {
   );
 };
 
+const AuthorLink = ({ name, className, style }) => (
+  <a href={AUTHOR_URL} target="_blank" rel="noopener noreferrer" className={className} style={style}>
+    {name}
+  </a>
+);
+
 const BlogPost = () => {
   const { slug } = useParams();
   const post = getPost(slug);
@@ -152,18 +165,16 @@ const BlogPost = () => {
 
   if (!post) return <Navigate to="/blog" replace />;
 
-  const t = theme(post.color);
+  const t = themeFor(post.category);
   const tt = bandText(t);
-  const bt = theme(post.bottomColor);
-  const btt = bandText(bt);
   const more = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 2);
 
   return (
     <article style={{ backgroundColor: BODY_BG }}>
-      {/* ── Hero band ── */}
-      <header className="relative overflow-hidden" style={{ backgroundColor: t.band }}>
+      {/* ── Split hero: left colour + text, right image (hidden on mobile) ── */}
+      <header className="grid items-stretch lg:grid-cols-2" style={{ backgroundColor: t.band }}>
         <div className="app-container py-14 sm:py-20">
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-xl lg:mx-0 lg:ml-auto lg:pr-10">
             <Link to="/blog" className="inline-flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-80"
               style={{ color: tt.faint }}>
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -173,28 +184,38 @@ const BlogPost = () => {
             </Link>
 
             <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: tt.faint }}>
-              {post.tag}
+              {post.category}
             </p>
             <h1 className="mt-3 font-heading text-3xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl" style={{ color: tt.title }}>
               {post.title}
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed sm:text-lg" style={{ color: tt.soft }}>
+            <p className="mt-5 text-base leading-relaxed sm:text-lg" style={{ color: tt.soft }}>
               {post.excerpt}
             </p>
 
             {/* Meta row */}
             <div className="mt-10 border-t pt-5" style={{ borderColor: tt.rule }}>
               <dl className="grid grid-cols-3 gap-4">
-                {[['Published', post.date], ['Author', post.author], ['Read', `${post.readMins} min`]].map(([k, v]) => (
-                  <div key={k}>
-                    <dt className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tt.faint }}>{k}</dt>
-                    <dd className="mt-1 text-sm font-semibold sm:text-base" style={{ color: tt.title }}>{v}</dd>
-                  </div>
-                ))}
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tt.faint }}>Published</dt>
+                  <dd className="mt-1 text-sm font-semibold sm:text-base" style={{ color: tt.title }}>{post.date}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tt.faint }}>Author</dt>
+                  <dd className="mt-1 text-sm font-semibold sm:text-base">
+                    <AuthorLink name={post.author} className="underline decoration-from-font underline-offset-2 hover:opacity-80" style={{ color: tt.title }} />
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tt.faint }}>Read</dt>
+                  <dd className="mt-1 text-sm font-semibold sm:text-base" style={{ color: tt.title }}>{post.readMins} min</dd>
+                </div>
               </dl>
             </div>
           </div>
         </div>
+
+        <HeroVisual post={post} t={t} />
       </header>
 
       {/* ── Reading body ── */}
@@ -206,7 +227,7 @@ const BlogPost = () => {
           <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t pt-6"
             style={{ borderColor: 'rgba(255,255,255,0.10)' }}>
             <p className="text-sm" style={{ color: BODY_DIM }}>
-              by <span className="font-semibold" style={{ color: BODY_TX }}>{post.author}</span>
+              by <AuthorLink name={post.author} className="font-semibold underline decoration-from-font underline-offset-2 transition-colors hover:text-white" style={{ color: BODY_TX }} />
             </p>
             <ShareRow title={post.title} />
           </div>
@@ -217,12 +238,12 @@ const BlogPost = () => {
               <h2 className="text-lg font-bold tracking-tight" style={{ color: HEAD_TX }}>Keep reading</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {more.map((p) => {
-                  const pt = theme(p.color);
+                  const pt = themeFor(p.category);
                   return (
                     <Link key={p.slug} to={`/blog/${p.slug}`}
                       className="group rounded-xl border p-4 transition-colors hover:no-underline"
                       style={{ borderColor: 'rgba(255,255,255,0.10)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: pt.accent }}>{p.tag}</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: pt.accent }}>{p.category}</span>
                       <h3 className="mt-1 font-heading text-base font-bold tracking-tight" style={{ color: HEAD_TX }}>{p.title}</h3>
                     </Link>
                   );
@@ -233,19 +254,19 @@ const BlogPost = () => {
         </div>
       </div>
 
-      {/* ── Bottom CTA band (second colour) ── */}
-      <section style={{ backgroundColor: bt.band }}>
+      {/* ── Bottom CTA band (same category colour) ── */}
+      <section style={{ backgroundColor: t.band }}>
         <div className="app-container py-16 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: btt.title }}>
+            <h2 className="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl" style={{ color: tt.title }}>
               Want this for your own bookings?
             </h2>
-            <p className="mx-auto mt-3 max-w-md text-sm sm:text-base" style={{ color: btt.soft }}>
+            <p className="mx-auto mt-3 max-w-md text-sm sm:text-base" style={{ color: tt.soft }}>
               Set up your page, sync your calendar and start getting paid — at 0% commission.
             </p>
             <Link to="/be-a-sloth"
               className="btn mt-6 inline-flex items-center px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:no-underline"
-              style={{ backgroundColor: bt.light ? '#141416' : '#FFFFFF', color: bt.light ? '#FFFFFF' : '#141416' }}>
+              style={{ backgroundColor: t.light ? '#141416' : '#FFFFFF', color: t.light ? '#FFFFFF' : '#141416' }}>
               Become a host
             </Link>
           </div>
