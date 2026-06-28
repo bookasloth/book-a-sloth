@@ -10,8 +10,7 @@ import FaqAccordion from "../components/about/FaqAccordion";
 import TeamMasonry from "../components/about/TeamMasonry";
 // Appended (kept) original sections:
 import BeliefGrid from "../components/about/BeliefGrid";
-import TrustGrid from "../components/about/TrustGrid";
-// Removed: ProblemSplit, BehindProduct, StatStrip, BuildFlow, FinalCta
+// Removed: ProblemSplit, BehindProduct, StatStrip, BuildFlow, FinalCta, TrustGrid
 
 const JSON_LD = {
   "@context": "https://schema.org",
@@ -42,7 +41,6 @@ export default function About() {
       <TeamMasonry />
       {/* Appended original sections */}
       <BeliefGrid />
-      <TrustGrid />
     </main>
   );
 }

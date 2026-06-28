@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import useGsapReveal from "./useGsapReveal";
 import { join } from "./aboutContent";
+import ImgWithSkeleton from "./ImgWithSkeleton";
 
 export default function JoinSplit() {
   const root = useRef(null);
@@ -19,7 +20,7 @@ export default function JoinSplit() {
           </Link>
         </div>
         <div className="js-item relative aspect-[16/10] overflow-hidden rounded-[12px] bg-sand ring-1 ring-black/5" data-swap={join.imageSwap}>
-          <div className="flex h-full w-full items-center justify-center text-ink/30">Team photo</div>
+          <ImgWithSkeleton src={join.image} alt="The Book A Sloth team" fallbackLabel="Book A Sloth" />
         </div>
       </div>
     </section>

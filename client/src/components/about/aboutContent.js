@@ -201,6 +201,7 @@ export const join = {
   cta: "Join the moment",
   href: "/careers",
   imageSwap: "join-hero",
+  image: `${ABOUT_ASSETS}/book-a-sloth-about-team.png`,
 };
 
 // Section 4 — stacking cards. Big feature card + 4 sticky-stacking cards.
@@ -212,10 +213,10 @@ export const stackCards = {
     swap: "stack-feature",
   },
   cards: [
-    { title: "Get booked", body: "Your page is live 24/7. Clients book while you sleep.", more: "Personal booking page, availability rules and two-way calendar sync — all in one place.", swap: "stack-1" },
-    { title: "Get paid", body: "Money in before the session. No invoicing, no chasing.", more: "Razorpay UPI, cards and netbanking. Advance or full payment. Auto GST invoices.", swap: "stack-2" },
-    { title: "Stay organized", body: "Every client, booking and rupee in one place.", more: "Client history, private notes, and bookings & revenue reports — zero spreadsheets.", swap: "stack-3" },
-    { title: "Reduce no-shows", body: "Gentle reminders go out automatically.", more: "Email + WhatsApp reminders, instant confirmations and post-session follow-ups.", swap: "stack-4" },
+    { title: "Get booked", body: "Your page is live 24/7. Clients book while you sleep.", more: "Personal booking page, availability rules and two-way calendar sync — all in one place.", swap: "stack-1", image: `${ABOUT_ASSETS}/book-a-sloth-about-get-booked.png` },
+    { title: "Get paid", body: "Money in before the session. No invoicing, no chasing.", more: "Razorpay UPI, cards and netbanking. Advance or full payment. Auto GST invoices.", swap: "stack-2", image: `${ABOUT_ASSETS}/book-a-sloth-about-get-paid.png` },
+    { title: "Stay organized", body: "Every client, booking and rupee in one place.", more: "Client history, private notes, and bookings & revenue reports — zero spreadsheets.", swap: "stack-3", image: `${ABOUT_ASSETS}/book-a-sloth-about-get-organized.jpg` },
+    { title: "Reduce no-shows", body: "Gentle reminders go out automatically.", more: "Email + WhatsApp reminders, instant confirmations and post-session follow-ups.", swap: "stack-4", image: `${ABOUT_ASSETS}/book-a-sloth-about-getno-shows.jpg` },
   ],
 };
 

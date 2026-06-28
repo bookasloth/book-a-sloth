@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { gsap, useGSAP, EASE } from "./gsapSetup";
 import { stackCards, ROUTE_START } from "./aboutContent";
+import ImgWithSkeleton from "./ImgWithSkeleton";
 
 const ACCENTS = ["var(--c-blue)", "var(--c-emerald)", "var(--c-violet)", "var(--c-amber)"];
 
@@ -40,7 +41,9 @@ export default function StackingCards() {
                 className="group relative mb-6 h-[320px] overflow-hidden rounded-[16px] border border-ink/10 bg-surface p-8 shadow-[0_20px_45px_-25px_rgba(26,26,26,0.4)]"
                 style={{ borderTopColor: ACCENTS[i], borderTopWidth: 3 }}
               >
-                <div className="flex h-32 items-center justify-center rounded-[10px] bg-sand text-ink/30" data-swap={c.swap}>Image</div>
+                <div className="h-32 overflow-hidden rounded-[10px] bg-sand" data-swap={c.swap}>
+                  <ImgWithSkeleton src={c.image} alt={c.title} fallbackLabel={c.title} />
+                </div>
                 <h3 className="mt-5 font-heading text-xl font-bold">{c.title}</h3>
                 <p className="mt-2 text-ink/70">{c.body}</p>
 
