@@ -35,34 +35,7 @@ const Blog = () => {
   const [featured, ...rest] = BLOG_POSTS;
 
   return (
-    <div className="relative isolate">
-      {/* Soft warm backdrop — cream base + faint peach glows. Kept low-opacity
-          so cards and text stay readable (lighter than the /changelog mesh).
-          Gentle drift; honours prefers-reduced-motion. */}
-      <style>{`
-        @keyframes blogDriftA { 0%,100% { transform: translate3d(0,0,0) scale(1); }
-          50% { transform: translate3d(3%,4%,0) scale(1.08); } }
-        @keyframes blogDriftB { 0%,100% { transform: translate3d(0,0,0) scale(1.05); }
-          50% { transform: translate3d(-4%,3%,0) scale(0.94); } }
-        @media (prefers-reduced-motion: reduce) { .blog-blob { animation: none !important; } }
-      `}</style>
-      <div
-        aria-hidden="true"
-        className="fixed inset-0 -z-10 overflow-hidden"
-        style={{ backgroundImage: 'linear-gradient(180deg,#FFF7EF 0%,#FFFBF6 45%,#FFFFFF 100%)' }}
-      >
-        <span className="blog-blob absolute" style={{ top: '-12%', left: '-8%', width: '55%', height: '50%',
-          backgroundImage: 'radial-gradient(closest-side, rgba(254,81,0,0.10) 0%, rgba(254,81,0,0) 70%)',
-          animation: 'blogDriftA 22s ease-in-out infinite', willChange: 'transform' }} />
-        <span className="blog-blob absolute" style={{ top: '-6%', left: '62%', width: '52%', height: '46%',
-          backgroundImage: 'radial-gradient(closest-side, rgba(255,138,61,0.12) 0%, rgba(255,138,61,0) 72%)',
-          animation: 'blogDriftB 26s ease-in-out -6s infinite', willChange: 'transform' }} />
-        <span className="blog-blob absolute" style={{ top: '46%', left: '70%', width: '50%', height: '48%',
-          backgroundImage: 'radial-gradient(closest-side, rgba(255,196,140,0.10) 0%, rgba(255,196,140,0) 70%)',
-          animation: 'blogDriftA 28s ease-in-out -10s infinite', willChange: 'transform' }} />
-      </div>
-
-      <div className="app-container py-12 sm:py-16">
+    <div className="app-container py-12 sm:py-16">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <header className="text-center">
@@ -146,7 +119,6 @@ const Blog = () => {
             Become a host
           </Link>
         </div>
-      </div>
       </div>
     </div>
   );
