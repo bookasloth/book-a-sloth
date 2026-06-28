@@ -3,12 +3,11 @@ import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
-import ModeSwitch from './ModeSwitch';
 import UseCasesMegaMenu from './UseCasesMegaMenu';
 import { USE_CASES_CONFIG } from './useCasesConfig';
 import { isHost, routeRole } from '../../utils/roleRoutes';
-import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../services/api';
-import { planLabel } from '../../utils/themeUtils';
+import { getNotifications, markAllNotificationsRead, markNotificationRead, getGuestBookings } from '../../services/api';
+import { getPlanBorderLabel, normalizePlan } from '../../utils/themeUtils';
 import {
   Home, Tag, HelpCircle,
   CalendarCheck, MessageCircle, Bookmark, BarChart2,
@@ -16,7 +15,7 @@ import {
   Search, User, Settings, LogOut, TrendingUp,
   Clock, Wallet, LayoutDashboard, ExternalLink,
   Gift, Star, Info, Compass, Cpu, HeartPulse,
-  GraduationCap, Sparkles, Mail, Award, Layers,
+  GraduationCap, Sparkles, Mail, Award, Layers, Headset,
 } from 'lucide-react';
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
@@ -30,56 +29,23 @@ const MORE_MENU = [
   { label: 'About',        href: '/about',         icon: Info },
 ];
 
-const CUSTOMER_NAV = [
-  { label: 'Home',     href: '/',            icon: Home,         exact: true },
-  { label: 'Explore',  href: '/explore',     icon: Search,       tag: 'Soon' },
-  { label: 'Bookings', href: '/user/my-bookings', icon: CalendarCheck },
+// Slim guest profile menu (logged-in guests). The navbar carries nothing but the
+// profile dropdown — these are the only two destinations a guest needs.
+const GUEST_MENU = [
+  { label: 'All Bookings', href: '/user/my-bookings', icon: CalendarCheck },
+  { label: 'Review',       href: '/user/reviews',     icon: Star },
 ];
 
-// Host quick-links — only shown OUTSIDE /dashboard/* (the sidebar owns nav inside
-// the dashboard). "Dashboard" replaces the old mislabelled "Analytics".
-const VENDOR_NAV = [
-  { label: 'Home',      href: '/',                   icon: Home,         exact: true },
-  { label: 'Bookings',  href: '/dashboard/bookings', icon: CalendarCheck },
-  { label: 'Services',  href: '/dashboard/services', icon: Briefcase },
-  { label: 'Dashboard', href: '/dashboard',          icon: LayoutDashboard, exact: true },
-];
-
-// Grouped profile dropdown — sectioned for scannability (#3/#5). Bookings lives
-// in the center nav, so it is NOT repeated here (#6). __profile__/__badges__ are
-// resolved to the user's public username routes at render time.
-const CUSTOMER_SECTIONS = [
-  { title: 'Account', items: [
-    { label: 'My Profile',        href: '/user/profile',  icon: User },
-    { label: 'Reviews',           href: '/user/reviews',  icon: Star },
-    { label: 'Loyalty & Rewards', href: '/user/loyalty',  icon: Gift },
-  ] },
-  { title: 'Resources', items: [
-    { label: 'Help Center', href: '/help',    icon: HelpCircle },
-    { label: 'Contact',     href: '/contact', icon: Mail },
-    { label: 'About',       href: '/about',   icon: Info },
-  ] },
-];
-
-const VENDOR_SECTIONS = [
-  { title: 'Workspace', items: [
-    { label: 'Dashboard',           href: '/dashboard',              icon: LayoutDashboard },
-    { label: 'Public Booking Page', href: '__profile__',             icon: ExternalLink },
-    { label: 'Availability',        href: '/dashboard/availability', icon: Clock },
-    { label: 'Settings',            href: '/dashboard/profile',      icon: Settings },
-  ] },
-  { title: 'Money', items: [
-    { label: 'Earnings', href: '/dashboard/earnings',         icon: TrendingUp },
-    { label: 'Payouts',  href: '/dashboard/payments/payouts', icon: Wallet },
-  ] },
-  { title: 'Account', items: [
-    { label: 'Reviews', href: '/user/reviews', icon: Star },
-    { label: 'Badges',  href: '__badges__',    icon: Award },
-  ] },
-  { title: 'Resources', items: [
-    { label: 'Help Center', href: '/help',    icon: HelpCircle },
-    { label: 'Contact',     href: '/contact', icon: Mail },
-  ] },
+// Slim host profile menu (logged-in hosts). A single flat list — the dashboard
+// sidebar/bottom-bar owns full navigation, so the navbar only carries the few
+// high-frequency host shortcuts. `__profile__` resolves to the public username
+// route; `external: true` opens in a new tab. Account Manager → Bolt's BAS page.
+const VENDOR_MENU = [
+  { label: 'Upcoming Bookings',     href: '/dashboard/bookings',     icon: CalendarCheck },
+  { label: 'Availability',          href: '/dashboard/availability', icon: Clock },
+  { label: 'View Public Profile',   href: '__profile__',             icon: ExternalLink, external: true },
+  { label: 'Talk to Account Manager', href: '/bolt958',              icon: Headset,      external: true },
+  { label: 'Settings',              href: '/dashboard/profile',      icon: Settings },
 ];
 
 // ── Brand logo (admin-managed: icon_text | image | festive) ───────────────────
@@ -111,16 +77,88 @@ const NavbarLogo = ({ appearance }) => {
   return wordmarkText(true); // fallback: text only, always visible
 };
 
-// ── Avatar initials ───────────────────────────────────────────────────────────
+// ── Photo avatar (host) — real profile photo with initials fallback ──────────
+// Literal size classes (never interpolated) so Tailwind's JIT emits them.
+const PhotoAvatar = ({ user, className = 'h-11 w-11' }) =>
+  user?.profile_image ? (
+    <img
+      src={user.profile_image}
+      alt={user?.name || 'Profile'}
+      className={`${className} rounded-full object-cover flex-shrink-0`}
+    />
+  ) : (
+    <span
+      className={`${className} inline-flex items-center justify-center rounded-full bg-[#FE5100] text-white font-bold flex-shrink-0 select-none`}
+      aria-hidden="true"
+    >
+      {user?.name ? user.name[0].toUpperCase() : 'U'}
+    </span>
+  );
 
-const Avatar = ({ name, size = 8 }) => (
-  <span
-    className={`inline-flex items-center justify-center w-${size} h-${size} rounded-full bg-[#FE5100] text-white font-bold text-sm flex-shrink-0 select-none`}
-    aria-hidden="true"
-  >
-    {name ? name[0].toUpperCase() : 'U'}
-  </span>
+// ── Sloth avatar (guest) — always the brand mark, never initials/photo ───────
+// Guests have no profile image; the spec calls for the Sloth mark every time.
+// Uses the admin-managed icon, falling back to the bundled favicon (also Sloth).
+const SlothAvatar = ({ appearance, className = 'h-11 w-11' }) => (
+  <img
+    src={appearance?.icon_url || '/favicon.svg'}
+    alt="Book A Sloth"
+    className={`${className} rounded-full object-contain bg-[#FE5100]/10 p-1 flex-shrink-0`}
+  />
 );
+
+// ── Profile dropdown pieces (shared desktop + mobile) ────────────────────────
+const VendorProfileHeader = ({ user }) => (
+  <div className="flex items-center gap-3">
+    <PhotoAvatar user={user} />
+    <div className="min-w-0 flex-1">
+      <p className="text-[14px] font-semibold text-[#1E1E1E] truncate">{user?.name || 'Host'}</p>
+      {user?.username && <p className="text-[12px] text-gray-400 truncate">@{user.username}</p>}
+    </div>
+  </div>
+);
+
+// Guest header: Sloth mark + "Hello," + the name from their most recent booking.
+const GuestProfileHeader = ({ appearance, name }) => (
+  <div className="flex items-center gap-3">
+    <SlothAvatar appearance={appearance} />
+    <div className="min-w-0 flex-1">
+      <p className="text-[12px] text-gray-400 leading-tight">Hello,</p>
+      <p className="text-[14px] font-semibold text-[#1E1E1E] truncate">{name || 'there'}</p>
+    </div>
+  </div>
+);
+
+const MembershipButton = ({ user, onClick }) => (
+  <Link
+    to="/dashboard/upgrade"
+    onClick={onClick}
+    className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-[#FE5100]/10 px-3 py-2 text-[12.5px] font-semibold text-[#FE5100] transition-colors hover:bg-[#FE5100]/15 hover:no-underline"
+  >
+    <Sparkles size={14} className="flex-shrink-0" />
+    You are a {getPlanBorderLabel(normalizePlan(user?.plan))} Member
+  </Link>
+);
+
+// Flat profile-menu renderer (host VENDOR_MENU or guest GUEST_MENU). Handles the
+// `__profile__` username token and `external` (new-tab) links.
+const MenuLinks = ({ items, user, onNavigate }) =>
+  items.map((item) => {
+    const Icon = item.icon;
+    const href = item.href === '__profile__'
+      ? (user?.username ? `/${user.username}` : '/dashboard/profile')
+      : item.href;
+    const cls =
+      'flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] transition-colors duration-150 hover:no-underline outline-none focus-visible:bg-[#FE5100]/5 focus-visible:text-[#FE5100]';
+    return item.external ? (
+      <a key={item.label} href={href} target="_blank" rel="noreferrer" role="menuitem" onClick={onNavigate} className={cls}>
+        <Icon size={15} className="flex-shrink-0 text-gray-400" /> {item.label}
+      </a>
+    ) : (
+      <Link key={item.label} to={href} role="menuitem" onClick={onNavigate} className={cls}>
+        <Icon size={15} className="flex-shrink-0 text-gray-400" /> {item.label}
+      </Link>
+    );
+  });
 
 // ── Badge pill ────────────────────────────────────────────────────────────────
 
@@ -222,20 +260,20 @@ const Navbar = () => {
   const [signInOpen,  setSignInOpen]  = useState(false);
   const [notifs,      setNotifs]      = useState([]);
   const [unread,      setUnread]      = useState(0);
+  const [guestName,   setGuestName]   = useState('');
 
   const dropdownRef = useRef(null);
   const notifRef    = useRef(null);
   const signInRef   = useRef(null);
 
   // Mode-aware view (unified identity): a host sees the host nav only in Hosting
-  // mode; in Traveling mode — or as a pure guest — they see the customer nav.
+  // mode; in Traveling mode — or as a pure guest — they see the guest nav.
   const canHost     = isHost(user);
   const hostingView = canHost && mode === 'hosting';
-  const onDashboard = location.pathname.startsWith('/dashboard');
-  // Inside /dashboard/* the sidebar owns navigation, so the host center links are
-  // hidden to avoid a duplicate nav (#2). Logged-out users render PublicCenterNav.
-  const navItems     = !user ? [] : hostingView ? (onDashboard ? [] : VENDOR_NAV) : CUSTOMER_NAV;
-  const dropSections = hostingView ? VENDOR_SECTIONS : CUSTOMER_SECTIONS;
+  // Logged-in users get a deliberately empty center nav — the profile dropdown is
+  // the only navbar surface (hosts navigate via the dashboard; guests only need
+  // bookings/reviews). Logged-out users render PublicCenterNav.
+  const navItems     = [];
 
   // Notification feed — role-filtered (host vs guest), loaded on mount and on panel open
   const notifRole = hostingView ? 'host' : 'guest';
@@ -248,6 +286,21 @@ const Navbar = () => {
   useEffect(() => { loadNotifs(); }, [loadNotifs]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (notifOpen) loadNotifs(); }, [notifOpen]);
+
+  // Guest greeting name — sourced from the guest's most recent booking (guests
+  // often have no profile name). Falls back to the account name. Hosts skip this.
+  useEffect(() => {
+    if (!user || hostingView) return;
+    getGuestBookings()
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : [];
+        const latest = [...list].sort(
+          (a, b) => new Date(b.created_at || b.scheduled_at) - new Date(a.created_at || a.scheduled_at),
+        )[0];
+        setGuestName(latest?.guest_name || user.name || '');
+      })
+      .catch(() => setGuestName(user.name || ''));
+  }, [user, hostingView]);
 
 
   const badges = { messages: 0, notifications: unread };
@@ -304,13 +357,6 @@ const Navbar = () => {
 
   const isActive = ({ href, exact }) =>
     exact ? location.pathname === href : location.pathname.startsWith(href);
-
-  // Resolve dropdown href (vendor public profile uses dynamic username)
-  const resolveHref = (item) => {
-    if (item.href === '__profile__') return user?.username ? `/${user.username}` : null;
-    if (item.href === '__badges__')  return user?.username ? `/${user.username}/badges` : null;
-    return item.href;
-  };
 
   return (
     <nav
@@ -386,9 +432,6 @@ const Navbar = () => {
 
             {user ? (
               <>
-                {/* Hosting/Traveling switch — only for dual-capability accounts */}
-                <div className="hidden md:block mr-1"><ModeSwitch /></div>
-
                 {/* Notifications bell */}
                 <div ref={notifRef} className="relative">
                   <button
@@ -457,7 +500,9 @@ const Navbar = () => {
                     aria-expanded={dropdownOpen}
                     aria-haspopup="menu"
                   >
-                    <Avatar name={user.name} size={8} />
+                    {hostingView
+                      ? <PhotoAvatar user={user} className="h-8 w-8 text-sm" />
+                      : <SlothAvatar appearance={appearance} className="h-8 w-8" />}
                     <ChevronDown
                       size={13}
                       strokeWidth={2.5}
@@ -468,60 +513,32 @@ const Navbar = () => {
                   {/* Dropdown menu */}
                   {dropdownOpen && (
                     <div
-                      className="absolute right-0 top-full mt-1.5 w-56 bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden"
+                      className={`absolute right-0 top-full mt-1.5 ${hostingView ? 'w-72' : 'w-64'} bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden`}
                       role="menu"
                       aria-label="Profile options"
                     >
-                      {/* User info header */}
-                      <div className="px-4 py-3.5 border-b border-gray-100">
-                        <div className="flex items-center gap-3">
-                          <Avatar name={user.name} size={9} />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[13px] font-semibold text-[#1E1E1E] truncate">{user.name}</p>
-                            <p className="text-[11px] text-gray-400 truncate">{user.username ? `@${user.username}` : user.email}</p>
+                      {hostingView ? (
+                        <>
+                          {/* Host header: photo + name + @username + membership */}
+                          <div className="px-4 py-3.5 border-b border-gray-100">
+                            <VendorProfileHeader user={user} />
+                            <MembershipButton user={user} onClick={() => setDropdownOpen(false)} />
                           </div>
-                          {user.plan && (
-                            <span className="shrink-0 rounded-full bg-[#FE5100]/10 px-2 py-0.5 text-[10px] font-bold text-[#FE5100]">
-                              {planLabel(user.plan, user.plan)}
-                            </span>
-                          )}
-                        </div>
-                        {hostingView && user.username && (
-                          <a
-                            href={`/${user.username}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-2.5 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-[12px] font-medium text-gray-700 transition-colors hover:border-[#FE5100]/40 hover:text-[#FE5100] hover:no-underline"
-                          >
-                            <ExternalLink size={13} /> View public profile
-                          </a>
-                        )}
-                      </div>
-
-                      {/* Grouped nav sections */}
-                      <div className="max-h-[60vh] overflow-y-auto py-1">
-                        {dropSections.map((sec, si) => (
-                          <div key={sec.title} className={si > 0 ? 'mt-1 border-t border-gray-100 pt-1' : ''}>
-                            <p className="px-4 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{sec.title}</p>
-                            {sec.items.map((item) => {
-                              const Icon = item.icon;
-                              const href = resolveHref(item);
-                              if (!href) return null;
-                              return (
-                                <Link
-                                  key={item.label}
-                                  to={href}
-                                  role="menuitem"
-                                  className="flex items-center gap-3 px-4 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] transition-colors duration-150 outline-none focus-visible:bg-[#FE5100]/5 focus-visible:text-[#FE5100]"
-                                >
-                                  <Icon size={15} className="flex-shrink-0 text-gray-400" />
-                                  {item.label}
-                                </Link>
-                              );
-                            })}
+                          <div className="py-1">
+                            <MenuLinks items={VENDOR_MENU} user={user} onNavigate={() => setDropdownOpen(false)} />
                           </div>
-                        ))}
-                      </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* Guest header: Sloth mark + "Hello," + last-booking name */}
+                          <div className="px-4 py-3.5 border-b border-gray-100">
+                            <GuestProfileHeader appearance={appearance} name={guestName} />
+                          </div>
+                          <div className="py-1">
+                            <MenuLinks items={GUEST_MENU} user={user} onNavigate={() => setDropdownOpen(false)} />
+                          </div>
+                        </>
+                      )}
 
                       {/* Logout */}
                       <div className="border-t border-gray-100 py-1">
@@ -675,41 +692,28 @@ const Navbar = () => {
             {/* Logged in: user info + dropdown items + logout */}
             {user && (
               <div className="pt-3 mt-1 border-t border-gray-100 px-1">
-                {/* User info */}
-                <div className="flex items-center gap-3 px-3 py-2 mb-1">
-                  <Avatar name={user.name} size={9} />
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-[#1E1E1E] truncate">{user.name}</p>
-                    <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
-                  </div>
-                </div>
-
-                {/* Hosting/Traveling switch — only for dual-capability accounts */}
-                <div className="px-3 pb-2"><ModeSwitch /></div>
-
-                {/* Grouped nav sections */}
-                <div className="space-y-0.5">
-                  {dropSections.map((sec, si) => (
-                    <div key={sec.title} className={si > 0 ? 'mt-1 border-t border-gray-100 pt-1' : ''}>
-                      <p className="px-3 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{sec.title}</p>
-                      {sec.items.map((item) => {
-                        const Icon = item.icon;
-                        const href = resolveHref(item);
-                        if (!href) return null;
-                        return (
-                          <Link
-                            key={item.label}
-                            to={href}
-                            className="flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-600 hover:text-[#FE5100] hover:bg-[#FE5100]/5 rounded-lg transition-colors duration-150 hover:no-underline"
-                          >
-                            <Icon size={16} className="flex-shrink-0 text-gray-400" />
-                            {item.label}
-                          </Link>
-                        );
-                      })}
+                {hostingView ? (
+                  <>
+                    {/* Host: photo + name + @username + membership */}
+                    <div className="px-3 py-2 mb-1">
+                      <VendorProfileHeader user={user} />
+                      <MembershipButton user={user} onClick={() => setMenuOpen(false)} />
                     </div>
-                  ))}
-                </div>
+                    <div className="space-y-0.5">
+                      <MenuLinks items={VENDOR_MENU} user={user} onNavigate={() => setMenuOpen(false)} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Guest: Sloth mark + "Hello," + last-booking name */}
+                    <div className="px-3 py-2 mb-1">
+                      <GuestProfileHeader appearance={appearance} name={guestName} />
+                    </div>
+                    <div className="space-y-0.5">
+                      <MenuLinks items={GUEST_MENU} user={user} onNavigate={() => setMenuOpen(false)} />
+                    </div>
+                  </>
+                )}
 
                 {/* Logout */}
                 <button
