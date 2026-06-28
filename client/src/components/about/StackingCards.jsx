@@ -38,10 +38,10 @@ export default function StackingCards() {
           {stackCards.cards.map((c, i) => (
             <div key={i} className="sticky" style={{ top: `${6 + i * 1.5}rem` }}>
               <div
-                className="group relative mb-6 h-[320px] overflow-hidden rounded-[16px] border border-ink/10 bg-surface p-8 shadow-[0_20px_45px_-25px_rgba(26,26,26,0.4)]"
+                className="group relative mb-6 overflow-hidden rounded-[16px] border border-ink/10 bg-surface p-8 shadow-[0_20px_45px_-25px_rgba(26,26,26,0.4)]"
                 style={{ borderTopColor: ACCENTS[i], borderTopWidth: 3 }}
               >
-                <div className="h-32 overflow-hidden rounded-[10px] bg-sand" data-swap={c.swap}>
+                <div className="h-[360px] overflow-hidden rounded-[10px] bg-sand sm:h-[480px] lg:h-[600px]" data-swap={c.swap}>
                   <ImgWithSkeleton src={c.image} alt={c.title} fallbackLabel={c.title} />
                 </div>
                 <h3 className="mt-5 font-heading text-xl font-bold">{c.title}</h3>
