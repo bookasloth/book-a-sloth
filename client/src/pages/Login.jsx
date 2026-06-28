@@ -43,7 +43,7 @@ const Login = () => {
     if (!isPhone(phone)) return toast.error("Enter your WhatsApp number");
     setBusy(true);
     try {
-      await sendOtp({ phone });
+      await sendOtp({ phone, purpose: "login" });
       setStep("otp");
       toast.success("Code sent on WhatsApp");
     } catch (err) {

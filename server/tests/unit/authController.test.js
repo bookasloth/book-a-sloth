@@ -46,6 +46,12 @@ jest.mock('../../utils/otpStore',   () => ({
   generate: jest.fn(() => '123456'),
 }));
 
+// Default unified_login ON (fail-open default); individual tests flip it OFF to
+// exercise the legacy host/guest login separation.
+jest.mock('../../services/featureFlags', () => ({
+  isFeatureEnabled: jest.fn().mockResolvedValue(true),
+}));
+
 jest.mock('../../services/usernameService', () => ({
   resolve: jest.fn().mockResolvedValue(null),
   createInitialUsername: jest.fn().mockResolvedValue('auto-handle-x1'),
@@ -56,6 +62,7 @@ jest.mock('../../services/usernameService', () => ({
 
 const { supabaseAdmin }  = require('../../config/supabase');
 const otpStore           = require('../../utils/otpStore');
+const featureFlags       = require('../../services/featureFlags');
 const {
   registerVendor, registerUser, login, sendOtp, verifyOtp, getMe,
 } = require('../../controllers/authController');
@@ -244,6 +251,54 @@ describe('sendOtp', () => {
     await sendOtp(req({ email: 'guest@x.com', name: 'Guest' }), r);
     expect(otpStore.set).toHaveBeenCalled();
     expect(r.json.mock.calls[0][0].message).toMatch(/sent/i);
+  });
+
+  // ── login-door host pre-check (reject BEFORE sending an OTP) ──────────────────
+  const profileByPhone = (data) => supabaseAdmin.from.mockReturnValue({
+    select: jest.fn().mockReturnThis(),
+    eq:     jest.fn().mockReturnThis(),
+    maybeSingle: jest.fn().mockResolvedValue({ data }),
+  });
+
+  test('purpose:login + host number + unified_login OFF → 409 before any OTP', async () => {
+    featureFlags.isFeatureEnabled.mockResolvedValueOnce(false);
+    profileByPhone({ is_host: true, role: 'host' });
+    otpStore.set.mockClear();
+    const r = res();
+    await sendOtp(req({ phone: '+919876543210', purpose: 'login' }), r);
+    expect(r.status).toHaveBeenCalledWith(409);
+    expect(r.json.mock.calls[0][0].message).toMatch(/host login/i);
+    expect(otpStore.set).not.toHaveBeenCalled();
+  });
+
+  test('purpose:login + superadmin number + unified_login OFF → 409 before any OTP', async () => {
+    featureFlags.isFeatureEnabled.mockResolvedValueOnce(false);
+    profileByPhone({ is_host: false, role: 'superadmin' });
+    otpStore.set.mockClear();
+    const r = res();
+    await sendOtp(req({ phone: '+919876543210', purpose: 'login' }), r);
+    expect(r.status).toHaveBeenCalledWith(409);
+    expect(otpStore.set).not.toHaveBeenCalled();
+  });
+
+  test('purpose:login + guest number + unified_login OFF → OTP still sent', async () => {
+    featureFlags.isFeatureEnabled.mockResolvedValueOnce(false);
+    profileByPhone({ is_host: false, role: 'guest' });
+    otpStore.set.mockClear();
+    const r = res();
+    await sendOtp(req({ phone: '+919876543210', purpose: 'login' }), r);
+    expect(otpStore.set).toHaveBeenCalled();
+    expect(r.json.mock.calls[0][0].message).toMatch(/sent/i);
+  });
+
+  test('booking flow (no purpose) + host number → OTP still sent (host can book as customer)', async () => {
+    featureFlags.isFeatureEnabled.mockResolvedValueOnce(false);
+    profileByPhone({ is_host: true, role: 'host' });
+    otpStore.set.mockClear();
+    const r = res();
+    await sendOtp(req({ phone: '+919876543210' }), r);
+    expect(otpStore.set).toHaveBeenCalled();
+    expect(r.status).not.toHaveBeenCalledWith(409);
   });
 });
 

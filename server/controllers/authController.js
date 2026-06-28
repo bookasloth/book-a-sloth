@@ -629,9 +629,28 @@ const otpIdentifier = ({ email, phone }) => normalizePhone(phone) || (email || "
 // POST /api/auth/send-otp — sends OTP to guest's phone (WhatsApp) + email
 const sendOtp = async (req, res) => {
   try {
-    const { email, name, phone } = req.body;
-    if (!email && !normalizePhone(phone))
+    const { email, name, phone, purpose } = req.body;
+    const normalizedPhone = normalizePhone(phone);
+    if (!email && !normalizedPhone)
       return res.status(400).json({ message: "A valid mobile number or email is required" });
+
+    // Guest-login door: reject a host/admin number BEFORE sending an OTP (better
+    // UX than the post-verify 409 in verifyOtpLogin). Scoped to purpose:'login' so
+    // the shared booking flow still lets a host book as a customer. Mirrors the
+    // verifyOtpLogin gate: skipped when unified_login is ON (any account may phone-
+    // login then). Same 409 message so client copy stays consistent.
+    if (purpose === "login" && normalizedPhone) {
+      const unifiedLogin = await featureFlags.isFeatureEnabled("unified_login");
+      if (!unifiedLogin) {
+        const { data: prof } = await supabaseAdmin
+          .from("profiles")
+          .select("is_host, role")
+          .eq("phone", normalizedPhone)
+          .maybeSingle();
+        if (prof && (prof.is_host || prof.role === "superadmin"))
+          return res.status(409).json({ message: "This number is registered as a host. Please use host login." });
+      }
+    }
 
     const identifier = otpIdentifier({ email, phone });
     const otp = otpStore.generate();
