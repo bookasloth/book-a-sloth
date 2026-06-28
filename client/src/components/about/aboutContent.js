@@ -206,28 +206,11 @@ export const BRAND_ASSETS = `${ABOUT_ASSETS}/brands`;
 export const logos = {
   eyebrow: "Used by people who work with",
   brands: [
-    // Global
-    { name: "Apple", file: "apple.png" },
-    { name: "Google", file: "google.png" },
-    { name: "Microsoft", file: "microsoft.png" },
-    { name: "Amazon", file: "amazon.png" },
-    { name: "Coca-Cola", file: "coca-cola.png" },
-    { name: "Nike", file: "nike.png" },
-    { name: "Samsung", file: "samsung.png" },
-    { name: "Netflix", file: "netflix.png" },
-    { name: "Spotify", file: "spotify.png" },
-    { name: "Facebook", file: "facebook.png" },
-    // Indian
-    { name: "Tata", file: "tata.png" },
-    { name: "Reliance", file: "reliance.png" },
-    { name: "Infosys", file: "infosys.png" },
-    { name: "HDFC Bank", file: "hdfc-bank.png" },
     { name: "Mahindra", file: "mahindra.png" },
-    { name: "Asian Paints", file: "asian-paints.png" },
-    { name: "Zomato", file: "zomato.png" },
     { name: "Flipkart", file: "flipkart.png" },
-    { name: "Airtel", file: "airtel.png" },
-    { name: "Wipro", file: "wipro.png" },
+    { name: "Zomato", file: "zomato.png" },
+    { name: "PharmEasy", file: "pharmeasy.png" },
+    { name: "Blinkit", file: "blinkit.png" },
   ].map((b) => ({ ...b, src: `${BRAND_ASSETS}/${b.file}` })),
 };
 
