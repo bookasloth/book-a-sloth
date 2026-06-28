@@ -71,6 +71,7 @@ export const team = {
   members: [
     {
       name: "Durga Laxne",
+      position: "Marketing Lead",
       role: "Marketing",
       photo: `${ABOUT_ASSETS}/durga-laxne.jpg`,
       bio: "Tells the Book A Sloth story so the right creators find us — and feel calmer the moment they land.",
@@ -78,6 +79,7 @@ export const team = {
     },
     {
       name: "Happy Singh",
+      position: "Content Lead",
       role: "Content",
       photo: `${ABOUT_ASSETS}/happy-singh.jpg`,
       bio: "Turns the product into words people actually enjoy reading. Believes good content respects your time.",
@@ -85,6 +87,7 @@ export const team = {
     },
     {
       name: "Mohini Daf",
+      position: "Automation Engineer",
       role: "Automation",
       photo: `${ABOUT_ASSETS}/mohini-daf.jpg`,
       bio: "Makes the boring parts vanish. If a task can run itself, she's probably already automated it.",
@@ -92,6 +95,7 @@ export const team = {
     },
     {
       name: "Sujata Mishra",
+      position: "Operations Manager",
       role: "Operations",
       photo: `${ABOUT_ASSETS}/sujata-mishra.jpg`,
       bio: "Keeps the whole machine humming behind the scenes so nothing — and no one — slips through the cracks.",
@@ -99,6 +103,7 @@ export const team = {
     },
     {
       name: "Arjun Ravikumar",
+      position: "Performance Marketer",
       role: "Performance Marketing",
       photo: "https://company-assets.bookasloth.in/images/testimonials/arjun-ravikumar.jpg",
       bio: "Finds the calm creators wherever they scroll and brings them home — every rupee spent earns its keep.",
@@ -106,6 +111,7 @@ export const team = {
     },
     {
       name: "Sariga Suresh",
+      position: "Admin Executive",
       role: "Admin",
       photo: "",
       bio: "Keeps the back office spotless so the team can stay on creators — payouts, paperwork and the small stuff, handled.",
@@ -113,6 +119,7 @@ export const team = {
     },
     {
       name: "Aastha Nikhare",
+      position: "Product Designer",
       role: "Product",
       photo: `${ABOUT_ASSETS}/aastha-nikhare.jpg`,
       bio: "Obsesses over every tap so you never have to think twice. Removes friction for a living.",
@@ -120,6 +127,7 @@ export const team = {
     },
     {
       name: "Shubham",
+      position: "Founding Engineer",
       role: "Engineering",
       photo: "",
       bio: "Builds the calm under the hood — fast, reliable, and quietly out of your way.",

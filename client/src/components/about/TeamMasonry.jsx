@@ -28,7 +28,7 @@ export default function TeamMasonry() {
                 <ImgWithSkeleton src={m.photo} alt={`${m.name} — ${m.role}`} fallbackLabel={m.name} />
               </div>
               <div className="p-4">
-                <div className="font-heading font-semibold">{m.name}</div>
+                <div className="font-heading font-semibold">{m.name.split(" ")[0]}</div>
                 <div className="text-sm font-medium text-primary">{m.role}</div>
               </div>
             </button>

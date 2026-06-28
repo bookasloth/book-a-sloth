@@ -24,7 +24,8 @@ export default function TeamModal({ member, onClose }) {
         </div>
         <div className="flex flex-col">
           <h3 className="font-heading text-2xl font-bold">{member.name}</h3>
-          <p className="font-medium text-primary">{member.role}</p>
+          {member.position && <p className="font-medium text-primary">{member.position}</p>}
+          <p className="text-sm font-medium uppercase tracking-wide text-ink/45">{member.role}</p>
           <p className="mt-3 text-sm leading-relaxed text-ink/70">{member.bio}</p>
           <TeamSocials socials={member.socials} name={member.name} />
         </div>
