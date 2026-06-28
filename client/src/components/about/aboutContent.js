@@ -205,12 +205,24 @@ export const BRAND_ASSETS = `${ABOUT_ASSETS}/brands`;
 
 export const logos = {
   eyebrow: "Used by people who work with",
+  // Indian + foreign brands interleaved; the marquee duplicates this list
+  // for a seamless infinite loop.
   brands: [
     { name: "Mahindra", file: "mahindra.png" },
+    { name: "Apple", file: "apple.png" },
     { name: "Flipkart", file: "flipkart.png" },
+    { name: "Google", file: "google.png" },
     { name: "Zomato", file: "zomato.png" },
+    { name: "Microsoft", file: "microsoft.png" },
     { name: "PharmEasy", file: "pharmeasy.png" },
+    { name: "Amazon", file: "amazon.png" },
     { name: "Blinkit", file: "blinkit.png" },
+    { name: "Coca-Cola", file: "coca-cola.png" },
+    { name: "Nike", file: "nike.png" },
+    { name: "Samsung", file: "samsung.png" },
+    { name: "Netflix", file: "netflix.png" },
+    { name: "Spotify", file: "spotify.png" },
+    { name: "Facebook", file: "facebook.png" },
   ].map((b) => ({ ...b, src: `${BRAND_ASSETS}/${b.file}` })),
 };
 
