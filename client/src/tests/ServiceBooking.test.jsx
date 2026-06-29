@@ -62,10 +62,10 @@ const renderBooking = (profileSlug = 'jane-vendor', serviceSlug = 'consultation'
 // ── Loading / error states ────────────────────────────────────────────────────
 
 describe('ServiceBooking — loading/error', () => {
-  test('shows spinner while loading', () => {
+  test('shows loading state while loading', () => {
     getServiceBySlug.mockReturnValueOnce(new Promise(() => {}));
     renderBooking();
-    expect(document.querySelector('.animate-spin')).toBeTruthy();
+    expect(document.querySelector('.animate-pulse')).toBeTruthy();
   });
 
   test('shows "Service not found" when API fails', async () => {
@@ -164,10 +164,10 @@ describe('ServiceBooking — details step', () => {
     // Jump straight to details step by mocking the router state
     // In practice we'd select a date/time; here we just check form renders.
     renderBooking();
-    await waitFor(() => screen.getByText('Select Date & Time'));
+    await waitFor(() => screen.getByText('When works for you?'));
     // First Name / Last Name / Email inputs are present on the details step
     // We verify step navigation triggers them:
-    expect(screen.getByText(/select date & time/i)).toBeTruthy();
+    expect(screen.getByText(/when works for you/i)).toBeTruthy();
   });
 });
 
@@ -180,7 +180,7 @@ describe('ServiceBooking — OTP step (guest)', () => {
     });
     sendOtp.mockResolvedValue({ data: { message: 'Sent' } });
     renderBooking();
-    await waitFor(() => screen.getByText('Select Date & Time'));
+    await waitFor(() => screen.getByText('When works for you?'));
     // Verify OTP step would show a centered 6-digit input — check it exists in DOM
     // after the step transition (requires selecting time first, which needs a real date)
     // We test the input configuration by checking if the component has the otp field
@@ -196,7 +196,7 @@ describe('ServiceBooking — progress indicators use theme color', () => {
       data: { host: HOST, service: SERVICE, availability: AVAILABILITY },
     });
     renderBooking();
-    await waitFor(() => screen.getByText('Select Date & Time'));
+    await waitFor(() => screen.getByText('When works for you?'));
     // Progress dots exist
     const dots = document.querySelectorAll('[style*="background"]');
     expect(dots.length).toBeGreaterThan(0);
