@@ -77,6 +77,26 @@ const getLimit = async (slug, key) => {
   return typeof v === 'number' ? v : 0;
 };
 
+// Booking-reminder lead-times, in flow-priority order: flow 1 = 24h, flow 2 = 1h.
+// A plan's `reminder_flows` limit (DB-driven, admin-editable) decides how many of
+// these a host's bookings get: 0 = none, 1 = 24h only, 2 = 24h + 1h, -1 = all.
+const REMINDER_WINDOWS = [24, 1];
+
+/** Reminder windows (hours-before-start) a plan is entitled to. Derived from the
+ *  DB-driven `reminder_flows` limit so admins tune gating without code changes. */
+const reminderWindowsForPlan = async (slug) => {
+  const n = await getLimit(slug, 'reminder_flows');
+  if (n < 0) return [...REMINDER_WINDOWS];          // unlimited (e.g. supreme)
+  return REMINDER_WINDOWS.slice(0, n);
+};
+
+/** Whether a plan receives BOOKING_RESCHEDULED notifications — a perk of the top
+ *  reminder tier (a plan entitled to every reminder window). */
+const rescheduleNotifyForPlan = async (slug) => {
+  const n = await getLimit(slug, 'reminder_flows');
+  return n < 0 || n >= REMINDER_WINDOWS.length;
+};
+
 /** Resolve a vendor's effective plan slug — expired paid plan falls back to free tier. */
 const resolveVendorPlan = (profile) => {
   const raw = normalizeSlug(profile?.plan);
@@ -84,4 +104,4 @@ const resolveVendorPlan = (profile) => {
   return expired ? 'starter' : raw;
 };
 
-module.exports = { loadPlans, getPlan, getLimit, resolveVendorPlan, normalizeSlug, clearCache, FALLBACK_PLANS };
+module.exports = { loadPlans, getPlan, getLimit, reminderWindowsForPlan, rescheduleNotifyForPlan, resolveVendorPlan, normalizeSlug, clearCache, FALLBACK_PLANS, REMINDER_WINDOWS };
