@@ -8,7 +8,7 @@ const { safeError } = require('../utils/httpError');
 const { getConfig: getPlatformConfig } = require('../services/platformConfig');
 const { bustSitemapCache } = require('../utils/sitemapCache');
 const { resolveAndValidateCategory } = require('../lib/serviceCategory');
-const { canActivateMore } = require('../middleware/planMiddleware');
+const { canActivateMore, canAddFreeService } = require('../middleware/planMiddleware');
 const { getPublicAppearanceData } = require('./appearanceController');
 
 // Clamp service money/time fields to safe bounds (audit P1-11). parseFloat/parseInt
@@ -223,6 +223,13 @@ const createService = async (req, res) => {
     p.type     = p.type || 'one_on_one';
     p.is_active = true;
 
+    // Free-service sub-cap: a new active price-0 service must fit the plan's
+    // free_services limit (Starter 2; paid tiers unlimited).
+    if (Number(p.price ?? 0) === 0) {
+      const gate = await canAddFreeService(req.user.id);
+      if (!gate.ok) return res.status(gate.status).json({ message: gate.message, upgrade_required: true });
+    }
+
     const { data, error } = await insertSafe(p);
     if (error) return safeError(res, error);
     bustSitemapCache(); // new service may now be indexable
@@ -283,6 +290,19 @@ const updateService = async (req, res) => {
       updates.slug = await uniqueSlug(base, req.user.id, req.params.id);
     }
 
+    // Free-service sub-cap: only a LIVE service flipping paid→₹0 enters the free
+    // set and must fit the cap. Editing an already-free service (or an inactive
+    // one) doesn't add a new free listing, so it isn't gated — keeps benign edits
+    // and grandfathered rows working.
+    if (updates.price === 0) {
+      const { data: cur } = await supabaseAdmin
+        .from('services').select('is_active, price').eq('id', req.params.id).eq('host_id', req.user.id).single();
+      if (cur?.is_active && Number(cur.price ?? 0) !== 0) {
+        const gate = await canAddFreeService(req.user.id, { excludeId: req.params.id });
+        if (!gate.ok) return res.status(gate.status).json({ message: gate.message, upgrade_required: true });
+      }
+    }
+
     const { data, error } = await updateSafe(req.params.id, req.user.id, updates);
     if (error) return safeError(res, error);
     bustSitemapCache(); // title/slug change moves the canonical URL
@@ -339,13 +359,18 @@ const duplicateService = async (req, res) => {
 
 const toggleService = async (req, res) => {
   try {
-    const { data: svc } = await supabaseAdmin.from('services').select('is_active').eq('id', req.params.id).eq('host_id', req.user.id).single();
+    const { data: svc } = await supabaseAdmin.from('services').select('is_active, price').eq('id', req.params.id).eq('host_id', req.user.id).single();
     if (!svc) return res.status(404).json({ message: 'Service not found' });
 
-    // P1-1: activating (inactive→active) must respect the plan's active-service cap.
+    // P1-1: activating (inactive→active) must respect the plan's active-service cap…
     if (!svc.is_active) {
       const gate = await canActivateMore(req.user.id, 'services');
       if (!gate.ok) return res.status(gate.status).json({ message: gate.message, upgrade_required: true });
+      // …and, if it's a free service, the free-service sub-cap too.
+      if (Number(svc.price ?? 0) === 0) {
+        const freeGate = await canAddFreeService(req.user.id, { excludeId: req.params.id });
+        if (!freeGate.ok) return res.status(freeGate.status).json({ message: freeGate.message, upgrade_required: true });
+      }
     }
 
     const { error } = await supabaseAdmin

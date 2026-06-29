@@ -119,6 +119,44 @@ const canActivateMore = async (hostId, kind) => {
   }
 };
 
+// Free-service sub-cap (v3.54): `limits.free_services` bounds how many ACTIVE
+// price-0 services a host may list. Sits INSIDE the total `services` cap — a free
+// service counts toward both. -1 = unlimited; an ABSENT key defaults to unlimited
+// (permissive) so a pre-migration DB never accidentally blocks paid-tier hosts —
+// the v3.54 migration is what actually switches the Starter cap on.
+//
+// Call from every path that can yield an active free service:
+//   - create a price-0 service          → no excludeId (count all active free)
+//   - activate an inactive free service → excludeId = id (it isn't counted yet)
+//   - edit an active service down to ₹0 → excludeId = id (don't double-count self)
+// Returns { ok:true } or { ok:false, status, message }. Fails CLOSED on error.
+const canAddFreeService = async (hostId, { excludeId = null } = {}) => {
+  try {
+    const { data: profile } = await supabaseAdmin
+      .from('profiles').select('plan, plan_expires_at, plan_activated_at, created_at').eq('id', hostId).single();
+    const plan = planService.resolveVendorPlan(profile);
+    const planData = await planService.getPlan(plan);
+    const limit = planData.limits?.free_services ?? -1;   // absent → unlimited
+    if (limit === -1) return { ok: true };
+    if (limit === 0)
+      return { ok: false, status: 403, message: `Free services aren't available on the ${planData.name} plan. Set a price, or upgrade.` };
+
+    let q = supabaseAdmin
+      .from('services').select('id', { count: 'exact', head: true })
+      .eq('host_id', hostId).eq('is_active', true).eq('price', 0);
+    if (excludeId) q = q.neq('id', excludeId);
+    const { count } = await q;
+
+    if ((count || 0) >= limit)
+      return { ok: false, status: 403, message: `You can list up to ${limit} free services on the ${planData.name} plan. Set a price on this one, or deactivate another free service.` };
+    return { ok: true };
+  } catch (err) {
+    // Fail CLOSED: a transient DB error must not let a caller exceed the free cap.
+    console.error('canAddFreeService error:', err.message);
+    return { ok: false, status: 503, message: 'Could not verify your plan limit. Please try again.' };
+  }
+};
+
 // Yearly booking-receive limit (spec v1.1: bookings_per_year, all plans capped)
 // NOTE: this count→insert is still TOCTOU-racy — two concurrent bookings can
 // each read count = limit-1 and both insert, briefly exceeding the cap. We do
@@ -159,4 +197,4 @@ const checkBookingReceiveLimit = async (hostId) => {
   }
 };
 
-module.exports = { attachPlan, checkServiceLimit, checkProductLimit, checkBookingReceiveLimit, canActivateMore };
+module.exports = { attachPlan, checkServiceLimit, checkProductLimit, checkBookingReceiveLimit, canActivateMore, canAddFreeService };
