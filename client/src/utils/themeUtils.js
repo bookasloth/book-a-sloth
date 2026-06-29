@@ -37,6 +37,7 @@ export const FREE_COLORS = [
   { name: 'Brand Orange', hex: '#FE5100' },
 ];
 
+// Host+ (creator) tier: 8 curated colours.
 export const CREATOR_COLORS = [
   { name: 'Brand Orange',  hex: '#FE5100' },
   { name: 'Royal Blue',    hex: '#2563EB' },
@@ -46,14 +47,6 @@ export const CREATOR_COLORS = [
   { name: 'Crimson',       hex: '#DC2626' },
   { name: 'Emerald',       hex: '#10B981' },
   { name: 'Forest Green',  hex: '#15803D' },
-  { name: 'Teal',          hex: '#0F766E' },
-  { name: 'Cyan',          hex: '#0891B2' },
-  { name: 'Sky Blue',      hex: '#0284C7' },
-  { name: 'Amber',         hex: '#F59E0B' },
-  { name: 'Yellow',        hex: '#EAB308' },
-  { name: 'Lime',          hex: '#84CC16' },
-  { name: 'Slate',         hex: '#475569' },
-  { name: 'Charcoal',      hex: '#1F2937' },
 ];
 
 // Studio (+ Supreme) tier: full hue-ordered palette + custom hex picker.
@@ -96,7 +89,7 @@ export const DEFAULT_THEME_COLOR = '#FE5100';
 /**
  * Returns the color swatches available for the given plan.
  *   Starter        → brand orange only (1)
- *   Host+          → CREATOR_COLORS (16)
+ *   Host+          → CREATOR_COLORS (8)
  *   Studio/Supreme → STUDIO_COLORS (full palette) + custom hex input
  */
 export const getColorsForPlan = (plan) => {

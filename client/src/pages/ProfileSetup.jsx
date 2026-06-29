@@ -44,28 +44,12 @@ const SOCIAL_PLATFORMS = [
 // catalog, shown as branded favicon cards (real brand marks via Google's
 // favicon service, no emoji). Marked "Coming soon" until each is wired up.
 const MORE_INTEGRATIONS = [
-  { name: 'Google Meet',          domain: 'meet.google.com',      desc: 'Video links on online bookings' },
   { name: 'Zoom',                 domain: 'zoom.us',              desc: 'Auto-create Zoom meeting links' },
-  { name: 'Microsoft Teams',      domain: 'teams.microsoft.com',  desc: 'Teams links for bookings' },
-  { name: 'Calendly',             domain: 'calendly.com',         desc: 'Import external availability' },
-  { name: 'Stripe',               domain: 'stripe.com',           desc: 'Accept card payments' },
   { name: 'Razorpay',             domain: 'razorpay.com',         desc: 'Payments & instant payouts' },
   { name: 'PayPal',               domain: 'paypal.com',           desc: 'Accept PayPal payments' },
-  { name: 'Cashfree',             domain: 'cashfree.com',         desc: 'Payments & payouts (India)' },
-  { name: 'Zoho CRM',             domain: 'zoho.com',             desc: 'Sync contacts to Zoho CRM' },
-  { name: 'HubSpot',              domain: 'hubspot.com',          desc: 'Push leads to HubSpot' },
-  { name: 'Slack',                domain: 'slack.com',            desc: 'Booking alerts in Slack' },
-  { name: 'Notion',               domain: 'notion.so',            desc: 'Log bookings to Notion' },
-  { name: 'Airtable',             domain: 'airtable.com',         desc: 'Sync bookings to Airtable' },
-  { name: 'WhatsApp Business',    domain: 'whatsapp.com',         desc: 'Reminders via WhatsApp' },
-  { name: 'Mailchimp',            domain: 'mailchimp.com',        desc: 'Add guests to email lists' },
-  { name: 'Brevo',                domain: 'brevo.com',            desc: 'Email & SMS campaigns' },
-  { name: 'Meta Pixel',           domain: 'facebook.com',         desc: 'Track ad conversions' },
-  { name: 'Google Analytics',     domain: 'analytics.google.com', desc: 'Measure your traffic' },
-  { name: 'Google Tag Manager',   domain: 'tagmanager.google.com',desc: 'Manage marketing tags' },
-  { name: 'Google Search Console',domain: 'search.google.com',    desc: 'Track search performance' },
   { name: 'Zapier',               domain: 'zapier.com',           desc: 'Connect 6,000+ apps' },
-  { name: 'Webhooks',             domain: '',                     desc: 'Send events to your endpoint' },
+  { name: 'Meta Pixel',           domain: 'facebook.com',         desc: 'Track ad conversions' },
+  { name: 'Zoho CRM',             domain: 'zoho.com',             desc: 'Sync contacts to Zoho CRM' },
 ];
 
 // Brand favicon with a graceful initial-letter fallback (no emoji).
