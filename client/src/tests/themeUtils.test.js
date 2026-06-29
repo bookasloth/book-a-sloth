@@ -91,9 +91,9 @@ describe('getColorsForPlan', () => {
     expect(colors[0].hex).toBe(DEFAULT_THEME_COLOR);
   });
 
-  test('creator → CREATOR_COLORS (16 swatches)', () => {
+  test('creator → CREATOR_COLORS (8 swatches)', () => {
     const colors = getColorsForPlan('creator');
-    expect(colors).toHaveLength(16);
+    expect(colors).toHaveLength(8);
     expect(colors).toEqual(CREATOR_COLORS);
   });
 
