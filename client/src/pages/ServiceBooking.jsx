@@ -85,6 +85,98 @@ const wallClockToUTC = (year, month, day, hour, minute, tz) => {
   return new Date(fakeUTC.getTime() + offsetMs).toISOString();
 };
 
+// Warmth: keyframes for the celebration + labour-illusion screen. Injected once.
+const BAS_KEYFRAMES = `
+@keyframes basPop {0%{transform:scale(.5);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes basBob {0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes basFade {from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.bas-pop{animation:basPop .5s cubic-bezier(.2,.8,.2,1) both}
+.bas-bob{animation:basBob 2.4s ease-in-out infinite}
+.bas-fade{animation:basFade .5s ease both}
+`;
+
+// Skeleton placeholder shown while the slot list is being fetched, so the panel
+// doesn't flash empty / jump when times arrive.
+const SlotSkeleton = () => (
+  <div className="grid grid-cols-2 gap-2" aria-hidden="true">
+    {Array.from({ length: 8 }).map((_, i) => (
+      <div key={i} className="h-[42px] rounded-lg bg-gray-200/70 animate-pulse" />
+    ))}
+  </div>
+);
+
+// Labour-illusion: a short "wrapping up" screen between the action (pay / verify)
+// and the confirmed view. Operational transparency — makes the result feel
+// earned and reassures the guest that real work is happening.
+const FINALIZE_STEPS_PAID = [
+  "Confirming your payment",
+  "Securing your spot",
+  "Sending your confirmation",
+  "Adding it to your calendar",
+];
+const FINALIZE_STEPS_FREE = [
+  "Securing your spot",
+  "Sending your confirmation",
+  "Adding it to your calendar",
+];
+
+const FinalizingScreen = ({ tc, textOnTheme, isPaid, onDone }) => {
+  const steps = isPaid ? FINALIZE_STEPS_PAID : FINALIZE_STEPS_FREE;
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const STEP_MS = 760;
+    const timers = steps.map((_, i) =>
+      setTimeout(() => setActive(i + 1), (i + 1) * STEP_MS),
+    );
+    timers.push(setTimeout(onDone, steps.length * STEP_MS + 520));
+    return () => timers.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+      <div className="max-w-md mx-auto text-center py-2">
+        <img src="/favicon.svg" alt="" className="w-14 h-14 mx-auto mb-4 bas-bob" />
+        <h2 className="text-xl font-bold mb-1">Wrapping things up…</h2>
+        <p className="text-sm text-gray-500 mb-6">Hang tight — almost there.</p>
+        <ul className="text-left max-w-xs mx-auto space-y-3">
+          {steps.map((label, i) => {
+            const done = i < active;
+            const current = i === active;
+            return (
+              <li
+                key={label}
+                className="flex items-center gap-3 transition-opacity duration-300"
+                style={{ opacity: done || current ? 1 : 0.45 }}
+              >
+                <span
+                  className="flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0"
+                  style={{ background: done ? tc : current ? `${tc}22` : "#f3f4f6" }}
+                >
+                  {done ? (
+                    <svg className="w-3.5 h-3.5" fill="none" stroke={textOnTheme} strokeWidth={3}
+                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      <path d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : current ? (
+                    <span className="w-3.5 h-3.5 rounded-full animate-spin"
+                      style={{ border: `2px solid ${tc}`, borderTopColor: "transparent" }} />
+                  ) : (
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                  )}
+                </span>
+                <span className="text-sm font-medium"
+                  style={{ color: done || current ? "#1E1E1E" : "#9ca3af" }}>
+                  {label}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+};
+
 const ServiceBooking = () => {
   const { profileSlug, serviceSlug } = useParams();
   const { user } = useAuth();
@@ -126,6 +218,20 @@ const ServiceBooking = () => {
   const [confirmation, setConfirmation] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false); // Section 1: collapsed by default
+  const [slotsLoading, setSlotsLoading] = useState(false); // skeleton while slots fetch
+  const [finalizing, setFinalizing] = useState(false);     // labour-illusion screen
+  const [finalizeMsg, setFinalizeMsg] = useState("");
+
+  // Labour-illusion: show the "wrapping up" screen, then reveal the confirmed view.
+  const triggerFinalize = (msg) => {
+    setFinalizeMsg(msg || "");
+    setFinalizing(true);
+  };
+  const completeFinalize = () => {
+    setFinalizing(false);
+    setStep("confirmed");
+    if (finalizeMsg) toast.success(finalizeMsg);
+  };
 
   useEffect(() => {
     const fetchService = async () => {
@@ -173,17 +279,27 @@ const ServiceBooking = () => {
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     setServerSlots(null);
     setCalendarUnverified(false);
+    setSlotsLoading(true);
+    let cancelled = false;
+    const tasks = [];
     if (service?.id) {
-      getAvailableSlots(host.id, service.id, dateStr)
-        .then(({ data }) => {
-          setServerSlots(Array.isArray(data?.slots) ? data.slots : null);
-          setCalendarUnverified(!!data?.calendarUnverified);
-        })
-        .catch(() => setServerSlots(null));
+      tasks.push(
+        getAvailableSlots(host.id, service.id, dateStr)
+          .then(({ data }) => {
+            if (cancelled) return;
+            setServerSlots(Array.isArray(data?.slots) ? data.slots : null);
+            setCalendarUnverified(!!data?.calendarUnverified);
+          })
+          .catch(() => { if (!cancelled) setServerSlots(null); }),
+      );
     }
-    getBookedSlots(host.id, dateStr)
-      .then(({ data }) => setBookedSlots(data || []))
-      .catch(() => setBookedSlots([]));
+    tasks.push(
+      getBookedSlots(host.id, dateStr)
+        .then(({ data }) => { if (!cancelled) setBookedSlots(data || []); })
+        .catch(() => { if (!cancelled) setBookedSlots([]); }),
+    );
+    Promise.allSettled(tasks).then(() => { if (!cancelled) setSlotsLoading(false); });
+    return () => { cancelled = true; };
   }, [selectedDate, host, service]);
 
   // Per-host theme → CSS vars (--profile-accent etc.) for the whole flow
@@ -387,8 +503,7 @@ const ServiceBooking = () => {
       if (service.price > 0) {
         setStep("payment");
       } else {
-        setStep("confirmed");
-        toast.success("Booking confirmed!");
+        triggerFinalize("Booking confirmed!");
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Booking failed");
@@ -459,8 +574,7 @@ const ServiceBooking = () => {
       if (service.price > 0) {
         setStep("payment");
       } else {
-        setStep("confirmed");
-        toast.success("Booking confirmed!");
+        triggerFinalize("Booking confirmed!");
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Booking failed");
@@ -507,8 +621,7 @@ const ServiceBooking = () => {
             if (verifyData?.booking) {
               setConfirmation((prev) => ({ ...prev, ...verifyData.booking }));
             }
-            setStep("confirmed");
-            toast.success("Payment successful! Booking confirmed.");
+            triggerFinalize("Payment successful! Booking confirmed.");
           } catch (err) {
             if (err?.response) {
               // Server explicitly rejected (bad signature / mismatch) — genuine failure.
@@ -543,8 +656,9 @@ const ServiceBooking = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <img src="/favicon.svg" alt="" className="w-12 h-12 animate-pulse" />
+        <p className="text-sm text-gray-400">Getting things ready…</p>
       </div>
     );
   if (!service)
@@ -587,7 +701,15 @@ const ServiceBooking = () => {
   for (let i = 1; i <= daysInMonth; i++) calDays.push(i);
 
   return (
-    <div className="min-h-screen" style={{ background: '#f7f5ef', paddingBottom: '48px' }}>
+    <div
+      className="min-h-screen"
+      style={{
+        background:
+          `radial-gradient(circle at top, ${tc}0f, transparent 22rem), linear-gradient(180deg, #fffaf3 0%, #faf7f1 100%)`,
+        paddingBottom: '48px',
+      }}
+    >
+      <style>{BAS_KEYFRAMES}</style>
       {host?.is_verified === false && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-sm text-amber-700">
           ⚠️ This creator is pending admin verification. Bookings may be subject to confirmation.
@@ -597,7 +719,7 @@ const ServiceBooking = () => {
 
         {/* ── LEFT: Collapsible Profile Card ── */}
         <div className="lg:w-[300px] flex-shrink-0">
-          <div className="bg-white border rounded overflow-hidden lg:sticky lg:top-24">
+          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
             {/* Header toggle */}
             <button
               onClick={() => setProfileOpen((o) => !o)}
@@ -717,9 +839,14 @@ const ServiceBooking = () => {
             })}
           </div>
 
+          {/* Labour-illusion: brief "wrapping up" screen before the confirmed view */}
+          {finalizing && (
+            <FinalizingScreen tc={tc} textOnTheme={textOnTheme} isPaid={isPaid} onDone={completeFinalize} />
+          )}
+
           {/* STEP: time */}
-          {step === "time" && (
-            <div className="bg-white border rounded p-5 sm:p-7">
+          {!finalizing && step === "time" && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="flex items-center justify-between gap-3 mb-5">
                 <Link
                   to={`/${profileSlug}`}
@@ -731,7 +858,7 @@ const ServiceBooking = () => {
                   Back to Services
                 </Link>
                 <div className="flex items-center gap-2 min-w-0">
-                  <h2 className="text-xl font-bold truncate">Select Date & Time</h2>
+                  <h2 className="text-xl font-bold truncate">When works for you?</h2>
                   <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full flex-shrink-0">
                     {tzAbbr}
                   </span>
@@ -839,35 +966,43 @@ const ServiceBooking = () => {
                           </button>
                         </div>
                       </div>
-                      {calendarUnverified && timeSlots.length > 0 && (
-                        <div className="mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                          We couldn't reach {host.name?.split(" ")[0] || "the host"}'s calendar just now — these times may be subject to confirmation.
-                        </div>
-                      )}
-                      {timeSlots.length === 0 ? (
-                        <p className="text-sm text-gray-400 py-4">
-                          No available slots for this date.
-                        </p>
+                      {slotsLoading ? (
+                        <SlotSkeleton />
                       ) : (
-                        <div className="grid grid-cols-2 gap-2 max-h-[320px] overflow-y-auto pr-1">
-                          {timeSlots.map((t) => (
-                            <button
-                              key={t}
-                              onClick={() => setSelectedTime(t)}
-                              className="btn btn--outline py-2.5 text-sm transition-all"
-                              style={selectedTime === t
-                                ? { background: tc, color: textOnTheme, fontWeight: 600 }
-                                : {}}
-                            >
-                              {formatTime(t)}
-                            </button>
-                          ))}
-                        </div>
+                        <>
+                          {calendarUnverified && timeSlots.length > 0 && (
+                            <div className="mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                              We couldn't reach {host.name?.split(" ")[0] || "the host"}'s calendar just now — these times may be subject to confirmation.
+                            </div>
+                          )}
+                          {timeSlots.length === 0 ? (
+                            <div className="py-8 text-center bas-fade">
+                              <p className="text-sm font-medium text-gray-600">No open times that day 🦥</p>
+                              <p className="text-xs text-gray-400 mt-1">Try another date — there's bound to be a good one.</p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-2 gap-2 max-h-[320px] overflow-y-auto pr-1 bas-fade">
+                              {timeSlots.map((t) => (
+                                <button
+                                  key={t}
+                                  onClick={() => setSelectedTime(t)}
+                                  className="btn btn--outline py-2.5 text-sm transition-all"
+                                  style={selectedTime === t
+                                    ? { background: tc, color: textOnTheme, fontWeight: 600 }
+                                    : {}}
+                                >
+                                  {formatTime(t)}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </>
                       )}
                     </>
                   ) : (
-                    <div className="flex items-center justify-center h-full text-sm text-gray-400">
-                      Select a date to see available times
+                    <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                      <p className="text-sm font-medium text-gray-600">Pick a day to begin</p>
+                      <p className="text-xs text-gray-400 mt-1">We'll show you {host.name?.split(" ")[0] || "the host"}'s open times.</p>
                     </div>
                   )}
                 </div>
@@ -891,8 +1026,8 @@ const ServiceBooking = () => {
           )}
 
           {/* STEP: details */}
-          {step === "details" && (
-            <div className="bg-white border rounded p-5 sm:p-7">
+          {!finalizing && step === "details" && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="flex items-center justify-between gap-3 mb-5">
                 <button
                   onClick={() => setStep("time")}
@@ -903,13 +1038,13 @@ const ServiceBooking = () => {
                   </svg>
                   Back
                 </button>
-                <h2 className="text-xl font-bold truncate">Enter Details</h2>
+                <h2 className="text-xl font-bold truncate">Tell us who's coming</h2>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* LEFT: Booking Summary */}
                 <div className="order-2 lg:order-1">
-                  <h3 className="font-semibold mb-3 text-sm text-gray-700">Booking Summary</h3>
+                  <h3 className="font-semibold mb-3 text-sm text-gray-700">Here's your booking</h3>
                   <div className="border rounded p-4 text-sm space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-500">Service</span>
@@ -956,7 +1091,7 @@ const ServiceBooking = () => {
 
                 {/* RIGHT: Customer Information */}
                 <div className="order-1 lg:order-2 space-y-4">
-                  <h3 className="font-semibold mb-3 text-sm text-gray-700">Customer Information</h3>
+                  <h3 className="font-semibold mb-3 text-sm text-gray-700">Your details</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">First Name</label>
@@ -998,14 +1133,17 @@ const ServiceBooking = () => {
                   ? isPaid
                     ? "Continue to Payment"
                     : "Confirm Booking"
-                  : "Send Verification Code"}
+                  : "Send my code"}
               </button>
+              <p className="mt-3 text-center text-xs text-gray-400">
+                🔒 Free to cancel · We'll never spam you
+              </p>
             </div>
           )}
 
           {/* STEP: otp */}
-          {step === "otp" && (
-            <div className="bg-white border rounded p-5 sm:p-7">
+          {!finalizing && step === "otp" && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <button
                 onClick={() => setStep("details")}
                 className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-6"
@@ -1072,7 +1210,7 @@ const ServiceBooking = () => {
           )}
 
           {/* STEP: payment */}
-          {step === "payment" && confirmation && (() => {
+          {!finalizing && step === "payment" && confirmation && (() => {
             // Total the customer pays = service + platform fee + GST.
             // Prefer the server snapshot; fall back to a local estimate for legacy rows.
             const _fee = Number(confirmation?.platform_fee_amount ?? 10);
@@ -1083,7 +1221,7 @@ const ServiceBooking = () => {
               ? Number(confirmation.customer_total)
               : Math.round((service.price + _fee + _gst) * 100) / 100;
             return (
-            <div className="bg-white border rounded p-5 sm:p-7">
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-md mx-auto text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                 style={{ background: `${tc}18` }}>
@@ -1093,9 +1231,9 @@ const ServiceBooking = () => {
                     d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold mb-2">Complete Payment</h2>
+              <h2 className="text-xl font-bold mb-2">One last step</h2>
               <p className="text-sm text-gray-500 mb-6">
-                Your slot is held. Pay now to confirm.
+                Your spot's saved — pay now to lock it in. ⏳
               </p>
               <div className="bg-gray-50 rounded p-4 text-sm text-left space-y-2 mb-6">
                 <div className="flex justify-between">
@@ -1191,16 +1329,20 @@ const ServiceBooking = () => {
               total: confirmation.customer_total,
             };
             return (
-            <div className="bg-white border rounded p-5 sm:p-7">
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-md mx-auto text-center">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: `${tc}18` }}>
+                <img src="/favicon.svg" alt="" className="w-12 h-12 mx-auto mb-3 bas-bob" />
+                <div className="bas-pop w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: `${tc}18` }}>
                   <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: tc }}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold mb-2" style={{ color: tc }}>Booking Confirmed</h2>
-                <p className="text-sm text-gray-500 mb-6">
-                  {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
+                <h2 className="text-2xl font-bold mb-2 bas-fade" style={{ color: tc }}>You're all set! 🦥</h2>
+                <p className="text-sm text-gray-500 mb-1 bas-fade">
+                  See you {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
+                </p>
+                <p className="text-sm text-gray-400 mb-6 bas-fade">
+                  We've emailed everything you need.
                 </p>
                 <div className="border rounded p-4 text-sm text-left space-y-3 mb-6">
                   <div className="flex justify-between"><span className="text-gray-500">Service</span><span className="font-medium">{service.title}</span></div>
