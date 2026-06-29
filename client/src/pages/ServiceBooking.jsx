@@ -120,16 +120,25 @@ const FINALIZE_STEPS_FREE = [
   "Adding it to your calendar",
 ];
 
-const FinalizingScreen = ({ tc, textOnTheme, isPaid, onDone }) => {
+const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
   const steps = isPaid ? FINALIZE_STEPS_PAID : FINALIZE_STEPS_FREE;
   const [active, setActive] = useState(0);
   useEffect(() => {
-    const STEP_MS = 760;
+    let cancelled = false;
+    const STEP_MS = 620;
     const timers = steps.map((_, i) =>
-      setTimeout(() => setActive(i + 1), (i + 1) * STEP_MS),
+      setTimeout(() => { if (!cancelled) setActive(i + 1); }, (i + 1) * STEP_MS),
     );
-    timers.push(setTimeout(onDone, steps.length * STEP_MS + 520));
-    return () => timers.forEach(clearTimeout);
+    // The animation doubles as cover for the background work (e.g. payment
+    // verify). Reveal only once BOTH the min animation time and the task settle.
+    const minDelay = new Promise((res) => {
+      timers.push(setTimeout(res, steps.length * STEP_MS + 300));
+    });
+    const work = task || Promise.resolve({ ok: true });
+    Promise.all([work, minDelay]).then(([result]) => {
+      if (!cancelled) onDone(result || { ok: true });
+    });
+    return () => { cancelled = true; timers.forEach(clearTimeout); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
@@ -221,14 +230,30 @@ const ServiceBooking = () => {
   const [slotsLoading, setSlotsLoading] = useState(false); // skeleton while slots fetch
   const [finalizing, setFinalizing] = useState(false);     // labour-illusion screen
   const [finalizeMsg, setFinalizeMsg] = useState("");
+  const [payError, setPayError] = useState(null);          // {type:'server'|'network'} after verify fail
+  const finalizeTaskRef = useRef(null); // optional promise the finalize screen awaits
 
   // Labour-illusion: show the "wrapping up" screen, then reveal the confirmed view.
-  const triggerFinalize = (msg) => {
+  // `task` (optional) is a promise the screen awaits before revealing — it must
+  // resolve to { ok: true } on success or { ok: false, error } on failure, and
+  // must never reject. The animation doubles as cover for that work so the
+  // transition feels instant instead of waiting on a network round-trip.
+  const triggerFinalize = (msg, task = null) => {
+    finalizeTaskRef.current = task;
     setFinalizeMsg(msg || "");
+    setPayError(null);
     setFinalizing(true);
   };
-  const completeFinalize = () => {
+  const completeFinalize = (result) => {
     setFinalizing(false);
+    finalizeTaskRef.current = null;
+    if (result && result.ok === false) {
+      // Payment verify failed. Distinguish a genuine server rejection from a
+      // network/timeout (where the payment may actually have been captured).
+      const isNetwork = !result.error?.response;
+      setPayError({ type: isNetwork ? "network" : "server" });
+      return;
+    }
     setStep("confirmed");
     if (finalizeMsg) toast.success(finalizeMsg);
   };
@@ -608,30 +633,30 @@ const ServiceBooking = () => {
         name: "Book A Sloth",
         description: service.title,
         order_id: order.razorpay_order_id,
-        handler: async (response) => {
-          try {
-            const { data: verifyData } = await verifyPayment({
-              booking_id: confirmation.id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature,
-              ga_client_id: gaClientId(),   // join server GA4 hit to this web session
-            });
-            // Post-payment the server creates the calendar event; pick up the link.
-            if (verifyData?.booking) {
-              setConfirmation((prev) => ({ ...prev, ...verifyData.booking }));
-            }
-            triggerFinalize("Payment successful! Booking confirmed.");
-          } catch (err) {
-            if (err?.response) {
-              // Server explicitly rejected (bad signature / mismatch) — genuine failure.
-              toast.error("Payment verification failed. If money was deducted, contact support — don't pay again.");
-            } else {
-              // Network/timeout: the server may have captured the payment anyway.
-              // Don't claim failure — point the user to check before retrying.
-              toast("Confirming your payment… if you don't see it shortly, check My Bookings before paying again.", { icon: "⏳" });
-            }
-          }
+        handler: (response) => {
+          // Move to the "wrapping up" screen INSTANTLY so the return from
+          // Razorpay never feels frozen. The verify round-trip runs in the
+          // background and the labour animation covers its latency; the screen
+          // only reveals confirmed (or an error) once verify settles.
+          const verifyTask = verifyPayment({
+            booking_id: confirmation.id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature,
+            ga_client_id: gaClientId(),   // join server GA4 hit to this web session
+          })
+            .then(({ data: verifyData }) => {
+              // Post-payment the server creates the calendar event; pick up link.
+              if (verifyData?.booking) {
+                setConfirmation((prev) => ({ ...prev, ...verifyData.booking }));
+              }
+              return { ok: true };
+            })
+            // Shape failures into a result so the promise never rejects: server
+            // reject (err.response) vs network/timeout (no response) handled in
+            // completeFinalize.
+            .catch((error) => ({ ok: false, error }));
+          triggerFinalize("Payment successful! Booking confirmed.", verifyTask);
         },
         prefill: {
           name: `${firstName} ${lastName}`.trim(),
@@ -841,7 +866,53 @@ const ServiceBooking = () => {
 
           {/* Labour-illusion: brief "wrapping up" screen before the confirmed view */}
           {finalizing && (
-            <FinalizingScreen tc={tc} textOnTheme={textOnTheme} isPaid={isPaid} onDone={completeFinalize} />
+            <FinalizingScreen tc={tc} textOnTheme={textOnTheme} isPaid={isPaid}
+              task={finalizeTaskRef.current} onDone={completeFinalize} />
+          )}
+
+          {/* Payment verify failed after the instant move — smart by failure type */}
+          {!finalizing && payError && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+              <div className="max-w-md mx-auto text-center">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                  style={{ background: payError.type === "server" ? "#FEE2E2" : "#FEF3C7" }}>
+                  {payError.type === "server" ? (
+                    <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" strokeWidth={2}
+                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+                    </svg>
+                  ) : (
+                    <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2}
+                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+                    </svg>
+                  )}
+                </div>
+                {payError.type === "server" ? (
+                  <>
+                    <h2 className="text-xl font-bold mb-2">We couldn't verify your payment</h2>
+                    <p className="text-sm text-gray-500 mb-6">
+                      If money was deducted, please <strong>don't pay again</strong> — contact us with your details and we'll sort it out right away.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-xl font-bold mb-2">Still confirming your payment…</h2>
+                    <p className="text-sm text-gray-500 mb-6">
+                      This can take a moment on a slow connection. You'll get a confirmation email shortly — please <strong>don't pay again</strong>.
+                    </p>
+                  </>
+                )}
+                <a href="mailto:bolt@bookasloth.in"
+                  className="btn w-full py-3 font-bold text-sm transition-opacity hover:opacity-85"
+                  style={{ background: tc, color: textOnTheme }}>
+                  Contact support
+                </a>
+                <Link to={`/${profileSlug}`} className="block mt-3 text-sm hover:underline" style={{ color: tc }}>
+                  Back to {host.name}'s profile
+                </Link>
+              </div>
+            </div>
           )}
 
           {/* STEP: time */}
@@ -1210,7 +1281,7 @@ const ServiceBooking = () => {
           )}
 
           {/* STEP: payment */}
-          {!finalizing && step === "payment" && confirmation && (() => {
+          {!finalizing && !payError && step === "payment" && confirmation && (() => {
             // Total the customer pays = service + platform fee + GST.
             // Prefer the server snapshot; fall back to a local estimate for legacy rows.
             const _fee = Number(confirmation?.platform_fee_amount ?? 10);
@@ -1330,55 +1401,66 @@ const ServiceBooking = () => {
             };
             return (
             <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
-              <div className="max-w-md mx-auto text-center">
-                <img src="/favicon.svg" alt="" className="w-12 h-12 mx-auto mb-3 bas-bob" />
-                <div className="bas-pop w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: `${tc}18` }}>
-                  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: tc }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold mb-2 bas-fade" style={{ color: tc }}>You're all set! 🦥</h2>
-                <p className="text-sm text-gray-500 mb-1 bas-fade">
-                  See you {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
-                </p>
-                <p className="text-sm text-gray-400 mb-6 bas-fade">
-                  We've emailed everything you need.
-                </p>
-                <div className="border rounded p-4 text-sm text-left space-y-3 mb-6">
-                  <div className="flex justify-between"><span className="text-gray-500">Service</span><span className="font-medium">{service.title}</span></div>
-                  <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Date</span><span>{selectedDate?.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span></div>
-                  <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Time</span><span>{formatTime(selectedTime)} ({tzAbbr})</span></div>
-                  <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Customer</span><span>{`${firstName} ${lastName}`.trim()}</span></div>
-                  {confirmation.meeting_link && (
-                    <div className="flex justify-between border-t pt-3 items-center">
-                      <span className="text-gray-500">Meeting</span>
-                      <a href={confirmation.meeting_link} target="_blank" rel="noreferrer" className="font-medium hover:underline" style={{ color: tc }}>Join Link</a>
+              <div className="max-w-3xl mx-auto">
+                {/* Top: two columns — success message | booking details. Stacks on mobile. */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center">
+                  {/* LEFT: success */}
+                  <div className="text-center">
+                    <img src="/favicon.svg" alt="" className="w-12 h-12 mx-auto mb-3 bas-bob" />
+                    <div className="bas-pop w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: `${tc}18` }}>
+                      <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: tc }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
                     </div>
+                    <h2 className="text-2xl font-bold mb-2 bas-fade" style={{ color: tc }}>You're all set! 🦥</h2>
+                    <p className="text-sm text-gray-500 mb-1 bas-fade">
+                      See you {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
+                    </p>
+                    <p className="text-sm text-gray-400 bas-fade">
+                      We've emailed everything you need.
+                    </p>
+                  </div>
+                  {/* RIGHT: booking details */}
+                  <div className="border border-gray-100 rounded-xl p-4 text-sm text-left space-y-3 bg-gray-50/40">
+                    <div className="flex justify-between"><span className="text-gray-500">Service</span><span className="font-medium text-right">{service.title}</span></div>
+                    <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Date</span><span>{selectedDate?.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span></div>
+                    <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Time</span><span>{formatTime(selectedTime)} ({tzAbbr})</span></div>
+                    <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Customer</span><span className="text-right">{`${firstName} ${lastName}`.trim()}</span></div>
+                    {confirmation.meeting_link && (
+                      <div className="flex justify-between border-t pt-3 items-center">
+                        <span className="text-gray-500">Meeting</span>
+                        <a href={confirmation.meeting_link} target="_blank" rel="noreferrer" className="font-medium hover:underline" style={{ color: tc }}>Join Link</a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Row below: actions + footer, full width */}
+                <div className="mt-6 max-w-md mx-auto text-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <a href={gUrl} target="_blank" rel="noreferrer"
+                      className="btn btn--outline inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                      style={{ color: tc }}>
+                      Add to Google Calendar
+                    </a>
+                    <a href={icsUrl} download={`${service.title.replace(/\s+/g, "-")}.ics`}
+                      className="btn inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                      style={{ background: tc, color: textOnTheme }}>
+                      Download iCal (.ics)
+                    </a>
+                  </div>
+                  {isPaidBooking && (
+                    <button type="button" onClick={() => downloadReceipt(receiptData)}
+                      className="btn btn--outline mt-3 w-full inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                      style={{ color: tc }}>
+                      Download Receipt
+                    </button>
                   )}
+                  <p className="text-xs text-gray-400 mt-4">Confirmation email sent to {email}</p>
+                  <Link to={`/${profileSlug}`} className="block mt-3 text-sm hover:underline" style={{ color: tc }}>
+                    Back to {host.name}'s profile
+                  </Link>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <a href={gUrl} target="_blank" rel="noreferrer"
-                    className="btn btn--outline inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
-                    style={{ color: tc }}>
-                    Add to Google Calendar
-                  </a>
-                  <a href={icsUrl} download={`${service.title.replace(/\s+/g, "-")}.ics`}
-                    className="btn inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
-                    style={{ background: tc, color: textOnTheme }}>
-                    Download iCal (.ics)
-                  </a>
-                </div>
-                {isPaidBooking && (
-                  <button type="button" onClick={() => downloadReceipt(receiptData)}
-                    className="btn btn--outline mt-3 w-full inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
-                    style={{ color: tc }}>
-                    Download Receipt
-                  </button>
-                )}
-                <p className="text-xs text-gray-400 mt-4">Confirmation email sent to {email}</p>
-                <Link to={`/${profileSlug}`} className="block mt-3 text-sm hover:underline" style={{ color: tc }}>
-                  Back to {host.name}'s profile
-                </Link>
               </div>
             </div>
             );
