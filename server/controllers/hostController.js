@@ -7,7 +7,7 @@ const { bustSitemapCache } = require("../utils/sitemapCache");
 const planService = require('../services/planService');
 const { validateCategorySelection } = require('../lib/categoryRules');
 const { resolveAndValidateCategory } = require('../lib/serviceCategory');
-const { canActivateMore } = require('../middleware/planMiddleware');
+const { canActivateMore, canAddFreeService } = require('../middleware/planMiddleware');
 const { isBackgroundKey } = require('../config/backgroundKeys');
 const cleanBackgroundKey = (v) => (isBackgroundKey(v) ? v : null);
 
@@ -440,6 +440,14 @@ const createService = async (req, res) => {
     };
     if (thumbnail_url !== undefined) payload.thumbnail_url = thumbnail_url;
 
+    // Free-service sub-cap: a new active price-0 service must fit the plan's
+    // free_services limit (Starter 2; paid tiers unlimited). New host services
+    // are created active, so this gates the listing immediately.
+    if (Number(payload.price ?? 0) === 0) {
+      const gate = await canAddFreeService(req.user.id);
+      if (!gate.ok) return res.status(gate.status).json({ message: gate.message, upgrade_required: true });
+    }
+
     const { data, error } = await insertServiceSafe(payload);
 
     if (error) return safeError(res, error);
@@ -465,14 +473,28 @@ const updateService = async (req, res) => {
       thumbnail_url,
       grace_period_minutes,
     } = req.body;
-    // P1-1: this endpoint can flip is_active. Gate a real false→true transition
-    // against the plan's active-service cap (mirrors the toggle route).
-    if (is_active === true) {
+    // P1-1: this endpoint can flip is_active and/or price. Gate against the
+    // plan's caps. Fetch current state once so we can reason about the RESULTING
+    // (is_active, price) — needed for both the total-service cap and the
+    // free-service sub-cap.
+    if (is_active === true || price !== undefined) {
       const { data: current } = await supabaseAdmin
-        .from('services').select('is_active').eq('id', req.params.id).eq('host_id', req.user.id).single();
-      if (current && current.is_active === false) {
-        const gate = await canActivateMore(req.user.id, 'services');
-        if (!gate.ok) return res.status(gate.status).json({ message: gate.message, upgrade_required: true });
+        .from('services').select('is_active, price').eq('id', req.params.id).eq('host_id', req.user.id).single();
+      if (current) {
+        const finalActive = is_active !== undefined ? is_active === true : current.is_active;
+        const finalPrice  = price !== undefined ? clampPrice(price) : Number(current.price ?? 0);
+        const wasFreeActive = current.is_active && Number(current.price ?? 0) === 0;
+
+        // Total active-service cap on a real false→true transition.
+        if (is_active === true && current.is_active === false) {
+          const gate = await canActivateMore(req.user.id, 'services');
+          if (!gate.ok) return res.status(gate.status).json({ message: gate.message, upgrade_required: true });
+        }
+        // Free sub-cap only when the edit newly enters the active+free set.
+        if (finalActive && finalPrice === 0 && !wasFreeActive) {
+          const freeGate = await canAddFreeService(req.user.id, { excludeId: req.params.id });
+          if (!freeGate.ok) return res.status(freeGate.status).json({ message: freeGate.message, upgrade_required: true });
+        }
       }
     }
 
