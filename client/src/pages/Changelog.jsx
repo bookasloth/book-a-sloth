@@ -48,6 +48,34 @@ const BLOBS = [
 
 const RELEASES = [
   {
+    date: 'Jun 29, 2026', version: 'v3.54',
+    title: 'Reminders that actually show up — even last-minute',
+    tags: ['New', 'Improved'],
+    points: [
+      'Automatic booking reminders before every session — a 24-hour heads-up on Host+, plus a 1-hour nudge and reschedule alerts on Studio.',
+      'Booked something at the last minute? A catch-up sweep makes sure short-notice bookings still get their reminder in time.',
+    ],
+  },
+  {
+    date: 'Jun 28, 2026', version: 'v3.53',
+    title: 'A booking page that looks and feels like you',
+    tags: ['New', 'Improved'],
+    points: [
+      'Dress up your service page with animated, brand-tinted backgrounds — curated and ready to pick.',
+      'New profession-scoped service categories so you tag your work with the labels that actually fit your craft.',
+      'A slimmer, calmer navigation with a redesigned profile menu and a full Use Cases mega-menu — fewer links, faster to what you need.',
+    ],
+  },
+  {
+    date: 'Jun 28, 2026',
+    title: 'Get to know Book A Sloth',
+    tags: ['New'],
+    points: [
+      'A revamped About page — our story, the team and the brands building with us.',
+      'A new Blog where we share what we’re building, in public.',
+    ],
+  },
+  {
     date: 'Jun 27, 2026', version: 'v3.5',
     title: 'A dashboard that actually works the way you do',
     tags: ['Improved', 'Fixed'],
