@@ -518,6 +518,9 @@ const createBooking = async (req, res) => {
             data: { bookingId: booking.id },
           });
         }
+        // Last-minute booking (start sooner than a reminder lead-time): fire the
+        // catch-up reminder the 5-min cron's band would otherwise miss.
+        await fireDueReminders({ ...booking, services: service }, host);
       });
     }
 
@@ -1135,6 +1138,12 @@ const rescheduleBooking = async (req, res) => {
 
     const s = booking.services;
     const host = hostOf(booking);
+    // Studio-tier perk: reschedule notifications (email/WhatsApp) only fire for
+    // plans entitled to the full reminder set. Lower tiers still get the in-app
+    // notice below, so the guest is never left unaware of the new time.
+    const rescheduleNotify = await planService.rescheduleNotifyForPlan(
+      planService.resolveVendorPlan(host),
+    );
     const oldWhen = new Date(booking.scheduled_at).toLocaleString("en-IN", {
       timeZone: hostTimezone,
     });
@@ -1150,7 +1159,7 @@ const rescheduleBooking = async (req, res) => {
         serviceTitle: s?.title, hostName: host.name, hostPhone: host.phone,
         guestName: booking.guest_name, scheduledAt: scheduled_at, tz: hostTimezone, bookingId: booking.id,
       });
-      if (booking.guest_email) {
+      if (rescheduleNotify && booking.guest_email) {
         await NotificationEngine.send({
           event: "BOOKING_RESCHEDULED_CUSTOMER",
           data: {
@@ -1161,7 +1170,7 @@ const rescheduleBooking = async (req, res) => {
           },
         });
       }
-      if (host.email) {
+      if (rescheduleNotify && host.email) {
         await NotificationEngine.send({
           event: "BOOKING_RESCHEDULED_VENDOR",
           data: {
@@ -1200,6 +1209,13 @@ const rescheduleBooking = async (req, res) => {
     }
 
     res.json(updated);
+
+    // The reschedule reset the reminder flags (so the cron re-fires for the new
+    // time). If that new time is itself last-minute, the cron's band would miss
+    // it — fire the catch-up here. Self-gates on plan inside fireDueReminders.
+    runInBackground("rescheduleBooking:catchup-reminder", () =>
+      fireDueReminders({ ...booking, ...updated, services: booking.services }, host),
+    );
   } catch (error) {
     safeError(res, error);
   }
@@ -1250,11 +1266,14 @@ const confirmReschedule = async (req, res) => {
 
     const s = booking.services;
     const host = hostOf(booking);
+    const rescheduleNotify = await planService.rescheduleNotifyForPlan(
+      planService.resolveVendorPlan(host),
+    );
     const tz = await resolveHostTz(booking.host_id);
     const when = new Date(booking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
 
     try {
-      if (host.email) {
+      if (rescheduleNotify && host.email) {
         await NotificationEngine.send({
           event: "BOOKING_RESCHEDULED_VENDOR",
           data: {
@@ -1289,6 +1308,82 @@ const confirmReschedule = async (req, res) => {
   }
 };
 
+// Which booking column tracks a given reminder window as already sent.
+const reminderFlagFor = (windowHours) =>
+  windowHours === 24 ? "reminder_24h_sent" : "reminder_1h_sent";
+
+// Send the guest + host reminder pair for one booking. Content is identical for
+// every lead-time (it shows the actual scheduled time), so callers don't pass
+// the window — only the cron's flag bookkeeping differs.
+const sendBookingReminder = async (b, host, tz) => {
+  const s = b.services;
+  const when = new Date(b.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
+  // Mode of truth = service.meeting_mode (NOT meeting_link presence — the Meet
+  // link may not be minted yet). Online → join link; offline → dashboard for now.
+  const isOnline = (s?.meeting_mode || (b.meeting_link ? "online" : "offline")) === "online";
+  const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
+  const actionLink = isOnline && b.meeting_link ? b.meeting_link : dashboard;
+  const ctx = { guestName: b.guest_name, serviceTitle: s?.title, hostName: host.name, when, actionLink };
+  const emailData = bookingEmailData({
+    serviceTitle: s?.title, hostName: host.name, hostPhone: host.phone,
+    guestName: b.guest_name, scheduledAt: b.scheduled_at, tz, bookingId: b.id,
+    online: isOnline, actionLink: isOnline && b.meeting_link ? b.meeting_link : "",
+  });
+  await NotificationEngine.send({
+    event: "BOOKING_REMINDER_CUSTOMER",
+    data: {
+      email: b.guest_email, phone: b.guest_phone, name: b.guest_name,
+      templateParams: customerParams(ctx),
+      emailData, emailUser: { name: b.guest_name, email: b.guest_email },
+      recipientUserId: b.guest_id, bookingId: b.id,
+    },
+  });
+  await NotificationEngine.send({
+    event: "BOOKING_REMINDER_VENDOR",
+    data: {
+      email: host.email, phone: host.phone, name: host.name,
+      templateParams: vendorParams(ctx),
+      emailData, emailUser: { name: host.name, email: host.email, username: host.username },
+      recipientUserId: b.host_id, bookingId: b.id,
+    },
+  });
+};
+
+// Catch-up reminder for last-minute bookings. The 5-min cron only matches a
+// ±10-min band around each lead-time, so a booking created INSIDE that band's
+// past edge (e.g. booked 40 min before a session) would never trip the 1h
+// reminder. Call this right after a booking becomes confirmed (or is moved to a
+// new time): it fires a single nudge for any plan-entitled window whose lead-time
+// has already elapsed, and marks every elapsed window's flag so the cron never
+// double-sends. Still-future windows are left to the cron. Best-effort.
+const fireDueReminders = async (booking, host) => {
+  try {
+    if (!booking || booking.status !== "confirmed") return;
+    if (!(await featureFlags.isFeatureEnabled("booking_reminders"))) return;
+    const windows = await planService.reminderWindowsForPlan(
+      planService.resolveVendorPlan(host),
+    );
+    if (!windows.length) return;
+    const now = Date.now();
+    const startMs = new Date(booking.scheduled_at).getTime();
+    if (!(startMs > now)) return; // already started — nothing to remind about
+    // Entitled windows whose lead-time is already past and not yet sent.
+    const due = windows.filter(
+      (w) => startMs - w * 3600000 <= now && !booking[reminderFlagFor(w)],
+    );
+    if (!due.length) return;
+    const tz = await resolveHostTz(booking.host_id);
+    // One nudge only — guest needs a single "coming up" notice, not one per
+    // lapsed window — then suppress the rest so the cron skips them.
+    await sendBookingReminder(booking, host, tz);
+    const flags = { updated_at: new Date().toISOString() };
+    for (const w of due) flags[reminderFlagFor(w)] = true;
+    await supabaseAdmin.from("bookings").update(flags).eq("id", booking.id);
+  } catch (err) {
+    console.error(`fireDueReminders error for booking ${booking?.id}:`, err.message);
+  }
+};
+
 const processReminders = async () => {
   if (!(await featureFlags.isFeatureEnabled("booking_reminders"))) return;
   const now = new Date();
@@ -1304,9 +1399,7 @@ const processReminders = async () => {
       now.getTime() + (windowHours * 60 - 10) * 60000,
     );
     const rangeEnd = new Date(now.getTime() + (windowHours * 60 + 10) * 60000);
-    const sentFlag =
-      windowHours === 24 ? "reminder_24h_sent" : "reminder_1h_sent";
-    const label = windowHours === 24 ? "24 hours" : "1 hour";
+    const sentFlag = reminderFlagFor(windowHours);
 
     const { data: bookings } = await supabaseAdmin
       .from("bookings")
@@ -1317,41 +1410,17 @@ const processReminders = async () => {
       .lte("scheduled_at", rangeEnd.toISOString());
 
     for (const b of bookings || []) {
-      const s = b.services;
       const host = hostOf(b);
-      const tz = await tzFor(b.host_id);
-      const when = new Date(b.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
+      // Plan gate (DB-driven reminder_flows): Starter gets none, Host+/Creator
+      // gets 24h, Studio/Professional gets 24h + 1h. Not entitled → leave the
+      // flag false and let the booking age out of the ±10-min band naturally.
+      const windows = await planService.reminderWindowsForPlan(
+        planService.resolveVendorPlan(host),
+      );
+      if (!windows.includes(windowHours)) continue;
       try {
-        // Mode of truth = service.meeting_mode (NOT meeting_link presence — the
-        // Meet link may not be minted yet). Online → join link; offline → dashboard
-        // for now (Phase 2 swaps in a Google Maps directions link).
-        const isOnline = (s?.meeting_mode || (b.meeting_link ? "online" : "offline")) === "online";
-        const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
-        const actionLink = isOnline && b.meeting_link ? b.meeting_link : dashboard;
-        const ctx = { guestName: b.guest_name, serviceTitle: s?.title, hostName: host.name, when, actionLink };
-        const emailData = bookingEmailData({
-          serviceTitle: s?.title, hostName: host.name, hostPhone: host.phone,
-          guestName: b.guest_name, scheduledAt: b.scheduled_at, tz, bookingId: b.id,
-          online: isOnline, actionLink: isOnline && b.meeting_link ? b.meeting_link : "",
-        });
-        await NotificationEngine.send({
-          event: "BOOKING_REMINDER_CUSTOMER",
-          data: {
-            email: b.guest_email, phone: b.guest_phone, name: b.guest_name,
-            templateParams: customerParams(ctx),
-            emailData, emailUser: { name: b.guest_name, email: b.guest_email },
-            recipientUserId: b.guest_id, bookingId: b.id,
-          },
-        });
-        await NotificationEngine.send({
-          event: "BOOKING_REMINDER_VENDOR",
-          data: {
-            email: host.email, phone: host.phone, name: host.name,
-            templateParams: vendorParams(ctx),
-            emailData, emailUser: { name: host.name, email: host.email, username: host.username },
-            recipientUserId: b.host_id, bookingId: b.id,
-          },
-        });
+        const tz = await tzFor(b.host_id);
+        await sendBookingReminder(b, host, tz);
         await supabaseAdmin
           .from("bookings")
           .update({ [sentFlag]: true, updated_at: new Date().toISOString() })
@@ -1487,4 +1556,5 @@ module.exports = {
   rescheduleBooking,
   confirmReschedule,
   processReminders,
+  fireDueReminders,
 };

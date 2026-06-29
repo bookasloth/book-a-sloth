@@ -370,6 +370,11 @@ const verifyPayment = async (req, res) => {
           recipientUserId: fullBooking.host_id, bookingId: fullBooking.id,
         },
       });
+      // Last-minute paid booking (start sooner than a reminder lead-time): fire
+      // the catch-up reminder the 5-min cron's band would otherwise miss.
+      // Lazy require avoids a load-time cycle with bookingController.
+      const { fireDueReminders } = require("./bookingController");
+      await fireDueReminders(fullBooking, host);
     });
   } catch (error) {
     // Success response is sent at L302 before the best-effort background fan-out.
