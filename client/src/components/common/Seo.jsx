@@ -13,8 +13,9 @@ import { useEffect } from 'react';
  * changes don't leak stale SEO between pages.
  */
 export default function Seo({
-  title, description, canonical, robots,
+  title, description, canonical, robots, keywords,
   ogTitle, ogDescription, image, jsonLd,
+  siteName, locale, themeColor,
 }) {
   useEffect(() => {
     const restores = [];
@@ -45,6 +46,8 @@ export default function Seo({
 
     upsertMeta('name', 'description', description);
     upsertMeta('name', 'robots', robots);
+    upsertMeta('name', 'keywords', keywords);
+    upsertMeta('name', 'theme-color', themeColor);
 
     // canonical link
     if (canonical) {
@@ -64,6 +67,8 @@ export default function Seo({
 
     // Open Graph + Twitter
     upsertMeta('property', 'og:type', 'website');
+    upsertMeta('property', 'og:site_name', siteName);
+    upsertMeta('property', 'og:locale', locale);
     upsertMeta('property', 'og:title', ogTitle || title);
     upsertMeta('property', 'og:description', ogDescription || description);
     upsertMeta('property', 'og:url', canonical);
@@ -86,7 +91,7 @@ export default function Seo({
       restores.reverse().forEach((fn) => fn());
       if (script) script.remove();
     };
-  }, [title, description, canonical, robots, ogTitle, ogDescription, image, JSON.stringify(jsonLd)]);
+  }, [title, description, canonical, robots, keywords, ogTitle, ogDescription, image, siteName, locale, themeColor, JSON.stringify(jsonLd)]);
 
   return null;
 }

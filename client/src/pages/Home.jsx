@@ -58,10 +58,54 @@ import BrandPreloader from "../components/preloader/BrandPreloader";
 import { HERO, HERO_FACES, PERSONAS, NEWSLETTER } from "../components/home/images";
 import { PAID_PLANS, STARTER_PLAN } from "../data/plans";
 import { TESTIMONIALS } from "../data/testimonials";
+import Seo from "../components/common/Seo";
 
 /* Real funnel routes — do not point CTAs anywhere else. */
 const ROUTE_START = "/be-a-sloth";
 const ROUTE_LOGIN = "/login-as-vendor";
+
+/* ── Homepage SEO ──────────────────────────────────────────────────────────
+   OG/Twitter image + Organization logo must be uploaded to these exact URLs
+   on company-assets.bookasloth.in (1200×630 for OG). */
+const SITE_URL = "https://bookasloth.com";
+const OG_IMAGE = "https://company-assets.bookasloth.in/images/seo/home-og-1200x630.png";
+const ORG_LOGO = "https://company-assets.bookasloth.in/images/brand/logo.png";
+
+const HOME_JSONLD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Book A Sloth",
+    applicationCategory: "BusinessApplication",
+    applicationSubCategory: "Appointment Scheduling Software",
+    operatingSystem: "Web",
+    url: SITE_URL,
+    description:
+      "Book A Sloth helps professionals automate bookings, payments, reminders and scheduling with one professional booking page.",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Book A Sloth",
+    url: SITE_URL,
+    logo: ORG_LOGO,
+    description:
+      "Appointment scheduling and business automation software for professionals.",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Book A Sloth",
+    url: SITE_URL,
+    description: "Automate bookings, payments, reminders and scheduling.",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  },
+];
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -676,11 +720,25 @@ const Home = () => {
 
   return (
     <main id="top" className="overflow-x-clip bg-canvas text-ink">
+      <Seo
+        title="Book A Sloth | Appointment Scheduling & Booking Software for Professionals"
+        description="Book A Sloth helps coaches, consultants, doctors, trainers, photographers and service professionals automate bookings, payments, reminders and scheduling. Spend less time managing appointments and more time growing your business."
+        keywords="appointment scheduling software, booking software, appointment booking, online booking, calendar scheduling, booking page, service business software, appointment management, coach booking software, consultant scheduling, doctor appointment software, fitness trainer booking, photographer booking, freelancer booking, India"
+        canonical={`${SITE_URL}/`}
+        robots="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+        siteName="Book A Sloth"
+        locale="en_IN"
+        themeColor="#F5B700"
+        ogTitle="Book A Sloth | Appointment Scheduling & Booking Software"
+        ogDescription="Automate bookings, payments, reminders and scheduling with one professional booking page."
+        image={OG_IMAGE}
+        jsonLd={HOME_JSONLD}
+      />
       <BrandPreloader variant="homepage" ready={assetsReady} />
 
       {/* ════════════════ HERO — DESKTOP/TABLET (sm+) ════════════════ */}
       {/* Mobile gets its own centered section below; this whole block is sm:block. */}
-      <section ref={heroRef} className="relative hidden px-5 pb-14 pt-8 sm:block sm:px-8 sm:pb-20 sm:pt-20 lg:pb-32 lg:pt-28">
+      <section ref={heroRef} className="relative hidden px-5 pb-14 pt-8 sm:block sm:px-8 sm:pb-20 sm:pt-12 lg:pb-32 lg:pt-16">
         {/* Ambient warm aura — adds depth on the flat canvas without changing the palette */}
         <div aria-hidden className="sloth-hero-aura" />
 
@@ -1882,6 +1940,8 @@ const Home = () => {
       </section>
 
       {/* ════════════════ COMPARISON / COMPETITORS (full-width dark band) ════════════════ */}
+      {/* Hidden for now — re-enable once all comparison pages are ready by removing the {false && (...)} wrapper. */}
+      {false && (
       <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
         <Reveal className="mx-auto max-w-7xl">
           <div className="lg:flex lg:items-end lg:justify-between">
@@ -1966,6 +2026,7 @@ const Home = () => {
           </p>
         </Reveal>
       </section>
+      )}
 
       {/* ════════════════ TRUST & SECURITY ════════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">

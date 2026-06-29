@@ -180,7 +180,8 @@ const MetaRow = ({ price, duration, mode }) => (
 
 // ─── Service Card ──────────────────────────────────────────────────────────────
 const ServiceCard = ({ service: s, profileSlug, viewMode }) => {
-  const desc      = s.short_description || s.description || '';
+  const _rawDesc  = s.short_description || s.description || '';
+  const desc      = _rawDesc.length > 85 ? `${_rawDesc.slice(0, 84)}…` : _rawDesc;
   const detailUrl = s.slug ? `/${profileSlug}/${s.slug}` : null;
   const bookUrl   = s.slug ? `/${profileSlug}/booking/${s.slug}` : null;
   const tag       = getServiceTag(s);
@@ -466,7 +467,7 @@ const HostProfile = () => {
               style={isMobile ? { maxHeight: cardExpanded ? (bodyH || 2000) : 0, opacity: cardExpanded ? 1 : 0 } : undefined}>
               <div ref={cardBodyRef}>
             <div className="relative overflow-hidden rounded-2xl"
-              style={{ background: C.card, border: `1px solid ${C.border}` }}>
+              style={{ background: C.card, border: `2px solid ${C.border}` }}>
 
               {/* Collapse button — mobile only */}
               <button onClick={() => setCardExpanded(false)} aria-label="Collapse"
@@ -532,12 +533,6 @@ const HostProfile = () => {
                   </p>
                 )}
 
-                {/* Primary category chip */}
-                {host?.primary_category_label && (
-                  <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-primary-light text-primary mt-1.5">
-                    {host.primary_category_label}
-                  </span>
-                )}
 
                 {/* Available Now — disabled
                 {host.google_calendar_connected && (

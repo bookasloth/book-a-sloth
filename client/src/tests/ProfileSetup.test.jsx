@@ -157,11 +157,11 @@ describe('ProfileSetup — Appearance (explorer plan)', () => {
 });
 
 describe('ProfileSetup — Appearance (creator plan)', () => {
-  test('shows 16 color swatches for creator', async () => {
+  test('shows 8 color swatches for creator', async () => {
     renderSetup('creator');
     await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
     const swatches = document.querySelectorAll('button[title]');
-    expect(swatches.length).toBeGreaterThanOrEqual(16);
+    expect(swatches.length).toBeGreaterThanOrEqual(8);
   });
 
   test('hides custom hex input for creator (pro-only)', async () => {
@@ -201,12 +201,12 @@ describe('ProfileSetup — Integrations', () => {
     expect(screen.getByText(/connected ✓/i)).toBeTruthy();
   });
 
-  test('lists coming-soon integrations (Zoom, Notion, etc.)', async () => {
+  test('lists coming-soon integrations (Zoom, Razorpay, Zapier)', async () => {
     renderSetup();
     await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
     expect(screen.getByText('Zoom')).toBeTruthy();
-    expect(screen.getByText('Notion')).toBeTruthy();
-    expect(screen.getByText(/WhatsApp Business/i)).toBeTruthy();
+    expect(screen.getByText('Razorpay')).toBeTruthy();
+    expect(screen.getByText('Zapier')).toBeTruthy();
   });
 });
 

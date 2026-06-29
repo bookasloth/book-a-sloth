@@ -10,6 +10,9 @@ import {
 const fmtDate = (iso) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
+// Single source of truth for the minimum withdrawable balance (₹).
+const MIN_WITHDRAWAL = 100;
+
 const WithdrawModal = ({ available, onClose, onRequested }) => {
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
@@ -18,8 +21,8 @@ const WithdrawModal = ({ available, onClose, onRequested }) => {
   const submit = async (e) => {
     e.preventDefault();
     const n = parseFloat(amount);
-    if (!n || n < 100) {
-      toast.error("Minimum withdrawal is ₹100");
+    if (!n || n < MIN_WITHDRAWAL) {
+      toast.error(`Minimum withdrawal is ₹${MIN_WITHDRAWAL}`);
       return;
     }
     if (n > available) {
@@ -46,10 +49,10 @@ const WithdrawModal = ({ available, onClose, onRequested }) => {
           <p className="mb-0.5 text-xs text-gray-500">Available balance</p>
           <p className="text-xl font-bold text-primary">{fmtMoney(available, { decimals: true })}</p>
         </div>
-        <FormField label="Amount (INR)" htmlFor="wd-amount" required hint={`Minimum ₹100 · Maximum ${fmtMoney(available, { decimals: true })}`} className="mb-0">
+        <FormField label="Amount (INR)" htmlFor="wd-amount" required hint={`Minimum ₹${MIN_WITHDRAWAL} · Maximum ${fmtMoney(available, { decimals: true })}`} className="mb-0">
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">₹</span>
-            <Input id="wd-amount" type="number" required min={100} max={available} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="100.00" className="pl-8" />
+            <Input id="wd-amount" type="number" required min={MIN_WITHDRAWAL} max={available} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="100.00" className="pl-8" />
           </div>
         </FormField>
         <FormField label="Notes" htmlFor="wd-notes" hint="Optional" className="mb-0">
@@ -100,7 +103,7 @@ const Payouts = () => {
 
   useEffect(() => { load(); }, []);
 
-  const canWithdraw = !!balance?.available && balance.available >= 100;
+  const canWithdraw = !!balance?.available && balance.available >= MIN_WITHDRAWAL;
 
   if (loading) {
     return (
@@ -139,9 +142,9 @@ const Payouts = () => {
       </div>
 
       <p className="-mt-3 mb-6 text-xs text-gray-500">
-        Minimum withdrawal amount is <span className="font-semibold text-gray-700">₹100</span>.{" "}
-        {balance?.available != null && balance.available < 100
-          ? `${fmtMoney(100 - balance.available, { decimals: true })} more to unlock withdrawals.`
+        Minimum withdrawal amount is <span className="font-semibold text-gray-700">₹{MIN_WITHDRAWAL}</span>.{" "}
+        {balance?.available != null && balance.available < MIN_WITHDRAWAL
+          ? `${fmtMoney(MIN_WITHDRAWAL - balance.available, { decimals: true })} more to unlock withdrawals.`
           : "You can request a withdrawal once your available balance reaches it."}
       </p>
 

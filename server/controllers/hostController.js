@@ -288,19 +288,23 @@ const updateProfile = async (req, res) => {
         return res.status(400).json({ message: "Invalid theme colour — expected a hex value like #FE5100." });
       }
       const FREE_PALETTE = ["#F8F7F2", "#6B7280", "#FE5100"];
+      // Host+ (creator) — 8 curated colours (keep in sync with
+      // client/src/utils/themeUtils.js CREATOR_COLORS).
       const CREATOR_PALETTE = [
-        "#FE5100", "#2563EB", "#4F46E5", "#7C3AED", "#EC4899", "#DC2626",
-        "#10B981", "#15803D", "#0F766E", "#0891B2", "#0284C7", "#F59E0B",
-        "#EAB308", "#84CC16", "#475569", "#1F2937",
+        "#FE5100", "#2563EB", "#4F46E5", "#7C3AED",
+        "#EC4899", "#DC2626", "#10B981", "#15803D",
       ];
       const { data: planRow } = await supabaseAdmin
         .from("profiles").select("plan").eq("id", req.user.id).single();
       const plan = planRow?.plan || "explorer";
       const hex = theme_color.toUpperCase();
+      // Studio (professional) and Supreme get any hex; creator is gated to the
+      // 8-colour palette; everyone else to the free palette.
+      const unlimited = plan === "professional" || plan === "supreme";
       const allowed =
-        plan === "professional" ||
+        unlimited ||
         (plan === "creator" && CREATOR_PALETTE.includes(hex)) ||
-        (plan !== "creator" && plan !== "professional" && FREE_PALETTE.includes(hex));
+        (plan !== "creator" && FREE_PALETTE.includes(hex));
       if (!allowed) {
         return res.status(403).json({ message: "This colour is not available on your plan. Upgrade to unlock more colours." });
       }

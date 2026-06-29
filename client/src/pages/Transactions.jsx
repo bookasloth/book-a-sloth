@@ -4,7 +4,7 @@ import { getTransactions } from "../services/api";
 import toast from "react-hot-toast";
 import {
   PageHeader, DataTable, StatusBadge, Modal, Button,
-  SearchInput, Select, FilterBar, EmptyState, fmtMoney, cn,
+  SearchInput, Select, EmptyState, fmtMoney, cn,
 } from "../components/dashboard/ui";
 
 const fmtDate = (iso) =>
@@ -171,32 +171,35 @@ const Transactions = () => {
     <div>
       <PageHeader title="Transactions" subtitle={`${total} total transactions`} />
 
-      {/* Toolbar — search, status, date and sort on one horizontal row. */}
-      <FilterBar className="mb-5 flex-wrap items-center gap-2">
+      {/* Toolbar — search ~70% + status/date/sort inline on one row;
+          stacks on mobile (search on top, the 3 dropdowns in a row under). */}
+      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
         <SearchInput
           value={search}
           onChange={(v) => { setSearch(v); setPage(1); }}
           placeholder="Search name, email…"
-          className="sm:w-64"
+          className="w-full sm:w-[70%]"
         />
-        <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-auto" aria-label="Filter by status">
-          <option value="">All statuses</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </Select>
-        <Select value={dateRange} onChange={(e) => { setDateRange(e.target.value); setPage(1); }} className="w-auto" aria-label="Filter by date">
-          <option value="">All time</option>
-          <option value="today">Today</option>
-          <option value="7d">Last 7 days</option>
-          <option value="30d">Last 30 days</option>
-          <option value="month">This month</option>
-        </Select>
-        <Select value={sort} onChange={(e) => setSort(e.target.value)} className="w-auto" aria-label="Sort order">
-          <option value="desc">Newest first</option>
-          <option value="asc">Oldest first</option>
-        </Select>
-      </FilterBar>
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-1">
+          <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-full sm:w-auto sm:flex-1" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </Select>
+          <Select value={dateRange} onChange={(e) => { setDateRange(e.target.value); setPage(1); }} className="w-full sm:w-auto sm:flex-1" aria-label="Filter by date">
+            <option value="">All time</option>
+            <option value="today">Today</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="month">This month</option>
+          </Select>
+          <Select value={sort} onChange={(e) => setSort(e.target.value)} className="w-full sm:w-auto sm:flex-1" aria-label="Sort order">
+            <option value="desc">Newest first</option>
+            <option value="asc">Oldest first</option>
+          </Select>
+        </div>
+      </div>
 
       <DataTable
         columns={COLUMNS}

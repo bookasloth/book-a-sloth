@@ -235,9 +235,10 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Profile URL pill */}
+      {/* Profile URL + Money — side by side on desktop, stacked on mobile */}
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-stretch">
       {user?.username ? (
-        <div className="mb-5 flex items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5">
+        <div className="flex flex-1 items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2.5">
           <Link2 className="h-3.5 w-3.5 shrink-0 text-gray-400" strokeWidth={2.25} />
           <span className="shrink-0 text-xs text-gray-400">Your profile:</span>
           <a href={`/${user.username}`} target="_blank" rel="noreferrer" className="truncate text-xs font-semibold text-primary hover:underline">
@@ -251,7 +252,7 @@ const Dashboard = () => {
           </button>
         </div>
       ) : (
-        <div className="mb-5 flex items-start gap-3 rounded-md border border-primary/30 bg-primary-light p-4">
+        <div className="flex flex-1 items-start gap-3 rounded-md border border-primary/30 bg-primary-light p-4">
           <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" strokeWidth={2.25} />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900">Set up your public profile</p>
@@ -262,6 +263,19 @@ const Dashboard = () => {
           </Link>
         </div>
       )}
+      {balance && (balance.available != null || balance.clearing != null || balance.pendingCompletion != null) && (
+        <Link to="/dashboard/payments/payouts"
+          className="flex flex-1 flex-wrap items-center gap-x-6 gap-y-2 rounded-md border border-gray-200 bg-white px-4 py-3 transition-colors hover:border-primary/30 hover:no-underline">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <Wallet className="h-4 w-4 text-primary" strokeWidth={2.25} /> Money
+          </span>
+          <MoneyBit label="Available" value={fmtMoney(balance.available, { decimals: true })} tone="text-primary" />
+          <MoneyBit label="Clearing" value={fmtMoney(balance.clearing, { decimals: true })} tone="text-amber-600" />
+          <MoneyBit label="Pending" value={fmtMoney(balance.pendingCompletion, { decimals: true })} tone="text-gray-700" />
+          <ArrowRight className="ml-auto h-4 w-4 text-gray-300" strokeWidth={2.25} />
+        </Link>
+      )}
+      </div>
 
       {loading ? <DashboardSkeleton /> : (
       <>
@@ -303,20 +317,6 @@ const Dashboard = () => {
             Review
           </Link>
         </div>
-      )}
-
-      {/* Money — settlement balance at a glance */}
-      {balance && (balance.available != null || balance.clearing != null || balance.pendingCompletion != null) && (
-        <Link to="/dashboard/payments/payouts"
-          className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-md border border-gray-200 bg-white px-4 py-3 transition-colors hover:border-primary/30 hover:no-underline">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-            <Wallet className="h-4 w-4 text-primary" strokeWidth={2.25} /> Money
-          </span>
-          <MoneyBit label="Available" value={fmtMoney(balance.available, { decimals: true })} tone="text-primary" />
-          <MoneyBit label="Clearing" value={fmtMoney(balance.clearing, { decimals: true })} tone="text-amber-600" />
-          <MoneyBit label="Pending" value={fmtMoney(balance.pendingCompletion, { decimals: true })} tone="text-gray-700" />
-          <ArrowRight className="ml-auto h-4 w-4 text-gray-300" strokeWidth={2.25} />
-        </Link>
       )}
 
       {/* 2 rows × 2 columns */}
