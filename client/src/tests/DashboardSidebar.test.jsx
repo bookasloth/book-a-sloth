@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // FeatureGate just renders its children so nav items don't depend on the flag
@@ -56,23 +56,25 @@ describe('dashboard topbar profile menu', () => {
     expect(screen.getByText('S')).toBeInTheDocument();
   });
 
-  it('offers View Profile + Upgrade Plan and four inactive shortcuts', () => {
+  it('offers the membership CTA + host shortcuts', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
     openProfile();
-    expect(screen.getByText('View Profile')).toBeInTheDocument();
-    expect(screen.getByText('Upgrade Plan')).toBeInTheDocument();
-    ['Refer a Friend', 'Add BaS to Website', 'Badges', 'Talk to Account Manager'].forEach((label) => {
-      const btn = screen.getByText(label).closest('button');
-      expect(btn).toBeDisabled();
+    // Scope to the menu surface — some labels (e.g. Availability) also appear in
+    // the always-mounted sidebar nav.
+    const menu = within(screen.getByRole('menu', { name: 'Account' }));
+    // Membership CTA carries the humanized plan label (creator -> Host+).
+    expect(menu.getByText(/Host\+ Member/)).toBeInTheDocument();
+    ['Upcoming Bookings', 'Availability', 'View Public Profile', 'Talk to Account Manager', 'Settings'].forEach((label) => {
+      expect(menu.getByText(label)).toBeInTheDocument();
     });
   });
 
-  it('holds View public page + Logout (moved out of the sidebar)', () => {
+  it('holds View Public Profile + Logout (moved out of the sidebar)', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
     // Not present until the menu is opened — they no longer live in the sidebar.
     expect(screen.queryByText('Logout')).toBeNull();
     openProfile();
-    expect(screen.getByText('View public page')).toBeInTheDocument();
+    expect(screen.getByText('View Public Profile')).toBeInTheDocument();
     expect(screen.getByText('Logout')).toBeInTheDocument();
   });
 });
@@ -102,7 +104,7 @@ describe('mobile — popups open as bottom sheets', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
     fireEvent.click(screen.getByLabelText('Profile menu'));
     expect(screen.getByLabelText('Close')).toBeInTheDocument();     // sheet chrome
-    expect(screen.getByText('View public page')).toBeInTheDocument();
+    expect(screen.getByText('View Public Profile')).toBeInTheDocument();
     expect(screen.getByText('Logout')).toBeInTheDocument();
   });
 
