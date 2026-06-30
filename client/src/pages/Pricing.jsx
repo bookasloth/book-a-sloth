@@ -19,8 +19,8 @@ const JSON_LD = {
   brand: { "@type": "Brand", name: "Book A Sloth" },
   offers: [
     { "@type": "Offer", name: "Starter", price: "0", priceCurrency: "INR" },
-    { "@type": "Offer", name: "Host+", price: "199", priceCurrency: "INR" },
-    { "@type": "Offer", name: "Studio", price: "499", priceCurrency: "INR" },
+    { "@type": "Offer", name: "Host+", price: "229", priceCurrency: "INR" },
+    { "@type": "Offer", name: "Studio", price: "555", priceCurrency: "INR" },
   ],
 };
 

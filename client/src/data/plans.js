@@ -35,8 +35,8 @@ export const PAID_PLANS = [
     name: "Host+",
     slug: "creator",
     tagline: "For solo creators & freelancers.",
-    monthly: 199,
-    yearly: 999,
+    monthly: 229,
+    yearly: 1499,
     intro: "What's included:",
     features: [
       "0% commission on bookings",
@@ -54,7 +54,7 @@ export const PAID_PLANS = [
     name: "Studio",
     slug: "professional",
     tagline: "Top tier, for growing practices & studios.",
-    monthly: 499,
+    monthly: 555,
     yearly: 3650,
     recommended: true,
     intro: "Everything in Host+, plus:",
@@ -90,8 +90,8 @@ export const PLAN_MATRIX = [
   {
     group: "Pricing & commission",
     rows: [
-      { label: "Price (monthly)", starter: "₹0", hostplus: "₹199", studio: "₹499" },
-      { label: "Price (yearly)", starter: "₹0", hostplus: "₹999", studio: "₹3,650" },
+      { label: "Price (monthly)", starter: "₹0", hostplus: "₹229", studio: "₹555" },
+      { label: "Price (yearly)", starter: "₹0", hostplus: "₹1,499", studio: "₹3,650" },
       { label: "Commission", starter: "5%", hostplus: "0%", studio: "0%" },
       { label: "Support", starter: "Community + Email", hostplus: "Email + Chat", studio: "WhatsApp + Call" },
     ],
