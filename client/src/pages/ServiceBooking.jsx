@@ -781,6 +781,9 @@ const ServiceBooking = () => {
                 </div>
                 <div className="px-4 pt-2 pb-4 text-center">
                   <h2 className="text-base font-bold text-gray-900">{host.name}</h2>
+                  {(host.tagline || host.profession) && (
+                    <p className="text-xs text-gray-500 mt-0.5">{host.tagline || host.profession}</p>
+                  )}
                 </div>
 
                 {/* Service details — name, price, duration only (icons in brand colour) */}
