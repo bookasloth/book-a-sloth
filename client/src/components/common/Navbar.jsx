@@ -639,53 +639,66 @@ const Navbar = () => {
               })}
             </div>
 
-            {/* Public: browse by industry + info pages (mobile) */}
+            {/* Public (mobile): Home / Pricing / Use Cases / More, then the CTA.
+                Industry + info collapsed so the drawer stays short. */}
             {!user && (
-              <div className="px-1 pt-2 space-y-0.5">
-                <p className="px-3 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Browse by industry</p>
-                {USE_CASES_CONFIG.map((u) => {
-                  const Icon = u.icon;
-                  return (
-                    <Link key={u.label} to={u.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-                      <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${u.iconBg} ${u.iconColor}`}>
-                        <Icon size={15} />
-                      </span>
-                      {u.label}
-                    </Link>
-                  );
-                })}
-                <Link to="/#pricing" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+              <div className="px-2 pt-2 space-y-1.5">
+                <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                  <Home size={16} className="flex-shrink-0 text-gray-400" /> Home
+                </Link>
+
+                <Link to="/#pricing" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
                   <Tag size={16} className="flex-shrink-0 text-gray-400" /> Pricing
                 </Link>
-                <div className="my-1 border-t border-gray-100" />
-                {MORE_MENU.map((m) => {
-                  const Icon = m.icon;
-                  return (
-                    <Link key={m.label} to={m.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-                      <Icon size={16} className="flex-shrink-0 text-gray-400" /> {m.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
 
-            {/* Public: Sign In (customer + vendor) + Get Started */}
-            {!user && (
-              <div className="px-2 pt-3 mt-1 border-t border-gray-100 space-y-2">
-                <div className="flex gap-2">
-                  <Link
-                    to="/login"
-                    className="btn flex-1 py-2.5 text-[13px] font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors duration-150 hover:no-underline"
-                  >
-                    Customer Login
-                  </Link>
-                  <Link
-                    to="/login-as-vendor"
-                    className="btn flex-1 py-2.5 text-[13px] font-medium text-center text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors duration-150 hover:no-underline"
-                  >
-                    Host Login
-                  </Link>
-                </div>
+                {/* Use Cases (browse by industry) — collapsed by default */}
+                <details className="group rounded-lg">
+                  <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
+                    <Compass size={16} className="flex-shrink-0 text-gray-400" />
+                    <span className="flex-1">Use Cases</span>
+                    <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="space-y-0.5 pl-1 pt-0.5">
+                    {USE_CASES_CONFIG.map((u) => {
+                      const Icon = u.icon;
+                      return (
+                        <Link key={u.label} to={u.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                          <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${u.iconBg} ${u.iconColor}`}>
+                            <Icon size={13} />
+                          </span>
+                          {u.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </details>
+
+                {/* More — collapsed by default */}
+                <details className="group rounded-lg">
+                  <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
+                    <Layers size={16} className="flex-shrink-0 text-gray-400" />
+                    <span className="flex-1">More</span>
+                    <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="space-y-0.5 pl-1 pt-0.5">
+                    {MORE_MENU.map((m) => {
+                      const Icon = m.icon;
+                      return (
+                        <Link key={m.label} to={m.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                          <Icon size={15} className="flex-shrink-0 text-gray-400" /> {m.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </details>
+
+                {/* Primary conversion CTA — last in the sequence */}
+                <Link
+                  to="/be-a-sloth"
+                  className="btn mt-1 block w-full rounded-lg bg-primary-cta py-2.5 text-center text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-[#d94400] hover:no-underline"
+                >
+                  Let's Get Started
+                </Link>
               </div>
             )}
 

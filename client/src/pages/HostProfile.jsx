@@ -11,7 +11,6 @@ const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
 import {
   DEFAULT_THEME_COLOR,
   getContrastColor,
-  getPlanBorderColor,
   SOCIAL_BRAND_COLORS,
   isValidHex,
   applyProfileTheme,
@@ -379,7 +378,6 @@ const HostProfile = () => {
   // Derived values are null-safe: the component renders the preloader while
   // host is still loading, so these run before host exists.
   const tc          = host && isValidHex(host.theme_color) ? host.theme_color : DEFAULT_THEME_COLOR;
-  const borderColor = getPlanBorderColor(host?.plan || 'explorer');
   const social      = host?.social_links || {};
   const badges      = badgeList;
 
@@ -441,7 +439,7 @@ const HostProfile = () => {
               className="btn btn--outline w-full flex items-center gap-3 p-3 text-left transition-shadow active:shadow-sm"
               style={{ background: C.card }}>
               <div className="flex-shrink-0 overflow-hidden"
-                style={{ width: 48, height: 48, borderRadius: 10, outline: `2px solid ${borderColor}`, background: C.card }}>
+                style={{ width: 48, height: 48, borderRadius: 10, background: C.card }}>
                 {host.profile_image
                   ? <img src={host.profile_image} alt={host.name} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center text-lg font-bold"
@@ -496,7 +494,6 @@ const HostProfile = () => {
                   width: 100, height: 100,
                   borderRadius: 12,
                   border: `3px solid ${C.card}`,
-                  outline: `2px solid ${borderColor}`,
                   overflow: 'hidden',
                   background: C.card,
                   flexShrink: 0,
@@ -523,8 +520,8 @@ const HostProfile = () => {
               {/* Profile info + all sections */}
               <div className="px-6 pb-6 pt-4 text-center">
 
-                {/* Name */}
-                <h1 className="text-xl font-bold mt-1" style={{ color: C.text }}>{host.name}</h1>
+                {/* Name — in the host's profile accent colour */}
+                <h1 className="text-xl font-bold mt-1" style={{ color: tc }}>{host.name}</h1>
 
                 {/* Profession */}
                 {(host.profession || host.tagline) && (
