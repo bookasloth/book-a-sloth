@@ -1791,6 +1791,11 @@ const Home = () => {
           <p className="mt-8 text-center text-sm text-neutral-500">
             Not sure which plan? <span className="font-semibold text-ink">Start free</span> — you can upgrade in one click, anytime.
           </p>
+          <p className="mt-4 text-center">
+            <Link to="/pricing" className="text-sm font-semibold text-primary hover:text-primary-dark hover:underline">
+              Compare all plans &amp; features →
+            </Link>
+          </p>
           <p className="mt-3 text-center text-xs text-neutral-400">
             0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
           </p>
