@@ -9,10 +9,12 @@ const LIMIT_KEYS = [
   ['services', 'Services'],
   ['bookings_per_year', 'Bookings / year'],
   ['digital_products', 'Digital products'],
+  ['categories', 'Service categories'],
   ['calendar_integrations', 'Calendar integrations'],
   ['profile_theme_colors', 'Theme colors'],
   ['reminder_flows', 'Reminder flows'],
   ['followup_flows', 'Follow-up flows'],
+  ['free_services', 'Free services'],
 ];
 
 const FEATURE_KEYS = [
@@ -20,6 +22,7 @@ const FEATURE_KEYS = [
   'email_notifications', 'whatsapp_notifications', 'booking_confirmation', 'booking_cancellation',
   'booking_completion_notifications', 'client_records', 'booking_history', 'client_history',
   'auto_invoices', 'invoice_history', 'basic_reports', 'advanced_reports', 'client_notes', 'data_export',
+  'multiple_schedules', 'priority_feature_access', 'custom_fields', 'recurring_clients',
 ];
 
 const CALENDAR_APPS = ['google_calendar', 'zoom', 'ical'];

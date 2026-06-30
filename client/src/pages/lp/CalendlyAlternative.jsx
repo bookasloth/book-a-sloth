@@ -216,7 +216,7 @@ const COMPARE = [
   { f: "WhatsApp reminders", basT: "Yes", cT: "No", c: false },
   { f: "INR billing (₹)", basT: "Yes", cT: "USD only", c: false },
   { f: "0% commission on paid plans", basT: "Yes", cT: "N/A", c: false },
-  { f: "Starting price", basT: "₹199 / month", cT: "~₹1,200 / month (USD)", c: false },
+  { f: "Starting price", basT: "₹229 / month", cT: "~₹1,200 / month (USD)", c: false },
   { f: "Google Calendar sync", basT: "Yes", cT: "Yes", c: true },
   { f: "Google Meet links", basT: "Yes", cT: "Yes", c: true },
   { f: "Custom booking page", basT: "Yes", cT: "Yes", c: true },
@@ -234,7 +234,7 @@ const CalendlyAlternative = () => {
   useDocumentMeta({
     title: "Book A Sloth — Calendly alternative built for India",
     description:
-      "Calendly schedules. Book A Sloth schedules AND collects ₹ via UPI, sends GST invoices, WhatsApp reminders — built for India from ₹199/month.",
+      "Calendly schedules. Book A Sloth schedules AND collects ₹ via UPI, sends GST invoices, WhatsApp reminders — built for India from ₹229/month.",
   });
 
   useEffect(() => {
