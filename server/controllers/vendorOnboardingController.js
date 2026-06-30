@@ -453,10 +453,9 @@ const getActivePlan = async (vendorId) => {
     .eq("id", vendorId)
     .maybeSingle();
   if (!p || !p.plan) return null;
-  // Free tier is always active. Resolve via planService so the legacy 'explorer'
-  // alias AND the canonical 'starter' slug both count (normalizeSlug maps
-  // explorer→starter), instead of hardcoding a single literal.
-  if (planService.normalizeSlug(p.plan) === "starter") return p.plan;
+  // Free tier is always active. isFreeSlug covers every free variant — canonical
+  // 'starter', legacy 'explorer'/'free', and grandfathered 'starter_legacy'.
+  if (planService.isFreeSlug(p.plan)) return p.plan;
   if (p.plan_expires_at && new Date(p.plan_expires_at) > new Date()) return p.plan;
   return null;
 };

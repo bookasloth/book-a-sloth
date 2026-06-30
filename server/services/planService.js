@@ -106,4 +106,12 @@ const resolveVendorPlan = (profile) => {
   return expired ? 'starter' : raw;
 };
 
-module.exports = { loadPlans, getPlan, getLimit, reminderWindowsForPlan, rescheduleNotifyForPlan, resolveVendorPlan, normalizeSlug, clearCache, FALLBACK_PLANS, REMINDER_WINDOWS };
+// Every free-tier slug, so "is this host on the paid track?" checks treat all
+// free variants alike: canonical `starter`, legacy aliases `explorer`/`free`,
+// and `starter_legacy` (pre-v3.55 free users grandfathered on old limits — see
+// migration v3.56). NOT aliased in normalizeSlug because starter_legacy must
+// read its OWN plan row (old limits), not collapse to the new `starter` row.
+const FREE_SLUGS = new Set(['starter', 'explorer', 'free', 'starter_legacy']);
+const isFreeSlug = (slug) => FREE_SLUGS.has(String(slug || '').toLowerCase().trim());
+
+module.exports = { loadPlans, getPlan, getLimit, reminderWindowsForPlan, rescheduleNotifyForPlan, resolveVendorPlan, normalizeSlug, isFreeSlug, clearCache, FALLBACK_PLANS, REMINDER_WINDOWS };

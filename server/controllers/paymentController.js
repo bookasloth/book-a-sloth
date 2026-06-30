@@ -591,7 +591,7 @@ const createVendorSubscription = async (req, res) => {
     const nowMs = Date.now();
     const periodEndMs = prof?.current_period_end ? new Date(prof.current_period_end).getTime()
       : prof?.plan_expires_at ? new Date(prof.plan_expires_at).getTime() : 0;
-    const onPaidPlan = prof && planService.normalizeSlug(prof.plan) !== "starter";
+    const onPaidPlan = prof && !planService.isFreeSlug(prof.plan);
     const isSwitch = !!(onPaidPlan && prof.subscription_status === "active" && periodEndMs > nowMs);
 
     // ── Idempotency guard: prevent double-charge on re-click ──────────────────
