@@ -237,13 +237,12 @@ const UsersTab = ({ stats }) => {
 // ══ Provider plan charts (dependency-free SVG) ════════════════
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
-// Plan visual identity. Free = white (needs a visible border), Creator = grey,
-// Professional = brand orange. Slice + outer rim share one border colour.
+// Plan visual identity. Starter = white (needs border), Host+ = grey, Studio = brand orange.
 const PLAN_ORDER = ['starter', 'creator', 'professional'];
 const PLAN_META = {
-  starter:      { label: 'Starter',   color: '#ffffff' },
-  creator:      { label: '₹1,499',    color: '#9ca3af' },
-  professional: { label: '₹3,650',    color: '#FE5100' },
+  starter:      { label: 'Starter',  color: '#ffffff' },
+  creator:      { label: 'Host+',    color: '#9ca3af' },
+  professional: { label: 'Studio',   color: '#FE5100' },
 };
 const PIE_BORDER = '#374151'; // gray-700 — keeps the white slice readable on a white card
 const PLAN_NAME = { starter: 'Starter', creator: 'Host+', professional: 'Studio' };
@@ -480,7 +479,7 @@ const ProvidersTab = ({ stats }) => {
                   </div>
                   <p className="text-[11px] text-gray-400 truncate">@{p.username || p.email}</p>
                 </div>
-                <span className="text-[11px] text-gray-400 flex-shrink-0 capitalize">{p.plan || 'explorer'}</span>
+                <span className="text-[11px] text-gray-400 flex-shrink-0 capitalize">{p.plan || 'starter'}</span>
               </div>
             ))}
           </div>

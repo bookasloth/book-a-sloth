@@ -263,7 +263,7 @@ const AdminProviders = () => {
                     <td className="px-4 py-3">
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize
                         ${p.plan === 'professional' ? 'bg-purple-50 text-purple-700' : p.plan === 'creator' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {p.plan || 'explorer'}
+                        {p.plan || 'starter'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
