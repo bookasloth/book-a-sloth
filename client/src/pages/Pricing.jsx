@@ -184,7 +184,7 @@ export default function Pricing() {
       {/* ── Closing CTA ────────────────────────────────────── */}
       <section className="px-5 pb-24 sm:px-8">
         <div className="mx-auto max-w-3xl rounded-[10px] bg-ink px-8 py-12 text-center text-white">
-          <h2 className="text-3xl font-extrabold sm:text-4xl">Ready when you are.</h2>
+          <h2 className="text-3xl font-extrabold text-primary sm:text-4xl">Ready when you are.</h2>
           <p className="mx-auto mt-3 max-w-[520px] text-neutral-300">
             Start free in minutes. Upgrade in one click whenever your bookings grow.
           </p>
