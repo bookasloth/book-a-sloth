@@ -11,7 +11,7 @@ jest.mock('../../utils/logger', () => ({ securityLog: jest.fn(), auditLog: jest.
 jest.mock('../../utils/httpError', () => ({ safeError: (res, e) => res.status(500).json({ message: String(e && e.message || e) }) }));
 jest.mock('../../utils/razorpaySignature', () => ({ verifySignature: jest.fn() }));
 jest.mock('../../services/razorpayConfig', () => ({ getKeySecret: jest.fn(), getClient: jest.fn(), getWebhookSecret: jest.fn() }));
-jest.mock('../../services/planService', () => ({ normalizeSlug: (s) => (s || '').toLowerCase(), getPlan: jest.fn() }));
+jest.mock('../../services/planService', () => ({ normalizeSlug: (s) => (s || '').toLowerCase(), isFreeSlug: (s) => ['starter','explorer','free','starter_legacy'].includes((s || '').toLowerCase().trim()), getPlan: jest.fn() }));
 jest.mock('../../services/platformConfig', () => ({ getConfig: jest.fn() }));
 jest.mock('../../services/razorpaySubscriptions', () => ({ getClient: jest.fn() }));
 jest.mock('../../services/subscriptionService', () => ({ activateFromSubscription: jest.fn() }));

@@ -21,6 +21,7 @@ jest.mock('../../services/razorpayConfig', () => ({
 }));
 jest.mock('../../services/planService', () => ({
   normalizeSlug: (s) => (s || '').toLowerCase(),
+  isFreeSlug: (s) => ['starter', 'explorer', 'free', 'starter_legacy'].includes((s || '').toLowerCase().trim()),
   getPlan: jest.fn(),
 }));
 jest.mock('../../services/platformConfig', () => ({

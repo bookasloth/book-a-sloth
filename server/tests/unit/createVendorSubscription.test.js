@@ -34,6 +34,7 @@ jest.mock('../../services/planService', () => ({
     const v = (s || 'starter').toLowerCase().trim();
     return v === 'explorer' ? 'starter' : v;
   },
+  isFreeSlug: (s) => ['starter', 'explorer', 'free', 'starter_legacy'].includes((s || '').toLowerCase().trim()),
   getPlan: jest.fn(() =>
     Promise.resolve({ slug: 'creator', name: 'Creator', monthly_price: 199, annual_price: 999 })
   ),
