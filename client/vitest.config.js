@@ -120,6 +120,13 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/tests/setup.js'],
+    // Dummy Supabase creds so modules that call createClient() at import time
+    // (services/supabaseClient.js) don't throw "supabaseUrl is required" in CI,
+    // where no .env is present. Available on import.meta.env + process.env.
+    env: {
+      VITE_SUPABASE_URL: 'http://localhost:54321',
+      VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+    },
     deps: {
       web: {
         // Force source JSX files through Vite's transform pipeline (rpc.transform)
