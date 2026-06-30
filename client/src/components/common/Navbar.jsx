@@ -639,35 +639,23 @@ const Navbar = () => {
               })}
             </div>
 
-            {/* Public (mobile): primary CTAs up top; browse + info collapsed so the
-                drawer stays short instead of an 18-item scroll. */}
+            {/* Public (mobile): Home / Pricing / Use Cases / More, then the CTA.
+                Industry + info collapsed so the drawer stays short. */}
             {!user && (
               <div className="px-2 pt-2 space-y-1.5">
-                {/* Primary conversion CTA — was desktop-only; mobile needs it most */}
-                <Link
-                  to="/be-a-sloth"
-                  className="btn block w-full rounded-lg bg-primary-cta py-2.5 text-center text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-[#d94400] hover:no-underline"
-                >
-                  Let's Get Started
+                <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                  <Home size={16} className="flex-shrink-0 text-gray-400" /> Home
                 </Link>
-                <div className="flex gap-2">
-                  <Link to="/login" className="btn flex-1 rounded-lg py-2.5 text-center text-[13px] font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors hover:no-underline">
-                    Customer Login
-                  </Link>
-                  <Link to="/login-as-vendor" className="btn flex-1 rounded-lg py-2.5 text-center text-[13px] font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors hover:no-underline">
-                    Host Login
-                  </Link>
-                </div>
 
                 <Link to="/#pricing" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
                   <Tag size={16} className="flex-shrink-0 text-gray-400" /> Pricing
                 </Link>
 
-                {/* Browse by industry — collapsed by default */}
+                {/* Use Cases (browse by industry) — collapsed by default */}
                 <details className="group rounded-lg">
                   <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
                     <Compass size={16} className="flex-shrink-0 text-gray-400" />
-                    <span className="flex-1">Browse by industry</span>
+                    <span className="flex-1">Use Cases</span>
                     <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
                   </summary>
                   <div className="space-y-0.5 pl-1 pt-0.5">
@@ -703,6 +691,14 @@ const Navbar = () => {
                     })}
                   </div>
                 </details>
+
+                {/* Primary conversion CTA — last in the sequence */}
+                <Link
+                  to="/be-a-sloth"
+                  className="btn mt-1 block w-full rounded-lg bg-primary-cta py-2.5 text-center text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-[#d94400] hover:no-underline"
+                >
+                  Let's Get Started
+                </Link>
               </div>
             )}
 
