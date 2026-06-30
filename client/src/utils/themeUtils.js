@@ -113,7 +113,7 @@ export const getPlanBorderColor = (plan) => {
 // Maps the internal plan slug to the user-facing brand name. Internal code,
 // routes, DB values, feature flags, and analytics keep their original slugs.
 export const PLAN_DISPLAY = {
-  starter: 'Starter', explorer: 'Starter', free: 'Starter',
+  starter: 'Starter', explorer: 'Starter', free: 'Starter', starter_legacy: 'Starter',
   creator: 'Host+',
   professional: 'Studio', pro: 'Studio',
 };
