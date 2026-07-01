@@ -11,6 +11,7 @@ const platformConfig = require('../services/platformConfig');
 const { computeSettlementBalance } = require('../services/settlementService');
 const { sanitizeLikeTerm } = require('../utils/searchSanitize');
 const { canActivateMore } = require('../middleware/planMiddleware');
+const { parseListRange } = require('../utils/pagination');
 
 // ─── TRANSACTIONS ─────────────────────────────────────────────────────────────
 
@@ -84,11 +85,15 @@ const getPayoutBalance = async (req, res) => {
 // GET /api/vendor/payout/requests
 const getPayoutRequests = async (req, res) => {
   try {
+    // Safety ceiling — payout history is small per host, but cap it so the
+    // endpoint can never return an unbounded array. Bare-array shape unchanged.
+    const { from, to } = parseListRange(req.query);
     const { data, error } = await supabaseAdmin
       .from('payout_requests')
       .select('*')
       .eq('host_id', req.user.id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (error) return safeError(res, error);
     res.json(data || []);

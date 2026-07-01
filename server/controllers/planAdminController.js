@@ -7,6 +7,7 @@
  */
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const { setPublicCache } = require('../utils/httpCache');
 const planService = require('../services/planService');
 const razorpaySubscriptions = require('../services/razorpaySubscriptions');
 const { audit } = require('../services/auditService');
@@ -273,6 +274,8 @@ const assignPlan = async (req, res) => {
 const publicPlans = async (req, res) => {
   try {
     const plans = await planService.loadPlans();
+    // Public pricing page — cacheable; admin plan edits appear within 5 min.
+    setPublicCache(res, 300);
     res.json([...plans.values()].filter((p) => p.active !== false)
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
       .map(({ id, name, slug, sort_order, annual_price, monthly_price, billing_cycle, commission_percentage, limits, features, integrations, support_type }) =>
