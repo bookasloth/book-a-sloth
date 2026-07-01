@@ -1,7 +1,12 @@
 const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require('../utils/httpError');
 const { setPublicCache } = require('../utils/httpCache');
+const responseCache = require('../services/responseCache');
+const { bustPublicReadCaches } = require('../services/publicCacheBust');
 const { sanitizeLikeTerm } = require("../utils/searchSanitize");
+
+// Server-side read-through cache TTL for the assembled public host profile.
+const HOST_PROFILE_CACHE_MS = Number(process.env.HOST_PROFILE_CACHE_MS) || 120_000;
 const { getConfig: getPlatformConfig } = require("../services/platformConfig");
 const usernameService = require("../services/usernameService");
 const { bustSitemapCache } = require("../utils/sitemapCache");
@@ -154,83 +159,103 @@ const updateServiceSafe = async (id, updates, userId) => {
   return result;
 };
 
+// Assemble the public profile payload (6+ queries). Returns a normalized
+// outcome: { redirect, username } | { notFound: true } | { payload }. Kept as a
+// pure-ish builder so responseCache.getOrSet can wrap it — including negative
+// outcomes, which also shields the DB from crawlers walking dead usernames.
+const buildHostProfile = async (username) => {
+  // Try whitelist + SEO override cols; fall back to the base whitelist if the
+  // v3.19 SEO migration isn't applied yet (so the profile still resolves).
+  let { data: host, error } = await supabaseAdmin
+    .from("profiles")
+    .select(`${HOST_PUBLIC_COLS}, ${HOST_SEO_COLS}`)
+    .eq("username", username)
+    .eq("role", "host")
+    .single();
+
+  if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+    ({ data: host, error } = await supabaseAdmin
+      .from("profiles")
+      .select(HOST_PUBLIC_COLS)
+      .eq("username", username)
+      .eq("role", "host")
+      .single());
+  }
+
+  if (error || !host) {
+    // Not a current username — it may be an OLD alias. Resolve via history and
+    // tell the client to redirect to the canonical (current) username. The
+    // SEO-grade HTTP 301 is issued by the Vercel edge function; this 200
+    // envelope is defense-in-depth so the SPA self-corrects the URL too.
+    const requested = String(username || "").toLowerCase();
+    const resolved = await usernameService.resolve(requested);
+    if (resolved && resolved.currentUsername && resolved.currentUsername !== requested) {
+      return { redirect: true, username: resolved.currentUsername };
+    }
+    return { notFound: true };
+  }
+
+  // Defense-in-depth: the whitelist above already excludes these at the query
+  // layer; this strip is a second guard in case the select ever changes.
+  delete host.google_access_token;
+  delete host.google_refresh_token;
+  delete host.otp_code;
+  delete host.otp_expires_at;
+
+  // Task 10: Show unverified status but don't block -- client shows a banner
+  // (flip host.is_verified to true in Admin -> Users to go fully live)
+
+  // Fetch services + availability in parallel
+  const [servicesResult, { data: availability }] = await Promise.all([
+    supabaseAdmin.from("services").select(SERVICE_PUBLIC_COLS).eq("host_id", host.id).eq("is_active", true).limit(100),
+    supabaseAdmin.from("availability").select("*").eq("host_id", host.id).single(),
+  ]);
+
+  let { data: services } = servicesResult;
+
+  // Fallback if schema cache is stale
+  if (
+    servicesResult.error &&
+    /Could not find the|column.*does not exist/i.test(servicesResult.error.message)
+  ) {
+    const fallback = await supabaseAdmin
+      .from("services")
+      .select(SERVICE_PUBLIC_COLS)
+      .eq("host_id", host.id)
+      .eq("is_active", true)
+      .limit(100);
+    services = fallback.data;
+  }
+
+  // Resolve the primary category's human label for display (best-effort).
+  if (host?.primary_category) {
+    const { data: cat } = await supabaseAdmin
+      .from('categories').select('label').eq('slug', host.primary_category).maybeSingle();
+    host.primary_category_label = cat?.label || null;
+  }
+
+  return { payload: { host, services: services || [], availability } };
+};
+
 // GET /api/host/:username -- public profile
 const getHostProfile = async (req, res) => {
   try {
-    // Try whitelist + SEO override cols; fall back to the base whitelist if the
-    // v3.19 SEO migration isn't applied yet (so the profile still resolves).
-    let { data: host, error } = await supabaseAdmin
-      .from("profiles")
-      .select(`${HOST_PUBLIC_COLS}, ${HOST_SEO_COLS}`)
-      .eq("username", req.params.username)
-      .eq("role", "host")
-      .single();
+    const username = req.params.username;
+    // Read-through cache (120s) keyed by username. Busted on this host's profile
+    // and service mutations (see bustHostCaches); the TTL is the backstop.
+    const outcome = await responseCache.getOrSet(
+      `hostprofile:${username}`,
+      HOST_PROFILE_CACHE_MS,
+      () => buildHostProfile(username),
+    );
 
-    if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
-      ({ data: host, error } = await supabaseAdmin
-        .from("profiles")
-        .select(HOST_PUBLIC_COLS)
-        .eq("username", req.params.username)
-        .eq("role", "host")
-        .single());
-    }
-
-    if (error || !host) {
-      // Not a current username — it may be an OLD alias. Resolve via history and
-      // tell the client to redirect to the canonical (current) username. The
-      // SEO-grade HTTP 301 is issued by the Vercel edge function; this 200
-      // envelope is defense-in-depth so the SPA self-corrects the URL too.
-      const requested = String(req.params.username || "").toLowerCase();
-      const resolved = await usernameService.resolve(requested);
-      if (resolved && resolved.currentUsername && resolved.currentUsername !== requested) {
-        return res.json({ redirect: true, username: resolved.currentUsername });
-      }
-      return res.status(404).json({ message: "Host not found" });
-    }
-
-    // Defense-in-depth: the whitelist above already excludes these at the query
-    // layer; this strip is a second guard in case the select ever changes.
-    delete host.google_access_token;
-    delete host.google_refresh_token;
-    delete host.otp_code;
-    delete host.otp_expires_at;
-
-    // Task 10: Show unverified status but don't block -- client shows a banner
-    // (flip host.is_verified to true in Admin -> Users to go fully live)
-
-    // Fetch services + availability in parallel
-    const [servicesResult, { data: availability }] = await Promise.all([
-      supabaseAdmin.from("services").select(SERVICE_PUBLIC_COLS).eq("host_id", host.id).eq("is_active", true).limit(100),
-      supabaseAdmin.from("availability").select("*").eq("host_id", host.id).single(),
-    ]);
-
-    let { data: services } = servicesResult;
-
-    // Fallback if schema cache is stale
-    if (
-      servicesResult.error &&
-      /Could not find the|column.*does not exist/i.test(servicesResult.error.message)
-    ) {
-      const fallback = await supabaseAdmin
-        .from("services")
-        .select(SERVICE_PUBLIC_COLS)
-        .eq("host_id", host.id)
-        .eq("is_active", true)
-        .limit(100);
-      services = fallback.data;
-    }
-
-    // Resolve the primary category's human label for display (best-effort).
-    if (host?.primary_category) {
-      const { data: cat } = await supabaseAdmin
-        .from('categories').select('label').eq('slug', host.primary_category).maybeSingle();
-      host.primary_category_label = cat?.label || null;
-    }
+    if (outcome.redirect) return res.json({ redirect: true, username: outcome.username });
+    if (outcome.notFound) return res.status(404).json({ message: "Host not found" });
 
     // Public, anonymous profile — cacheable. Short TTL so a profile/service edit
-    // (which busts nothing here) is still reflected within ~2 min for viewers.
+    // is reflected within ~2 min for viewers even on a cold shared cache.
     setPublicCache(res, 120);
-    res.json({ host, services: services || [], availability });
+    res.json(outcome.payload);
   } catch (error) {
     safeError(res, error);
   }
@@ -471,6 +496,7 @@ const createService = async (req, res) => {
 
     if (error) return safeError(res, error);
     bustSitemapCache();
+    bustPublicReadCaches();
     res.status(201).json(data);
   } catch (error) {
     safeError(res, error);
@@ -544,6 +570,7 @@ const updateService = async (req, res) => {
 
     if (error) return safeError(res, error);
     bustSitemapCache();
+    bustPublicReadCaches();
     res.json(data);
   } catch (error) {
     safeError(res, error);
@@ -561,6 +588,7 @@ const deleteService = async (req, res) => {
 
     if (error) return safeError(res, error);
     bustSitemapCache();
+    bustPublicReadCaches();
     res.json({ message: "Service deleted" });
   } catch (error) {
     safeError(res, error);

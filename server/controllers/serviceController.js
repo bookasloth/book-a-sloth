@@ -8,7 +8,12 @@ const { safeError } = require('../utils/httpError');
 const { setPublicCache } = require('../utils/httpCache');
 const { getConfig: getPlatformConfig } = require('../services/platformConfig');
 const { bustSitemapCache } = require('../utils/sitemapCache');
+const { bustPublicReadCaches } = require('../services/publicCacheBust');
+const responseCache = require('../services/responseCache');
 const { resolveAndValidateCategory } = require('../lib/serviceCategory');
+
+// Server-side read-through cache TTL for the assembled public service page.
+const SERVICE_DETAIL_CACHE_MS = Number(process.env.SERVICE_DETAIL_CACHE_MS) || 120_000;
 const { canActivateMore, canAddFreeService } = require('../middleware/planMiddleware');
 const { getPublicAppearanceData } = require('./appearanceController');
 
@@ -234,6 +239,7 @@ const createService = async (req, res) => {
     const { data, error } = await insertSafe(p);
     if (error) return safeError(res, error);
     bustSitemapCache(); // new service may now be indexable
+    bustPublicReadCaches();
     res.status(201).json(data);
   } catch (err) {
     safeError(res, err);
@@ -307,6 +313,7 @@ const updateService = async (req, res) => {
     const { data, error } = await updateSafe(req.params.id, req.user.id, updates);
     if (error) return safeError(res, error);
     bustSitemapCache(); // title/slug change moves the canonical URL
+    bustPublicReadCaches();
     res.json(data);
   } catch (err) {
     safeError(res, err);
@@ -324,6 +331,7 @@ const deleteService = async (req, res) => {
       .eq('host_id', req.user.id);
     if (error) return safeError(res, error);
     bustSitemapCache(); // removed service drops from the sitemap
+    bustPublicReadCaches();
     res.json({ message: 'Service deleted' });
   } catch (err) {
     safeError(res, err);
@@ -381,6 +389,7 @@ const toggleService = async (req, res) => {
       .eq('host_id', req.user.id);
     if (error) return safeError(res, error);
     bustSitemapCache(); // activating/deactivating adds/removes from the sitemap
+    bustPublicReadCaches();
     res.json({ is_active: !svc.is_active });
   } catch (err) {
     safeError(res, err);
@@ -389,65 +398,65 @@ const toggleService = async (req, res) => {
 
 // ─── GET /api/services/public/:slug  (public, no auth) ───────────────────────
 
-const getPublicServiceBySlug = async (req, res) => {
-  try {
-    let r = await supabaseAdmin
-      .from('services')
-      .select(V2_SELECT_COLS)
-      .eq('slug', req.params.slug)
-      .eq('is_active', true)
-      .single();
-    if (r.error && /Could not find the/i.test(r.error.message)) {
-      r = await supabaseAdmin.from('services').select(LEGACY_SELECT_COLS).eq('slug', req.params.slug).eq('is_active', true).single();
-    }
-    if (r.error || !r.data) return res.status(404).json({ message: 'Service not found' });
+// Assemble the public service page (6+ queries). Returns { notFound: true } |
+// { payload }, so responseCache.getOrSet can wrap the whole thing.
+const buildPublicServiceBySlug = async (slug) => {
+  let r = await supabaseAdmin
+    .from('services')
+    .select(V2_SELECT_COLS)
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .single();
+  if (r.error && /Could not find the/i.test(r.error.message)) {
+    r = await supabaseAdmin.from('services').select(LEGACY_SELECT_COLS).eq('slug', slug).eq('is_active', true).single();
+  }
+  if (r.error || !r.data) return { notFound: true };
 
-    const svc = r.data;
+  const svc = r.data;
 
-    // Fetch vendor profile
-    const { data: vendor } = await supabaseAdmin
-      .from('profiles')
-      .select('id,name,username,profession,tagline,profile_image,cover_image,bio,is_verified,google_calendar_connected,badges')
-      .eq('id', svc.host_id)
-      .single();
+  // Fetch vendor profile
+  const { data: vendor } = await supabaseAdmin
+    .from('profiles')
+    .select('id,name,username,profession,tagline,profile_image,cover_image,bio,is_verified,google_calendar_connected,badges')
+    .eq('id', svc.host_id)
+    .single();
 
-    // Fetch vendor's total active services count
-    const { count: totalServices } = await supabaseAdmin
-      .from('services')
-      .select('id', { count: 'exact', head: true })
-      .eq('host_id', svc.host_id)
-      .eq('is_active', true);
+  // Fetch vendor's total active services count
+  const { count: totalServices } = await supabaseAdmin
+    .from('services')
+    .select('id', { count: 'exact', head: true })
+    .eq('host_id', svc.host_id)
+    .eq('is_active', true);
 
-    // Fetch availability
-    const { data: availability } = await supabaseAdmin
-      .from('availability')
-      .select('*')
-      .eq('host_id', svc.host_id)
-      .single();
+  // Fetch availability
+  const { data: availability } = await supabaseAdmin
+    .from('availability')
+    .select('*')
+    .eq('host_id', svc.host_id)
+    .single();
 
-    // Fetch reviews for this service (via bookings)
-    const { data: reviews } = await supabaseAdmin
-      .from('reviews')
-      .select('id,rating,comment,created_at,profiles!reviews_reviewer_id_fkey(name,profile_image)')
-      .eq('service_id', svc.id)
-      .eq('direction', 'guest_to_host')
-      .order('created_at', { ascending: false })
-      .limit(20);
+  // Fetch reviews for this service (via bookings)
+  const { data: reviews } = await supabaseAdmin
+    .from('reviews')
+    .select('id,rating,comment,created_at,profiles!reviews_reviewer_id_fkey(name,profile_image)')
+    .eq('service_id', svc.id)
+    .eq('direction', 'guest_to_host')
+    .order('created_at', { ascending: false })
+    .limit(20);
 
-    // Aggregate review stats
-    const reviewList = reviews || [];
-    const avgRating = reviewList.length
-      ? parseFloat((reviewList.reduce((s, r) => s + r.rating, 0) / reviewList.length).toFixed(2))
-      : 0;
+  // Aggregate review stats
+  const reviewList = reviews || [];
+  const avgRating = reviewList.length
+    ? parseFloat((reviewList.reduce((s, r) => s + r.rating, 0) / reviewList.length).toFixed(2))
+    : 0;
 
-    const ratingBreakdown = [5, 4, 3, 2, 1].map((star) => ({
-      star,
-      count: reviewList.filter((r) => r.rating === star).length,
-    }));
+  const ratingBreakdown = [5, 4, 3, 2, 1].map((star) => ({
+    star,
+    count: reviewList.filter((r) => r.rating === star).length,
+  }));
 
-    // Public, anonymous service page — cacheable with a short TTL.
-    setPublicCache(res, 120);
-    res.json({
+  return {
+    payload: {
       service: svc,
       vendor: vendor || {},
       totalServices: totalServices || 0,
@@ -455,7 +464,22 @@ const getPublicServiceBySlug = async (req, res) => {
       reviews: reviewList,
       avgRating,
       ratingBreakdown,
-    });
+    },
+  };
+};
+
+const getPublicServiceBySlug = async (req, res) => {
+  try {
+    const outcome = await responseCache.getOrSet(
+      `service:slug:${req.params.slug}`,
+      SERVICE_DETAIL_CACHE_MS,
+      () => buildPublicServiceBySlug(req.params.slug),
+    );
+    if (outcome.notFound) return res.status(404).json({ message: 'Service not found' });
+
+    // Public, anonymous service page — cacheable with a short TTL.
+    setPublicCache(res, 120);
+    res.json(outcome.payload);
   } catch (err) {
     safeError(res, err);
   }
@@ -465,73 +489,71 @@ const getPublicServiceBySlug = async (req, res) => {
 // Validates service belongs to vendor identified by profileSlug (username).
 // Returns the same payload shape as getPublicServiceBySlug.
 
-const getPublicServiceByProfileAndSlug = async (req, res) => {
+// Assemble the vendor-scoped public service page. Returns
+// { hostNotFound: true } | { notFound: true } | { payload }.
+const buildPublicServiceByProfileAndSlug = async (profileSlug, serviceSlug) => {
+  // 1. Resolve the vendor by username (profileSlug)
+  const { data: vendor, error: vendorErr } = await fetchPublicVendor(profileSlug);
+
+  if (vendorErr || !vendor) {
+    return { hostNotFound: true };
+  }
+
+  // 2. Resolve the service by slug, scoped to this vendor (with SEO overrides)
+  const r = await fetchPublicServiceSeo({ hostId: vendor.id, slug: serviceSlug });
+
+  if (r.error || !r.data) {
+    return { notFound: true };
+  }
+
+  const svc = r.data;
+
+  // 3. Fetch supporting data
+  const [
+    { count: totalServices },
+    { data: availability },
+    { data: reviews },
+  ] = await Promise.all([
+    supabaseAdmin.from('services').select('id', { count: 'exact', head: true }).eq('host_id', vendor.id).eq('is_active', true),
+    supabaseAdmin.from('availability').select('*').eq('host_id', vendor.id).single(),
+    supabaseAdmin.from('reviews').select('id,rating,comment,created_at,profiles!reviews_reviewer_id_fkey(name,profile_image)').eq('service_id', svc.id).eq('direction', 'guest_to_host').order('created_at', { ascending: false }).limit(20),
+  ]);
+
+  const reviewList = reviews || [];
+  const avgRating = reviewList.length
+    ? parseFloat((reviewList.reduce((s, r) => s + r.rating, 0) / reviewList.length).toFixed(2))
+    : 0;
+
+  const ratingBreakdown = [5, 4, 3, 2, 1].map((star) => ({
+    star,
+    count: reviewList.filter((r) => r.rating === star).length,
+  }));
+
+  // Resolve service-category slug → human label for the public service page.
+  const service = svc;
+  if (service && service.category) {
+    const { data: cat } = await supabaseAdmin
+      .from('service_categories').select('name').eq('slug', service.category).limit(1).maybeSingle();
+    service.category_label = cat?.name || null;
+  }
+
+  // Customer-facing booking charge = flat platform fee + GST (admin-editable).
+  // Mirrors the breakdown shown on the booking/payment screen so the price the
+  // guest sees here matches what they pay. Falls back to 0 on error.
+  let bookingFee = 0;
   try {
-    const { profileSlug, serviceSlug } = req.params;
+    const { platformFee, gstRate } = await getPlatformConfig();
+    bookingFee = Math.round(platformFee * (1 + gstRate) * 100) / 100;
+  } catch (_) { bookingFee = 0; }
 
-    // 1. Resolve the vendor by username (profileSlug)
-    const { data: vendor, error: vendorErr } = await fetchPublicVendor(profileSlug);
+  // Embed the host's appearance (enabled backgrounds + default) so the service
+  // page can render the right background without a second request. Decorative —
+  // non-fatal on error so the page still loads.
+  let appearance = { backgrounds: [], default_background: 'dotgrid' };
+  try { appearance = await getPublicAppearanceData(); } catch (_) { /* non-fatal: decorative */ }
 
-    if (vendorErr || !vendor) {
-      return res.status(404).json({ message: 'Host not found' });
-    }
-
-    // 2. Resolve the service by slug, scoped to this vendor (with SEO overrides)
-    const r = await fetchPublicServiceSeo({ hostId: vendor.id, slug: serviceSlug });
-
-    if (r.error || !r.data) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-
-    const svc = r.data;
-
-    // 3. Fetch supporting data
-    const [
-      { count: totalServices },
-      { data: availability },
-      { data: reviews },
-    ] = await Promise.all([
-      supabaseAdmin.from('services').select('id', { count: 'exact', head: true }).eq('host_id', vendor.id).eq('is_active', true),
-      supabaseAdmin.from('availability').select('*').eq('host_id', vendor.id).single(),
-      supabaseAdmin.from('reviews').select('id,rating,comment,created_at,profiles!reviews_reviewer_id_fkey(name,profile_image)').eq('service_id', svc.id).eq('direction', 'guest_to_host').order('created_at', { ascending: false }).limit(20),
-    ]);
-
-    const reviewList = reviews || [];
-    const avgRating = reviewList.length
-      ? parseFloat((reviewList.reduce((s, r) => s + r.rating, 0) / reviewList.length).toFixed(2))
-      : 0;
-
-    const ratingBreakdown = [5, 4, 3, 2, 1].map((star) => ({
-      star,
-      count: reviewList.filter((r) => r.rating === star).length,
-    }));
-
-    // Resolve service-category slug → human label for the public service page.
-    const service = svc;
-    if (service && service.category) {
-      const { data: cat } = await supabaseAdmin
-        .from('service_categories').select('name').eq('slug', service.category).limit(1).maybeSingle();
-      service.category_label = cat?.name || null;
-    }
-
-    // Customer-facing booking charge = flat platform fee + GST (admin-editable).
-    // Mirrors the breakdown shown on the booking/payment screen so the price the
-    // guest sees here matches what they pay. Falls back to 0 on error.
-    let bookingFee = 0;
-    try {
-      const { platformFee, gstRate } = await getPlatformConfig();
-      bookingFee = Math.round(platformFee * (1 + gstRate) * 100) / 100;
-    } catch (_) { bookingFee = 0; }
-
-    // Embed the host's appearance (enabled backgrounds + default) so the service
-    // page can render the right background without a second request. Decorative —
-    // non-fatal on error so the page still loads.
-    let appearance = { backgrounds: [], default_background: 'dotgrid' };
-    try { appearance = await getPublicAppearanceData(); } catch (_) { /* non-fatal: decorative */ }
-
-    // Public, anonymous service page — cacheable with a short TTL.
-    setPublicCache(res, 120);
-    res.json({
+  return {
+    payload: {
       service: service,
       vendor: vendor || {},
       appearance,
@@ -541,7 +563,24 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
       avgRating,
       ratingBreakdown,
       bookingFee,
-    });
+    },
+  };
+};
+
+const getPublicServiceByProfileAndSlug = async (req, res) => {
+  try {
+    const { profileSlug, serviceSlug } = req.params;
+    const outcome = await responseCache.getOrSet(
+      `service:pair:${profileSlug}/${serviceSlug}`,
+      SERVICE_DETAIL_CACHE_MS,
+      () => buildPublicServiceByProfileAndSlug(profileSlug, serviceSlug),
+    );
+    if (outcome.hostNotFound) return res.status(404).json({ message: 'Host not found' });
+    if (outcome.notFound) return res.status(404).json({ message: 'Service not found' });
+
+    // Public, anonymous service page — cacheable with a short TTL.
+    setPublicCache(res, 120);
+    res.json(outcome.payload);
   } catch (err) {
     safeError(res, err);
   }
