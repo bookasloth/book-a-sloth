@@ -145,9 +145,10 @@ Tests after Phase 2: server **1075/1075** green (+ new `responseCache` unit suit
 
 > **To turn on Redis caching:** provision Upstash (free tier fine) → copy the `rediss://…` connection URL → set `REDIS_URL` in Render env → redeploy. Verify via logs (`[redis] client initialised`). To roll back: unset `REDIS_URL` (falls straight back to in-process) or set `RESPONSE_CACHE_ENABLED=false` to disable caching entirely.
 
-**Phase 4 — Durable queue + background offload**
-- 4a. Adopt pg-boss (or BullMQ if Redis-first). Migrate email + campaigns onto it with DLQ + backoff.
-- 4b. Move calendar writes and reminder sends off the request/cron hot path into jobs.
+**Phase 4 — Durable queue + background offload — ⏸ DEFERRED (rationale below)**
+- Reassessed against the code: email **and** campaigns are **already** durably DB-queued (`email_logs` + 60s worker + 5m/30m/2h backoff + permanent-fail = a working queue with a dead-letter), and confirmation emails/analytics in `verifyPayment` already run via `runInBackground`. So "adopt pg-boss" (4a) would mostly churn working, tested infrastructure for little gain — and can't be live-tested here. Deferred by decision.
+- The one genuinely-synchronous hot-path call left is the **Google Calendar write in `verifyPayment`** (awaited before the response). Moving it async trades the immediate meeting-link-in-response (still emailed + persisted). Left as-is for now — not worth the payment-path risk this session; revisit if verify latency becomes an issue.
+- 4c. ✅ (partial) reminder-window memoization — see above.
 - 4c. ✅ (partial) Memoized reminder windows per plan slug in `processReminders` (tz was already cached). Honest note: not a real DB N+1 — `planService` is 60s-cached in memory and the reminder query is ±10-min-windowed (small N); this is a redundant-lookup cleanup. The queue-offload of reminder sends (4b) is still pending.
 
 **Phase 5 — Correctness hardening**
@@ -155,9 +156,9 @@ Tests after Phase 2: server **1075/1075** green (+ new `responseCache` unit suit
 - 5b. Add missing indexes **only after** `EXPLAIN ANALYZE` confirms benefit (still pending; needs migration on both DBs).
 
 **Phase 6 — Observability & resilience**
-- 6a. Turn on Sentry DSN; add `/ready` (DB ping) + `/metrics`; latency alerting.
-- 6b. Enable backup workflow secrets; evaluate Supabase Pro (PITR).
-- 6c. Connection-pool sizing via Supavisor; document.
+- 6a. ✅ (code) `GET /ready` (DB-checked readiness, timeout-guarded, 200/503) + `GET /metrics` (dependency-free Prometheus text: uptime, RSS, heap, response-cache entries, http totals/slow/by-status; token-gated via `METRICS_TOKEN`, 404 when unset) + always-on `utils/metrics.js` HTTP middleware. **Founder actions (not code):** set `SENTRY_DSN` to activate the already-wired Sentry; set `METRICS_TOKEN` + point a scraper at `/metrics`; wire latency alerting off the slow-request counter.
+- 6b. Founder action: add `BACKUP_DATABASE_URL` + `BACKUP_PASSPHRASE` secrets to enable the existing daily encrypted `pg_dump` workflow; evaluate Supabase Pro for PITR.
+- 6c. Pending: connection-pool sizing via Supavisor; document.
 
 **Phase 7 (optional) — Read replica + SSR/prerender** — only if metrics justify.
 
