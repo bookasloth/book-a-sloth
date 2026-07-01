@@ -53,6 +53,7 @@ const REGISTRY = [
   // ── BOOKINGS (shared) ────────────────────────────────────────
   { key: 'reschedule',           label: 'Booking Reschedule',   category: 'Bookings', scope: 'both',     description: 'Allow guests and vendors to reschedule bookings. Off = all reschedule blocked.' },
   { key: 'reschedule_fee',       label: 'Reschedule Fee Charging', category: 'Bookings', scope: 'both',  description: 'Charge the vendor-set reschedule fee from the 2nd reschedule. Off = all reschedules free.' },
+  { key: 'rebook_nudge',         label: 'Rebook Nudge',         category: 'Bookings', scope: 'both',     description: 'Automated post-session rebook nudge to guests (Studio hosts). Off = no rebook follow-ups fire (pending ones pause).' },
 
   // ── CUSTOMER · Booking ───────────────────────────────────────
   { key: 'guest_booking',        label: 'Guest Booking',        category: 'Booking',  scope: 'customer', description: 'Create new bookings. Off = booking creation blocked platform-wide.' },

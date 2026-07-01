@@ -824,6 +824,20 @@ const markBookingCompleted = async (booking, { notify = true } = {}) => {
     }
   }
 
+  // Post-session follow-ups (rebook nudge). Best-effort — never block completion.
+  try {
+    const { scheduleFollowups } = require("../services/followups/followupService");
+    await scheduleFollowups({
+      sourceType: "booking",
+      sourceId: booking.id,
+      hostId: booking.host_id,
+      entity: booking,
+      completedAt: data?.completed_at || new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error("scheduleFollowups error:", e.message);
+  }
+
   // Event-driven badge evaluation for this vendor (fire-and-forget)
   require("../services/badgeEngine")
     .evaluate({ vendorIds: [booking.host_id] })

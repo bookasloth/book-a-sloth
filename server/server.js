@@ -199,6 +199,14 @@ setInterval(async () => {
   catch (err) { console.error('Auto-complete cron error:', err.message); }
 }, AUTO_COMPLETE_INTERVAL_MIN * 60 * 1000);
 
+// ── Follow-up nudges cron (rebook). Leader-elected; fires due scheduled_followups. ──
+const { processFollowups } = require('./services/followups/followupService');
+const FOLLOWUP_INTERVAL_MIN = Number(process.env.FOLLOWUP_INTERVAL_MIN || 10);
+setInterval(async () => {
+  try { await runLocked('followups', () => processFollowups(), { leaseMs: 10 * 60 * 1000 }); }
+  catch (err) { console.error('Follow-up cron error:', err.message); }
+}, FOLLOWUP_INTERVAL_MIN * 60 * 1000);
+
 // Reap stale unpaid 'pending' bookings (security audit H-2) so abandoned or
 // maliciously-sprayed holds release the slot for real customers. Default every
 // 10 min; the hold window (default 30 min) lives in the controller.

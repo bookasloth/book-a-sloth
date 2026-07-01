@@ -220,6 +220,20 @@ const TEMPLATES = [
     cta_label: 'View earnings', cta_url: '{{dashboard_url}}',
   }; })(),
 
+  (() => { const t = themeForCategory('Session Complete'); return {
+    event_key: 'REBOOK_NUDGE_CUSTOMER', audience: 'all', category: 'Marketing',
+    name: 'Rebook Nudge — Customer', subject: 'Ready for another session with {{vendor_name}}?',
+    preview_text: 'Book {{vendor_name}} again in a tap.',
+    email_category: 'Session Complete',
+    email_reason: 'You are receiving this because you recently booked a session on Book A Sloth.',
+    html_content:
+      eyebrow(t.text, 'Come back soon') + h('Hi {{first_name}},') +
+      lead('Hope your session with {{vendor_name}} went well. Ready for another?') +
+      C.infoCard(t, [['Last service', '{{service_name}}']]) +
+      lead('Booking your next session takes just a tap.'),
+    cta_label: 'Book again', cta_url: '{{profile_url}}',
+  }; })(),
+
   // ── Booking — Rescheduled ───────────────────────────────────────────────────
 
   (() => { const t = themeForCategory('Rescheduled'); return {
