@@ -77,6 +77,10 @@ app.use(compression({
   },
 }));
 
+// Always-on, O(1) HTTP metrics (request counts, slow-request count, status
+// classes) surfaced at /metrics. Distinct from the opt-in PERF_LOG logger below.
+app.use(require('./utils/metrics').middleware);
+
 // ── Perf instrumentation ────────────────────────────────────────────────
 // Logs real wall-clock per /api request so the actual slow endpoints behind the
 // "20s+ vendor page" reports are visible. Disable with PERF_LOG=false.
@@ -159,6 +163,12 @@ app.use(require('./routes/sitemapRoutes'));
 app.get('/health', (req, res) =>
   res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() })
 );
+
+// Readiness (DB-checked) + metrics (Prometheus text, token-gated). Mounted
+// outside /api so they bypass the rate limiter + maintenance 503, like /health.
+const opsController = require('./controllers/opsController');
+app.get('/ready', opsController.readiness);
+app.get('/metrics', opsController.exposeMetrics);
 
 app.get('/', (req, res) => res.json({ message: 'Book A Sloth API v1.4 running' }));
 
