@@ -146,11 +146,11 @@ Tests after Phase 2: server **1075/1075** green (+ new `responseCache` unit suit
 **Phase 4 — Durable queue + background offload**
 - 4a. Adopt pg-boss (or BullMQ if Redis-first). Migrate email + campaigns onto it with DLQ + backoff.
 - 4b. Move calendar writes and reminder sends off the request/cron hot path into jobs.
-- 4c. Fix reminder N+1: batch plan-rule + timezone lookups per host inside the job.
+- 4c. ✅ (partial) Memoized reminder windows per plan slug in `processReminders` (tz was already cached). Honest note: not a real DB N+1 — `planService` is 60s-cached in memory and the reminder query is ±10-min-windowed (small N); this is a redundant-lookup cleanup. The queue-offload of reminder sends (4b) is still pending.
 
 **Phase 5 — Correctness hardening**
-- 5a. Close monthly-quota TOCTOU (DB trigger/constraint or advisory lock around count+insert).
-- 5b. Add missing indexes **only after** `EXPLAIN ANALYZE` confirms benefit.
+- 5a. ✅ Closed monthly-quota TOCTOU via `utils/keyedMutex.js` `runExclusive` — the quota recheck + insert now run under a per-host in-process lock (early check kept as fast-fail / orphan-calendar avoidance). Fully effective on the single API instance today; a cross-instance lock (Redis / pg advisory) is the Phase 3+ upgrade. No migration, no new infra.
+- 5b. Add missing indexes **only after** `EXPLAIN ANALYZE` confirms benefit (still pending; needs migration on both DBs).
 
 **Phase 6 — Observability & resilience**
 - 6a. Turn on Sentry DSN; add `/ready` (DB ping) + `/metrics`; latency alerting.
