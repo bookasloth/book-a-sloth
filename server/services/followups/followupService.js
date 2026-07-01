@@ -109,7 +109,10 @@ const sendRow = async (row) => {
     event: row.event_key,
     data: {
       email: p.guest_email, phone: p.guest_phone, name: p.guest_name,
-      templateParams: [p.guest_name || 'there', p.host_name || 'your host'],
+      // WhatsApp body params: {{1}} guest name, {{2}} host name, {{3}} rebook link.
+      // The link is a BODY param (not a dynamic CTA button) because AiSensy templates
+      // have no dynamic button-URL option — the deep-link must live in the message text.
+      templateParams: [p.guest_name || 'there', p.host_name || 'your host', deepLink],
       emailData: {
         first_name: (p.guest_name || '').split(' ')[0],
         vendor_name: p.host_name, service_name: p.service_title, profile_url: deepLink,
