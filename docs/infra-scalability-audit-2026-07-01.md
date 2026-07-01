@@ -158,7 +158,18 @@ Tests after Phase 2: server **1075/1075** green (+ new `responseCache` unit suit
 **Phase 6 — Observability & resilience**
 - 6a. ✅ (code) `GET /ready` (DB-checked readiness, timeout-guarded, 200/503) + `GET /metrics` (dependency-free Prometheus text: uptime, RSS, heap, response-cache entries, http totals/slow/by-status; token-gated via `METRICS_TOKEN`, 404 when unset) + always-on `utils/metrics.js` HTTP middleware. **Founder actions (not code):** set `SENTRY_DSN` to activate the already-wired Sentry; set `METRICS_TOKEN` + point a scraper at `/metrics`; wire latency alerting off the slow-request counter.
 - 6b. Founder action: add `BACKUP_DATABASE_URL` + `BACKUP_PASSPHRASE` secrets to enable the existing daily encrypted `pg_dump` workflow; evaluate Supabase Pro for PITR.
-- 6c. Pending: connection-pool sizing via Supavisor; document.
+- 6c. ✅ (documented) — see **Connection pooling** below.
+
+### Connection pooling
+
+**PostgREST path (the app's main DB access):** `supabaseAdmin` / `supabase` (`@supabase/supabase-js`) talk to Supabase over PostgREST (HTTPS), whose backend connections are pooled by Supabase — the app holds no PG connection pool for its normal reads/writes, so connection exhaustion from app traffic isn't a concern on this path.
+
+**Direct-`pg` consumers** (bypass PostgREST, open real Postgres connections): `middleware/rateLimitStore.js` (`RATE_LIMIT_STORE_URL`, currently unset), `scripts/migrate.js`, and any future pg-boss. Guidance for these:
+- Point them at the **Supavisor transaction-mode pooler** URL (port **6543**, `...pooler.supabase.com`, add `?pgbouncer=true`), **not** the direct connection (5432). Transaction mode multiplexes many short-lived app queries onto few DB connections — the right mode for a stateless API + serverless-ish workers.
+- Keep each process's `pg.Pool` `max` small (rate-limit store defaults to **5**). With N API instances × pool `max`, stay well under the plan's connection ceiling; the pooler is the backstop but a sane per-process `max` avoids thundering-herd on deploy.
+- Migrations/one-offs (`migrate.js`) can use the direct 5432 connection (single short-lived session) — pooler not required there.
+
+**When Redis lands (P3):** the rate-limit store can move off `pg` to Redis, removing one direct-PG consumer entirely.
 
 **Phase 7 (optional) — Read replica + SSR/prerender** — only if metrics justify.
 
