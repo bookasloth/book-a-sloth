@@ -24,7 +24,7 @@ const FALLBACK_PLANS = {
     features: {}, integrations: { calendar_apps: ['google_calendar'] }, support_type: 'standard', sort_order: 1 },
   creator:      { name: 'Creator', slug: 'creator', annual_price: 1499, monthly_price: 229, commission_percentage: 0, active: true,
     razorpay_plan_id_monthly: null, razorpay_plan_id_annual: null,
-    limits: { services: 5, free_services: -1, bookings_per_year: 1000, digital_products: 5, calendar_integrations: 1, profile_theme_colors: 16, reminder_flows: 1, followup_flows: 1, categories: 2 },
+    limits: { services: 5, free_services: -1, bookings_per_year: 1000, digital_products: 5, calendar_integrations: 1, profile_theme_colors: 16, reminder_flows: 1, followup_flows: 0, categories: 2 },
     features: {}, integrations: { calendar_apps: ['google_calendar'] }, support_type: 'priority_email', sort_order: 2 },
   professional: { name: 'Professional', slug: 'professional', annual_price: 3650, monthly_price: 555, commission_percentage: 0, active: true,
     razorpay_plan_id_monthly: null, razorpay_plan_id_annual: null,
