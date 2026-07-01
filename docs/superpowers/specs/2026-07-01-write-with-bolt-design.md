@@ -183,9 +183,10 @@ On Publish → existing service save path → public page renders content + <scr
 - Regenerate button + optional tweak textarea (appended to prompt), reuses `session_id`.
 - On any error, keep the host's typed input and allow full manual completion.
 
-**Public page JSON-LD (render-time):**
-- Extend existing `Seo.jsx`/JSON-LD infra with builders for **Service**, **Offer** (price, INR, availability, url), **FAQPage** (from `faqs`, 1:1 with the visible FAQ block — Google visible-parity requirement).
-- Only emit fields that are real (no fabricated ratings/address). BreadcrumbList + Provider/LocalBusiness = Phase 2.
+**Public page JSON-LD (render-time) — infra already exists, minimal work:**
+- `client/src/utils/seo.js` already exports `serviceJsonLd` (**Service + nested Offer + aggregateRating**, real-only), `breadcrumbJsonLd` (**BreadcrumbList**), and `faqJsonLd` (**FAQPage** from `[{q,a}]`). `ServiceDetail.jsx` already renders `serviceJsonLd` + `breadcrumbJsonLd` via `<Seo jsonLd>`.
+- **Only gap:** `faqJsonLd` is built but **not wired** on `ServiceDetail.jsx` (import at line 12 omits it). Task = wire it in, mapping `service.faqs` `{question,answer}` → `{q,a}`, 1:1 with the visible FAQ tab (Google visible-parity). No new builders. `<Seo>` accepts a single `jsonLd` object, so combine as an array or `@graph`.
+- Only emit real fields (existing builders already guard ratings). Provider/LocalBusiness = Phase 2.
 
 ---
 
@@ -235,13 +236,16 @@ Track: button clicks, generates, regenerates, edits-before-publish, publish rate
 
 ---
 
-## 14. Open Items to Confirm During Planning
+## 14. Open Items
 
+**Resolved (verified 2026-07-01):**
+- ✅ **JSON-LD — reuse, don't rebuild.** `client/src/utils/seo.js` already has `serviceJsonLd` (Service+Offer+aggregateRating), `breadcrumbJsonLd`, and `faqJsonLd` (FAQPage). `ServiceDetail.jsx` already renders Service + Breadcrumb. **Only task:** wire the existing `faqJsonLd` into `ServiceDetail.jsx` (map `service.faqs` `{question,answer}`→`{q,a}`, combine with the Service node via array/`@graph`). No new schema builders.
+- ✅ **Category source — reuse existing.** `hostGetCategories()` → `primary_category`, then `listServiceCategories(primary)` → `[{id,name,slug}]` (see `ServiceForm.jsx:398-409`). The generate endpoint fetches this same list server-side and constrains the AI's `category` output to those slugs only; omit if none fit. Never invent a category.
+
+**Still to confirm during planning:**
 1. Exact `long_description` HTML shape the RichEditor expects (so generated HTML renders cleanly).
-2. Whether the public service page already emits any Service/FAQPage JSON-LD (extend vs. add).
-3. Config location + values for the quota map (`Starter 1/6mo, Host+ 2/3mo, Studio 2/mo`) and Supreme bypass hook.
-4. Category suggestion: confirm the allowed-category source per host profession to constrain the AI.
-5. Success-metric baselines from current analytics (completion rate, time-to-publish).
+2. Config location + values for the quota map (`Starter 1/6mo, Host+ 2/3mo, Studio 2/mo`) and Supreme bypass hook.
+3. Success-metric baselines from current analytics (completion rate, time-to-publish).
 
 ---
 
