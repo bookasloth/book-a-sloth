@@ -58,11 +58,12 @@ _Last updated: 2026-06-13_
 
 ## ⚠️ Pending / Known Limitations
 
-### DB Migration Required
-- `v1.7_pricing_snapshot.sql` must be run in Supabase SQL Editor
-- Adds `commission_applied` column to bookings
-- Fallback code in `bookingController.js` handles missing column gracefully
-- Until migration runs: `commission_applied` snapshot not stored
+### DB Migrations — all applied (verified 2026-07-01)
+- All migrations through **v3.57** are applied on both prod (Mumbai) and staging (Tokyo),
+  confirmed by live schema introspection.
+- `v1.7` (`bookings.commission_applied`) is applied — snapshot is now stored. The
+  `bookingController.js` schema-fallback remains as defence-in-depth (harmless).
+- No DB migration is currently outstanding.
 
 ### Twilio WhatsApp Disabled
 - All WhatsApp sends in `notify.js` are stubs (`sendAppointmentWhatsApp` → returns false)

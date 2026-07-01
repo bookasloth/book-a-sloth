@@ -30,7 +30,7 @@ Each **service** now carries one `category` slug, drawn from the host's own cate
 - **Pre-migration tolerant:** `category` added to `V2_SELECT_COLS`; `hostController` safe-fallback regex broadened to include `category`; writes drop `category` gracefully until the column exists (currently load-bearing since v3.22 unapplied).
 - **Client:** `ServiceCategoryPicker` (auto-chip when host has 1 category, single-select chips when 2–3), wired into dashboard `ServiceForm` + onboarding `FirstServiceStep`, default = `primary_category`. Category **badge** on dashboard list (`Services.jsx`) + public page (`ServiceDetail.jsx`, server-resolved `category_label`). slug→label via `categoryUtils.categoryLabel`.
 - **Deferred (follow-ups):** Explore filter by category; sharpen `admin_category_stats()` to count by the service's own category; guard against null-wiping a category on update for a 0-category host; client retry if the host-categories fetch fails.
-- **Pending ops (founder):** apply `v3.22` to BOTH Supabase projects (prod Mumbai `ayjhlwyzszykqtnaktpb` + staging Tokyo `xwvciqkayammbvsidqig`) before/with deploy; feature is inert until then.
+- **Ops:** `v3.22` **applied** to both Supabase projects (prod Mumbai `ayjhlwyzszykqtnaktpb` + staging Tokyo `xwvciqkayammbvsidqig`), verified 2026-07-01.
 
 ## Sprint: Industry Categories (branch `feat/category-system`) — built 2026-06-20
 
@@ -44,7 +44,7 @@ Each **service** now carries one `category` slug, drawn from the host's own cate
 - **Endpoints:** `GET`/`PUT /api/host/categories` (plan-capped, pure validator `server/lib/categoryRules.js`), `PATCH /api/admin/users/:id/categories` (admin override, uncapped).
 - **Admin `/admin/services/categories` redesigned:** grouped table with status **dropdown** (🟢 Active / 🔴 Off), 5 columns (Category Name · Status · Registered Hosts · Active Services · Date Added), summary strip, delete-guard (blocks delete when hosts registered; server returns 409). Vendor "suggest category" pending flow retained.
 - **Profile settings:** new plan-gated "Categories" tab (`components/dashboard/CategoriesSection.jsx`). **HostProfile** shows a primary-category chip; `getHostProfile` returns `primary_category_label`.
-- **Pending ops (founder):** apply `v3.21` to the live Supabase DB (deletes + reseeds `categories`) before/with deploy, then phased rollout = flip Day-30/Day-60 categories to Active when ready.
+- **Ops:** `v3.21` **applied** to the live Supabase DBs (verified 2026-07-01). Remaining (optional): phased rollout = flip Day-30/Day-60 categories to Active when ready.
 
 ## Sprint: Financial Ledger P1 (Ledger Core) — Double-Entry Accounting (DONE 2026-06-13)
 
@@ -231,11 +231,10 @@ Each **service** now carries one `category` slug, drawn from the host's own cate
 ## Pending Actions
 
 ### Must Do Before Production
-1. **Run migration** `server/migrations/v1.7_pricing_snapshot.sql` in Supabase SQL Editor
-   - Adds `commission_applied NUMERIC(10,2) NOT NULL DEFAULT 0` to `bookings`
-   - Until done: column not stored but fallback prevents crashes
+1. ~~Run migration `v1.7_pricing_snapshot.sql`~~ — **DONE.** `commission_applied` is
+   applied on both DBs (verified 2026-07-01). All migrations through v3.57 are applied.
 
-2. **Test end-to-end booking flow** with a real service after migration
+2. **Test end-to-end booking flow** with a real service (routine regression check)
 
 ### Nice To Have
 - Guest booking history: dedicated page for guests at `/my-bookings`
