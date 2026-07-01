@@ -3,7 +3,7 @@
 ## Run Order for Fresh Setup
 1. `server/config/schema.sql` — base tables + RLS
 2. `server/migrations/v1.6_catchup.sql` — all columns through v1.6
-3. `server/migrations/v1.7_pricing_snapshot.sql` — commission_applied ⚠️ PENDING on production
+3. `server/migrations/v1.7_pricing_snapshot.sql` — commission_applied ✅ applied (all migrations through v3.59 live on both DBs, verified 2026-07-01)
 
 ---
 
@@ -113,14 +113,20 @@ One row per host. JSONB schedule.
 | guest_email | TEXT | |
 | guest_phone | TEXT | |
 | scheduled_at | TIMESTAMPTZ | UTC |
-| status | TEXT | `'pending'` \| `'confirmed'` \| `'cancelled'` \| `'completed'` |
+| status | TEXT | `'pending'` \| `'confirmed'` \| `'cancelled'` \| `'completed'` \| `'no_show'` (v3.45) |
 | payment_status | TEXT | `'unpaid'` \| `'paid'` \| `'refunded'` |
 | payment_id | TEXT | Razorpay payment ID |
 | meeting_link | TEXT | Google Meet URL |
 | notes | TEXT | Guest notes |
 | vendor_amount | NUMERIC | Pricing snapshot: vendor payout |
 | platform_fee_amount | NUMERIC | Pricing snapshot: platform fee |
-| commission_applied | NUMERIC | Pricing snapshot: commission ⚠️ requires v1.7 migration |
+| commission_applied | NUMERIC | Pricing snapshot: commission (v1.7 — applied live) |
+| customer_total | NUMERIC | v2.2 money model: service + platform fee + GST (amount charged online) |
+| platform_fee_gst | NUMERIC | v2.2: 18% GST on the platform fee |
+| gst_rate | NUMERIC | v2.2: GST rate snapshot (default 0.18) |
+| razorpay_fee_actual | NUMERIC | v2.2: actual Razorpay fee at capture (vendor-borne, excl tax) |
+| end_at | TIMESTAMPTZ | v2.5: session end; backs the `bookings_no_overlap` exclusion constraint |
+| google_event_id | TEXT | Google Calendar event id (online bookings) |
 | reminder_24h_sent | BOOLEAN | |
 | reminder_1h_sent | BOOLEAN | |
 | reschedule_status | TEXT | `'none'` \| `'awaiting_guest_ack'` \| `'acknowledged'` |
@@ -254,7 +260,7 @@ Key-value store for admin-configurable platform settings.
 | v1.4 | payout_requests table |
 | v1.5 | increment_product_purchase_count function |
 | v1.6 | Catch-up: all profile columns (google tokens, razorpay, cover_image etc) |
-| v1.7 | ⚠️ PENDING: bookings.commission_applied column |
+| v1.7 | bookings.commission_applied column (applied live) |
 | v1.9 | notification_providers, notification_events, notification_logs; otp_codes hardening |
 | v2.0–v2.5 | badges, plans, payout model, email engine, admin RBAC, Google auth/availability |
 | v2.6 | **Campaign platform:** `contacts`, `segments`, `email_campaigns`, `campaign_recipients`; `email_logs.campaign_id` |
