@@ -50,6 +50,7 @@ const res  = () => {
   const r = {};
   r.status = jest.fn().mockReturnValue(r);
   r.json   = jest.fn().mockReturnValue(r);
+  r.set    = jest.fn().mockReturnValue(r);
   return r;
 };
 

@@ -1,5 +1,6 @@
 const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require('../utils/httpError');
+const { setPublicCache } = require('../utils/httpCache');
 const { sanitizeLikeTerm } = require("../utils/searchSanitize");
 const { getConfig: getPlatformConfig } = require("../services/platformConfig");
 const usernameService = require("../services/usernameService");
@@ -226,6 +227,9 @@ const getHostProfile = async (req, res) => {
       host.primary_category_label = cat?.label || null;
     }
 
+    // Public, anonymous profile — cacheable. Short TTL so a profile/service edit
+    // (which busts nothing here) is still reflected within ~2 min for viewers.
+    setPublicCache(res, 120);
     res.json({ host, services: services || [], availability });
   } catch (error) {
     safeError(res, error);

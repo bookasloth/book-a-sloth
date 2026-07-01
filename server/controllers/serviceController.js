@@ -5,6 +5,7 @@
  */
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const { setPublicCache } = require('../utils/httpCache');
 const { getConfig: getPlatformConfig } = require('../services/platformConfig');
 const { bustSitemapCache } = require('../utils/sitemapCache');
 const { resolveAndValidateCategory } = require('../lib/serviceCategory');
@@ -444,6 +445,8 @@ const getPublicServiceBySlug = async (req, res) => {
       count: reviewList.filter((r) => r.rating === star).length,
     }));
 
+    // Public, anonymous service page — cacheable with a short TTL.
+    setPublicCache(res, 120);
     res.json({
       service: svc,
       vendor: vendor || {},
@@ -526,6 +529,8 @@ const getPublicServiceByProfileAndSlug = async (req, res) => {
     let appearance = { backgrounds: [], default_background: 'dotgrid' };
     try { appearance = await getPublicAppearanceData(); } catch (_) { /* non-fatal: decorative */ }
 
+    // Public, anonymous service page — cacheable with a short TTL.
+    setPublicCache(res, 120);
     res.json({
       service: service,
       vendor: vendor || {},
