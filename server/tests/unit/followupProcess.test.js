@@ -51,6 +51,8 @@ test('happy path: eligible row sends and is marked sent', async () => {
   expect(NotificationEngine.send).toHaveBeenCalledTimes(1);
   expect(NotificationEngine.send.mock.calls[0][0].event).toBe('REBOOK_NUDGE_CUSTOMER');
   expect(NotificationEngine.send.mock.calls[0][0].data.emailData.profile_url).toContain('/mystic');
+  // WhatsApp: profile link must be a body param ({{3}}) — AiSensy has no dynamic CTA button.
+  expect(NotificationEngine.send.mock.calls[0][0].data.templateParams[2]).toContain('/mystic');
   expect(r.sent).toBe(1);
   expect(updates[0].status).toBe('sent');
 });
