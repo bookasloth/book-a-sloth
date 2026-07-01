@@ -60,13 +60,28 @@ display. Full/online bookings set `depositPortion = P` and are byte-for-byte unc
 | `payment_type` | text, default `'full'` CHECK `in ('full','partial')` | Snapshot at booking creation. |
 | `deposit_amount` | numeric(12,2), default `0` | The service-value portion collected online (= `servicePrice` fed to `computeBreakdown`). |
 | `balance_due` | numeric(12,2), default `0` | Offline balance the host collects in person (`0` for full bookings). |
-| `service_value_snapshot` | numeric(12,2), nullable | **Immutable** full service price `P` at booking time. **Analytics/reporting/exports/history only.** Populated for every booking (partial and full). MUST NEVER enter any money calculation (see Accounting vs Analytics). |
+| `service_value_snapshot` | numeric(12,2), nullable | **Immutable** final service value `P` at booking time (post any discounts; = `service.price` today). **Analytics/reporting/exports/history only.** Populated for every booking; `= deposit_amount + balance_due`. MUST NEVER enter any money calculation (see Accounting vs Analytics). |
 
 No `payment_status` enum change. No `balance_collected` column (BAS does not track collection).
 
+## Calculation order (canonical)
+
+All **service-level price adjustments** (coupons, discounts, promotions) are applied **first**,
+producing the **final service value** `P`. The deposit and balance are **always** computed from
+`P` (the final, post-adjustment value), never from the pre-discount list price. This guarantees
+the invariant **`deposit_amount + balance_due = P`** for every booking, and
+`service_value_snapshot = P`.
+
+> **v1 note:** no coupon/discount/promotion mechanism exists in the codebase today, so
+> `P = service.price`. This rule is the ordering contract a future discount feature must slot
+> into: adjust the service value → then split into deposit + balance. If a future feature also
+> needs the pre-discount list price / discount amount for analytics, that is an additive column
+> then — not v1.
+
 ## Money model
 
-Let `P` = `service.price` (full price). `pct` = `deposit_percentage`.
+Let `P` = the **final service value** (post-adjustment; today `= service.price`).
+`pct` = `deposit_percentage`.
 
 - **Full / online / offline-full booking:** `depositPortion = P`, `balance_due = 0`,
   `payment_type = 'full'`. Identical to current behaviour.
@@ -263,7 +278,8 @@ future-proof analytics.
 - Tests: `computeDeposit` rounding; booking snapshot (partial vs full vs online); **`service_value_snapshot = P`
   written for every booking AND `customer_total`/`vendor_amount`/commission are independent of it**
   (accounting-vs-analytics separation); service-field validation (offline gate, 50–99); checkout
-  render; edge cases.
+  render; edge cases; **invariant `deposit_amount + balance_due == service_value_snapshot` holds for
+  partial, full, and online bookings**.
 
 ## Deploy notes
 
