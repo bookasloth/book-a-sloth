@@ -9,6 +9,8 @@ const { supabaseAdmin } = require('../../config/supabase');
 const featureFlags = require('../featureFlags');
 const planService = require('../planService');
 const { getFlow, entitledSteps } = require('./flowRegistry');
+const NotificationEngine = require('../notificationEngine');
+const commEngine = require('../email/communicationEngine');
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -54,4 +56,102 @@ const scheduleFollowups = async ({ sourceType, sourceId, hostId, entity, complet
   }
 };
 
-module.exports = { scheduleFollowups };
+const PROCESS_BATCH = 200;
+const MAX_ATTEMPTS = 3;
+const CLIENT_URL = process.env.CLIENT_URL || 'https://bookasloth.in';
+
+const setStatus = (id, vals) =>
+  supabaseAdmin.from('scheduled_followups')
+    .update({ ...vals, updated_at: new Date().toISOString() }).eq('id', id);
+
+const cancelSiblings = (row) =>
+  supabaseAdmin.from('scheduled_followups')
+    .update({ status: 'cancelled', skip_reason: 'sibling_rebooked', updated_at: new Date().toISOString() })
+    .eq('source_type', row.source_type).eq('source_id', row.source_id)
+    .eq('flow_key', row.flow_key).eq('status', 'pending').neq('id', row.id);
+
+// Live eligibility for a booking-sourced row. Returns { ok } or { skip: reason }.
+const bookingEligibility = async (row) => {
+  // E2 — entitlement re-check (host may have downgraded since scheduling)
+  const { data: hostRow } = await supabaseAdmin
+    .from('profiles').select('plan, plan_expires_at').eq('id', row.host_id).maybeSingle();
+  const n = await planService.getLimit(planService.resolveVendorPlan(hostRow || {}), 'followup_flows');
+  if (!(n < 0 || n >= row.step)) return { skip: 'not_entitled' };
+
+  // E3 — source still completed + paid
+  const { data: bk } = await supabaseAdmin
+    .from('bookings').select('status, payment_status, completed_at').eq('id', row.source_id).maybeSingle();
+  if (!bk || bk.status !== 'completed' || bk.payment_status !== 'paid') return { skip: 'source_invalid' };
+
+  // E4 — already rebooked with this host after the source completed
+  const p = row.payload || {};
+  let rq = supabaseAdmin.from('bookings')
+    .select('id').eq('host_id', row.host_id).eq('payment_status', 'paid')
+    .neq('id', row.source_id).gt('created_at', bk.completed_at || '1970-01-01');
+  if (p.guest_id) rq = rq.eq('guest_id', p.guest_id);
+  else if (p.guest_email) rq = rq.eq('guest_email', p.guest_email);
+  else if (p.guest_phone) rq = rq.eq('guest_phone', p.guest_phone);
+  const { data: rebooked } = await rq.limit(1);
+  if (rebooked && rebooked.length) return { skip: 'already_rebooked', cancelSiblings: true };
+
+  // E5 — contactability + email opt-out (WhatsApp channel is off for this event now)
+  if (!p.guest_email && !p.guest_phone) return { skip: 'no_contact' };
+  const emailOptedOut = p.guest_email ? await commEngine.isUnsubscribed(p.guest_email) : true;
+  if (emailOptedOut && !p.guest_phone) return { skip: 'opted_out' };
+
+  return { ok: true };
+};
+
+const sendRow = async (row) => {
+  const p = row.payload || {};
+  const deepLink = p.host_username ? `${CLIENT_URL}/${p.host_username}` : `${CLIENT_URL}`;
+  await NotificationEngine.send({
+    event: row.event_key,
+    data: {
+      email: p.guest_email, phone: p.guest_phone, name: p.guest_name,
+      templateParams: [p.guest_name || 'there', p.host_name || 'your host'],
+      emailData: {
+        first_name: (p.guest_name || '').split(' ')[0],
+        vendor_name: p.host_name, service_name: p.service_title, profile_url: deepLink,
+      },
+      emailUser: { name: p.guest_name, email: p.guest_email },
+      recipientUserId: p.guest_id || row.recipient_user_id || null,
+    },
+  });
+};
+
+const processFollowups = async () => {
+  const out = { sent: 0, skipped: 0, failed: 0 };
+  // E1 — kill switch: leave pending (pause, not skip)
+  if (!(await featureFlags.isFeatureEnabled('rebook_nudge'))) return out;
+
+  const { data: rows, error } = await supabaseAdmin
+    .from('scheduled_followups').select('*')
+    .eq('status', 'pending').lte('due_at', new Date().toISOString())
+    .order('due_at', { ascending: true }).limit(PROCESS_BATCH);
+  if (error) { console.error('processFollowups query error:', error.message); return out; }
+
+  for (const row of rows || []) {
+    try {
+      const elig = await bookingEligibility(row);
+      if (elig.skip) {
+        await setStatus(row.id, { status: 'skipped', skip_reason: elig.skip });
+        if (elig.cancelSiblings) await cancelSiblings(row);
+        out.skipped += 1;
+        continue;
+      }
+      await sendRow(row);
+      await setStatus(row.id, { status: 'sent', sent_at: new Date().toISOString() });
+      out.sent += 1;
+    } catch (e) {
+      const attempts = (row.attempts || 0) + 1;
+      const status = attempts >= MAX_ATTEMPTS ? 'failed' : 'pending';
+      await setStatus(row.id, { attempts, status, skip_reason: status === 'failed' ? `error: ${e.message}` : null });
+      out.failed += 1;
+      console.error(`processFollowups row ${row.id} failed (attempt ${attempts}):`, e.message);
+    }
+  }
+  return out;
+};
+
+module.exports = { scheduleFollowups, processFollowups };
