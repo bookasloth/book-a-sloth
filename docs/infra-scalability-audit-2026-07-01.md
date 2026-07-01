@@ -140,8 +140,10 @@ Tests after Phase 1: server **1071/1071** green. No client changes; client build
 Tests after Phase 2: server **1075/1075** green (+ new `responseCache` unit suite).
 
 **Phase 3 — Redis (shared state)**
-- 3a. Provision Upstash Redis; move cache backend from in-process → Redis.
-- 3b. Move rate-limit store to Redis (unblocks horizontal API scaling).
+- 3a. ✅ (code) `services/redisClient.js` (lazy ioredis, `rediss://`→TLS, fail-open, off unless `REDIS_URL` set) + `services/responseCache.js` backend now pluggable Redis↔in-process behind the same `getOrSet`/`bust`/`clear`. Redis path JSON round-trips, busts via SCAN+DEL under an `rc:` namespace, fails open on any Redis error. Mock-tested (get/set/scan/del + fail-open). **Founder step to activate: create an Upstash Redis, set `REDIS_URL`** — inert until then; in-process remains the default.
+- 3b. Deferred (rationale): a pg-backed persistent rate-limit store already exists via `RATE_LIMIT_STORE_URL`, so rate-limit horizontal-scale is already solvable. A Redis rate-limit store (reusing `redisClient`) is an optional future swap, not implemented to avoid untested marginal surface.
+
+> **To turn on Redis caching:** provision Upstash (free tier fine) → copy the `rediss://…` connection URL → set `REDIS_URL` in Render env → redeploy. Verify via logs (`[redis] client initialised`). To roll back: unset `REDIS_URL` (falls straight back to in-process) or set `RESPONSE_CACHE_ENABLED=false` to disable caching entirely.
 
 **Phase 4 — Durable queue + background offload**
 - 4a. Adopt pg-boss (or BullMQ if Redis-first). Migrate email + campaigns onto it with DLQ + backoff.
