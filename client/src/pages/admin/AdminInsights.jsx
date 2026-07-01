@@ -69,6 +69,7 @@ const AdminInsights = () => {
   if (loading) return <div className="text-center py-16 text-gray-400">Loading insights…</div>;
 
   const revDelta = kpi && delta(kpi.revenue?.last30, kpi.revenue?.prev30);
+  const gmvDelta = kpi && delta(kpi.gmv?.last30, kpi.gmv?.prev30);
 
   return (
     <div className="max-w-5xl">
@@ -90,7 +91,7 @@ const AdminInsights = () => {
 
       {/* ── Owned KPI strip (Postgres truth) ── */}
       {kpi && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           <Tile
             label="Platform Revenue"
             value={inr(kpi.revenue?.total)}
@@ -117,6 +118,30 @@ const AdminInsights = () => {
             label="Hosts"
             value={kpi.hosts?.total ?? 0}
             sub={`+${kpi.hosts?.new30 ?? 0} last 30d · ${kpi.guests?.total ?? 0} guests`}
+          />
+          <Tile
+            label="GMV (bookings + products)"
+            value={inr(kpi.gmv?.total)}
+            sub={`${inr(kpi.gmv?.last30)} last 30d · take ${kpi.gmv?.takeRate ?? 0}%`}
+            foot={
+              gmvDelta != null && (
+                <p className={`text-xs mt-2 font-semibold ${gmvDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {gmvDelta >= 0 ? '▲' : '▼'} {Math.abs(gmvDelta)}% vs prior 30d
+                </p>
+              )
+            }
+          />
+          <Tile
+            label="Host Activation"
+            value={`${kpi.activation?.activationRate ?? 0}%`}
+            sub={`${kpi.activation?.activatedCount ?? 0} of ${kpi.activation?.totalHosts ?? 0} hosts · +${kpi.activation?.new30 ?? 0} 30d`}
+            foot={
+              <p className="text-xs mt-2 text-gray-400">
+                {kpi.activation?.medianTimeToFirstBookingDays != null
+                  ? `~${kpi.activation.medianTimeToFirstBookingDays}d to first booking`
+                  : '— no activated hosts yet'}
+              </p>
+            }
           />
         </div>
       )}
