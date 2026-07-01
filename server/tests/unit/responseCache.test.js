@@ -1,6 +1,6 @@
 const cache = require('../../services/responseCache');
 
-afterEach(() => cache.clear());
+afterEach(async () => { await cache.clear(); });
 
 describe('responseCache.getOrSet', () => {
   test('runs producer once, then serves cached value within TTL', async () => {
@@ -43,7 +43,7 @@ describe('responseCache.bust', () => {
     await cache.getOrSet('hostprofile:jane', 1000, async () => 1);
     await cache.getOrSet('hostprofile:bob', 1000, async () => 2);
     await cache.getOrSet('service:jane/x', 1000, async () => 3);
-    const removed = cache.bust('hostprofile:');
+    const removed = await cache.bust('hostprofile:');
     expect(removed).toBe(2);
     expect(cache._size()).toBe(1);        // only the service: entry remains
   });
