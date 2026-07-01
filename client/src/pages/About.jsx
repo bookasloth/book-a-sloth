@@ -1,4 +1,5 @@
 import Seo from "../components/common/Seo";
+import { ORG_SAME_AS } from "../utils/seo";
 import useAboutMotion from "../components/about/useAboutMotion";
 import HeroV2 from "../components/about/HeroV2";
 import LogoMarquee from "../components/about/LogoMarquee";
@@ -19,6 +20,7 @@ const JSON_LD = {
   url: "https://bookasloth.com",
   description:
     "Book A Sloth helps creators publish services, get booked, and get paid — with 0% commission.",
+  sameAs: ORG_SAME_AS,
 };
 
 export default function About() {

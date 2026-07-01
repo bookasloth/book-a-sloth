@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AuthBrandPanel from "../components/auth/AuthBrandPanel";
 import WhatsNewLink from "../components/auth/WhatsNewLink";
+import Seo from "../components/common/Seo";
 import toast from "react-hot-toast";
 
 // /login-as-vendor — the host login door. Hosts authenticate with Google only
@@ -75,6 +76,7 @@ const HostLogin = () => {
 
   return (
     <div className="grid min-h-[calc(100vh-72px)] w-full lg:grid-cols-[1.05fr_1fr]">
+      <Seo title="Host login — Book A Sloth" robots="noindex,nofollow" />
       {/* ── LEFT · colourful brand panel (lg+ only) ──────────────────────────── */}
       <AuthBrandPanel />
 

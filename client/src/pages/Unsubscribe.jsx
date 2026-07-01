@@ -6,6 +6,7 @@ import {
   unsubscribeEmail,
   resubscribeEmail,
 } from "../services/api";
+import Seo from "../components/common/Seo";
 
 /**
  * /unsubscribe?u=<signed-token>
@@ -63,6 +64,7 @@ const Unsubscribe = () => {
 
   return (
     <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
+      <Seo title="Unsubscribe — Book A Sloth" robots="noindex,nofollow" />
       <div className="page-card w-full max-w-md p-5 sm:p-8 text-center">
         {state === "loading" && (
           <p className="text-sm text-gray-500 py-8">Loading…</p>

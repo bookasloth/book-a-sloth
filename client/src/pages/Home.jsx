@@ -92,6 +92,12 @@ const HOME_JSONLD = [
     logo: ORG_LOGO,
     description:
       "Appointment scheduling and business automation software for professionals.",
+    sameAs: [
+      "https://www.linkedin.com/company/book-a-sloth/",
+      "https://www.instagram.com/bookasloth",
+      "https://www.facebook.com/bookasloth",
+      "https://x.com/bookasloth",
+    ],
   },
   {
     "@context": "https://schema.org",

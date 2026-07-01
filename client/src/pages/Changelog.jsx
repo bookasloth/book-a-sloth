@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import Seo from "../components/common/Seo";
+import { SITE_URL } from "../utils/seo";
 
 // /changelog — public "What's New" timeline. Marketing-facing product updates,
 // newest first. Entries are curated release notes (backdated to launch window).
@@ -283,6 +285,11 @@ const Changelog = () => {
 
   return (
     <div className="relative isolate">
+      <Seo
+        title="What's New — Book A Sloth Changelog"
+        description="Every feature, improvement, and fix shipped to Book A Sloth. Follow the latest updates to the appointment booking platform."
+        canonical={`${SITE_URL}/changelog`}
+      />
       {/* Decorative animated mesh backdrop (fixed, full-bleed) */}
       <style>{`
         @keyframes clDrift1 { 0%,100% { transform: translate3d(0,0,0) scale(1); }

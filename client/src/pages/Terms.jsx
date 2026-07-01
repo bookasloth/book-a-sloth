@@ -8,6 +8,7 @@ const Terms = () => (
   <LegalLayout
     title="Terms & Conditions"
     current="/terms"
+    description="The terms governing your use of Book A Sloth — accounts, bookings, payments, and host listings. Read before you book or list a service."
     intro={
       <>
         <p>

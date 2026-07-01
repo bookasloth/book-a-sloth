@@ -4,7 +4,7 @@ import { getHostProfile, getHostReviews, getHostProducts, getVendorBadges } from
 import { analytics, EVENTS } from "../services/analytics";
 import BrandPreloader from "../components/preloader/BrandPreloader";
 import Seo from "../components/common/Seo";
-import { resolveProfileSeo, profileJsonLd, SITE_URL } from "../utils/seo";
+import { resolveProfileSeo, profileJsonLd, breadcrumbJsonLd, SITE_URL } from "../utils/seo";
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
 const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
@@ -395,7 +395,13 @@ const HostProfile = () => {
 
   // Admin-managed SEO → head tags + ProfilePage JSON-LD (only once host loaded).
   const seo = host ? resolveProfileSeo({ host, siteUrl: SEO_SITE }) : null;
-  const jsonLd = host ? profileJsonLd({ host, siteUrl: SEO_SITE, services }) : null;
+  const jsonLd = host ? [
+    profileJsonLd({ host, siteUrl: SEO_SITE, services }),
+    breadcrumbJsonLd({ items: [
+      { name: 'Home', path: '/' },
+      { name: host.name || 'Host', path: `/${host.username}` },
+    ], siteUrl: SEO_SITE }),
+  ] : null;
 
   return (
     <>

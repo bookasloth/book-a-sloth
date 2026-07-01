@@ -16,6 +16,8 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, Sparkles, Zap } from 'lucide-react';
 import VendorCard from '../components/guest/VendorCard';
 import CategoryFilter from '../components/guest/CategoryFilter';
+import Seo from '../components/common/Seo';
+import { SITE_URL } from '../utils/seo';
 import {
   getExploreVendors,
   getExploreFeatured,
@@ -163,6 +165,11 @@ function ExploreFull() {
 
   return (
     <div className="min-h-screen bg-[#FFF8EE]">
+      <Seo
+        title="Explore Hosts & Services — Book A Sloth"
+        description="Discover coaches, consultants, therapists, and creators taking bookings on Book A Sloth. Browse services and book instantly."
+        canonical={`${SITE_URL}/explore`}
+      />
 
       {/* ═══ HERO / SEARCH ═══════════════════════════════════ */}
       <div className="bg-[#1E1E1E] border-b-4 border-[#1E1E1E]">
@@ -403,6 +410,11 @@ function ExploreFull() {
 function ExploreComingSoon() {
   return (
     <div className="min-h-screen bg-[#FFF8EE] flex items-center justify-center px-4 py-16">
+      <Seo
+        title="Explore Hosts & Services — Book A Sloth"
+        description="Discover coaches, consultants, therapists, and creators taking bookings on Book A Sloth. Browse services and book instantly."
+        canonical={`${SITE_URL}/explore`}
+      />
       <div className="max-w-lg w-full text-center">
         <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide
                          bg-amber-400 text-[#1E1E1E] border-2 border-[#1E1E1E] rounded-[4px] px-3 py-1
