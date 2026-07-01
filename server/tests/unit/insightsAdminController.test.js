@@ -38,9 +38,10 @@ test('computes revenue, conversion, bookings and host tiles from Postgres rows',
     { id: 4, payment_status: 'failed', platform_fee_amount: 0,  commission_applied: 0,  created_at: nowIso },
   ];
   supabaseAdmin.from
-    .mockReturnValueOnce(makeQuery({ data: bookings, error: null }))           // bookings
+    .mockReturnValueOnce(makeQuery({ data: bookings, error: null }))            // bookings
+    .mockReturnValueOnce(makeQuery({ data: [], error: null }))                  // product_purchases
     .mockReturnValueOnce(makeQuery({ data: [{ id: 'h1', created_at: nowIso }, { id: 'h2', created_at: nowIso }], error: null })) // hosts
-    .mockReturnValueOnce(makeQuery({ count: 42, error: null }));               // guests
+    .mockReturnValueOnce(makeQuery({ count: 42, error: null }));                // guests
 
   const r = res();
   await getKpis({}, r);
@@ -64,6 +65,7 @@ test('falls back to fee-only select when commission_applied column is missing', 
   supabaseAdmin.from
     .mockReturnValueOnce(errQuery)                                              // bookings (errors)
     .mockReturnValueOnce(retryQuery)                                            // bookings retry
+    .mockReturnValueOnce(makeQuery({ data: [], error: null }))                  // product_purchases
     .mockReturnValueOnce(makeQuery({ data: [], error: null }))                  // hosts
     .mockReturnValueOnce(makeQuery({ count: 0, error: null }));                 // guests
 
@@ -72,6 +74,55 @@ test('falls back to fee-only select when commission_applied column is missing', 
   const p = r.json.mock.calls[0][0];
   expect(p.revenue.total).toBe(10);
   expect(p.bookings.paid).toBe(1);
+});
+
+test('computes GMV from paid bookings (gross) + paid products, with windows', async () => {
+  const nowIso = new Date().toISOString();
+  const old = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(); // in prev30 window
+  const bookings = [
+    { id: 1, host_id: 'h1', payment_status: 'paid',   customer_total: 1180, platform_fee_amount: 10, platform_fee_gst: 1.8, created_at: nowIso }, // gross 1168.2
+    { id: 2, host_id: 'h1', payment_status: 'paid',   customer_total: 236,  platform_fee_amount: 10, platform_fee_gst: 1.8, created_at: old },    // gross 224.2 (prev30)
+    { id: 3, host_id: 'h2', payment_status: 'unpaid',  customer_total: 999, platform_fee_amount: 10, platform_fee_gst: 1.8, created_at: nowIso }, // excluded
+    { id: 4, host_id: 'h2', payment_status: 'refunded',customer_total: 500, platform_fee_amount: 10, platform_fee_gst: 1.8, created_at: nowIso }, // excluded
+  ];
+  const products = [
+    { id: 'p1', payment_status: 'paid', amount_paid: 299, platform_fee: 10, created_at: nowIso },
+    { id: 'p2', payment_status: 'unpaid', amount_paid: 999, platform_fee: 0, created_at: nowIso }, // excluded
+  ];
+  supabaseAdmin.from
+    .mockReturnValueOnce(makeQuery({ data: bookings, error: null }))
+    .mockReturnValueOnce(makeQuery({ data: products, error: null }))
+    .mockReturnValueOnce(makeQuery({ data: [{ id: 'h1', created_at: nowIso }, { id: 'h2', created_at: nowIso }], error: null }))
+    .mockReturnValueOnce(makeQuery({ count: 0, error: null }));
+
+  const r = res();
+  await getKpis({}, r);
+  const p = r.json.mock.calls[0][0];
+  expect(p.gmv.bookings).toBe(1392.4);       // 1168.2 + 224.2
+  expect(p.gmv.products).toBe(299);
+  expect(p.gmv.total).toBe(1691.4);          // 1392.4 + 299
+  expect(p.gmv.last30).toBe(1467.2);         // 1168.2 (booking) + 299 (product)
+  expect(p.gmv.prev30).toBe(224.2);          // the 45-day-old booking
+  // platformRevenue = booking(fee+commission) + product platform_fee
+  //   booking1 fee 10 + booking2 fee 10 = 20 (commission 0) ; product fee 10 => 30
+  expect(p.gmv.platformRevenue).toBe(30);
+  expect(p.gmv.takeRate).toBe(1.8);          // round1(30 / 1691.4 * 100)
+});
+
+test('product scan error degrades product GMV to 0 without failing', async () => {
+  const nowIso = new Date().toISOString();
+  supabaseAdmin.from
+    .mockReturnValueOnce(makeQuery({ data: [{ id: 1, host_id: 'h1', payment_status: 'paid', customer_total: 100, platform_fee_amount: 0, platform_fee_gst: 0, created_at: nowIso }], error: null }))
+    .mockReturnValueOnce(makeQuery({ data: null, error: { message: 'relation "product_purchases" does not exist' } }))
+    .mockReturnValueOnce(makeQuery({ data: [{ id: 'h1', created_at: nowIso }], error: null }))
+    .mockReturnValueOnce(makeQuery({ count: 0, error: null }));
+
+  const r = res();
+  await getKpis({}, r);
+  const p = r.json.mock.calls[0][0];
+  expect(p.gmv.products).toBe(0);
+  expect(p.gmv.bookings).toBe(100);
+  expect(p.gmv.total).toBe(100);
 });
 
 const {

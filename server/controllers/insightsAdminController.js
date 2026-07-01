@@ -55,13 +55,11 @@ const getKpis = async (req, res) => {
 
     // ── Bookings (one scan drives revenue, conversion + booking counts) ──
     // v1.7 fallback: commission_applied may not exist yet (see getStats).
-    let bookingsRes = await supabaseAdmin
-      .from('bookings')
-      .select('id, payment_status, platform_fee_amount, commission_applied, created_at');
+    const FULL_COLS = 'id, host_id, payment_status, platform_fee_amount, platform_fee_gst, commission_applied, vendor_amount, customer_total, created_at';
+    const CORE_COLS = 'id, host_id, payment_status, platform_fee_amount, created_at';
+    let bookingsRes = await supabaseAdmin.from('bookings').select(FULL_COLS);
     if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
-      bookingsRes = await supabaseAdmin
-        .from('bookings')
-        .select('id, payment_status, platform_fee_amount, created_at');
+      bookingsRes = await supabaseAdmin.from('bookings').select(CORE_COLS);
     }
     if (bookingsRes.error) return safeError(res, bookingsRes.error);
     const bookings = bookingsRes.data || [];
@@ -74,6 +72,30 @@ const getKpis = async (req, res) => {
     const revenuePrev30 = paid
       .filter((b) => b.created_at >= since60 && b.created_at < since30)
       .reduce((s, b) => s + bookingRevenue(b), 0);
+
+    // ── Product purchases (GMV only; degrade to [] on any error) — spec D3/edge table ──
+    let products = [];
+    const prodRes = await supabaseAdmin
+      .from('product_purchases')
+      .select('id, payment_status, amount_paid, platform_fee, created_at');
+    if (!prodRes.error) products = (prodRes.data || []).filter((p) => p.payment_status === 'paid');
+
+    // ── GMV (spec D4/D8) ──
+    const inWindow = (rows, valfn, lo, hi) =>
+      rows
+        .filter((x) => x.created_at >= lo && (hi ? x.created_at < hi : true))
+        .reduce((s, x) => s + valfn(x), 0);
+    const bookingGmvAll = paid.reduce((s, b) => s + bookingGrossValue(b), 0);
+    const productGmvAll = products.reduce((s, p) => s + productGrossValue(p), 0);
+    const gmvLast30 = inWindow(paid, bookingGrossValue, since30, null)
+                    + inWindow(products, productGrossValue, since30, null);
+    const gmvPrev30 = inWindow(paid, bookingGrossValue, since60, since30)
+                    + inWindow(products, productGrossValue, since60, since30);
+    const gmvTotal = round2(bookingGmvAll + productGmvAll);
+    // Take-rate uses a GMV-consistent revenue base (booking fee+commission + product fee).
+    const productPlatformRev = products.reduce((s, p) => s + (Number(p.platform_fee) || 0), 0);
+    const gmvPlatformRevenue = revenueTotal + productPlatformRev;
+    const takeRate = gmvTotal > 0 ? round1((gmvPlatformRevenue / gmvTotal) * 100) : 0;
 
     // ── Hosts + guests (growth tile) ──
     const [hostsRes, guestsRes] = await Promise.all([
@@ -101,6 +123,15 @@ const getKpis = async (req, res) => {
         created: bookings.length,
         paid: paid.length,
         rate: bookings.length ? Math.round((paid.length / bookings.length) * 1000) / 10 : 0, // %
+      },
+      gmv: {
+        total: gmvTotal,
+        last30: round2(gmvLast30),
+        prev30: round2(gmvPrev30),
+        bookings: round2(bookingGmvAll),
+        products: round2(productGmvAll),
+        platformRevenue: round2(gmvPlatformRevenue),
+        takeRate,
       },
       // Tile 4 — Host growth
       hosts: {
