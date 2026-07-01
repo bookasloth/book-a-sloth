@@ -60,14 +60,17 @@ cd client && npm test             # Vitest
 - `server/.env` — DB, Supabase, SMTP, Twilio, Razorpay keys
 - `client/.env` — VITE_API_URL, VITE_RAZORPAY_KEY_ID, VITE_SUPABASE_*
 
-## Pending DB Migration
-Run `server/migrations/v1.7_pricing_snapshot.sql` in Supabase SQL Editor.
-Adds `commission_applied` column to `bookings`. Code has fallback until applied.
+## Database Migrations — Status (verified 2026-07-01 against both DBs)
+All migrations through **v3.57 are APPLIED** on both prod (Mumbai `ayjhlwyzszykqtnaktpb`)
+and staging (Tokyo `xwvciqkayammbvsidqig`), verified by live schema introspection.
+Items previously listed here as pending are now live:
+- **v1.7** (`bookings.commission_applied`) — applied.
+- **v3.53** (profession-scoped `service_categories` redesign + `seedServiceCategories.js`) — applied.
+- **v3.57** (two partial `bookings` indexes for host paid-booking reads) — applied 2026-07-01.
 
-**Service Category redesign (v3.53):** Run `server/migrations/v3.53_service_category_redesign.sql`
-in Supabase (BOTH DBs), then `node server/scripts/seedServiceCategories.js` to populate the new
-profession-scoped `service_categories` table from `server/config/serviceCategorySeed.js`. Drops the
-old `services.service_category_id` and clears stale `services.category` values (hosts re-pick).
+No migration is currently outstanding. Workflow for any NEW migration: run it in the
+Supabase SQL Editor on BOTH DBs, and keep the code-side schema fallback (SELECT/INSERT
+destructure) until it is confirmed applied everywhere.
 
 ## Documentation Map
 | File | Purpose |
