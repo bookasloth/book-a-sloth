@@ -198,7 +198,7 @@ const BlogPost = () => {
   const canonical = `${SITE_URL}/blog/${post.slug}`;
 
   return (
-    <article style={{ backgroundColor: BODY_BG }}>
+    <article className="blog-page" style={{ backgroundColor: BODY_BG }}>
       <Seo
         title={`${post.title} — Book A Sloth Blog`}
         description={post.excerpt}

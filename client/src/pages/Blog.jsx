@@ -32,7 +32,7 @@ const Blog = () => {
   const [featured, ...rest] = BLOG_POSTS;
 
   return (
-    <div className="app-container py-12 sm:py-16">
+    <div className="app-container blog-page py-12 sm:py-16">
       <Seo
         title="Book A Sloth Blog — Booking & Business Growth Tips"
         description="Guides on appointment scheduling, reducing no-shows, online payments, and growing your booking business. Practical tips from Book A Sloth."
