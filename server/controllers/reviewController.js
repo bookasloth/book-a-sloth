@@ -5,6 +5,11 @@ const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require('../utils/httpError');
 const { inAppNotify } = require("../utils/inAppNotify");
 
+// Ceiling for review lists. count/avg are computed over the returned rows, so
+// these endpoints cap only (no offset paging) — capping the window would skew
+// the average. No account is anywhere near this; it's a pathological-case guard.
+const REVIEW_LIST_MAX = 500;
+
 const DIRECTIONS = ["guest_to_host", "host_to_guest"];
 
 // POST /api/reviews — submit a review for a completed booking
@@ -133,7 +138,9 @@ const getReceivedReviews = async (req, res) => {
       .eq("subject_id", req.user.id);
     const dir = req.query.direction;
     if (dir === "guest_to_host" || dir === "host_to_guest") q = q.eq("direction", dir);
-    const { data: reviews, error } = await q.order("created_at", { ascending: false });
+    const { data: reviews, error } = await q
+      .limit(REVIEW_LIST_MAX)
+      .order("created_at", { ascending: false });
 
     if (error) return safeError(res, error);
 
@@ -164,6 +171,7 @@ const getHostReviews = async (req, res) => {
       .select("id, rating, comment, created_at, profiles!reviews_reviewer_id_fkey(name, profile_image)")
       .eq("host_id", host.id)
       .eq("direction", "guest_to_host")
+      .limit(REVIEW_LIST_MAX)
       .order("created_at", { ascending: false });
 
     if (error) return safeError(res, error);

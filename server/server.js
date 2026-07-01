@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -62,6 +63,23 @@ app.use(offenseTracker);
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json());
+
+// Gzip/deflate JSON + text responses. Only kicks in when the client sends
+// Accept-Encoding and the body clears the 1KB default threshold, and it never
+// double-encodes an already-compressed response — so this is safe even if a
+// proxy in front (Render) also compresses. Biggest win on the large public list
+// payloads (host profile, service listings). Honors a `x-no-compression` header
+// for debugging raw responses.
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  },
+}));
+
+// Always-on, O(1) HTTP metrics (request counts, slow-request count, status
+// classes) surfaced at /metrics. Distinct from the opt-in PERF_LOG logger below.
+app.use(require('./utils/metrics').middleware);
 
 // ── Perf instrumentation ────────────────────────────────────────────────
 // Logs real wall-clock per /api request so the actual slow endpoints behind the
@@ -145,6 +163,12 @@ app.use(require('./routes/sitemapRoutes'));
 app.get('/health', (req, res) =>
   res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() })
 );
+
+// Readiness (DB-checked) + metrics (Prometheus text, token-gated). Mounted
+// outside /api so they bypass the rate limiter + maintenance 503, like /health.
+const opsController = require('./controllers/opsController');
+app.get('/ready', opsController.readiness);
+app.get('/metrics', opsController.exposeMetrics);
 
 app.get('/', (req, res) => res.json({ message: 'Book A Sloth API v1.4 running' }));
 

@@ -9,7 +9,7 @@ import { svcGetPublicByProfile, getAvailableSlots } from '../services/api';
 import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/themeUtils';
 import Seo from '../components/common/Seo';
 import HostBackground from '../backgrounds/HostBackground';
-import { resolveServiceSeo, serviceJsonLd, SITE_URL } from '../utils/seo';
+import { resolveServiceSeo, serviceJsonLd, breadcrumbJsonLd, SITE_URL } from '../utils/seo';
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
 const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
@@ -796,7 +796,14 @@ export default function ServiceDetail() {
 
   // Admin-managed SEO → head tags + Service JSON-LD (canonical derived from URL).
   const seo = resolveServiceSeo({ service, vendor, siteUrl: SEO_SITE });
-  const jsonLd = serviceJsonLd({ service, vendor, siteUrl: SEO_SITE, avgRating: rating, reviewCount });
+  const jsonLd = [
+    serviceJsonLd({ service, vendor, siteUrl: SEO_SITE, avgRating: rating, reviewCount }),
+    breadcrumbJsonLd({ items: [
+      { name: 'Home', path: '/' },
+      { name: vendor.name || vendor.username, path: `/${vendor.username}` },
+      { name: service.title, path: `/${vendor.username}/${service.slug}` },
+    ], siteUrl: SEO_SITE }),
+  ];
 
   return (
     <div className="min-h-screen bg-[#f7f5ef] relative">

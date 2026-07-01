@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getGuestBookings, getBookingReview, createReview, updateReview } from "../services/api";
 import useFeatureFlags from "../hooks/useFeatureFlags";
+import Seo from "../components/common/Seo";
 import toast from "react-hot-toast";
 
 // Dedicated "leave a review" page reached from the booking-completed email
@@ -155,6 +156,7 @@ export default function ReviewPage() {
 
   return (
     <Shell>
+      <Seo title="Leave a review — Book A Sloth" robots="noindex,nofollow" />
       <h1 className="mb-1 text-2xl font-bold">{isEdit ? "Edit your review" : "Leave a review"}</h1>
       <p className="mb-1 text-sm text-gray-500">
         How was your {booking.services?.title || "session"} with {host.name || "your host"}?

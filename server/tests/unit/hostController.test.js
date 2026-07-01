@@ -2,6 +2,14 @@
  * tests/unit/hostController.test.js
  * Tests for getHostProfile, updateProfile, getServiceBySlug, getMyServices.
  */
+// Bypass the read-through response cache so each test drives its own mock DB
+// sequence deterministically (cache behavior is covered by responseCache.test.js).
+jest.mock('../../services/responseCache', () => ({
+  getOrSet: (_k, _ttl, producer) => producer(),
+  bust: () => 0,
+  clear: () => 0,
+  _size: () => 0,
+}));
 jest.mock('../../config/supabase', () => {
   const chain = () => ({
     select:  jest.fn().mockReturnThis(),
@@ -38,6 +46,7 @@ const res = () => {
   const r = {};
   r.status = jest.fn().mockReturnValue(r);
   r.json   = jest.fn().mockReturnValue(r);
+  r.set    = jest.fn().mockReturnValue(r);
   return r;
 };
 

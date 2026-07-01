@@ -5,6 +5,8 @@ const featureFlags = require("../services/featureFlags");
 const sendEmail = require("../utils/sendEmail");
 const NotificationEngine = require("../services/notificationEngine");
 const { checkBookingReceiveLimit } = require("../middleware/planMiddleware");
+const { parseListRange } = require("../utils/pagination");
+const { runExclusive } = require("../utils/keyedMutex");
 const crypto = require("crypto");
 const { computeBreakdown } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
@@ -312,7 +314,10 @@ const createBooking = async (req, res) => {
       return res.status(status).json({ message: slotCheck.reason });
     }
 
-    // Plan limit: check if host has hit monthly booking cap (Explorer = 20/month)
+    // Plan limit: early check — fast-fail before we build pricing / a calendar
+    // event, so a rejected booking leaves no orphan Google event. The
+    // authoritative, race-safe recheck happens under the per-host lock right
+    // before the insert (see below).
     const limitCheck = await checkBookingReceiveLimit(host_id);
     if (!limitCheck.allowed)
       return res.status(403).json({ message: limitCheck.message });
@@ -414,11 +419,25 @@ const createBooking = async (req, res) => {
       payment_status: service.price === 0 ? "paid" : "unpaid",
     };
 
-    let bookingResult = await supabaseAdmin
-      .from("bookings")
-      .insert(bookingPayload)
-      .select()
-      .single();
+    // Serialize the quota recheck + insert per host so two concurrent bookings
+    // can't both pass the count check and push the host over their yearly cap
+    // (TOCTOU). The recheck's count includes this pending row, so a queued peer
+    // observes it. In-process lock — fully effective on the single API instance
+    // today; a cross-instance lock is the Phase 3+ upgrade. See utils/keyedMutex.
+    const guarded = await runExclusive(`booking-quota:${host_id}`, async () => {
+      const recheck = await checkBookingReceiveLimit(host_id);
+      if (!recheck.allowed) return { limited: recheck.message };
+      return {
+        result: await supabaseAdmin
+          .from("bookings")
+          .insert(bookingPayload)
+          .select()
+          .single(),
+      };
+    });
+    if (guarded.limited)
+      return res.status(403).json({ message: guarded.limited });
+    let bookingResult = guarded.result;
 
     // Fallback: retry without commission_applied if v1.7 migration hasn't run yet
     if (
@@ -541,6 +560,10 @@ const createBooking = async (req, res) => {
 // GET /api/bookings/host
 const getHostBookings = async (req, res) => {
   try {
+    // Safety ceiling so a large account can't drag its entire paid-booking
+    // history over the wire on every dashboard load. Optional ?limit/?offset;
+    // response stays a bare array (unchanged shape). See utils/pagination.js.
+    const { from, to } = parseListRange(req.query);
     // Vendors only see PAID bookings. An unpaid/pending booking is not yet the
     // vendor's booking — it is a lead and only Admin can see it. payment_status
     // 'paid' covers paid/confirmed and paid-then-cancelled (refund visibility);
@@ -550,7 +573,8 @@ const getHostBookings = async (req, res) => {
       .select("*, services(*), profiles!bookings_guest_id_fkey(*)")
       .eq("host_id", req.user.id)
       .eq("payment_status", "paid")
-      .order("scheduled_at", { ascending: true });
+      .order("scheduled_at", { ascending: true })
+      .range(from, to);
     // Fallback if schema cache is stale
     if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
       result = await supabaseAdmin
@@ -558,7 +582,8 @@ const getHostBookings = async (req, res) => {
         .select("id, service_id, host_id, guest_id, guest_name, guest_email, scheduled_at, status, payment_status, meeting_link, notes, created_at, updated_at, services(id, title, duration, price), profiles!bookings_guest_id_fkey(id, name, email)")
         .eq("host_id", req.user.id)
         .eq("payment_status", "paid")
-        .order("scheduled_at", { ascending: true });
+        .order("scheduled_at", { ascending: true })
+        .range(from, to);
     }
     const { data, error } = result;
     if (error) return safeError(res, error);
@@ -571,18 +596,22 @@ const getHostBookings = async (req, res) => {
 // GET /api/bookings/guest
 const getGuestBookings = async (req, res) => {
   try {
+    // Safety ceiling (optional ?limit/?offset); response stays a bare array.
+    const { from, to } = parseListRange(req.query);
     let result = await supabaseAdmin
       .from("bookings")
       .select("*, services(*), profiles!bookings_host_id_fkey(*)")
       .eq("guest_id", req.user.id)
-      .order("scheduled_at", { ascending: true });
+      .order("scheduled_at", { ascending: true })
+      .range(from, to);
     // Fallback if schema cache is stale
     if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
       result = await supabaseAdmin
         .from("bookings")
         .select("id, service_id, host_id, guest_id, guest_name, guest_email, scheduled_at, status, payment_status, meeting_link, notes, created_at, updated_at, services(id, title, duration, price), profiles!bookings_host_id_fkey(id, name, email)")
         .eq("guest_id", req.user.id)
-        .order("scheduled_at", { ascending: true });
+        .order("scheduled_at", { ascending: true })
+        .range(from, to);
     }
     const { data, error } = result;
     if (error) return safeError(res, error);
@@ -1394,6 +1423,15 @@ const processReminders = async () => {
     if (!tzCache.has(hostId)) tzCache.set(hostId, await resolveHostTz(hostId));
     return tzCache.get(hostId);
   };
+  // Memoize reminder windows per plan slug for the batch. planService.loadPlans
+  // is already 60s-cached in memory (so this is a cheap read, not a DB round-trip),
+  // but a batch of same-plan bookings would otherwise re-resolve the same slug on
+  // every row — this collapses that to one lookup per distinct plan.
+  const windowsCache = new Map();
+  const windowsFor = async (slug) => {
+    if (!windowsCache.has(slug)) windowsCache.set(slug, await planService.reminderWindowsForPlan(slug));
+    return windowsCache.get(slug);
+  };
   for (const windowHours of [24, 1]) {
     const rangeStart = new Date(
       now.getTime() + (windowHours * 60 - 10) * 60000,
@@ -1414,9 +1452,7 @@ const processReminders = async () => {
       // Plan gate (DB-driven reminder_flows): Starter gets none, Host+/Creator
       // gets 24h, Studio/Professional gets 24h + 1h. Not entitled → leave the
       // flag false and let the booking age out of the ±10-min band naturally.
-      const windows = await planService.reminderWindowsForPlan(
-        planService.resolveVendorPlan(host),
-      );
+      const windows = await windowsFor(planService.resolveVendorPlan(host));
       if (!windows.includes(windowHours)) continue;
       try {
         const tz = await tzFor(b.host_id);

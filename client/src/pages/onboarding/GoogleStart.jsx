@@ -1,4 +1,5 @@
 import { useAuth } from '../../context/AuthContext';
+import Seo from '../../components/common/Seo';
 
 // Inline Google "G" logo SVG — no external file dependency.
 const GoogleIcon = () => (
@@ -44,6 +45,7 @@ const GoogleStart = () => {
 
   return (
     <div className="app-container flex items-center justify-center min-h-screen px-4">
+      <Seo title="Set up your Book A Sloth page" robots="noindex,nofollow" />
       <div className="page-card w-full max-w-sm p-6 sm:p-8 flex flex-col items-center text-center">
         {/* Sloth brandmark */}
         <div

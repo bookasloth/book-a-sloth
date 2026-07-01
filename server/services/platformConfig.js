@@ -12,6 +12,7 @@
  */
 
 const { supabaseAdmin } = require('../config/supabase');
+const { securityLog } = require('../utils/logger');
 
 const DEFAULTS = { platformFee: 10, gstRate: 0.18, clearingDays: 7 };
 const CACHE_TTL_MS = 60 * 1000;
@@ -53,7 +54,12 @@ const getConfig = async () => {
       if (row.key === 'platform_fee_gst_rate') gstRate = toNumber(row.value, DEFAULTS.gstRate);
       if (row.key === 'settlement_clearing_days') clearingDays = toNumber(row.value, DEFAULTS.clearingDays);
     }
-  } catch (_) { /* fall back to defaults */ }
+  } catch (err) {
+    // A DB blip silently reverts platform_fee / gstRate to hardcoded defaults
+    // (₹10 / 18%) — a mispricing risk if the admin has configured different
+    // values. Surface it so the fallback isn't invisible.
+    securityLog('platform_config_db_fallback', { error: err?.message });
+  }
 
   // Guard against nonsensical config
   if (platformFee < 0) platformFee = DEFAULTS.platformFee;

@@ -130,6 +130,7 @@ describe('GET /api/reviews/received', () => {
     const stub = {
       select: jest.fn().mockReturnThis(),
       eq:     eqMock,
+      limit:  jest.fn().mockReturnThis(),
       order:  jest.fn().mockResolvedValue({ data: rows, error: null }),
     };
     // eq must return an object that also has eq and order so chaining works

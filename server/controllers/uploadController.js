@@ -157,9 +157,18 @@ const uploadProductFile = async (req, res) => {
     const rand = Math.random().toString(36).slice(2, 8);
     const key = `products/${hostId}/${Date.now()}_${rand}.${sniffed.ext}`;
 
+    // Pin the stored content-type to the sniffed type (never the spoofable
+    // client mimetype) and force `attachment` so the object always downloads
+    // rather than rendering inline in the browser. Defense-in-depth: the
+    // magic-byte allowlist already rejects HTML/SVG, but this guarantees even a
+    // future allowlisted type can't be served as an inline/active document.
     const { error } = await supabaseAdmin.storage
       .from('products')
-      .upload(key, buffer, { upsert: true });
+      .upload(key, buffer, {
+        upsert: true,
+        contentType: sniffed.mime || 'application/octet-stream',
+        contentDisposition: 'attachment',
+      });
 
     if (error) {
       return safeError(res, error, 500, 'File upload failed. Please try again.');

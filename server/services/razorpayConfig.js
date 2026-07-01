@@ -14,6 +14,7 @@
 const Razorpay = require('razorpay');
 const { supabaseAdmin } = require('../config/supabase');
 const { encrypt, decrypt } = require('../utils/cryptoTokens');
+const { securityLog } = require('../utils/logger');
 
 const KEYS = {
   keyId: 'razorpay_key_id',
@@ -62,7 +63,12 @@ async function getConfig() {
     } else {
       enabled = !!(keyId && keySecret);
     }
-  } catch (_) { /* fall back to env values above */ }
+  } catch (err) {
+    // Silent fallback to env creds masks a DB outage while payments quietly
+    // run on whatever env vars happen to be set (or none). Emit a security
+    // event so the fallback is observable instead of invisible.
+    securityLog('razorpay_config_db_fallback', { error: err?.message });
+  }
 
   _cache = { at: now, value: { keyId, keySecret, webhookSecret, enabled, mode } };
   return _cache.value;

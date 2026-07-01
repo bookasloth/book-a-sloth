@@ -1,5 +1,6 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const { setPublicCache } = require('../utils/httpCache');
 const sendEmail = require('../utils/sendEmail');
 
 const ADMIN_ALERT_EMAIL =
@@ -43,6 +44,8 @@ const listActive = async (req, res) => {
       .order('sort_order', { ascending: true })
       .order('label', { ascending: true });
     if (error) throw error;
+    // Public taxonomy, changes rarely — cache longer.
+    setPublicCache(res, 600);
     res.json(data || []);
   } catch (error) {
     safeError(res, error);

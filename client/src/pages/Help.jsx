@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MessageCircle, MessageSquare, Phone, Mail, Sparkles, Copy, Check } from "lucide-react";
+import Seo from "../components/common/Seo";
+import { SITE_URL, faqJsonLd } from "../utils/seo";
 
 /**
  * /help — Help Center. FAQ + support channels.
@@ -112,6 +114,12 @@ const EmailSupportCard = ({ email }) => {
 
 const Help = () => (
   <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
+    <Seo
+      title="Help & Support — Book A Sloth"
+      description="Get help with bookings, rescheduling, payments, and becoming a host on Book A Sloth. Answers to common questions plus WhatsApp, email, and phone support."
+      canonical={`${SITE_URL}/help`}
+      jsonLd={faqJsonLd({ faqs: FAQ })}
+    />
     <div className="app-container py-8 sm:py-12 max-w-3xl">
       <h1 className="text-2xl sm:text-3xl font-bold mb-2">Help & Support</h1>
       <p className="text-sm text-gray-500 mb-8">
