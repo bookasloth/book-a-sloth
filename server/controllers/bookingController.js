@@ -6,6 +6,7 @@ const sendEmail = require("../utils/sendEmail");
 const NotificationEngine = require("../services/notificationEngine");
 const { checkBookingReceiveLimit } = require("../middleware/planMiddleware");
 const { parseListRange } = require("../utils/pagination");
+const { runExclusive } = require("../utils/keyedMutex");
 const crypto = require("crypto");
 const { computeBreakdown } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
@@ -313,7 +314,10 @@ const createBooking = async (req, res) => {
       return res.status(status).json({ message: slotCheck.reason });
     }
 
-    // Plan limit: check if host has hit monthly booking cap (Explorer = 20/month)
+    // Plan limit: early check — fast-fail before we build pricing / a calendar
+    // event, so a rejected booking leaves no orphan Google event. The
+    // authoritative, race-safe recheck happens under the per-host lock right
+    // before the insert (see below).
     const limitCheck = await checkBookingReceiveLimit(host_id);
     if (!limitCheck.allowed)
       return res.status(403).json({ message: limitCheck.message });
@@ -415,11 +419,25 @@ const createBooking = async (req, res) => {
       payment_status: service.price === 0 ? "paid" : "unpaid",
     };
 
-    let bookingResult = await supabaseAdmin
-      .from("bookings")
-      .insert(bookingPayload)
-      .select()
-      .single();
+    // Serialize the quota recheck + insert per host so two concurrent bookings
+    // can't both pass the count check and push the host over their yearly cap
+    // (TOCTOU). The recheck's count includes this pending row, so a queued peer
+    // observes it. In-process lock — fully effective on the single API instance
+    // today; a cross-instance lock is the Phase 3+ upgrade. See utils/keyedMutex.
+    const guarded = await runExclusive(`booking-quota:${host_id}`, async () => {
+      const recheck = await checkBookingReceiveLimit(host_id);
+      if (!recheck.allowed) return { limited: recheck.message };
+      return {
+        result: await supabaseAdmin
+          .from("bookings")
+          .insert(bookingPayload)
+          .select()
+          .single(),
+      };
+    });
+    if (guarded.limited)
+      return res.status(403).json({ message: guarded.limited });
+    let bookingResult = guarded.result;
 
     // Fallback: retry without commission_applied if v1.7 migration hasn't run yet
     if (
