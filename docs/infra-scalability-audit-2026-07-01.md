@@ -132,10 +132,12 @@ Tests after Phase 1: server **1071/1071** green. No client changes; client build
 
 > **Worktree note:** this repo's checkout is shared by a concurrent session that repeatedly switched branches mid-task, reverting the working tree. Phase 1 was finished in an isolated git worktree at `.claude/worktrees/perf-api-latency` on `perf/api-latency-phase1` to stop the HEAD drift. All commits pushed to `origin/perf/api-latency-phase1`.
 
-**Phase 2 — Server read cache**
-- 2a. Introduce cache abstraction (`getOrSet(key, ttl, fn)`) with pluggable backend.
-- 2b. Wrap host-profile, service-detail, plans, categories reads. TTLs below.
-- 2c. Wire mutation-time invalidation (service/profile edits bust their keys).
+**Phase 2 — Server read cache — ✅ DONE (branch `perf/api-latency-phase1`)**
+- 2a. ✅ `services/responseCache.js` — pluggable in-process TTL cache (`getOrSet`/`bust`/`clear`), bounded (`MAX_ENTRIES`, expired-then-oldest eviction), `RESPONSE_CACHE_ENABLED=false` kill-switch. Phase 3 swaps the backend to Redis behind the same 3 functions.
+- 2b. ✅ Wrapped host-profile + both service-detail handlers (refactored into pure builders) at 120s, incl. negative-caching redirect/404 to shield the DB from crawlers on dead slugs. Plans/categories skipped — already covered by `planService` cache + P1 HTTP headers.
+- 2c. ✅ `services/publicCacheBust.js` `bustPublicReadCaches()` co-located with every `bustSitemapCache()` write site (host + service create/update/delete/toggle + profile writes); busts both `hostprofile:` and `service:` namespaces. TTL is the backstop.
+
+Tests after Phase 2: server **1075/1075** green (+ new `responseCache` unit suite).
 
 **Phase 3 — Redis (shared state)**
 - 3a. Provision Upstash Redis; move cache backend from in-process → Redis.
