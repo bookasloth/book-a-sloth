@@ -62,6 +62,16 @@ const HOST_PUBLIC_COLS =
 const HOST_SEO_COLS =
   "seo_title, seo_description, og_title, og_description, seo_image, is_indexable";
 
+// Public service columns for the profile listing. PERF: never select('*') here —
+// the profile can carry up to 100 services and '*' drags every heavy text column
+// (long_description, faqs, included_items, excluded_items) into the payload the
+// public page never renders. The card only needs title/slug/desc/price/duration/
+// mode (+ created_at for the "New" tag). Matches the schema-fallback set below so
+// both query paths return an identical lean shape.
+const SERVICE_PUBLIC_COLS =
+  "id, host_id, title, slug, description, short_description, type, duration, " +
+  "price, currency, meeting_mode, is_active, created_at, updated_at";
+
 // ??? Profile slug helpers ????????????????????????????????????????????????????
 const slugifyUsername = (text) =>
   text
@@ -189,7 +199,7 @@ const getHostProfile = async (req, res) => {
 
     // Fetch services + availability in parallel
     const [servicesResult, { data: availability }] = await Promise.all([
-      supabaseAdmin.from("services").select("*").eq("host_id", host.id).eq("is_active", true).limit(100),
+      supabaseAdmin.from("services").select(SERVICE_PUBLIC_COLS).eq("host_id", host.id).eq("is_active", true).limit(100),
       supabaseAdmin.from("availability").select("*").eq("host_id", host.id).single(),
     ]);
 
@@ -202,9 +212,10 @@ const getHostProfile = async (req, res) => {
     ) {
       const fallback = await supabaseAdmin
         .from("services")
-        .select("id, host_id, title, slug, description, short_description, type, duration, price, currency, meeting_mode, is_active, created_at, updated_at")
+        .select(SERVICE_PUBLIC_COLS)
         .eq("host_id", host.id)
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .limit(100);
       services = fallback.data;
     }
 
