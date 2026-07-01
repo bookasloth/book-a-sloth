@@ -205,6 +205,21 @@ const freeDownloadIpLimiter = rateLimit({
   skip: skipWhenLoadTest,
 });
 
+// Signed product-download links (GET /products/download/:token). The token is a
+// 122-bit UUID so it isn't brute-forceable, but the route is unauthenticated and
+// each hit mints a fresh short-lived signed file URL. Cap per IP so a leaked
+// token (forwarded email, proxy log, referrer) can't be used to hammer the
+// storage-URL endpoint, and so token-guessing floods are throttled regardless.
+const downloadTokenLimiter = rateLimit({
+  store: makeRateLimitStore('download_token'),
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many download requests. Please try again later.' },
+  skip: skipWhenLoadTest,
+});
+
 // Newsletter signup — public write keyed by EMAIL (falling back to IP) so an
 // attacker can't repeatedly subscribe a victim's address from rotating IPs.
 const newsletterEmailLimiter = rateLimit({
@@ -356,6 +371,7 @@ module.exports = {
   uploadLimiter,
   freeDownloadLimiter,
   freeDownloadIpLimiter,
+  downloadTokenLimiter,
   newsletterEmailLimiter,
   newsletterIpLimiter,
   speedLimiter,

@@ -8,12 +8,12 @@ const {
 const { protect, optionalProtect, requireHost } = require('../middleware/authMiddleware');
 const { attachPlan, checkProductLimit } = require('../middleware/planMiddleware');
 const { requireFeature } = require('../middleware/requireFeature');
-const { freeDownloadLimiter, freeDownloadIpLimiter } = require('../middleware/security');
+const { freeDownloadLimiter, freeDownloadIpLimiter, downloadTokenLimiter } = require('../middleware/security');
 const { validate, createProductRules, updateProductRules } = require('../middleware/validate');
 
 // Public
 router.get('/host/:username', getHostProducts);
-router.get('/download/:token', downloadProduct);
+router.get('/download/:token', downloadTokenLimiter, downloadProduct);
 // Slug-first public detail (/p/:username/:slug) with id fallback. Declared
 // before '/:id' — distinct path depth, but kept explicit for clarity.
 router.get('/p/:username/:key', getProductPublic);
