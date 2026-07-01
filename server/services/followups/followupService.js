@@ -132,21 +132,37 @@ const processFollowups = async () => {
   if (error) { console.error('processFollowups query error:', error.message); return out; }
 
   for (const row of rows || []) {
+    // Eligibility is decided outside the send try/catch so a skip-branch
+    // write failure (setStatus/cancelSiblings) can never be mistaken for a
+    // send failure and feed the attempts/retry logic below.
+    let elig;
     try {
-      const elig = await bookingEligibility(row);
-      if (elig.skip) {
+      elig = await bookingEligibility(row);
+    } catch (e) {
+      console.error(`processFollowups row ${row.id} eligibility check failed:`, e.message);
+      continue;
+    }
+
+    if (elig.skip) {
+      try {
         await setStatus(row.id, { status: 'skipped', skip_reason: elig.skip });
         if (elig.cancelSiblings) await cancelSiblings(row);
         out.skipped += 1;
-        continue;
+      } catch (e) {
+        // Skip-write failed — surface it, but do NOT touch attempts/failed.
+        console.error(`processFollowups row ${row.id} skip-write failed:`, e.message);
       }
+      continue;
+    }
+
+    try {
       await sendRow(row);
       await setStatus(row.id, { status: 'sent', sent_at: new Date().toISOString() });
       out.sent += 1;
     } catch (e) {
       const attempts = (row.attempts || 0) + 1;
       const status = attempts >= MAX_ATTEMPTS ? 'failed' : 'pending';
-      await setStatus(row.id, { attempts, status, skip_reason: status === 'failed' ? `error: ${e.message}` : null });
+      await setStatus(row.id, { attempts, status, skip_reason: status === 'failed' ? 'send_failed' : null });
       out.failed += 1;
       console.error(`processFollowups row ${row.id} failed (attempt ${attempts}):`, e.message);
     }
