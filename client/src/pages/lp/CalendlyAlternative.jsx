@@ -13,6 +13,8 @@ import {
 import useUtm from "../../hooks/useUtm";
 import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
+import Seo from "../../components/common/Seo";
+import { SITE_URL } from "../../utils/seo";
 import HowItWorks from "../../components/home/HowItWorks";
 import LogoMarquee from "../../components/about/LogoMarquee";
 import { ALL_PLANS } from "../../data/plans";
@@ -248,6 +250,11 @@ const CalendlyAlternative = () => {
       className="min-h-dvh overflow-x-hidden bg-white"
       style={{ fontFamily: "'Poppins', ui-sans-serif, system-ui, sans-serif", color: CAL_NAVY }}
     >
+      <Seo
+        title="The Best Calendly Alternative for Creators — Book A Sloth"
+        description="Looking for a Calendly alternative? Book A Sloth adds payments, reminders, and a booking page built for coaches, consultants, and creators."
+        canonical={`${SITE_URL}/lp/calendly-alternative`}
+      />
       {/* ══════ HEADER ══════ */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">

@@ -19,6 +19,7 @@ const Privacy = () => (
   <LegalLayout
     title="Privacy Policy"
     current="/privacy"
+    description="How Book A Sloth collects, uses, and protects your data under India's DPDP Act 2023 and GDPR. Read our full privacy policy."
     intro={
       <>
         <p>

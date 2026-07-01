@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { getPost, BLOG_POSTS, themeFor, AUTHOR_URL } from '../data/blogPosts';
+import Seo from '../components/common/Seo';
+import { SITE_URL, articleJsonLd, breadcrumbJsonLd } from '../utils/seo';
 
 // /blog/:slug — immersive post page. A split hero (left = category colour +
 // text, right = image, hidden on mobile) over a dark reading body, finished
@@ -185,10 +187,7 @@ const BlogPost = () => {
 
   useEffect(() => {
     if (!post) return;
-    const prev = document.title;
-    document.title = `${post.title} · Book A Sloth`;
     window.scrollTo(0, 0);
-    return () => { document.title = prev; };
   }, [post]);
 
   if (!post) return <Navigate to="/blog" replace />;
@@ -196,9 +195,24 @@ const BlogPost = () => {
   const t = themeFor(post.category);
   const tt = bandText(t);
   const more = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 2);
+  const canonical = `${SITE_URL}/blog/${post.slug}`;
 
   return (
     <article style={{ backgroundColor: BODY_BG }}>
+      <Seo
+        title={`${post.title} — Book A Sloth Blog`}
+        description={post.excerpt}
+        canonical={canonical}
+        image={post.image || undefined}
+        jsonLd={[
+          articleJsonLd({ post: { slug: post.slug, title: post.title, excerpt: post.excerpt, image: post.image, author: post.author } }),
+          breadcrumbJsonLd({ items: [
+            { name: 'Home', path: '/' },
+            { name: 'Blog', path: '/blog' },
+            { name: post.title, path: `/blog/${post.slug}` },
+          ] }),
+        ]}
+      />
       {/* ── Split hero: left colour + text, right image (hidden on mobile) ── */}
       <header className="grid items-stretch lg:grid-cols-2" style={{ backgroundColor: t.band }}>
         <div className="app-container py-14 sm:py-20">

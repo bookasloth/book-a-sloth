@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getVendorBadges, getVendorBadgeDetail } from '../services/api';
+import Seo from '../components/common/Seo';
+import { SITE_URL } from '../utils/seo';
 
 /**
  * Public badge showcase — domain.com/:username/badges
@@ -81,6 +83,11 @@ const BadgeShowcase = () => {
 
   return (
     <div className="min-h-screen bg-[#FFFBF7]" style={{ fontFamily: "'Plus Jakarta Sans','Poppins',sans-serif" }}>
+      <Seo
+        title={`${vendor.name} — Badges | Book A Sloth`}
+        description={`Badges and achievements earned by ${vendor.name} on Book A Sloth.`}
+        canonical={`${SITE_URL}/${username}/badges`}
+      />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
         {/* Header */}
         <header className="flex items-center gap-4 mb-8">
