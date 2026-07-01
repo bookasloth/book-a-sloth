@@ -1405,6 +1405,15 @@ const processReminders = async () => {
     if (!tzCache.has(hostId)) tzCache.set(hostId, await resolveHostTz(hostId));
     return tzCache.get(hostId);
   };
+  // Memoize reminder windows per plan slug for the batch. planService.loadPlans
+  // is already 60s-cached in memory (so this is a cheap read, not a DB round-trip),
+  // but a batch of same-plan bookings would otherwise re-resolve the same slug on
+  // every row — this collapses that to one lookup per distinct plan.
+  const windowsCache = new Map();
+  const windowsFor = async (slug) => {
+    if (!windowsCache.has(slug)) windowsCache.set(slug, await planService.reminderWindowsForPlan(slug));
+    return windowsCache.get(slug);
+  };
   for (const windowHours of [24, 1]) {
     const rangeStart = new Date(
       now.getTime() + (windowHours * 60 - 10) * 60000,
@@ -1425,9 +1434,7 @@ const processReminders = async () => {
       // Plan gate (DB-driven reminder_flows): Starter gets none, Host+/Creator
       // gets 24h, Studio/Professional gets 24h + 1h. Not entitled → leave the
       // flag false and let the booking age out of the ±10-min band naturally.
-      const windows = await planService.reminderWindowsForPlan(
-        planService.resolveVendorPlan(host),
-      );
+      const windows = await windowsFor(planService.resolveVendorPlan(host));
       if (!windows.includes(windowHours)) continue;
       try {
         const tz = await tzFor(b.host_id);
