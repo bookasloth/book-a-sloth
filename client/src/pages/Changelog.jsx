@@ -50,6 +50,17 @@ const BLOBS = [
 
 const RELEASES = [
   {
+    date: 'Jul 1, 2026', version: 'v3.59',
+    title: 'Turn one session into the next',
+    tags: ['New', 'Improved'],
+    points: [
+      'Rebook nudges for Studio hosts: after a completed session, your guest gets a warm “ready for another?” reminder — at 3 days and again at 21 days — with a one-tap link straight back to your page.',
+      'Completely hands-off — it automatically skips anyone who’s already rebooked, so the right people get nudged at the right time.',
+      'Sent by email today, with WhatsApp ready to switch on.',
+      'Behind the scenes: sharper product analytics so we can see what’s driving bookings and keep building what helps you get booked.',
+    ],
+  },
+  {
     date: 'Jun 29, 2026', version: 'v3.54',
     title: 'Reminders that actually show up — even last-minute',
     tags: ['New', 'Improved'],
