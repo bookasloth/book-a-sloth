@@ -121,6 +121,14 @@ One row per host. JSONB schedule.
 | vendor_amount | NUMERIC | Pricing snapshot: vendor payout |
 | platform_fee_amount | NUMERIC | Pricing snapshot: platform fee |
 | commission_applied | NUMERIC | Pricing snapshot: commission ⚠️ requires v1.7 migration |
+| customer_total | NUMERIC(10,2) | Money model (v2.2): total the customer paid. Default 0 |
+| platform_fee_gst | NUMERIC(10,2) | Money model (v2.2): GST on platform fee. Default 0 |
+| razorpay_fee_actual | NUMERIC(10,2) | Money model (v2.2): actual PG fee, vendor-borne. Default 0 |
+| gst_rate | NUMERIC(5,4) | Money model (v2.2): snapshot of GST rate used. Default 0.18 |
+| commission_gst | NUMERIC(12,2) | Ledger (v2.8): GST on commission. Default 0 |
+| commission_percentage | NUMERIC(5,2) | Ledger (v2.8): plan commission % snapshot |
+| vendor_plan_type | TEXT | Ledger (v2.8): vendor plan at booking time |
+| razorpay_tax_actual | NUMERIC(12,2) | Ledger (v2.8): actual PG tax, vendor-borne. Default 0 |
 | reminder_24h_sent | BOOLEAN | |
 | reminder_1h_sent | BOOLEAN | |
 | reschedule_status | TEXT | `'none'` \| `'awaiting_guest_ack'` \| `'acknowledged'` |
