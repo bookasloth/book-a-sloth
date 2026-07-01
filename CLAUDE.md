@@ -83,3 +83,132 @@ old `services.service_category_id` and clears stale `services.category` values (
 | `docs/current-work.md` | Recent changes + next tasks |
 | `docs/common-workflows.md` | How to implement recurring tasks |
 | `docs/critical-files.md` | High-risk files + consequences |
+
+
+# Before Writing Any Code
+
+Never assume how a feature works.
+Search first.
+
+Always preserve existing behaviour unless explicitly asked.
+
+If changing authentication, payments, bookings, pricing,
+subscriptions, or middleware:
+    Read docs/feature-map.md first.
+
+Do not rename APIs, routes, or database columns unless instructed.
+
+Prefer modifying existing components over creating new ones.
+
+Never remove comments that explain business logic.
+
+When unsure, ask.
+
+
+## Product Rules
+
+Guests
+- Login using OTP.
+- Phone number is identity.
+- Auto-created if new.
+
+Hosts
+- Login only using Google
+- Never show  email login.
+- Never show OTP login.
+
+Bookings
+- Always snapshot pricing.
+- Never trust client-side pricing.
+
+Payments
+- Razorpay is source of truth.
+- Verify signatures server-side.
+
+Plans
+Starter
+Host+
+Studio
+
+Limits always come from: subscription_plans.limits
+
+
+## UI Rules
+
+Always use existing design tokens.
+
+Do not invent colors.
+
+4px borders.
+
+Rounded-xl only where already used.
+
+Plus Jakarta Sans headings.
+
+Poppins body.
+
+Reuse existing components before creating new ones.
+
+
+
+## Quick Search
+
+Authentication
+server/routes/authRoutes.js
+server/controllers/authController.js
+client/context/AuthContext.jsx
+
+Bookings
+server/controllers/bookingController.js
+client/src/pages/ServiceBooking.jsx
+
+Payments
+server/controllers/paymentController.js
+
+Hosts
+client/pages/dashboard/*
+server/controllers/vendorController.js
+
+Pricing
+server/lib/pricingEngine.js
+
+Plans
+subscription_plans table
+server/middleware/planMiddleware.js
+
+
+## Current Priority
+
+1. Stability
+2. Performance
+3. DX
+4. UI polish
+
+Never refactor unrelated code.
+
+## Never Do
+
+❌ Change database schema without migration.
+
+❌ Hardcode plan limits.
+
+❌ Duplicate API endpoints.
+
+❌ Create another auth flow.
+
+❌ Store secrets in code.
+
+❌ Break backward compatibility.
+
+
+## Before Finishing
+
+Run:
+
+Server
+npm test
+
+Client
+npm run build
+
+Only mention failures caused by existing code.
