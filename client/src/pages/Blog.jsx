@@ -30,7 +30,7 @@ const Blog = () => {
   const [featured, ...rest] = BLOG_POSTS;
 
   return (
-    <div className="app-container py-12 sm:py-16">
+    <div className="app-container blog-page py-12 sm:py-16">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <header className="text-center">

@@ -198,7 +198,7 @@ const BlogPost = () => {
   const more = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 2);
 
   return (
-    <article style={{ backgroundColor: BODY_BG }}>
+    <article className="blog-page" style={{ backgroundColor: BODY_BG }}>
       {/* ── Split hero: left colour + text, right image (hidden on mobile) ── */}
       <header className="grid items-stretch lg:grid-cols-2" style={{ backgroundColor: t.band }}>
         <div className="app-container py-14 sm:py-20">
