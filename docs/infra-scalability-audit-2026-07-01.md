@@ -122,11 +122,15 @@ Key choices to decide at approval:
 
 Each milestone is independently testable, deployable, and reversible. No two major infra changes in one step.
 
-**Phase 1 — Zero-infra latency wins (safe, no new services)**
-- 1a. Add `compression()` middleware (after verifying Render proxy isn't already gzipping).
-- 1b. Replace `SELECT *` in host-profile services with an explicit column list (fixes 20s page).
-- 1c. Add `.limit()`/`.range()` cursor pagination to the 5 unbounded list endpoints.
-- 1d. Add `Cache-Control: public, s-maxage` + `ETag` to public GETs (`/api/host/:username`, `/api/services/public/*`, `/api/plans`, `/api/categories`) so Vercel/CDN + browsers cache them. Bust via short TTL (60–120s) + on-mutation where cheap.
+**Phase 1 — Zero-infra latency wins (safe, no new services) — ✅ DONE (branch `perf/api-latency-phase1`)**
+- 1a. ✅ Added `compression()` middleware (Accept-Encoding + 1KB gated, never double-encodes; honors `x-no-compression`). `server.js`.
+- 1b. ✅ Replaced `SELECT *` in host-profile services with a `SERVICE_PUBLIC_COLS` whitelist (+ the missing `.limit(100)` on the fallback path). Kills the 20s page. `hostController.js`.
+- 1c. ✅ Bounded the 5 unbounded list endpoints (host/guest bookings, received/host reviews, payout requests) via `utils/pagination.js` (`parseListRange` — optional `?limit/?offset`, hard ceiling). Bare-array shape preserved → no client break. Reviews cap-only so count/avg stay correct.
+- 1d. ✅ Added `Cache-Control` (`utils/httpCache.js` `setPublicCache`) to public GET success paths: host profile 120s, service detail 120s, plans 300s, categories 600s. `max-age` lands now (direct-to-Render); `s-maxage`+`stale-while-revalidate` are CDN-ready; Express weak ETag gives 304 for free.
+
+Tests after Phase 1: server **1071/1071** green. No client changes; client build not re-run.
+
+> **Worktree note:** this repo's checkout is shared by a concurrent session that repeatedly switched branches mid-task, reverting the working tree. Phase 1 was finished in an isolated git worktree at `.claude/worktrees/perf-api-latency` on `perf/api-latency-phase1` to stop the HEAD drift. All commits pushed to `origin/perf/api-latency-phase1`.
 
 **Phase 2 — Server read cache**
 - 2a. Introduce cache abstraction (`getOrSet(key, ttl, fn)`) with pluggable backend.
