@@ -73,3 +73,43 @@ test('falls back to fee-only select when commission_applied column is missing', 
   expect(p.revenue.total).toBe(10);
   expect(p.bookings.paid).toBe(1);
 });
+
+const {
+  bookingGrossValue, productGrossValue, median,
+} = require('../../controllers/insightsAdminController');
+
+describe('bookingGrossValue (spec D2)', () => {
+  test('primary: customer_total minus platform fee and its GST', () => {
+    expect(bookingGrossValue({ customer_total: 1180, platform_fee_amount: 10, platform_fee_gst: 1.8 }))
+      .toBe(1168.2);
+  });
+  test('free booking (customer_total 0) => 0', () => {
+    expect(bookingGrossValue({ customer_total: 0, platform_fee_amount: 0, platform_fee_gst: 0 })).toBe(0);
+  });
+  test('NULL fee/gst coalesced to 0', () => {
+    expect(bookingGrossValue({ customer_total: 500 })).toBe(500);
+  });
+  test('pre-v2.2 fallback: NULL customer_total => vendor_amount + commission_applied', () => {
+    expect(bookingGrossValue({ customer_total: null, vendor_amount: 900, commission_applied: 50 })).toBe(950);
+  });
+  test('negative reconstruction clamped to 0', () => {
+    expect(bookingGrossValue({ customer_total: 5, platform_fee_amount: 10, platform_fee_gst: 1.8 })).toBe(0);
+  });
+});
+
+describe('productGrossValue (spec D3)', () => {
+  test('uses amount_paid', () => {
+    expect(productGrossValue({ amount_paid: 299, platform_fee: 10 })).toBe(299);
+  });
+  test('free product (0) => 0; null => 0', () => {
+    expect(productGrossValue({ amount_paid: 0 })).toBe(0);
+    expect(productGrossValue({})).toBe(0);
+  });
+});
+
+describe('median (spec D6)', () => {
+  test('empty => null', () => expect(median([])).toBeNull());
+  test('odd => middle', () => expect(median([3, 1, 2])).toBe(2));
+  test('even => mean of two middle', () => expect(median([1, 2, 3, 4])).toBe(2.5));
+  test('rounds to 1 decimal', () => expect(median([1.2, 2.2])).toBe(1.7));
+});

@@ -11,6 +11,37 @@ const { safeError } = require('../utils/httpError');
 
 const DAY = 24 * 60 * 60 * 1000;
 
+const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
+
+// Gross service value of a paid booking (GMV contribution) — spec D2.
+//   primary: customer_total − platform_fee − platform_fee_gst  (= service price)
+//   fallback (pre-v2.2 row, customer_total NULL): vendor_amount + commission_applied
+// Clamped to ≥0. Reused by BOTH gmv and activation so they cannot diverge.
+const bookingGrossValue = (b) => {
+  let v;
+  if (b.customer_total != null) {
+    v = Number(b.customer_total)
+      - (Number(b.platform_fee_amount) || 0)
+      - (Number(b.platform_fee_gst) || 0);
+  } else {
+    v = (Number(b.vendor_amount) || 0) + (Number(b.commission_applied) || 0);
+  }
+  return Math.max(0, round2(v));
+};
+
+// Gross value of a paid product purchase (GMV contribution) — spec D3.
+const productGrossValue = (p) => Math.max(0, round2(Number(p.amount_paid) || 0));
+
+// Median of a numeric array, 1-decimal; null when empty — spec D6.
+const median = (arr) => {
+  if (!arr.length) return null;
+  const s = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  const m = s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+  return round1(m);
+};
+
 // Platform revenue on a paid booking = platform fee + commission collected.
 // GST is a pass-through liability, not revenue (matches getStats).
 const bookingRevenue = (b) =>
@@ -84,4 +115,4 @@ const getKpis = async (req, res) => {
   }
 };
 
-module.exports = { getKpis };
+module.exports = { getKpis, bookingGrossValue, productGrossValue, median };
