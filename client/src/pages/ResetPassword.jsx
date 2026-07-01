@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { resetPassword } from "../services/api";
 import toast from "react-hot-toast";
+import Seo from "../components/common/Seo";
 
 const ResetPassword = () => {
   const location = useLocation();
@@ -43,6 +44,7 @@ const ResetPassword = () => {
 
   return (
     <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
+      <Seo title="Reset password — Book A Sloth" robots="noindex,nofollow" />
       <div className="page-card w-full max-w-md p-5 sm:p-8">
         <h1 className="text-2xl font-bold mb-2">Reset password</h1>
         <p className="mb-6 text-sm text-gray-500">

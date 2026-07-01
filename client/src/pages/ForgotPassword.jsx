@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { forgotPassword } from "../services/api";
 import toast from "react-hot-toast";
+import Seo from "../components/common/Seo";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -26,6 +27,7 @@ const ForgotPassword = () => {
   if (sent) {
     return (
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
+        <Seo title="Forgot password — Book A Sloth" robots="noindex,nofollow" />
         <div className="page-card w-full max-w-md p-5 sm:p-8 text-center">
           <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
             <svg
@@ -69,6 +71,7 @@ const ForgotPassword = () => {
 
   return (
     <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
+      <Seo title="Forgot password — Book A Sloth" robots="noindex,nofollow" />
       <div className="page-card w-full max-w-md p-5 sm:p-8">
         <h1 className="text-2xl font-bold mb-2">Forgot password?</h1>
         <p className="mb-6 text-sm text-gray-500">

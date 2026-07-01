@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import useDocumentMeta from '../../hooks/useDocumentMeta';
+import Seo from './Seo';
+import { SITE_URL } from '../../utils/seo';
 
 /**
  * Shared chrome for the legal pages (/terms, /privacy, /refund). Keeps the three
@@ -20,11 +22,17 @@ const POLICIES = [
   { to: '/refund',  label: 'Refund & Cancellation' },
 ];
 
-export default function LegalLayout({ title, updated = '20 June 2026', current, intro, children }) {
+export default function LegalLayout({ title, updated = '20 June 2026', current, intro, description, children }) {
   useDocumentMeta({ title: `${title} | Book A Sloth` });
+  const canonical = current ? `${SITE_URL}${current}` : undefined;
 
   return (
     <div className="min-h-screen" style={{ background: "#f7f5ef" }}>
+    <Seo
+      title={`${title} | Book A Sloth`}
+      description={description || `${title} for Book A Sloth — the online appointment booking and scheduling platform.`}
+      canonical={canonical}
+    />
     <div className="app-container py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <h1 className="text-2xl sm:text-3xl font-bold mb-1 text-ink">{title}</h1>

@@ -129,3 +129,105 @@ export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [] } =
     mainEntity: person,
   };
 };
+
+// ── Shared brand / page builders ─────────────────────────────────────────────
+
+// Official brand profiles — used for Organization.sameAs (entity disambiguation
+// for SEO/GEO). Source of truth mirrors client/src/components/about/TeamSocials.jsx.
+export const ORG_SAME_AS = [
+  'https://www.linkedin.com/company/book-a-sloth/',
+  'https://www.instagram.com/bookasloth',
+  'https://www.facebook.com/bookasloth',
+  'https://x.com/bookasloth',
+];
+
+// Canonical Organization node. Pages that need it inline it into their JSON-LD
+// so the brand entity is consistent everywhere (never hand-roll a second one).
+export const organizationJsonLd = ({ siteUrl = SITE_URL } = {}) => {
+  const site = trimSlash(siteUrl);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Book A Sloth',
+    url: `${site}/`,
+    logo: `${site}/logo-512.png`,
+    description: 'Online booking and appointment scheduling platform for coaches, consultants, therapists, and small businesses.',
+    sameAs: ORG_SAME_AS,
+  };
+};
+
+// BreadcrumbList from an ordered [{ name, path }] trail. Paths are site-relative
+// ('/x') or absolute; the crawler shows the trail and can render breadcrumb rich
+// results. Home is the caller's responsibility (pass it first).
+export const breadcrumbJsonLd = ({ items = [], siteUrl = SITE_URL } = {}) => {
+  const site = trimSlash(siteUrl);
+  const abs = (p) => (/^https?:/i.test(p) ? p : `${site}${p.startsWith('/') ? '' : '/'}${p}`);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: (items || [])
+      .filter((it) => it && it.name && it.path)
+      .map((it, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: it.name,
+        item: abs(it.path),
+      })),
+  };
+};
+
+// FAQPage from [{ q, a }]. `a` may contain plain text; strip to a safe string.
+export const faqJsonLd = ({ faqs = [] } = {}) => ({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: (faqs || [])
+    .filter((f) => f && f.q && f.a)
+    .map((f) => ({
+      '@type': 'Question',
+      name: String(f.q),
+      acceptedAnswer: { '@type': 'Answer', text: String(f.a) },
+    })),
+});
+
+// BlogPosting for a single article. Pass the loaded post record.
+export const articleJsonLd = ({ post = {}, siteUrl = SITE_URL } = {}) => {
+  const site = trimSlash(siteUrl);
+  const url = post.slug ? `${site}/blog/${post.slug}` : `${site}/blog`;
+  const ld = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.seo_title || post.title || 'Book A Sloth Blog',
+    description: post.seo_description || post.excerpt || undefined,
+    url,
+    mainEntityOfPage: url,
+    datePublished: post.published_at || post.created_at || undefined,
+    dateModified: post.updated_at || post.published_at || post.created_at || undefined,
+    author: { '@type': 'Organization', name: post.author || 'Book A Sloth' },
+    publisher: organizationJsonLd({ siteUrl: site }),
+  };
+  if (post.seo_image || post.cover_image || post.image) {
+    ld.image = post.seo_image || post.cover_image || post.image;
+  }
+  return ld;
+};
+
+// ContactPage node with the support contact point.
+export const contactPageJsonLd = ({ siteUrl = SITE_URL, email = 'bolt@bookasloth.in' } = {}) => {
+  const site = trimSlash(siteUrl);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ContactPage',
+    url: `${site}/contact`,
+    mainEntity: {
+      '@type': 'Organization',
+      name: 'Book A Sloth',
+      url: `${site}/`,
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email,
+        availableLanguage: ['en', 'hi'],
+      },
+    },
+  };
+};

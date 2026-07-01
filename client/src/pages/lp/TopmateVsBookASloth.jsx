@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import useUtm from "../../hooks/useUtm";
 import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
+import Seo from "../../components/common/Seo";
+import { SITE_URL } from "../../utils/seo";
 
 import { CtaButton } from "../../components/lp/LpKit";
 import LpHero from "../../components/lp/LpHero";
@@ -39,6 +41,11 @@ const TopmateVsBookASloth = () => {
 
   return (
     <div className="min-h-dvh overflow-x-hidden bg-canvas text-ink">
+      <Seo
+        title="Book A Sloth vs Topmate — A Better Way to Get Booked"
+        description="Compare Book A Sloth and Topmate for creators and consultants. See pricing, payouts, reminders, and booking features side by side."
+        canonical={`${SITE_URL}/lp/topmate-vs-bookasloth`}
+      />
       {/* ───── Minimal header (no nav links = no exit) ───── */}
       <header className="sticky top-0 z-40 border-b border-black/5 bg-canvas/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-8">

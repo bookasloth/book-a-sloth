@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Seo from "../components/common/Seo";
 import toast from "react-hot-toast";
 
 const VendorSignup = () => {
@@ -31,6 +32,7 @@ const VendorSignup = () => {
 
   return (
     <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
+      <Seo title="Become a host — Book A Sloth" robots="noindex,nofollow" />
       <div className="page-card w-full max-w-md p-5 sm:p-8">
         <h1 className="text-2xl font-bold mb-1">Create a host account</h1>
         <p className="text-gray-500 text-sm mb-6">

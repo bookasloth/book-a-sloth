@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Briefcase, Clock, IndianRupee } from 'lucide-react';
 import Seo from '../components/common/Seo';
+import { breadcrumbJsonLd } from '../utils/seo';
 import { getJobBySlug, company, HIRING_EMAIL } from '../components/careers/careersContent';
 
 function NotFound() {
@@ -66,7 +67,11 @@ export default function JobDetail() {
         title={`${job.title} — Careers at Book A Sloth`}
         description={job.summary}
         canonical={`https://bookasloth.com/careers/${job.slug}`}
-        jsonLd={jsonLd}
+        jsonLd={[jsonLd, breadcrumbJsonLd({ items: [
+          { name: 'Home', path: '/' },
+          { name: 'Careers', path: '/careers' },
+          { name: job.title, path: `/careers/${job.slug}` },
+        ] })]}
       />
       <article className="mx-auto max-w-2xl px-5 py-20 sm:px-8 lg:py-24">
         <Link to="/careers" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink/60 hover:text-ink hover:no-underline">

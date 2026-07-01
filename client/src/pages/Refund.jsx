@@ -8,6 +8,7 @@ const Refund = () => (
   <LegalLayout
     title="Refund & Cancellation Policy"
     current="/refund"
+    description="Book A Sloth refund and cancellation policy — how refunds work for bookings, digital products, and subscriptions, processed via Razorpay."
     intro={
       <>
         <p>
