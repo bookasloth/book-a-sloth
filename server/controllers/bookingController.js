@@ -5,6 +5,7 @@ const featureFlags = require("../services/featureFlags");
 const sendEmail = require("../utils/sendEmail");
 const NotificationEngine = require("../services/notificationEngine");
 const { checkBookingReceiveLimit } = require("../middleware/planMiddleware");
+const { parseListRange } = require("../utils/pagination");
 const crypto = require("crypto");
 const { computeBreakdown } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
@@ -541,6 +542,10 @@ const createBooking = async (req, res) => {
 // GET /api/bookings/host
 const getHostBookings = async (req, res) => {
   try {
+    // Safety ceiling so a large account can't drag its entire paid-booking
+    // history over the wire on every dashboard load. Optional ?limit/?offset;
+    // response stays a bare array (unchanged shape). See utils/pagination.js.
+    const { from, to } = parseListRange(req.query);
     // Vendors only see PAID bookings. An unpaid/pending booking is not yet the
     // vendor's booking — it is a lead and only Admin can see it. payment_status
     // 'paid' covers paid/confirmed and paid-then-cancelled (refund visibility);
@@ -550,7 +555,8 @@ const getHostBookings = async (req, res) => {
       .select("*, services(*), profiles!bookings_guest_id_fkey(*)")
       .eq("host_id", req.user.id)
       .eq("payment_status", "paid")
-      .order("scheduled_at", { ascending: true });
+      .order("scheduled_at", { ascending: true })
+      .range(from, to);
     // Fallback if schema cache is stale
     if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
       result = await supabaseAdmin
@@ -558,7 +564,8 @@ const getHostBookings = async (req, res) => {
         .select("id, service_id, host_id, guest_id, guest_name, guest_email, scheduled_at, status, payment_status, meeting_link, notes, created_at, updated_at, services(id, title, duration, price), profiles!bookings_guest_id_fkey(id, name, email)")
         .eq("host_id", req.user.id)
         .eq("payment_status", "paid")
-        .order("scheduled_at", { ascending: true });
+        .order("scheduled_at", { ascending: true })
+        .range(from, to);
     }
     const { data, error } = result;
     if (error) return safeError(res, error);
@@ -571,18 +578,22 @@ const getHostBookings = async (req, res) => {
 // GET /api/bookings/guest
 const getGuestBookings = async (req, res) => {
   try {
+    // Safety ceiling (optional ?limit/?offset); response stays a bare array.
+    const { from, to } = parseListRange(req.query);
     let result = await supabaseAdmin
       .from("bookings")
       .select("*, services(*), profiles!bookings_host_id_fkey(*)")
       .eq("guest_id", req.user.id)
-      .order("scheduled_at", { ascending: true });
+      .order("scheduled_at", { ascending: true })
+      .range(from, to);
     // Fallback if schema cache is stale
     if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
       result = await supabaseAdmin
         .from("bookings")
         .select("id, service_id, host_id, guest_id, guest_name, guest_email, scheduled_at, status, payment_status, meeting_link, notes, created_at, updated_at, services(id, title, duration, price), profiles!bookings_host_id_fkey(id, name, email)")
         .eq("guest_id", req.user.id)
-        .order("scheduled_at", { ascending: true });
+        .order("scheduled_at", { ascending: true })
+        .range(from, to);
     }
     const { data, error } = result;
     if (error) return safeError(res, error);
