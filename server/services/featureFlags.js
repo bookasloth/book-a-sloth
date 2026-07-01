@@ -15,11 +15,20 @@ async function loadFlags() {
   return map;
 }
 
-// Fail-open: unknown / errored flags default to enabled so a missing
-// migration never bricks a feature.
+// Security-boundary flags fail CLOSED. For these keys an absent row or a DB
+// read error must NOT silently disable the guard, so they default to `false`
+// (the safe / more-restrictive state) rather than `true`. A boundary control
+// that fails open is not a control. `unified_login` gates the host/guest login
+// separation (authController) — if it can't be read, enforce the separation.
+const FAIL_CLOSED_KEYS = new Set(['unified_login']);
+
+// Fail-open (default): unknown / errored feature flags default to enabled so a
+// missing migration never bricks a normal feature. Security keys override this
+// and fail closed (see FAIL_CLOSED_KEYS).
 async function isFeatureEnabled(key) {
   const map = await loadFlags();
-  return key in map ? map[key] : true;
+  if (key in map) return map[key];
+  return FAIL_CLOSED_KEYS.has(key) ? false : true;
 }
 
 function clearCache() { _cache = { at: 0, map: null }; }
