@@ -105,6 +105,27 @@ const getKpis = async (req, res) => {
     const hosts = hostsRes.data || [];
     const hostsNew30 = hosts.filter((h) => h.created_at >= since30).length;
 
+    // ── Activation: host's first money-moving paid booking (spec D5/D6) ──
+    const hostCreatedAt = new Map(hosts.map((h) => [h.id, h.created_at]));
+    const firstQualifyingByHost = new Map(); // host_id -> earliest qualifying created_at
+    for (const b of paid) {
+      if (!b.host_id || bookingGrossValue(b) <= 0) continue; // skip null host + free bookings
+      const prev = firstQualifyingByHost.get(b.host_id);
+      if (!prev || b.created_at < prev) firstQualifyingByHost.set(b.host_id, b.created_at);
+    }
+    const activatedCount = firstQualifyingByHost.size;
+    const totalHosts = hosts.length;
+    let activatedNew30 = 0;
+    const ttfbDays = [];
+    for (const [hostId, firstAt] of firstQualifyingByHost) {
+      if (firstAt >= since30) activatedNew30 += 1;
+      const created = hostCreatedAt.get(hostId);
+      if (created) {
+        const diff = (new Date(firstAt).getTime() - new Date(created).getTime()) / DAY;
+        ttfbDays.push(Math.max(0, diff)); // clamp negatives (data anomaly)
+      }
+    }
+
     res.json({
       // Tile 1 — Revenue + bookings (Postgres truth)
       revenue: {
@@ -132,6 +153,13 @@ const getKpis = async (req, res) => {
         products: round2(productGmvAll),
         platformRevenue: round2(gmvPlatformRevenue),
         takeRate,
+      },
+      activation: {
+        activatedCount,
+        totalHosts,
+        activationRate: totalHosts ? round1((activatedCount / totalHosts) * 100) : 0,
+        new30: activatedNew30,
+        medianTimeToFirstBookingDays: median(ttfbDays),
       },
       // Tile 4 — Host growth
       hosts: {

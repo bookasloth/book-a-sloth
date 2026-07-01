@@ -164,3 +164,46 @@ describe('median (spec D6)', () => {
   test('even => mean of two middle', () => expect(median([1, 2, 3, 4])).toBe(2.5));
   test('rounds to 1 decimal', () => expect(median([1.2, 2.2])).toBe(1.7));
 });
+
+test('activation counts only hosts with a money-moving paid booking', async () => {
+  const now = Date.now();
+  const nowIso = new Date(now).toISOString();
+  const host1Created = new Date(now - 5 * 24 * 60 * 60 * 1000).toISOString();  // h1 signed up 5d ago
+  const h1FirstPaid = new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString();   // first paid 2d after signup
+  const bookings = [
+    { id: 1, host_id: 'h1', payment_status: 'paid', customer_total: 500, platform_fee_amount: 0, platform_fee_gst: 0, created_at: h1FirstPaid }, // gross>0 => activates h1
+    { id: 2, host_id: 'h2', payment_status: 'paid', customer_total: 0,   platform_fee_amount: 0, platform_fee_gst: 0, created_at: nowIso },       // free => NOT activation
+    { id: 3, host_id: 'h3', payment_status: 'unpaid',customer_total: 999, platform_fee_amount: 0, platform_fee_gst: 0, created_at: nowIso },      // unpaid => excluded
+  ];
+  supabaseAdmin.from
+    .mockReturnValueOnce(makeQuery({ data: bookings, error: null }))
+    .mockReturnValueOnce(makeQuery({ data: [], error: null }))                                        // products
+    .mockReturnValueOnce(makeQuery({ data: [
+      { id: 'h1', created_at: host1Created }, { id: 'h2', created_at: nowIso }, { id: 'h3', created_at: nowIso },
+    ], error: null }))                                                                                // hosts (3)
+    .mockReturnValueOnce(makeQuery({ count: 0, error: null }));                                       // guests
+
+  const r = res();
+  await getKpis({}, r);
+  const p = r.json.mock.calls[0][0];
+  expect(p.activation.activatedCount).toBe(1);            // only h1
+  expect(p.activation.totalHosts).toBe(3);
+  expect(p.activation.activationRate).toBe(33.3);         // 1/3
+  expect(p.activation.new30).toBe(1);                     // h1 first-paid within 30d
+  expect(p.activation.medianTimeToFirstBookingDays).toBe(2); // 5d signup -> 3d ago first paid = 2 days
+});
+
+test('activation is null/zero-safe on empty data', async () => {
+  supabaseAdmin.from
+    .mockReturnValueOnce(makeQuery({ data: [], error: null }))   // bookings
+    .mockReturnValueOnce(makeQuery({ data: [], error: null }))   // products
+    .mockReturnValueOnce(makeQuery({ data: [], error: null }))   // hosts
+    .mockReturnValueOnce(makeQuery({ count: 0, error: null }));  // guests
+
+  const r = res();
+  await getKpis({}, r);
+  const p = r.json.mock.calls[0][0];
+  expect(p.activation).toEqual({
+    activatedCount: 0, totalHosts: 0, activationRate: 0, new30: 0, medianTimeToFirstBookingDays: null,
+  });
+});
