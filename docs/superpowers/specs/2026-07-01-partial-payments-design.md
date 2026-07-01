@@ -60,6 +60,7 @@ display. Full/online bookings set `depositPortion = P` and are byte-for-byte unc
 | `payment_type` | text, default `'full'` CHECK `in ('full','partial')` | Snapshot at booking creation. |
 | `deposit_amount` | numeric(12,2), default `0` | The service-value portion collected online (= `servicePrice` fed to `computeBreakdown`). |
 | `balance_due` | numeric(12,2), default `0` | Offline balance the host collects in person (`0` for full bookings). |
+| `service_value_snapshot` | numeric(12,2), nullable | **Immutable** full service price `P` at booking time. **Analytics/reporting/exports/history only.** Populated for every booking (partial and full). MUST NEVER enter any money calculation (see Accounting vs Analytics). |
 
 No `payment_status` enum change. No `balance_collected` column (BAS does not track collection).
 
@@ -73,6 +74,8 @@ Let `P` = `service.price` (full price). `pct` = `deposit_percentage`.
   - `depositPortion = round(P × pct / 100)` (nearest rupee, 2-dp).
   - `balance_due = P − depositPortion` (so `depositPortion + balance_due = P` exactly).
   - `payment_type = 'partial'`, `deposit_amount = depositPortion`.
+- **Every booking (partial and full)** stores `service_value_snapshot = P` — analytics-only,
+  never read by any calculation below.
 - Feed `depositPortion` into the existing engine:
   `computeBreakdown({ servicePrice: depositPortion, commissionPercentage: pct_plan, platformFee: ₹10, gstRate: 0.18 })` →
   - `customer_total = depositPortion + platform_fee + gst_on_fee` (what the guest pays online).
@@ -87,7 +90,48 @@ Let `P` = `service.price` (full price). `pct` = `deposit_percentage`.
 **Worked example:** offline service ₹1000, 60% deposit, Studio host (0% commission).
 `depositPortion = 600`, `balance_due = 400`. Online: `customer_total = 600 + 10 + 1.80 = 611.80`
 (guest pays now); `vendor_amount = 600 − 0 − 0 − razorpay_fee`. Guest pays ₹400 to the host in
-person. BAS books reflect ₹600 processed.
+person. BAS books reflect ₹600 processed. `service_value_snapshot = 1000` is stored for
+analytics but is **not** part of any figure above.
+
+## Accounting vs Analytics (permanent architectural rule)
+
+Two intentionally different concepts. They must never be mixed:
+
+- **Financial records** (accounting) always represent **money actually processed by BAS** —
+  `customer_total`, `deposit_amount`, `vendor_amount`, commission, GST, settlements, payouts,
+  and every ledger/journal entry. For a partial booking this is the **deposit**, never the full
+  service price.
+- **Analytics** may represent **the total value of booked services** — the sum of
+  `service_value_snapshot`. This can exceed processed value (it includes offline balances BAS
+  never touched).
+
+**Rule:** `service_value_snapshot` (and the offline `balance_due`) are analytics-only. No
+accounting, Razorpay, settlement, payout, or ledger path may read them. Any code that computes
+money reads the processed figures; any code that reports "value booked" reads the snapshot.
+
+## Reporting metrics (definitions)
+
+Define two distinct metrics — do not collapse them into one ambiguous "GMV":
+
+- **Processed Value** — total online payments BAS processed (sum of `customer_total`, or of
+  `deposit_amount` for service-value processed). This is what accounting uses.
+- **Service Value** — total booked service value (sum of `service_value_snapshot`). Business
+  analytics may use this to show demand/booked volume including offline balances.
+
+These are **definitions for correctness**, not new dashboards. **v1 only populates
+`service_value_snapshot`** so the Service Value metric is *possible later*; it does not build a
+Service-Value report or alter the existing #7 insights dashboard (which stays Processed-Value
+based). Wiring Service Value into a dashboard is future work, explicitly out of this build.
+
+## Immutable booking snapshot (permanent rule)
+
+At creation, a booking **permanently snapshots** all of: `service_value_snapshot` (full price),
+`deposit_amount`, `balance_due`, `payment_type`, and the full pricing breakdown
+(`customer_total`, `platform_fee_amount`, `platform_fee_gst`, `commission_applied`,
+`commission_gst`, `commission_percentage`, `gst_rate`, `vendor_amount`). Later edits to the
+service (price, `deposit_percentage`, `accept_partial`, meeting mode, plan, platform fee) MUST
+NEVER retroactively alter an existing booking. Every booking is a self-contained financial
+record of the moment it was made.
 
 ## Service-setup UX (`client/src/pages/services/ServiceForm.jsx`)
 
@@ -133,17 +177,34 @@ person. BAS books reflect ₹600 processed.
 - **Host** booking list/detail: a "Partial" badge + info line "Deposit ₹deposit_amount paid ·
   **₹balance_due to collect in person**". No toggle, no collected/outstanding state, no summary
   report — BAS does not track balance collection.
-- **Earnings / transactions / settlement:** reflect only the deposit (`vendor_amount` from the
-  deposit snapshot), exactly as today. The offline balance is never shown as BAS revenue or
-  payout.
+- **Host Earnings / Settlements / Transactions / Payouts** reflect **only money processed
+  through BAS** (the deposit's `vendor_amount`), exactly as today. The offline `balance_due` is
+  **informational only** and is NEVER counted as BAS revenue, earnings, payout, or settlement.
+  Where a balance is shown near these surfaces, it must be visibly labelled as an offline amount
+  the host collects directly — not part of BAS figures.
 - **Guest** `/user/my-bookings` + receipt: show deposit paid + "₹balance_due payable to the
   host in person".
+
+## Customer communication copy (consistency rule)
+
+Every customer-facing touchpoint for a partial booking — checkout, confirmation step,
+confirmation email, receipt, guest bookings page — uses consistent, unambiguous wording:
+
+- **"Deposit Paid"** for the online amount (`deposit_amount`).
+- **"Balance Due"** for `balance_due`.
+- **"Pay the remaining balance to the host in person."**
+
+Never use wording that implies the booking is fully paid when only a deposit was collected
+(e.g. avoid a bare "Paid ✓" / "Payment complete" on a partial booking without the balance
+context). Full bookings keep their existing copy unchanged.
 
 ## API + DB changes
 
 - **Migration** (`vX_partial_payments.sql`, applied manually both DBs): `services +=
-  accept_partial, deposit_percentage`; `bookings += payment_type, deposit_amount, balance_due`.
-  Additive; existing rows default to `payment_type='full'`, `balance_due=0`.
+  accept_partial, deposit_percentage`; `bookings += payment_type, deposit_amount, balance_due,
+  service_value_snapshot`. Additive; existing rows default to `payment_type='full'`,
+  `balance_due=0` (`service_value_snapshot` stays NULL for pre-feature rows — acceptable, it is
+  analytics-only and backfill is optional).
 - `serviceController` + `hostController`: validate + persist the two service fields (offline
   gate, 50–99), add to SELECT/write whitelists; public service reads expose them.
 - `bookingController.createBooking`: deposit snapshot + new columns (schema-fallback).
@@ -173,10 +234,23 @@ person. BAS books reflect ₹600 processed.
 
 ## Future extensibility (no overbuild)
 
-`deposit_amount` / `balance_due` / `payment_type` generalize to future models (online partial,
-installments, balance auto-charge) without a schema change — but none of those are built now.
-Explicitly **not** built in v1: refunds, refundable deposits, cancellation policy, automatic
-balance collection, balance reminders, balance-collection tracking, free-service deposit holds.
+`deposit_amount` / `balance_due` / `payment_type` / `service_value_snapshot` generalize to
+future models (online partial, installments, balance auto-charge, Service-Value analytics)
+without a schema change — but none of those are built now.
+
+**v1 is intentionally small. Explicitly NOT in scope:**
+- Offline services only (no online partial payments).
+- No balance tracking / no balance-collection state.
+- No cash reconciliation.
+- No reminders for the remaining balance.
+- No refund engine / no refundable deposits.
+- No cancellation-policy engine.
+- No installment support.
+- No deposit holds for free services.
+- No new Service-Value dashboard (the metric is defined + the column populated; surfacing it is future).
+
+Goal: minimal implementation complexity, minimal blast radius, accurate financial records,
+future-proof analytics.
 
 ## Files touched (indicative; pinned in the plan)
 
@@ -186,8 +260,10 @@ balance collection, balance reminders, balance-collection tracking, free-service
   (validate/persist/expose service fields).
 - Client: `client/src/pages/services/ServiceForm.jsx`, `client/src/pages/ServiceBooking.jsx`,
   host booking list/detail components, guest bookings page, receipt/email template.
-- Tests: `computeDeposit` rounding; booking snapshot (partial vs full vs online); service-field
-  validation (offline gate, 50–99); checkout render; edge cases.
+- Tests: `computeDeposit` rounding; booking snapshot (partial vs full vs online); **`service_value_snapshot = P`
+  written for every booking AND `customer_total`/`vendor_amount`/commission are independent of it**
+  (accounting-vs-analytics separation); service-field validation (offline gate, 50–99); checkout
+  render; edge cases.
 
 ## Deploy notes
 
