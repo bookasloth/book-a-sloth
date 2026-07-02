@@ -64,6 +64,20 @@ const serviceEntries = (rows, siteUrl) =>
     .filter((r) => r && r.slug && r.profiles && r.profiles.username)
     .map((r) => ({ loc: serviceUrl(siteUrl, r.profiles.username, r.slug), lastmod: toLastmod(r.updated_at), changefreq: 'weekly', priority: '0.8' }));
 
+// Professions that own >=1 active bookable-service category -> /services/:slug pages.
+const professionEntries = (rows, siteUrl) => {
+  const site = trimSlash(siteUrl);
+  return [
+    { loc: `${site}/services`, changefreq: 'weekly', priority: '0.6' },
+    ...(rows || []).map((r) => ({
+      loc: `${site}/services/${r.slug}`,
+      lastmod: toLastmod(r.updated_at),
+      changefreq: 'weekly',
+      priority: '0.6',
+    })),
+  ];
+};
+
 // ── DB fetchers ──────────────────────────────────────────────────────────────
 
 const schemaMissing = (err) => err && /Could not find the|column.*does not exist/i.test(err.message || '');
@@ -124,9 +138,24 @@ const fetchServices = async () => {
   });
 };
 
+// Professions that own >=1 active bookable-service category (newest updated_at wins).
+const fetchProfessions = async () => {
+  const { data, error } = await supabaseAdmin
+    .from('service_categories')
+    .select('primary_category, updated_at')
+    .eq('is_active', true);
+  if (error) throw error;
+  const newest = new Map();
+  for (const r of data || []) {
+    const prev = newest.get(r.primary_category);
+    if (!prev || (r.updated_at && r.updated_at > prev)) newest.set(r.primary_category, r.updated_at);
+  }
+  return [...newest.entries()].map(([slug, updated_at]) => ({ slug, updated_at }));
+};
+
 module.exports = {
   // pure
-  trimSlash, hostUrl, serviceUrl, toLastmod, STATIC_ROUTES, staticEntries, hostEntries, serviceEntries,
+  trimSlash, hostUrl, serviceUrl, toLastmod, STATIC_ROUTES, staticEntries, hostEntries, serviceEntries, professionEntries,
   // db
-  fetchHosts, fetchServices,
+  fetchHosts, fetchServices, fetchProfessions,
 };

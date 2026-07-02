@@ -3,7 +3,7 @@
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: {} }));
 
 const {
-  toLastmod, hostUrl, serviceUrl, staticEntries, hostEntries, serviceEntries,
+  toLastmod, hostUrl, serviceUrl, staticEntries, hostEntries, serviceEntries, professionEntries,
 } = require('../../services/sitemapService');
 
 const SITE = 'https://bookasloth.com';
@@ -64,6 +64,26 @@ describe('serviceEntries', () => {
   test('maps a service to /username/slug and skips unresolvable rows', () => {
     expect(serviceEntries(rows, SITE)).toEqual([
       { loc: 'https://bookasloth.com/john-doe/consult', lastmod: '2026-06-20', changefreq: 'weekly', priority: '0.8' },
+    ]);
+  });
+});
+
+describe('professionEntries', () => {
+  test('leads with the /services root entry (no lastmod)', () => {
+    const entries = professionEntries([], SITE);
+    expect(entries).toEqual([
+      { loc: 'https://bookasloth.com/services', changefreq: 'weekly', priority: '0.6' },
+    ]);
+  });
+  test('adds one URL per profession row with lastmod', () => {
+    const rows = [
+      { slug: 'therapy', updated_at: '2026-06-20T10:00:00Z' },
+      { slug: 'coaching', updated_at: '2026-06-15T10:00:00Z' },
+    ];
+    expect(professionEntries(rows, SITE)).toEqual([
+      { loc: 'https://bookasloth.com/services', changefreq: 'weekly', priority: '0.6' },
+      { loc: 'https://bookasloth.com/services/therapy', lastmod: '2026-06-20', changefreq: 'weekly', priority: '0.6' },
+      { loc: 'https://bookasloth.com/services/coaching', lastmod: '2026-06-15', changefreq: 'weekly', priority: '0.6' },
     ]);
   });
 });
