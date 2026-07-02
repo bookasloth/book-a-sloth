@@ -59,10 +59,15 @@ const ipBlocklist = require('./lib/ipBlocklist');
 app.use(ipGuard);
 app.use(offenseTracker);
 
-// Raw body for Razorpay webhook (must come before express.json)
-app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
+// Raw body for Razorpay webhook (must come before express.json). Explicit limit
+// so a malformed/oversized webhook body is rejected early (Razorpay payloads are
+// a few KB; 1mb is generous headroom).
+app.use('/api/payment/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
 
-app.use(express.json());
+// Explicit JSON body cap (defence-in-depth vs large-body DoS). This equals the
+// body-parser default but is stated so the bound is intentional and can't drift
+// silently if a future route needs a larger payload.
+app.use(express.json({ limit: '100kb' }));
 
 // Gzip/deflate JSON + text responses. Only kicks in when the client sends
 // Accept-Encoding and the body clears the 1KB default threshold, and it never

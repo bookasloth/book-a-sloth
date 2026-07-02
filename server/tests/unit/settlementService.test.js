@@ -94,6 +94,18 @@ test('available never negative when over-claimed', async () => {
   expect(b.available).toBe(0);
 });
 
+test('negative vendor_amount is clamped to 0 (cannot suppress a real balance)', async () => {
+  mockData(
+    [
+      { vendor_amount: 500, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid' },
+      { vendor_amount: -400, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid' },
+    ],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(500); // the -400 row contributes 0, not -400
+});
+
 test('booking completed exactly at cutoff counts as matured (<= cutoff)', async () => {
   mockData(
     [{ vendor_amount: 400, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(7), payment_status: 'paid' }],

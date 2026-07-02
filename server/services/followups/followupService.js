@@ -102,9 +102,18 @@ const bookingEligibility = async (row) => {
   return { ok: true };
 };
 
+// Strip control chars (CR/LF/TAB) from free-text profile fields before they are
+// handed to an external messaging API as template parameters. Defence-in-depth
+// against parameter smuggling / CRLF injection at the AiSensy boundary — host and
+// guest names are user-controlled and must never carry line breaks into a message.
+const cleanParam = (s) => String(s || '').replace(/[\r\n\t]+/g, ' ').trim();
+
 const sendRow = async (row) => {
   const p = row.payload || {};
-  const deepLink = p.host_username ? `${CLIENT_URL}/${p.host_username}` : `${CLIENT_URL}`;
+  // encodeURIComponent the slug even though normalizeSlug already constrains it —
+  // defence-in-depth so a future relaxation of the username charset can't break
+  // (or inject into) the deep link that ships inside the message body.
+  const deepLink = p.host_username ? `${CLIENT_URL}/${encodeURIComponent(p.host_username)}` : `${CLIENT_URL}`;
   await NotificationEngine.send({
     event: row.event_key,
     data: {
@@ -112,7 +121,7 @@ const sendRow = async (row) => {
       // WhatsApp body params: {{1}} guest name, {{2}} host name, {{3}} rebook link.
       // The link is a BODY param (not a dynamic CTA button) because AiSensy templates
       // have no dynamic button-URL option — the deep-link must live in the message text.
-      templateParams: [p.guest_name || 'there', p.host_name || 'your host', deepLink],
+      templateParams: [cleanParam(p.guest_name) || 'there', cleanParam(p.host_name) || 'your host', deepLink],
       emailData: {
         first_name: (p.guest_name || '').split(' ')[0],
         vendor_name: p.host_name, service_name: p.service_title, profile_url: deepLink,

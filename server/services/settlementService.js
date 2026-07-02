@@ -34,7 +34,10 @@ async function computeSettlementBalance(hostId, clearingDays, nowMs = Date.now()
 
   let matured = 0, clearing = 0, pendingCompletion = 0;
   for (const b of bookings || []) {
-    const amt = Number(b.vendor_amount) || 0;
+    // Clamp to ≥0: vendor_amount is a payout share and must never be negative.
+    // A negative value (only reachable via a corrupted booking row) would silently
+    // suppress a host's real matured balance, so treat it as 0 defensively.
+    const amt = Math.max(0, Number(b.vendor_amount) || 0);
     const ss = b.settlement_status;
     if (ss === 'cancelled' || ss === 'not_eligible') continue;
     if (ss === 'eligible_for_settlement') {
