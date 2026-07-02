@@ -61,8 +61,9 @@ export const PATH_LABELS = {
   admin:null, bookings:'Bookings', users:'Users', services:'Services',
   settings:'General Settings', payment:'Payment Settings', plans:'Subscription Plans', addons:'Addons',
   providers:'Hosts', active:'Active', suspended:'Suspended',
+  professions:'Professions', explore:'Explore Page', insights:'Marketing Insights',
   kyc:'KYC', approved:'Approved', rejected:'Rejected',
-  finance:'Finance', transactions:'Transactions', payouts:'Payouts', earnings:'Host Earnings', refunds:'Refunds',
+  finance:'Finance', journal:'Journal', ledger:'Ledger', transactions:'Transactions', payouts:'Payouts', earnings:'Host Earnings', refunds:'Refunds',
   content:'Content', pages:'Pages', blogs:'Blogs', newsletter:'Newsletter',
   faq:'FAQ', testimonials:'Testimonials',
   support:'Support', tickets:'Tickets', disputes:'Disputes', reviews:'Reviews', feedback:'Host Feedback',
@@ -77,13 +78,10 @@ export const PATH_LABELS = {
 
 export const NAV = [
   { id:'dashboard', section:'DASHBOARD', items:[
-    { label:'Operations Center', icon:'grid',     to:'/super-dashboard', exact:true, perm:'ops.view' },
-    { label:'Revenue',         icon:'trendUp',  to:'/super-dashboard/revenue', perm:'analytics.view' },
-    { label:'Marketing Insights', icon:'trendUp', to:'/super-dashboard/insights', perm:'analytics.view' },
-    { label:'Users',           icon:'users',    to:'/super-dashboard/users', perm:'users.view' },
-    { label:'Hosts',           icon:'building', to:'/super-dashboard/providers', perm:'professionals.view' },
-    { label:'Bookings',        icon:'calendar', to:'/super-dashboard/bookings', perm:'bookings.view' },
-    { label:'Pending Actions', icon:'clock',    to:'/super-dashboard/pending', perm:'ops.view' },
+    { label:'Operations Center',  icon:'grid',    to:'/super-dashboard', exact:true, perm:'ops.view' },
+    { label:'Revenue',            icon:'trendUp', to:'/super-dashboard/revenue', perm:'analytics.view' },
+    { label:'Marketing Insights', icon:'bars',    to:'/super-dashboard/insights', perm:'analytics.view' },
+    { label:'Pending Actions',    icon:'clock',   to:'/super-dashboard/pending', perm:'ops.view' },
   ]},
   { id:'operations', section:'OPERATIONS', items:[
     { label:'Bookings', icon:'calCheck', groupId:'op-bookings', perm:'bookings.view', children:[
@@ -151,15 +149,12 @@ export const NAV = [
     { label:'Payment Settings', icon:'card',    to:'/admin/settings/payment', perm:'settings.manage' },
     { label:'General Settings', icon:'gear',    to:'/admin/settings', perm:'settings.manage' },
   ]},
-  { id:'security', section:'SECURITY', items:[
-    { label:'Audit Logs',          icon:'activity',  to:'/admin/system/audit', perm:'audit.view' },
-    { label:'Roles & Permissions', icon:'shieldOk', to:'/admin/staff', perm:'staff.manage' },
-    { label:'Reserved Slugs',      icon:'lock',      to:'/admin/system/reserved', perm:'settings.manage' },
-    { label:'Blocked IPs',         icon:'ban',       to:'/admin/security/blocked-ips', perm:'settings.manage' },
-    { label:'API Keys',            icon:'key',       disabled:true },
-  ]},
-  { id:'control', section:'PLATFORM CONTROL', items:[
-    { label:'Feature Status', icon:'zap', to:'/admin/features', perm:'settings.manage' },
+  { id:'system', section:'SYSTEM', items:[
+    { label:'Audit Logs',     icon:'activity', to:'/admin/system/audit', perm:'audit.view' },
+    { label:'Reserved Slugs', icon:'lock',     to:'/admin/system/reserved', perm:'settings.manage' },
+    { label:'Blocked IPs',    icon:'ban',      to:'/admin/security/blocked-ips', perm:'settings.manage' },
+    { label:'Feature Status', icon:'zap',      to:'/admin/features', perm:'settings.manage' },
+    { label:'API Keys',       icon:'key',      disabled:true },
   ]},
 ];
 
@@ -175,13 +170,11 @@ export const QUICK_ACTIONS = [
 // that expand to inert children — pure roadmap teasers, nothing navigates.
 export const ROADMAP = [
   { id: 'roadmap', section: 'ROADMAP', items: [
-    { comingSoon: true, groupId: 'cs-crm',       label: 'CRM',                  icon: 'users2',    children: [{ label: 'Leads' }, { label: 'Contacts' }, { label: 'Pipelines' }, { label: 'Deals' }] },
-    { comingSoon: true, groupId: 'cs-mktg',      label: 'Marketing Automation', icon: 'radio',     children: [{ label: 'Journeys' }, { label: 'Triggers' }, { label: 'A/B Tests' }, { label: 'Audiences' }] },
-    { comingSoon: true, groupId: 'cs-aff',       label: 'Affiliates',           icon: 'affiliate', children: [{ label: 'Partners' }, { label: 'Commissions' }, { label: 'Payout Rules' }, { label: 'Links' }] },
-    { comingSoon: true, groupId: 'cs-rev',       label: 'Revenue Analytics',    icon: 'bars',      children: [{ label: 'Cohorts' }, { label: 'LTV' }, { label: 'Churn' }, { label: 'Forecasts' }] },
-    { comingSoon: true, groupId: 'cs-intg',      label: 'Integrations',         icon: 'globe',     children: [{ label: 'Webhooks' }, { label: 'API Keys' }, { label: 'Zapier' }, { label: 'OAuth Apps' }] },
-    { comingSoon: true, groupId: 'cs-ai',        label: 'AI Assistant',         icon: 'zap',       children: [{ label: 'Auto-replies' }, { label: 'Smart Insights' }, { label: 'Copilot' }] },
-    { comingSoon: true, groupId: 'cs-mobile',    label: 'Mobile App',           icon: 'phone',     children: [{ label: 'Push' }, { label: 'App Banners' }, { label: 'Deep Links' }] },
+    { comingSoon: true, groupId: 'cs-roadmap', label: 'Coming Soon', icon: 'zap', children: [
+      { label: 'CRM' }, { label: 'Marketing Automation' }, { label: 'Affiliates' },
+      { label: 'Revenue Analytics' }, { label: 'Integrations' }, { label: 'AI Assistant' },
+      { label: 'Mobile App' },
+    ]},
   ]},
 ];
 
