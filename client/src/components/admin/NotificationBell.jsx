@@ -41,19 +41,19 @@ const NotificationBell = () => {
         {total > 0 && <span data-testid="bell-dot" className="absolute top-[7px] right-[7px] w-[7px] h-[7px] rounded-full bg-[#FE5100] ring-2 ring-white" />}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl w-72 z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5 border-b border-gray-100">
+        <div className="absolute right-0 top-full mt-2 adm-card rounded-xl shadow-xl w-72 z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5 border-b adm-border">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Needs attention</p>
             {total > 0 && <span className="text-[11px] font-semibold text-[#FE5100]">{total}</span>}
           </div>
-          {state === 'loading' && <p className="px-3 py-5 text-center text-[12px] text-gray-400">Loading…</p>}
+          {state === 'loading' && <p className="px-3 py-5 text-center text-[12px] adm-t3">Loading…</p>}
           {state === 'error' && <p className="px-3 py-5 text-center text-[12px] text-red-400">Couldn't load</p>}
-          {state === 'idle' && shown.length === 0 && <p className="px-3 py-6 text-center text-[12px] text-gray-400">Nothing needs attention</p>}
+          {state === 'idle' && shown.length === 0 && <p className="px-3 py-6 text-center text-[12px] adm-t3">Nothing needs attention</p>}
           {state === 'idle' && shown.map(i => (
             <Link key={i.key} to={i.to} onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-gray-50 transition-colors">
+              className="flex items-center gap-2.5 px-3 py-2.5 adm-hoverable transition-colors">
               <span className={`w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${SEV[i.severity] || SEV.ok}`}>{i.count}</span>
-              <span className="flex-1 text-[13px] text-gray-700 truncate">{i.label}</span>
+              <span className="flex-1 text-[13px] adm-t2 truncate">{i.label}</span>
               <Ic d={IC.chevR} size={12} className="text-gray-300" />
             </Link>
           ))}

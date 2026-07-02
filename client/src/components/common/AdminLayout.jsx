@@ -75,6 +75,13 @@ const AdminLayout = ({ children }) => {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Close drawer on navigation + lock body scroll while open
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
+
   const breadcrumbs = (() => {
     const segs = location.pathname.split('/').filter(Boolean);
     const result = []; let acc = '';
@@ -93,9 +100,9 @@ const AdminLayout = ({ children }) => {
         <div>
           <button onClick={() => !collapsed && setExpandedGroups(prev => ({ ...prev, [item.groupId]: !prev[item.groupId] }))}
             title={collapsed ? item.label : undefined}
-            className={`w-full flex items-center gap-2.5 rounded-lg text-[13px] text-gray-500 transition-all duration-150
-              ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2'} hover:bg-white/[0.03]`}>
-            <Ic d={IC[item.icon]} size={15} className="opacity-50" />
+            className={`w-full flex items-center gap-2.5 rounded-lg text-[14px] text-gray-500 transition-all duration-150
+              ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2.5'} hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100]/50`}>
+            <Ic d={IC[item.icon]} size={16} className="opacity-50" />
             {!collapsed && <>
               <span className="flex-1 text-left">{item.label}</span>
               <span className="flex items-center gap-0.5 text-[9px] font-bold text-gray-700 bg-gray-800/80 px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
@@ -123,10 +130,10 @@ const AdminLayout = ({ children }) => {
         <div>
           <button onClick={() => !collapsed && setExpandedGroups(prev => ({ ...prev, [item.groupId]: !prev[item.groupId] }))}
             title={collapsed ? item.label : undefined}
-            className={`w-full flex items-center gap-2.5 rounded-lg text-[13px] transition-all duration-150
-              ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2'}
-              ${anyActive ? 'text-white bg-[#FE5100]/[0.12] border-l-[2px] border-[#FE5100]' : 'text-gray-300 hover:text-gray-200 hover:bg-white/[0.04]'}`}>
-            <Ic d={IC[item.icon]} size={15} />
+            className={`w-full flex items-center gap-2.5 rounded-lg text-[14px] transition-all duration-150
+              ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2.5'}
+              ${anyActive ? 'text-[#FF7433] bg-[#FE5100]/[0.14]' : 'text-gray-300 hover:text-gray-200 hover:bg-white/[0.04]'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100]/50`}>
+            <Ic d={IC[item.icon]} size={16} />
             {!collapsed && <><span className="flex-1 text-left font-medium">{item.label}</span>
               <Ic d={IC.chevD} size={12} className={`text-gray-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} /></>}
           </button>
@@ -135,8 +142,8 @@ const AdminLayout = ({ children }) => {
               {item.children.map(ch => {
                 const a = location.pathname === ch.to;
                 return <Link key={ch.to} to={ch.to} onClick={() => setMobileOpen(false)}
-                  className={`block px-3 py-1.5 rounded-md text-[12px] transition-colors
-                    ${a ? 'text-[#FE5100] font-semibold' : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'}`}>
+                  className={`block px-3 py-2 rounded-md text-[13px] transition-colors
+                    ${a ? 'text-[#FF7433] font-semibold' : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100]/50`}>
                   {ch.label}
                 </Link>;
               })}
@@ -147,9 +154,9 @@ const AdminLayout = ({ children }) => {
     }
     if (item.disabled) {
       return (
-        <div title={item.label} className={`flex items-center gap-2.5 rounded-lg opacity-30 cursor-not-allowed select-none text-gray-500 ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2'}`}>
-          <Ic d={IC[item.icon]} size={15} />
-          {!collapsed && <><span className="flex-1 text-[13px]">{item.label}</span>
+        <div title={item.label} className={`flex items-center gap-2.5 rounded-lg opacity-30 cursor-not-allowed select-none text-gray-500 ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2.5'}`}>
+          <Ic d={IC[item.icon]} size={16} />
+          {!collapsed && <><span className="flex-1 text-[14px]">{item.label}</span>
             <span className="flex items-center gap-0.5 text-[9px] font-bold text-gray-700 bg-gray-800/80 px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
               <Ic d={IC.lock} size={8} />soon
             </span></>}
@@ -159,10 +166,10 @@ const AdminLayout = ({ children }) => {
     const active = item.exact ? location.pathname === item.to : (location.pathname === item.to || location.pathname.startsWith(item.to + '/'));
     return (
       <Link to={item.to} onClick={() => setMobileOpen(false)} title={collapsed ? item.label : undefined}
-        className={`flex items-center gap-2.5 rounded-lg text-[13px] transition-all duration-150
-          ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2'}
-          ${active ? 'text-white bg-[#FE5100]/[0.12] border-l-[2px] border-[#FE5100] font-medium' : 'text-gray-300 hover:text-gray-200 hover:bg-white/[0.04]'}`}>
-        <Ic d={IC[item.icon]} size={15} />
+        className={`flex items-center gap-2.5 rounded-lg text-[14px] transition-all duration-150
+          ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2.5'}
+          ${active ? 'text-[#FF7433] bg-[#FE5100]/[0.14] font-semibold' : 'text-gray-300 hover:text-gray-200 hover:bg-white/[0.04]'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100]/50`}>
+        <Ic d={IC[item.icon]} size={16} />
         {!collapsed && <span>{item.label}</span>}
       </Link>
     );
@@ -188,7 +195,7 @@ const AdminLayout = ({ children }) => {
           return (
             <div key={sec.id}>
               {(!collapsed || mobile)
-                ? <p className="px-4 mb-1.5 text-[10.5px] font-bold text-gray-500 tracking-[0.14em] uppercase select-none">{sec.section}</p>
+                ? <p className="px-4 mb-1.5 text-[11px] font-bold text-gray-500 tracking-[0.14em] uppercase select-none">{sec.section}</p>
                 : <div className="w-5 h-px bg-gray-800/80 mx-auto my-2" />}
               <div className={`space-y-0.5 ${(!collapsed || mobile) ? 'px-2' : 'px-1.5'}`}>
                 {items.map((item, i) => <SidebarItem key={i} item={item} />)}
@@ -210,13 +217,13 @@ const AdminLayout = ({ children }) => {
   );
 
   return (
-    <div className={`admin-shell adm-canvas min-h-screen bg-[#F6F7F9] flex ${dark ? 'dark' : ''}`} style={{ fontFamily:"'Poppins',system-ui,sans-serif" }}>
-      <aside className={`hidden md:flex flex-col bg-[#17171A] border-r border-[#232327] fixed inset-y-0 left-0 z-30 transition-all duration-300 overflow-hidden ${collapsed ? 'w-[70px]' : 'w-[258px]'}`}>
+    <div className={`admin-shell adm-canvas min-h-screen flex ${dark ? 'dark' : ''}`} style={{ fontFamily:"'Poppins',system-ui,sans-serif" }}>
+      <aside className={`hidden md:flex flex-col bg-[#17171A] border-r border-[#232327] fixed inset-y-0 left-0 z-30 transition-all duration-300 overflow-hidden ${collapsed ? 'w-[70px]' : 'w-[268px]'}`}>
         <SidebarBody />
       </aside>
 
       {mobileOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setMobileOpen(false)} />}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-[258px] flex flex-col bg-[#17171A] transition-transform duration-300 md:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-[268px] flex flex-col bg-[#17171A] transition-transform duration-300 md:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#1a1a1a]">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background:'#FE5100' }}>
@@ -229,47 +236,47 @@ const AdminLayout = ({ children }) => {
         <div className="flex-1 overflow-hidden"><SidebarBody mobile /></div>
       </aside>
 
-      <div className={`flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'md:ml-[70px]' : 'md:ml-[258px]'}`}>
-        <header className="adm-header sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-200/70 h-[54px] flex items-center gap-3 px-4 md:px-5 flex-shrink-0">
+      <div className={`flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'md:ml-[70px]' : 'md:ml-[268px]'}`}>
+        <header className="adm-header sticky top-0 z-20 backdrop-blur h-[60px] flex items-center gap-3 px-4 md:px-5 flex-shrink-0">
           <button onClick={() => { if (window.innerWidth < 768) setMobileOpen(o => !o); else toggleSidebar(); }}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0">
+            className="p-1.5 rounded-lg adm-t3 adm-hoverable transition-colors flex-shrink-0">
             <Ic d={IC.hamb} size={17} />
           </button>
 
-          <nav className="hidden sm:flex items-center gap-1 text-[12px] text-gray-400 flex-1 min-w-0">
+          <nav className="hidden sm:flex items-center gap-1 text-[13px] adm-t3 flex-1 min-w-0">
             {breadcrumbs.length === 0
-              ? <span className="font-semibold text-gray-800">Dashboard</span>
+              ? <span className="font-semibold adm-t1">Dashboard</span>
               : breadcrumbs.map((crumb, i) => (
                 <span key={crumb.to} className="flex items-center gap-1 min-w-0">
                   {i > 0 && <Ic d={IC.chevR} size={10} className="text-gray-300 flex-shrink-0" />}
                   {i === breadcrumbs.length - 1
-                    ? <span className="font-semibold text-gray-800 truncate">{crumb.label}</span>
-                    : <Link to={crumb.to} className="hover:text-gray-600 truncate transition-colors">{crumb.label}</Link>}
+                    ? <span className="font-semibold adm-t1 truncate">{crumb.label}</span>
+                    : <Link to={crumb.to} className="hover:opacity-80 truncate transition-colors">{crumb.label}</Link>}
                 </span>
               ))
             }
           </nav>
 
           <div className="flex items-center gap-1 ml-auto flex-shrink-0">
-            <button onClick={() => setPaletteOpen(true)} className="btn hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 transition-colors text-[12px] text-gray-400 w-40 max-w-[40vw]">
+            <button onClick={() => setPaletteOpen(true)} className="btn hidden md:flex items-center gap-2 px-3 py-1.5 adm-chip adm-hoverable transition-colors text-[12px] w-40 max-w-[40vw]">
               <Ic d={IC.search} size={13} /><span>Search...</span>
-              <span className="ml-auto text-[10px] text-gray-300 font-mono bg-gray-200 px-1 rounded">⌘K</span>
+              <span className="ml-auto text-[10px] adm-t3 font-mono adm-chip px-1 rounded">⌘K</span>
             </button>
 
             <NotificationBell />
 
             <div className="relative" ref={quickRef}>
               <button onClick={() => setShowQuick(o => !o)} title="Quick Actions"
-                className={`p-2 rounded-lg transition-colors ${showQuick ? 'bg-[#FE5100]/10 text-[#FE5100]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}>
+                className={`p-2 rounded-lg transition-colors ${showQuick ? 'bg-[#FE5100]/10 text-[#FE5100]' : 'adm-t3 adm-hoverable'}`}>
                 <Ic d={IC.zap} size={16} />
               </button>
               {showQuick && (
-                <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl w-52 z-50 overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 adm-card rounded-xl shadow-xl w-52 z-50 overflow-hidden">
                   <p className="px-3 pt-2.5 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Quick Actions</p>
                   {QUICK_ACTIONS.map(a => (
                     <Link key={a.to} to={a.to} onClick={() => setShowQuick(false)}
-                      className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
-                      <div className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] adm-t2 adm-hoverable transition-colors">
+                      <div className="w-6 h-6 rounded-md adm-chip flex items-center justify-center flex-shrink-0">
                         <Ic d={IC[a.icon]} size={12} className="text-gray-500" />
                       </div>
                       {a.label}
@@ -280,37 +287,37 @@ const AdminLayout = ({ children }) => {
             </div>
 
             <button onClick={toggleTheme} title={dark ? 'Light mode' : 'Dark mode'}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+              className="p-2 rounded-lg adm-t3 adm-hoverable transition-colors">
               <Ic d={dark ? IC.sun : IC.moon} size={16} />
             </button>
 
             <div className="relative" ref={profileRef}>
               <button onClick={() => setShowProfile(o => !o)}
-                className={`flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg transition-colors ${showProfile ? 'bg-gray-100' : 'hover:bg-gray-100'}`}>
+                className={`flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg transition-colors ${showProfile ? 'adm-chip' : 'adm-hoverable'}`}>
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0" style={{ background:'#FE5100' }}>
                   {(session.name || session.username || 'A')[0].toUpperCase()}
                 </div>
                 <div className="hidden md:block text-left leading-none">
-                  <p className="text-[12px] font-semibold text-gray-800">{session.name || 'Super Admin'}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">@{session.username || 'admin'}</p>
+                  <p className="text-[12px] font-semibold adm-t1">{session.name || 'Super Admin'}</p>
+                  <p className="text-[10px] adm-t3 mt-0.5">@{session.username || 'admin'}</p>
                 </div>
                 <Ic d={IC.chevD} size={11} className="text-gray-400 hidden md:block" />
               </button>
               {showProfile && (
-                <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl w-52 z-50 overflow-hidden">
-                  <div className="px-3 py-2.5 border-b border-gray-100">
-                    <p className="text-[13px] font-semibold text-gray-800">{session.name || 'Super Admin'}</p>
-                    <p className="text-[11px] text-gray-400">@{session.username || 'admin'}</p>
+                <div className="absolute right-0 top-full mt-2 adm-card rounded-xl shadow-xl w-52 z-50 overflow-hidden">
+                  <div className="px-3 py-2.5 border-b adm-border">
+                    <p className="text-[13px] font-semibold adm-t1">{session.name || 'Super Admin'}</p>
+                    <p className="text-[11px] adm-t3">@{session.username || 'admin'}</p>
                   </div>
                   <div className="py-1">
                     <Link to="/admin/settings" onClick={() => setShowProfile(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
-                      <Ic d={IC.gear} size={13} className="text-gray-400" />Settings
+                      className="flex items-center gap-2.5 px-3 py-2 text-[13px] adm-t2 adm-hoverable transition-colors">
+                      <Ic d={IC.gear} size={13} className="adm-t3" />Settings
                     </Link>
                   </div>
-                  <div className="border-t border-gray-100 py-1">
+                  <div className="border-t adm-border py-1">
                     <button onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-red-500 hover:bg-red-50 transition-colors">
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-red-500 hover:bg-[var(--adm-danger-bg)] transition-colors">
                       <Ic d={IC.logout} size={13} />Sign out
                     </button>
                   </div>
