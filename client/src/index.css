@@ -106,6 +106,66 @@ h3 {
   text-decoration: none;
 }
 
+/* ═══ Admin theme tokens ═══════════════════════════════════════
+   Light values on .admin-shell, dark on .admin-shell.dark.
+   Sidebar chrome stays permanently dark; ONLY content area switches. */
+.admin-shell {
+  --adm-bg: #F6F7F9;
+  --adm-card: #ffffff;
+  --adm-card-hover: #fafafa;
+  --adm-border: rgba(229, 231, 235, 0.8);
+  --adm-text-1: #111827;
+  --adm-text-2: #4b5563;
+  --adm-text-3: #9ca3af;
+  --adm-accent: #FE5100;
+  --adm-th-bg: #f9fafb;
+  --adm-hover: rgba(17, 24, 39, 0.045);
+  --adm-header-bg: rgba(255, 255, 255, 0.95);
+  --adm-ok: #15803d;      --adm-ok-bg: #f0fdf4;
+  --adm-warn: #b45309;    --adm-warn-bg: #fffbeb;
+  --adm-danger: #dc2626;  --adm-danger-bg: #fef2f2;
+  --adm-info: #1d4ed8;    --adm-info-bg: #eff6ff;
+}
+.admin-shell.dark {
+  --adm-bg: #0f0f10;
+  --adm-card: #17171a;
+  --adm-card-hover: #1c1c20;
+  --adm-border: #232327;
+  --adm-text-1: #e7e7ea;
+  --adm-text-2: #a1a1aa;
+  --adm-text-3: #71717a;
+  --adm-th-bg: #1c1c20;
+  --adm-hover: rgba(255, 255, 255, 0.05);
+  --adm-header-bg: rgba(23, 23, 26, 0.95);
+  --adm-ok: #4ade80;      --adm-ok-bg: rgba(34, 197, 94, 0.12);
+  --adm-warn: #fbbf24;    --adm-warn-bg: rgba(245, 158, 11, 0.12);
+  --adm-danger: #f87171;  --adm-danger-bg: rgba(239, 68, 68, 0.12);
+  --adm-info: #60a5fa;    --adm-info-bg: rgba(59, 130, 246, 0.12);
+}
+
+/* Token utilities — avoids Tailwind text-[var(...)] ambiguity pitfalls */
+.adm-canvas { background: var(--adm-bg); }
+.adm-card { background: var(--adm-card); border: 1px solid var(--adm-border); }
+.adm-t1 { color: var(--adm-text-1); }
+.adm-t2 { color: var(--adm-text-2); }
+.adm-t3 { color: var(--adm-text-3); }
+.adm-border { border-color: var(--adm-border) !important; }
+.adm-th { background: var(--adm-th-bg); }
+.adm-hoverable:hover { background: var(--adm-hover); }
+.adm-chip { background: var(--adm-hover); color: var(--adm-text-3); }
+.adm-header { background: var(--adm-header-bg); border-bottom: 1px solid var(--adm-border); color: var(--adm-text-1); }
+
+.adm-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+  border-radius: 9999px; font-size: 11px; font-weight: 600; line-height: 1.4; white-space: nowrap; }
+.adm-badge-ok      { color: var(--adm-ok);     background: var(--adm-ok-bg); }
+.adm-badge-warn    { color: var(--adm-warn);   background: var(--adm-warn-bg); }
+.adm-badge-danger  { color: var(--adm-danger); background: var(--adm-danger-bg); }
+.adm-badge-info    { color: var(--adm-info);   background: var(--adm-info-bg); }
+.adm-badge-neutral { color: var(--adm-text-2); background: var(--adm-hover); }
+
+.adm-table thead tr { background: var(--adm-th-bg); }
+.adm-table tbody tr + tr { border-top: 1px solid var(--adm-border); }
+
 /* No link underline on host profile page (incl. hover). */
 .host-profile a,
 .host-profile a:hover {
