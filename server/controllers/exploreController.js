@@ -4,39 +4,85 @@
  * Each handler returns shaped mock data now; replace SELECT * with
  * real Supabase queries once the v2.9 migration is applied.
  */
-const { supabase } = require('../config/supabase');
+const { supabase, supabaseAdmin } = require('../config/supabase');
 
 // ── helpers ───────────────────────────────────────────────────
 const now = () => new Date().toISOString();
 
+const schemaMissing = (err) => err && /Could not find the|column .* does not exist/i.test(err.message || '');
+
 // ── GET /api/explore ──────────────────────────────────────────
-// Returns paginated vendors. Filters: category, q, sort, price_min, price_max
-// Plan-gating: only vendors on paid plans appear (explore_visible = true).
+// Minimal real listing: verified hosts, profession (category) + service filters.
+// `service` REQUIRES `category`: service slugs are only unique per profession
+// (v3.60 pair model), so a slug-only filter could leak across professions.
 async function listVendors(req, res) {
   try {
-    const {
-      category = '',
-      q        = '',
-      sort     = 'recommended',  // recommended | rating | newest | price_asc | price_desc
-      price_min,
-      price_max,
-      page     = 1,
-      limit    = 12,
-    } = req.query;
+    const category = String(req.query.category || '').trim();
+    const service  = String(req.query.service  || '').trim();
+    const q        = String(req.query.q        || '').trim();
+    const page     = Math.max(1, parseInt(req.query.page, 10)  || 1);
+    const limit    = Math.min(48, Math.max(1, parseInt(req.query.limit, 10) || 12));
 
-    // TODO: replace with real query once v2.9 migration is applied
-    // Real query will join profiles + subscription_plans + explore_boosts
-    // + explore_verified_badges and filter by is_explore_visible = true
+    if (service && !category) {
+      return res.status(400).json({ message: 'service filter requires a category (profession)' });
+    }
 
+    const runQuery = (withPairCol) => {
+      const svcCols = withPairCol
+        ? 'price, rating, total_reviews, category, primary_category, is_active'
+        : 'price, rating, total_reviews, category, is_active';
+      let sel = supabaseAdmin
+        .from('profiles')
+        .select(`id, name, username, tagline, profile_image, primary_category, services!inner(${svcCols})`, { count: 'exact' })
+        .eq('role', 'host')
+        .eq('is_verified', true)
+        .eq('is_banned', false)
+        .not('username', 'is', null)
+        .eq('services.is_active', true);
+      if (category) sel = sel.eq('primary_category', category);
+      if (service) {
+        sel = sel.eq('services.category', service);
+        if (withPairCol) sel = sel.eq('services.primary_category', category);
+      }
+      if (q) {
+        const safe = q.replace(/[,()]/g, ' ');
+        sel = sel.or(`name.ilike.%${safe}%,tagline.ilike.%${safe}%`);
+      }
+      return sel
+        .order('updated_at', { ascending: false })
+        .range((page - 1) * limit, page * limit - 1);
+    };
+
+    let r = await runQuery(true);
+    if (schemaMissing(r.error)) r = await runQuery(false); // pre-v3.60
+    if (r.error) throw r.error;
+
+    const vendors = (r.data || []).map((p) => {
+      const svcs = p.services || [];
+      const rated = svcs.filter((s) => (s.total_reviews || 0) > 0);
+      return {
+        id: p.id,
+        name: p.name,
+        username: p.username,
+        tagline: p.tagline || '',
+        profileImage: p.profile_image || null,
+        category: p.primary_category || '',
+        avgRating: rated.length
+          ? Number((rated.reduce((a, s) => a + Number(s.rating || 0), 0) / rated.length).toFixed(1))
+          : null,
+        reviewCount: svcs.reduce((a, s) => a + (s.total_reviews || 0), 0),
+        minPrice: svcs.length ? Math.min(...svcs.map((s) => Number(s.price) || 0)) : null,
+        currency: 'INR',
+        isFeatured: false, isSponsored: false, isBoosted: false,
+        isVerified: true, // listing already filters is_verified=true
+      };
+    });
+
+    const total = r.count || 0;
     return res.json({
-      vendors: [],
-      meta: {
-        page: Number(page),
-        limit: Number(limit),
-        total: 0,
-        hasMore: false,
-      },
-      filters: { category, q, sort, price_min, price_max },
+      vendors,
+      meta: { page, limit, total, hasMore: page * limit < total },
+      filters: { category, service, q },
     });
   } catch (err) {
     console.error('[explore.listVendors]', err);
