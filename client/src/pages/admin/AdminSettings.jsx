@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { adminGetSettings, adminUpdateSettings } from "../../services/api";
 import toast from "react-hot-toast";
+import { PageHeader, Card } from "../../components/admin/ui";
 
 const AdminSettings = () => {
   const [settings, setSettings] = useState({});
@@ -27,18 +28,15 @@ const AdminSettings = () => {
   };
 
   if (loading)
-    return <div className="text-center py-12 text-gray-400">Loading...</div>;
+    return <div className="text-center py-12 adm-t3">Loading...</div>;
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-1">Platform Settings</h1>
-      <p className="text-sm text-gray-400 mb-6">
-        Global configuration for Book A Sloth.
-      </p>
+      <PageHeader title="Platform Settings" subtitle="Global configuration for Book A Sloth." />
 
-      <div className="bg-white border rounded-xl p-5 space-y-5">
+      <Card className="space-y-5">
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="block text-sm font-medium adm-t1 mb-1">
             Platform Name
           </label>
           <input
@@ -52,7 +50,7 @@ const AdminSettings = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="block text-sm font-medium adm-t1 mb-1">
             Platform Fee (₹ flat, added to each booking)
           </label>
           <input
@@ -68,15 +66,15 @@ const AdminSettings = () => {
               })
             }
           />
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs adm-t3 mt-1">
             Percentage deducted from host earnings. Charged on top of the service price. Default: ₹10. Set 0 for no fee.
           </p>
         </div>
 
-        <div className="flex items-center justify-between py-3 border-t">
+        <div className="flex items-center justify-between py-3 border-t adm-border">
           <div>
-            <p className="text-sm font-medium">Maintenance Mode</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-sm font-medium adm-t1">Maintenance Mode</p>
+            <p className="text-xs adm-t3">
               When enabled, only superadmins can access the platform.
             </p>
           </div>
@@ -102,7 +100,7 @@ const AdminSettings = () => {
         >
           {saving ? "Saving..." : "Save Settings"}
         </button>
-      </div>
+      </Card>
     </div>
   );
 };
