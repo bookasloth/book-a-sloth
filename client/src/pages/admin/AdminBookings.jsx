@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { adminGetBookings, adminUpdateBooking, adminDeleteBooking } from '../../services/api';
 import toast from 'react-hot-toast';
+import { PageHeader, Skeleton } from '../../components/admin/ui';
 
 // ───────────────────────────────────────────────────────────────
 // Admin Bookings — support/operations console
@@ -204,11 +205,11 @@ const BookingCard = ({ b, status, onView, onEdit, onDelete }) => {
   const amount = Number(b.customer_total ?? b.services?.price ?? 0);
   const rev = platformRevenue(b);
   return (
-    <div className="bg-white border border-gray-200/80 rounded-xl p-4 hover:border-gray-300 hover:shadow-sm transition-all"
+    <div className="adm-card rounded-xl p-4 hover:shadow-sm transition-all"
       onClick={() => onView(b)}>
       <div className="flex items-center gap-2 mb-2">
         <StatusIcon status={status} />
-        <code className="text-[12px] font-bold text-gray-900 font-mono">{shortId(b.id)}</code>
+        <code className="text-[12px] font-bold adm-t1 font-mono">{shortId(b.id)}</code>
         <PaymentPill status={b.payment_status} />
         {Number(b.reschedule_count) >= RESCHEDULE_ALERT_THRESHOLD && (
           <span title={`${b.reschedule_count} reschedules`}
@@ -216,18 +217,18 @@ const BookingCard = ({ b, status, onView, onEdit, onDelete }) => {
             ⚠ {b.reschedule_count}× resched
           </span>
         )}
-        <span className="ml-auto font-bold text-sm text-gray-900 tabular-nums">{inr(amount)}</span>
+        <span className="ml-auto font-bold text-sm adm-t1 tabular-nums">{inr(amount)}</span>
       </div>
-      <p className="text-[13px] font-semibold text-gray-900 truncate">{b.services?.title || 'Service'}</p>
+      <p className="text-[13px] font-semibold adm-t1 truncate">{b.services?.title || 'Service'}</p>
       <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mt-1 text-[12px]">
-        <p className="truncate"><span className="text-gray-400">Customer </span><span className="font-medium text-gray-800">{b.guest_name || '—'}</span></p>
-        <p className="truncate"><span className="text-gray-400">Host </span><span className="font-medium text-gray-800">{b.profiles?.name || '—'}</span></p>
+        <p className="truncate"><span className="adm-t3">Customer </span><span className="font-medium adm-t2">{b.guest_name || '—'}</span></p>
+        <p className="truncate"><span className="adm-t3">Host </span><span className="font-medium adm-t2">{b.profiles?.name || '—'}</span></p>
       </div>
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-        <span className="inline-flex items-center gap-1.5 text-[11.5px] text-gray-500 tabular-nums">
-          <Ic d={IC.calendar} size={13} className="text-gray-400" />{fmtDate(b.scheduled_at)} · {fmtTime(b.scheduled_at)}
+      <div className="flex items-center justify-between mt-2 pt-2 border-t adm-border">
+        <span className="inline-flex items-center gap-1.5 text-[11.5px] adm-t3 tabular-nums">
+          <Ic d={IC.calendar} size={13} className="adm-t3" />{fmtDate(b.scheduled_at)} · {fmtTime(b.scheduled_at)}
         </span>
-        <span className="text-[11.5px] text-gray-400">Rev <span className="font-semibold text-emerald-600 tabular-nums">{rev == null ? '—' : inr(rev)}</span></span>
+        <span className="text-[11.5px] adm-t3">Rev <span className="font-semibold text-emerald-600 tabular-nums">{rev == null ? '—' : inr(rev)}</span></span>
       </div>
       <div className="flex items-center gap-0.5 justify-end mt-1" onClick={(e) => e.stopPropagation()}>
         <IconBtn icon={IC.eye}    label="View details" tone="primary" onClick={() => onView(b)} />
@@ -249,11 +250,11 @@ const BookingRow = ({ b, status, onView, onEdit, onDelete }) => {
   const rev = platformRevenue(b);
   return (
     <tr onClick={() => onView(b)}
-      className="group border-t border-gray-100 hover:bg-gray-50/70 cursor-pointer transition-colors">
+      className="group border-t adm-border adm-hoverable cursor-pointer transition-colors">
       {/* 1 Booking ID */}
       <td className="px-4 py-3 align-middle">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <code className="text-[12.5px] font-bold font-mono text-gray-900">{shortId(b.id)}</code>
+          <code className="text-[12.5px] font-bold font-mono adm-t1">{shortId(b.id)}</code>
           {Number(b.reschedule_count) >= RESCHEDULE_ALERT_THRESHOLD && (
             <span title={`${b.reschedule_count} reschedules`}
               className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
@@ -266,27 +267,27 @@ const BookingRow = ({ b, status, onView, onEdit, onDelete }) => {
       <td className="px-3 py-3 align-middle"><StatusIcon status={status} /></td>
       {/* 3 Service */}
       <td className="px-4 py-3 align-middle">
-        <p className="text-[12.5px] font-medium text-gray-800 truncate max-w-[160px]">{b.services?.title || 'Service'}</p>
-        <p className="text-[11.5px] text-gray-400 tabular-nums">{dur} min</p>
+        <p className="text-[12.5px] font-medium adm-t2 truncate max-w-[160px]">{b.services?.title || 'Service'}</p>
+        <p className="text-[11.5px] adm-t3 tabular-nums">{dur} min</p>
       </td>
       {/* 4 Vendor */}
       <td className="px-4 py-3 align-middle">
-        <p className="text-[12.5px] font-medium text-gray-800 truncate max-w-[150px]">{b.profiles?.name || '—'}</p>
-        {b.profiles?.username && <p className="text-[11.5px] text-gray-400 truncate max-w-[150px]">@{b.profiles.username}</p>}
+        <p className="text-[12.5px] font-medium adm-t2 truncate max-w-[150px]">{b.profiles?.name || '—'}</p>
+        {b.profiles?.username && <p className="text-[11.5px] adm-t3 truncate max-w-[150px]">@{b.profiles.username}</p>}
       </td>
       {/* 5 Customer */}
       <td className="px-4 py-3 align-middle">
-        <p className="text-[12.5px] font-medium text-gray-800 truncate max-w-[170px]">{b.guest_name || '—'}</p>
-        <p className="text-[11.5px] text-gray-400 truncate max-w-[170px]">{b.guest_email || '—'}</p>
+        <p className="text-[12.5px] font-medium adm-t2 truncate max-w-[170px]">{b.guest_name || '—'}</p>
+        <p className="text-[11.5px] adm-t3 truncate max-w-[170px]">{b.guest_email || '—'}</p>
       </td>
       {/* 6 Date & Time */}
       <td className="px-4 py-3 align-middle whitespace-nowrap">
-        <p className="text-[12.5px] text-gray-700">{fmtDate(b.scheduled_at)}</p>
-        <p className="text-[11.5px] text-gray-400 tabular-nums">{fmtTime(b.scheduled_at)}</p>
+        <p className="text-[12.5px] adm-t2">{fmtDate(b.scheduled_at)}</p>
+        <p className="text-[11.5px] adm-t3 tabular-nums">{fmtTime(b.scheduled_at)}</p>
       </td>
       {/* 7 Amount */}
       <td className="px-4 py-3 align-middle text-right whitespace-nowrap">
-        <span className="text-[13px] font-bold text-gray-900 tabular-nums">{inr(amount)}</span>
+        <span className="text-[13px] font-bold adm-t1 tabular-nums">{inr(amount)}</span>
       </td>
       {/* 8 Payment */}
       <td className="px-4 py-3 align-middle"><PaymentPill status={b.payment_status} /></td>
@@ -308,10 +309,10 @@ const BookingRow = ({ b, status, onView, onEdit, onDelete }) => {
 };
 
 const BookingTable = ({ items, onView, onEdit, onDelete }) => (
-  <div className="hidden md:block bg-white border border-gray-200/80 rounded-xl overflow-x-auto">
-    <table className="w-full border-collapse">
+  <div className="hidden md:block adm-card rounded-xl overflow-x-auto">
+    <table className="adm-table w-full border-collapse">
       <thead>
-        <tr className="bg-gray-50/60 text-[11px] uppercase tracking-wide text-gray-400">
+        <tr className="bg-gray-50/60 text-[11px] uppercase tracking-wide adm-t3">
           <TH>Booking ID</TH>
           <TH>Status</TH>
           <TH>Service</TH>
@@ -1167,10 +1168,7 @@ const AdminBookings = () => {
       <style>{`@keyframes slideUp{from{transform:translateY(12px);opacity:.6}to{transform:translateY(0);opacity:1}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}`}</style>
 
       {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-gray-900">Bookings</h1>
-        <p className="text-[12px] text-gray-400 mt-0.5">Search, triage, and manage every booking on the platform.</p>
-      </div>
+      <PageHeader title="Bookings" subtitle="Search, triage, and manage every booking on the platform." />
 
       {/* Search — Booking ID / Phone / Email only */}
       <div className="relative mb-4">
@@ -1207,29 +1205,29 @@ const AdminBookings = () => {
       {/* List */}
       {loading ? (
         <>
-          <div className="hidden md:block bg-white border border-gray-200/80 rounded-xl overflow-hidden divide-y divide-gray-100">
+          <div className="hidden md:block adm-card rounded-xl overflow-hidden divide-y adm-border">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-4 py-3.5 animate-pulse">
-                <div className="h-8 w-24 bg-gray-100 rounded" />
-                <div className="h-8 flex-1 bg-gray-100 rounded" />
-                <div className="h-6 w-20 bg-gray-100 rounded-full" />
-                <div className="h-6 w-16 bg-gray-100 rounded-full" />
+              <div key={i} className="flex items-center gap-4 px-4 py-3.5">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 flex-1" />
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-6 w-16 rounded-full" />
               </div>
             ))}
           </div>
           <div className="md:hidden space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-[88px] bg-white border border-gray-200/70 rounded-xl animate-pulse" />)}
+            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[88px]" />)}
           </div>
         </>
       ) : pageItems.length === 0 ? (
-        <div className="bg-white border border-gray-200/80 rounded-2xl py-16 px-6 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-            <Ic d={tab === 'disputed' ? IC.alert : IC.inbox} size={24} className="text-gray-400" />
+        <div className="adm-card rounded-2xl py-16 px-6 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-[var(--adm-hover)] flex items-center justify-center mx-auto mb-4">
+            <Ic d={tab === 'disputed' ? IC.alert : IC.inbox} size={24} className="adm-t3" />
           </div>
-          <h3 className="text-sm font-bold text-gray-800 mb-1">
+          <h3 className="text-sm font-bold adm-t2 mb-1">
             {query ? 'No matches' : tab === 'disputed' ? 'No disputes' : `No ${tab === 'all' ? '' : tab + ' '}bookings`}
           </h3>
-          <p className="text-[12.5px] text-gray-400 max-w-sm mx-auto">
+          <p className="text-[12.5px] adm-t3 max-w-sm mx-auto">
             {query ? 'No booking matches that ID, phone, or email.'
               : tab === 'disputed' ? 'Disputed bookings will appear here once a customer or host raises a dispute.'
               : 'Nothing to show in this view yet.'}
