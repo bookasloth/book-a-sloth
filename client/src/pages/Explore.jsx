@@ -108,6 +108,7 @@ function ExploreFull() {
   const [totalVendors, setTotalVendors] = useState(MOCK_VENDORS.length);
 
   const searchRef = useRef(null);
+  const vendorsReqRef = useRef(0);
 
   // ── Sync URL params ───────────────────────────────────────
   useEffect(() => {
@@ -119,10 +120,12 @@ function ExploreFull() {
 
   // ── Load data (swap mock → real when API ready) ───────────
   const loadVendors = useCallback(async () => {
+    const reqId = ++vendorsReqRef.current;
     setLoading(true);
     try {
       // Uncomment when backend is live:
       // const res = await getExploreVendors({ q: query, category, sort, page, limit: PAGE_SIZE });
+      // if (reqId !== vendorsReqRef.current) return; // stale response — a newer request took over
       // setVendors(res.data.vendors);
       // setTotalVendors(res.data.meta.total);
 
@@ -133,10 +136,15 @@ function ExploreFull() {
       if (sort === 'price_asc')  filtered.sort((a, b) => a.minPrice - b.minPrice);
       if (sort === 'price_desc') filtered.sort((a, b) => b.minPrice - a.minPrice);
       if (sort === 'rating')     filtered.sort((a, b) => b.avgRating - a.avgRating);
+      if (reqId !== vendorsReqRef.current) return; // stale response — a newer request took over
       setTotalVendors(filtered.length);
       setVendors(filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE));
+    } catch {
+      if (reqId !== vendorsReqRef.current) return;
+      setVendors([]);
+      setTotalVendors(0);
     } finally {
-      setLoading(false);
+      if (reqId === vendorsReqRef.current) setLoading(false);
     }
   }, [query, category, sort, page]);
 
