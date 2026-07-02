@@ -40,7 +40,11 @@ async function resolveAndValidateCategory(supabaseAdmin, hostId, category, opts 
       .eq('is_active', true);
     validSlugs = (rows || []).map((r) => r.slug);
   }
-  return validateServiceCategory({ category, validSlugs, required: !!opts.required });
+  const result = validateServiceCategory({ category, validSlugs, required: !!opts.required });
+  if (!result.ok) return result;
+  // The pair travels together: a stored category always carries the profession
+  // it was validated against (composite FK fk_services_category, v3.60).
+  return { ...result, primary: result.value ? primary : null };
 }
 
 module.exports = { validateServiceCategory, resolveAndValidateCategory };
