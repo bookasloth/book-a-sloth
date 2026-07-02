@@ -12,6 +12,21 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const responseCache = require('../services/responseCache');
+const { setPublicCache } = require('../utils/httpCache');
+const { bustSitemapCache } = require('../utils/sitemapCache');
+
+const PUBLIC_CACHE_MS = Number(process.env.SERVICE_CATEGORY_CACHE_MS) || 300_000;
+
+// Any category mutation invalidates the public picker payloads, the SEO
+// directory payloads (Task 8), and the professions sitemap.
+const bustCategoryCaches = () => {
+  responseCache.bust('svccat:');
+  responseCache.bust('svcdir:');
+  bustSitemapCache();
+};
+
+const isFkViolation = (error) => error && error.code === '23503';
 
 // ── slug helper (mirrors scripts/seedServiceCategories.js) ───────────────────
 const slugify = (str) =>
@@ -84,15 +99,30 @@ const listPublic = async (req, res) => {
     const primary = req.query.primary;
     if (!primary) return res.json({ categories: [] });
 
-    const { data, error } = await supabaseAdmin
-      .from('service_categories')
-      .select('id, name, slug, primary_category')
-      .eq('primary_category', primary)
-      .eq('is_active', true)
-      .order('display_order', { ascending: true })
-      .order('name', { ascending: true });
-    if (error) throw error;
-    res.json({ categories: data || [] });
+    const payload = await responseCache.getOrSet(`svccat:${primary}`, PUBLIC_CACHE_MS, async () => {
+      let r = await supabaseAdmin
+        .from('service_categories')
+        .select('id, name, slug, primary_category, description, icon')
+        .eq('primary_category', primary)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .order('name', { ascending: true });
+      if (r.error && /Could not find the|column .* does not exist/i.test(r.error.message)) {
+        // pre-v3.60: no description/icon columns
+        r = await supabaseAdmin
+          .from('service_categories')
+          .select('id, name, slug, primary_category')
+          .eq('primary_category', primary)
+          .eq('is_active', true)
+          .order('display_order', { ascending: true })
+          .order('name', { ascending: true });
+      }
+      if (r.error) throw r.error;
+      return { categories: r.data || [] };
+    });
+
+    setPublicCache(res, 300);
+    res.json(payload);
   } catch (error) {
     safeError(res, error);
   }
@@ -129,13 +159,19 @@ const create = async (req, res) => {
         slug,
         display_order: displayOrder,
         is_active: req.body.is_active !== undefined ? Boolean(req.body.is_active) : true,
+        description: req.body.description ? String(req.body.description).trim() : null,
+        icon:        req.body.icon        ? String(req.body.icon).trim()        : null,
       })
       .select()
       .single();
     if (error) throw error;
 
+    bustCategoryCaches();
     res.status(201).json(data);
   } catch (error) {
+    if (isFkViolation(error)) {
+      return res.status(400).json({ message: 'primary_category must be an existing profession' });
+    }
     safeError(res, error);
   }
 };
@@ -148,6 +184,8 @@ const update = async (req, res) => {
     if (req.body.name !== undefined)          updates.name          = String(req.body.name).trim();
     if (req.body.display_order !== undefined) updates.display_order = req.body.display_order;
     if (req.body.is_active !== undefined)     updates.is_active     = Boolean(req.body.is_active);
+    if (req.body.description !== undefined) updates.description = req.body.description ? String(req.body.description).trim() : null;
+    if (req.body.icon !== undefined)        updates.icon        = req.body.icon ? String(req.body.icon).trim() : null;
 
     // Renaming can re-derive the slug only when explicitly requested, scoped to
     // the row's own profession to keep (primary_category, slug) unique.
@@ -167,8 +205,12 @@ const update = async (req, res) => {
     if (error) throw error;
     if (!data) return res.status(404).json({ message: 'Service category not found' });
 
+    bustCategoryCaches();
     res.json(data);
   } catch (error) {
+    if (isFkViolation(error)) {
+      return res.status(400).json({ message: 'primary_category must be an existing profession' });
+    }
     safeError(res, error);
   }
 };
@@ -194,6 +236,8 @@ const remove = async (req, res) => {
     const { error } = await supabaseAdmin
       .from('service_categories').delete().eq('id', req.params.id);
     if (error) throw error;
+
+    bustCategoryCaches();
     res.json({ ok: true });
   } catch (error) {
     safeError(res, error);
@@ -213,6 +257,8 @@ const reorder = async (req, res) => {
           .eq('id', id)
       )
     );
+
+    bustCategoryCaches();
     res.json({ ok: true });
   } catch (error) {
     safeError(res, error);

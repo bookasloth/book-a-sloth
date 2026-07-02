@@ -46,6 +46,7 @@ const awaitable = (resolved, methods = ['select', 'eq', 'not', 'order', 'limit']
 };
 
 afterEach(() => jest.clearAllMocks());
+beforeEach(() => require('../../services/responseCache').clear());
 
 // ── listAdmin ─────────────────────────────────────────────────────────────────
 describe('GET /api/admin/service-categories', () => {
@@ -205,5 +206,105 @@ describe('GET /api/service-categories (public)', () => {
     expect(res.status).toBe(200);
     expect(res.body.categories).toHaveLength(1);
     expect(res.body.categories[0].slug).toBe('wedding-photography');
+  });
+
+  test('public list includes description and icon, and sets Cache-Control', async () => {
+    const active = [{
+      id: 'cat-1', name: 'Wedding Photography', slug: 'wedding-photography',
+      primary_category: 'photographer', description: 'Capture your big day', icon: 'camera',
+    }];
+
+    supabaseAdmin.from.mockReturnValueOnce(awaitable({ data: active, error: null }));
+
+    const res = await request(app).get('/api/service-categories?primary=photographer');
+
+    expect(res.status).toBe(200);
+    expect(res.body.categories[0].description).toBe('Capture your big day');
+    expect(res.body.categories[0].icon).toBe('camera');
+    expect(res.headers['cache-control']).toMatch(/public, max-age=300/);
+  });
+
+  test('falls back to pre-migration select when description/icon columns are missing', async () => {
+    const legacy = [{ id: 'cat-1', name: 'Wedding Photography', slug: 'wedding-photography', primary_category: 'photographer' }];
+
+    supabaseAdmin.from
+      .mockReturnValueOnce(awaitable({ data: null, error: { message: "column service_categories.description does not exist" } }))
+      .mockReturnValueOnce(awaitable({ data: legacy, error: null }));
+
+    const res = await request(app).get('/api/service-categories?primary=photographer');
+
+    expect(res.status).toBe(200);
+    expect(res.body.categories).toHaveLength(1);
+    expect(res.body.categories[0].slug).toBe('wedding-photography');
+  });
+
+  test('second request for the same primary is served from cache (single DB hit)', async () => {
+    const active = [{ id: 'cat-1', name: 'Wedding Photography', slug: 'wedding-photography', primary_category: 'photographer' }];
+    supabaseAdmin.from.mockReturnValueOnce(awaitable({ data: active, error: null }));
+
+    const res1 = await request(app).get('/api/service-categories?primary=photographer');
+    const res2 = await request(app).get('/api/service-categories?primary=photographer');
+
+    expect(res1.status).toBe(200);
+    expect(res2.status).toBe(200);
+    expect(res2.body.categories[0].slug).toBe('wedding-photography');
+    expect(supabaseAdmin.from).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── FK mapping + cache busting ─────────────────────────────────────────────────
+describe('FK violation mapping + cache invalidation', () => {
+  test('admin create maps FK violation (23503) to friendly 400', async () => {
+    supabaseAdmin.from
+      // uniqueSlug → slug free
+      .mockReturnValueOnce({ select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), maybeSingle: jest.fn().mockResolvedValue({ data: null }) })
+      // max display_order → none
+      .mockReturnValueOnce({ select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), order: jest.fn().mockReturnThis(), limit: jest.fn().mockReturnThis(), maybeSingle: jest.fn().mockResolvedValue({ data: null }) })
+      // insert → FK violation
+      .mockReturnValueOnce({
+        insert: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: { code: '23503', message: 'insert or update on table "service_categories" violates foreign key constraint "fk_sc_primary"' },
+        }),
+      });
+
+    const res = await request(app).post('/api/admin/service-categories').set(adminAuth())
+      .send({ primary_category: 'not-a-real-profession', name: 'X' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/existing profession/i);
+  });
+
+  test('successful create busts the public category cache', async () => {
+    // Prime the cache with one entry.
+    supabaseAdmin.from.mockReturnValueOnce(awaitable({
+      data: [{ id: 'cat-1', name: 'Wedding Photography', slug: 'wedding-photography', primary_category: 'photographer' }],
+      error: null,
+    }));
+    const primed = await request(app).get('/api/service-categories?primary=photographer');
+    expect(primed.body.categories).toHaveLength(1);
+
+    // Create a new category (busts svccat: on success).
+    const inserted = { id: 'new-cat', primary_category: 'photographer', name: 'Drone Photography', slug: 'drone-photography', display_order: 0, is_active: true };
+    supabaseAdmin.from
+      .mockReturnValueOnce({ select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), maybeSingle: jest.fn().mockResolvedValue({ data: null }) })
+      .mockReturnValueOnce({ select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), order: jest.fn().mockReturnThis(), limit: jest.fn().mockReturnThis(), maybeSingle: jest.fn().mockResolvedValue({ data: null }) })
+      .mockReturnValueOnce({ insert: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(), single: jest.fn().mockResolvedValue({ data: inserted, error: null }) });
+
+    const createRes = await request(app).post('/api/admin/service-categories').set(adminAuth())
+      .send({ primary_category: 'photographer', name: 'Drone Photography' });
+    expect(createRes.status).toBe(201);
+
+    // Cache should be busted: the next public list fetch must hit the DB again.
+    supabaseAdmin.from.mockReturnValueOnce(awaitable({
+      data: [
+        { id: 'cat-1', name: 'Wedding Photography', slug: 'wedding-photography', primary_category: 'photographer' },
+        inserted,
+      ],
+      error: null,
+    }));
+    const afterRes = await request(app).get('/api/service-categories?primary=photographer');
+    expect(afterRes.body.categories).toHaveLength(2);
   });
 });
