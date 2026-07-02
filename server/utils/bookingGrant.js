@@ -41,30 +41,66 @@ const normalizePhone = (p) => {
 const identifierOf = ({ email, phone } = {}) =>
   normalizePhone(phone) || String(email || '').toLowerCase().trim();
 
-/** Issue a grant for a freshly-verified contact. Returns null if no identifier. */
+const normalizeEmail = (e) => String(e || '').toLowerCase().trim() || null;
+
+/**
+ * Issue a grant for a freshly-verified contact. Returns null if no identifier.
+ *
+ * Security audit R-3: the grant now carries the full verified channel tuple
+ * (`ph` + `em`), not just the phone-first `sub`. `sub` stays for back-compat, but
+ * `verify` additionally pins every channel the booking presents to the channel
+ * that was actually verified — closing the "verify my own phone, then book with a
+ * victim's email" notification-relay vector.
+ */
 const issue = ({ email, phone } = {}) => {
-  const sub = identifierOf({ email, phone });
+  const ph = normalizePhone(phone);
+  const em = normalizeEmail(email);
+  const sub = ph || em;                      // phone-first primary subject (back-compat)
   if (!sub) return null;
-  return jwt.sign({ purpose: PURPOSE, sub }, SECRET, { expiresIn: TTL });
+  return jwt.sign({ purpose: PURPOSE, sub, ph: ph || null, em }, SECRET, { expiresIn: TTL });
 };
 
 /**
- * True only if `token` is a valid, unexpired guest_booking grant whose subject
- * matches the contact being booked. Never throws.
+ * True only if `token` is a valid, unexpired guest_booking grant whose verified
+ * contact matches the contact being booked. Never throws.
+ *
+ * Two layers:
+ *   1. Primary subject (`sub`) must timing-safe-match the phone-first identifier
+ *      of the booking contact (covers legacy tokens with no channel claims).
+ *   2. Channel-tuple binding (audit R-3): once a token carries explicit `ph`/`em`
+ *      claims, EVERY channel present in the booking must equal the verified one —
+ *      and a channel that was never verified (claim is null) may not be supplied
+ *      at all. Legacy tokens (no channel claims) pass on layer 1 alone during the
+ *      30-min TTL rollout window.
  */
 const verify = (token, { email, phone } = {}) => {
   if (!token || typeof token !== 'string') return false;
-  const expected = identifierOf({ email, phone });
+  const reqPhone = normalizePhone(phone);
+  const reqEmail = normalizeEmail(email);
+  const expected = reqPhone || reqEmail;     // phone-first primary identifier
   if (!expected) return false;
+  let claims;
   try {
-    const claims = jwt.verify(token, SECRET);
-    if (!claims || claims.purpose !== PURPOSE || !claims.sub) return false;
-    const a = Buffer.from(String(claims.sub));
-    const b = Buffer.from(expected);
-    return a.length === b.length && crypto.timingSafeEqual(a, b);
+    claims = jwt.verify(token, SECRET);
   } catch {
     return false;
   }
+  if (!claims || claims.purpose !== PURPOSE || !claims.sub) return false;
+
+  // Layer 1 — primary subject (timing-safe).
+  const a = Buffer.from(String(claims.sub));
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;
+
+  // Layer 2 — channel-tuple binding (audit R-3). Only enforced for new-style
+  // tokens that carry the channel claims.
+  const hasChannelClaims = Object.prototype.hasOwnProperty.call(claims, 'ph')
+    || Object.prototype.hasOwnProperty.call(claims, 'em');
+  if (hasChannelClaims) {
+    if (reqPhone && reqPhone !== (claims.ph || null)) return false; // phone mismatch or not verified
+    if (reqEmail && reqEmail !== (claims.em || null)) return false; // email mismatch or not verified
+  }
+  return true;
 };
 
 module.exports = { issue, verify, identifierOf, normalizePhone };

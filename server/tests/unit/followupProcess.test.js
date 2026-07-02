@@ -87,6 +87,24 @@ test('source invalid (cancelled/refunded): skips', async () => {
   expect(updates[0].skip_reason).toBe('source_invalid');
 });
 
+test('sanitises CRLF from host/guest names before WhatsApp params (injection)', async () => {
+  featureFlags.isFeatureEnabled.mockResolvedValue(true);
+  const updates = [];
+  const base = pendingRow().payload;
+  supabaseAdmin.from
+    .mockReturnValueOnce(q({ data: [pendingRow({ payload: { ...base, guest_name: 'Ada\r\nInjected', host_name: 'Mystic\r\nHost' } })], error: null }))
+    .mockReturnValueOnce(q({ data: { plan: 'professional', plan_expires_at: null }, error: null }))
+    .mockReturnValueOnce(q({ data: { status: 'completed', payment_status: 'paid', completed_at: '2026-07-01T00:00:00Z' }, error: null }))
+    .mockReturnValueOnce(q({ data: [], error: null }))
+    .mockReturnValueOnce(q({ data: null, error: null }, updates));
+  await processFollowups();
+  const params = NotificationEngine.send.mock.calls[0][0].data.templateParams;
+  expect(params[0]).toBe('Ada Injected');
+  expect(params[1]).toBe('Mystic Host');
+  expect(params[0]).not.toMatch(/[\r\n]/);
+  expect(params[1]).not.toMatch(/[\r\n]/);
+});
+
 test('send failure: increments attempts, stays pending', async () => {
   featureFlags.isFeatureEnabled.mockResolvedValue(true);
   NotificationEngine.send.mockRejectedValueOnce(new Error('smtp down'));
