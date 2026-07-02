@@ -47,7 +47,7 @@ const CommandPalette = ({ open, session, onClose }) => {
               onMouseEnter={() => setActive(i)} onMouseDown={() => go(d)}
               className={`flex items-center gap-2.5 px-4 py-2 cursor-pointer text-[13px] ${i === active ? 'bg-[#FE5100]/10 text-[#FE5100]' : 'adm-t2'}`}>
               <span className="flex-1 truncate">{d.label}</span>
-              <span className="text-[10px] uppercase tracking-wider text-gray-400">{d.section}</span>
+              <span className="text-[10px] uppercase tracking-wider adm-t3">{d.section}</span>
             </li>
           ))}
         </ul>

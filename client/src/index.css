@@ -166,6 +166,9 @@ h3 {
 .adm-table thead tr { background: var(--adm-th-bg); }
 .adm-table tbody tr + tr { border-top: 1px solid var(--adm-border); }
 
+/* Dark content-area default ink — replaces the deleted legacy override */
+.admin-shell.dark main { color: var(--adm-text-2); }
+
 /* No link underline on host profile page (incl. hover). */
 .host-profile a,
 .host-profile a:hover {
