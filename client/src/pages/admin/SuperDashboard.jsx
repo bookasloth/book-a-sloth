@@ -1,32 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { adminGetStats, adminGetBookings, adminGetUsers, adminOpsSummary, adminGetProviderPlanAnalytics } from '../../services/api';
+import Ic from '../../components/admin/Ic';
+import { IC } from '../../components/admin/adminNav';
 import AdminInsights from './AdminInsights';
-
-// ── Mini icon renderer ────────────────────────────────────────
-const Ic = ({ d, size = 16, className = '' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className={`flex-shrink-0 ${className}`}>
-    {(Array.isArray(d) ? d : [d]).map((p, i) => <path key={i} d={p} />)}
-  </svg>
-);
-
-const IC = {
-  trendUp:  ['M23 6l-9.5 9.5-5-5L1 18','M17 6h6v6'],
-  trendDn:  ['M23 18l-9.5-9.5-5 5L1 6','M17 18h6v-6'],
-  dollar:   ['M12 1v22','M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6'],
-  users:    ['M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2','M9 11a4 4 0 100-8 4 4 0 000 8'],
-  building: ['M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z','M9 22V12h6v10'],
-  calendar: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-  clock:    ['M12 2a10 10 0 100 20A10 10 0 0012 2z','M12 7v5l4 2'],
-  check:    ['M20 6L9 17l-5-5'],
-  x:        ['M18 6L6 18','M6 6l12 12'],
-  alert:    ['M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z','M12 9v4','M12 17h.01'],
-  activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
-  eye:      ['M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z','M12 9a3 3 0 100 6 3 3 0 000-6z'],
-  arrow:    'M5 12h14m-7-7l7 7-7 7',
-  grid:     'M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z',
-};
 
 const TABS = [
   { id: 'overview',   label: 'Overview',        to: '/super-dashboard' },
