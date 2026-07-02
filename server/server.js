@@ -144,6 +144,7 @@ app.use('/api/categories',  require('./routes/categoryRoutes'));
 const { adminRouter: scAdminRouter, publicRouter: scPublicRouter } = require('./routes/serviceCategoryRoutes');
 app.use('/api/admin/service-categories', adminLimiter, scAdminRouter);
 app.use('/api/service-categories',       scPublicRouter);
+app.use('/api/services-directory', require('./routes/servicesDirectoryRoutes'));
 app.use('/api/admin/security', adminLimiter, require('./routes/adminSecurityRoutes')); // IP blocking mgmt (super-only)
 app.use('/api/explore',     require('./routes/exploreRoutes'));
 app.use('/api/vendors',        require('./routes/badgePublicRoutes'));
