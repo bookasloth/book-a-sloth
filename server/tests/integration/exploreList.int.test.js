@@ -21,9 +21,11 @@ app.use('/api/explore', exploreRoutes);
 
 // Awaitable chain stub: every listed fluent method returns `this`, and awaiting
 // the object resolves `resolved`. Mirrors servicesDirectory.int.test.js style.
+// The `eq` method is instrumented to record (col, val) pairs for assertion.
 const awaitable = (resolved, methods = ['select', 'eq', 'not', 'or', 'order', 'range']) => {
   const obj = {};
-  methods.forEach((m) => { obj[m] = jest.fn().mockReturnValue(obj); });
+  obj.eq = jest.fn().mockReturnValue(obj);
+  methods.filter(m => m !== 'eq').forEach((m) => { obj[m] = jest.fn().mockReturnValue(obj); });
   obj.then = (resolve, reject) => Promise.resolve(resolved).then(resolve, reject);
   return obj;
 };
@@ -49,7 +51,8 @@ describe('GET /api/explore', () => {
       }],
     }];
 
-    supabaseAdmin.from.mockReturnValueOnce(awaitable({ data: rows, error: null, count: 1 }));
+    const mockQuery = awaitable({ data: rows, error: null, count: 1 });
+    supabaseAdmin.from.mockReturnValueOnce(mockQuery);
 
     const res = await request(app).get('/api/explore?category=photographer&service=wedding-photography');
 
@@ -59,6 +62,13 @@ describe('GET /api/explore', () => {
       username: 'asha', category: 'photographer', minPrice: 999, reviewCount: 12,
     });
     expect(res.body.meta.total).toBe(1);
+
+    // Assert that both pair-filter .eq() calls were made with correct arguments
+    const eqCalls = mockQuery.eq.mock.calls;
+    expect(eqCalls.some(call => call[0] === 'services.category' && call[1] === 'wedding-photography'))
+      .toBe(true);
+    expect(eqCalls.some(call => call[0] === 'services.primary_category' && call[1] === 'photographer'))
+      .toBe(true);
   });
 
   test('category alone (no service) returns vendors without requiring pair', async () => {
@@ -91,9 +101,12 @@ describe('GET /api/explore', () => {
       }],
     }];
 
+    const failQuery = awaitable({ data: null, error: { message: 'column services.primary_category does not exist' } });
+    const fallbackQuery = awaitable({ data: rows, error: null, count: 1 });
+
     supabaseAdmin.from
-      .mockReturnValueOnce(awaitable({ data: null, error: { message: 'column services.primary_category does not exist' } }))
-      .mockReturnValueOnce(awaitable({ data: rows, error: null, count: 1 }));
+      .mockReturnValueOnce(failQuery)
+      .mockReturnValueOnce(fallbackQuery);
 
     const res = await request(app).get('/api/explore?category=photographer&service=wedding-photography');
 
@@ -101,6 +114,12 @@ describe('GET /api/explore', () => {
     expect(res.body.vendors).toHaveLength(1);
     expect(res.body.vendors[0].username).toBe('asha');
     expect(supabaseAdmin.from).toHaveBeenCalledTimes(2);
+
+    // Assert that the fallback query (second .from() call) does NOT include
+    // services.primary_category filter (pre-migration schema)
+    const fallbackEqCalls = fallbackQuery.eq.mock.calls;
+    expect(fallbackEqCalls.some(call => call[0] === 'services.primary_category'))
+      .toBe(false);
   });
 
   test('q is sanitized before building the ilike .or() filter', async () => {
