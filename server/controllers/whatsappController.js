@@ -17,7 +17,13 @@ const sendOtp = async (req, res) => {
   if (!stored.ok) {
     return res.status(429).json({ success: false, message: stored.reason });
   }
-  await notify.sendWhatsAppVerifyOtp({ phone: normalized, otp, name: req.user?.name });
+  const sent = await notify.sendWhatsAppVerifyOtp({ phone: normalized, otp, name: req.user?.name });
+  if (!sent) {
+    return res.status(502).json({
+      success: false,
+      message: 'We could not deliver the code on WhatsApp. Check the country code and make sure this number has WhatsApp.',
+    });
+  }
   return res.json({ success: true });
 };
 
