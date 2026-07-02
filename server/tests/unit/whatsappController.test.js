@@ -37,6 +37,18 @@ describe('whatsappController.sendOtp', () => {
     expect(res.json).toHaveBeenCalledWith({ success: true });
   });
 
+  it('returns 502 when the WhatsApp send fails (e.g. provider rejects the number)', async () => {
+    otpStore.generate.mockReturnValue('123456');
+    otpStore.set.mockResolvedValue({ ok: true });
+    notify.sendWhatsAppVerifyOtp.mockResolvedValue(false);
+    const res = mockRes();
+    await sendOtp({ user: { id: 'u1', name: 'Sam' }, body: { phone: '+447760380550' } }, res);
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ success: false, message: expect.stringContaining('country code') })
+    );
+  });
+
   it('surfaces a rate-limit reason with 429', async () => {
     otpStore.generate.mockReturnValue('123456');
     otpStore.set.mockResolvedValue({ ok: false, reason: 'Too many OTP requests. Try again in 15 minutes.' });
