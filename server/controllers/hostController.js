@@ -111,14 +111,18 @@ const insertServiceSafe = async (payload) => {
   // Retry with fallback if schema cache doesn't recognize newer columns
   if (
     result.error &&
-    /Could not find the '(grace_period_minutes|thumbnail_url|category)' column|column.*does not exist/i.test(
+    /Could not find the '(grace_period_minutes|thumbnail_url|category|primary_category)' column|column.*does not exist/i.test(
       result.error.message,
     )
   ) {
     const payloadCopy = { ...payload };
     delete payloadCopy.grace_period_minutes;
     delete payloadCopy.thumbnail_url;
+    // `category` and `primary_category` are deliberately excluded from the legacy
+    // fallback so a stale / pre-migration schema (without the columns) still
+    // writes the core fields.
     delete payloadCopy.category;
+    delete payloadCopy.primary_category;
     result = await supabaseAdmin
       .from("services")
       .insert(payloadCopy)
@@ -140,14 +144,18 @@ const updateServiceSafe = async (id, updates, userId) => {
   // Retry with fallback if schema cache doesn't recognize newer columns
   if (
     result.error &&
-    /Could not find the '(grace_period_minutes|thumbnail_url|category)' column|column.*does not exist/i.test(
+    /Could not find the '(grace_period_minutes|thumbnail_url|category|primary_category)' column|column.*does not exist/i.test(
       result.error.message,
     )
   ) {
     const updatesCopy = { ...updates };
     delete updatesCopy.grace_period_minutes;
     delete updatesCopy.thumbnail_url;
+    // `category` and `primary_category` are deliberately excluded from the legacy
+    // fallback so a stale / pre-migration schema (without the columns) still
+    // writes the core fields.
     delete updatesCopy.category;
+    delete updatesCopy.primary_category;
     result = await supabaseAdmin
       .from("services")
       .update(updatesCopy)
@@ -481,6 +489,7 @@ const createService = async (req, res) => {
       currency: currency || "INR",
       grace_period_minutes: grace_period_minutes !== undefined ? clampGrace(grace_period_minutes) : 10,
       category: chk.value,
+      primary_category: chk.primary,
     };
     if (thumbnail_url !== undefined) payload.thumbnail_url = thumbnail_url;
 
@@ -560,6 +569,7 @@ const updateService = async (req, res) => {
       const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: false });
       if (!chk.ok) return res.status(chk.status).json({ message: chk.message });
       updates.category = chk.value;
+      updates.primary_category = chk.primary;
     }
 
     const { data, error } = await updateServiceSafe(
