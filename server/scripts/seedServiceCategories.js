@@ -64,7 +64,7 @@ async function run() {
       if (schemaHasDescription) {
         ({ error: insErr } = await supabaseAdmin.from('service_categories').insert(rows));
         if (insErr && isMissingDescriptionColumn(insErr)) {
-          console.log('v3.60 not applied — seeding names only');
+          console.log('v3.60 not applied -- seeding names only');
           schemaHasDescription = false;
           insErr = null;
         }
@@ -93,7 +93,7 @@ async function run() {
           .is('description', null);
         if (updErr) {
           if (isMissingDescriptionColumn(updErr)) {
-            console.log('v3.60 not applied — seeding names only');
+            console.log('v3.60 not applied -- seeding names only');
             schemaHasDescription = false;
             break;
           }
