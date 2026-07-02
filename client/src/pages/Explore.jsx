@@ -30,7 +30,7 @@ import {
 // Explore (discovery + paid placement) launches later. While this is true,
 // /explore renders <ExploreComingSoon />; the full page (ExploreFull) below is
 // kept intact and structurally identical so launch = flip COMING_SOON → false.
-const COMING_SOON = true;
+const COMING_SOON = false;
 
 // ── Mock data (shown while real API is wired up) ──────────────
 const MOCK_CATEGORIES = [
@@ -95,17 +95,18 @@ function ExploreFull() {
   const [query,      setQuery]      = useState(searchParams.get('q') || '');
   const [inputVal,   setInputVal]   = useState(searchParams.get('q') || '');
   const [category,   setCategory]   = useState(searchParams.get('category') || '');
+  const [service,    setService]    = useState(searchParams.get('service') || '');
   const [sort,       setSort]       = useState('recommended');
   const [page,       setPage]       = useState(1);
   const [showFilter, setShowFilter] = useState(false);
 
-  const [categories,   setCategories]   = useState(MOCK_CATEGORIES);
-  const [featured,     setFeatured]     = useState(MOCK_FEATURED);
-  const [vendors,      setVendors]      = useState(MOCK_VENDORS);
-  const [collections,  setCollections]  = useState(MOCK_COLLECTIONS);
+  const [categories,   setCategories]   = useState([]);
+  const [featured,     setFeatured]     = useState([]);
+  const [vendors,      setVendors]      = useState([]);
+  const [collections,  setCollections]  = useState([]);
   const [sponsored,    setSponsored]    = useState([]);
   const [loading,      setLoading]      = useState(false);
-  const [totalVendors, setTotalVendors] = useState(MOCK_VENDORS.length);
+  const [totalVendors, setTotalVendors] = useState(0);
 
   const searchRef = useRef(null);
 
@@ -114,31 +115,31 @@ function ExploreFull() {
     const params = {};
     if (query)    params.q        = query;
     if (category) params.category = category;
+    if (service)  params.service  = service;
     setSearchParams(params, { replace: true });
-  }, [query, category]);
+  }, [query, category, service]);
 
-  // ── Load data (swap mock → real when API ready) ───────────
+  // ── Load real categories on mount ──────────────────────────
+  useEffect(() => {
+    getExploreCategories()
+      .then(res => setCategories(res.data.categories))
+      .catch(() => {});
+  }, []);
+
+  // ── Load data ───────────────────────────────────────────────
   const loadVendors = useCallback(async () => {
     setLoading(true);
     try {
-      // Uncomment when backend is live:
-      // const res = await getExploreVendors({ q: query, category, sort, page, limit: PAGE_SIZE });
-      // setVendors(res.data.vendors);
-      // setTotalVendors(res.data.meta.total);
-
-      // Filter mock data client-side for now
-      let filtered = [...MOCK_VENDORS];
-      if (query)    filtered = filtered.filter(v => v.name.toLowerCase().includes(query.toLowerCase()) || v.tagline.toLowerCase().includes(query.toLowerCase()));
-      if (category) filtered = filtered.filter(v => v.category.toLowerCase() === category.toLowerCase());
-      if (sort === 'price_asc')  filtered.sort((a, b) => a.minPrice - b.minPrice);
-      if (sort === 'price_desc') filtered.sort((a, b) => b.minPrice - a.minPrice);
-      if (sort === 'rating')     filtered.sort((a, b) => b.avgRating - a.avgRating);
-      setTotalVendors(filtered.length);
-      setVendors(filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE));
+      const res = await getExploreVendors({ q: query, category, service, sort, page, limit: PAGE_SIZE });
+      setVendors(res.data.vendors);
+      setTotalVendors(res.data.meta.total);
+    } catch {
+      setVendors([]);
+      setTotalVendors(0);
     } finally {
       setLoading(false);
     }
-  }, [query, category, sort, page]);
+  }, [query, category, service, sort, page]);
 
   useEffect(() => { loadVendors(); }, [loadVendors]);
 
@@ -151,6 +152,7 @@ function ExploreFull() {
 
   const handleCategory = (slug) => {
     setCategory(slug);
+    setService('');
     setPage(1);
   };
 
@@ -284,7 +286,7 @@ function ExploreFull() {
           </div>
 
           {/* Active filters pill */}
-          {(query || category) && (
+          {(query || category || service) && (
             <div className="flex flex-wrap gap-2 mb-4">
               {query && (
                 <span className="flex items-center gap-1 text-sm bg-white border-2 border-[#1E1E1E]
@@ -302,6 +304,12 @@ function ExploreFull() {
                     className="ml-1 text-[#64748b] hover:text-[#FE5100]"><X size={13} /></button>
                 </span>
               )}
+              {service && (
+                <button onClick={() => { setService(''); setPage(1); }}
+                        className="inline-flex items-center gap-1 rounded-xl border-4 border-black px-3 py-1 text-sm dark:border-gray-700">
+                  {service.replace(/-/g, ' ')} <X className="h-3 w-3" aria-hidden="true" />
+                </button>
+              )}
             </div>
           )}
 
@@ -317,7 +325,7 @@ function ExploreFull() {
               <div className="text-5xl mb-4">🦥</div>
               <p className="text-lg font-bold text-[#1E1E1E]">No sloths found</p>
               <p className="text-sm text-[#64748b] mt-1">Try a different search or category</p>
-              <button onClick={() => { setQuery(''); setInputVal(''); setCategory(''); setPage(1); }}
+              <button onClick={() => { setQuery(''); setInputVal(''); setCategory(''); setService(''); setPage(1); }}
                 className="btn mt-4 px-4 py-2 bg-[#FE5100] text-white font-bold
                            shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]">
                 Clear filters
