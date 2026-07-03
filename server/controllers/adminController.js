@@ -38,13 +38,13 @@ const getStats = async (req, res) => {
     // collected on paid bookings (GST is a pass-through liability, not revenue).
     let bookingsRes = await supabaseAdmin
       .from('bookings')
-      .select('id, payment_status, status, platform_fee_amount, commission_applied', { count: 'exact' });
+      .select('id, payment_status, status, platform_fee_amount, commission_applied, vendor_amount', { count: 'exact' });
 
     if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
       // Pre-v1.7 DB without commission_applied — fall back to the fee column only.
       bookingsRes = await supabaseAdmin
         .from('bookings')
-        .select('id, payment_status, status, platform_fee_amount', { count: 'exact' });
+        .select('id, payment_status, status, platform_fee_amount, vendor_amount', { count: 'exact' });
     }
 
     const [usersRes, vendorsRes, servicesRes] = await Promise.all([
@@ -59,6 +59,25 @@ const getStats = async (req, res) => {
       (s, b) => s + (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0),
       0
     );
+    // GMV = full amount guests paid (host cut + platform fee + commission). Drives
+    // "Avg per Booking" = average transaction size, not platform take per booking.
+    const gmv = paid.reduce(
+      (s, b) => s + (Number(b.vendor_amount) || 0) + (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0),
+      0
+    );
+
+    // Subscriptions collected — NET cash from real Razorpay subscription payments:
+    // net = plan_price − razorpay_fee − razorpay_tax (GST is a pass-through). Admin-
+    // granted plans have no payment row, so they contribute ₹0 here (by design).
+    let subscriptionsNet = 0;
+    const { data: subs } = await supabaseAdmin
+      .from('subscription_payments')
+      .select('plan_price, razorpay_fee, razorpay_tax, status')
+      .eq('status', 'paid');
+    (subs || []).forEach((sp) => {
+      const net = (Number(sp.plan_price) || 0) - (Number(sp.razorpay_fee) || 0) - (Number(sp.razorpay_tax) || 0);
+      subscriptionsNet += Math.max(0, net);
+    });
 
     res.json({
       users: usersRes.count || 0,
@@ -66,6 +85,8 @@ const getStats = async (req, res) => {
       bookings: bookingsRes.count || 0,
       services: servicesRes.count || 0,
       revenue,
+      gmv,
+      subscriptionsNet,
       confirmed: paid.length,
       cancelled: allBookings.filter(b => b.payment_status === 'refunded').length,
       // Disputed = booking lifecycle status, independent of payment_status. Falls
