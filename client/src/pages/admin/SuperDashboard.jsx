@@ -223,31 +223,43 @@ const inr0 = (n) => `₹${Math.round(Number(n) || 0).toLocaleString('en-IN')}`;
 
 const RevenueTab = ({ stats }) => {
   const [rb, setRb] = useState(null);
-  useEffect(() => { adminGetRevenueBreakdown().then(r => setRb(r.data)).catch(() => setRb({})); }, []);
+  const [err, setErr] = useState(false);
+  useEffect(() => { adminGetRevenueBreakdown().then(r => setRb(r.data)).catch(() => setErr(true)); }, []);
   const b = rb || {};
+
+  // Loading shows "…", a failed fetch shows "—" — never a misleading ₹0.
+  const loading = !rb && !err;
+  const money = (v) => (loading ? '…' : err ? '—' : inr(v));
+  const money0 = (v) => (loading ? '…' : err ? '—' : inr0(v));
 
   // Row 1 — revenue streams. Gross = Total + taxes; Total = net income (money kept).
   const revenueCards = [
-    { label: 'Gross Revenue',        value: inr(b.grossRevenue),        hex: '#047857' },
-    { label: 'Total Revenue',        value: inr(b.totalRevenue),        hex: '#059669' },
-    { label: 'Subscription Revenue', value: inr(b.subscriptionRevenue), hex: '#2563EB' },
-    { label: 'Platform Fee Revenue', value: inr(b.platformFeeRevenue),  hex: '#FE5100' },
+    { label: 'Gross Revenue',        value: money(b.grossRevenue),        hex: '#047857' },
+    { label: 'Total Revenue',        value: money(b.totalRevenue),        hex: '#059669' },
+    { label: 'Subscription Revenue', value: money(b.subscriptionRevenue), hex: '#2563EB' },
+    { label: 'Platform Fee Revenue', value: money(b.platformFeeRevenue),  hex: '#FE5100' },
   ];
-  // Row 2 — lifetime averages (rounded to whole ₹).
+  // Row 2 — average values (rounded to whole ₹).
   const avgCards = [
-    { label: 'LT Avg Revenue / Host',    value: inr0(b.ltvPerHost),        hex: '#7C3AED' },
-    { label: 'LT Avg Revenue / Guest',   value: inr0(b.ltvPerGuest),       hex: '#DB2777' },
-    { label: 'LT Avg Revenue / Booking', value: inr0(b.revenuePerBooking), hex: '#0891B2' },
-    { label: 'LT Avg Revenue / Week',    value: inr0(b.revenuePerWeek),    hex: '#D97706' },
+    { label: 'Avg Revenue / Host',    value: money0(b.ltvPerHost),        hex: '#7C3AED' },
+    { label: 'Avg Revenue / Guest',   value: money0(b.ltvPerGuest),       hex: '#DB2777' },
+    { label: 'Avg Revenue / Booking', value: money0(b.revenuePerBooking), hex: '#0891B2' },
+    { label: 'Avg Revenue / Week',    value: money0(b.revenuePerWeek),    hex: '#D97706' },
   ];
-  // Row 3 — 30-Jun-2026 monetization cohort.
+  // Row 3 — post-launch registered-user cohort.
   const cohortCards = [
-    { label: 'LTV / Registered User', value: inr0(b.ltvPerRegisteredUser), hex: '#4F46E5' },
-    { label: 'Govt Tax (since 30 Jun)', value: inr(b.govtExtorted),        hex: '#DC2626' },
+    { label: 'LTV / Registered User', value: money0(b.ltvPerRegisteredUser), hex: '#4F46E5' },
+    { label: 'Govt Tax', value: money(b.govtExtorted),                       hex: '#DC2626' },
   ];
 
   return (
     <div className="space-y-6">
+      <p className="text-[12px] adm-t3 -mb-2">
+        All figures from <span className="font-semibold adm-t2">30 Jun 2026, 00:00 IST</span> (monetization start). Earlier test payments are excluded.
+      </p>
+      {err && (
+        <p className="text-[12px] text-red-500">Couldn't load revenue — retry in a moment (server may be waking up).</p>
+      )}
       <div>
         <SectionHead title="Revenue" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -256,14 +268,14 @@ const RevenueTab = ({ stats }) => {
       </div>
 
       <div>
-        <SectionHead title="Lifetime Averages" />
+        <SectionHead title="Average Values" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {avgCards.map(c => <RevCard key={c.label} {...c} />)}
         </div>
       </div>
 
       <div>
-        <SectionHead title="New Cohort (from 30 Jun 2026)" />
+        <SectionHead title="New Cohort" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {cohortCards.map(c => <RevCard key={c.label} {...c} />)}
         </div>
