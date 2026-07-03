@@ -89,12 +89,10 @@ export const PATH_LABELS = {
 };
 
 export const NAV = [
-  { id:'dashboard', section:'Main Dashboard', items:[
-    { label:'Operations Center',  icon:'grid',    to:'/super-dashboard', exact:true, perm:'ops.view' },
-    { label:'Revenue',            icon:'trendUp', to:'/super-dashboard/revenue', perm:'analytics.view' },
-    { label:'Marketing Insights', icon:'bars',    to:'/super-dashboard/insights', perm:'analytics.view' },
-    { label:'Pending Actions',    icon:'clock',   to:'/super-dashboard/pending', perm:'ops.view' },
-  ]},
+  // Main Dashboard section removed from the sidebar (2026-07-03). Operations
+  // Center / Revenue / Marketing Insights / Pending Actions now live only as
+  // inactive "parked" cards on the Sloth House hub (see deptRegistry.js).
+  // Routes still exist; nothing here links to them anymore.
   { id:'operations', section:'Important', items:[
     { label:'Bookings', icon:'calCheck', to:'/admin/bookings', perm:'bookings.view' },
     { label:'Services', icon:'layers', to:'/admin/services', perm:'services.view' },

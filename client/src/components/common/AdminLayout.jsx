@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, Navigate, useNavigate, Link } from 'react-router-dom';
 import Ic from '../admin/Ic';
-import { IC, NAV, ROADMAP, PATH_LABELS, QUICK_ACTIONS, sessionCan } from '../admin/adminNav';
+import { IC, NAV, PATH_LABELS, QUICK_ACTIONS, sessionCan } from '../admin/adminNav';
 import CommandPalette from '../admin/CommandPalette';
 import NotificationBell from '../admin/NotificationBell';
 import { useAdminTheme } from '../admin/useAdminTheme';
@@ -187,7 +187,7 @@ const AdminLayout = ({ children }) => {
         </div>}
       </div>
       <nav className="flex-1 overflow-y-auto py-3 space-y-4" style={{ scrollbarWidth:'none' }}>
-        {[...NAV, ...ROADMAP].map(sec => {
+        {NAV.map(sec => {
           // Permission-aware: show an item if it's an inert "soon" teaser, or the
           // session grants its permission. Hide the whole section if nothing shows.
           const items = sec.items.filter(item => item.disabled || item.comingSoon || sessionCan(session, item.perm));

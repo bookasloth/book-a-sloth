@@ -70,9 +70,9 @@ describe('adminNav', () => {
     expect(ROADMAP[0].items[0].children.length).toBeGreaterThanOrEqual(7);
   });
 
-  it('dashboard section has no full-page duplicates (users/hosts/bookings)', () => {
-    const dash = NAV.find(s => s.id === 'dashboard');
-    const labels = dash.items.map(i => i.label);
-    expect(labels).toEqual(['Operations Center', 'Revenue', 'Marketing Insights', 'Pending Actions']);
+  it('sidebar is slimmed to Important + Department (no Main Dashboard section)', () => {
+    expect(NAV.find(s => s.id === 'dashboard')).toBeUndefined();
+    const sections = NAV.map(s => s.section);
+    expect(sections).toEqual(['Important', 'DEPARTMENT']);
   });
 });

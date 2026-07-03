@@ -22,11 +22,22 @@ export const DEPT_META = {
 };
 
 export const DEPT_LINKS = [
-  // Dashboard
-  { label: 'Operations Center',  icon: 'grid',    to: '/super-dashboard',            desc: 'Live ops overview & platform health',   depts: ['cxo', 'operation'] },
-  { label: 'Revenue',            icon: 'trendUp', to: '/super-dashboard/revenue',    desc: 'GMV, LTV, and revenue breakdown',        depts: ['cxo', 'finance'] },
-  { label: 'Marketing Insights', icon: 'bars',    to: '/super-dashboard/insights',   desc: 'Traffic, funnels & campaign performance', depts: ['marketing', 'cxo'] },
-  { label: 'Pending Actions',    icon: 'clock',   to: '/super-dashboard/pending',    desc: 'Items awaiting admin decision',          depts: ['operation', 'cxo'] },
+  // Dashboard — parked in Sloth House as inactive cards (2026-07-03). Removed
+  // from the sidebar and from their old org departments; routes still exist but
+  // nothing links to them. `inactive` renders a greyed, non-clickable card.
+  { label: 'Operations Center',  icon: 'grid',    desc: 'Live ops overview & platform health',      depts: ['sloth-house'], inactive: true },
+  { label: 'Revenue',            icon: 'trendUp', desc: 'GMV, LTV, and revenue breakdown',          depts: ['sloth-house'], inactive: true },
+  { label: 'Marketing Insights', icon: 'bars',    desc: 'Traffic, funnels & campaign performance',  depts: ['sloth-house'], inactive: true },
+  { label: 'Pending Actions',    icon: 'clock',   desc: 'Items awaiting admin decision',            depts: ['sloth-house'], inactive: true },
+
+  // Roadmap — coming-soon teasers, parked in Sloth House. No routes.
+  { label: 'CRM',                  icon: 'users2',    desc: 'Customer relationship management',   depts: ['sloth-house'], inactive: true },
+  { label: 'Marketing Automation', icon: 'zap',       desc: 'Automated journeys and drips',       depts: ['sloth-house'], inactive: true },
+  { label: 'Affiliates',           icon: 'affiliate', desc: 'Referral and affiliate program',     depts: ['sloth-house'], inactive: true },
+  { label: 'Revenue Analytics',    icon: 'bars',      desc: 'Deep revenue and cohort analytics',  depts: ['sloth-house'], inactive: true },
+  { label: 'Integrations',         icon: 'link2',     desc: 'Third-party app integrations',       depts: ['sloth-house'], inactive: true },
+  { label: 'AI Assistant',         icon: 'star',      desc: 'AI-assisted admin workflows',        depts: ['sloth-house'], inactive: true },
+  { label: 'Mobile App',           icon: 'phone',     desc: 'Native admin mobile app',            depts: ['sloth-house'], inactive: true },
 
   // Operations
   { label: 'Bookings',           icon: 'calCheck', to: '/admin/bookings',   desc: 'All guest bookings across the platform', depts: ['operation', 'support'] },
