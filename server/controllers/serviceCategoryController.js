@@ -302,4 +302,87 @@ const reorder = async (req, res) => {
   }
 };
 
-module.exports = { listAdmin, listPublic, create, update, remove, reorder };
+// ── Host: suggest a new subcategory (pending admin approval) ──────────────────
+// POST /api/service-categories/suggest  body: { primary_category, name }
+// Allowed only when the profession opted in AND the host belongs to it.
+const OPEN_SUGGESTION_CAP = 5;
+const suggest = async (req, res) => {
+  try {
+    const primary = (req.body.primary_category || '').trim();
+    const name = (req.body.name || '').trim();
+    if (!primary) return res.status(400).json({ message: 'primary_category is required' });
+    if (name.length < 2 || name.length > 60) {
+      return res.status(400).json({ message: 'Name must be 2–60 characters' });
+    }
+
+    // 1) Profession must exist and be opted in.
+    const { data: cat } = await supabaseAdmin
+      .from('categories')
+      .select('slug, allow_subcategory_suggestions')
+      .eq('slug', primary)
+      .maybeSingle();
+    if (!cat) return res.status(404).json({ message: 'Profession not found' });
+    if (!cat.allow_subcategory_suggestions) {
+      return res.status(403).json({ message: "This profession isn't accepting suggestions right now" });
+    }
+
+    // 2) Host must belong to this profession.
+    const { data: prof } = await supabaseAdmin
+      .from('profiles')
+      .select('primary_category')
+      .eq('id', req.user.id)
+      .maybeSingle();
+    if (!prof || prof.primary_category !== primary) {
+      return res.status(403).json({ message: 'You can only suggest subcategories for your own profession' });
+    }
+
+    // 3) Cap open (pending) suggestions per host per profession.
+    const { count: openCount } = await supabaseAdmin
+      .from('service_categories')
+      .select('id', { count: 'exact', head: true })
+      .eq('primary_category', primary)
+      .eq('suggested_by', req.user.id)
+      .eq('status', 'pending');
+    if ((openCount || 0) >= OPEN_SUGGESTION_CAP) {
+      return res.status(429).json({ message: 'You have too many pending suggestions' });
+    }
+
+    // 4) Slug + uniqueness within the profession (any status).
+    const slug = slugify(name);
+    if (!slug) return res.status(400).json({ message: 'Invalid name' });
+    const { data: dupe } = await supabaseAdmin
+      .from('service_categories')
+      .select('id')
+      .eq('primary_category', primary)
+      .eq('slug', slug)
+      .maybeSingle();
+    if (dupe) return res.status(409).json({ message: 'That subcategory already exists' });
+
+    // 5) Append at the end of the profession's order.
+    const { data: maxRow } = await supabaseAdmin
+      .from('service_categories')
+      .select('display_order')
+      .eq('primary_category', primary)
+      .order('display_order', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const displayOrder = maxRow ? (maxRow.display_order + 1) : 0;
+
+    const { data: row, error } = await supabaseAdmin
+      .from('service_categories')
+      .insert({
+        primary_category: primary, name, slug,
+        display_order: displayOrder, is_active: false,
+        status: 'pending', suggested_by: req.user.id,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+
+    res.status(201).json(row);
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+module.exports = { listAdmin, listPublic, create, update, remove, reorder, suggest };
