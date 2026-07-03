@@ -26,6 +26,9 @@ import {
 // ─── Minimal plan label for display ─────────────────────────────────────────
 const PLAN_LABEL = { starter: 'Starter', explorer: 'Starter', creator: 'Host+', professional: 'Studio', supreme: 'Supreme' };
 
+// Keep only the digits of a phone number (e.g. "+91 98765 43210" → "919876543210").
+const digitsOf = (s) => String(s || '').replace(/[^\d]/g, '');
+
 // ─── Social platform config ──────────────────────────────────────────────────
 const SOCIAL_PLATFORMS = [
   { key: 'instagram', label: 'Instagram',  placeholder: 'https://instagram.com/yourhandle', type: 'url' },
@@ -444,11 +447,44 @@ const ProfileSetup = () => {
             <div className="space-y-4">
               <p className="text-sm text-gray-500">Add your social profiles. Only filled links appear on your public page.</p>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {SOCIAL_PLATFORMS.map(({ key, label, placeholder, type }) => (
-                  <FormField key={key} label={label} htmlFor={`sl-${key}`} className="mb-0">
-                    <Input id={`sl-${key}`} type={type} name={key} placeholder={placeholder} value={form.social_links[key] || ''} onChange={handleSocialChange} />
-                  </FormField>
-                ))}
+                {SOCIAL_PLATFORMS.map(({ key, label, placeholder, type }) => {
+                  // WhatsApp is a public "message me" link — a DIFFERENT thing from the
+                  // number verified during onboarding for booking alerts. When that number
+                  // is already verified, explain the split and offer a one-tap fill so the
+                  // host isn't asked to re-type it. We never auto-publish it silently.
+                  const showVerifiedWa =
+                    key === 'whatsapp' && user?.whatsapp_verified && user?.whatsapp_number;
+                  const verifiedDigits = showVerifiedWa ? digitsOf(user.whatsapp_number) : '';
+                  return (
+                    <FormField key={key} label={label} htmlFor={`sl-${key}`} className="mb-0">
+                      <Input id={`sl-${key}`} type={type} name={key} placeholder={placeholder} value={form.social_links[key] || ''} onChange={handleSocialChange} />
+                      {showVerifiedWa && (
+                        <div className="mt-1.5">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                              <span aria-hidden="true">✓</span> Verified for booking alerts: +{verifiedDigits}
+                            </span>
+                            {!form.social_links.whatsapp?.trim() && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setForm(f => ({ ...f, social_links: { ...f.social_links, whatsapp: `https://wa.me/${verifiedDigits}` } }));
+                                  setDirty(true);
+                                }}
+                                className="text-xs font-medium text-primary hover:underline"
+                              >
+                                Use this number as public link
+                              </button>
+                            )}
+                          </div>
+                          <p className="mt-1 text-[11px] leading-snug text-gray-400">
+                            This is a separate <span className="font-medium">public</span> contact link shown on your page. Your booking-alert number is already saved.
+                          </p>
+                        </div>
+                      )}
+                    </FormField>
+                  );
+                })}
               </div>
             </div>
           </FeatureGate>
