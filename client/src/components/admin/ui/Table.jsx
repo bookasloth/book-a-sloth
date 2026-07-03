@@ -1,6 +1,8 @@
 // client/src/components/admin/ui/Table.jsx
 // columns: [{ key, label, className?, render?(row) }]
-const Table = ({ columns, rows, rowKey, empty, onRowClick }) => (
+// rows defaults to [] so an unexpected API shape degrades to the empty state
+// instead of crashing the page into the route error boundary.
+const Table = ({ columns, rows = [], rowKey, empty, onRowClick }) => (
   <div className="adm-card rounded-2xl overflow-hidden">
     {rows.length === 0 && empty ? empty : (
       <div className="overflow-x-auto">
