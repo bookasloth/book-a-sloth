@@ -5,8 +5,8 @@ import { SITE_URL } from '../../utils/seo';
 
 /**
  * Shared chrome for the legal pages (/terms, /privacy, /refund). Keeps the three
- * documents visually consistent and cross-linked. Content lives in each page.
- * Source of truth for the text: /legal/*.md (kept in sync on updates).
+ * documents visually consistent and cross-linked. The canonical text lives inline
+ * in each page component (Terms.jsx, Privacy.jsx, Refund.jsx).
  */
 
 export const Section = ({ title, children }) => (

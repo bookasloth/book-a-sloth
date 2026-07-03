@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import LegalLayout, { Section } from '../components/common/LegalLayout';
 
-// /privacy — Privacy Policy (DPDP Act 2023 + GDPR). Text mirrors /legal/PRIVACY_POLICY.md.
+// /privacy — Privacy Policy (India DPDP Act 2023 + DPDP Rules 2025, and GDPR).
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
 const USE_ROWS = [
@@ -18,6 +18,7 @@ const USE_ROWS = [
 const Privacy = () => (
   <LegalLayout
     title="Privacy Policy"
+    updated="3 July 2026"
     current="/privacy"
     description="How Book A Sloth collects, uses, and protects your data under India's DPDP Act 2023 and GDPR. Read our full privacy policy."
     intro={
@@ -32,8 +33,14 @@ const Privacy = () => (
         </p>
         <p>
           We are committed to processing your personal data in accordance with India's <strong>Digital Personal Data
-          Protection Act, 2023 (DPDP Act)</strong> and, where it applies, the EU <strong>General Data Protection
-          Regulation (GDPR)</strong>.
+          Protection Act, 2023 (DPDP Act)</strong> and the <strong>Digital Personal Data Protection Rules, 2025 (DPDP
+          Rules)</strong>, and, where it applies, the EU <strong>General Data Protection Regulation (GDPR)</strong>.
+          Under the DPDP Act we act as the <strong>Data Fiduciary</strong> that decides how and why your personal data
+          is processed, and you are the <strong>Data Principal</strong> the data relates to.
+        </p>
+        <p>
+          We provide this Policy in English. If you would like it in any other language listed in the Eighth Schedule to
+          the Constitution of India, please contact our Grievance Officer (Section 11).
         </p>
         <p>
           By using the Platform you acknowledge that you have read and understood this Policy. If you do not agree with
@@ -129,12 +136,13 @@ const Privacy = () => (
 
     <Section title="7. Your rights">
       <p className="font-medium text-ink">7.1 Under the DPDP Act (all users in India)</p>
-      <p>You have the right to: access a summary of your personal data and how it is processed; request correction or completion of inaccurate or incomplete data; request erasure of data that is no longer needed; nominate another person to exercise your rights in the event of death or incapacity; and grievance redressal (Section 11).</p>
-      <p>You may withdraw consent at any time; this does not affect processing carried out before withdrawal.</p>
+      <p>As a Data Principal you have the right to: access a summary of the personal data we process about you and the processing activities; request correction, completion, or updating of inaccurate or incomplete data; request erasure of data that is no longer needed for the purpose it was collected; nominate another person to exercise your rights in the event of death or incapacity; and readily available means of grievance redressal (Section 11).</p>
+      <p>You may withdraw your consent at any time, and withdrawing it will be as easy as giving it; this does not affect processing carried out before withdrawal. Where a registered Consent Manager is available, you may also give, manage, review, and withdraw your consent through it.</p>
+      <p>If you are not satisfied with how we handle your request or grievance, you may make a complaint to the <strong>Data Protection Board of India</strong>.</p>
       <p className="font-medium text-ink pt-1">7.2 Under the GDPR (users in the EU/EEA)</p>
       <p>If you are in the EU/EEA, you also have the right to data portability, the right to object to or restrict processing, the right not to be subject to solely automated decisions with legal effects, and the right to lodge a complaint with your local supervisory authority.</p>
       <p className="font-medium text-ink pt-1">7.3 How to exercise your rights</p>
-      <p>Contact us at <Mail /> (or the Grievance Officer in Section 11). We will respond within the timeframes required by applicable law. We may ask you to verify your identity before acting on a request.</p>
+      <p>Contact us at <Mail /> (or the Grievance Officer in Section 11). We will respond within the timeframes required by applicable law and, for grievances, within <strong>90 days</strong> as required by the DPDP Rules. We may ask you to verify your identity before acting on a request.</p>
     </Section>
 
     <Section title="8. Cookies and tracking">
@@ -152,16 +160,18 @@ const Privacy = () => (
         We use technical and organisational measures to protect your data, including encrypted connections (HTTPS),
         access controls, row-level security on our database, restricted administrative access, and storing payment data
         only with our PCI-DSS compliant processor. No method of transmission or storage is completely secure, so we
-        cannot guarantee absolute security. If a personal data breach occurs, we will notify the Data Protection Board
-        of India and affected users as required by the DPDP Act.
+        cannot guarantee absolute security. If a personal data breach occurs, we will intimate affected Data Principals
+        without undue delay and report the breach to the Data Protection Board of India within <strong>72 hours</strong>
+        of becoming aware of it, as required by the DPDP Act and DPDP Rules.
       </p>
     </Section>
 
     <Section title="10. Children">
       <p>
-        The Platform is not intended for children under the age of 18. We do not knowingly collect personal data from
-        children without verifiable parental or guardian consent as required by the DPDP Act. If you believe a child
-        has provided us data, contact us and we will delete it.
+        The Platform is not intended for children under the age of 18. We do not knowingly process a child's personal
+        data without verifiable consent from a parent or lawful guardian as required by the DPDP Act. We do not carry
+        out tracking, behavioural monitoring, profiling, or targeted advertising directed at children. If you believe a
+        child has provided us data, contact us and we will delete it.
       </p>
     </Section>
 
@@ -174,7 +184,7 @@ const Privacy = () => (
         <li><strong>Registered office:</strong> Ground Floor, Holding No-55, Ward No-19, Natapada, Jajpur Road, Byasanagar, District Jajpur, Odisha – 755019, India</li>
         <li><strong>Operations office:</strong> #6, 2nd Floor, Eureka Coworking, Mate Square, Nagpur, Maharashtra</li>
       </ul>
-      <p>For GDPR matters, you may also contact us at the same email. If you are unsatisfied with our response, you may escalate to the Data Protection Board of India or your local data protection authority.</p>
+      <p>We will acknowledge and address grievances within the time required by the DPDP Rules (currently <strong>90 days</strong>). For GDPR matters, you may also contact us at the same email. If you are unsatisfied with our response, you may escalate to the Data Protection Board of India or your local data protection authority.</p>
     </Section>
 
     <Section title="12. Changes to this Policy">
