@@ -341,6 +341,9 @@ function App() {
           <Route path="/admin/finance/journal" element={<AdminWrapper><AdminJournal /></AdminWrapper>} />
           <Route path="/admin/finance/ledger" element={<AdminWrapper><AdminLedger /></AdminWrapper>} />
 
+          {/* System — bare /admin/system has no page; send it to the dashboard */}
+          <Route path="/admin/system" element={<Navigate to="/super-dashboard" replace />} />
+
           {/* System — Staff & Roles, Audit Logs (M1) */}
           <Route path="/admin/staff" element={<AdminWrapper><AdminStaff /></AdminWrapper>} />
           <Route path="/admin/system/audit" element={<AdminWrapper><AdminAudit /></AdminWrapper>} />
