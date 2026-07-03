@@ -64,6 +64,14 @@ const AdminCategories = () => {
     } catch { toast.error('Update failed'); }
   };
 
+  const setAllowSuggest = async (cat, value) => {
+    try {
+      await adminUpdateCategory(cat.id, { allow_subcategory_suggestions: value });
+      toast.success(value ? 'Suggestions on' : 'Suggestions off');
+      load();
+    } catch { toast.error('Update failed'); }
+  };
+
   const remove = async (cat) => {
     if ((cat.registered_hosts || 0) > 0) return;
     if (!window.confirm(`Delete "${cat.label}"? This cannot be undone.`)) return;
@@ -104,6 +112,18 @@ const AdminCategories = () => {
         <td className="px-3 py-2.5 text-center tabular-nums">{cat.registered_hosts || 0}</td>
         <td className="px-3 py-2.5 text-center tabular-nums">{cat.active_services || 0}</td>
         <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">{fmtDate(cat.created_at)}</td>
+        <td className="px-3 py-2.5 text-center">
+          <button
+            onClick={() => setAllowSuggest(cat, !cat.allow_subcategory_suggestions)}
+            className={`text-xs font-medium rounded px-2 py-1 border ${
+              cat.allow_subcategory_suggestions
+                ? 'border-green-300 bg-green-50 text-green-700'
+                : 'border-gray-200 bg-gray-50 text-gray-500'
+            }`}
+          >
+            {cat.allow_subcategory_suggestions ? 'On' : 'Off'}
+          </button>
+        </td>
         <td className="px-3 py-2.5 text-right">
           <button
             onClick={() => remove(cat)}
@@ -187,6 +207,7 @@ const AdminCategories = () => {
                   <th className="px-3 py-2 text-center">Registered Hosts</th>
                   <th className="px-3 py-2 text-center">Active Services</th>
                   <th className="px-3 py-2">Date Added</th>
+                  <th className="px-3 py-2 text-center">Host Suggestions</th>
                   <th className="px-3 py-2 text-right">Actions</th>
                 </tr>
               </thead>
@@ -194,13 +215,13 @@ const AdminCategories = () => {
                 {groups.map((g) => (
                   <Fragment key={g.group}>
                     <tr className="bg-gray-50/60">
-                      <td colSpan={6} className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">{g.group}</td>
+                      <td colSpan={7} className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">{g.group}</td>
                     </tr>
                     {g.items.map(Row)}
                   </Fragment>
                 ))}
                 {live.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-6 text-sm text-gray-400 text-center">No categories yet.</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-6 text-sm text-gray-400 text-center">No categories yet.</td></tr>
                 )}
               </tbody>
             </table>
