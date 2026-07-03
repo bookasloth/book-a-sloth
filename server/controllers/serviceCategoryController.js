@@ -122,14 +122,17 @@ const listPublic = async (req, res) => {
       }
       if (r.error) throw r.error;
 
-      // Does this profession accept host suggestions?
-      let allow = false;
-      const { data: cat } = await supabaseAdmin
+      // Does this profession accept host suggestions? Fail closed (allow=false)
+      // on error, but log so schema/infra drift is diagnosable.
+      const { data: cat, error: catErr } = await supabaseAdmin
         .from('categories')
         .select('allow_subcategory_suggestions')
         .eq('slug', primary)
         .maybeSingle();
-      allow = Boolean(cat?.allow_subcategory_suggestions);
+      if (catErr) {
+        console.warn('listPublic: allow_subcategory_suggestions lookup failed for %s: %s', primary, catErr.message);
+      }
+      const allow = Boolean(cat?.allow_subcategory_suggestions);
 
       return { categories: r.data || [], allow_suggestions: allow };
     });
