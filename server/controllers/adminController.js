@@ -708,28 +708,31 @@ const getRevenueBreakdown = async (req, res) => {
       if (ms >= COHORT_START_MS) registeredCohort += 1;
     });
 
-    let earliestMs = Infinity;
-    const bumpEarliest = (iso) => { const ms = Date.parse(iso); if (!isNaN(ms)) earliestMs = Math.min(earliestMs, ms); };
+    // Everything on this dashboard counts ONLY from the monetization start
+    // (30 Jun 2026 00:00 IST). Payments before then were test/dummy — still stored,
+    // just excluded from every figure here. Events are gated by paid_at.
+    const inWindow = (iso) => { const ms = Date.parse(iso); return !isNaN(ms) && ms >= COHORT_START_MS; };
 
     // ── Subscriptions ──
-    let subNet = 0, subGst = 0, subNetCohort = 0, subGstCohort = 0;
+    let subNet = 0, subGst = 0, subNetCohort = 0;
     const payingHosts = new Set();
     (subs || []).forEach((s) => {
+      if (!inWindow(s.paid_at)) return; // drop pre-launch test payments
       const net = Math.max(0, (Number(s.plan_price) || 0) - (Number(s.razorpay_fee) || 0) - (Number(s.razorpay_tax) || 0));
       subNet += net;
       subGst += Number(s.gst_amount) || 0;
       payingHosts.add(s.vendor_id);
-      bumpEarliest(s.paid_at);
+      // Registered-user cohort = revenue from hosts who also SIGNED UP on/after start.
       if (hostCreatedMs[s.vendor_id] >= COHORT_START_MS) subNetCohort += net;
-      if (Date.parse(s.paid_at) >= COHORT_START_MS) subGstCohort += Number(s.gst_amount) || 0;
     });
 
     // ── Bookings ── (paid only feed revenue; refunded are simply excluded)
-    let platformFee = 0, bookingGst = 0, platformFeeCohort = 0, bookingGstCohort = 0, paidBookings = 0;
+    let platformFee = 0, bookingGst = 0, platformFeeCohort = 0, paidBookings = 0;
     const payingGuests = new Set();
     const guestKey = (b) => b.guest_id || b.guest_email || b.guest_phone || null;
     (bookings || []).forEach((b) => {
       if (b.payment_status !== 'paid') return;
+      if (!inWindow(b.paid_at || b.created_at)) return; // drop pre-launch test bookings
       const fee = (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
       const gst = (Number(b.platform_fee_gst) || 0) + (Number(b.commission_gst) || 0);
       platformFee += fee;
@@ -737,9 +740,7 @@ const getRevenueBreakdown = async (req, res) => {
       paidBookings += 1;
       const gk = guestKey(b); if (gk) payingGuests.add(gk);
       if (fee > 0 && b.host_id) payingHosts.add(b.host_id);
-      bumpEarliest(b.paid_at || b.created_at);
       if (hostCreatedMs[b.host_id] >= COHORT_START_MS) platformFeeCohort += fee;
-      if (Date.parse(b.paid_at || b.created_at) >= COHORT_START_MS) bookingGstCohort += gst;
     });
 
     const subscriptionRevenue = subNet;
@@ -757,9 +758,10 @@ const getRevenueBreakdown = async (req, res) => {
     const weeksSinceStart = Math.max(1, Math.ceil((Date.now() - COHORT_START_MS) / WEEK_MS));
     const revenuePerWeek = div(totalRevenue, weeksSinceStart);
 
-    // 30-Jun cohort LTV + the govt's tax take on that cohort
+    // Registered-user LTV (revenue from post-launch signups ÷ post-launch signups)
+    // + total tax handed to the govt (all figures are already windowed to start).
     const ltvPerRegisteredUser = div(subNetCohort + platformFeeCohort, registeredCohort);
-    const govtExtorted = subGstCohort + bookingGstCohort;
+    const govtExtorted = taxes;
 
     res.json({
       grossRevenue, totalRevenue, subscriptionRevenue, platformFeeRevenue, otherRevenue, taxes,
