@@ -6,7 +6,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCategories } from '../../services/api';
-import ServiceCategoryPicker from '../../components/services/ServiceCategoryPicker';
 import toast from 'react-hot-toast';
 import FeatureGate from '../../components/common/FeatureGate';
 import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
@@ -502,20 +501,29 @@ export default function ServiceForm({ initialData, serviceId }) {
               <Textarea rows={3} value={form.short_description} maxLength={160} required onChange={e => set('short_description', e.target.value)} placeholder="Used for service cards, search results and meta description" />
             </div>
 
-            {/* Service Type — offline option gated; off = online only */}
-            <FeatureGate flag="service_offline_type">
-              <div>
-                <label className={fieldLabel}>Service Type</label>
-                <div className="flex gap-3">
-                  {['online','offline'].map(t => (
-                    <button key={t} type="button" onClick={() => set('service_type', t)}
-                      className={cn('flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all', form.service_type === t ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-500 hover:border-gray-300')}>
-                      {t === 'online' ? '🌐 Online' : '📍 Offline'}
-                    </button>
-                  ))}
+            {/* Service Type + Category — compact side-by-side dropdowns.
+                Service Type: offline option gated; off = online only.
+                Category: scoped to the host's primary profession. */}
+            <div className="flex flex-col gap-5 sm:flex-row sm:gap-4">
+              <FeatureGate flag="service_offline_type">
+                <div className="flex-1">
+                  <label className={fieldLabel}>Service Type</label>
+                  <Select value={form.service_type} onChange={e => set('service_type', e.target.value)}>
+                    <option value="online">🌐 Online</option>
+                    <option value="offline">📍 Offline</option>
+                  </Select>
                 </div>
-              </div>
-            </FeatureGate>
+              </FeatureGate>
+
+              {svcCats.length > 0 && (
+                <div className="flex-1">
+                  <label className={fieldLabel}>Category <span className="text-red-500">*</span></label>
+                  <Select value={form.category} onChange={e => set('category', e.target.value)}>
+                    {svcCats.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+                  </Select>
+                </div>
+              )}
+            </div>
 
             {/* Price */}
             <div>
@@ -525,9 +533,6 @@ export default function ServiceForm({ initialData, serviceId }) {
                 <Input type="number" min={0} step={1} required value={form.price} onChange={e => set('price', e.target.value)} placeholder="1999" className="pl-7" />
               </div>
             </div>
-
-            {/* Service Category — the actual service, scoped to the host's profession */}
-            <ServiceCategoryPicker categories={svcCats} value={form.category} onChange={(slug) => set('category', slug)} />
           </div>
 
           {/* Right column */}
