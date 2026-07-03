@@ -816,18 +816,24 @@ const getProviderOverview = async (req, res) => {
 
     const { data: subs } = await supabaseAdmin
       .from('subscription_payments')
-      .select('plan_price, razorpay_fee, razorpay_tax, paid_at, status')
+      .select('vendor_id, plan_price, razorpay_fee, razorpay_tax, paid_at, status')
       .eq('status', 'paid');
 
     const now = Date.now();
     const d30 = now - 30 * 24 * 60 * 60 * 1000;
     const inWindow = (iso) => { const ms = Date.parse(iso); return !isNaN(ms) && ms >= COHORT_START_MS; };
 
+    // Premium = hosts who actually PAID (a real Razorpay subscription charge exists).
+    // Admin-granted upgrades have no payment row → they stay in Free (freeloaders
+    // asking for upgrades don't inflate Premium). Void/refunded rows are excluded
+    // by the status='paid' filter above.
+    const paidHostSet = new Set((subs || []).map((s) => s.vendor_id).filter(Boolean));
+
     // ── Row 1: host counts (all-time, independent states) ──
     const totalHosts = (hosts || []).length;
     let premiumHosts = 0, freeHosts = 0, unverifiedHosts = 0, suspendedHosts = 0, newHosts30 = 0;
     (hosts || []).forEach((h) => {
-      if (planService.isFreeSlug(planService.normalizeSlug(h.plan))) freeHosts += 1; else premiumHosts += 1;
+      if (paidHostSet.has(h.id)) premiumHosts += 1; else freeHosts += 1;
       if (!h.is_verified) unverifiedHosts += 1;
       if (h.is_banned) suspendedHosts += 1;
       if (Date.parse(h.created_at) >= d30) newHosts30 += 1;
