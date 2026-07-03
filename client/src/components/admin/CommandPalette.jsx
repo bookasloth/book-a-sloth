@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Ic from './Ic';
-import { IC, NAV, flattenDestinations } from './adminNav';
+import { IC, NAV, flattenAllDestinations } from './adminNav';
 
 const CommandPalette = ({ open, session, onClose }) => {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ const CommandPalette = ({ open, session, onClose }) => {
   const [active, setActive] = useState(0);
   const inputRef = useRef(null);
 
-  const all = useMemo(() => flattenDestinations(NAV, session), [session]);
+  const all = useMemo(() => flattenAllDestinations(NAV, session), [session]);
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return all;
