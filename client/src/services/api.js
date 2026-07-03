@@ -303,6 +303,7 @@ export const resendProductLink   = (data)     => API.post('/products/resend-link
 export const adminGetStats       = ()          => API.get('/admin/stats');
 export const adminGetInsights    = ()          => API.get('/admin/insights/kpis');
 export const adminGetProviderPlanAnalytics = (params) => API.get('/admin/provider-plan-analytics', { params });
+export const adminGetProviderOverview = ()      => API.get('/admin/provider-overview');
 export const adminGetRevenueTrend = ()          => API.get('/admin/revenue-trend');
 export const adminGetRevenueBreakdown = ()      => API.get('/admin/revenue-breakdown');
 export const adminGetUsers       = (params)    => API.get('/admin/users', { params });
