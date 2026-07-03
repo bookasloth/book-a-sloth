@@ -1,6 +1,8 @@
 // client/src/components/admin/adminNav.js
 // Pure nav data + helpers for the admin shell. No JSX, no React — unit-testable.
 
+import { DEPT_LINKS, DEPT_META } from './deptRegistry';
+
 export const IC = {
   grid:      'M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z',
   trendUp:   ['M23 6l-9.5 9.5-5-5L1 18','M17 6h6v6'],
@@ -222,4 +224,27 @@ export const flattenDestinations = (nav, session) => {
     });
   });
   return out;
+};
+
+// Full destination list for the command palette. The sidebar (NAV) was slimmed
+// to Important + Departments on 2026-07-03, which stripped ~40 pages out of
+// flattenDestinations(). The palette must still find every page by title, so we
+// merge the visible NAV destinations with every navigable card in DEPT_LINKS
+// (the single source of truth behind the department hubs). Deduped by path.
+export const flattenAllDestinations = (nav, session) => {
+  const byPath = new Map();
+  const add = (dest) => { if (dest?.to && !byPath.has(dest.to)) byPath.set(dest.to, dest); };
+
+  // Visible sidebar destinations first (keeps Important + department hub pages).
+  flattenDestinations(nav, session).forEach(add);
+
+  // Every real page tagged into a department hub. DEPT_LINKS has no perm field —
+  // route guards enforce access on navigation, same as the hub pages themselves.
+  DEPT_LINKS.forEach(link => {
+    if (!link.to) return; // skip inactive / coming-soon cards
+    const dept = link.depts?.[0];
+    add({ label: link.label, to: link.to, section: (DEPT_META[dept]?.label || 'Pages').toUpperCase() });
+  });
+
+  return Array.from(byPath.values());
 };
