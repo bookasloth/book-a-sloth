@@ -66,7 +66,8 @@ describe('getStats', () => {
       .mockReturnValueOnce(countMock(0, { data: [], count: 0 }))       // bookings (queried first)
       .mockReturnValueOnce(countMock(10))                               // users (guests)
       .mockReturnValueOnce(countMock(5))                                // vendors (hosts)
-      .mockReturnValueOnce(countMock(12));                              // services
+      .mockReturnValueOnce(countMock(12))                               // services
+      .mockReturnValueOnce(countMock(0, { data: [] }));                 // subscription_payments
 
     const r = res();
     await getStats(req(), r);

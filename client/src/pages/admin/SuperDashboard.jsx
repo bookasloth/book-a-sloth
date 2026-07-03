@@ -193,32 +193,48 @@ const RevenueTrendChart = () => {
   );
 };
 
+// ── Revenue stat card ─────────────────────────────────────────
+// Icon AND value share the card's hue. The descriptive `sub` line is hidden and
+// surfaced as a tooltip when the card is clicked (tap-to-toggle, mobile-safe).
+const RevCard = ({ label, value, sub, hex }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <Card>
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="w-full text-left relative" title={sub}>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="w-10 h-10 rounded-xl flex items-center justify-center border-2 flex-shrink-0"
+            style={{ borderColor: hex, color: hex }}>
+            <Ic d={IC.rupee} size={18} />
+          </span>
+          <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3 leading-tight">{label}</p>
+        </div>
+        <p className="text-2xl font-bold tabular-nums" style={{ color: hex }}>{value}</p>
+        {open && (
+          <span className="absolute left-0 top-full mt-1 z-20 rounded-md bg-gray-900 text-white text-[11px] font-medium px-2 py-1 shadow-lg whitespace-nowrap">
+            {sub}
+          </span>
+        )}
+      </button>
+    </Card>
+  );
+};
+
 // ── Revenue Tab ───────────────────────────────────────────────
-// Four bordered rupee cards, each a different border hue, + the trend chart.
+// Rupee cards (icon + value share a hue; sub line is a click tooltip) + trend chart.
 const RevenueTab = ({ stats }) => {
   const s = stats || {};
   const cards = [
-    { label: 'Total Revenue',   value: inr(s.revenue),                                              sub: 'Platform fees collected', hex: '#FE5100' },
-    { label: 'Paid Bookings',   value: (s.confirmed || 0).toLocaleString(),                          sub: 'Completed payments',      hex: '#2563EB' },
-    { label: 'Avg per Booking', value: s.confirmed ? inr(Math.round(s.revenue / s.confirmed)) : '₹0', sub: 'Revenue per booking',   hex: '#7C3AED' },
-    { label: 'Refunds',         value: (s.cancelled || 0).toLocaleString(),                          sub: 'Cancelled / refunded',    hex: '#DC2626' },
+    { label: 'Subscriptions Collected', value: inr(s.subscriptionsNet), sub: 'Net Razorpay subscription cash (plan price − Razorpay fees)', hex: '#059669' },
+    { label: 'Total Revenue',   value: inr(s.revenue),                                             sub: 'Platform fees collected', hex: '#FE5100' },
+    { label: 'Paid Bookings',   value: (s.confirmed || 0).toLocaleString(),                        sub: 'Completed payments',      hex: '#2563EB' },
+    { label: 'Avg per Booking', value: s.confirmed ? inr(Math.round((s.gmv || 0) / s.confirmed)) : '₹0', sub: 'Average booking value (GMV per paid booking)', hex: '#7C3AED' },
+    { label: 'Refunds',         value: (s.cancelled || 0).toLocaleString(),                        sub: 'Cancelled / refunded',    hex: '#DC2626' },
   ];
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {cards.map(c => (
-          <Card key={c.label}>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="w-10 h-10 rounded-xl flex items-center justify-center border-2 flex-shrink-0"
-                style={{ borderColor: c.hex, color: c.hex }}>
-                <Ic d={IC.rupee} size={18} />
-              </span>
-              <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3 leading-tight">{c.label}</p>
-            </div>
-            <p className="text-2xl font-bold adm-t1 tabular-nums">{c.value}</p>
-            <p className="text-[11px] adm-t3 mt-1">{c.sub}</p>
-          </Card>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {cards.map(c => <RevCard key={c.label} {...c} />)}
       </div>
 
       <RevenueTrendChart />
