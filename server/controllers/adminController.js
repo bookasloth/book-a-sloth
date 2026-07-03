@@ -38,13 +38,13 @@ const getStats = async (req, res) => {
     // collected on paid bookings (GST is a pass-through liability, not revenue).
     let bookingsRes = await supabaseAdmin
       .from('bookings')
-      .select('id, payment_status, status, platform_fee_amount, commission_applied, vendor_amount', { count: 'exact' });
+      .select('id, payment_status, status, platform_fee_amount, commission_applied, vendor_amount, guest_id, guest_email, guest_phone', { count: 'exact' });
 
     if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
       // Pre-v1.7 DB without commission_applied — fall back to the fee column only.
       bookingsRes = await supabaseAdmin
         .from('bookings')
-        .select('id, payment_status, status, platform_fee_amount, vendor_amount', { count: 'exact' });
+        .select('id, payment_status, status, platform_fee_amount, vendor_amount, guest_id, guest_email, guest_phone', { count: 'exact' });
     }
 
     const [usersRes, vendorsRes, servicesRes] = await Promise.all([
@@ -79,6 +79,20 @@ const getStats = async (req, res) => {
       subscriptionsNet += Math.max(0, net);
     });
 
+    // ── Revenue breakdown (Revenue tab: 4 streams + 2 averages) ──
+    // Platform-fee revenue = the booking-side take already computed as `revenue`.
+    // Other revenue (reschedule fees, add-ons, …) is not yet aggregated → 0 for now.
+    const platformFeeRevenue = revenue;
+    const otherRevenue = 0;
+    const netIncome = subscriptionsNet + platformFeeRevenue + otherRevenue;
+
+    // Paying customers = distinct guests with ≥1 paid booking (identity falls back
+    // guest_id → email → phone for OTP guests). Denominator for ARPC.
+    const guestKey = (b) => b.guest_id || b.guest_email || b.guest_phone || null;
+    const payingCustomers = new Set(paid.map(guestKey).filter(Boolean)).size;
+    // Completed + paid bookings → denominator for ARPB.
+    const completedPaidBookings = paid.filter((b) => b.status === 'completed').length;
+
     res.json({
       users: usersRes.count || 0,
       vendors: vendorsRes.count || 0,
@@ -87,6 +101,13 @@ const getStats = async (req, res) => {
       revenue,
       gmv,
       subscriptionsNet,
+      // Revenue-breakdown fields
+      subscriptionRevenue: subscriptionsNet,
+      platformFeeRevenue,
+      otherRevenue,
+      netIncome,
+      payingCustomers,
+      completedPaidBookings,
       confirmed: paid.length,
       cancelled: allBookings.filter(b => b.payment_status === 'refunded').length,
       // Disputed = booking lifecycle status, independent of payment_status. Falls

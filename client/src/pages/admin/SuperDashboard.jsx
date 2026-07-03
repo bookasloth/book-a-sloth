@@ -194,47 +194,63 @@ const RevenueTrendChart = () => {
 };
 
 // ── Revenue stat card ─────────────────────────────────────────
-// Icon AND value share the card's hue. The descriptive `sub` line is hidden and
-// surfaced as a tooltip when the card is clicked (tap-to-toggle, mobile-safe).
-const RevCard = ({ label, value, sub, hex }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <Card>
-      <button type="button" onClick={() => setOpen(o => !o)}
-        className="w-full text-left relative" title={sub}>
-        <div className="flex items-center gap-3 mb-3">
-          <span className="w-10 h-10 rounded-xl flex items-center justify-center border-2 flex-shrink-0"
-            style={{ borderColor: hex, color: hex }}>
-            <Ic d={IC.rupee} size={18} />
-          </span>
-          <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3 leading-tight">{label}</p>
-        </div>
-        <p className="text-2xl font-bold tabular-nums" style={{ color: hex }}>{value}</p>
-        {open && (
-          <span className="absolute left-0 top-full mt-1 z-20 rounded-md bg-gray-900 text-white text-[11px] font-medium px-2 py-1 shadow-lg whitespace-nowrap">
-            {sub}
-          </span>
-        )}
-      </button>
-    </Card>
-  );
-};
+// Icon boxed in a hue-bordered chip; value shares the hue. No tooltip — static.
+const RevCard = ({ label, value, hex }) => (
+  <Card>
+    <div className="flex items-center gap-3 mb-3">
+      <span className="w-10 h-10 rounded-xl flex items-center justify-center border-2 flex-shrink-0"
+        style={{ borderColor: hex, color: hex }}>
+        <Ic d={IC.rupee} size={18} />
+      </span>
+      <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3 leading-tight">{label}</p>
+    </div>
+    <p className="text-2xl font-bold tabular-nums" style={{ color: hex }}>{value}</p>
+  </Card>
+);
+
+// Section divider heading (Revenue / Average Values).
+const SectionHead = ({ title }) => (
+  <div className="flex items-center gap-3 mb-3">
+    <p className="text-[13px] font-semibold adm-t1">{title}</p>
+    <span className="flex-1 h-px bg-[var(--adm-border)]" />
+  </div>
+);
 
 // ── Revenue Tab ───────────────────────────────────────────────
-// Rupee cards (icon + value share a hue; sub line is a click tooltip) + trend chart.
+// Two sections: 4 revenue streams + 2 average-value cards, then the trend chart.
 const RevenueTab = ({ stats }) => {
   const s = stats || {};
-  const cards = [
-    { label: 'Subscriptions Collected', value: inr(s.subscriptionsNet), sub: 'Net Razorpay subscription cash (plan price − Razorpay fees)', hex: '#059669' },
-    { label: 'Total Revenue',   value: inr(s.revenue),                                             sub: 'Platform fees collected', hex: '#FE5100' },
-    { label: 'Paid Bookings',   value: (s.confirmed || 0).toLocaleString(),                        sub: 'Completed payments',      hex: '#2563EB' },
-    { label: 'Avg per Booking', value: s.confirmed ? inr(Math.round((s.gmv || 0) / s.confirmed)) : '₹0', sub: 'Average booking value (GMV per paid booking)', hex: '#7C3AED' },
-    { label: 'Refunds',         value: (s.cancelled || 0).toLocaleString(),                        sub: 'Cancelled / refunded',    hex: '#DC2626' },
+
+  // Revenue streams. Other Revenue (reschedule / add-ons) not aggregated yet → ₹0.
+  const revenueCards = [
+    { label: 'Net Income',          value: inr(s.netIncome),          hex: '#059669' },
+    { label: 'Subscription Revenue',value: inr(s.subscriptionRevenue ?? s.subscriptionsNet), hex: '#2563EB' },
+    { label: 'Platform Fee Revenue',value: inr(s.platformFeeRevenue ?? s.revenue), hex: '#FE5100' },
+    { label: 'Other Revenue',       value: inr(s.otherRevenue || 0),  hex: '#64748B' },
   ];
+
+  // Averages. ARPC = Net Income / paying customers; ARPB = Platform Fee / completed-paid.
+  const arpc = s.payingCustomers ? Math.round((s.netIncome || 0) / s.payingCustomers) : 0;
+  const arpb = s.completedPaidBookings ? Math.round((s.platformFeeRevenue ?? s.revenue ?? 0) / s.completedPaidBookings) : 0;
+  const avgCards = [
+    { label: 'Avg Revenue / Customer', value: inr(arpc), hex: '#7C3AED' },
+    { label: 'Avg Revenue / Booking',  value: inr(arpb), hex: '#DB2777' },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {cards.map(c => <RevCard key={c.label} {...c} />)}
+      <div>
+        <SectionHead title="Revenue" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {revenueCards.map(c => <RevCard key={c.label} {...c} />)}
+        </div>
+      </div>
+
+      <div>
+        <SectionHead title="Average Values" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {avgCards.map(c => <RevCard key={c.label} {...c} />)}
+        </div>
       </div>
 
       <RevenueTrendChart />
