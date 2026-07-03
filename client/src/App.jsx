@@ -157,6 +157,9 @@ const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
 const AdminReservedSlugs = lazy(() => import('./pages/admin/AdminReservedSlugs'));
 const AdminBlockedIps = lazy(() => import('./pages/admin/AdminBlockedIps'));
 
+// Admin — Departments (org placeholder shells)
+const AdminDepartment = lazy(() => import('./pages/admin/AdminDepartment'));
+
 // Admin — Platform Control
 const AdminFeatureStatus = lazy(() => import('./pages/admin/AdminFeatureStatus'));
 
@@ -345,6 +348,9 @@ function App() {
 
           {/* Marketing & performance insights — now a SuperDashboard tab; keep old path as redirect */}
           <Route path="/admin/insights" element={<Navigate to="/super-dashboard/insights" replace />} />
+
+          {/* Departments — org placeholder shells (CXO, Support, Marketing, Finance, Operation, Engineering) */}
+          <Route path="/admin/dept/:dept" element={<AdminWrapper><AdminDepartment /></AdminWrapper>} />
 
           {/* Platform Control */}
           <Route path="/admin/features" element={<AdminWrapper><AdminFeatureStatus /></AdminWrapper>} />

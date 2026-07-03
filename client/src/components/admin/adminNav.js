@@ -85,22 +85,39 @@ export const PATH_LABELS = {
   staff:'Staff & Roles', system:'System', audit:'Audit Logs', reserved:'Reserved Slugs',
   features:'Feature Status',
   security:'Security', 'blocked-ips':'Blocked IPs',
+  dept:'Department', cxo:'CXO', marketing:'Marketing', operation:'Operation', engineering:'Engineering', 'sloth-house':'Sloth House',
 };
 
 export const NAV = [
-  { id:'dashboard', section:'DASHBOARD', items:[
+  { id:'dashboard', section:'Main Dashboard', items:[
     { label:'Operations Center',  icon:'grid',    to:'/super-dashboard', exact:true, perm:'ops.view' },
     { label:'Revenue',            icon:'trendUp', to:'/super-dashboard/revenue', perm:'analytics.view' },
     { label:'Marketing Insights', icon:'bars',    to:'/super-dashboard/insights', perm:'analytics.view' },
     { label:'Pending Actions',    icon:'clock',   to:'/super-dashboard/pending', perm:'ops.view' },
   ]},
-  { id:'operations', section:'OPERATIONS', items:[
+  { id:'operations', section:'Important', items:[
     { label:'Bookings', icon:'calCheck', to:'/admin/bookings', perm:'bookings.view' },
     { label:'Services', icon:'layers', to:'/admin/services', perm:'services.view' },
     { label:'Hosts',    icon:'userCheck', to:'/admin/providers', perm:'professionals.view' },
-    { label:'Subscription Plans', icon:'card',    to:'/admin/plans', perm:'plans.view' },
     { label:'Professions',        icon:'layers',  to:'/admin/professions', perm:'settings.manage' },
+    // Subscription Plans moved out — now reachable via Finance & Marketing dept cards.
   ]},
+  // Org departments — placeholder shells served by AdminDepartment (/admin/dept/:dept).
+  // Mirrors DEPARTMENTS map in pages/admin/AdminDepartment.jsx.
+  { id:'department', section:'DEPARTMENT', items:[
+    { label:'CXO',         icon:'badgeCheck', to:'/admin/dept/cxo' },
+    { label:'Support',     icon:'help',       to:'/admin/dept/support' },
+    { label:'Marketing',   icon:'bars',       to:'/admin/dept/marketing' },
+    { label:'Finance',     icon:'rupee',      to:'/admin/dept/finance' },
+    { label:'Operation',   icon:'grid',       to:'/admin/dept/operation' },
+    { label:'Engineering', icon:'gear',       to:'/admin/dept/engineering' },
+    { label:'Sloth House', icon:'building',   to:'/admin/dept/sloth-house' },
+  ]},
+  /* ── HIDDEN FROM SIDEBAR (2026-07-03) ───────────────────────────────────────
+     Every destination below now lives on its relevant department hub page
+     (see deptRegistry.js), so these sections are commented out to keep the
+     sidebar to Main Dashboard + Important + Departments. Routes still work;
+     uncomment any section to restore it to the sidebar.
   { id:'people', section:'PEOPLE', items:[
     { label:'Staff & Roles', icon:'users2', to:'/admin/staff', perm:'staff.manage' },
   ]},
@@ -158,6 +175,7 @@ export const NAV = [
     { label:'Menu Builder',       icon:'menu3',   to:'/admin/platform/menu', perm:'cms.manage' },
     { label:'Footer Builder',     icon:'layout2', to:'/admin/platform/footer', perm:'cms.manage' },
   ]},
+  ─────────────────────────────────────────────────────────────────────────── */
 ];
 
 export const QUICK_ACTIONS = [
