@@ -1,5 +1,20 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-06-24_
+_Last updated: 2026-07-02_
+
+## Sprint: Service Category Redesign (branch `feat/service-categories`) — built 2026-07-02
+
+> **Status: BUILT.** Migration `v3.60_service_category_integrity.sql` NOT yet applied to either DB.
+
+**Spec / plan:** `docs/superpowers/specs/2026-07-02-service-category-redesign-design.md`; `docs/superpowers/plans/2026-07-02-service-category-redesign.md`.
+
+Closes the gaps left by the 2026-06-21 service-categories build (below): categories are now a composite-FK-enforced pair instead of a loose slug, and the category catalog gets public SEO landing pages + a live Explore listing.
+
+- **Migration `v3.60` (PENDING both DBs):** `services.primary_category` column; composite FK `fk_services_category (primary_category, category) → service_categories(primary_category, slug)` `ON UPDATE CASCADE ON DELETE RESTRICT` (makes cross-profession pairings unrepresentable); CHECK `chk_category_pair` (both NULL or both set — closes the `MATCH SIMPLE` hole composite FKs leave); FK `fk_sc_primary service_categories.primary_category → categories(slug)`; partial index `idx_services_prof_cat`; `service_categories.description` + `.icon` columns; backfill (stamps the pair from the host's current profession where valid, else clears both) + orphan `service_categories` row cleanup.
+- **Server:** `resolveAndValidateCategory` (`server/lib/serviceCategory.js`) now returns `{ok,value,primary}`; both service writers (`serviceController.js`, `hostController.js`) stamp the pair, with 42703 schema fallbacks for pre-migration DBs. `PUT /api/host/categories` de-categorises services on profession change and returns `services_cleared` in the response. `serviceCategoryController.js` gained description/icon fields, a friendly 400 on FK violation (23503), and a cached public list (`responseCache`, key `svccat:`, `Cache-Control: 300`); all 4 admin mutations bust `svccat:` + `svcdir:` + sitemap cache.
+- **New public endpoints:** `GET /api/services-directory` + `GET /api/services-directory/:profession` (`servicesDirectoryController.js`/`servicesDirectoryRoutes.js`, cached `svcdir:`, template description fallback, 404 for unknown/empty professions). Real `GET /api/explore` `listVendors` (profession `category` + `service` params; `service` requires `category` else 400; verified hosts only; paginated). `/sitemap-professions.xml` added as a sitemap-index child.
+- **Seed:** `serviceCategorySeed.js` entries are now `string | {name, description}`; 10 professions with curated descriptions (photographer added). `seedServiceCategories.js` gap-fills `description` where NULL — **re-run on both DBs after v3.60 applies**.
+- **Client:** new public routes `/services` (`ServicesDirectory.jsx`) + `/services/:profession` (`ProfessionServices.jsx`), built on `ServiceCategoryCard` + `professionIcons.js`; `services` added to `reservedSegments`. **Explore page goes live** (`COMING_SOON` stub removed) — real API listing, `service` filter chip, stale-async-response guard (`e7c3672`, review finding). `AdminServiceCategories` modal gained description/icon fields; `CategoriesSection` toast now surfaces `services_cleared`.
+- **Ops (before merge):** apply `v3.60` on both Supabase projects, then re-run `node server/scripts/seedServiceCategories.js` on both.
 
 ## Sprint: Guest/Host URL Separation (branch `feat/guest-host-url-separation`) — built 2026-06-24
 
