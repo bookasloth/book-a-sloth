@@ -40,7 +40,35 @@ async function resolveAndValidateCategory(supabaseAdmin, hostId, category, opts 
       .eq('is_active', true);
     validSlugs = (rows || []).map((r) => r.slug);
   }
-  return validateServiceCategory({ category, validSlugs, required: !!opts.required });
+  const result = validateServiceCategory({ category, validSlugs, required: !!opts.required });
+  if (!result.ok) return result;
+  // The pair travels together: a stored category always carries the profession
+  // it was validated against (composite FK fk_services_category, v3.60).
+  return { ...result, primary: result.value ? primary : null };
 }
 
-module.exports = { validateServiceCategory, resolveAndValidateCategory };
+// Clear the (category, primary_category) pair on a host's categorised services.
+// Used when the host's profession changes: old slugs belong to the old
+// profession's list. Returns the number of services cleared.
+// Pre-v3.60 fallback clears `category` only.
+async function clearHostServiceCategories(supabaseAdmin, hostId) {
+  const now = new Date().toISOString();
+  let clr = await supabaseAdmin
+    .from('services')
+    .update({ category: null, primary_category: null, updated_at: now })
+    .eq('host_id', hostId)
+    .not('category', 'is', null)
+    .select('id');
+  if (clr.error && /Could not find the|column .* does not exist/i.test(clr.error.message)) {
+    clr = await supabaseAdmin
+      .from('services')
+      .update({ category: null, updated_at: now })
+      .eq('host_id', hostId)
+      .not('category', 'is', null)
+      .select('id');
+  }
+  if (clr.error) throw clr.error;
+  return (clr.data || []).length;
+}
+
+module.exports = { validateServiceCategory, resolveAndValidateCategory, clearHostServiceCategories };

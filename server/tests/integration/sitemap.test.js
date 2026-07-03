@@ -12,13 +12,14 @@ jest.mock('../../services/sitemapService', () => {
     ...actual,
     fetchHosts: jest.fn(),
     fetchServices: jest.fn(),
+    fetchProfessions: jest.fn(),
   };
 });
 
 const request = require('supertest');
 const express = require('express');
 const sitemapRoutes = require('../../routes/sitemapRoutes');
-const { fetchHosts, fetchServices } = require('../../services/sitemapService');
+const { fetchHosts, fetchServices, fetchProfessions } = require('../../services/sitemapService');
 const { bustSitemapCache } = require('../../utils/sitemapCache');
 
 const app = express();
@@ -29,6 +30,9 @@ beforeEach(() => {
   fetchHosts.mockResolvedValue([{ username: 'john-doe', updated_at: '2026-06-20T10:00:00Z' }]);
   fetchServices.mockResolvedValue([
     { slug: 'business-consultation', updated_at: '2026-06-20T10:00:00Z', profiles: { username: 'john-doe' } },
+  ]);
+  fetchProfessions.mockResolvedValue([
+    { slug: 'therapy', updated_at: '2026-06-20T10:00:00Z' },
   ]);
 });
 
@@ -41,6 +45,7 @@ describe('GET /sitemap.xml (index)', () => {
     expect(res.text).toContain('https://bookasloth.com/sitemap-pages.xml');
     expect(res.text).toContain('https://bookasloth.com/sitemap-hosts-1.xml');
     expect(res.text).toContain('https://bookasloth.com/sitemap-services-1.xml');
+    expect(res.text).toContain('https://bookasloth.com/sitemap-professions.xml');
   });
 });
 
@@ -50,6 +55,14 @@ describe('child sitemaps', () => {
     expect(res.status).toBe(200);
     expect(res.text).toContain('<urlset');
     expect(res.text).toContain('<loc>https://bookasloth.com/</loc>');
+  });
+
+  test('professions sitemap lists /services plus one URL per profession', async () => {
+    const res = await request(app).get('/sitemap-professions.xml');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('<urlset');
+    expect(res.text).toContain('<loc>https://bookasloth.com/services</loc>');
+    expect(res.text).toContain('<loc>https://bookasloth.com/services/therapy</loc>');
   });
 
   test('hosts sitemap lists the verified host profile URL', async () => {

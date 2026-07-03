@@ -1,9 +1,11 @@
-// supabase config throws without a service_role key; this suite only exercises
-// the pure URL/entry mappers, so stub the side-effecting dep.
-jest.mock('../../config/supabase', () => ({ supabaseAdmin: {} }));
+// supabase config throws without a service_role key; this suite exercises the
+// pure URL/entry mappers plus fetchProfessions (its .from is stubbed per test).
+jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 
+const { supabaseAdmin } = require('../../config/supabase');
 const {
-  toLastmod, hostUrl, serviceUrl, staticEntries, hostEntries, serviceEntries,
+  toLastmod, hostUrl, serviceUrl, staticEntries, hostEntries, serviceEntries, professionEntries,
+  fetchProfessions,
 } = require('../../services/sitemapService');
 
 const SITE = 'https://bookasloth.com';
@@ -65,5 +67,54 @@ describe('serviceEntries', () => {
     expect(serviceEntries(rows, SITE)).toEqual([
       { loc: 'https://bookasloth.com/john-doe/consult', lastmod: '2026-06-20', changefreq: 'weekly', priority: '0.8' },
     ]);
+  });
+});
+
+describe('professionEntries', () => {
+  test('leads with the /services root entry (no lastmod)', () => {
+    const entries = professionEntries([], SITE);
+    expect(entries).toEqual([
+      { loc: 'https://bookasloth.com/services', changefreq: 'weekly', priority: '0.6' },
+    ]);
+  });
+  test('adds one URL per profession row with lastmod', () => {
+    const rows = [
+      { slug: 'therapy', updated_at: '2026-06-20T10:00:00Z' },
+      { slug: 'coaching', updated_at: '2026-06-15T10:00:00Z' },
+    ];
+    expect(professionEntries(rows, SITE)).toEqual([
+      { loc: 'https://bookasloth.com/services', changefreq: 'weekly', priority: '0.6' },
+      { loc: 'https://bookasloth.com/services/therapy', lastmod: '2026-06-20', changefreq: 'weekly', priority: '0.6' },
+      { loc: 'https://bookasloth.com/services/coaching', lastmod: '2026-06-15', changefreq: 'weekly', priority: '0.6' },
+    ]);
+  });
+});
+
+describe('fetchProfessions', () => {
+  // Awaitable fluent chain: .select()/.eq() return `this`; awaiting resolves `resolved`.
+  const awaitable = (resolved) => {
+    const obj = {};
+    ['select', 'eq'].forEach((m) => { obj[m] = jest.fn().mockReturnValue(obj); });
+    obj.then = (resolve, reject) => Promise.resolve(resolved).then(resolve, reject);
+    return obj;
+  };
+
+  test('excludes professions whose categories row is not active (directory 404s them)', async () => {
+    supabaseAdmin.from.mockImplementation((table) =>
+      table === 'service_categories'
+        ? awaitable({
+            data: [
+              { primary_category: 'therapy', updated_at: '2026-06-20T10:00:00Z' },
+              // profession disabled in `categories` → its rows must be dropped
+              { primary_category: 'astrology', updated_at: '2026-06-21T10:00:00Z' },
+            ],
+            error: null,
+          })
+        : awaitable({ data: [{ slug: 'therapy' }], error: null })
+    );
+
+    const rows = await fetchProfessions();
+
+    expect(rows).toEqual([{ slug: 'therapy', updated_at: '2026-06-20T10:00:00Z' }]);
   });
 });

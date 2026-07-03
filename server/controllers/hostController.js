@@ -12,7 +12,7 @@ const usernameService = require("../services/usernameService");
 const { bustSitemapCache } = require("../utils/sitemapCache");
 const planService = require('../services/planService');
 const { validateCategorySelection } = require('../lib/categoryRules');
-const { resolveAndValidateCategory } = require('../lib/serviceCategory');
+const { resolveAndValidateCategory, clearHostServiceCategories } = require('../lib/serviceCategory');
 const { canActivateMore, canAddFreeService } = require('../middleware/planMiddleware');
 const { isBackgroundKey } = require('../config/backgroundKeys');
 const cleanBackgroundKey = (v) => (isBackgroundKey(v) ? v : null);
@@ -111,14 +111,18 @@ const insertServiceSafe = async (payload) => {
   // Retry with fallback if schema cache doesn't recognize newer columns
   if (
     result.error &&
-    /Could not find the '(grace_period_minutes|thumbnail_url|category)' column|column.*does not exist/i.test(
+    /Could not find the '(grace_period_minutes|thumbnail_url|category|primary_category)' column|column.*does not exist/i.test(
       result.error.message,
     )
   ) {
     const payloadCopy = { ...payload };
     delete payloadCopy.grace_period_minutes;
     delete payloadCopy.thumbnail_url;
+    // `category` and `primary_category` are deliberately excluded from the legacy
+    // fallback so a stale / pre-migration schema (without the columns) still
+    // writes the core fields.
     delete payloadCopy.category;
+    delete payloadCopy.primary_category;
     result = await supabaseAdmin
       .from("services")
       .insert(payloadCopy)
@@ -140,14 +144,18 @@ const updateServiceSafe = async (id, updates, userId) => {
   // Retry with fallback if schema cache doesn't recognize newer columns
   if (
     result.error &&
-    /Could not find the '(grace_period_minutes|thumbnail_url|category)' column|column.*does not exist/i.test(
+    /Could not find the '(grace_period_minutes|thumbnail_url|category|primary_category)' column|column.*does not exist/i.test(
       result.error.message,
     )
   ) {
     const updatesCopy = { ...updates };
     delete updatesCopy.grace_period_minutes;
     delete updatesCopy.thumbnail_url;
+    // `category` and `primary_category` are deliberately excluded from the legacy
+    // fallback so a stale / pre-migration schema (without the columns) still
+    // writes the core fields.
     delete updatesCopy.category;
+    delete updatesCopy.primary_category;
     result = await supabaseAdmin
       .from("services")
       .update(updatesCopy)
@@ -434,6 +442,11 @@ const updateCategories = async (req, res) => {
     });
     if (!result.ok) return res.status(result.status).json({ message: result.message });
 
+    // Prior profession — a change invalidates every categorised service (their
+    // category slugs belong to the OLD profession's list).
+    const { data: before } = await supabaseAdmin
+      .from('profiles').select('primary_category').eq('id', req.user.id).single();
+
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .update({
@@ -445,7 +458,13 @@ const updateCategories = async (req, res) => {
       .select('primary_category, categories')
       .single();
     if (error) throw error;
-    res.json(data);
+
+    let services_cleared = 0;
+    if ((before?.primary_category || null) !== (data.primary_category || null)) {
+      services_cleared = await clearHostServiceCategories(supabaseAdmin, req.user.id);
+      if (services_cleared > 0) bustPublicReadCaches(); // public service pages embed category_label
+    }
+    res.json({ ...data, services_cleared });
   } catch (error) {
     safeError(res, error);
   }
@@ -481,6 +500,7 @@ const createService = async (req, res) => {
       currency: currency || "INR",
       grace_period_minutes: grace_period_minutes !== undefined ? clampGrace(grace_period_minutes) : 10,
       category: chk.value,
+      primary_category: chk.primary,
     };
     if (thumbnail_url !== undefined) payload.thumbnail_url = thumbnail_url;
 
@@ -560,6 +580,7 @@ const updateService = async (req, res) => {
       const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: false });
       if (!chk.ok) return res.status(chk.status).json({ message: chk.message });
       updates.category = chk.value;
+      updates.primary_category = chk.primary;
     }
 
     const { data, error } = await updateServiceSafe(

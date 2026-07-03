@@ -4,6 +4,8 @@ const { audit } = require('../services/auditService');
 const { sanitizeLikeTerm, isUuid } = require('../utils/searchSanitize');
 const { bustSitemapCache } = require('../utils/sitemapCache');
 const { validateCategorySelection } = require('../lib/categoryRules');
+const { clearHostServiceCategories } = require('../lib/serviceCategory');
+const { bustPublicReadCaches } = require('../services/publicCacheBust');
 
 // Admin-managed SEO fields (v3.19) — shared whitelist for service + profile SEO.
 // Builds a sanitised update payload from the request body; only provided keys
@@ -205,6 +207,11 @@ const adminSetUserCategories = async (req, res) => {
     });
     if (!result.ok) return res.status(result.status).json({ message: result.message });
 
+    // Prior profession -- a change invalidates every categorised service (their
+    // category slugs belong to the OLD profession's list). Mirrors hostController.
+    const { data: before } = await supabaseAdmin
+      .from('profiles').select('primary_category').eq('id', req.params.id).single();
+
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .update({
@@ -217,9 +224,15 @@ const adminSetUserCategories = async (req, res) => {
       .single();
     if (error) return safeError(res, error);
 
+    let services_cleared = 0;
+    if ((before?.primary_category || null) !== (data.primary_category || null)) {
+      services_cleared = await clearHostServiceCategories(supabaseAdmin, req.params.id);
+      if (services_cleared > 0) bustPublicReadCaches(); // public service pages embed category_label
+    }
+
     await audit(req, { action: 'user.set_categories', resource_type: 'profile', resource_id: req.params.id,
       after: { primary_category: result.primary_category, categories: result.categories } });
-    res.json(data);
+    res.json({ ...data, services_cleared });
   } catch (error) {
     safeError(res, error);
   }

@@ -108,7 +108,7 @@ const V2_SELECT_COLS =
   'id,host_id,title,slug,short_description,long_description,description,' +
   'meeting_mode,type,price,duration,currency,grace_period_minutes,thumbnail_url,' +
   'included_items,excluded_items,faqs,important_note,rating,total_reviews,total_bookings,' +
-  'category,is_active,created_at,updated_at';
+  'category,primary_category,is_active,created_at,updated_at';
 
 const LEGACY_SELECT_COLS =
   'id,host_id,title,slug,description,type,meeting_mode,price,duration,currency,' +
@@ -190,8 +190,9 @@ const updateSafe = async (id, hostId, updates) => {
     .single();
   if (r.error && /Could not find the/i.test(r.error.message)) {
     const safe = {};
-    // `category` is deliberately excluded from the legacy fallback so a stale /
-    // pre-migration schema (without the column) still writes the core fields.
+    // `category` and `primary_category` are deliberately excluded from the legacy
+    // fallback so a stale / pre-migration schema (without the columns) still
+    // writes the core fields.
     const legacyCols = ['title','description','type','meeting_mode','duration','price','currency','grace_period_minutes','thumbnail_url','slug','is_active','updated_at'];
     legacyCols.forEach(k => { if (updates[k] !== undefined) safe[k] = updates[k]; });
     if (updates.short_description) safe.description = updates.short_description;
@@ -223,6 +224,7 @@ const createService = async (req, res) => {
 
     const p = buildPayload(req.body);
     p.category = chk.value;
+    p.primary_category = chk.primary;
     p.host_id  = req.user.id;
     p.slug     = slug;
     p.currency = p.currency || 'INR';
@@ -288,6 +290,7 @@ const updateService = async (req, res) => {
       const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: false });
       if (!chk.ok) return res.status(chk.status).json({ message: chk.message });
       updates.category = chk.value;
+      updates.primary_category = chk.primary;
     }
     updates.updated_at = new Date().toISOString();
 
@@ -532,8 +535,10 @@ const buildPublicServiceByProfileAndSlug = async (profileSlug, serviceSlug) => {
   // Resolve service-category slug → human label for the public service page.
   const service = svc;
   if (service && service.category) {
-    const { data: cat } = await supabaseAdmin
-      .from('service_categories').select('name').eq('slug', service.category).limit(1).maybeSingle();
+    let q = supabaseAdmin.from('service_categories').select('name').eq('slug', service.category);
+    // Pair lookup once v3.60 stamps the profession; slug-only pre-migration.
+    if (service.primary_category) q = q.eq('primary_category', service.primary_category);
+    const { data: cat } = await q.limit(1).maybeSingle();
     service.category_label = cat?.name || null;
   }
 

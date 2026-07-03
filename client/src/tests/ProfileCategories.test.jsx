@@ -19,7 +19,7 @@ const ACTIVE = [
 beforeEach(() => {
   getCategories.mockResolvedValue({ data: ACTIVE });
   hostGetCategories.mockResolvedValue({ data: { primary_category: 'life-coach', categories: ['life-coach'] } });
-  hostUpdateCategories.mockResolvedValue({ data: { primary_category: 'life-coach', categories: ['life-coach'] } });
+  hostUpdateCategories.mockResolvedValue({ data: { primary_category: 'life-coach', categories: ['life-coach'], services_cleared: 0 } });
 });
 
 test('free plan is locked with a contact-admin note', async () => {
