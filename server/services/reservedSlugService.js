@@ -5,12 +5,13 @@
 //   L3  taken usernames            (username_history via usernameService)
 //
 // checkAvailability(raw, { selfUserId }) returns { ok, reason, normalized }, with
-// reason ∈ format | reserved_route | reserved_admin | taken | ok. Input is
+// reason ∈ format | reserved_route | blocked | reserved_admin | taken | ok. Input is
 // normalized FIRST so confusable/zero-width reserved-word variants are caught.
 const { supabaseAdmin } = require('../config/supabase');
 const { normalizeSlug } = require('../utils/slugNormalize');
 const { formatError } = require('../utils/slugFormat');
 const { isStaticReserved } = require('../config/reservedNamespaces');
+const { isBlocked } = require('../utils/adultContentFilter');
 const usernameService = require('./usernameService');
 
 const TTL_MS = 60 * 1000;
@@ -51,6 +52,11 @@ async function checkAvailability(raw, { selfUserId = null } = {}) {
 
   if (isStaticReserved(normalized)) {
     return { ok: false, reason: 'reserved_route', normalized };
+  }
+
+  // Adult / sexual-content guard — cheap sync check before any DB round-trip.
+  if (isBlocked(normalized)) {
+    return { ok: false, reason: 'blocked', normalized };
   }
 
   const rows = await _loadDynamic();

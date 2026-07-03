@@ -39,6 +39,13 @@ describe('checkAvailability reason ladder', () => {
     expect((await svc.checkAvailability('ad​min')).reason).toBe('reserved_route'); // ZWSP
   });
 
+  test('adult-content blocked beats DB layers', async () => {
+    mockDynamicRows = [{ slug: 'bestpornhub', is_prefix: false }];
+    const r = await svc.checkAvailability('bestpornhub');
+    expect(r).toMatchObject({ ok: false, reason: 'blocked', normalized: 'bestpornhub' });
+    expect(usernameService.usernameOwner).not.toHaveBeenCalled();
+  });
+
   test('L2 admin reservation (exact)', async () => {
     mockDynamicRows = [{ slug: 'acme', is_prefix: false }];
     const r = await svc.checkAvailability('acme');
