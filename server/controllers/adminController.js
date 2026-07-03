@@ -789,6 +789,99 @@ const getRevenueBreakdown = async (req, res) => {
   }
 };
 
+// ══════════════════════════════════════
+// PROVIDER OVERVIEW — the Providers tab's host-ecosystem dashboard (4 rows):
+//   1. Host Overview   — total / premium / free / unverified counts
+//   2. Business        — completed-booking value, completed, upcoming, fail rate
+//   3. Growth          — new(30d) / active(30d) / zero-booking / avg rev per host
+//   4. Revenue split   — GMV / platform revenue / subscription / booking-fee
+//
+// Entitlement (premium vs free), verification and suspension are INDEPENDENT
+// states — a suspended premium host still counts under Premium. Counts are
+// all-time; money + booking activity are windowed to the 30-Jun-2026 launch
+// (pre-launch test data excluded), matching the Revenue tab.
+// ══════════════════════════════════════
+const getProviderOverview = async (req, res) => {
+  try {
+    const { data: hosts } = await supabaseAdmin
+      .from('profiles').select('id, plan, is_verified, is_banned, created_at').eq('role', 'host');
+
+    let bkRes = await supabaseAdmin.from('bookings').select(
+      'host_id, status, payment_status, scheduled_at, created_at, paid_at, vendor_amount, platform_fee_amount, commission_applied');
+    if (bkRes.error && /Could not find the|column.*does not exist/i.test(bkRes.error.message)) {
+      bkRes = await supabaseAdmin.from('bookings').select(
+        'host_id, status, payment_status, scheduled_at, created_at, paid_at, vendor_amount, platform_fee_amount');
+    }
+    const bookings = bkRes.data || [];
+
+    const { data: subs } = await supabaseAdmin
+      .from('subscription_payments')
+      .select('plan_price, razorpay_fee, razorpay_tax, paid_at, status')
+      .eq('status', 'paid');
+
+    const now = Date.now();
+    const d30 = now - 30 * 24 * 60 * 60 * 1000;
+    const inWindow = (iso) => { const ms = Date.parse(iso); return !isNaN(ms) && ms >= COHORT_START_MS; };
+
+    // ── Row 1: host counts (all-time, independent states) ──
+    const totalHosts = (hosts || []).length;
+    let premiumHosts = 0, freeHosts = 0, unverifiedHosts = 0, suspendedHosts = 0, newHosts30 = 0;
+    (hosts || []).forEach((h) => {
+      if (planService.isFreeSlug(planService.normalizeSlug(h.plan))) freeHosts += 1; else premiumHosts += 1;
+      if (!h.is_verified) unverifiedHosts += 1;
+      if (h.is_banned) suspendedHosts += 1;
+      if (Date.parse(h.created_at) >= d30) newHosts30 += 1;
+    });
+
+    // ── Bookings: windowed money + activity ──
+    const gmvOf = (b) => (Number(b.vendor_amount) || 0) + (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
+    const feeOf = (b) => (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
+    let completedBookings = 0, completedValue = 0, upcomingBookings = 0;
+    let windowTotal = 0, failedBookings = 0, gmv = 0, bookingFeeRevenue = 0;
+    const activeHostSet = new Set();
+    const everBookedHosts = new Set();
+    (bookings || []).forEach((b) => {
+      if (b.host_id) everBookedHosts.add(b.host_id);
+      if (Date.parse(b.created_at) >= d30 && b.host_id) activeHostSet.add(b.host_id);
+      // Upcoming = future, still-live booking (not terminal). Independent of window.
+      const sched = Date.parse(b.scheduled_at);
+      if (!isNaN(sched) && sched > now && !['cancelled', 'no_show', 'completed'].includes(b.status)) upcomingBookings += 1;
+      // Windowed money + rates (paid bookings on/after launch).
+      if (b.payment_status !== 'paid' || !inWindow(b.paid_at || b.created_at)) return;
+      windowTotal += 1;
+      gmv += gmvOf(b);
+      bookingFeeRevenue += feeOf(b);
+      if (b.status === 'completed') { completedBookings += 1; completedValue += gmvOf(b); }
+      if (b.status === 'cancelled' || b.status === 'no_show') failedBookings += 1;
+    });
+    const failRate = windowTotal > 0 ? Math.round((failedBookings / windowTotal) * 1000) / 10 : 0;
+
+    // ── Subscriptions (windowed net) ──
+    let subscriptionRevenue = 0;
+    (subs || []).forEach((s) => {
+      if (!inWindow(s.paid_at)) return;
+      subscriptionRevenue += Math.max(0, (Number(s.plan_price) || 0) - (Number(s.razorpay_fee) || 0) - (Number(s.razorpay_tax) || 0));
+    });
+
+    const platformRevenue = bookingFeeRevenue + subscriptionRevenue; // + other (0)
+    const zeroBookingHosts = Math.max(0, totalHosts - everBookedHosts.size);
+    const avgRevenuePerHost = totalHosts > 0 ? platformRevenue / totalHosts : 0;
+
+    res.json({
+      // Row 1
+      totalHosts, premiumHosts, freeHosts, unverifiedHosts, suspendedHosts,
+      // Row 2
+      completedValue, completedBookings, upcomingBookings, failRate,
+      // Row 3
+      newHosts30, activeHosts30: activeHostSet.size, zeroBookingHosts, avgRevenuePerHost,
+      // Row 4
+      gmv, platformRevenue, subscriptionRevenue, bookingFeeRevenue,
+    });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 // NOTE: the former POST /api/admin/cleanup-users handler (mass-deleted every
 // Supabase Auth user except a hardcoded fallback email) was removed in M0 — a
 // destructive dev-reset tool must never be exposed on the production admin API.
@@ -796,6 +889,7 @@ const getRevenueBreakdown = async (req, res) => {
 
 module.exports = {
   getRevenueBreakdown,
+  getProviderOverview,
   getStats,
   getProviderPlanAnalytics,
   getRevenueTrend,

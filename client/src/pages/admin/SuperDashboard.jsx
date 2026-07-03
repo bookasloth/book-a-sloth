@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { adminGetStats, adminGetBookings, adminGetUsers, adminOpsSummary, adminGetProviderPlanAnalytics, adminGetRevenueTrend, adminGetRevenueBreakdown } from '../../services/api';
+import { adminGetStats, adminGetBookings, adminGetUsers, adminOpsSummary, adminGetProviderPlanAnalytics, adminGetProviderOverview, adminGetRevenueTrend, adminGetRevenueBreakdown } from '../../services/api';
 import Ic from '../../components/admin/Ic';
 import { IC } from '../../components/admin/adminNav';
 import AdminInsights from './AdminInsights';
@@ -256,18 +256,23 @@ const RevenueTrendChart = () => {
 // ── Revenue stat card ─────────────────────────────────────────
 // Title on top; below, a SOLID hue-filled icon box (white glyph) beside the
 // hue-matched value. Static — no tooltip.
-const RevCard = ({ label, value, hex }) => (
-  <Card>
-    <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3 leading-tight mb-2">{label}</p>
-    <div className="flex items-center gap-3">
-      <span className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm"
-        style={{ background: hex }}>
-        <Ic d={IC.rupee} size={18} />
-      </span>
-      <span className="text-2xl font-bold tabular-nums" style={{ color: hex }}>{value}</span>
-    </div>
-  </Card>
-);
+const RevCard = ({ label, value, hex, icon = 'rupee', to }) => {
+  const inner = (
+    <>
+      <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3 leading-tight mb-2">{label}</p>
+      <div className="flex items-center gap-3">
+        <span className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm"
+          style={{ background: hex }}>
+          <Ic d={IC[icon] || IC.rupee} size={18} />
+        </span>
+        <span className="text-2xl font-bold tabular-nums" style={{ color: hex }}>{value}</span>
+      </div>
+    </>
+  );
+  return to
+    ? <Link to={to} className="block hover:shadow-sm transition-all rounded-2xl"><Card>{inner}</Card></Link>
+    : <Card>{inner}</Card>;
+};
 
 // ── Revenue Tab ───────────────────────────────────────────────
 // 10 cards over 3 rows: revenue streams → lifetime averages → 30-Jun cohort LTV.
@@ -520,17 +525,20 @@ const periodSince = (key) => {
   return d.toISOString();
 };
 
-const ProvidersTab = ({ stats }) => {
+const ProvidersTab = () => {
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
   const [period, setPeriod] = useState('all');
+  const [ov, setOv] = useState(null);
+  const [ovErr, setOvErr] = useState(false);
 
   useEffect(() => {
     adminGetUsers({ page: 1, limit: 10, role: 'host' })
       .then(r => setProviders(r.data.users || []))
       .catch(() => {})
       .finally(() => setLoading(false));
+    adminGetProviderOverview().then(r => setOv(r.data)).catch(() => setOvErr(true));
   }, []);
 
   useEffect(() => {
@@ -539,21 +547,51 @@ const ProvidersTab = ({ stats }) => {
       .catch(() => {});
   }, [period]);
 
-  const m = analytics?.metrics || {};
-  const cards = [
-    { label: 'Total Hosts',     value: (m.total ?? stats?.vendors ?? 0).toLocaleString(), icon: 'userCheck',   hex: '#2563EB' },
-    { label: 'Verified',        value: (m.verified ?? 0).toLocaleString(),                icon: 'badgeCheck',  hex: '#059669' },
-    { label: 'Paid Plans',      value: (m.paid ?? 0).toLocaleString(),                    icon: 'card',        hex: '#FE5100' },
-    { label: 'Active Services', value: (stats?.services ?? 0).toLocaleString(),           icon: 'layers',      hex: '#7C3AED' },
-    { label: 'Bookings Made',   value: (stats?.bookings ?? 0).toLocaleString(),           icon: 'calCheck',    hex: '#DB2777' },
-    { label: 'New This Week',   value: (m.newWeek ?? 0).toLocaleString(),                 icon: 'trendUp',     hex: '#D97706' },
+  const o = ov || {};
+  const ovLoading = !ov && !ovErr;
+  const num = (v) => (ovLoading ? '…' : ovErr ? '—' : (Number(v) || 0).toLocaleString('en-IN'));
+  const money = (v) => (ovLoading ? '…' : ovErr ? '—' : inr(v));
+  const pct = (v) => (ovLoading ? '…' : ovErr ? '—' : `${Number(v) || 0}%`);
+
+  // Row 1 — host overview (all-time; entitlement / verification / suspension independent)
+  const row1 = [
+    { label: 'Total Hosts',      value: num(o.totalHosts),      icon: 'users',      hex: '#2563EB' },
+    { label: 'Premium Hosts',    value: num(o.premiumHosts),    icon: 'card',       hex: '#FE5100' },
+    { label: 'Free Hosts',       value: num(o.freeHosts),       icon: 'userCheck',  hex: '#64748B' },
+    { label: 'Unverified Hosts', value: num(o.unverifiedHosts), icon: 'alert',      hex: '#D97706', to: '/admin/providers/pending' },
+  ];
+  // Row 2 — business generated (since 30 Jun 2026)
+  const row2 = [
+    { label: 'Total Revenue',      value: money(o.completedValue),    icon: 'rupee',    hex: '#059669' },
+    { label: 'Completed Bookings', value: num(o.completedBookings),   icon: 'calCheck', hex: '#2563EB' },
+    { label: 'Upcoming Bookings',  value: num(o.upcomingBookings),    icon: 'calendar', hex: '#7C3AED' },
+    { label: 'Cancel / No-show Rate', value: pct(o.failRate),         icon: 'ban',      hex: '#DC2626' },
+  ];
+  // Row 3 — growth
+  const row3 = [
+    { label: 'New Hosts (30d)',      value: num(o.newHosts30),       icon: 'trendUp',  hex: '#D97706' },
+    { label: 'Active Hosts (30d)',   value: num(o.activeHosts30),    icon: 'activity', hex: '#059669' },
+    { label: 'Zero-Booking Hosts',   value: num(o.zeroBookingHosts), icon: 'alert',    hex: '#DC2626' },
+    { label: 'Avg Revenue / Host',   value: money(o.avgRevenuePerHost), icon: 'rupee', hex: '#7C3AED' },
+  ];
+  // Row 4 — revenue breakdown (since 30 Jun 2026)
+  const row4 = [
+    { label: 'GMV (Booking Value)',  value: money(o.gmv),                icon: 'rupee', hex: '#475569' },
+    { label: 'Platform Revenue',     value: money(o.platformRevenue),    icon: 'rupee', hex: '#059669' },
+    { label: 'Subscription Revenue', value: money(o.subscriptionRevenue),icon: 'rupee', hex: '#2563EB' },
+    { label: 'Booking Fee Revenue',  value: money(o.bookingFeeRevenue),  icon: 'rupee', hex: '#FE5100' },
   ];
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {cards.map(c => <ColorStat key={c.label} {...c} />)}
-      </div>
+      <p className="text-[12px] adm-t3 -mb-1">
+        Host counts are all-time. Business &amp; revenue figures are since <span className="font-semibold adm-t2">30 Jun 2026 IST</span> (pre-launch test data excluded).
+      </p>
+      {[row1, row2, row3, row4].map((row, i) => (
+        <div key={i} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {row.map(c => <RevCard key={c.label} {...c} />)}
+        </div>
+      ))}
 
       {/* Plan analytics — two columns: share pie + earnings bars */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -786,7 +824,7 @@ const SuperDashboard = () => {
         <>
           {activeTab === 'overview'  && <OverviewTab  stats={stats} ops={ops} />}
           {activeTab === 'revenue'   && <RevenueTab   stats={stats} />}
-          {activeTab === 'providers' && <ProvidersTab  stats={stats} />}
+          {activeTab === 'providers' && <ProvidersTab />}
           {activeTab === 'bookings'  && <BookingsTab   stats={stats} />}
           {activeTab === 'pending'   && <PendingTab ops={ops} />}
           {activeTab === 'insights'  && <AdminInsights />}
