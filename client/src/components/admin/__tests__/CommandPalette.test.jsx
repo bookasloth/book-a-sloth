@@ -20,17 +20,17 @@ describe('CommandPalette', () => {
   it('lists destinations and filters by query', () => {
     renderPalette();
     expect(screen.getAllByRole('option').length).toBeGreaterThan(5);
-    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: 'payout' } });
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: 'bookings' } });
     const opts = screen.getAllByRole('option');
     expect(opts.length).toBeGreaterThan(0);
-    opts.forEach(o => expect(o.textContent.toLowerCase()).toContain('payout'));
+    opts.forEach(o => expect(o.textContent.toLowerCase()).toContain('bookings'));
   });
 
   it('Enter navigates to the highlighted destination', () => {
     renderPalette();
-    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: 'payouts' } });
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: 'bookings' } });
     fireEvent.keyDown(screen.getByPlaceholderText(/search/i), { key: 'Enter' });
-    expect(mockNavigate).toHaveBeenCalledWith('/admin/finance/payouts');
+    expect(mockNavigate).toHaveBeenCalledWith('/admin/bookings');
   });
 
   it('Escape calls onClose', () => {
