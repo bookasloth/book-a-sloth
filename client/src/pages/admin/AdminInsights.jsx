@@ -10,30 +10,38 @@ import { PageHeader, Card } from '../../components/admin/ui';
 
 // Native dashboards (open in a new tab). Generic entry URLs — each lands the
 // admin in their own logged-in account; no per-project secrets in the client.
+// favicon() → the tool's own favicon via Google's public S2 service, so each
+// launchpad card shows the real brand mark with no bundled assets.
+const favicon = (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+
 const LAUNCHPAD = [
   {
     label: 'PostHog',
     desc: 'Product funnels, retention, paths, event explorer.',
     href: 'https://us.posthog.com',
     accent: '#1d4ed8',
+    icon: favicon('posthog.com'),
   },
   {
     label: 'GA4',
     desc: 'Acquisition, channels, UTM attribution, Google Ads ROI.',
     href: 'https://analytics.google.com',
     accent: '#ea4335',
+    icon: favicon('analytics.google.com'),
   },
   {
     label: 'Microsoft Clarity',
     desc: 'Session replays + heatmaps (where users click & rage-click).',
     href: 'https://clarity.microsoft.com',
     accent: '#7c3aed',
+    icon: favicon('clarity.microsoft.com'),
   },
   {
     label: 'Meta Events Manager',
     desc: 'Pixel + Conversions API events, ad campaign conversions.',
     href: 'https://business.facebook.com/events_manager2',
     accent: '#1877f2',
+    icon: favicon('facebook.com'),
   },
 ];
 
@@ -46,13 +54,13 @@ const delta = (cur, prev) => {
   return pct;
 };
 
-const Tile = ({ label, value, sub, foot }) => (
-  <Card>
-    <p className="text-xs adm-t3 mb-1">{label}</p>
-    <p className="text-3xl font-bold adm-t1">{value}</p>
-    {sub && <p className="text-xs adm-t2 mt-1">{sub}</p>}
+const Tile = ({ label, value, sub, foot, accent = '#FE5100' }) => (
+  <div className="rounded-2xl p-4 border" style={{ background: `${accent}0F`, borderColor: `${accent}2E` }}>
+    <p className="text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: accent }}>{label}</p>
+    <p className="text-2xl font-bold adm-t1 tabular-nums">{value}</p>
+    {sub && <p className="text-[11px] adm-t3 mt-1">{sub}</p>}
     {foot}
-  </Card>
+  </div>
 );
 
 const AdminInsights = () => {
@@ -93,50 +101,56 @@ const AdminInsights = () => {
       {kpi && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           <Tile
+            accent="#FE5100"
             label="Platform Revenue"
             value={inr(kpi.revenue?.total)}
             sub={`${inr(kpi.revenue?.last30)} last 30d`}
             foot={
               revDelta != null && (
-                <p className={`text-xs mt-2 font-semibold ${revDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                <p className={`text-[11px] mt-1.5 font-semibold ${revDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                   {revDelta >= 0 ? '▲' : '▼'} {Math.abs(revDelta)}% vs prior 30d
                 </p>
               )
             }
           />
           <Tile
+            accent="#7C3AED"
             label="Paid Bookings"
             value={kpi.bookings?.paid ?? 0}
             sub={`${kpi.bookings?.last30 ?? 0} last 30d · ${kpi.bookings?.total ?? 0} total`}
           />
           <Tile
+            accent="#2563EB"
             label="Booking → Paid"
             value={`${kpi.conversion?.rate ?? 0}%`}
             sub={`${kpi.conversion?.paid ?? 0} of ${kpi.conversion?.created ?? 0} created`}
           />
           <Tile
+            accent="#059669"
             label="Hosts"
             value={kpi.hosts?.total ?? 0}
             sub={`+${kpi.hosts?.new30 ?? 0} last 30d · ${kpi.guests?.total ?? 0} guests`}
           />
           <Tile
+            accent="#DB2777"
             label="GMV (bookings + products)"
             value={inr(kpi.gmv?.total)}
             sub={`${inr(kpi.gmv?.last30)} last 30d · take ${kpi.gmv?.takeRate ?? 0}%`}
             foot={
               gmvDelta != null && (
-                <p className={`text-xs mt-2 font-semibold ${gmvDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                <p className={`text-[11px] mt-1.5 font-semibold ${gmvDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                   {gmvDelta >= 0 ? '▲' : '▼'} {Math.abs(gmvDelta)}% vs prior 30d
                 </p>
               )
             }
           />
           <Tile
+            accent="#D97706"
             label="Host Activation"
             value={`${kpi.activation?.activationRate ?? 0}%`}
             sub={`${kpi.activation?.activatedCount ?? 0} of ${kpi.activation?.totalHosts ?? 0} hosts · +${kpi.activation?.new30 ?? 0} 30d`}
             foot={
-              <p className="text-xs mt-2 text-gray-400">
+              <p className="text-[11px] mt-1.5 adm-t3">
                 {kpi.activation?.medianTimeToFirstBookingDays != null
                   ? `~${kpi.activation.medianTimeToFirstBookingDays}d to first booking`
                   : '— no activated hosts yet'}
@@ -157,7 +171,11 @@ const AdminInsights = () => {
             rel="noreferrer"
             className="adm-card rounded-xl p-5 hover:shadow-sm transition-shadow flex items-start gap-3"
           >
-            <span className="mt-1 w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: t.accent }} />
+            <span className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border"
+              style={{ background: `${t.accent}14`, borderColor: `${t.accent}33` }}>
+              <img src={t.icon} alt="" width={20} height={20} className="rounded"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            </span>
             <span>
               <span className="font-semibold adm-t1 flex items-center gap-1">
                 {t.label}

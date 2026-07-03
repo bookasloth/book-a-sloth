@@ -38,13 +38,13 @@ const getStats = async (req, res) => {
     // collected on paid bookings (GST is a pass-through liability, not revenue).
     let bookingsRes = await supabaseAdmin
       .from('bookings')
-      .select('id, payment_status, platform_fee_amount, commission_applied', { count: 'exact' });
+      .select('id, payment_status, status, platform_fee_amount, commission_applied', { count: 'exact' });
 
     if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
       // Pre-v1.7 DB without commission_applied — fall back to the fee column only.
       bookingsRes = await supabaseAdmin
         .from('bookings')
-        .select('id, payment_status, platform_fee_amount', { count: 'exact' });
+        .select('id, payment_status, status, platform_fee_amount', { count: 'exact' });
     }
 
     const [usersRes, vendorsRes, servicesRes] = await Promise.all([
@@ -68,6 +68,9 @@ const getStats = async (req, res) => {
       revenue,
       confirmed: paid.length,
       cancelled: allBookings.filter(b => b.payment_status === 'refunded').length,
+      // Disputed = booking lifecycle status, independent of payment_status. Falls
+      // back to 0 on pre-dispute schemas (the `status` column simply reads null).
+      disputed: allBookings.filter(b => b.status === 'disputed').length,
     });
   } catch (error) {
     safeError(res, error);
@@ -85,7 +88,7 @@ const getUsers = async (req, res) => {
     const limit = clampLimit(req.query.limit);
     let query = supabaseAdmin
       .from('profiles')
-      .select('id, name, email, role, username, is_verified, is_banned, google_calendar_connected, created_at', { count: 'exact' })
+      .select('id, name, email, role, username, plan, is_verified, is_banned, google_calendar_connected, created_at', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
@@ -460,18 +463,34 @@ const getProviderPlanAnalytics = async (req, res) => {
     // headcount distribution is always "current" (a snapshot), so it ignores this.
     const since = req.query.since && !isNaN(Date.parse(req.query.since)) ? req.query.since : null;
 
-    // ── Hosts: one fetch drives both headcount distribution and host→plan map ──
+    // ── Hosts: one fetch drives headcount distribution, host→plan map, metrics ──
     const { data: hostRows, error: hostErr } = await supabaseAdmin
-      .from('profiles').select('id, plan').eq('role', 'host');
+      .from('profiles').select('id, plan, is_verified, created_at').eq('role', 'host');
     if (hostErr) return safeError(res, hostErr);
 
     const distribution = { starter: 0, creator: 0, professional: 0 };
     const hostPlan = {};
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const metrics = { total: 0, verified: 0, paid: 0, starter: 0, newWeek: 0 };
     (hostRows || []).forEach((h) => {
       const slug = planService.normalizeSlug(h.plan);
       hostPlan[h.id] = slug;
       distribution[slug] = (distribution[slug] || 0) + 1;
+      metrics.total += 1;
+      if (h.is_verified) metrics.verified += 1;
+      // Paid = anything that isn't a free tier (starter / explorer / starter_legacy).
+      if (planService.isFreeSlug(slug)) metrics.starter += 1; else metrics.paid += 1;
+      if (h.created_at && Date.parse(h.created_at) >= weekAgo) metrics.newWeek += 1;
     });
+
+    // ── Contracted plan revenue (DERIVED): plan list price × current holders. ──
+    // Auto-updates the instant a host's plan changes — the only way to surface
+    // subscription value when upgrades are admin-granted (no payment row exists).
+    const planContracted = { creator: 0, professional: 0 };
+    for (const slug of ['creator', 'professional']) {
+      const price = Number((await planService.getPlan(slug))?.annual_price) || 0;
+      planContracted[slug] = price * (distribution[slug] || 0);
+    }
 
     // ── Earning from plans: collected subscription payments, net of gateway ──
     // net = plan_price − razorpay_fee − razorpay_tax (GST excluded: pass-through).
@@ -508,7 +527,90 @@ const getProviderPlanAnalytics = async (req, res) => {
       bookingEarnings[slug] += (Number(b.commission_applied) || 0) + (Number(b.platform_fee_amount) || 0);
     });
 
-    res.json({ distribution, planEarnings, bookingEarnings });
+    res.json({ distribution, planEarnings, planContracted, bookingEarnings, metrics });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// ══════════════════════════════════════
+// REVENUE TREND — time-bucketed platform earnings for the Revenue tab chart.
+// Buckets platform net take (commission + platform fee) from PAID bookings into
+// weekly / monthly / quarterly series, all returned in one call. The client
+// toggles granularity without a refetch.
+// ══════════════════════════════════════
+const getRevenueTrend = async (req, res) => {
+  try {
+    let rowsRes = await supabaseAdmin
+      .from('bookings')
+      .select('paid_at, platform_fee_amount, commission_applied')
+      .eq('payment_status', 'paid')
+      .not('paid_at', 'is', null);
+    if (rowsRes.error && /Could not find the|column.*does not exist/i.test(rowsRes.error.message)) {
+      rowsRes = await supabaseAdmin
+        .from('bookings')
+        .select('paid_at, platform_fee_amount')
+        .eq('payment_status', 'paid')
+        .not('paid_at', 'is', null);
+    }
+    const rows = rowsRes.data || [];
+    const takeOf = (b) => (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
+
+    // Build fixed-length trailing buckets so the chart has a stable x-axis even
+    // with sparse data. Each entry: { label, value }.
+    const pad = (n) => String(n).padStart(2, '0');
+    const startOfWeek = (d) => { const x = new Date(d); const day = (x.getDay() + 6) % 7; x.setDate(x.getDate() - day); x.setHours(0, 0, 0, 0); return x; };
+
+    const buildWeekly = () => {
+      const buckets = [];
+      const base = startOfWeek(new Date());
+      for (let i = 11; i >= 0; i--) {
+        const start = new Date(base); start.setDate(start.getDate() - i * 7);
+        buckets.push({ start, key: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
+          label: start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), value: 0 });
+      }
+      return buckets;
+    };
+    const buildMonthly = () => {
+      const buckets = [];
+      const now = new Date();
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        buckets.push({ start: d, key: `${d.getFullYear()}-${pad(d.getMonth() + 1)}`,
+          label: d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }), value: 0 });
+      }
+      return buckets;
+    };
+    const buildQuarterly = () => {
+      const buckets = [];
+      const now = new Date();
+      const curQ = Math.floor(now.getMonth() / 3);
+      for (let i = 7; i >= 0; i--) {
+        const qIndex = curQ - i;
+        const year = now.getFullYear() + Math.floor(qIndex / 4);
+        const q = ((qIndex % 4) + 4) % 4;
+        const d = new Date(year, q * 3, 1);
+        buckets.push({ start: d, key: `${year}-Q${q + 1}`,
+          label: `Q${q + 1} '${String(year).slice(2)}`, value: 0 });
+      }
+      return buckets;
+    };
+
+    const weekly = buildWeekly(), monthly = buildMonthly(), quarterly = buildQuarterly();
+    const assign = (buckets, d, take) => {
+      // Buckets are ascending by start; find the last whose start <= d.
+      let target = null;
+      for (const b of buckets) { if (b.start <= d) target = b; else break; }
+      if (target) target.value += take;
+    };
+    rows.forEach((b) => {
+      const d = new Date(b.paid_at);
+      if (isNaN(d)) return;
+      const take = takeOf(b);
+      assign(weekly, d, take); assign(monthly, d, take); assign(quarterly, d, take);
+    });
+    const strip = (arr) => arr.map(({ label, value }) => ({ label, value: Math.round(value) }));
+    res.json({ weekly: strip(weekly), monthly: strip(monthly), quarterly: strip(quarterly) });
   } catch (error) {
     safeError(res, error);
   }
@@ -522,6 +624,7 @@ const getProviderPlanAnalytics = async (req, res) => {
 module.exports = {
   getStats,
   getProviderPlanAnalytics,
+  getRevenueTrend,
   getUsers,
   getUserById,
   updateUser,
