@@ -5,7 +5,9 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, CheckCircle, Star, Zap, BookMarked, Tag, BadgeCheck } from 'lucide-react';
+import Ic from '../../components/admin/Ic';
+import { IC } from '../../components/admin/adminNav';
+import { Btn } from '../../components/admin/ui';
 import {
   adminGetExploreFeatured, adminCreateExploreFeatured, adminDeleteExploreFeatured,
   adminGetExploreCollections, adminCreateExploreCollection, adminUpdateExploreCollection,
@@ -17,33 +19,23 @@ import {
 
 // ── Shared empty-state ────────────────────────────────────────
 const Empty = ({ label }) => (
-  <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-[6px]">
-    <p className="text-gray-400 text-sm font-medium">{label}</p>
+  <div className="text-center py-12 border-2 border-dashed adm-border rounded-2xl">
+    <p className="adm-t3 text-sm font-medium">{label}</p>
   </div>
 );
 
 // ── Shared section card ───────────────────────────────────────
 const Section = ({ children }) => (
-  <div className="bg-white border-2 border-[#1E1E1E] rounded-[6px] shadow-[4px_4px_0_#1E1E1E] p-6 space-y-4">
+  <div className="adm-card rounded-2xl p-6 space-y-4">
     {children}
   </div>
 );
 
-const Btn = ({ onClick, variant = 'primary', disabled, children, className = '' }) => {
-  const base = 'btn inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold transition-shadow disabled:opacity-50';
-  const v = {
-    primary: 'bg-[#FE5100] text-white shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]',
-    ghost:   'btn--outline bg-white text-[#1E1E1E] shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]',
-    danger:  'bg-[#EF4444] text-white shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]',
-  };
-  return <button onClick={onClick} disabled={disabled} className={`${base} ${v[variant]} ${className}`}>{children}</button>;
-};
-
 const Input = ({ label, ...props }) => (
   <label className="block">
-    <span className="text-xs font-bold text-[#1E1E1E] uppercase tracking-wide mb-1 block">{label}</span>
-    <input className="w-full border-2 border-[#1E1E1E] rounded-[4px] px-3 py-2 text-sm font-medium
-                      bg-white outline-none focus:border-[#FE5100] transition-colors" {...props} />
+    <span className="text-xs font-bold adm-t1 uppercase tracking-wide mb-1 block">{label}</span>
+    <input className="w-full border-2 adm-border rounded-lg px-3 py-2 text-sm font-medium
+                      adm-card outline-none focus:border-[#FE5100] transition-colors" {...props} />
   </label>
 );
 
@@ -85,13 +77,13 @@ function FeaturedTab() {
   return (
     <div className="space-y-6">
       <Section>
-        <h3 className="font-bold text-[#1E1E1E] flex items-center gap-2"><Star size={16} className="text-[#FE5100]" /> Add Featured Slot</h3>
+        <h3 className="font-bold adm-t1 flex items-center gap-2"><Ic d={IC.star} size={16} className="text-[#FE5100]" /> Add Featured Slot</h3>
         <div className="grid grid-cols-2 gap-3">
           <Input label="Host ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} placeholder="profiles.id (UUID)" />
           <div>
-            <span className="text-xs font-bold text-[#1E1E1E] uppercase tracking-wide mb-1 block">Slot Position (1–5) *</span>
+            <span className="text-xs font-bold adm-t1 uppercase tracking-wide mb-1 block">Slot Position (1–5) *</span>
             <select value={form.slot_position} onChange={e => setForm(f => ({ ...f, slot_position: Number(e.target.value) }))}
-              className="w-full border-2 border-[#1E1E1E] rounded-[4px] px-3 py-2 text-sm font-medium bg-white outline-none">
+              className="w-full border-2 adm-border rounded-lg px-3 py-2 text-sm font-medium adm-card outline-none">
               {[1,2,3,4,5].map(n => <option key={n} value={n}>Slot {n}</option>)}
             </select>
           </div>
@@ -100,20 +92,20 @@ function FeaturedTab() {
           <Input label="Price paid (₹)" type="number" value={form.price_paid} onChange={e => setForm(f => ({ ...f, price_paid: e.target.value }))} />
           <Input label="Notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
         </div>
-        <Btn onClick={create} disabled={saving}><Plus size={14} /> {saving ? 'Saving…' : 'Add Slot'}</Btn>
+        <Btn onClick={create} disabled={saving} icon={IC.plus}>{saving ? 'Saving…' : 'Add Slot'}</Btn>
       </Section>
 
       <Section>
-        <h3 className="font-bold text-[#1E1E1E]">Active Featured Slots ({slots.length})</h3>
-        {loading ? <p className="text-sm text-gray-400">Loading…</p> : slots.length === 0 ? <Empty label="No featured slots yet" /> : (
+        <h3 className="font-bold adm-t1">Active Featured Slots ({slots.length})</h3>
+        {loading ? <p className="text-sm adm-t3">Loading…</p> : slots.length === 0 ? <Empty label="No featured slots yet" /> : (
           <div className="space-y-2">
             {slots.map(s => (
-              <div key={s.id} className="flex items-center justify-between p-3 border-2 border-[#E5E5E5] rounded-[4px] bg-[#FFF8EE]">
+              <div key={s.id} className="flex items-center justify-between p-3 border-2 adm-border rounded-lg adm-chip">
                 <div>
-                  <p className="font-bold text-sm text-[#1E1E1E]">Slot {s.slot_position} — {s.profiles?.name || s.vendor_id}</p>
-                  <p className="text-xs text-[#64748b]">{new Date(s.starts_at).toLocaleDateString()} → {new Date(s.ends_at).toLocaleDateString()} · ₹{s.price_paid}</p>
+                  <p className="font-bold text-sm adm-t1">Slot {s.slot_position} — {s.profiles?.name || s.vendor_id}</p>
+                  <p className="text-xs adm-t3">{new Date(s.starts_at).toLocaleDateString()} → {new Date(s.ends_at).toLocaleDateString()} · ₹{s.price_paid}</p>
                 </div>
-                <Btn variant="danger" onClick={() => remove(s.id)}><Trash2 size={13} /></Btn>
+                <Btn variant="danger" size="sm" onClick={() => remove(s.id)} icon={IC.trash} />
               </div>
             ))}
           </div>
@@ -154,7 +146,7 @@ function KeywordsTab() {
   return (
     <div className="space-y-6">
       <Section>
-        <h3 className="font-bold text-[#1E1E1E] flex items-center gap-2"><Tag size={16} className="text-[#FE5100]" /> Add Sponsored Keyword</h3>
+        <h3 className="font-bold adm-t1 flex items-center gap-2"><Ic d={IC.tag} size={16} className="text-[#FE5100]" /> Add Sponsored Keyword</h3>
         <div className="grid grid-cols-2 gap-3">
           <Input label="Host ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} />
           <Input label="Keyword / Category slug *" value={form.keyword} onChange={e => setForm(f => ({ ...f, keyword: e.target.value }))} placeholder="e.g. yoga, fitness" />
@@ -163,19 +155,19 @@ function KeywordsTab() {
           <Input label="Starts at *" type="datetime-local" value={form.starts_at} onChange={e => setForm(f => ({ ...f, starts_at: e.target.value }))} />
           <Input label="Ends at *"   type="datetime-local" value={form.ends_at}   onChange={e => setForm(f => ({ ...f, ends_at: e.target.value }))} />
         </div>
-        <Btn onClick={create} disabled={saving}><Plus size={14} /> {saving ? 'Saving…' : 'Add Keyword'}</Btn>
+        <Btn onClick={create} disabled={saving} icon={IC.plus}>{saving ? 'Saving…' : 'Add Keyword'}</Btn>
       </Section>
       <Section>
-        <h3 className="font-bold text-[#1E1E1E]">Active Sponsorships ({keywords.length})</h3>
-        {loading ? <p className="text-sm text-gray-400">Loading…</p> : keywords.length === 0 ? <Empty label="No sponsored keywords yet" /> : (
+        <h3 className="font-bold adm-t1">Active Sponsorships ({keywords.length})</h3>
+        {loading ? <p className="text-sm adm-t3">Loading…</p> : keywords.length === 0 ? <Empty label="No sponsored keywords yet" /> : (
           <div className="space-y-2">
             {keywords.map(k => (
-              <div key={k.id} className="flex items-center justify-between p-3 border-2 border-[#E5E5E5] rounded-[4px]">
+              <div key={k.id} className="flex items-center justify-between p-3 border-2 adm-border rounded-lg">
                 <div>
-                  <p className="font-bold text-sm text-[#1E1E1E]">"{k.keyword}" → {k.profiles?.name || k.vendor_id}</p>
-                  <p className="text-xs text-[#64748b]">₹{k.bid_amount}/period · until {new Date(k.ends_at).toLocaleDateString()}</p>
+                  <p className="font-bold text-sm adm-t1">"{k.keyword}" → {k.profiles?.name || k.vendor_id}</p>
+                  <p className="text-xs adm-t3">₹{k.bid_amount}/period · until {new Date(k.ends_at).toLocaleDateString()}</p>
                 </div>
-                <Btn variant="danger" onClick={() => revoke(k.id)}><Trash2 size={13} /></Btn>
+                <Btn variant="danger" size="sm" onClick={() => revoke(k.id)} icon={IC.trash} />
               </div>
             ))}
           </div>
@@ -216,7 +208,7 @@ function CollectionsTab() {
   return (
     <div className="space-y-6">
       <Section>
-        <h3 className="font-bold text-[#1E1E1E] flex items-center gap-2"><BookMarked size={16} className="text-[#FE5100]" /> New Collection</h3>
+        <h3 className="font-bold adm-t1 flex items-center gap-2"><Ic d={IC.bookmark} size={16} className="text-[#FE5100]" /> New Collection</h3>
         <div className="grid grid-cols-2 gap-3">
           <Input label="Title *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
           <Input label="Slug *"  value={form.slug}  onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}  placeholder="e.g. top-picks" />
@@ -227,20 +219,20 @@ function CollectionsTab() {
           <input type="checkbox" checked={form.is_paid} onChange={e => setForm(f => ({ ...f, is_paid: e.target.checked }))} className="accent-[#FE5100]" />
           Paid collection (hosts paid to be included)
         </label>
-        <Btn onClick={create} disabled={saving}><Plus size={14} /> {saving ? 'Saving…' : 'Create Collection'}</Btn>
+        <Btn onClick={create} disabled={saving} icon={IC.plus}>{saving ? 'Saving…' : 'Create Collection'}</Btn>
       </Section>
       <Section>
-        <h3 className="font-bold text-[#1E1E1E]">Collections ({collections.length})</h3>
-        {loading ? <p className="text-sm text-gray-400">Loading…</p> : collections.length === 0 ? <Empty label="No collections yet" /> : (
+        <h3 className="font-bold adm-t1">Collections ({collections.length})</h3>
+        {loading ? <p className="text-sm adm-t3">Loading…</p> : collections.length === 0 ? <Empty label="No collections yet" /> : (
           <div className="space-y-3">
             {collections.map(col => (
-              <div key={col.id} className="border-2 border-[#E5E5E5] rounded-[4px] p-4">
+              <div key={col.id} className="border-2 adm-border rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold text-sm text-[#1E1E1E]">{col.icon_emoji} {col.title} {col.is_paid && <span className="text-[10px] bg-[#FE5100] text-white px-1.5 py-0.5 rounded ml-1">Paid</span>}</p>
-                    <p className="text-xs text-[#64748b]">{col.subtitle} · {(col.explore_collection_vendors || []).length} hosts</p>
+                    <p className="font-bold text-sm adm-t1">{col.icon_emoji} {col.title} {col.is_paid && <span className="text-[10px] bg-[#FE5100] text-white px-1.5 py-0.5 rounded ml-1">Paid</span>}</p>
+                    <p className="text-xs adm-t3">{col.subtitle} · {(col.explore_collection_vendors || []).length} hosts</p>
                   </div>
-                  <Btn variant={col.is_active ? 'ghost' : 'primary'} onClick={() => toggle(col)}>
+                  <Btn variant={col.is_active ? 'ghost' : 'primary'} size="sm" onClick={() => toggle(col)}>
                     {col.is_active ? 'Deactivate' : 'Activate'}
                   </Btn>
                 </div>
@@ -284,13 +276,13 @@ function BoostsTab() {
   return (
     <div className="space-y-6">
       <Section>
-        <h3 className="font-bold text-[#1E1E1E] flex items-center gap-2"><Zap size={16} className="text-[#FFB703]" /> Add Boost</h3>
+        <h3 className="font-bold adm-t1 flex items-center gap-2"><Ic d={IC.zap} size={16} className="text-[#FFB703]" /> Add Boost</h3>
         <div className="grid grid-cols-2 gap-3">
           <Input label="Host ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} />
           <div>
-            <span className="text-xs font-bold text-[#1E1E1E] uppercase tracking-wide mb-1 block">Boost Type *</span>
+            <span className="text-xs font-bold adm-t1 uppercase tracking-wide mb-1 block">Boost Type *</span>
             <select value={form.boost_type} onChange={e => setForm(f => ({ ...f, boost_type: e.target.value }))}
-              className="w-full border-2 border-[#1E1E1E] rounded-[4px] px-3 py-2 text-sm font-medium bg-white outline-none">
+              className="w-full border-2 adm-border rounded-lg px-3 py-2 text-sm font-medium adm-card outline-none">
               <option value="standard">Standard (1.5×)</option>
               <option value="premium">Premium (2.5×)</option>
             </select>
@@ -299,19 +291,19 @@ function BoostsTab() {
           <Input label="Ends at *"   type="datetime-local" value={form.ends_at}   onChange={e => setForm(f => ({ ...f, ends_at: e.target.value }))} />
           <Input label="Price paid (₹)" type="number" value={form.price_paid} onChange={e => setForm(f => ({ ...f, price_paid: e.target.value }))} />
         </div>
-        <Btn onClick={create} disabled={saving}><Plus size={14} /> {saving ? 'Saving…' : 'Add Boost'}</Btn>
+        <Btn onClick={create} disabled={saving} icon={IC.plus}>{saving ? 'Saving…' : 'Add Boost'}</Btn>
       </Section>
       <Section>
-        <h3 className="font-bold text-[#1E1E1E]">Active Boosts ({boosts.length})</h3>
-        {loading ? <p className="text-sm text-gray-400">Loading…</p> : boosts.length === 0 ? <Empty label="No active boosts" /> : (
+        <h3 className="font-bold adm-t1">Active Boosts ({boosts.length})</h3>
+        {loading ? <p className="text-sm adm-t3">Loading…</p> : boosts.length === 0 ? <Empty label="No active boosts" /> : (
           <div className="space-y-2">
             {boosts.map(b => (
-              <div key={b.id} className="flex items-center justify-between p-3 border-2 border-[#E5E5E5] rounded-[4px]">
+              <div key={b.id} className="flex items-center justify-between p-3 border-2 adm-border rounded-lg">
                 <div>
-                  <p className="font-bold text-sm text-[#1E1E1E]">{b.profiles?.name || b.vendor_id} · {b.boost_type === 'premium' ? '2.5×' : '1.5×'}</p>
-                  <p className="text-xs text-[#64748b]">until {new Date(b.ends_at).toLocaleDateString()} · ₹{b.price_paid}</p>
+                  <p className="font-bold text-sm adm-t1">{b.profiles?.name || b.vendor_id} · {b.boost_type === 'premium' ? '2.5×' : '1.5×'}</p>
+                  <p className="text-xs adm-t3">until {new Date(b.ends_at).toLocaleDateString()} · ₹{b.price_paid}</p>
                 </div>
-                <Btn variant="danger" onClick={() => revoke(b.id)}><Trash2 size={13} /></Btn>
+                <Btn variant="danger" size="sm" onClick={() => revoke(b.id)} icon={IC.trash} />
               </div>
             ))}
           </div>
@@ -352,30 +344,30 @@ function VerifiedTab() {
   return (
     <div className="space-y-6">
       <Section>
-        <h3 className="font-bold text-[#1E1E1E] flex items-center gap-2"><BadgeCheck size={16} className="text-[#FE5100]" /> Grant Verified Badge</h3>
+        <h3 className="font-bold adm-t1 flex items-center gap-2"><Ic d={IC.badgeCheck} size={16} className="text-[#FE5100]" /> Grant Verified Badge</h3>
         <div className="grid grid-cols-2 gap-3">
           <Input label="Host ID *" value={form.vendor_id} onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))} />
           <Input label="Expires at (leave blank = never)" type="date" value={form.expires_at} onChange={e => setForm(f => ({ ...f, expires_at: e.target.value }))} />
           <Input label="Price paid (₹)" type="number" value={form.price_paid} onChange={e => setForm(f => ({ ...f, price_paid: e.target.value }))} />
         </div>
-        <Btn onClick={grant} disabled={saving}><CheckCircle size={14} /> {saving ? 'Saving…' : 'Grant Badge'}</Btn>
+        <Btn onClick={grant} disabled={saving} icon={IC.checkCircle}>{saving ? 'Saving…' : 'Grant Badge'}</Btn>
       </Section>
       <Section>
-        <h3 className="font-bold text-[#1E1E1E]">Verified Hosts ({verified.length})</h3>
-        {loading ? <p className="text-sm text-gray-400">Loading…</p> : verified.length === 0 ? <Empty label="No verified hosts yet" /> : (
+        <h3 className="font-bold adm-t1">Verified Hosts ({verified.length})</h3>
+        {loading ? <p className="text-sm adm-t3">Loading…</p> : verified.length === 0 ? <Empty label="No verified hosts yet" /> : (
           <div className="space-y-2">
             {verified.map(v => (
-              <div key={v.id} className="flex items-center justify-between p-3 border-2 border-[#E5E5E5] rounded-[4px]">
+              <div key={v.id} className="flex items-center justify-between p-3 border-2 adm-border rounded-lg">
                 <div className="flex items-center gap-2">
-                  <BadgeCheck size={16} className="text-[#FE5100]" />
+                  <Ic d={IC.badgeCheck} size={16} className="text-[#FE5100]" />
                   <div>
-                    <p className="font-bold text-sm text-[#1E1E1E]">{v.profiles?.name || v.vendor_id}</p>
-                    <p className="text-xs text-[#64748b]">
+                    <p className="font-bold text-sm adm-t1">{v.profiles?.name || v.vendor_id}</p>
+                    <p className="text-xs adm-t3">
                       {v.expires_at ? `Expires ${new Date(v.expires_at).toLocaleDateString()}` : 'Never expires'} · ₹{v.price_paid}
                     </p>
                   </div>
                 </div>
-                <Btn variant="danger" onClick={() => revoke(v.id)}><Trash2 size={13} /></Btn>
+                <Btn variant="danger" size="sm" onClick={() => revoke(v.id)} icon={IC.trash} />
               </div>
             ))}
           </div>
@@ -387,11 +379,11 @@ function VerifiedTab() {
 
 // ── Main page ─────────────────────────────────────────────────
 const TABS = [
-  { key: 'featured',    label: 'Featured Slots',       icon: Star },
-  { key: 'keywords',   label: 'Sponsored Keywords',   icon: Tag },
-  { key: 'collections',label: 'Collections',          icon: BookMarked },
-  { key: 'boosts',     label: 'Boosts',               icon: Zap },
-  { key: 'verified',   label: 'Verified Badges',      icon: BadgeCheck },
+  { key: 'featured',    label: 'Featured Slots',       icon: IC.star },
+  { key: 'keywords',   label: 'Sponsored Keywords',   icon: IC.tag },
+  { key: 'collections',label: 'Collections',          icon: IC.bookmark },
+  { key: 'boosts',     label: 'Boosts',               icon: IC.zap },
+  { key: 'verified',   label: 'Verified Badges',      icon: IC.badgeCheck },
 ];
 
 export default function AdminExplore() {
@@ -400,27 +392,26 @@ export default function AdminExplore() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-black text-[#1E1E1E]">Explore Page</h1>
-        <p className="text-sm text-[#64748b] mt-1">Manage paid placements and revenue features on the public Explore page.</p>
+        <h1 className="text-2xl font-black adm-t1">Explore Page</h1>
+        <p className="text-sm adm-t3 mt-1">Manage paid placements and revenue features on the public Explore page.</p>
       </div>
 
       {/* Tab nav */}
-      <div className="flex flex-wrap gap-2 border-b-2 border-[#E5E5E5] pb-0">
+      <div className="flex flex-wrap gap-2 border-b-2 adm-border pb-0">
         {TABS.map(t => {
-          const Icon = t.icon;
           const active = tab === t.key;
           return (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-bold border-2 border-b-0 rounded-t-[4px]
+              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-bold border-2 border-b-0 rounded-t-lg
                           transition-colors
                           ${active
-                            ? 'bg-white border-[#1E1E1E] text-[#FE5100]'
-                            : 'bg-[#FFF8EE] border-transparent text-[#64748b] hover:text-[#1E1E1E]'
+                            ? 'adm-card adm-border text-[#FE5100]'
+                            : 'adm-chip border-transparent adm-t3 hover:text-[color:var(--adm-text-1)]'
                           }`}
             >
-              <Icon size={14} />
+              <Ic d={t.icon} size={14} />
               {t.label}
             </button>
           );
