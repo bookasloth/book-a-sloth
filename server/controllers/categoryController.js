@@ -172,6 +172,9 @@ const adminUpdate = async (req, res) => {
     if (req.body.sort_order !== undefined) updates.sort_order = req.body.sort_order;
     if (req.body.slug !== undefined) updates.slug = slugify(req.body.slug);
     if (req.body.group_label !== undefined) updates.group_label = req.body.group_label || null;
+    if (req.body.allow_subcategory_suggestions !== undefined) {
+      updates.allow_subcategory_suggestions = Boolean(req.body.allow_subcategory_suggestions);
+    }
 
     const { data, error } = await supabaseAdmin
       .from('categories')
