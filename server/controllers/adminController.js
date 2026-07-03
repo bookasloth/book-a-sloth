@@ -392,7 +392,13 @@ const updateService = async (req, res) => {
     if (e1 || !svc) return res.status(404).json({ message: 'Service not found' });
 
     // Empty string clears the category; a non-empty slug is validated.
+    // services carries a denormalised primary_category alongside category. The DB
+    // enforces both together: chk_category_pair (both set or both null) and the
+    // composite FK (primary_category, category) -> service_categories. So we MUST
+    // write primary_category in lockstep — writing category alone violates the
+    // CHECK whenever the row's primary_category is null.
     let nextCategory = null;
+    let nextPrimary = null;
     if (category) {
       const primary = svc.profiles?.primary_category || null;
       if (!primary) {
@@ -407,11 +413,12 @@ const updateService = async (req, res) => {
         .maybeSingle();
       if (!cat) return res.status(400).json({ message: 'Invalid category for this host profession' });
       nextCategory = category;
+      nextPrimary = primary;
     }
 
     const { data, error } = await supabaseAdmin
       .from('services')
-      .update({ category: nextCategory })
+      .update({ category: nextCategory, primary_category: nextPrimary })
       .eq('id', id)
       .select('*, profiles!services_host_id_fkey(name, username, primary_category)')
       .single();
