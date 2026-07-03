@@ -26,6 +26,8 @@ function StatusBadge({ active }) {
 // ── Create / edit modal ─────────────────────────────────────────────────────────
 function CategoryModal({ open, onClose, onSaved, editing, primary, primaryLabel }) {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [icon, setIcon] = useState('');
   const [displayOrder, setDisplayOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,6 +35,8 @@ function CategoryModal({ open, onClose, onSaved, editing, primary, primaryLabel 
   useEffect(() => {
     if (!open) return;
     setName(editing?.name ?? '');
+    setDescription(editing?.description ?? '');
+    setIcon(editing?.icon ?? '');
     setDisplayOrder(editing?.display_order ?? 0);
     setIsActive(editing?.is_active ?? true);
   }, [open, editing]);
@@ -42,7 +46,7 @@ function CategoryModal({ open, onClose, onSaved, editing, primary, primaryLabel 
     if (trimmed.length < 2) { toast.error('Name must be at least 2 characters'); return; }
     setSaving(true);
     try {
-      const payload = { name: trimmed, display_order: Number(displayOrder) || 0, is_active: isActive };
+      const payload = { name: trimmed, description: description.trim(), icon: icon.trim(), display_order: Number(displayOrder) || 0, is_active: isActive };
       if (editing) {
         await adminUpdateServiceCategory(editing.id, payload);
         toast.success('Service category updated');
@@ -90,6 +94,29 @@ function CategoryModal({ open, onClose, onSaved, editing, primary, primaryLabel 
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              SEO description (shown on /services pages; empty = auto template)
+            </label>
+            <textarea
+              rows={2}
+              maxLength={200}
+              className="fb-input w-full"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Icon key (optional, e.g. camera)
+            </label>
+            <input
+              type="text"
+              className="fb-input w-full"
+              value={icon}
+              onChange={(e) => setIcon(e.target.value)}
             />
           </div>
           <div className="grid grid-cols-2 gap-3 items-end">
