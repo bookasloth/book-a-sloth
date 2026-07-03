@@ -194,17 +194,18 @@ const RevenueTrendChart = () => {
 };
 
 // ── Revenue stat card ─────────────────────────────────────────
-// Icon boxed in a hue-bordered chip; value shares the hue. No tooltip — static.
+// Title on top; below, a hue-bordered icon chip beside the hue-matched value.
+// No tooltip — static.
 const RevCard = ({ label, value, hex }) => (
   <Card>
-    <div className="flex items-center gap-3 mb-3">
+    <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3 leading-tight mb-2">{label}</p>
+    <div className="flex items-center gap-3">
       <span className="w-10 h-10 rounded-xl flex items-center justify-center border-2 flex-shrink-0"
         style={{ borderColor: hex, color: hex }}>
         <Ic d={IC.rupee} size={18} />
       </span>
-      <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3 leading-tight">{label}</p>
+      <span className="text-2xl font-bold tabular-nums" style={{ color: hex }}>{value}</span>
     </div>
-    <p className="text-2xl font-bold tabular-nums" style={{ color: hex }}>{value}</p>
   </Card>
 );
 
