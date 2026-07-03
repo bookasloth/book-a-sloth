@@ -13,6 +13,7 @@
 
 const express = require('express');
 const { requireAdmin } = require('../middleware/adminMiddleware');
+const { protect, requireHost } = require('../middleware/authMiddleware');
 const sc = require('../controllers/serviceCategoryController');
 
 // ── Admin router (all CRUD) ───────────────────────────────────────────────────
@@ -29,5 +30,6 @@ adminRouter.delete('/:id',  requireAdmin('settings.manage'), sc.remove);
 const publicRouter = express.Router();
 
 publicRouter.get('/', sc.listPublic);
+publicRouter.post('/suggest', protect, requireHost, sc.suggest);
 
 module.exports = { adminRouter, publicRouter };

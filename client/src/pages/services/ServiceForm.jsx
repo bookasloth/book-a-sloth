@@ -5,7 +5,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
-import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCategories } from '../../services/api';
+import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCategories, hostSuggestServiceCategory } from '../../services/api';
 import toast from 'react-hot-toast';
 import FeatureGate from '../../components/common/FeatureGate';
 import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
@@ -358,6 +358,43 @@ const ThumbnailCropper = ({ currentUrl, onUploaded }) => {
   );
 };
 
+const SuggestSubcategoryModal = ({ primary, onClose }) => {
+  const [name, setName] = useState('');
+  const [saving, setSaving] = useState(false);
+  const submit = async () => {
+    const v = name.trim();
+    if (v.length < 2) return toast.error('Enter a subcategory name');
+    setSaving(true);
+    try {
+      await hostSuggestServiceCategory({ primary_category: primary, name: v });
+      toast.success('Sent for approval');
+      onClose();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Could not submit');
+    } finally { setSaving(false); }
+  };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+        <h3 className="text-base font-bold text-gray-900 mb-1">Suggest a subcategory</h3>
+        <p className="text-[12px] text-gray-500 mb-3">An admin will review it before it goes live.</p>
+        <input autoFocus value={name} onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && submit()}
+          placeholder="e.g. Wedding Photography"
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#FE5100] focus:outline-none" />
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100">Cancel</button>
+          <button onClick={submit} disabled={saving}
+            className="rounded-lg bg-[#FE5100] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e04800] disabled:opacity-50">
+            {saving ? 'Sending…' : 'Send for approval'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── ServiceForm ─────────────────────────────────────────────────────────────
 
 export default function ServiceForm({ initialData, serviceId }) {
@@ -388,6 +425,9 @@ export default function ServiceForm({ initialData, serviceId }) {
 
   const [saving, setSaving] = useState(false);
   const [svcCats, setSvcCats] = useState([]);   // [{ id, name, slug }] for the host's profession
+  const [primaryCat, setPrimaryCat]     = useState(null);
+  const [allowSuggest, setAllowSuggest] = useState(false);
+  const [suggestOpen, setSuggestOpen]   = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -406,6 +446,8 @@ export default function ServiceForm({ initialData, serviceId }) {
         if (!alive) return;
         const list = sc.data?.categories || [];
         setSvcCats(list);
+        setPrimaryCat(primary);
+        setAllowSuggest(Boolean(sc.data?.allow_suggestions));
         // Default to the existing value (edit) or the first available category.
         setForm((f) => (f.category ? f : { ...f, category: initialData?.category || list[0]?.slug || '' }));
       })
@@ -521,6 +563,12 @@ export default function ServiceForm({ initialData, serviceId }) {
                   <Select value={form.category} onChange={e => set('category', e.target.value)}>
                     {svcCats.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
                   </Select>
+                  {allowSuggest && (
+                    <button type="button" onClick={() => setSuggestOpen(true)}
+                      className="mt-1.5 text-[12px] font-medium text-[#FE5100] hover:underline">
+                      + Suggest new subcategory
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -623,6 +671,8 @@ export default function ServiceForm({ initialData, serviceId }) {
           {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Publish Service'}
         </Button>
       </div>
+
+      {suggestOpen && <SuggestSubcategoryModal primary={primaryCat} onClose={() => setSuggestOpen(false)} />}
     </form>
   );
 }
