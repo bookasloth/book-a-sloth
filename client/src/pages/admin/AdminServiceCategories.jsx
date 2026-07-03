@@ -214,7 +214,7 @@ const AdminServiceCategories = () => {
   const rows = useMemo(
     () =>
       cats
-        .filter((c) => c.primary_category === selected)
+        .filter((c) => c.primary_category === selected && c.status !== 'pending' && c.status !== 'rejected')
         .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name)),
     [cats, selected]
   );

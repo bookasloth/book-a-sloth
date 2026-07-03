@@ -224,6 +224,20 @@ const update = async (req, res) => {
     if (req.body.description !== undefined) updates.description = req.body.description ? String(req.body.description).trim() : null;
     if (req.body.icon !== undefined)        updates.icon        = req.body.icon ? String(req.body.icon).trim() : null;
 
+    // Guard the coupling invariant: never leave a row is_active=true while its
+    // status is not 'active'. A plain { is_active: true } toggle on a pending or
+    // rejected suggestion would otherwise leak it into is_active-only read paths.
+    if (updates.is_active === true && req.body.status === undefined) {
+      const { data: cur } = await supabaseAdmin
+        .from('service_categories')
+        .select('status')
+        .eq('id', req.params.id)
+        .maybeSingle();
+      if (cur && cur.status && cur.status !== 'active') {
+        return res.status(409).json({ message: 'Approve the suggestion before activating it' });
+      }
+    }
+
     // Renaming can re-derive the slug only when explicitly requested, scoped to
     // the row's own profession to keep (primary_category, slug) unique.
     if (req.body.slug !== undefined) {

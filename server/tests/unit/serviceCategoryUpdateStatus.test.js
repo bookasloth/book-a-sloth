@@ -39,3 +39,15 @@ test('invalid status returns 400', async () => {
   await update({ params: { id: 'sc1' }, body: { status: 'reject-typo' } }, r);
   expect(r.status).toHaveBeenCalledWith(400);
 });
+
+test('blocks activating a pending row via plain is_active toggle (409)', async () => {
+  const c = {
+    update: jest.fn(() => c), eq: jest.fn(() => c), select: jest.fn(() => c),
+    maybeSingle: jest.fn().mockResolvedValue({ data: { status: 'pending' }, error: null }),
+  };
+  mockFrom.mockReturnValue(c);
+  const r = res();
+  await update({ params: { id: 'sc1' }, body: { is_active: true } }, r);
+  expect(r.status).toHaveBeenCalledWith(409);
+  expect(c.update).not.toHaveBeenCalled();
+});
