@@ -212,6 +212,11 @@ function App() {
     <ChromeContext.Provider value={chromeValue}>
       <ScrollToTop />
       <Toaster position="top-right" />
+      {/* Boundary wraps the whole chrome, not just <Routes>: a throw in Navbar,
+          ConsentBanner or AnalyticsBridge is ABOVE the route content and would
+          otherwise unmount the entire tree into a blank white screen. resetKey
+          clears the error when the user navigates to a different path. */}
+      <RouteErrorBoundary resetKey={location.pathname}>
       <AnalyticsBridge />
       {/* Keep error / offline pages a clean single card — consent is still
           surfaced on every normal page. */}
@@ -219,7 +224,6 @@ function App() {
         <ConsentBanner variant={location.pathname.startsWith('/lp') ? 'slim' : 'full'} />
       )}
       {!hideNavbar && <Navbar />}
-      <RouteErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public */}
@@ -435,8 +439,8 @@ function App() {
           <Route path="*" element={<ErrorPage code={404} />} />
         </Routes>
       </Suspense>
-      </RouteErrorBoundary>
       {!hideFooter && <Footer />}
+      </RouteErrorBoundary>
     </ChromeContext.Provider>
   );
 }
