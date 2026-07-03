@@ -69,14 +69,13 @@ const OverviewTab = ({ stats, ops }) => {
     { label: 'Platform Revenue', value: inr(s.revenue), icon: 'rupee',    hex: '#FE5100', to: '/super-dashboard/revenue' },
     { label: 'Total Bookings',   value: (s.bookings || 0).toLocaleString(), icon: 'calendar', hex: '#7C3AED', to: '/super-dashboard/bookings' },
     { label: 'Active Hosts',     value: (s.vendors || 0).toLocaleString(),  icon: 'building', hex: '#2563EB', to: '/super-dashboard/providers' },
-    { label: 'Total Users',      value: (s.users || 0).toLocaleString(),    icon: 'users',    hex: '#059669', to: '/admin/users' },
+    { label: 'Total Users',      value: (s.users || 0).toLocaleString(),    icon: 'users',    hex: '#059669' },
     { label: 'Active Services',  value: (s.services || 0).toLocaleString(), icon: 'grid',     hex: '#DB2777', to: '/admin/services' },
     { label: 'Pending Actions',  value: (ops?.totalAttention ?? 0).toLocaleString(), icon: 'alert', hex: ops?.totalAttention ? '#DC2626' : '#D97706', to: '/super-dashboard/pending' },
   ];
 
   const manage = [
     { title: 'Manage Bookings',  desc: 'View, update status, resolve disputes',    to: '/admin/bookings',        icon: 'calendar', hex: '#7C3AED' },
-    { title: 'Manage Users',     desc: 'Verify, ban, or delete platform accounts', to: '/admin/users',           icon: 'users',    hex: '#2563EB' },
     { title: 'Manage Services',  desc: 'Review and moderate provider services',    to: '/admin/services',        icon: 'grid',     hex: '#DB2777' },
     { title: 'Payouts',          desc: 'Approve and release host payout requests', to: '/admin/finance/payouts', icon: 'rupee',    hex: '#FE5100' },
     { title: 'Platform Settings',desc: 'Configure fees, maintenance, branding',    to: '/admin/settings',        icon: 'activity', hex: '#059669' },

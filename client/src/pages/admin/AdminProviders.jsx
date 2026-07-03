@@ -143,14 +143,34 @@ const ProviderEditModal = ({ entity, onClose, onSaved }) => {
   );
 };
 
+// Filter tabs — 'all' has no status filter; the other three map to the
+// verified/banned combinations in STATUS_FILTER. "Unverified" == pending.
+const TABS = [
+  { key: 'all',       label: 'All',        to: '/admin/providers' },
+  { key: 'active',    label: 'Active',     to: '/admin/providers/active' },
+  { key: 'pending',   label: 'Unverified', to: '/admin/providers/pending' },
+  { key: 'suspended', label: 'Suspended',  to: '/admin/providers/suspended' },
+];
+const TITLES = { all: 'All Hosts', active: 'Active Hosts', pending: 'Unverified Hosts', suspended: 'Suspended Hosts' };
+const SEARCH_ICON = 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z';
+
 const AdminProviders = () => {
-  const { status = 'active' } = useParams();
+  const { status } = useParams();
+  const active = status || 'all';   // no :status segment → show everyone
   const [providers, setProviders] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [total, setTotal]         = useState(0);
   const [page, setPage]           = useState(1);
+  const [search, setSearch]       = useState('');
+  const [debounced, setDebounced] = useState('');
   const [seoEntity, setSeoEntity] = useState(null);
   const [editEntity, setEditEntity] = useState(null);
+
+  // Debounce the search box so we don't hit the API on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
 
   // List rows lack the SEO columns, so load the full profile before opening.
   const openSeo = async (p) => {
@@ -171,9 +191,9 @@ const AdminProviders = () => {
   const fetchProviders = async () => {
     setLoading(true);
     try {
-      const { data } = await adminGetUsers({ role: 'host', page, limit: 20 });
+      const { data } = await adminGetUsers({ role: 'host', page, limit: 20, search: debounced || undefined });
       let list = data.users || [];
-      const filter = STATUS_FILTER[status];
+      const filter = STATUS_FILTER[active];
       if (filter) {
         if (filter.banned !== null) list = list.filter(u => u.is_banned === filter.banned);
         if (filter.verified !== null) list = list.filter(u => u.is_verified === filter.verified);
@@ -184,7 +204,9 @@ const AdminProviders = () => {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchProviders(); }, [status, page]);
+  // Reset to the first page whenever the tab or the search term changes.
+  useEffect(() => { setPage(1); }, [active, debounced]);
+  useEffect(() => { fetchProviders(); }, [active, page, debounced]);
 
   const handleVerify = async (u) => {
     try {
@@ -212,31 +234,49 @@ const AdminProviders = () => {
     } catch { toast.error('Failed'); }
   };
 
-  const titles = { active: 'Active Hosts', pending: 'Pending Hosts', suspended: 'Suspended Hosts' };
-
   return (
     <div>
       <PageHeader
-        title={titles[status] || 'Hosts'}
+        title={TITLES[active] || 'Hosts'}
         subtitle={`${total} host${total !== 1 ? 's' : ''}`}
         actions={
           <div className="flex gap-1 adm-card rounded-xl p-1">
-            {Object.keys(STATUS_FILTER).map(s => (
-              <Link key={s} to={`/admin/providers/${s}`}
-                className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all capitalize
-                  ${status === s ? 'bg-[#FE5100] text-white' : 'adm-t2 hover:text-gray-700'}`}>
-                {s}
+            {TABS.map(t => (
+              <Link key={t.key} to={t.to}
+                className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all
+                  ${active === t.key ? 'bg-[#FE5100] text-white' : 'adm-t2 hover:text-gray-700'}`}>
+                {t.label}
               </Link>
             ))}
           </div>
         }
       />
 
+      {/* Search — name, phone, or email (server-side, debounced) */}
+      <div className="relative mb-4 max-w-md">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 adm-t3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={SEARCH_ICON} />
+        </svg>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search by name, phone, or email…"
+          className="w-full pl-10 pr-9 py-2.5 adm-card border rounded-xl text-sm adm-t1 placeholder:text-[color:var(--adm-text-3)] focus:ring-2 focus:ring-[#FE5100]/25 focus:border-[#FE5100] outline-none transition"
+        />
+        {search && (
+          <button onClick={() => setSearch('')} aria-label="Clear search"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md adm-t3 hover:text-gray-700">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <div className="adm-card rounded-2xl py-12 text-center adm-t3 text-sm">Loading...</div>
       ) : providers.length === 0 ? (
         <AdminEmptyState icon={PROVIDER_ICON} iconBg="bg-blue-50" iconColor="text-blue-500"
-          title={`No ${status} hosts`} description={`No hosts with ${status} status found.`} />
+          title={debounced ? 'No matches' : (TITLES[active] || 'No hosts')}
+          description={debounced ? 'No hosts match that name, phone, or email.' : 'No hosts found for this filter.'} />
       ) : (
         <div className="adm-card rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
@@ -257,6 +297,7 @@ const AdminProviders = () => {
                         <div>
                           <p className="font-medium adm-t1 text-[13px]">{p.name}</p>
                           <p className="text-[11px] adm-t3">{p.email}</p>
+                          {p.phone && <p className="text-[11px] adm-t3">{p.phone}</p>}
                         </div>
                       </div>
                     </td>

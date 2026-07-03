@@ -95,18 +95,9 @@ export const NAV = [
     { label:'Pending Actions',    icon:'clock',   to:'/super-dashboard/pending', perm:'ops.view' },
   ]},
   { id:'operations', section:'OPERATIONS', items:[
-    { label:'Bookings', icon:'calCheck', groupId:'op-bookings', perm:'bookings.view', children:[
-      { label:'All',       to:'/admin/bookings' },
-      { label:'Confirmed', to:'/admin/bookings/confirmed' },
-      { label:'Completed', to:'/admin/bookings/completed' },
-      { label:'Cancelled', to:'/admin/bookings/cancelled' },
-      { label:'Disputed',  to:'/admin/bookings/disputed' },
-    ]},
-    { label:'Services', icon:'layers', groupId:'op-services', perm:'services.view', children:[
-      { label:'All Services', to:'/admin/services' },
-      { label:'Service Categories', to:'/admin/services/categories' },
-      { label:'Featured',     to:'/admin/services/featured' },
-    ]},
+    { label:'Bookings', icon:'calCheck', to:'/admin/bookings', perm:'bookings.view' },
+    { label:'Services', icon:'layers', to:'/admin/services', perm:'services.view' },
+    { label:'Hosts',    icon:'userCheck', to:'/admin/providers', perm:'professionals.view' },
     { label:'Addons',             icon:'package', to:'/admin/addons', perm:'plans.manage' },
     { label:'Badges',             icon:'star',    to:'/admin/badges', perm:'badges.manage' },
     { label:'Subscription Plans', icon:'card',    to:'/admin/plans', perm:'plans.view' },
@@ -114,12 +105,6 @@ export const NAV = [
     { label:'Explore Page',        icon:'search',  to:'/admin/explore',      perm:'settings.manage' },
   ]},
   { id:'people', section:'PEOPLE', items:[
-    { label:'Hosts', icon:'userCheck', groupId:'ppl-providers', perm:'professionals.view', children:[
-      { label:'Active',    to:'/admin/providers/active' },
-      { label:'Pending',   to:'/admin/providers/pending' },
-      { label:'Suspended', to:'/admin/providers/suspended' },
-    ]},
-    { label:'Users',  icon:'users',    to:'/admin/users', perm:'users.view' },
     { label:'KYC',    icon:'shieldOk', groupId:'ppl-kyc', perm:'kyc.view', children:[
       { label:'Pending',  to:'/admin/kyc/pending' },
       { label:'Approved', to:'/admin/kyc/approved' },

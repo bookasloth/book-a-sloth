@@ -104,7 +104,6 @@ const ProductPurchase = lazy(() => import('./pages/ProductPurchase'));
 const SuperDashboard = lazy(() => import('./pages/admin/SuperDashboard'));
 
 // Admin — Core
-const AdminUsers    = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminBookings = lazy(() => import('./pages/admin/AdminBookings'));
 const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
@@ -294,7 +293,6 @@ function App() {
           {/* Operations — Services */}
           <Route path="/admin/services" element={<AdminWrapper><AdminServices /></AdminWrapper>} />
           <Route path="/admin/services/categories" element={<AdminWrapper><AdminServiceCategories /></AdminWrapper>} />
-          <Route path="/admin/services/featured" element={<AdminWrapper><AdminServices /></AdminWrapper>} />
 
           {/* Operations */}
           <Route path="/admin/addons" element={<AdminWrapper><AdminAddons /></AdminWrapper>} />
@@ -303,8 +301,8 @@ function App() {
           <Route path="/admin/explore"     element={<AdminWrapper><AdminExplore /></AdminWrapper>} />
 
           {/* People */}
+          <Route path="/admin/providers" element={<AdminWrapper><AdminProviders /></AdminWrapper>} />
           <Route path="/admin/providers/:status" element={<AdminWrapper><AdminProviders /></AdminWrapper>} />
-          <Route path="/admin/users" element={<AdminWrapper><AdminUsers /></AdminWrapper>} />
           <Route path="/admin/kyc/:status" element={<AdminWrapper><AdminKYC /></AdminWrapper>} />
 
           {/* Finance */}
