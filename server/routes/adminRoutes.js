@@ -11,7 +11,7 @@ const { requireAdmin, requireSuperAdmin } = require('../middleware/adminMiddlewa
 const {
   getStats, getProviderPlanAnalytics, getProviderOverview, getRevenueTrend, getRevenueBreakdown, getUsers, getUserById, updateUser, deleteUser, adminSetUserCategories,
   getAllBookings, updateBooking, deleteBooking,
-  getAllServices, deleteService, updateServiceSeo, updateProviderSeo,
+  getAllServices, updateService, deleteService, updateServiceSeo, updateProviderSeo,
   getSettings, updateSettings,
 } = require('../controllers/adminController');
 
@@ -49,6 +49,7 @@ router.delete('/bookings/:id', requireAdmin('bookings.edit'), deleteBooking);
 // ── Services ───────────────────────────────────────────────────
 router.get('/services',         requireAdmin('services.view'),   getAllServices);
 router.put('/services/:id/seo',  requireAdmin('services.manage'), updateServiceSeo);
+router.put('/services/:id',      requireAdmin('services.manage'), updateService);
 router.delete('/services/:id',  requireAdmin('services.manage'), deleteService);
 
 // ── Provider (host) SEO — providers are users with role='host' ─

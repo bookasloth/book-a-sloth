@@ -1189,33 +1189,36 @@ const AdminBookings = () => {
       {/* Header */}
       <PageHeader title="Bookings" subtitle="Search, triage, and manage every booking on the platform." />
 
-      {/* Search — Booking ID / Phone / Email only */}
-      <div className="relative mb-4">
-        <Ic d={IC.search} size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Search by Booking ID, phone, or email…"
-          className="w-full pl-10 pr-9 py-2.5 adm-card border rounded-xl text-sm adm-t1 placeholder:text-[color:var(--adm-text-3)] focus:ring-2 focus:ring-[#FE5100]/25 focus:border-[#FE5100] outline-none transition"
-        />
-        {query && (
-          <button onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100">
-            <Ic d={IC.x} size={15} />
-          </button>
-        )}
-      </div>
+      {/* Toolbar — search (40%) + state filters (10% each), one row on md+.
+          Search bar and the 6 filter pills sit side-by-side; on mobile the
+          search takes a full row and the pills wrap beneath it. */}
+      <div className="flex flex-wrap md:flex-nowrap items-stretch gap-2 mb-5">
+        {/* Search — Booking ID / Phone / Email only */}
+        <div className="relative basis-full md:flex-[4] md:min-w-0">
+          <Ic d={IC.search} size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search by Booking ID, phone, or email…"
+            className="w-full pl-10 pr-9 py-2.5 adm-card border rounded-xl text-sm adm-t1 placeholder:text-[color:var(--adm-text-3)] focus:ring-2 focus:ring-[#FE5100]/25 focus:border-[#FE5100] outline-none transition"
+          />
+          {query && (
+            <button onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+              <Ic d={IC.x} size={15} />
+            </button>
+          )}
+        </div>
 
-      {/* State tabs */}
-      <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1 -mx-0.5 px-0.5" style={{ scrollbarWidth: 'none' }}>
+        {/* State filters — each 10% of the row */}
         {TABS.map(t => {
           const active = t.key === tab;
           const count = counts[t.key];
           return (
-            <Link key={t.key} to={t.to}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-medium whitespace-nowrap transition-colors
+            <Link key={t.key} to={t.to} title={t.label}
+              className={`flex-[1] min-w-0 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-[12.5px] font-medium whitespace-nowrap overflow-hidden transition-colors
                 ${active ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300'}`}>
-              {t.label}
-              {count > 0 && <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : 'bg-gray-100 text-gray-500'}`}>{count}</span>}
+              <span className="truncate">{t.label}</span>
+              {count > 0 && <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${active ? 'bg-white/20' : 'bg-gray-100 text-gray-500'}`}>{count}</span>}
             </Link>
           );
         })}

@@ -130,14 +130,14 @@ const getUsers = async (req, res) => {
     const limit = clampLimit(req.query.limit);
     let query = supabaseAdmin
       .from('profiles')
-      .select('id, name, email, role, username, plan, is_verified, is_banned, google_calendar_connected, created_at', { count: 'exact' })
+      .select('id, name, email, phone, role, username, plan, is_verified, is_banned, google_calendar_connected, created_at', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
     if (role && role !== 'all') query = query.eq('role', role);
     // Sanitize the term so commas/parens/wildcards can't break out of the or().
     const search = sanitizeLikeTerm(req.query.search);
-    if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,username.ilike.%${search}%`);
+    if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,username.ilike.%${search}%`);
 
     const { data, count, error } = await query;
     if (error) return safeError(res, error);
@@ -362,11 +362,66 @@ const getAllServices = async (req, res) => {
     // Hard cap to avoid dumping the entire services table in one unbounded query.
     const { data, error } = await supabaseAdmin
       .from('services')
-      .select('*, profiles!services_host_id_fkey(name, username)')
+      .select('*, profiles!services_host_id_fkey(name, username, primary_category)')
       .order('created_at', { ascending: false })
       .limit(500);
 
     if (error) return safeError(res, error);
+    res.json(data);
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// PUT /api/admin/services/:id — admin edits a service's category (only field
+// exposed here). The slug must belong to the host's own profession
+// (primary_category) and be active, mirroring how hosts pick categories.
+const updateService = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { category } = req.body;
+    if (category === undefined) {
+      return res.status(400).json({ message: 'category is required' });
+    }
+
+    const { data: svc, error: e1 } = await supabaseAdmin
+      .from('services')
+      .select('id, host_id, profiles!services_host_id_fkey(primary_category)')
+      .eq('id', id)
+      .single();
+    if (e1 || !svc) return res.status(404).json({ message: 'Service not found' });
+
+    // Empty string clears the category; a non-empty slug is validated.
+    let nextCategory = null;
+    if (category) {
+      const primary = svc.profiles?.primary_category || null;
+      if (!primary) {
+        return res.status(400).json({ message: 'Host has no profession set — cannot assign a category' });
+      }
+      const { data: cat } = await supabaseAdmin
+        .from('service_categories')
+        .select('slug')
+        .eq('primary_category', primary)
+        .eq('slug', category)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (!cat) return res.status(400).json({ message: 'Invalid category for this host profession' });
+      nextCategory = category;
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('services')
+      .update({ category: nextCategory })
+      .eq('id', id)
+      .select('*, profiles!services_host_id_fkey(name, username, primary_category)')
+      .single();
+    if (error) return safeError(res, error);
+
+    bustPublicReadCaches(); // public service pages embed category_label
+    await audit(req, {
+      action: 'service.update_category', resource_type: 'service', resource_id: id,
+      after: { category: nextCategory },
+    });
     res.json(data);
   } catch (error) {
     safeError(res, error);
@@ -908,6 +963,7 @@ module.exports = {
   updateBooking,
   deleteBooking,
   getAllServices,
+  updateService,
   deleteService,
   updateServiceSeo,
   updateProviderSeo,
