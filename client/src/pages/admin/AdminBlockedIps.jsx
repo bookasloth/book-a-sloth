@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import Ic from '../../components/admin/Ic';
 import { IC } from '../../components/admin/adminNav';
+import { PageHeader, Btn, Badge } from '../../components/admin/ui';
 import {
   adminGetBlockedIps, adminCreateBlockedIp, adminDeleteBlockedIp,
   adminGetAllowlist, adminCreateAllowlistIp, adminDeleteAllowlistIp,
@@ -26,10 +27,10 @@ const timeLeft = (expires_at) => {
 };
 
 const SOURCE_BADGE = {
-  manual:        { label: 'Manual',     cls: 'bg-gray-100 text-gray-600 border-gray-200' },
-  auto:          { label: 'Auto',       cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-  auto_attack:   { label: 'Attack',     cls: 'bg-red-50 text-red-700 border-red-200' },
-  admin_lockout: { label: 'Admin lock', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+  manual:        { label: 'Manual',     tone: 'neutral' },
+  auto:          { label: 'Auto',       tone: 'warn' },
+  auto_attack:   { label: 'Attack',     tone: 'danger' },
+  admin_lockout: { label: 'Admin lock', tone: 'info' },
 };
 
 const AdminBlockedIps = () => {
@@ -110,14 +111,10 @@ const AdminBlockedIps = () => {
 
   return (
     <div className="max-w-5xl">
-      <h1 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-        <Ic d={IC.ban} size={20} className="text-red-600" /> Blocked IPs
-      </h1>
-      <p className="text-sm text-gray-500 mb-6">
-        IPs are auto-banned for repeated rate-limit violations, attack patterns, and admin-login brute-force.
-        Add or remove bans manually below. Allowlisted IPs can never be auto-banned — add your office IP and
-        monitors there first.
-      </p>
+      <PageHeader
+        title={<span className="flex items-center gap-2"><Ic d={IC.ban} size={20} className="text-red-600" /> Blocked IPs</span>}
+        subtitle="IPs are auto-banned for repeated rate-limit violations, attack patterns, and admin-login brute-force. Add or remove bans manually below. Allowlisted IPs can never be auto-banned — add your office IP and monitors there first."
+      />
 
       {/* ── Block an IP ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2 mb-6">
@@ -126,24 +123,24 @@ const AdminBlockedIps = () => {
           onKeyDown={(e) => e.key === 'Enter' && block()} />
         <input className="fb-input flex-1 min-w-[180px]" placeholder="Reason (optional)"
           value={reason} onChange={(e) => setReason(e.target.value)} />
-        <label className="flex items-center gap-1.5 text-sm text-gray-600 select-none">
+        <label className="flex items-center gap-1.5 text-sm adm-t2 select-none">
           <input type="checkbox" checked={permanent} onChange={(e) => setPermanent(e.target.checked)} />
           Permanent
         </label>
-        <button onClick={block} disabled={blocking}
-          className="btn flex items-center gap-1.5 bg-red-600 text-white px-4 text-sm font-medium hover:bg-red-700 disabled:opacity-50 shrink-0">
+        <Btn variant="danger" onClick={block} disabled={blocking} className="shrink-0">
           <Ic d={IC.ban} size={16} strokeWidth={2.5} /> Block
-        </button>
+        </Btn>
       </div>
 
       {loading ? (
-        <p className="text-gray-400 text-sm py-10 text-center">Loading…</p>
+        <p className="adm-t3 text-sm py-10 text-center">Loading…</p>
       ) : (
         <>
-          <div className="border border-gray-200 rounded overflow-x-auto mb-10">
-            <table className="w-full text-sm">
+          <div className="adm-card rounded-2xl overflow-hidden mb-10">
+            <div className="overflow-x-auto">
+            <table className="adm-table w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                <tr className="adm-th text-left text-xs font-semibold adm-t3">
                   <th className="px-3 py-2">IP Address</th>
                   <th className="px-3 py-2">Source</th>
                   <th className="px-3 py-2">Reason</th>
@@ -156,24 +153,24 @@ const AdminBlockedIps = () => {
                 {blocked.map((row) => {
                   const badge = SOURCE_BADGE[row.source] || SOURCE_BADGE.manual;
                   return (
-                    <tr key={row.ip} className="border-b border-gray-100 last:border-0">
-                      <td className="px-3 py-2.5 font-mono text-gray-900">{row.ip}</td>
+                    <tr key={row.ip} className="adm-hoverable">
+                      <td className="px-3 py-2.5 font-mono adm-t1">{row.ip}</td>
                       <td className="px-3 py-2.5">
-                        <span className={`text-[11px] font-medium rounded border px-1.5 py-0.5 ${badge.cls}`}>{badge.label}</span>
+                        <Badge tone={badge.tone}>{badge.label}</Badge>
                       </td>
-                      <td className="px-3 py-2.5 text-gray-600 max-w-[220px] truncate" title={row.reason || ''}>{row.reason || '—'}</td>
-                      <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">
+                      <td className="px-3 py-2.5 adm-t2 max-w-[220px] truncate" title={row.reason || ''}>{row.reason || '—'}</td>
+                      <td className="px-3 py-2.5 text-xs adm-t3 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1">
-                          {!row.expires_at && <Ic d={IC.clock} size={12} className="text-gray-400" />}
+                          {!row.expires_at && <Ic d={IC.clock} size={12} className="adm-t3" />}
                           {timeLeft(row.expires_at)}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">
+                      <td className="px-3 py-2.5 text-xs adm-t3 whitespace-nowrap">
                         {fmtDate(row.created_at)}{row.created_by ? ` · ${row.created_by}` : ''}
                       </td>
                       <td className="px-3 py-2.5 text-right">
                         <button onClick={() => unblock(row)} title="Unblock"
-                          className="text-gray-400 hover:text-red-600 p-1">
+                          className="adm-t3 hover:text-red-600 p-1">
                           <Ic d={IC.trash} size={16} />
                         </button>
                       </td>
@@ -181,17 +178,18 @@ const AdminBlockedIps = () => {
                   );
                 })}
                 {blocked.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-6 text-sm text-gray-400 text-center">No IPs are currently blocked.</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-6 text-sm adm-t3 text-center">No IPs are currently blocked.</td></tr>
                 )}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* ── Allowlist ─────────────────────────────────────────── */}
-          <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
+          <h2 className="text-lg font-bold adm-t1 mb-1 flex items-center gap-2">
             <Ic d={IC.shieldOk} size={20} className="text-green-600" /> Allowlist
           </h2>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm adm-t3 mb-4">
             These IPs are <strong>never</strong> blocked or auto-banned. Add the founder/office IP and any uptime monitors here.
           </p>
 
@@ -207,10 +205,11 @@ const AdminBlockedIps = () => {
             </button>
           </div>
 
-          <div className="border border-gray-200 rounded overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="adm-card rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+            <table className="adm-table w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                <tr className="adm-th text-left text-xs font-semibold adm-t3">
                   <th className="px-3 py-2">IP Address</th>
                   <th className="px-3 py-2">Note</th>
                   <th className="px-3 py-2">Added</th>
@@ -219,25 +218,26 @@ const AdminBlockedIps = () => {
               </thead>
               <tbody>
                 {allowlist.map((row) => (
-                  <tr key={row.ip} className="border-b border-gray-100 last:border-0">
-                    <td className="px-3 py-2.5 font-mono text-gray-900">{row.ip}</td>
-                    <td className="px-3 py-2.5 text-gray-600">{row.note || '—'}</td>
-                    <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">
+                  <tr key={row.ip} className="adm-hoverable">
+                    <td className="px-3 py-2.5 font-mono adm-t1">{row.ip}</td>
+                    <td className="px-3 py-2.5 adm-t2">{row.note || '—'}</td>
+                    <td className="px-3 py-2.5 text-xs adm-t3 whitespace-nowrap">
                       {fmtDate(row.created_at)}{row.created_by ? ` · ${row.created_by}` : ''}
                     </td>
                     <td className="px-3 py-2.5 text-right">
                       <button onClick={() => unallow(row)} title="Remove"
-                        className="text-gray-400 hover:text-red-600 p-1">
+                        className="adm-t3 hover:text-red-600 p-1">
                         <Ic d={IC.trash} size={16} />
                       </button>
                     </td>
                   </tr>
                 ))}
                 {allowlist.length === 0 && (
-                  <tr><td colSpan={4} className="px-4 py-6 text-sm text-gray-400 text-center">No allowlisted IPs yet.</td></tr>
+                  <tr><td colSpan={4} className="px-4 py-6 text-sm adm-t3 text-center">No allowlisted IPs yet.</td></tr>
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import Ic from '../../components/admin/Ic';
 import { IC } from '../../components/admin/adminNav';
+import { PageHeader, Card, Btn, Badge } from '../../components/admin/ui';
 import {
   getReservedSlugs, createReservedSlug, releaseReservedSlug, checkReservedSlug,
 } from '../../services/api';
@@ -112,11 +113,10 @@ const AdminReservedSlugs = () => {
 
   return (
     <div className="max-w-5xl">
-      <h1 className="text-xl font-bold text-gray-900 mb-1">Reserved Slugs</h1>
-      <p className="text-sm text-gray-500 mb-5">
-        Reserve usernames / profile slugs so they can never be claimed by a host. Code-protected
-        routes are listed below and cannot be changed here.
-      </p>
+      <PageHeader
+        title="Reserved Slugs"
+        subtitle="Reserve usernames / profile slugs so they can never be claimed by a host. Code-protected routes are listed below and cannot be changed here."
+      />
 
       {migrationPending && (
         <div className="mb-5 flex items-start gap-2 border border-amber-200 bg-amber-50 rounded px-4 py-3 text-sm text-amber-800">
@@ -126,15 +126,14 @@ const AdminReservedSlugs = () => {
       )}
 
       {/* ── Check-a-name tool ──────────────────────────────────── */}
-      <div className="border border-gray-200 rounded p-4 mb-6">
-        <h2 className="text-sm font-bold text-gray-700 mb-3">Check a name</h2>
+      <Card className="p-4 mb-6">
+        <h2 className="text-sm font-bold adm-t2 mb-3">Check a name</h2>
         <form onSubmit={runCheck} className="flex flex-wrap gap-2">
           <input className="fb-input flex-1 min-w-[200px]" placeholder="e.g. admin, my-name"
             value={checkSlug} onChange={(e) => { setCheckSlug(e.target.value); setCheckResult(null); }} />
-          <button type="submit" disabled={checking || !checkSlug.trim()}
-            className="btn flex items-center gap-1.5 bg-primary text-white px-4 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 shrink-0">
+          <Btn type="submit" size="sm" disabled={checking || !checkSlug.trim()} className="shrink-0">
             <Ic d={IC.search} size={16} strokeWidth={2.5} /> {checking ? 'Checking…' : 'Check'}
-          </button>
+          </Btn>
         </form>
         {checkResult && (
           <div className="mt-3 text-sm">
@@ -156,20 +155,20 @@ const AdminReservedSlugs = () => {
             )}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* ── Create reservation ─────────────────────────────────── */}
-      <div className="border border-gray-200 rounded p-4 mb-6">
-        <h2 className="text-sm font-bold text-gray-700 mb-3">Reserve a slug</h2>
+      <Card className="p-4 mb-6">
+        <h2 className="text-sm font-bold adm-t2 mb-3">Reserve a slug</h2>
         <form onSubmit={create} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Slug</label>
+              <label className="block text-xs font-medium adm-t2 mb-1">Slug</label>
               <input className="fb-input text-sm font-mono" placeholder="e.g. support"
                 value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Kind</label>
+              <label className="block text-xs font-medium adm-t2 mb-1">Kind</label>
               <select className="fb-input text-sm" value={form.kind}
                 onChange={(e) => setForm({ ...form, kind: e.target.value })}>
                 <option value="admin">Admin</option>
@@ -179,40 +178,40 @@ const AdminReservedSlugs = () => {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Reason</label>
+            <label className="block text-xs font-medium adm-t2 mb-1">Reason</label>
             <input className="fb-input text-sm" placeholder="Why is this reserved?"
               value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
           </div>
           <div className="flex flex-wrap gap-5">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm adm-t2">
               <input type="checkbox" checked={form.is_prefix}
                 onChange={(e) => setForm({ ...form, is_prefix: e.target.checked })} />
               Prefix match (blocks anything starting with this)
             </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm adm-t2">
               <input type="checkbox" checked={form.premium}
                 onChange={(e) => setForm({ ...form, premium: e.target.checked })} />
               Premium (held for assignment)
             </label>
           </div>
-          <button type="submit" disabled={creating}
-            className="btn flex items-center gap-1.5 bg-primary text-white px-4 text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
+          <Btn type="submit" size="sm" disabled={creating}>
             <Ic d={IC.plus} size={16} strokeWidth={3} /> {creating ? 'Reserving…' : 'Reserve slug'}
-          </button>
+          </Btn>
         </form>
-      </div>
+      </Card>
 
       {/* ── Active reservations ────────────────────────────────── */}
-      <h2 className="text-sm font-bold text-gray-700 mb-3">Active reservations</h2>
+      <h2 className="text-sm font-bold adm-t2 mb-3">Active reservations</h2>
       {loading ? (
-        <p className="text-gray-400 text-sm py-10 text-center">Loading…</p>
+        <p className="adm-t3 text-sm py-10 text-center">Loading…</p>
       ) : error ? (
-        <p className="text-gray-400 text-sm py-10 text-center">Could not load reservations.</p>
+        <p className="adm-t3 text-sm py-10 text-center">Could not load reservations.</p>
       ) : (
-        <div className="border border-gray-200 rounded overflow-x-auto mb-8">
-          <table className="w-full text-sm">
+        <div className="adm-card rounded-2xl overflow-hidden mb-8">
+          <div className="overflow-x-auto">
+          <table className="adm-table w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+              <tr className="adm-th text-left text-xs font-semibold adm-t3">
                 <th className="px-3 py-2">Slug</th>
                 <th className="px-3 py-2">Kind</th>
                 <th className="px-3 py-2">Reason</th>
@@ -224,53 +223,54 @@ const AdminReservedSlugs = () => {
             </thead>
             <tbody>
               {reservations.map((r) => (
-                <tr key={r.id} className="border-b border-gray-100 last:border-0">
-                  <td className="px-3 py-2.5 font-mono text-gray-900">{r.slug}</td>
+                <tr key={r.id} className="adm-hoverable">
+                  <td className="px-3 py-2.5 font-mono adm-t1">{r.slug}</td>
                   <td className="px-3 py-2.5">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{r.kind}</span>
+                    <Badge tone="neutral">{r.kind}</Badge>
                   </td>
-                  <td className="px-3 py-2.5 text-gray-600">{r.reason || '—'}</td>
+                  <td className="px-3 py-2.5 adm-t2">{r.reason || '—'}</td>
                   <td className="px-3 py-2.5 text-center">{r.is_prefix ? 'Yes' : '—'}</td>
                   <td className="px-3 py-2.5 text-center">{r.premium ? 'Yes' : '—'}</td>
-                  <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">{fmtDate(r.created_at)}</td>
+                  <td className="px-3 py-2.5 text-xs adm-t3 whitespace-nowrap">{fmtDate(r.created_at)}</td>
                   <td className="px-3 py-2.5 text-right">
                     <button onClick={() => release(r)} title="Release reservation"
-                      className="text-gray-400 hover:text-red-600 p-1">
+                      className="adm-t3 hover:text-red-600 p-1">
                       <Ic d={IC.trash} size={16} />
                     </button>
                   </td>
                 </tr>
               ))}
               {reservations.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-6 text-sm text-gray-400 text-center">No active reservations yet.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-6 text-sm adm-t3 text-center">No active reservations yet.</td></tr>
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
       {/* ── System (code) reservations — read-only, collapsible ── */}
-      <div className="border border-gray-200 rounded overflow-hidden">
+      <div className="adm-card rounded-2xl overflow-hidden">
         <button onClick={() => setShowSystem((v) => !v)}
-          className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-gray-50 text-left">
-          <span className="text-sm font-bold text-gray-700">System (code) reservations</span>
-          {showSystem ? <Ic d={IC.chevD} size={16} className="text-gray-500" /> : <Ic d={IC.chevR} size={16} className="text-gray-500" />}
+          className="w-full flex items-center justify-between gap-2 px-4 py-3 adm-th text-left">
+          <span className="text-sm font-bold adm-t2">System (code) reservations</span>
+          {showSystem ? <Ic d={IC.chevD} size={16} className="adm-t3" /> : <Ic d={IC.chevR} size={16} className="adm-t3" />}
         </button>
         {showSystem && (
           <div className="p-4">
-            <p className="text-xs text-gray-400 mb-4">Protected in code — cannot be removed here.</p>
+            <p className="text-xs adm-t3 mb-4">Protected in code — cannot be removed here.</p>
             {categoryEntries.length === 0 ? (
-              <p className="text-sm text-gray-400">No system reservations.</p>
+              <p className="text-sm adm-t3">No system reservations.</p>
             ) : (
               <div className="space-y-4">
                 {categoryEntries.map(([category, list]) => (
                   <div key={category}>
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide adm-t3 mb-2">
                       {category} <span className="font-normal">({list.length})</span>
                     </h3>
                     <div className="flex flex-wrap gap-1.5">
                       {list.map((slug) => (
-                        <span key={slug} className="text-xs font-mono px-2 py-0.5 rounded bg-gray-100 text-gray-600">{slug}</span>
+                        <span key={slug} className="text-xs font-mono px-2 py-0.5 rounded adm-chip">{slug}</span>
                       ))}
                     </div>
                   </div>
