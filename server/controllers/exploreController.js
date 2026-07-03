@@ -105,9 +105,11 @@ async function getFeatured(req, res) {
 
 // ── GET /api/explore/categories ───────────────────────────────
 // Returns active categories with vendor counts.
+// supabaseAdmin (not the anon client): anon table grants were revoked in v3.27,
+// so the anon client silently returns an empty rail on this public read.
 async function getCategories(req, res) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('categories')
       .select('id, label, slug, icon_url')
       .eq('status', 'active')

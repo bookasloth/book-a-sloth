@@ -112,6 +112,40 @@ describe('POST /api/admin/service-categories', () => {
     expect(res.body.slug).toBe('drone-photography');
   });
 
+  test('retries insert without description/icon when columns are missing (pre-v3.60)', async () => {
+    const inserted = { id: 'new-cat', primary_category: 'photographer', name: 'Drone Photography', slug: 'drone-photography', display_order: 0, is_active: true };
+    const firstInsert = jest.fn().mockReturnThis();
+    const retryInsert = jest.fn().mockReturnThis();
+
+    supabaseAdmin.from
+      // uniqueSlug → slug free
+      .mockReturnValueOnce({ select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), maybeSingle: jest.fn().mockResolvedValue({ data: null }) })
+      // max display_order → none
+      .mockReturnValueOnce({ select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), order: jest.fn().mockReturnThis(), limit: jest.fn().mockReturnThis(), maybeSingle: jest.fn().mockResolvedValue({ data: null }) })
+      // insert #1 → missing-column error (pre-v3.60 schema)
+      .mockReturnValueOnce({
+        insert: firstInsert, select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: "Could not find the 'description' column of 'service_categories' in the schema cache" },
+        }),
+      })
+      // insert #2 (retry with description/icon stripped) → success
+      .mockReturnValueOnce({
+        insert: retryInsert, select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: inserted, error: null }),
+      });
+
+    const res = await request(app).post('/api/admin/service-categories').set(adminAuth())
+      .send({ primary_category: 'photographer', name: 'Drone Photography', description: 'Aerial shots' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.slug).toBe('drone-photography');
+    expect(firstInsert.mock.calls[0][0]).toHaveProperty('description', 'Aerial shots');
+    expect(retryInsert.mock.calls[0][0]).not.toHaveProperty('description');
+    expect(retryInsert.mock.calls[0][0]).not.toHaveProperty('icon');
+  });
+
   test('de-dupes slug within the profession — appends -2 when base is taken', async () => {
     const inserted = { id: 'new-2', primary_category: 'photographer', name: 'Photo Editing', slug: 'photo-editing-2', display_order: 1, is_active: true };
 

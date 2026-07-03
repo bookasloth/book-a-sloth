@@ -130,6 +130,41 @@ describe('DELETE /api/admin/users/:id', () => {
   });
 });
 
+describe('PATCH /api/admin/users/:id/categories', () => {
+  test('profession change clears categorised services and reports services_cleared', async () => {
+    supabaseAdmin.from
+      // 1) categories → active slugs
+      .mockReturnValueOnce({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: [{ slug: 'doctor' }, { slug: 'photographer' }], error: null }),
+      })
+      // 2) profiles select — prior profession (before)
+      .mockReturnValueOnce({
+        select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: { primary_category: 'photographer' }, error: null }),
+      })
+      // 3) profiles update — new profession (after)
+      .mockReturnValueOnce({
+        update: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: { id: 'vendor-uuid', primary_category: 'doctor', categories: ['doctor'] }, error: null }),
+      })
+      // 4) services update — clears the (category, primary_category) pair
+      .mockReturnValueOnce({
+        update: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), not: jest.fn().mockReturnThis(),
+        select: jest.fn().mockResolvedValue({ data: [{ id: 's1' }, { id: 's2' }], error: null }),
+      });
+
+    const res = await request(app)
+      .patch('/api/admin/users/vendor-uuid/categories')
+      .set(adminHeaders())
+      .send({ primary_category: 'doctor', categories: ['doctor'] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.services_cleared).toBe(2);
+    expect(res.body.primary_category).toBe('doctor');
+  });
+});
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // BOOKINGS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

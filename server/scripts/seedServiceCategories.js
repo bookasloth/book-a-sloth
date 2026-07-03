@@ -85,12 +85,13 @@ async function run() {
         if (!description) continue;
         const slug = slugify(name);
         if (!have.has(slug)) continue; // just inserted with description above
-        const { error: updErr } = await supabaseAdmin
+        const { data: updData, error: updErr } = await supabaseAdmin
           .from('service_categories')
           .update({ description })
           .eq('primary_category', primary)
           .eq('slug', slug)
-          .is('description', null);
+          .is('description', null)
+          .select('slug');
         if (updErr) {
           if (isMissingDescriptionColumn(updErr)) {
             console.log('v3.60 not applied -- seeding names only');
@@ -99,7 +100,9 @@ async function run() {
           }
           throw updErr;
         }
-        descriptionsFilled += 1;
+        // Count actual filled rows: the .is('description', null) guard means most
+        // re-runs update 0 rows here.
+        descriptionsFilled += (updData || []).length;
       }
     }
   }

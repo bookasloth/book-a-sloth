@@ -42,7 +42,7 @@ const listProfessions = async (req, res) => {
       }
       return { groups };
     });
-    setPublicCache(res, 300);
+    setPublicCache(res, Math.round(DIRECTORY_CACHE_MS / 1000));
     res.json(payload);
   } catch (error) {
     safeError(res, error);
@@ -89,7 +89,7 @@ const getProfession = async (req, res) => {
     });
 
     if (payload.notFound) return res.status(404).json({ message: 'Profession not found' });
-    setPublicCache(res, 300);
+    setPublicCache(res, Math.round(DIRECTORY_CACHE_MS / 1000));
     res.json(payload);
   } catch (error) {
     safeError(res, error);

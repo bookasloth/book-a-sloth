@@ -78,6 +78,7 @@ const MOCK_COLLECTIONS = [
   },
 ];
 
+// server-side sort not implemented yet -- re-enable when /api/explore supports sort
 const SORT_OPTIONS = [
   { value: 'recommended', label: 'Recommended' },
   { value: 'rating',      label: 'Top Rated' },
@@ -96,6 +97,7 @@ function ExploreFull() {
   const [inputVal,   setInputVal]   = useState(searchParams.get('q') || '');
   const [category,   setCategory]   = useState(searchParams.get('category') || '');
   const [service,    setService]    = useState(searchParams.get('service') || '');
+  // server-side sort not implemented yet -- re-enable when /api/explore supports sort
   const [sort,       setSort]       = useState('recommended');
   const [page,       setPage]       = useState(1);
   const [showFilter, setShowFilter] = useState(false);
@@ -134,7 +136,7 @@ function ExploreFull() {
     const reqId = ++vendorsReqRef.current;
     setLoading(true);
     try {
-      const res = await getExploreVendors({ q: query, category, service, sort, page, limit: PAGE_SIZE });
+      const res = await getExploreVendors({ q: query, category, service, page, limit: PAGE_SIZE });
       if (reqId !== vendorsReqRef.current) return; // stale response — a newer request took over
       setVendors(res.data.vendors);
       setTotalVendors(res.data.meta.total);
@@ -145,7 +147,7 @@ function ExploreFull() {
     } finally {
       if (reqId === vendorsReqRef.current) setLoading(false);
     }
-  }, [query, category, service, sort, page]);
+  }, [query, category, service, page]);
 
   useEffect(() => { loadVendors(); }, [loadVendors]);
 
@@ -277,7 +279,8 @@ function ExploreFull() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Sort */}
+              {/* Sort dropdown hidden: server-side sort not implemented yet --
+                  re-enable when /api/explore supports sort.
               <select
                 value={sort}
                 onChange={e => { setSort(e.target.value); setPage(1); }}
@@ -288,6 +291,7 @@ function ExploreFull() {
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
+              */}
             </div>
           </div>
 
@@ -311,10 +315,12 @@ function ExploreFull() {
                 </span>
               )}
               {service && (
-                <button onClick={() => { setService(''); setPage(1); }}
-                        className="inline-flex items-center gap-1 rounded-xl border-4 border-black px-3 py-1 text-sm dark:border-gray-700">
-                  {service.replace(/-/g, ' ')} <X className="h-3 w-3" aria-hidden="true" />
-                </button>
+                <span className="flex items-center gap-1 text-sm bg-white border-2 border-[#1E1E1E]
+                                 rounded-[4px] px-3 py-1 font-medium shadow-[2px_2px_0_#1E1E1E]">
+                  {service.replace(/-/g, ' ')}
+                  <button onClick={() => { setService(''); setPage(1); }}
+                    className="ml-1 text-[#64748b] hover:text-[#FE5100]"><X size={13} /></button>
+                </span>
               )}
             </div>
           )}

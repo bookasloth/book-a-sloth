@@ -20,6 +20,8 @@ const PUBLIC_CACHE_MS = Number(process.env.SERVICE_CATEGORY_CACHE_MS) || 300_000
 
 // Any category mutation invalidates the public picker payloads, the SEO
 // directory payloads (Task 8), and the professions sitemap.
+// NOTE: profession (categories-table) admin mutations do NOT bust svcdir: -- the
+// 5-min TTL bounds that staleness.
 const bustCategoryCaches = () => {
   responseCache.bust('svccat:');
   responseCache.bust('svcdir:');
@@ -121,7 +123,7 @@ const listPublic = async (req, res) => {
       return { categories: r.data || [] };
     });
 
-    setPublicCache(res, 300);
+    setPublicCache(res, Math.round(PUBLIC_CACHE_MS / 1000));
     res.json(payload);
   } catch (error) {
     safeError(res, error);
@@ -151,23 +153,34 @@ const create = async (req, res) => {
       displayOrder = maxRow ? (maxRow.display_order + 1) : 0;
     }
 
-    const { data, error } = await supabaseAdmin
+    const basePayload = {
+      primary_category: primary,
+      name,
+      slug,
+      display_order: displayOrder,
+      is_active: req.body.is_active !== undefined ? Boolean(req.body.is_active) : true,
+    };
+    let r = await supabaseAdmin
       .from('service_categories')
       .insert({
-        primary_category: primary,
-        name,
-        slug,
-        display_order: displayOrder,
-        is_active: req.body.is_active !== undefined ? Boolean(req.body.is_active) : true,
+        ...basePayload,
         description: req.body.description ? String(req.body.description).trim() : null,
         icon:        req.body.icon        ? String(req.body.icon).trim()        : null,
       })
       .select()
       .single();
-    if (error) throw error;
+    if (r.error && /Could not find the|column .* does not exist/i.test(r.error.message)) {
+      // pre-v3.60: no description/icon columns -- retry without them
+      r = await supabaseAdmin
+        .from('service_categories')
+        .insert(basePayload)
+        .select()
+        .single();
+    }
+    if (r.error) throw r.error;
 
     bustCategoryCaches();
-    res.status(201).json(data);
+    res.status(201).json(r.data);
   } catch (error) {
     if (isFkViolation(error)) {
       return res.status(400).json({ message: 'primary_category must be an existing profession' });
@@ -196,17 +209,27 @@ const update = async (req, res) => {
       updates.slug = await uniqueSlug(slugify(req.body.slug), row.primary_category, req.params.id);
     }
 
-    const { data, error } = await supabaseAdmin
+    let r = await supabaseAdmin
       .from('service_categories')
       .update(updates)
       .eq('id', req.params.id)
       .select()
       .maybeSingle();
-    if (error) throw error;
-    if (!data) return res.status(404).json({ message: 'Service category not found' });
+    if (r.error && /Could not find the|column .* does not exist/i.test(r.error.message)) {
+      // pre-v3.60: no description/icon columns -- retry with them stripped
+      const { description, icon, ...legacyUpdates } = updates;
+      r = await supabaseAdmin
+        .from('service_categories')
+        .update(legacyUpdates)
+        .eq('id', req.params.id)
+        .select()
+        .maybeSingle();
+    }
+    if (r.error) throw r.error;
+    if (!r.data) return res.status(404).json({ message: 'Service category not found' });
 
     bustCategoryCaches();
-    res.json(data);
+    res.json(r.data);
   } catch (error) {
     if (isFkViolation(error)) {
       return res.status(400).json({ message: 'primary_category must be an existing profession' });

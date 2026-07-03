@@ -139,14 +139,25 @@ const fetchServices = async () => {
 };
 
 // Professions that own >=1 active bookable-service category (newest updated_at wins).
+// Intersected with ACTIVE professions (categories.status): the directory endpoint
+// 404s inactive/unknown professions, so emitting them here would sitemap 404 URLs.
 const fetchProfessions = async () => {
-  const { data, error } = await supabaseAdmin
-    .from('service_categories')
-    .select('primary_category, updated_at')
-    .eq('is_active', true);
-  if (error) throw error;
+  const [sc, prof] = await Promise.all([
+    supabaseAdmin
+      .from('service_categories')
+      .select('primary_category, updated_at')
+      .eq('is_active', true),
+    supabaseAdmin
+      .from('categories')
+      .select('slug')
+      .eq('status', 'active'),
+  ]);
+  if (sc.error) throw sc.error;
+  if (prof.error) throw prof.error;
+  const activeProfessions = new Set((prof.data || []).map((r) => r.slug));
   const newest = new Map();
-  for (const r of data || []) {
+  for (const r of sc.data || []) {
+    if (!activeProfessions.has(r.primary_category)) continue;
     const prev = newest.get(r.primary_category);
     if (!prev || (r.updated_at && r.updated_at > prev)) newest.set(r.primary_category, r.updated_at);
   }

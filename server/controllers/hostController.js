@@ -12,7 +12,7 @@ const usernameService = require("../services/usernameService");
 const { bustSitemapCache } = require("../utils/sitemapCache");
 const planService = require('../services/planService');
 const { validateCategorySelection } = require('../lib/categoryRules');
-const { resolveAndValidateCategory } = require('../lib/serviceCategory');
+const { resolveAndValidateCategory, clearHostServiceCategories } = require('../lib/serviceCategory');
 const { canActivateMore, canAddFreeService } = require('../middleware/planMiddleware');
 const { isBackgroundKey } = require('../config/backgroundKeys');
 const cleanBackgroundKey = (v) => (isBackgroundKey(v) ? v : null);
@@ -461,23 +461,7 @@ const updateCategories = async (req, res) => {
 
     let services_cleared = 0;
     if ((before?.primary_category || null) !== (data.primary_category || null)) {
-      let clr = await supabaseAdmin
-        .from('services')
-        .update({ category: null, primary_category: null, updated_at: new Date().toISOString() })
-        .eq('host_id', req.user.id)
-        .not('category', 'is', null)
-        .select('id');
-      if (clr.error && /Could not find the|column .* does not exist/i.test(clr.error.message)) {
-        // pre-v3.60 schema: no primary_category column yet
-        clr = await supabaseAdmin
-          .from('services')
-          .update({ category: null, updated_at: new Date().toISOString() })
-          .eq('host_id', req.user.id)
-          .not('category', 'is', null)
-          .select('id');
-      }
-      if (clr.error) throw clr.error;
-      services_cleared = (clr.data || []).length;
+      services_cleared = await clearHostServiceCategories(supabaseAdmin, req.user.id);
       if (services_cleared > 0) bustPublicReadCaches(); // public service pages embed category_label
     }
     res.json({ ...data, services_cleared });

@@ -52,7 +52,7 @@ const CategoriesSection = ({ plan, onSaved }) => {
       const { data } = await hostUpdateCategories({ primary_category: primary, categories: selected });
       if (data?.services_cleared > 0) {
         toast.success(
-          `Profession updated. ${data.services_cleared} of your services need a new category -- edit them to pick one.`,
+          `Profession updated. ${data.services_cleared} of your services ${data.services_cleared === 1 ? 'needs' : 'need'} a new category. Edit them to pick one.`,
           { duration: 6000 }
         );
       } else {

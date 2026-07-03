@@ -177,10 +177,19 @@ headers on: service-categories list, services-directory payload. Sitemap via exi
 
 ## Rollout
 
-1. v3.60 on staging → verify → prod; re-run seed (gap-fill only).
-2. Deploy server.
-3. Deploy client.
-4. Update `docs/database-schema.md`, `docs/feature-map.md`, `docs/current-work.md`,
+(Corrected 2026-07-03: server deploys BEFORE the migration -- the order originally
+listed here was wrong. Old server code writes `category` without `primary_category`,
+so applying v3.60 first would make the new CHECK `chk_category_pair` 500 every
+categorised service write; 23514 is not matched by any legacy-retry regex.)
+
+1. Merge + deploy server (code is forward-compatible via 42703 fallbacks).
+2. v3.60 on staging Tokyo → verify → prod Mumbai. Run once per DB top-to-bottom;
+   the whole file is one transaction -- safe to retry a FAILED run from the top,
+   never re-run after COMMIT.
+3. Run `node server/scripts/seedServiceCategories.js` against each DB (gap-fill only).
+4. Deploy client (may also ride step 1 -- SEO pages/Explore degrade gracefully
+   pre-migration).
+5. Update `docs/database-schema.md`, `docs/feature-map.md`, `docs/current-work.md`,
    changelog.
 
 ## Scalability

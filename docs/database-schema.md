@@ -98,9 +98,12 @@ Profession-scoped service category catalog (v3.53). One row per (profession, slu
 | primary_category | TEXT | Profession slug this category belongs to |
 | slug | TEXT | Category slug (unique per profession) |
 | name | TEXT | Display label |
+| display_order | INTEGER | NOT NULL DEFAULT 0 -- sort position within the profession (v3.53) |
+| is_active | BOOLEAN | NOT NULL DEFAULT true -- inactive rows hidden from picker + public pages (v3.53) |
 | description | TEXT | v3.60, PENDING both DBs — SEO copy for `/services/:profession` |
 | icon | TEXT | v3.60, PENDING both DBs — icon key for `professionIcons.js` |
 | created_at | TIMESTAMPTZ | |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT now() (v3.53) |
 
 **Constraints (v3.60, PENDING both DBs):**
 - `fk_sc_primary FOREIGN KEY (primary_category) REFERENCES categories(slug) ON UPDATE CASCADE ON DELETE RESTRICT` — a category's profession must be a real, live profession.
