@@ -252,50 +252,9 @@ const RevenueTrendChart = () => {
   );
 };
 
-// ── Masked money ──────────────────────────────────────────────
-// Revenue figures are hidden by default behind stable, random-looking noise
-// (₹xxxx.xx shape preserved) and only revealed on hover or tap. Keeps sensitive
-// numbers off-screen during screen-shares / shoulder-surfing.
-const GARBLE_POOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#$%&@?';
-// Deterministic per (char, position) so the mask stays fixed across re-renders
-// and only alphanumerics are scrambled — ₹, commas and the decimal dot survive.
-const garble = (str) => {
-  let out = '';
-  for (let i = 0; i < str.length; i++) {
-    const c = str[i];
-    if (/[0-9A-Za-z]/.test(c)) {
-      const seed = (c.charCodeAt(0) * 31 + i * 17) % GARBLE_POOL.length;
-      out += GARBLE_POOL[seed];
-    } else {
-      out += c;
-    }
-  }
-  return out;
-};
-
-const MaskedMoney = ({ value, hex, mask = true }) => {
-  const [shown, setShown] = useState(false);
-  // Only mask real amounts — loading '…' / error '—' and non-money cards
-  // (counts, rates) show through untouched.
-  const isMoney = mask && typeof value === 'string' && /\d/.test(value);
-  const display = !isMoney || shown ? value : garble(value);
-  return (
-    <span
-      className="text-2xl font-bold tabular-nums cursor-pointer select-none"
-      style={{ color: hex }}
-      title={isMoney && !shown ? 'Hover or tap to reveal' : undefined}
-      onMouseEnter={() => setShown(true)}
-      onMouseLeave={() => setShown(false)}
-      onClick={() => setShown(s => !s)}
-    >
-      {display}
-    </span>
-  );
-};
-
 // ── Revenue stat card ─────────────────────────────────────────
 // Title on top; below, a SOLID hue-filled icon box (white glyph) beside the
-// hue-matched value. Value is hidden until hover/tap (see MaskedMoney).
+// hue-matched value. Static — no tooltip.
 const RevCard = ({ label, value, hex, icon = 'rupee', to }) => {
   const inner = (
     <>
@@ -305,7 +264,7 @@ const RevCard = ({ label, value, hex, icon = 'rupee', to }) => {
           style={{ background: hex }}>
           <Ic d={IC[icon] || IC.rupee} size={18} />
         </span>
-        <MaskedMoney value={value} hex={hex} mask={icon === 'rupee'} />
+        <span className="text-2xl font-bold tabular-nums" style={{ color: hex }}>{value}</span>
       </div>
     </>
   );
