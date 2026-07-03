@@ -44,10 +44,14 @@ const getSummary = async (req, res) => {
       countWhere('email_logs',      q => q.eq('status', 'failed')),
       countWhere('notification_logs', q => q.eq('status', 'failed')),
       countWhere('bookings',        q => q.eq('status', 'pending').eq('payment_status', 'unpaid').lt('created_at', oneHourAgo)),
-      // These columns arrive in later milestones (reviews.status M3, verification_status M3).
-      // The fallback to 0 keeps the dashboard alive until then.
-      countWhere('reviews',         q => q.eq('status', 'pending')),
-      countWhere('profiles',        q => q.eq('verification_status', 'pending')),
+      // "Reviews to moderate" = reviews an admin has flagged (v3.64 reviews.status).
+      // 'flagged' is the only actionable state; visible/hidden are resolved.
+      countWhere('reviews',         q => q.eq('status', 'flagged')),
+      // Pending hosts = unverified, non-banned hosts — the SAME definition the
+      // Pending Hosts list uses (AdminProviders STATUS_FILTER.pending → is_verified
+      // false + not banned). Previously counted a non-existent `verification_status`
+      // column, so the card was always 0 while the list showed real rows.
+      countWhere('profiles',        q => q.eq('role', 'host').eq('is_verified', false).eq('is_banned', false)),
       countWhere('profiles',        q => q.eq('role', 'guest')),
       countWhere('profiles',        q => q.eq('role', 'host')),
       countWhere('bookings',        null),
@@ -58,8 +62,8 @@ const getSummary = async (req, res) => {
       { key: 'pending_payouts',       label: 'Pending payouts',        count: pendingPayouts,       to: '/admin/finance/payouts?status=pending',     severity: pendingPayouts ? 'warning' : 'ok' },
       { key: 'failed_emails',         label: 'Failed emails',          count: failedEmails,         to: '/admin/platform/communication?tab=logs&status=failed', severity: failedEmails ? 'danger' : 'ok' },
       { key: 'failed_notifications',  label: 'Failed WhatsApp/notifs', count: failedNotifications,  to: '/admin/notifications?tab=logs&status=failed', severity: failedNotifications ? 'danger' : 'ok' },
-      { key: 'stale_unpaid_bookings', label: 'Abandoned bookings',     count: staleUnpaidBookings,  to: '/admin/bookings?status=pending',            severity: staleUnpaidBookings ? 'warning' : 'ok' },
-      { key: 'pending_reviews',       label: 'Reviews to moderate',    count: pendingReviews,       to: '/admin/support/reviews?status=pending',     severity: pendingReviews ? 'warning' : 'ok' },
+      { key: 'stale_unpaid_bookings', label: 'Abandoned bookings',     count: staleUnpaidBookings,  to: '/admin/bookings/abandoned',                 severity: staleUnpaidBookings ? 'warning' : 'ok' },
+      { key: 'pending_reviews',       label: 'Reviews to moderate',    count: pendingReviews,       to: '/admin/support/reviews?status=flagged',     severity: pendingReviews ? 'warning' : 'ok' },
       { key: 'pending_verifications', label: 'Pending verifications',  count: pendingVerifications, to: '/admin/providers/pending',       severity: pendingVerifications ? 'warning' : 'ok' },
     ];
 

@@ -31,6 +31,7 @@ const chain = (resolved) => ({
   insert:      jest.fn().mockReturnThis(),
   update:      jest.fn().mockReturnThis(),
   eq:          jest.fn().mockReturnThis(),
+  neq:         jest.fn().mockReturnThis(),
   order:       jest.fn().mockReturnThis(),
   single:      jest.fn().mockResolvedValue(resolved),
   maybeSingle: jest.fn().mockResolvedValue(resolved),
@@ -130,6 +131,7 @@ describe('GET /api/reviews/received', () => {
     const stub = {
       select: jest.fn().mockReturnThis(),
       eq:     eqMock,
+      neq:    jest.fn().mockReturnThis(),
       limit:  jest.fn().mockReturnThis(),
       order:  jest.fn().mockResolvedValue({ data: rows, error: null }),
     };

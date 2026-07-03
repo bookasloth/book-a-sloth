@@ -135,7 +135,8 @@ const getReceivedReviews = async (req, res) => {
     let q = supabaseAdmin
       .from("reviews")
       .select("id, rating, comment, created_at, direction, profiles!reviews_reviewer_id_fkey(name, profile_image), bookings(services(title))")
-      .eq("subject_id", req.user.id);
+      .eq("subject_id", req.user.id)
+      .neq("status", "hidden");   // admin-hidden reviews are excluded from public reads
     const dir = req.query.direction;
     if (dir === "guest_to_host" || dir === "host_to_guest") q = q.eq("direction", dir);
     const { data: reviews, error } = await q
@@ -171,6 +172,7 @@ const getHostReviews = async (req, res) => {
       .select("id, rating, comment, created_at, profiles!reviews_reviewer_id_fkey(name, profile_image)")
       .eq("host_id", host.id)
       .eq("direction", "guest_to_host")
+      .neq("status", "hidden")   // admin-hidden reviews are excluded from public reads
       .limit(REVIEW_LIST_MAX)
       .order("created_at", { ascending: false });
 

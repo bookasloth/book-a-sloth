@@ -236,7 +236,7 @@ describe('getPublicServiceBySlug', () => {
         select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), single: jest.fn().mockResolvedValue({ data: { id: 'vendor-uuid', name: 'Jane' }, error: null }),
       })
       .mockReturnValue({ // service count + availability + reviews
-        select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), neq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({ data: null, error: null }),
         order:  jest.fn().mockReturnThis(), limit: jest.fn().mockResolvedValue({ data: [], error: null }),
         count:  0,

@@ -73,4 +73,74 @@ async function computeSettlementBalance(hostId, clearingDays, nowMs = Date.now()
   };
 }
 
-module.exports = { computeSettlementBalance };
+/**
+ * Batch variant of computeSettlementBalance — computes every host's settlement
+ * breakdown in two queries (all bookings + all payout_requests) instead of
+ * 2 queries per host. Used by the admin Payouts → Clearing view for platform-wide
+ * fund visibility. Same maturation rules as computeSettlementBalance.
+ *
+ * @param {number} clearingDays
+ * @param {number} [nowMs]
+ * @returns {Promise<Map<string, {available:number, clearing:number,
+ *   pendingCompletion:number, inflight:number, paidOut:number, lifetimeEarned:number}>>}
+ *   keyed by host_id. Only hosts that appear in bookings or payouts are present.
+ */
+async function computeAllSettlementBalances(clearingDays, nowMs = Date.now()) {
+  const cutoff = nowMs - (Number(clearingDays) || 0) * 86400000;
+
+  const { data: bookings, error: bErr } = await supabaseAdmin
+    .from('bookings')
+    .select('host_id, vendor_amount, settlement_status, completed_at, payment_status')
+    .not('host_id', 'is', null);
+  if (bErr) throw new Error(`settlementService: bookings query failed: ${bErr.message}`);
+
+  const { data: payouts, error: pErr } = await supabaseAdmin
+    .from('payout_requests')
+    .select('host_id, amount, status')
+    .not('host_id', 'is', null);
+  if (pErr) throw new Error(`settlementService: payout_requests query failed: ${pErr.message}`);
+
+  // matured / clearing / pendingCompletion per host (mirrors single-host logic).
+  const acc = new Map(); // host_id -> { matured, clearing, pendingCompletion, claimed, inflight, paidOut }
+  const bucket = (id) => {
+    let b = acc.get(id);
+    if (!b) { b = { matured: 0, clearing: 0, pendingCompletion: 0, claimed: 0, inflight: 0, paidOut: 0 }; acc.set(id, b); }
+    return b;
+  };
+
+  for (const bk of bookings || []) {
+    const b = bucket(bk.host_id);
+    const amt = Math.max(0, Number(bk.vendor_amount) || 0);
+    const ss = bk.settlement_status;
+    if (ss === 'cancelled' || ss === 'not_eligible') continue;
+    if (ss === 'eligible_for_settlement') {
+      const completedMs = bk.completed_at ? new Date(bk.completed_at).getTime() : NaN;
+      if (Number.isFinite(completedMs) && completedMs <= cutoff) b.matured += amt;
+      else b.clearing += amt;
+    } else if (bk.payment_status === 'paid' && ss === 'pending_completion') {
+      b.pendingCompletion += amt;
+    }
+  }
+
+  for (const p of payouts || []) {
+    const b = bucket(p.host_id);
+    const amt = Number(p.amount) || 0;
+    if (p.status === 'paid') { b.claimed += amt; b.paidOut += amt; }
+    else if (p.status === 'approved' || p.status === 'pending') { b.claimed += amt; b.inflight += amt; }
+  }
+
+  const out = new Map();
+  for (const [id, b] of acc) {
+    out.set(id, {
+      available: round2(Math.max(0, b.matured - b.claimed)),
+      clearing: round2(b.clearing),
+      pendingCompletion: round2(b.pendingCompletion),
+      inflight: round2(b.inflight),
+      paidOut: round2(b.paidOut),
+      lifetimeEarned: round2(b.matured + b.clearing + b.pendingCompletion),
+    });
+  }
+  return out;
+}
+
+module.exports = { computeSettlementBalance, computeAllSettlementBalances };

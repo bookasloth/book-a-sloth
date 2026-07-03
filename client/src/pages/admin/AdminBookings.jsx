@@ -114,7 +114,21 @@ const TABS = [
   { key: 'completed', label: 'Completed', to: '/admin/bookings/completed' },
   { key: 'cancelled', label: 'Cancelled', to: '/admin/bookings/cancelled' },
   { key: 'disputed',  label: 'Disputed',  to: '/admin/bookings/disputed' },
+  // Abandoned is NOT a booking.status — it's a derived state (see isAbandoned).
+  // Guest started a booking, never paid, and left it stale. The ops dashboard
+  // "Abandoned bookings" card links here.
+  { key: 'abandoned', label: 'Abandoned', to: '/admin/bookings/abandoned' },
 ];
+
+// Abandoned = pending + unpaid + older than the 1h grace window. Mirrors the
+// ops-summary count (opsAdminController: status=pending, payment_status=unpaid,
+// created_at < 1h ago) so the dashboard card and this tab agree.
+const ABANDON_GRACE_MS = 60 * 60 * 1000;
+const isAbandoned = (b) => b
+  && b.status === 'pending'
+  && b.payment_status === 'unpaid'
+  && b.created_at != null
+  && (Date.now() - new Date(b.created_at).getTime()) >= ABANDON_GRACE_MS;
 
 // ── Formatting helpers ────────────────────────────────────────────
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -1124,15 +1138,20 @@ const AdminBookings = () => {
   }, [withStatus, query]);
 
   // Tab filter by booking.status (Disputed has no backend source → empty).
+  // Abandoned is derived (pending + unpaid + stale), not a status key.
   const filtered = useMemo(() => {
     if (tab === 'all') return searched;
+    if (tab === 'abandoned') return searched.filter(({ b }) => isAbandoned(b));
     return searched.filter(({ status }) => status === tab);
   }, [searched, tab]);
 
   // Tab counts (over the searched set so counts respect active search).
   const counts = useMemo(() => {
-    const c = { all: searched.length, confirmed: 0, completed: 0, cancelled: 0, disputed: 0 };
-    searched.forEach(({ status }) => { if (c[status] != null) c[status] += 1; });
+    const c = { all: searched.length, confirmed: 0, completed: 0, cancelled: 0, disputed: 0, abandoned: 0 };
+    searched.forEach(({ b, status }) => {
+      if (c[status] != null) c[status] += 1;
+      if (isAbandoned(b)) c.abandoned += 1;
+    });
     return c;
   }, [searched]);
 

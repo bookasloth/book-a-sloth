@@ -444,6 +444,7 @@ const buildPublicServiceBySlug = async (slug) => {
     .select('id,rating,comment,created_at,profiles!reviews_reviewer_id_fkey(name,profile_image)')
     .eq('service_id', svc.id)
     .eq('direction', 'guest_to_host')
+    .neq('status', 'hidden')   // admin-hidden reviews are excluded from public reads
     .order('created_at', { ascending: false })
     .limit(20);
 
@@ -519,7 +520,7 @@ const buildPublicServiceByProfileAndSlug = async (profileSlug, serviceSlug) => {
   ] = await Promise.all([
     supabaseAdmin.from('services').select('id', { count: 'exact', head: true }).eq('host_id', vendor.id).eq('is_active', true),
     supabaseAdmin.from('availability').select('*').eq('host_id', vendor.id).single(),
-    supabaseAdmin.from('reviews').select('id,rating,comment,created_at,profiles!reviews_reviewer_id_fkey(name,profile_image)').eq('service_id', svc.id).eq('direction', 'guest_to_host').order('created_at', { ascending: false }).limit(20),
+    supabaseAdmin.from('reviews').select('id,rating,comment,created_at,profiles!reviews_reviewer_id_fkey(name,profile_image)').eq('service_id', svc.id).eq('direction', 'guest_to_host').neq('status', 'hidden').order('created_at', { ascending: false }).limit(20),
   ]);
 
   const reviewList = reviews || [];
