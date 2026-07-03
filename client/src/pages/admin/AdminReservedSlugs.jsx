@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Trash2, Plus, Search, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
+import Ic from '../../components/admin/Ic';
+import { IC } from '../../components/admin/adminNav';
 import {
   getReservedSlugs, createReservedSlug, releaseReservedSlug, checkReservedSlug,
 } from '../../services/api';
@@ -119,7 +120,7 @@ const AdminReservedSlugs = () => {
 
       {migrationPending && (
         <div className="mb-5 flex items-start gap-2 border border-amber-200 bg-amber-50 rounded px-4 py-3 text-sm text-amber-800">
-          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+          <Ic d={IC.alert} size={16} className="mt-0.5 shrink-0" />
           <span>Run migration <code className="font-mono">v3.33_reserved_slugs.sql</code> to enable reservations.</span>
         </div>
       )}
@@ -132,7 +133,7 @@ const AdminReservedSlugs = () => {
             value={checkSlug} onChange={(e) => { setCheckSlug(e.target.value); setCheckResult(null); }} />
           <button type="submit" disabled={checking || !checkSlug.trim()}
             className="btn flex items-center gap-1.5 bg-primary text-white px-4 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 shrink-0">
-            <Search className="w-4 h-4" strokeWidth={2.5} /> {checking ? 'Checking…' : 'Check'}
+            <Ic d={IC.search} size={16} strokeWidth={2.5} /> {checking ? 'Checking…' : 'Check'}
           </button>
         </form>
         {checkResult && (
@@ -196,7 +197,7 @@ const AdminReservedSlugs = () => {
           </div>
           <button type="submit" disabled={creating}
             className="btn flex items-center gap-1.5 bg-primary text-white px-4 text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
-            <Plus className="w-4 h-4" strokeWidth={3} /> {creating ? 'Reserving…' : 'Reserve slug'}
+            <Ic d={IC.plus} size={16} strokeWidth={3} /> {creating ? 'Reserving…' : 'Reserve slug'}
           </button>
         </form>
       </div>
@@ -235,7 +236,7 @@ const AdminReservedSlugs = () => {
                   <td className="px-3 py-2.5 text-right">
                     <button onClick={() => release(r)} title="Release reservation"
                       className="text-gray-400 hover:text-red-600 p-1">
-                      <Trash2 className="w-4 h-4" />
+                      <Ic d={IC.trash} size={16} />
                     </button>
                   </td>
                 </tr>
@@ -253,7 +254,7 @@ const AdminReservedSlugs = () => {
         <button onClick={() => setShowSystem((v) => !v)}
           className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-gray-50 text-left">
           <span className="text-sm font-bold text-gray-700">System (code) reservations</span>
-          {showSystem ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
+          {showSystem ? <Ic d={IC.chevD} size={16} className="text-gray-500" /> : <Ic d={IC.chevR} size={16} className="text-gray-500" />}
         </button>
         {showSystem && (
           <div className="p-4">

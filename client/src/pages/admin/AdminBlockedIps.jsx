@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Ban, Plus, Trash2, ShieldCheck, Clock } from 'lucide-react';
+import Ic from '../../components/admin/Ic';
+import { IC } from '../../components/admin/adminNav';
 import {
   adminGetBlockedIps, adminCreateBlockedIp, adminDeleteBlockedIp,
   adminGetAllowlist, adminCreateAllowlistIp, adminDeleteAllowlistIp,
@@ -110,7 +111,7 @@ const AdminBlockedIps = () => {
   return (
     <div className="max-w-5xl">
       <h1 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-        <Ban className="w-5 h-5 text-red-600" /> Blocked IPs
+        <Ic d={IC.ban} size={20} className="text-red-600" /> Blocked IPs
       </h1>
       <p className="text-sm text-gray-500 mb-6">
         IPs are auto-banned for repeated rate-limit violations, attack patterns, and admin-login brute-force.
@@ -131,7 +132,7 @@ const AdminBlockedIps = () => {
         </label>
         <button onClick={block} disabled={blocking}
           className="btn flex items-center gap-1.5 bg-red-600 text-white px-4 text-sm font-medium hover:bg-red-700 disabled:opacity-50 shrink-0">
-          <Ban className="w-4 h-4" strokeWidth={2.5} /> Block
+          <Ic d={IC.ban} size={16} strokeWidth={2.5} /> Block
         </button>
       </div>
 
@@ -163,7 +164,7 @@ const AdminBlockedIps = () => {
                       <td className="px-3 py-2.5 text-gray-600 max-w-[220px] truncate" title={row.reason || ''}>{row.reason || '—'}</td>
                       <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1">
-                          {!row.expires_at && <Clock className="w-3 h-3 text-gray-400" />}
+                          {!row.expires_at && <Ic d={IC.clock} size={12} className="text-gray-400" />}
                           {timeLeft(row.expires_at)}
                         </span>
                       </td>
@@ -173,7 +174,7 @@ const AdminBlockedIps = () => {
                       <td className="px-3 py-2.5 text-right">
                         <button onClick={() => unblock(row)} title="Unblock"
                           className="text-gray-400 hover:text-red-600 p-1">
-                          <Trash2 className="w-4 h-4" />
+                          <Ic d={IC.trash} size={16} />
                         </button>
                       </td>
                     </tr>
@@ -188,7 +189,7 @@ const AdminBlockedIps = () => {
 
           {/* ── Allowlist ─────────────────────────────────────────── */}
           <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-green-600" /> Allowlist
+            <Ic d={IC.shieldOk} size={20} className="text-green-600" /> Allowlist
           </h2>
           <p className="text-sm text-gray-500 mb-4">
             These IPs are <strong>never</strong> blocked or auto-banned. Add the founder/office IP and any uptime monitors here.
@@ -202,7 +203,7 @@ const AdminBlockedIps = () => {
               value={allowNote} onChange={(e) => setAllowNote(e.target.value)} />
             <button onClick={allow} disabled={allowing}
               className="btn flex items-center gap-1.5 bg-green-600 text-white px-4 text-sm font-medium hover:bg-green-700 disabled:opacity-50 shrink-0">
-              <Plus className="w-4 h-4" strokeWidth={3} /> Allow
+              <Ic d={IC.plus} size={16} strokeWidth={3} /> Allow
             </button>
           </div>
 
@@ -227,7 +228,7 @@ const AdminBlockedIps = () => {
                     <td className="px-3 py-2.5 text-right">
                       <button onClick={() => unallow(row)} title="Remove"
                         className="text-gray-400 hover:text-red-600 p-1">
-                        <Trash2 className="w-4 h-4" />
+                        <Ic d={IC.trash} size={16} />
                       </button>
                     </td>
                   </tr>
