@@ -9,6 +9,11 @@ import { Component } from 'react';
  * one-shot reload, so anything that reaches this boundary is either a genuine
  * runtime error in the page, or a chunk that stayed broken even after a reload.
  * Either way we show a manual recovery path rather than dying silently.
+ *
+ * Pass a `resetKey` (e.g. the current pathname) so the boundary clears its error
+ * state when the user navigates away. Without it, one transient error would
+ * "stick" and show the recovery card on every route for the rest of the SPA
+ * session until a full browser reload.
  */
 class RouteErrorBoundary extends Component {
   constructor(props) {
@@ -24,6 +29,14 @@ class RouteErrorBoundary extends Component {
     // Surface for PostHog/console; keep it cheap and non-throwing.
     // eslint-disable-next-line no-console
     console.error('[RouteErrorBoundary]', error, info?.componentStack);
+  }
+
+  componentDidUpdate(prevProps) {
+    // Route changed while showing the error card → give the new route a clean
+    // shot at rendering instead of staying stuck on the recovery screen.
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false });
+    }
   }
 
   handleReload = () => {
