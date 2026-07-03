@@ -5,11 +5,12 @@ import {
   adminBadgeStatus, adminPreviewRules, adminRunBadgeEval,
   adminVendorBadges, adminAssignBadge, adminRevokeBadge, adminGetUsers, adminUploadImage,
 } from '../../services/api';
+import { PageHeader, Card, Btn, Badge } from '../../components/admin/ui';
 
-const STATUS_PILL = {
-  draft:    'bg-gray-100 text-gray-600',
-  active:   'bg-emerald-50 text-emerald-600',
-  archived: 'bg-amber-50 text-amber-600',
+const STATUS_TONE = {
+  draft: 'neutral',
+  active: 'ok',
+  archived: 'warn',
 };
 
 const EMPTY_FORM = {
@@ -167,17 +168,11 @@ const AdminBadges = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Badges</h1>
-          <p className="text-[12px] text-gray-400 mt-0.5">Rules-driven host credentialing — all badge logic lives in the database</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => adminRunBadgeEval().then((r) => toast.success(`Evaluated: +${r.data.awarded} awarded, -${r.data.revoked} revoked`)).catch(() => toast.error('Evaluation failed'))}
-            className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Run Engine Now</button>
-          <button onClick={openCreate} className="btn bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800">+ New Badge</button>
-        </div>
-      </div>
+      <PageHeader title="Badges" subtitle="Rules-driven host credentialing — all badge logic lives in the database"
+        actions={<>
+          <Btn variant="outline" size="sm" onClick={() => adminRunBadgeEval().then((r) => toast.success(`Evaluated: +${r.data.awarded} awarded, -${r.data.revoked} revoked`)).catch(() => toast.error('Evaluation failed'))}>Run Engine Now</Btn>
+          <Btn size="sm" onClick={openCreate}>+ New Badge</Btn>
+        </>} />
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 mb-4">
@@ -192,12 +187,12 @@ const AdminBadges = () => {
       </div>
 
       {/* Badge list */}
-      <div className="bg-white border rounded-xl overflow-hidden mb-8">
-        {loading ? <p className="text-center text-sm text-gray-400 py-8">Loading…</p> : (
+      <div className="adm-card rounded-xl overflow-hidden mb-8">
+        {loading ? <p className="text-center text-sm adm-t3 py-8">Loading…</p> : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="adm-table w-full text-sm">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wider text-gray-400 border-b">
+                <tr className="text-left text-[11px] uppercase tracking-wider adm-t3 border-b adm-border">
                   <th className="px-4 py-2.5">Badge</th><th className="px-4 py-2.5">Category</th>
                   <th className="px-4 py-2.5">Type</th><th className="px-4 py-2.5">Status</th>
                   <th className="px-4 py-2.5">Earned</th><th className="px-4 py-2.5">Flags</th><th className="px-4 py-2.5">Actions</th>
@@ -205,19 +200,19 @@ const AdminBadges = () => {
               </thead>
               <tbody>
                 {badges.map((b) => (
-                  <tr key={b.id} className="border-b last:border-0 hover:bg-gray-50/60">
+                  <tr key={b.id} className="border-b adm-border last:border-0 adm-hoverable">
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-2.5">
                         {b.image_url
-                          ? <img src={b.image_url} alt={b.name} className="w-8 h-8 rounded object-cover border" />
-                          : <div className="w-8 h-8 rounded bg-gradient-to-br from-orange-100 to-amber-100 border flex items-center justify-center text-xs font-bold text-orange-500">{b.name[0]}</div>}
-                        <span className="font-medium text-gray-800">{b.name}</span>
+                          ? <img src={b.image_url} alt={b.name} className="w-8 h-8 rounded object-cover border adm-border" />
+                          : <div className="w-8 h-8 rounded bg-gradient-to-br from-orange-100 to-amber-100 border adm-border flex items-center justify-center text-xs font-bold text-orange-500">{b.name[0]}</div>}
+                        <span className="font-medium adm-t1">{b.name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-2.5 text-xs text-gray-500">{b.badge_categories?.name || '—'}</td>
-                    <td className="px-4 py-2.5 text-xs capitalize">{b.badge_type}</td>
-                    <td className="px-4 py-2.5"><span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold capitalize ${STATUS_PILL[b.status]}`}>{b.status}</span></td>
-                    <td className="px-4 py-2.5 text-xs font-semibold">{b.earned_count}</td>
+                    <td className="px-4 py-2.5 text-xs adm-t2">{b.badge_categories?.name || '—'}</td>
+                    <td className="px-4 py-2.5 text-xs capitalize adm-t2">{b.badge_type}</td>
+                    <td className="px-4 py-2.5"><Badge tone={STATUS_TONE[b.status]}><span className="capitalize">{b.status}</span></Badge></td>
+                    <td className="px-4 py-2.5 text-xs font-semibold adm-t1">{b.earned_count}</td>
                     <td className="px-4 py-2.5 text-[10px] space-x-1">
                       {b.is_bas_team && <span className="px-1.5 py-0.5 rounded bg-orange-50 text-orange-600 font-bold">BAS</span>}
                       {b.is_negative && <span className="px-1.5 py-0.5 rounded bg-red-50 text-red-600 font-bold">NEG</span>}
@@ -229,7 +224,7 @@ const AdminBadges = () => {
                     </td>
                   </tr>
                 ))}
-                {badges.length === 0 && <tr><td colSpan="7" className="text-center text-sm text-gray-400 py-8">No badges match.</td></tr>}
+                {badges.length === 0 && <tr><td colSpan="7" className="text-center text-sm adm-t3 py-8">No badges match.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -237,19 +232,19 @@ const AdminBadges = () => {
       </div>
 
       {/* Vendor badge management */}
-      <div className="bg-white border rounded-xl p-5 max-w-3xl">
-        <h2 className="text-sm font-bold text-gray-900 mb-1">Host Badges</h2>
-        <p className="text-xs text-gray-400 mb-3">Search a host to view earned badges and manage manual assignments (reason required, full audit trail).</p>
+      <Card className="max-w-3xl">
+        <h2 className="text-sm font-bold adm-t1 mb-1">Host Badges</h2>
+        <p className="text-xs adm-t3 mb-3">Search a host to view earned badges and manage manual assignments (reason required, full audit trail).</p>
         <div className="flex gap-2 mb-3">
           <input className="fb-input text-sm flex-1" placeholder="Search host by name/email…" value={vendorQuery}
             onChange={(e) => setVendorQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchVendors()} />
-          <button onClick={searchVendors} className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Search</button>
+          <Btn variant="outline" size="sm" onClick={searchVendors}>Search</Btn>
         </div>
         {vendorResults.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {vendorResults.map((v) => (
               <button key={v.id} onClick={() => openVendor(v)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${vendorPanel?.vendor?.id === v.id ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border adm-border ${vendorPanel?.vendor?.id === v.id ? 'bg-gray-900 text-white' : 'adm-t2 adm-hoverable'}`}>
                 {v.name} <span className="opacity-60">({v.email})</span>
               </button>
             ))}
@@ -257,15 +252,15 @@ const AdminBadges = () => {
         )}
 
         {vendorPanel && (
-          <div className="border-t pt-4">
-            <p className="text-sm font-semibold text-gray-800 mb-2">{vendorPanel.vendor.name} — badge history</p>
+          <div className="border-t adm-border pt-4">
+            <p className="text-sm font-semibold adm-t1 mb-2">{vendorPanel.vendor.name} — badge history</p>
             <div className="space-y-1.5 mb-4">
-              {vendorPanel.awards.length === 0 && <p className="text-xs text-gray-400">No badges yet.</p>}
+              {vendorPanel.awards.length === 0 && <p className="text-xs adm-t3">No badges yet.</p>}
               {vendorPanel.awards.map((a) => (
-                <div key={a.id} className={`flex items-center justify-between text-xs px-3 py-2 rounded-lg ${a.revoked_at ? 'bg-gray-50 text-gray-400' : 'bg-emerald-50/50'}`}>
+                <div key={a.id} className={`flex items-center justify-between text-xs px-3 py-2 rounded-lg ${a.revoked_at ? 'bg-[var(--adm-hover)] adm-t3' : 'bg-emerald-50/50'}`}>
                   <div>
-                    <span className="font-semibold">{a.badges?.name}</span>
-                    <span className="ml-2 text-gray-400">
+                    <span className="font-semibold adm-t1">{a.badges?.name}</span>
+                    <span className="ml-2 adm-t3">
                       {a.assigned_by ? 'manual' : 'engine'} · {new Date(a.assigned_at).toLocaleDateString('en-IN')}
                       {a.reason && ` · "${a.reason}"`}
                       {a.revoked_at && ` · REVOKED ${new Date(a.revoked_at).toLocaleDateString('en-IN')}${a.revocation_reason ? ` ("${a.revocation_reason}")` : ''}`}
@@ -279,28 +274,28 @@ const AdminBadges = () => {
             </div>
             <div className="flex flex-wrap gap-2 items-end">
               <div className="flex-1 min-w-[180px]">
-                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Assign manual badge</label>
+                <label className="block text-[11px] font-semibold adm-t3 mb-1">Assign manual badge</label>
                 <select className="fb-input text-sm" value={assignForm.badge_id} onChange={(e) => setAssignForm((f) => ({ ...f, badge_id: e.target.value }))}>
                   <option value="">Select badge…</option>
                   {manualBadges.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </div>
               <div className="flex-[2] min-w-[220px]">
-                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Reason (required)</label>
+                <label className="block text-[11px] font-semibold adm-t3 mb-1">Reason (required)</label>
                 <input className="fb-input text-sm" value={assignForm.reason} onChange={(e) => setAssignForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Why is this badge being assigned?" />
               </div>
-              <button onClick={assign} className="btn bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800">Assign</button>
+              <Btn size="sm" onClick={assign}>Assign</Btn>
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Create / Edit wizard */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center overflow-y-auto py-10" onClick={() => setShowForm(false)}>
-          <div className="bg-white rounded-2xl w-full max-w-xl p-6 mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="adm-card rounded-2xl w-full max-w-xl p-6 mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">{editingId ? 'Edit Badge' : 'New Badge'}</h2>
+              <h2 className="text-lg font-bold adm-t1">{editingId ? 'Edit Badge' : 'New Badge'}</h2>
               <div className="flex gap-1">
                 {[1, 2, 3, 4].map((s) => (
                   <span key={s} className={`w-6 h-1.5 rounded-full ${step >= s ? 'bg-[#FE5100]' : 'bg-gray-200'}`} />
@@ -310,18 +305,18 @@ const AdminBadges = () => {
 
             {step === 1 && (
               <div className="space-y-3">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Step 1 — Basic information</p>
-                <div><label className="block text-sm font-medium mb-1">Name</label>
+                <p className="text-xs font-bold adm-t3 uppercase tracking-wider">Step 1 — Basic information</p>
+                <div><label className="block text-sm font-medium adm-t1 mb-1">Name</label>
                   <input className="fb-input" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} /></div>
-                <div><label className="block text-sm font-medium mb-1">Description</label>
+                <div><label className="block text-sm font-medium adm-t1 mb-1">Description</label>
                   <textarea className="fb-input" rows="2" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} /></div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Badge image</label>
+                  <label className="block text-sm font-medium adm-t1 mb-1">Badge image</label>
                   <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <div className="w-16 h-16 rounded-xl border adm-border bg-[var(--adm-hover)] flex items-center justify-center overflow-hidden flex-shrink-0">
                       {form.image_url
                         ? <img src={form.image_url} alt="badge" className="w-full h-full object-cover" />
-                        : <span className="text-[10px] text-gray-300 text-center px-1">No image</span>}
+                        : <span className="text-[10px] adm-t3 text-center px-1">No image</span>}
                     </div>
                     <div className="flex-1">
                       <label className={`fb-btn fb-btn--secondary text-sm cursor-pointer inline-block ${uploadingImg ? 'opacity-60 pointer-events-none' : ''}`}>
@@ -333,31 +328,31 @@ const AdminBadges = () => {
                         <button type="button" onClick={() => setForm((f) => ({ ...f, image_url: '' }))}
                           className="ml-2 text-[12px] text-red-500 hover:underline">Remove</button>
                       )}
-                      <p className="text-[11px] text-gray-400 mt-1">PNG, JPG or WEBP, up to 2MB.</p>
+                      <p className="text-[11px] adm-t3 mt-1">PNG, JPG or WEBP, up to 2MB.</p>
                     </div>
                   </div>
                 </div>
-                <div><label className="block text-sm font-medium mb-1">Category</label>
+                <div><label className="block text-sm font-medium adm-t1 mb-1">Category</label>
                   <select className="fb-input" value={form.category_id} onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))}>
                     <option value="">No category</option>
                     {meta.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select></div>
                 <div className="flex gap-5 pt-1">
-                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.is_bas_team} onChange={(e) => setForm((f) => ({ ...f, is_bas_team: e.target.checked }))} /> BAS Team badge</label>
-                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.is_negative} onChange={(e) => setForm((f) => ({ ...f, is_negative: e.target.checked }))} /> Negative (admin-only)</label>
+                  <label className="flex items-center gap-2 text-sm adm-t2"><input type="checkbox" checked={form.is_bas_team} onChange={(e) => setForm((f) => ({ ...f, is_bas_team: e.target.checked }))} /> BAS Team badge</label>
+                  <label className="flex items-center gap-2 text-sm adm-t2"><input type="checkbox" checked={form.is_negative} onChange={(e) => setForm((f) => ({ ...f, is_negative: e.target.checked }))} /> Negative (admin-only)</label>
                 </div>
               </div>
             )}
 
             {step === 2 && (
               <div className="space-y-3">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Step 2 — Badge type</p>
+                <p className="text-xs font-bold adm-t3 uppercase tracking-wider">Step 2 — Badge type</p>
                 {['automatic', 'manual'].map((t) => (
-                  <label key={t} className={`flex items-start gap-3 border rounded-xl p-3 cursor-pointer ${form.badge_type === t ? 'border-[#FE5100] bg-orange-50/40' : ''}`}>
+                  <label key={t} className={`flex items-start gap-3 border adm-border rounded-xl p-3 cursor-pointer ${form.badge_type === t ? 'border-[#FE5100] bg-orange-50/40' : ''}`}>
                     <input type="radio" checked={form.badge_type === t} onChange={() => setForm((f) => ({ ...f, badge_type: t }))} className="mt-1" />
                     <span>
-                      <span className="block text-sm font-semibold capitalize">{t}</span>
-                      <span className="block text-xs text-gray-400">
+                      <span className="block text-sm font-semibold capitalize adm-t1">{t}</span>
+                      <span className="block text-xs adm-t3">
                         {t === 'automatic' ? 'Awarded by the engine when rules are satisfied. Re-evaluated on schedule and events.' : 'Assigned by admins from a vendor profile, with a documented reason.'}
                       </span>
                     </span>
@@ -369,12 +364,12 @@ const AdminBadges = () => {
             {step === 3 && form.badge_type === 'automatic' && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Step 3 — Rules</p>
+                  <p className="text-xs font-bold adm-t3 uppercase tracking-wider">Step 3 — Rules</p>
                   <div className="flex items-center gap-1 text-xs">
-                    <span className="text-gray-400">Combine with</span>
+                    <span className="adm-t3">Combine with</span>
                     {['AND', 'OR'].map((l) => (
                       <button key={l} onClick={() => setForm((f) => ({ ...f, rule_logic: l }))}
-                        className={`px-2 py-1 rounded font-bold ${form.rule_logic === l ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500'}`}>{l}</button>
+                        className={`px-2 py-1 rounded font-bold ${form.rule_logic === l ? 'bg-gray-900 text-white' : 'adm-chip adm-t3'}`}>{l}</button>
                     ))}
                   </div>
                 </div>
@@ -397,7 +392,7 @@ const AdminBadges = () => {
                 <div className="flex items-center gap-3">
                   <button onClick={() => setForm((f) => ({ ...f, rules: [...f.rules, { field: meta.fields[0] || 'completed_bookings', operator: '>=', value: '', group_id: 0 }] }))}
                     className="text-xs font-semibold text-indigo-600 hover:underline">+ Add rule</button>
-                  <button onClick={runPreview} className="btn btn--outline text-xs font-semibold text-gray-600 px-3 py-1.5 hover:bg-gray-50">Preview eligible hosts</button>
+                  <Btn variant="outline" size="sm" onClick={runPreview}>Preview eligible hosts</Btn>
                   {preview !== null && <span className="text-xs font-bold text-emerald-600">{preview} host(s) would earn this badge now</span>}
                 </div>
               </div>
@@ -405,13 +400,13 @@ const AdminBadges = () => {
 
             {step === 4 && (
               <div className="space-y-3">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Step 4 — Publish</p>
+                <p className="text-xs font-bold adm-t3 uppercase tracking-wider">Step 4 — Publish</p>
                 {['draft', 'active', 'archived'].map((s) => (
-                  <label key={s} className={`flex items-start gap-3 border rounded-xl p-3 cursor-pointer ${form.status === s ? 'border-[#FE5100] bg-orange-50/40' : ''}`}>
+                  <label key={s} className={`flex items-start gap-3 border adm-border rounded-xl p-3 cursor-pointer ${form.status === s ? 'border-[#FE5100] bg-orange-50/40' : ''}`}>
                     <input type="radio" checked={form.status === s} onChange={() => setForm((f) => ({ ...f, status: s }))} className="mt-1" />
                     <span>
-                      <span className="block text-sm font-semibold capitalize">{s}</span>
-                      <span className="block text-xs text-gray-400">
+                      <span className="block text-sm font-semibold capitalize adm-t1">{s}</span>
+                      <span className="block text-xs adm-t3">
                         {s === 'draft' ? 'Saved, not evaluated.' : s === 'active' ? 'Evaluated immediately and on every engine run.' : 'Preserved, no new awards.'}
                       </span>
                     </span>
@@ -420,21 +415,19 @@ const AdminBadges = () => {
               </div>
             )}
 
-            <div className="flex justify-between mt-6 pt-4 border-t">
-              <button onClick={() => step > 1 ? setStep(step === 4 && form.badge_type === 'manual' ? 2 : step - 1) : setShowForm(false)}
-                className="btn btn--outline px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+            <div className="flex justify-between mt-6 pt-4 border-t adm-border">
+              <Btn variant="outline" size="sm" onClick={() => step > 1 ? setStep(step === 4 && form.badge_type === 'manual' ? 2 : step - 1) : setShowForm(false)}>
                 {step === 1 ? 'Cancel' : 'Back'}
-              </button>
+              </Btn>
               {step < 4 ? (
-                <button onClick={() => {
+                <Btn size="sm" onClick={() => {
                   if (step === 1 && !form.name.trim()) return toast.error('Name is required');
                   setStep(step === 2 && form.badge_type === 'manual' ? 4 : step + 1);
-                }} className="btn bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800">Next</button>
+                }}>Next</Btn>
               ) : (
-                <button onClick={save} disabled={saving}
-                  className="btn bg-[#FE5100] text-white px-5 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50">
+                <Btn size="sm" onClick={save} disabled={saving}>
                   {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Create Badge'}
-                </button>
+                </Btn>
               )}
             </div>
           </div>

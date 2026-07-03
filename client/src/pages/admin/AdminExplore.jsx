@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import Ic from '../../components/admin/Ic';
 import { IC } from '../../components/admin/adminNav';
-import { Btn } from '../../components/admin/ui';
+import { Btn, PageHeader } from '../../components/admin/ui';
 import {
   adminGetExploreFeatured, adminCreateExploreFeatured, adminDeleteExploreFeatured,
   adminGetExploreCollections, adminCreateExploreCollection, adminUpdateExploreCollection,
@@ -391,10 +391,7 @@ export default function AdminExplore() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black adm-t1">Explore Page</h1>
-        <p className="text-sm adm-t3 mt-1">Manage paid placements and revenue features on the public Explore page.</p>
-      </div>
+      <PageHeader title="Explore Page" subtitle="Manage paid placements and revenue features on the public Explore page." />
 
       {/* Tab nav */}
       <div className="flex flex-wrap gap-2 border-b-2 adm-border pb-0">
