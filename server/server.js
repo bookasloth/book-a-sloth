@@ -283,6 +283,7 @@ setInterval(async () => {
       const r = await subscriptionReconciler.reconcile();
       if (r.healed > 0) console.log(`Subscription reconciler: activated ${r.healed} pending subscriptions`);
       if (r.released > 0) console.log(`Subscription reconciler: released ${r.released} orphaned pending mandates`);
+      if (r.recorded > 0) console.log(`Subscription reconciler: booked ${r.recorded} missing subscription charges`);
     }, { leaseMs: SUB_RECONCILE_MIN * 2 * 60 * 1000 });
   } catch (err) { console.error('Subscription reconciler cron error:', err.message); }
 }, SUB_RECONCILE_MIN * 60 * 1000);

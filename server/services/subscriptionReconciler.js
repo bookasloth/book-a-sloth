@@ -104,15 +104,53 @@ async function reconcile() {
     }
   }
 
-  await recordStatus({ healed, released, scanned: (pending || []).length });
-  return { healed, released };
+  // Second pass: heal ACTIVE subscriptions whose charge was never booked —
+  // access was granted (subscription.activated) but the payment-carrying
+  // subscription.charged webhook was missed, so no subscription_payments row
+  // exists. Backfill straight from the Razorpay invoices. This is the gap that
+  // silently zeroed Collected revenue for admin/webhook-activated subscriptions.
+  const recorded = await reconcileMissingPayments();
+
+  await recordStatus({ healed, released, recorded, scanned: (pending || []).length });
+  return { healed, released, recorded };
+}
+
+/**
+ * Backfill payments for ACTIVE subscriptions that have zero recorded charges.
+ * Only touches subs with NO subscription_payments row (renewals are booked by
+ * the webhook), so it's cheap: at most one Razorpay call per un-booked sub, and
+ * nothing once every active sub has at least its initial charge recorded.
+ */
+async function reconcileMissingPayments() {
+  const { data: active } = await supabaseAdmin
+    .from('profiles')
+    .select('id, razorpay_subscription_id')
+    .eq('subscription_status', 'active')
+    .not('razorpay_subscription_id', 'is', null)
+    .limit(200);
+
+  let recorded = 0;
+  for (const p of active || []) {
+    const { count } = await supabaseAdmin
+      .from('subscription_payments').select('id', { count: 'exact', head: true })
+      .eq('razorpay_subscription_id', p.razorpay_subscription_id);
+    if ((count || 0) > 0) continue; // already has at least one charge booked
+    try {
+      const rzpSub = await razorpaySubscriptions.fetchSubscription(p.razorpay_subscription_id);
+      const r = await subscriptionService.backfillSubscriptionPayments(rzpSub);
+      recorded += r.recorded || 0;
+    } catch (e) {
+      if (!isNotFound(e)) console.error('reconcileMissingPayments error', p.id, e.message);
+    }
+  }
+  return recorded;
 }
 
 /**
  * Persist a running summary (last run + cumulative totals) to platform_settings.
  * Best-effort: a write failure never fails the reconcile pass.
  */
-async function recordStatus({ healed, released, scanned }) {
+async function recordStatus({ healed, released, recorded = 0, scanned }) {
   try {
     const { data } = await supabaseAdmin
       .from('platform_settings').select('value').eq('key', STATUS_KEY).maybeSingle();
@@ -124,8 +162,10 @@ async function recordStatus({ healed, released, scanned }) {
       last_scanned: scanned,
       last_healed: healed,
       last_released: released,
+      last_recorded: recorded,
       healed_total: (Number(prev.healed_total) || 0) + healed,
       released_total: (Number(prev.released_total) || 0) + released,
+      recorded_total: (Number(prev.recorded_total) || 0) + recorded,
     };
     await supabaseAdmin.from('platform_settings')
       .upsert({ key: STATUS_KEY, value: JSON.stringify(next), updated_at: now }, { onConflict: 'key' });

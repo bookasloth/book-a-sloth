@@ -148,6 +148,19 @@ async function fetchSubscription(subscriptionId) {
   return razorpay.subscriptions.fetch(subscriptionId);
 }
 
+/** All invoices for a subscription (each paid invoice carries its payment_id). */
+async function fetchSubscriptionInvoices(subscriptionId) {
+  const razorpay = await razorpayConfig.getClient();
+  const res = await razorpay.invoices.all({ subscription_id: subscriptionId, count: 100 });
+  return res?.items || [];
+}
+
+/** Full payment entity (fee/tax in paise) — used to record the exact charge. */
+async function fetchPayment(paymentId) {
+  const razorpay = await razorpayConfig.getClient();
+  return razorpay.payments.fetch(paymentId);
+}
+
 module.exports = {
   getClient: razorpayConfig.getClient,
   PLAN_ID_COLUMN,
@@ -157,4 +170,6 @@ module.exports = {
   createSubscription,
   cancelSubscription,
   fetchSubscription,
+  fetchSubscriptionInvoices,
+  fetchPayment,
 };
