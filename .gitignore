@@ -89,3 +89,12 @@ staging_schema.sql
 
 # gstack tooling artifacts (browse logs, audits) — local only
 .gstack/
+
+# Business/planning docs kept in the working tree but not version-controlled
+# (roadmaps, decks, research notes). Not code; excluded so they don't show up as
+# uncommitted changes / trigger PR prompts.
+autoresearch/
+book-a-sloth-messaging-bible.md
+BookASloth_12Month_Roadmap_Tracker.xlsx
+BookASloth_12Month_Value_Roadmap.docx
+BookASloth_12Month_Value_Roadmap.pdf
