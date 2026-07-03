@@ -98,18 +98,10 @@ export const NAV = [
     { label:'Bookings', icon:'calCheck', to:'/admin/bookings', perm:'bookings.view' },
     { label:'Services', icon:'layers', to:'/admin/services', perm:'services.view' },
     { label:'Hosts',    icon:'userCheck', to:'/admin/providers', perm:'professionals.view' },
-    { label:'Addons',             icon:'package', to:'/admin/addons', perm:'plans.manage' },
-    { label:'Badges',             icon:'star',    to:'/admin/badges', perm:'badges.manage' },
     { label:'Subscription Plans', icon:'card',    to:'/admin/plans', perm:'plans.view' },
     { label:'Professions',        icon:'layers',  to:'/admin/professions', perm:'settings.manage' },
-    { label:'Explore Page',        icon:'search',  to:'/admin/explore',      perm:'settings.manage' },
   ]},
   { id:'people', section:'PEOPLE', items:[
-    { label:'KYC',    icon:'shieldOk', groupId:'ppl-kyc', perm:'kyc.view', children:[
-      { label:'Pending',  to:'/admin/kyc/pending' },
-      { label:'Approved', to:'/admin/kyc/approved' },
-      { label:'Rejected', to:'/admin/kyc/rejected' },
-    ]},
     { label:'Staff & Roles', icon:'users2', to:'/admin/staff', perm:'staff.manage' },
   ]},
   { id:'finance', section:'FINANCE', items:[
@@ -122,23 +114,14 @@ export const NAV = [
     { label:'Coupons',           icon:'tag',     disabled:true },
   ]},
   { id:'content', section:'CONTENT', items:[
-    { label:'Pages',         icon:'file',   to:'/admin/content/pages', perm:'cms.manage' },
-    { label:'Blogs',         icon:'news',   to:'/admin/content/blogs', perm:'cms.manage' },
-    { label:'Newsletter',    icon:'mail',   to:'/admin/content/newsletter', perm:'cms.manage' },
-    { label:'FAQ',           icon:'help',   to:'/admin/content/faq', perm:'cms.manage' },
-    { label:'Testimonials',  icon:'star',   to:'/admin/content/testimonials', perm:'cms.manage' },
     { label:'Media Library', icon:'photo',  disabled:true },
   ]},
   { id:'support', section:'SUPPORT', items:[
-    { label:'Tickets',            icon:'chat',  to:'/admin/support/tickets', perm:'support.view' },
-    { label:'Disputes',           icon:'alert', to:'/admin/support/disputes', perm:'disputes.view' },
     { label:'Reviews Moderation', icon:'msgSq', to:'/admin/support/reviews', perm:'reviews.moderate' },
     { label:'Host Feedback',    icon:'msgSq', to:'/admin/feedback', perm:'feedback.view' },
   ]},
   { id:'platform', section:'PLATFORM', items:[
     { label:'Appearance',       icon:'palette', to:'/admin/platform/appearance', perm:'branding.manage' },
-    { label:'Menu Builder',     icon:'menu3',   to:'/admin/platform/menu', perm:'cms.manage' },
-    { label:'Footer Builder',   icon:'layout2', to:'/admin/platform/footer', perm:'cms.manage' },
     { label:'Communication',    icon:'mail',    to:'/admin/platform/communication', perm:'email.manage' },
     { label:'Campaigns',        icon:'mail',    to:'/admin/campaigns', perm:'campaigns.view' },
     { label:'Notification Settings', icon:'bell', to:'/admin/notifications', perm:'notifications.view' },
@@ -151,6 +134,29 @@ export const NAV = [
     { label:'Blocked IPs',    icon:'ban',      to:'/admin/security/blocked-ips', perm:'settings.manage' },
     { label:'Feature Status', icon:'zap',      to:'/admin/features', perm:'settings.manage' },
     { label:'API Keys',       icon:'key',      disabled:true },
+  ]},
+  // Holding bucket for links pulled out of the sections above during cleanup.
+  // When asked to "take link to others", move the item's object here so the
+  // sidebar shrinks and re-arrangement stays organised. Empty = section hidden
+  // (SidebarBody drops sections whose visible item count is 0).
+  { id:'other', section:'OTHER', items:[
+    { label:'Addons',             icon:'package', to:'/admin/addons', perm:'plans.manage' },
+    { label:'Badges',             icon:'star',    to:'/admin/badges', perm:'badges.manage' },
+    { label:'Explore Page',       icon:'search',  to:'/admin/explore', perm:'settings.manage' },
+    { label:'KYC',    icon:'shieldOk', groupId:'ppl-kyc', perm:'kyc.view', children:[
+      { label:'Pending',  to:'/admin/kyc/pending' },
+      { label:'Approved', to:'/admin/kyc/approved' },
+      { label:'Rejected', to:'/admin/kyc/rejected' },
+    ]},
+    { label:'Pages',              icon:'file',    to:'/admin/content/pages', perm:'cms.manage' },
+    { label:'Blogs',              icon:'news',    to:'/admin/content/blogs', perm:'cms.manage' },
+    { label:'Newsletter',         icon:'mail',    to:'/admin/content/newsletter', perm:'cms.manage' },
+    { label:'FAQ',                icon:'help',    to:'/admin/content/faq', perm:'cms.manage' },
+    { label:'Testimonials',       icon:'star',    to:'/admin/content/testimonials', perm:'cms.manage' },
+    { label:'Tickets',            icon:'chat',    to:'/admin/support/tickets', perm:'support.view' },
+    { label:'Disputes',           icon:'alert',   to:'/admin/support/disputes', perm:'disputes.view' },
+    { label:'Menu Builder',       icon:'menu3',   to:'/admin/platform/menu', perm:'cms.manage' },
+    { label:'Footer Builder',     icon:'layout2', to:'/admin/platform/footer', perm:'cms.manage' },
   ]},
 ];
 
