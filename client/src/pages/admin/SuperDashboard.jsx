@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { adminGetStats, adminGetBookings, adminGetUsers, adminOpsSummary, adminGetProviderPlanAnalytics, adminGetRevenueTrend } from '../../services/api';
+import { adminGetStats, adminGetBookings, adminGetUsers, adminOpsSummary, adminGetProviderPlanAnalytics, adminGetRevenueTrend, adminGetRevenueBreakdown } from '../../services/api';
 import Ic from '../../components/admin/Ic';
 import { IC } from '../../components/admin/adminNav';
 import AdminInsights from './AdminInsights';
@@ -218,24 +218,32 @@ const SectionHead = ({ title }) => (
 );
 
 // ── Revenue Tab ───────────────────────────────────────────────
-// Two sections: 4 revenue streams + 2 average-value cards, then the trend chart.
+// 10 cards over 3 rows: revenue streams → lifetime averages → 30-Jun cohort LTV.
+const inr0 = (n) => `₹${Math.round(Number(n) || 0).toLocaleString('en-IN')}`;
+
 const RevenueTab = ({ stats }) => {
-  const s = stats || {};
+  const [rb, setRb] = useState(null);
+  useEffect(() => { adminGetRevenueBreakdown().then(r => setRb(r.data)).catch(() => setRb({})); }, []);
+  const b = rb || {};
 
-  // Revenue streams. Other Revenue (reschedule / add-ons) not aggregated yet → ₹0.
+  // Row 1 — revenue streams. Gross = Total + taxes; Total = net income (money kept).
   const revenueCards = [
-    { label: 'Net Income',          value: inr(s.netIncome),          hex: '#059669' },
-    { label: 'Subscription Revenue',value: inr(s.subscriptionRevenue ?? s.subscriptionsNet), hex: '#2563EB' },
-    { label: 'Platform Fee Revenue',value: inr(s.platformFeeRevenue ?? s.revenue), hex: '#FE5100' },
-    { label: 'Other Revenue',       value: inr(s.otherRevenue || 0),  hex: '#64748B' },
+    { label: 'Gross Revenue',        value: inr(b.grossRevenue),        hex: '#047857' },
+    { label: 'Total Revenue',        value: inr(b.totalRevenue),        hex: '#059669' },
+    { label: 'Subscription Revenue', value: inr(b.subscriptionRevenue), hex: '#2563EB' },
+    { label: 'Platform Fee Revenue', value: inr(b.platformFeeRevenue),  hex: '#FE5100' },
   ];
-
-  // Averages. ARPC = Net Income / paying customers; ARPB = Platform Fee / completed-paid.
-  const arpc = s.payingCustomers ? Math.round((s.netIncome || 0) / s.payingCustomers) : 0;
-  const arpb = s.completedPaidBookings ? Math.round((s.platformFeeRevenue ?? s.revenue ?? 0) / s.completedPaidBookings) : 0;
+  // Row 2 — lifetime averages (rounded to whole ₹).
   const avgCards = [
-    { label: 'Avg Revenue / Customer', value: inr(arpc), hex: '#7C3AED' },
-    { label: 'Avg Revenue / Booking',  value: inr(arpb), hex: '#DB2777' },
+    { label: 'LT Avg Revenue / Host',    value: inr0(b.ltvPerHost),        hex: '#7C3AED' },
+    { label: 'LT Avg Revenue / Guest',   value: inr0(b.ltvPerGuest),       hex: '#DB2777' },
+    { label: 'LT Avg Revenue / Booking', value: inr0(b.revenuePerBooking), hex: '#0891B2' },
+    { label: 'LT Avg Revenue / Week',    value: inr0(b.revenuePerWeek),    hex: '#D97706' },
+  ];
+  // Row 3 — 30-Jun-2026 monetization cohort.
+  const cohortCards = [
+    { label: 'LTV / Registered User', value: inr0(b.ltvPerRegisteredUser), hex: '#4F46E5' },
+    { label: 'Govt Tax (since 30 Jun)', value: inr(b.govtExtorted),        hex: '#DC2626' },
   ];
 
   return (
@@ -248,9 +256,16 @@ const RevenueTab = ({ stats }) => {
       </div>
 
       <div>
-        <SectionHead title="Average Values" />
+        <SectionHead title="Lifetime Averages" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {avgCards.map(c => <RevCard key={c.label} {...c} />)}
+        </div>
+      </div>
+
+      <div>
+        <SectionHead title="New Cohort (from 30 Jun 2026)" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {cohortCards.map(c => <RevCard key={c.label} {...c} />)}
         </div>
       </div>
 

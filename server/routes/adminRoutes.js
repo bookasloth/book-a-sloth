@@ -9,7 +9,7 @@ const router  = express.Router();
 const { requireAdmin, requireSuperAdmin } = require('../middleware/adminMiddleware');
 
 const {
-  getStats, getProviderPlanAnalytics, getRevenueTrend, getUsers, getUserById, updateUser, deleteUser, adminSetUserCategories,
+  getStats, getProviderPlanAnalytics, getRevenueTrend, getRevenueBreakdown, getUsers, getUserById, updateUser, deleteUser, adminSetUserCategories,
   getAllBookings, updateBooking, deleteBooking,
   getAllServices, deleteService, updateServiceSeo, updateProviderSeo,
   getSettings, updateSettings,
@@ -20,6 +20,7 @@ const ops = require('../controllers/opsAdminController');
 router.get('/stats',                    requireAdmin('ops.view'),             getStats);
 router.get('/provider-plan-analytics',  requireAdmin('professionals.view'),   getProviderPlanAnalytics);
 router.get('/revenue-trend',            requireAdmin('analytics.view'),      getRevenueTrend);
+router.get('/revenue-breakdown',        requireAdmin('analytics.view'),      getRevenueBreakdown);
 
 // ── Marketing / performance insights (owned KPI tiles, Postgres-first) ──
 const insights = require('../controllers/insightsAdminController');
