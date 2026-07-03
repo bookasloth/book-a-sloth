@@ -588,7 +588,7 @@ const SuperDashboard = () => {
             onClick={() => navigate(tab.to)}
             className={`px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150
               ${activeTab === tab.id
-                ? 'text-[#FE5100] shadow-sm'
+                ? 'bg-[#FE5100] text-white shadow-sm'
                 : 'adm-t2 hover:text-gray-700 hover:bg-gray-50'}`}
           >
             {tab.label}
