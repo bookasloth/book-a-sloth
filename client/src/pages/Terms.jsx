@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
 import LegalLayout, { Section } from '../components/common/LegalLayout';
 
-// /terms — Terms & Conditions. Text mirrors /legal/TERMS_AND_CONDITIONS.md.
+// /terms — Terms & Conditions (aligned with India DPDP Act 2023 + DPDP Rules 2025).
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
 const Terms = () => (
   <LegalLayout
     title="Terms & Conditions"
+    updated="3 July 2026"
     current="/terms"
     description="The terms governing your use of Book A Sloth — accounts, bookings, payments, and host listings. Read before you book or list a service."
     intro={
@@ -67,7 +68,7 @@ const Terms = () => (
         <li>You are solely responsible for delivering your services lawfully, professionally, and as described.</li>
         <li>You hold all licences, registrations, and qualifications required to offer your services.</li>
         <li>You will honour confirmed bookings or handle cancellations/reschedules fairly and in line with the <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>.</li>
-        <li>You will use guest personal data only to deliver the booking, and in compliance with applicable data-protection law (see <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>).</li>
+        <li>You will use guest personal data only to deliver the booking, keep it confidential and secure, not retain it longer than needed, and comply with applicable data-protection law including the <strong>DPDP Act, 2023</strong> and DPDP Rules, 2025 (see <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>).</li>
         <li>You are responsible for your own tax obligations, including GST where applicable, on the income you earn.</li>
         <li>You will not list services that are illegal, harmful, deceptive, infringing, or that violate Section 7.</li>
       </ul>
@@ -191,7 +192,7 @@ const Terms = () => (
     </Section>
 
     <Section title="17. Grievance Officer and contact">
-      <p>In accordance with applicable Indian law, you may contact our Grievance Officer:</p>
+      <p>In accordance with the DPDP Act, 2023 and other applicable Indian law, you may contact our Grievance Officer, who will address grievances within the timeframes required by law (within <strong>90 days</strong> for data-protection grievances under the DPDP Rules, 2025):</p>
       <ul className="list-disc pl-5 space-y-1.5">
         <li><strong>Grievance Officer:</strong> Shubham Narendra Datarkar</li>
         <li><strong>Email:</strong> <Mail /></li>
