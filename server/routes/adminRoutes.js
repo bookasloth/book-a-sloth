@@ -108,6 +108,12 @@ router.post('/notifications/test-send',      requireAdmin('whatsapp.manage'),   
 router.get('/notifications/logs',            requireAdmin('notifications.view'), notif.getLogs);
 router.post('/notifications/logs/:id/retry', requireAdmin('whatsapp.manage'),    notif.retryLog);
 
+// ── Reviews moderation (Support) ───────────────────────────────
+const reviewsAdmin = require('../controllers/reviewAdminController');
+router.get('/reviews',           requireAdmin('reviews.moderate'), reviewsAdmin.listReviews);
+router.patch('/reviews/:id',     requireAdmin('reviews.moderate'), reviewsAdmin.moderateReview);
+router.delete('/reviews/:id',    requireAdmin('reviews.moderate'), reviewsAdmin.deleteReview);
+
 // ── Vendor feedback (triage) ───────────────────────────────────
 const feedbackAdmin = require('../controllers/feedbackAdminController');
 router.get('/feedback',         requireAdmin('feedback.view'),   feedbackAdmin.listFeedback);
@@ -131,6 +137,7 @@ router.delete('/vendors/:id/badges/:badgeId', requireAdmin('badges.manage'), bad
 
 // ── Payout approval ────────────────────────────────────────────
 const payouts = require('../controllers/payoutAdminController');
+router.get('/payouts/clearing',     requireAdmin('payouts.view'),    payouts.listClearing);
 router.get('/payouts',              requireAdmin('payouts.view'),    payouts.listPayouts);
 router.post('/payouts/:id/approve', requireAdmin('payouts.approve'), payouts.approvePayout);
 router.post('/payouts/:id/reject',  requireAdmin('payouts.approve'), payouts.rejectPayout);

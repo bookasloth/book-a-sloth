@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   adminGetNotifProvider, adminUpdateNotifProvider, adminTestNotifProvider,
@@ -32,8 +33,14 @@ const TEMPLATE_PREVIEWS = {
   BOOKING_RESCHEDULED_VENDOR:  '{{1}} host · {{2}} customer · {{3}} service · {{4}} date/time',
 };
 
+const NOTIF_TAB_KEYS = ['provider', 'events', 'logs'];
+
 const AdminNotifications = () => {
-  const [tab, setTab] = useState('provider');
+  // Deep-link support: the ops dashboard "Failed WhatsApp/notifs" card links
+  // here with ?tab=logs&status=failed. Seed the initial tab + log status filter.
+  const [searchParams] = useSearchParams();
+  const initTab = NOTIF_TAB_KEYS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'provider';
+  const [tab, setTab] = useState(initTab);
 
   // ── Provider state ──
   const [provider, setProvider] = useState(null);
@@ -51,7 +58,7 @@ const AdminNotifications = () => {
 
   // ── Logs state ──
   const [logs, setLogs] = useState([]);
-  const [logFilter, setLogFilter] = useState({ status: '', channel: '' });
+  const [logFilter, setLogFilter] = useState({ status: searchParams.get('status') || '', channel: '' });
   const [loadingLogs, setLoadingLogs] = useState(false);
 
   const loadProvider = useCallback(() => {

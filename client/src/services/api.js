@@ -172,6 +172,12 @@ export const adminGetPayouts     = (status)         => API.get('/admin/payouts',
 export const adminApprovePayout  = (id)             => API.post(`/admin/payouts/${id}/approve`);
 export const adminRejectPayout   = (id, reason)     => API.post(`/admin/payouts/${id}/reject`, { reason });
 export const adminMarkPayoutPaid = (id, reference)  => API.post(`/admin/payouts/${id}/pay`, { payment_reference: reference });
+export const adminGetPayoutClearing = ()            => API.get('/admin/payouts/clearing');
+
+// Admin — Reviews moderation
+export const adminGetReviews     = (params)         => API.get('/admin/reviews', { params });
+export const adminModerateReview = (id, data)       => API.patch(`/admin/reviews/${id}`, data);
+export const adminDeleteReview   = (id)             => API.delete(`/admin/reviews/${id}`);
 
 // ── Vendor Onboarding (Google-first flow) ─────────────────────
 // Removed in onboarding reshape (server endpoints deleted):

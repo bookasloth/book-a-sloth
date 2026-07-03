@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   adminEmailTemplates, adminEmailTemplate, adminEmailUpdate, adminEmailDuplicate,
@@ -15,8 +16,14 @@ const STATUS_TONE = {
 
 const Pill = ({ s }) => <Badge tone={STATUS_TONE[s] || 'neutral'}><span className="capitalize">{s}</span></Badge>;
 
+const TAB_KEYS = ['templates', 'logs', 'settings', 'events'];
+
 const AdminCommunication = () => {
-  const [tab, setTab] = useState('templates');
+  // Deep-link support: the ops dashboard "Failed emails" card links here with
+  // ?tab=logs&status=failed. Seed initial tab + log status filter from the URL.
+  const [searchParams] = useSearchParams();
+  const initTab = TAB_KEYS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'templates';
+  const [tab, setTab] = useState(initTab);
 
   // templates
   const [templates, setTemplates] = useState([]);
@@ -29,7 +36,7 @@ const AdminCommunication = () => {
 
   // logs
   const [logs, setLogs] = useState([]);
-  const [logFilter, setLogFilter] = useState({ email: '', status: '', event: '' });
+  const [logFilter, setLogFilter] = useState({ email: '', status: searchParams.get('status') || '', event: '' });
 
   // settings + events
   const [settings, setSettings] = useState(null);

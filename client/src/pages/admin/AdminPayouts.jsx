@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { adminGetPayouts, adminApprovePayout, adminRejectPayout, adminMarkPayoutPaid } from '../../services/api';
+import { useSearchParams } from 'react-router-dom';
+import { adminGetPayouts, adminApprovePayout, adminRejectPayout, adminMarkPayoutPaid, adminGetPayoutClearing } from '../../services/api';
 import toast from 'react-hot-toast';
 import { PageHeader, Card, Btn, Badge, Skeleton } from '../../components/admin/ui';
 
@@ -12,7 +13,9 @@ const STATUS_TONE = {
   paid: 'ok',
   rejected: 'danger',
 };
-const TABS = ['pending', 'approved', 'paid', 'rejected', 'all'];
+// 'clearing' is a read-only view of funds not yet in the payout queue (maturing
+// or below the withdrawal minimum) — it is not a payout_requests status.
+const TABS = ['pending', 'approved', 'paid', 'rejected', 'all', 'clearing'];
 
 const Modal = ({ title, label, placeholder, confirmText, onClose, onConfirm }) => {
   const [val, setVal] = useState('');
@@ -36,14 +39,26 @@ const Modal = ({ title, label, placeholder, confirmText, onClose, onConfirm }) =
 };
 
 const AdminPayouts = () => {
-  const [tab, setTab] = useState('pending');
+  // Deep-link support: ops dashboard "Pending payouts" card links with ?status=pending.
+  const [searchParams] = useSearchParams();
+  const initTab = TABS.includes(searchParams.get('status')) ? searchParams.get('status') : 'pending';
+  const [tab, setTab] = useState(initTab);
   const [rows, setRows] = useState([]);
+  const [clearing, setClearing] = useState({ threshold: 100, hosts: [] });
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null); // { kind: 'reject'|'pay', id }
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { const { data } = await adminGetPayouts(tab); setRows(data || []); }
+    try {
+      if (tab === 'clearing') {
+        const { data } = await adminGetPayoutClearing();
+        setClearing(data || { threshold: 100, hosts: [] });
+      } else {
+        const { data } = await adminGetPayouts(tab);
+        setRows(data || []);
+      }
+    }
     catch { toast.error('Failed to load payouts'); }
     finally { setLoading(false); }
   }, [tab]);
@@ -71,6 +86,51 @@ const AdminPayouts = () => {
 
       {loading ? (
         <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14" />)}</div>
+      ) : tab === 'clearing' ? (
+        <div>
+          <p className="text-[12.5px] adm-t3 mb-3 leading-relaxed">
+            Funds owed to hosts that are <strong className="adm-t2">not yet in the payout queue</strong>.
+            <span className="mx-1">·</span><span className="text-amber-600 font-medium">In Clearing</span> and
+            <span className="text-blue-600 font-medium"> Pending Completion</span> mature over the settlement window (time-based).
+            A host can request a payout once <span className="text-emerald-600 font-medium">Available</span> reaches the
+            {' '}₹{clearing.threshold} minimum.
+          </p>
+          {clearing.hosts.length === 0 ? (
+            <div className="adm-card rounded-2xl py-16 text-center text-[13px] adm-t3">No host funds in clearing right now.</div>
+          ) : (
+            <div className="adm-card rounded-xl overflow-x-auto">
+              <table className="adm-table w-full border-collapse text-[13px]">
+                <thead>
+                  <tr className="text-[11px] uppercase tracking-wide adm-t3 text-left">
+                    <th className="px-4 py-2.5 font-semibold">Host</th>
+                    <th className="px-4 py-2.5 font-semibold text-right">In Clearing</th>
+                    <th className="px-4 py-2.5 font-semibold text-right">Pending Completion</th>
+                    <th className="px-4 py-2.5 font-semibold text-right">Available</th>
+                    <th className="px-4 py-2.5 font-semibold">Eligibility</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clearing.hosts.map(h => (
+                    <tr key={h.host_id} className="border-t adm-border">
+                      <td className="px-4 py-3">
+                        <p className="font-medium adm-t2">{h.name || '—'}</p>
+                        {h.username && <p className="text-[11.5px] adm-t3">@{h.username}</p>}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-amber-600 font-medium">{inr(h.clearing)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-blue-600">{inr(h.pendingCompletion)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums font-bold adm-t1">{inr(h.available)}</td>
+                      <td className="px-4 py-3">
+                        {h.eligible
+                          ? <Badge tone="ok">Eligible</Badge>
+                          : <Badge tone="warn">Below ₹{clearing.threshold}</Badge>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       ) : rows.length === 0 ? (
         <div className="adm-card rounded-2xl py-16 text-center text-[13px] adm-t3">No {tab === 'all' ? '' : tab} payout requests.</div>
       ) : (

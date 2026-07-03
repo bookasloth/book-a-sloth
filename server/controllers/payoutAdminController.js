@@ -13,8 +13,13 @@ const { audit } = require('../services/auditService');
 const { post } = require('../services/ledger/postingService');
 const { payoutEntry } = require('../services/ledger/journalTemplates');
 const { inAppNotify } = require('../utils/inAppNotify');
+const { computeAllSettlementBalances } = require('../services/settlementService');
+const platformConfig = require('../services/platformConfig');
 
 const now = () => new Date().toISOString();
+
+// Minimum available balance a host can withdraw (mirrors vendorController.requestPayout).
+const MIN_WITHDRAWAL = 100;
 
 const fetchPayout = async (id) => {
   const { data } = await supabaseAdmin.from('payout_requests').select('*').eq('id', id).maybeSingle();
@@ -106,4 +111,50 @@ const markPayoutPaid = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { listPayouts, approvePayout, rejectPayout, markPayoutPaid };
+// GET /admin/payouts/clearing
+// Platform-wide settlement visibility: every host with money in the pipeline that
+// is NOT yet a payout request — clearing (maturing), pending-completion, or matured
+// but below the ₹100 withdrawal minimum. Gives admins sight of funds owed before
+// they ever enter the Pending payout queue.
+const listClearing = async (req, res) => {
+  try {
+    const { clearingDays } = await platformConfig.getConfig();
+    const balances = await computeAllSettlementBalances(clearingDays);
+
+    // Keep only hosts that have money not-yet-withdrawable or below the minimum.
+    // (available >= MIN is already actionable via the normal payout flow.)
+    const relevant = [];
+    for (const [hostId, b] of balances) {
+      const notYetWithdrawable = b.clearing + b.pendingCompletion;
+      const belowMin = b.available > 0 && b.available < MIN_WITHDRAWAL;
+      if (notYetWithdrawable > 0 || belowMin) relevant.push({ hostId, ...b });
+    }
+
+    if (relevant.length === 0) return res.json({ threshold: MIN_WITHDRAWAL, hosts: [] });
+
+    const { data: profiles } = await supabaseAdmin
+      .from('profiles')
+      .select('id, name, username')
+      .in('id', relevant.map(r => r.hostId));
+    const pMap = new Map((profiles || []).map(p => [p.id, p]));
+
+    const hosts = relevant
+      .map(r => ({
+        host_id: r.hostId,
+        name: pMap.get(r.hostId)?.name || null,
+        username: pMap.get(r.hostId)?.username || null,
+        clearing: r.clearing,
+        pendingCompletion: r.pendingCompletion,
+        available: r.available,
+        inflight: r.inflight,
+        // Eligible to request a payout once available reaches the minimum.
+        eligible: r.available >= MIN_WITHDRAWAL,
+      }))
+      // Most money-in-clearing first.
+      .sort((a, b) => (b.clearing + b.pendingCompletion) - (a.clearing + a.pendingCompletion));
+
+    res.json({ threshold: MIN_WITHDRAWAL, hosts });
+  } catch (e) { safeError(res, e); }
+};
+
+module.exports = { listPayouts, approvePayout, rejectPayout, markPayoutPaid, listClearing };
