@@ -7,6 +7,7 @@ import {
   adminSetUserCategories,
 } from "../../services/api";
 import toast from "react-hot-toast";
+import { PageHeader, Badge, Table } from "../../components/admin/ui";
 
 const ROLE_COLORS = {
   guest: "bg-blue-100 text-blue-700",
@@ -124,10 +125,7 @@ const AdminUsers = () => {
 
   return (
     <div className="max-w-5xl">
-      <h1 className="text-2xl font-bold mb-1">Users & Hosts</h1>
-      <p className="text-sm text-gray-400 mb-6">
-        Manage all platform accounts.
-      </p>
+      <PageHeader title="Users & Hosts" subtitle="Manage all platform accounts." />
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-5">
@@ -158,134 +156,124 @@ const AdminUsers = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading...</div>
+        <div className="text-center py-12 adm-t3">Loading...</div>
       ) : (
         <>
-          <div className="bg-white border rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm fb-table">
-                <thead className="bg-gray-50 text-left text-xs text-gray-400 uppercase">
-                  <tr>
-                    <th className="px-4 py-3">User</th>
-                    <th className="px-4 py-3">Role</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Joined</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {users.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">
-                        No {filter === "all" ? "" : filter + " "}accounts found.
-                      </td>
-                    </tr>
-                  )}
-                  {users.map((u) => (
-                    <tr
-                      key={u.id}
-                      className={`${u.is_banned ? "bg-red-50/50" : ""}`}
-                    >
-                      <td data-label="User" className="px-4 py-3">
-                        <p className="font-medium">{u.name}</p>
-                        <p className="text-xs text-gray-400">{u.email}</p>
-                        {u.username && (
-                          <p className="text-[10px] text-gray-300">
-                            @{u.username}
-                          </p>
-                        )}
-                      </td>
-                      <td data-label="Role" className="px-4 py-3">
-                        {editingId === u.id ? (
-                          <select
-                            className="border rounded px-2 py-1 text-xs"
-                            value={u.role}
-                            onChange={(e) =>
-                              handleChangeRole(u, e.target.value)
-                            }
-                            onBlur={() => setEditingId(null)}
-                          >
-                            <option value="guest">guest</option>
-                            <option value="host">host</option>
-                            <option value="superadmin">superadmin</option>
-                          </select>
-                        ) : (
-                          <button
-                            onClick={() => setEditingId(u.id)}
-                            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[u.role]}`}
-                          >
-                            {u.role}
-                          </button>
-                        )}
-                        {u.role === 'host' && (
-                          <select
-                            className="border rounded px-1.5 py-1 text-xs mt-1"
-                            value={u.primary_category || ''}
-                            onChange={(e) => handleSetCategory(u, e.target.value)}
-                            title="Set primary category"
-                          >
-                            <option value="">— category —</option>
-                            {catOptions.map((c) => <option key={c.slug} value={c.slug}>{c.label}</option>)}
-                          </select>
-                        )}
-                      </td>
-                      <td data-label="Status" className="px-4 py-3">
-                        <div className="flex gap-1">
-                          {u.is_verified && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700">
-                              Verified
-                            </span>
-                          )}
-                          {u.is_banned && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-600">
-                              Banned
-                            </span>
-                          )}
-                          {u.google_calendar_connected && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600">
-                              GCal
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td
-                        data-label="Joined"
-                        className="px-4 py-3 text-xs text-gray-400"
+          <Table
+            rowKey={(u) => u.id}
+            rowClassName={(u) => (u.is_banned ? "bg-[var(--adm-danger-bg)]" : "")}
+            empty={
+              <div className="px-4 py-12 text-center text-sm adm-t3">
+                No {filter === "all" ? "" : filter + " "}accounts found.
+              </div>
+            }
+            columns={[
+              {
+                key: "user",
+                label: "User",
+                render: (u) => (
+                  <>
+                    <p className="font-medium adm-t1">{u.name}</p>
+                    <p className="text-xs adm-t3">{u.email}</p>
+                    {u.username && (
+                      <p className="text-[10px] adm-t3">
+                        @{u.username}
+                      </p>
+                    )}
+                  </>
+                ),
+              },
+              {
+                key: "role",
+                label: "Role",
+                render: (u) => (
+                  <>
+                    {editingId === u.id ? (
+                      <select
+                        className="border rounded px-2 py-1 text-xs"
+                        value={u.role}
+                        onChange={(e) =>
+                          handleChangeRole(u, e.target.value)
+                        }
+                        onBlur={() => setEditingId(null)}
                       >
-                        {new Date(u.created_at).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "2-digit",
-                        })}
-                      </td>
-                      <td data-label="Actions" className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleToggleVerify(u)}
-                            className="text-[10px] text-primary hover:underline"
-                          >
-                            {u.is_verified ? "Unverify" : "Verify"}
-                          </button>
-                          <button
-                            onClick={() => handleToggleBan(u)}
-                            className="text-[10px] text-amber-600 hover:underline"
-                          >
-                            {u.is_banned ? "Unban" : "Ban"}
-                          </button>
-                          <button
-                            onClick={() => handleDelete(u)}
-                            className="text-[10px] text-red-500 hover:underline"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                        <option value="guest">guest</option>
+                        <option value="host">host</option>
+                        <option value="superadmin">superadmin</option>
+                      </select>
+                    ) : (
+                      <button
+                        onClick={() => setEditingId(u.id)}
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[u.role]}`}
+                      >
+                        {u.role}
+                      </button>
+                    )}
+                    {u.role === 'host' && (
+                      <select
+                        className="border rounded px-1.5 py-1 text-xs mt-1"
+                        value={u.primary_category || ''}
+                        onChange={(e) => handleSetCategory(u, e.target.value)}
+                        title="Set primary category"
+                      >
+                        <option value="">— category —</option>
+                        {catOptions.map((c) => <option key={c.slug} value={c.slug}>{c.label}</option>)}
+                      </select>
+                    )}
+                  </>
+                ),
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (u) => (
+                  <div className="flex gap-1">
+                    {u.is_verified && <Badge tone="ok">Verified</Badge>}
+                    {u.is_banned && <Badge tone="danger">Banned</Badge>}
+                    {u.google_calendar_connected && <Badge tone="info">GCal</Badge>}
+                  </div>
+                ),
+              },
+              {
+                key: "joined",
+                label: "Joined",
+                render: (u) =>
+                  new Date(u.created_at).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "2-digit",
+                  }),
+              },
+              {
+                key: "actions",
+                label: "Actions",
+                className: "text-right",
+                render: (u) => (
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => handleToggleVerify(u)}
+                      className="text-[10px] text-primary hover:underline"
+                    >
+                      {u.is_verified ? "Unverify" : "Verify"}
+                    </button>
+                    <button
+                      onClick={() => handleToggleBan(u)}
+                      className="text-[10px] text-amber-600 hover:underline"
+                    >
+                      {u.is_banned ? "Unban" : "Ban"}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(u)}
+                      className="text-[10px] text-red-500 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+            rows={users}
+          />
 
           {/* Pagination */}
           {totalPages > 1 && (

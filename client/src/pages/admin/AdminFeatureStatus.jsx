@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminGetFeatures, adminToggleFeature, adminCreateFeature } from '../../services/api';
 import toast from 'react-hot-toast';
+import { PageHeader, Card, Btn } from '../../components/admin/ui';
 
 const SCOPE_LABEL = { vendor: 'Host', customer: 'Customer', both: 'Shared' };
 const SCOPE_ORDER = ['vendor', 'customer', 'both'];
@@ -71,16 +72,16 @@ export default function AdminFeatureStatus() {
   }, [flags]);
 
   const Switch = ({ f }) => (
-    <div className="flex items-start justify-between gap-4 bg-white border rounded-xl p-4">
+    <Card className="flex items-start justify-between gap-4 rounded-xl p-4">
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-semibold">{f.label}</p>
+          <p className="font-semibold adm-t1">{f.label}</p>
           {f.category && (
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{f.category}</span>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full adm-chip">{f.category}</span>
           )}
-          <code className="text-[10px] text-gray-400">{f.key}</code>
+          <code className="text-[10px] adm-t3">{f.key}</code>
         </div>
-        <p className="text-sm text-gray-500 mt-0.5">{f.description}</p>
+        <p className="text-sm adm-t2 mt-0.5">{f.description}</p>
       </div>
       <button
         role="switch"
@@ -92,51 +93,42 @@ export default function AdminFeatureStatus() {
       >
         <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${f.enabled ? 'translate-x-5' : ''}`} />
       </button>
-    </div>
+    </Card>
   );
 
   return (
     <div className="p-6 max-w-3xl">
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold mb-1">Feature Status</h1>
-          <p className="text-sm text-gray-500">Turn platform features on or off. New switches always start ON.</p>
-        </div>
-        <button
-          onClick={() => setShowNew((v) => !v)}
-          className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold border border-[#FE5100] text-[#FE5100] hover:bg-[#FFF4EE] transition-colors"
-        >
-          {showNew ? 'Close' : '+ New switch'}
-        </button>
-      </div>
+      <PageHeader title="Feature Status" subtitle="Turn platform features on or off. New switches always start ON."
+        actions={<Btn variant="outline" size="sm" onClick={() => setShowNew((v) => !v)}>{showNew ? 'Close' : '+ New switch'}</Btn>} />
 
       {showNew && (
-        <form onSubmit={create} className="bg-white border rounded-xl p-4 mb-6 space-y-3">
+        <Card className="mb-6">
+          <form onSubmit={create} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Key (a–z, 0–9, _)</label>
+              <label className="block text-xs font-medium adm-t2 mb-1">Key (a–z, 0–9, _)</label>
               <input className="fb-input text-sm font-mono" placeholder="e.g. live_chat" value={form.key}
                 onChange={(e) => setForm({ ...form, key: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Label</label>
+              <label className="block text-xs font-medium adm-t2 mb-1">Label</label>
               <input className="fb-input text-sm" placeholder="e.g. Live Chat" value={form.label}
                 onChange={(e) => setForm({ ...form, label: e.target.value })} />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+            <label className="block text-xs font-medium adm-t2 mb-1">Description</label>
             <input className="fb-input text-sm" placeholder="What this switch controls" value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
+              <label className="block text-xs font-medium adm-t2 mb-1">Category</label>
               <input className="fb-input text-sm" placeholder="e.g. Engagement" value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Scope</label>
+              <label className="block text-xs font-medium adm-t2 mb-1">Scope</label>
               <select className="fb-input text-sm" value={form.scope}
                 onChange={(e) => setForm({ ...form, scope: e.target.value })}>
                 <option value="vendor">Host</option>
@@ -145,27 +137,27 @@ export default function AdminFeatureStatus() {
               </select>
             </div>
           </div>
-          <p className="text-[11px] text-gray-400">
+          <p className="text-[11px] adm-t3">
             Heads up: a new switch only changes behaviour once a developer wires its key into the
             relevant route guard or <code>FeatureGate</code>. Until then it is a no-op toggle.
           </p>
-          <button type="submit" disabled={creating}
-            className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#FE5100] disabled:opacity-50">
+          <Btn type="submit" size="sm" disabled={creating}>
             {creating ? 'Creating…' : 'Create switch'}
-          </button>
-        </form>
+          </Btn>
+          </form>
+        </Card>
       )}
 
       {loading ? (
-        <p className="text-gray-400">Loading…</p>
+        <p className="adm-t3">Loading…</p>
       ) : flags.length === 0 ? (
-        <p className="text-gray-400">No feature flags yet.</p>
+        <p className="adm-t3">No feature flags yet.</p>
       ) : (
         <div className="space-y-8">
           {groups.map(({ scope, items }) => (
             <div key={scope}>
-              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">
-                {SCOPE_LABEL[scope]} <span className="text-gray-400 font-normal">({items.length})</span>
+              <h2 className="text-sm font-bold adm-t2 uppercase tracking-wide mb-3">
+                {SCOPE_LABEL[scope]} <span className="adm-t3 font-normal">({items.length})</span>
               </h2>
               <div className="space-y-3">
                 {items.map((f) => <Switch key={f.key} f={f} />)}

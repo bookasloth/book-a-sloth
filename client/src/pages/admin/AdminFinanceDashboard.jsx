@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { adminFinanceSummary } from '../../services/api';
 import toast from 'react-hot-toast';
+import { PageHeader, Card, Skeleton } from '../../components/admin/ui';
 
 // P1 Ledger dashboard — every figure is read from account_balances (running
 // double-entry balances) or indexed snapshot sums. Nothing computed client-side.
@@ -36,25 +37,22 @@ const AdminFinanceDashboard = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Finance</h1>
-        <p className="text-[12px] text-gray-400 mt-0.5">Double-entry ledger balances. GST and host money are never platform revenue.</p>
-      </div>
+      <PageHeader title="Finance" subtitle="Double-entry ledger balances. GST and host money are never platform revenue." />
 
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-          {CARDS.map((c) => <div key={c.key} className="h-24 bg-gray-100 rounded-2xl animate-pulse" />)}
+          {CARDS.map((c) => <Skeleton key={c.key} className="h-24" />)}
         </div>
       ) : !metrics ? (
-        <div className="bg-white border rounded-2xl py-16 text-center text-gray-400">No financial data yet.</div>
+        <Card className="p-0 py-16 text-center adm-t3">No financial data yet.</Card>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {CARDS.map((c) => (
-            <div key={c.key} className={`bg-white border rounded-2xl p-4 ${c.accent ? 'border-gray-900' : ''}`}>
-              <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">{c.label}</p>
-              <p className="text-lg font-bold text-gray-900 mt-1 tabular-nums">{inr(metrics[c.key])}</p>
-              <p className="text-[11px] text-gray-400 mt-1">{c.hint}</p>
-            </div>
+            <Card key={c.key} className={`p-4 ${c.accent ? 'border-gray-900' : ''}`}>
+              <p className="text-[11px] uppercase tracking-wide adm-t3 font-semibold">{c.label}</p>
+              <p className="text-lg font-bold adm-t1 mt-1 tabular-nums">{inr(metrics[c.key])}</p>
+              <p className="text-[11px] adm-t3 mt-1">{c.hint}</p>
+            </Card>
           ))}
         </div>
       )}

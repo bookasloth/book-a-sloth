@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { adminGetRazorpay, adminUpdateRazorpay, adminTestRazorpay } from "../../services/api";
 import toast from "react-hot-toast";
+import { PageHeader, Card, Btn } from "../../components/admin/ui";
 
 const AdminPaymentSettings = () => {
   const [cfg, setCfg] = useState(null);
@@ -62,21 +63,18 @@ const AdminPaymentSettings = () => {
     }
   };
 
-  if (loading) return <div className="text-center py-12 text-gray-400">Loading…</div>;
+  if (loading) return <div className="text-center py-12 adm-t3">Loading…</div>;
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-1">Payment — Razorpay</h1>
-      <p className="text-sm text-gray-400 mb-6">
-        Enter your Razorpay API credentials here. Stored encrypted; used for all bookings, products, and subscription billing.
-      </p>
+      <PageHeader title="Payment — Razorpay" subtitle="Enter your Razorpay API credentials here. Stored encrypted; used for all bookings, products, and subscription billing." />
 
-      <div className="bg-white border rounded-xl p-5 space-y-5">
+      <Card className="space-y-5">
         {/* Enabled */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Razorpay enabled</p>
-            <p className="text-xs text-gray-400">When off, payment flows are disabled platform-wide.</p>
+            <p className="text-sm font-medium adm-t1">Razorpay enabled</p>
+            <p className="text-xs adm-t3">When off, payment flows are disabled platform-wide.</p>
           </div>
           <button
             onClick={() => setForm((f) => ({ ...f, enabled: !f.enabled }))}
@@ -88,90 +86,88 @@ const AdminPaymentSettings = () => {
 
         {/* Mode */}
         <div>
-          <label className="block text-sm font-medium mb-1">Mode</label>
+          <label className="block text-sm font-medium adm-t1 mb-1">Mode</label>
           <select className="fb-input w-40" value={form.mode} onChange={(e) => setForm((f) => ({ ...f, mode: e.target.value }))}>
             <option value="test">Test</option>
             <option value="live">Live</option>
           </select>
-          <p className="text-xs text-gray-400 mt-1">Informational label — use matching test/live keys below.</p>
+          <p className="text-xs adm-t3 mt-1">Informational label — use matching test/live keys below.</p>
         </div>
 
         {/* Key ID */}
         <div>
-          <label className="block text-sm font-medium mb-1">Key ID</label>
+          <label className="block text-sm font-medium adm-t1 mb-1">Key ID</label>
           <input className="fb-input font-mono text-sm" placeholder="rzp_test_xxxxxxxx or rzp_live_xxxxxxxx"
             value={form.key_id} onChange={(e) => setForm((f) => ({ ...f, key_id: e.target.value }))} />
         </div>
 
         {/* Key Secret */}
         <div>
-          <label className="block text-sm font-medium mb-1">Key Secret</label>
+          <label className="block text-sm font-medium adm-t1 mb-1">Key Secret</label>
           <input type="password" className="fb-input font-mono text-sm" autoComplete="new-password"
             placeholder={cfg?.key_secret_set ? `Saved (${cfg.key_secret_hint}) — leave blank to keep` : "Enter key secret"}
             value={form.key_secret} onChange={(e) => setForm((f) => ({ ...f, key_secret: e.target.value }))} />
-          <p className="text-xs text-gray-400 mt-1">Stored encrypted. Leave blank to keep the existing secret.</p>
+          <p className="text-xs adm-t3 mt-1">Stored encrypted. Leave blank to keep the existing secret.</p>
         </div>
 
         {/* Webhook Secret */}
         <div>
-          <label className="block text-sm font-medium mb-1">Webhook Secret</label>
+          <label className="block text-sm font-medium adm-t1 mb-1">Webhook Secret</label>
           <input type="password" className="fb-input font-mono text-sm" autoComplete="new-password"
             placeholder={cfg?.webhook_secret_set ? "Saved — leave blank to keep" : "Enter webhook secret"}
             value={form.webhook_secret} onChange={(e) => setForm((f) => ({ ...f, webhook_secret: e.target.value }))} />
         </div>
 
         {/* Webhook URL (read-only, for the Razorpay dashboard) */}
-        <div className="border-t pt-4">
-          <label className="block text-sm font-medium mb-1">Webhook URL</label>
+        <div className="border-t adm-border pt-4">
+          <label className="block text-sm font-medium adm-t1 mb-1">Webhook URL</label>
           <div className="flex gap-2">
-            <input className="fb-input font-mono text-xs bg-gray-50" readOnly value={cfg?.webhook_url || ""} />
-            <button onClick={copyWebhook} className="btn btn--outline px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 whitespace-nowrap">Copy</button>
+            <input className="fb-input font-mono text-xs bg-[var(--adm-hover)]" readOnly value={cfg?.webhook_url || ""} />
+            <Btn variant="outline" size="sm" onClick={copyWebhook} className="whitespace-nowrap">Copy</Btn>
           </div>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs adm-t3 mt-1">
             In the Razorpay dashboard, add this as a webhook and enable events:
             <span className="font-mono"> payment.captured, payment.failed, subscription.activated, subscription.charged, subscription.halted, subscription.cancelled</span>.
           </p>
         </div>
 
-        <div className="flex gap-2 pt-2 border-t">
-          <button onClick={test} disabled={testing}
-            className="btn btn--outline px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+        <div className="flex gap-2 pt-2 border-t adm-border">
+          <Btn variant="outline" onClick={test} disabled={testing}>
             {testing ? "Testing…" : "Test connection"}
-          </button>
-          <button onClick={save} disabled={saving}
-            className="btn bg-gray-900 text-white px-6 py-2.5 text-sm font-medium hover:bg-gray-800 disabled:opacity-50 flex-1">
+          </Btn>
+          <Btn onClick={save} disabled={saving} className="flex-1">
             {saving ? "Saving…" : "Save Razorpay Settings"}
-          </button>
+          </Btn>
         </div>
-      </div>
+      </Card>
 
       {/* Subscription reconciler — read-only health, surfaces orphan cleanup */}
       {cfg?.reconciler && (
-        <div className="bg-white border rounded-xl p-5 mt-6">
-          <h2 className="text-sm font-semibold mb-1">Subscription reconciler</h2>
-          <p className="text-xs text-gray-400 mb-3">
+        <Card className="mt-6">
+          <h2 className="text-sm font-semibold adm-t1 mb-1">Subscription reconciler</h2>
+          <p className="text-xs adm-t3 mb-3">
             Heals pending subscriptions whose activation webhook was missed, and releases orphaned
             mandates — ones that never authorized or pointed at a rotated key — so the vendor can retry.
           </p>
-          <dl className="text-sm text-gray-700 grid grid-cols-2 gap-x-6 gap-y-2">
-            <div className="flex justify-between border-b border-gray-100 pb-1">
-              <dt className="text-gray-500">Orphans released (total)</dt>
+          <dl className="text-sm adm-t2 grid grid-cols-2 gap-x-6 gap-y-2">
+            <div className="flex justify-between border-b adm-border pb-1">
+              <dt className="adm-t3">Orphans released (total)</dt>
               <dd className="font-mono font-medium">{cfg.reconciler.released_total ?? 0}</dd>
             </div>
-            <div className="flex justify-between border-b border-gray-100 pb-1">
-              <dt className="text-gray-500">Released last run</dt>
+            <div className="flex justify-between border-b adm-border pb-1">
+              <dt className="adm-t3">Released last run</dt>
               <dd className="font-mono font-medium">{cfg.reconciler.last_released ?? 0}</dd>
             </div>
-            <div className="flex justify-between border-b border-gray-100 pb-1">
-              <dt className="text-gray-500">Pending healed (total)</dt>
+            <div className="flex justify-between border-b adm-border pb-1">
+              <dt className="adm-t3">Pending healed (total)</dt>
               <dd className="font-mono font-medium">{cfg.reconciler.healed_total ?? 0}</dd>
             </div>
-            <div className="flex justify-between border-b border-gray-100 pb-1">
-              <dt className="text-gray-500">Last run</dt>
+            <div className="flex justify-between border-b adm-border pb-1">
+              <dt className="adm-t3">Last run</dt>
               <dd>{cfg.reconciler.last_run_at ? new Date(cfg.reconciler.last_run_at).toLocaleString() : "—"}</dd>
             </div>
           </dl>
-        </div>
+        </Card>
       )}
     </div>
   );

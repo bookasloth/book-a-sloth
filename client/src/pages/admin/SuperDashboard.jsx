@@ -1,32 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { adminGetStats, adminGetBookings, adminGetUsers, adminOpsSummary, adminGetProviderPlanAnalytics } from '../../services/api';
+import Ic from '../../components/admin/Ic';
+import { IC } from '../../components/admin/adminNav';
 import AdminInsights from './AdminInsights';
-
-// ── Mini icon renderer ────────────────────────────────────────
-const Ic = ({ d, size = 16, className = '' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className={`flex-shrink-0 ${className}`}>
-    {(Array.isArray(d) ? d : [d]).map((p, i) => <path key={i} d={p} />)}
-  </svg>
-);
-
-const IC = {
-  trendUp:  ['M23 6l-9.5 9.5-5-5L1 18','M17 6h6v6'],
-  trendDn:  ['M23 18l-9.5-9.5-5 5L1 6','M17 18h6v-6'],
-  dollar:   ['M12 1v22','M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6'],
-  users:    ['M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2','M9 11a4 4 0 100-8 4 4 0 000 8'],
-  building: ['M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z','M9 22V12h6v10'],
-  calendar: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-  clock:    ['M12 2a10 10 0 100 20A10 10 0 0012 2z','M12 7v5l4 2'],
-  check:    ['M20 6L9 17l-5-5'],
-  x:        ['M18 6L6 18','M6 6l12 12'],
-  alert:    ['M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z','M12 9v4','M12 17h.01'],
-  activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
-  eye:      ['M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z','M12 9a3 3 0 100 6 3 3 0 000-6z'],
-  arrow:    'M5 12h14m-7-7l7 7-7 7',
-  grid:     'M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z',
-};
+import { PageHeader, Card, StatCard, Badge } from '../../components/admin/ui';
 
 const TABS = [
   { id: 'overview',   label: 'Overview',        to: '/super-dashboard' },
@@ -45,35 +23,14 @@ const STATUS_DOT = {
   cancelled: 'bg-red-400',
 };
 
-// ── Stat card ─────────────────────────────────────────────────
-const StatCard = ({ label, value, sub, icon, iconColor, change, to }) => (
-  <Link to={to || '#'} className="bg-white border border-gray-200/80 rounded-2xl p-5 hover:shadow-sm hover:border-gray-300 transition-all group block">
-    <div className="flex items-start justify-between mb-3">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconColor}`}>
-        <Ic d={IC[icon]} size={16} className="text-white" />
-      </div>
-      {change !== undefined && (
-        <span className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full
-          ${change >= 0 ? 'text-green-700 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-          <Ic d={change >= 0 ? IC.trendUp : IC.trendDn} size={10} />
-          {Math.abs(change)}%
-        </span>
-      )}
-    </div>
-    <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-1">{label}</p>
-    <p className="text-2xl font-bold text-gray-900 tracking-tight">{value}</p>
-    {sub && <p className="text-[11px] text-gray-400 mt-1">{sub}</p>}
-  </Link>
-);
-
 // ── Empty state ───────────────────────────────────────────────
 const Empty = ({ icon, title, desc }) => (
   <div className="flex flex-col items-center justify-center py-20 text-center">
-    <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-      <Ic d={IC[icon]} size={22} className="text-gray-400" />
+    <div className="w-14 h-14 rounded-2xl bg-[var(--adm-hover)] flex items-center justify-center mb-4">
+      <Ic d={IC[icon]} size={22} className="adm-t3" />
     </div>
-    <p className="text-base font-semibold text-gray-700 mb-1">{title}</p>
-    <p className="text-sm text-gray-400 max-w-xs">{desc}</p>
+    <p className="text-base font-semibold adm-t2 mb-1">{title}</p>
+    <p className="text-sm adm-t3 max-w-xs">{desc}</p>
   </div>
 );
 
@@ -108,15 +65,15 @@ const OverviewTab = ({ stats, ops }) => {
           { title: 'Support Tickets',       desc: 'Respond to user issues and disputes',       to: '/admin/support/tickets', icon: 'clock', color: 'text-amber-600 bg-amber-50' },
         ].map(item => (
           <Link key={item.to} to={item.to}
-            className="flex items-center gap-4 bg-white border border-gray-200/80 rounded-2xl p-4 hover:shadow-sm hover:border-gray-300 transition-all group">
+            className="flex items-center gap-4 adm-card rounded-2xl p-4 hover:shadow-sm transition-all group">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${item.color.split(' ')[1]}`}>
               <Ic d={IC[item.icon]} size={17} className={item.color.split(' ')[0]} />
             </div>
             <div className="min-w-0">
-              <p className="font-semibold text-gray-800 text-sm">{item.title}</p>
-              <p className="text-[12px] text-gray-400 truncate mt-0.5">{item.desc}</p>
+              <p className="font-semibold adm-t1 text-sm">{item.title}</p>
+              <p className="text-[12px] adm-t3 truncate mt-0.5">{item.desc}</p>
             </div>
-            <Ic d={IC.arrow} size={14} className="text-gray-300 ml-auto group-hover:text-gray-500 transition-colors flex-shrink-0" />
+            <Ic d={IC.arrow} size={14} className="adm-t3 ml-auto group-hover:text-gray-500 transition-colors flex-shrink-0" />
           </Link>
         ))}
       </div>
@@ -136,38 +93,38 @@ const RevenueTab = ({ stats }) => {
           { label: 'Avg per Booking',  value: s.confirmed ? `₹${Math.round(s.revenue / s.confirmed)}` : '₹0', sub: 'Revenue per booking' },
           { label: 'Refunds',          value: (s.cancelled || 0).toLocaleString(),               sub: 'Cancelled / refunded' },
         ].map(c => (
-          <div key={c.label} className="bg-white border border-gray-200/80 rounded-2xl p-5">
-            <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-1">{c.label}</p>
-            <p className="text-2xl font-bold text-gray-900">{c.value}</p>
-            <p className="text-[11px] text-gray-400 mt-1">{c.sub}</p>
-          </div>
+          <Card key={c.label}>
+            <p className="text-[11px] font-medium adm-t3 uppercase tracking-wide mb-1">{c.label}</p>
+            <p className="text-2xl font-bold adm-t1">{c.value}</p>
+            <p className="text-[11px] adm-t3 mt-1">{c.sub}</p>
+          </Card>
         ))}
       </div>
-      <div className="bg-white border border-gray-200/80 rounded-2xl p-6">
-        <p className="text-sm font-semibold text-gray-800 mb-1">Revenue trend</p>
-        <p className="text-xs text-gray-400 mb-6">Monthly platform revenue breakdown</p>
+      <Card className="p-6">
+        <p className="text-sm font-semibold adm-t1 mb-1">Revenue trend</p>
+        <p className="text-xs adm-t3 mb-6">Monthly platform revenue breakdown</p>
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
-            <Ic d={IC.activity} size={20} className="text-gray-400" />
+          <div className="w-12 h-12 rounded-2xl bg-[var(--adm-hover)] flex items-center justify-center mb-3">
+            <Ic d={IC.activity} size={20} className="adm-t3" />
           </div>
-          <p className="text-sm font-medium text-gray-600">Trend charts arrive with Analytics</p>
-          <p className="text-[12px] text-gray-400 max-w-xs mt-1">
+          <p className="text-sm font-medium adm-t2">Trend charts arrive with Analytics</p>
+          <p className="text-[12px] adm-t3 max-w-xs mt-1">
             Time-series revenue, GMV and MRR land in the Analytics milestone. Totals above are live.
           </p>
         </div>
-      </div>
+      </Card>
       <div className="flex gap-3">
-        <Link to="/admin/finance/transactions" className="btn btn--outline flex-1 bg-white p-4 hover:shadow-sm transition-all text-center">
-          <p className="font-semibold text-gray-800 text-sm">All Transactions</p>
-          <p className="text-xs text-gray-400 mt-0.5">View full transaction ledger</p>
+        <Link to="/admin/finance/transactions" className="btn btn--outline flex-1 adm-card p-4 hover:shadow-sm transition-all text-center">
+          <p className="font-semibold adm-t1 text-sm">All Transactions</p>
+          <p className="text-xs adm-t3 mt-0.5">View full transaction ledger</p>
         </Link>
-        <Link to="/admin/finance/refunds" className="btn btn--outline flex-1 bg-white p-4 hover:shadow-sm transition-all text-center">
-          <p className="font-semibold text-gray-800 text-sm">Refunds</p>
-          <p className="text-xs text-gray-400 mt-0.5">Manage refund requests</p>
+        <Link to="/admin/finance/refunds" className="btn btn--outline flex-1 adm-card p-4 hover:shadow-sm transition-all text-center">
+          <p className="font-semibold adm-t1 text-sm">Refunds</p>
+          <p className="text-xs adm-t3 mt-0.5">Manage refund requests</p>
         </Link>
-        <Link to="/admin/finance/payouts" className="btn btn--outline flex-1 bg-white p-4 hover:shadow-sm transition-all text-center">
-          <p className="font-semibold text-gray-800 text-sm">Payouts</p>
-          <p className="text-xs text-gray-400 mt-0.5">Approve &amp; release</p>
+        <Link to="/admin/finance/payouts" className="btn btn--outline flex-1 adm-card p-4 hover:shadow-sm transition-all text-center">
+          <p className="font-semibold adm-t1 text-sm">Payouts</p>
+          <p className="text-xs adm-t3 mt-0.5">Approve &amp; release</p>
         </Link>
       </div>
     </div>
@@ -194,24 +151,24 @@ const UsersTab = ({ stats }) => {
           { label: 'Total Hosts',      value: (stats?.vendors || 0).toLocaleString(),  sub: 'Host accounts' },
           { label: 'Total Accounts',   value: ((stats?.users || 0) + (stats?.vendors || 0)).toLocaleString(), sub: 'Combined' },
         ].map(c => (
-          <div key={c.label} className="bg-white border border-gray-200/80 rounded-2xl p-5">
-            <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-1">{c.label}</p>
-            <p className="text-2xl font-bold text-gray-900">{c.value}</p>
-            <p className="text-[11px] text-gray-400 mt-1">{c.sub}</p>
-          </div>
+          <Card key={c.label}>
+            <p className="text-[11px] font-medium adm-t3 uppercase tracking-wide mb-1">{c.label}</p>
+            <p className="text-2xl font-bold adm-t1">{c.value}</p>
+            <p className="text-[11px] adm-t3 mt-1">{c.sub}</p>
+          </Card>
         ))}
       </div>
-      <div className="bg-white border border-gray-200/80 rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <p className="font-semibold text-gray-800 text-sm">Recent Users</p>
+      <Card className="p-0 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b adm-border">
+          <p className="font-semibold adm-t1 text-sm">Recent Users</p>
           <Link to="/admin/users" className="text-[12px] text-[#FE5100] hover:underline font-medium">View all</Link>
         </div>
         {loading ? (
-          <div className="py-10 text-center text-gray-400 text-sm">Loading...</div>
+          <div className="py-10 text-center adm-t3 text-sm">Loading...</div>
         ) : users.length === 0 ? (
           <Empty icon="users" title="No users yet" desc="Users will appear here once they sign up." />
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y adm-border">
             {users.map(u => (
               <div key={u.id} className="flex items-center gap-3 px-5 py-3">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
@@ -219,17 +176,15 @@ const UsersTab = ({ stats }) => {
                   {(u.name || u.email || '?')[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{u.name || '—'}</p>
-                  <p className="text-[11px] text-gray-400 truncate">{u.email}</p>
+                  <p className="text-sm font-medium adm-t1 truncate">{u.name || '—'}</p>
+                  <p className="text-[11px] adm-t3 truncate">{u.email}</p>
                 </div>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${u.is_banned ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-                  {u.is_banned ? 'Banned' : 'Active'}
-                </span>
+                <Badge tone={u.is_banned ? 'danger' : 'ok'}>{u.is_banned ? 'Banned' : 'Active'}</Badge>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };
@@ -266,11 +221,11 @@ const PlanSharePie = ({ distribution }) => {
   const cx = 90, cy = 90, r = 80;
 
   return (
-    <div className="bg-white border border-gray-200/80 rounded-2xl p-5">
-      <p className="text-sm font-semibold text-gray-800 mb-0.5">Plan Share</p>
-      <p className="text-[12px] text-gray-400 mb-4">Hosts by subscription plan</p>
+    <Card>
+      <p className="text-sm font-semibold adm-t1 mb-0.5">Plan Share</p>
+      <p className="text-[12px] adm-t3 mb-4">Hosts by subscription plan</p>
       {total === 0 ? (
-        <div className="py-10 text-center text-[12px] text-gray-400">No hosts on any plan yet.</div>
+        <div className="py-10 text-center text-[12px] adm-t3">No hosts on any plan yet.</div>
       ) : (
         <>
         <div className="flex flex-col sm:flex-row items-center gap-5">
@@ -303,19 +258,19 @@ const PlanSharePie = ({ distribution }) => {
             {data.map((d) => (
               <li key={d.key} className="flex items-center gap-2 text-[12px]">
                 <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: d.color, border: `1px solid ${PIE_BORDER}` }} />
-                <span className="text-gray-600 flex-1">{d.label}</span>
-                <span className="font-semibold text-gray-900 tabular-nums">{d.value}</span>
-                <span className="text-gray-400 tabular-nums w-10 text-right">{total ? Math.round((d.value / total) * 100) : 0}%</span>
+                <span className="adm-t2 flex-1">{d.label}</span>
+                <span className="font-semibold adm-t1 tabular-nums">{d.value}</span>
+                <span className="adm-t3 tabular-nums w-10 text-right">{total ? Math.round((d.value / total) * 100) : 0}%</span>
               </li>
             ))}
           </ul>
         </div>
-        <p className="mt-4 pt-3 border-t border-gray-100 text-[11px] text-gray-500">
-          Largest group: <span className="font-semibold text-gray-700">{PLAN_NAME[top.key]}</span> — {top.value} host{top.value !== 1 ? 's' : ''} ({Math.round((top.value / total) * 100)}%).
+        <p className="mt-4 pt-3 border-t adm-border text-[11px] adm-t3">
+          Largest group: <span className="font-semibold adm-t2">{PLAN_NAME[top.key]}</span> — {top.value} host{top.value !== 1 ? 's' : ''} ({Math.round((top.value / total) * 100)}%).
         </p>
         </>
       )}
-    </div>
+    </Card>
   );
 };
 
@@ -338,11 +293,11 @@ const PlanEarningsBars = ({ planEarnings, bookingEarnings, period, onPeriod }) =
   const hasData = grand > 0;
 
   return (
-    <div className="bg-white border border-gray-200/80 rounded-2xl p-5">
+    <Card>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <p className="text-sm font-semibold text-gray-800 mb-0.5">Earnings by Plan</p>
-          <p className="text-[12px] text-gray-400">Subscription revenue vs booking commission</p>
+          <p className="text-sm font-semibold adm-t1 mb-0.5">Earnings by Plan</p>
+          <p className="text-[12px] adm-t3">Subscription revenue vs booking commission</p>
         </div>
         {onPeriod && (
           <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
@@ -357,12 +312,12 @@ const PlanEarningsBars = ({ planEarnings, bookingEarnings, period, onPeriod }) =
       </div>
 
       <div className="mb-4">
-        <p className="text-2xl font-bold text-gray-900 tabular-nums">{inr(grand)}</p>
-        <p className="text-[11px] text-gray-400">Total platform earnings{period && period !== 'all' ? ' in selected period' : ''}</p>
+        <p className="text-2xl font-bold adm-t1 tabular-nums">{inr(grand)}</p>
+        <p className="text-[11px] adm-t3">Total platform earnings{period && period !== 'all' ? ' in selected period' : ''}</p>
       </div>
 
       {!hasData ? (
-        <div className="flex items-center justify-center text-center text-[12px] text-gray-400" style={{ height: H + 28 }}>
+        <div className="flex items-center justify-center text-center text-[12px] adm-t3" style={{ height: H + 28 }}>
           {period && period !== 'all' ? 'No earnings in this period.' : 'No earnings to show yet.'}
         </div>
       ) : (
@@ -377,7 +332,7 @@ const PlanEarningsBars = ({ planEarnings, bookingEarnings, period, onPeriod }) =
                     const pct = grand ? Math.round((v / grand) * 100) : 0;
                     return (
                       <div key={s.key} className="group relative flex flex-col items-center justify-end" style={{ height: H }}>
-                        <span className="text-[10px] font-semibold text-gray-600 tabular-nums mb-1 whitespace-nowrap">{inr(v)}</span>
+                        <span className="text-[10px] font-semibold adm-t2 tabular-nums mb-1 whitespace-nowrap">{inr(v)}</span>
                         <div className="w-9 rounded-t-md transition-opacity group-hover:opacity-80" style={{ height: h, background: s.color }} />
                         <div className="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 z-10">
                           {s.label}: {inr(v)} ({pct}%)
@@ -386,20 +341,20 @@ const PlanEarningsBars = ({ planEarnings, bookingEarnings, period, onPeriod }) =
                     );
                   })}
                 </div>
-                <span className="mt-2 text-[11px] font-medium text-gray-500 text-center">{g.label}</span>
+                <span className="mt-2 text-[11px] font-medium adm-t3 text-center">{g.label}</span>
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t adm-border">
             {series.map((s) => (
-              <span key={s.key} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+              <span key={s.key} className="flex items-center gap-1.5 text-[11px] adm-t3">
                 <span className="w-2.5 h-2.5 rounded-sm" style={{ background: s.color }} />{s.label}
               </span>
             ))}
           </div>
         </>
       )}
-    </div>
+    </Card>
   );
 };
 
@@ -440,11 +395,11 @@ const ProvidersTab = ({ stats }) => {
           { label: 'Active Services', value: (stats?.services || 0).toLocaleString(), sub: 'Published listings' },
           { label: 'Bookings Made',   value: (stats?.bookings || 0).toLocaleString(), sub: 'All-time' },
         ].map(c => (
-          <div key={c.label} className="bg-white border border-gray-200/80 rounded-2xl p-5">
-            <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-1">{c.label}</p>
-            <p className="text-2xl font-bold text-gray-900">{c.value}</p>
-            <p className="text-[11px] text-gray-400 mt-1">{c.sub}</p>
-          </div>
+          <Card key={c.label}>
+            <p className="text-[11px] font-medium adm-t3 uppercase tracking-wide mb-1">{c.label}</p>
+            <p className="text-2xl font-bold adm-t1">{c.value}</p>
+            <p className="text-[11px] adm-t3 mt-1">{c.sub}</p>
+          </Card>
         ))}
       </div>
 
@@ -454,17 +409,17 @@ const ProvidersTab = ({ stats }) => {
         <PlanEarningsBars planEarnings={analytics?.planEarnings} bookingEarnings={analytics?.bookingEarnings} period={period} onPeriod={setPeriod} />
       </div>
 
-      <div className="bg-white border border-gray-200/80 rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <p className="font-semibold text-gray-800 text-sm">Active Hosts</p>
+      <Card className="p-0 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b adm-border">
+          <p className="font-semibold adm-t1 text-sm">Active Hosts</p>
           <Link to="/admin/providers/active" className="text-[12px] text-[#FE5100] hover:underline font-medium">View all</Link>
         </div>
         {loading ? (
-          <div className="py-10 text-center text-gray-400 text-sm">Loading...</div>
+          <div className="py-10 text-center adm-t3 text-sm">Loading...</div>
         ) : providers.length === 0 ? (
           <Empty icon="building" title="No hosts yet" desc="Hosts will appear here once they register." />
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y adm-border">
             {providers.map(p => (
               <div key={p.id} className="flex items-center gap-3 px-5 py-3">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 bg-blue-500">
@@ -472,19 +427,17 @@ const ProvidersTab = ({ stats }) => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-800 truncate">{p.name || '—'}</p>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${p.is_verified ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
-                      {p.is_verified ? 'Verified' : 'Unverified'}
-                    </span>
+                    <p className="text-sm font-medium adm-t1 truncate">{p.name || '—'}</p>
+                    <Badge tone={p.is_verified ? 'ok' : 'warn'}>{p.is_verified ? 'Verified' : 'Unverified'}</Badge>
                   </div>
-                  <p className="text-[11px] text-gray-400 truncate">@{p.username || p.email}</p>
+                  <p className="text-[11px] adm-t3 truncate">@{p.username || p.email}</p>
                 </div>
-                <span className="text-[11px] text-gray-400 flex-shrink-0 capitalize">{p.plan || 'starter'}</span>
+                <span className="text-[11px] adm-t3 flex-shrink-0 capitalize">{p.plan || 'starter'}</span>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };
@@ -510,34 +463,34 @@ const BookingsTab = ({ stats }) => {
           { label: 'Cancelled', value: (stats?.cancelled  || 0).toLocaleString(), color: 'text-red-600' },
           { label: 'Pending',   value: ((stats?.bookings || 0) - (stats?.confirmed || 0) - (stats?.cancelled || 0)).toLocaleString(), color: 'text-amber-600' },
         ].map(c => (
-          <div key={c.label} className="bg-white border border-gray-200/80 rounded-2xl p-5">
-            <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-1">{c.label}</p>
+          <Card key={c.label}>
+            <p className="text-[11px] font-medium adm-t3 uppercase tracking-wide mb-1">{c.label}</p>
             <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
-          </div>
+          </Card>
         ))}
       </div>
-      <div className="bg-white border border-gray-200/80 rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <p className="font-semibold text-gray-800 text-sm">Recent Bookings</p>
+      <Card className="p-0 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b adm-border">
+          <p className="font-semibold adm-t1 text-sm">Recent Bookings</p>
           <Link to="/admin/bookings" className="text-[12px] text-[#FE5100] hover:underline font-medium">View all</Link>
         </div>
         {loading ? (
-          <div className="py-10 text-center text-gray-400 text-sm">Loading...</div>
+          <div className="py-10 text-center adm-t3 text-sm">Loading...</div>
         ) : bookings.length === 0 ? (
           <Empty icon="calendar" title="No bookings yet" desc="Bookings will appear here once guests start booking." />
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y adm-border">
             {bookings.map(b => {
               const dt = new Date(b.scheduled_at);
               return (
                 <div key={b.id} className="flex items-center gap-3 px-5 py-3">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${STATUS_DOT[b.status] || 'bg-gray-300'}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{b.services?.title || 'Service'}</p>
-                    <p className="text-[11px] text-gray-400">{b.guest_name || b.guest_email} · {dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
+                    <p className="text-sm font-medium adm-t1 truncate">{b.services?.title || 'Service'}</p>
+                    <p className="text-[11px] adm-t3">{b.guest_name || b.guest_email} · {dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-semibold text-gray-800">₹{b.services?.price || 0}</p>
+                    <p className="text-sm font-semibold adm-t1">₹{b.services?.price || 0}</p>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium capitalize
                       ${b.status === 'confirmed' ? 'text-green-700 bg-green-50' : b.status === 'cancelled' ? 'text-red-600 bg-red-50' : 'text-amber-700 bg-amber-50'}`}>
                       {b.status}
@@ -548,7 +501,7 @@ const BookingsTab = ({ stats }) => {
             })}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };
@@ -567,25 +520,25 @@ const PendingTab = ({ ops }) => {
   return (
     <div className="space-y-4">
       {clear && (
-        <div className="bg-white border border-gray-200/80 rounded-2xl p-8 text-center">
+        <Card className="p-8 text-center">
           <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center mx-auto mb-4">
             <Ic d={IC.check} size={22} className="text-green-500" />
           </div>
-          <p className="font-semibold text-gray-800 mb-1">All clear</p>
-          <p className="text-sm text-gray-400 max-w-sm mx-auto">Nothing needs attention right now.</p>
-        </div>
+          <p className="font-semibold adm-t1 mb-1">All clear</p>
+          <p className="text-sm adm-t3 max-w-sm mx-auto">Nothing needs attention right now.</p>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {items.map(item => (
           <Link key={item.key} to={item.to}
-            className="bg-white border border-gray-200/80 rounded-2xl p-5 hover:shadow-sm transition-all flex items-center gap-4 group">
+            className="adm-card rounded-2xl p-5 hover:shadow-sm transition-all flex items-center gap-4 group">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${SEVERITY_STYLE[item.severity] || SEVERITY_STYLE.ok}`}>
               <Ic d={IC.alert} size={16} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-800 text-sm">{item.label}</p>
-              <p className="text-[12px] text-gray-400 mt-0.5">{item.count ? 'Needs attention' : 'Nothing pending'}</p>
+              <p className="font-semibold adm-t1 text-sm">{item.label}</p>
+              <p className="text-[12px] adm-t3 mt-0.5">{item.count ? 'Needs attention' : 'Nothing pending'}</p>
             </div>
             <span className={`text-sm font-bold px-2.5 py-1 rounded-lg flex-shrink-0 ${item.count ? SEVERITY_STYLE[item.severity] : 'text-gray-300 bg-gray-100'}`}>
               {item.count}
@@ -617,18 +570,18 @@ const SuperDashboard = () => {
   return (
     <div>
       {/* Page header */}
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
-          <p className="text-[12px] text-gray-400 mt-0.5">Platform overview and key metrics</p>
-        </div>
-        <div className="text-[11px] text-gray-400 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-          {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-        </div>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Platform overview and key metrics"
+        actions={
+          <div className="text-[11px] adm-t3 adm-card rounded-lg px-3 py-1.5">
+            {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+          </div>
+        }
+      />
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 mb-6 bg-white border border-gray-200/80 rounded-xl p-1 w-fit flex-wrap">
+      <div className="flex items-center gap-1 mb-6 adm-card rounded-xl p-1 w-fit flex-wrap">
         {TABS.map(tab => (
           <button
             key={tab.id}
@@ -636,7 +589,7 @@ const SuperDashboard = () => {
             className={`px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150
               ${activeTab === tab.id
                 ? 'bg-[#FE5100] text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                : 'adm-t2 hover:text-gray-700 hover:bg-gray-50'}`}
           >
             {tab.label}
           </button>
@@ -648,7 +601,7 @@ const SuperDashboard = () => {
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-2 border-[#FE5100] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-400">Loading dashboard...</p>
+            <p className="text-sm adm-t3">Loading dashboard...</p>
           </div>
         </div>
       ) : (

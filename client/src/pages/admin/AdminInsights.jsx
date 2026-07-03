@@ -6,6 +6,7 @@
 // attribution / funnels here — those live in their own tools and rot if cloned.
 import { useState, useEffect } from 'react';
 import { adminGetInsights } from '../../services/api';
+import { PageHeader, Card } from '../../components/admin/ui';
 
 // Native dashboards (open in a new tab). Generic entry URLs — each lands the
 // admin in their own logged-in account; no per-project secrets in the client.
@@ -46,12 +47,12 @@ const delta = (cur, prev) => {
 };
 
 const Tile = ({ label, value, sub, foot }) => (
-  <div className="bg-white rounded-xl border p-5">
-    <p className="text-xs text-gray-400 mb-1">{label}</p>
-    <p className="text-3xl font-bold text-gray-900">{value}</p>
-    {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
+  <Card>
+    <p className="text-xs adm-t3 mb-1">{label}</p>
+    <p className="text-3xl font-bold adm-t1">{value}</p>
+    {sub && <p className="text-xs adm-t2 mt-1">{sub}</p>}
     {foot}
-  </div>
+  </Card>
 );
 
 const AdminInsights = () => {
@@ -66,22 +67,21 @@ const AdminInsights = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="text-center py-16 text-gray-400">Loading insights…</div>;
+  if (loading) return <div className="text-center py-16 adm-t3">Loading insights…</div>;
 
   const revDelta = kpi && delta(kpi.revenue?.last30, kpi.revenue?.prev30);
   const gmvDelta = kpi && delta(kpi.gmv?.last30, kpi.gmv?.prev30);
 
   return (
     <div className="max-w-5xl">
-      <h1 className="text-2xl font-bold mb-1">Marketing & Performance</h1>
-      <p className="text-sm text-gray-400 mb-6">
+      <PageHeader title="Marketing & Performance" subtitle={<>
         Owned KPIs from our database · deep-dive in the native tools below.
         {kpi?.generatedAt && (
-          <span className="ml-1 text-gray-300">
+          <span className="ml-1 adm-t3">
             (as of {new Date(kpi.generatedAt).toLocaleString('en-IN')})
           </span>
         )}
-      </p>
+      </>} />
 
       {error && (
         <div className="mb-6 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded px-4 py-3">
@@ -147,7 +147,7 @@ const AdminInsights = () => {
       )}
 
       {/* ── Launchpad — native tool dashboards ── */}
-      <h2 className="text-sm font-semibold text-gray-700 mb-3">Open a tool</h2>
+      <h2 className="text-sm font-semibold adm-t2 mb-3">Open a tool</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {LAUNCHPAD.map((t) => (
           <a
@@ -155,24 +155,24 @@ const AdminInsights = () => {
             href={t.href}
             target="_blank"
             rel="noreferrer"
-            className="bg-white border rounded-xl p-5 hover:shadow-sm transition-shadow flex items-start gap-3"
+            className="adm-card rounded-xl p-5 hover:shadow-sm transition-shadow flex items-start gap-3"
           >
             <span className="mt-1 w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: t.accent }} />
             <span>
-              <span className="font-semibold flex items-center gap-1">
+              <span className="font-semibold adm-t1 flex items-center gap-1">
                 {t.label}
-                <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 adm-t3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                   <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
                 </svg>
               </span>
-              <span className="block text-xs text-gray-400 mt-0.5">{t.desc}</span>
+              <span className="block text-xs adm-t3 mt-0.5">{t.desc}</span>
             </span>
           </a>
         ))}
       </div>
 
-      <p className="text-xs text-gray-300 mt-6">
+      <p className="text-xs adm-t3 mt-6">
         Traffic sources &amp; the full visitor funnel live in PostHog/GA4 — a native
         in-dashboard view is planned (PostHog query API).
       </p>
