@@ -219,6 +219,20 @@ const AdminServiceCategories = () => {
     [cats, selected]
   );
 
+  const pending = useMemo(
+    () => cats.filter((c) => c.status === 'pending')
+      .sort((a, b) => (a.primary_category || '').localeCompare(b.primary_category || '')),
+    [cats]
+  );
+
+  const moderate = async (cat, status) => {
+    try {
+      await adminUpdateServiceCategory(cat.id, { status });
+      toast.success(status === 'active' ? 'Approved' : 'Rejected');
+      load();
+    } catch { toast.error('Update failed'); }
+  };
+
   const openCreate = () => { setEditing(null); setModalOpen(true); };
   const openEdit = (cat) => { setEditing(cat); setModalOpen(true); };
 
@@ -283,6 +297,26 @@ const AdminServiceCategories = () => {
             <div className="text-2xl font-bold text-gray-900">{Object.keys(countByPrimary).length}</div>
             <div className="text-xs text-gray-500">Professions covered</div>
           </div>
+        </div>
+      )}
+
+      {pending.length > 0 && (
+        <div className="mb-6 border border-amber-200 rounded overflow-hidden">
+          <div className="px-4 py-2 bg-amber-50 text-amber-700 text-sm font-medium">
+            Pending subcategory suggestions ({pending.length})
+          </div>
+          {pending.map((cat) => (
+            <div key={cat.id} className="flex items-center gap-3 px-4 py-2.5 border-t border-amber-100">
+              <span className="flex-1 text-sm">
+                <span className="font-medium text-gray-900">{cat.name}</span>
+                <span className="text-xs text-gray-400"> · {labelFor(cat.primary_category)}</span>
+              </span>
+              <button onClick={() => moderate(cat, 'active')}
+                className="btn text-xs bg-green-600 text-white px-2 py-1 hover:bg-green-700">Approve</button>
+              <button onClick={() => moderate(cat, 'rejected')}
+                className="text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-100">Reject</button>
+            </div>
+          ))}
         </div>
       )}
 
