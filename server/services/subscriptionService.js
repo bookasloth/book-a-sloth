@@ -158,6 +158,18 @@ async function recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, p
   const planPrice = cadence === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0;
   const breakdown = computeSubscriptionBreakdown({ planPrice, gstRate });
 
+  // Guard against UPI-AutoPay mandate-authorization token charges. When a UPI
+  // AutoPay mandate is registered Razorpay captures a ₹1-2 "auth" transaction to
+  // validate it — it is status=paid but is NOT a plan payment. Recording it stamps
+  // the full plan_price against a ₹1 capture, inflating collected revenue (this is
+  // exactly what put a never-paying admin-granted host into "Subscriptions
+  // Collected"). A genuine plan charge always captures at least the plan list price;
+  // an auth token captures a few rupees. Skip anything well below the plan price.
+  const capturedRupees = payment?.amount != null ? Number(payment.amount) / 100 : null;
+  if (capturedRupees != null && planPrice > 0 && capturedRupees + 0.01 < planPrice) {
+    return { recorded: false, reason: `auth/token txn ₹${capturedRupees} < plan ₹${planPrice}` };
+  }
+
   const periodStartIso = unixToIso(rzpSub?.current_start) || new Date().toISOString();
   const periodEndIso = unixToIso(rzpSub?.current_end) ||
     new Date(Date.now() + (cadence === 'monthly' ? 30 : 365) * 24 * 3600 * 1000).toISOString();
