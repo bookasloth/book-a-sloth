@@ -115,6 +115,15 @@ describe('activateFromSubscription', () => {
     });
   });
 
+  test('UPI mandate-auth token charge (amount << plan price) grants access but books no charge', async () => {
+    const { profileUpdate, insert } = wireSupabase({ priorPayment: null, priorCount: 0 });
+    // amount is in paise: ₹1.18 auth token, well below the ₹99 monthly plan price.
+    const r = await svc.activateFromSubscription({ rzpSub: RZP_SUB, rzpPayment: { id: 'pay_auth', amount: 118 } });
+    expect(r.activated).toBe(true);
+    expect(profileUpdate).toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();   // no phantom plan-price row from a ₹1 token
+  });
+
   test('activation without a payment entity grants access but records no charge', async () => {
     const { profileUpdate, insert } = wireSupabase({ priorPayment: null, priorCount: 0 });
     const r = await svc.activateFromSubscription({ rzpSub: RZP_SUB }); // no rzpPayment
