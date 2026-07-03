@@ -50,6 +50,15 @@ const BLOBS = [
 
 const RELEASES = [
   {
+    date: 'Jul 3, 2026', version: 'v3.64',
+    title: 'Reviews you can trust',
+    tags: ['Improved'],
+    points: [
+      'Reviews that break our community guidelines can now be taken down — so the ratings on every profile and service page stay honest and fair.',
+      'Nothing changes for genuine feedback: your real reviews keep showing exactly where they always have.',
+    ],
+  },
+  {
     date: 'Jul 1, 2026', version: 'v3.59',
     title: 'Turn one session into the next',
     tags: ['New', 'Improved'],
