@@ -1177,7 +1177,7 @@ const AdminBookings = () => {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search by Booking ID, phone, or email…"
-          className="w-full pl-10 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-[#FE5100]/25 focus:border-[#FE5100] outline-none transition"
+          className="w-full pl-10 pr-9 py-2.5 adm-card border rounded-xl text-sm adm-t1 placeholder:text-[color:var(--adm-text-3)] focus:ring-2 focus:ring-[#FE5100]/25 focus:border-[#FE5100] outline-none transition"
         />
         {query && (
           <button onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100">

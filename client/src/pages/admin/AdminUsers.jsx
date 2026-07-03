@@ -161,6 +161,7 @@ const AdminUsers = () => {
         <>
           <Table
             rowKey={(u) => u.id}
+            rowClassName={(u) => (u.is_banned ? "bg-[var(--adm-danger-bg)]" : "")}
             empty={
               <div className="px-4 py-12 text-center text-sm adm-t3">
                 No {filter === "all" ? "" : filter + " "}accounts found.
