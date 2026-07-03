@@ -19,6 +19,7 @@ const { supabaseAdmin }             = require('../../config/supabase');
 const hostRoutes                    = require('../../routes/hostRoutes');
 const serviceRoutes                 = require('../../routes/serviceRoutes');
 const { VENDOR_PROFILE, SERVICE }   = require('./helpers');
+const planService                   = require('../../services/planService');
 
 const app = express();
 app.use(express.json());
@@ -216,5 +217,96 @@ describe('PUT /api/services/:id/toggle (toggle active)', () => {
       .put('/api/services/ghost/toggle')
       .set('Authorization', 'Bearer vendor-token');
     expect(res.status).toBe(404);
+  });
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PUT /api/host/categories — profession change de-categorises services (Task 5)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+describe('PUT /api/host/categories (profession change)', () => {
+  // planService caches subscription_plans for 60s in-process; without clearing,
+  // the second test's getLimit() call would skip supabaseAdmin.from('subscription_plans')
+  // entirely, shifting the mock queue by one and breaking the "call order" mocks below.
+  beforeEach(() => planService.clearCache());
+
+  test('changing primary_category clears categorised services and reports count', async () => {
+    supabaseAdmin.from
+      // 1) planService.getLimit → subscription_plans (fallback plans used; no chain needed
+      //    beyond the mock default, but we still consume the .from() call slot explicitly
+      //    so later mockReturnValueOnce calls line up with the controller's real order).
+      .mockReturnValueOnce({
+        select: jest.fn().mockReturnThis(), order: jest.fn().mockResolvedValue({ data: null, error: null }),
+      })
+      // 2) categories → active slugs
+      .mockReturnValueOnce({
+        select: jest.fn().mockReturnThis(), eq: jest.fn().mockResolvedValue({
+          data: [{ slug: 'doctor' }, { slug: 'photographer' }], error: null,
+        }),
+      })
+      // 3) profiles select — prior profession (before)
+      .mockReturnValueOnce({
+        select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: { primary_category: 'photographer' }, error: null }),
+      })
+      // 4) profiles update — new profession (after)
+      .mockReturnValueOnce({
+        update: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: { primary_category: 'doctor', categories: ['doctor'] }, error: null }),
+      })
+      // 5) services update — clears category + primary_category on the host's rows
+      .mockReturnValueOnce({
+        update: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), not: jest.fn().mockReturnThis(),
+        select: jest.fn().mockResolvedValue({ data: [{ id: 's1' }, { id: 's2' }], error: null }),
+      });
+
+    const res = await request(app)
+      .put('/api/host/categories')
+      .set('Authorization', 'Bearer vendor-token')
+      .send({ primary_category: 'doctor', categories: ['doctor'] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.services_cleared).toBe(2);
+    expect(res.body.primary_category).toBe('doctor');
+  });
+
+  test('re-saving the same primary_category clears nothing and does not touch services', async () => {
+    const servicesUpdate = jest.fn();
+    supabaseAdmin.from
+      // 1) planService.getLimit → subscription_plans
+      .mockReturnValueOnce({
+        select: jest.fn().mockReturnThis(), order: jest.fn().mockResolvedValue({ data: null, error: null }),
+      })
+      // 2) categories → active slugs
+      .mockReturnValueOnce({
+        select: jest.fn().mockReturnThis(), eq: jest.fn().mockResolvedValue({
+          data: [{ slug: 'photographer' }], error: null,
+        }),
+      })
+      // 3) profiles select — prior profession (before) — same as after
+      .mockReturnValueOnce({
+        select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: { primary_category: 'photographer' }, error: null }),
+      })
+      // 4) profiles update — unchanged profession
+      .mockReturnValueOnce({
+        update: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: { primary_category: 'photographer', categories: ['photographer'] }, error: null }),
+      })
+      // No 5th queued mock — if the controller calls .from('services') it will fall
+      // through to the default fluent() stub, which we assert against below via
+      // the servicesUpdate spy never having been invoked.
+      .mockImplementation((table) => {
+        if (table === 'services') servicesUpdate();
+        return { select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), update: jest.fn().mockReturnThis(), not: jest.fn().mockReturnThis(), single: jest.fn().mockResolvedValue({ data: null, error: null }) };
+      });
+
+    const res = await request(app)
+      .put('/api/host/categories')
+      .set('Authorization', 'Bearer vendor-token')
+      .send({ primary_category: 'photographer', categories: ['photographer'] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.services_cleared).toBe(0);
+    expect(servicesUpdate).not.toHaveBeenCalled();
   });
 });

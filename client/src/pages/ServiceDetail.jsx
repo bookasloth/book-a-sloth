@@ -458,20 +458,43 @@ const TRUST_SIGNALS = [
     path: 'M13 10V3L4 14h7v7l9-11h-7z' },
 ];
 
-const BookingCard = ({ service, onBookNow, bookingFee = 0 }) => {
+const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, motionOK = true }) => {
   const isFree = service.price === 0;
   const [feeOpen, setFeeOpen] = useState(false);
 
+  // Measure the natural thumbnail height so the collapse animates to a real px
+  // value (CSS can't transition to `auto`). Height is driven by the 16/10
+  // aspect box, so it's known before the image finishes loading.
+  const imgWrapRef = useRef(null);
+  const [imgH, setImgH] = useState(0);
+  useEffect(() => {
+    if (imgWrapRef.current) setImgH(imgWrapRef.current.scrollHeight);
+  }, [service.thumbnail_url]);
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Thumbnail */}
-      {service.thumbnail_url
-        ? <img src={service.thumbnail_url} alt={service.title} className="w-full aspect-[16/10] object-cover"/>
-        : <div className="w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-            <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 16M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-          </div>}
+      {/* Thumbnail — collapses once the reader scrolls past the hero so the
+          booking controls take focus, and restores on scroll-up. */}
+      <div
+        ref={imgWrapRef}
+        aria-hidden={compact}
+        className="overflow-hidden"
+        style={{
+          maxHeight: compact ? 0 : (imgH || 240),
+          opacity: compact ? 0 : 1,
+          transition: motionOK
+            ? 'max-height 280ms cubic-bezier(0.4,0,0.2,1), opacity 200ms ease'
+            : 'none',
+        }}
+      >
+        {service.thumbnail_url
+          ? <img src={service.thumbnail_url} alt={service.title} className="w-full aspect-[16/10] object-cover"/>
+          : <div className="w-full aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+              <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 16M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>}
+      </div>
       <div className="p-5">
         {/* Price + booking fee on one line */}
         <div className="relative flex items-baseline gap-2 mt-2 mb-5">
@@ -728,6 +751,33 @@ export default function ServiceDetail() {
   const [tab, setTab]       = useState('Overview');
   const [feeInfoOpen, setFeeInfoOpen] = useState(false); // mobile fee disclaimer
 
+  // Desktop sidebar polish: collapse the booking-card thumbnail once the reader
+  // scrolls past the hero (IntersectionObserver — no scroll handler), and honour
+  // reduced-motion by skipping the collapse transition.
+  const heroRef = useRef(null);
+  const [heroInView, setHeroInView] = useState(true);
+  const [motionOK, setMotionOK] = useState(true);
+
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([entry]) => setHeroInView(entry.isIntersecting),
+      { rootMargin: '-96px 0px 0px 0px', threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [data]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setMotionOK(!mq.matches);
+    update();
+    mq.addEventListener?.('change', update);
+    return () => mq.removeEventListener?.('change', update);
+  }, []);
+
   useEffect(() => {
     svcGetPublicByProfile(profileSlug, serviceSlug)
       .then(r => {
@@ -816,8 +866,37 @@ export default function ServiceDetail() {
           {/* ── LEFT: Main content ── */}
           <div className="flex-1 min-w-0">
 
-            {/* ── HERO ── theme-derived gradient band */}
-            <section className="rounded-2xl p-6 sm:p-10 mb-6" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--profile-accent, #FE5100) 14%, white), color-mix(in srgb, var(--profile-accent, #FE5100) 4%, white))' }}>
+            {/* ── HERO ── theme-derived gradient band + premium brand accents */}
+            <section ref={heroRef} className="relative isolate overflow-hidden rounded-2xl p-6 sm:p-10 mb-6"
+              style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--profile-accent, #FE5100) 16%, white) 0%, color-mix(in srgb, var(--profile-accent, #FE5100) 6%, white) 48%, color-mix(in srgb, var(--profile-accent, #FE5100) 2%, white) 100%)' }}>
+
+              {/* Decorative brand-derived backdrop — soft glows + abstract accents,
+                  low-opacity, behind all content, auto-adapts to --profile-accent. */}
+              <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+                {/* soft radial highlight, upper-right — adds depth + guides the eye */}
+                <div className="absolute -top-24 -right-16 h-[26rem] w-[26rem] rounded-full blur-3xl"
+                  style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 22%, transparent), transparent 70%)' }}/>
+                {/* faint secondary glow, lower-left */}
+                <div className="absolute -bottom-28 -left-24 h-80 w-80 rounded-full blur-3xl"
+                  style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 12%, transparent), transparent 70%)' }}/>
+                {/* right-corner orbital rings — simplified away on small screens */}
+                <svg className="absolute -top-14 -right-12 hidden h-64 w-64 opacity-20 sm:block"
+                  viewBox="0 0 240 240" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+                  <circle cx="150" cy="96" r="92" stroke="currentColor" strokeWidth="1"/>
+                  <circle cx="150" cy="96" r="62" stroke="currentColor" strokeWidth="1"/>
+                  <circle cx="150" cy="96" r="32" stroke="currentColor" strokeWidth="1"/>
+                  <circle cx="242" cy="96" r="3" fill="currentColor"/>
+                  <circle cx="150" cy="4" r="2.5" fill="currentColor"/>
+                </svg>
+                {/* left-corner faint grid framing — minimal, keeps the text side clean */}
+                <svg className="absolute bottom-6 left-5 hidden h-16 w-16 opacity-[0.12] sm:block"
+                  viewBox="0 0 80 80" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+                  <path d="M0 20H80M0 40H80M0 60H80M20 0V80M40 0V80M60 0V80" stroke="currentColor" strokeWidth="1"/>
+                </svg>
+              </div>
+
+              {/* Content — above the decorative layer */}
+              <div className="relative z-10">
               {/* Eyebrow — category · session type */}
               {eyebrow && (
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">{eyebrow}</p>
@@ -886,6 +965,7 @@ export default function ServiceDetail() {
                   </div>
                 </div>
               )}
+              </div>
             </section>
 
             {/* Important note */}
@@ -963,7 +1043,7 @@ export default function ServiceDetail() {
           {/* ── RIGHT: Sticky sidebar ── */}
           <div className="hidden lg:block lg:w-[320px] flex-shrink-0 lg:mt-[64px]">
             <div className="sticky top-20 flex flex-col gap-5">
-              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee}/>
+              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} compact={!heroInView} motionOK={motionOK}/>
               <AdSpaceCard/>
               {/* Hidden for now — keep for later
               <SponsoredCard/>

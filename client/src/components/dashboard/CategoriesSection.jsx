@@ -50,7 +50,14 @@ const CategoriesSection = ({ plan, onSaved }) => {
     setSaving(true);
     try {
       const { data } = await hostUpdateCategories({ primary_category: primary, categories: selected });
-      toast.success('Categories saved');
+      if (data?.services_cleared > 0) {
+        toast.success(
+          `Profession updated. ${data.services_cleared} of your services ${data.services_cleared === 1 ? 'needs' : 'need'} a new category. Edit them to pick one.`,
+          { duration: 6000 }
+        );
+      } else {
+        toast.success('Categories saved');
+      }
       onSaved?.(data);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not save categories');

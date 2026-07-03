@@ -17,7 +17,7 @@
 const { buildUrlset, buildSitemapIndex, paginate } = require('../utils/sitemapXml');
 const { sitemapCache } = require('../utils/sitemapCache');
 const {
-  trimSlash, staticEntries, hostEntries, serviceEntries, fetchHosts, fetchServices,
+  trimSlash, staticEntries, hostEntries, serviceEntries, professionEntries, fetchHosts, fetchServices, fetchProfessions,
 } = require('../services/sitemapService');
 const { logger } = require('../utils/logger');
 
@@ -33,11 +33,12 @@ const loadEntries = async () => {
   if (cached) return cached;
 
   const site = getSiteUrl();
-  const [hosts, services] = await Promise.all([fetchHosts(), fetchServices()]);
+  const [hosts, services, professions] = await Promise.all([fetchHosts(), fetchServices(), fetchProfessions()]);
   const value = {
     pages: staticEntries(site),
     hosts: hostEntries(hosts, site),
     services: serviceEntries(services, site),
+    professions: professionEntries(professions, site),
   };
   sitemapCache.set('__entries', value);
   return value;
@@ -78,11 +79,14 @@ const sitemapIndex = (req, res) => serveCached(req, res, (entries) => {
   const children = [{ loc: `${site}/sitemap-pages.xml`, lastmod: newestLastmod(entries.pages) }];
   hostPages.forEach((pg, i) => children.push({ loc: `${site}/sitemap-hosts-${i + 1}.xml`, lastmod: newestLastmod(pg) }));
   servicePages.forEach((pg, i) => children.push({ loc: `${site}/sitemap-services-${i + 1}.xml`, lastmod: newestLastmod(pg) }));
+  children.push({ loc: `${site}/sitemap-professions.xml`, lastmod: newestLastmod(entries.professions) });
 
   return buildSitemapIndex(children);
 });
 
 const sitemapPages = (req, res) => serveCached(req, res, (entries) => buildUrlset(entries.pages));
+
+const sitemapProfessions = (req, res) => serveCached(req, res, (entries) => buildUrlset(entries.professions));
 
 // page param comes from the regex route (group 1); defaults to 1. Out-of-range -> 404.
 const childPage = (collection) => (req, res) => serveCached(req, res, (entries) => {
@@ -97,6 +101,7 @@ module.exports = {
   sitemapPages,
   sitemapHosts: childPage('hosts'),
   sitemapServices: childPage('services'),
+  sitemapProfessions,
   PER_SITEMAP,
   getSiteUrl,
   loadEntries,

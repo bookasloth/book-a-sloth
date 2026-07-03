@@ -62,6 +62,8 @@ One service per row. Services belong to a host.
 | thumbnail_url | TEXT | Cloudinary URL |
 | grace_period_minutes | INTEGER | Default 10 — overlap buffer |
 | slug | TEXT | URL slug — **globally unique** (see Indexes below) |
+| category | TEXT | Service category slug (v3.22); paired with `primary_category` since v3.60 |
+| primary_category | TEXT | Host's profession at time of categorisation (v3.60, PENDING both DBs); NULL unless `category` is also set |
 | is_active | BOOLEAN | Default true |
 | included_items | JSONB | v2 — what's included |
 | excluded_items | JSONB | v2 — what's not included |
@@ -76,10 +78,37 @@ One service per row. Services belong to a host.
 **Indexes:**
 - `UNIQUE (host_id, slug)` — `services_host_slug_idx`
 - `UNIQUE (slug)` — `services_slug_unique_idx` (slug is **globally unique**; two hosts cannot share a slug, even across different hosts)
+- `idx_services_prof_cat (primary_category, category) WHERE category IS NOT NULL` — v3.60, PENDING both DBs
+
+**Constraints (v3.60, PENDING both DBs):**
+- `fk_services_category FOREIGN KEY (primary_category, category) REFERENCES service_categories(primary_category, slug) ON UPDATE CASCADE ON DELETE RESTRICT` — composite FK; makes cross-profession `(category, primary_category)` pairings unrepresentable. `ON UPDATE CASCADE` repoints services when an admin renames a slug; `ON DELETE RESTRICT` backstops the app-side "in use" 409.
+- `chk_category_pair CHECK ((category IS NULL) = (primary_category IS NULL))` — closes the `MATCH SIMPLE` hole (a composite FK ignores rows where any column is NULL): both columns are NULL together or set together.
 
 **RLS:**
 - SELECT: `is_active = true`
 - INSERT/UPDATE/DELETE: `auth.uid() = host_id`
+
+---
+
+### service_categories
+Profession-scoped service category catalog (v3.53). One row per (profession, slug) pair; `slug` is the value stored on `services.category`.
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID PK | |
+| primary_category | TEXT | Profession slug this category belongs to |
+| slug | TEXT | Category slug (unique per profession) |
+| name | TEXT | Display label |
+| display_order | INTEGER | NOT NULL DEFAULT 0 -- sort position within the profession (v3.53) |
+| is_active | BOOLEAN | NOT NULL DEFAULT true -- inactive rows hidden from picker + public pages (v3.53) |
+| description | TEXT | v3.60, PENDING both DBs — SEO copy for `/services/:profession` |
+| icon | TEXT | v3.60, PENDING both DBs — icon key for `professionIcons.js` |
+| created_at | TIMESTAMPTZ | |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT now() (v3.53) |
+
+**Constraints (v3.60, PENDING both DBs):**
+- `fk_sc_primary FOREIGN KEY (primary_category) REFERENCES categories(slug) ON UPDATE CASCADE ON DELETE RESTRICT` — a category's profession must be a real, live profession.
+
+**Seed:** `server/config/serviceCategorySeed.js` (10 professions, entries as `string | {name, description}`) via `server/scripts/seedServiceCategories.js`; gap-fills `description` where NULL — re-run on both DBs after v3.60 applies.
 
 ---
 
@@ -268,6 +297,7 @@ Key-value store for admin-configurable platform settings.
 | v2.8 | **Financial ledger P1:** `chart_of_accounts` (12 seeded), `journal_entries`, `journal_lines`, `ledger_entries`, `account_balances`, `subscription_payments`; +10 `bookings` columns; `post_journal_entry(jsonb)` RPC; all RLS deny-all (applied live) |
 | v2.8.1 | Ledger hardening: ordered account locks, idempotency-race handling, journal/ledger immutability triggers, ledger amount CHECK (applied live) |
 | v2.8.2 | Partial unique index on `subscription_payments.razorpay_payment_id` (applied live) |
+| v3.60 | **Service category integrity** (`v3.60_service_category_integrity.sql`) — `services.primary_category` + composite FK `fk_services_category` → `service_categories(primary_category, slug)`; CHECK `chk_category_pair`; FK `fk_sc_primary` on `service_categories.primary_category` → `categories(slug)`; partial index `idx_services_prof_cat`; `service_categories.description`/`.icon`; backfill + orphan cleanup. **PENDING both DBs** |
 
 ---
 

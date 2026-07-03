@@ -203,6 +203,10 @@ export const adminReorderServiceCategories = (rows)       => API.put('/admin/ser
 // Profession-scoped: pass the host's primary_category slug to get its service list.
 export const listServiceCategories         = (primary)    => API.get('/service-categories', { params: primary ? { primary } : {} });
 
+// ── Services Directory (public SEO — /services, /services/:profession) ──
+export const getServicesDirectory   = ()     => API.get('/services-directory');
+export const getProfessionServices  = (slug) => API.get(`/services-directory/${slug}`);
+
 export const hostGetCategories      = ()         => API.get('/host/categories');
 export const hostUpdateCategories   = (payload)  => API.put('/host/categories', payload);
 export const adminSetUserCategories = (id, data) => API.patch(`/admin/users/${id}/categories`, data);

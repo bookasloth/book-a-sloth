@@ -179,3 +179,17 @@
 - **Dependencies:** `communicationEngine` (email queue/Resend), `aisensyService` (WhatsApp), `notificationEngine.logResult`
 - **Reference:** `docs/communication-campaigns-architecture.md`; **guides:** `docs/guides/email-campaigns.md`, `whatsapp-campaigns.md`, `aisensy-onboarding.md`, `segments-and-consent.md`
 - **Related:** Email Communication Engine, Notification System
+
+---
+
+## 17. Service Categories — redesign (branch `feat/service-categories`)
+**Purpose:** Profession-scoped categories for services; each service stores a validated `(category, primary_category)` pair, feeding both host UX and public SEO landing pages.
+- **Primary (server):** `server/lib/serviceCategory.js` (`resolveAndValidateCategory` → `{ok,value,primary}`), `serviceCategoryController.js` (admin CRUD + cached public list), `servicesDirectoryController.js` (SEO landing payloads), `exploreController.js` (`listVendors`)
+- **Writers (both stamp the pair, with 42703 schema fallback):** `serviceController.js` (`/api/services`), `hostController.js` (`/api/host/services`, `PUT /api/host/categories` — profession change de-categorises services and returns `services_cleared`)
+- **Routes:** `/api/service-categories/*` (public, cached `svccat:`), `/api/admin/service-categories/*` (admin, 4 mutations bust `svccat:`+`svcdir:`+sitemap cache), `/api/services-directory` + `/api/services-directory/:profession` (cached `svcdir:`), `/api/explore` (`category`/`service` params — `service` requires `category` else 400)
+- **Client:** `ServiceCategoryPicker` (dashboard `ServiceForm` + onboarding `FirstServiceStep`), `CategoriesSection.jsx` (profile settings, shows `services_cleared` toast), `Explore.jsx` (live listing + service filter chip, stale-response guard), `ServicesDirectory.jsx` (`/services`) + `ProfessionServices.jsx` (`/services/:profession`) with `ServiceCategoryCard` + `professionIcons.js`
+- **DB Tables:** `services` (`category`, `primary_category`), `service_categories` (`primary_category`, `slug`, `name`, `description`, `icon`)
+- **Migration:** `v3.60_service_category_integrity.sql` — composite FK + CHECK + SEO columns. **PENDING both DBs**
+- **Seed:** `server/config/serviceCategorySeed.js` + `server/scripts/seedServiceCategories.js` (gap-fills `description`; re-run after v3.60)
+- **SEO:** `/sitemap-professions.xml` sitemap-index child (`sitemapController.js`)
+- **Related:** Service Management, Host Dashboard, SEO + Sitemap
