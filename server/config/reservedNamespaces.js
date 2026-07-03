@@ -75,7 +75,49 @@ const STATUS = [
   'offline', 'maintenance', 'waitlist',
 ];
 
-const CATEGORIES = { ROUTES, INFRA, FUTURE, ACCOUNT, BRAND, SHORT, HAZARD, STATUS };
+// Corporate / org-chart roles — impersonation guard for "the company".
+const CORP = [
+  'owner', 'founder', 'cofounder', 'co-founder', 'ceo', 'cto', 'cfo', 'coo',
+  'employee', 'manager', 'superuser', 'sysadmin',
+];
+
+// Marketplace role nouns (parity with existing host/guest/vendor in BRAND).
+const ROLES = ['provider', 'client', 'customer', 'customerservice', 'member', 'members'];
+
+// Account / auth / config surface nouns not covered by ACCOUNT above.
+const ACCOUNT_EXTRA = [
+  'verification', 'authentication', 'profiles', 'password', 'reset',
+  'forgot-password', 'forgotpassword', 'registration', 'preferences',
+  'config', 'configuration', 'panel', 'console', 'portal',
+];
+
+// Ops / observability surfaces.
+const OPS = [
+  'monitor', 'logs', 'analytics', 'reports', 'report', 'finance', 'trust', 'safety',
+];
+
+// Communication surfaces.
+const COMMS = ['messages', 'inbox', 'outbox', 'news', 'updates', 'calendar', 'documentation'];
+
+// Mail / transport protocol handles (extends INFRA).
+const PROTO = ['ftp', 'smtp', 'imap', 'pop3'];
+
+// Legal / compliance handles (extends FUTURE legal set).
+const LEGAL = ['gdpr', 'cookie'];
+
+// Non-prod environment handles — never a public username.
+const ENVS = ['dev', 'staging', 'test', 'beta', 'sandbox', 'demo'];
+
+// Additional literal / anonymity hazards (extends HAZARD).
+const HAZARD_EXTRA = ['anonymous', 'unknown', 'default'];
+
+// Current + future product brands (impersonation guard).
+const PRODUCTS = ['timewheel'];
+
+const CATEGORIES = {
+  ROUTES, INFRA, FUTURE, ACCOUNT, BRAND, SHORT, HAZARD, STATUS,
+  CORP, ROLES, ACCOUNT_EXTRA, OPS, COMMS, PROTO, LEGAL, ENVS, HAZARD_EXTRA, PRODUCTS,
+};
 
 // Normalized set of every L1 reserved name.
 const RESERVED_SET = new Set(
