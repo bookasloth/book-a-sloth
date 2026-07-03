@@ -272,17 +272,24 @@ describe('GET /api/service-categories (public)', () => {
     expect(res.body.categories[0].slug).toBe('wedding-photography');
   });
 
-  test('second request for the same primary is served from cache (single DB hit)', async () => {
+  test('second request for the same primary is served from cache (no DB hit)', async () => {
+    // Cold path now makes >1 DB read (service_categories list + categories
+    // allow_subcategory_suggestions flag). The invariant under test is that the
+    // SECOND request is a cache hit — zero further DB access — so we clear the
+    // call count after the cold request and assert the cached one touches no DB.
     const active = [{ id: 'cat-1', name: 'Wedding Photography', slug: 'wedding-photography', primary_category: 'photographer' }];
+    // Cold path reads the service_categories list (this stub) plus the
+    // categories allow_subcategory_suggestions flag (default from() mock).
     supabaseAdmin.from.mockReturnValueOnce(awaitable({ data: active, error: null }));
 
     const res1 = await request(app).get('/api/service-categories?primary=photographer');
+    supabaseAdmin.from.mockClear();
     const res2 = await request(app).get('/api/service-categories?primary=photographer');
 
     expect(res1.status).toBe(200);
     expect(res2.status).toBe(200);
     expect(res2.body.categories[0].slug).toBe('wedding-photography');
-    expect(supabaseAdmin.from).toHaveBeenCalledTimes(1);
+    expect(supabaseAdmin.from).not.toHaveBeenCalled();
   });
 });
 
