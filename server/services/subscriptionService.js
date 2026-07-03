@@ -45,13 +45,16 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
   }
 
   const plan = await planService.getPlan(planSlug);
-  const { gstRate } = await platformConfig.getConfig();
-  const planPrice = cadence === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0;
-  const breakdown = computeSubscriptionBreakdown({ planPrice, gstRate });
+
+  // First charge for this subscription → initial (drives the purchase email);
+  // later charges → renewal. Read before recording so the new row doesn't skew it.
+  const { count: priorCount } = await supabaseAdmin
+    .from('subscription_payments').select('id', { count: 'exact', head: true })
+    .eq('razorpay_subscription_id', rzpSub.id);
+  const isInitial = (priorCount || 0) === 0;
 
   let periodEndIso = unixToIso(rzpSub.current_end) ||
     new Date(Date.now() + (cadence === 'monthly' ? 30 : 365) * 24 * 3600 * 1000).toISOString();
-  const periodStartIso = unixToIso(rzpSub.current_start) || new Date().toISOString();
   const nowIso = new Date().toISOString();
 
   // Never shrink access below what's already granted — a switch grants free
@@ -62,12 +65,6 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
   if (existing?.plan_expires_at && new Date(existing.plan_expires_at) > new Date(periodEndIso)) {
     periodEndIso = existing.plan_expires_at;
   }
-
-  // First charge for this subscription → initial; later charges → renewal.
-  const { count: priorCount } = await supabaseAdmin
-    .from('subscription_payments').select('id', { count: 'exact', head: true })
-    .eq('razorpay_subscription_id', rzpSub.id);
-  const kind = (priorCount || 0) === 0 ? 'initial' : 'renewal';
 
   // Grant / extend access (idempotent — safe to repeat).
   await supabaseAdmin.from('profiles').update({
@@ -83,49 +80,20 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
   }).eq('id', vendorId);
 
   // Record the charge + ledger entry (only when a payment entity is present).
+  // A missing payment entity (e.g. subscription.activated) grants access but
+  // books no money — recordSubscriptionCharge / the reconciler backfill handles
+  // the actual charge when the invoice/payment surfaces.
   if (paymentId) {
-    // Gateway fee+tax — PLATFORM-borne for subscriptions (PRD §5.3).
-    let feeTotal = 0, tax = 0;
-    try {
-      const razorpay = await require('./razorpaySubscriptions').getClient();
-      const pmt = await razorpay.payments.fetch(paymentId);
-      if (pmt?.fee != null) feeTotal = Number(pmt.fee) / 100;
-      if (pmt?.tax != null) tax = Number(pmt.tax) / 100;
-    } catch (e) { console.error('subscription fee fetch failed (recorded 0):', e.message); }
-    tax = Math.min(tax, feeTotal);
-    const feeExcl = Math.max(0, Math.round((feeTotal - tax) * 100) / 100);
-
-    const { data: subPayment, error: subErr } = await supabaseAdmin
-      .from('subscription_payments').insert({
-        vendor_id: vendorId, plan_type: planSlug,
-        plan_price: breakdown.planPrice, gst_amount: breakdown.gstAmount, total_charged: breakdown.totalCharged,
-        razorpay_fee: feeExcl, razorpay_tax: tax,
-        razorpay_payment_id: paymentId, razorpay_order_id: rzpPayment?.order_id || null,
-        razorpay_subscription_id: rzpSub.id, billing_cadence: cadence, kind,
-        paid_at: nowIso, revenue_recognized_at: nowIso,
-        billing_period_start: periodStartIso.slice(0, 10),
-        billing_period_end: periodEndIso.slice(0, 10),
-        status: 'paid',
-      }).select().single();
-
-    if (subErr) {
-      if (subErr.code === '23505' || /duplicate key|unique constraint/i.test(subErr.message || '')) {
-        return { activated: true, reason: 'duplicate payment (raced)' };
-      }
-      console.error('subscription_payments insert failed:', subErr.message);
-    } else {
-      try {
-        const { subscriptionPaymentEntry } = require('./ledger/journalTemplates');
-        const { postSafe } = require('./ledger/postingService');
-        await postSafe({
-          sourceType: 'SUBSCRIPTION_PAYMENT', sourceId: subPayment.id,
-          journalDate: nowIso.slice(0, 10), template: subscriptionPaymentEntry(subPayment),
-        });
-      } catch (e) { console.error('subscription ledger error (non-fatal):', e.message); }
-    }
+    let fetched = null;
+    // Fetch the full payment so fee/tax are present (webhook payloads may omit).
+    try { fetched = await require('./razorpaySubscriptions').fetchPayment(paymentId); }
+    catch (e) { console.error('subscription payment fetch failed (using webhook entity):', e.message); }
+    // Merge so id/order survive even if a mock/partial fetch omits them.
+    const payment = { ...(rzpPayment || {}), ...(fetched || {}), id: paymentId, order_id: fetched?.order_id || rzpPayment?.order_id || null };
+    await recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, payment });
   }
 
-  if (kind === 'initial') {
+  if (isInitial) {
     try {
       const { data: prof } = await supabaseAdmin.from('profiles').select('name, email').eq('id', vendorId).single();
       NotificationEngine.send({
@@ -145,19 +113,134 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
   // Auto-renew analytics. Renewal charges flow ONLY through this path (webhook /
   // reconciler), never the verify endpoint — so a dedicated event can't overlap
   // the verify path's `subscription_purchased` and never double-counts.
-  if (paymentId && kind === 'renewal') {
+  if (paymentId && !isInitial) {
+    const { gstRate } = await platformConfig.getConfig();
+    const planPrice = cadence === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0;
+    const total = computeSubscriptionBreakdown({ planPrice, gstRate }).totalCharged;
     trackServer(vendorId, 'subscription_renewed', {
       plan: planSlug,
       cadence,
       expires_at: periodEndIso,
     }, {
-      value: Number(breakdown?.totalCharged) || 0,
+      value: Number(total) || 0,
       currency: 'INR',
       eventId: paymentId,   // de-dupe (renewals have no browser pixel, but keep stable)
     });
   }
 
   return { activated: true };
+}
+
+/**
+ * Record a single subscription charge (idempotent on razorpay_payment_id) +
+ * post its ledger entry. Shared by activateFromSubscription (webhook) and the
+ * reconciler backfill so the money logic lives in exactly one place.
+ *
+ * @param {object} p
+ * @param {string} p.vendorId
+ * @param {string} p.planSlug
+ * @param {string} p.cadence     'monthly' | 'annual'
+ * @param {object} p.rzpSub      Razorpay subscription entity (id, current_start/end)
+ * @param {object} p.payment     Razorpay payment entity (id, order_id, fee/tax in paise)
+ * @returns {Promise<{recorded:boolean, reason?:string}>}
+ */
+async function recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, payment }) {
+  const paymentId = payment?.id || null;
+  if (!paymentId) return { recorded: false, reason: 'no payment id' };
+
+  // Idempotency: skip if this exact charge already booked.
+  const { data: prior } = await supabaseAdmin
+    .from('subscription_payments').select('id').eq('razorpay_payment_id', paymentId).maybeSingle();
+  if (prior) return { recorded: false, reason: 'already recorded' };
+
+  const plan = await planService.getPlan(planSlug);
+  const { gstRate } = await platformConfig.getConfig();
+  const planPrice = cadence === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0;
+  const breakdown = computeSubscriptionBreakdown({ planPrice, gstRate });
+
+  const periodStartIso = unixToIso(rzpSub?.current_start) || new Date().toISOString();
+  const periodEndIso = unixToIso(rzpSub?.current_end) ||
+    new Date(Date.now() + (cadence === 'monthly' ? 30 : 365) * 24 * 3600 * 1000).toISOString();
+  // Prefer the real capture time; fall back to now.
+  const paidIso = payment?.created_at ? new Date(Number(payment.created_at) * 1000).toISOString() : new Date().toISOString();
+
+  // First charge for this subscription → initial; later → renewal.
+  const { count: priorCount } = await supabaseAdmin
+    .from('subscription_payments').select('id', { count: 'exact', head: true })
+    .eq('razorpay_subscription_id', rzpSub.id);
+  const kind = (priorCount || 0) === 0 ? 'initial' : 'renewal';
+
+  // Gateway fee+tax — PLATFORM-borne for subscriptions (PRD §5.3). Paise → rupees.
+  let feeTotal = 0, tax = 0;
+  if (payment?.fee != null) feeTotal = Number(payment.fee) / 100;
+  if (payment?.tax != null) tax = Number(payment.tax) / 100;
+  tax = Math.min(tax, feeTotal);
+  const feeExcl = Math.max(0, Math.round((feeTotal - tax) * 100) / 100);
+
+  const { data: subPayment, error: subErr } = await supabaseAdmin
+    .from('subscription_payments').insert({
+      vendor_id: vendorId, plan_type: planSlug,
+      plan_price: breakdown.planPrice, gst_amount: breakdown.gstAmount, total_charged: breakdown.totalCharged,
+      razorpay_fee: feeExcl, razorpay_tax: tax,
+      razorpay_payment_id: paymentId, razorpay_order_id: payment?.order_id || null,
+      razorpay_subscription_id: rzpSub.id, billing_cadence: cadence, kind,
+      paid_at: paidIso, revenue_recognized_at: paidIso,
+      billing_period_start: periodStartIso.slice(0, 10),
+      billing_period_end: periodEndIso.slice(0, 10),
+      status: 'paid',
+    }).select().single();
+
+  if (subErr) {
+    if (subErr.code === '23505' || /duplicate key|unique constraint/i.test(subErr.message || '')) {
+      return { recorded: false, reason: 'duplicate (raced)' };
+    }
+    console.error('subscription_payments insert failed:', subErr.message);
+    return { recorded: false, reason: subErr.message };
+  }
+
+  try {
+    const { subscriptionPaymentEntry } = require('./ledger/journalTemplates');
+    const { postSafe } = require('./ledger/postingService');
+    await postSafe({
+      sourceType: 'SUBSCRIPTION_PAYMENT', sourceId: subPayment.id,
+      journalDate: paidIso.slice(0, 10), template: subscriptionPaymentEntry(subPayment),
+    });
+  } catch (e) { console.error('subscription ledger error (non-fatal):', e.message); }
+
+  return { recorded: true };
+}
+
+/**
+ * Backfill EVERY paid invoice of a subscription that isn't yet booked. Heals
+ * subscriptions whose charge was never recorded (activation granted access via
+ * subscription.activated, but the subscription.charged webhook that carries the
+ * payment was missed). Idempotent — recordSubscriptionCharge skips existing rows.
+ *
+ * @param {object} rzpSub Razorpay subscription entity (notes.vendor_id/plan/cadence)
+ * @returns {Promise<{recorded:number}>}
+ */
+async function backfillSubscriptionPayments(rzpSub) {
+  const notes = rzpSub?.notes || {};
+  const vendorId = notes.vendor_id;
+  const planSlug = planService.normalizeSlug(notes.plan);
+  const cadence = normCadence(notes.cadence) || 'monthly';
+  if (!vendorId || !notes.plan) return { recorded: 0 };
+
+  const razorpaySubscriptions = require('./razorpaySubscriptions');
+  let invoices = [];
+  try { invoices = await razorpaySubscriptions.fetchSubscriptionInvoices(rzpSub.id); }
+  catch (e) { console.error('backfill invoices fetch failed', rzpSub.id, e.message); return { recorded: 0 }; }
+
+  let recorded = 0;
+  for (const inv of invoices) {
+    if (inv.status !== 'paid' || !inv.payment_id) continue;
+    let payment = { id: inv.payment_id, order_id: inv.order_id || null };
+    try { payment = await razorpaySubscriptions.fetchPayment(inv.payment_id); }
+    catch (e) { console.error('backfill payment fetch failed', inv.payment_id, e.message); }
+    const r = await recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, payment });
+    if (r.recorded) recorded++;
+  }
+  return { recorded };
 }
 
 /** subscription.halted — repeated charge failure. Keep plan flag, mark halted. */
@@ -179,4 +262,4 @@ async function markCancelled(rzpSub) {
     .eq('razorpay_subscription_id', rzpSub.id);
 }
 
-module.exports = { activateFromSubscription, markHalted, markCancelled, ACTIVE_STATES };
+module.exports = { activateFromSubscription, recordSubscriptionCharge, backfillSubscriptionPayments, markHalted, markCancelled, ACTIVE_STATES };

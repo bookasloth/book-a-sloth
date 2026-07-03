@@ -16,6 +16,7 @@ jest.mock('../../services/razorpaySubscriptions', () => ({
 }));
 jest.mock('../../services/subscriptionService', () => ({
   activateFromSubscription: jest.fn(() => Promise.resolve({ activated: true })),
+  backfillSubscriptionPayments: jest.fn(() => Promise.resolve({ recorded: 0 })),
   markHalted: jest.fn(() => Promise.resolve()),
   markCancelled: jest.fn(() => Promise.resolve()),
   ACTIVE_STATES: ['active', 'authenticated'],
@@ -27,10 +28,19 @@ const subscriptionService = require('../../services/subscriptionService');
 
 // Wire profiles (pending scan returns `rows`; captures profiles.update) and the
 // platform_settings status read/write the reconciler records at the end.
-const wire = (rows, { priorStatus = null } = {}) => {
+const wire = (rows, { priorStatus = null, activeRows = [], subPayCount = 1 } = {}) => {
   const updates = [];
   updates.status = [];   // captured platform_settings status upserts (parsed)
+  let profilesCall = 0;
   supabaseAdmin.from.mockImplementation((table) => {
+    if (table === 'subscription_payments') {
+      // Count query used by the missing-payment second pass.
+      const c = {};
+      c.select = jest.fn(() => c);
+      c.eq = jest.fn(() => c);
+      c.then = (resolve) => resolve({ count: subPayCount, data: [], error: null });
+      return c;
+    }
     if (table === 'platform_settings') {
       const c = {};
       c.select = jest.fn(() => c);
@@ -41,10 +51,12 @@ const wire = (rows, { priorStatus = null } = {}) => {
     }
     if (table !== 'profiles') throw new Error(`unexpected table ${table}`);
     const c = {};
+    // First profiles scan = pending pass (rows); second = active pass (activeRows).
+    const which = profilesCall++ === 0 ? rows : activeRows;
     c.select = jest.fn(() => c);
     c.eq = jest.fn(() => c);
     c.not = jest.fn(() => c);
-    c.limit = jest.fn(() => Promise.resolve({ data: rows, error: null }));
+    c.limit = jest.fn(() => Promise.resolve({ data: which, error: null }));
     c.update = jest.fn((payload) => {
       const chain = { eq: jest.fn((_, id) => { updates.push({ id, payload }); return Promise.resolve({ error: null }); }) };
       return chain;
@@ -70,7 +82,7 @@ describe('subscriptionReconciler — orphan cleanup', () => {
     expect(razorpaySubscriptions.cancelSubscription).toHaveBeenCalledWith('sub_OLD', false);
     expect(updates).toHaveLength(1);
     expect(updates[0]).toMatchObject({ id: 'v1', payload: { subscription_status: 'cancelled', razorpay_subscription_id: null } });
-    expect(r).toEqual({ healed: 0, released: 1 });
+    expect(r).toEqual({ healed: 0, released: 1, recorded: 0 });
   });
 
   test('recent pre-auth mandate (inside grace window) is left pending', async () => {
@@ -82,7 +94,7 @@ describe('subscriptionReconciler — orphan cleanup', () => {
 
     expect(razorpaySubscriptions.cancelSubscription).not.toHaveBeenCalled();
     expect(updates).toHaveLength(0);
-    expect(r).toEqual({ healed: 0, released: 0 });
+    expect(r).toEqual({ healed: 0, released: 0, recorded: 0 });
   });
 
   test('subscription Razorpay cannot find is released WITHOUT a cancel call', async () => {
@@ -97,7 +109,7 @@ describe('subscriptionReconciler — orphan cleanup', () => {
     expect(razorpaySubscriptions.cancelSubscription).not.toHaveBeenCalled();
     expect(updates).toHaveLength(1);
     expect(updates[0].payload).toMatchObject({ subscription_status: 'cancelled', razorpay_subscription_id: null });
-    expect(r).toEqual({ healed: 0, released: 1 });
+    expect(r).toEqual({ healed: 0, released: 1, recorded: 0 });
   });
 
   test('transient fetch error leaves the row pending (no release)', async () => {
@@ -108,7 +120,7 @@ describe('subscriptionReconciler — orphan cleanup', () => {
     const r = await reconcile();
 
     expect(updates).toHaveLength(0);
-    expect(r).toEqual({ healed: 0, released: 0 });
+    expect(r).toEqual({ healed: 0, released: 0, recorded: 0 });
   });
 
   test('records a status summary with the cumulative released total', async () => {
@@ -135,6 +147,29 @@ describe('subscriptionReconciler — orphan cleanup', () => {
 
     expect(subscriptionService.activateFromSubscription).toHaveBeenCalledWith({ rzpSub: { id: 'sub_OK', status: 'active' } });
     expect(razorpaySubscriptions.cancelSubscription).not.toHaveBeenCalled();
-    expect(r).toEqual({ healed: 1, released: 0 });
+    expect(r).toEqual({ healed: 1, released: 0, recorded: 0 });
+  });
+
+  test('active sub with NO booked charge is backfilled from Razorpay', async () => {
+    // No pending rows; one active sub whose subscription_payments count is 0.
+    wire([], { activeRows: [{ id: 'v9', razorpay_subscription_id: 'sub_UNBOOKED' }], subPayCount: 0 });
+    razorpaySubscriptions.fetchSubscription.mockResolvedValue({ id: 'sub_UNBOOKED', status: 'active' });
+    subscriptionService.backfillSubscriptionPayments.mockResolvedValue({ recorded: 1 });
+
+    const { reconcile } = require('../../services/subscriptionReconciler');
+    const r = await reconcile();
+
+    expect(subscriptionService.backfillSubscriptionPayments).toHaveBeenCalledWith({ id: 'sub_UNBOOKED', status: 'active' });
+    expect(r).toEqual({ healed: 0, released: 0, recorded: 1 });
+  });
+
+  test('active sub that already has a charge is NOT re-fetched', async () => {
+    wire([], { activeRows: [{ id: 'v10', razorpay_subscription_id: 'sub_BOOKED' }], subPayCount: 1 });
+
+    const { reconcile } = require('../../services/subscriptionReconciler');
+    const r = await reconcile();
+
+    expect(subscriptionService.backfillSubscriptionPayments).not.toHaveBeenCalled();
+    expect(r).toEqual({ healed: 0, released: 0, recorded: 0 });
   });
 });
