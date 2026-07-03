@@ -113,18 +113,37 @@ const OverviewTab = ({ stats, ops }) => {
 
 // ══ Revenue trend chart (dependency-free SVG line/area) ═══════
 const TREND_GRAN = [['weekly', 'Weekly'], ['monthly', 'Monthly'], ['quarterly', 'Quarterly']];
+const ACCENT = '#047857'; // Gross line = same green as the Gross Revenue card
+// Tooltip rows — one per revenue stream, hue-dotted.
+const TIP_ROWS = [
+  { key: 'gross',        label: 'Gross Revenue',        hex: '#047857' },
+  { key: 'total',        label: 'Total Revenue',        hex: '#059669' },
+  { key: 'subscription', label: 'Subscription Revenue', hex: '#2563EB' },
+  { key: 'platformFee',  label: 'Platform Fee Revenue', hex: '#FE5100' },
+  { key: 'tax',          label: 'Govt Tax',             hex: '#DC2626' },
+];
+// Compact ₹ for axis labels: 1.2k / 3.4L.
+const inrShort = (n) => {
+  const v = Number(n) || 0;
+  if (v >= 1e5) return `₹${(v / 1e5).toFixed(1)}L`;
+  if (v >= 1e3) return `₹${(v / 1e3).toFixed(1)}k`;
+  return `₹${Math.round(v)}`;
+};
 
 const RevenueTrendChart = () => {
   const [data, setData] = useState(null);
   const [gran, setGran] = useState('monthly');
   const [err, setErr]   = useState(false);
+  const [hover, setHover]   = useState(null); // transient (mouse)
+  const [pinned, setPinned] = useState(null); // sticky (click)
 
   useEffect(() => {
     adminGetRevenueTrend().then(r => setData(r.data)).catch(() => setErr(true));
   }, []);
+  useEffect(() => { setHover(null); setPinned(null); }, [gran]);
 
   const series = data?.[gran] || [];
-  const W = 720, H = 240, padL = 8, padR = 8, padT = 16, padB = 28;
+  const W = 720, H = 260, padL = 52, padR = 12, padT = 16, padB = 30;
   const plotW = W - padL - padR, plotH = H - padT - padB;
   const max = Math.max(1, ...series.map(d => d.value));
   const n = series.length;
@@ -136,14 +155,19 @@ const RevenueTrendChart = () => {
     ? `${linePath} L ${pts[pts.length - 1][0].toFixed(1)} ${padT + plotH} L ${pts[0][0].toFixed(1)} ${padT + plotH} Z`
     : '';
   const total = series.reduce((t, d) => t + d.value, 0);
-  const ACCENT = '#FE5100';
+
+  const active = hover ?? pinned;
+  const ad = active != null ? series[active] : null;
+  const ap = active != null ? pts[active] : null;
+  // Every Nth x-label so ticks don't collide (12 weekly points).
+  const labelEvery = n > 8 ? 2 : 1;
 
   return (
     <Card className="p-6">
       <div className="flex items-start justify-between gap-3 mb-1">
         <div>
-          <p className="text-sm font-semibold adm-t1">Revenue trend</p>
-          <p className="text-xs adm-t3 mt-0.5">Platform net take (commission + fees) from paid bookings</p>
+          <p className="text-sm font-semibold adm-t1">Gross revenue trend</p>
+          <p className="text-xs adm-t3 mt-0.5">Gross = Total + tax, per period · since 30 Jun 2026 · tap a point for the breakdown</p>
         </div>
         <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
           {TREND_GRAN.map(([k, lbl]) => (
@@ -156,65 +180,93 @@ const RevenueTrendChart = () => {
       </div>
 
       <p className="text-2xl font-bold adm-t1 tabular-nums mt-2 mb-4">{inr(total)}
-        <span className="text-[11px] font-medium adm-t3 ml-2">in view</span></p>
+        <span className="text-[11px] font-medium adm-t3 ml-2">gross in view</span></p>
 
       {err ? (
         <div className="py-10 text-center text-[12px] adm-t3">Couldn't load trend data.</div>
       ) : !data ? (
         <div className="py-10 text-center text-[12px] adm-t3">Loading trend…</div>
       ) : total === 0 ? (
-        <div className="py-10 text-center text-[12px] adm-t3">No paid-booking revenue in this window yet.</div>
+        <div className="py-10 text-center text-[12px] adm-t3">No revenue in this window yet.</div>
       ) : (
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 'auto' }} preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"  stopColor={ACCENT} stopOpacity="0.22" />
-              <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          {/* horizontal gridlines */}
-          {[0, 0.25, 0.5, 0.75, 1].map(f => (
-            <line key={f} x1={padL} x2={W - padR} y1={padT + plotH * f} y2={padT + plotH * f}
-              stroke="currentColor" className="adm-t3" strokeOpacity="0.12" strokeWidth="1" />
-          ))}
-          <path d={areaPath} fill="url(#revFill)" />
-          <path d={linePath} fill="none" stroke={ACCENT} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-          {pts.map((p, i) => (
-            <g key={i}>
-              <circle cx={p[0]} cy={p[1]} r="3" fill={ACCENT} />
-              <text x={p[0]} y={H - 8} textAnchor="middle" className="adm-t3" fill="currentColor" style={{ fontSize: 11 }}>
-                {series[i].label}
-              </text>
-            </g>
-          ))}
-        </svg>
+        <div className="relative">
+          <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 'auto' }}
+            onMouseLeave={() => setHover(null)}>
+            <defs>
+              <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"  stopColor={ACCENT} stopOpacity="0.20" />
+                <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {/* gridlines + y-axis value labels */}
+            {[0, 0.25, 0.5, 0.75, 1].map(f => (
+              <g key={f}>
+                <line x1={padL} x2={W - padR} y1={padT + plotH * f} y2={padT + plotH * f}
+                  stroke="currentColor" className="adm-t3" strokeOpacity="0.12" strokeWidth="1" />
+                <text x={padL - 8} y={padT + plotH * f + 3} textAnchor="end" className="adm-t3"
+                  fill="currentColor" style={{ fontSize: 10 }}>{inrShort(max * (1 - f))}</text>
+              </g>
+            ))}
+            <path d={areaPath} fill="url(#revFill)" />
+            <path d={linePath} fill="none" stroke={ACCENT} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+            {/* active guide line */}
+            {ap && <line x1={ap[0]} x2={ap[0]} y1={padT} y2={padT + plotH} stroke={ACCENT} strokeOpacity="0.35" strokeWidth="1" strokeDasharray="3 3" />}
+            {pts.map((p, i) => (
+              <g key={i}>
+                {i % labelEvery === 0 && (
+                  <text x={p[0]} y={H - 10} textAnchor="middle" className="adm-t3" fill="currentColor" style={{ fontSize: 10 }}>
+                    {series[i].label}
+                  </text>
+                )}
+                <circle cx={p[0]} cy={p[1]} r={active === i ? 5 : 3} fill={ACCENT} stroke="#fff" strokeWidth={active === i ? 2 : 0} />
+                {/* fat invisible hit target */}
+                <circle cx={p[0]} cy={p[1]} r="16" fill="transparent" style={{ cursor: 'pointer' }}
+                  onMouseEnter={() => setHover(i)}
+                  onClick={() => setPinned(pinned === i ? null : i)} />
+              </g>
+            ))}
+          </svg>
+
+          {/* Pretty light tooltip — positioned over the active point */}
+          {ad && ap && (
+            <div className="absolute z-20 pointer-events-none"
+              style={{ left: `${(ap[0] / W) * 100}%`, top: `${(ap[1] / H) * 100}%`,
+                transform: `translate(${ap[0] > W * 0.6 ? '-100%' : '0'}, calc(-100% - 12px))` }}>
+              <div className="rounded-xl border adm-border bg-[var(--adm-card)] shadow-xl px-3.5 py-3 min-w-[180px]"
+                style={{ backdropFilter: 'blur(4px)' }}>
+                <p className="text-[11px] font-semibold adm-t2 mb-2">{ad.label}</p>
+                <div className="space-y-1.5">
+                  {TIP_ROWS.map(r => (
+                    <div key={r.key} className="flex items-center gap-2 text-[12px]">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: r.hex }} />
+                      <span className="adm-t3 flex-1">{r.label}</span>
+                      <span className="font-semibold adm-t1 tabular-nums">{inr(ad[r.key] ?? 0)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </Card>
   );
 };
 
 // ── Revenue stat card ─────────────────────────────────────────
-// Title on top; below, a hue-bordered icon chip beside the hue-matched value.
-// No tooltip — static.
+// Title on top; below, a SOLID hue-filled icon box (white glyph) beside the
+// hue-matched value. Static — no tooltip.
 const RevCard = ({ label, value, hex }) => (
   <Card>
     <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3 leading-tight mb-2">{label}</p>
     <div className="flex items-center gap-3">
-      <span className="w-10 h-10 rounded-xl flex items-center justify-center border-2 flex-shrink-0"
-        style={{ borderColor: hex, color: hex }}>
+      <span className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm"
+        style={{ background: hex }}>
         <Ic d={IC.rupee} size={18} />
       </span>
       <span className="text-2xl font-bold tabular-nums" style={{ color: hex }}>{value}</span>
     </div>
   </Card>
-);
-
-// Section divider heading (Revenue / Average Values).
-const SectionHead = ({ title }) => (
-  <div className="flex items-center gap-3 mb-3">
-    <p className="text-[13px] font-semibold adm-t1">{title}</p>
-    <span className="flex-1 h-px bg-[var(--adm-border)]" />
-  </div>
 );
 
 // ── Revenue Tab ───────────────────────────────────────────────
@@ -260,25 +312,16 @@ const RevenueTab = ({ stats }) => {
       {err && (
         <p className="text-[12px] text-red-500">Couldn't load revenue — retry in a moment (server may be waking up).</p>
       )}
-      <div>
-        <SectionHead title="Revenue" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {revenueCards.map(c => <RevCard key={c.label} {...c} />)}
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {revenueCards.map(c => <RevCard key={c.label} {...c} />)}
       </div>
 
-      <div>
-        <SectionHead title="Average Values" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {avgCards.map(c => <RevCard key={c.label} {...c} />)}
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {avgCards.map(c => <RevCard key={c.label} {...c} />)}
       </div>
 
-      <div>
-        <SectionHead title="New Cohort" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {cohortCards.map(c => <RevCard key={c.label} {...c} />)}
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {cohortCards.map(c => <RevCard key={c.label} {...c} />)}
       </div>
 
       <RevenueTrendChart />

@@ -576,82 +576,96 @@ const getProviderPlanAnalytics = async (req, res) => {
 };
 
 // ══════════════════════════════════════
-// REVENUE TREND — time-bucketed platform earnings for the Revenue tab chart.
-// Buckets platform net take (commission + platform fee) from PAID bookings into
-// weekly / monthly / quarterly series, all returned in one call. The client
-// toggles granularity without a refetch.
+// REVENUE TREND — time-bucketed revenue for the Revenue tab chart. Each bucket
+// carries the full breakdown (subscription / platform-fee / tax → total / gross)
+// so the chart plots Gross and the hover tooltip shows every stream for that
+// period. Weekly / monthly / quarterly returned together; client toggles without
+// a refetch. Windowed to the 30-Jun-2026 monetization start like the rest of the
+// Revenue tab (pre-launch test payments excluded).
 // ══════════════════════════════════════
 const getRevenueTrend = async (req, res) => {
   try {
-    let rowsRes = await supabaseAdmin
+    let bkRes = await supabaseAdmin
       .from('bookings')
-      .select('paid_at, platform_fee_amount, commission_applied')
+      .select('paid_at, platform_fee_amount, commission_applied, platform_fee_gst, commission_gst')
       .eq('payment_status', 'paid')
       .not('paid_at', 'is', null);
-    if (rowsRes.error && /Could not find the|column.*does not exist/i.test(rowsRes.error.message)) {
-      rowsRes = await supabaseAdmin
+    if (bkRes.error && /Could not find the|column.*does not exist/i.test(bkRes.error.message)) {
+      bkRes = await supabaseAdmin
         .from('bookings')
         .select('paid_at, platform_fee_amount')
         .eq('payment_status', 'paid')
         .not('paid_at', 'is', null);
     }
-    const rows = rowsRes.data || [];
-    const takeOf = (b) => (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
+    const bookings = bkRes.data || [];
 
-    // Build fixed-length trailing buckets so the chart has a stable x-axis even
-    // with sparse data. Each entry: { label, value }.
+    const { data: subs } = await supabaseAdmin
+      .from('subscription_payments')
+      .select('paid_at, plan_price, gst_amount, razorpay_fee, razorpay_tax, status')
+      .eq('status', 'paid')
+      .not('paid_at', 'is', null);
+
     const pad = (n) => String(n).padStart(2, '0');
     const startOfWeek = (d) => { const x = new Date(d); const day = (x.getDay() + 6) % 7; x.setDate(x.getDate() - day); x.setHours(0, 0, 0, 0); return x; };
+    const blank = (extra) => ({ subscription: 0, platformFee: 0, tax: 0, ...extra });
 
     const buildWeekly = () => {
-      const buckets = [];
-      const base = startOfWeek(new Date());
+      const out = []; const base = startOfWeek(new Date());
       for (let i = 11; i >= 0; i--) {
         const start = new Date(base); start.setDate(start.getDate() - i * 7);
-        buckets.push({ start, key: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
-          label: start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), value: 0 });
+        out.push(blank({ start, label: start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) }));
       }
-      return buckets;
+      return out;
     };
     const buildMonthly = () => {
-      const buckets = [];
-      const now = new Date();
+      const out = []; const now = new Date();
       for (let i = 11; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        buckets.push({ start: d, key: `${d.getFullYear()}-${pad(d.getMonth() + 1)}`,
-          label: d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }), value: 0 });
+        out.push(blank({ start: d, label: d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }) }));
       }
-      return buckets;
+      return out;
     };
     const buildQuarterly = () => {
-      const buckets = [];
-      const now = new Date();
-      const curQ = Math.floor(now.getMonth() / 3);
+      const out = []; const now = new Date(); const curQ = Math.floor(now.getMonth() / 3);
       for (let i = 7; i >= 0; i--) {
         const qIndex = curQ - i;
         const year = now.getFullYear() + Math.floor(qIndex / 4);
         const q = ((qIndex % 4) + 4) % 4;
         const d = new Date(year, q * 3, 1);
-        buckets.push({ start: d, key: `${year}-Q${q + 1}`,
-          label: `Q${q + 1} '${String(year).slice(2)}`, value: 0 });
+        out.push(blank({ start: d, label: `Q${q + 1} '${String(year).slice(2)}` }));
       }
-      return buckets;
+      return out;
     };
 
     const weekly = buildWeekly(), monthly = buildMonthly(), quarterly = buildQuarterly();
-    const assign = (buckets, d, take) => {
-      // Buckets are ascending by start; find the last whose start <= d.
+    const add = (buckets, d, sub, fee, tax) => {
       let target = null;
       for (const b of buckets) { if (b.start <= d) target = b; else break; }
-      if (target) target.value += take;
+      if (!target) return;
+      target.subscription += sub; target.platformFee += fee; target.tax += tax;
     };
-    rows.forEach((b) => {
+    const feed = (d, sub, fee, tax) => { add(weekly, d, sub, fee, tax); add(monthly, d, sub, fee, tax); add(quarterly, d, sub, fee, tax); };
+
+    bookings.forEach((b) => {
       const d = new Date(b.paid_at);
-      if (isNaN(d)) return;
-      const take = takeOf(b);
-      assign(weekly, d, take); assign(monthly, d, take); assign(quarterly, d, take);
+      if (isNaN(d) || d.getTime() < COHORT_START_MS) return;
+      feed(d, 0, (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0),
+        (Number(b.platform_fee_gst) || 0) + (Number(b.commission_gst) || 0));
     });
-    const strip = (arr) => arr.map(({ label, value }) => ({ label, value: Math.round(value) }));
+    (subs || []).forEach((s) => {
+      const d = new Date(s.paid_at);
+      if (isNaN(d) || d.getTime() < COHORT_START_MS) return;
+      const net = Math.max(0, (Number(s.plan_price) || 0) - (Number(s.razorpay_fee) || 0) - (Number(s.razorpay_tax) || 0));
+      feed(d, net, 0, Number(s.gst_amount) || 0);
+    });
+
+    // Expose gross as `value` (chart line) + the full breakdown for the tooltip.
+    const strip = (arr) => arr.map(({ label, subscription, platformFee, tax }) => {
+      const total = subscription + platformFee;
+      const r = (n) => Math.round(n * 100) / 100;
+      return { label, subscription: r(subscription), platformFee: r(platformFee), tax: r(tax),
+        total: r(total), gross: r(total + tax), value: Math.round(total + tax) };
+    });
     res.json({ weekly: strip(weekly), monthly: strip(monthly), quarterly: strip(quarterly) });
   } catch (error) {
     safeError(res, error);
