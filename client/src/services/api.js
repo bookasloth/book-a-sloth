@@ -208,6 +208,8 @@ export const adminDeleteServiceCategory    = (id)         => API.delete(`/admin/
 export const adminReorderServiceCategories = (rows)       => API.put('/admin/service-categories/reorder', { rows });
 // Profession-scoped: pass the host's primary_category slug to get its service list.
 export const listServiceCategories         = (primary)    => API.get('/service-categories', { params: primary ? { primary } : {} });
+// Host suggests a new subcategory for their profession (pending admin approval).
+export const hostSuggestServiceCategory    = (data)       => API.post('/service-categories/suggest', data);
 
 // ── Services Directory (public SEO — /services, /services/:profession) ──
 export const getServicesDirectory   = ()     => API.get('/services-directory');
