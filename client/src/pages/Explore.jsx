@@ -109,6 +109,9 @@ function ExploreFull() {
   const [totalVendors, setTotalVendors] = useState(0);
 
   const searchRef = useRef(null);
+  // Monotonic id so a slow, superseded /explore response can never overwrite
+  // the results of a newer filter combination (real async, unlike the mock era).
+  const vendorsReqRef = useRef(0);
 
   // ── Sync URL params ───────────────────────────────────────
   useEffect(() => {
@@ -128,16 +131,19 @@ function ExploreFull() {
 
   // ── Load data ───────────────────────────────────────────────
   const loadVendors = useCallback(async () => {
+    const reqId = ++vendorsReqRef.current;
     setLoading(true);
     try {
       const res = await getExploreVendors({ q: query, category, service, sort, page, limit: PAGE_SIZE });
+      if (reqId !== vendorsReqRef.current) return; // stale response — a newer request took over
       setVendors(res.data.vendors);
       setTotalVendors(res.data.meta.total);
     } catch {
+      if (reqId !== vendorsReqRef.current) return;
       setVendors([]);
       setTotalVendors(0);
     } finally {
-      setLoading(false);
+      if (reqId === vendorsReqRef.current) setLoading(false);
     }
   }, [query, category, service, sort, page]);
 
