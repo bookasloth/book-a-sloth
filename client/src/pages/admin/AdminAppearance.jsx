@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { adminGetAppearance, adminUpdateAppearance, adminUploadImage } from "../../services/api";
 import toast from "react-hot-toast";
 import BackgroundCurator from "../../components/admin/BackgroundCurator";
+import { PageHeader, Card, Btn } from "../../components/admin/ui";
 
 const MODES = [
   { key: "icon_text", label: "Icon + Text", hint: "Brand mark plus the “Book A Sloth” wordmark." },
@@ -84,21 +85,18 @@ const AdminAppearance = () => {
     }
   };
 
-  if (loading || !form) return <div className="text-center py-12 text-gray-400">Loading…</div>;
+  if (loading || !form) return <div className="text-center py-12 adm-t3">Loading…</div>;
 
   const activeUrl = form[SLOT[form.navbar_logo_mode]];
 
   return (
     <div className="max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Appearance</h1>
-        <p className="text-[12px] text-gray-400 mt-0.5">Manage the navbar logo shown across the website.</p>
-      </div>
+      <PageHeader title="Appearance" subtitle="Manage the navbar logo shown across the website." />
 
-      <div className="bg-white border rounded-xl p-5 space-y-6">
+      <Card className="space-y-6">
         {/* Mode selector */}
         <div>
-          <label className="block text-sm font-medium mb-2">Active navbar logo</label>
+          <label className="block text-sm font-medium adm-t1 mb-2">Active navbar logo</label>
           <div className="grid grid-cols-3 gap-2">
             {MODES.map((m) => (
               <button
@@ -107,22 +105,22 @@ const AdminAppearance = () => {
                 className={`btn px-3 py-2 text-sm font-medium border ${
                   form.navbar_logo_mode === m.key
                     ? "bg-gray-900 text-white border-gray-900"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    : "adm-card adm-t2 adm-border adm-hoverable"
                 }`}
               >
                 {m.label}
               </button>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-1.5">
+          <p className="text-xs adm-t3 mt-1.5">
             {MODES.find((m) => m.key === form.navbar_logo_mode)?.hint}
           </p>
         </div>
 
         {/* Live preview */}
         <div>
-          <label className="block text-sm font-medium mb-2">Preview</label>
-          <div className="border rounded-lg p-4 bg-gray-50 flex items-center gap-2.5 min-h-[56px]">
+          <label className="block text-sm font-medium adm-t1 mb-2">Preview</label>
+          <div className="border adm-border rounded-lg p-4 bg-[var(--adm-hover)] flex items-center gap-2.5 min-h-[56px]">
             {form.navbar_logo_mode === "icon_text" ? (
               <>
                 {form.icon_url && <img src={form.icon_url} alt="" className="h-[26px] w-[26px] rounded block" />}
@@ -131,25 +129,25 @@ const AdminAppearance = () => {
             ) : activeUrl ? (
               <img src={activeUrl} alt="Book A Sloth" className="h-7 w-auto block" />
             ) : (
-              <span className="text-sm text-gray-400">No image for this mode yet — upload one below.</span>
+              <span className="text-sm adm-t3">No image for this mode yet — upload one below.</span>
             )}
           </div>
         </div>
 
         {/* Image slots */}
-        <div className="space-y-4 border-t pt-4">
+        <div className="space-y-4 border-t adm-border pt-4">
           {SLOTS.map(({ field, label, note }) => (
             <div key={field} className="flex items-center gap-3">
-              <div className="w-16 h-12 border rounded bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-16 h-12 border adm-border rounded bg-[var(--adm-hover)] flex items-center justify-center overflow-hidden shrink-0">
                 {form[field]
                   ? <img src={form[field]} alt="" className="max-h-10 max-w-[60px] object-contain" />
-                  : <span className="text-[10px] text-gray-300">none</span>}
+                  : <span className="text-[10px] adm-t3">none</span>}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">{label}</p>
-                <p className="text-xs text-gray-400 truncate">{note}</p>
+                <p className="text-sm font-medium adm-t1">{label}</p>
+                <p className="text-xs adm-t3 truncate">{note}</p>
               </div>
-              <label className="btn btn--outline px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer whitespace-nowrap">
+              <label className="btn btn--outline px-3 py-2 text-sm font-medium adm-t2 adm-hoverable cursor-pointer whitespace-nowrap">
                 {uploading === field ? "Uploading…" : "Upload"}
                 <input
                   type="file"
@@ -164,9 +162,9 @@ const AdminAppearance = () => {
         </div>
 
         {/* Backgrounds */}
-        <div className="border-t pt-4">
-          <label className="block text-sm font-medium mb-1">Backgrounds</label>
-          <p className="text-xs text-gray-400 mb-3">
+        <div className="border-t adm-border pt-4">
+          <label className="block text-sm font-medium adm-t1 mb-1">Backgrounds</label>
+          <p className="text-xs adm-t3 mb-3">
             Curate the animated host-page backgrounds. Enable a type, tune its look, and pick a default.
           </p>
           <BackgroundCurator
@@ -178,16 +176,12 @@ const AdminAppearance = () => {
           />
         </div>
 
-        <div className="flex justify-end pt-2 border-t">
-          <button
-            onClick={save}
-            disabled={saving}
-            className="btn bg-gray-900 text-white px-6 py-2.5 text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
-          >
+        <div className="flex justify-end pt-2 border-t adm-border">
+          <Btn onClick={save} disabled={saving}>
             {saving ? "Saving…" : "Save appearance settings"}
-          </button>
+          </Btn>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
