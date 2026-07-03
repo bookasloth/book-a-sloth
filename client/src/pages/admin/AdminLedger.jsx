@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminFinanceAccounts, adminFinanceLedger } from '../../services/api';
 import toast from 'react-hot-toast';
+import { PageHeader, Btn, Skeleton } from '../../components/admin/ui';
 
 // Per-account ledger with running balance — the auditable account history.
 
@@ -48,14 +49,11 @@ const AdminLedger = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Ledger</h1>
-        <p className="text-[12px] text-gray-400 mt-0.5">Per-account entries with running balance. Written only by the posting engine.</p>
-      </div>
+      <PageHeader title="Ledger" subtitle="Per-account entries with running balance. Written only by the posting engine." />
 
       <div className="flex flex-wrap items-end gap-3 mb-4">
         <div>
-          <label className="block text-[11px] font-medium text-gray-400 mb-1">Account</label>
+          <label className="block text-[11px] font-medium adm-t3 mb-1">Account</label>
           <select className="fb-input text-sm min-w-[280px]" value={accountId}
             onChange={(e) => { setPage(1); setAccountId(e.target.value); }}>
             {accounts.map((a) => (
@@ -64,21 +62,21 @@ const AdminLedger = () => {
           </select>
         </div>
         {selected && (
-          <p className="text-sm text-gray-700 pb-2">
+          <p className="text-sm adm-t2 pb-2">
             Balance: <span className="font-bold tabular-nums">{inr(selected.account_balances?.[0]?.balance ?? selected.account_balances?.balance ?? 0)}</span>
           </p>
         )}
       </div>
 
       {loading ? (
-        <div className="space-y-2">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />)}</div>
+        <div className="space-y-2">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12" />)}</div>
       ) : entries.length === 0 ? (
-        <div className="bg-white border rounded-2xl py-16 text-center text-gray-400">No ledger entries for this account yet.</div>
+        <div className="adm-card rounded-2xl py-16 text-center adm-t3">No ledger entries for this account yet.</div>
       ) : (
-        <div className="bg-white border rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="adm-card rounded-2xl overflow-hidden">
+          <table className="adm-table w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wide text-gray-400 border-b">
+              <tr className="text-left text-[11px] uppercase tracking-wide adm-t3 border-b adm-border">
                 <th className="px-4 py-3 font-semibold">When</th>
                 <th className="px-4 py-3 font-semibold">Journal</th>
                 <th className="px-4 py-3 font-semibold hidden md:table-cell">Description</th>
@@ -89,12 +87,12 @@ const AdminLedger = () => {
             </thead>
             <tbody>
               {entries.map((e) => (
-                <tr key={e.id} className="border-b last:border-0 hover:bg-gray-50/60">
-                  <td className="px-4 py-3 text-[12px] text-gray-500 whitespace-nowrap">{fmt(e.created_at)}</td>
-                  <td className="px-4 py-3 font-mono text-[12px] text-gray-700">{e.journal_entries?.journal_number}</td>
-                  <td className="px-4 py-3 hidden md:table-cell text-[12px] text-gray-500 truncate max-w-[240px]">{e.journal_entries?.description || '—'}</td>
+                <tr key={e.id} className="border-b adm-border last:border-0 adm-hoverable">
+                  <td className="px-4 py-3 text-[12px] adm-t3 whitespace-nowrap">{fmt(e.created_at)}</td>
+                  <td className="px-4 py-3 font-mono text-[12px] adm-t2">{e.journal_entries?.journal_number}</td>
+                  <td className="px-4 py-3 hidden md:table-cell text-[12px] adm-t3 truncate max-w-[240px]">{e.journal_entries?.description || '—'}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{Number(e.debit) > 0 ? inr(e.debit) : ''}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-gray-500">{Number(e.credit) > 0 ? inr(e.credit) : ''}</td>
+                  <td className="px-4 py-3 text-right tabular-nums adm-t3">{Number(e.credit) > 0 ? inr(e.credit) : ''}</td>
                   <td className="px-4 py-3 text-right tabular-nums font-semibold">{inr(e.balance_after_account)}</td>
                 </tr>
               ))}
@@ -105,9 +103,9 @@ const AdminLedger = () => {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="fb-btn fb-btn--secondary text-xs disabled:opacity-40">Previous</button>
-          <span className="text-[12px] text-gray-400">Page {page} of {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="fb-btn fb-btn--secondary text-xs disabled:opacity-40">Next</button>
+          <Btn variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Btn>
+          <span className="text-[12px] adm-t3">Page {page} of {totalPages}</span>
+          <Btn variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Btn>
         </div>
       )}
     </div>
