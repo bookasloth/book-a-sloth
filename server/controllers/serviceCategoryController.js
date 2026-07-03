@@ -99,7 +99,7 @@ const listAdmin = async (req, res) => {
 const listPublic = async (req, res) => {
   try {
     const primary = req.query.primary;
-    if (!primary) return res.json({ categories: [] });
+    if (!primary) return res.json({ categories: [], allow_suggestions: false });
 
     const payload = await responseCache.getOrSet(`svccat:${primary}`, PUBLIC_CACHE_MS, async () => {
       let r = await supabaseAdmin
@@ -107,10 +107,11 @@ const listPublic = async (req, res) => {
         .select('id, name, slug, primary_category, description, icon')
         .eq('primary_category', primary)
         .eq('is_active', true)
+        .eq('status', 'active')
         .order('display_order', { ascending: true })
         .order('name', { ascending: true });
       if (r.error && /Could not find the|column .* does not exist/i.test(r.error.message)) {
-        // pre-v3.60: no description/icon columns
+        // pre-migration fallback: no status/description/icon columns
         r = await supabaseAdmin
           .from('service_categories')
           .select('id, name, slug, primary_category')
@@ -120,7 +121,17 @@ const listPublic = async (req, res) => {
           .order('name', { ascending: true });
       }
       if (r.error) throw r.error;
-      return { categories: r.data || [] };
+
+      // Does this profession accept host suggestions?
+      let allow = false;
+      const { data: cat } = await supabaseAdmin
+        .from('categories')
+        .select('allow_subcategory_suggestions')
+        .eq('slug', primary)
+        .maybeSingle();
+      allow = Boolean(cat?.allow_subcategory_suggestions);
+
+      return { categories: r.data || [], allow_suggestions: allow };
     });
 
     setPublicCache(res, Math.round(PUBLIC_CACHE_MS / 1000));
