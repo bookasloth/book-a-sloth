@@ -658,12 +658,128 @@ const getRevenueTrend = async (req, res) => {
   }
 };
 
+// ══════════════════════════════════════
+// REVENUE BREAKDOWN — the Revenue tab's 10 cards (revenue streams + LTV averages).
+//   Row 1  Gross Revenue | Total Revenue (net income) | Subscription | Platform Fee
+//   Row 2  Lifetime avg revenue per Host | Guest | Booking | Week
+//   Row 3  Avg LTV / Registered User (30-Jun-2026 cohort) | Govt tax (same cohort)
+//
+// Money model (all ₹, GST excluded from "revenue" — it is a pass-through liability):
+//   subscription net = plan_price − razorpay_fee − razorpay_tax
+//   platform-fee net = platform_fee_amount + commission_applied
+//   taxes            = GST we charged: subscription gst_amount + booking
+//                      platform_fee_gst + commission_gst
+//   Total Revenue    = subscription net + platform-fee net (money BAS kept)
+//   Gross Revenue    = Total Revenue + taxes (before the govt's cut)
+// ══════════════════════════════════════
+// 30 Jun 2026 00:00 IST = 29 Jun 2026 18:30 UTC — monetization cohort start.
+const COHORT_START_MS = Date.parse('2026-06-29T18:30:00.000Z');
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+const getRevenueBreakdown = async (req, res) => {
+  try {
+    // Booking money + tax snapshot columns. Fall back if GST columns predate v2.8.
+    let bookingsRes = await supabaseAdmin.from('bookings').select(
+      'host_id, guest_id, guest_email, guest_phone, payment_status, status, ' +
+      'platform_fee_amount, commission_applied, platform_fee_gst, commission_gst, paid_at, created_at'
+    );
+    if (bookingsRes.error && /Could not find the|column.*does not exist/i.test(bookingsRes.error.message)) {
+      bookingsRes = await supabaseAdmin.from('bookings').select(
+        'host_id, guest_id, guest_email, guest_phone, payment_status, status, ' +
+        'platform_fee_amount, commission_applied, paid_at, created_at'
+      );
+    }
+    const bookings = bookingsRes.data || [];
+
+    const { data: subs } = await supabaseAdmin
+      .from('subscription_payments')
+      .select('vendor_id, plan_price, gst_amount, razorpay_fee, razorpay_tax, paid_at, status')
+      .eq('status', 'paid');
+
+    const { data: profiles } = await supabaseAdmin
+      .from('profiles').select('id, role, created_at');
+
+    // host id → created_at ms (for cohort attribution of that host's revenue)
+    const hostCreatedMs = {};
+    let registeredCohort = 0;
+    (profiles || []).forEach((p) => {
+      const ms = Date.parse(p.created_at);
+      hostCreatedMs[p.id] = ms;
+      if (ms >= COHORT_START_MS) registeredCohort += 1;
+    });
+
+    let earliestMs = Infinity;
+    const bumpEarliest = (iso) => { const ms = Date.parse(iso); if (!isNaN(ms)) earliestMs = Math.min(earliestMs, ms); };
+
+    // ── Subscriptions ──
+    let subNet = 0, subGst = 0, subNetCohort = 0, subGstCohort = 0;
+    const payingHosts = new Set();
+    (subs || []).forEach((s) => {
+      const net = Math.max(0, (Number(s.plan_price) || 0) - (Number(s.razorpay_fee) || 0) - (Number(s.razorpay_tax) || 0));
+      subNet += net;
+      subGst += Number(s.gst_amount) || 0;
+      payingHosts.add(s.vendor_id);
+      bumpEarliest(s.paid_at);
+      if (hostCreatedMs[s.vendor_id] >= COHORT_START_MS) subNetCohort += net;
+      if (Date.parse(s.paid_at) >= COHORT_START_MS) subGstCohort += Number(s.gst_amount) || 0;
+    });
+
+    // ── Bookings ── (paid only feed revenue; refunded are simply excluded)
+    let platformFee = 0, bookingGst = 0, platformFeeCohort = 0, bookingGstCohort = 0, paidBookings = 0;
+    const payingGuests = new Set();
+    const guestKey = (b) => b.guest_id || b.guest_email || b.guest_phone || null;
+    (bookings || []).forEach((b) => {
+      if (b.payment_status !== 'paid') return;
+      const fee = (Number(b.platform_fee_amount) || 0) + (Number(b.commission_applied) || 0);
+      const gst = (Number(b.platform_fee_gst) || 0) + (Number(b.commission_gst) || 0);
+      platformFee += fee;
+      bookingGst += gst;
+      paidBookings += 1;
+      const gk = guestKey(b); if (gk) payingGuests.add(gk);
+      if (fee > 0 && b.host_id) payingHosts.add(b.host_id);
+      bumpEarliest(b.paid_at || b.created_at);
+      if (hostCreatedMs[b.host_id] >= COHORT_START_MS) platformFeeCohort += fee;
+      if (Date.parse(b.paid_at || b.created_at) >= COHORT_START_MS) bookingGstCohort += gst;
+    });
+
+    const subscriptionRevenue = subNet;
+    const platformFeeRevenue = platformFee;
+    const otherRevenue = 0; // reschedule fees / add-ons — not aggregated yet
+    const totalRevenue = subscriptionRevenue + platformFeeRevenue + otherRevenue;
+    const taxes = subGst + bookingGst;
+    const grossRevenue = totalRevenue + taxes;
+
+    // Lifetime averages
+    const div = (num, den) => (den > 0 ? num / den : 0);
+    const ltvPerHost = div(subNet + platformFee, payingHosts.size);        // host-attributed net
+    const ltvPerGuest = div(platformFee, payingGuests.size);               // guests: fee revenue only
+    const revenuePerBooking = div(platformFee, paidBookings);
+    const weeksSinceStart = Math.max(1, Math.ceil((Date.now() - COHORT_START_MS) / WEEK_MS));
+    const revenuePerWeek = div(totalRevenue, weeksSinceStart);
+
+    // 30-Jun cohort LTV + the govt's tax take on that cohort
+    const ltvPerRegisteredUser = div(subNetCohort + platformFeeCohort, registeredCohort);
+    const govtExtorted = subGstCohort + bookingGstCohort;
+
+    res.json({
+      grossRevenue, totalRevenue, subscriptionRevenue, platformFeeRevenue, otherRevenue, taxes,
+      ltvPerHost, ltvPerGuest, revenuePerBooking, revenuePerWeek,
+      ltvPerRegisteredUser, govtExtorted,
+      payingHosts: payingHosts.size, payingGuests: payingGuests.size,
+      paidBookings, registeredCohort, weeksSinceStart,
+    });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 // NOTE: the former POST /api/admin/cleanup-users handler (mass-deleted every
 // Supabase Auth user except a hardcoded fallback email) was removed in M0 — a
 // destructive dev-reset tool must never be exposed on the production admin API.
 // If a bulk reset is ever needed, do it as an offline, access-controlled script.
 
 module.exports = {
+  getRevenueBreakdown,
   getStats,
   getProviderPlanAnalytics,
   getRevenueTrend,
