@@ -166,8 +166,8 @@ const AdminPlans = () => {
                 <div className="flex flex-col items-end gap-1">
                   <Badge tone={plan.active ? 'ok' : 'warn'}>{plan.active ? 'ACTIVE' : 'ARCHIVED'}</Badge>
                   <div className="flex gap-0.5">
-                    <button onClick={() => move(i, -1)} title="Move up" className="adm-t3 hover:adm-t2 px-1">↑</button>
-                    <button onClick={() => move(i, 1)} title="Move down" className="adm-t3 hover:adm-t2 px-1">↓</button>
+                    <button onClick={() => move(i, -1)} title="Move up" className="adm-t3 hover:text-[color:var(--adm-text-2)] px-1">↑</button>
+                    <button onClick={() => move(i, 1)} title="Move down" className="adm-t3 hover:text-[color:var(--adm-text-2)] px-1">↓</button>
                   </div>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminAuditLogs, adminAuditActions } from '../../services/api';
 import toast from 'react-hot-toast';
+import { PageHeader, Btn, Skeleton } from '../../components/admin/ui';
 
 // Read-only viewer for the append-only admin action trail (admin_audit_logs).
 // Filter by action + date range; paginated. Every mutating admin endpoint writes
@@ -41,15 +42,12 @@ const AdminAudit = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Audit Logs</h1>
-        <p className="text-[12px] text-gray-400 mt-0.5">Append-only trail of every admin action. {total} record{total === 1 ? '' : 's'}.</p>
-      </div>
+      <PageHeader title="Audit Logs" subtitle={`Append-only trail of every admin action. ${total} record${total === 1 ? '' : 's'}.`} />
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3 mb-4">
         <div>
-          <label className="block text-[11px] font-medium text-gray-400 mb-1">Action</label>
+          <label className="block text-[11px] font-medium adm-t3 mb-1">Action</label>
           <select className="fb-input text-sm" value={filters.action}
             onChange={(e) => { setPage(1); setFilters((f) => ({ ...f, action: e.target.value })); }}>
             <option value="">All actions</option>
@@ -57,30 +55,29 @@ const AdminAudit = () => {
           </select>
         </div>
         <div>
-          <label className="block text-[11px] font-medium text-gray-400 mb-1">From</label>
+          <label className="block text-[11px] font-medium adm-t3 mb-1">From</label>
           <input type="date" className="fb-input text-sm" value={filters.from}
             onChange={(e) => { setPage(1); setFilters((f) => ({ ...f, from: e.target.value })); }} />
         </div>
         <div>
-          <label className="block text-[11px] font-medium text-gray-400 mb-1">To</label>
+          <label className="block text-[11px] font-medium adm-t3 mb-1">To</label>
           <input type="date" className="fb-input text-sm" value={filters.to}
             onChange={(e) => { setPage(1); setFilters((f) => ({ ...f, to: e.target.value })); }} />
         </div>
         {(filters.action || filters.from || filters.to) && (
-          <button onClick={() => { setPage(1); setFilters({ action: '', from: '', to: '' }); }}
-            className="fb-btn fb-btn--secondary text-xs">Clear</button>
+          <Btn variant="outline" size="sm" onClick={() => { setPage(1); setFilters({ action: '', from: '', to: '' }); }}>Clear</Btn>
         )}
       </div>
 
       {loading ? (
-        <div className="space-y-2">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />)}</div>
+        <div className="space-y-2">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12" />)}</div>
       ) : logs.length === 0 ? (
-        <div className="bg-white border rounded-2xl py-16 text-center text-gray-400">No audit records match these filters.</div>
+        <div className="adm-card rounded-2xl py-16 text-center adm-t3">No audit records match these filters.</div>
       ) : (
-        <div className="bg-white border rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="adm-card rounded-2xl overflow-hidden">
+          <table className="adm-table w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wide text-gray-400 border-b">
+              <tr className="text-left text-[11px] uppercase tracking-wide adm-t3 border-b adm-border">
                 <th className="px-4 py-3 font-semibold">When</th>
                 <th className="px-4 py-3 font-semibold">Admin</th>
                 <th className="px-4 py-3 font-semibold">Action</th>
@@ -89,17 +86,17 @@ const AdminAudit = () => {
             </thead>
             <tbody>
               {logs.map((l) => (
-                <tr key={l.id} className="border-b last:border-0 hover:bg-gray-50/60 transition-colors align-top">
-                  <td className="px-4 py-3 text-[12px] text-gray-500 whitespace-nowrap">{fmt(l.created_at)}</td>
+                <tr key={l.id} className="border-b adm-border last:border-0 adm-hoverable transition-colors align-top">
+                  <td className="px-4 py-3 text-[12px] adm-t3 whitespace-nowrap">{fmt(l.created_at)}</td>
                   <td className="px-4 py-3">
-                    <p className="text-gray-800">{l.admin_email || '—'}</p>
-                    {l.admin_role && <p className="text-[11px] text-gray-400">{l.admin_role}</p>}
+                    <p className="adm-t2">{l.admin_email || '—'}</p>
+                    {l.admin_role && <p className="text-[11px] adm-t3">{l.admin_role}</p>}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-[11px] font-mono font-semibold px-2 py-1 rounded bg-gray-100 text-gray-700">{l.action}</span>
+                    <span className="text-[11px] font-mono font-semibold px-2 py-1 rounded adm-chip adm-t2">{l.action}</span>
                   </td>
-                  <td className="px-4 py-3 hidden md:table-cell text-[12px] text-gray-500">
-                    {l.resource_type ? <>{l.resource_type}{l.resource_id ? <span className="text-gray-300"> · {l.resource_id}</span> : null}</> : '—'}
+                  <td className="px-4 py-3 hidden md:table-cell text-[12px] adm-t3">
+                    {l.resource_type ? <>{l.resource_type}{l.resource_id ? <span className="adm-t3"> · {l.resource_id}</span> : null}</> : '—'}
                   </td>
                 </tr>
               ))}
@@ -111,11 +108,9 @@ const AdminAudit = () => {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}
-            className="fb-btn fb-btn--secondary text-xs disabled:opacity-40">Previous</button>
-          <span className="text-[12px] text-gray-400">Page {page} of {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}
-            className="fb-btn fb-btn--secondary text-xs disabled:opacity-40">Next</button>
+          <Btn variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Btn>
+          <span className="text-[12px] adm-t3">Page {page} of {totalPages}</span>
+          <Btn variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Btn>
         </div>
       )}
     </div>
