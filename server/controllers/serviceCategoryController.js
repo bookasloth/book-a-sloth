@@ -211,6 +211,16 @@ const update = async (req, res) => {
     if (req.body.name !== undefined)          updates.name          = String(req.body.name).trim();
     if (req.body.display_order !== undefined) updates.display_order = req.body.display_order;
     if (req.body.is_active !== undefined)     updates.is_active     = Boolean(req.body.is_active);
+
+    // Approve/reject a suggestion. status wins over any is_active in the body.
+    if (req.body.status !== undefined) {
+      const allowedStatus = ['active', 'pending', 'rejected'];
+      if (!allowedStatus.includes(req.body.status)) {
+        return res.status(400).json({ message: 'Invalid status' });
+      }
+      updates.status = req.body.status;
+      updates.is_active = req.body.status === 'active';
+    }
     if (req.body.description !== undefined) updates.description = req.body.description ? String(req.body.description).trim() : null;
     if (req.body.icon !== undefined)        updates.icon        = req.body.icon ? String(req.body.icon).trim() : null;
 
