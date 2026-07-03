@@ -110,7 +110,7 @@ const Privacy = () => (
         <li><strong>Business transfers</strong> — in connection with a merger, acquisition, or sale of assets, subject to this Policy.</li>
       </ul>
       <p>We do <strong>not</strong> sell your personal data.</p>
-      <p>Some of our processors may store or process data outside India. Where personal data is transferred internationally, we rely on appropriate safeguards as required by the DPDP Act and, for EU data, GDPR-compliant transfer mechanisms.</p>
+      <p>Some of our processors may store or process data outside India. Where personal data is transferred outside India, we do so subject to any requirements or restrictions the Central Government may specify under the DPDP Act and DPDP Rules, and, for EU data, using GDPR-compliant transfer mechanisms.</p>
     </Section>
 
     <Section title="5. Data retention">
@@ -120,6 +120,7 @@ const Privacy = () => (
         <li><strong>Booking, payment, and financial records</strong> — retained as long as required to meet tax, accounting, and legal obligations under Indian law.</li>
         <li><strong>OTPs</strong> — deleted shortly after they expire.</li>
         <li><strong>Marketing contact data</strong> — until you withdraw consent or opt out.</li>
+        <li><strong>Processing and security logs</strong> — retained for at least one year, as required by the DPDP Rules and to detect, investigate, and prevent unauthorised access.</li>
       </ul>
       <p>When data is no longer needed, we delete or anonymise it.</p>
     </Section>
@@ -158,11 +159,13 @@ const Privacy = () => (
     <Section title="9. Data security">
       <p>
         We use technical and organisational measures to protect your data, including encrypted connections (HTTPS),
-        access controls, row-level security on our database, restricted administrative access, and storing payment data
-        only with our PCI-DSS compliant processor. No method of transmission or storage is completely secure, so we
-        cannot guarantee absolute security. If a personal data breach occurs, we will intimate affected Data Principals
-        without undue delay and report the breach to the Data Protection Board of India within <strong>72 hours</strong>
-        of becoming aware of it, as required by the DPDP Act and DPDP Rules.
+        encryption or obfuscation of stored data where appropriate, access controls, row-level security on our database,
+        restricted administrative access, monitoring and logging to detect unauthorised access, backups, contractual
+        security obligations on our processors, and storing payment data only with our PCI-DSS compliant processor. No
+        method of transmission or storage is completely secure, so we cannot guarantee absolute security. If a personal
+        data breach occurs, we will intimate each affected Data Principal without delay, and notify the Data Protection
+        Board of India without delay and provide a detailed report within <strong>72 hours</strong> of becoming aware of
+        the breach, as required by the DPDP Act and DPDP Rules.
       </p>
     </Section>
 
