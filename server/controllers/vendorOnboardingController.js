@@ -5,6 +5,7 @@ const { sendWhatsAppOtp } = require("../utils/notify");
 const communicationEngine = require("../services/email/communicationEngine");
 const otpStore = require("../utils/otpStore");
 const { isReserved } = require("../utils/reservedUsernames");
+const { isBlocked } = require("../utils/adultContentFilter");
 const usernameService = require("../services/usernameService");
 const planService = require("../services/planService");
 
@@ -61,6 +62,7 @@ const slugAvailableForUser = async (vendorId, slug) => {
   const clean = (slug || '').toLowerCase().trim();
   if (!isValidSlug(clean)) return { available: false, reason: 'invalid' };
   if (isReserved(clean))   return { available: false, reason: 'reserved' };
+  if (isBlocked(clean))    return { available: false, reason: 'blocked' };
   // History-backed: rejects names that are current OR retired in username_history.
   // Allow the caller's own name through (self-aware / idempotent).
   const owner = await usernameService.usernameOwner(clean);
@@ -87,6 +89,10 @@ const claimSlug = async (vendorId, slug) => {
   // Reuse the same reserved-word set that guards changeUsername
   if (isReserved(clean)) {
     throw new Error("That name is reserved");
+  }
+  // Adult/sexual-content guard — same generic wording as the reserved case.
+  if (isBlocked(clean)) {
+    throw new Error("That name isn't available");
   }
 
   // History-backed availability check: rejects names that are current OR retired

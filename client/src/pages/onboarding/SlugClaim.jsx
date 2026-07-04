@@ -25,7 +25,7 @@ const SlugClaim = () => {
   const [slug, setSlug] = useState(urlSlug || '');
   const [checking, setChecking] = useState(false);
   const [available, setAvailable] = useState(null);
-  const [unavailableReason, setUnavailableReason] = useState(null); // 'taken'|'reserved'|'invalid'|null
+  const [unavailableReason, setUnavailableReason] = useState(null); // 'taken'|'reserved'|'invalid'|'blocked'|null
   const [tooShort, setTooShort] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const debounceRef = useRef(null);
@@ -193,6 +193,9 @@ const SlugClaim = () => {
               )}
               {slug && !tooShort && available === false && !checking && unavailableReason === 'invalid' && (
                 <p className="text-red-500 text-sm">Only lowercase letters, numbers, and hyphens are allowed.</p>
+              )}
+              {slug && !tooShort && available === false && !checking && unavailableReason === 'blocked' && (
+                <p className="text-red-500 text-sm">This URL isn&apos;t available. Try another.</p>
               )}
               {slug && !tooShort && available === false && !checking && (!unavailableReason || unavailableReason === 'taken') && (
                 <p className="text-red-500 text-sm">This URL is taken. Try another.</p>

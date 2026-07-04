@@ -5,6 +5,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { generateUnique } = require('../utils/usernameGenerator');
 const { normalizeSlug } = require('../utils/slugNormalize');
 const { isStaticReserved } = require('../config/reservedNamespaces');
+const { isBlocked } = require('../utils/adultContentFilter');
 
 // True if a username has EVER been used (current or historical) — enforces
 // global non-reuse and feeds the generator's uniqueness loop.
@@ -107,6 +108,7 @@ async function setOnboardingUsername(userId, newSlug) {
   // Defense-in-depth: controllers already gate on the reserved guard, but reject
   // L1 reserved names here too so any future direct caller cannot bypass it.
   if (isStaticReserved(clean)) return { ok: false, reason: 'taken' };
+  if (isBlocked(clean)) return { ok: false, reason: 'blocked' };
 
   const { data, error } = await supabaseAdmin.rpc('set_onboarding_username', {
     p_user_id: userId,
@@ -134,6 +136,7 @@ async function changeUsername(userId, newSlug) {
   // Defense-in-depth: the RPC also enforces L2 reserved; reject L1 here so a
   // future direct caller (bypassing usernameController) cannot claim a route name.
   if (isStaticReserved(clean)) return { ok: false, reason: 'taken' };
+  if (isBlocked(clean)) return { ok: false, reason: 'blocked' };
   const { data, error } = await supabaseAdmin.rpc('change_username', {
     p_user_id: userId,
     p_new: clean,

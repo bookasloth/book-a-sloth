@@ -1,5 +1,6 @@
 const usernameService = require('../services/usernameService');
 const { isReserved } = require('../utils/reservedUsernames');
+const { isBlocked } = require('../utils/adultContentFilter');
 const { normalizeSlug } = require('../utils/slugNormalize');
 const { formatError } = require('../utils/slugFormat');
 const { safeError } = require('../utils/httpError');
@@ -13,6 +14,9 @@ function validateFormat(norm) {
   const fmt = formatError(norm);
   if (fmt) return fmt;
   if (isReserved(norm)) return 'That username is reserved.';
+  // Adult/sexual-content guard. Deliberately generic message — don't confirm the
+  // blocklist or embarrass a false-positive with an "adult content" label.
+  if (isBlocked(norm)) return "That username isn't available.";
   return null;
 }
 
@@ -64,6 +68,7 @@ const changeUsername = async (req, res) => {
 
     const REASONS = {
       whatsapp_unverified: [403, 'Verify your WhatsApp number before changing your username.'],
+      blocked: [400, "That username isn't available."],
       taken: [409, 'That username is taken.'],
       limit_reached: [429, 'You can change your username at most twice per year.'],
       too_soon: [429, result.next_eligible
