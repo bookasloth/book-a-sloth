@@ -1,7 +1,6 @@
 'use strict';
 const { round2 } = require('../lib/pricingEngine');
 const { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SERIES } = require('../config/sellerIdentity');
-const { supabaseAdmin } = require('../config/supabase');
 
 // Indian FY (Apr–Mar). 2-digit START year for the invoice serial (Jun 2026 -> '26').
 function fiscalYearFor(date = new Date()) {
@@ -42,6 +41,7 @@ const SAC_FOR = { subscription: SAC_SUBSCRIPTION, booking: SAC_BOOKING };
 // RPC guarantees gap-free serials and one row per (sourceType, sourceId).
 async function generateInvoice({ sourceType, sourceId, paymentId = null, issuedAt, buyer, taxableValue, gstAmount }) {
   try {
+    const { supabaseAdmin } = require('../config/supabase');
     const series = SERIES[sourceType];
     if (!series) throw new Error(`unknown sourceType ${sourceType}`);
     const when = issuedAt ? new Date(issuedAt) : new Date();
