@@ -458,13 +458,6 @@ const socialProofCount = (id) => {
   return (Math.abs(h) % 4) + 2;
 };
 
-// Inflated "MRP" for marketing display — ~3.5–5× the real price, rounded to nearest ₹5.
-const fakeOriginal = (price) => {
-  if (!price) return 0;
-  const multiplier = 1.18 + ((price * 7) % 8) / 100;
-  return Math.round((price * multiplier) / 5) * 5;
-};
-
 // Conversion-focused trust signals shown under the CTA.
 const TRUST_SIGNALS = [
   { key: 'verified',  label: 'Verified host',
@@ -473,10 +466,10 @@ const TRUST_SIGNALS = [
     path: 'M13 10V3L4 14h7v7l9-11h-7z' },
 ];
 
-const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, motionOK = true }) => {
+const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown = { platformFee: 0, tax: 0 }, compact = false, motionOK = true }) => {
   const isFree = service.price === 0;
   const [cancelTipOpen, setCancelTipOpen] = useState(false);
-  const [discountTipOpen, setDiscountTipOpen] = useState(false);
+  const [feeTipOpen, setFeeTipOpen] = useState(false);
 
   const imgWrapRef = useRef(null);
   const [imgH, setImgH] = useState(0);
@@ -484,8 +477,8 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, moti
     if (imgWrapRef.current) setImgH(imgWrapRef.current.scrollHeight);
   }, [service.thumbnail_url]);
 
-  const mrp = fakeOriginal(service.price);
-  const discount = mrp > service.price ? Math.round(((mrp - service.price) / mrp) * 100) : 0;
+  const { platformFee = 0, tax = 0 } = bookingFeeBreakdown || {};
+  const total = service.price + bookingFee;
   const recentBookers = socialProofCount(service.id);
 
   return (
@@ -512,7 +505,7 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, moti
             </div>}
       </div>
       <div className="p-5">
-        {/* Pricing — listed price + inflated MRP strikethrough + discount badge */}
+        {/* Pricing — service price + platform fee & tax breakdown */}
         <div className="mb-1">
           {isFree ? (
             <div className="text-3xl font-black text-gray-900 leading-none">Free</div>
@@ -520,33 +513,42 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, moti
             <>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-black text-gray-900 leading-none">₹{service.price}</span>
-                {discount > 0 && (
-                  <>
-                    <span className="text-base text-gray-400 line-through font-medium">₹{mrp}</span>
-                    <span className="text-sm font-bold text-amber-600">{discount}% off</span>
-                    <span className="relative">
-                      <button type="button" onClick={() => setDiscountTipOpen(o => !o)} aria-label="Pricing info"
-                        className="text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="9"/><path strokeLinecap="round" d="M12 16v-4M12 8.5h.01"/>
-                        </svg>
-                      </button>
-                      {discountTipOpen && (
-                        <>
-                          <button type="button" aria-hidden tabIndex={-1}
-                            className="fixed inset-0 z-10 cursor-default" onClick={() => setDiscountTipOpen(false)}/>
-                          <div className="absolute z-20 left-1/2 -translate-x-1/2 top-full mt-2 w-56 rounded-xl bg-gray-900 text-white text-xs leading-relaxed p-3 shadow-lg">
-                            <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-gray-900"/>
-                            <p>Price compared to the host's standard consultation rate.</p>
-                          </div>
-                        </>
-                      )}
-                    </span>
-                  </>
-                )}
               </div>
               {bookingFee > 0 && (
-                <p className="text-xs text-gray-500 mt-1">+ taxes & fees: ₹{bookingFee}</p>
+                <p className="relative mt-1.5 flex items-center gap-1 text-xs text-gray-500">
+                  <span>+ ₹{bookingFee} platform fee &amp; tax</span>
+                  <button type="button" onClick={() => setFeeTipOpen(o => !o)} aria-label="View fee breakdown"
+                    className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="9"/><path strokeLinecap="round" d="M12 16v-4M12 8.5h.01"/>
+                    </svg>
+                  </button>
+                  {feeTipOpen && (
+                    <>
+                      <button type="button" aria-hidden tabIndex={-1}
+                        className="fixed inset-0 z-10 cursor-default" onClick={() => setFeeTipOpen(false)}/>
+                      <div className="absolute z-20 left-0 top-full mt-2 w-64 rounded-xl border border-gray-200 bg-white text-gray-700 text-xs leading-relaxed p-3.5 shadow-xl">
+                        <span className="absolute -top-1.5 left-6 w-3 h-3 rotate-45 border-l border-t border-gray-200 bg-white"/>
+                        <p className="mb-2 font-semibold text-gray-900">Price breakdown</p>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span>Service price</span><span className="font-medium text-gray-900">₹{service.price}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Platform fee</span><span className="font-medium text-gray-900">₹{platformFee}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Tax (GST)</span><span className="font-medium text-gray-900">₹{tax}</span>
+                          </div>
+                          <div className="mt-1.5 flex items-center justify-between border-t border-gray-100 pt-1.5">
+                            <span className="font-semibold text-gray-900">Total</span>
+                            <span className="font-bold text-gray-900">₹{total}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </p>
               )}
             </>
           )}
@@ -899,7 +901,7 @@ export default function ServiceDetail() {
     </div>
   );
 
-  const { service, vendor, totalServices, reviews, avgRating, ratingBreakdown, bookingFee } = data;
+  const { service, vendor, totalServices, reviews, avgRating, ratingBreakdown, bookingFee, bookingFeeBreakdown } = data;
 
   // Host-picked brand colour drives the above-the-fold dot-grid backdrop.
   const dotColor = isValidHex(vendor?.theme_color) ? vendor.theme_color : DEFAULT_THEME_COLOR;
@@ -1218,7 +1220,7 @@ export default function ServiceDetail() {
           {/* ── RIGHT: Sticky sidebar ── */}
           <div className="hidden lg:block lg:w-[320px] flex-shrink-0">
             <div className="sticky top-20 flex flex-col gap-5">
-              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} compact={!heroInView} motionOK={motionOK}/>
+              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} bookingFeeBreakdown={bookingFeeBreakdown} compact={!heroInView} motionOK={motionOK}/>
               <AdSpaceCard/>
             </div>
           </div>
@@ -1257,10 +1259,9 @@ export default function ServiceDetail() {
             <>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-xl font-black text-gray-900 leading-none">₹{service.price}</span>
-                {(() => { const m = fakeOriginal(service.price); const d = m > service.price ? Math.round(((m - service.price) / m) * 100) : 0; return d > 0 ? <><span className="text-xs text-gray-400 line-through">₹{m}</span><span className="text-[11px] font-bold text-amber-600">{d}% off</span></> : null; })()}
               </div>
               {bookingFee > 0 && (
-                <p className="text-[11px] text-gray-500 mt-0.5">+ taxes & fees: ₹{bookingFee}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">+ ₹{bookingFee} platform fee &amp; tax</p>
               )}
             </>
           )}
