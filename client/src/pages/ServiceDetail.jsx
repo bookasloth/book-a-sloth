@@ -860,61 +860,95 @@ export default function ServiceDetail() {
       <Seo {...seo} jsonLd={jsonLd} />
       {/* ── Above-the-fold backdrop — host-themed background type ── */}
       <HostBackground typeKey={bg.key} color={dotColor} params={bg.params} />
-      {/* Page-level decorative backdrop — brand gradient glows + geometric accents */}
+      {/* Page-level decorative backdrop — brand gradient glows + calendar-inspired accents */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[40rem] overflow-hidden z-[1]">
         {/* radial glows */}
         <div className="absolute -top-24 -right-16 h-[30rem] w-[30rem] rounded-full blur-3xl"
           style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 18%, transparent), transparent 70%)' }}/>
         <div className="absolute -top-20 -left-24 h-[26rem] w-[26rem] rounded-full blur-3xl"
           style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 12%, transparent), transparent 70%)' }}/>
-        {/* top-right orbital rings — thicker strokes */}
-        <svg className="absolute -top-10 -right-8 hidden h-72 w-72 opacity-[0.18] sm:block"
-          viewBox="0 0 240 240" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <circle cx="150" cy="96" r="92" stroke="currentColor" strokeWidth="1.6"/>
-          <circle cx="150" cy="96" r="62" stroke="currentColor" strokeWidth="1.6"/>
-          <circle cx="150" cy="96" r="32" stroke="currentColor" strokeWidth="1.6"/>
-          <circle cx="242" cy="96" r="3.5" fill="currentColor"/>
-          <circle cx="150" cy="4" r="3" fill="currentColor"/>
+
+        {/* ── Calendar mesh — deconstructed grid dissolving rightward ── */}
+        <svg className="absolute -top-4 right-0 hidden h-[22rem] w-[28rem] opacity-[0.10] sm:block"
+          viewBox="0 0 440 340" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <line x1="60" y1="48" x2="400" y2="48" stroke="currentColor" strokeWidth="0.8" opacity="0.7"/>
+          <line x1="100" y1="96" x2="420" y2="96" stroke="currentColor" strokeWidth="0.8" opacity="0.55"/>
+          <line x1="140" y1="144" x2="380" y2="144" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
+          <line x1="180" y1="192" x2="360" y2="192" stroke="currentColor" strokeWidth="0.6" opacity="0.25"/>
+          <line x1="220" y1="240" x2="340" y2="240" stroke="currentColor" strokeWidth="0.5" opacity="0.15"/>
+          <line x1="160" y1="20" x2="160" y2="120" stroke="currentColor" strokeWidth="0.7" opacity="0.5"/>
+          <line x1="220" y1="30" x2="220" y2="180" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
+          <line x1="280" y1="10" x2="280" y2="220" stroke="currentColor" strokeWidth="0.8" opacity="0.65"/>
+          <line x1="340" y1="25" x2="340" y2="170" stroke="currentColor" strokeWidth="0.7" opacity="0.4"/>
+          <line x1="400" y1="35" x2="400" y2="110" stroke="currentColor" strokeWidth="0.5" opacity="0.25"/>
+          <circle cx="220" cy="48" r="2.5" fill="currentColor" opacity="0.5"/>
+          <circle cx="280" cy="96" r="3" fill="currentColor" opacity="0.45"/>
+          <circle cx="160" cy="96" r="2" fill="currentColor" opacity="0.35"/>
+          <circle cx="340" cy="48" r="2" fill="currentColor" opacity="0.3"/>
+          <circle cx="280" cy="144" r="2" fill="currentColor" opacity="0.2"/>
         </svg>
-        {/* top-left grid mesh — thicker */}
-        <svg className="absolute top-16 left-6 hidden h-24 w-24 opacity-[0.12] sm:block"
-          viewBox="0 0 80 80" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <path d="M0 20H80M0 40H80M0 60H80M20 0V80M40 0V80M60 0V80" stroke="currentColor" strokeWidth="1.4"/>
+
+        {/* ── Date dot field — structured rows, dense top → sparse bottom ── */}
+        <svg className="absolute top-8 right-[8%] hidden h-[18rem] w-[20rem] opacity-[0.08] sm:block"
+          viewBox="0 0 320 280" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <circle cx="32" cy="24" r="2" fill="currentColor" opacity="0.7"/>
+          <circle cx="72" cy="24" r="2" fill="currentColor" opacity="0.6"/>
+          <circle cx="112" cy="24" r="2" fill="currentColor" opacity="0.7"/>
+          <circle cx="152" cy="24" r="2" fill="currentColor" opacity="0.5"/>
+          <circle cx="192" cy="24" r="2" fill="currentColor" opacity="0.65"/>
+          <circle cx="232" cy="24" r="2" fill="currentColor" opacity="0.6"/>
+          <circle cx="272" cy="24" r="2" fill="currentColor" opacity="0.55"/>
+          <circle cx="32" cy="64" r="1.8" fill="currentColor" opacity="0.55"/>
+          <circle cx="112" cy="64" r="1.8" fill="currentColor" opacity="0.6"/>
+          <circle cx="152" cy="64" r="1.8" fill="currentColor" opacity="0.5"/>
+          <circle cx="232" cy="64" r="1.8" fill="currentColor" opacity="0.45"/>
+          <circle cx="272" cy="64" r="1.8" fill="currentColor" opacity="0.5"/>
+          <circle cx="72" cy="104" r="1.6" fill="currentColor" opacity="0.4"/>
+          <circle cx="152" cy="104" r="1.6" fill="currentColor" opacity="0.45"/>
+          <circle cx="232" cy="104" r="1.6" fill="currentColor" opacity="0.35"/>
+          <circle cx="112" cy="144" r="1.4" fill="currentColor" opacity="0.3"/>
+          <circle cx="192" cy="144" r="1.4" fill="currentColor" opacity="0.25"/>
+          <circle cx="152" cy="184" r="1.2" fill="currentColor" opacity="0.15"/>
+          <circle cx="232" cy="184" r="1.2" fill="currentColor" opacity="0.12"/>
+          <circle cx="192" cy="224" r="1" fill="currentColor" opacity="0.08"/>
         </svg>
-        {/* left — dashed arc sweep */}
-        <svg className="absolute top-48 -left-6 hidden h-48 w-48 opacity-[0.10] sm:block"
-          viewBox="0 0 200 200" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <path d="M180 100A80 80 0 0 0 20 100" stroke="currentColor" strokeWidth="1.5" strokeDasharray="6 4"/>
-          <path d="M160 100A60 60 0 0 0 40 100" stroke="currentColor" strokeWidth="1.2" strokeDasharray="4 6"/>
-          <circle cx="20" cy="100" r="3" fill="currentColor"/>
+
+        {/* ── Booking connection lines — schedule flow paths ── */}
+        <svg className="absolute top-36 right-[5%] hidden h-56 w-64 opacity-[0.09] sm:block"
+          viewBox="0 0 250 220" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <path d="M20 30 H120 V90 H200" stroke="currentColor" strokeWidth="1" opacity="0.5"/>
+          <circle cx="20" cy="30" r="3" fill="currentColor" opacity="0.6"/>
+          <circle cx="120" cy="90" r="2.5" fill="currentColor" opacity="0.4"/>
+          <circle cx="200" cy="90" r="3" fill="currentColor" opacity="0.5"/>
+          <path d="M40 130 H100 V170 H180" stroke="currentColor" strokeWidth="0.8" opacity="0.35"/>
+          <circle cx="40" cy="130" r="2.5" fill="currentColor" opacity="0.4"/>
+          <circle cx="180" cy="170" r="2.5" fill="currentColor" opacity="0.35"/>
+          <line x1="120" y1="90" x2="100" y2="130" stroke="currentColor" strokeWidth="0.6" strokeDasharray="3 3" opacity="0.25"/>
         </svg>
-        {/* right — scattered dots constellation */}
-        <svg className="absolute top-52 right-12 hidden h-32 w-32 opacity-[0.14] sm:block"
-          viewBox="0 0 120 120" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <circle cx="20" cy="30" r="2.5" fill="currentColor"/>
-          <circle cx="55" cy="15" r="1.8" fill="currentColor"/>
-          <circle cx="90" cy="38" r="3" fill="currentColor"/>
-          <circle cx="40" cy="65" r="2" fill="currentColor"/>
-          <circle cx="75" cy="80" r="2.5" fill="currentColor"/>
-          <circle cx="105" cy="70" r="1.5" fill="currentColor"/>
-          <circle cx="15" cy="95" r="2" fill="currentColor"/>
-          <circle cx="60" cy="105" r="1.8" fill="currentColor"/>
-          <line x1="20" y1="30" x2="55" y2="15" stroke="currentColor" strokeWidth="0.6" opacity="0.5"/>
-          <line x1="55" y1="15" x2="90" y2="38" stroke="currentColor" strokeWidth="0.6" opacity="0.5"/>
-          <line x1="40" y1="65" x2="75" y2="80" stroke="currentColor" strokeWidth="0.6" opacity="0.5"/>
+
+        {/* ── Floating calendar cells — tiny rounded rects, very sparse ── */}
+        <svg className="absolute top-12 right-[30%] hidden h-64 w-80 opacity-[0.06] lg:block"
+          viewBox="0 0 320 260" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <rect x="40" y="20" width="28" height="22" rx="4" stroke="currentColor" strokeWidth="0.8" opacity="0.5"/>
+          <rect x="200" y="60" width="32" height="24" rx="5" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
+          <rect x="120" y="130" width="26" height="20" rx="4" stroke="currentColor" strokeWidth="0.7" opacity="0.3"/>
+          <rect x="260" y="110" width="30" height="22" rx="4" stroke="currentColor" strokeWidth="0.6" opacity="0.2"/>
+          <rect x="80" y="200" width="24" height="18" rx="3" stroke="currentColor" strokeWidth="0.5" opacity="0.12"/>
         </svg>
-        {/* center-left — diamond crosshair */}
-        <svg className="absolute top-28 left-[18%] hidden h-10 w-10 opacity-[0.10] lg:block"
-          viewBox="0 0 40 40" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <path d="M20 4L36 20L20 36L4 20Z" stroke="currentColor" strokeWidth="1.4"/>
-          <line x1="20" y1="0" x2="20" y2="40" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
-          <line x1="0" y1="20" x2="40" y2="20" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
+
+        {/* ── Left side — extremely subtle dot mesh (reduced density ~70%) ── */}
+        <svg className="absolute top-20 left-4 hidden h-32 w-24 opacity-[0.05] sm:block"
+          viewBox="0 0 100 130" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <circle cx="20" cy="20" r="1.5" fill="currentColor" opacity="0.4"/>
+          <circle cx="60" cy="40" r="1.2" fill="currentColor" opacity="0.3"/>
+          <circle cx="30" cy="70" r="1" fill="currentColor" opacity="0.2"/>
+          <circle cx="70" cy="90" r="1.2" fill="currentColor" opacity="0.15"/>
         </svg>
-        {/* right mid — plus/cross mark */}
-        <svg className="absolute top-32 right-[22%] hidden h-8 w-8 opacity-[0.12] lg:block"
-          viewBox="0 0 24 24" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <line x1="12" y1="2" x2="12" y2="22" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-          <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+
+        {/* ── Left side — single faint calendar cell ── */}
+        <svg className="absolute top-48 left-[12%] hidden h-8 w-10 opacity-[0.04] lg:block"
+          viewBox="0 0 36 28" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <rect x="2" y="2" width="32" height="24" rx="4" stroke="currentColor" strokeWidth="0.7"/>
         </svg>
       </div>
 
