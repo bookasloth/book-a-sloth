@@ -51,6 +51,7 @@ const STATIC_ROUTES = [
   { path: '/lp/calendly-alternative',  changefreq: 'monthly', priority: '0.7' },
   { path: '/for/lawyers',              changefreq: 'monthly', priority: '0.8' },
   { path: '/for/doctors',              changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/doctors-india',        changefreq: 'monthly', priority: '0.8' },
 ];
 
 const staticEntries = (siteUrl) =>
