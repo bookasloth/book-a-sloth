@@ -1,13 +1,12 @@
 const { BACKGROUND_KEYS, isBackgroundKey } = require('../config/backgroundKeys');
 
 describe('backgroundKeys', () => {
-  it('is a non-empty unique list including dotgrid', () => {
-    expect(BACKGROUND_KEYS).toContain('dotgrid');
-    expect(new Set(BACKGROUND_KEYS).size).toBe(BACKGROUND_KEYS.length);
+  it('is empty (all backgrounds removed)', () => {
+    expect(BACKGROUND_KEYS).toEqual([]);
   });
-  it('validates membership', () => {
-    expect(isBackgroundKey('dotgrid')).toBe(true);
-    expect(isBackgroundKey('nope')).toBe(false);
+  it('rejects all keys', () => {
+    expect(isBackgroundKey('lines')).toBe(false);
+    expect(isBackgroundKey('dotgrid')).toBe(false);
     expect(isBackgroundKey(null)).toBe(false);
   });
 });

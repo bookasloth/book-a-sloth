@@ -38,12 +38,12 @@ function sanitizeBackgrounds(input) {
 
 /**
  * Resolve a usable default background: keep the requested one if it is a known,
- * enabled key; otherwise fall back to the first enabled key, then to 'dotgrid'.
+ * enabled key; otherwise fall back to the first enabled key, then null.
  */
 function resolveDefaultBackground(requested, backgrounds) {
   if (isBackgroundKey(requested) && backgrounds?.[requested]?.enabled) return requested;
   const firstEnabled = BACKGROUND_KEYS.find((k) => backgrounds?.[k]?.enabled);
-  return firstEnabled || 'dotgrid';
+  return firstEnabled || null;
 }
 
 const DEFAULTS = {
@@ -77,7 +77,7 @@ const publicShape = (row) => {
     logo_image_url: row.logo_image_url || '',
     festive_logo_url: row.festive_logo_url || '',
     backgrounds: _enabled,
-    default_background: row?.default_background || 'dotgrid',
+    default_background: row?.default_background || null,
   };
 };
 
