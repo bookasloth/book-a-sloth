@@ -27,7 +27,7 @@ import {
   Lock, FileCheck, BadgePercent, Clock3,
   HeartPulse, Stethoscope, CalendarClock, UserX, PhoneCall, ClipboardList, TrendingDown,
   Briefcase, Target, TrendingUp, Presentation, Handshake, LineChart,
-  Scissors, Sparkles,
+  Scissors, Sparkles, Laptop,
 } from 'lucide-react';
 
 export const PROFESSION_LANDING = {
@@ -875,6 +875,217 @@ export const PROFESSION_LANDING = {
         quote: 'Clients book their own slot with my stylists and pay upfront. Way more professional than a WhatsApp back-and-forth.',
         name: 'Deepak Nair',
         role: 'Hair Studio Owner',
+        avatar: null,
+      },
+    ],
+  },
+
+  freelancers: {
+    slug: 'freelancers',
+    label: 'Freelancers',
+    icon: Laptop,
+
+    // ── Theme — digital & remote: deep teal + bright teal ────────────────────
+    theme: {
+      primary: '#134e4a',    // teal-900 — ink / headings
+      accent: '#14b8a6',     // teal-500 — signature colour
+      accentCta: '#0f766e',  // teal-700, AA-safe for white-text buttons
+      tint: '#f0fdfa',        // teal-50 wash
+      heroFrom: '#042f2e',   // dark teal
+      heroTo: '#134e4a',     // teal-900
+    },
+
+    // ── SEO ──────────────────────────────────────────────────────────────────
+    seo: {
+      title: 'Appointment Booking Software for Freelancers | Book A Sloth',
+      description:
+        'Let clients book calls and pay you online. Book A Sloth is booking + payment software for freelancers — advances collected upfront, calendar synced, no-shows gone, GST invoices. From ₹10/day.',
+      keywords:
+        'booking software for freelancers, freelancer scheduling app, collect advance payment freelancer, freelance discovery call booking, freelancer booking page India, get paid upfront freelance',
+      ogTitle: 'Still chasing freelance clients for payment? Fix it for ₹10/day.',
+      ogDescription:
+        'Clients book your call, pay an advance upfront, and get reminded — automatically. The booking + payment link every freelancer in India should already have.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-freelancers-og-1200x630.png',
+    },
+
+    // ── Hero ─────────────────────────────────────────────────────────────────
+    hero: {
+      eyebrow: 'For Freelancers, Designers, Developers & Writers',
+      headline: 'Your client calls,',
+      headlineAccent: 'booked and paid',
+      headlineTail: 'before you open the laptop.',
+      subline:
+        'Book A Sloth gives every freelancer one link — clients pick a slot, pay an advance upfront, and get reminded. You do the work, not the invoice-chasing.',
+      ctaText: 'Set Up My Booking Page',
+      microcopy: 'Free to start · No card needed · Live in minutes',
+      mock: {
+        practice: 'Ananya Rao',
+        practiceTag: 'Freelance UX Designer',
+        services: [
+          { name: 'Intro / Discovery Call', meta: '30 min · Online', price: '₹1,000' },
+          { name: 'Design Consultation', meta: '60 min · Online', price: '₹3,000' },
+        ],
+      },
+    },
+
+    // ── Social proof strip ───────────────────────────────────────────────────
+    socialProof: 'Trusted by designers, developers, writers and independent freelancers across India.',
+
+    // ── Trust badges ─────────────────────────────────────────────────────────
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Client data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+
+    // ── Authority stat band ──────────────────────────────────────────────────
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Calls booked, across any client time zone' },
+      { icon: BadgePercent, value: '0%', label: 'Commission — you keep every rupee' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your page' },
+    ],
+
+    // ── Problem / Agitation → Solution (6, freelancer's language) ────────────
+    painPoints: [
+      {
+        icon: IndianRupee,
+        problem: 'Chasing clients for advances and unpaid invoices',
+        solution: 'Collect an advance or full fee at booking. You start the work already paid, no follow-ups.',
+      },
+      {
+        icon: MessageSquareX,
+        problem: 'Scheduling calls over endless DMs and email threads',
+        solution: 'One link. Clients pick a slot themselves — no “what time works for you?” ping-pong.',
+      },
+      {
+        icon: CalendarX2,
+        problem: 'Juggling calls across clients and time zones',
+        solution: 'Two-way calendar sync shows only your real free slots, in the client’s own time zone.',
+      },
+      {
+        icon: UserX,
+        problem: 'Prospects ghosting your free discovery calls',
+        solution: 'A small paid or deposit slot plus reminders means only serious clients book your time.',
+      },
+      {
+        icon: MessageSquareX,
+        problem: 'Sharing a UPI QR after the call — looks unprofessional',
+        solution: 'A clean branded page with Razorpay checkout. The polish that wins better-paying clients.',
+      },
+      {
+        icon: Clock3,
+        problem: 'Losing overseas leads who reach out overnight',
+        solution: 'Your page books 24/7 — a client in another time zone reserves while you sleep.',
+      },
+    ],
+
+    // ── Features / Benefits ──────────────────────────────────────────────────
+    features: [
+      {
+        icon: CalendarCheck,
+        title: 'Booked around the clock',
+        desc: 'Your booking page is live 24/7. Clients reserve calls while you’re heads-down or offline.',
+      },
+      {
+        icon: Wallet,
+        title: 'Paid before you start',
+        desc: 'Collect an advance or full fee upfront via UPI, card or netbanking. GST invoice generated automatically.',
+      },
+      {
+        icon: ShieldCheck,
+        title: 'Client details stay private',
+        desc: 'Encrypted, access-controlled and never sold. Your client list and notes belong to you alone.',
+      },
+      {
+        icon: BellRing,
+        title: 'Reminders that cut no-shows',
+        desc: 'Email + WhatsApp reminders send themselves before every call — you never chase a client.',
+      },
+    ],
+
+    // ── Pricing framing ──────────────────────────────────────────────────────
+    pricing: {
+      hook: 'Less than a cup of chai a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one booked call covers a year.',
+    },
+
+    // ── Mid-page CTA banners ─────────────────────────────────────────────────
+    midCtas: {
+      afterProblems: {
+        text: 'Stop chasing invoices. Start getting paid to talk.',
+        ctaText: 'Get My Booking Link',
+      },
+      afterHow: {
+        text: 'Your next client is ready to book a call. Make it one click.',
+        ctaText: 'Set Up My Page Free',
+      },
+    },
+
+    // ── FAQ (drives FAQPage schema — AEO/GEO) ────────────────────────────────
+    faq: [
+      {
+        q: 'What is the best booking and payment software for freelancers in India?',
+        a: 'Book A Sloth is built for Indian freelancers — clients book calls online, pay an advance or full fee upfront via UPI or card, and get automatic reminders. It syncs with your calendar, handles GST invoicing and charges 0% commission on paid plans, so you keep every rupee.',
+      },
+      {
+        q: 'Can I collect an advance payment when a client books?',
+        a: 'Yes. Your fee is shown on the booking page and collected at checkout through Razorpay (UPI, cards, netbanking) before the call. You can take an advance or the full amount upfront.',
+      },
+      {
+        q: 'Does it handle clients in other time zones?',
+        a: 'Yes. Your availability is shown in each client’s own time zone, and two-way calendar sync keeps your real free slots accurate — so overseas clients book without any back-and-forth.',
+      },
+      {
+        q: 'How does it reduce no-shows on discovery calls?',
+        a: 'Automatic email and WhatsApp reminders go out before every call, and making the slot paid or deposit-based means only serious prospects book your time.',
+      },
+      {
+        q: 'How much does it cost?',
+        a: 'You can start free with a 5% per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.',
+      },
+      {
+        q: 'Is it suitable for designers, developers, writers and consultants?',
+        a: 'Yes. Any freelancer who sells booked time — designers, developers, writers, marketers, video editors and consultants — can use Book A Sloth to run bookings and payments from one professional link.',
+      },
+    ],
+
+    // ── Final CTA ────────────────────────────────────────────────────────────
+    finalCta: {
+      icon: Laptop,
+      urgency: 'Every unpaid invoice is time you’ll never bill again.',
+      headline: 'Do the work. Skip the admin.',
+      subline: 'Set up your freelance booking page in minutes. Free to start, no card required.',
+      ctaText: 'Create My Booking Page',
+    },
+
+    // ── Section headings ─────────────────────────────────────────────────────
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Doing great work is the job.', titleAccent: 'Chasing payment shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own project manager.' },
+    },
+
+    madeFor: "India's Freelancers",
+
+    // ── Freelancer testimonials (real) ───────────────────────────────────────
+    testimonials: [
+      {
+        quote: 'Advances at booking ended my cash-flow stress. I start projects already paid instead of chasing invoices for weeks.',
+        name: 'Ananya Rao',
+        role: 'UX Designer',
+        avatar: null,
+      },
+      {
+        quote: 'Overseas clients used to be a scheduling headache. Now they book in their own time zone and pay upfront — zero back-and-forth.',
+        name: 'Karan Mehta',
+        role: 'Freelance Developer',
+        avatar: null,
+      },
+      {
+        quote: 'A clean booking link on my portfolio looks so much more professional than sending a UPI QR after every call.',
+        name: 'Ishita Sen',
+        role: 'Content Writer',
         avatar: null,
       },
     ],

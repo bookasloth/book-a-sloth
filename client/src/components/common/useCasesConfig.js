@@ -104,7 +104,7 @@ export const USE_CASES_CONFIG = [
   {
     label: 'Freelancers',
     desc: 'Let clients book your availability.',
-    href: '/explore?category=freelance',
+    href: '/for/freelancers',
     icon: Laptop,
     category: 'freelance',
     iconBg: 'bg-teal-50',
