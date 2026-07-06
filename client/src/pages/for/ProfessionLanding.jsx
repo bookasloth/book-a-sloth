@@ -1,0 +1,487 @@
+// /for/:profession — profession-specific marketing landing page.
+//
+// One data-driven template (config in professionLandingData.js). Each profession
+// carries its OWN palette + voice + product mockup, applied here via CSS custom
+// properties on the page root, so the pages feel distinct. Design pattern:
+// "Trust & Authority + Conversion" — credibility band, security badges, metric
+// proof, transparent pricing, low-friction CTA. Marketing-only: every CTA hands
+// off to the real host signup funnel (/be-a-sloth).
+//
+// SEO: clean commercial title/meta for Google; clickbait OG for social; full
+// JSON-LD graph (SoftwareApplication + FAQPage + BreadcrumbList + Service) for
+// AEO/GEO citation by ChatGPT / Claude / Gemini / Perplexity. New profession URLs
+// must also be added to scripts/prerender.mjs so scrapers see the baked HTML.
+
+import { useMemo } from 'react';
+import { Link, useParams, Navigate } from 'react-router-dom';
+import Reveal from '../../components/home/Reveal';
+import { ArrowRight, Check, Star, Sparkles, ShieldCheck } from 'lucide-react';
+import useLenis from '../../hooks/useLenis';
+import Seo from '../../components/common/Seo';
+import { SITE_URL } from '../../utils/seo';
+import { HERO_FACES } from '../../components/home/images';
+import { TESTIMONIALS } from '../../data/testimonials';
+import { STARTER_PLAN, PAID_PLANS } from '../../data/plans';
+import { getProfessionLanding } from './professionLandingData';
+
+const ROUTE_START = '/be-a-sloth';
+
+/* Hero social-proof face — CDN photo with neutral fallback chip. */
+function HeroFace({ src }) {
+  return src ? (
+    <img src={src} alt="" loading="lazy" className="h-9 w-9 flex-shrink-0 rounded-full border-2 border-white/80 object-cover" />
+  ) : (
+    <span className="h-9 w-9 flex-shrink-0 rounded-full border-2 border-white/80 bg-white/20" />
+  );
+}
+
+/* Testimonial avatar with initials fallback. */
+function TAvatar({ src, name }) {
+  return src ? (
+    <img src={src} alt={name} loading="lazy" className="h-11 w-11 flex-shrink-0 rounded-xl object-cover" />
+  ) : (
+    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-sm font-bold" style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 15%, transparent)', color: 'var(--lp-accent-cta)' }}>
+      {name?.charAt(0) || '★'}
+    </div>
+  );
+}
+
+/* Hero product mockup — a themed booking page for this profession. Pure CSS,
+   no screenshot needed; reads the practice + service names from config. */
+function BookingMock({ mock, label }) {
+  return (
+    <div className="relative mx-auto w-full max-w-sm">
+      {/* Browser chrome */}
+      <div className="overflow-hidden rounded-[12px] bg-white shadow-[0_40px_90px_-30px_rgba(0,0,0,0.55)] ring-1 ring-black/10">
+        <div className="flex items-center gap-2 border-b border-black/5 bg-neutral-50 px-4 py-2.5">
+          <span className="flex gap-1.5" aria-hidden>
+            <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+            <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+            <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+          </span>
+          <div className="ml-2 flex-1 truncate rounded-full bg-white px-3 py-1 text-[11px] text-neutral-400 ring-1 ring-inset ring-black/5">
+            bookasloth.com/meera-law
+          </div>
+        </div>
+        {/* Page body */}
+        <div className="p-5">
+          {/* Banner + avatar */}
+          <div className="relative">
+            <div className="h-14 rounded-[8px]" style={{ background: 'linear-gradient(110deg, var(--lp-hero-from), var(--lp-accent))' }} />
+            <div className="absolute -bottom-5 left-3 flex h-12 w-12 items-center justify-center rounded-2xl border-[3px] border-white text-sm font-bold text-white" style={{ background: 'var(--lp-accent-cta)' }}>
+              {mock.practice.split(' ').slice(-1)[0].charAt(0)}
+            </div>
+          </div>
+          <div className="pl-1 pt-6">
+            <div className="text-sm font-bold text-[color:var(--lp-primary)]">{mock.practice}</div>
+            <span className="mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 14%, transparent)', color: 'var(--lp-accent-cta)' }}>
+              {mock.practiceTag}
+            </span>
+          </div>
+          {/* Services */}
+          <div className="mt-4 space-y-2.5">
+            {mock.services.map((s) => (
+              <div key={s.name} className="flex items-center justify-between rounded-[8px] border border-neutral-100 bg-white p-3">
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-semibold text-[color:var(--lp-primary)]">{s.name}</div>
+                  <div className="mt-0.5 text-[10px] text-neutral-400">{s.meta}</div>
+                </div>
+                <div className="flex items-center gap-2 pl-2">
+                  <span className="text-xs font-bold text-[color:var(--lp-primary)]">{s.price}</span>
+                  <span className="rounded-[6px] px-2.5 py-1 text-[10px] font-bold text-white" style={{ background: 'var(--lp-accent-cta)' }}>Book</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex items-center gap-1.5 pl-0.5 text-[10px] font-medium text-neutral-500">
+            <ShieldCheck size={12} style={{ color: 'var(--lp-accent-cta)' }} />
+            Fee paid securely before the consultation
+          </div>
+        </div>
+      </div>
+      {/* Floating "paid" chip */}
+      <div className="absolute -right-3 top-16 hidden rounded-2xl bg-white px-3 py-2 shadow-xl ring-1 ring-black/5 sm:block">
+        <div className="text-[10px] font-medium text-neutral-400">Fee received</div>
+        <div className="text-sm font-bold" style={{ color: 'var(--lp-accent-cta)' }}>₹2,500</div>
+      </div>
+    </div>
+  );
+}
+
+const HOW_STEPS = [
+  { n: '1', title: 'Claim your link', desc: 'Pick your handle and add your consultation services in minutes.' },
+  { n: '2', title: 'Share it anywhere', desc: 'Website, Instagram bio, WhatsApp status, email signature — one link does it all.' },
+  { n: '3', title: 'Get booked & paid', desc: 'Clients pick a slot, pay upfront, and get reminded. You just show up.' },
+];
+
+export default function ProfessionLanding() {
+  useLenis();
+  const { profession } = useParams();
+  const data = getProfessionLanding(profession);
+
+  // Prefer profession-specific testimonials; fall back to weighted shared set.
+  const testimonials = useMemo(() => {
+    if (!data) return [];
+    if (data.testimonials?.length) return data.testimonials.slice(0, 3);
+    const roles = new Set(data.testimonialRoles || []);
+    const first = TESTIMONIALS.filter((t) => roles.has(t.role));
+    const rest = TESTIMONIALS.filter((t) => !roles.has(t.role));
+    return [...first, ...rest].slice(0, 3);
+  }, [data]);
+
+  // Unknown profession → home (friendlier than a bare 404).
+  if (!data) return <Navigate to="/" replace />;
+
+  const { theme, seo, hero, socialProof, trust, stats, painPoints, features, headings, pricing, faq, finalCta, testimonialsNote, label } = data;
+  const canonical = `${SITE_URL}/for/${data.slug}`;
+  // Headline "₹X/day" sells the TOP plan (last = Studio, unlimited). ₹3650/yr = ₹10/day.
+  const topPlan = PAID_PLANS[PAID_PLANS.length - 1];
+  const perDay = Math.max(1, Math.round(topPlan.yearly / 365));
+
+  // ── JSON-LD graph — SEO + AEO + GEO ──────────────────────────────────────
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'Book A Sloth',
+      applicationCategory: 'BusinessApplication',
+      applicationSubCategory: 'Appointment Scheduling Software',
+      operatingSystem: 'Web',
+      url: canonical,
+      description: seo.description,
+      offers: [
+        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${STARTER_PLAN.name} plan` },
+        { '@type': 'Offer', price: String(PAID_PLANS[0].yearly), priceCurrency: 'INR', name: `${PAID_PLANS[0].name} plan (yearly)` },
+      ],
+      aggregateRating: { '@type': 'AggregateRating', ratingValue: '5', reviewCount: String(TESTIMONIALS.length), bestRating: '5' },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      serviceType: `Appointment booking software for ${label.toLowerCase()}`,
+      provider: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
+      areaServed: 'IN',
+      description: seo.description,
+      url: canonical,
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faq.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: label, item: canonical },
+      ],
+    },
+  ];
+
+  // Palette → CSS custom properties consumed by the sections below.
+  const styleVars = {
+    '--lp-primary': theme.primary,
+    '--lp-accent': theme.accent,
+    '--lp-accent-cta': theme.accentCta,
+    '--lp-tint': theme.tint,
+    '--lp-hero-from': theme.heroFrom,
+    '--lp-hero-to': theme.heroTo,
+  };
+
+  return (
+    <main className="overflow-x-clip bg-white text-[color:var(--lp-primary)]" style={styleVars}>
+      <Seo
+        title={seo.title}
+        description={seo.description}
+        keywords={seo.keywords}
+        canonical={canonical}
+        robots="index, follow, max-image-preview:large, max-snippet:-1"
+        siteName="Book A Sloth"
+        locale="en_IN"
+        themeColor={theme.primary}
+        ogTitle={seo.ogTitle}
+        ogDescription={seo.ogDescription}
+        image={seo.ogImage}
+        jsonLd={jsonLd}
+      />
+
+      {/* ════════════════ HERO (dark, themed, two-column) ════════════════ */}
+      <section
+        className="relative px-5 pb-16 pt-16 sm:px-8 sm:pb-20 sm:pt-24"
+        style={{ background: 'linear-gradient(160deg, var(--lp-hero-from), var(--lp-hero-to))' }}
+      >
+        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+          {/* LEFT — copy */}
+          <div className="text-center text-white lg:text-left">
+            <Reveal as="p" className="text-xs font-semibold uppercase tracking-[0.22em]" style={{ color: 'var(--lp-accent)' }}>
+              {hero.eyebrow}
+            </Reveal>
+            <Reveal as="h1" delay={0.05} className="mt-5 text-[clamp(2rem,5.4vw,3.6rem)] font-bold leading-[1.08] tracking-[-0.02em] text-white">
+              {hero.headline}{' '}
+              <span className="italic" style={{ color: 'var(--lp-accent)' }}>{hero.headlineAccent}</span>{' '}
+              {hero.headlineTail}
+            </Reveal>
+            <Reveal as="p" delay={0.12} className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg lg:mx-0">
+              {hero.subline}
+            </Reveal>
+
+            <Reveal delay={0.18} className="mt-9 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
+              <Link
+                to={ROUTE_START}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-7 py-4 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:no-underline sm:w-auto"
+                style={{ background: 'var(--lp-accent-cta)' }}
+              >
+                {hero.ctaText}
+                <ArrowRight size={16} />
+              </Link>
+              <span className="flex items-center gap-1.5 text-xs text-white/50">
+                <Check size={13} style={{ color: 'var(--lp-accent)' }} />
+                {hero.microcopy}
+              </span>
+            </Reveal>
+
+            {/* Social proof */}
+            <Reveal delay={0.24} className="mt-10 flex items-center justify-center gap-4 lg:justify-start">
+              <div className="flex -space-x-3">
+                {HERO_FACES.map((f, i) => <HeroFace key={i} src={f} />)}
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-1">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <Star key={i} size={13} className="fill-amber-400 text-amber-400" />
+                  ))}
+                  <span className="ml-1 text-sm font-semibold text-white">5/5</span>
+                </div>
+                <p className="max-w-xs text-xs text-white/50">{socialProof}</p>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* RIGHT — product mockup */}
+          <Reveal delay={0.1} className="hidden lg:block">
+            <BookingMock mock={hero.mock} label={label} />
+          </Reveal>
+        </div>
+
+        {/* Trust badge row */}
+        <Reveal delay={0.3} className="mx-auto mt-14 max-w-5xl">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {trust.map((t) => (
+              <div key={t.label} className="flex items-center gap-2.5 rounded-[6px] border border-white/10 bg-white/10 px-3.5 py-3">
+                <t.icon size={17} className="flex-shrink-0" style={{ color: 'var(--lp-accent)' }} />
+                <span className="text-[12.5px] font-medium leading-tight text-white/80">{t.label}</span>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ════════════════ STAT BAND (authority metrics) ════════════════ */}
+      <section className="border-b border-black/5 px-5 py-12 sm:px-8" style={{ background: 'var(--lp-tint)' }}>
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 lg:grid-cols-4">
+          {stats.map((s, i) => (
+            <Reveal key={s.label} delay={i * 0.07} className="text-center">
+              <s.icon size={22} className="mx-auto" style={{ color: 'var(--lp-accent-cta)' }} />
+              <div className="mt-2 font-heading text-3xl font-extrabold tracking-tight sm:text-4xl">{s.value}</div>
+              <p className="mx-auto mt-1.5 max-w-[13rem] text-xs leading-snug text-neutral-500">{s.label}</p>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ════════════════ PROBLEM → SOLUTION ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em]" style={{ color: 'var(--lp-accent-cta)' }}>
+            {headings.problems.eyebrow}
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-3xl font-bold leading-tight sm:text-4xl">
+            {headings.problems.title} <span className="italic" style={{ color: 'var(--lp-accent-cta)' }}>{headings.problems.titleAccent}</span>
+          </Reveal>
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6">
+            {painPoints.map((p, i) => (
+              <Reveal key={p.problem} delay={(i % 2) * 0.08}>
+                <div className="h-full rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)] sm:p-7">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 12%, transparent)', color: 'var(--lp-accent-cta)' }}>
+                      <p.icon size={18} />
+                    </span>
+                    <p className="text-sm font-semibold text-neutral-500 line-through decoration-neutral-400 decoration-[1.5px]">
+                      {p.problem}
+                    </p>
+                  </div>
+                  <div className="mt-4 flex items-start gap-3 border-t border-dashed border-neutral-200 pt-4">
+                    <Check size={18} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--lp-accent-cta)' }} />
+                    <p className="text-[15px] font-medium leading-relaxed text-[color:var(--lp-primary)]">{p.solution}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════ FEATURES / BENEFITS ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--lp-tint)' }}>
+        <div className="mx-auto max-w-6xl">
+          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em]" style={{ color: 'var(--lp-accent-cta)' }}>
+            {headings.features.eyebrow}
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-3xl font-bold leading-tight sm:text-4xl">
+            {headings.features.title} <span className="italic" style={{ color: 'var(--lp-accent-cta)' }}>{headings.features.titleAccent}</span>
+          </Reveal>
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
+            {features.map((f, i) => (
+              <Reveal key={f.title} delay={(i % 4) * 0.07}>
+                <div className="flex h-full flex-col rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)] sm:p-7">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl" style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 12%, transparent)', color: 'var(--lp-accent-cta)' }}>
+                    <f.icon size={22} />
+                  </span>
+                  <h3 className="mt-5 font-heading text-base font-bold">{f.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">{f.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════ HOW IT WORKS (dark, themed) ════════════════ */}
+      <section className="px-5 py-20 text-white sm:px-8 lg:py-28" style={{ background: 'var(--lp-primary)' }}>
+        <div className="mx-auto max-w-6xl">
+          <Reveal as="h2" className="mx-auto max-w-[750px] text-center text-3xl font-bold leading-tight text-white sm:text-4xl">
+            From link to paid. <span className="italic" style={{ color: 'var(--lp-accent)' }}>In three steps.</span>
+          </Reveal>
+          <div className="mt-14 grid gap-6 sm:grid-cols-3">
+            {HOW_STEPS.map((s, i) => (
+              <Reveal key={s.n} delay={i * 0.08}>
+                <div className="h-full rounded-[6px] border border-white/10 bg-white/5 p-7">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full text-lg font-bold text-white" style={{ background: 'var(--lp-accent-cta)' }}>
+                    {s.n}
+                  </span>
+                  <h3 className="mt-5 font-heading text-lg font-bold text-white">{s.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-white/60">{s.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════ TESTIMONIALS ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <Reveal as="h2" className="text-center text-3xl font-bold leading-tight sm:text-4xl">
+            Built for how legal work really runs.
+          </Reveal>
+          <Reveal as="p" delay={0.08} className="mx-auto mt-3 max-w-[600px] text-center text-base text-neutral-500">
+            Advocates, CAs and consultants — booked, paid and reminded, without the admin.
+          </Reveal>
+          <div className="mt-12 grid gap-5 sm:grid-cols-3 sm:gap-6">
+            {testimonials.map((t, i) => (
+              <Reveal key={t.name} delay={(i % 3) * 0.08}>
+                <figure className="flex h-full flex-col justify-between rounded-[6px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)]">
+                  <span aria-hidden className="block h-[3px] w-10 rounded-full" style={{ background: 'var(--lp-accent-cta)' }} />
+                  <blockquote className="mt-4 flex-1 text-[15px] font-semibold leading-snug text-[color:var(--lp-primary)]">
+                    “{t.quote}”
+                  </blockquote>
+                  <figcaption className="mt-6 flex items-center gap-3">
+                    <TAvatar src={t.avatar} name={t.name} />
+                    <div>
+                      <div className="text-sm font-bold text-[color:var(--lp-primary)]">{t.name}</div>
+                      <div className="text-xs text-neutral-400">{t.role}</div>
+                    </div>
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+          {testimonialsNote && (
+            <p className="mt-6 text-center text-[11px] text-neutral-400">{testimonialsNote}</p>
+          )}
+        </div>
+      </section>
+
+      {/* ════════════════ PRICING TEASER ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--lp-tint)' }}>
+        <div className="mx-auto max-w-3xl text-center">
+          <Reveal as="span" className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wide" style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 14%, transparent)', color: 'var(--lp-accent-cta)' }}>
+            <Sparkles size={13} /> {pricing.hook}
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="mt-5 text-3xl font-bold leading-tight sm:text-4xl">
+            About <span style={{ color: 'var(--lp-accent-cta)' }}>₹{perDay}/day</span> for a page that books &amp; bills for you.
+          </Reveal>
+          <Reveal as="p" delay={0.08} className="mt-2 text-xs text-neutral-400">
+            {topPlan.name} plan, billed yearly (₹{topPlan.yearly.toLocaleString('en-IN')}/year) · + 18% GST
+          </Reveal>
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
+            {pricing.line}
+          </Reveal>
+          <Reveal delay={0.16} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-2 rounded-[6px] px-7 py-4 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:no-underline" style={{ background: 'var(--lp-accent-cta)' }}>
+              Start free <ArrowRight size={16} />
+            </Link>
+            <Link to="/pricing" className="text-sm font-semibold text-[color:var(--lp-primary)] underline-offset-4 hover:underline">
+              See full pricing
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ════════════════ FAQ ════════════════ */}
+      <section className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-3xl">
+          <Reveal as="h2" className="text-center text-3xl font-bold leading-tight sm:text-4xl">
+            Questions, answered.
+          </Reveal>
+          <div className="mt-12 space-y-3">
+            {faq.map((f) => (
+              <details key={f.q} className="group rounded-[6px] border border-black/5 bg-white px-5 py-4 transition-colors open:border-black/10 [&_summary::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left text-base font-semibold text-[color:var(--lp-primary)]">
+                  {f.q}
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-lg transition-transform group-open:rotate-45" style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 14%, transparent)', color: 'var(--lp-accent-cta)' }}>
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 text-[15px] leading-relaxed text-neutral-500">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════ FINAL CTA (dark, themed, urgency) ════════════════ */}
+      <section
+        className="px-5 py-24 text-center text-white sm:px-8"
+        style={{ background: 'linear-gradient(160deg, var(--lp-hero-from), var(--lp-hero-to))' }}
+      >
+        <div className="mx-auto max-w-2xl">
+          <Reveal className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 20%, transparent)' }}>
+            <finalCta.icon size={26} style={{ color: 'var(--lp-accent)' }} />
+          </Reveal>
+          {finalCta.urgency && (
+            <Reveal as="p" delay={0.04} className="mt-6 text-sm font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--lp-accent)' }}>
+              {finalCta.urgency}
+            </Reveal>
+          )}
+          <Reveal as="h2" delay={0.08} className="mt-3 text-3xl font-bold leading-tight text-white sm:text-4xl">
+            {finalCta.headline}
+          </Reveal>
+          <Reveal as="p" delay={0.12} className="mx-auto mt-4 max-w-lg text-base text-white/70">
+            {finalCta.subline}
+          </Reveal>
+          <Reveal delay={0.18} className="mt-8">
+            <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-2 rounded-[6px] px-8 py-4 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:no-underline" style={{ background: 'var(--lp-accent-cta)' }}>
+              {finalCta.ctaText} <ArrowRight size={16} />
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+    </main>
+  );
+}

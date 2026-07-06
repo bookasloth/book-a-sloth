@@ -94,7 +94,7 @@ export const USE_CASES_CONFIG = [
   {
     label: 'Lawyers & CAs',
     desc: 'Professional appointment scheduling.',
-    href: '/explore?category=legal-finance',
+    href: '/for/lawyers',
     icon: Scale,
     category: 'legal-finance',
     iconBg: 'bg-neutral-100',

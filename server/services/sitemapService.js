@@ -49,6 +49,7 @@ const STATIC_ROUTES = [
   { path: '/refund',                   changefreq: 'yearly',  priority: '0.3' },
   { path: '/lp/topmate-vs-bookasloth', changefreq: 'monthly', priority: '0.7' },
   { path: '/lp/calendly-alternative',  changefreq: 'monthly', priority: '0.7' },
+  { path: '/for/lawyers',              changefreq: 'monthly', priority: '0.8' },
 ];
 
 const staticEntries = (siteUrl) =>

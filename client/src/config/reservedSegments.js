@@ -12,7 +12,7 @@ export const RESERVED_FIRST_SEGMENTS = [
   'help', 'about', 'careers', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore', 'changelog', 'blog', 'pricing', 'services',
   'contact', 'get-in-touch',
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
-  'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'lp',
+  'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'lp', 'for',
   'my-bookings', 'profile', 'reviews', 'loyalty', 'sitemap', 'robots', 'health',
   // Branded error pages (config/errorCatalog.js) + offline/maintenance. Each has
   // its own /<code> route, so the first segment must be reserved here too.
