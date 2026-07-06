@@ -20,7 +20,8 @@ Qualified organic traffic that converts to bookings, trials, paid customers. Nev
 - **Phase 0 (quick wins) — DONE.** `robots.txt` + `llms.txt` in `client/public/`. Per-route canonical/OG/JSON-LD via [`Seo.jsx`](../client/src/components/common/Seo.jsx) (upserts head tags, restores on unmount for SPA nav).
 - **Phase 1 (structured data) — DONE, wider than originally scoped.** JSON-LD live on Pricing, Home, HostProfile, About, ServiceDetail, JobDetail, Careers.
 - **Phase 2 (crawlability) — DONE.** DB-driven sitemap ([`sitemapService.js`](../server/services/sitemapService.js)): static routes + host/service URLs gated by `is_verified`+`is_indexable`+`is_active`+not-banned; noindexed host cascades to drop its services. Admin `SeoDrawer.jsx` for per-page overrides. v3.19 both DBs.
-- **Phase 3 (SSR/prerender) — OPEN, biggest remaining ceiling.** SPA still invisible to non-JS crawlers/bots. Options cheapest-first: **A.** prerender bot traffic only (Prerender.io via edge middleware) — recommended start. **B.** build-time prerender of marketing/LP routes (`vite-react-ssg`). **C.** full Next.js SSR migration — defer unless SEO becomes primary growth channel.
+- **Phase 3A (build-time prerender) — DONE.** Custom Puppeteer post-build script (`client/scripts/prerender.mjs`) prerenders 17 marketing routes to static `.html` files with full meta/OG/JSON-LD baked in. Vercel serves these directly. Analytics scripts stripped from prerendered output.
+- **Phase 3B (dynamic route bot prerender) — DONE.** Server-side meta-tag endpoint (`server/controllers/prerenderController.js`) serves lightweight HTML shells for host profiles and service pages. Vercel edge middleware (`client/middleware.js`) detects bot User-Agents and proxies them to this endpoint. Admin SEO overrides (SeoDrawer) reflected within 2 min — no redeploy needed. Fail-open: bots get SPA on error.
 - **Phase 4 (measurement) — OPEN.** No GSC/Bing Webmaster submission confirmed yet, no CI schema validation.
 
 Infra work funds the content strategy below — structured data + crawlable sitemap are prerequisites for AEO/GEO citation, not optional polish.
@@ -120,8 +121,9 @@ Organic traffic, qualified leads, trial signups, paid conversions, time on page,
 
 ```
 Infra Phase 0-2  (quick wins + structured data + crawlability)  ── DONE
+Infra Phase 3A (marketing route prerender)                       ── DONE (17 static routes)
+Infra Phase 3B (dynamic route bot prerender)                     ── DONE (host+service pages)
 Content Priority 1-4 (commercial → industry → feature → blog)   ── ACTIVE
-Infra Phase 3  (prerender decision)                              ── unblocks AEO/GEO ceiling
 Infra Phase 4  (measure + iterate)                                ── ongoing
 ```
 

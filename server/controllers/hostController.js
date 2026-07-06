@@ -831,4 +831,5 @@ module.exports = {
   searchVendors,
   validateWeeklySchedule, // exported for unit testing (P1-10)
   cleanBackgroundKey, // exported for unit testing
+  buildHostProfile, // used by prerenderController for bot-traffic meta shells
 };
