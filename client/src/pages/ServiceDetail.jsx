@@ -1007,15 +1007,12 @@ export default function ServiceDetail() {
               <span className="mx-1">/</span>
             </>
           )}
-          <span className="text-gray-800/70">{service.slug || 'service'}</span>
+          <span className="text-gray-800/70 max-w-[120px] sm:max-w-[200px] truncate inline-block align-bottom">{service.slug || 'service'}</span>
         </nav>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* ── LEFT: Hero content ── */}
-          <div className="flex-1 min-w-0">
-            <section ref={heroRef} className="relative pb-6">
+        <section ref={heroRef} className="relative pb-6 lg:max-w-[60%]">
 
-              {/* Eyebrow — category · session type */}
+          {/* Eyebrow — category · session type */}
               {eyebrow && (
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-gray-800/50">{eyebrow}</p>
               )}
@@ -1034,62 +1031,49 @@ export default function ServiceDetail() {
                 <p className="text-base sm:text-lg text-gray-700 mb-6 leading-relaxed max-w-xl">{service.short_description}</p>
               )}
 
-              {/* Meta — inline with dot separators */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-800">
+              {/* Meta — icons + pipe separator */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-800 mb-6">
                 {rating > 0 && (
                   <>
                     <span className="flex items-center gap-1.5 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-gray-900 inline-block"/>
+                      <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                       {rating.toFixed(1)} / 5
                     </span>
-                    <span className="text-gray-400">·</span>
-                  </>
-                )}
-                {isBestseller && (
-                  <>
-                    <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
-                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                      Bestseller
-                    </span>
-                    <span className="text-gray-400">·</span>
+                    <span className="text-gray-300">|</span>
                   </>
                 )}
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-gray-900 inline-block"/>
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   {fmtDuration(service.duration)}
                 </span>
-                <span className="text-gray-400">·</span>
+                <span className="text-gray-300">|</span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-gray-900 inline-block"/>
-                  {service.meeting_mode === 'offline' ? 'In-person' : 'Google Meet'}
+                  {service.meeting_mode === 'offline'
+                    ? <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
+                    : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>Google Meet</>}
                 </span>
-                {vendor?.name && (
-                  <>
-                    <span className="text-gray-400">·</span>
-                    <span className="flex items-center gap-1.5">
-                      Hosted by <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-primary transition-colors">{vendor.name}</Link>
-                    </span>
-                  </>
-                )}
               </div>
-            </section>
-          </div>
 
-          {/* ── RIGHT: Sidebar overlaps hero ── */}
-          <div className="hidden lg:block lg:w-[320px] flex-shrink-0">
-            <div className="sticky top-20 flex flex-col gap-5">
-              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} compact={!heroInView} motionOK={motionOK}/>
-              <AdSpaceCard/>
-            </div>
-          </div>
-        </div>
+              {/* Host — photo + Hosted by Name */}
+              {vendor?.name && (
+                <div className="flex items-center gap-3">
+                  {vendor.profile_image
+                    ? <img src={vendor.profile_image} alt={vendor.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm flex-shrink-0"/>
+                    : <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary ring-2 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-500 leading-tight">Hosted by</p>
+                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-primary transition-colors">{vendor.name}</Link>
+                  </div>
+                </div>
+              )}
+        </section>
       </div>
 
       {/* ── Content below hero ── */}
       <div className="app-container pt-0 pb-28 lg:pb-8 relative z-10">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── LEFT: Main content ── */}
-          <div className="flex-1 min-w-0 lg:max-w-[calc(100%-320px-2rem)]">
+          <div className="flex-1 min-w-0">
 
             {/* Important note */}
             {service.important_note && (
@@ -1163,8 +1147,13 @@ export default function ServiceDetail() {
             </div>
           </div>
 
-          {/* Sidebar spacer — actual sidebar is in hero row above */}
-          <div className="hidden lg:block lg:w-[320px] flex-shrink-0"/>
+          {/* ── RIGHT: Sticky sidebar ── */}
+          <div className="hidden lg:block lg:w-[320px] flex-shrink-0">
+            <div className="sticky top-20 flex flex-col gap-5">
+              <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} compact={!heroInView} motionOK={motionOK}/>
+              <AdSpaceCard/>
+            </div>
+          </div>
         </div>
       </div>
 
