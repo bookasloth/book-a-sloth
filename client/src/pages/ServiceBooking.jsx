@@ -765,8 +765,8 @@ const ServiceBooking = () => {
 
             {profileOpen && (
               <div className="border-t">
-                {/* Section 1: Vendor Profile */}
-                <div className="h-20 relative z-0 overflow-hidden"
+                {/* Section 1: Vendor Profile — cover at 3:1, same ratio everywhere */}
+                <div className="aspect-[3/1] relative z-0 overflow-hidden"
                   style={{ background: host.cover_image ? undefined : `linear-gradient(135deg, ${tc}26, ${tc}55)` }}>
                   {host.cover_image && <img src={host.cover_image} alt="" className="w-full h-full object-cover" />}
                 </div>
