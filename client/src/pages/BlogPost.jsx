@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { getPost, BLOG_POSTS, themeFor, AUTHOR_URL } from '../data/blogPosts';
 import Seo from '../components/common/Seo';
 import { SITE_URL, articleJsonLd, breadcrumbJsonLd } from '../utils/seo';
+import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 
 // /blog/:slug — immersive post page. A split hero (left = category colour +
 // text, right = image, hidden on mobile) over a dark reading body, finished
@@ -28,15 +29,7 @@ const HeroVisual = ({ post, t }) => (
     {post.image ? (
       <img src={post.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
     ) : (
-      <>
-        <div
-          className="absolute inset-0"
-          style={{ backgroundImage: `radial-gradient(60% 60% at 70% 30%, ${t.light ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.18)'} 0%, transparent 70%)` }}
-        />
-        <div className="absolute inset-0 grid place-items-center">
-          <span aria-hidden="true" className="select-none" style={{ fontSize: '11rem', opacity: t.light ? 0.22 : 0.18 }}>🦥</span>
-        </div>
-      </>
+      <BlogHeroThumbnail post={post} theme={t} />
     )}
   </div>
 );
