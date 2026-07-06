@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import AdminEmptyState from '../../components/admin/AdminEmptyState';
 import SeoDrawer from '../../components/admin/SeoDrawer';
 import { PageHeader, Badge } from '../../components/admin/ui';
+import { normalizePlan, getPlanBorderLabel } from '../../utils/themeUtils';
 
 const PROVIDER_ICON = 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M16 11l2 2 4-4';
 
@@ -303,10 +304,15 @@ const AdminProviders = () => {
                     </td>
                     <td className="px-4 py-3 text-[13px] adm-t2">@{p.username || '—'}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize
-                        ${p.plan === 'professional' ? 'bg-purple-50 text-purple-700' : p.plan === 'creator' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {p.plan || 'starter'}
-                      </span>
+                      {(() => {
+                        const canon = normalizePlan(p.plan);
+                        const label = getPlanBorderLabel(canon);
+                        const colors = canon === 'supreme' ? 'bg-amber-50 text-amber-700'
+                          : canon === 'professional' ? 'bg-purple-50 text-purple-700'
+                          : canon === 'creator' ? 'bg-blue-50 text-blue-700'
+                          : 'bg-gray-100 text-gray-500';
+                        return <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colors}`}>{label}</span>;
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       {p.is_banned ? <Badge tone="danger">Suspended</Badge>

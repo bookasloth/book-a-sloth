@@ -5,6 +5,7 @@ import {
   adminRestorePlan, adminClonePlan, adminReorderPlans, adminAssignPlan, adminGetUsers,
 } from '../../services/api';
 import { PageHeader, Card, Btn, Badge } from '../../components/admin/ui';
+import { normalizePlan, getPlanBorderLabel } from '../../utils/themeUtils';
 
 const LIMIT_KEYS = [
   ['services', 'Services'],
@@ -218,7 +219,7 @@ const AdminPlans = () => {
         <div className="space-y-1.5">
           {assignResults.map((v) => (
             <div key={v.id} className="flex items-center justify-between text-sm px-3 py-2 rounded-lg bg-[var(--adm-hover)]">
-              <span className="adm-t2">{v.name} <span className="text-xs adm-t3">({v.email}) — current: {v.plan || 'starter'}</span></span>
+              <span className="adm-t2">{v.name} <span className="text-xs adm-t3">({v.email}) — current: {getPlanBorderLabel(normalizePlan(v.plan))}</span></span>
               <button onClick={() => assign(v)} className="text-xs font-bold text-indigo-600 hover:underline">Assign</button>
             </div>
           ))}
