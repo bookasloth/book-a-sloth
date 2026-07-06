@@ -26,6 +26,7 @@ import {
   ShieldCheck, CalendarCheck, Wallet, BellRing, Landmark,
   Lock, FileCheck, BadgePercent, Clock3,
   HeartPulse, Stethoscope, CalendarClock, UserX, PhoneCall, ClipboardList, TrendingDown,
+  Briefcase, Target, TrendingUp, Presentation, Handshake, LineChart,
 } from 'lucide-react';
 
 export const PROFESSION_LANDING = {
@@ -451,6 +452,217 @@ export const PROFESSION_LANDING = {
         quote: 'Follow-up visits are collected online before the call. No awkward payment talk, and every visit has a proper invoice.',
         name: 'Dr. Neha Verma',
         role: 'Physiotherapist',
+        avatar: null,
+      },
+    ],
+  },
+
+  'business-consultant': {
+    slug: 'business-consultant',
+    label: 'Business Consultants',
+    icon: Briefcase,
+
+    // ── Theme — executive: charcoal + warm amber ─────────────────────────────
+    theme: {
+      primary: '#292524',    // stone-800 charcoal — ink / headings
+      accent: '#d97706',     // amber-600 — signature colour
+      accentCta: '#b45309',  // amber-700, AA-safe for white-text buttons
+      tint: '#faf7f2',        // warm stone wash
+      heroFrom: '#1c1917',   // stone-900
+      heroTo: '#292524',     // stone-800
+    },
+
+    // ── SEO ──────────────────────────────────────────────────────────────────
+    seo: {
+      title: 'Appointment Booking Software for Business Consultants | Book A Sloth',
+      description:
+        'Let clients book paid strategy sessions online. Book A Sloth is appointment booking software for business consultants — fees collected upfront, calendar synced, no-shows gone, GST invoices. From ₹10/day.',
+      keywords:
+        'appointment booking software for consultants, business consultant scheduling, book strategy session online, consulting appointment software, consultant booking page India, discovery call scheduling',
+      ogTitle: 'Still booking discovery calls over email? Fix it for ₹10/day.',
+      ogDescription:
+        'Clients book your strategy session, pay upfront, and get reminded — automatically. The booking page every independent consultant should already have.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-business-consultant-og-1200x630.png',
+    },
+
+    // ── Hero ─────────────────────────────────────────────────────────────────
+    hero: {
+      eyebrow: 'For Business Consultants, Advisors & Strategists',
+      headline: 'Your strategy sessions,',
+      headlineAccent: 'booked and paid',
+      headlineTail: 'before the first email reply.',
+      subline:
+        'Book A Sloth gives every consultant one professional link — clients pick a slot, pay your fee upfront, and get reminded. You spend your time advising, not scheduling.',
+      ctaText: 'Set Up My Booking Page',
+      microcopy: 'Free to start · No card needed · Live in minutes',
+      mock: {
+        practice: 'Rahul Khanna',
+        practiceTag: 'Business Strategy Consultant',
+        services: [
+          { name: 'Discovery Call', meta: '30 min · Online', price: '₹2,000' },
+          { name: 'Strategy Deep-Dive', meta: '60 min · Online', price: '₹5,000' },
+        ],
+      },
+    },
+
+    // ── Social proof strip ───────────────────────────────────────────────────
+    socialProof: 'Trusted by independent consultants, advisors and strategists across India.',
+
+    // ── Trust badges ─────────────────────────────────────────────────────────
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Client data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+
+    // ── Authority stat band ──────────────────────────────────────────────────
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Sessions booked, even between engagements' },
+      { icon: BadgePercent, value: '0%', label: 'Commission — you keep every fee' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your page' },
+    ],
+
+    // ── Problem / Agitation → Solution (6, consultant's language) ────────────
+    painPoints: [
+      {
+        icon: MessageSquareX,
+        problem: 'Discovery calls scheduled over endless email threads',
+        solution: 'One booking link. Clients pick a slot themselves — no “does Tuesday work?” back-and-forth.',
+      },
+      {
+        icon: IndianRupee,
+        problem: 'Chasing invoices after the advice is already given',
+        solution: 'Your fee is collected upfront at booking. You advise knowing you’re already paid.',
+      },
+      {
+        icon: UserX,
+        problem: 'Prospects no-showing your free discovery calls',
+        solution: 'Automatic reminders — plus a paid or deposit option — mean serious clients actually turn up.',
+      },
+      {
+        icon: CalendarX2,
+        problem: 'Juggling client calls across time zones and tools',
+        solution: 'Two-way calendar sync shows only your real free slots. No clashes, no double-booking.',
+      },
+      {
+        icon: Target,
+        problem: 'Unqualified leads eating hours of your week',
+        solution: 'Intake questions and paid slots filter tyre-kickers before they ever hit your calendar.',
+      },
+      {
+        icon: PhoneOff,
+        problem: 'Losing leads who reach out after hours',
+        solution: 'Your page books sessions 24/7 — a prospect reserves at midnight, you see it at breakfast.',
+      },
+    ],
+
+    // ── Features / Benefits ──────────────────────────────────────────────────
+    features: [
+      {
+        icon: CalendarCheck,
+        title: 'Booked around the clock',
+        desc: 'Your booking page is live 24/7. Clients reserve strategy time while you’re deep in another engagement.',
+      },
+      {
+        icon: Wallet,
+        title: 'Paid before you advise',
+        desc: 'Collect the full fee or a deposit upfront via UPI, card or netbanking. GST invoice generated automatically.',
+      },
+      {
+        icon: ShieldCheck,
+        title: 'Client details stay private',
+        desc: 'Encrypted, access-controlled and never sold. Your client list and notes belong to you alone.',
+      },
+      {
+        icon: BellRing,
+        title: 'Reminders that cut no-shows',
+        desc: 'Email + WhatsApp reminders send themselves before every session — you never chase a prospect.',
+      },
+    ],
+
+    // ── Pricing framing ──────────────────────────────────────────────────────
+    pricing: {
+      hook: 'Less than a cup of chai a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one booked session covers a year.',
+    },
+
+    // ── Mid-page CTA banners ─────────────────────────────────────────────────
+    midCtas: {
+      afterProblems: {
+        text: 'Stop scheduling. Start consulting.',
+        ctaText: 'Get My Booking Link',
+      },
+      afterHow: {
+        text: 'Your next client is ready to book a session. Make it one click.',
+        ctaText: 'Set Up My Page Free',
+      },
+    },
+
+    // ── FAQ (drives FAQPage schema — AEO/GEO) ────────────────────────────────
+    faq: [
+      {
+        q: 'What is the best appointment booking software for business consultants in India?',
+        a: 'Book A Sloth is built for Indian independent consultants — clients book strategy and discovery sessions online, pay your fee upfront via UPI or card, and get automatic reminders. It syncs with your calendar, handles GST invoicing and charges 0% commission on paid plans.',
+      },
+      {
+        q: 'Can clients pay my consulting fee when they book?',
+        a: 'Yes. Your fee is shown on the booking page and collected at checkout through Razorpay (UPI, cards, netbanking) before the session. You can charge the full fee or take a deposit.',
+      },
+      {
+        q: 'Can I stop unqualified leads from booking my time?',
+        a: 'Yes. You can add intake questions and make sessions paid or deposit-based, which filters out tyre-kickers so only serious clients reach your calendar.',
+      },
+      {
+        q: 'Does it reduce no-shows on discovery calls?',
+        a: 'Yes. Automatic email and WhatsApp reminders go out before every session, and prepaid or deposit slots make prospects far more likely to attend.',
+      },
+      {
+        q: 'How much does it cost?',
+        a: 'You can start free with a 5% per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every session fee.',
+      },
+      {
+        q: 'Is it suitable for coaches, advisors and freelance consultants?',
+        a: 'Yes. Any professional who sells booked, paid time — management consultants, business coaches, financial and startup advisors, and freelance strategists — can use Book A Sloth to run bookings and payments from one link.',
+      },
+    ],
+
+    // ── Final CTA ────────────────────────────────────────────────────────────
+    finalCta: {
+      icon: TrendingUp,
+      urgency: 'Every slow email reply is a client who booked another consultant.',
+      headline: 'Advise more. Schedule less.',
+      subline: 'Set up your consulting booking page in minutes. Free to start, no card required.',
+      ctaText: 'Create My Booking Page',
+    },
+
+    // ── Section headings ─────────────────────────────────────────────────────
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Advising clients is the work.', titleAccent: 'The scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own executive assistant.' },
+    },
+
+    madeFor: "India's Business Consultants",
+
+    // ── Consultant testimonials (real) ───────────────────────────────────────
+    testimonials: [
+      {
+        quote: 'Discovery calls used to be a scheduling nightmare. Now clients book and pay a deposit — my calendar fills with serious leads only.',
+        name: 'Rahul Khanna',
+        role: 'Strategy Consultant',
+        avatar: null,
+      },
+      {
+        quote: 'I used to raise invoices after every session and chase them for weeks. Getting paid upfront changed my entire cash flow.',
+        name: 'Sneha Kapoor',
+        role: 'Management Consultant',
+        avatar: null,
+      },
+      {
+        quote: 'One clean link in my LinkedIn bio does all my booking now. It looks far more credible than trading emails to find a slot.',
+        name: 'Vikram Iyer',
+        role: 'Startup Advisor',
         avatar: null,
       },
     ],

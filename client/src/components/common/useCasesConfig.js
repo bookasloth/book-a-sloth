@@ -23,7 +23,7 @@ export const USE_CASES_CONFIG = [
   {
     label: 'Coaches & Consultants',
     desc: 'Book meetings and collect payments effortlessly.',
-    href: '/explore?category=coaching-consulting',
+    href: '/for/business-consultant',
     icon: TrendingUp,
     category: 'coaching-consulting',
     iconBg: 'bg-violet-50',
