@@ -56,6 +56,10 @@ const STATIC_ROUTES = [
   { path: '/for/salon',                changefreq: 'monthly', priority: '0.8' },
   { path: '/for/freelancers',          changefreq: 'monthly', priority: '0.8' },
   { path: '/for/fitness',              changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/tutors',               changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/photographers',        changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/events',               changefreq: 'monthly', priority: '0.8' },
+  { path: '/for/agencies',             changefreq: 'monthly', priority: '0.8' },
 ];
 
 const staticEntries = (siteUrl) =>

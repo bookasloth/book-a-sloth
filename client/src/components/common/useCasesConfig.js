@@ -64,7 +64,7 @@ export const USE_CASES_CONFIG = [
   {
     label: 'Tutors & Educators',
     desc: 'Online and offline class bookings.',
-    href: '/explore?category=education',
+    href: '/for/tutors',
     icon: BookOpen,
     category: 'education',
     iconBg: 'bg-amber-50',
@@ -74,7 +74,7 @@ export const USE_CASES_CONFIG = [
   {
     label: 'Photographers',
     desc: 'Book shoots and manage clients.',
-    href: '/explore?category=photography',
+    href: '/for/photographers',
     icon: Camera,
     category: 'photography',
     iconBg: 'bg-slate-100',
@@ -84,7 +84,7 @@ export const USE_CASES_CONFIG = [
   {
     label: 'Event Organisers',
     desc: 'Handle consultations and bookings.',
-    href: '/explore?category=events',
+    href: '/for/events',
     icon: CalendarCheck,
     category: 'events',
     iconBg: 'bg-purple-50',
@@ -114,7 +114,7 @@ export const USE_CASES_CONFIG = [
   {
     label: 'Agencies & Studios',
     desc: 'Manage discovery calls and projects.',
-    href: '/explore?category=agencies',
+    href: '/for/agencies',
     icon: Building2,
     category: 'agencies',
     iconBg: 'bg-emerald-50',
