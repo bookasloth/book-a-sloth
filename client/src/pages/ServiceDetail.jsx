@@ -868,87 +868,130 @@ export default function ServiceDetail() {
         <div className="absolute -top-20 -left-24 h-[26rem] w-[26rem] rounded-full blur-3xl"
           style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 12%, transparent), transparent 70%)' }}/>
 
-        {/* ── Calendar mesh — deconstructed grid dissolving rightward ── */}
-        <svg className="absolute -top-4 right-0 hidden h-[22rem] w-[28rem] opacity-[0.10] sm:block"
-          viewBox="0 0 440 340" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <line x1="60" y1="48" x2="400" y2="48" stroke="currentColor" strokeWidth="0.8" opacity="0.7"/>
-          <line x1="100" y1="96" x2="420" y2="96" stroke="currentColor" strokeWidth="0.8" opacity="0.55"/>
-          <line x1="140" y1="144" x2="380" y2="144" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
-          <line x1="180" y1="192" x2="360" y2="192" stroke="currentColor" strokeWidth="0.6" opacity="0.25"/>
-          <line x1="220" y1="240" x2="340" y2="240" stroke="currentColor" strokeWidth="0.5" opacity="0.15"/>
-          <line x1="160" y1="20" x2="160" y2="120" stroke="currentColor" strokeWidth="0.7" opacity="0.5"/>
-          <line x1="220" y1="30" x2="220" y2="180" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
-          <line x1="280" y1="10" x2="280" y2="220" stroke="currentColor" strokeWidth="0.8" opacity="0.65"/>
-          <line x1="340" y1="25" x2="340" y2="170" stroke="currentColor" strokeWidth="0.7" opacity="0.4"/>
-          <line x1="400" y1="35" x2="400" y2="110" stroke="currentColor" strokeWidth="0.5" opacity="0.25"/>
-          <circle cx="220" cy="48" r="2.5" fill="currentColor" opacity="0.5"/>
-          <circle cx="280" cy="96" r="3" fill="currentColor" opacity="0.45"/>
-          <circle cx="160" cy="96" r="2" fill="currentColor" opacity="0.35"/>
-          <circle cx="340" cy="48" r="2" fill="currentColor" opacity="0.3"/>
-          <circle cx="280" cy="144" r="2" fill="currentColor" opacity="0.2"/>
+        {/* ── Dense dot grid — uniform repeating pattern via SVG <pattern> ── */}
+        <svg className="absolute inset-0 h-full w-full opacity-[0.12] sm:opacity-[0.14]"
+          style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <defs>
+            <pattern id="dot-grid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+              <circle cx="12" cy="12" r="1.2" fill="currentColor"/>
+            </pattern>
+            <linearGradient id="dot-fade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="white" stopOpacity="1"/>
+              <stop offset="60%" stopColor="white" stopOpacity="0.6"/>
+              <stop offset="100%" stopColor="white" stopOpacity="0"/>
+            </linearGradient>
+            <linearGradient id="dot-fade-lr" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="white" stopOpacity="0"/>
+              <stop offset="30%" stopColor="white" stopOpacity="0.3"/>
+              <stop offset="60%" stopColor="white" stopOpacity="0.8"/>
+              <stop offset="100%" stopColor="white" stopOpacity="1"/>
+            </linearGradient>
+            <mask id="dot-mask">
+              <rect width="100%" height="100%" fill="url(#dot-fade)"/>
+            </mask>
+            <mask id="dot-mask-lr">
+              <rect width="100%" height="100%" fill="url(#dot-fade-lr)"/>
+            </mask>
+          </defs>
+          <g mask="url(#dot-mask)">
+            <g mask="url(#dot-mask-lr)">
+              <rect width="100%" height="100%" fill="url(#dot-grid)"/>
+            </g>
+          </g>
         </svg>
 
-        {/* ── Date dot field — structured rows, dense top → sparse bottom ── */}
-        <svg className="absolute top-8 right-[8%] hidden h-[18rem] w-[20rem] opacity-[0.08] sm:block"
-          viewBox="0 0 320 280" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <circle cx="32" cy="24" r="2" fill="currentColor" opacity="0.7"/>
-          <circle cx="72" cy="24" r="2" fill="currentColor" opacity="0.6"/>
-          <circle cx="112" cy="24" r="2" fill="currentColor" opacity="0.7"/>
-          <circle cx="152" cy="24" r="2" fill="currentColor" opacity="0.5"/>
-          <circle cx="192" cy="24" r="2" fill="currentColor" opacity="0.65"/>
-          <circle cx="232" cy="24" r="2" fill="currentColor" opacity="0.6"/>
-          <circle cx="272" cy="24" r="2" fill="currentColor" opacity="0.55"/>
-          <circle cx="32" cy="64" r="1.8" fill="currentColor" opacity="0.55"/>
-          <circle cx="112" cy="64" r="1.8" fill="currentColor" opacity="0.6"/>
-          <circle cx="152" cy="64" r="1.8" fill="currentColor" opacity="0.5"/>
-          <circle cx="232" cy="64" r="1.8" fill="currentColor" opacity="0.45"/>
-          <circle cx="272" cy="64" r="1.8" fill="currentColor" opacity="0.5"/>
-          <circle cx="72" cy="104" r="1.6" fill="currentColor" opacity="0.4"/>
-          <circle cx="152" cy="104" r="1.6" fill="currentColor" opacity="0.45"/>
-          <circle cx="232" cy="104" r="1.6" fill="currentColor" opacity="0.35"/>
-          <circle cx="112" cy="144" r="1.4" fill="currentColor" opacity="0.3"/>
-          <circle cx="192" cy="144" r="1.4" fill="currentColor" opacity="0.25"/>
-          <circle cx="152" cy="184" r="1.2" fill="currentColor" opacity="0.15"/>
-          <circle cx="232" cy="184" r="1.2" fill="currentColor" opacity="0.12"/>
-          <circle cx="192" cy="224" r="1" fill="currentColor" opacity="0.08"/>
+        {/* ── Calendar date grid — 7-col layout with date numbers, right-biased ── */}
+        <svg className="absolute top-6 right-0 hidden h-[26rem] w-[42rem] opacity-[0.16] sm:block lg:w-[52rem]"
+          viewBox="0 0 700 400" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          {/* row 1: dates 01-07 */}
+          <text x="240" y="58" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.6">01</text>
+          <text x="310" y="58" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.7">02</text>
+          <text x="380" y="58" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.65">03</text>
+          <text x="450" y="58" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.5">04</text>
+          <text x="520" y="58" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.7">05</text>
+          <text x="590" y="58" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.6">06</text>
+          <text x="660" y="58" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.4">07</text>
+          {/* row 2: dates 08-13 */}
+          <text x="280" y="128" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.55">08</text>
+          <text x="350" y="128" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.7">09</text>
+          <text x="420" y="128" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.6">10</text>
+          <text x="490" y="128" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.75">11</text>
+          <text x="560" y="128" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.8">12</text>
+          <text x="630" y="128" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.65">13</text>
+          {/* row 3: dates 14-20 */}
+          <text x="210" y="198" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.4">14</text>
+          <text x="280" y="198" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.55">15</text>
+          <text x="350" y="198" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.6">16</text>
+          <text x="420" y="198" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.65">17</text>
+          <text x="490" y="198" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.7">18</text>
+          <text x="560" y="198" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.75">19</text>
+          <text x="630" y="198" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.5">20</text>
+          {/* row 4: dates 21-26 */}
+          <text x="240" y="268" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.45">21</text>
+          <text x="310" y="268" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.5">22</text>
+          <text x="380" y="268" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.55">23</text>
+          <text x="450" y="268" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.6">24</text>
+          <text x="520" y="268" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.65">25</text>
+          <text x="590" y="268" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.55">26</text>
+          {/* row 5: dates 28-31 */}
+          <text x="280" y="338" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.35">28</text>
+          <text x="350" y="338" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.4">29</text>
+          <text x="420" y="338" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.45">30</text>
+          <text x="490" y="338" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.4">31</text>
+
+          {/* ── Booking connection lines between dates ── */}
+          {/* flow 01→02→03 */}
+          <path d="M256 52 H300" stroke="currentColor" strokeWidth="0.8" opacity="0.45" strokeDasharray="4 3"/>
+          <path d="M326 52 H370" stroke="currentColor" strokeWidth="0.8" opacity="0.4" strokeDasharray="4 3"/>
+          {/* flow 05→12 vertical */}
+          <path d="M530 64 V118" stroke="currentColor" strokeWidth="0.8" opacity="0.5"/>
+          <circle cx="530" cy="64" r="2.5" fill="currentColor" opacity="0.6"/>
+          <circle cx="530" cy="118" r="2.5" fill="currentColor" opacity="0.55"/>
+          {/* flow 09→10→17 L-shape */}
+          <path d="M366 122 H410 V188" stroke="currentColor" strokeWidth="0.8" opacity="0.45"/>
+          <circle cx="366" cy="122" r="2" fill="currentColor" opacity="0.5"/>
+          <circle cx="410" cy="122" r="2" fill="currentColor" opacity="0.35"/>
+          <circle cx="410" cy="188" r="2.5" fill="currentColor" opacity="0.5"/>
+          {/* flow 12→13→20 */}
+          <path d="M576 122 H620 V188" stroke="currentColor" strokeWidth="0.8" opacity="0.5"/>
+          <rect x="618" y="184" width="5" height="5" rx="1" fill="currentColor" opacity="0.6"/>
+          {/* flow 18→25 */}
+          <path d="M500 204 V258" stroke="currentColor" strokeWidth="0.7" opacity="0.4"/>
+          {/* flow 19→26 diagonal-ish connector */}
+          <path d="M576 204 V220 H600 V258" stroke="currentColor" strokeWidth="0.7" opacity="0.35"/>
+          {/* flow 24→31 */}
+          <path d="M460 274 V328" stroke="currentColor" strokeWidth="0.6" opacity="0.3"/>
+
+          {/* ── Calendar cells — small rounded rects around some dates ── */}
+          <rect x="516" y="40" width="30" height="28" rx="4" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
+          <rect x="556" y="110" width="30" height="28" rx="4" stroke="currentColor" strokeWidth="0.9" opacity="0.55"/>
+          <rect x="486" y="180" width="30" height="28" rx="4" stroke="currentColor" strokeWidth="0.7" opacity="0.35"/>
+          <rect x="626" y="180" width="30" height="28" rx="4" stroke="currentColor" strokeWidth="0.8" opacity="0.45"/>
+          <rect x="516" y="250" width="30" height="28" rx="4" stroke="currentColor" strokeWidth="0.7" opacity="0.35"/>
+          <rect x="346" y="320" width="30" height="28" rx="4" stroke="currentColor" strokeWidth="0.6" opacity="0.25"/>
+          {/* scattered cells — no dates, ghost cells */}
+          <rect x="170" y="90" width="26" height="22" rx="3" stroke="currentColor" strokeWidth="0.6" opacity="0.2"/>
+          <rect x="200" y="230" width="24" height="20" rx="3" stroke="currentColor" strokeWidth="0.5" opacity="0.15"/>
+          <rect x="660" y="280" width="28" height="24" rx="4" stroke="currentColor" strokeWidth="0.6" opacity="0.2"/>
+
+          {/* ── Intersection nodes — small glowing squares ── */}
+          <rect x="348" y="120" width="4" height="4" rx="1" fill="currentColor" opacity="0.55"/>
+          <rect x="488" y="120" width="5" height="5" rx="1" fill="currentColor" opacity="0.65"/>
+          <rect x="558" y="50" width="4" height="4" rx="1" fill="currentColor" opacity="0.5"/>
+          <rect x="418" y="260" width="4" height="4" rx="1" fill="currentColor" opacity="0.4"/>
+          <rect x="528" y="190" width="5" height="5" rx="1" fill="currentColor" opacity="0.5"/>
         </svg>
 
-        {/* ── Booking connection lines — schedule flow paths ── */}
-        <svg className="absolute top-36 right-[5%] hidden h-56 w-64 opacity-[0.09] sm:block"
-          viewBox="0 0 250 220" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <path d="M20 30 H120 V90 H200" stroke="currentColor" strokeWidth="1" opacity="0.5"/>
-          <circle cx="20" cy="30" r="3" fill="currentColor" opacity="0.6"/>
-          <circle cx="120" cy="90" r="2.5" fill="currentColor" opacity="0.4"/>
-          <circle cx="200" cy="90" r="3" fill="currentColor" opacity="0.5"/>
-          <path d="M40 130 H100 V170 H180" stroke="currentColor" strokeWidth="0.8" opacity="0.35"/>
-          <circle cx="40" cy="130" r="2.5" fill="currentColor" opacity="0.4"/>
-          <circle cx="180" cy="170" r="2.5" fill="currentColor" opacity="0.35"/>
-          <line x1="120" y1="90" x2="100" y2="130" stroke="currentColor" strokeWidth="0.6" strokeDasharray="3 3" opacity="0.25"/>
-        </svg>
-
-        {/* ── Floating calendar cells — tiny rounded rects, very sparse ── */}
-        <svg className="absolute top-12 right-[30%] hidden h-64 w-80 opacity-[0.06] lg:block"
-          viewBox="0 0 320 260" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <rect x="40" y="20" width="28" height="22" rx="4" stroke="currentColor" strokeWidth="0.8" opacity="0.5"/>
-          <rect x="200" y="60" width="32" height="24" rx="5" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
-          <rect x="120" y="130" width="26" height="20" rx="4" stroke="currentColor" strokeWidth="0.7" opacity="0.3"/>
-          <rect x="260" y="110" width="30" height="22" rx="4" stroke="currentColor" strokeWidth="0.6" opacity="0.2"/>
-          <rect x="80" y="200" width="24" height="18" rx="3" stroke="currentColor" strokeWidth="0.5" opacity="0.12"/>
-        </svg>
-
-        {/* ── Left side — extremely subtle dot mesh (reduced density ~70%) ── */}
-        <svg className="absolute top-20 left-4 hidden h-32 w-24 opacity-[0.05] sm:block"
-          viewBox="0 0 100 130" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <circle cx="20" cy="20" r="1.5" fill="currentColor" opacity="0.4"/>
-          <circle cx="60" cy="40" r="1.2" fill="currentColor" opacity="0.3"/>
-          <circle cx="30" cy="70" r="1" fill="currentColor" opacity="0.2"/>
-          <circle cx="70" cy="90" r="1.2" fill="currentColor" opacity="0.15"/>
-        </svg>
-
-        {/* ── Left side — single faint calendar cell ── */}
-        <svg className="absolute top-48 left-[12%] hidden h-8 w-10 opacity-[0.04] lg:block"
-          viewBox="0 0 36 28" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-          <rect x="2" y="2" width="32" height="24" rx="4" stroke="currentColor" strokeWidth="0.7"/>
+        {/* ── Left side — very faint scattered dots + one ghost cell (kept ~70% cleaner) ── */}
+        <svg className="absolute top-12 left-0 hidden h-48 w-40 opacity-[0.06] sm:block"
+          viewBox="0 0 160 200" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <circle cx="30" cy="30" r="1.5" fill="currentColor" opacity="0.4"/>
+          <circle cx="80" cy="50" r="1.2" fill="currentColor" opacity="0.3"/>
+          <circle cx="50" cy="90" r="1" fill="currentColor" opacity="0.2"/>
+          <circle cx="110" cy="70" r="1.3" fill="currentColor" opacity="0.25"/>
+          <circle cx="40" cy="140" r="1" fill="currentColor" opacity="0.15"/>
+          <circle cx="90" cy="120" r="1.2" fill="currentColor" opacity="0.2"/>
+          <rect x="60" y="150" width="22" height="18" rx="3" stroke="currentColor" strokeWidth="0.5" opacity="0.15"/>
         </svg>
       </div>
 
