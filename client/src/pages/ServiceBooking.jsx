@@ -1183,7 +1183,7 @@ const ServiceBooking = () => {
                   <div>
                     <label className="block text-sm font-medium mb-1">Mobile Number</label>
                     <input type="tel" required placeholder="+91 98765 43210" className="fb-input fb-input--sm" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                    <p className="text-xs text-gray-400 mt-1">Code sent via WhatsApp &amp; email.</p>
+                    <p className="text-xs text-gray-400 mt-1">Code sent via WhatsApp.</p>
                   </div>
                 </div>
               </div>
