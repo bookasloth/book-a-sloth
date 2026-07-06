@@ -133,6 +133,7 @@ app.use('/api/onboarding',  require('./routes/vendorOnboardingRoutes'));
 app.use('/api/host',        require('./routes/hostRoutes'));
 app.use('/api/bookings',    require('./routes/bookingRoutes'));
 app.use('/api/payment',     require('./routes/paymentRoutes'));
+app.use('/api/invoices',   require('./routes/invoiceRoutes'));
 app.use('/api/admin',       adminLimiter, require('./routes/adminRoutes'));
 app.use('/api/reviews',     require('./routes/reviewRoutes'));
 app.use('/api/feedback',    require('./routes/feedbackRoutes'));
