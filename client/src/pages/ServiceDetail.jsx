@@ -8,6 +8,7 @@ import DOMPurify from 'dompurify';
 import { svcGetPublicByProfile, getAvailableSlots } from '../services/api';
 import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/themeUtils';
 import Seo from '../components/common/Seo';
+import { useMinimalFooter } from '../context/ChromeContext';
 import HostBackground from '../backgrounds/HostBackground';
 import { resolveServiceSeo, serviceJsonLd, breadcrumbJsonLd, SITE_URL } from '../utils/seo';
 
@@ -832,6 +833,8 @@ export default function ServiceDetail() {
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
+  // Not-found state gets the stripped minimal footer, header kept.
+  useMinimalFooter(!loading && (!!error || !data));
   const [tab, setTab]       = useState('Overview');
   const [feeInfoOpen, setFeeInfoOpen] = useState(false); // mobile fee disclaimer
   const [notesModalOpen, setNotesModalOpen] = useState(false);
@@ -893,7 +896,7 @@ export default function ServiceDetail() {
   );
 
   if (error || !data) return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
       <div className="text-center">
         <p className="text-gray-400 text-lg mb-3">{error || 'Service not found'}</p>
         <button onClick={() => navigate(-1)} className="text-primary text-sm hover:underline">Go back</button>

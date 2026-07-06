@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { getHostProfile, getHostReviews, getHostProducts, getVendorBadges } from "../services/api";
 import { analytics, EVENTS } from "../services/analytics";
 import BrandPreloader from "../components/preloader/BrandPreloader";
+import { useMinimalFooter } from "../context/ChromeContext";
 import Seo from "../components/common/Seo";
 import { resolveProfileSeo, profileJsonLd, breadcrumbJsonLd, SITE_URL } from "../utils/seo";
 
@@ -304,6 +305,8 @@ const HostProfile = () => {
   const [services,    setServices]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState('');
+  // Not-found (and other error) state gets the stripped minimal footer, header kept.
+  useMinimalFooter(!!error);
   const [viewMode,    setViewMode]    = useState('grid');
   const [reviewData,  setReviewData]  = useState({ reviews: [], count: 0, avg: 0 });
   const [showReviews, setShowReviews] = useState(false);
@@ -414,7 +417,7 @@ const HostProfile = () => {
       />
 
       {error ? (
-        <div className="min-h-screen flex items-center justify-center" style={{ background: C.bg }}>
+        <div className="min-h-[70vh] flex items-center justify-center px-4 py-16" style={{ background: C.bg }}>
           <div className="text-center">
             <p className="text-lg" style={{ color: C.secondary }}>{error}</p>
             <Link to="/" className="mt-4 inline-block text-sm hover:underline" style={{ color: C.text }}>← Back to home</Link>

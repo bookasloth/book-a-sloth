@@ -56,13 +56,14 @@ function FLink({ href, className, children }) {
   );
 }
 
-export default function Footer() {
+export default function Footer({ variant = 'full' }) {
   const year = new Date().getFullYear();
+  const minimal = variant === 'minimal';
   return (
     <footer className="bg-ink px-5 pb-12 pt-16 text-white sm:px-8 lg:pt-20">
       <div className="mx-auto max-w-6xl">
         {/* CTA band */}
-        <div className="flex flex-col gap-8 pb-14 lg:flex-row lg:items-center lg:justify-between">
+        <div className={`flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between ${minimal ? '' : 'pb-14'}`}>
           <h2 className="font-heading text-3xl font-bold leading-[1.05] tracking-tight text-white sm:text-4xl">
             Power up your<br />bookings.
           </h2>
@@ -79,7 +80,8 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Brand column + link columns */}
+        {/* Brand column + link columns — dropped in minimal variant */}
+        {!minimal && (
         <div className="grid gap-10 border-t border-white/10 py-12 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
           {/* Brand: wordmark + blurb + socials */}
           <div className="max-w-sm">
@@ -120,9 +122,10 @@ export default function Footer() {
             ))}
           </nav>
         </div>
+        )}
 
         {/* Legal bar */}
-        <div className="flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
+        <div className={`flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between ${minimal ? 'mt-14' : ''}`}>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <a href="#top" className="font-heading text-sm font-extrabold text-white/80 transition-colors hover:text-white hover:no-underline">Book A Sloth</a>
             <span>© {year} All rights reserved.</span>
