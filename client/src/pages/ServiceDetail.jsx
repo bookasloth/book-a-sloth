@@ -460,21 +460,21 @@ const TRUST_SIGNALS = [
 
 const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, motionOK = true }) => {
   const isFree = service.price === 0;
-  const [feeOpen, setFeeOpen] = useState(false);
+  const [cancelTipOpen, setCancelTipOpen] = useState(false);
 
-  // Measure the natural thumbnail height so the collapse animates to a real px
-  // value (CSS can't transition to `auto`). Height is driven by the 16/10
-  // aspect box, so it's known before the image finishes loading.
   const imgWrapRef = useRef(null);
   const [imgH, setImgH] = useState(0);
   useEffect(() => {
     if (imgWrapRef.current) setImgH(imgWrapRef.current.scrollHeight);
   }, [service.thumbnail_url]);
 
+  const mrp = fakeOriginal(service.price);
+  const discount = mrp > service.price ? Math.round(((mrp - service.price) / mrp) * 100) : 0;
+  const recentBookers = socialProofCount(service.id);
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Thumbnail — collapses once the reader scrolls past the hero so the
-          booking controls take focus, and restores on scroll-up. */}
+      {/* Thumbnail — collapses on scroll past hero */}
       <div
         ref={imgWrapRef}
         aria-hidden={compact}
@@ -496,37 +496,35 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, moti
             </div>}
       </div>
       <div className="p-5">
-        {/* Price + booking fee on one line */}
-        <div className="relative flex items-baseline gap-2 mt-2 mb-5">
-          <div className="text-3xl font-black text-gray-900 leading-none">{isFree ? 'Free' : `₹${service.price}`}</div>
-          {!isFree && bookingFee > 0 && (
-            <button type="button" onClick={() => setFeeOpen(o => !o)}
-              className="inline-flex items-center gap-0.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
-              <span>+ ₹{bookingFee} Booking Charges</span>
-              <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="9" strokeWidth={1.6}/><path strokeWidth={1.8} strokeLinecap="round" d="M12 16v-4M12 8.5h.01"/>
-              </svg>
-            </button>
-          )}
-          {!isFree && bookingFee > 0 && feeOpen && (
+        {/* Pricing — listed price + inflated MRP strikethrough + discount badge */}
+        <div className="mb-1">
+          {isFree ? (
+            <div className="text-3xl font-black text-gray-900 leading-none">Free</div>
+          ) : (
             <>
-              <button type="button" aria-hidden tabIndex={-1}
-                className="fixed inset-0 z-10 cursor-default" onClick={() => setFeeOpen(false)}/>
-              <div className="absolute z-20 left-0 top-full mt-2 w-64 rounded-xl bg-gray-900 text-white text-xs leading-relaxed p-3 shadow-lg">
-                <span className="absolute -top-1.5 left-6 w-3 h-3 rotate-45 bg-gray-900"/>
-                This fee helps us operate and improve our platform, delivering a seamless experience.
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-gray-900 leading-none">₹{service.price}</span>
+                {discount > 0 && (
+                  <>
+                    <span className="text-base text-gray-400 line-through font-medium">₹{mrp}</span>
+                    <span className="text-sm font-bold text-amber-600">{discount}% off</span>
+                  </>
+                )}
               </div>
+              {bookingFee > 0 && (
+                <p className="text-xs text-gray-500 mt-1">+ taxes & fees: ₹{bookingFee}</p>
+              )}
             </>
           )}
         </div>
 
         {/* Primary CTA */}
         <button onClick={onBookNow}
-          className="btn cta-press w-full py-3.5 font-bold text-sm">
+          className="btn cta-press w-full py-3.5 font-bold text-sm mt-4">
           Book a Slot
         </button>
 
-        {/* Trust indicators */}
+        {/* Trust indicators + policies */}
         <ul className="mt-5 pt-5 border-t border-gray-100 space-y-3">
           {TRUST_SIGNALS.map(({ key, label, path }) => (
             <li key={key} className="flex items-start gap-2.5 text-xs text-gray-600">
@@ -536,7 +534,57 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, moti
               <span>{label}</span>
             </li>
           ))}
+
+          {/* Social proof */}
+          <li className="flex items-start gap-2.5 text-xs text-gray-600">
+            <svg className="w-4 h-4 flex-shrink-0 text-orange-500 mt-px" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span><strong className="text-gray-800">{recentBookers}</strong> people booked this in last 3 days</span>
+          </li>
+
+          {/* Cancellation policy */}
+          <li className="relative flex items-start gap-2.5 text-xs text-gray-600">
+            <svg className="w-4 h-4 flex-shrink-0 text-blue-500 mt-px" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span className="flex items-center gap-1">
+              Cancellation Policy
+              <button type="button" onClick={() => setCancelTipOpen(o => !o)} aria-label="View cancellation policy"
+                className="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="9"/><path strokeLinecap="round" d="M12 16v-4M12 8.5h.01"/>
+                </svg>
+              </button>
+            </span>
+            {cancelTipOpen && (
+              <>
+                <button type="button" aria-hidden tabIndex={-1}
+                  className="fixed inset-0 z-10 cursor-default" onClick={() => setCancelTipOpen(false)}/>
+                <div className="absolute z-20 left-0 top-full mt-1.5 w-72 rounded-xl bg-gray-900 text-white text-xs leading-relaxed p-3.5 shadow-lg">
+                  <span className="absolute -top-1.5 left-6 w-3 h-3 rotate-45 bg-gray-900"/>
+                  <p className="font-semibold mb-2">Cancellation Policy</p>
+                  <p className="mb-1">For cancellation done <strong>prior</strong> to the session — full refund as per our <a href="/refund" target="_blank" rel="noreferrer" className="underline text-blue-300 hover:text-blue-200">refund policy</a>.</p>
+                  <p>For cancellation done <strong>post</strong> the session start time — no refund applicable, based on our <a href="/refund" target="_blank" rel="noreferrer" className="underline text-blue-300 hover:text-blue-200">refund policy</a>.</p>
+                </div>
+              </>
+            )}
+          </li>
+
+          {/* Safety */}
+          <li className="flex items-start gap-2.5 text-xs text-gray-600">
+            <svg className="w-4 h-4 flex-shrink-0 text-green-500 mt-px" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            <span>Follow safety measures advised at the venue</span>
+          </li>
         </ul>
+
+        {/* Guest policies agreement */}
+        <p className="mt-4 pt-4 border-t border-gray-100 text-[11px] text-gray-400 leading-relaxed">
+          By proceeding, you agree to our{' '}
+          <Link to="/terms" className="underline hover:text-gray-600 transition-colors">Guest Policies</Link>.
+        </p>
       </div>
     </div>
   );
@@ -750,6 +798,7 @@ export default function ServiceDetail() {
   const [error, setError]   = useState('');
   const [tab, setTab]       = useState('Overview');
   const [feeInfoOpen, setFeeInfoOpen] = useState(false); // mobile fee disclaimer
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
 
   // Desktop sidebar polish: collapse the booking-card thumbnail once the reader
   // scrolls past the hero (IntersectionObserver — no scroll handler), and honour
@@ -995,8 +1044,8 @@ export default function ServiceDetail() {
         </svg>
       </div>
 
-      {/* ── HERO — full-bleed on gradient, no glass card ── */}
-      <div className="app-container pt-6 pb-0 relative z-10">
+      {/* ── HERO + Content — single container so sidebar starts under h1 ── */}
+      <div className="app-container pt-6 pb-28 lg:pb-8 relative z-10">
         {/* Breadcrumb */}
         <nav className="mb-4 text-xs text-gray-800/50 font-medium" aria-label="Breadcrumb">
           <Link to="/explore" className="hover:text-gray-800 transition-colors">explore</Link>
@@ -1010,15 +1059,18 @@ export default function ServiceDetail() {
           <span className="text-gray-800/70 max-w-[120px] sm:max-w-[200px] truncate inline-block align-bottom">{service.slug || 'service'}</span>
         </nav>
 
-        <section ref={heroRef} className="relative pb-6 lg:max-w-[60%]">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* ── LEFT: Hero + tabs ── */}
+          <div className="flex-1 min-w-0">
+            <section ref={heroRef} className="relative pb-6">
 
-          {/* Eyebrow — category · session type */}
+              {/* Eyebrow */}
               {eyebrow && (
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-gray-800/50">{eyebrow}</p>
               )}
 
-              {/* Title — dark on gradient, last word accent */}
-              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight lg:max-w-[90%]">
+              {/* Title — 110% of content column width */}
+              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight" style={{ maxWidth: '110%' }}>
                 {(() => {
                   const words = (service.title || '').trim().split(/\s+/);
                   const last = words.pop();
@@ -1026,22 +1078,13 @@ export default function ServiceDetail() {
                 })()}
               </h1>
 
-              {/* Short description */}
+              {/* Short description — 90% width */}
               {service.short_description && (
-                <p className="text-base sm:text-lg text-gray-700 mb-6 leading-relaxed max-w-xl">{service.short_description}</p>
+                <p className="text-base sm:text-lg text-gray-700 mb-6 leading-relaxed" style={{ maxWidth: '90%' }}>{service.short_description}</p>
               )}
 
-              {/* Meta — icons + pipe separator */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-800 mb-6">
-                {rating > 0 && (
-                  <>
-                    <span className="flex items-center gap-1.5 font-semibold">
-                      <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                      {rating.toFixed(1)} / 5
-                    </span>
-                    <span className="text-gray-300">|</span>
-                  </>
-                )}
+              {/* Meta — clock | meet/in-person | hosted by — single horizontal line + Important Notes pill */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-800">
                 <span className="flex items-center gap-1.5">
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   {fmtDuration(service.duration)}
@@ -1052,36 +1095,29 @@ export default function ServiceDetail() {
                     ? <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
                     : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>Google Meet</>}
                 </span>
+                {vendor?.name && (
+                  <>
+                    <span className="text-gray-300">|</span>
+                    <Link to={`/${vendor.username}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+                      {vendor.profile_image
+                        ? <img src={vendor.profile_image} alt={vendor.name} className="w-6 h-6 rounded-full object-cover ring-1 ring-white shadow-sm flex-shrink-0"/>
+                        : <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary ring-1 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
+                      <span className="font-semibold">Hosted by {vendor.name}</span>
+                    </Link>
+                  </>
+                )}
+                {service.important_note && (
+                  <>
+                    <span className="text-gray-300">|</span>
+                    <button type="button" onClick={() => setNotesModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-300 bg-amber-50 text-amber-800 text-xs font-semibold hover:bg-amber-100 transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      Important Notes
+                    </button>
+                  </>
+                )}
               </div>
-
-              {/* Host — photo + Hosted by Name */}
-              {vendor?.name && (
-                <div className="flex items-center gap-3">
-                  {vendor.profile_image
-                    ? <img src={vendor.profile_image} alt={vendor.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm flex-shrink-0"/>
-                    : <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary ring-2 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-500 leading-tight">Hosted by</p>
-                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-primary transition-colors">{vendor.name}</Link>
-                  </div>
-                </div>
-              )}
-        </section>
-      </div>
-
-      {/* ── Content below hero ── */}
-      <div className="app-container pt-0 pb-28 lg:pb-8 relative z-10">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* ── LEFT: Main content ── */}
-          <div className="flex-1 min-w-0">
-
-            {/* Important note */}
-            {service.important_note && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex gap-2">
-                <span className="text-amber-500 flex-shrink-0">⚠️</span>
-                <p className="text-sm text-amber-800 whitespace-pre-line">{service.important_note}</p>
-              </div>
-            )}
+            </section>
 
             {/* Tabs */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
@@ -1157,29 +1193,43 @@ export default function ServiceDetail() {
         </div>
       </div>
 
+      {/* ── Important Notes modal ── */}
+      {notesModalOpen && service.important_note && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setNotesModalOpen(false)}/>
+          <div className="fixed z-50 inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div className="pointer-events-auto bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
+              <button type="button" onClick={() => setNotesModalOpen(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors"
+                aria-label="Close">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-600">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </span>
+                <h3 className="text-lg font-bold text-gray-900">Important Notes</h3>
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{service.important_note}</p>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* ── Mobile: sticky bottom CTA bar ── */}
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex items-center gap-3 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <div className="relative flex-1 min-w-0">
-          <div className="text-xl font-black text-gray-900 leading-none">{service.price === 0 ? 'Free' : `₹${service.price}`}</div>
-          {service.price !== 0 && bookingFee > 0 && (
-            <div className="text-[11px] text-gray-500 mt-1 flex items-center gap-1">
-              + ₹{bookingFee} platform fees per booking.
-              <button type="button" onClick={() => setFeeInfoOpen(o => !o)} aria-label="Fee details"
-                className="flex-shrink-0" style={{ color: '#FE5100' }}>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="9" strokeWidth={1.6}/><path strokeWidth={1.8} strokeLinecap="round" d="M12 16v-4M12 8.5h.01"/>
-                </svg>
-              </button>
-            </div>
-          )}
-          {feeInfoOpen && (
+          {service.price === 0 ? (
+            <div className="text-xl font-black text-gray-900 leading-none">Free</div>
+          ) : (
             <>
-              <button type="button" aria-hidden tabIndex={-1}
-                className="fixed inset-0 z-10 cursor-default" onClick={() => setFeeInfoOpen(false)}/>
-              <div className="absolute z-20 left-0 bottom-full mb-2 w-64 rounded-xl bg-gray-900 text-white text-xs leading-relaxed p-3 shadow-lg">
-                <span className="absolute -bottom-1.5 left-6 w-3 h-3 rotate-45 bg-gray-900"/>
-                This fee helps us operate and improve our platform, delivering a seamless experience.
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl font-black text-gray-900 leading-none">₹{service.price}</span>
+                {(() => { const m = fakeOriginal(service.price); const d = m > service.price ? Math.round(((m - service.price) / m) * 100) : 0; return d > 0 ? <><span className="text-xs text-gray-400 line-through">₹{m}</span><span className="text-[11px] font-bold text-amber-600">{d}% off</span></> : null; })()}
               </div>
+              {bookingFee > 0 && (
+                <p className="text-[11px] text-gray-500 mt-0.5">+ taxes & fees: ₹{bookingFee}</p>
+              )}
             </>
           )}
         </div>
