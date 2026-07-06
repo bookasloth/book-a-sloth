@@ -450,6 +450,21 @@ const ReviewsTab = ({ reviews = [], avgRating, ratingBreakdown = [] }) => {
 
 // ─── Booking Card (sticky sidebar on desktop, block on mobile) ────────────────
 
+// Stable pseudo-random number 2–5 per service (deterministic from ID).
+const socialProofCount = (id) => {
+  let h = 0;
+  const s = String(id || '');
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return (Math.abs(h) % 4) + 2;
+};
+
+// Inflated "MRP" for marketing display — ~3.5–5× the real price, rounded to nearest ₹5.
+const fakeOriginal = (price) => {
+  if (!price) return 0;
+  const multiplier = 3.5 + ((price * 7) % 15) / 10;
+  return Math.round((price * multiplier) / 5) * 5;
+};
+
 // Conversion-focused trust signals shown under the CTA.
 const TRUST_SIGNALS = [
   { key: 'verified',  label: 'Verified host',
