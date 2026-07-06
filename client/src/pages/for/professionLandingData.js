@@ -28,6 +28,7 @@ import {
   HeartPulse, Stethoscope, CalendarClock, UserX, PhoneCall, ClipboardList, TrendingDown,
   Briefcase, Target, TrendingUp, Presentation, Handshake, LineChart,
   Scissors, Sparkles, Laptop, Zap,
+  GraduationCap, BookOpen, Camera, Calendar, Building2, Users,
 } from 'lucide-react';
 
 export const PROFESSION_LANDING = {
@@ -1299,6 +1300,366 @@ export const PROFESSION_LANDING = {
         role: 'Studio Owner',
         avatar: null,
       },
+    ],
+  },
+
+  tutors: {
+    slug: 'tutors',
+    label: 'Tutors & Educators',
+    icon: GraduationCap,
+    theme: {
+      primary: '#1e1b4b', accent: '#6366f1', accentCta: '#4338ca',
+      tint: '#eef2ff', heroFrom: '#1e1b4b', heroTo: '#312e81',
+    },
+    seo: {
+      title: 'Appointment Booking Software for Tutors & Educators | Book A Sloth',
+      description:
+        'Let students and parents book classes online. Book A Sloth is booking software for tutors & educators — fees paid upfront, batches scheduled, automatic reminders that cut no-shows, GST invoices. From ₹10/day.',
+      keywords:
+        'booking software for tutors, online class booking, tuition scheduling app, book tutor online India, coaching class booking system, reduce student no-shows, demo class booking',
+      ogTitle: 'Still fixing tuition timings over WhatsApp? Fix it for ₹10/day.',
+      ogDescription:
+        'Students and parents book a slot, pay upfront, and get reminded — automatically. The booking page every tutor and coaching class in India should already have.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-tutors-og-1200x630.png',
+    },
+    hero: {
+      eyebrow: 'For Tutors, Coaching Classes & Educators',
+      headline: 'Your classes,',
+      headlineAccent: 'booked and paid',
+      headlineTail: 'before the first lesson.',
+      subline:
+        'Book A Sloth gives every tutor one link — students and parents pick a slot, pay the fee upfront, and get reminded. You teach, we handle the timetable.',
+      ctaText: 'Set Up My Booking Page',
+      microcopy: 'Free to start · No card needed · Live in minutes',
+      mock: {
+        practice: 'Priya’s Maths Class',
+        practiceTag: 'Maths Tutor · Grades 9–12',
+        services: [
+          { name: 'Demo Class', meta: '30 min · Online', price: 'Free' },
+          { name: 'Monthly Batch', meta: '12 classes · Prepaid', price: '₹3,000' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by tutors, coaching classes and independent educators across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Student data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Classes & demos booked, any hour' },
+      { icon: TrendingDown, value: 'Fewer', label: 'No-shows, thanks to prepaid + reminders' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your page' },
+    ],
+    painPoints: [
+      { icon: MessageSquareX, problem: 'Fixing class timings over endless parent WhatsApps', solution: 'One link. Students and parents pick a slot themselves — no group-chat scheduling.' },
+      { icon: IndianRupee, problem: 'Chasing monthly fees class after class', solution: 'Fees are collected online upfront — prepaid batches with a GST invoice, no reminders needed.' },
+      { icon: UserX, problem: 'Students booking demos and never turning up', solution: 'Reminders plus a paid or confirmed slot mean only serious learners take your time.' },
+      { icon: CalendarX2, problem: 'Batch timings and 1:1 slots clashing', solution: 'Every slot locks the moment it’s taken. Batches and private lessons never overlap.' },
+      { icon: BookOpen, problem: 'Juggling students across boards, grades and subjects', solution: 'Separate services per subject and level — students book exactly the right class.' },
+      { icon: Clock3, problem: 'Enquiries after class hours lost by morning', solution: 'Your page books 24/7 — a parent enrols at night, you see it before the first bell.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Bookings around the clock', desc: 'Your class page is live 24/7. Students book demos and batches while you’re teaching another group.' },
+      { icon: Wallet, title: 'Fees paid upfront', desc: 'Collect per-class or prepaid batch fees via UPI, card or netbanking. GST invoice generated automatically.' },
+      { icon: ShieldCheck, title: 'Student details stay private', desc: 'Encrypted, access-controlled and never sold. Your student list and history belong to you alone.' },
+      { icon: BellRing, title: 'Reminders that cut no-shows', desc: 'Email + WhatsApp reminders send themselves before every class — you never chase a student.' },
+    ],
+    pricing: { hook: 'Less than a cup of chai a day.', line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one enrolled student covers a year.' },
+    midCtas: {
+      afterProblems: { text: 'Spend your time teaching, not texting.', ctaText: 'Get My Booking Link' },
+      afterHow: { text: 'Your next student is ready to enrol. Make it one click.', ctaText: 'Set Up My Page Free' },
+    },
+    faq: [
+      { q: 'What is the best booking software for tutors and coaching classes in India?', a: 'Book A Sloth is built for Indian tutors and educators — students and parents book classes online, pay the fee upfront via UPI or card, and get automatic reminders that cut no-shows. It handles batches, GST invoicing and charges 0% commission on paid plans.' },
+      { q: 'Can I collect class fees when students book?', a: 'Yes. Your fee is shown on the booking page and collected at checkout through Razorpay (UPI, cards, netbanking) before the class, with a GST invoice generated automatically. You can charge per class or per batch.' },
+      { q: 'Can I run both batches and 1:1 lessons?', a: 'Yes. You can set up separate services for group batches and private lessons, each with its own capacity and availability, so bookings never clash.' },
+      { q: 'How does it reduce demo-class no-shows?', a: 'Automatic email and WhatsApp reminders go out before every class, and making demos confirmed or paid means only serious students book your time.' },
+      { q: 'How much does it cost?', a: 'You can start free with a 5% per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+      { q: 'Is it suitable for coaching institutes and online educators?', a: 'Yes. Tutors, coaching institutes, music and language teachers, exam-prep coaches and online educators can all use Book A Sloth to run class bookings and payments from one link.' },
+    ],
+    finalCta: { icon: GraduationCap, urgency: 'Every empty seat is a student who enrolled elsewhere.', headline: 'More teaching. Less timetabling.', subline: 'Set up your class booking page in minutes. Free to start, no card required.', ctaText: 'Create My Booking Page' },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Teaching well is the job.', titleAccent: 'The timetable shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own class coordinator.' },
+    },
+    madeFor: "India's Tutors & Educators",
+    testimonials: [
+      { quote: 'Parents used to message me all day about timings and fees. Now they book a slot and pay online — my evenings are mine again.', name: 'Priya Sharma', role: 'Maths Tutor', avatar: null },
+      { quote: 'Prepaid batches ended my fee-chasing completely. Students commit for the month and actually show up.', name: 'Imtiaz Ali', role: 'Physics Coach', avatar: null },
+      { quote: 'Demo no-shows used to waste my slots. Reminders fixed that, and my calendar finally stays full.', name: 'Ananya Reddy', role: 'English Tutor', avatar: null },
+    ],
+  },
+
+  photographers: {
+    slug: 'photographers',
+    label: 'Photographers',
+    icon: Camera,
+    theme: {
+      primary: '#4a044e', accent: '#d946ef', accentCta: '#a21caf',
+      tint: '#fdf4ff', heroFrom: '#3b0764', heroTo: '#701a75',
+    },
+    seo: {
+      title: 'Appointment Booking Software for Photographers | Book A Sloth',
+      description:
+        'Let clients book shoots and pay online. Book A Sloth is booking software for photographers — deposits collected upfront, calendar synced, automatic reminders, GST invoices. From ₹10/day.',
+      keywords:
+        'booking software for photographers, photography shoot booking, photographer scheduling app, book photoshoot online India, studio booking system, collect shoot deposit, wedding photographer booking',
+      ogTitle: 'Still booking shoots in your Instagram DMs? Fix it for ₹10/day.',
+      ogDescription:
+        'Clients book a shoot slot, pay a deposit upfront, and get reminded — automatically. The booking page every photographer in India should already have.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-photographers-og-1200x630.png',
+    },
+    hero: {
+      eyebrow: 'For Photographers, Studios & Videographers',
+      headline: 'Your shoots,',
+      headlineAccent: 'booked and secured',
+      headlineTail: 'before you pack the gear.',
+      subline:
+        'Book A Sloth gives every photographer one link — clients pick a slot, pay a deposit upfront, and get reminded. You stay behind the lens, not in your inbox.',
+      ctaText: 'Set Up My Booking Page',
+      microcopy: 'Free to start · No card needed · Live in minutes',
+      mock: {
+        practice: 'Studio Lumen',
+        practiceTag: 'Portrait & Wedding Photography',
+        services: [
+          { name: 'Portrait Session', meta: '60 min · On-location', price: '₹5,000' },
+          { name: 'Pre-Wedding Shoot', meta: 'Half day · Deposit', price: '₹8,000' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by portrait, wedding and event photographers across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Client data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Shoots booked, even between sessions' },
+      { icon: TrendingDown, value: 'Fewer', label: 'Cancellations, thanks to deposits' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your page' },
+    ],
+    painPoints: [
+      { icon: MessageSquareX, problem: 'Shoot bookings buried in Instagram and WhatsApp DMs', solution: 'One link in your bio takes every booking — no scrolling messages to piece together dates.' },
+      { icon: IndianRupee, problem: 'Clients backing out after you’ve blocked the date', solution: 'A deposit at booking secures the slot — flaky enquiries filter themselves out.' },
+      { icon: CalendarX2, problem: 'Double-booking two shoots on the same day', solution: 'Every date locks the moment it’s taken. One live calendar, no clashes.' },
+      { icon: MessageSquareX, problem: 'Sharing a UPI QR for the advance feels unprofessional', solution: 'A clean branded page with Razorpay checkout — the polish premium clients expect.' },
+      { icon: Clock3, problem: 'Enquiries at all hours you can’t always answer', solution: 'Your page books 24/7 — a couple reserves their date at midnight while you edit.' },
+      { icon: UserX, problem: 'No-shows for portfolio and trial sessions', solution: 'Reminders plus a deposit mean clients actually turn up for the shoot.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Bookings around the clock', desc: 'Your booking page is live 24/7. Clients reserve shoots while you’re on set or editing.' },
+      { icon: Wallet, title: 'Deposits paid upfront', desc: 'Collect a deposit or full fee via UPI, card or netbanking. GST invoice generated automatically.' },
+      { icon: ShieldCheck, title: 'Client details stay private', desc: 'Encrypted, access-controlled and never sold. Your client list and shoots belong to you alone.' },
+      { icon: BellRing, title: 'Reminders that cut no-shows', desc: 'Email + WhatsApp reminders send themselves before every shoot — you never chase a client.' },
+    ],
+    pricing: { hook: 'Less than a cup of chai a day.', line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one secured shoot covers years.' },
+    midCtas: {
+      afterProblems: { text: 'Stay behind the lens, not in your DMs.', ctaText: 'Get My Booking Link' },
+      afterHow: { text: 'Your next client is ready to book a shoot. Make it one click.', ctaText: 'Set Up My Page Free' },
+    },
+    faq: [
+      { q: 'What is the best booking software for photographers in India?', a: 'Book A Sloth is built for Indian photographers — clients book shoots online, pay a deposit upfront via UPI or card, and get automatic reminders. It syncs with your calendar, handles GST invoicing and charges 0% commission on paid plans.' },
+      { q: 'Can I collect a shoot deposit when a client books?', a: 'Yes. You can collect a deposit or the full fee at checkout through Razorpay (UPI, cards, netbanking) before the shoot, with a GST invoice generated automatically.' },
+      { q: 'Does it stop double-booking dates?', a: 'Yes. Each date and slot locks the moment it’s booked, and two-way calendar sync keeps your real availability accurate — so you never double-book a shoot.' },
+      { q: 'How does it reduce cancellations and no-shows?', a: 'Requiring a deposit filters out flaky enquiries, and automatic reminders before every shoot keep confirmed clients showing up.' },
+      { q: 'Do clients need an app to book?', a: 'No. Clients open your link, pick a date and pay — no app or account needed. It works straight from your Instagram bio or website.' },
+      { q: 'Is it suitable for wedding, portrait and event photographers?', a: 'Yes. Wedding, portrait, product, event and pre-wedding photographers, plus videographers and studios, can all use Book A Sloth for shoot bookings and payments.' },
+    ],
+    finalCta: { icon: Camera, urgency: 'Every unbooked date is a shoot that went to another photographer.', headline: 'More shooting. Less scheduling.', subline: 'Set up your photography booking page in minutes. Free to start, no card required.', ctaText: 'Create My Booking Page' },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Making great images is the job.', titleAccent: 'The booking shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own studio manager.' },
+    },
+    madeFor: "India's Photographers",
+    testimonials: [
+      { quote: 'Deposits at booking ended last-minute cancellations. Clients who book now actually show up with the date locked.', name: 'Kabir Malhotra', role: 'Wedding Photographer', avatar: null },
+      { quote: 'My whole booking used to live in Instagram DMs. One link took over and I finally stopped losing track of dates.', name: 'Sara D’Souza', role: 'Portrait Photographer', avatar: null },
+      { quote: 'Clients pay the advance online before the shoot now. It looks far more professional than sending a GPay number.', name: 'Nikhil Verma', role: 'Studio Owner', avatar: null },
+    ],
+  },
+
+  events: {
+    slug: 'events',
+    label: 'Event Organisers',
+    icon: Calendar,
+    theme: {
+      primary: '#3b0764', accent: '#a855f7', accentCta: '#7e22ce',
+      tint: '#faf5ff', heroFrom: '#3b0764', heroTo: '#581c87',
+    },
+    seo: {
+      title: 'Appointment Booking Software for Event Organisers | Book A Sloth',
+      description:
+        'Let clients book consultations and secure dates online. Book A Sloth is booking software for event planners & organisers — advances collected upfront, calendar synced, automatic reminders, GST invoices. From ₹10/day.',
+      keywords:
+        'booking software for event planners, event consultation booking, event organiser scheduling, book event planner online India, secure event date deposit, wedding planner booking system',
+      ogTitle: 'Still locking event dates over phone calls? Fix it for ₹10/day.',
+      ogDescription:
+        'Clients book a consultation, pay an advance to hold the date, and get reminded — automatically. The booking page every event planner in India should already have.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-events-og-1200x630.png',
+    },
+    hero: {
+      eyebrow: 'For Event Planners, Organisers & Decorators',
+      headline: 'Your consultations,',
+      headlineAccent: 'booked and dates held',
+      headlineTail: 'before the first meeting.',
+      subline:
+        'Book A Sloth gives every event planner one link — clients book a consultation, pay an advance to hold the date, and get reminded. You plan events, not your calendar.',
+      ctaText: 'Set Up My Booking Page',
+      microcopy: 'Free to start · No card needed · Live in minutes',
+      mock: {
+        practice: 'Celebrations by Neha',
+        practiceTag: 'Wedding & Event Planner',
+        services: [
+          { name: 'Planning Consultation', meta: '45 min · Online', price: '₹1,500' },
+          { name: 'Date Hold Advance', meta: 'Secures your date', price: '₹10,000' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by wedding planners, event organisers and decorators across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Client data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Consultations booked, any hour' },
+      { icon: BadgePercent, value: '0%', label: 'Commission — you keep every rupee' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your page' },
+    ],
+    painPoints: [
+      { icon: PhoneCall, problem: 'Endless calls just to lock a consultation time', solution: 'One link. Clients pick a slot themselves — you stop playing phone tag over dates.' },
+      { icon: IndianRupee, problem: 'Dates held on a promise, then lost to no advance', solution: 'Collect an advance online to hold the date — only committed clients block your calendar.' },
+      { icon: CalendarX2, problem: 'Two clients chasing the same peak-season date', solution: 'Dates lock the moment an advance is paid — no accidental double-bookings.' },
+      { icon: MessageSquareX, problem: 'Enquiries scattered across calls, DMs and email', solution: 'Every enquiry becomes a booked consultation from one link — nothing slips through.' },
+      { icon: UserX, problem: 'No-shows for planning meetings you prepped for', solution: 'Reminders plus a paid consultation mean serious clients actually turn up.' },
+      { icon: Clock3, problem: 'Late-night enquiries lost before you reply', solution: 'Your page books 24/7 — a couple reserves a consultation at midnight, you see it at breakfast.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Bookings around the clock', desc: 'Your booking page is live 24/7. Clients book consultations while you’re running an event.' },
+      { icon: Wallet, title: 'Advances paid upfront', desc: 'Collect consultation fees or a date-hold advance via UPI, card or netbanking. GST invoice automatic.' },
+      { icon: ShieldCheck, title: 'Client details stay private', desc: 'Encrypted, access-controlled and never sold. Your client list and events belong to you alone.' },
+      { icon: BellRing, title: 'Reminders that cut no-shows', desc: 'Email + WhatsApp reminders send themselves before every meeting — you never chase a client.' },
+    ],
+    pricing: { hook: 'Less than a cup of chai a day.', line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one held date covers years.' },
+    midCtas: {
+      afterProblems: { text: 'Plan events, not your calendar.', ctaText: 'Get My Booking Link' },
+      afterHow: { text: 'Your next client is ready to book a consultation. Make it one click.', ctaText: 'Set Up My Page Free' },
+    },
+    faq: [
+      { q: 'What is the best booking software for event planners in India?', a: 'Book A Sloth is built for Indian event planners — clients book consultations online, pay an advance to hold a date via UPI or card, and get automatic reminders. It syncs with your calendar, handles GST invoicing and charges 0% commission on paid plans.' },
+      { q: 'Can clients pay an advance to hold their date?', a: 'Yes. You can collect a consultation fee or a date-hold advance at checkout through Razorpay (UPI, cards, netbanking), with a GST invoice generated automatically — so only committed clients block your calendar.' },
+      { q: 'Does it prevent double-booking peak dates?', a: 'Yes. A date locks the moment its advance is paid, and two-way calendar sync keeps availability accurate — so two clients can never hold the same date.' },
+      { q: 'How does it reduce no-shows for planning meetings?', a: 'Automatic email and WhatsApp reminders go out before every consultation, and paid consultations mean serious clients actually attend.' },
+      { q: 'How much does it cost?', a: 'You can start free with a 5% per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+      { q: 'Is it suitable for wedding planners and decorators?', a: 'Yes. Wedding and event planners, decorators, caterers and venue managers can all use Book A Sloth for consultation bookings, date holds and payments from one link.' },
+    ],
+    finalCta: { icon: Sparkles, urgency: 'Every un-held date is an event that went to another planner.', headline: 'More celebrations. Less coordination.', subline: 'Set up your event booking page in minutes. Free to start, no card required.', ctaText: 'Create My Booking Page' },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Creating memorable events is the job.', titleAccent: 'The scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own event coordinator.' },
+    },
+    madeFor: "India's Event Planners",
+    testimonials: [
+      { quote: 'Date-hold advances online changed my business. Clients commit with a payment instead of a maybe, and I stopped losing peak dates.', name: 'Neha Kapoor', role: 'Wedding Planner', avatar: null },
+      { quote: 'Consultations used to be endless calls to find a time. Now clients just book a slot and pay — my week runs itself.', name: 'Suresh Pillai', role: 'Event Organiser', avatar: null },
+      { quote: 'Every enquiry now turns into a booked, paid consultation from one link. Nothing slips through the cracks anymore.', name: 'Anjali Rao', role: 'Event Decorator', avatar: null },
+    ],
+  },
+
+  agencies: {
+    slug: 'agencies',
+    label: 'Agencies & Studios',
+    icon: Building2,
+    theme: {
+      primary: '#083344', accent: '#06b6d4', accentCta: '#0e7490',
+      tint: '#ecfeff', heroFrom: '#083344', heroTo: '#164e63',
+    },
+    seo: {
+      title: 'Appointment Booking Software for Agencies & Studios | Book A Sloth',
+      description:
+        'Let clients book discovery calls with your team online. Book A Sloth is booking software for agencies & studios — calls routed, fees collected upfront, calendar synced, GST invoices. From ₹10/day.',
+      keywords:
+        'booking software for agencies, discovery call scheduling, agency client booking, studio booking system India, book agency consultation, team scheduling software, creative studio booking',
+      ogTitle: 'Still scheduling discovery calls over email chains? Fix it for ₹10/day.',
+      ogDescription:
+        'Clients book a call with the right person on your team, pay upfront, and get reminded — automatically. The booking page every agency and studio should already have.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-agencies-og-1200x630.png',
+    },
+    hero: {
+      eyebrow: 'For Agencies, Studios & Creative Teams',
+      headline: 'Your discovery calls,',
+      headlineAccent: 'booked and routed',
+      headlineTail: 'before the email thread starts.',
+      subline:
+        'Book A Sloth gives your agency one link — clients pick a slot with the right person, pay if you charge, and get reminded. Your team pitches, not schedules.',
+      ctaText: 'Set Up My Booking Page',
+      microcopy: 'Free to start · No card needed · Live in minutes',
+      mock: {
+        practice: 'Northlight Studio',
+        practiceTag: 'Design & Brand Agency',
+        services: [
+          { name: 'Discovery Call', meta: '30 min · Online', price: 'Free' },
+          { name: 'Paid Strategy Session', meta: '60 min · Online', price: '₹5,000' },
+        ],
+      },
+    },
+    socialProof: 'Trusted by design, marketing and creative studios across India.',
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Client data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Discovery calls booked, any time zone' },
+      { icon: Users, value: 'Whole', label: 'Team on one shared calendar' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your page' },
+    ],
+    painPoints: [
+      { icon: MessageSquareX, problem: 'Discovery calls scheduled across long email chains', solution: 'One link. Prospects pick a slot themselves — no “does Thursday work for your team?”' },
+      { icon: Users, problem: 'Juggling one calendar across the whole team', solution: 'Route each call to the right person; every team member’s real availability, one page.' },
+      { icon: Target, problem: 'Unqualified leads eating your team’s time', solution: 'Intake questions and paid strategy slots filter tyre-kickers before they reach the calendar.' },
+      { icon: IndianRupee, problem: 'Paid workshops and audits invoiced after the fact', solution: 'Charge for paid sessions upfront — money’s in before the call, with a GST invoice.' },
+      { icon: UserX, problem: 'Prospects no-showing booked pitch calls', solution: 'Automatic reminders before every call keep your pipeline meetings actually happening.' },
+      { icon: Clock3, problem: 'Overseas leads lost to slow scheduling', solution: 'Your page books 24/7 in the client’s time zone — a lead reserves while your team sleeps.' },
+    ],
+    features: [
+      { icon: CalendarCheck, title: 'Bookings around the clock', desc: 'Your booking page is live 24/7. Prospects reserve calls while your team is deep in delivery.' },
+      { icon: Wallet, title: 'Paid sessions upfront', desc: 'Charge for strategy sessions, audits or workshops via UPI, card or netbanking. GST invoice automatic.' },
+      { icon: ShieldCheck, title: 'Client details stay private', desc: 'Encrypted, access-controlled and never sold. Your pipeline and client list belong to you alone.' },
+      { icon: BellRing, title: 'Reminders that cut no-shows', desc: 'Email + WhatsApp reminders send themselves before every call — no one on the team chases leads.' },
+    ],
+    pricing: { hook: 'Less than a cup of chai a day.', line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one closed lead covers years.' },
+    midCtas: {
+      afterProblems: { text: 'Let your team pitch, not schedule.', ctaText: 'Get My Booking Link' },
+      afterHow: { text: 'Your next lead is ready to book a call. Make it one click.', ctaText: 'Set Up My Page Free' },
+    },
+    faq: [
+      { q: 'What is the best booking software for agencies and studios in India?', a: 'Book A Sloth is built for Indian agencies and studios — prospects book discovery calls with the right team member online, pay for paid sessions upfront via UPI or card, and get automatic reminders. It syncs each person’s calendar, handles GST invoicing and charges 0% commission on paid plans.' },
+      { q: 'Can I route calls to different team members?', a: 'Yes. Each team member can have their own services and availability, so prospects book the right person and slots never clash across the team.' },
+      { q: 'Can I charge for paid strategy sessions or audits?', a: 'Yes. You can offer free discovery calls and paid sessions side by side, collecting fees at checkout through Razorpay with a GST invoice generated automatically.' },
+      { q: 'Can I filter out unqualified leads?', a: 'Yes. Intake questions and paid strategy slots filter out tyre-kickers before they ever reach your team’s calendar.' },
+      { q: 'How much does it cost?', a: 'You can start free with a 5% per-booking fee. Paid plans begin at roughly ₹10 a day (billed yearly) and remove all commission, so you keep 100% of every fee.' },
+      { q: 'Is it suitable for design, marketing and dev studios?', a: 'Yes. Design, branding, marketing, development and creative studios of any size can use Book A Sloth to route discovery calls and collect payments from one shared link.' },
+    ],
+    finalCta: { icon: TrendingUp, urgency: 'Every slow reply is a lead that booked a competitor.', headline: 'More pitches. Less scheduling.', subline: 'Set up your agency booking page in minutes. Free to start, no card required.', ctaText: 'Create My Booking Page' },
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Winning great clients is the job.', titleAccent: 'The scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own client-services lead.' },
+    },
+    madeFor: "India's Agencies & Studios",
+    testimonials: [
+      { quote: 'Discovery calls used to bounce around email for days. One link routes each lead to the right person and books instantly.', name: 'Aditya Rao', role: 'Agency Founder', avatar: null },
+      { quote: 'Charging for strategy sessions upfront filtered out tyre-kickers overnight. My team only meets serious prospects now.', name: 'Tara Menon', role: 'Studio Director', avatar: null },
+      { quote: 'The whole team shares one booking page. No more clashing calendars or double-booked pitch calls.', name: 'Rohan Gupta', role: 'Creative Lead', avatar: null },
     ],
   },
 };

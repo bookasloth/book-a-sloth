@@ -45,6 +45,10 @@ const PRERENDER_ROUTES = [
   '/for/salon',
   '/for/freelancers',
   '/for/fitness',
+  '/for/tutors',
+  '/for/photographers',
+  '/for/events',
+  '/for/agencies',
   '/lp/calendly-alternative',
   '/lp/topmate-vs-bookasloth',
 ];
