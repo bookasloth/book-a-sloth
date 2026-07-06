@@ -210,6 +210,7 @@ function App() {
     location.pathname.startsWith('/super-dashboard') ||
     location.pathname.startsWith('/vendor-register') ||
     location.pathname.startsWith('/lp') ||
+    location.pathname.startsWith('/for/') ||
     location.pathname === '/hello-sloth';
 
   const isAuthPage =

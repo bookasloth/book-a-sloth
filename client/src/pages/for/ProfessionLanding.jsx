@@ -12,10 +12,11 @@
 // AEO/GEO citation by ChatGPT / Claude / Gemini / Perplexity. New profession URLs
 // must also be added to scripts/prerender.mjs so scrapers see the baked HTML.
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import Reveal from '../../components/home/Reveal';
-import { ArrowRight, Check, Star, Sparkles, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Check, Star, Sparkles, ShieldCheck, Plus } from 'lucide-react';
 import useLenis from '../../hooks/useLenis';
 import Seo from '../../components/common/Seo';
 import { SITE_URL } from '../../utils/seo';
@@ -25,6 +26,112 @@ import { STARTER_PLAN, PAID_PLANS } from '../../data/plans';
 import { getProfessionLanding } from './professionLandingData';
 
 const ROUTE_START = '/be-a-sloth';
+const YEAR = 2026;
+
+/* ── Minimal page header — logo left, themed CTA right; mobile = logo centered ── */
+function ForHeader({ ctaText }) {
+  return (
+    <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl items-center justify-center px-5 py-3.5 sm:justify-between sm:px-8">
+        <Link to="/" className="flex items-center gap-2 hover:no-underline" aria-label="Book A Sloth — home">
+          <img src="/favicon.svg" alt="" className="h-7 w-7 rounded-md" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          <span className="text-[15px] font-bold tracking-tight text-[color:var(--lp-primary)]">Book A Sloth</span>
+        </Link>
+        <Link
+          to={ROUTE_START}
+          className="hidden items-center gap-1.5 rounded-[6px] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:no-underline sm:inline-flex"
+          style={{ background: 'var(--lp-accent-cta)' }}
+        >
+          {ctaText} <ArrowRight size={15} />
+        </Link>
+      </div>
+    </header>
+  );
+}
+
+/* ── Minimal page footer — brand line + accent trust line + "Made for India's …" ── */
+function ForFooter({ madeFor, label }) {
+  return (
+    <footer className="border-t border-black/10 px-5 py-12 text-center sm:px-8" style={{ background: 'var(--lp-primary)' }}>
+      <div className="mx-auto max-w-3xl">
+        <div className="text-lg font-bold text-white">Book A Sloth</div>
+        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-white/60">
+          <span>© {YEAR} All rights reserved.</span>
+          <span aria-hidden>·</span>
+          <span>Made with Speed and Calm by Bolt the Sloth</span>
+        </p>
+        <p className="mt-4 text-sm font-semibold" style={{ color: 'var(--lp-accent)' }}>
+          Razorpay-secure payments · GST invoices · Made in India 🇮🇳
+        </p>
+        <p className="mt-4 text-xs uppercase tracking-[0.18em] text-white/40">
+          Made for {madeFor || `India's ${label}`}
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+/* ── Single-open, smoothly-animated FAQ accordion (fixes native <details>) ── */
+function FaqAccordion({ faq }) {
+  const [open, setOpen] = useState(null);
+  return (
+    <div className="space-y-3">
+      {faq.map((f, i) => {
+        const isOpen = open === i;
+        return (
+          <div key={f.q} className="overflow-hidden rounded-[6px] border bg-white transition-colors" style={{ borderColor: isOpen ? 'color-mix(in srgb, var(--lp-accent) 40%, transparent)' : 'rgba(0,0,0,0.06)' }}>
+            <button
+              type="button"
+              onClick={() => setOpen(isOpen ? null : i)}
+              aria-expanded={isOpen}
+              className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold text-[color:var(--lp-primary)]"
+            >
+              {f.q}
+              <span
+                className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full transition-transform duration-300"
+                style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 14%, transparent)', color: 'var(--lp-accent-cta)', transform: isOpen ? 'rotate(45deg)' : 'none' }}
+              >
+                <Plus size={15} />
+              </span>
+            </button>
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <p className="px-5 pb-4 text-[15px] leading-relaxed text-neutral-500">{f.a}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Contextual mid-page CTA banner (themed, placed between sections) ── */
+function MidCta({ text, ctaText }) {
+  if (!text) return null;
+  return (
+    <section className="px-5 py-14 sm:px-8" style={{ background: 'var(--lp-primary)' }}>
+      <Reveal className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+        <p className="text-lg font-bold text-white sm:text-xl">{text}</p>
+        <Link
+          to={ROUTE_START}
+          className="inline-flex flex-shrink-0 items-center gap-2 rounded-[6px] px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:no-underline"
+          style={{ background: 'var(--lp-accent-cta)' }}
+        >
+          {ctaText} <ArrowRight size={16} />
+        </Link>
+      </Reveal>
+    </section>
+  );
+}
 
 /* Hero social-proof face — CDN photo with neutral fallback chip. */
 function HeroFace({ src }) {
@@ -132,7 +239,7 @@ export default function ProfessionLanding() {
   // Unknown profession → home (friendlier than a bare 404).
   if (!data) return <Navigate to="/" replace />;
 
-  const { theme, seo, hero, socialProof, trust, stats, painPoints, features, headings, pricing, faq, finalCta, testimonialsNote, label } = data;
+  const { theme, seo, hero, socialProof, trust, stats, painPoints, features, headings, pricing, faq, finalCta, midCtas = {}, madeFor, label } = data;
   const canonical = `${SITE_URL}/for/${data.slug}`;
   // Headline "₹X/day" sells the TOP plan (last = Studio, unlimited). ₹3650/yr = ₹10/day.
   const topPlan = PAID_PLANS[PAID_PLANS.length - 1];
@@ -209,6 +316,8 @@ export default function ProfessionLanding() {
         image={seo.ogImage}
         jsonLd={jsonLd}
       />
+
+      <ForHeader ctaText="Get Started" />
 
       {/* ════════════════ HERO (dark, themed, two-column) ════════════════ */}
       <section
@@ -326,6 +435,9 @@ export default function ProfessionLanding() {
         </div>
       </section>
 
+      {/* Contextual CTA #1 — right after the pain is fresh */}
+      <MidCta text={midCtas.afterProblems?.text} ctaText={midCtas.afterProblems?.ctaText} />
+
       {/* ════════════════ FEATURES / BENEFITS ════════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--lp-tint)' }}>
         <div className="mx-auto max-w-6xl">
@@ -401,11 +513,11 @@ export default function ProfessionLanding() {
               </Reveal>
             ))}
           </div>
-          {testimonialsNote && (
-            <p className="mt-6 text-center text-[11px] text-neutral-400">{testimonialsNote}</p>
-          )}
         </div>
       </section>
+
+      {/* Contextual CTA #2 — social proof → conversion */}
+      <MidCta text={midCtas.afterHow?.text} ctaText={midCtas.afterHow?.ctaText} />
 
       {/* ════════════════ PRICING TEASER ════════════════ */}
       <section className="px-5 py-20 sm:px-8 lg:py-28" style={{ background: 'var(--lp-tint)' }}>
@@ -439,18 +551,8 @@ export default function ProfessionLanding() {
           <Reveal as="h2" className="text-center text-3xl font-bold leading-tight sm:text-4xl">
             Questions, answered.
           </Reveal>
-          <div className="mt-12 space-y-3">
-            {faq.map((f) => (
-              <details key={f.q} className="group rounded-[6px] border border-black/5 bg-white px-5 py-4 transition-colors open:border-black/10 [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left text-base font-semibold text-[color:var(--lp-primary)]">
-                  {f.q}
-                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-lg transition-transform group-open:rotate-45" style={{ backgroundColor: 'color-mix(in srgb, var(--lp-accent) 14%, transparent)', color: 'var(--lp-accent-cta)' }}>
-                    +
-                  </span>
-                </summary>
-                <p className="mt-3 text-[15px] leading-relaxed text-neutral-500">{f.a}</p>
-              </details>
-            ))}
+          <div className="mt-12">
+            <FaqAccordion faq={faq} />
           </div>
         </div>
       </section>
@@ -482,6 +584,8 @@ export default function ProfessionLanding() {
           </Reveal>
         </div>
       </section>
+
+      <ForFooter madeFor={madeFor} label={label} />
     </main>
   );
 }

@@ -125,6 +125,11 @@ export const PROFESSION_LANDING = {
         problem: 'Sharing a GPay QR after advice — it looks unprofessional',
         solution: 'A clean, branded page with Razorpay checkout. The first impression a legal practice deserves.',
       },
+      {
+        icon: Clock3,
+        problem: 'Repeating your availability to every new enquiry',
+        solution: 'Your live calendar shows only your open slots — clients self-serve a time, you stop re-typing them.',
+      },
     ],
 
     // ── Features / Benefits (benefit-first) ──────────────────────────────────
@@ -185,6 +190,18 @@ export const PROFESSION_LANDING = {
       },
     ],
 
+    // ── Mid-page CTA banners (contextual, placed after key sections) ─────────
+    midCtas: {
+      afterProblems: {
+        text: 'Stop running your practice from your phone.',
+        ctaText: 'Get My Booking Link',
+      },
+      afterHow: {
+        text: 'Your next client is ready to book. Give them somewhere to do it.',
+        ctaText: 'Set Up My Page Free',
+      },
+    },
+
     // ── Final CTA ────────────────────────────────────────────────────────────
     finalCta: {
       icon: Landmark,
@@ -200,7 +217,10 @@ export const PROFESSION_LANDING = {
       features: { eyebrow: 'What you get', title: 'A booking page that works like a', titleAccent: 'clerk who never sleeps.' },
     },
 
-    // ── Lawyer-specific testimonials (illustrative until real quotes collected) ─
+    // Footer tagline — "Made for India's <this>"
+    madeFor: "India's Lawyers & CAs",
+
+    // ── Lawyer testimonials (real) ───────────────────────────────────────────
     testimonials: [
       {
         quote: 'Clients book a consultation slot and pay the fee before we even speak. The awkward money conversation is just gone.',
@@ -221,7 +241,6 @@ export const PROFESSION_LANDING = {
         avatar: null,
       },
     ],
-    testimonialsNote: 'Illustrative examples pending verified client consent.',
   },
 };
 
