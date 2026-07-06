@@ -53,7 +53,7 @@ export const USE_CASES_CONFIG = [
   {
     label: 'Fitness Trainers',
     desc: 'Schedule personal and group sessions.',
-    href: '/explore?category=fitness',
+    href: '/for/fitness',
     icon: Zap,
     category: 'fitness',
     badge: 'Popular',
