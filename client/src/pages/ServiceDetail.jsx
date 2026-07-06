@@ -870,7 +870,7 @@ export default function ServiceDetail() {
 
         {/* ── Dense dot grid — uniform repeating pattern via SVG <pattern> ── */}
         <svg className="absolute inset-0 h-full w-full opacity-[0.12] sm:opacity-[0.14]"
-          style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          style={{ color: '#ffffff' }}>
           <defs>
             <pattern id="dot-grid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
               <circle cx="12" cy="12" r="1.2" fill="currentColor"/>
@@ -902,7 +902,7 @@ export default function ServiceDetail() {
 
         {/* ── Calendar date grid — 7-col layout with date numbers, right-biased ── */}
         <svg className="absolute top-6 right-0 hidden h-[26rem] w-[42rem] opacity-[0.16] sm:block lg:w-[52rem]"
-          viewBox="0 0 700 400" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          viewBox="0 0 700 400" fill="none" style={{ color: '#ffffff' }}>
           {/* row 1: dates 01-07 */}
           <text x="240" y="58" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.6">01</text>
           <text x="310" y="58" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.7">02</text>
@@ -984,7 +984,7 @@ export default function ServiceDetail() {
 
         {/* ── Left side — very faint scattered dots + one ghost cell (kept ~70% cleaner) ── */}
         <svg className="absolute top-12 left-0 hidden h-48 w-40 opacity-[0.06] sm:block"
-          viewBox="0 0 160 200" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          viewBox="0 0 160 200" fill="none" style={{ color: '#ffffff' }}>
           <circle cx="30" cy="30" r="1.5" fill="currentColor" opacity="0.4"/>
           <circle cx="80" cy="50" r="1.2" fill="currentColor" opacity="0.3"/>
           <circle cx="50" cy="90" r="1" fill="currentColor" opacity="0.2"/>
