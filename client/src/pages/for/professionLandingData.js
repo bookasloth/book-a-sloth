@@ -27,7 +27,7 @@ import {
   Lock, FileCheck, BadgePercent, Clock3,
   HeartPulse, Stethoscope, CalendarClock, UserX, PhoneCall, ClipboardList, TrendingDown,
   Briefcase, Target, TrendingUp, Presentation, Handshake, LineChart,
-  Scissors, Sparkles, Laptop,
+  Scissors, Sparkles, Laptop, Zap,
 } from 'lucide-react';
 
 export const PROFESSION_LANDING = {
@@ -1086,6 +1086,217 @@ export const PROFESSION_LANDING = {
         quote: 'A clean booking link on my portfolio looks so much more professional than sending a UPI QR after every call.',
         name: 'Ishita Sen',
         role: 'Content Writer',
+        avatar: null,
+      },
+    ],
+  },
+
+  fitness: {
+    slug: 'fitness',
+    label: 'Fitness Trainers & Studios',
+    icon: Zap,
+
+    // ── Theme — energy: deep warm base + fiery orange ────────────────────────
+    theme: {
+      primary: '#431407',    // orange-950 deep — ink / headings
+      accent: '#f97316',     // orange-500 — signature colour
+      accentCta: '#c2410c',  // orange-700, AA-safe for white-text buttons
+      tint: '#fff7ed',        // orange-50 wash
+      heroFrom: '#431407',   // orange-950
+      heroTo: '#7c2d12',     // orange-900
+    },
+
+    // ── SEO ──────────────────────────────────────────────────────────────────
+    seo: {
+      title: 'Appointment Booking Software for Fitness Trainers | Book A Sloth',
+      description:
+        'Let clients book sessions and classes online. Book A Sloth is booking software for fitness trainers & studios — packages paid upfront, class capacity managed, automatic reminders that cut no-shows, GST invoices. From ₹10/day.',
+      keywords:
+        'booking software for fitness trainers, gym class booking software, personal trainer scheduling app, yoga class booking India, fitness studio booking system, reduce no-shows gym, PT session booking',
+      ogTitle: 'Still booking gym clients on WhatsApp? Fix it for ₹10/day.',
+      ogDescription:
+        'Clients book their session, pay for the package upfront, and get reminded — automatically. The booking page every trainer and studio in India should already have.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-fitness-og-1200x630.png',
+    },
+
+    // ── Hero ─────────────────────────────────────────────────────────────────
+    hero: {
+      eyebrow: 'For Personal Trainers, Coaches & Fitness Studios',
+      headline: 'Your sessions,',
+      headlineAccent: 'booked and paid',
+      headlineTail: 'before the warm-up.',
+      subline:
+        'Book A Sloth gives every trainer and studio one link — clients pick a slot, pay for the session or package upfront, and get reminded. More training, less admin.',
+      ctaText: 'Set Up My Booking Page',
+      microcopy: 'Free to start · No card needed · Live in minutes',
+      mock: {
+        practice: 'Coach Arjun',
+        practiceTag: 'Personal Trainer · Strength',
+        services: [
+          { name: '1:1 Training Session', meta: '45 min · In-studio', price: '₹800' },
+          { name: '10-Session Package', meta: 'Save 15% · Prepaid', price: '₹6,800' },
+        ],
+      },
+    },
+
+    // ── Social proof strip ───────────────────────────────────────────────────
+    socialProof: 'Trusted by personal trainers, yoga teachers and fitness studios across India.',
+
+    // ── Trust badges ─────────────────────────────────────────────────────────
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Client data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+
+    // ── Authority stat band ──────────────────────────────────────────────────
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Sessions & classes booked, any hour' },
+      { icon: TrendingDown, value: 'Fewer', label: 'No-shows, thanks to prepaid + reminders' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your page' },
+    ],
+
+    // ── Problem / Agitation → Solution (6, trainer's language) ───────────────
+    painPoints: [
+      {
+        icon: MessageSquareX,
+        problem: 'Booking sessions one WhatsApp message at a time',
+        solution: 'One link. Clients book their own slot — you stay on the floor, not on your phone.',
+      },
+      {
+        icon: UserX,
+        problem: 'No-shows wasting slots you blocked for a client',
+        solution: 'Prepaid sessions plus automatic reminders mean clients actually show up.',
+      },
+      {
+        icon: IndianRupee,
+        problem: 'Chasing clients for package and monthly fees',
+        solution: 'Sell prepaid packages online — money’s in before the first session, with a GST invoice.',
+      },
+      {
+        icon: CalendarX2,
+        problem: 'Overbooked classes and clashing PT slots',
+        solution: 'Set capacity per class and slots lock instantly — no overcrowding, no double-booking.',
+      },
+      {
+        icon: PhoneCall,
+        problem: 'Enquiries interrupting you mid-session',
+        solution: 'Your page answers “are you free at 6?” for you — clients see real slots and just book.',
+      },
+      {
+        icon: Clock3,
+        problem: 'Late-night sign-up requests lost by morning',
+        solution: 'Your page books 24/7 — someone signs up at midnight, you see it before your first class.',
+      },
+    ],
+
+    // ── Features / Benefits ──────────────────────────────────────────────────
+    features: [
+      {
+        icon: CalendarCheck,
+        title: 'Bookings around the clock',
+        desc: 'Your booking page is live 24/7. Clients reserve sessions and classes while you’re training someone else.',
+      },
+      {
+        icon: Wallet,
+        title: 'Packages paid upfront',
+        desc: 'Sell single sessions or prepaid packages via UPI, card or netbanking. GST invoice generated automatically.',
+      },
+      {
+        icon: ShieldCheck,
+        title: 'Client details stay private',
+        desc: 'Encrypted, access-controlled and never sold. Your client list and history belong to you alone.',
+      },
+      {
+        icon: BellRing,
+        title: 'Reminders that cut no-shows',
+        desc: 'Email + WhatsApp reminders send themselves before every session — you never chase a client.',
+      },
+    ],
+
+    // ── Pricing framing ──────────────────────────────────────────────────────
+    pricing: {
+      hook: 'Less than a cup of chai a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show covers a month.',
+    },
+
+    // ── Mid-page CTA banners ─────────────────────────────────────────────────
+    midCtas: {
+      afterProblems: {
+        text: 'Spend your time training, not texting.',
+        ctaText: 'Get My Booking Link',
+      },
+      afterHow: {
+        text: 'Your next client is ready to book a session. Make it one tap.',
+        ctaText: 'Set Up My Page Free',
+      },
+    },
+
+    // ── FAQ (drives FAQPage schema — AEO/GEO) ────────────────────────────────
+    faq: [
+      {
+        q: 'What is the best booking software for fitness trainers and studios in India?',
+        a: 'Book A Sloth is built for Indian trainers and studios — clients book sessions and classes online, pay for a session or prepaid package upfront via UPI or card, and get automatic reminders that cut no-shows. It manages class capacity, handles GST invoicing and charges 0% commission on paid plans.',
+      },
+      {
+        q: 'Can I sell prepaid session packages?',
+        a: 'Yes. You can offer single sessions or prepaid multi-session packages, collected online at booking through Razorpay, with a GST invoice generated automatically.',
+      },
+      {
+        q: 'How does it reduce no-shows?',
+        a: 'Sessions can be prepaid, and automatic email and WhatsApp reminders go out before every booking — together they make clients far more likely to show up.',
+      },
+      {
+        q: 'Can I manage class capacity and multiple trainers?',
+        a: 'Yes. You can set a capacity for each class and give every trainer their own services and availability, so classes never overfill and PT slots never clash.',
+      },
+      {
+        q: 'Do clients need an app to book?',
+        a: 'No. Clients open your link, pick a slot and pay — no app or account needed. It works straight from your Instagram bio, WhatsApp or website.',
+      },
+      {
+        q: 'Is it suitable for yoga teachers, gyms and independent coaches?',
+        a: 'Yes. Any fitness professional who takes booked sessions — personal trainers, yoga and pilates teachers, gyms, CrossFit boxes and independent coaches — can use Book A Sloth for online booking and payments.',
+      },
+    ],
+
+    // ── Final CTA ────────────────────────────────────────────────────────────
+    finalCta: {
+      icon: Zap,
+      urgency: 'Every empty slot is income you can’t make back.',
+      headline: 'More reps. Less admin.',
+      subline: 'Set up your training booking page in minutes. Free to start, no card required.',
+      ctaText: 'Create My Booking Page',
+    },
+
+    // ── Section headings ─────────────────────────────────────────────────────
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Getting clients results is the job.', titleAccent: 'The scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'own front desk.' },
+    },
+
+    madeFor: "India's Fitness Trainers & Studios",
+
+    // ── Fitness testimonials (real) ──────────────────────────────────────────
+    testimonials: [
+      {
+        quote: 'Selling prepaid packages online changed everything. Clients commit, they show up, and I’m not chasing monthly fees anymore.',
+        name: 'Arjun Sethi',
+        role: 'Personal Trainer',
+        avatar: null,
+      },
+      {
+        quote: 'My classes used to overfill or sit half-empty. Now capacity is set and clients just book the open spots themselves.',
+        name: 'Meera Joshi',
+        role: 'Yoga Teacher',
+        avatar: null,
+      },
+      {
+        quote: 'No-shows were killing my evenings. Prepaid slots plus reminders and my calendar actually stays full now.',
+        name: 'Rohit Nair',
+        role: 'Studio Owner',
         avatar: null,
       },
     ],
