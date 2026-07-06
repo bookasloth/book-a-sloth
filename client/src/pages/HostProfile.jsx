@@ -529,12 +529,12 @@ const HostProfile = () => {
               {/* Profile info + all sections */}
               <div className="px-6 pb-6 pt-4 text-center">
 
-                {/* Name — in the host's profile accent colour */}
-                <h1 className="text-xl font-bold mt-1" style={{ color: tc }}>{host.name}</h1>
+                {/* Name — black (theme colour reserved for the title below) */}
+                <h1 className="text-xl font-bold mt-1" style={{ color: C.text }}>{host.name}</h1>
 
-                {/* Profession */}
+                {/* Profession — in the host's profile accent colour */}
                 {(host.profession || host.tagline) && (
-                  <p className="text-sm font-medium mt-0.5" style={{ color: C.secondary }}>
+                  <p className="text-sm font-medium mt-0.5" style={{ color: tc }}>
                     {host.profession || host.tagline}
                   </p>
                 )}
@@ -636,11 +636,12 @@ const HostProfile = () => {
                   },
                 ].map(({ mode, icon }) => (
                   <button key={mode} onClick={() => setViewMode(mode)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium capitalize transition-colors"
+                    aria-label={`${mode} view`} title={`${mode} view`}
+                    className="flex items-center justify-center px-3 py-2 transition-colors"
                     style={viewMode === mode
                       ? { background: C.text, color: C.btnText }
                       : { color: C.secondary }}>
-                    {icon}{mode}
+                    {icon}
                   </button>
                 ))}
               </div>
