@@ -555,7 +555,7 @@ const buildPublicServiceByProfileAndSlug = async (profileSlug, serviceSlug) => {
   // Embed the host's appearance (enabled backgrounds + default) so the service
   // page can render the right background without a second request. Decorative —
   // non-fatal on error so the page still loads.
-  let appearance = { backgrounds: [], default_background: 'dotgrid' };
+  let appearance = { backgrounds: [], default_background: null };
   try { appearance = await getPublicAppearanceData(); } catch (_) { /* non-fatal: decorative */ }
 
   return {
@@ -604,4 +604,5 @@ module.exports = {
   toggleService,
   getPublicServiceBySlug,
   getPublicServiceByProfileAndSlug,
+  buildPublicServiceByProfileAndSlug, // used by prerenderController for bot-traffic meta shells
 };

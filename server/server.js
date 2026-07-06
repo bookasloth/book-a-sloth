@@ -162,6 +162,10 @@ app.get('/api/plans',       require('./controllers/planAdminController').publicP
 // on service/profile mutations. Bypasses the /api rate limiter + maintenance 503.
 app.use(require('./routes/sitemapRoutes'));
 
+// Bot-traffic prerender — serves lightweight HTML meta-tag shells for social
+// scrapers and non-JS crawlers. Proxied from Vercel edge middleware on bot UA.
+app.use('/prerender', require('./routes/prerenderRoutes'));
+
 // Health check — used by Render's health probe and UptimeRobot. Mounted outside
 // /api so it bypasses the API rate limiter and maintenance-mode 503s, staying
 // reachable even while the app is in maintenance. Intentionally does NOT touch

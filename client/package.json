@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender.mjs",
+    "build:no-prerender": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -42,6 +43,7 @@
     "autoprefixer": "^10.4.16",
     "jsdom": "^29.1.1",
     "postcss": "^8.4.31",
+    "puppeteer": "^24.43.1",
     "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^3.3.5",
     "vite": "^5.0.0",
