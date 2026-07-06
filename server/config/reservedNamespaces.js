@@ -14,7 +14,7 @@ const ROUTES = [
   'login', 'logout', 'signin', 'signup', 'register', 'forgot-password', 'reset-password',
   'help', 'about', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore',
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
-  'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'lp',
+  'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'lp', 'for',
   'my-bookings', 'profile', 'reviews', 'loyalty', 'settings', 'search',
   'sitemap', 'robots', 'health', 'manifest', 'favicon', 'get-in-touch',
 ];

@@ -143,6 +143,7 @@ const BadgeShowcase      = lazy(() => import('./pages/BadgeShowcase'));
 const Explore         = lazy(() => import('./pages/Explore'));
 const ServicesDirectory  = lazy(() => import('./pages/services/ServicesDirectory'));
 const ProfessionServices = lazy(() => import('./pages/services/ProfessionServices'));
+const ProfessionLanding  = lazy(() => import('./pages/for/ProfessionLanding'));
 
 // Admin — Operations
 const AdminPlans  = lazy(() => import('./pages/admin/AdminPlans'));
@@ -384,6 +385,9 @@ function App() {
           {/* Services directory — public SEO (profession-scoped listing pages) */}
           <Route path="/services" element={<ServicesDirectory />} />
           <Route path="/services/:profession" element={<ProfessionServices />} />
+
+          {/* Profession marketing landing pages (/for/:profession) — sell BAS per profession */}
+          <Route path="/for/:profession" element={<ProfessionLanding />} />
 
           {/* Support / Contact — placeholders; MUST precede the /:profileSlug catch-all */}
           <Route path="/support" element={<Support />} />

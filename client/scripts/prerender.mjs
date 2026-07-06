@@ -38,6 +38,7 @@ const PRERENDER_ROUTES = [
   '/badges',
   '/services',
   '/explore',
+  '/for/lawyers',
   '/lp/calendly-alternative',
   '/lp/topmate-vs-bookasloth',
 ];
