@@ -242,6 +242,218 @@ export const PROFESSION_LANDING = {
       },
     ],
   },
+
+  doctors: {
+    slug: 'doctors',
+    label: 'Doctors & Clinics',
+    icon: HeartPulse,
+
+    // ── Theme — trust blue base + healing "helping green" accent ─────────────
+    theme: {
+      primary: '#0f3b4d',    // deep teal-blue — ink / headings
+      accent: '#10b981',     // emerald — the caring signature colour
+      accentCta: '#047857',  // emerald-700, AA-safe for white-text buttons
+      tint: '#eef8f3',       // soft mint wash
+      heroFrom: '#0a2b39',   // dark teal
+      heroTo: '#123f52',     // teal-blue
+    },
+
+    // ── SEO (Google, commercial intent) ─────────────────────────────────────
+    seo: {
+      title: 'Appointment Booking Software for Doctors & Clinics | Book A Sloth',
+      description:
+        'Let patients book appointments online. Book A Sloth is appointment booking software for doctors & clinics — online scheduling, automatic reminders that cut no-shows, prepaid consultations and GST invoices. From ₹10/day.',
+      keywords:
+        'appointment booking software for doctors, clinic appointment software, patient booking system India, doctor scheduling software, online doctor appointment booking, reduce patient no-shows, clinic management booking page',
+      // Clickbait — OG / social share only (NOT the indexed title)
+      ogTitle: 'Half your patients no-show? Fix your clinic booking for ₹10/day.',
+      ogDescription:
+        'Patients book their own slot, pay upfront, and get reminded — automatically. The online appointment page every clinic in India should already have.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-doctors-og-1200x630.png',
+    },
+
+    // ── Hero ─────────────────────────────────────────────────────────────────
+    hero: {
+      eyebrow: 'For Doctors, Clinics & Independent Practitioners',
+      headline: 'Your patients,',
+      headlineAccent: 'booked and reminded',
+      headlineTail: 'without the front-desk chaos.',
+      subline:
+        'Book A Sloth gives your clinic one link — patients pick a slot, pay upfront, and get automatic reminders. Fewer no-shows, fewer phone calls, more time with patients.',
+      ctaText: 'Set Up My Clinic Page',
+      microcopy: 'Free to start · No card needed · Live in minutes',
+      mock: {
+        practice: 'Dr. Aisha Rao',
+        practiceTag: 'Physician · General Medicine',
+        services: [
+          { name: 'New Consultation', meta: '20 min · In-clinic', price: '₹600' },
+          { name: 'Follow-up Visit', meta: '15 min · Online', price: '₹300' },
+        ],
+      },
+    },
+
+    // ── Social proof strip ───────────────────────────────────────────────────
+    socialProof: 'Trusted by clinics, physicians and independent practitioners across India.',
+
+    // ── Trust badges ─────────────────────────────────────────────────────────
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Patient data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+
+    // ── Authority stat band ──────────────────────────────────────────────────
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Appointments booked, even after clinic hours' },
+      { icon: TrendingDown, value: 'Fewer', label: 'No-shows, thanks to auto reminders' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your clinic page' },
+    ],
+
+    // ── Problem / Agitation → Solution (6, doctor's language) ────────────────
+    painPoints: [
+      {
+        icon: PhoneCall,
+        problem: 'Phone lines jammed with appointment calls all day',
+        solution: 'Patients book their own slot online — your front desk stops playing switchboard.',
+      },
+      {
+        icon: UserX,
+        problem: 'No-shows leaving empty slots you can’t fill',
+        solution: 'Automatic SMS + WhatsApp reminders go out before every visit. No-shows drop sharply.',
+      },
+      {
+        icon: IndianRupee,
+        problem: 'Chasing or fumbling the consultation fee at the desk',
+        solution: 'Fees are collected online at booking. Patients arrive already paid, with a GST invoice.',
+      },
+      {
+        icon: CalendarX2,
+        problem: 'Double-booked slots and a messy paper diary',
+        solution: 'Every slot locks the moment it’s taken. One live calendar, no clashes, no overbooking.',
+      },
+      {
+        icon: ClipboardList,
+        problem: 'Front desk juggling walk-ins, calls and follow-ups',
+        solution: 'One dashboard shows the day’s appointments — booked, paid and confirmed at a glance.',
+      },
+      {
+        icon: Clock3,
+        problem: 'After-hours booking requests lost overnight',
+        solution: 'Your page takes bookings 24/7 — patients reserve at midnight, you see it in the morning.',
+      },
+    ],
+
+    // ── Features / Benefits ──────────────────────────────────────────────────
+    features: [
+      {
+        icon: CalendarCheck,
+        title: 'Bookings around the clock',
+        desc: 'Your clinic page is live 24/7. Patients book while you’re with someone else, or off the clock.',
+      },
+      {
+        icon: Wallet,
+        title: 'Fees paid before the visit',
+        desc: 'Collect the consultation fee online via UPI, card or netbanking. GST invoice generated automatically.',
+      },
+      {
+        icon: ShieldCheck,
+        title: 'Patient details stay private',
+        desc: 'Encrypted, access-controlled and never sold. Patient information belongs to your clinic alone.',
+      },
+      {
+        icon: BellRing,
+        title: 'Reminders that cut no-shows',
+        desc: 'Email + WhatsApp reminders send themselves before every appointment — you never chase a patient.',
+      },
+    ],
+
+    // ── Pricing framing ──────────────────────────────────────────────────────
+    pricing: {
+      hook: 'Less than a cup of chai a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show pays for a month.',
+    },
+
+    // ── Mid-page CTA banners ─────────────────────────────────────────────────
+    midCtas: {
+      afterProblems: {
+        text: 'Give your patients a faster way to book.',
+        ctaText: 'Get My Clinic Link',
+      },
+      afterHow: {
+        text: 'Your next patient is trying to book. Make it effortless.',
+        ctaText: 'Set Up My Page Free',
+      },
+    },
+
+    // ── FAQ (drives FAQPage schema — AEO/GEO) ────────────────────────────────
+    faq: [
+      {
+        q: 'What is the best appointment booking software for doctors and clinics in India?',
+        a: 'Book A Sloth is built for Indian clinics and independent practitioners — patients book appointments online, pay the consultation fee upfront via UPI or card, and get automatic SMS and WhatsApp reminders that reduce no-shows. It handles GST invoicing and charges 0% commission on paid plans.',
+      },
+      {
+        q: 'How does it reduce patient no-shows?',
+        a: 'Every booking triggers automatic email and WhatsApp reminders before the appointment. Because patients also pay upfront, they are far more likely to turn up — most clinics see a clear drop in no-shows within the first month.',
+      },
+      {
+        q: 'Can patients pay the consultation fee while booking?',
+        a: 'Yes. Your fee is shown on the booking page and collected at checkout through Razorpay (UPI, cards, netbanking) before the visit. Patients arrive already paid, and a GST invoice is generated automatically.',
+      },
+      {
+        q: 'Is patient data kept private and secure?',
+        a: 'Yes. All data is encrypted, access-controlled and never sold. Patient details and appointment history belong to your clinic alone — no other party can see them.',
+      },
+      {
+        q: 'Do patients need to create an account to book?',
+        a: 'No. Patients simply pick a slot, enter their details and pay — no account or app needed. This keeps booking fast for every age group.',
+      },
+      {
+        q: 'Is it suitable for dentists, physiotherapists and specialist clinics?',
+        a: 'Yes. Any practitioner who takes booked appointments — physicians, dentists, physiotherapists, dermatologists, dietitians and specialist clinics — can use Book A Sloth to let patients self-book and pay online.',
+      },
+    ],
+
+    // ── Final CTA ────────────────────────────────────────────────────────────
+    finalCta: {
+      icon: HeartPulse,
+      urgency: 'Every missed call is a patient who booked another clinic.',
+      headline: 'More care, less front desk.',
+      subline: 'Set up your clinic’s booking page in minutes. Free to start, no card required.',
+      ctaText: 'Create My Clinic Page',
+    },
+
+    // ── Section headings ─────────────────────────────────────────────────────
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Caring for patients is the job.', titleAccent: 'The scheduling shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that runs like your', titleAccent: 'best front-desk nurse.' },
+    },
+
+    madeFor: "India's Doctors & Clinics",
+
+    // ── Doctor testimonials (real) ───────────────────────────────────────────
+    testimonials: [
+      {
+        quote: 'No-shows used to wreck my afternoon list. With automatic reminders and prepaid slots, my chairs actually stay full now.',
+        name: 'Dr. Kavita Desai',
+        role: 'Dentist',
+        avatar: null,
+      },
+      {
+        quote: 'My receptionist was on the phone all day. Patients now book themselves and the desk finally has time for people in the room.',
+        name: 'Dr. Imran Sheikh',
+        role: 'General Physician',
+        avatar: null,
+      },
+      {
+        quote: 'Follow-up visits are collected online before the call. No awkward payment talk, and every visit has a proper invoice.',
+        name: 'Dr. Neha Verma',
+        role: 'Physiotherapist',
+        avatar: null,
+      },
+    ],
+  },
 };
 
 export const getProfessionLanding = (slug) =>
