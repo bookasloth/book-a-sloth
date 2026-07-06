@@ -1,5 +1,5 @@
 import { Suspense, useState, useMemo } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, useParams, Navigate } from 'react-router-dom';
 import ChromeContext from './context/ChromeContext';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/common/Navbar';
@@ -187,6 +187,11 @@ function AdminWrapper({ children }) {
   return <AdminLayout>{children}</AdminLayout>;
 }
 
+function BookingRedirect() {
+  const { profileSlug } = useParams();
+  return <Navigate to={`/${profileSlug}`} replace />;
+}
+
 function App() {
   const location = useLocation();
   const { user } = useAuth();
@@ -206,7 +211,12 @@ function App() {
     location.pathname.startsWith('/lp') ||
     location.pathname === '/hello-sloth';
 
-  const hideFooter = hideNavbar || !!user; // public/app boundary AND only when logged out
+  const isAuthPage =
+    location.pathname === '/login' ||
+    location.pathname === '/login-as-vendor' ||
+    location.pathname === '/be-a-sloth';
+
+  const hideFooter = hideNavbar || !!user || isAuthPage;
 
   return (
     <ChromeContext.Provider value={chromeValue}>
@@ -410,6 +420,7 @@ function App() {
           {/* Public host/service pages — specific before dynamic */}
           <Route path="/:profileSlug/badges" element={<BadgeShowcase />} />
           <Route path="/:profileSlug/product/:productId" element={<ProductPurchase />} />
+          <Route path="/:profileSlug/booking" element={<BookingRedirect />} />
           <Route path="/:profileSlug/booking/:serviceSlug" element={<ServiceBooking />} />
           <Route path="/:profileSlug/:serviceSlug" element={<ServiceDetail />} />
           <Route path="/:profileSlug" element={<HostProfile />} />
