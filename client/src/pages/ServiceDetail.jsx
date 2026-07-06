@@ -461,7 +461,7 @@ const socialProofCount = (id) => {
 // Inflated "MRP" for marketing display — ~3.5–5× the real price, rounded to nearest ₹5.
 const fakeOriginal = (price) => {
   if (!price) return 0;
-  const multiplier = 3.5 + ((price * 7) % 15) / 10;
+  const multiplier = 1.18 + ((price * 7) % 8) / 100;
   return Math.round((price * multiplier) / 5) * 5;
 };
 
@@ -476,6 +476,7 @@ const TRUST_SIGNALS = [
 const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, motionOK = true }) => {
   const isFree = service.price === 0;
   const [cancelTipOpen, setCancelTipOpen] = useState(false);
+  const [discountTipOpen, setDiscountTipOpen] = useState(false);
 
   const imgWrapRef = useRef(null);
   const [imgH, setImgH] = useState(0);
@@ -523,6 +524,24 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, moti
                   <>
                     <span className="text-base text-gray-400 line-through font-medium">₹{mrp}</span>
                     <span className="text-sm font-bold text-amber-600">{discount}% off</span>
+                    <span className="relative">
+                      <button type="button" onClick={() => setDiscountTipOpen(o => !o)} aria-label="Pricing info"
+                        className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="9"/><path strokeLinecap="round" d="M12 16v-4M12 8.5h.01"/>
+                        </svg>
+                      </button>
+                      {discountTipOpen && (
+                        <>
+                          <button type="button" aria-hidden tabIndex={-1}
+                            className="fixed inset-0 z-10 cursor-default" onClick={() => setDiscountTipOpen(false)}/>
+                          <div className="absolute z-20 left-1/2 -translate-x-1/2 top-full mt-2 w-56 rounded-xl bg-gray-900 text-white text-xs leading-relaxed p-3 shadow-lg">
+                            <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-gray-900"/>
+                            <p>Price compared to the host's standard consultation rate.</p>
+                          </div>
+                        </>
+                      )}
+                    </span>
                   </>
                 )}
               </div>
@@ -561,10 +580,10 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, moti
           {/* Cancellation policy */}
           <li className="relative flex items-start gap-2.5 text-xs text-gray-600">
             <svg className="w-4 h-4 flex-shrink-0 text-blue-500 mt-px" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
             </svg>
             <span className="flex items-center gap-1">
-              Cancellation Policy
+              Free cancellation available
               <button type="button" onClick={() => setCancelTipOpen(o => !o)} aria-label="View cancellation policy"
                 className="text-gray-400 hover:text-gray-600 transition-colors">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -579,8 +598,8 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, compact = false, moti
                 <div className="absolute z-20 left-0 top-full mt-1.5 w-72 rounded-xl bg-gray-900 text-white text-xs leading-relaxed p-3.5 shadow-lg">
                   <span className="absolute -top-1.5 left-6 w-3 h-3 rotate-45 bg-gray-900"/>
                   <p className="font-semibold mb-2">Cancellation Policy</p>
-                  <p className="mb-1">For cancellation done <strong>prior</strong> to the session — full refund as per our <a href="/refund" target="_blank" rel="noreferrer" className="underline text-blue-300 hover:text-blue-200">refund policy</a>.</p>
-                  <p>For cancellation done <strong>post</strong> the session start time — no refund applicable, based on our <a href="/refund" target="_blank" rel="noreferrer" className="underline text-blue-300 hover:text-blue-200">refund policy</a>.</p>
+                  <p className="mb-1">Cancel <strong>before</strong> the session starts — full refund as per our <a href="/refund" target="_blank" rel="noreferrer" className="underline text-blue-300 hover:text-blue-200">refund policy</a>.</p>
+                  <p>Cancel <strong>after</strong> the session start time — no refund, per our <a href="/refund" target="_blank" rel="noreferrer" className="underline text-blue-300 hover:text-blue-200">refund policy</a>.</p>
                 </div>
               </>
             )}
@@ -823,14 +842,14 @@ export default function ServiceDetail() {
   const [motionOK, setMotionOK] = useState(true);
 
   useEffect(() => {
-    const el = heroEndRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(
-      ([entry]) => setHeroInView(entry.isIntersecting),
-      { rootMargin: '0px 0px 0px 0px', threshold: 0 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
+    if (!data) return;
+    const onScroll = () => {
+      const scrollPct = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+      setHeroInView(scrollPct < 0.05);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, [data]);
 
   useEffect(() => {
@@ -1060,7 +1079,7 @@ export default function ServiceDetail() {
       </div>
 
       {/* ── HERO + Content — single container so sidebar starts under h1 ── */}
-      <div className="app-container pt-6 pb-28 lg:pb-8 relative z-10">
+      <div className="app-container pb-28 lg:pb-8 relative z-10" style={{ paddingTop: 44 }}>
         {/* Breadcrumb */}
         <nav className="mb-4 text-xs text-gray-800/50 font-medium" aria-label="Breadcrumb">
           <Link to="/explore" className="hover:text-gray-800 transition-colors">explore</Link>
@@ -1086,11 +1105,7 @@ export default function ServiceDetail() {
 
               {/* Title — 110% of content column width */}
               <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight" style={{ maxWidth: '110%' }}>
-                {(() => {
-                  const words = (service.title || '').trim().split(/\s+/);
-                  const last = words.pop();
-                  return <>{words.length > 0 && <>{words.join(' ')} </>}<span style={{ color: 'var(--profile-accent, #FE5100)' }}>{last}</span></>;
-                })()}
+                {service.title}
               </h1>
 
               {/* Short description — 90% width */}
@@ -1113,12 +1128,12 @@ export default function ServiceDetail() {
                 {vendor?.name && (
                   <>
                     <span className="text-gray-300">|</span>
-                    <Link to={`/${vendor.username}`} className="flex items-center gap-2 hover:text-primary transition-colors">
-                      {vendor.profile_image
-                        ? <img src={vendor.profile_image} alt={vendor.name} className="w-6 h-6 rounded-full object-cover ring-1 ring-white shadow-sm flex-shrink-0"/>
-                        : <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary ring-1 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
-                      <span className="font-semibold">Hosted by {vendor.name}</span>
-                    </Link>
+                    <span className="flex items-center gap-1.5">
+                      <span>Hosted by</span>
+                      <Link to={`/${vendor.username}`} className="font-semibold hover:text-primary transition-colors underline decoration-gray-300 hover:decoration-current underline-offset-2">
+                        {vendor.name}
+                      </Link>
+                    </span>
                   </>
                 )}
                 {service.important_note && (
