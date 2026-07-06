@@ -995,23 +995,30 @@ export default function ServiceDetail() {
         </svg>
       </div>
 
-      <div className="app-container py-8 pb-28 lg:pb-8 relative z-10">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* ── LEFT: Main content ── */}
-          <div className="flex-1 min-w-0">
+      {/* ── HERO — full-bleed on gradient, no glass card ── */}
+      <div className="app-container pt-6 pb-0 relative z-10">
+        {/* Breadcrumb */}
+        <nav className="mb-4 text-xs text-gray-800/50 font-medium" aria-label="Breadcrumb">
+          <Link to="/explore" className="hover:text-gray-800 transition-colors">explore</Link>
+          <span className="mx-1">/</span>
+          {vendor?.username && (
+            <>
+              <Link to={`/${vendor.username}`} className="hover:text-gray-800 transition-colors">{vendor.username}</Link>
+              <span className="mx-1">/</span>
+            </>
+          )}
+          <span className="text-gray-800/70 max-w-[120px] sm:max-w-[200px] truncate inline-block align-bottom">{service.slug || 'service'}</span>
+        </nav>
 
-            {/* ── HERO ── frosted card so accent title doesn't merge with page gradient */}
-            <section ref={heroRef} className="relative isolate overflow-hidden rounded-2xl p-6 sm:p-10 mb-6 bg-white/60 backdrop-blur-sm border border-white/80 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
+        <section ref={heroRef} className="relative pb-6 lg:max-w-[60%]">
 
-              {/* Content */}
-              <div className="relative z-10">
-              {/* Eyebrow — category · session type */}
+          {/* Eyebrow — category · session type */}
               {eyebrow && (
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">{eyebrow}</p>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-gray-800/50">{eyebrow}</p>
               )}
 
-              {/* Title — last word accent-highlighted */}
-              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight">
+              {/* Title — dark on gradient, last word accent */}
+              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight lg:max-w-[90%]">
                 {(() => {
                   const words = (service.title || '').trim().split(/\s+/);
                   const last = words.pop();
@@ -1021,60 +1028,52 @@ export default function ServiceDetail() {
 
               {/* Short description */}
               {service.short_description && (
-                <p className="text-base sm:text-lg text-gray-600 mb-6 leading-relaxed max-w-2xl">{service.short_description}</p>
+                <p className="text-base sm:text-lg text-gray-700 mb-6 leading-relaxed max-w-xl">{service.short_description}</p>
               )}
 
-              {/* Meta pills — status · duration · mode · category */}
-              <div className="flex flex-wrap items-center gap-2 mb-6">
-                {isBestseller ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
-                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    Bestseller
-                  </span>
-                ) : rating <= 0 && (
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-gray-900 text-white">New</span>
+              {/* Meta — icons + pipe separator */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-800 mb-6">
+                {rating > 0 && (
+                  <>
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                      {rating.toFixed(1)} / 5
+                    </span>
+                    <span className="text-gray-300">|</span>
+                  </>
                 )}
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-white text-gray-800 shadow-sm">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   {fmtDuration(service.duration)}
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-white text-gray-800 shadow-sm">
+                <span className="text-gray-300">|</span>
+                <span className="flex items-center gap-1.5">
                   {service.meeting_mode === 'offline'
                     ? <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
-                    : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>Online · Google Meet</>}
+                    : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>Google Meet</>}
                 </span>
-                {service.category_label && (
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-900/5 text-gray-700">
-                    {service.category_label}
-                  </span>
-                )}
               </div>
 
-              {/* Host — [photo] Hosted by Name · rating */}
+              {/* Host — photo + Hosted by Name */}
               {vendor?.name && (
                 <div className="flex items-center gap-3">
                   {vendor.profile_image
-                    ? <img src={vendor.profile_image} alt={vendor.name} className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-sm flex-shrink-0"/>
-                    : <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary ring-2 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
+                    ? <img src={vendor.profile_image} alt={vendor.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm flex-shrink-0"/>
+                    : <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-base font-bold text-primary ring-2 ring-white shadow-sm flex-shrink-0">{vendor.name.charAt(0)}</div>}
                   <div className="min-w-0">
                     <p className="text-xs text-gray-500 leading-tight">Hosted by</p>
-                    <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5">
-                      <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-primary transition-colors">{vendor.name}</Link>
-                      {rating > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Stars avg={rating} count={0}/>
-                          <span className="text-sm text-gray-700">
-                            <strong className="font-semibold text-gray-900">{rating.toFixed(1)}</strong>
-                            {reviewCount > 0 && <span className="text-gray-500"> ({reviewCount})</span>}
-                          </span>
-                        </span>
-                      )}
-                    </div>
+                    <Link to={`/${vendor.username}`} className="font-bold text-gray-900 hover:text-primary transition-colors">{vendor.name}</Link>
                   </div>
                 </div>
               )}
-              </div>
-            </section>
+        </section>
+      </div>
+
+      {/* ── Content below hero ── */}
+      <div className="app-container pt-0 pb-28 lg:pb-8 relative z-10">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* ── LEFT: Main content ── */}
+          <div className="flex-1 min-w-0">
 
             {/* Important note */}
             {service.important_note && (
@@ -1149,15 +1148,10 @@ export default function ServiceDetail() {
           </div>
 
           {/* ── RIGHT: Sticky sidebar ── */}
-          <div className="hidden lg:block lg:w-[320px] flex-shrink-0 lg:mt-[64px]">
+          <div className="hidden lg:block lg:w-[320px] flex-shrink-0">
             <div className="sticky top-20 flex flex-col gap-5">
               <BookingCard service={service} onBookNow={handleBookNow} bookingFee={bookingFee} compact={!heroInView} motionOK={motionOK}/>
               <AdSpaceCard/>
-              {/* Hidden for now — keep for later
-              <SponsoredCard/>
-              <SponsoredCardB/>
-              <DisplayAdCard/>
-              */}
             </div>
           </div>
         </div>
