@@ -21,7 +21,7 @@ const ipBlocklist = require('../lib/ipBlocklist');
 //   - the Razorpay webhook is HMAC-verified; a 403 here would silently break
 //     payment reconciliation.
 //   - the health probe must stay reachable for Render/UptimeRobot.
-const EXEMPT_PREFIXES = ['/api/payment/webhook', '/health'];
+const EXEMPT_PREFIXES = ['/api/payment/webhook', '/health', '/prerender', '/sitemap'];
 
 function isExempt(req) {
   const p = (req && (req.path || req.url)) || '';
