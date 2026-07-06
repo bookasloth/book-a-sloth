@@ -547,10 +547,13 @@ const buildPublicServiceByProfileAndSlug = async (profileSlug, serviceSlug) => {
   // Mirrors the breakdown shown on the booking/payment screen so the price the
   // guest sees here matches what they pay. Falls back to 0 on error.
   let bookingFee = 0;
+  let bookingFeeBreakdown = { platformFee: 0, tax: 0 };
   try {
     const { platformFee, gstRate } = await getPlatformConfig();
-    bookingFee = Math.round(platformFee * (1 + gstRate) * 100) / 100;
-  } catch (_) { bookingFee = 0; }
+    const tax = Math.round(platformFee * gstRate * 100) / 100;
+    bookingFee = Math.round((platformFee + tax) * 100) / 100;
+    bookingFeeBreakdown = { platformFee: Math.round(platformFee * 100) / 100, tax };
+  } catch (_) { bookingFee = 0; bookingFeeBreakdown = { platformFee: 0, tax: 0 }; }
 
   // Embed the host's appearance (enabled backgrounds + default) so the service
   // page can render the right background without a second request. Decorative —
@@ -569,6 +572,7 @@ const buildPublicServiceByProfileAndSlug = async (profileSlug, serviceSlug) => {
       avgRating,
       ratingBreakdown,
       bookingFee,
+      bookingFeeBreakdown,
     },
   };
 };
