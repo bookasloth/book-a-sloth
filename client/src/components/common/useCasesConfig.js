@@ -33,7 +33,7 @@ export const USE_CASES_CONFIG = [
   {
     label: 'Doctors & Clinics',
     desc: 'Appointment scheduling with reminders.',
-    href: '/explore?category=health-wellness',
+    href: '/for/doctors',
     icon: HeartPulse,
     category: 'health-wellness',
     iconBg: 'bg-blue-50',
