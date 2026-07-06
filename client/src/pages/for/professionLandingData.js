@@ -457,6 +457,27 @@ export const PROFESSION_LANDING = {
   },
 };
 
+// doctors-india — identical content to `doctors`, but a blue palette. Built by
+// spreading the doctors entry and overriding only slug + theme + SEO (canonical
+// resolves to /for/doctors-india automatically in ProfessionLanding).
+PROFESSION_LANDING['doctors-india'] = {
+  ...PROFESSION_LANDING.doctors,
+  slug: 'doctors-india',
+  theme: {
+    primary: '#12395c',    // deep blue — ink / headings
+    accent: '#2563eb',     // brand blue — signature colour
+    accentCta: '#1d4ed8',  // blue-700, AA-safe for white-text buttons
+    tint: '#eef4fb',        // soft blue wash
+    heroFrom: '#0a2540',   // dark navy
+    heroTo: '#123a5c',     // navy-blue
+  },
+  seo: {
+    ...PROFESSION_LANDING.doctors.seo,
+    title: 'Appointment Booking Software for Doctors in India | Book A Sloth',
+    ogImage: 'https://company-assets.bookasloth.in/images/seo/for-doctors-india-og-1200x630.png',
+  },
+};
+
 export const getProfessionLanding = (slug) =>
   (slug && PROFESSION_LANDING[slug.toLowerCase()]) || null;
 
