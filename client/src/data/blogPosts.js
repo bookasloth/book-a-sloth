@@ -43,6 +43,130 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
   {
+    slug: 'digital-marketing-strategy-vibe-coders',
+    title: 'Digital Marketing Strategy for Vibe Coders: How to Pay Down Distribution Debt',
+    date: 'Jul 6, 2026',
+    author: 'Bolt 958',
+    readMins: 13,
+    category: 'Guide',
+    image: null,
+    excerpt:
+      'You didn’t ship a product — you took out a loan. Every app you build 10x faster accrues Distribution Debt. Here’s the framework, the channel logic, and a 30-day sprint to pay it down.',
+    body: [
+      { p: 'A digital marketing strategy for vibe coders starts with an uncomfortable reframe: you didn’t just ship a product, you took out a loan. Every app you build 10x faster accrues Distribution Debt — the widening gap between your build speed and your ability to get found. The interest compounds silently, then comes due when nobody shows up. Most vibe coders spend 40+ hours automating their product and under 4 on customer acquisition (VibeCom, 2026). This guide gives you the frameworks, the channel logic, and a 30-day sprint to pay that debt down.' },
+      { p: 'Shipping is no longer the bottleneck. Getting found is.' },
+
+      { h2: 'Why Can’t Vibe Coders Get Traction Anymore?' },
+      { p: 'Vibe coders can’t get traction because two curves crossed in 2026 — and their tools only tell them about one of them.' },
+      { p: 'The first curve fell off a cliff. The cost of building a functional SaaS dropped from roughly $200,000 to about $5,000, with timelines compressing from six months to six weeks (Keyhole Software, Q1 2026). The second curve went the other way: customer acquisition costs rose about 60% between 2021 and 2026 (VibeCom, May 2026). Building got cheap. Attention got expensive. Nobody sent you the second invoice.' },
+      { p: 'That second invoice has a name. Borrow the industry’s favorite phrase — technical debt, the future cost of shipping code fast today — and apply it to growth. Distribution Debt is the accumulated cost of shipping a product faster than you can build an audience for it. Technical debt is covered exhaustively; a JetBrains-cited 2026 survey and Escape.tech’s scan of 1,400+ vibe-coded apps (65% with security issues) made sure of that. Distribution Debt is the debt nobody’s tracking — and it’s the one that actually kills products.' },
+      { p: 'Here’s why it compounds. When everyone can ship, shipping stops being a signal. Apple took in 235,800 new app submissions in Q1 2026 alone, up 84% year over year (FindSkill.ai, April 2026). Your Lovable-built CRM now launches into a market with forty near-identical twins born the same week. The feature that would have earned attention in 2020 earns a shrug in 2026, because the scarce resource flipped from code to trust — and trust doesn’t respond to prompts.' },
+
+      { h2: 'The Distribution Debt Curve' },
+      { p: 'Picture two lines on the same chart. Build Capability shoots up almost vertically the day you adopt AI tools. Audience Capability — the number of people who know you exist and believe you — crawls upward, because it’s made of relationships, reputation, and search rankings that no tool can one-shot. The vertical gap between those two lines is your Distribution Debt, and it widens every time you ship without distributing.' },
+      { info: { title: 'The Distribution Debt Curve', text: 'Build Capability shoots near-vertical after AI adoption. Audience Capability crawls upward slowly. The shaded gap between them is your Distribution Debt — and it widens every time you ship without distributing. Day 1 → Launch → Month 3 → Month 6: the gap only grows unless you actively service it.' } },
+      { p: 'The founder pattern falls straight out of the curve. You ship a habit tracker in a weekend, post it once, get 30 visits, and conclude the product is weak — so you add features. Features live on the Build line. Your problem lives in the gap. You just serviced the wrong debt, and the interest kept running.' },
+
+      { h2: 'What Actually Is a Marketing Strategy for Vibe Coders?' },
+      { p: 'A marketing strategy for vibe coders is a debt-servicing schedule, not a campaign. It has exactly three moving parts, and the discipline that makes it work is one you already own.' },
+      { p: 'You already run the loop. Every build follows the same cycle: describe → generate → review → refine → deploy. Marketing answers to the identical rhythm. This is the Ship-to-Signal Loop — the same five moves, pointed at humans instead of a compiler:' },
+      { ol: [
+        'DESCRIBE — who, where they already are, what they type when the pain hits, in their words not your feature names.',
+        'GENERATE — the asset: a landing page, a comparison post, a demo, a free tool.',
+        'REVIEW — against real signal: clicks, replies, signups. Not likes.',
+        'REFINE — sharpen the angle the data pointed at.',
+        'DEPLOY — publish, then repeat tomorrow.',
+      ] },
+      { p: 'The loop matters because it converts marketing from a vague obligation (“I should post more”) into an engineering task with a feedback signal — the exact shape of work vibe coders don’t avoid. Founders are already wiring this up: Forbes documented a LinkedIn growth coach who built a workflow in Claude Cowork mapping a year of her posts against which ones produced booked calls (Forbes, March 2026). That’s the Ship-to-Signal Loop, automated.' },
+      { p: 'Set an interest rate, not a resolution. “Do more marketing someday” pays down nothing. A rule does: for every 3 hours on the Build line, 1 hour on the Audience line, from day one. A 3:1 ratio is livable. The 10:1 ratio most founders run is how Distribution Debt goes to collections.' },
+
+      { h2: 'Turn the “vibe coded” stigma into a distribution asset' },
+      { p: 'Here’s a counterintuitive move most founders get backwards. Because AI-generated products have a documented trust problem — Escape.tech found 58% of scanned vibe-coded apps carried at least one critical vulnerability (CSA Labs, March 2026) — buyers arrive skeptical. The instinct is to hide that you vibe coded it. The better play is to publish your diligence. A plain /security or /how-we-build page describing your review, testing, and secret-scanning process out-markets a feature page, because it addresses the exact objection your competitors are pretending doesn’t exist. Trust is a marketing asset now, and software scales faster than trust ever will.' },
+
+      { h2: 'Which Channel Should You Actually Pick First?' },
+      { p: 'Pick the one channel whose feedback loop matches your product’s discovery mode — searched-for, discovered, or demonstrated — and ignore the other five until it works. Spreading across channels is how solo founders convert a time shortage into six half-built ones.' },
+      { p: 'And now the contrarian part, because the standard advice is wrong for most vibe coders:' },
+      { p: 'Don’t start with SEO. It’s the strongest compounding channel and it’s the wrong first move, because it pays out in 6–12 weeks and you need signal in 6–12 days to stay sane and stay funded. Start SEO on day one; just don’t wait on it.' },
+      { p: 'Don’t start with paid ads. Ads don’t create demand; they buy volume against a conversion rate you don’t know yet. Running ads pre-revenue is paying to learn what a free landing-page test teaches for nothing. Ads are an amplifier, and amplifying an unvalidated offer just makes the loss faster.' },
+
+      { h2: 'The Vibe Coder’s Channel-Fit Matrix' },
+      { table: {
+        head: ['Channel', 'Time to Signal', 'Hours/Wk', 'Compounds?', 'Best For'],
+        rows: [
+          ['Launch platforms (PH, HN)', '1–7 days', '2–3', 'No', 'Novel, demo-able products'],
+          ['Build in public (X, LinkedIn)', '2–4 weeks', '3–5', 'Partially', 'Solo founders, dev tools'],
+          ['SEO + AEO', '6–12 weeks', '4–6', 'Yes (strongest)', 'Products people search for'],
+          ['Free tool (eng-as-marketing)', '2–6 weeks', '1 build + 1', 'Yes', 'Any calculable pain'],
+          ['Paid ads', '1–3 days', '2 + budget', 'No', 'Validated offer with known CAC'],
+          ['Cold outreach', '1–2 weeks', '4–6', 'No', 'B2B, higher price points'],
+        ],
+      } },
+
+      { h2: 'Optimize for the AI answer, not just the blue link' },
+      { p: 'Your buyers increasingly find tools by asking ChatGPT, Perplexity, and Claude — which means answer engine optimization (AEO) and generative engine optimization (GEO) now sit alongside classic SEO. The practical translation: write self-contained, directly-answering pages an AI can lift verbatim — honest “X vs Y” comparisons, “best [tool] for [niche]” pages that name real competitors, and pricing an engine can quote. One founder in the Forbes piece built a semantic content-map generator tied to Ahrefs that surfaces topics rivals haven’t covered, tuned for how LLMs pick sources (Forbes, March 2026). You can vibe code the same asset in an afternoon — the rare case where your build speed is the marketing moat.' },
+
+      { h2: 'Free tools: the one channel where vibe coders have an unfair advantage' },
+      { p: 'Ship a small free tool that solves one slice of the customer’s problem. ALM Corp’s 2026 search-marketing guide flags interactive ROI calculators as among the highest-value B2B assets precisely because AI Overviews can’t replicate a working tool — they can only summarize a static page. A calculator, grader, or generator costs you one evening in Bolt or v0, ranks for “[problem] calculator,” and captures emails while you sleep. Every other founder treats tool-building as expensive. For you it’s a Tuesday.' },
+      { p: 'Example — when personality is the channel: Book A Sloth, a niche booking product, is the archetype where build-in-public overdelivers. The name alone is a hook, every demo screenshot is inherently shareable, and a weekly “weirdest bookings this week” post markets the product without ever pitching it. Rule of thumb from the matrix: if your product has a personality, the personality is the channel; if it doesn’t, pick SEO and let the compounding do the talking.' },
+
+      { h2: 'How Do You Pay Down Distribution Debt in 30 Days?' },
+      { p: 'Spend 30 days proving one channel can produce signups — not “doing marketing.” Run it as the Debt-Payoff Sprint, structured as the Ship-to-Signal Loop stretched across a month.' },
+      { steps: [
+        'Days 1–5 — DESCRIBE. Write the positioning spec before any content: who exactly, where they already gather, what they search or ask an AI when the pain hits, and the vocabulary they use. One page. This is a PRD for demand, and skipping it is the single most common reason launches flop.',
+        'Days 6–10 — GENERATE. Ship the minimum distribution surface: one landing page with one claim and one CTA, one comparison page against the incumbent, and five pieces of channel content drafted in your voice. Vibe code the assets.',
+        'Days 11–25 — REVIEW & REFINE. Publish on your ONE chosen channel. Daily 30-minute loop: read the signal, reply to every comment, sharpen the angle. Kill nothing before day 25 — compounding channels look dead right up until they don’t.',
+        'Days 26–30 — DEPLOY OR PIVOT. Decide on data. Signups, not likes: if the channel produced real signups, pour hours into it. If it produced nothing, switch channels, not products.',
+      ] },
+      { info: { title: 'The mistake that eats sprints', text: 'Over-automating before validating. Founders wire up a seven-tool lead pipeline before proving a single message converts. Build one connection, let it run two weeks, measure, then extend. Complexity before validation is just silent failure with more moving parts.' } },
+
+      { h2: 'When Does Hiring a Marketing Agency Make Sense?' },
+      { p: 'Hire help when you have a validated channel and no time — never before, because no agency can outsource your positioning. The honest sequence: prove one channel yourself (that’s how you learn what your market responds to), then hand off execution once each founder-hour is worth more spent on product or sales than on scheduling posts.' },
+
+      { h2: 'The Agency-Readiness Scorecard' },
+      { table: {
+        head: ['Signal', 'Not Ready (DIY)', 'Ready to Hire'],
+        rows: [
+          ['Channel proof', 'No channel has produced signups yet', 'At least one channel reliably converts'],
+          ['Bottleneck', 'You don’t know what works', 'You know what works but can’t scale it alone'],
+          ['Data', 'No usage or conversion data', 'Real numbers an agency can optimize against'],
+          ['Skill floor', 'Task is learnable in a week', 'Task needs technical SEO, paid, or AEO depth'],
+          ['Runway', 'Every hour is survival', 'Founder-hours are worth more elsewhere'],
+        ],
+      } },
+      { p: 'Three or more boxes on the right, it’s time. Mostly on the left, an agency will bill you to discover what you should have learned for free.' },
+      { p: 'Even Karpathy’s own arc rhymes with this. A year after coining “vibe coding,” he’d moved to advocating structured, reviewed, agent-driven engineering (Taskade, March 2026). Improvised distribution gets you signal. Systematized distribution gets you a business.' },
+
+      { h2: 'Frequently Asked Questions' },
+
+      { h2: 'What is distribution debt in vibe coding?' },
+      { p: 'Distribution Debt is the accumulated cost of shipping a product faster than you can build an audience for it. AI collapsed build time while acquisition costs rose ~60% since 2021 (VibeCom, 2026), so every fast launch widens the gap between what you’ve built and who knows it exists. Like technical debt, the interest compounds until you service it.' },
+
+      { h2: 'Can you do marketing with vibe coding tools?' },
+      { p: 'Yes. Vibe coding tools build most core marketing assets — landing pages, ROI calculators, email workflows, comparison pages, dashboards. Forbes documented founders building full content-analysis and lead-enrichment systems this way in March 2026. The tools handle the assets; you still supply positioning, judgment, and consistency.' },
+
+      { h2: 'What is the biggest marketing mistake vibe coders make?' },
+      { p: 'Servicing the wrong debt. Founders answer weak traction by adding features, but features sit on the Build line while the problem sits in the distribution gap. The documented pattern is 40+ hours on the product versus under 4 on acquisition (VibeCom, 2026) — a 10:1 imbalance that guarantees the debt compounds.' },
+
+      { h2: 'How long before SEO works for a vibe-coded product?' },
+      { p: 'Expect 6–12 weeks before meaningful organic signal, longer in competitive niches. That’s why SEO shouldn’t be your first channel even though it’s your strongest — pair it with a fast-signal channel like a launch platform so you get feedback while SEO compounds in the background.' },
+
+      { h2: 'Should I mention my app is vibe coded?' },
+      { p: 'Yes, paired with proof of diligence. Escape.tech found 58% of scanned vibe-coded apps carried a critical vulnerability (CSA Labs, 2026), so buyers are wary. Publishing your review, testing, and security process turns “vibe coded” from a red flag into a transparency signal your competitors won’t match.' },
+
+      { h2: 'Is build-in-public dead in 2026?' },
+      { p: 'No, but launch-announcement posting is. Feeds are saturated with “shipped in 2 hours” content. What still earns attention is specific, honest process-sharing — real numbers, failed experiments, weird user stories — because specificity is the one thing AI-generated feed content can’t fake well.' },
+
+      { h2: 'Do I need a marketing budget to start?' },
+      { p: 'No. Launch platforms, build-in-public, SEO, and free-tool marketing cost time, not money. Paid ads only make sense once you know your conversion rate and can calculate an acceptable acquisition cost — spending before that is paying to guess.' },
+
+      { h2: 'Service the Debt Before It Collects' },
+      { p: 'The mental model to keep: you don’t have a marketing problem, you have a Distribution Debt problem — and debt responds to schedules, not bursts of motivation. AI handed you a near-vertical Build line and left your Audience line crawling. The gap between them is the whole game now, and it closes exactly one way: run the Ship-to-Signal Loop on one channel from the Channel-Fit Matrix, at a 3:1 hours ratio, starting the day you ship — not the day you panic.' },
+      { p: 'The founders winning in 2026 aren’t shipping better apps. They’re the ones who realized the code was never the moat.' },
+      { quote: 'AI writes the software. You still have to write the reason anyone shows up.' },
+      { p: 'Next step: run the Debt-Payoff Sprint on your current product. Day 1 is the positioning spec — one page, tonight.' },
+    ],
+  },
+  {
     slug: 'building-in-public-why-we-blog',
     title: 'Building in public: why we’re writing this down',
     date: 'Jun 28, 2026',
