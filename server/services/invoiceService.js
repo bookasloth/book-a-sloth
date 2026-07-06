@@ -1,6 +1,7 @@
 'use strict';
 const { round2 } = require('../lib/pricingEngine');
-const { seller } = require('../config/sellerIdentity');
+const { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SERIES } = require('../config/sellerIdentity');
+const { supabaseAdmin } = require('../config/supabase');
 
 // Indian FY (Apr–Mar). 2-digit START year for the invoice serial (Jun 2026 -> '26').
 function fiscalYearFor(date = new Date()) {
@@ -34,7 +35,48 @@ function computeTaxSplit(gstAmount, posStateCode, sellerStateCode = seller.state
   return { cgst: 0, sgst: 0, igst: g };
 }
 
+const SAC_FOR = { subscription: SAC_SUBSCRIPTION, booking: SAC_BOOKING };
+
+// Idempotent invoice minting. Best-effort: returns null (never throws) so a
+// captured payment is never failed by an invoicing problem. The create_invoice
+// RPC guarantees gap-free serials and one row per (sourceType, sourceId).
+async function generateInvoice({ sourceType, sourceId, paymentId = null, issuedAt, buyer, taxableValue, gstAmount }) {
+  try {
+    const series = SERIES[sourceType];
+    if (!series) throw new Error(`unknown sourceType ${sourceType}`);
+    const when = issuedAt ? new Date(issuedAt) : new Date();
+    const pos = placeOfSupply(buyer || {});
+    const { cgst, sgst, igst } = computeTaxSplit(gstAmount, pos);
+    const total = round2(round2(taxableValue) + round2(gstAmount));
+
+    const { data, error } = await supabaseAdmin.rpc('create_invoice', {
+      p_series: series.code,
+      p_number_prefix: series.prefix,
+      p_fiscal_year: fiscalYearFor(when),
+      p_source_type: sourceType,
+      p_source_id: sourceId,
+      p_payment_id: paymentId,
+      p_buyer_name: buyer?.name || 'Customer',
+      p_buyer_address: buyer?.address || null,
+      p_buyer_state: buyer?.stateName || null,
+      p_buyer_state_code: pos,
+      p_buyer_gstin: buyer?.gstin || null,
+      p_buyer_pan: buyer?.pan || null,
+      p_seller_snapshot: seller,
+      p_taxable_value: round2(taxableValue),
+      p_cgst: cgst, p_sgst: sgst, p_igst: igst, p_total: total,
+      p_place_of_supply: pos,
+      p_sac_code: SAC_FOR[sourceType],
+    });
+    if (error) { console.error('generateInvoice RPC error (non-fatal):', error.message); return null; }
+    return data;
+  } catch (e) {
+    console.error('generateInvoice failed (non-fatal):', e.message);
+    return null;
+  }
+}
+
 module.exports = {
   fiscalYearFor, fiscalYearLabel, isValidGstin, stateCodeFromGstin,
-  placeOfSupply, computeTaxSplit,
+  placeOfSupply, computeTaxSplit, generateInvoice,
 };
