@@ -818,16 +818,16 @@ export default function ServiceDetail() {
   // Desktop sidebar polish: collapse the booking-card thumbnail once the reader
   // scrolls past the hero (IntersectionObserver — no scroll handler), and honour
   // reduced-motion by skipping the collapse transition.
-  const heroRef = useRef(null);
+  const heroEndRef = useRef(null);
   const [heroInView, setHeroInView] = useState(true);
   const [motionOK, setMotionOK] = useState(true);
 
   useEffect(() => {
-    const el = heroRef.current;
+    const el = heroEndRef.current;
     if (!el || typeof IntersectionObserver === 'undefined') return;
     const io = new IntersectionObserver(
       ([entry]) => setHeroInView(entry.isIntersecting),
-      { rootMargin: '-96px 0px 0px 0px', threshold: 0 },
+      { rootMargin: '0px 0px 0px 0px', threshold: 0 },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -1077,7 +1077,7 @@ export default function ServiceDetail() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── LEFT: Hero + tabs ── */}
           <div className="flex-1 min-w-0">
-            <section ref={heroRef} className="relative pb-6">
+            <section className="relative pb-6">
 
               {/* Eyebrow */}
               {eyebrow && (
@@ -1132,6 +1132,8 @@ export default function ServiceDetail() {
                   </>
                 )}
               </div>
+              {/* Sentinel — when this scrolls out of view, sidebar thumbnail collapses */}
+              <div ref={heroEndRef} className="h-px" aria-hidden />
             </section>
 
             {/* Tabs */}
