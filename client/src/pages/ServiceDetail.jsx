@@ -860,42 +860,73 @@ export default function ServiceDetail() {
       <Seo {...seo} jsonLd={jsonLd} />
       {/* ── Above-the-fold backdrop — host-themed background type ── */}
       <HostBackground typeKey={bg.key} color={dotColor} params={bg.params} />
+      {/* Page-level decorative backdrop — brand gradient glows + geometric accents */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[40rem] overflow-hidden z-[1]">
+        {/* radial glows */}
+        <div className="absolute -top-24 -right-16 h-[30rem] w-[30rem] rounded-full blur-3xl"
+          style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 18%, transparent), transparent 70%)' }}/>
+        <div className="absolute -top-20 -left-24 h-[26rem] w-[26rem] rounded-full blur-3xl"
+          style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 12%, transparent), transparent 70%)' }}/>
+        {/* top-right orbital rings — thicker strokes */}
+        <svg className="absolute -top-10 -right-8 hidden h-72 w-72 opacity-[0.18] sm:block"
+          viewBox="0 0 240 240" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <circle cx="150" cy="96" r="92" stroke="currentColor" strokeWidth="1.6"/>
+          <circle cx="150" cy="96" r="62" stroke="currentColor" strokeWidth="1.6"/>
+          <circle cx="150" cy="96" r="32" stroke="currentColor" strokeWidth="1.6"/>
+          <circle cx="242" cy="96" r="3.5" fill="currentColor"/>
+          <circle cx="150" cy="4" r="3" fill="currentColor"/>
+        </svg>
+        {/* top-left grid mesh — thicker */}
+        <svg className="absolute top-16 left-6 hidden h-24 w-24 opacity-[0.12] sm:block"
+          viewBox="0 0 80 80" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <path d="M0 20H80M0 40H80M0 60H80M20 0V80M40 0V80M60 0V80" stroke="currentColor" strokeWidth="1.4"/>
+        </svg>
+        {/* left — dashed arc sweep */}
+        <svg className="absolute top-48 -left-6 hidden h-48 w-48 opacity-[0.10] sm:block"
+          viewBox="0 0 200 200" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <path d="M180 100A80 80 0 0 0 20 100" stroke="currentColor" strokeWidth="1.5" strokeDasharray="6 4"/>
+          <path d="M160 100A60 60 0 0 0 40 100" stroke="currentColor" strokeWidth="1.2" strokeDasharray="4 6"/>
+          <circle cx="20" cy="100" r="3" fill="currentColor"/>
+        </svg>
+        {/* right — scattered dots constellation */}
+        <svg className="absolute top-52 right-12 hidden h-32 w-32 opacity-[0.14] sm:block"
+          viewBox="0 0 120 120" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <circle cx="20" cy="30" r="2.5" fill="currentColor"/>
+          <circle cx="55" cy="15" r="1.8" fill="currentColor"/>
+          <circle cx="90" cy="38" r="3" fill="currentColor"/>
+          <circle cx="40" cy="65" r="2" fill="currentColor"/>
+          <circle cx="75" cy="80" r="2.5" fill="currentColor"/>
+          <circle cx="105" cy="70" r="1.5" fill="currentColor"/>
+          <circle cx="15" cy="95" r="2" fill="currentColor"/>
+          <circle cx="60" cy="105" r="1.8" fill="currentColor"/>
+          <line x1="20" y1="30" x2="55" y2="15" stroke="currentColor" strokeWidth="0.6" opacity="0.5"/>
+          <line x1="55" y1="15" x2="90" y2="38" stroke="currentColor" strokeWidth="0.6" opacity="0.5"/>
+          <line x1="40" y1="65" x2="75" y2="80" stroke="currentColor" strokeWidth="0.6" opacity="0.5"/>
+        </svg>
+        {/* center-left — diamond crosshair */}
+        <svg className="absolute top-28 left-[18%] hidden h-10 w-10 opacity-[0.10] lg:block"
+          viewBox="0 0 40 40" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <path d="M20 4L36 20L20 36L4 20Z" stroke="currentColor" strokeWidth="1.4"/>
+          <line x1="20" y1="0" x2="20" y2="40" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
+          <line x1="0" y1="20" x2="40" y2="20" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
+        </svg>
+        {/* right mid — plus/cross mark */}
+        <svg className="absolute top-32 right-[22%] hidden h-8 w-8 opacity-[0.12] lg:block"
+          viewBox="0 0 24 24" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
+          <line x1="12" y1="2" x2="12" y2="22" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+          <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        </svg>
+      </div>
 
       <div className="app-container py-8 pb-28 lg:pb-8 relative z-10">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── LEFT: Main content ── */}
           <div className="flex-1 min-w-0">
 
-            {/* ── HERO ── theme-derived gradient band + premium brand accents */}
-            <section ref={heroRef} className="relative isolate overflow-hidden rounded-2xl p-6 sm:p-10 mb-6"
-              style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--profile-accent, #FE5100) 16%, white) 0%, color-mix(in srgb, var(--profile-accent, #FE5100) 6%, white) 48%, color-mix(in srgb, var(--profile-accent, #FE5100) 2%, white) 100%)' }}>
+            {/* ── HERO ── frosted card so accent title doesn't merge with page gradient */}
+            <section ref={heroRef} className="relative isolate overflow-hidden rounded-2xl p-6 sm:p-10 mb-6 bg-white/60 backdrop-blur-sm border border-white/80 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
 
-              {/* Decorative brand-derived backdrop — soft glows + abstract accents,
-                  low-opacity, behind all content, auto-adapts to --profile-accent. */}
-              <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-                {/* soft radial highlight, upper-right — adds depth + guides the eye */}
-                <div className="absolute -top-24 -right-16 h-[26rem] w-[26rem] rounded-full blur-3xl"
-                  style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 22%, transparent), transparent 70%)' }}/>
-                {/* faint secondary glow, lower-left */}
-                <div className="absolute -bottom-28 -left-24 h-80 w-80 rounded-full blur-3xl"
-                  style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 12%, transparent), transparent 70%)' }}/>
-                {/* right-corner orbital rings — simplified away on small screens */}
-                <svg className="absolute -top-14 -right-12 hidden h-64 w-64 opacity-20 sm:block"
-                  viewBox="0 0 240 240" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-                  <circle cx="150" cy="96" r="92" stroke="currentColor" strokeWidth="1"/>
-                  <circle cx="150" cy="96" r="62" stroke="currentColor" strokeWidth="1"/>
-                  <circle cx="150" cy="96" r="32" stroke="currentColor" strokeWidth="1"/>
-                  <circle cx="242" cy="96" r="3" fill="currentColor"/>
-                  <circle cx="150" cy="4" r="2.5" fill="currentColor"/>
-                </svg>
-                {/* left-corner faint grid framing — minimal, keeps the text side clean */}
-                <svg className="absolute bottom-6 left-5 hidden h-16 w-16 opacity-[0.12] sm:block"
-                  viewBox="0 0 80 80" fill="none" style={{ color: 'var(--profile-accent, #FE5100)' }}>
-                  <path d="M0 20H80M0 40H80M0 60H80M20 0V80M40 0V80M60 0V80" stroke="currentColor" strokeWidth="1"/>
-                </svg>
-              </div>
-
-              {/* Content — above the decorative layer */}
+              {/* Content */}
               <div className="relative z-10">
               {/* Eyebrow — category · session type */}
               {eyebrow && (
