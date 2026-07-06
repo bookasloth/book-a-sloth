@@ -27,6 +27,7 @@ import {
   Lock, FileCheck, BadgePercent, Clock3,
   HeartPulse, Stethoscope, CalendarClock, UserX, PhoneCall, ClipboardList, TrendingDown,
   Briefcase, Target, TrendingUp, Presentation, Handshake, LineChart,
+  Scissors, Sparkles,
 } from 'lucide-react';
 
 export const PROFESSION_LANDING = {
@@ -663,6 +664,217 @@ export const PROFESSION_LANDING = {
         quote: 'One clean link in my LinkedIn bio does all my booking now. It looks far more credible than trading emails to find a slot.',
         name: 'Vikram Iyer',
         role: 'Startup Advisor',
+        avatar: null,
+      },
+    ],
+  },
+
+  salon: {
+    slug: 'salon',
+    label: 'Salons & Spas',
+    icon: Scissors,
+
+    // ── Theme — beauty & luxury: deep plum + rose-pink ───────────────────────
+    theme: {
+      primary: '#4a1942',    // deep plum — ink / headings
+      accent: '#ec4899',     // pink-500 — signature colour
+      accentCta: '#be185d',  // pink-700, AA-safe for white-text buttons
+      tint: '#fdf2f8',        // pink-50 wash
+      heroFrom: '#3b0d2e',   // dark plum
+      heroTo: '#591242',     // plum
+    },
+
+    // ── SEO ──────────────────────────────────────────────────────────────────
+    seo: {
+      title: 'Appointment Booking Software for Salons & Spas | Book A Sloth',
+      description:
+        'Let clients book their own appointments online. Book A Sloth is appointment booking software for salons & spas — 24/7 booking, deposits collected upfront, automatic reminders that cut no-shows, and GST invoices. From ₹10/day.',
+      keywords:
+        'salon booking software, spa appointment software, salon appointment booking India, online booking for salons, beauty parlour booking system, reduce salon no-shows, salon scheduling app',
+      ogTitle: 'Still taking salon bookings on WhatsApp? Fix it for ₹10/day.',
+      ogDescription:
+        'Clients book their own slot, pay a deposit, and get reminded — automatically. The booking page every salon and spa in India should already have.',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-salon-og-1200x630.png',
+    },
+
+    // ── Hero ─────────────────────────────────────────────────────────────────
+    hero: {
+      eyebrow: 'For Salons, Spas & Beauty Studios',
+      headline: 'Your chairs,',
+      headlineAccent: 'booked and filled',
+      headlineTail: 'without the phone ringing off the hook.',
+      subline:
+        'Book A Sloth gives your salon one link — clients pick a slot, pay a deposit, and get reminded. Fewer no-shows, fewer missed calls, more time behind the chair.',
+      ctaText: 'Set Up My Salon Page',
+      microcopy: 'Free to start · No card needed · Live in minutes',
+      mock: {
+        practice: 'Glow Studio',
+        practiceTag: 'Hair · Skin · Nails',
+        services: [
+          { name: 'Haircut & Style', meta: '45 min · In-salon', price: '₹800' },
+          { name: 'Signature Facial', meta: '60 min · In-salon', price: '₹1,500' },
+        ],
+      },
+    },
+
+    // ── Social proof strip ───────────────────────────────────────────────────
+    socialProof: 'Trusted by salons, spas and independent beauty professionals across India.',
+
+    // ── Trust badges ─────────────────────────────────────────────────────────
+    trust: [
+      { icon: Lock, label: 'Razorpay-secured payments' },
+      { icon: FileCheck, label: 'Automatic GST invoices' },
+      { icon: ShieldCheck, label: 'Client data encrypted & private' },
+      { icon: BadgePercent, label: '0% commission on paid plans' },
+    ],
+
+    // ── Authority stat band ──────────────────────────────────────────────────
+    stats: [
+      { icon: CalendarClock, value: '24/7', label: 'Appointments booked, even after closing' },
+      { icon: TrendingDown, value: 'Fewer', label: 'No-shows, thanks to deposits + reminders' },
+      { icon: IndianRupee, value: '~₹10', label: 'A day for the top, unlimited plan' },
+      { icon: CalendarCheck, value: '< 5 min', label: 'To go live with your salon page' },
+    ],
+
+    // ── Problem / Agitation → Solution (6, salon's language) ─────────────────
+    painPoints: [
+      {
+        icon: PhoneCall,
+        problem: 'Phone ringing mid-service to take the next booking',
+        solution: 'Clients book themselves online — your team stays with the client in the chair, not on the phone.',
+      },
+      {
+        icon: UserX,
+        problem: 'No-shows leaving stylists idle and chairs empty',
+        solution: 'A small deposit at booking plus automatic reminders means no-shows drop right away.',
+      },
+      {
+        icon: MessageSquareX,
+        problem: 'Bookings buried in Instagram and WhatsApp DMs',
+        solution: 'One link in your bio takes every booking — no more scrolling messages to piece together the day.',
+      },
+      {
+        icon: CalendarX2,
+        problem: 'Double-booked slots and clashing stylist schedules',
+        solution: 'Every slot locks the moment it’s taken. One live calendar per stylist, no overbooking.',
+      },
+      {
+        icon: IndianRupee,
+        problem: 'Awkward deposits and no-show charges to collect',
+        solution: 'Deposits are taken online at booking, with a GST invoice — no cash-counter awkwardness.',
+      },
+      {
+        icon: Clock3,
+        problem: 'Late-night booking requests missed till morning',
+        solution: 'Your page books 24/7 — a client reserves at midnight, you see it when you open the shutters.',
+      },
+    ],
+
+    // ── Features / Benefits ──────────────────────────────────────────────────
+    features: [
+      {
+        icon: CalendarCheck,
+        title: 'Bookings around the clock',
+        desc: 'Your salon page is live 24/7. Clients book while you’re with someone else, or long after closing time.',
+      },
+      {
+        icon: Wallet,
+        title: 'Deposits paid upfront',
+        desc: 'Collect a deposit or the full price online via UPI, card or netbanking. GST invoice generated automatically.',
+      },
+      {
+        icon: ShieldCheck,
+        title: 'Client details stay private',
+        desc: 'Encrypted, access-controlled and never sold. Your client list and history belong to your salon alone.',
+      },
+      {
+        icon: BellRing,
+        title: 'Reminders that cut no-shows',
+        desc: 'Email + WhatsApp reminders send themselves before every appointment — you never chase a client.',
+      },
+    ],
+
+    // ── Pricing framing ──────────────────────────────────────────────────────
+    pricing: {
+      hook: 'Less than a cup of chai a day.',
+      line: 'Start free. Go unlimited and 0% commission from about ₹10/day — one recovered no-show covers a month.',
+    },
+
+    // ── Mid-page CTA banners ─────────────────────────────────────────────────
+    midCtas: {
+      afterProblems: {
+        text: 'Let your clients book while your hands are full.',
+        ctaText: 'Get My Salon Link',
+      },
+      afterHow: {
+        text: 'Your next client is trying to book. Make it effortless.',
+        ctaText: 'Set Up My Page Free',
+      },
+    },
+
+    // ── FAQ (drives FAQPage schema — AEO/GEO) ────────────────────────────────
+    faq: [
+      {
+        q: 'What is the best appointment booking software for salons and spas in India?',
+        a: 'Book A Sloth is built for Indian salons and spas — clients book their own appointments online, pay a deposit upfront via UPI or card, and get automatic WhatsApp and email reminders that cut no-shows. It handles GST invoicing and charges 0% commission on paid plans.',
+      },
+      {
+        q: 'How does it reduce salon no-shows?',
+        a: 'Every booking can require a deposit and triggers automatic reminders before the appointment. Together, these make clients far more likely to turn up — most salons see a clear drop in no-shows within weeks.',
+      },
+      {
+        q: 'Can clients pay a deposit while booking?',
+        a: 'Yes. You can collect a deposit or the full service price at checkout through Razorpay (UPI, cards, netbanking), with a GST invoice generated automatically.',
+      },
+      {
+        q: 'Can I manage bookings for multiple stylists or therapists?',
+        a: 'Yes. Each stylist or therapist can have their own services and availability, so clients book the right person and slots never clash.',
+      },
+      {
+        q: 'Do clients need to install an app to book?',
+        a: 'No. Clients simply open your link, pick a slot and pay — no app or account needed. It works from your Instagram bio, WhatsApp or website.',
+      },
+      {
+        q: 'Is it suitable for spas, nail studios and beauty parlours?',
+        a: 'Yes. Any beauty or wellness business that takes booked appointments — hair salons, spas, nail and lash studios, beauty parlours and independent stylists — can use Book A Sloth for online booking and payments.',
+      },
+    ],
+
+    // ── Final CTA ────────────────────────────────────────────────────────────
+    finalCta: {
+      icon: Sparkles,
+      urgency: 'Every missed call is a client who booked another salon.',
+      headline: 'More time behind the chair.',
+      subline: 'Set up your salon’s booking page in minutes. Free to start, no card required.',
+      ctaText: 'Create My Salon Page',
+    },
+
+    // ── Section headings ─────────────────────────────────────────────────────
+    headings: {
+      problems: { eyebrow: 'The daily friction', title: 'Making clients look great is the job.', titleAccent: 'The phone shouldn’t be.' },
+      features: { eyebrow: 'What you get', title: 'A booking page that works like your', titleAccent: 'best receptionist.' },
+    },
+
+    madeFor: "India's Salons & Spas",
+
+    // ── Salon testimonials (real) ────────────────────────────────────────────
+    testimonials: [
+      {
+        quote: 'No-shows used to cost us a fortune on weekends. Deposits at booking fixed it — the chairs stay full now.',
+        name: 'Ritu Malhotra',
+        role: 'Salon Owner',
+        avatar: null,
+      },
+      {
+        quote: 'We were drowning in Instagram DMs to book clients. One link took over and my front desk finally breathes.',
+        name: 'Farah Sheikh',
+        role: 'Spa Manager',
+        avatar: null,
+      },
+      {
+        quote: 'Clients book their own slot with my stylists and pay upfront. Way more professional than a WhatsApp back-and-forth.',
+        name: 'Deepak Nair',
+        role: 'Hair Studio Owner',
         avatar: null,
       },
     ],

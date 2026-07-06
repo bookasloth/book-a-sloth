@@ -43,7 +43,7 @@ export const USE_CASES_CONFIG = [
   {
     label: 'Salons & Spas',
     desc: 'Manage clients, staff, and bookings.',
-    href: '/explore?category=salons-spas',
+    href: '/for/salon',
     icon: Scissors,
     category: 'salons-spas',
     iconBg: 'bg-pink-50',
