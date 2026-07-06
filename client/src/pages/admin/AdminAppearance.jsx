@@ -25,13 +25,13 @@ const AdminAppearance = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState("");
   const [backgrounds, setBackgrounds] = useState({});
-  const [defaultBackground, setDefaultBackground] = useState("dotgrid");
+  const [defaultBackground, setDefaultBackground] = useState(null);
 
   // The save response returns `backgrounds` as an enabled-only array, so we
   // re-seed the editable raw map from a fresh appearance payload instead.
   const seedBackgrounds = (data) => {
     setBackgrounds(data?.backgrounds || {});
-    setDefaultBackground(data?.default_background || "dotgrid");
+    setDefaultBackground(data?.default_background || null);
   };
 
   useEffect(() => {

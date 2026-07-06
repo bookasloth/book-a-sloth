@@ -24,11 +24,11 @@ const sanitizeHtml = (dirty) =>
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 // Resolve which background type to render: host pick if it's enabled, else the
-// curated default, else the first enabled one, else a hard 'dotgrid' fallback.
+// curated default, else the first enabled one, else null (no background).
 // Pure + exported so it can be unit-tested without mounting the component.
 export function resolveBackgroundKey(hostKey, enabled = [], defaultKey) {
   const find = (k) => enabled.find((e) => e.key === k);
-  const chosen = find(hostKey) || find(defaultKey) || enabled[0] || { key: 'dotgrid', params: {} };
+  const chosen = find(hostKey) || find(defaultKey) || enabled[0] || { key: null, params: {} };
   return chosen;
 }
 

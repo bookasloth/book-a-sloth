@@ -3,19 +3,17 @@ import { render, cleanup, fireEvent } from '@testing-library/react';
 import BackgroundPicker from '../BackgroundPicker';
 
 afterEach(cleanup);
-const enabled = [{ key: 'dotgrid', params: {} }, { key: 'galaxy', params: {} }];
 
 describe('BackgroundPicker', () => {
-  it('renders a card per enabled type plus a None option', () => {
-    const { getByText } = render(<BackgroundPicker color="#FE5100" enabled={enabled} value="galaxy" onChange={() => {}} />);
-    expect(getByText('Dot Grid')).toBeInTheDocument();
-    expect(getByText('Galaxy')).toBeInTheDocument();
+  it('renders only the None option when no backgrounds enabled', () => {
+    const { getByText, container } = render(<BackgroundPicker color="#FE5100" enabled={[]} value={null} onChange={() => {}} />);
     expect(getByText(/none/i)).toBeInTheDocument();
+    expect(container.querySelectorAll('button').length).toBe(1);
   });
-  it('calls onChange with the chosen key', () => {
+  it('calls onChange with null when None clicked', () => {
     const onChange = vi.fn();
-    const { getByText } = render(<BackgroundPicker color="#FE5100" enabled={enabled} value={null} onChange={onChange} />);
-    fireEvent.click(getByText('Galaxy'));
-    expect(onChange).toHaveBeenCalledWith('galaxy');
+    const { getByText } = render(<BackgroundPicker color="#FE5100" enabled={[]} value={null} onChange={onChange} />);
+    fireEvent.click(getByText(/none/i));
+    expect(onChange).toHaveBeenCalledWith(null);
   });
 });

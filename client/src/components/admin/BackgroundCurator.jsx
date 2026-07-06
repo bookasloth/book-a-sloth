@@ -5,7 +5,7 @@ const SAMPLE = '#FE5100'; // platform accent — shows motion to admin
 
 export default function BackgroundCurator({ value, onChange }) {
   const backgrounds = value?.backgrounds || {};
-  const def = value?.default_background || 'dotgrid';
+  const def = value?.default_background || null;
 
   const patch = (key, next) =>
     onChange({
