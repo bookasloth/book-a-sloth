@@ -43,6 +43,7 @@ const PRERENDER_ROUTES = [
   '/for/doctors-india',
   '/for/business-consultant',
   '/for/salon',
+  '/for/freelancers',
   '/lp/calendly-alternative',
   '/lp/topmate-vs-bookasloth',
 ];
