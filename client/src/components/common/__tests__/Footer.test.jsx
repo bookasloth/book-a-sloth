@@ -51,4 +51,17 @@ describe('<Footer>', () => {
       expect(link.getAttribute('rel')).toContain('noopener');
     });
   });
+
+  test('minimal variant keeps CTA + legal bar but drops link columns and socials', () => {
+    render(<MemoryRouter><Footer variant="minimal" /></MemoryRouter>);
+    // CTA band survives
+    expect(screen.getByText(/Power up your/i)).toBeTruthy();
+    expect(screen.getByRole('link', { name: "Let's Get Started" })).toBeTruthy();
+    // legal bar survives (Bolt attribution)
+    expect(screen.getByRole('link', { name: 'Bolt the Sloth' })).toBeTruthy();
+    // link columns + socials are gone
+    expect(screen.queryByRole('link', { name: 'Be a Host' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'About' })).toBeNull();
+    expect(screen.queryByLabelText('Instagram')).toBeNull();
+  });
 });

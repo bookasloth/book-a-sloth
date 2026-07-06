@@ -12,6 +12,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { gaClientId } from "../services/analytics";
 import { isValidHex } from "../utils/themeUtils";
+import { useMinimalFooter } from "../context/ChromeContext";
 import loadRazorpay from "../utils/loadRazorpay";
 import toast from "react-hot-toast";
 
@@ -44,6 +45,8 @@ const ProductPurchase = () => {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Not-found state gets the stripped minimal footer, header kept.
+  useMinimalFooter(!loading && !product);
 
   // step: 'details' | 'otp' | 'payment' | 'done'
   const [step, setStep] = useState("details");

@@ -201,7 +201,10 @@ function App() {
   // global Navbar + Footer drop — even the catch-all 404, whose URL is unknown
   // ahead of time and so can't be matched by a pathname prefix.
   const [chromeHidden, setChromeHidden] = useState(false);
-  const chromeValue = useMemo(() => ({ setChromeHidden }), []);
+  // 'default' → normal footer rules; 'minimal' → a not-found error state asked
+  // for the stripped footer, forced on even when it would normally be hidden.
+  const [footerMode, setFooterMode] = useState('default');
+  const chromeValue = useMemo(() => ({ setChromeHidden, setFooterMode }), []);
 
   const hideNavbar =
     chromeHidden ||
@@ -218,7 +221,11 @@ function App() {
     location.pathname === '/login-as-vendor' ||
     location.pathname === '/be-a-sloth';
 
-  const hideFooter = hideNavbar || !!user || isAuthPage;
+  // Guest booking page (/:profileSlug/booking/:serviceSlug) gets a stripped-down
+  // footer — CTA band + legal bar only, no link columns — so checkout stays focused.
+  const isBookingPage = /^\/[^/]+\/booking\/[^/]+\/?$/.test(location.pathname);
+
+  const hideFooter = (hideNavbar || !!user || isAuthPage) && !isBookingPage;
 
   return (
     <ChromeContext.Provider value={chromeValue}>
@@ -455,7 +462,9 @@ function App() {
           <Route path="*" element={<ErrorPage code={404} />} />
         </Routes>
       </Suspense>
-      {!hideFooter && <Footer />}
+      {footerMode === 'minimal'
+        ? !chromeHidden && <Footer variant="minimal" />
+        : !hideFooter && <Footer variant={isBookingPage ? 'minimal' : 'full'} />}
       </RouteErrorBoundary>
     </ChromeContext.Provider>
   );
