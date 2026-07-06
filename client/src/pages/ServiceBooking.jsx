@@ -10,6 +10,7 @@ import {
   createPaymentOrder,
   verifyPayment,
   getHostReviews,
+  invoiceUrl,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { analytics, EVENTS, gaClientId } from "../services/analytics";
@@ -220,6 +221,9 @@ const ServiceBooking = () => {
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [wantGst, setWantGst] = useState(false);
+  const [billing, setBilling] = useState({ name: "", address: "", state: "", state_code: "", gstin: "", pan: "" });
+  const [invoiceRef, setInvoiceRef] = useState(null); // {id, token}
 
   const [otp, setOtp] = useState("");
   const [otpSending, setOtpSending] = useState(false);
@@ -506,6 +510,9 @@ const ServiceBooking = () => {
       .padStart(2, "0")}:${(tot % 60).toString().padStart(2, "0")}`;
   };
 
+  // Buyer billing snapshot for the GST invoice (null unless the guest opted in).
+  const billingDetails = () => wantGst ? billing : null;
+
   // BUG-16 fix: logged-in users skip OTP — book directly with their session
   const bookDirectly = async () => {
     setVerifying(true);
@@ -523,6 +530,7 @@ const ServiceBooking = () => {
         guest_phone: phone,
         scheduled_at: scheduledAt,
         notes,
+        billing_details: billingDetails(),
       });
       setConfirmation(bookingResult);
       if (service.price > 0) {
@@ -589,6 +597,7 @@ const ServiceBooking = () => {
         guest_phone: phone,
         scheduled_at: scheduledAt,
         notes,
+        billing_details: billingDetails(),
         // H-1: short-lived grant proving this contact just passed OTP. The server
         // requires it for anonymous bookings (logged-in users use bookDirectly).
         booking_grant: otpResult.bookingGrant,
@@ -650,6 +659,7 @@ const ServiceBooking = () => {
               if (verifyData?.booking) {
                 setConfirmation((prev) => ({ ...prev, ...verifyData.booking }));
               }
+              if (verifyData?.invoice) setInvoiceRef(verifyData.invoice);
               return { ok: true };
             })
             // Shape failures into a result so the promise never rejects: server
@@ -1194,6 +1204,28 @@ const ServiceBooking = () => {
                 <input type="text" placeholder="Any specific requirements..." className="fb-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
               </div>
 
+              {/* Optional GST invoice details */}
+              <div className="mt-4 border rounded-xl p-4">
+                <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                  <input type="checkbox" checked={wantGst} onChange={(e) => setWantGst(e.target.checked)} />
+                  Need a GST invoice? (for businesses claiming input tax credit)
+                </label>
+                {wantGst && (
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input className="fb-input fb-input--sm" placeholder="Business / legal name"
+                      value={billing.name} onChange={(e) => setBilling((b) => ({ ...b, name: e.target.value }))} />
+                    <input className="fb-input fb-input--sm" placeholder="GSTIN (optional)"
+                      value={billing.gstin} onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
+                    <input className="fb-input fb-input--sm sm:col-span-2" placeholder="Billing address"
+                      value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} />
+                    <input className="fb-input fb-input--sm" placeholder="State (e.g. Maharashtra)"
+                      value={billing.state} onChange={(e) => setBilling((b) => ({ ...b, state: e.target.value }))} />
+                    <input className="fb-input fb-input--sm" placeholder="PAN (optional)"
+                      value={billing.pan} onChange={(e) => setBilling((b) => ({ ...b, pan: e.target.value.toUpperCase() }))} />
+                  </div>
+                )}
+              </div>
+
               {/* Full-width Continue */}
               <button
                 onClick={handleSendOtp}
@@ -1458,6 +1490,13 @@ const ServiceBooking = () => {
                       style={{ color: tc }}>
                       Download Receipt
                     </button>
+                  )}
+                  {invoiceRef && (
+                    <a href={invoiceUrl(invoiceRef.id, invoiceRef.token)} target="_blank" rel="noreferrer"
+                      className="btn btn--outline mt-3 w-full inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                      style={{ color: tc }}>
+                      Download GST Invoice
+                    </a>
                   )}
                   <p className="text-xs text-gray-400 mt-4">Confirmation email sent to {email}</p>
                   <Link to={`/${profileSlug}`} className="block mt-3 text-sm hover:underline" style={{ color: tc }}>
