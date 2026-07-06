@@ -546,6 +546,21 @@ const verifySubscription = async (req, res) => {
           journalDate: nowIso.slice(0, 10),
           template: subscriptionPaymentEntry(subPayment),
         });
+
+        // v3.67: GST tax invoice for the subscription (best-effort, idempotent).
+        try {
+          const { generateInvoice } = require("../services/invoiceService");
+          const { data: prof2 } = await supabaseAdmin
+            .from('profiles').select('name, billing_details').eq('id', req.user.id).maybeSingle();
+          const bd = prof2?.billing_details || {};
+          await generateInvoice({
+            sourceType: 'subscription', sourceId: subPayment.id, paymentId: razorpay_payment_id,
+            issuedAt: nowIso,
+            buyer: { name: bd.name || prof2?.name || 'Customer', address: bd.address || null,
+              stateCode: bd.state_code || null, stateName: bd.state || null, gstin: bd.gstin || null, pan: bd.pan || null },
+            taxableValue: breakdown.planPrice, gstAmount: breakdown.gstAmount,
+          });
+        } catch (e) { console.error('subscription invoice error (non-fatal):', e.message); }
       }
     } catch (subLedgerErr) {
       console.error("Subscription ledger error (non-fatal):", subLedgerErr.message);
@@ -620,6 +635,11 @@ const createVendorSubscription = async (req, res) => {
       .eq("id", req.user.id).single();
 
     const nowIso = new Date().toISOString();
+    if (req.body.billing && typeof req.body.billing === 'object') {
+      await supabaseAdmin.from('profiles')
+        .update({ billing_details: req.body.billing, updated_at: nowIso })
+        .eq('id', req.user.id);
+    }
     const nowMs = Date.now();
     const periodEndMs = prof?.current_period_end ? new Date(prof.current_period_end).getTime()
       : prof?.plan_expires_at ? new Date(prof.plan_expires_at).getTime() : 0;
