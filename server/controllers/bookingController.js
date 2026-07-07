@@ -400,6 +400,7 @@ const createBooking = async (req, res) => {
       scheduled_at,
       end_at: newEnd.toISOString(),  // backs the v2.5 no-overlap exclusion constraint
       notes,
+      billing_details: req.body.billing_details || null,  // v3.67 GST-invoice buyer snapshot
       meeting_link: meetingLink,
       google_event_id: googleEventId,
       vendor_amount:       vendorPayout,
@@ -453,7 +454,7 @@ const createBooking = async (req, res) => {
         commission_applied: _c, platform_fee_gst: _g, customer_total: _t,
         gst_rate: _r, razorpay_fee_actual: _f, razorpay_tax_actual: _rt,
         commission_gst: _cg, commission_percentage: _cp, vendor_plan_type: _vp,
-        google_event_id: _gei,
+        google_event_id: _gei, billing_details: _bd,
         ...payloadCore
       } = bookingPayload;
       bookingResult = await supabaseAdmin

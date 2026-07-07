@@ -24,6 +24,31 @@ const { trackServer } = require("../utils/trackServer");
 const { runInBackground } = require("../utils/background");
 const otpStore = require("../utils/otpStore");
 const { sendProductDownloadEmail } = require("../utils/productEmail");
+const { generateInvoice } = require("../services/invoiceService");
+
+// Mint the platform-fee tax invoice for a paid booking (best-effort, idempotent).
+// `bk` must carry billing_details + guest fields + fee snapshot.
+async function generateBookingInvoice(bk) {
+  const fee = Number(bk.platform_fee_amount) || 0;
+  if (fee <= 0) return null; // nothing of BAS's own supply to invoice
+  const b = bk.billing_details || {};
+  return generateInvoice({
+    sourceType: 'booking',
+    sourceId: bk.id,
+    paymentId: bk.razorpay_payment_id || bk.payment_id || null,
+    issuedAt: bk.paid_at || new Date().toISOString(),
+    buyer: {
+      name: b.name || bk.guest_name || 'Customer',
+      address: b.address || null,
+      stateCode: b.state_code || null,
+      stateName: b.state || null,
+      gstin: b.gstin || null,
+      pan: b.pan || null,
+    },
+    taxableValue: fee,
+    gstAmount: Number(bk.platform_fee_gst) || 0,
+  });
+}
 
 // Annual plan price in paise, read from subscription_plans (DB-driven, spec v1.1)
 const getPlanPricePaise = async (slug) => {
@@ -152,7 +177,7 @@ const verifyPayment = async (req, res) => {
     // Verify the order_id matches what we stored (replay attack prevention)
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("razorpay_order_id, payment_status, commission_applied, commission_gst, platform_fee_amount, platform_fee_gst, customer_total, meeting_link, scheduled_at, guest_name, guest_email, notes, host_id, service_id, services(price, title, duration, meeting_mode)")
+      .select("razorpay_order_id, payment_status, commission_applied, commission_gst, platform_fee_amount, platform_fee_gst, customer_total, meeting_link, scheduled_at, guest_name, guest_email, notes, host_id, service_id, billing_details, services(price, title, duration, meeting_mode)")
       .eq("id", booking_id).single();
 
     if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -239,6 +264,13 @@ const verifyPayment = async (req, res) => {
     }
     if (!updated) return res.status(400).json({ message: "Already paid" });
 
+    // v3.67: GST tax invoice for the platform fee (best-effort; idempotent).
+    let invoiceRef = null;
+    try {
+      const inv = await generateBookingInvoice({ ...updated, billing_details: booking.billing_details });
+      if (inv) invoiceRef = { id: inv.id, token: inv.access_token };
+    } catch (_) { /* non-fatal */ }
+
     // Payment captured → now create the Google Calendar event (deferred from
     // booking time for paid services). A calendar failure must NOT fail an
     // already-charged payment — log and continue with an empty meeting link.
@@ -301,7 +333,7 @@ const verifyPayment = async (req, res) => {
     // Payment is now durably recorded. Respond immediately; analytics fan-out
     // (server GA4/Meta CAPI) and confirmation emails (WhatsApp + SMTP) are
     // best-effort and ran synchronously before — they were the bulk of the ~6s.
-    res.json({ message: "Payment verified", booking: updated });
+    res.json({ message: "Payment verified", booking: updated, invoice: invoiceRef });
 
     runInBackground("verifyPayment:analytics", () =>
       trackServer(resolveGuestId({ guestId: req.user?.id, guestEmail: booking.guest_email }), "booking_paid", {
@@ -514,6 +546,21 @@ const verifySubscription = async (req, res) => {
           journalDate: nowIso.slice(0, 10),
           template: subscriptionPaymentEntry(subPayment),
         });
+
+        // v3.67: GST tax invoice for the subscription (best-effort, idempotent).
+        try {
+          const { generateInvoice } = require("../services/invoiceService");
+          const { data: prof2 } = await supabaseAdmin
+            .from('profiles').select('name, billing_details').eq('id', req.user.id).maybeSingle();
+          const bd = prof2?.billing_details || {};
+          await generateInvoice({
+            sourceType: 'subscription', sourceId: subPayment.id, paymentId: razorpay_payment_id,
+            issuedAt: nowIso,
+            buyer: { name: bd.name || prof2?.name || 'Customer', address: bd.address || null,
+              stateCode: bd.state_code || null, stateName: bd.state || null, gstin: bd.gstin || null, pan: bd.pan || null },
+            taxableValue: breakdown.planPrice, gstAmount: breakdown.gstAmount,
+          });
+        } catch (e) { console.error('subscription invoice error (non-fatal):', e.message); }
       }
     } catch (subLedgerErr) {
       console.error("Subscription ledger error (non-fatal):", subLedgerErr.message);
@@ -588,6 +635,11 @@ const createVendorSubscription = async (req, res) => {
       .eq("id", req.user.id).single();
 
     const nowIso = new Date().toISOString();
+    if (req.body.billing && typeof req.body.billing === 'object') {
+      await supabaseAdmin.from('profiles')
+        .update({ billing_details: req.body.billing, updated_at: nowIso })
+        .eq('id', req.user.id);
+    }
     const nowMs = Date.now();
     const periodEndMs = prof?.current_period_end ? new Date(prof.current_period_end).getTime()
       : prof?.plan_expires_at ? new Date(prof.plan_expires_at).getTime() : 0;
@@ -1152,6 +1204,7 @@ const handleWebhook = async (req, res) => {
         });
         auditLog('WEBHOOK_BOOKING_PAID', null, { booking_id: notes.booking_id, payment_id: payment.id });
         if (paid) {
+          try { await generateBookingInvoice(paid); } catch (_) { /* non-fatal */ }
           trackServer(resolveGuestId({ guestId: paid.guest_id, guestEmail: paid.guest_email }), "booking_paid", {
             booking_id: paid.id,
             service_title: paid.services?.title,
@@ -1245,4 +1298,5 @@ module.exports = {
   createOrder, verifyPayment, signatureValid, subscribePlan, verifySubscription,
   createVendorSubscription, syncVendorSubscription, cancelVendorSubscription,
   createProductOrder, verifyProductPayment, createRescheduleFeeOrder, handleWebhook,
+  generateBookingInvoice,
 };

@@ -48,6 +48,10 @@ const JobDetail      = lazy(() => import('./pages/JobDetail'));
 // Paid-traffic landing pages (/lp/*) — own header/footer, global nav hidden
 const TopmateVsBookASloth = lazy(() => import('./pages/lp/TopmateVsBookASloth'));
 const CalendlyAlternative  = lazy(() => import('./pages/lp/CalendlyAlternative'));
+const SetmoreAlternative   = lazy(() => import('./pages/lp/SetmoreAlternative'));
+const AcuityAlternative    = lazy(() => import('./pages/lp/AcuityAlternative'));
+const SimplybookAlternative = lazy(() => import('./pages/lp/SimplybookAlternative'));
+const ZohoBookingsAlternative = lazy(() => import('./pages/lp/ZohoBookingsAlternative'));
 
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
@@ -250,6 +254,10 @@ function App() {
           {/* Paid-traffic landing pages — own header/footer, nav hidden */}
           <Route path="/lp/topmate-vs-bookasloth" element={<TopmateVsBookASloth />} />
           <Route path="/lp/calendly-alternative" element={<CalendlyAlternative />} />
+          <Route path="/lp/setmore-alternative" element={<SetmoreAlternative />} />
+          <Route path="/lp/acuity-alternative" element={<AcuityAlternative />} />
+          <Route path="/lp/simplybook-alternative" element={<SimplybookAlternative />} />
+          <Route path="/lp/zoho-bookings-alternative" element={<ZohoBookingsAlternative />} />
           {/* Unknown /lp/* slug → home (friendlier than a bare 404 for ad traffic) */}
           <Route path="/lp/*" element={<Navigate to="/" replace />} />
           <Route path="/login" element={<Login />} />

@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { getPublicPlans, createSubscription, syncSubscription, cancelSubscription } from "../services/api";
 import toast from "react-hot-toast";
 import BackButton from "../components/common/BackButton";
-import { PageHeader, Card, Button, cn } from "../components/dashboard/ui";
+import { PageHeader, Card, Button, cn, Modal, Input, FormField } from "../components/dashboard/ui";
 import { planLabel } from "../utils/themeUtils";
 import loadRazorpay from "../utils/loadRazorpay";
 
@@ -43,6 +43,15 @@ const UpgradePlan = () => {
   const [cadence, setCadence] = useState("annual"); // 'monthly' | 'annual'
   const [paying, setPaying] = useState(null);        // plan slug
   const [cancelling, setCancelling] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState(null); // plan awaiting billing details
+  const [billing, setBilling] = useState({
+    name: user?.billing_details?.name || user?.name || "",
+    address: user?.billing_details?.address || "",
+    state: user?.billing_details?.state || "",
+    state_code: user?.billing_details?.state_code || "",
+    gstin: user?.billing_details?.gstin || "",
+    pan: user?.billing_details?.pan || "",
+  });
 
   const rawPlan = (user?.plan || "starter").toLowerCase();
   const currentPlan = LEGACY_PLAN_ALIASES[rawPlan] || rawPlan;
@@ -72,7 +81,7 @@ const UpgradePlan = () => {
 
     setPaying(plan.slug);
     try {
-      const { data: sub } = await createSubscription({ plan: plan.slug, cadence });
+      const { data: sub } = await createSubscription({ plan: plan.slug, cadence, billing });
       if (sub.free_days > 0) {
         toast.success(`${sub.free_days} free day${sub.free_days === 1 ? "" : "s"} credited from your current plan${sub.forfeited > 0 ? ` (${inr(sub.forfeited)} excess forfeited)` : ""}.`, { duration: 6000 });
       }
@@ -106,7 +115,7 @@ const UpgradePlan = () => {
     } finally {
       setPaying(null);
     }
-  }, [cadence, user, updateUser]);
+  }, [cadence, user, updateUser, billing]);
 
   const handleCancel = async () => {
     if (!window.confirm("Cancel auto-renew? You keep access until the end of the current period.")) return;
@@ -227,7 +236,7 @@ const UpgradePlan = () => {
                 ) : !paid ? (
                   <div className="rounded-xl border border-gray-200 py-2.5 text-center text-sm text-gray-400">Default plan</div>
                 ) : (
-                  <Button full onClick={() => handleUpgrade(plan)} disabled={paying === plan.slug || !cadenceAvailable}>
+                  <Button full onClick={() => setPendingPlan(plan)} disabled={paying === plan.slug || !cadenceAvailable}>
                     {paying === plan.slug ? "Opening payment…"
                       : !cadenceAvailable ? "Annual billing only"
                       : isCurrentTier ? `Switch to ${cadence}`
@@ -244,6 +253,50 @@ const UpgradePlan = () => {
       <Card className="mt-8 text-center text-sm text-gray-500">
         Plans auto-renew {cadence}. Cancel anytime — you keep access until the period ends. GST charged on top. · Powered by Razorpay.
       </Card>
+
+      <Modal
+        open={!!pendingPlan}
+        onClose={() => setPendingPlan(null)}
+        title="Billing details"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setPendingPlan(null)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                const plan = pendingPlan;
+                setPendingPlan(null);
+                handleUpgrade(plan);
+              }}
+            >
+              Continue to payment
+            </Button>
+          </>
+        }
+      >
+        <p className="mb-4 text-sm text-gray-500">Used for your GST invoice. GSTIN and PAN are optional.</p>
+        <FormField label="Business / legal name" required>
+          <Input value={billing.name} onChange={(e) => setBilling((b) => ({ ...b, name: e.target.value }))} />
+        </FormField>
+        <FormField label="Billing address" required>
+          <Input value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} />
+        </FormField>
+        <div className="grid grid-cols-2 gap-3">
+          <FormField label="State" required>
+            <Input value={billing.state} onChange={(e) => setBilling((b) => ({ ...b, state: e.target.value }))} />
+          </FormField>
+          <FormField label="State code" hint="GST state code, e.g. 27">
+            <Input value={billing.state_code} onChange={(e) => setBilling((b) => ({ ...b, state_code: e.target.value }))} />
+          </FormField>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <FormField label="GSTIN" hint="Optional">
+            <Input value={billing.gstin} onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
+          </FormField>
+          <FormField label="PAN" hint="Optional">
+            <Input value={billing.pan} onChange={(e) => setBilling((b) => ({ ...b, pan: e.target.value.toUpperCase() }))} />
+          </FormField>
+        </div>
+      </Modal>
     </div>
   );
 };

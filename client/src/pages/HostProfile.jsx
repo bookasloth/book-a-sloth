@@ -485,10 +485,10 @@ const HostProfile = () => {
                 </svg>
               </button>
 
-              {/* Cover — 150px, rounded top only */}
+              {/* Cover — 3:1, rounded top only (same ratio as ProfileSetup + ServiceBooking) */}
               <div className="relative overflow-hidden"
                 style={{
-                  height: 150,
+                  aspectRatio: '3 / 1',
                   borderRadius: '16px 16px 0 0',
                   background: host.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)`,
                 }}>

@@ -479,3 +479,10 @@ export const adminDeleteBlockedIp   = (ip)    => API.delete(`/admin/security/blo
 export const adminGetAllowlist      = ()      => API.get('/admin/security/allowlist');
 export const adminCreateAllowlistIp = (data)  => API.post('/admin/security/allowlist', data);
 export const adminDeleteAllowlistIp = (ip)    => API.delete(`/admin/security/allowlist/${encodeURIComponent(ip)}`);
+
+// Absolute URL to a GST tax invoice (token-gated public view; opens print dialog).
+export const invoiceUrl = (id, token) =>
+  `${API.defaults.baseURL.replace(/\/$/, '')}/invoices/${id}?token=${encodeURIComponent(token)}`;
+
+// The logged-in user's own GST invoices (subscriptions + bookings billed to them).
+export const getMyInvoices = () => API.get('/invoices/mine');

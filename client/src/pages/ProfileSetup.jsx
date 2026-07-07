@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { updateProfile, uploadImage, getAppearance } from "../services/api";
+import { updateProfile, getAppearance } from "../services/api";
 import BackButton from "../components/common/BackButton";
 import BackgroundPicker from "../components/BackgroundPicker";
 import ImageCropper from "../components/common/ImageCropper";
@@ -25,6 +25,11 @@ import {
 
 // ─── Minimal plan label for display ─────────────────────────────────────────
 const PLAN_LABEL = { starter: 'Starter', explorer: 'Starter', creator: 'Host+', professional: 'Studio', supreme: 'Supreme' };
+
+// Canonical cover-photo aspect ratio. Cropped to this on upload and rendered at
+// this ratio in every place the cover shows (here, HostProfile, ServiceBooking)
+// so one upload looks identical everywhere. Change here = change the box classes too.
+const COVER_ASPECT = 3; // 3:1 banner
 
 // Keep only the digits of a phone number (e.g. "+91 98765 43210" → "919876543210").
 const digitsOf = (s) => String(s || '').replace(/[^\d]/g, '');
@@ -140,8 +145,8 @@ const ProfilePreview = ({ form, themeColor }) => {
 
   return (
     <div className="mx-auto w-full max-w-[240px] select-none overflow-hidden rounded-2xl border bg-white text-xs shadow-sm">
-      {/* Cover */}
-      <div className="relative h-16" style={{ background: form.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)` }}>
+      {/* Cover — 3:1, matches every render site */}
+      <div className="relative aspect-[3/1]" style={{ background: form.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)` }}>
         {form.cover_image && <img src={form.cover_image} alt="" className="h-full w-full object-cover" />}
       </div>
       {/* Avatar — relative+z-10 so it paints above the positioned cover (else cover overlaps photo) */}
@@ -172,8 +177,6 @@ const ProfileSetup = () => {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [cropper, setCropper] = useState(null);
-  const [coverUploading, setCoverUploading] = useState(false);
-  const coverInputRef = useRef(null);
   const [dirty, setDirty] = useState(false);
   const [activeSection, setActiveSection] = useState('info'); // 'info' | 'social' | 'appearance' | 'integrations'
 
@@ -266,34 +269,6 @@ const ProfileSetup = () => {
     }
   };
 
-  // Cover photo: plain upload — no crop/zoom/rotate. The image renders with
-  // object-fit: cover everywhere, so editing UI is unnecessary complexity.
-  const handleCoverFile = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-selecting the same file
-    if (!file) return;
-    if (!["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.type)) {
-      toast.error("Use a JPG, PNG or WebP image");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image must be under 2MB");
-      return;
-    }
-    setCoverUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("image", file);
-      const { data } = await uploadImage(fd, "covers");
-      setForm(f => ({ ...f, cover_image: data.url }));
-      setDirty(true);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Cover upload failed");
-    } finally {
-      setCoverUploading(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -365,8 +340,12 @@ const ProfileSetup = () => {
                 onUploaded={(url) => { setForm(f => ({ ...f, profile_image: url })); setDirty(true); setCropper(null); }}
                 onClose={() => setCropper(null)} label="Profile Photo" />
             )}
-            {/* Cover photo uses a plain file input — no editor */}
-            <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleCoverFile} />
+            {/* Cover photo — cropped to 3:1 so it renders identically everywhere it's shown */}
+            {cropper === "cover" && (
+              <ImageCropper aspect={COVER_ASPECT} folder="covers" currentUrl={form.cover_image}
+                onUploaded={(url) => { setForm(f => ({ ...f, cover_image: url })); setDirty(true); setCropper(null); }}
+                onClose={() => setCropper(null)} label="Cover Photo" />
+            )}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
@@ -393,16 +372,14 @@ const ProfileSetup = () => {
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">Cover Photo</label>
                   <div
-                    className="relative h-16 cursor-pointer overflow-hidden rounded-xl border bg-gray-50 transition-opacity hover:opacity-80"
-                    onClick={() => !coverUploading && coverInputRef.current?.click()}
+                    className="relative aspect-[3/1] cursor-pointer overflow-hidden rounded-xl border bg-gray-50 transition-opacity hover:opacity-80"
+                    onClick={() => setCropper("cover")}
                   >
-                    {coverUploading
-                      ? <div className="flex h-full items-center justify-center text-xs text-gray-400">Uploading…</div>
-                      : form.cover_image
-                        ? <img src={form.cover_image} alt="" className="h-full w-full object-cover" />
-                        : <div className="flex h-full items-center justify-center text-xs text-gray-400">Click to upload cover photo</div>}
+                    {form.cover_image
+                      ? <img src={form.cover_image} alt="" className="h-full w-full object-cover" />
+                      : <div className="flex h-full items-center justify-center text-xs text-gray-400">Click to upload cover photo</div>}
                   </div>
-                  <p className="mt-1 text-[10px] text-gray-400">JPG/PNG/WebP up to 2MB — shown full-width, auto-cropped to fit</p>
+                  <p className="mt-1 text-[10px] text-gray-400">JPG/PNG/WebP up to 2MB — crop to a 3:1 banner, shown the same everywhere</p>
                 </div>
               </FeatureGate>
             </div>
