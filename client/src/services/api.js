@@ -111,6 +111,9 @@ export const resetPassword    = (data)         => API.post('/auth/reset-password
 // client-side (mirrors the /lp client-only lead pattern).
 export const subscribeNewsletter = (email)     => API.post('/email/subscribe', { email });
 
+// ── Contact form (public) ─────────────────────────────────────
+export const sendContactMessage = (data) => API.post('/contact', data);
+
 // ── Email preferences (public, signed-token gated) ────────────
 export const getUnsubscribeStatus = (token)    => API.get('/email/unsubscribe', { params: { token } });
 export const unsubscribeEmail     = (token)    => API.post('/email/unsubscribe', { token });

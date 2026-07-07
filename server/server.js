@@ -153,6 +153,7 @@ app.use('/api/feature-flags',  require('./routes/featureFlagRoutes'));
 app.use('/api/notifications', require('./routes/notificationWebhookRoutes')); // public AiSensy webhook (secret-gated)
 app.use('/api/notifications', require('./routes/notificationRoutes'));         // in-app feed (bell panel, auth-gated)
 app.use('/api/email',         require('./routes/emailRoutes')); // public unsubscribe (signed-token gated)
+app.use('/api/contact',       require('./routes/contactRoutes')); // public contact form → support email
 app.use('/api/whatsapp',      require('./routes/whatsappRoutes'));
 app.use('/api/username',      require('./routes/usernameRoutes')); // public resolve (edge 301) + auth check
 app.get('/api/appearance',  require('./controllers/appearanceController').getPublic); // public navbar logo
