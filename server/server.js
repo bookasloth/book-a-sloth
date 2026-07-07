@@ -133,6 +133,7 @@ app.use('/api/onboarding',  require('./routes/vendorOnboardingRoutes'));
 app.use('/api/host',        require('./routes/hostRoutes'));
 app.use('/api/bookings',    require('./routes/bookingRoutes'));
 app.use('/api/payment',     require('./routes/paymentRoutes'));
+app.use('/api/invoices',   require('./routes/invoiceRoutes'));
 app.use('/api/admin',       adminLimiter, require('./routes/adminRoutes'));
 app.use('/api/reviews',     require('./routes/reviewRoutes'));
 app.use('/api/feedback',    require('./routes/feedbackRoutes'));
@@ -179,6 +180,14 @@ app.get('/health', (req, res) =>
 const opsController = require('./controllers/opsController');
 app.get('/ready', opsController.readiness);
 app.get('/metrics', opsController.exposeMetrics);
+
+// Google Search Console site-ownership proof for OAuth verification. Served as a
+// route (no static dir on this API-only server). ponytail: onrender.com is a
+// shared/free-tier host — move OAuth redirect + this proof to api.bookasloth.in
+// once we own that subdomain.
+app.get('/google7afa06c4734ff5fc.html', (req, res) =>
+  res.type('text/html').send('google-site-verification: google7afa06c4734ff5fc.html')
+);
 
 app.get('/', (req, res) => res.json({ message: 'Book A Sloth API v1.4 running' }));
 

@@ -51,6 +51,10 @@ const PRERENDER_ROUTES = [
   '/for/agencies',
   '/lp/calendly-alternative',
   '/lp/topmate-vs-bookasloth',
+  '/lp/setmore-alternative',
+  '/lp/acuity-alternative',
+  '/lp/simplybook-alternative',
+  '/lp/zoho-bookings-alternative',
 ];
 
 function createStaticServer() {

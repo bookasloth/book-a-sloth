@@ -219,6 +219,30 @@ async function recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, p
     });
   } catch (e) { console.error('subscription ledger error (non-fatal):', e.message); }
 
+  // v3.67: GST tax invoice for the subscription (best-effort, idempotent).
+  try {
+    const { generateInvoice } = require('./invoiceService');
+    const { data: prof } = await supabaseAdmin
+      .from('profiles').select('name, billing_details').eq('id', vendorId).maybeSingle();
+    const bd = prof?.billing_details || {};
+    await generateInvoice({
+      sourceType: 'subscription',
+      sourceId: subPayment.id,
+      paymentId,
+      issuedAt: paidIso,
+      buyer: {
+        name: bd.name || prof?.name || 'Customer',
+        address: bd.address || null,
+        stateCode: bd.state_code || null,
+        stateName: bd.state || null,
+        gstin: bd.gstin || null,
+        pan: bd.pan || null,
+      },
+      taxableValue: breakdown.planPrice,
+      gstAmount: breakdown.gstAmount,
+    });
+  } catch (e) { console.error('subscription invoice error (non-fatal):', e.message); }
+
   return { recorded: true };
 }
 
