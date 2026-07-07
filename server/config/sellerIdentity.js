@@ -21,9 +21,10 @@ const seller = {
   logoUrl:   'https://company-assets.bookasloth.in/images/email/footer-logo.png',
 };
 
-// SAC codes — confirm with CA before go-live; one-line editable here.
-const SAC_SUBSCRIPTION = env.SAC_SUBSCRIPTION || '998315'; // SaaS / hosting
-const SAC_BOOKING      = env.SAC_BOOKING      || '998599'; // online-platform facilitation
+// SAC code — CA-confirmed 998314 (IT design & development services). Used for
+// both series until told otherwise; env-overridable per series if they ever diverge.
+const SAC_SUBSCRIPTION = env.SAC_SUBSCRIPTION || '998314';
+const SAC_BOOKING      = env.SAC_BOOKING      || '998314';
 
 const SERIES = {
   subscription: { code: 'SUB', prefix: 'BAS-SUB' },
