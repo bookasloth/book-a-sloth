@@ -7,12 +7,21 @@ const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_REDIRECT_URI
 );
 
-// Scopes needed for Calendar (events + free/busy) + Meet link generation +
-// identity (email/profile). Requested in ONE consent screen — vendors never
-// see a separate "connect calendar" step.
+// Scopes needed for Calendar (events + free/busy + timezone) + Meet link
+// generation + identity (email/profile). Requested in ONE consent screen —
+// vendors never see a separate "connect calendar" step.
+//
+// Narrowed from the full `calendar` (RESTRICTED) scope to the three "sensitive"
+// scopes the code actually uses: create/reschedule/cancel events + Meet
+// (calendar.events), availability (calendar.freebusy), and signup timezone
+// (calendar.settings.readonly). Dropping full `calendar` removes the
+// "permanently delete all your calendars" consent line and keeps Google
+// verification on the lighter sensitive-scope path (no CASA audit). Existing
+// host refresh tokens granted under full `calendar` keep working (superset).
 const SCOPES = [
-  'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/calendar.freebusy',
+  'https://www.googleapis.com/auth/calendar.settings.readonly',
   'openid',
   'email',
   'profile',
