@@ -5,7 +5,7 @@ import { svcGetAll, svcDelete, svcToggle, svcDuplicate } from '../../services/ap
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
-  PageHeader, Card, Button, buttonClasses, SearchInput, FilterBar,
+  PageHeader, Card, Button, buttonClasses, SearchInput, SegmentedControl, Fab,
   StatusBadge, Modal, SkeletonCard, cn,
 } from '../../components/dashboard/ui';
 
@@ -134,31 +134,25 @@ export default function ServicesList() {
         title="Services"
         subtitle={`${counts.active} active · ${counts.all} total`}
         actions={
-          <Link to="/dashboard/service/add-new" className={buttonClasses({ variant: 'primary' })}>
+          <Link to="/dashboard/service/add-new" className={cn(buttonClasses({ variant: 'primary' }), 'hidden sm:inline-flex')}>
             <Plus className="h-4 w-4" />
             Add Service
           </Link>
         }
       />
 
-      {/* Filters */}
-      <FilterBar className="mb-5 sm:flex-nowrap">
-        <div className="flex gap-2">
-          {['all', 'active', 'disabled'].map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={cn(
-                'rounded-full px-4 py-1.5 text-xs font-medium transition-colors',
-                filter === f ? 'bg-gray-900 text-white' : 'border bg-white text-gray-500 hover:bg-gray-50',
-              )}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)} ({counts[f]})
-            </button>
-          ))}
-        </div>
+      {/* Filters — segmented control + search */}
+      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <SegmentedControl
+          className="sm:w-auto sm:flex-1"
+          value={filter}
+          onChange={setFilter}
+          options={['all', 'active', 'disabled'].map(f => ({
+            value: f, label: f.charAt(0).toUpperCase() + f.slice(1), count: counts[f],
+          }))}
+        />
         <SearchInput value={search} onChange={setSearch} placeholder="Search services…" className="sm:w-56" />
-      </FilterBar>
+      </div>
 
       {/* Table — desktop / tablet only (mobile uses the card list below) */}
       <Card padded={false} className="hidden overflow-hidden sm:block">
@@ -247,7 +241,11 @@ export default function ServicesList() {
           const typeLabel = TYPE_LABEL[s.meeting_mode] || TYPE_LABEL[s.service_type] || s.meeting_mode || '—';
           return (
             <Card key={s.id} className={cn(!s.is_active && 'opacity-70')}>
-              <div className="flex items-start gap-3">
+              <button
+                type="button"
+                onClick={() => navigate(`/dashboard/service/edit/${s.id}`)}
+                className="flex w-full items-start gap-3 text-left"
+              >
                 {s.thumbnail_url
                   ? <img src={s.thumbnail_url} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
                   : <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-sm font-bold text-gray-300">{(s.title || '?').charAt(0).toUpperCase()}</div>}
@@ -266,29 +264,26 @@ export default function ServicesList() {
                     <span>{s.total_bookings || 0} bookings</span>
                   </div>
                 </div>
-              </div>
+              </button>
 
+              {/* Secondary actions (tap the card to edit). Delete sits apart. */}
               <div className="mt-3 grid grid-cols-2 gap-2 border-t border-gray-100 pt-3">
                 {s.slug && s.is_active && (
                   <a href={`/${user?.username}/booking/${s.slug}`} target="_blank" rel="noreferrer"
-                    className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50">
+                    className="col-span-2 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100">
                     <Icon d={PATHS.view} /> View public page
                   </a>
                 )}
-                <button onClick={() => navigate(`/dashboard/service/edit/${s.id}`)}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
-                  <Icon d={PATHS.edit} /> Edit
-                </button>
                 <button onClick={() => handleDuplicate(s)}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                  className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                   <Icon d={PATHS.dup} /> Duplicate
                 </button>
                 <button onClick={() => handleToggle(s)}
-                  className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium', s.is_active ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-700 hover:bg-green-50')}>
+                  className={cn('inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-medium', s.is_active ? 'border-red-200 text-red-600 hover:bg-red-50 active:bg-red-100' : 'border-green-200 text-green-700 hover:bg-green-50 active:bg-green-100')}>
                   <Icon d={s.is_active ? PATHS.disable : PATHS.enable} /> {s.is_active ? 'Disable' : 'Enable'}
                 </button>
                 <button onClick={() => setConfirmDelete(s)}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50">
+                  className="col-span-2 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 text-sm font-medium text-red-600 hover:bg-red-50 active:bg-red-100">
                   <Icon d={PATHS.del} /> Delete
                 </button>
               </div>
@@ -317,6 +312,9 @@ export default function ServicesList() {
           </p>
         )}
       </Modal>
+
+      {/* Mobile: floating "Add service" */}
+      <Fab as={Link} to="/dashboard/service/add-new" icon={Plus} label="Add service" />
     </div>
   );
 }
