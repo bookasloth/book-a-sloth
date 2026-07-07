@@ -4,7 +4,7 @@ import { getPayoutBalance, getPayoutRequests, requestPayout } from "../services/
 import toast from "react-hot-toast";
 import {
   PageHeader, Section, StatCard, DataTable, StatusBadge, Modal, Button,
-  FormField, Input, Textarea, EmptyState, SkeletonCard, fmtMoney,
+  FormField, Input, Textarea, EmptyState, SkeletonCard, StickyActionBar, fmtMoney,
 } from "../components/dashboard/ui";
 
 const fmtDate = (iso) =>
@@ -58,9 +58,9 @@ const WithdrawModal = ({ available, onClose, onRequested }) => {
         <FormField label="Notes" htmlFor="wd-notes" hint="Optional" className="mb-0">
           <Textarea id="wd-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Bank account, UPI ID, or any note for admin…" />
         </FormField>
-        <div className="flex gap-3 pt-1">
-          <Button type="button" variant="outline" full onClick={onClose}>Cancel</Button>
-          <Button type="submit" full disabled={saving}>{saving ? "Submitting…" : "Request Withdrawal"}</Button>
+        <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:gap-3">
+          <Button type="button" size="lg" variant="outline" full onClick={onClose}>Cancel</Button>
+          <Button type="submit" size="lg" full disabled={saving}>{saving ? "Submitting…" : "Request Withdrawal"}</Button>
         </div>
       </form>
     </Modal>
@@ -127,21 +127,25 @@ const Payouts = () => {
         title="Payouts"
         subtitle="Request withdrawals of your earned balance."
         actions={
-          <Button onClick={() => setShowModal(true)} disabled={!canWithdraw}>
+          <Button className="hidden md:inline-flex" onClick={() => setShowModal(true)} disabled={!canWithdraw}>
             <Send className="h-4 w-4" />
             Request Withdrawal
           </Button>
         }
       />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Available Balance" value={fmtMoney(balance?.available, { decimals: true })} icon={Wallet} tone="primary" />
+      {/* Balance — Available leads full-width on mobile, then a compact grid.
+          One responsive grid (no duplicated markup). */}
+      <div className="mb-2 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="col-span-2 md:col-span-1">
+          <StatCard label="Available Balance" value={fmtMoney(balance?.available, { decimals: true })} icon={Wallet} tone="primary" />
+        </div>
         <StatCard label="Clearing" value={fmtMoney(balance?.clearing, { decimals: true })} icon={Clock} tone="warning" />
         <StatCard label="Pending Completion" value={fmtMoney(balance?.pendingCompletion, { decimals: true })} icon={Hourglass} tone="neutral" />
         <StatCard label="Total Withdrawn" value={fmtMoney(balance?.paidOut, { decimals: true })} icon={Banknote} tone="info" />
       </div>
 
-      <p className="-mt-3 mb-6 text-xs text-gray-500">
+      <p className="mb-6 mt-4 text-xs text-gray-500">
         Minimum withdrawal amount is <span className="font-semibold text-gray-700">₹{MIN_WITHDRAWAL}</span>.{" "}
         {balance?.available != null && balance.available < MIN_WITHDRAWAL
           ? `${fmtMoney(MIN_WITHDRAWAL - balance.available, { decimals: true })} more to unlock withdrawals.`
@@ -155,6 +159,23 @@ const Payouts = () => {
           empty={<EmptyState icon={Banknote} title="No withdrawal requests yet" description="Once you request a withdrawal, it shows up here with its status." />}
         />
       </Section>
+
+      {/* Mobile: sticky primary action within thumb reach */}
+      <StickyActionBar className="md:hidden">
+        <div className="w-full">
+          {!canWithdraw && (
+            <p className="mb-2 text-center text-xs text-gray-500">
+              {balance?.available != null && balance.available < MIN_WITHDRAWAL
+                ? `${fmtMoney(MIN_WITHDRAWAL - balance.available, { decimals: true })} more to withdraw`
+                : `Minimum balance ₹${MIN_WITHDRAWAL} required`}
+            </p>
+          )}
+          <Button full size="lg" onClick={() => setShowModal(true)} disabled={!canWithdraw}>
+            <Send className="h-4 w-4" />
+            Request Withdrawal
+          </Button>
+        </div>
+      </StickyActionBar>
     </div>
   );
 };

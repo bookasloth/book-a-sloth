@@ -4,11 +4,57 @@ import { getTransactions, getMyInvoices, invoiceUrl } from "../services/api";
 import toast from "react-hot-toast";
 import {
   PageHeader, DataTable, StatusBadge, Modal, Button,
-  SearchInput, Select, EmptyState, fmtMoney, cn,
+  SearchInput, Select, EmptyState, SkeletonCard, fmtMoney, cn,
 } from "../components/dashboard/ui";
 
 const fmtDate = (iso) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+// Day-grouping for the mobile statement feed (Today / Yesterday / date).
+const txDate = (tx) => new Date(tx.scheduled_at || tx.created_at);
+const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+const dayLabel = (d) => {
+  const now = new Date();
+  const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate());
+  const diff = Math.round((startOf(d) - startOf(now)) / 86400000);
+  if (diff === 0) return "Today";
+  if (diff === -1) return "Yesterday";
+  if (diff === 1) return "Tomorrow";
+  return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: d.getFullYear() === now.getFullYear() ? undefined : "numeric" });
+};
+const groupTxByDay = (list) => {
+  const groups = [];
+  const index = {};
+  for (const tx of list) {
+    const key = dayKey(txDate(tx));
+    if (index[key] == null) { index[key] = groups.length; groups.push({ key, label: dayLabel(txDate(tx)), items: [] }); }
+    groups[index[key]].items.push(tx);
+  }
+  return groups;
+};
+
+// Money-forward mobile transaction card. Earnings lead; the whole card opens
+// the detail sheet (same onRowClick target as the desktop table).
+const TxCard = ({ tx, onOpen }) => {
+  const isFree = tx.services?.price === 0;
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(tx)}
+      className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 text-left transition-colors active:bg-gray-50 dash-elev-1"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-gray-900">{tx.guest_name || "Guest"}</p>
+        <p className="truncate text-xs text-gray-500">{tx.services?.title || "—"}</p>
+        <div className="mt-1.5"><StatusBadge status={tx.payment_status} /></div>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="text-base font-bold text-primary">{fmtMoney(tx.vendor_amount, { decimals: true })}</p>
+        <p className="mt-0.5 text-[11px] text-gray-400">{isFree ? "Free" : `of ${fmtMoney(tx.services?.price, { decimals: true })}`}</p>
+      </div>
+    </button>
+  );
+};
 
 // Maps a date-filter preset to an ISO lower bound on the transaction date.
 // Returns undefined for "all time" so the param is omitted entirely.
@@ -229,42 +275,66 @@ const Transactions = () => {
           placeholder="Search name, email…"
           className="w-full sm:w-[70%]"
         />
-        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-1">
-          <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-full sm:w-auto sm:flex-1" aria-label="Filter by status">
+        <div className="dash-noscrollbar flex gap-2 overflow-x-auto sm:flex-1 sm:overflow-visible">
+          <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="min-h-11 min-w-[8.5rem] shrink-0 sm:min-w-0 sm:flex-1" aria-label="Filter by status">
             <option value="">All statuses</option>
             <option value="confirmed">Confirmed</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
           </Select>
-          <Select value={dateRange} onChange={(e) => { setDateRange(e.target.value); setPage(1); }} className="w-full sm:w-auto sm:flex-1" aria-label="Filter by date">
+          <Select value={dateRange} onChange={(e) => { setDateRange(e.target.value); setPage(1); }} className="min-h-11 min-w-[8.5rem] shrink-0 sm:min-w-0 sm:flex-1" aria-label="Filter by date">
             <option value="">All time</option>
             <option value="today">Today</option>
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
             <option value="month">This month</option>
           </Select>
-          <Select value={sort} onChange={(e) => setSort(e.target.value)} className="w-full sm:w-auto sm:flex-1" aria-label="Sort order">
+          <Select value={sort} onChange={(e) => setSort(e.target.value)} className="min-h-11 min-w-[8.5rem] shrink-0 sm:min-w-0 sm:flex-1" aria-label="Sort order">
             <option value="desc">Newest first</option>
             <option value="asc">Oldest first</option>
           </Select>
         </div>
       </div>
 
-      <DataTable
-        columns={COLUMNS}
-        rows={data}
-        loading={loading}
-        onRowClick={setSelected}
-        empty={<EmptyState icon={Receipt} title="No transactions found" description="Transactions show up here once guests pay for bookings." />}
-      />
+      {/* Mobile: money-forward statement feed, grouped by day */}
+      <div className="space-y-5 md:hidden">
+        {loading ? (
+          <div className="space-y-2.5">{Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+        ) : data.length === 0 ? (
+          <EmptyState icon={Receipt} title="No transactions found" description="Transactions show up here once guests pay for bookings." />
+        ) : (
+          groupTxByDay(data).map((group) => (
+            <section key={group.key}>
+              <div className="sticky top-14 z-10 -mx-1 mb-2 bg-[#f7f5ef]/95 px-1 py-1.5 backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{group.label}</p>
+              </div>
+              <div className="space-y-2.5">
+                {group.items.map((tx) => <TxCard key={tx.id} tx={tx} onOpen={setSelected} />)}
+              </div>
+            </section>
+          ))
+        )}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="hidden md:block">
+        <DataTable
+          columns={COLUMNS}
+          rows={data}
+          loading={loading}
+          onRowClick={setSelected}
+          empty={<EmptyState icon={Receipt} title="No transactions found" description="Transactions show up here once guests pay for bookings." />}
+        />
+      </div>
 
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
           <span className="text-xs text-gray-500">
             Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} of {total}
           </span>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
+            <span className="px-1 text-xs text-gray-500 sm:hidden">{page} / {totalPages}</span>
             <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
           </div>
         </div>

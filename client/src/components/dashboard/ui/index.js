@@ -15,3 +15,7 @@ export { DataTable } from './DataTable';
 export { Tabs } from './Tabs';
 export { SearchInput, FilterBar } from './Toolbar';
 export { Modal, Sheet } from './Overlay';
+export { StickyActionBar } from './StickyActionBar';
+export { SegmentedControl } from './SegmentedControl';
+export { Fab } from './Fab';
+export { ConfirmSheet } from './ConfirmSheet';

@@ -17,7 +17,7 @@ import { Plus, Package } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   PageHeader, Card, Button, buttonClasses, FormField, Input, Select, Textarea,
-  Badge, StatusBadge, EmptyState, cn,
+  Badge, StatusBadge, EmptyState, ConfirmSheet, Fab, cn,
 } from "../components/dashboard/ui";
 
 const PRODUCT_TYPES = [
@@ -73,6 +73,8 @@ const Products = () => {
   const [fileError, setFileError] = useState("");
   const [thumbUploading, setThumbUploading] = useState(false);
   const [thumbMode, setThumbMode] = useState("url"); // "url" | "upload"
+  const [confirmDelete, setConfirmDelete] = useState(null); // product pending delete
+  const [confirmDiscard, setConfirmDiscard] = useState(false); // unsaved-changes guard
 
   // Admin kill-switch gate (fail-open: on unless an admin disabled it).
   const digitalProductsOn = useFeature("digital_products");
@@ -144,11 +146,15 @@ const Products = () => {
     setFileError("");
     setThumbMode("url");
   };
-  const handleCancel = () => {
-    if (dirty && !window.confirm("Discard changes?")) return;
+  const doDiscard = () => {
     setShowForm(false);
     setEditingId(null);
     setDirty(false);
+    setConfirmDiscard(false);
+  };
+  const handleCancel = () => {
+    if (dirty) { setConfirmDiscard(true); return; }
+    doDiscard();
   };
   const handleChange = (f, v) => {
     setForm({ ...form, [f]: v });
@@ -240,11 +246,12 @@ const Products = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this product?")) return;
+  const doDelete = async () => {
+    if (!confirmDelete) return;
     try {
-      await deleteProduct(id);
+      await deleteProduct(confirmDelete.id);
       toast.success("Product deleted");
+      setConfirmDelete(null);
       fetchProducts();
     } catch {
       toast.error("Failed to delete");
@@ -269,7 +276,7 @@ const Products = () => {
         subtitle="Sell PDFs, templates, ebooks, and more."
         actions={
           !showForm && canCreate ? (
-            <Button onClick={openCreate}>
+            <Button className="hidden sm:inline-flex" onClick={openCreate}>
               <Plus className="h-4 w-4" />
               Add Product
             </Button>
@@ -414,9 +421,9 @@ const Products = () => {
         <ul className="space-y-3">
           {products.map((p) => (
             <Card as="li" key={p.id} padded={false} className="overflow-hidden">
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row sm:gap-4">
                 {p.thumbnail_url && (
-                  <img src={p.thumbnail_url} alt={p.title} className="h-20 w-24 flex-shrink-0 object-cover" />
+                  <img src={p.thumbnail_url} alt={p.title} className="h-40 w-full object-cover sm:h-auto sm:w-28 sm:flex-shrink-0 sm:self-stretch" />
                 )}
                 <div className="min-w-0 flex-1 p-4">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -431,10 +438,10 @@ const Products = () => {
                     </div>
                     <p className="flex-shrink-0 font-semibold text-primary">{p.price === 0 ? "Free" : `₹${p.price}`}</p>
                   </div>
-                  <div className="mt-3 flex gap-4 border-t pt-3 text-sm">
-                    <button onClick={() => openEdit(p)} className="font-medium text-primary hover:underline">Edit</button>
-                    <button onClick={() => handleToggle(p)} className="text-gray-500 hover:underline">{p.is_active ? "Deactivate" : "Activate"}</button>
-                    <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:underline">Delete</button>
+                  <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-3 sm:flex sm:justify-start">
+                    <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" onClick={() => openEdit(p)}>Edit</Button>
+                    <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" onClick={() => handleToggle(p)}>{p.is_active ? "Deactivate" : "Activate"}</Button>
+                    <Button size="sm" variant="danger-outline" className="min-h-11 sm:min-h-0" onClick={() => setConfirmDelete(p)}>Delete</Button>
                   </div>
                 </div>
               </div>
@@ -442,6 +449,30 @@ const Products = () => {
           ))}
         </ul>
       )}
+
+      {/* Native confirmations (replace window.confirm) */}
+      <ConfirmSheet
+        open={!!confirmDelete}
+        title="Delete product?"
+        message={confirmDelete ? `"${confirmDelete.title}" will be permanently deleted. This cannot be undone.` : ""}
+        confirmLabel="Delete"
+        danger
+        onConfirm={doDelete}
+        onClose={() => setConfirmDelete(null)}
+      />
+      <ConfirmSheet
+        open={confirmDiscard}
+        title="Discard changes?"
+        message="Your unsaved changes will be lost."
+        confirmLabel="Discard"
+        danger
+        onConfirm={doDiscard}
+        onClose={() => setConfirmDiscard(false)}
+      />
+
+      {/* Mobile: floating create button. Label kept distinct from the header
+          "Add Product" button so there's a single unambiguous named control. */}
+      {canCreate && !showForm && <Fab onClick={openCreate} icon={Plus} label="New product" className="sm:hidden" />}
     </div>
   );
 };

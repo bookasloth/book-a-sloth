@@ -10,19 +10,48 @@ import {
   getBookingReview,
 } from "../services/api";
 import toast from "react-hot-toast";
-import { ChevronLeft, ChevronRight, Eye, Star, CalendarDays, User, Briefcase, CreditCard, Link2, Copy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Star, CalendarDays, User, Briefcase, CreditCard, Link2, Copy, ChevronRight as Chevron, CalendarX2 } from "lucide-react";
 import ReviewModal from "../components/booking/ReviewModal";
 import useFeatureFlags from "../hooks/useFeatureFlags";
 import StatusChip from "../components/common/StatusChip";
 import {
-  PageHeader, Card, Button, SearchInput, FilterBar,
-  StatusBadge, Modal, SkeletonCard, cn,
+  PageHeader, Card, Button, SearchInput, SegmentedControl,
+  StatusBadge, Modal, SkeletonCard, EmptyState, cn,
 } from "../components/dashboard/ui";
 
 const fmtDate = (iso) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 const fmtTime = (iso) =>
   new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
+// ---- Agenda day-grouping (mobile) ----
+// Group a booking list into day buckets keyed by local date, labelled
+// Today / Tomorrow / Yesterday / weekday-date for a native calendar feel.
+const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+const dayLabel = (d) => {
+  const now = new Date();
+  const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate());
+  const diff = Math.round((startOf(d) - startOf(now)) / 86400000);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Tomorrow";
+  if (diff === -1) return "Yesterday";
+  return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: d.getFullYear() === now.getFullYear() ? undefined : "numeric" });
+};
+const groupByDay = (list) => {
+  const groups = [];
+  const index = {};
+  for (const b of list) {
+    const d = new Date(b.scheduled_at);
+    const key = dayKey(d);
+    if (index[key] == null) {
+      index[key] = groups.length;
+      groups.push({ key, label: dayLabel(d), items: [] });
+    }
+    groups[index[key]].items.push(b);
+  }
+  return groups;
+};
+const initialOf = (name) => (name || "G").trim().charAt(0).toUpperCase();
 
 const Row = ({ label, value, mono }) => (
   <div className="flex items-start justify-between gap-4">
@@ -162,25 +191,25 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
 
       {/* Calendar */}
       <div className="mb-3 flex items-center justify-between">
-        <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); } else setCalMonth(m => m - 1); }} className="rounded-lg p-1.5 hover:bg-gray-100">
-          <ChevronLeft className="h-4 w-4" />
+        <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); } else setCalMonth(m => m - 1); }} aria-label="Previous month" className="grid h-11 w-11 place-items-center rounded-lg hover:bg-gray-100">
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <span className="text-sm font-semibold">{MONTHS[calMonth]} {calYear}</span>
-        <button onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); } else setCalMonth(m => m + 1); }} className="rounded-lg p-1.5 hover:bg-gray-100">
-          <ChevronRight className="h-4 w-4" />
+        <button onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); } else setCalMonth(m => m + 1); }} aria-label="Next month" className="grid h-11 w-11 place-items-center rounded-lg hover:bg-gray-100">
+          <ChevronRight className="h-5 w-5" />
         </button>
       </div>
-      <div className="mb-1 grid grid-cols-7 text-center text-[10px] font-medium text-gray-400">
+      <div className="mb-1 grid grid-cols-7 text-center text-[11px] font-medium text-gray-400">
         {DS.map((d, i) => <div key={i}>{d}</div>)}
       </div>
-      <div className="mb-4 grid grid-cols-7 gap-0.5 text-center">
+      <div className="mb-4 grid grid-cols-7 gap-1 text-center">
         {cells.map((day, i) => {
           if (!day) return <div key={"e" + i} />;
           const ok = isDateSelectable(day);
           return (
             <button key={day} disabled={!ok}
               onClick={() => { if (ok) { setSelDate(new Date(calYear, calMonth, day)); setSelTime(""); } }}
-              className={cn("rounded-lg py-1.5 text-xs transition-colors", isSel(day) ? "bg-primary font-semibold text-white" : !ok ? "cursor-default text-gray-300" : "hover:bg-gray-100")}>
+              className={cn("grid aspect-square min-h-11 place-items-center rounded-lg text-sm transition-colors", isSel(day) ? "bg-primary font-semibold text-white" : !ok ? "cursor-default text-gray-300" : "hover:bg-gray-100 active:bg-gray-200")}>
               {day}
             </button>
           );
@@ -195,14 +224,16 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
             {avail?.timezone ? <span className="ml-1 text-gray-400">({avail.timezone.split("/")[1] || avail.timezone})</span> : ""}
           </p>
           {loadingSlots ? (
-            <p className="py-2 text-xs text-gray-400">Loading slots…</p>
+            <div className="grid grid-cols-2 gap-2">
+              {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-11 animate-pulse rounded-lg bg-gray-100" />)}
+            </div>
           ) : slots.length === 0 ? (
-            <p className="py-2 text-xs text-gray-400">No available slots for this date.</p>
+            <p className="py-2 text-sm text-gray-400">No available slots for this date.</p>
           ) : (
-            <div className="grid max-h-40 grid-cols-3 gap-1.5 overflow-y-auto pr-1">
+            <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto">
               {slots.map((t) => (
                 <button key={t} onClick={() => setSelTime(t)}
-                  className={cn("rounded-lg border py-2 text-xs font-medium transition-colors", selTime === t ? "border-primary bg-primary text-white" : "hover:border-gray-400")}>
+                  className={cn("min-h-11 rounded-lg border text-sm font-medium transition-colors", selTime === t ? "border-primary bg-primary text-white" : "hover:border-gray-400 active:bg-gray-50")}>
                   {formatSlot(t)}
                 </button>
               ))}
@@ -211,9 +242,9 @@ const RescheduleModal = ({ booking, onClose, onDone }) => {
         </div>
       )}
 
-      <div className="flex gap-2">
-        <Button variant="outline" full onClick={onClose}>Cancel</Button>
-        <Button full onClick={save} disabled={saving || !selDate || !selTime}>{saving ? "Saving…" : "Confirm"}</Button>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row">
+        <Button size="lg" variant="outline" full onClick={onClose}>Cancel</Button>
+        <Button size="lg" full onClick={save} disabled={saving || !selDate || !selTime}>{saving ? "Saving…" : "Confirm"}</Button>
       </div>
     </Modal>
   );
@@ -369,29 +400,29 @@ const DetailsModal = ({ booking, onClose, onAction, review, onReviewDone }) => {
               ? "Mark this booking as a no-show? Use this when the guest did not attend."
               : "Mark as completed?"}
           </p>
-          <div className="flex gap-2">
-            <Button variant="outline" full onClick={() => setConfirming(null)}>Back</Button>
-            <Button full variant={confirming === "cancel" ? "danger" : "primary"} onClick={() => doAction(confirming)} disabled={busy}>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            <Button size="lg" variant="outline" full onClick={() => setConfirming(null)}>Back</Button>
+            <Button size="lg" full variant={confirming === "cancel" ? "danger" : "primary"} onClick={() => doAction(confirming)} disabled={busy}>
               {busy ? "..." : confirming === "cancel" ? "Yes, cancel" : confirming === "no_show" ? "Yes, no-show" : "Yes, complete"}
             </Button>
           </div>
         </div>
       ) : (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
           {booking.status === "confirmed" && new Date(booking.scheduled_at) > new Date() && (
-            <Button variant="outline" className="min-w-[120px] flex-1 text-primary" onClick={() => setShowReschedule(true)}>Reschedule</Button>
+            <Button size="lg" variant="outline" className="w-full text-primary sm:w-auto sm:min-w-[120px] sm:flex-1" onClick={() => setShowReschedule(true)}>Reschedule</Button>
           )}
           {booking.status === "confirmed" && new Date(booking.scheduled_at) <= new Date() && (
-            <Button className="min-w-[120px] flex-1" onClick={() => setConfirming("complete")}>Mark Completed</Button>
+            <Button size="lg" className="w-full sm:w-auto sm:min-w-[120px] sm:flex-1" onClick={() => setConfirming("complete")}>Mark Completed</Button>
           )}
           {booking.status === "confirmed" && new Date(booking.scheduled_at) <= new Date() && (
-            <Button variant="outline" className="min-w-[120px] flex-1" onClick={() => setConfirming("no_show")}>No-show</Button>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto sm:min-w-[120px] sm:flex-1" onClick={() => setConfirming("no_show")}>No-show</Button>
           )}
           {booking.status !== "cancelled" && booking.status !== "completed" && booking.status !== "no_show" && (
-            <Button variant="danger-outline" className="min-w-[120px] flex-1" onClick={() => setConfirming("cancel")}>Cancel Booking</Button>
+            <Button size="lg" variant="danger-outline" className="w-full sm:w-auto sm:min-w-[120px] sm:flex-1" onClick={() => setConfirming("cancel")}>Cancel Booking</Button>
           )}
           {booking.status === "completed" && on("review_submission") && booking.guest_id && !review && (
-            <Button className="min-w-[120px] flex-1" onClick={() => setShowReview(true)}>Review Guest</Button>
+            <Button size="lg" className="w-full sm:w-auto sm:min-w-[120px] sm:flex-1" onClick={() => setShowReview(true)}>Review Guest</Button>
           )}
         </div>
       )}
@@ -414,6 +445,38 @@ const DetailsModal = ({ booking, onClose, onAction, review, onReviewDone }) => {
         </div>
       )}
     </Modal>
+  );
+};
+
+// ------ MOBILE AGENDA CARD ------
+// App-style, person-forward booking row. The whole card is one large tap target
+// that opens the details sheet. Same data, same click handler as the table row.
+const BookingCard = ({ booking, onOpen }) => {
+  const d = new Date(booking.scheduled_at);
+  const isFree = booking.services?.price === 0;
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(booking)}
+      className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 text-left transition-colors active:bg-gray-50 dash-elev-1"
+    >
+      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-base font-bold text-primary">
+        {initialOf(booking.guest_name)}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="truncate text-sm font-semibold text-gray-900">{booking.guest_name || "Guest"}</p>
+          <StatusChip status={booking.status} />
+        </div>
+        <p className="mt-0.5 truncate text-xs text-gray-500">{booking.services?.title || "Service"}</p>
+        <div className="mt-1.5 flex items-center gap-2 text-xs">
+          <span className="font-medium text-gray-700">{fmtTime(d)}</span>
+          <span className="text-gray-300">&middot;</span>
+          <span className="text-gray-500">{isFree ? "Free" : `₹${booking.services?.price}`}</span>
+        </div>
+      </div>
+      <Chevron className="h-4 w-4 shrink-0 text-gray-300" />
+    </button>
   );
 };
 
@@ -524,24 +587,47 @@ const Bookings = () => {
         }
       />
 
-      {/* Filter tabs */}
-      <FilterBar className="mb-5 flex-nowrap overflow-x-auto pb-1">
-        {["all", "upcoming", "past", "cancelled"].map((f) => (
-          <button
-            key={f}
-            onClick={() => { setFilter(f); setPage(1); }}
-            className={cn(
-              "whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors",
-              filter === f ? "bg-gray-900 text-white" : "border bg-white text-gray-500 hover:bg-gray-50",
-            )}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)} ({counts[f]})
-          </button>
-        ))}
-      </FilterBar>
+      {/* Filter — app-style segmented control */}
+      <SegmentedControl
+        className="mb-5"
+        value={filter}
+        onChange={(f) => { setFilter(f); setPage(1); }}
+        options={["all", "upcoming", "past", "cancelled"].map((f) => ({
+          value: f,
+          label: f.charAt(0).toUpperCase() + f.slice(1),
+          count: counts[f],
+        }))}
+      />
 
-      {/* Table */}
-      <Card padded={false} className="overflow-hidden">
+      {/* Mobile: day-grouped agenda cards */}
+      <div className="space-y-5 md:hidden">
+        {paged.length === 0 ? (
+          <EmptyState
+            icon={CalendarX2}
+            title="No bookings here"
+            description={filter === "all" ? "New bookings will appear here as guests book you." : `You have no ${filter} bookings.`}
+          />
+        ) : (
+          groupByDay(paged).map((group) => (
+            <section key={group.key}>
+              <div className="sticky top-14 z-10 -mx-1 mb-2 bg-[#f7f5ef]/95 px-1 py-1.5 backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {group.label}
+                  <span className="ml-1.5 font-normal text-gray-400">{group.items.length}</span>
+                </p>
+              </div>
+              <div className="space-y-2.5">
+                {group.items.map((b) => (
+                  <BookingCard key={b.id} booking={b} onOpen={setSelected} />
+                ))}
+              </div>
+            </section>
+          ))
+        )}
+      </div>
+
+      {/* Desktop: table */}
+      <Card padded={false} className="hidden overflow-hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -589,27 +675,28 @@ const Bookings = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t px-4 py-3 text-sm text-gray-500">
-            <span className="text-xs">
-              Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
-            </span>
-            <div className="flex gap-1">
-              <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const p = page <= 3 ? i + 1 : page + i - 2;
-                if (p < 1 || p > totalPages) return null;
-                return (
-                  <Button key={p} size="sm" variant={p === page ? "primary" : "outline"} onClick={() => setPage(p)}>{p}</Button>
-                );
-              })}
-              <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
-            </div>
-          </div>
-        )}
       </Card>
+
+      {/* Pagination — shared by both views */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between gap-3 text-sm text-gray-500">
+          <span className="text-xs">
+            Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const p = page <= 3 ? i + 1 : page + i - 2;
+              if (p < 1 || p > totalPages) return null;
+              return (
+                <Button key={p} size="sm" variant={p === page ? "primary" : "outline"} onClick={() => setPage(p)} className="hidden sm:inline-flex">{p}</Button>
+              );
+            })}
+            <span className="px-2 text-xs sm:hidden">{page} / {totalPages}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
