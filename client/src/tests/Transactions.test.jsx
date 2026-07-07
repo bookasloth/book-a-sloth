@@ -1,7 +1,13 @@
 import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import { vi } from 'vitest';
 
-vi.mock('../services/api', () => ({ getTransactions: vi.fn() }));
+// getMyInvoices/invoiceUrl back the InvoicesSection that now renders above the
+// table; mock them so the component mounts (empty invoices → section renders null).
+vi.mock('../services/api', () => ({
+  getTransactions: vi.fn(),
+  getMyInvoices: vi.fn(() => Promise.resolve({ data: [] })),
+  invoiceUrl: vi.fn(() => '#'),
+}));
 
 import { getTransactions } from '../services/api';
 import Transactions from '../pages/Transactions';
