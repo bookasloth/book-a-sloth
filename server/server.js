@@ -181,6 +181,14 @@ const opsController = require('./controllers/opsController');
 app.get('/ready', opsController.readiness);
 app.get('/metrics', opsController.exposeMetrics);
 
+// Google Search Console site-ownership proof for OAuth verification. Served as a
+// route (no static dir on this API-only server). ponytail: onrender.com is a
+// shared/free-tier host — move OAuth redirect + this proof to api.bookasloth.in
+// once we own that subdomain.
+app.get('/google7afa06c4734ff5fc.html', (req, res) =>
+  res.type('text/html').send('google-site-verification: google7afa06c4734ff5fc.html')
+);
+
 app.get('/', (req, res) => res.json({ message: 'Book A Sloth API v1.4 running' }));
 
 app.use(require('./middleware/errorMiddleware'));
