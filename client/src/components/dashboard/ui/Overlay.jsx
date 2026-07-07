@@ -50,6 +50,8 @@ export function Modal({ open, onClose, title, children, footer, size = 'md', cla
             transition={{ type: 'spring', stiffness: 320, damping: 30 }}
             className={cn('relative w-full rounded-t-xl bg-white dash-elev-3 sm:rounded-xl', MODAL_SIZES[size], className)}
           >
+            {/* Mobile grabber — signals a draggable native sheet. */}
+            <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-gray-300 sm:hidden" aria-hidden="true" />
             {(title || onClose) && (
               <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
                 <h3 className="text-base font-semibold text-gray-900">{title}</h3>
