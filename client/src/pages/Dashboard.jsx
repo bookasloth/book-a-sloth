@@ -43,7 +43,7 @@ const Stat = ({ Icon, label, value, tint, to, title }) => {
       <p className="mt-1.5 text-xs text-gray-500">{label}</p>
     </>
   );
-  const base = 'rounded-md border border-gray-100 bg-gray-50/60 p-2.5 sm:p-3';
+  const base = 'block rounded-md border border-gray-100 bg-gray-50/60 p-3 min-h-[4.5rem]';
   if (!to) return <div className={base} title={title}>{inner}</div>;
   return (
     <Link to={to} title={title} className={cn(base, 'block transition hover:border-primary/30 hover:bg-primary-light/40 hover:no-underline')}>
@@ -291,15 +291,15 @@ const Dashboard = () => {
             </p>
             <p className="text-xs text-gray-500">{fmtDate(m.nextUp.scheduled_at)}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
             {m.nextUp.meeting_link && (
               <a href={m.nextUp.meeting_link} target="_blank" rel="noreferrer"
-                className={cn(buttonClasses({ variant: 'primary', size: 'sm' }), 'whitespace-nowrap')}>
+                className={cn(buttonClasses({ variant: 'primary', size: 'sm' }), 'min-h-11 flex-1 whitespace-nowrap sm:min-h-0 sm:flex-none')}>
                 Join
               </a>
             )}
             <Link to="/dashboard/bookings"
-              className="whitespace-nowrap rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:no-underline">
+              className="inline-flex min-h-11 flex-1 items-center justify-center whitespace-nowrap rounded-md border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:no-underline sm:min-h-0 sm:flex-none sm:py-1.5">
               View
             </Link>
           </div>
