@@ -1,0 +1,48 @@
+# Deploys the client to Vercel production on every push to main.
+#
+# WHY THIS EXISTS: the Vercel project sits on a Hobby team, and Vercel's own
+# git integration blocks any deployment whose commit author isn't the team
+# owner ("does not have contributing access"). Token-authenticated CLI deploys
+# run AS the owner, so this pipeline bypasses that check entirely. Vercel's
+# native git deploys are disabled in client/vercel.json (git.deploymentEnabled).
+#
+# REQUIRED SECRET (GitHub repo → Settings → Secrets and variables → Actions):
+#   VERCEL_TOKEN — create at vercel.com → Account Settings → Tokens.
+# Org/project IDs are not secrets; they are pinned below.
+
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: team_zIeLwmD7MoWJWDJyb2YEb8IK
+  VERCEL_PROJECT_ID: prj_b02XYKuwhxoZakgucihWVXgUdUIA
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
