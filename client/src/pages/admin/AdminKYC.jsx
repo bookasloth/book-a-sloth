@@ -5,8 +5,8 @@ import AdminEmptyState from '../../components/admin/AdminEmptyState';
 import { adminListKyc, adminGetKyc, adminDecideKyc } from '../../services/api';
 
 const ICON = 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4';
-const TITLES = { pending: 'Pending KYC', approved: 'Approved KYC', rejected: 'Rejected KYC' };
-const TONE = { pending: 'warning', approved: 'success', rejected: 'danger' };
+const TITLES = { pending: 'Pending KYC', approved: 'Verified KYC', rejected: 'Rejected KYC' };
+const TONE = { pending: 'warn', approved: 'ok', rejected: 'danger' };
 const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 
 // Signed document link — opens in a new tab; rel guards against tab-nabbing.
@@ -17,7 +17,7 @@ const DocLink = ({ href, label }) =>
     <span className="adm-t3">{label}: —</span>
   );
 
-const Detail = ({ id, onClose, onDecided }) => {
+export const KycDetail = ({ id, onClose, onDecided }) => {
   const [row, setRow] = useState(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -116,7 +116,7 @@ const AdminKYC = () => {
       ) : (
         <Table columns={columns} rows={rows} rowKey={(r) => r.id} onRowClick={(r) => setOpenId(r.id)} />
       )}
-      {openId && <Detail id={openId} onClose={() => setOpenId(null)} onDecided={() => { setOpenId(null); load(); }} />}
+      {openId && <KycDetail id={openId} onClose={() => setOpenId(null)} onDecided={() => { setOpenId(null); load(); }} />}
     </div>
   );
 };

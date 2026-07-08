@@ -49,7 +49,7 @@ export const DEPT_LINKS = [
   { label: 'Badges',             icon: 'star',     to: '/admin/badges',     desc: 'Host trust and achievement badges',      depts: ['marketing', 'operation'] },
 
   // People
-  { label: 'KYC',           icon: 'shieldOk', to: '/admin/kyc/pending', desc: 'Verify host identity documents',      depts: ['support', 'operation'] },
+  { label: 'KYC',           icon: 'shieldOk', to: '/admin/kyc', desc: 'Verify host identity documents',      depts: ['support', 'operation'] },
   { label: 'Staff & Roles', icon: 'users2',   to: '/admin/staff',       desc: 'Admin accounts and permission roles', depts: ['cxo', 'engineering'] },
 
   // Finance

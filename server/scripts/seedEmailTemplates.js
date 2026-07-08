@@ -19,6 +19,8 @@ const EMAIL_ONLY_EVENTS = [
   ['PROFILE_COMPLETION_REMINDER', 'Profile Completion Reminder'],
   ['PROFILE_VERIFIED', 'Verification Approved'],
   ['PROFILE_REJECTED', 'Verification Rejected'],
+  ['KYC_APPROVED', 'KYC Approved'],
+  ['KYC_REJECTED', 'KYC Rejected'],
   ['BADGE_UNLOCKED', 'Badge Unlocked'],
   ['MILESTONE_FIRST_BOOKING', 'Milestone — First Booking'],
   ['MILESTONE_10_BOOKINGS', 'Milestone — 10 Bookings'],
