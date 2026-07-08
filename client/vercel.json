@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": { "deploymentEnabled": false },
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://book-a-sloth.onrender.com/sitemap.xml" },
     { "source": "/sitemap-:name.xml", "destination": "https://book-a-sloth.onrender.com/sitemap-:name.xml" },
