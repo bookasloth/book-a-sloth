@@ -158,6 +158,7 @@ const Explore         = lazy(() => import('./pages/Explore'));
 const ServicesDirectory  = lazy(() => import('./pages/services/ServicesDirectory'));
 const ProfessionServices = lazy(() => import('./pages/services/ProfessionServices'));
 const ProfessionLanding  = lazy(() => import('./pages/for/ProfessionLanding'));
+const FeaturePage = lazy(() => import('./pages/features/FeaturePage'));
 
 // Admin — Operations
 const AdminPlans  = lazy(() => import('./pages/admin/AdminPlans'));
@@ -228,6 +229,7 @@ function App() {
     location.pathname.startsWith('/vendor-register') ||
     location.pathname.startsWith('/lp') ||
     location.pathname.startsWith('/for/') ||
+    location.pathname.startsWith('/features') ||
     location.pathname === '/hello-sloth';
 
   const isAuthPage =
@@ -424,6 +426,9 @@ function App() {
 
           {/* Profession marketing landing pages (/for/:profession) — sell BAS per profession */}
           <Route path="/for/:profession" element={<ProfessionLanding />} />
+
+          {/* Feature marketing pages (/features/:slug) — own header/footer, nav hidden */}
+          <Route path="/features/:slug" element={<FeaturePage />} />
 
           {/* Support / Contact — placeholders; MUST precede the /:profileSlug catch-all */}
           <Route path="/support" element={<Support />} />
