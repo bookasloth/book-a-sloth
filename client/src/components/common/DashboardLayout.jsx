@@ -4,7 +4,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Clock, LayoutGrid, Package, LineChart,
   Banknote, Receipt, User, Menu, X,
-  ExternalLink, LogOut, Lock, Wallet,
+  ExternalLink, LogOut, Lock, Wallet, ShieldCheck,
   Bell, LifeBuoy, Headset, ChevronDown, Sparkles, Settings,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -44,6 +44,7 @@ const NAV_GROUPS = [
     label: 'Account',
     items: [
       { to: '/dashboard/profile', label: 'Profile', icon: User },
+      { to: '/dashboard/kyc', label: 'Verification', icon: ShieldCheck, matchPrefix: '/dashboard/kyc' },
     ],
   },
 ];

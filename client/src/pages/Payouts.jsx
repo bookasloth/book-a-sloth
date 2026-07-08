@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Wallet, Clock, Hourglass, Banknote, Send } from "lucide-react";
-import { getPayoutBalance, getPayoutRequests, requestPayout } from "../services/api";
+import { Link } from "react-router-dom";
+import { Wallet, Clock, Hourglass, Banknote, Send, ShieldCheck } from "lucide-react";
+import { getPayoutBalance, getPayoutRequests, requestPayout, getMyKyc } from "../services/api";
 import toast from "react-hot-toast";
 import {
   PageHeader, Section, StatCard, DataTable, StatusBadge, Modal, Button,
@@ -88,12 +89,18 @@ const Payouts = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [kycStatus, setKycStatus] = useState(null);
 
   const load = async () => {
     try {
-      const [{ data: bal }, { data: reqs }] = await Promise.all([getPayoutBalance(), getPayoutRequests()]);
+      const [{ data: bal }, { data: reqs }, kyc] = await Promise.all([
+        getPayoutBalance(),
+        getPayoutRequests(),
+        getMyKyc().then((r) => r.data).catch(() => ({ status: "not_started" })),
+      ]);
       setBalance(bal);
       setRequests(reqs || []);
+      setKycStatus(kyc?.status || "not_started");
     } catch {
       toast.error("Failed to load payout data");
     } finally {
@@ -103,7 +110,9 @@ const Payouts = () => {
 
   useEffect(() => { load(); }, []);
 
-  const canWithdraw = !!balance?.available && balance.available >= MIN_WITHDRAWAL;
+  const kycApproved = kycStatus === "approved";
+  // Payouts require a completed KYC — gate withdrawal on approval.
+  const canWithdraw = kycApproved && !!balance?.available && balance.available >= MIN_WITHDRAWAL;
 
   if (loading) {
     return (
@@ -133,6 +142,22 @@ const Payouts = () => {
           </Button>
         }
       />
+
+      {!kycApproved && (
+        <Link to="/dashboard/kyc" className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 hover:bg-amber-100">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">
+              {kycStatus === "pending" ? "Verification under review" : "Complete verification to withdraw"}
+            </p>
+            <p className="text-xs text-amber-700">
+              {kycStatus === "pending"
+                ? "Payouts unlock automatically once your KYC is approved."
+                : "You must complete identity verification (KYC) before requesting a payout. Tap to start."}
+            </p>
+          </div>
+        </Link>
+      )}
 
       {/* Balance — Available leads full-width on mobile, then a compact grid.
           One responsive grid (no duplicated markup). */}
@@ -165,7 +190,9 @@ const Payouts = () => {
         <div className="w-full">
           {!canWithdraw && (
             <p className="mb-2 text-center text-xs text-gray-500">
-              {balance?.available != null && balance.available < MIN_WITHDRAWAL
+              {!kycApproved
+                ? "Complete verification (KYC) to withdraw"
+                : balance?.available != null && balance.available < MIN_WITHDRAWAL
                 ? `${fmtMoney(MIN_WITHDRAWAL - balance.available, { decimals: true })} more to withdraw`
                 : `Minimum balance ₹${MIN_WITHDRAWAL} required`}
             </p>
