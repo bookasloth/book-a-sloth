@@ -7,8 +7,59 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const { maskPan, maskAadhaar, maskAccount, maskPhone } = require('../utils/kycCrypto');
+const NotificationEngine = require('../services/notificationEngine');
+const { inAppNotify } = require('../utils/inAppNotify');
 
 const KYC_BUCKET = 'kyc';
+
+// GET /api/admin/kyc/stats — ops centre: counts, throughput/SLA, recent activity.
+const getStats = async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('kyc_submissions')
+      .select('id, full_name, email, status, created_at, reviewed_at');
+    if (error) throw error;
+    const rows = data || [];
+
+    const counts = { pending: 0, approved: 0, rejected: 0 };
+    let decidedCount = 0, decidedMs = 0, todayDecisions = 0;
+    const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+    let oldestPendingAgeMs = 0;
+
+    for (const r of rows) {
+      counts[r.status] = (counts[r.status] || 0) + 1;
+      if (r.reviewed_at) {
+        decidedCount += 1;
+        decidedMs += new Date(r.reviewed_at) - new Date(r.created_at);
+        if (new Date(r.reviewed_at) >= startOfDay) todayDecisions += 1;
+      } else if (r.status === 'pending') {
+        const age = Date.now() - new Date(r.created_at);
+        if (age > oldestPendingAgeMs) oldestPendingAgeMs = age;
+      }
+    }
+
+    const total = rows.length;
+    const decided = counts.approved + counts.rejected;
+    const recent = rows
+      .filter((r) => r.reviewed_at)
+      .sort((a, b) => new Date(b.reviewed_at) - new Date(a.reviewed_at))
+      .slice(0, 8)
+      .map((r) => ({ id: r.id, full_name: r.full_name, email: r.email, status: r.status, reviewed_at: r.reviewed_at }));
+
+    res.json({
+      counts: { ...counts, total },
+      throughput: {
+        avgDecisionMs: decidedCount ? Math.round(decidedMs / decidedCount) : null,
+        oldestPendingAgeMs,
+        approvalRate: decided ? Math.round((counts.approved / decided) * 100) : null,
+        todayDecisions,
+      },
+      recent,
+    });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
 
 // GET /api/admin/kyc?status=pending|approved|rejected
 const listKyc = async (req, res) => {
@@ -84,14 +135,43 @@ const decideKyc = async (req, res) => {
         updated_at: new Date().toISOString(),
       })
       .eq('id', req.params.id)
-      .select('id, status')
+      .select('id, status, user_id, email, full_name, review_note')
       .maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ message: 'KYC submission not found.' });
-    res.json(data);
+
+    // Notify the host — email (NotificationEngine) + in-app bell. Fire-and-forget:
+    // a notification failure must never fail the admin's decision.
+    const event = status === 'approved' ? 'KYC_APPROVED' : 'KYC_REJECTED';
+    NotificationEngine.send({
+      event,
+      data: {
+        email: data.email,
+        name: data.full_name,
+        emailData: {
+          first_name: (data.full_name || '').split(' ')[0],
+          review_note: data.review_note || 'Please review the requirements and resubmit.',
+          support_email: 'bookasloth@gmail.com',
+        },
+        emailUser: { name: data.full_name, email: data.email },
+        recipientUserId: data.user_id,
+      },
+    }).catch((e) => console.error('KYC notify email failed:', e.message));
+    inAppNotify({
+      userId: data.user_id,
+      role: 'host',
+      type: event,
+      title: status === 'approved' ? 'KYC approved' : 'KYC needs attention',
+      body: status === 'approved'
+        ? 'Your identity verification was approved. Payouts are unlocked.'
+        : (data.review_note || 'Your KYC could not be approved. Please review and resubmit.'),
+      link: status === 'approved' ? '/dashboard/payments/payouts' : '/dashboard/kyc',
+    });
+
+    res.json({ id: data.id, status: data.status });
   } catch (error) {
     safeError(res, error);
   }
 };
 
-module.exports = { listKyc, getKyc, decideKyc };
+module.exports = { getStats, listKyc, getKyc, decideKyc };

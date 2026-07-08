@@ -307,6 +307,7 @@ export const uploadKycFile = (file, type) => {
   });
 };
 // Admin
+export const adminKycStats  = ()           => API.get('/admin/kyc/stats');
 export const adminListKyc   = (status)     => API.get('/admin/kyc', { params: { status } });
 export const adminGetKyc    = (id)         => API.get(`/admin/kyc/${id}`);
 export const adminDecideKyc = (id, data)   => API.patch(`/admin/kyc/${id}`, data);

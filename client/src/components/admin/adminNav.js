@@ -161,8 +161,9 @@ export const NAV = [
     { label:'Badges',             icon:'star',    to:'/admin/badges', perm:'badges.manage' },
     { label:'Explore Page',       icon:'search',  to:'/admin/explore', perm:'settings.manage' },
     { label:'KYC',    icon:'shieldOk', groupId:'ppl-kyc', perm:'kyc.view', children:[
+      { label:'Overview', to:'/admin/kyc' },
       { label:'Pending',  to:'/admin/kyc/pending' },
-      { label:'Approved', to:'/admin/kyc/approved' },
+      { label:'Verified', to:'/admin/kyc/approved' },
       { label:'Rejected', to:'/admin/kyc/rejected' },
     ]},
     { label:'Pages',              icon:'file',    to:'/admin/content/pages', perm:'cms.manage' },

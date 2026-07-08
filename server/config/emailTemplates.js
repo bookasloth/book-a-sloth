@@ -305,6 +305,33 @@ const TEMPLATES = [
     cta_label: 'Review & resubmit', cta_url: '{{dashboard_url}}',
   }; })(),
 
+  (() => { const t = themeForCategory('Account Update'); return {
+    event_key: 'KYC_APPROVED', audience: 'vendor', category: 'Profile',
+    name: 'KYC Approved', subject: 'Your KYC is verified — payouts unlocked',
+    preview_text: 'Your identity verification was approved.',
+    email_category: 'Account Update',
+    email_reason: 'You are receiving this email because your KYC verification status was updated.',
+    html_content:
+      eyebrow(t.text, 'KYC verified') + h("You're verified, {{first_name}}!") +
+      lead('Your identity verification was approved. You can now request payouts from your dashboard.') +
+      C.banner(t, { title: 'Verified', sub: 'Payouts are now unlocked' }),
+    cta_label: 'Go to payouts', cta_url: '{{dashboard_url}}',
+  }; })(),
+
+  (() => { const t = themeForCategory('Account Update'); return {
+    event_key: 'KYC_REJECTED', audience: 'vendor', category: 'Profile',
+    name: 'KYC Rejected', subject: 'Action needed on your KYC verification',
+    preview_text: 'Your KYC needs another look.',
+    email_category: 'Account Update',
+    email_reason: 'You are receiving this email because action is required on your KYC verification.',
+    html_content:
+      eyebrow(t.text, 'KYC verification') + h('Your KYC needs attention') +
+      lead("We couldn't approve your KYC this time. Review the reason below and resubmit.") +
+      C.banner(t, { title: 'Needs attention', sub: '{{review_note}}' }) +
+      note('Questions? Email {{support_email}}.'),
+    cta_label: 'Review & resubmit', cta_url: '{{dashboard_url}}',
+  }; })(),
+
   // ── Badge ────────────────────────────────────────────────────────────────────
 
   (() => { const t = themeForCategory('Achievement Unlocked'); return {
