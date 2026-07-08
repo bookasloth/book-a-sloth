@@ -1,8 +1,24 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 
-export default defineConfig({
+export default defineConfig(({ command, mode }) => {
+  // Guard: a production build without the Supabase env vars ships a bundle that
+  // throws "supabaseUrl is required" at boot — a total white screen (2026-07-08
+  // outage). Fail the build loudly instead of shipping it silently.
+  if (command === 'build') {
+    const env = loadEnv(mode, process.cwd(), '');
+    const missing = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'VITE_API_URL']
+      .filter((k) => !env[k]);
+    if (missing.length) {
+      throw new Error(
+        `Refusing to build: missing required env var(s): ${missing.join(', ')}. ` +
+        'Set them in the build environment (Vercel project env / client/.env).',
+      );
+    }
+  }
+
+  return {
   plugins: [
     react(),
     // Dev-only bundle analysis. Off by default — set ANALYZE=1 to emit
@@ -43,4 +59,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });
