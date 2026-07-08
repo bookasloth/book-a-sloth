@@ -1205,13 +1205,22 @@ const ServiceBooking = () => {
               </div>
 
               {/* Optional GST invoice details */}
-              <div className="mt-4 border rounded-xl p-4">
-                <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                  <input type="checkbox" checked={wantGst} onChange={(e) => setWantGst(e.target.checked)} />
-                  Need a GST invoice? (for businesses claiming input tax credit)
+              <div className="mt-3 border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50/60">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={wantGst}
+                    onChange={(e) => setWantGst(e.target.checked)}
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-gray-300 accent-current cursor-pointer"
+                    style={{ accentColor: tc }}
+                  />
+                  <span className="leading-tight">
+                    <span className="block text-xs font-medium text-gray-700">Need a GST invoice?</span>
+                    <span className="block text-[11px] text-gray-400">For businesses claiming input tax credit</span>
+                  </span>
                 </label>
                 {wantGst && (
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <input className="fb-input fb-input--sm" placeholder="Business / legal name"
                       value={billing.name} onChange={(e) => setBilling((b) => ({ ...b, name: e.target.value }))} />
                     <input className="fb-input fb-input--sm" placeholder="GSTIN (optional)"
