@@ -14,6 +14,7 @@ import { createServer } from 'http';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { FEATURES } from '../src/pages/features/featureData.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, '..', 'dist');
@@ -55,6 +56,7 @@ const PRERENDER_ROUTES = [
   '/lp/acuity-alternative',
   '/lp/simplybook-alternative',
   '/lp/zoho-bookings-alternative',
+  ...FEATURES.map((f) => `/features/${f.slug}`),
 ];
 
 function createStaticServer() {
