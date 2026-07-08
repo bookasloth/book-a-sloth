@@ -38,14 +38,14 @@ export default function KycStart() {
   };
 
   return (
-    <Card className="p-5 sm:p-6">
-      <h2 className="mb-1 text-base font-semibold text-gray-900">Personal details</h2>
-      <p className="mb-5 text-sm text-gray-500">These must match your PAN and Aadhaar exactly.</p>
-      <form onSubmit={next} className="space-y-4">
+    <Card className="p-4 sm:p-5">
+      <h2 className="mb-0.5 text-base font-semibold text-gray-900">Personal details</h2>
+      <p className="mb-4 text-sm text-gray-500">These must match your PAN and Aadhaar exactly.</p>
+      <form onSubmit={next} className="space-y-3">
         <FormField label="Full name" htmlFor="k-name" required className="mb-0">
           <Input id="k-name" value={personal.full_name} onChange={set('full_name')} placeholder="As printed on PAN" />
         </FormField>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           <FormField label="Email" htmlFor="k-email" required className="mb-0">
             <Input id="k-email" type="email" value={personal.email} onChange={set('email')} placeholder="you@email.com" />
           </FormField>
@@ -53,7 +53,7 @@ export default function KycStart() {
             <Input id="k-phone" inputMode="numeric" value={personal.phone} onChange={set('phone')} placeholder="10-digit number" />
           </FormField>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           <FormField label="PAN number" htmlFor="k-pan" required hint="Format: ABCDE1234F" className="mb-0">
             <Input id="k-pan" value={personal.pan_number} onChange={set('pan_number')} maxLength={10} className="uppercase" placeholder="ABCDE1234F" />
           </FormField>
