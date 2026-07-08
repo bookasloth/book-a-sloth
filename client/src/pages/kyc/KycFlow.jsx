@@ -33,7 +33,7 @@ function Stepper() {
   const cur = pathname.split('/').pop();
   const curIdx = ORDER.indexOf(cur);
   return (
-    <ol className="mb-8 flex items-center justify-center gap-2 sm:gap-3">
+    <ol className="mb-6 flex items-center justify-center gap-2 sm:gap-3">
       {STEPS.map((s, i) => {
         const state = i < curIdx ? 'done' : i === curIdx ? 'active' : 'todo';
         return (
@@ -64,7 +64,7 @@ function Stepper() {
 export default function KycFlow() {
   return (
     <KycProvider>
-      <div className="mx-auto flex min-h-[calc(100dvh-5rem)] max-w-2xl flex-col py-6">
+      <div className="mx-auto flex min-h-[calc(100dvh-5rem)] max-w-2xl flex-col py-4">
         <div className="mb-2 flex items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900">Identity Verification</h1>
           <Link to="/dashboard/kyc" className="text-sm text-gray-400 hover:text-gray-600">Cancel</Link>

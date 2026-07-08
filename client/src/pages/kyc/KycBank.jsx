@@ -23,14 +23,14 @@ export default function KycBank() {
   };
 
   return (
-    <Card className="p-5 sm:p-6">
-      <h2 className="mb-1 text-base font-semibold text-gray-900">Bank account</h2>
-      <p className="mb-5 text-sm text-gray-500">Payouts are sent to this account after verification.</p>
-      <form onSubmit={next} className="space-y-4">
+    <Card className="p-4 sm:p-5">
+      <h2 className="mb-0.5 text-base font-semibold text-gray-900">Bank account</h2>
+      <p className="mb-4 text-sm text-gray-500">Payouts are sent to this account after verification.</p>
+      <form onSubmit={next} className="space-y-3">
         <FormField label="Account holder name" htmlFor="b-holder" required className="mb-0">
           <Input id="b-holder" value={bank.holder_name} onChange={set('holder_name')} placeholder="As per bank records" />
         </FormField>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           <FormField label="Bank name" htmlFor="b-bank" required className="mb-0">
             <Input id="b-bank" value={bank.bank_name} onChange={set('bank_name')} placeholder="e.g. HDFC Bank" />
           </FormField>
@@ -38,7 +38,7 @@ export default function KycBank() {
             <Input id="b-branch" value={bank.branch} onChange={set('branch')} placeholder="Optional" />
           </FormField>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           <FormField label="Account number" htmlFor="b-acct" required className="mb-0">
             <Input id="b-acct" inputMode="numeric" value={bank.account_number} onChange={set('account_number')} placeholder="Account number" />
           </FormField>
