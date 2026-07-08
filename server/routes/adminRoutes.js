@@ -66,6 +66,12 @@ router.post('/reserved-slugs',            requireAdmin('settings.manage'), reser
 router.get('/reserved-slugs/check/:slug', requireAdmin('settings.manage'), reservedSlugs.check);
 router.delete('/reserved-slugs/:id',      requireAdmin('settings.manage'), reservedSlugs.release);
 
+// ── KYC — host identity verification review ────────────────────
+const kycAdmin = require('../controllers/kycAdminController');
+router.get('/kyc',        requireAdmin('kyc.view'),   kycAdmin.listKyc);
+router.get('/kyc/:id',    requireAdmin('kyc.view'),   kycAdmin.getKyc);
+router.patch('/kyc/:id',  requireAdmin('kyc.decide'), kycAdmin.decideKyc);
+
 // ── Appearance — navbar logo (mode + image URLs) ───────────────
 const appearance = require('../controllers/appearanceController');
 router.get('/appearance', requireAdmin('settings.manage'), appearance.getAdmin);

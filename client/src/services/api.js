@@ -296,6 +296,21 @@ export const getPayoutRequests  = ()          => API.get('/vendor/payout/request
 export const requestPayout      = (data)      => API.post('/vendor/payout/request', data);
 export const toggleService      = (id)        => API.put(`/vendor/services/${id}/toggle`);
 
+// ── KYC (host identity verification) ──────────────────────────
+export const getMyKyc   = ()     => API.get('/kyc/me');
+export const submitKyc  = (data) => API.post('/kyc', data);
+export const uploadKycFile = (file, type) => {
+  const fd = new FormData();
+  fd.append('file', file);
+  return API.post(`/kyc/upload?type=${encodeURIComponent(type)}`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+// Admin
+export const adminListKyc   = (status)     => API.get('/admin/kyc', { params: { status } });
+export const adminGetKyc    = (id)         => API.get(`/admin/kyc/${id}`);
+export const adminDecideKyc = (id, data)   => API.patch(`/admin/kyc/${id}`, data);
+
 // ── Digital Products ──────────────────────────────────────────
 export const createProduct       = (data)     => API.post('/products', data);
 export const getMyProducts       = ()         => API.get('/products/mine/all');
