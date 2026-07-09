@@ -16,12 +16,15 @@ const { protect, requireHost } = require('../middleware/authMiddleware');
 const { attachPlan, checkServiceLimit } = require('../middleware/planMiddleware');
 const { requireFeature } = require('../middleware/requireFeature');
 const { validate, serviceWriteRules } = require('../middleware/validate');
+const { generateAiListing } = require('../controllers/aiController');
 
 // Public routes — no auth (specific before dynamic)
 router.get('/public/:profileSlug/:serviceSlug', getPublicServiceByProfileAndSlug);
 router.get('/public/:slug', getPublicServiceBySlug);
 
 // Protected routes — vendor dashboard
+// "Write with Bolt" AI autofill — before any /:id-style route so it can't be shadowed.
+router.post('/ai/listing',    protect, requireHost, attachPlan, generateAiListing);
 router.get('/',               protect, getMyServices);
 router.post('/',              protect, requireHost, requireFeature('services'), ...serviceWriteRules, validate, attachPlan, checkServiceLimit, createService); // BUG-04 fixed
 router.get('/:id',            protect, getServiceById);
