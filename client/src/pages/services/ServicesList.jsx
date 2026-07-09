@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
   PageHeader, Card, Button, buttonClasses, SearchInput, SegmentedControl, Fab,
-  StatusBadge, Modal, SkeletonCard, cn,
+  StatusBadge, Modal, SkeletonCard, ErrorState, cn,
 } from '../../components/dashboard/ui';
 
 const TYPE_LABEL = { online: 'Online', offline: 'Offline', one_on_one: '1:1', group: 'Group', paid_dm: 'Paid DM' };
@@ -57,15 +57,19 @@ export default function ServicesList() {
   const { user } = useAuth();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null); // service to confirm delete
 
   const load = async () => {
+    setLoading(true);
+    setError(false);
     try {
       const { data } = await svcGetAll();
       setServices(data || []);
     } catch {
+      setError(true);
       toast.error('Failed to load services');
     } finally {
       setLoading(false);
@@ -124,6 +128,15 @@ export default function ServicesList() {
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
+      </div>
+    );
+  }
+
+  if (error && services.length === 0) {
+    return (
+      <div>
+        <PageHeader title="Services" subtitle="Manage everything you offer." />
+        <ErrorState message="Couldn’t load your services." onRetry={load} />
       </div>
     );
   }

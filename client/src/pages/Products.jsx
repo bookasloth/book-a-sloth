@@ -17,7 +17,7 @@ import { Plus, Package } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   PageHeader, Card, Button, buttonClasses, FormField, Input, Select, Textarea,
-  Badge, StatusBadge, EmptyState, ConfirmSheet, Fab, cn,
+  Badge, StatusBadge, EmptyState, ErrorState, ConfirmSheet, Fab, cn,
 } from "../components/dashboard/ui";
 
 const PRODUCT_TYPES = [
@@ -63,6 +63,7 @@ const emptyForm = {
 const Products = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState([]);
+  const [loadError, setLoadError] = useState(false); // first-load fetch failure
   const [plans, setPlans] = useState(null); // DB subscription_plans; null = loading
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
@@ -107,10 +108,12 @@ const Products = () => {
   );
 
   const fetchProducts = async () => {
+    setLoadError(false);
     try {
       const { data } = await getMyProducts();
       setProducts(data || []);
     } catch {
+      setLoadError(true);
       toast.error("Failed to load products");
     }
   };
@@ -411,7 +414,9 @@ const Products = () => {
         </Card>
       )}
 
-      {products.length === 0 && !showForm ? (
+      {loadError && products.length === 0 && !showForm ? (
+        <ErrorState message="Couldn’t load your products." onRetry={fetchProducts} />
+      ) : products.length === 0 && !showForm ? (
         <EmptyState
           icon={Package}
           title="No products yet"
