@@ -10,7 +10,7 @@ import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/the
 import Seo from '../components/common/Seo';
 import { useMinimalFooter } from '../context/ChromeContext';
 import HostBackground from '../backgrounds/HostBackground';
-import { resolveServiceSeo, serviceJsonLd, breadcrumbJsonLd, SITE_URL } from '../utils/seo';
+import { resolveServiceSeo, serviceJsonLd, breadcrumbJsonLd, faqJsonLd, SITE_URL } from '../utils/seo';
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
 const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
@@ -941,6 +941,9 @@ export default function ServiceDetail() {
       { name: vendor.name || vendor.username, path: `/${vendor.username}` },
       { name: service.title, path: `/${vendor.username}/${service.slug}` },
     ], siteUrl: SEO_SITE }),
+    ...(Array.isArray(service.faqs) && service.faqs.length
+      ? [faqJsonLd({ faqs: service.faqs.map(f => ({ q: f.question, a: f.answer })) })]
+      : []),
   ];
 
   return (
