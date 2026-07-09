@@ -5,7 +5,7 @@ import { getPayoutBalance, getPayoutRequests, requestPayout, getMyKyc } from "..
 import toast from "react-hot-toast";
 import {
   PageHeader, Section, StatCard, DataTable, StatusBadge, Modal, Button,
-  FormField, Input, Textarea, EmptyState, SkeletonCard, StickyActionBar, fmtMoney,
+  FormField, Input, Textarea, EmptyState, ErrorState, SuccessState, SkeletonCard, StickyActionBar, fmtMoney,
 } from "../components/dashboard/ui";
 
 const fmtDate = (iso) =>
@@ -18,6 +18,7 @@ const WithdrawModal = ({ available, onClose, onRequested }) => {
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [submitted, setSubmitted] = useState(null); // amount once the request lands
 
   const submit = async (e) => {
     e.preventDefault();
@@ -33,9 +34,8 @@ const WithdrawModal = ({ available, onClose, onRequested }) => {
     setSaving(true);
     try {
       await requestPayout({ amount: n, notes });
-      toast.success("Withdrawal request submitted!");
-      onRequested();
-      onClose();
+      onRequested();          // refresh balance/history behind the sheet
+      setSubmitted(n);        // show the success confirmation (pattern #13)
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed");
     } finally {
@@ -44,7 +44,14 @@ const WithdrawModal = ({ available, onClose, onRequested }) => {
   };
 
   return (
-    <Modal open onClose={onClose} title="Request Withdrawal" size="sm">
+    <Modal open onClose={onClose} title={submitted ? "" : "Request Withdrawal"} size="sm">
+      {submitted ? (
+        <SuccessState
+          title="Withdrawal requested"
+          message={`${fmtMoney(submitted, { decimals: true })} is on its way. Track it in your Withdrawal History.`}
+          action={<Button full onClick={onClose}>Done</Button>}
+        />
+      ) : (
       <form onSubmit={submit} className="space-y-4">
         <div className="rounded-xl bg-gray-50 p-3">
           <p className="mb-0.5 text-xs text-gray-500">Available balance</p>
@@ -64,6 +71,7 @@ const WithdrawModal = ({ available, onClose, onRequested }) => {
           <Button type="submit" size="lg" full disabled={saving}>{saving ? "Submitting…" : "Request Withdrawal"}</Button>
         </div>
       </form>
+      )}
     </Modal>
   );
 };
@@ -88,10 +96,13 @@ const Payouts = () => {
   const [balance, setBalance] = useState(null);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [kycStatus, setKycStatus] = useState(null);
 
   const load = async () => {
+    setLoading(true);
+    setError(false);
     try {
       const [{ data: bal }, { data: reqs }, kyc] = await Promise.all([
         getPayoutBalance(),
@@ -102,6 +113,7 @@ const Payouts = () => {
       setRequests(reqs || []);
       setKycStatus(kyc?.status || "not_started");
     } catch {
+      setError(true);
       toast.error("Failed to load payout data");
     } finally {
       setLoading(false);
@@ -122,6 +134,15 @@ const Payouts = () => {
           {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
         <DataTable columns={HISTORY_COLUMNS} rows={[]} loading />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <PageHeader title="Payouts" subtitle="Request withdrawals of your earned balance." />
+        <ErrorState message="Couldn’t load your payout data." onRetry={load} />
       </div>
     );
   }

@@ -13,6 +13,7 @@ import { getNotifications, markAllNotificationsRead, markNotificationRead } from
 import FeatureGate from './FeatureGate';
 import { normalizePlan } from '../../utils/themeUtils';
 import { cn } from '../dashboard/ui/cn';
+import { PageTransition } from '../dashboard/ui/PageTransition';
 import '../dashboard/ui/tokens.css';
 
 // Grouped by host mental model. Routes are byte-identical to before — only the
@@ -548,7 +549,9 @@ const DashboardLayout = ({ children }) => {
         {/* Sticky topbar — right-to-left: Profile, Notifications, Support. */}
         <DashTopbar user={user} plan={plan} planStyle={planStyle} initial={initial} logout={logout} />
         <div className="px-4 py-6 pb-28 sm:px-6 md:px-8 md:pb-8">
-          <div className="mx-auto w-full max-w-6xl">{children}</div>
+          <div className="mx-auto w-full max-w-6xl">
+            <PageTransition>{children}</PageTransition>
+          </div>
         </div>
       </main>
     </div>

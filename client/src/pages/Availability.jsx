@@ -7,7 +7,7 @@ import {
 import BackButton from "../components/common/BackButton";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Button, FormField, Select, Input, cn,
+  PageHeader, Card, Button, FormField, Select, Input, StickyActionBar, cn,
 } from "../components/dashboard/ui";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
@@ -60,6 +60,14 @@ const Availability = () => {
     const updated = [...schedule[day]];
     updated[idx] = { ...updated[idx], [field]: val };
     setSchedule({ ...schedule, [day]: updated });
+    setDirty(true);
+  };
+  // Per-day open/closed. A day is "open" when it has ≥1 slot; toggling on seeds a
+  // default 9–5 window, toggling off clears the day (matches the save model where
+  // an empty slot array = unavailable). Removing the last slot also closes the day.
+  const isDayOpen = (day) => (schedule[day]?.length || 0) > 0;
+  const toggleDay = (day) => {
+    setSchedule((s) => ({ ...s, [day]: s[day]?.length ? [] : [{ start: "09:00", end: "17:00" }] }));
     setDirty(true);
   };
   const copyToAll = (sourceDay) => {
@@ -185,22 +193,39 @@ const Availability = () => {
 
           {/* Weekly schedule */}
           <div className="space-y-4">
-            {DAYS.map((day) => (
+            {DAYS.map((day) => {
+              const open = isDayOpen(day);
+              return (
               <Card key={day}>
                 <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="font-medium capitalize text-gray-900">{day}</h3>
-                  <div className="flex flex-wrap items-center gap-3">
-                    {schedule[day].length > 0 && (
-                      <button type="button" onClick={() => copyToAll(day)} className="text-xs font-medium text-primary hover:underline">Copy to all</button>
-                    )}
-                    <Button type="button" variant="secondary" size="sm" onClick={() => addSlot(day)}>
-                      <Plus className="h-3.5 w-3.5" /> Add slot
-                    </Button>
+                  <div className="flex items-center gap-3">
+                    {/* Per-day on/off switch */}
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={open}
+                      aria-label={`${open ? "Close" : "Open"} ${day}`}
+                      onClick={() => toggleDay(day)}
+                      className={cn(
+                        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40",
+                        open ? "bg-primary" : "bg-gray-200",
+                      )}
+                    >
+                      <span className={cn("inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform", open ? "translate-x-6" : "translate-x-1")} />
+                    </button>
+                    <h3 className="font-medium capitalize text-gray-900">{day}</h3>
+                    {!open && <span className="text-xs text-gray-400">Closed</span>}
                   </div>
+                  {open && (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button type="button" onClick={() => copyToAll(day)} className="text-xs font-medium text-primary hover:underline">Copy to all</button>
+                      <Button type="button" variant="secondary" size="sm" onClick={() => addSlot(day)}>
+                        <Plus className="h-3.5 w-3.5" /> Add slot
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                {schedule[day].length === 0 ? (
-                  <p className="text-sm text-gray-400">Unavailable</p>
-                ) : (
+                {open && (
                   <div className="space-y-2">
                     {schedule[day].map((slot, i) => (
                       <div key={i} className="grid items-center gap-2 sm:grid-cols-[1fr_auto_1fr_auto]">
@@ -213,7 +238,8 @@ const Availability = () => {
                   </div>
                 )}
               </Card>
-            ))}
+              );
+            })}
           </div>
 
           {/* Blocked dates — full days guests can never book */}
@@ -263,22 +289,21 @@ const Availability = () => {
             )}
           </Card>
 
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
+          <StickyActionBar>
             {hasSaved && (
               <Button
                 type="button"
                 variant="secondary"
                 disabled={loading}
                 onClick={() => { fetchAvailability(); setIsEditing(false); setDirty(false); }}
-                className="w-full sm:w-auto sm:px-8"
               >
                 Cancel
               </Button>
             )}
-            <Button type="submit" disabled={loading} className="w-full sm:flex-1">
+            <Button type="submit" disabled={loading}>
               {loading ? "Saving..." : "Save Availability"}
             </Button>
-          </div>
+          </StickyActionBar>
         </form>
       )}
     </div>

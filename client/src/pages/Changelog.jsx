@@ -50,6 +50,44 @@ const BLOBS = [
 
 const RELEASES = [
   {
+    date: 'Jul 8, 2026', version: 'v3.68',
+    title: 'Get verified, get paid',
+    tags: ['New', 'Security'],
+    points: [
+      'Verify your identity in four quick steps — your details are encrypted and stored privately, never shown on your page.',
+      'A verified badge builds trust with guests, and clearing verification unlocks your payouts.',
+      'Prefer a face-to-face check? A video-KYC option is on the way.',
+    ],
+  },
+  {
+    date: 'Jul 7, 2026', version: 'v3.67',
+    title: 'Proper GST tax invoices, done for you',
+    tags: ['New', 'Improved'],
+    points: [
+      'Every booking and subscription now generates a clean, GST-compliant tax invoice — with the right place-of-supply and tax split worked out automatically.',
+      'Download any invoice from your dashboard, or opt in for one right at checkout.',
+      'No spreadsheets, no manual maths — just receipts you and your accountant can rely on.',
+    ],
+  },
+  {
+    date: 'Jul 7, 2026',
+    title: 'An app-like experience on your phone',
+    tags: ['Improved'],
+    points: [
+      'The host dashboard now feels like a native app on mobile — smooth page transitions, swipe gestures and tap-friendly confirmations.',
+      'Faster, calmer and built for running your bookings on the go.',
+    ],
+  },
+  {
+    date: 'Jul 6, 2026',
+    title: 'Pages built for your profession',
+    tags: ['New'],
+    points: [
+      'New landing pages tailored to your line of work — doctors, lawyers, salons, fitness coaches, consultants and more — so the right guests find you faster.',
+      'Get in touch anytime through our new contact page.',
+    ],
+  },
+  {
     date: 'Jul 3, 2026', version: 'v3.64',
     title: 'Reviews you can trust',
     tags: ['Improved'],

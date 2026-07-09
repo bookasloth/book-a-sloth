@@ -20,7 +20,7 @@ import {
   CREATOR_COLORS,
 } from "../utils/themeUtils";
 import {
-  PageHeader, Card, Button, FormField, Input, Select, Textarea, cn,
+  PageHeader, Card, Button, FormField, Input, Select, Textarea, StickyActionBar, cn,
 } from "../components/dashboard/ui";
 
 // ─── Minimal plan label for display ─────────────────────────────────────────
@@ -494,7 +494,20 @@ const ProfileSetup = () => {
                   {customHexAllowed ? (
                     <FeatureGate flag="custom_hex_color">
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="h-8 w-8 flex-shrink-0 rounded-lg border" style={{ background: isValidHex(customHex) ? customHex : '#e5e7eb' }} />
+                        {/* Native colour wheel — click the swatch to pick visually */}
+                        <label
+                          className="relative h-8 w-8 flex-shrink-0 cursor-pointer rounded-lg border"
+                          style={{ background: isValidHex(customHex) ? customHex : '#e5e7eb' }}
+                          title="Pick a colour"
+                        >
+                          <input
+                            type="color"
+                            value={isValidHex(customHex) ? customHex : '#4F46E5'}
+                            onChange={handleCustomHex}
+                            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                            aria-label="Custom theme colour picker"
+                          />
+                        </label>
                         <Input type="text" placeholder="#4F46E5" maxLength={7} className="flex-1 font-mono" value={customHex} onChange={handleCustomHex} />
                         <span className="text-xs text-gray-400">Custom</span>
                       </div>
@@ -667,18 +680,18 @@ const ProfileSetup = () => {
           </div>
         )}
 
-        {/* Save button — always visible */}
-        <div className="mt-8 flex gap-3 border-t pt-5">
+        {/* Save — sticky action bar, reachable across every tab (pattern #6) */}
+        <StickyActionBar>
+          <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>Cancel</Button>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 rounded py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+            className="rounded px-8 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
             style={{ background: tc }}
           >
             {loading ? "Saving…" : "Save Profile"}
           </button>
-          <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>Cancel</Button>
-        </div>
+        </StickyActionBar>
       </form>
     </div>
   );
