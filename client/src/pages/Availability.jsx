@@ -7,7 +7,7 @@ import {
 import BackButton from "../components/common/BackButton";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Button, FormField, Select, Input, cn,
+  PageHeader, Card, Button, FormField, Select, Input, StickyActionBar, cn,
 } from "../components/dashboard/ui";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
@@ -263,22 +263,21 @@ const Availability = () => {
             )}
           </Card>
 
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
+          <StickyActionBar>
             {hasSaved && (
               <Button
                 type="button"
                 variant="secondary"
                 disabled={loading}
                 onClick={() => { fetchAvailability(); setIsEditing(false); setDirty(false); }}
-                className="w-full sm:w-auto sm:px-8"
               >
                 Cancel
               </Button>
             )}
-            <Button type="submit" disabled={loading} className="w-full sm:flex-1">
+            <Button type="submit" disabled={loading}>
               {loading ? "Saving..." : "Save Availability"}
             </Button>
-          </div>
+          </StickyActionBar>
         </form>
       )}
     </div>
