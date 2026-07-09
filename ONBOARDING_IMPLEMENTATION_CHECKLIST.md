@@ -12,7 +12,7 @@
 
 ### Environment Variables
 - [ ] Ensure `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are set in `server/.env`
-- [ ] (Optional) Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_NUMBER` to enable WhatsApp OTP
+- [ ] (Optional) Set `AISENSY_API_URL`, `AISENSY_WEBHOOK_SECRET` to enable WhatsApp OTP
 - [ ] (Optional) Set `NODE_ENV=development` to see OTP logs
 
 ### Server
@@ -378,7 +378,7 @@ npm test -- onboarding.test.jsx
 - [ ] Track step drop-off rates
 - [ ] Collect user feedback on UX friction points
 - [ ] Monitor API latency
-- [ ] Plan next iteration (Twilio WhatsApp, webhook auto-verify, etc.)
+- [ ] Plan next iteration (webhook auto-verify, etc.)
 
 ---
 

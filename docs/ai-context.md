@@ -61,7 +61,7 @@ result = await supabaseAdmin.from('table').insert(safePayload);
 - Admin: `/admin/*` (login at `/hello-sloth`)
 
 ## Known Issues / Constraints
-- Twilio WhatsApp is disabled — all WhatsApp calls are stubs in `notify.js`
+- WhatsApp is live via AiSensy — `notify.js` routes through `notificationEngine.js`, DB-configured per event/provider
 - `commission_applied` column requires `v1.7_pricing_snapshot.sql` migration (fallback in place)
 - Server reminder cron runs every 5 minutes, OTP cleanup every 60 minutes (set in `server.js`)
 - `supabaseAdmin` (service role key) bypasses RLS — use only in server-side controllers

@@ -88,7 +88,7 @@ This is a genuinely strong base: the four config-driven engines (notifications, 
 3. **In-process cron via `setInterval`** (reminders 5m, OTP cleanup 60m, email queue 60s, badge engine 60m) — single-instance assumption, no Redis/BullMQ. "Queues" are DB tables (`email_logs.status`). Platform-health monitoring must be built on DB state + heartbeats, not a job framework.
 4. **Custom admin JWT** — HS256, 8h, no refresh, no roles in payload beyond `type:'super_admin'`. RBAC must extend this token and `adminMiddleware` without touching the Supabase vendor/user auth path.
 5. **Razorpay only** — orders + manual verify + webhook (HMAC-verified, raw-body ordering constraint in `server.js`). No RazorpayX (payout rails), no refund API usage yet. Stripe absent.
-6. **WhatsApp = AiSensy** via notification engine (DB-configured). Twilio stubs remain but are dead.
+6. **WhatsApp = AiSensy** via notification engine (DB-configured). No Twilio code exists in this repo.
 7. **Rate limiting** — `/api` global 100 req/15min applies to admin too; a busy ops console will hit it. Admin needs its own limiter bucket.
 8. **Admin UI visual language deviates from the documented design system** — dark `#0C0C0C` sidebar, Inter font, and ad-hoc accent colors (violet/blue/emerald/pink/amber), versus the documented Friendly Brutalism (Plus Jakarta Sans/Poppins, 4 brand colors). Must be reconciled (see Part I).
 9. **Test culture exists** — server 172 Jest tests, client 113 Vitest. New admin modules are expected to ship with tests.

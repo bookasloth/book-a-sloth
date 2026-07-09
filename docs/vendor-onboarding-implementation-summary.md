@@ -60,7 +60,7 @@ Complete implementation of a 10-step vendor onboarding flow with OTP verificatio
 - `otp_sessions` table stores both `email_otp` and `phone_otp` with separate verification flags
 - UI shows two input boxes side-by-side for both channels
 - Email verification required, phone optional
-- Currently logs OTP in dev mode; Twilio integration can be enabled later
+- `sendWhatsAppOtp` now routes through `notificationEngine.js` to AiSensy (live, not Twilio)
 
 ---
 
@@ -213,7 +213,6 @@ POST /api/onboarding/mark-complete
 - Unit tests in `server/__tests__/vendorOnboarding.test.js` (stubs written)
 - E2E tests for full 10-step flow
 - Razorpay webhook handler for payment.captured events
-- Twilio WhatsApp integration (currently dev mode logging)
 - Console error verification
 - Lighthouse performance audit
 
@@ -249,14 +248,12 @@ POST /api/onboarding/mark-complete
 5. **Test resume:** Create account, logout, login → should resume from last step
 6. **Test payment:** Try both free and paid plans
 7. **Write integration tests** using Jest + Supertest (stubs in place)
-8. **Enable Twilio** when ready (uncomment in vendorOnboardingController.js)
-9. **Add webhook handler** for Razorpay payment.captured events
+8. **Add webhook handler** for Razorpay payment.captured events
 
 ---
 
 ## Known Limitations
 
-- WhatsApp OTP currently logs in dev mode (needs Twilio env vars)
 - No demo booking flow yet (button exists but links to `/demo-booking`)
 - Razorpay webhook auto-verification not yet implemented (frontend verify is sufficient for now)
 - Google Calendar OAuth callback needs special handling for onboarding context

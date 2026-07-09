@@ -157,10 +157,9 @@
 
 ## Long-Term Backlog
 
-### WhatsApp Re-enable via Twilio 💡
-- Twilio stubs exist in `notify.js`
-- AiSensy is the active WhatsApp provider
-- Could offer Twilio as an alternative provider in the notifications engine
+### Twilio as Alternative WhatsApp Provider 💡
+- AiSensy is the active WhatsApp provider (no Twilio code exists today)
+- Could add Twilio as an alternative provider in the notifications engine
 
 ### Google Ads / UTM Tracking 💡
 - Booking source tracking (how did the guest find this service)
