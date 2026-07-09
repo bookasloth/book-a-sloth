@@ -20,6 +20,11 @@ describe('route manifest covers the router', () => {
     const manifest = new Set(RESERVED_FIRST_SEGMENTS);
     const missing = [];
     for (const p of routePaths) {
+      // Only top-level (absolute) routes claim a URL first-segment. A relative
+      // child path like <Route path="start"> under <Route path="/dashboard/kyc/flow">
+      // resolves to /dashboard/kyc/flow/start — its first segment is the parent's
+      // ("dashboard"), already covered — so it's not a claimable username segment.
+      if (!p.startsWith('/')) continue;
       const seg = p.replace(/^\//, '').split('/')[0];
       if (!seg || seg.startsWith(':') || seg === '*') continue; // dynamic / catch-all / index
       if (!manifest.has(seg)) missing.push(seg);
