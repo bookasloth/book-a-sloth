@@ -119,7 +119,6 @@ The booking platform is functionally complete. All critical flows work end-to-en
 |---|---|---|---|
 | BUG-16 | Logged-in users had to verify OTP again | High | **Fixed** |
 | BUG-18 | `/my-bookings` routes guest to vendor dashboard | Medium | Open |
-| — | WhatsApp via Twilio disabled (stub only) | Low | By design (AiSensy used instead) |
 | — | `commission_applied` column: v1.7 migration needed | Medium | **Workaround in place** (schema fallback) |
 | — | Admin dashboard trend % hardcoded | Low | Open |
 | — | Badge metrics: 2 of 14 always return 0 | Low | Open |

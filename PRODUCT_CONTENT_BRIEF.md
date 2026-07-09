@@ -152,7 +152,7 @@ Razorpay fee:  ~₹2.34   (borne by vendor, recorded from actual API response)
 - **Web only:** responsive web app, no native mobile app.
 - **Async only:** no real-time chat; communication is booking + email/WhatsApp.
 - **Single-location services:** no multi-location support yet.
-- **WhatsApp = AiSensy**, not Twilio (Twilio code exists only as stubs).
+- **WhatsApp = AiSensy**, not Twilio (no Twilio code exists in this repo).
 
 ---
 

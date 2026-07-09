@@ -65,11 +65,10 @@ _Last updated: 2026-06-13_
   `bookingController.js` schema-fallback remains as defence-in-depth (harmless).
 - No DB migration is currently outstanding.
 
-### Twilio WhatsApp Disabled
-- All WhatsApp sends in `notify.js` are stubs (`sendAppointmentWhatsApp` → returns false)
-- OTP → email only
-- Appointment notifications → email only
-- Re-enable: restore Twilio imports in `notify.js`
+### WhatsApp via AiSensy
+- `notify.js` routes WhatsApp sends through `notificationEngine.js` to AiSensy (`aisensyService.js`), not Twilio — no Twilio code exists in this repo
+- Enabled per event/provider from DB (`notification_events.whatsapp_enabled` + `notification_providers.is_active`), admin-configurable
+- OTP and appointment notifications send over both email and WhatsApp where the channel is enabled
 
 ### Features Not Yet Built
 - Guest booking history dashboard (guests redirected to `/my-bookings` but shows host dashboard)

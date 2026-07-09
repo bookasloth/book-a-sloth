@@ -147,7 +147,7 @@ Key decisions with context and rationale. Read this before making changes to fou
 
 **Decision:** WhatsApp notifications use AiSensy's campaign API, not Twilio.
 
-**Context:** Twilio WhatsApp was the original plan. AiSensy was chosen as the active provider. Twilio stubs remain in `notify.js`.
+**Context:** Twilio WhatsApp was the original plan. AiSensy was chosen as the active provider; no Twilio code was ever shipped to `notify.js`.
 
 **Rationale:**
 - AiSensy uses campaign-name-based sending (no template approval per-message)
@@ -155,10 +155,10 @@ Key decisions with context and rationale. Read this before making changes to fou
 - Credentials in DB (admin-configurable), not hardcoded
 
 **Consequences:**
-- `notify.js` still has Twilio stub functions — they return `false` without sending
+- `notify.js` routes all WhatsApp sends through `notificationEngine.js` to `aisensyService.js` — no Twilio code path exists
 - `aisensyService.js` is the active WhatsApp implementation
 - `notification_providers` DB table stores AiSensy credentials (masked in admin UI)
-- Re-enabling Twilio would require: restoring imports in `notify.js` and adding Twilio as a provider option in the notification engine
+- Adding Twilio would require introducing it from scratch as a new provider option in the notification engine
 
 ---
 

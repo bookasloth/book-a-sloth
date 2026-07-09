@@ -202,7 +202,6 @@ with subscription billing.
 
 ## ⚠️ Known Gaps
 
-- WhatsApp via Twilio is disabled (stubs only) — AiSensy is the active WhatsApp provider
 - Guest booking history page (`/my-bookings`) redirects to vendor dashboard (BUG-18)
 - Review submission UI not yet built (API exists)
 - Admin payout approval workflow is partial

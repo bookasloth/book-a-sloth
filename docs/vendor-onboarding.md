@@ -270,10 +270,9 @@ Action: Trigger `verifyRazorpayPayment` automatically instead of waiting for fro
 ## Future Enhancements
 
 1. Razorpay webhook auto-verification (payment.captured event)
-2. Twilio WhatsApp integration (currently stubs)
-3. Email template customization per locale
-4. A/B testing on plan selection UX
-5. Vendor referral code generation on completion
-6. Integration with email deliverability monitoring
-7. Abandoned onboarding recovery emails
-8. Admin onboarding analytics dashboard
+2. Email template customization per locale
+3. A/B testing on plan selection UX
+4. Vendor referral code generation on completion
+5. Integration with email deliverability monitoring
+6. Abandoned onboarding recovery emails
+7. Admin onboarding analytics dashboard
