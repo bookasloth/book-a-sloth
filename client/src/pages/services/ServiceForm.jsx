@@ -9,6 +9,7 @@ import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCatego
 import toast from 'react-hot-toast';
 import FeatureGate from '../../components/common/FeatureGate';
 import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
+import { BOLT_ENABLED } from '../../config/aiListing';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -467,7 +468,7 @@ export default function ServiceForm({ initialData, serviceId }) {
   const [aiTweak, setAiTweak]     = useState('');
 
   const runBolt = async (regenerate = false) => {
-    if (!form.title.trim() || aiLoading) return;
+    if (!BOLT_ENABLED || !form.title.trim() || aiLoading) return;
     setAiLoading(true); setAiError('');
     try {
       const body = { title: form.title, category: form.category || undefined, price: form.price || undefined, duration: form.duration || undefined };
@@ -555,9 +556,14 @@ export default function ServiceForm({ initialData, serviceId }) {
                 <label className="block text-sm font-medium text-gray-700">Service Title <span className="text-red-500">*</span></label>
                 <div className="flex items-center gap-2">
                   <span className={cn('text-xs', titleLen > 55 ? 'text-red-500' : 'text-gray-400')}>{titleLen}/60</span>
-                  <button type="button" onClick={() => runBolt(false)} disabled={!form.title.trim() || aiLoading}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--accent)] disabled:opacity-40">
-                    {aiLoading ? 'Bolt is writing…' : '✨ Write with Bolt'}
+                  <button type="button" onClick={() => runBolt(false)}
+                    disabled={!BOLT_ENABLED || !form.title.trim() || aiLoading}
+                    title={!BOLT_ENABLED ? 'AI writing — available soon' : undefined}
+                    className={cn(
+                      'inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--accent)] disabled:opacity-40',
+                      !BOLT_ENABLED && 'grayscale opacity-60 cursor-not-allowed',
+                    )}>
+                    {!BOLT_ENABLED ? '✨ Write with Bolt · soon' : (aiLoading ? 'Bolt is writing…' : '✨ Write with Bolt')}
                   </button>
                 </div>
               </div>

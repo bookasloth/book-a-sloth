@@ -11,6 +11,9 @@ vi.mock('../services/api', async (orig) => ({
   aiGenerateListing: vi.fn(),
 }));
 
+// These tests exercise the LIVE (post-key) behavior — force the feature on.
+vi.mock('../config/aiListing', () => ({ BOLT_ENABLED: true }));
+
 const renderForm = () => render(<MemoryRouter><ServiceForm /></MemoryRouter>);
 
 test('Write with Bolt button is present', async () => {
