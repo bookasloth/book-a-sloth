@@ -2,13 +2,24 @@ jest.mock('../../services/ai/generateListing', () => ({ generateListing: jest.fn
 jest.mock('../../services/planService', () => ({ getLimit: jest.fn() }));
 
 // Chainable supabase mock: from().select().eq().gte() → { count }, and from().insert() ok.
-const state = { count: 0, insertErr: null };
+// Distinguishes the ownership-check select (has an .eq('session_id', ...) in
+// its chain) from the plain quota-count select so tests can control each
+// independently. missingTableErr, when set, is what BOTH selects resolve to
+// (Bug 2: a missing table must degrade, not throw, on either read path).
+const state = { count: 0, insertErr: null, ownedSessionIds: [], missingTableErr: null, insertedRows: [] };
 jest.mock('../../config/supabase', () => {
   const q = () => {
+    const calls = { eq: [] };
     const o = {};
-    ['select', 'eq', 'gte'].forEach((m) => { o[m] = jest.fn(() => o); });
-    o.then = (res) => res({ count: state.count, error: null });
-    o.insert = jest.fn(() => Promise.resolve({ error: state.insertErr }));
+    ['select', 'gte'].forEach((m) => { o[m] = jest.fn(() => o); });
+    o.eq = jest.fn((field, value) => { calls.eq.push([field, value]); return o; });
+    o.then = (res) => {
+      if (state.missingTableErr) return res({ count: null, error: { message: state.missingTableErr } });
+      const sessionEq = calls.eq.find(([field]) => field === 'session_id');
+      if (sessionEq) return res({ count: state.ownedSessionIds.includes(sessionEq[1]) ? 1 : 0, error: null });
+      return res({ count: state.count, error: null });
+    };
+    o.insert = jest.fn((row) => { state.insertedRows.push(row); return Promise.resolve({ error: state.insertErr }); });
     return o;
   };
   return { supabaseAdmin: { from: jest.fn(q) } };
@@ -21,7 +32,11 @@ const { generateAiListing } = require('../../controllers/aiController');
 const mkRes = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
 const okFields = { title: 'T', short_description: 'S', long_description: 'L', included_items: [], excluded_items: [], faqs: [] };
 
-beforeEach(() => { state.count = 0; state.insertErr = null; generateListing.mockReset(); planService.getLimit.mockReset(); });
+beforeEach(() => {
+  state.count = 0; state.insertErr = null; state.ownedSessionIds = [];
+  state.missingTableErr = null; state.insertedRows = [];
+  generateListing.mockReset(); planService.getLimit.mockReset();
+});
 
 test('503 when generation unavailable (no key)', async () => {
   planService.getLimit.mockResolvedValue(1);
@@ -56,14 +71,59 @@ test('200 generate returns fields + new session_id, consumes quota', async () =>
   expect(payload.fields.title).toBe('T');
 });
 
-test('regenerate (session_id present) does not check quota', async () => {
+test('regenerate with an OWNED session_id does not check quota', async () => {
   planService.getLimit.mockResolvedValue(1);
-  state.count = 5; // over limit, but regenerate must ignore it
+  state.count = 5; // over limit, but an owned regenerate must ignore it
+  state.ownedSessionIds.push('sess-1'); // a prior 'generate' row for this host+session exists
   generateListing.mockResolvedValue({ fields: okFields, model: 'claude-sonnet-5' });
   const res = mkRes();
   await generateAiListing({ user: { id: 'h1' }, vendorPlan: 'starter', body: { title: 'X', session_id: 'sess-1' } }, res);
   expect(res.status).toHaveBeenCalledWith(200);
   expect(generateListing).toHaveBeenCalledWith(expect.objectContaining({ regenerate: true }));
+  const payload = res.json.mock.calls[0][0];
+  expect(payload.session_id).toBe('sess-1'); // reuses the owned session, no fresh quota unit
+  expect(state.insertedRows[0].kind).toBe('regenerate'); // no 'generate' unit consumed
+});
+
+test('forged/unowned session_id gets NO free ride: falls through to the quota-checked generate path', async () => {
+  planService.getLimit.mockResolvedValue(2);
+  state.count = 0; // under quota
+  // state.ownedSessionIds stays empty — no 'generate' row for this host+session exists
+  generateListing.mockResolvedValue({ fields: okFields, model: 'claude-haiku-4-5-20251001' });
+  const res = mkRes();
+  await generateAiListing({ user: { id: 'h1' }, vendorPlan: 'professional', body: { title: 'X', session_id: 'forged-session' } }, res);
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(generateListing).toHaveBeenCalledWith(expect.objectContaining({ regenerate: false }));
+  const payload = res.json.mock.calls[0][0];
+  expect(payload.session_id).not.toBe('forged-session'); // fresh session_id minted, forged one dropped
+  expect(state.insertedRows[0].kind).toBe('generate'); // a real quota unit was consumed
+});
+
+test('forged/unowned session_id can still 429 once quota is exhausted', async () => {
+  planService.getLimit.mockResolvedValue(1);
+  state.count = 1; // already at the limit
+  const res = mkRes();
+  await generateAiListing({ user: { id: 'h1' }, vendorPlan: 'starter', body: { title: 'X', session_id: 'forged-session-2' } }, res);
+  expect(res.status).toHaveBeenCalledWith(429);
+});
+
+test('missing-table error on the count/ownership select degrades gracefully, never hangs/throws', async () => {
+  state.missingTableErr = "Could not find the table 'public.ai_listing_generations' in the schema cache";
+  planService.getLimit.mockResolvedValue(2);
+  generateListing.mockResolvedValue({ fields: okFields, model: 'claude-haiku-4-5-20251001' });
+  const res = mkRes();
+  await generateAiListing({ user: { id: 'h1' }, vendorPlan: 'professional', body: { title: 'X', session_id: 'any-session' } }, res);
+  expect(res.status).toHaveBeenCalledWith(200); // ownership degrades to false, count degrades to 0
+  expect(generateListing).toHaveBeenCalledWith(expect.objectContaining({ regenerate: false }));
+});
+
+test('missing-table error still maps a downstream AI_UNAVAILABLE to 503, not a hang', async () => {
+  state.missingTableErr = "Could not find the table 'public.ai_listing_generations' in the schema cache";
+  planService.getLimit.mockResolvedValue(2);
+  generateListing.mockRejectedValue(new Error('AI_UNAVAILABLE'));
+  const res = mkRes();
+  await generateAiListing({ user: { id: 'h1' }, vendorPlan: 'professional', body: { title: 'X', session_id: 'any-session' } }, res);
+  expect(res.status).toHaveBeenCalledWith(503);
 });
 
 test('unlimited plan (-1) skips quota', async () => {

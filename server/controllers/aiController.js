@@ -14,6 +14,16 @@ const WINDOW_DAYS = { starter: 182, creator: 91, professional: 30, supreme: 0 };
 const DEFAULT_WINDOW_DAYS = 182;
 const TABLE = 'ai_listing_generations';
 
+// Missing-table degradation detector — same regex as planService.js's
+// _isMissingSchema (not exported there, so replicated here; matches the local
+// schemaMissing() pattern in serviceController.js/bookingController.js).
+// Supabase's real error for an un-migrated table is "Could not find the table
+// 'public.ai_listing_generations' in the schema cache", which the old
+// substring check ('does not exist') missed — that let the count/ownership
+// reads below re-throw uncaught and hang the request on a fresh DB.
+const _isMissingSchema = (error) =>
+  error && /Could not find the|does not exist|relation .* does not exist/i.test(error.message || '');
+
 async function countGeneratesInWindow(hostId, windowDays) {
   const since = new Date(Date.now() - windowDays * 864e5).toISOString();
   try {
@@ -29,7 +39,30 @@ async function countGeneratesInWindow(hostId, windowDays) {
     // Migration not yet applied on this DB — degrade to "no quota row" rather
     // than a 500 (graceful-degradation requirement; feature must not hard-fail
     // ahead of the ai_listing_generations table existing everywhere).
-    if (String(e.message || '').includes('does not exist')) return 0;
+    if (_isMissingSchema(e)) return 0;
+    throw e;
+  }
+}
+
+// session_id is client-supplied and unvalidated. Treating its mere presence
+// as "this is a free regenerate" (the old `Boolean(session_id)` gate) let any
+// host forge an arbitrary id and always hit the free path — unlimited free
+// generation. A request is only a real regenerate if a 'generate' row for
+// THIS host and THIS session_id already exists. Degrades to "not owned" (same
+// as the quota read) so a missing table falls through to the normal,
+// quota-checked GENERATE path instead of throwing.
+async function isOwnedGenerateSession(hostId, sessionId) {
+  try {
+    const { count, error } = await supabaseAdmin
+      .from(TABLE)
+      .select('id', { count: 'exact', head: true })
+      .eq('host_id', hostId)
+      .eq('session_id', sessionId)
+      .eq('kind', 'generate');
+    if (error) throw error;
+    return (count || 0) > 0;
+  } catch (e) {
+    if (_isMissingSchema(e)) return false;
     throw e;
   }
 }
@@ -53,9 +86,9 @@ async function generateAiListing(req, res) {
     return res.status(400).json({ message: 'A service title is required.' });
   }
 
-  const isRegenerate = Boolean(session_id);
+  const isRegenerate = session_id ? await isOwnedGenerateSession(hostId, session_id) : false;
 
-  // Quota gate — generate only. Regenerating within an existing session is free.
+  // Quota gate — generate only. Regenerating within an owned session is free.
   if (!isRegenerate) {
     const limit = await planService.getLimit(plan, 'ai_generations');
     if (limit !== -1) {
@@ -91,7 +124,9 @@ async function generateAiListing(req, res) {
     return res.status(502).json({ message: 'AI writing failed. Please try again in a moment.' });
   }
 
-  const sid = session_id || crypto.randomUUID();
+  // Only carry the caller's session_id forward when it was verified above as
+  // an owned regenerate — an unowned/forged one is never reused.
+  const sid = isRegenerate ? session_id : crypto.randomUUID();
   await logUsage({
     host_id: hostId, session_id: sid, plan_slug: plan,
     model: result.model.includes('sonnet') ? 'sonnet' : 'haiku',
