@@ -31,7 +31,9 @@ const FABRICATION = /(₹|\bRs\.?\b|\$\d|\b\d+\s*%|money[- ]?back|guarantee|cert
 const clamp = (s, n) => String(s || '').trim().slice(0, n);
 const arr = (v) => (Array.isArray(v) ? v : []);
 
-function sanitizeListing(raw, { allowedCategorySlugs = [] } = {}) {
+function sanitizeListing(raw, options) {
+  // ponytail: null-safe options destructuring
+  const { allowedCategorySlugs = [] } = (options && typeof options === 'object') ? options : {};
   const r = raw && typeof raw === 'object' ? raw : {};
   const dropped = [];
   const guard = (key, val) => {
@@ -44,11 +46,32 @@ function sanitizeListing(raw, { allowedCategorySlugs = [] } = {}) {
   fields.short_description = clamp(guard('short_description', r.short_description), 160);
   fields.long_description = guard('long_description', String(r.long_description || '').trim());
   fields.important_note = clamp(guard('important_note', r.important_note), 200);
-  fields.included_items = arr(r.included_items).map((x) => String(x).trim()).filter(Boolean).slice(0, 6);
-  fields.excluded_items = arr(r.excluded_items).map((x) => String(x).trim()).filter(Boolean).slice(0, 6);
+
+  // Guard each included item and filter blanks
+  fields.included_items = arr(r.included_items)
+    .map((x, i) => {
+      const trimmed = String(x).trim();
+      return guard(`included_items[${i}]`, trimmed);
+    })
+    .filter(Boolean)
+    .slice(0, 6);
+
+  // Guard each excluded item and filter blanks
+  fields.excluded_items = arr(r.excluded_items)
+    .map((x, i) => {
+      const trimmed = String(x).trim();
+      return guard(`excluded_items[${i}]`, trimmed);
+    })
+    .filter(Boolean)
+    .slice(0, 6);
+
+  // Guard FAQ questions and answers
   fields.faqs = arr(r.faqs)
     .filter((f) => f && (f.question || f.answer))
-    .map((f) => ({ question: clamp(f.question, 200), answer: clamp(guard('faq_answer', f.answer), 400) }))
+    .map((f, i) => ({
+      question: clamp(guard(`faq[${i}]_question`, f.question), 200),
+      answer: clamp(guard(`faq[${i}]_answer`, f.answer), 400)
+    }))
     .filter((f) => f.question && f.answer)
     .slice(0, 5);
 

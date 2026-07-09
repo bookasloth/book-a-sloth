@@ -43,4 +43,52 @@ describe('sanitizeListing', () => {
     expect(() => sanitizeListing(null, {})).not.toThrow();
     expect(() => sanitizeListing({ faqs: 'not-an-array' }, {})).not.toThrow();
   });
+
+  test('strips fabrication from included_items elements', () => {
+    const { fields, dropped } = sanitizeListing({
+      included_items: ['Lifetime access', 'Only ₹499!', 'FDA certified'],
+      title: 'x',
+      short_description: 'y',
+      long_description: 'z',
+      excluded_items: [],
+      faqs: [],
+    }, {});
+    expect(fields.included_items).toEqual(['Lifetime access']);
+    expect(dropped).toEqual(expect.arrayContaining(['included_items[1]', 'included_items[2]']));
+  });
+
+  test('strips fabrication from excluded_items elements', () => {
+    const { fields, dropped } = sanitizeListing({
+      excluded_items: ['No pets', 'Money-back guarantee', 'ISO certified'],
+      title: 'x',
+      short_description: 'y',
+      long_description: 'z',
+      included_items: [],
+      faqs: [],
+    }, {});
+    expect(fields.excluded_items).toEqual(['No pets']);
+    expect(dropped).toEqual(expect.arrayContaining(['excluded_items[1]', 'excluded_items[2]']));
+  });
+
+  test('drops FAQ if question contains fabrication signal', () => {
+    const { fields, dropped } = sanitizeListing({
+      faqs: [
+        { question: 'Is this FDA approved?', answer: 'Yes, absolutely.' },
+        { question: 'What is the price?', answer: 'Only ₹499!' },
+      ],
+      title: 'x',
+      short_description: 'y',
+      long_description: 'z',
+      included_items: [],
+      excluded_items: [],
+    }, {});
+    expect(fields.faqs).toHaveLength(0);
+    expect(dropped).toEqual(expect.arrayContaining(['faq[0]_question', 'faq[1]_answer']));
+  });
+
+  test('handles null options safely without throwing', () => {
+    expect(() => sanitizeListing({ title: 'x', short_description: 'y', long_description: 'z', included_items: [], excluded_items: [], faqs: [] }, null)).not.toThrow();
+    const { fields } = sanitizeListing({ title: 'Test', short_description: 'desc', long_description: 'long', included_items: ['a'], excluded_items: ['b'], faqs: [{ question: 'q', answer: 'a' }] }, null);
+    expect(fields.title).toBe('Test');
+  });
 });
