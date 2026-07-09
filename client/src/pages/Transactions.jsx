@@ -3,8 +3,9 @@ import { Receipt, User, CalendarDays, IndianRupee, CreditCard, Copy, FileText } 
 import { getTransactions, getMyInvoices, invoiceUrl } from "../services/api";
 import toast from "react-hot-toast";
 import {
-  PageHeader, DataTable, StatusBadge, Modal, Button,
-  SearchInput, Select, EmptyState, SkeletonCard, fmtMoney, cn,
+  PageHeader, DataTable, StatusBadge, Modal,
+  SearchInput, Select, EmptyState, ErrorState, SkeletonCard,
+  useInfiniteScroll, fmtMoney, cn,
 } from "../components/dashboard/ui";
 
 const fmtDate = (iso) =>
@@ -240,25 +241,38 @@ const Transactions = () => {
   const [status, setStatus] = useState("");
   const [dateRange, setDateRange] = useState("");
   const [sort, setSort] = useState("desc");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);    // first-page / filter-change load
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [error, setError] = useState(false);
   const [selected, setSelected] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  // One loader for both the first page (replace) and subsequent pages (append).
+  const load = useCallback(async (pageToLoad, replace) => {
+    replace ? setLoading(true) : setLoadingMore(true);
+    setError(false);
     try {
-      const { data: res } = await getTransactions({ page, limit: PAGE_SIZE, search, status, sort, dateFrom: dateFromFor(dateRange) });
-      setData(res.data || []);
+      const { data: res } = await getTransactions({ page: pageToLoad, limit: PAGE_SIZE, search, status, sort, dateFrom: dateFromFor(dateRange) });
+      const rows = res.data || [];
+      setData((prev) => (replace ? rows : [...prev, ...rows]));
       setTotal(res.total || 0);
+      setHasMore(pageToLoad * PAGE_SIZE < (res.total || 0));
     } catch {
-      toast.error("Failed to load transactions");
+      setError(true);
+      if (replace) toast.error("Failed to load transactions");
     } finally {
-      setLoading(false);
+      replace ? setLoading(false) : setLoadingMore(false);
     }
-  }, [page, search, status, sort, dateRange]);
+  }, [search, status, sort, dateRange]);
 
-  useEffect(() => { load(); }, [load]);
+  // Reset to page 1 and replace whenever filters change (load identity changes with them).
+  useEffect(() => { setPage(1); load(1, true); }, [load]);
 
-  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  const loadMore = useCallback(() => {
+    setPage((p) => { const next = p + 1; load(next, false); return next; });
+  }, [load]);
+
+  const sentinelRef = useInfiniteScroll(loadMore, { hasMore, loading: loading || loadingMore });
 
   return (
     <div>
@@ -300,6 +314,8 @@ const Transactions = () => {
       <div className="space-y-5 md:hidden">
         {loading ? (
           <div className="space-y-2.5">{Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+        ) : error && data.length === 0 ? (
+          <ErrorState message="Couldn’t load your transactions." onRetry={() => load(1, true)} />
         ) : data.length === 0 ? (
           <EmptyState icon={Receipt} title="No transactions found" description="Transactions show up here once guests pay for bookings." />
         ) : (
@@ -327,17 +343,18 @@ const Transactions = () => {
         />
       </div>
 
-      {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} of {total}
-          </span>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
-            <span className="px-1 text-xs text-gray-500 sm:hidden">{page} / {totalPages}</span>
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
-          </div>
+      {/* Infinite scroll: IntersectionObserver sentinel + inline load-more skeleton +
+          inline retry on a load-more failure. Replaces numbered pagination. */}
+      {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-1" />}
+      {loadingMore && <div className="mt-3"><SkeletonCard /></div>}
+      {error && data.length > 0 && (
+        <div className="mt-4 py-2 text-center text-sm text-gray-500">
+          Couldn’t load more.{" "}
+          <button type="button" onClick={loadMore} className="font-medium text-primary underline">Retry</button>
         </div>
+      )}
+      {!hasMore && !loading && data.length > 0 && (
+        <p className="mt-4 text-center text-xs text-gray-400">Showing all {total} transactions</p>
       )}
 
       <Modal open={!!selected} onClose={() => setSelected(null)} title="Transaction Details" size="lg">

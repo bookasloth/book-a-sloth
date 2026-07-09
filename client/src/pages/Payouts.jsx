@@ -5,7 +5,7 @@ import { getPayoutBalance, getPayoutRequests, requestPayout, getMyKyc } from "..
 import toast from "react-hot-toast";
 import {
   PageHeader, Section, StatCard, DataTable, StatusBadge, Modal, Button,
-  FormField, Input, Textarea, EmptyState, SkeletonCard, StickyActionBar, fmtMoney,
+  FormField, Input, Textarea, EmptyState, ErrorState, SkeletonCard, StickyActionBar, fmtMoney,
 } from "../components/dashboard/ui";
 
 const fmtDate = (iso) =>
@@ -88,10 +88,13 @@ const Payouts = () => {
   const [balance, setBalance] = useState(null);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [kycStatus, setKycStatus] = useState(null);
 
   const load = async () => {
+    setLoading(true);
+    setError(false);
     try {
       const [{ data: bal }, { data: reqs }, kyc] = await Promise.all([
         getPayoutBalance(),
@@ -102,6 +105,7 @@ const Payouts = () => {
       setRequests(reqs || []);
       setKycStatus(kyc?.status || "not_started");
     } catch {
+      setError(true);
       toast.error("Failed to load payout data");
     } finally {
       setLoading(false);
@@ -122,6 +126,15 @@ const Payouts = () => {
           {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
         <DataTable columns={HISTORY_COLUMNS} rows={[]} loading />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <PageHeader title="Payouts" subtitle="Request withdrawals of your earned balance." />
+        <ErrorState message="Couldn’t load your payout data." onRetry={load} />
       </div>
     );
   }

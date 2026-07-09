@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   getHostBookings,
   cancelBooking,
@@ -16,7 +16,8 @@ import useFeatureFlags from "../hooks/useFeatureFlags";
 import StatusChip from "../components/common/StatusChip";
 import {
   PageHeader, Card, Button, SearchInput, SegmentedControl,
-  StatusBadge, Modal, SkeletonCard, EmptyState, cn,
+  StatusBadge, Modal, SkeletonCard, EmptyState, ErrorState,
+  useInfiniteScroll, cn,
 } from "../components/dashboard/ui";
 
 const fmtDate = (iso) =>
@@ -486,13 +487,16 @@ const PAGE_SIZE = 10;
 const Bookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [visible, setVisible] = useState(PAGE_SIZE); // client-side infinite window
   const [selected, setSelected] = useState(null);
   const [reviews, setReviews] = useState({});
 
   const fetch = async () => {
+    setLoading(true);
+    setError(false);
     try {
       const { data } = await getHostBookings();
       const list = data || [];
@@ -505,6 +509,7 @@ const Bookings = () => {
         )
       ).then((pairs) => setReviews(Object.fromEntries(pairs)));
     } catch {
+      setError(true);
       toast.error("Failed to load bookings");
     } finally {
       setLoading(false);
@@ -538,8 +543,12 @@ const Bookings = () => {
     return [...list].sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
   }, [bookings, filter, search]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
-  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Client-side infinite window: grow `visible` as the sentinel scrolls into view.
+  // (getHostBookings returns the full list; no server pagination to page through.)
+  const paged = filtered.slice(0, visible);
+  const hasMore = visible < filtered.length;
+  const loadMore = useCallback(() => setVisible((v) => v + PAGE_SIZE), []);
+  const sentinelRef = useInfiniteScroll(loadMore, { hasMore, loading: false });
 
   const counts = (() => {
     const now = new Date();
@@ -562,6 +571,15 @@ const Bookings = () => {
     );
   }
 
+  if (error && bookings.length === 0) {
+    return (
+      <div>
+        <PageHeader title="Bookings" subtitle="Manage your appointments." />
+        <ErrorState message="Couldn’t load your bookings." onRetry={fetch} />
+      </div>
+    );
+  }
+
   return (
     <div>
       {selected && (
@@ -580,7 +598,7 @@ const Bookings = () => {
         actions={
           <SearchInput
             value={search}
-            onChange={(v) => { setSearch(v); setPage(1); }}
+            onChange={(v) => { setSearch(v); setVisible(PAGE_SIZE); }}
             placeholder="Search customer, service…"
             className="sm:w-64"
           />
@@ -591,7 +609,7 @@ const Bookings = () => {
       <SegmentedControl
         className="mb-5"
         value={filter}
-        onChange={(f) => { setFilter(f); setPage(1); }}
+        onChange={(f) => { setFilter(f); setVisible(PAGE_SIZE); }}
         options={["all", "upcoming", "past", "cancelled"].map((f) => ({
           value: f,
           label: f.charAt(0).toUpperCase() + f.slice(1),
@@ -677,25 +695,10 @@ const Bookings = () => {
         </div>
       </Card>
 
-      {/* Pagination — shared by both views */}
-      {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between gap-3 text-sm text-gray-500">
-          <span className="text-xs">
-            Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const p = page <= 3 ? i + 1 : page + i - 2;
-              if (p < 1 || p > totalPages) return null;
-              return (
-                <Button key={p} size="sm" variant={p === page ? "primary" : "outline"} onClick={() => setPage(p)} className="hidden sm:inline-flex">{p}</Button>
-              );
-            })}
-            <span className="px-2 text-xs sm:hidden">{page} / {totalPages}</span>
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
-          </div>
-        </div>
+      {/* Infinite scroll: sentinel grows the window; shared by both views. */}
+      {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-1" />}
+      {!hasMore && filtered.length > PAGE_SIZE && (
+        <p className="mt-4 text-center text-xs text-gray-400">Showing all {filtered.length} bookings</p>
       )}
     </div>
   );
