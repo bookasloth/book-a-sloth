@@ -1,5 +1,6 @@
 jest.mock('../../services/ai/generateListing', () => ({ generateListing: jest.fn() }));
 jest.mock('../../services/planService', () => ({ getLimit: jest.fn() }));
+jest.mock('../../services/ai/anthropicClient', () => ({ isConfigured: jest.fn(() => true) }));
 
 // Chainable supabase mock: from().select().eq().gte() → { count }, and from().insert() ok.
 // Distinguishes the ownership-check select (has an .eq('session_id', ...) in
@@ -12,7 +13,10 @@ jest.mock('../../services/planService', () => ({ getLimit: jest.fn() }));
 // sessionIdQueryCount counts how many times an .eq('session_id', ...) was
 // ever issued, so tests can assert the ownership DB read was skipped
 // entirely for a malformed session_id (Bug 1: no 22P02 round-trip).
-const state = { count: 0, insertErr: null, ownedSessionIds: [], missingTableErr: null, insertedRows: [], countErr: null, sessionIdQueryCount: 0 };
+// regenerateCount backs the NEW per-session regenerate-cap query
+// (.eq('session_id', ...).eq('kind', 'regenerate')) — distinct from
+// ownedSessionIds, which backs the ownership check (.eq('kind', 'generate')).
+const state = { count: 0, insertErr: null, ownedSessionIds: [], missingTableErr: null, insertedRows: [], countErr: null, sessionIdQueryCount: 0, regenerateCount: 0 };
 jest.mock('../../config/supabase', () => {
   const q = () => {
     const calls = { eq: [] };
@@ -26,6 +30,12 @@ jest.mock('../../config/supabase', () => {
     o.then = (res) => {
       if (state.missingTableErr) return res({ count: null, error: { message: state.missingTableErr } });
       const sessionEq = calls.eq.find(([field]) => field === 'session_id');
+      const kindEq = calls.eq.find(([field]) => field === 'kind');
+      // Regenerate-cap count query: session_id + kind='regenerate'. Distinct
+      // from the ownership check below, which is session_id + kind='generate'.
+      if (sessionEq && kindEq && kindEq[1] === 'regenerate') {
+        return res({ count: state.regenerateCount, error: null });
+      }
       if (sessionEq) return res({ count: state.ownedSessionIds.includes(sessionEq[1]) ? 1 : 0, error: null });
       if (state.countErr) return res({ count: null, error: { message: state.countErr } });
       return res({ count: state.count, error: null });
@@ -38,20 +48,35 @@ jest.mock('../../config/supabase', () => {
 
 const { generateListing } = require('../../services/ai/generateListing');
 const planService = require('../../services/planService');
+const anthropicClient = require('../../services/ai/anthropicClient');
 const { generateAiListing } = require('../../controllers/aiController');
 
 const mkRes = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
 const okFields = { title: 'T', short_description: 'S', long_description: 'L', included_items: [], excluded_items: [], faqs: [] };
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Mirrors aiController.js's MAX_REGENERATIONS_PER_SESSION (not exported —
+// no other consumer needs it, so the test pins the literal instead).
+const MAX_REGENERATIONS_PER_SESSION = 8;
 
 beforeEach(() => {
   state.count = 0; state.insertErr = null; state.ownedSessionIds = [];
   state.missingTableErr = null; state.insertedRows = [];
-  state.countErr = null; state.sessionIdQueryCount = 0;
+  state.countErr = null; state.sessionIdQueryCount = 0; state.regenerateCount = 0;
   generateListing.mockReset(); planService.getLimit.mockReset();
+  anthropicClient.isConfigured.mockReset(); anthropicClient.isConfigured.mockReturnValue(true);
 });
 
-test('503 when generation unavailable (no key)', async () => {
+test('503 when AI is not configured (dormancy short-circuit, before any DB/quota work)', async () => {
+  anthropicClient.isConfigured.mockReturnValue(false);
+  const res = mkRes();
+  await generateAiListing({ user: { id: 'h1' }, vendorPlan: 'starter', body: { title: 'X' } }, res);
+  expect(res.status).toHaveBeenCalledWith(503);
+  expect(res.json.mock.calls[0][0].ai_unavailable).toBe(true);
+  expect(planService.getLimit).not.toHaveBeenCalled();
+  expect(generateListing).not.toHaveBeenCalled();
+});
+
+test('503 when configured but generateListing throws AI_UNAVAILABLE (downstream SDK/key failure)', async () => {
   planService.getLimit.mockResolvedValue(1);
   generateListing.mockRejectedValue(new Error('AI_UNAVAILABLE'));
   const res = mkRes();
@@ -98,6 +123,28 @@ test('regenerate with an OWNED session_id does not check quota', async () => {
   const payload = res.json.mock.calls[0][0];
   expect(payload.session_id).toBe(OWNED_SESSION_ID); // reuses the owned session, no fresh quota unit
   expect(state.insertedRows[0].kind).toBe('regenerate'); // no 'generate' unit consumed
+});
+
+test('regenerate at the per-session cap returns 429, generateListing not called', async () => {
+  planService.getLimit.mockResolvedValue(1);
+  state.ownedSessionIds.push(OWNED_SESSION_ID);
+  state.regenerateCount = MAX_REGENERATIONS_PER_SESSION; // already at the cap
+  const res = mkRes();
+  await generateAiListing({ user: { id: 'h1' }, vendorPlan: 'starter', body: { title: 'X', session_id: OWNED_SESSION_ID } }, res);
+  expect(res.status).toHaveBeenCalledWith(429);
+  expect(res.json.mock.calls[0][0].message).toMatch(/regeneration limit/i);
+  expect(generateListing).not.toHaveBeenCalled();
+});
+
+test('regenerate below the per-session cap proceeds', async () => {
+  planService.getLimit.mockResolvedValue(1);
+  state.ownedSessionIds.push(OWNED_SESSION_ID);
+  state.regenerateCount = MAX_REGENERATIONS_PER_SESSION - 1; // one below the cap
+  generateListing.mockResolvedValue({ fields: okFields, model: 'claude-sonnet-5' });
+  const res = mkRes();
+  await generateAiListing({ user: { id: 'h1' }, vendorPlan: 'starter', body: { title: 'X', session_id: OWNED_SESSION_ID } }, res);
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(generateListing).toHaveBeenCalledWith(expect.objectContaining({ regenerate: true }));
 });
 
 test('forged/unowned session_id gets NO free ride: falls through to the quota-checked generate path', async () => {

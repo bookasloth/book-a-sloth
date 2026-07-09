@@ -30,9 +30,12 @@ function buildUserMessage({ title, category, price, duration, city, audience, tw
   return ctx.join('\n');
 }
 
-async function callOnce(client, { model, system, user, temperature }) {
+async function callOnce(client, { model, system, user }) {
+  // ponytail: no temperature/top_p/top_k — MODELS.regenerate (claude-sonnet-5)
+  // rejects any non-default sampling param with an HTTP 400. Regenerate
+  // variety comes from the tweak text in the prompt, not sampling params.
   const resp = await client.messages.create({
-    model, max_tokens: 1500, temperature, system,
+    model, max_tokens: 1500, system,
     tools: [LISTING_TOOL], tool_choice: { type: 'tool', name: 'emit_listing' },
     messages: [{ role: 'user', content: user }],
   });
@@ -45,13 +48,12 @@ async function generateListing(opts = {}) {
   if (!client) throw new Error('AI_UNAVAILABLE');
   const { regenerate = false, allowedCategorySlugs = [] } = opts;
   const model = regenerate ? MODELS.regenerate : MODELS.generate;
-  const temperature = regenerate ? 0.9 : 0.7;
   const user = buildUserMessage(opts);
 
-  let raw = await callOnce(client, { model, system: SYSTEM, user, temperature });
+  let raw = await callOnce(client, { model, system: SYSTEM, user });
   if (!raw) {
     raw = await callOnce(client, {
-      model, temperature,
+      model,
       system: SYSTEM + ' You MUST call emit_listing with every required field filled.',
       user,
     });

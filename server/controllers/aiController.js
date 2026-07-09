@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { supabaseAdmin } = require('../config/supabase');
 const planService = require('../services/planService');
 const { generateListing } = require('../services/ai/generateListing');
+const anthropicClient = require('../services/ai/anthropicClient');
 const { safeError } = require('../utils/httpError');
 
 // Rolling-window (days) a plan must wait before its "generate" quota renews.
@@ -14,6 +15,12 @@ const { safeError } = require('../utils/httpError');
 const WINDOW_DAYS = { starter: 182, creator: 91, professional: 30, supreme: 0 };
 const DEFAULT_WINDOW_DAYS = 182;
 const TABLE = 'ai_listing_generations';
+
+// Regenerate skips the generate quota by design (free within an owned
+// session) — this bounds how many times one session can call the pricier
+// regenerate model (MODELS.regenerate) before the host has to save the draft
+// or start a new one.
+const MAX_REGENERATIONS_PER_SESSION = 8;
 
 // Missing-table degradation detector — same regex as planService.js's
 // _isMissingSchema (not exported there, so replicated here; matches the local
@@ -78,6 +85,26 @@ async function isOwnedGenerateSession(hostId, sessionId) {
   }
 }
 
+// Per-session regenerate cap (MAX_REGENERATIONS_PER_SESSION). Same query
+// shape + same missing-table degradation as countGeneratesInWindow /
+// isOwnedGenerateSession above: an un-migrated table degrades to "0 used so
+// far" rather than throwing.
+async function countRegeneratesInSession(hostId, sessionId) {
+  try {
+    const { count, error } = await supabaseAdmin
+      .from(TABLE)
+      .select('id', { count: 'exact', head: true })
+      .eq('host_id', hostId)
+      .eq('session_id', sessionId)
+      .eq('kind', 'regenerate');
+    if (error) throw error;
+    return count || 0;
+  } catch (e) {
+    if (_isMissingSchema(e)) return 0;
+    throw e;
+  }
+}
+
 async function logUsage(row) {
   try { await supabaseAdmin.from(TABLE).insert(row); } catch (_) { /* audit only; non-fatal */ }
 }
@@ -105,10 +132,19 @@ async function generateAiListing(req, res) {
   // 503/429/422/502 mapping already handles every AI-side failure and always
   // returns; this outer catch only ever fires for the unexpected stuff.
   try {
+    // Dormant feature short-circuit: no key configured → skip straight to the
+    // same 503 the AI-side failure would produce, before touching the DB at
+    // all (quota/ownership reads). Independent of subscription_plans.limits,
+    // so an un-migrated plan row (ai_generations missing → getLimit returns
+    // 0) never surfaces as a confusing "used your 0 generations" 429.
+    if (!anthropicClient.isConfigured()) {
+      return res.status(503).json({ message: 'AI writing is temporarily unavailable. Please fill the form manually.', ai_unavailable: true });
+    }
+
     const isRegenerate = session_id ? await isOwnedGenerateSession(hostId, session_id) : false;
 
-    // Quota gate — generate only. Regenerating within an owned session is free.
     if (!isRegenerate) {
+      // Quota gate — generate only.
       const limit = await planService.getLimit(plan, 'ai_generations');
       if (limit !== -1) {
         const windowDays = WINDOW_DAYS[plan] ?? DEFAULT_WINDOW_DAYS;
@@ -120,6 +156,16 @@ async function generateAiListing(req, res) {
             current_plan: plan, limit, unlock_at: unlockAt,
           });
         }
+      }
+    } else {
+      // Regenerating within an owned session is free of the generate quota,
+      // but capped so a session can't call the pricier regenerate model
+      // unbounded.
+      const regenCount = await countRegeneratesInSession(hostId, session_id);
+      if (regenCount >= MAX_REGENERATIONS_PER_SESSION) {
+        return res.status(429).json({
+          message: "You've reached the regeneration limit for this draft. Save it or start a new one.",
+        });
       }
     }
 
