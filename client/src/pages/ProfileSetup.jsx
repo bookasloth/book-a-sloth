@@ -20,7 +20,7 @@ import {
   CREATOR_COLORS,
 } from "../utils/themeUtils";
 import {
-  PageHeader, Card, Button, FormField, Input, Select, Textarea, cn,
+  PageHeader, Card, Button, FormField, Input, Select, Textarea, StickyActionBar, cn,
 } from "../components/dashboard/ui";
 
 // ─── Minimal plan label for display ─────────────────────────────────────────
@@ -667,18 +667,18 @@ const ProfileSetup = () => {
           </div>
         )}
 
-        {/* Save button — always visible */}
-        <div className="mt-8 flex gap-3 border-t pt-5">
+        {/* Save — sticky action bar, reachable across every tab (pattern #6) */}
+        <StickyActionBar>
+          <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>Cancel</Button>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 rounded py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+            className="rounded px-8 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
             style={{ background: tc }}
           >
             {loading ? "Saving…" : "Save Profile"}
           </button>
-          <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>Cancel</Button>
-        </div>
+        </StickyActionBar>
       </form>
     </div>
   );

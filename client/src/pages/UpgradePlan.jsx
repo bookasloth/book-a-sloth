@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { getPublicPlans, createSubscription, syncSubscription, cancelSubscription } from "../services/api";
 import toast from "react-hot-toast";
 import BackButton from "../components/common/BackButton";
-import { PageHeader, Card, Button, cn, Modal, Input, FormField } from "../components/dashboard/ui";
+import { PageHeader, Card, Button, cn, Modal, ConfirmSheet, Input, FormField } from "../components/dashboard/ui";
 import { planLabel } from "../utils/themeUtils";
 import loadRazorpay from "../utils/loadRazorpay";
 
@@ -43,6 +43,7 @@ const UpgradePlan = () => {
   const [cadence, setCadence] = useState("annual"); // 'monthly' | 'annual'
   const [paying, setPaying] = useState(null);        // plan slug
   const [cancelling, setCancelling] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const [pendingPlan, setPendingPlan] = useState(null); // plan awaiting billing details
   const [billing, setBilling] = useState({
     name: user?.billing_details?.name || user?.name || "",
@@ -117,8 +118,8 @@ const UpgradePlan = () => {
     }
   }, [cadence, user, updateUser, billing]);
 
-  const handleCancel = async () => {
-    if (!window.confirm("Cancel auto-renew? You keep access until the end of the current period.")) return;
+  const doCancel = async () => {
+    setConfirmCancel(false);
     setCancelling(true);
     try {
       const { data } = await cancelSubscription();
@@ -165,7 +166,7 @@ const UpgradePlan = () => {
             )}
           </div>
           {status === "active" && (
-            <Button variant="danger-outline" size="sm" onClick={handleCancel} disabled={cancelling}>
+            <Button variant="danger-outline" size="sm" onClick={() => setConfirmCancel(true)} disabled={cancelling}>
               {cancelling ? "Cancelling…" : "Cancel auto-renew"}
             </Button>
           )}
@@ -297,6 +298,16 @@ const UpgradePlan = () => {
           </FormField>
         </div>
       </Modal>
+
+      <ConfirmSheet
+        open={confirmCancel}
+        title="Cancel auto-renew?"
+        message="You keep full access until the end of your current billing period. Auto-renewal will stop."
+        confirmLabel="Cancel auto-renew"
+        cancelLabel="Keep plan"
+        onConfirm={doCancel}
+        onClose={() => setConfirmCancel(false)}
+      />
     </div>
   );
 };
