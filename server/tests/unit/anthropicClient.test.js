@@ -1,7 +1,8 @@
 describe('anthropicClient', () => {
   const OLD = process.env.ANTHROPIC_API_KEY;
   afterEach(() => {
-    process.env.ANTHROPIC_API_KEY = OLD;
+    if (OLD === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = OLD;
     jest.resetModules();
   });
 
