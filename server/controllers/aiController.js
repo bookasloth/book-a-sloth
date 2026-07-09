@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { supabaseAdmin } = require('../config/supabase');
 const planService = require('../services/planService');
 const { generateListing } = require('../services/ai/generateListing');
+const { safeError } = require('../utils/httpError');
 
 // Rolling-window (days) a plan must wait before its "generate" quota renews.
 // Shorter = more generous (resets sooner). Keys are the real DB plan slugs
@@ -51,7 +52,17 @@ async function countGeneratesInWindow(hostId, windowDays) {
 // THIS host and THIS session_id already exists. Degrades to "not owned" (same
 // as the quota read) so a missing table falls through to the normal,
 // quota-checked GENERATE path instead of throwing.
+//
+// ai_listing_generations.session_id is `UUID NOT NULL` — a non-UUID value
+// (forged or garbage) made PostgREST throw 22P02 "invalid input syntax for
+// type uuid" on the .eq('session_id', ...) read below, a shape
+// _isMissingSchema doesn't match, so it re-threw uncaught and (Express 4, no
+// async-error wrapper) hung the request. Reject non-UUIDs before they ever
+// reach the DB, same "not owned" degradation as above.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function isOwnedGenerateSession(hostId, sessionId) {
+  if (!UUID_RE.test(sessionId)) return false;
   try {
     const { count, error } = await supabaseAdmin
       .from(TABLE)
@@ -86,54 +97,65 @@ async function generateAiListing(req, res) {
     return res.status(400).json({ message: 'A service title is required.' });
   }
 
-  const isRegenerate = session_id ? await isOwnedGenerateSession(hostId, session_id) : false;
+  // Outer guard: everything below awaits Supabase/plan-service reads that can
+  // reject with an error _isMissingSchema doesn't degrade (network blip, a
+  // genuine DB outage, etc). Express 4 has no async-error wrapper, so an
+  // uncaught rejection here used to hang the request instead of responding.
+  // The inner try/catch around generateListing() below is unchanged — its
+  // 503/429/422/502 mapping already handles every AI-side failure and always
+  // returns; this outer catch only ever fires for the unexpected stuff.
+  try {
+    const isRegenerate = session_id ? await isOwnedGenerateSession(hostId, session_id) : false;
 
-  // Quota gate — generate only. Regenerating within an owned session is free.
-  if (!isRegenerate) {
-    const limit = await planService.getLimit(plan, 'ai_generations');
-    if (limit !== -1) {
-      const windowDays = WINDOW_DAYS[plan] ?? DEFAULT_WINDOW_DAYS;
-      const used = await countGeneratesInWindow(hostId, windowDays);
-      if (used >= limit) {
-        const unlockAt = new Date(Date.now() + windowDays * 864e5).toISOString();
-        return res.status(429).json({
-          message: `You've used your ${limit} AI generation${limit === 1 ? '' : 's'} for the ${plan} plan.`,
-          current_plan: plan, limit, unlock_at: unlockAt,
-        });
+    // Quota gate — generate only. Regenerating within an owned session is free.
+    if (!isRegenerate) {
+      const limit = await planService.getLimit(plan, 'ai_generations');
+      if (limit !== -1) {
+        const windowDays = WINDOW_DAYS[plan] ?? DEFAULT_WINDOW_DAYS;
+        const used = await countGeneratesInWindow(hostId, windowDays);
+        if (used >= limit) {
+          const unlockAt = new Date(Date.now() + windowDays * 864e5).toISOString();
+          return res.status(429).json({
+            message: `You've used your ${limit} AI generation${limit === 1 ? '' : 's'} for the ${plan} plan.`,
+            current_plan: plan, limit, unlock_at: unlockAt,
+          });
+        }
       }
     }
-  }
 
-  let result;
-  try {
-    result = await generateListing({
-      title, category, price, duration, city, audience,
-      regenerate: isRegenerate,
-      allowedCategorySlugs: allowedCategorySlugsFor(),
+    let result;
+    try {
+      result = await generateListing({
+        title, category, price, duration, city, audience,
+        regenerate: isRegenerate,
+        allowedCategorySlugs: allowedCategorySlugsFor(),
+      });
+    } catch (e) {
+      if (e.message === 'AI_UNAVAILABLE') {
+        return res.status(503).json({ message: 'AI writing is temporarily unavailable. Please fill the form manually.', ai_unavailable: true });
+      }
+      if (e.message === 'AI_INVALID') {
+        return res.status(422).json({ message: 'Could not generate a listing from that title. Try a more descriptive title.' });
+      }
+      // Any other failure (SDK/network error etc.) is NOT ours to leak — log it
+      // server-side and return a clean, generic 502 instead of an unhandled 500.
+      console.error('generateAiListing: unmapped error from generateListing:', e);
+      return res.status(502).json({ message: 'AI writing failed. Please try again in a moment.' });
+    }
+
+    // Only carry the caller's session_id forward when it was verified above as
+    // an owned regenerate — an unowned/forged one is never reused.
+    const sid = isRegenerate ? session_id : crypto.randomUUID();
+    await logUsage({
+      host_id: hostId, session_id: sid, plan_slug: plan,
+      model: result.model.includes('sonnet') ? 'sonnet' : 'haiku',
+      kind: isRegenerate ? 'regenerate' : 'generate',
     });
+
+    return res.status(200).json({ fields: result.fields, session_id: sid, ai_generated: true, model: result.model });
   } catch (e) {
-    if (e.message === 'AI_UNAVAILABLE') {
-      return res.status(503).json({ message: 'AI writing is temporarily unavailable. Please fill the form manually.', ai_unavailable: true });
-    }
-    if (e.message === 'AI_INVALID') {
-      return res.status(422).json({ message: 'Could not generate a listing from that title. Try a more descriptive title.' });
-    }
-    // Any other failure (SDK/network error etc.) is NOT ours to leak — log it
-    // server-side and return a clean, generic 502 instead of an unhandled 500.
-    console.error('generateAiListing: unmapped error from generateListing:', e);
-    return res.status(502).json({ message: 'AI writing failed. Please try again in a moment.' });
+    return safeError(res, e);
   }
-
-  // Only carry the caller's session_id forward when it was verified above as
-  // an owned regenerate — an unowned/forged one is never reused.
-  const sid = isRegenerate ? session_id : crypto.randomUUID();
-  await logUsage({
-    host_id: hostId, session_id: sid, plan_slug: plan,
-    model: result.model.includes('sonnet') ? 'sonnet' : 'haiku',
-    kind: isRegenerate ? 'regenerate' : 'generate',
-  });
-
-  return res.status(200).json({ fields: result.fields, session_id: sid, ai_generated: true, model: result.model });
 }
 
 module.exports = { generateAiListing, countGeneratesInWindow, WINDOW_DAYS };
