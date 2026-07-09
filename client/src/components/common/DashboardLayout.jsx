@@ -420,7 +420,7 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
 
 /** Sticky dashboard topbar. Right-to-left: Profile, Notifications, Support. */
 const DashTopbar = ({ user, plan, planStyle, initial, logout }) => (
-  <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center border-b border-gray-200/80 bg-white/95 px-4 backdrop-blur sm:px-6 md:px-8">
+  <header className="sticky top-0 z-30 flex min-h-14 shrink-0 items-center border-b border-gray-200/80 bg-white/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur sm:px-6 md:px-8">
     <div className="ml-auto flex items-center gap-1">
       <SupportButton />
       <NotifBell />
