@@ -3,13 +3,30 @@ import { TrendingUp } from "lucide-react";
 import { getHostBookings } from "../services/api";
 import EarningsTrendChart from "../components/EarningsTrendChart";
 import {
-  PageHeader, Section, Card, EmptyState, SkeletonCard, fmtMoney,
+  PageHeader, Section, Card, EmptyState, ErrorState, SegmentedControl, SkeletonCard, fmtMoney,
 } from "../components/dashboard/ui";
+
+// Period presets for the earnings scope selector. `null` start = all time.
+const PERIODS = [
+  { value: "all", label: "All time" },
+  { value: "30d", label: "30 days" },
+  { value: "90d", label: "90 days" },
+  { value: "year", label: "This year" },
+];
+const periodStart = (p) => {
+  if (p === "all") return null;
+  const d = new Date();
+  if (p === "30d") d.setDate(d.getDate() - 30);
+  else if (p === "90d") d.setDate(d.getDate() - 90);
+  else if (p === "year") { d.setMonth(0, 1); d.setHours(0, 0, 0, 0); }
+  return d;
+};
 
 const Earnings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(false);
+  const [period, setPeriod] = useState("all");
 
   const load = async () => {
     setErr(false);
@@ -29,12 +46,7 @@ const Earnings = () => {
     return (
       <div>
         <PageHeader title="Earnings" subtitle="Track your revenue and per-service performance." />
-        <Card>
-          <div className="p-6 text-center">
-            <p className="mb-3 text-sm text-gray-600">Couldn't load your earnings. Check your connection and retry.</p>
-            <button onClick={load} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark">Retry</button>
-          </div>
-        </Card>
+        <ErrorState message="Couldn’t load your earnings." onRetry={load} />
       </div>
     );
   }
@@ -49,7 +61,11 @@ const Earnings = () => {
     );
   }
 
-  const paid = bookings.filter((b) => b.payment_status === "paid");
+  const start = periodStart(period);
+  const paid = bookings.filter(
+    (b) => b.payment_status === "paid" &&
+      (!start || new Date(b.scheduled_at || b.created_at) >= start),
+  );
 
   // Per-service breakdown (net vs gross)
   const serviceMap = {};
@@ -65,6 +81,14 @@ const Earnings = () => {
   return (
     <div>
       <PageHeader title="Earnings" subtitle="Track your revenue and per-service performance." />
+
+      {/* Period scope — filters both the trend chart and the per-service breakdown */}
+      <SegmentedControl
+        className="mb-5"
+        value={period}
+        onChange={setPeriod}
+        options={PERIODS}
+      />
 
       {/* Interactive trend chart — metric cards double as the KPI row */}
       <div className="mb-6">

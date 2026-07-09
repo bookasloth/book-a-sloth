@@ -494,7 +494,20 @@ const ProfileSetup = () => {
                   {customHexAllowed ? (
                     <FeatureGate flag="custom_hex_color">
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="h-8 w-8 flex-shrink-0 rounded-lg border" style={{ background: isValidHex(customHex) ? customHex : '#e5e7eb' }} />
+                        {/* Native colour wheel — click the swatch to pick visually */}
+                        <label
+                          className="relative h-8 w-8 flex-shrink-0 cursor-pointer rounded-lg border"
+                          style={{ background: isValidHex(customHex) ? customHex : '#e5e7eb' }}
+                          title="Pick a colour"
+                        >
+                          <input
+                            type="color"
+                            value={isValidHex(customHex) ? customHex : '#4F46E5'}
+                            onChange={handleCustomHex}
+                            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                            aria-label="Custom theme colour picker"
+                          />
+                        </label>
                         <Input type="text" placeholder="#4F46E5" maxLength={7} className="flex-1 font-mono" value={customHex} onChange={handleCustomHex} />
                         <span className="text-xs text-gray-400">Custom</span>
                       </div>
