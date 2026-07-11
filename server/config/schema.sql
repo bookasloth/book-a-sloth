@@ -133,6 +133,21 @@ CREATE POLICY "Hosts can update own availability" ON availability FOR UPDATE USI
 -- Bookings: hosts and guests can see their own
 CREATE POLICY "Users can view own bookings" ON bookings FOR SELECT
   USING (auth.uid() = host_id OR auth.uid() = guest_id);
-CREATE POLICY "Anyone can create bookings" ON bookings FOR INSERT WITH CHECK (true);
+-- NOTE: no anon/authenticated INSERT policy — all booking writes go through the
+-- Express API with the service_role key (bypasses RLS). The old
+-- "Anyone can create bookings" WITH CHECK (true) policy was dropped in v3.69.
 CREATE POLICY "Participants can update bookings" ON bookings FOR UPDATE
   USING (auth.uid() = host_id OR auth.uid() = guest_id);
+
+-- ── Write surface lockdown (mirrors v3.27 / v3.69) ──────────────────────────
+-- All DB writes flow through Express using the service_role key, which bypasses
+-- RLS. The browser uses supabase-js only for GoTrue auth + storage uploads.
+-- Revoke write privileges from the browser-facing roles so a base-schema apply
+-- (without the migration history) can't leave the anon insert path open. SELECT
+-- is left intact. Reversible via GRANT if ever required.
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE
+  ON ALL TABLES IN SCHEMA public
+  FROM anon, authenticated;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLES FROM anon, authenticated;

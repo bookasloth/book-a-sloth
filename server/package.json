@@ -15,7 +15,10 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "migrate:staging": "node scripts/migrate.js staging",
-    "migrate:prod": "node scripts/migrate.js prod"
+    "migrate:prod": "node scripts/migrate.js prod",
+    "loadtest:seed": "node scripts/seedLoadTest.js",
+    "loadtest:sameslot": "node scripts/sameSlotBurst.js",
+    "loadtest:cleanup": "node scripts/cleanupLoadTest.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
