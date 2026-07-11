@@ -149,6 +149,7 @@ app.use('/api/service-categories',       scPublicRouter);
 app.use('/api/services-directory', require('./routes/servicesDirectoryRoutes'));
 app.use('/api/admin/security', adminLimiter, require('./routes/adminSecurityRoutes')); // IP blocking mgmt (super-only)
 app.use('/api/explore',     require('./routes/exploreRoutes'));
+app.use('/api/blogs',       require('./routes/blogRoutes'));
 app.use('/api/vendors',        require('./routes/badgePublicRoutes'));
 app.use('/api/feature-flags',  require('./routes/featureFlagRoutes'));
 app.use('/api/notifications', require('./routes/notificationWebhookRoutes')); // public AiSensy webhook (secret-gated)

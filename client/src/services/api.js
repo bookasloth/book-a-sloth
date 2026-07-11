@@ -447,6 +447,10 @@ export const svcGetPublicByProfile  = (profileSlug, serviceSlug) => API.get(`/se
 // ── AI: Write with Bolt ───────────────────────────────────────
 export const aiGenerateListing      = (data)                   => API.post('/services/ai/listing', data);
 
+// ── Blog (public) ─────────────────────────────────────────────
+export const getBlogs       = ()     => API.get('/blogs');
+export const getBlogBySlug  = (slug) => API.get(`/blogs/${slug}`);
+
 // ── Explore (public) ──────────────────────────────────────────
 // Ranked SERVICE listing. `config` carries an AbortController signal so a newer
 // keystroke can cancel an in-flight request.

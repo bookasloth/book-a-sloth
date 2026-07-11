@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { getPost, BLOG_POSTS, themeFor, AUTHOR_URL } from '../data/blogPosts';
+import { themeFor, AUTHOR_URL } from '../data/blogPosts';
+import { getBlogBySlug, getBlogs } from '../services/api';
 import Seo from '../components/common/Seo';
 import { SITE_URL, articleJsonLd, breadcrumbJsonLd } from '../utils/seo';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
@@ -176,18 +177,34 @@ const AuthorLink = ({ name, className, style }) => (
 
 const BlogPost = () => {
   const { slug } = useParams();
-  const post = getPost(slug);
+  const [post, setPost] = useState(null);
+  const [more, setMore] = useState([]);
+  const [status, setStatus] = useState('loading'); // loading | ready | notfound
 
   useEffect(() => {
-    if (!post) return;
+    let alive = true;
+    setStatus('loading');
     window.scrollTo(0, 0);
-  }, [post]);
+    getBlogBySlug(slug)
+      .then((res) => { if (alive) { setPost(res.data.post); setStatus('ready'); } })
+      .catch(() => { if (alive) setStatus('notfound'); });
+    getBlogs()
+      .then((res) => { if (alive) setMore((res.data.posts || []).filter((p) => p.slug !== slug).slice(0, 2)); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [slug]);
 
-  if (!post) return <Navigate to="/blog" replace />;
+  if (status === 'notfound') return <Navigate to="/blog" replace />;
+  if (status === 'loading' || !post) {
+    return (
+      <div className="blog-page grid min-h-[60vh] place-items-center" style={{ backgroundColor: BODY_BG }}>
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+      </div>
+    );
+  }
 
   const t = themeFor(post.category);
   const tt = bandText(t);
-  const more = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 2);
   const canonical = `${SITE_URL}/blog/${post.slug}`;
 
   return (
