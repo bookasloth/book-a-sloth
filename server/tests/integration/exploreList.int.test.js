@@ -31,6 +31,10 @@ const awaitable = (resolved, methods = ['select', 'eq', 'not', 'or', 'order', 'r
 };
 
 afterEach(() => jest.clearAllMocks());
+// listVendors is now read-through cached (120s). Clear between tests so a shared
+// filter+page key from one case can't serve a stale payload into the next and
+// desync the per-test mockReturnValueOnce queue.
+beforeEach(() => require('../../services/responseCache').clear());
 
 describe('GET /api/explore', () => {
   test('service filter without category → 400', async () => {
@@ -122,14 +126,29 @@ describe('GET /api/explore', () => {
       .toBe(false);
   });
 
-  test('q is sanitized before building the ilike .or() filter', async () => {
-    supabaseAdmin.from.mockReturnValueOnce(awaitable({ data: [], error: null, count: 0 }));
+  test('q is sanitized (PostgREST metachars stripped) before the ilike .or() filter', async () => {
+    const mockQuery = awaitable({ data: [], error: null, count: 0 });
+    supabaseAdmin.from.mockReturnValueOnce(mockQuery);
 
     const res = await request(app).get('/api/explore?q=' + encodeURIComponent('foo,bar(baz)'));
 
     expect(res.status).toBe(200);
     expect(res.body.vendors).toEqual([]);
-    expect(res.body.filters.q).toBe('foo,bar(baz)');
+    // Metachars ,() are stripped by sanitizeLikeTerm; the response echoes the
+    // sanitized term (what was actually queried), and the ilike uses it too.
+    expect(res.body.filters.q).toBe('foobarbaz');
+    expect(mockQuery.or).toHaveBeenCalledWith('name.ilike.%foobarbaz%,tagline.ilike.%foobarbaz%');
+  });
+
+  test('q under 2 chars is ignored (no ilike filter, no wasteful near-full scan)', async () => {
+    const mockQuery = awaitable({ data: [], error: null, count: 0 });
+    supabaseAdmin.from.mockReturnValueOnce(mockQuery);
+
+    const res = await request(app).get('/api/explore?q=a');
+
+    expect(res.status).toBe(200);
+    expect(res.body.filters.q).toBe('');
+    expect(mockQuery.or).not.toHaveBeenCalled();
   });
 
   test('limit is clamped to 48 and page defaults to 1; hasMore computed from total', async () => {

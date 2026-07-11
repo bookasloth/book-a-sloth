@@ -123,6 +123,20 @@ const slotsLimiter = rateLimit({
   skip: skipWhenLoadTest,
 });
 
+// Explore / discovery search — public, unauthenticated, and the search box invites
+// a high rate of DISTINCT queries (each cache miss = a live profiles⋈services read
+// + count). Cap tighter than the global apiLimiter (100/min) so query spam can't
+// hammer the DB. Stacks on top of apiLimiter, which is mounted on all of /api.
+const searchLimiter = rateLimit({
+  store: makeRateLimitStore('search'),
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many searches. Please slow down.' },
+  skip: skipWhenLoadTest,
+});
+
 // Booking creation — public + fires email/WhatsApp notifications; cap per IP.
 const bookingLimiter = rateLimit({
   store: makeRateLimitStore('booking'),
@@ -368,6 +382,7 @@ module.exports = {
   otpContactLimiter,
   slugLimiter,
   slotsLimiter,
+  searchLimiter,
   uploadLimiter,
   freeDownloadLimiter,
   freeDownloadIpLimiter,
