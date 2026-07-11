@@ -5,6 +5,12 @@
  * real Supabase queries once the v2.9 migration is applied.
  */
 const { supabase, supabaseAdmin } = require('../config/supabase');
+const responseCache = require('../services/responseCache');
+const { setPublicCache } = require('../utils/httpCache');
+const { sanitizeLikeTerm } = require('../utils/searchSanitize');
+
+// Read-through cache TTL for the public listing (matches host/service pages).
+const EXPLORE_CACHE_MS = 120 * 1000;
 
 // ── helpers ───────────────────────────────────────────────────
 const now = () => new Date().toISOString();
@@ -19,7 +25,11 @@ async function listVendors(req, res) {
   try {
     const category = String(req.query.category || '').trim();
     const service  = String(req.query.service  || '').trim();
-    const q        = String(req.query.q        || '').trim();
+    // Sanitize with the shared util (strips PostgREST or()/ilike metachars), then
+    // ignore terms under 2 chars: a 1-char `%a%` matches almost everything, which
+    // is pure DB load for a useless result. Under 2 chars → no text filter.
+    const cleanQ   = sanitizeLikeTerm(String(req.query.q || '').trim());
+    const q        = cleanQ.length >= 2 ? cleanQ : '';
     const page     = Math.max(1, parseInt(req.query.page, 10)  || 1);
     const limit    = Math.min(48, Math.max(1, parseInt(req.query.limit, 10) || 12));
 
@@ -27,63 +37,74 @@ async function listVendors(req, res) {
       return res.status(400).json({ message: 'service filter requires a category (profession)' });
     }
 
-    const runQuery = (withPairCol) => {
-      const svcCols = withPairCol
-        ? 'price, rating, total_reviews, category, primary_category, is_active'
-        : 'price, rating, total_reviews, category, is_active';
-      let sel = supabaseAdmin
-        .from('profiles')
-        .select(`id, name, username, tagline, profile_image, primary_category, services!inner(${svcCols})`, { count: 'exact' })
-        .eq('role', 'host')
-        .eq('is_verified', true)
-        .eq('is_banned', false)
-        .not('username', 'is', null)
-        .eq('services.is_active', true);
-      if (category) sel = sel.eq('primary_category', category);
-      if (service) {
-        sel = sel.eq('services.category', service);
-        if (withPairCol) sel = sel.eq('services.primary_category', category);
-      }
-      if (q) {
-        const safe = q.replace(/[,()]/g, ' ');
-        sel = sel.or(`name.ilike.%${safe}%,tagline.ilike.%${safe}%`);
-      }
-      return sel
-        .order('updated_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
-    };
+    // Read-through cache (120s) keyed by the full filter+page combo. Public,
+    // anonymous, no per-user data → safe to share. This collapses repeat browse/
+    // search hits (crawlers, retries, popular queries) onto one DB read per window
+    // and shields Supabase during a traffic spike. Fail-open: a cache outage just
+    // runs the query uncached. TTL is the staleness backstop (a host edit shows
+    // within ~2 min); no explicit bust wiring needed.
+    const cacheKey = `explore:v1:${category}|${service}|${q}|${page}|${limit}`;
+    const payload = await responseCache.getOrSet(cacheKey, EXPLORE_CACHE_MS, async () => {
+      const runQuery = (withPairCol) => {
+        const svcCols = withPairCol
+          ? 'price, rating, total_reviews, category, primary_category, is_active'
+          : 'price, rating, total_reviews, category, is_active';
+        let sel = supabaseAdmin
+          .from('profiles')
+          .select(`id, name, username, tagline, profile_image, primary_category, services!inner(${svcCols})`, { count: 'exact' })
+          .eq('role', 'host')
+          .eq('is_verified', true)
+          .eq('is_banned', false)
+          .not('username', 'is', null)
+          .eq('services.is_active', true);
+        if (category) sel = sel.eq('primary_category', category);
+        if (service) {
+          sel = sel.eq('services.category', service);
+          if (withPairCol) sel = sel.eq('services.primary_category', category);
+        }
+        if (q) {
+          sel = sel.or(`name.ilike.%${q}%,tagline.ilike.%${q}%`);
+        }
+        return sel
+          .order('updated_at', { ascending: false })
+          .range((page - 1) * limit, page * limit - 1);
+      };
 
-    let r = await runQuery(true);
-    if (schemaMissing(r.error)) r = await runQuery(false); // pre-v3.60
-    if (r.error) throw r.error;
+      let r = await runQuery(true);
+      if (schemaMissing(r.error)) r = await runQuery(false); // pre-v3.60
+      if (r.error) throw r.error; // thrown → not cached; outer catch returns 500
 
-    const vendors = (r.data || []).map((p) => {
-      const svcs = p.services || [];
-      const rated = svcs.filter((s) => (s.total_reviews || 0) > 0);
+      const vendors = (r.data || []).map((p) => {
+        const svcs = p.services || [];
+        const rated = svcs.filter((s) => (s.total_reviews || 0) > 0);
+        return {
+          id: p.id,
+          name: p.name,
+          username: p.username,
+          tagline: p.tagline || '',
+          profileImage: p.profile_image || null,
+          category: p.primary_category || '',
+          avgRating: rated.length
+            ? Number((rated.reduce((a, s) => a + Number(s.rating || 0), 0) / rated.length).toFixed(1))
+            : null,
+          reviewCount: svcs.reduce((a, s) => a + (s.total_reviews || 0), 0),
+          minPrice: svcs.length ? Math.min(...svcs.map((s) => Number(s.price) || 0)) : null,
+          currency: 'INR',
+          isFeatured: false, isSponsored: false, isBoosted: false,
+          isVerified: true, // listing already filters is_verified=true
+        };
+      });
+
+      const total = r.count || 0;
       return {
-        id: p.id,
-        name: p.name,
-        username: p.username,
-        tagline: p.tagline || '',
-        profileImage: p.profile_image || null,
-        category: p.primary_category || '',
-        avgRating: rated.length
-          ? Number((rated.reduce((a, s) => a + Number(s.rating || 0), 0) / rated.length).toFixed(1))
-          : null,
-        reviewCount: svcs.reduce((a, s) => a + (s.total_reviews || 0), 0),
-        minPrice: svcs.length ? Math.min(...svcs.map((s) => Number(s.price) || 0)) : null,
-        currency: 'INR',
-        isFeatured: false, isSponsored: false, isBoosted: false,
-        isVerified: true, // listing already filters is_verified=true
+        vendors,
+        meta: { page, limit, total, hasMore: page * limit < total },
+        filters: { category, service, q },
       };
     });
 
-    const total = r.count || 0;
-    return res.json({
-      vendors,
-      meta: { page, limit, total, hasMore: page * limit < total },
-      filters: { category, service, q },
-    });
+    setPublicCache(res, 120);
+    return res.json(payload);
   } catch (err) {
     console.error('[explore.listVendors]', err);
     return res.status(500).json({ message: 'Failed to load hosts' });

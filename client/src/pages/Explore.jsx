@@ -154,7 +154,10 @@ function ExploreFull() {
   // ── Handlers ──────────────────────────────────────────────
   const handleSearch = (e) => {
     e.preventDefault();
-    setQuery(inputVal.trim());
+    const v = inputVal.trim();
+    // Server ignores queries under 2 chars; collapse to no-op so the heading/pill
+    // don't imply a filter that isn't applied.
+    setQuery(v.length >= 2 ? v : '');
     setPage(1);
   };
 
