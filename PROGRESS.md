@@ -134,8 +134,9 @@ pg_trgm/FTS/MV as *"pointless at 27 rows"*) against real data:
   delete; left in place to avoid churn (a comment in `ServiceCategoryCard.jsx` references it).
 - Stack is Vite/React (not Next): `next/image` → `<img loading="lazy">`; ISR/CDN → the
   `Cache-Control` + Redis layer already present.
-- Recompute cadence is NOT yet automated (pg_cron deferred). Backfill ran once; add a trigger on
-  booking/review writes or a cron at deploy. Tripwire to automate: score staleness complaints or
-  services > ~500.
+- Recompute automation SHIPPED (v3.73, both DBs): on-write DB triggers recompute the single
+  affected service on booking/review writes (exception-guarded — can't break a booking) + weekly
+  `pg_cron` full pass Fri 23:30 IST (`0 18 * * 5` UTC) to age time-window flags. The 15-min/4-hourly
+  cadence stays deferred (still pointless at this scale) — this is the minimal freshness layer.
 - `search_events`↔`explore_clicks` correlation is best-effort (click carries no event id) to keep
   render non-blocking; wire the id through if funnel analysis needs it.
