@@ -1,0 +1,73 @@
+/**
+ * blogController.js — public blog reads from the `blogs` table.
+ * Rows are served through the API via supabaseAdmin (anon has no grants).
+ * Response shape matches the client's existing post object exactly, so the
+ * React pages only swap their data source — the renderer is untouched.
+ */
+const { supabaseAdmin } = require('../config/supabase');
+const responseCache = require('../services/responseCache');
+const { setPublicCache } = require('../utils/httpCache');
+
+const BLOG_CACHE_MS = 300 * 1000; // 5 min; matches the Cache-Control below
+
+// timestamptz → "Jul 6, 2026" (the format the static posts used).
+const fmtDate = (ts) =>
+  ts ? new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+
+const toSummary = (r) => ({
+  slug: r.slug,
+  title: r.title,
+  excerpt: r.excerpt || '',
+  category: r.category || 'News',
+  author: r.author || 'Book A Sloth Team',
+  image: r.image || null,
+  icons: Array.isArray(r.icons) ? r.icons : [],
+  readMins: r.read_mins || null,
+  date: fmtDate(r.published_at),
+});
+const toFull = (r) => ({ ...toSummary(r), body: Array.isArray(r.body) ? r.body : [] });
+
+// GET /api/blogs — published posts, newest first (summaries, no body).
+async function listBlogs(req, res) {
+  try {
+    const payload = await responseCache.getOrSet('blogs:list:v1', BLOG_CACHE_MS, async () => {
+      const { data, error } = await supabaseAdmin
+        .from('blogs')
+        .select('slug,title,excerpt,category,author,image,icons,read_mins,published_at')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false });
+      if (error) throw error;
+      return { posts: (data || []).map(toSummary) };
+    });
+    setPublicCache(res, 300);
+    return res.json(payload);
+  } catch (err) {
+    console.error('[blog.list]', err);
+    return res.status(500).json({ message: 'Failed to load blog' });
+  }
+}
+
+// GET /api/blogs/:slug — full post (with body block array).
+async function getBlogBySlug(req, res) {
+  try {
+    const slug = String(req.params.slug || '').trim();
+    const payload = await responseCache.getOrSet(`blogs:post:v1:${slug}`, BLOG_CACHE_MS, async () => {
+      const { data, error } = await supabaseAdmin
+        .from('blogs')
+        .select('slug,title,excerpt,body,category,author,image,icons,read_mins,published_at')
+        .eq('slug', slug)
+        .eq('status', 'published')
+        .maybeSingle();
+      if (error) throw error;
+      return { post: data ? toFull(data) : null };
+    });
+    if (!payload.post) return res.status(404).json({ message: 'Post not found' });
+    setPublicCache(res, 300);
+    return res.json(payload);
+  } catch (err) {
+    console.error('[blog.getBySlug]', err);
+    return res.status(500).json({ message: 'Failed to load post' });
+  }
+}
+
+module.exports = { listBlogs, getBlogBySlug };
