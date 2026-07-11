@@ -165,6 +165,5 @@
 |---|---|
 | `otpStore.js` | DB-backed OTP store (uses `otp_codes` table via supabaseAdmin) |
 | `sendEmail.js` | Nodemailer SMTP wrapper |
-| `notify.js` | Email + WhatsApp notification dispatcher (WhatsApp stubbed out) |
+| `notify.js` | Email + WhatsApp notification dispatcher (routes through `notificationEngine.js` to AiSensy) |
 | `logger.js` | Winston logger |
-| `twilioWhatsApp.js` | Twilio WhatsApp client (disabled) |

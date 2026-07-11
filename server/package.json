@@ -15,11 +15,15 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "migrate:staging": "node scripts/migrate.js staging",
-    "migrate:prod": "node scripts/migrate.js prod"
+    "migrate:prod": "node scripts/migrate.js prod",
+    "loadtest:seed": "node scripts/seedLoadTest.js",
+    "loadtest:sameslot": "node scripts/sameSlotBurst.js",
+    "loadtest:cleanup": "node scripts/cleanupLoadTest.js"
   },
   "dependencies": {
-    "@sentry/node": "^10.63.0",
-    "@supabase/supabase-js": "^2.110.0",
+    "@anthropic-ai/sdk": "^0.110.0",
+    "@sentry/node": "^10.64.0",
+    "@supabase/supabase-js": "^2.110.2",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
@@ -35,11 +39,10 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^9.0.3",
-    "posthog-node": "^5.39.2",
+    "posthog-node": "^5.40.0",
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.6",
     "speakeasy": "^2.0.0",
-    "uuid": "^11.1.1",
     "winston": "^3.11.0"
   },
   "devDependencies": {

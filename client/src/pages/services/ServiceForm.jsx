@@ -5,10 +5,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
-import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCategories, hostSuggestServiceCategory } from '../../services/api';
+import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCategories, hostSuggestServiceCategory, aiGenerateListing } from '../../services/api';
 import toast from 'react-hot-toast';
 import FeatureGate from '../../components/common/FeatureGate';
 import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
+import { BOLT_ENABLED } from '../../config/aiListing';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -457,6 +458,30 @@ export default function ServiceForm({ initialData, serviceId }) {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  // ── "Write with Bolt" — AI listing generation (Task 7) ──────────────────
+  // Populates fields from a server-side AI draft. Host input stays intact:
+  // this only fires on demand and merges into existing form state.
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiFields, setAiFields]   = useState(() => new Set());
+  const [aiSession, setAiSession] = useState(null);
+  const [aiError, setAiError]     = useState('');
+  const [aiTweak, setAiTweak]     = useState('');
+
+  const runBolt = async (regenerate = false) => {
+    if (!BOLT_ENABLED || !form.title.trim() || aiLoading) return;
+    setAiLoading(true); setAiError('');
+    try {
+      const body = { title: form.title, category: form.category || undefined, price: form.price || undefined, duration: form.duration || undefined };
+      if (regenerate && aiSession) { body.session_id = aiSession; if (aiTweak.trim()) body.tweak = aiTweak.trim(); }
+      const { data } = await aiGenerateListing(body);
+      setForm(f => ({ ...f, ...data.fields }));
+      setAiFields(new Set(Object.keys(data.fields)));
+      setAiSession(data.session_id);
+    } catch (e) {
+      setAiError(e?.response?.data?.message || 'AI writing failed. You can fill the form manually.');
+    } finally { setAiLoading(false); }
+  };
+
   const titleLen = (form.title || '').length;
   const shortLen = (form.short_description || '').length;
 
@@ -527,11 +552,33 @@ export default function ServiceForm({ initialData, serviceId }) {
           <div className="space-y-5">
             {/* Title */}
             <div>
-              <div className="mb-1 flex justify-between">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
                 <label className="block text-sm font-medium text-gray-700">Service Title <span className="text-red-500">*</span></label>
-                <span className={cn('text-xs', titleLen > 55 ? 'text-red-500' : 'text-gray-400')}>{titleLen}/60</span>
+                <div className="flex items-center gap-2">
+                  <span className={cn('text-xs', titleLen > 55 ? 'text-red-500' : 'text-gray-400')}>{titleLen}/60</span>
+                  <button type="button" onClick={() => runBolt(false)}
+                    disabled={!BOLT_ENABLED || !form.title.trim() || aiLoading}
+                    title={!BOLT_ENABLED ? 'AI writing — available soon' : undefined}
+                    className={cn(
+                      'inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--accent)] disabled:opacity-40',
+                      !BOLT_ENABLED && 'grayscale opacity-60 cursor-not-allowed',
+                    )}>
+                    {!BOLT_ENABLED ? '✨ Write with Bolt · soon' : (aiLoading ? 'Bolt is writing…' : '✨ Write with Bolt')}
+                  </button>
+                </div>
               </div>
               <Input type="text" value={form.title} maxLength={60} required onChange={e => set('title', e.target.value)} placeholder="e.g. SEO Consultancy by Shubham Datarkar" />
+              {aiError && <p className="mt-1 text-xs text-red-500">{aiError}</p>}
+              {aiSession && !aiLoading && (
+                <div className="mt-2 flex items-center gap-2">
+                  <input value={aiTweak} onChange={e => setAiTweak(e.target.value)} placeholder="make it more… (optional)"
+                    className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs" />
+                  <button type="button" onClick={() => runBolt(true)} disabled={aiLoading}
+                    className="text-xs font-semibold text-[color:var(--accent)] disabled:opacity-40">
+                    Regenerate
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Short description */}

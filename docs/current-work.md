@@ -254,7 +254,6 @@ Each **service** now carries one `category` slug, drawn from the host's own cate
 ### Nice To Have
 - Guest booking history: dedicated page for guests at `/my-bookings`
 - Review submission: UI for guests to leave reviews after completed bookings
-- WhatsApp notifications: re-enable Twilio in `notify.js` when credentials ready
 - Admin payout workflow: complete approval/reject UI in `AdminSettings` or new page
 
 ---

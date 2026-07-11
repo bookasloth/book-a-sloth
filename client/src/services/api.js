@@ -444,6 +444,9 @@ export const svcGetPublic           = (slug)                   => API.get(`/serv
 // Clean URL: resolves service by both profileSlug + serviceSlug (validates vendor ownership)
 export const svcGetPublicByProfile  = (profileSlug, serviceSlug) => API.get(`/services/public/${profileSlug}/${serviceSlug}`);
 
+// ── AI: Write with Bolt ───────────────────────────────────────
+export const aiGenerateListing      = (data)                   => API.post('/services/ai/listing', data);
+
 // ── Explore (public) ──────────────────────────────────────────
 export const getExploreVendors    = (params) => API.get('/explore',            { params });
 export const getExploreFeatured   = ()        => API.get('/explore/featured');

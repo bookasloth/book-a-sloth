@@ -4,8 +4,9 @@
  */
 const router = require('express').Router();
 const explore = require('../controllers/exploreController');
+const { searchLimiter } = require('../middleware/security');
 
-router.get('/',            explore.listVendors);
+router.get('/',            searchLimiter, explore.listVendors);
 router.get('/featured',    explore.getFeatured);
 router.get('/categories',  explore.getCategories);
 router.get('/collections', explore.getCollections);

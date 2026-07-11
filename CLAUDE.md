@@ -18,7 +18,7 @@ Read these 4 files before touching any code:
 | Database | Supabase (PostgreSQL + Auth + Storage) |
 | Payments | Razorpay (orders + subscriptions) |
 | Email | Nodemailer (SMTP) |
-| WhatsApp | Twilio (currently disabled — stubs only) |
+| WhatsApp | AiSensy (active, DB-configured via `notification_providers`) |
 | Uploads | Cloudinary |
 | Calendar | Google Calendar API |
 
@@ -57,7 +57,7 @@ cd client && npm test             # Vitest
 ```
 
 ## Env Files
-- `server/.env` — DB, Supabase, SMTP, Twilio, Razorpay keys
+- `server/.env` — DB, Supabase, SMTP, AiSensy, Razorpay keys
 - `client/.env` — VITE_API_URL, VITE_RAZORPAY_KEY_ID, VITE_SUPABASE_*
 
 ## Database Migrations — Status (verified 2026-07-01 against both DBs)
