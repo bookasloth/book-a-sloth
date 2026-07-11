@@ -28,6 +28,10 @@ async function ensureVendor(v) {
   }
 
   const hasGoogle = v.gcal && !!process.env.TEST_VENDOR_GOOGLE_REFRESH_TOKEN;
+  // ponytail: google_access_token/google_refresh_token moved off `profiles` to
+  // `profile_private` in the v3.23 security remediation — writing them here 42703s.
+  // The gcal vendor's freebusy plan is already best-effort/skipped without tokens,
+  // and the same-slot test only uses the rules vendor, so we just don't seed them.
   const { error: profErr } = await supabaseAdmin.from('profiles').upsert({
     id: userId,
     name: `LoadTest ${v.key}`,
@@ -36,8 +40,6 @@ async function ensureVendor(v) {
     username: v.username,
     plan: 'professional',
     google_calendar_connected: hasGoogle,
-    google_access_token: hasGoogle ? (process.env.TEST_VENDOR_GOOGLE_ACCESS_TOKEN || null) : null,
-    google_refresh_token: hasGoogle ? (process.env.TEST_VENDOR_GOOGLE_REFRESH_TOKEN || null) : null,
   }, { onConflict: 'id' });
   if (profErr) throw new Error(`profiles upsert failed (${v.username}): ${profErr.message}`);
 

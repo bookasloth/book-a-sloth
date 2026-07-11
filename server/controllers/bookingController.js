@@ -399,6 +399,7 @@ const createBooking = async (req, res) => {
       guest_phone,
       scheduled_at,
       end_at: newEnd.toISOString(),  // backs the v2.5 no-overlap exclusion constraint
+      grace_minutes: service.grace_period_minutes ?? 10, // v3.70: snapshot pads the exclusion constraint by this booking's own grace (gap enforced = graceA+graceB)
       notes,
       billing_details: req.body.billing_details || null,  // v3.67 GST-invoice buyer snapshot
       meeting_link: meetingLink,
@@ -445,16 +446,18 @@ const createBooking = async (req, res) => {
       bookingResult.error &&
       /Could not find the|column.*does not exist/i.test(bookingResult.error.message)
     ) {
-      // Drop v1.7 + v2.2 + v2.8 columns if the migrations haven't been applied yet.
+      // Drop v1.7 + v2.2 + v2.8 + v3.70 columns if the migrations haven't been applied yet.
       // P0-4: end_at is DELIBERATELY kept — it backs the bookings_no_overlap
       // exclusion constraint (the only hard double-booking guarantee), whose
       // predicate requires end_at IS NOT NULL. Stripping it here silently disabled
       // that backstop. end_at has existed since v2.5; both DBs are well past it.
+      // grace_minutes (v3.70) IS stripped here — a DB without that migration still
+      // has the raw-range constraint, which end_at alone satisfies.
       const {
         commission_applied: _c, platform_fee_gst: _g, customer_total: _t,
         gst_rate: _r, razorpay_fee_actual: _f, razorpay_tax_actual: _rt,
         commission_gst: _cg, commission_percentage: _cp, vendor_plan_type: _vp,
-        google_event_id: _gei, billing_details: _bd,
+        google_event_id: _gei, billing_details: _bd, grace_minutes: _gm,
         ...payloadCore
       } = bookingPayload;
       bookingResult = await supabaseAdmin
