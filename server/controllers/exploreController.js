@@ -11,104 +11,205 @@ const { sanitizeLikeTerm } = require('../utils/searchSanitize');
 
 // Read-through cache TTL for the public listing (matches host/service pages).
 const EXPLORE_CACHE_MS = 120 * 1000;
+const MAX_RESULTS = 96;   // hard cap → at most 8 pages of 12
+const DEFAULT_LIMIT = 12;
 
 // ── helpers ───────────────────────────────────────────────────
 const now = () => new Date().toISOString();
 
-const schemaMissing = (err) => err && /Could not find the|column .* does not exist/i.test(err.message || '');
+// Filter-scoped cache key — deliberately page-INDEPENDENT: we cache the full ranked
+// list (≤96) once per (category, service, q) so all 8 pages share one DB computation
+// and pagination is a pure in-memory slice. (Improves on the old per-page key.)
+const rankKey = (category, service, q) => `explore:v2:${category}|${service}|${q}`;
+
+// Search relevance multiplier. FTS/tsvector + trigram typo-fallback are DEFERRED
+// (pointless over 35 rows — see PROGRESS.md tripwires); at this scale substring
+// tiers over the small candidate set are exact and free. exact/strong title 1.6,
+// category 1.3, description 1.0, no match → excluded from search results.
+function relevanceMult(row, q) {
+  if (!q) return 1;
+  const ql    = q.toLowerCase();
+  const title = (row.title || '').toLowerCase();
+  const cat   = (row.category || '').toLowerCase();
+  const desc  = (row.description || '').toLowerCase();
+  if (title.includes(ql)) return 1.6;
+  if (cat.includes(ql))   return 1.3;
+  if (desc.includes(ql))  return 1.0;
+  return 0;
+}
+
+const scoreOf = (row) =>
+  (Array.isArray(row.service_scores) ? row.service_scores[0] : row.service_scores) || null;
+
+// Denormalize a joined services row into the flat card the ServiceCard renders.
+function toCard(row) {
+  const host  = row.profiles || {};
+  const score = scoreOf(row);
+  const comp  = score?.score_components || {};
+  const hostCreated = host.created_at ? Date.parse(host.created_at) : NaN;
+  const isNew = Number.isFinite(hostCreated) && (Date.now() - hostCreated) < 30 * 864e5;
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title || '',
+    price: row.price == null ? null : Number(row.price),
+    currency: row.currency || 'INR',
+    coverImage: row.thumbnail_url || null,
+    hostName: host.name || '',
+    hostUsername: host.username || '',
+    hostAvatar: host.profile_image || null,
+    avgRating: (row.total_reviews || 0) > 0 ? Number(row.rating) || null : null,
+    reviewCount: row.total_reviews || 0,
+    category: row.category || host.primary_category || '',
+    area: host.location || '',
+    url: host.username && row.slug ? `/${host.username}/${row.slug}` : null,
+    badges: {
+      instantBook: false,                                // no instant-book flag in schema (PROGRESS deferrals)
+      isNew,
+      availableThisWeek: (comp?.E?.active_days || 0) > 0,
+    },
+    score: score ? Number(score.effective_score) || 0 : 0,  // precomputed; debug/rank only
+  };
+}
+
+// Fire-and-forget: log the explore load. NEVER awaited — analytics loss is
+// acceptable, user latency is not. (Batching deferred: see PROGRESS.md.)
+function logSearchEvent(req, { q, filters, page, results }) {
+  try {
+    const session_id = String(req.headers['x-session-id'] || req.query.sid || '').slice(0, 100) || null;
+    const user_id = req.user?.id || null;
+    supabaseAdmin.from('search_events')
+      .insert({ session_id, user_id, query: q || null, filters: filters || {}, page, results: results || [] })
+      .then(({ error }) => { if (error) console.warn('[explore.searchEvent]', error.message); });
+  } catch { /* best-effort */ }
+}
+
+// One DB read → rank in memory. Reads precomputed service_scores.effective_score
+// (quality × penalties, baked at compute time); request time never scores.
+async function fetchRanked(category, service, q) {
+  let sel = supabaseAdmin
+    .from('services')
+    .select(`id, slug, title, description, price, currency, category, thumbnail_url, rating, total_reviews,
+             profiles!inner(name, username, profile_image, is_verified, is_banned, location, primary_category, created_at, role),
+             service_scores(effective_score, score_components)`)
+    .eq('is_active', true)
+    .eq('profiles.role', 'host')
+    .eq('profiles.is_verified', true)
+    .eq('profiles.is_banned', false)
+    .not('profiles.username', 'is', null);
+  if (category) sel = sel.eq('profiles.primary_category', category);
+  if (service)  sel = sel.eq('category', service);
+  if (q)        sel = sel.or(`title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%`);
+  sel = sel.limit(300); // candidate ceiling before ranking; 96 kept after sort
+
+  const { data, error } = await sel;
+  if (error) throw error; // thrown → not cached; outer catch returns 500
+
+  return (data || [])
+    .map((r) => ({ card: toCard(r), mult: relevanceMult(r, q), eff: scoreOf(r)?.effective_score || 0 }))
+    .filter((x) => x.mult > 0)
+    .map((x) => ({ ...x, final: x.mult * x.eff }))
+    .sort((a, b) => b.final - a.final || b.eff - a.eff || (b.card.reviewCount - a.card.reviewCount))
+    .slice(0, MAX_RESULTS)
+    .map((x) => x.card);
+}
+
+const parseControls = (req) => {
+  const category = String(req.query.category || '').trim();
+  const service  = String(req.query.service  || '').trim();
+  // Shared sanitizer (strips PostgREST or()/ilike metachars); ignore <2-char terms
+  // (a 1-char `%a%` near-full-scans for a useless result). Under 2 chars → no filter.
+  const cleanQ = sanitizeLikeTerm(String(req.query.q || '').trim());
+  const q = cleanQ.length >= 2 ? cleanQ : '';
+  const page  = Math.max(1, Math.min(8, parseInt(req.query.page, 10) || 1));
+  const limit = Math.min(DEFAULT_LIMIT, Math.max(1, parseInt(req.query.limit, 10) || DEFAULT_LIMIT));
+  return { category, service, q, page, limit };
+};
+
+const paginate = (ranked, page, limit) => {
+  const total = ranked.length;                        // already ≤ 96
+  const totalPages = Math.min(8, Math.ceil(total / limit)) || 0;
+  const start = (page - 1) * limit;
+  return { total, totalPages, start, items: ranked.slice(start, start + limit) };
+};
 
 // ── GET /api/explore ──────────────────────────────────────────
-// Minimal real listing: verified hosts, profession (category) + service filters.
+// Lists SERVICES ranked by precomputed quality score × search relevance.
 // `service` REQUIRES `category`: service slugs are only unique per profession
 // (v3.60 pair model), so a slug-only filter could leak across professions.
-async function listVendors(req, res) {
+async function listServices(req, res) {
   try {
-    const category = String(req.query.category || '').trim();
-    const service  = String(req.query.service  || '').trim();
-    // Sanitize with the shared util (strips PostgREST or()/ilike metachars), then
-    // ignore terms under 2 chars: a 1-char `%a%` matches almost everything, which
-    // is pure DB load for a useless result. Under 2 chars → no text filter.
-    const cleanQ   = sanitizeLikeTerm(String(req.query.q || '').trim());
-    const q        = cleanQ.length >= 2 ? cleanQ : '';
-    const page     = Math.max(1, parseInt(req.query.page, 10)  || 1);
-    const limit    = Math.min(48, Math.max(1, parseInt(req.query.limit, 10) || 12));
-
+    const { category, service, q, page, limit } = parseControls(req);
     if (service && !category) {
       return res.status(400).json({ message: 'service filter requires a category (profession)' });
     }
 
-    // Read-through cache (120s) keyed by the full filter+page combo. Public,
-    // anonymous, no per-user data → safe to share. This collapses repeat browse/
-    // search hits (crawlers, retries, popular queries) onto one DB read per window
-    // and shields Supabase during a traffic spike. Fail-open: a cache outage just
-    // runs the query uncached. TTL is the staleness backstop (a host edit shows
-    // within ~2 min); no explicit bust wiring needed.
-    const cacheKey = `explore:v1:${category}|${service}|${q}|${page}|${limit}`;
-    const payload = await responseCache.getOrSet(cacheKey, EXPLORE_CACHE_MS, async () => {
-      const runQuery = (withPairCol) => {
-        const svcCols = withPairCol
-          ? 'price, rating, total_reviews, category, primary_category, is_active'
-          : 'price, rating, total_reviews, category, is_active';
-        let sel = supabaseAdmin
-          .from('profiles')
-          .select(`id, name, username, tagline, profile_image, primary_category, services!inner(${svcCols})`, { count: 'exact' })
-          .eq('role', 'host')
-          .eq('is_verified', true)
-          .eq('is_banned', false)
-          .not('username', 'is', null)
-          .eq('services.is_active', true);
-        if (category) sel = sel.eq('primary_category', category);
-        if (service) {
-          sel = sel.eq('services.category', service);
-          if (withPairCol) sel = sel.eq('services.primary_category', category);
-        }
-        if (q) {
-          sel = sel.or(`name.ilike.%${q}%,tagline.ilike.%${q}%`);
-        }
-        return sel
-          .order('updated_at', { ascending: false })
-          .range((page - 1) * limit, page * limit - 1);
-      };
+    // Read-through cache (120s, Redis L1, fail-open) of the full ranked list.
+    const ranked = await responseCache.getOrSet(
+      rankKey(category, service, q), EXPLORE_CACHE_MS,
+      () => fetchRanked(category, service, q),
+    );
 
-      let r = await runQuery(true);
-      if (schemaMissing(r.error)) r = await runQuery(false); // pre-v3.60
-      if (r.error) throw r.error; // thrown → not cached; outer catch returns 500
+    const { total, totalPages, start, items } = paginate(ranked, page, limit);
 
-      const vendors = (r.data || []).map((p) => {
-        const svcs = p.services || [];
-        const rated = svcs.filter((s) => (s.total_reviews || 0) > 0);
-        return {
-          id: p.id,
-          name: p.name,
-          username: p.username,
-          tagline: p.tagline || '',
-          profileImage: p.profile_image || null,
-          category: p.primary_category || '',
-          avgRating: rated.length
-            ? Number((rated.reduce((a, s) => a + Number(s.rating || 0), 0) / rated.length).toFixed(1))
-            : null,
-          reviewCount: svcs.reduce((a, s) => a + (s.total_reviews || 0), 0),
-          minPrice: svcs.length ? Math.min(...svcs.map((s) => Number(s.price) || 0)) : null,
-          currency: 'INR',
-          isFeatured: false, isSponsored: false, isBoosted: false,
-          isVerified: true, // listing already filters is_verified=true
-        };
-      });
-
-      const total = r.count || 0;
-      return {
-        vendors,
-        meta: { page, limit, total, hasMore: page * limit < total },
-        filters: { category, service, q },
-      };
+    logSearchEvent(req, {
+      q, filters: { category, service }, page,
+      results: items.map((c, i) => ({ service_id: c.id, rank: start + i + 1, score: c.score })),
     });
 
     setPublicCache(res, 120);
-    return res.json(payload);
+    return res.json({
+      services: items,
+      meta: { page, limit, total, totalPages, hasMore: page < totalPages },
+      filters: { category, service, q },
+    });
   } catch (err) {
-    console.error('[explore.listVendors]', err);
-    return res.status(500).json({ message: 'Failed to load hosts' });
+    console.error('[explore.listServices]', err);
+    return res.status(500).json({ message: 'Failed to load services' });
   }
+}
+
+// Rate-limit fail-soft (searchLimiter handler): serve last-good cache if present,
+// else a soft-empty 200 — never a hard 429 into a shared-IP user's face.
+async function serveStaleOrEmpty(req, res) {
+  try {
+    const { category, service, q, page, limit } = parseControls(req);
+    const ranked = await responseCache.peek(rankKey(category, service, q));
+    if (ranked) {
+      const { total, totalPages, items } = paginate(ranked, page, limit);
+      setPublicCache(res, 120);
+      return res.json({
+        services: items,
+        meta: { page, limit, total, totalPages, hasMore: page < totalPages, stale: true },
+        filters: { category, service, q },
+      });
+    }
+    return res.status(200).json({
+      services: [],
+      meta: { page, limit, total: 0, totalPages: 0, hasMore: false, rateLimited: true },
+      filters: { category, service, q },
+    });
+  } catch {
+    return res.status(200).json({ services: [], meta: { rateLimited: true }, filters: {} });
+  }
+}
+
+// ── POST /api/explore/click ───────────────────────────────────
+// navigator.sendBeacon target when a card is clicked. Fire-and-forget insert.
+async function logClick(req, res) {
+  try {
+    const b = req.body || {};
+    const serviceId = b.serviceId || b.service_id;
+    if (!serviceId) return res.status(204).end();
+    supabaseAdmin.from('explore_clicks')
+      .insert({
+        service_id: serviceId,
+        rank: b.rank == null ? null : parseInt(b.rank, 10) || null,
+        search_event_id: b.searchEventId ?? b.search_event_id ?? null,
+      })
+      .then(({ error }) => { if (error) console.warn('[explore.click]', error.message); });
+    return res.status(204).end();
+  } catch { return res.status(204).end(); }
 }
 
 // ── GET /api/explore/featured ─────────────────────────────────
@@ -414,7 +515,8 @@ async function adminRevokeKeyword(req, res) {
 
 module.exports = {
   // Public
-  listVendors, getFeatured, getCategories, getCollections, getSponsored,
+  listServices, serveStaleOrEmpty, logClick,
+  getFeatured, getCategories, getCollections, getSponsored,
   // Admin — featured
   adminListFeatured, adminCreateFeatured, adminUpdateFeatured, adminDeleteFeatured,
   // Admin — collections
