@@ -1,20 +1,25 @@
 const ProgressBar = ({ current, total }) => {
-  const percentage = (current / total) * 100;
+  const step = Math.min(current + 1, total);
+  const percentage = Math.round((current / total) * 100);
 
   return (
-    <div className="bg-white border-b sticky top-0 z-10">
-      <div className="max-w-3xl mx-auto px-4 py-3 sm:py-4">
-        <div className="flex items-center justify-between mb-2">
+    <div className="sticky top-0 z-10 border-b bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+      <div className="mx-auto max-w-3xl px-4 py-3 sm:py-4">
+        <div className="mb-2 flex items-center justify-between">
           <p className="text-sm font-medium text-gray-600">
-            Step {Math.min(current + 1, total)} of {total}
+            Step {step} of {total}
           </p>
-          <p className="text-sm font-medium text-gray-600">{Math.round(percentage)}%</p>
+          <p className="text-sm font-medium text-gray-600">{percentage}%</p>
         </div>
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary transition-all duration-300"
-            style={{ width: `${percentage}%` }}
-          />
+        {/* Segmented progress — one bar per step, filled through the current step */}
+        <div className="flex gap-1.5">
+          {Array.from({ length: total }).map((_, i) => (
+            <div key={i} className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200">
+              <div
+                className={`h-full rounded-full bg-primary transition-all duration-300 ${i < step ? "w-full" : "w-0"}`}
+              />
+            </div>
+          ))}
         </div>
       </div>
     </div>
