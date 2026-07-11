@@ -134,6 +134,10 @@ const searchLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many searches. Please slow down.' },
+  // Fail-soft: over the limit, serve last-good cache (or a soft-empty 200) instead
+  // of a hard 429 — the cap still blocks the live DB query, but a shared-IP user
+  // never sees an error. Lazy-require avoids a controller↔security import cycle.
+  handler: (req, res) => require('../controllers/exploreController').serveStaleOrEmpty(req, res),
   skip: skipWhenLoadTest,
 });
 

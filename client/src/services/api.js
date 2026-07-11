@@ -448,7 +448,17 @@ export const svcGetPublicByProfile  = (profileSlug, serviceSlug) => API.get(`/se
 export const aiGenerateListing      = (data)                   => API.post('/services/ai/listing', data);
 
 // ── Explore (public) ──────────────────────────────────────────
-export const getExploreVendors    = (params) => API.get('/explore',            { params });
+// Ranked SERVICE listing. `config` carries an AbortController signal so a newer
+// keystroke can cancel an in-flight request.
+export const getExploreServices   = (params, config = {}) => API.get('/explore', { params, ...config });
+// Fire-and-forget click log via sendBeacon (survives the page navigation the click triggers).
+export const logExploreClick = (payload) => {
+  try {
+    const base = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/$/, '');
+    const body = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+    if (navigator.sendBeacon) navigator.sendBeacon(`${base}/explore/click`, body);
+  } catch { /* analytics best-effort */ }
+};
 export const getExploreFeatured   = ()        => API.get('/explore/featured');
 export const getExploreCategories = ()        => API.get('/explore/categories');
 export const getExploreCollections= ()        => API.get('/explore/collections');

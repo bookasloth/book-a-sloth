@@ -130,6 +130,22 @@ async function bust(prefix) {
   return redis ? _redisBust(redis, prefix) : _memBust(prefix);
 }
 
+/**
+ * Return the cached value for `key` if present and unexpired, else undefined.
+ * Read-only (never runs a producer, never writes) — used for fail-soft stale
+ * serving when a request is rate-limited. Never throws.
+ */
+async function peek(key) {
+  if (!ENABLED) return undefined;
+  const redis = getRedis();
+  if (redis) {
+    try { const raw = await redis.get(NS + key); return raw != null ? JSON.parse(raw) : undefined; }
+    catch { return undefined; }
+  }
+  const hit = store.get(key);
+  return hit && hit.exp > Date.now() ? hit.value : undefined;
+}
+
 /** Wipe everything in this namespace (tests / admin). Never throws. */
 async function clear() {
   const redis = getRedis();
@@ -139,4 +155,4 @@ async function clear() {
 
 function _size() { return store.size; }
 
-module.exports = { getOrSet, bust, clear, _size };
+module.exports = { getOrSet, peek, bust, clear, _size };
