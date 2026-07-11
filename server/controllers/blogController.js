@@ -10,9 +10,12 @@ const { setPublicCache } = require('../utils/httpCache');
 
 const BLOG_CACHE_MS = 300 * 1000; // 5 min; matches the Cache-Control below
 
-// timestamptz → "Jul 6, 2026" (the format the static posts used).
+// timestamptz → "Jul 6, 2026" (the format the static posts used). Pinned to IST:
+// posts are authored/stored at 00:00 IST (= 18:30 UTC the prior day), so formatting
+// in the server's tz (UTC on Render) would show the day before. Asia/Kolkata is the
+// product's home tz and keeps the displayed date equal to the authored date.
 const fmtDate = (ts) =>
-  ts ? new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  ts ? new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' }) : '';
 
 const toSummary = (r) => ({
   slug: r.slug,
