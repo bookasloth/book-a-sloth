@@ -3,7 +3,7 @@ import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CalendarClock, CheckCircle2, XCircle, CalendarDays, LayoutGrid, IndianRupee,
   UserCheck, Hourglass, Camera, UserCog, Tag, CalendarCheck, CreditCard, ShieldCheck,
-  Check, ArrowRight, Copy, Link2, MessageCircle, Wallet,
+  Check, ArrowRight, Copy, Link2, MessageCircle, Wallet, Share2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getHostBookings, getMyServices, getPayoutBalance } from '../services/api';
@@ -244,12 +244,29 @@ const Dashboard = () => {
           <a href={`/${user.username}`} target="_blank" rel="noreferrer" className="truncate text-xs font-semibold text-primary hover:underline">
             bookasloth.com/{user.username}
           </a>
-          <button
-            onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/${user.username}`); toast.success('Link copied!'); }}
-            className="ml-auto shrink-0 p-1 text-gray-400 transition-colors hover:text-gray-700" title="Copy link"
-          >
-            <Copy className="h-3.5 w-3.5" strokeWidth={2.25} />
-          </button>
+          <div className="ml-auto flex shrink-0 items-center gap-0.5">
+            {/* Native share sheet on mobile; falls back to copy where unsupported. */}
+            <button
+              onClick={async () => {
+                const url = `${window.location.origin}/${user.username}`;
+                if (navigator.share) {
+                  try { await navigator.share({ title: 'Book A Sloth', text: 'Book a session with me:', url }); return; }
+                  catch (e) { if (e?.name === 'AbortError') return; /* user dismissed */ }
+                }
+                try { await navigator.clipboard.writeText(url); toast.success('Link copied!'); }
+                catch { toast.error('Could not share link'); }
+              }}
+              className="shrink-0 p-1 text-gray-400 transition-colors hover:text-primary" title="Share"
+            >
+              <Share2 className="h-3.5 w-3.5" strokeWidth={2.25} />
+            </button>
+            <button
+              onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/${user.username}`); toast.success('Link copied!'); }}
+              className="shrink-0 p-1 text-gray-400 transition-colors hover:text-gray-700" title="Copy link"
+            >
+              <Copy className="h-3.5 w-3.5" strokeWidth={2.25} />
+            </button>
+          </div>
         </div>
       ) : (
         <div className="flex flex-1 items-start gap-3 rounded-md border border-primary/30 bg-primary-light p-4">
