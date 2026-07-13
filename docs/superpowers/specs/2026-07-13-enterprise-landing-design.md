@@ -120,14 +120,50 @@ alter table enterprise_leads enable row level security;
 Apply to both DBs; controller destructures defensively so a missing table degrades to
 email-only (fail-soft) until confirmed applied.
 
-## 7. SEO
+## 7. SEO + AEO + GEO
 
-`<Seo>` props: `title`, `description`, `canonical=${SITE_URL}/enterprise`, `keywords`
-(Enterprise Booking Software, Enterprise Scheduling Software, Multi-location Booking Software,
-Franchise Scheduling Software, …), `ogTitle/ogDescription/image`, `jsonLd`.
-JSON-LD: `SoftwareApplication` + `FAQPage` (from the 20 FAQ) + `BreadcrumbList`, composed via
-`client/src/utils/seo.js` builders. One `<script>` (use `@graph`). Internal links to
-`/pricing`, `/features`, `/security` (if exists) or `/about`, `/contact`.
+### Target keywords
+- **Primary:** Book A Sloth Enterprise, **Appointment Booking App**, Enterprise Appointment Booking App.
+- **Secondary:** Appointment Booking Software, Enterprise Booking Software, Enterprise Scheduling
+  Software, Business Scheduling Platform, Multi-location Booking Software, Franchise Scheduling
+  Software, Booking Infrastructure, Custom Booking Platform.
+- Woven naturally into H1/subheading, section H2s, meta, first FAQ answer, and JSON-LD `name`/
+  `description`/`keywords`. No stuffing — one primary phrase per section max.
+
+### Classic SEO
+`<Seo>` props: `title` (contains "Appointment Booking App" + "Enterprise"), `description`,
+`canonical=${SITE_URL}/enterprise`, `keywords`, `ogTitle/ogDescription/image`, `robots="index,follow"`,
+`jsonLd`. Semantic HTML, one H1, logical H2/H3. Registered in sitemap + prerendered (baked HTML so
+non-JS crawlers read tags). Internal links to `/pricing`, `/features`, `/security` or `/about`, `/contact`.
+
+### AEO — Answer Engine Optimization (surfaced in Google AI Overviews, Bing Copilot, voice/answer boxes)
+- **Self-contained FAQ answers.** Each of the 20 answers leads with a direct one-sentence answer
+  ("Yes — Book A Sloth Enterprise supports your own WhatsApp Business API…"), then detail. Extractable
+  as a standalone answer without page context.
+- **A definitional block** near the top (or as FAQ #1) — "What is an enterprise appointment booking
+  app?" — one clean paragraph binding the entity **Book A Sloth Enterprise** to the concept. Gives
+  answer engines a citable definition.
+- **`FAQPage` JSON-LD** carries all 20 Q&A verbatim (question `name` + `acceptedAnswer.text`), so the
+  structured answers match the visible copy exactly (required for rich-result eligibility).
+- **Comparison + spec content** ("Why Book A Sloth", deployment table, integrations grid) as clean
+  lists/tables — the format answer engines lift into summaries.
+
+### GEO — Generative Engine Optimization (cited by ChatGPT / Perplexity / Gemini)
+- **Concrete, citable claims** over vague marketing: specific capabilities, named integrations
+  (Razorpay/Stripe/Cashfree/WhatsApp Business API/Zoom/Outlook), deployment tiers, timeline steps.
+  Generative engines prefer specific, attributable statements.
+- **Entity clarity:** consistent product name "Book A Sloth Enterprise", `Organization` +
+  `SoftwareApplication` schema with `sameAs` (from `utils/seo.js` `ORG_SAME_AS`) so the entity is
+  disambiguated across the web.
+- **Structured JSON-LD `@graph`** (one `<script>`): `SoftwareApplication` (name, applicationCategory
+  "BusinessApplication", operatingSystem "Web", offers/aggregate where truthful — omit fake ratings) +
+  `FAQPage` + `BreadcrumbList` + `Organization`. Built via `client/src/utils/seo.js`
+  (`organizationJsonLd`, `faqJsonLd`, `breadcrumbJsonLd`) — extend if a `softwareApplicationJsonLd`
+  builder is missing; do not invent fake `aggregateRating`/`review` (schema-spam risk).
+- Headings phrased as natural questions where it reads well (LLMs match query intent to headings).
+
+**Truthfulness gate:** no invented metrics, ratings, customer counts, or logos. Claims map to real
+product capability only. AEO/GEO reward accuracy; fabricated schema risks manual action.
 
 ## 8. Analytics
 
