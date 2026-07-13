@@ -1,8 +1,10 @@
 import { render, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { FAQ, FEATURE_CATEGORIES, INDUSTRIES, DEPLOYMENTS } from '../pages/enterprise/enterpriseData';
 import EnterpriseFaq from '../pages/enterprise/EnterpriseFaq';
 import EnterpriseLeadForm from '../pages/enterprise/EnterpriseLeadForm';
 import { buildEnterpriseJsonLd, ENT_SEO } from '../pages/enterprise/enterpriseSeo';
+import Enterprise from '../pages/Enterprise';
 
 const { mockTrack } = vi.hoisted(() => ({ mockTrack: vi.fn() }));
 vi.mock('../services/analytics', () => ({
@@ -123,5 +125,14 @@ describe('EnterpriseLeadForm', () => {
     fireEvent.change(getByLabelText(/Phone/i), { target: { value: '9876543210' } });
     fireEvent.click(getByRole('button', { name: /Request Enterprise Consultation/ }));
     await waitFor(() => expect(submitEnterpriseLead).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe('Enterprise page', () => {
+  it('renders exactly one h1 with the hero headline', () => {
+    const { container } = render(<MemoryRouter><Enterprise /></MemoryRouter>);
+    const h1s = container.querySelectorAll('h1');
+    expect(h1s.length).toBe(1);
+    expect(h1s[0].textContent).toMatch(/Built around your business/);
   });
 });
