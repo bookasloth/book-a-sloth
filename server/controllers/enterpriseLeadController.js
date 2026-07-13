@@ -52,15 +52,23 @@ async function submitEnterpriseLead(req, res) {
   };
 
   // Fail-soft: insert + email are independent; a failure in one does not block the other.
+  // But if BOTH fail the lead is lost entirely — surface that as a 500 so the client retries.
+  let insertOk = false;
+  let mailOk = false;
   try {
     const { error: insErr } = await supabaseAdmin.from('enterprise_leads').insert(lead);
+    insertOk = !insErr;
     if (insErr) console.error('[enterprise-lead] insert failed:', insErr.message);
   } catch (e) { console.error('[enterprise-lead] insert failed:', e.message); }
 
   try {
     await sendEmail({ to: SUPPORT_EMAIL, subject: `[Enterprise] ${cap(b.orgName, 200)}`, html: buildLeadEmail(b) });
+    mailOk = true;
   } catch (e) { console.error('[enterprise-lead] email failed:', e.message); }
 
+  if (!insertOk && !mailOk) {
+    return res.status(500).json({ error: 'Could not submit your request. Please try again.' });
+  }
   return res.status(201).json({ ok: true });
 }
 

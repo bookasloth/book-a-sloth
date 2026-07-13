@@ -1,6 +1,7 @@
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { FAQ, FEATURE_CATEGORIES, INDUSTRIES, DEPLOYMENTS } from '../pages/enterprise/enterpriseData';
+import * as ENTERPRISE_DATA from '../pages/enterprise/enterpriseData';
 import EnterpriseFaq from '../pages/enterprise/EnterpriseFaq';
 import EnterpriseLeadForm from '../pages/enterprise/EnterpriseLeadForm';
 import { buildEnterpriseJsonLd, ENT_SEO } from '../pages/enterprise/enterpriseSeo';
@@ -33,9 +34,8 @@ describe('enterpriseData', () => {
     expect(DEPLOYMENTS.find(d => d.name === 'On-premise').badge).toBe('Coming Soon');
   });
   it('uses no banned marketing words', () => {
-    const banned = /\b(amazing|revolutionary|magic|ultimate)\b/i;
-    const all = JSON.stringify(FAQ) + JSON.stringify(FEATURE_CATEGORIES) + JSON.stringify(INDUSTRIES);
-    expect(banned.test(all)).toBe(false);
+    const banned = /\b(amazing|revolutionary|magic|easy|best|ultimate)\b/i;
+    expect(banned.test(JSON.stringify(ENTERPRISE_DATA))).toBe(false);
   });
 });
 

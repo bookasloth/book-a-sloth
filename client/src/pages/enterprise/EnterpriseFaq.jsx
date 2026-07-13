@@ -22,6 +22,7 @@ export default function EnterpriseFaq({ items, idPrefix, trackOpen }) {
       {items.map((item, i) => {
         const isOpen = open === i;
         const panelId = `${idPrefix}-panel-${i}`;
+        const btnId = `${idPrefix}-btn-${i}`;
         return (
           <div
             key={item.q}
@@ -30,6 +31,7 @@ export default function EnterpriseFaq({ items, idPrefix, trackOpen }) {
           >
             <button
               type="button"
+              id={btnId}
               onClick={() => toggle(i, item.q)}
               aria-expanded={isOpen}
               aria-controls={panelId}
@@ -48,6 +50,7 @@ export default function EnterpriseFaq({ items, idPrefix, trackOpen }) {
                 <motion.div
                   id={panelId}
                   role="region"
+                  aria-labelledby={btnId}
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
