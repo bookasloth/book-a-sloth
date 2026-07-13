@@ -92,7 +92,7 @@ describe('EnterpriseLeadForm', () => {
     const { getByRole, getByText } = render(<EnterpriseLeadForm />);
     fireEvent.click(getByRole('button', { name: /Request Enterprise Consultation/ }));
     expect(submitEnterpriseLead).not.toHaveBeenCalled();
-    getByText(/required/i);
+    getByText('Enter your organization name.');
   });
 
   it('submits when required fields are filled', async () => {

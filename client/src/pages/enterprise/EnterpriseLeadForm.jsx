@@ -1,8 +1,8 @@
 // Lead-capture form for /enterprise (spec §14: docs/superpowers/specs/2026-07-13-enterprise-landing-design.md).
 // Pattern mirrors client/src/pages/Contact.jsx (controlled fields + success state).
 // Neutral/calm styling throughout; the submit CTA is the only orange element,
-// using the same --ent-cta token EnterpriseFaq.jsx already keys off (Task 4
-// owns the actual theme values).
+// styled via the existing bg-primary/hover:bg-primary-dark utility classes
+// (no bespoke --ent-cta token here).
 import { useState } from 'react';
 import { analytics, EVENTS } from '../../services/analytics';
 import { submitEnterpriseLead } from '../../services/api';
