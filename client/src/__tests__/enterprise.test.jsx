@@ -1,0 +1,78 @@
+import { render, fireEvent } from '@testing-library/react';
+import { FAQ, FEATURE_CATEGORIES, INDUSTRIES, DEPLOYMENTS } from '../pages/enterprise/enterpriseData';
+import EnterpriseFaq from '../pages/enterprise/EnterpriseFaq';
+
+const { mockTrack } = vi.hoisted(() => ({ mockTrack: vi.fn() }));
+vi.mock('../services/analytics', () => ({
+  analytics: { track: mockTrack },
+  EVENTS: { ENTERPRISE_FAQ_OPENED: 'enterprise_faq_opened' },
+}));
+
+describe('enterpriseData', () => {
+  it('has at least 20 FAQ with non-empty answers', () => {
+    expect(FAQ.length).toBeGreaterThanOrEqual(20);
+    FAQ.forEach(f => { expect(f.q.length).toBeGreaterThan(0); expect(f.a.length).toBeGreaterThan(20); });
+  });
+  it('has 6 feature categories with items', () => {
+    expect(FEATURE_CATEGORIES).toHaveLength(6);
+    FEATURE_CATEGORIES.forEach(c => expect(c.items.length).toBeGreaterThan(0));
+  });
+  it('has 8 industries with challenge + solution', () => {
+    expect(INDUSTRIES).toHaveLength(8);
+    INDUSTRIES.forEach(i => { expect(i.challenge).toBeTruthy(); expect(i.solution).toBeTruthy(); });
+  });
+  it('marks on-premise as coming soon', () => {
+    expect(DEPLOYMENTS.find(d => d.name === 'On-premise').badge).toBe('Coming Soon');
+  });
+  it('uses no banned marketing words', () => {
+    const banned = /\b(amazing|revolutionary|magic|ultimate)\b/i;
+    const all = JSON.stringify(FAQ) + JSON.stringify(FEATURE_CATEGORIES) + JSON.stringify(INDUSTRIES);
+    expect(banned.test(all)).toBe(false);
+  });
+});
+
+describe('EnterpriseFaq', () => {
+  beforeEach(() => mockTrack.mockClear());
+
+  it('toggles aria-expanded on click', () => {
+    const items = [{ q: 'Q one', a: 'Answer one text here.' }];
+    const { getByRole } = render(<EnterpriseFaq items={items} idPrefix="t" />);
+    const btn = getByRole('button', { name: /Q one/ });
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(btn);
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(btn);
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('wires aria-controls to the panel id', () => {
+    const items = [{ q: 'Q one', a: 'Answer one text here.' }];
+    const { getByRole, container } = render(<EnterpriseFaq items={items} idPrefix="t" />);
+    const btn = getByRole('button', { name: /Q one/ });
+    expect(btn.getAttribute('aria-controls')).toBe('t-panel-0');
+    fireEvent.click(btn);
+    const panel = container.querySelector('#t-panel-0');
+    expect(panel.getAttribute('role')).toBe('region');
+    expect(panel.textContent).toContain('Answer one text here.');
+  });
+
+  it('fires analytics only on open, not on close, when trackOpen is set', () => {
+    const items = [{ q: 'Track me', a: 'Some answer.' }];
+    const { getByRole } = render(<EnterpriseFaq items={items} idPrefix="t" trackOpen />);
+    const btn = getByRole('button', { name: /Track me/ });
+    fireEvent.click(btn); // open
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledWith('enterprise_faq_opened', { question: 'Track me' });
+    fireEvent.click(btn); // close
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    fireEvent.click(btn); // re-open — must track again
+    expect(mockTrack).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not fire analytics when trackOpen is falsy', () => {
+    const items = [{ q: 'Silent', a: 'Some answer.' }];
+    const { getByRole } = render(<EnterpriseFaq items={items} idPrefix="t" />);
+    fireEvent.click(getByRole('button', { name: /Silent/ }));
+    expect(mockTrack).not.toHaveBeenCalled();
+  });
+});

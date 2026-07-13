@@ -44,6 +44,7 @@ const Unsubscribe    = lazy(() => import('./pages/Unsubscribe'));
 const About          = lazy(() => import('./pages/About'));
 const Careers        = lazy(() => import('./pages/Careers'));
 const JobDetail      = lazy(() => import('./pages/JobDetail'));
+const Enterprise     = lazy(() => import('./pages/Enterprise'));
 
 // Paid-traffic landing pages (/lp/*) — own header/footer, global nav hidden
 const TopmateVsBookASloth = lazy(() => import('./pages/lp/TopmateVsBookASloth'));
@@ -434,6 +435,7 @@ function App() {
           <Route path="/support" element={<Support />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/get-in-touch" element={<Contact />} />
+          <Route path="/enterprise" element={<Enterprise />} />
 
           {/* Branded error pages — config-driven (see config/errorCatalog.js).
               One <ErrorPage> component renders all of them; adding a code = a
