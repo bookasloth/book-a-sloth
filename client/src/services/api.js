@@ -113,6 +113,7 @@ export const subscribeNewsletter = (email)     => API.post('/email/subscribe', {
 
 // ── Contact form (public) ─────────────────────────────────────
 export const sendContactMessage = (data) => API.post('/contact', data);
+export const submitEnterpriseLead = (data) => API.post('/enterprise-lead', data);
 
 // ── Email preferences (public, signed-token gated) ────────────
 export const getUnsubscribeStatus = (token)    => API.get('/email/unsubscribe', { params: { token } });

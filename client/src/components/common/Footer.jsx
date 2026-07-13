@@ -11,6 +11,7 @@ const COLUMNS = [
     { t: 'FAQ', href: '/#faq' },
     { t: 'Be a Host', href: '/be-a-sloth' },
     { t: 'Explore', href: '/explore' },
+    { t: 'Enterprise', href: '/enterprise' },
   ] },
   { h: 'Company', links: [
     { t: 'About', href: '/about' },

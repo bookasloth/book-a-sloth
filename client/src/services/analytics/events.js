@@ -42,6 +42,14 @@ export const EVENTS = Object.freeze({
   SUBSCRIPTION_STARTED:'subscription_started',
   USER_REGISTERED:    'user_registered',
 
+  // ── Enterprise landing page (/enterprise) — client-only ──
+  ENTERPRISE_HERO_CTA:     'enterprise_hero_cta',
+  ENTERPRISE_DEMO_CTA:     'enterprise_demo_cta',
+  ENTERPRISE_SALES_CTA:    'enterprise_sales_cta',
+  ENTERPRISE_LEAD_SUBMITTED: 'enterprise_lead_submitted',
+  ENTERPRISE_FAQ_OPENED:   'enterprise_faq_opened',
+  ENTERPRISE_SCROLL_DEPTH: 'enterprise_scroll_depth',
+
   // ── System / reliability (client-only) ──
   ERROR_PAGE_VIEWED:  'error_page_viewed',   // a branded error/offline page rendered
 });

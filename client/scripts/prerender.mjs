@@ -26,6 +26,7 @@ const DEFAULT_TITLE = 'Book A Sloth — booked & paid at 0% commission';
 const PRERENDER_ROUTES = [
   '/',
   '/pricing',
+  '/enterprise',
   '/about',
   '/help',
   '/contact',
