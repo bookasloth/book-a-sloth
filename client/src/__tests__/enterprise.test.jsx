@@ -1,12 +1,21 @@
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { FAQ, FEATURE_CATEGORIES, INDUSTRIES, DEPLOYMENTS } from '../pages/enterprise/enterpriseData';
+import * as ENTERPRISE_DATA from '../pages/enterprise/enterpriseData';
 import EnterpriseFaq from '../pages/enterprise/EnterpriseFaq';
+import EnterpriseLeadForm from '../pages/enterprise/EnterpriseLeadForm';
+import { buildEnterpriseJsonLd, ENT_SEO } from '../pages/enterprise/enterpriseSeo';
+import Enterprise from '../pages/Enterprise';
 
 const { mockTrack } = vi.hoisted(() => ({ mockTrack: vi.fn() }));
 vi.mock('../services/analytics', () => ({
   analytics: { track: mockTrack },
-  EVENTS: { ENTERPRISE_FAQ_OPENED: 'enterprise_faq_opened' },
+  EVENTS: { ENTERPRISE_FAQ_OPENED: 'enterprise_faq_opened', ENTERPRISE_LEAD_SUBMITTED: 'enterprise_lead_submitted' },
 }));
+
+const { mockSubmit } = vi.hoisted(() => ({ mockSubmit: vi.fn(() => Promise.resolve({ data: { ok: true } })) }));
+vi.mock('../services/api', () => ({ submitEnterpriseLead: mockSubmit }));
+import { submitEnterpriseLead } from '../services/api';
 
 describe('enterpriseData', () => {
   it('has at least 20 FAQ with non-empty answers', () => {
@@ -25,9 +34,8 @@ describe('enterpriseData', () => {
     expect(DEPLOYMENTS.find(d => d.name === 'On-premise').badge).toBe('Coming Soon');
   });
   it('uses no banned marketing words', () => {
-    const banned = /\b(amazing|revolutionary|magic|ultimate)\b/i;
-    const all = JSON.stringify(FAQ) + JSON.stringify(FEATURE_CATEGORIES) + JSON.stringify(INDUSTRIES);
-    expect(banned.test(all)).toBe(false);
+    const banned = /\b(amazing|revolutionary|magic|easy|best|ultimate)\b/i;
+    expect(banned.test(JSON.stringify(ENTERPRISE_DATA))).toBe(false);
   });
 });
 
@@ -74,5 +82,57 @@ describe('EnterpriseFaq', () => {
     const { getByRole } = render(<EnterpriseFaq items={items} idPrefix="t" />);
     fireEvent.click(getByRole('button', { name: /Silent/ }));
     expect(mockTrack).not.toHaveBeenCalled();
+  });
+});
+
+describe('enterpriseSeo', () => {
+  it('emits an @graph with FAQPage (>=20 Q&A) and named SoftwareApplication', () => {
+    const graph = buildEnterpriseJsonLd()['@graph'];
+    const faq = graph.find(n => n['@type'] === 'FAQPage');
+    const app = graph.find(n => n['@type'] === 'SoftwareApplication');
+    const org = graph.find(n => n['@type'] === 'Organization');
+    const breadcrumb = graph.find(n => n['@type'] === 'BreadcrumbList');
+    expect(app.name).toBe('Book A Sloth Enterprise');
+    expect(faq.mainEntity.length).toBeGreaterThanOrEqual(20);
+    expect(org).toBeTruthy();
+    expect(breadcrumb.itemListElement.length).toBe(2);
+    // Builder docs are nested under @graph, so their own @context must be stripped.
+    graph.forEach(node => expect(node['@context']).toBeUndefined());
+  });
+
+  it('title targets the primary keyword', () => {
+    expect(ENT_SEO.title.toLowerCase()).toContain('appointment booking app');
+  });
+});
+
+describe('EnterpriseLeadForm', () => {
+  beforeEach(() => {
+    mockSubmit.mockClear();
+    mockTrack.mockClear();
+  });
+
+  it('blocks submit when required fields are empty', () => {
+    const { getByRole, getByText } = render(<EnterpriseLeadForm />);
+    fireEvent.click(getByRole('button', { name: /Request Enterprise Consultation/ }));
+    expect(submitEnterpriseLead).not.toHaveBeenCalled();
+    getByText('Enter your organization name.');
+  });
+
+  it('submits when required fields are filled', async () => {
+    const { getByLabelText, getByRole } = render(<EnterpriseLeadForm />);
+    fireEvent.change(getByLabelText(/Organization Name/i), { target: { value: 'Acme' } });
+    fireEvent.change(getByLabelText(/Business Email/i), { target: { value: 'a@b.com' } });
+    fireEvent.change(getByLabelText(/Phone/i), { target: { value: '9876543210' } });
+    fireEvent.click(getByRole('button', { name: /Request Enterprise Consultation/ }));
+    await waitFor(() => expect(submitEnterpriseLead).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe('Enterprise page', () => {
+  it('renders exactly one h1 with the hero headline', () => {
+    const { container } = render(<MemoryRouter><Enterprise /></MemoryRouter>);
+    const h1s = container.querySelectorAll('h1');
+    expect(h1s.length).toBe(1);
+    expect(h1s[0].textContent).toMatch(/Built around your business/);
   });
 });
