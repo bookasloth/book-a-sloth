@@ -2,6 +2,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react';
 import { FAQ, FEATURE_CATEGORIES, INDUSTRIES, DEPLOYMENTS } from '../pages/enterprise/enterpriseData';
 import EnterpriseFaq from '../pages/enterprise/EnterpriseFaq';
 import EnterpriseLeadForm from '../pages/enterprise/EnterpriseLeadForm';
+import { buildEnterpriseJsonLd, ENT_SEO } from '../pages/enterprise/enterpriseSeo';
 
 const { mockTrack } = vi.hoisted(() => ({ mockTrack: vi.fn() }));
 vi.mock('../services/analytics', () => ({
@@ -79,6 +80,26 @@ describe('EnterpriseFaq', () => {
     const { getByRole } = render(<EnterpriseFaq items={items} idPrefix="t" />);
     fireEvent.click(getByRole('button', { name: /Silent/ }));
     expect(mockTrack).not.toHaveBeenCalled();
+  });
+});
+
+describe('enterpriseSeo', () => {
+  it('emits an @graph with FAQPage (>=20 Q&A) and named SoftwareApplication', () => {
+    const graph = buildEnterpriseJsonLd()['@graph'];
+    const faq = graph.find(n => n['@type'] === 'FAQPage');
+    const app = graph.find(n => n['@type'] === 'SoftwareApplication');
+    const org = graph.find(n => n['@type'] === 'Organization');
+    const breadcrumb = graph.find(n => n['@type'] === 'BreadcrumbList');
+    expect(app.name).toBe('Book A Sloth Enterprise');
+    expect(faq.mainEntity.length).toBeGreaterThanOrEqual(20);
+    expect(org).toBeTruthy();
+    expect(breadcrumb.itemListElement.length).toBe(2);
+    // Builder docs are nested under @graph, so their own @context must be stripped.
+    graph.forEach(node => expect(node['@context']).toBeUndefined());
+  });
+
+  it('title targets the primary keyword', () => {
+    expect(ENT_SEO.title.toLowerCase()).toContain('appointment booking app');
   });
 });
 
