@@ -1,12 +1,17 @@
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import { FAQ, FEATURE_CATEGORIES, INDUSTRIES, DEPLOYMENTS } from '../pages/enterprise/enterpriseData';
 import EnterpriseFaq from '../pages/enterprise/EnterpriseFaq';
+import EnterpriseLeadForm from '../pages/enterprise/EnterpriseLeadForm';
 
 const { mockTrack } = vi.hoisted(() => ({ mockTrack: vi.fn() }));
 vi.mock('../services/analytics', () => ({
   analytics: { track: mockTrack },
-  EVENTS: { ENTERPRISE_FAQ_OPENED: 'enterprise_faq_opened' },
+  EVENTS: { ENTERPRISE_FAQ_OPENED: 'enterprise_faq_opened', ENTERPRISE_LEAD_SUBMITTED: 'enterprise_lead_submitted' },
 }));
+
+const { mockSubmit } = vi.hoisted(() => ({ mockSubmit: vi.fn(() => Promise.resolve({ data: { ok: true } })) }));
+vi.mock('../services/api', () => ({ submitEnterpriseLead: mockSubmit }));
+import { submitEnterpriseLead } from '../services/api';
 
 describe('enterpriseData', () => {
   it('has at least 20 FAQ with non-empty answers', () => {
@@ -74,5 +79,28 @@ describe('EnterpriseFaq', () => {
     const { getByRole } = render(<EnterpriseFaq items={items} idPrefix="t" />);
     fireEvent.click(getByRole('button', { name: /Silent/ }));
     expect(mockTrack).not.toHaveBeenCalled();
+  });
+});
+
+describe('EnterpriseLeadForm', () => {
+  beforeEach(() => {
+    mockSubmit.mockClear();
+    mockTrack.mockClear();
+  });
+
+  it('blocks submit when required fields are empty', () => {
+    const { getByRole, getByText } = render(<EnterpriseLeadForm />);
+    fireEvent.click(getByRole('button', { name: /Request Enterprise Consultation/ }));
+    expect(submitEnterpriseLead).not.toHaveBeenCalled();
+    getByText(/required/i);
+  });
+
+  it('submits when required fields are filled', async () => {
+    const { getByLabelText, getByRole } = render(<EnterpriseLeadForm />);
+    fireEvent.change(getByLabelText(/Organization Name/i), { target: { value: 'Acme' } });
+    fireEvent.change(getByLabelText(/Business Email/i), { target: { value: 'a@b.com' } });
+    fireEvent.change(getByLabelText(/Phone/i), { target: { value: '9876543210' } });
+    fireEvent.click(getByRole('button', { name: /Request Enterprise Consultation/ }));
+    await waitFor(() => expect(submitEnterpriseLead).toHaveBeenCalledTimes(1));
   });
 });
