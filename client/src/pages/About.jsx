@@ -5,7 +5,6 @@ import HeroV2 from "../components/about/HeroV2";
 import LogoMarquee from "../components/about/LogoMarquee";
 import JoinSplit from "../components/about/JoinSplit";
 import StackingCards from "../components/about/StackingCards";
-// import CaseStudyGrid from "../components/about/CaseStudyGrid"; // hidden for now
 import TestimonialsFlip from "../components/about/TestimonialsFlip";
 import FaqAccordion from "../components/about/FaqAccordion";
 import TeamMasonry from "../components/about/TeamMasonry";
