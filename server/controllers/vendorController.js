@@ -112,6 +112,15 @@ const requestPayout = async (req, res) => {
       return res.status(400).json({ message: 'Minimum withdrawal amount is ₹100' });
     }
 
+    // KYC gate (server-side, v3.77): the client already hides withdrawal behind
+    // approved KYC (Payouts.jsx), but the API must enforce it too — a direct call
+    // otherwise bypasses identity verification (and could drain referral cash).
+    const { data: kyc } = await supabaseAdmin
+      .from('kyc_submissions').select('status').eq('user_id', hostId).maybeSingle();
+    if (!kyc || kyc.status !== 'approved') {
+      return res.status(403).json({ message: 'Complete KYC verification before requesting a payout.' });
+    }
+
     const { clearingDays } = await platformConfig.getConfig();
     const { available } = await computeSettlementBalance(hostId, clearingDays);
 

@@ -17,6 +17,7 @@ const ACCOUNTS = Object.freeze({
   RZP_CHARGES_SUBS:     '5100',
   SETTLEMENT_CHARGES:   '5200',
   REFUND_LOSSES:        '5300',
+  REFERRAL_EXPENSE:     '5400',
 });
 
 module.exports = { ACCOUNTS };

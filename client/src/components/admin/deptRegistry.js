@@ -33,7 +33,6 @@ export const DEPT_LINKS = [
   // Roadmap — coming-soon teasers, parked in Sloth House. No routes.
   { label: 'CRM',                  icon: 'users2',    desc: 'Customer relationship management',   depts: ['sloth-house'], inactive: true },
   { label: 'Marketing Automation', icon: 'zap',       desc: 'Automated journeys and drips',       depts: ['sloth-house'], inactive: true },
-  { label: 'Affiliates',           icon: 'affiliate', desc: 'Referral and affiliate program',     depts: ['sloth-house'], inactive: true },
   { label: 'Revenue Analytics',    icon: 'bars',      desc: 'Deep revenue and cohort analytics',  depts: ['sloth-house'], inactive: true },
   { label: 'Integrations',         icon: 'link2',     desc: 'Third-party app integrations',       depts: ['sloth-house'], inactive: true },
   { label: 'AI Assistant',         icon: 'star',      desc: 'AI-assisted admin workflows',        depts: ['sloth-house'], inactive: true },
@@ -44,6 +43,7 @@ export const DEPT_LINKS = [
   { label: 'Services',           icon: 'layers',   to: '/admin/services',   desc: 'Every host service and listing',         depts: ['operation', 'marketing'] },
   { label: 'Hosts',              icon: 'userCheck',to: '/admin/providers',  desc: 'Manage hosts and their status',          depts: ['operation', 'support'] },
   { label: 'Subscription Plans', icon: 'card',     to: '/admin/plans',      desc: 'Plan tiers, pricing, and limits',        depts: ['finance', 'marketing'] },
+  { label: 'Refer & Earn',       icon: 'affiliate',to: '/admin/referrals',  desc: 'Referral rewards, config & ledger',      depts: ['marketing', 'finance'] },
   { label: 'Professions',        icon: 'layers',   to: '/admin/professions',desc: 'Profession taxonomy and categories',     depts: ['operation', 'marketing'] },
   { label: 'Addons',             icon: 'package',  to: '/admin/addons',     desc: 'Paid add-ons and upsells',               depts: ['finance', 'operation'] },
   { label: 'Badges',             icon: 'star',     to: '/admin/badges',     desc: 'Host trust and achievement badges',      depts: ['marketing', 'operation'] },

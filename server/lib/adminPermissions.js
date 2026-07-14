@@ -36,6 +36,7 @@ const PERMISSIONS = [
   // Growth
   'plans.view', 'plans.manage',
   'coupons.view', 'coupons.manage',
+  'referrals.view', 'referrals.manage',
   'analytics.view',
   // Engagement
   'notifications.view', 'email.manage', 'whatsapp.manage',
@@ -130,6 +131,7 @@ const ROLES = {
       'commission.view', 'commission.edit',
       'plans.view',
       'coupons.view',
+      'referrals.view', 'referrals.manage',
       'analytics.view',
       'audit.view',
     ],
@@ -144,6 +146,7 @@ const ROLES = {
       'ops.view',
       'plans.view', 'plans.manage',
       'coupons.view', 'coupons.manage',
+      'referrals.view', 'referrals.manage',
       'analytics.view',
       'notifications.view', 'email.manage', 'whatsapp.manage',
       'campaigns.view', 'campaigns.manage',

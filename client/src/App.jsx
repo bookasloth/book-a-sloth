@@ -1,4 +1,4 @@
-import { Suspense, useState, useMemo } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import { Routes, Route, useLocation, useParams, Navigate } from 'react-router-dom';
 import ChromeContext from './context/ChromeContext';
 import { Toaster } from 'react-hot-toast';
@@ -15,6 +15,7 @@ import ConsentBanner from './components/common/ConsentBanner';
 import ScrollToTop from './components/common/ScrollToTop';
 import RouteErrorBoundary from './components/common/RouteErrorBoundary';
 import { useAuth } from './context/AuthContext';
+import { captureReferral } from './services/api';
 import lazyWithRetry from './utils/lazyWithRetry';
 
 // lazyWithRetry wraps React.lazy: it retries transient chunk-fetch failures and,
@@ -84,6 +85,7 @@ const Availability = lazy(() => import('./pages/Availability'));
 const Products    = lazy(() => import('./pages/Products'));
 const UpgradePlan = lazy(() => import('./pages/UpgradePlan'));
 const Payouts     = lazy(() => import('./pages/Payouts'));
+const ReferEarn   = lazy(() => import('./pages/ReferEarn'));
 const Transactions = lazy(() => import('./pages/Transactions'));
 const Feedback     = lazy(() => import('./pages/Feedback'));
 
@@ -172,6 +174,7 @@ const AdminExplore    = lazy(() => import('./pages/admin/AdminExplore'));
 const AdminStaff = lazy(() => import('./pages/admin/AdminStaff'));
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
 const AdminReservedSlugs = lazy(() => import('./pages/admin/AdminReservedSlugs'));
+const AdminReferrals = lazy(() => import('./pages/admin/AdminReferrals'));
 const AdminBlockedIps = lazy(() => import('./pages/admin/AdminBlockedIps'));
 
 // Admin — Departments (org placeholder shells)
@@ -193,7 +196,20 @@ const PageLoader = () => (
   </div>
 );
 
+// Refer & Earn attribution: a host who arrived via ?ref=<username> had it stashed
+// in localStorage (AuthContext). Once they're an authed host, POST it once — the
+// server write-once-guards, so re-fires are harmless — then clear it.
+function useReferralCapture() {
+  const { user } = useAuth();
+  useEffect(() => {
+    const ref = localStorage.getItem('bas_ref');
+    if (!ref || !user?.is_host) return;
+    captureReferral({ ref }).catch(() => {}).finally(() => localStorage.removeItem('bas_ref'));
+  }, [user?.is_host]);
+}
+
 function DashboardWrapper({ children }) {
+  useReferralCapture();
   return <HostRoute><DashboardLayout>{children}</DashboardLayout></HostRoute>;
 }
 
@@ -333,6 +349,7 @@ function App() {
           <Route path="/dashboard/products" element={<DashboardWrapper><Products /></DashboardWrapper>} />
           <Route path="/dashboard/upgrade" element={<DashboardWrapper><UpgradePlan /></DashboardWrapper>} />
           <Route path="/dashboard/payments/payouts" element={<DashboardWrapper><Payouts /></DashboardWrapper>} />
+          <Route path="/dashboard/referrals" element={<DashboardWrapper><ReferEarn /></DashboardWrapper>} />
           <Route path="/dashboard/payments/transactions" element={<DashboardWrapper><Transactions /></DashboardWrapper>} />
           <Route path="/dashboard/feedback" element={<DashboardWrapper><Feedback /></DashboardWrapper>} />
 
@@ -354,6 +371,7 @@ function App() {
           {/* Operations */}
           <Route path="/admin/addons" element={<AdminWrapper><AdminAddons /></AdminWrapper>} />
           <Route path="/admin/plans" element={<AdminWrapper><AdminPlans /></AdminWrapper>} />
+          <Route path="/admin/referrals" element={<AdminWrapper><AdminReferrals /></AdminWrapper>} />
           <Route path="/admin/professions" element={<AdminWrapper><AdminCategories /></AdminWrapper>} />
           <Route path="/admin/explore"     element={<AdminWrapper><AdminExplore /></AdminWrapper>} />
 

@@ -141,6 +141,7 @@ app.use('/api/feedback',    require('./routes/feedbackRoutes'));
 app.use('/api/products',    require('./routes/productRoutes'));
 app.use('/api/upload',      require('./routes/uploadRoutes'));
 app.use('/api/vendor',      require('./routes/vendorRoutes'));
+app.use('/api/referrals',   require('./routes/referralRoutes'));
 app.use('/api/services',    require('./routes/serviceRoutes'));
 app.use('/api/categories',  require('./routes/categoryRoutes'));
 const { adminRouter: scAdminRouter, publicRouter: scPublicRouter } = require('./routes/serviceCategoryRoutes');
@@ -318,6 +319,19 @@ setInterval(async () => {
     }, { leaseMs: BOOKING_RECONCILE_MIN * 2 * 60 * 1000 });
   } catch (err) { console.error('Booking reconciler cron error:', err.message); }
 }, BOOKING_RECONCILE_MIN * 60 * 1000);
+
+// Referral reward release (v3.76) — flips qualified referrals to rewarded once the
+// hold window passes and the referred host is still paying (clawing back churned/
+// refunded ones), crediting the referrer's withdrawable balance. Idempotent; hourly.
+const referralService = require('./services/referralService');
+setInterval(async () => {
+  try {
+    await runLocked('referral-release', async () => {
+      const r = await referralService.releaseDue();
+      if (r.released || r.clawed) console.log(`Referral release: +${r.released} rewarded, ${r.clawed} clawed back`);
+    }, { leaseMs: 2 * 60 * 60 * 1000 });
+  } catch (err) { console.error('Referral release cron error:', err.message); }
+}, 60 * 60 * 1000);
 
 // Rate-limit store housekeeping — prune expired rows so the rate_limit_hits table
 // can't grow unbounded once the persistent store is enabled (RATE_LIMIT_STORE_URL).
