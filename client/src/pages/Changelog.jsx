@@ -50,6 +50,49 @@ const BLOBS = [
 
 const RELEASES = [
   {
+    date: 'Jul 13, 2026', version: 'v3.75',
+    title: 'Book A Sloth, for teams',
+    tags: ['New'],
+    points: [
+      'A new Enterprise page for agencies, studios and larger teams who need to run bookings across a whole roster from one place.',
+      'Tell us what you need and our team will tailor a plan and get you set up.',
+    ],
+  },
+  {
+    date: 'Jul 12, 2026',
+    title: 'Share your page in one tap',
+    tags: ['Improved'],
+    points: [
+      'A native share button on your dashboard — send your booking link straight to WhatsApp, Messages or anywhere else using your phone’s own share sheet.',
+    ],
+  },
+  {
+    date: 'Jul 11, 2026', version: 'v3.72',
+    title: 'A smarter way to get discovered',
+    tags: ['New', 'Improved'],
+    points: [
+      'Rebuilt Explore ranks real services by quality and relevance, so guests searching for what you offer see the best matches first.',
+      'Search and public listings are faster and crash-proof, even under heavy load.',
+    ],
+  },
+  {
+    date: 'Jul 11, 2026', version: 'v3.71',
+    title: 'Your calendar, never double-booked',
+    tags: ['Improved', 'Fixed'],
+    points: [
+      'Hardened the booking engine so two guests can never grab the same slot — even in the same split second — while a short grace window keeps genuine back-to-back bookings flowing.',
+    ],
+  },
+  {
+    date: 'Jul 9, 2026',
+    title: 'The mobile dashboard keeps getting better',
+    tags: ['Improved'],
+    points: [
+      'More native-app polish on mobile: an infinite-scroll bookings feed, smoother sheets and forms, friendly success screens and a clearer step-by-step onboarding progress bar.',
+      'Set your hours per day with a simple open/closed toggle, and pick your brand colour from a proper colour wheel.',
+    ],
+  },
+  {
     date: 'Jul 8, 2026', version: 'v3.68',
     title: 'Get verified, get paid',
     tags: ['New', 'Security'],
