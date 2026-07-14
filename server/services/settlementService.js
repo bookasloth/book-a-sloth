@@ -49,6 +49,21 @@ async function computeSettlementBalance(hostId, clearingDays, nowMs = Date.now()
     }
   }
 
+  // v3.77: released cash referral rewards are withdrawable immediately — they carry
+  // their OWN hold (release_at, enforced before status='rewarded'), so they are NOT
+  // subject to the service-completion clearing window. Only cash_inr hits the payout
+  // rail; account_credit (not yet spendable) is excluded.
+  // Fail-soft: the referrals table ships in v3.77 and is applied manually on both
+  // DBs — until then, referral rewards simply read as 0 (never break payout reads).
+  const { data: refRewards, error: rErr } = await supabaseAdmin
+    .from('referrals')
+    .select('reward_value')
+    .eq('referrer_id', hostId)
+    .eq('status', 'rewarded')
+    .eq('reward_type', 'cash_inr');
+  if (rErr) console.error('settlementService: referrals read skipped:', rErr.message);
+  else for (const r of refRewards || []) matured += Math.max(0, Number(r.reward_value) || 0);
+
   const { data: payouts, error: pErr } = await supabaseAdmin
     .from('payout_requests')
     .select('amount, status')
@@ -100,6 +115,15 @@ async function computeAllSettlementBalances(clearingDays, nowMs = Date.now()) {
     .not('host_id', 'is', null);
   if (pErr) throw new Error(`settlementService: payout_requests query failed: ${pErr.message}`);
 
+  // v3.77: released cash referral rewards, per referrer (see single-host variant).
+  // Fail-soft (see single-host variant): 0 referral rewards until v3.77 is applied.
+  const { data: refRewards, error: rErr } = await supabaseAdmin
+    .from('referrals')
+    .select('referrer_id, reward_value')
+    .eq('status', 'rewarded')
+    .eq('reward_type', 'cash_inr');
+  if (rErr) console.error('settlementService: referrals read skipped:', rErr.message);
+
   // matured / clearing / pendingCompletion per host (mirrors single-host logic).
   const acc = new Map(); // host_id -> { matured, clearing, pendingCompletion, claimed, inflight, paidOut }
   const bucket = (id) => {
@@ -127,6 +151,10 @@ async function computeAllSettlementBalances(clearingDays, nowMs = Date.now()) {
     const amt = Number(p.amount) || 0;
     if (p.status === 'paid') { b.claimed += amt; b.paidOut += amt; }
     else if (p.status === 'approved' || p.status === 'pending') { b.claimed += amt; b.inflight += amt; }
+  }
+
+  for (const r of refRewards || []) {
+    bucket(r.referrer_id).matured += Math.max(0, Number(r.reward_value) || 0);
   }
 
   const out = new Map();

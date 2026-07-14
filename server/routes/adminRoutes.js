@@ -143,6 +143,12 @@ router.get('/vendors/:id/badges',         requireAdmin('badges.manage'), badges.
 router.post('/vendors/:id/badges',        requireAdmin('badges.manage'), badges.assignBadge);
 router.delete('/vendors/:id/badges/:badgeId', requireAdmin('badges.manage'), badges.revokeBadge);
 
+// ── Referral program (Refer & Earn config) ────────────────────
+const referralAdmin = require('../controllers/referralAdminController');
+router.get('/referral-rules',       requireAdmin('referrals.view'),   referralAdmin.listRules);
+router.patch('/referral-rules/:id', requireAdmin('referrals.manage'), referralAdmin.updateRule);
+router.get('/referrals',            requireAdmin('referrals.view'),   referralAdmin.listReferrals);
+
 // ── Payout approval ────────────────────────────────────────────
 const payouts = require('../controllers/payoutAdminController');
 router.get('/payouts/clearing',     requireAdmin('payouts.view'),    payouts.listClearing);

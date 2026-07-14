@@ -155,6 +155,23 @@ function rescheduleFeeEntry({ booking_id, host_id, fee, gstRate = 0.18, razorpay
   return { description: `Reschedule fee — booking ${booking_id}`, lines };
 }
 
+/**
+ * REFERRAL_REWARD — host referral bonus (v3.77). A marketing expense that
+ * credits the referrer's payable balance; the cash is later withdrawn through
+ * the normal payout rail (which posts its own SETTLEMENT entry Vendor Payables →
+ * Bank). Posted at release, after the hold window survives.
+ */
+function referralRewardEntry({ host_id, amount }) {
+  const tags = { vendor_id: host_id };
+  return {
+    description: `Referral reward — host ${host_id}`,
+    lines: [
+      line(ACCOUNTS.REFERRAL_EXPENSE, 'debit', amount, tags),
+      line(ACCOUNTS.VENDOR_PAYABLES, 'credit', amount, tags),
+    ],
+  };
+}
+
 /** ADJUSTMENT — admin-supplied balanced lines (validated again by the RPC). */
 function adjustmentEntry({ description, lines }) {
   return { description: description || 'Manual adjustment', lines };
@@ -185,6 +202,7 @@ module.exports = {
   productPaymentEntry,
   bankTransferEntry,
   payoutEntry,
+  referralRewardEntry,
   rescheduleFeeEntry,
   adjustmentEntry,
   reversalEntry,

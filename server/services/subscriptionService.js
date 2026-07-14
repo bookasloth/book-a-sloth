@@ -243,6 +243,12 @@ async function recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, p
     });
   } catch (e) { console.error('subscription invoice error (non-fatal):', e.message); }
 
+  // v3.77 Refer & Earn: a real (non-token) plan charge just booked for this host.
+  // If they were referred, advance the referral toward its reward. Best-effort.
+  try {
+    await require('./referralService').onReferredCharge({ referredId: vendorId, planSlug, cadence });
+  } catch (e) { console.error('referral qualify hook failed (non-fatal):', e.message); }
+
   return { recorded: true };
 }
 

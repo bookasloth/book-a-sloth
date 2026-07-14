@@ -178,6 +178,11 @@ export const adminRejectPayout   = (id, reason)     => API.post(`/admin/payouts/
 export const adminMarkPayoutPaid = (id, reference)  => API.post(`/admin/payouts/${id}/pay`, { payment_reference: reference });
 export const adminGetPayoutClearing = ()            => API.get('/admin/payouts/clearing');
 
+// Refer & Earn config ("what's paid for what, per plan+cadence") + ledger view.
+export const adminGetReferralRules  = ()            => API.get('/admin/referral-rules');
+export const adminUpdateReferralRule = (id, data)   => API.patch(`/admin/referral-rules/${id}`, data);
+export const adminGetReferrals      = (status)      => API.get('/admin/referrals', { params: status ? { status } : {} });
+
 // Admin — Reviews moderation
 export const adminGetReviews     = (params)         => API.get('/admin/reviews', { params });
 export const adminModerateReview = (id, data)       => API.patch(`/admin/reviews/${id}`, data);
@@ -296,6 +301,10 @@ export const getPayoutBalance   = ()          => API.get('/vendor/payout/balance
 export const getPayoutRequests  = ()          => API.get('/vendor/payout/requests');
 export const requestPayout      = (data)      => API.post('/vendor/payout/request', data);
 export const toggleService      = (id)        => API.put(`/vendor/services/${id}/toggle`);
+
+// ── Refer & Earn (host-refers-host) ───────────────────────────
+export const captureReferral    = (data)      => API.post('/referrals/capture', data); // { ref }
+export const getMyReferrals      = ()          => API.get('/referrals/mine');
 
 // ── KYC (host identity verification) ──────────────────────────
 export const getMyKyc   = ()     => API.get('/kyc/me');

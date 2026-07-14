@@ -50,6 +50,14 @@ export const AuthProvider = ({ children }) => {
   }, [user?.id, user?._id]);
 
   useEffect(() => {
+    // Refer & Earn: stash a ?ref=<username> from the landing URL so it survives the
+    // Google-OAuth signup round-trip. Consumed once the visitor becomes a host
+    // (App.jsx useReferralCapture). Only set — never overwrite an existing pending ref.
+    try {
+      const ref = new URLSearchParams(window.location.search).get('ref');
+      if (ref && !localStorage.getItem('bas_ref')) localStorage.setItem('bas_ref', ref.slice(0, 40));
+    } catch { /* non-fatal */ }
+
     const stored = localStorage.getItem('user');
     if (!stored) { setLoading(false); return; }
 

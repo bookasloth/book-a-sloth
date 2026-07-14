@@ -5,7 +5,7 @@ import {
   LayoutDashboard, CalendarDays, Clock, LayoutGrid, Package, LineChart,
   Banknote, Receipt, User, Menu, X,
   ExternalLink, LogOut, Lock, Wallet, ShieldCheck,
-  Bell, LifeBuoy, Headset, ChevronDown, Sparkles, Settings,
+  Bell, LifeBuoy, Headset, ChevronDown, Sparkles, Settings, Gift,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
@@ -39,6 +39,7 @@ const NAV_GROUPS = [
       { to: '/dashboard/earnings', label: 'Earnings', icon: LineChart },
       { to: '/dashboard/payments/payouts', label: 'Payouts', icon: Banknote },
       { to: '/dashboard/payments/transactions', label: 'Transactions', icon: Receipt },
+      { to: '/dashboard/referrals', label: 'Refer & Earn', icon: Gift },
     ],
   },
   {
@@ -64,6 +65,7 @@ const MORE_LINKS = [
   { to: '/dashboard/products', label: 'Products', icon: Package, locked: 'supreme' },
   { to: '/dashboard/payments/payouts', label: 'Payouts', icon: Banknote },
   { to: '/dashboard/payments/transactions', label: 'Transactions', icon: Receipt },
+  { to: '/dashboard/referrals', label: 'Refer & Earn', icon: Gift },
   { to: '/dashboard/profile', label: 'Profile', icon: User },
 ];
 
