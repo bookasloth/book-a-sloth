@@ -228,7 +228,7 @@ const PublicCenterNav = () => (
   <>
     <UseCasesMegaMenu />
 
-    <Link to="/#pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
+    <Link to="/pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
       Pricing
     </Link>
 
@@ -647,7 +647,7 @@ const Navbar = () => {
                   <Home size={16} className="flex-shrink-0 text-gray-400" /> Home
                 </Link>
 
-                <Link to="/#pricing" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                <Link to="/pricing" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
                   <Tag size={16} className="flex-shrink-0 text-gray-400" /> Pricing
                 </Link>
 
