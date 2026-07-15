@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { updateProfile, getAppearance } from "../services/api";
+import { updateProfile } from "../services/api";
 import BackButton from "../components/common/BackButton";
-import BackgroundPicker from "../components/BackgroundPicker";
 import ImageCropper from "../components/common/ImageCropper";
 import FeatureGate from "../components/common/FeatureGate";
 import UsernameField from "../components/dashboard/UsernameField";
@@ -204,19 +203,6 @@ const ProfileSetup = () => {
   const [customHex, setCustomHex] = useState('');
   const [loading, setLoading] = useState(false);
   const [backgroundKey, setBackgroundKey] = useState(null);
-  const [enabledBackgrounds, setEnabledBackgrounds] = useState([]);
-
-  // Enabled background types come from the public appearance config (enabled-only array).
-  useEffect(() => {
-    let alive = true;
-    getAppearance()
-      .then(({ data }) => {
-        const bgs = data?.backgrounds || [];
-        if (alive && bgs.length) setEnabledBackgrounds(bgs);
-      })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, []);
 
   useEffect(() => {
     if (user) {
@@ -528,18 +514,6 @@ const ProfileSetup = () => {
                   )}
                 </div>
               </FeatureGate>
-
-              {/* Page background */}
-              <div>
-                <h3 className="mb-1 text-sm font-semibold text-gray-800">Page background</h3>
-                <p className="mb-3 text-xs text-gray-400">Animated backdrop shown at the top of your service pages, in your brand colour.</p>
-                <BackgroundPicker
-                  color={tc}
-                  enabled={enabledBackgrounds}
-                  value={backgroundKey}
-                  onChange={(k) => { setBackgroundKey(k); setDirty(true); }}
-                />
-              </div>
 
               {/* Profile Border Info */}
               <div className="rounded-xl bg-gray-50 p-4">
