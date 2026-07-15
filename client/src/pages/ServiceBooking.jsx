@@ -1416,8 +1416,16 @@ const ServiceBooking = () => {
               ...selectedTime.split(":").map(Number), hostTz
             );
             const calTitle = `${service.title} with ${host.name}`;
-            const calDetails = confirmation.meeting_link ? `Join: ${confirmation.meeting_link}` : "";
-            const calLocation = confirmation.meeting_link || "Online";
+            // Offline (in-person) services: use the host's map link / city as the
+            // event location and directions; online services keep the Meet link.
+            const isOffline = service.meeting_mode === "offline";
+            const mapLink = host.map_link || "";
+            const venueText = host.location || "In person";
+            const calDetails = confirmation.meeting_link
+              ? `Join: ${confirmation.meeting_link}`
+              : (isOffline && mapLink ? `Directions: ${mapLink}` : "");
+            const calLocation = confirmation.meeting_link
+              || (isOffline ? (mapLink || venueText) : "Online");
             const gUrl = googleCalUrl({ title: calTitle, details: calDetails, location: calLocation, startISO: scheduledISO, durationMin: service.duration || 30 });
             const icsUrl = buildICS({ title: calTitle, details: calDetails, location: calLocation, startISO: scheduledISO, durationMin: service.duration || 30, uid: confirmation.id });
             const isPaidBooking = confirmation.payment_status === "paid";
@@ -1474,6 +1482,16 @@ const ServiceBooking = () => {
                       <div className="flex justify-between border-t pt-3 items-center">
                         <span className="text-gray-500">Meeting</span>
                         <a href={confirmation.meeting_link} target="_blank" rel="noreferrer" className="font-medium hover:underline" style={{ color: tc }}>Join Link</a>
+                      </div>
+                    )}
+                    {isOffline && !confirmation.meeting_link && (
+                      <div className="flex justify-between border-t pt-3 items-center">
+                        <span className="text-gray-500">Location</span>
+                        {mapLink ? (
+                          <a href={mapLink} target="_blank" rel="noreferrer" className="font-medium hover:underline" style={{ color: tc }}>Get directions</a>
+                        ) : (
+                          <span className="font-medium text-right">{venueText}</span>
+                        )}
                       </div>
                     )}
                   </div>

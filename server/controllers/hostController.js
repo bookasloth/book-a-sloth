@@ -281,6 +281,7 @@ const updateProfile = async (req, res) => {
       cover_image,
       profession,
       location,
+      map_link,
       theme_color,
       background_key,
       reschedule_fee,
@@ -306,6 +307,16 @@ const updateProfile = async (req, res) => {
     if (cover_image !== undefined) updates.cover_image = cover_image;
     if (profession !== undefined) updates.profession = profession;
     if (location !== undefined) updates.location = location;
+    if (map_link !== undefined) {
+      // Offline-service venue link (Google Maps etc.). Sanitise like social links:
+      // empty stays empty, http(s) kept, bare domain → https, any other scheme
+      // (javascript:/data:) rejected so it can never become an XSS href.
+      const v = String(map_link ?? '').trim().slice(0, 500);
+      if (!v) updates.map_link = '';
+      else if (/^https?:\/\//i.test(v)) updates.map_link = v;
+      else if (/^[a-z][a-z0-9+.-]*:/i.test(v)) updates.map_link = '';
+      else updates.map_link = `https://${v}`;
+    }
     if (social_links && typeof social_links === 'object') {
       // SECURITY (audit M5): only persist http(s) links (and well-formed
       // emails). Strip javascript:/data:/etc so a stored value can never become
