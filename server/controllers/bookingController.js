@@ -10,6 +10,7 @@ const { runExclusive } = require("../utils/keyedMutex");
 const crypto = require("crypto");
 const { computeBreakdown } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
+const { redactBookingContact } = require("../lib/contactVisibility");
 const platformConfig = require("../services/platformConfig");
 const availabilityService = require("../services/availabilityService");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
@@ -19,6 +20,21 @@ const { hostOf } = require("../utils/hostOf");
 const profileSecrets = require("../utils/profileSecrets");
 const guestGrant = require("../utils/bookingGrant");
 const { inAppNotify } = require("../utils/inAppNotify");
+
+// Redact the counterparty's phone on a single booking before returning it to the
+// caller (anti-disintermediation). Role = host if the caller owns the host side,
+// else guest; host plan fetched only when needed. See lib/contactVisibility.js.
+const redactForRequest = async (booking, req, now = Date.now()) => {
+  if (!booking) return booking;
+  const role = req.user?.id === booking.host_id ? "host" : "guest";
+  let plan;
+  if (role === "host") {
+    const { data: p } = await supabaseAdmin
+      .from("profiles").select("plan, plan_expires_at").eq("id", req.user.id).single();
+    plan = planService.resolveVendorPlan(p || {});
+  }
+  return redactBookingContact(booking, { role, plan }, now);
+};
 
 const emailHtml = (body) => `
   <div style="max-width:520px;margin:0 auto;padding:26px;border-radius:24px;background:#ffffff;font-family:'Plus Jakarta Sans','Poppins',sans-serif;color:#111827;box-shadow:0 24px 60px rgba(15,23,42,0.08);">
@@ -591,7 +607,13 @@ const getHostBookings = async (req, res) => {
     }
     const { data, error } = result;
     if (error) return safeError(res, error);
-    res.json(data);
+    // Anti-disintermediation: hide guest phone unless the host is Studio (with
+    // window) or Supreme. Plan resolved once for the whole list.
+    const { data: hp } = await supabaseAdmin
+      .from("profiles").select("plan, plan_expires_at").eq("id", req.user.id).single();
+    const hostPlan = planService.resolveVendorPlan(hp || {});
+    const now = Date.now();
+    res.json((data || []).map((b) => redactBookingContact(b, { role: "host", plan: hostPlan }, now)));
   } catch (error) {
     safeError(res, error);
   }
@@ -619,7 +641,10 @@ const getGuestBookings = async (req, res) => {
     }
     const { data, error } = result;
     if (error) return safeError(res, error);
-    res.json(data);
+    // Anti-disintermediation: hide host phone unless the service is offline and
+    // the booking is imminent/past (window). Guest side never reveals via plan.
+    const now = Date.now();
+    res.json((data || []).map((b) => redactBookingContact(b, { role: "guest" }, now)));
   } catch (error) {
     safeError(res, error);
   }
@@ -641,7 +666,7 @@ const cancelBooking = async (req, res) => {
     // P1-5: status guard + idempotency. A repeat cancel is a no-op (don't re-fire
     // notifications); a completed booking can't be walked back to cancelled (it
     // would diverge the ledger from the booking with no reversal).
-    if (booking.status === "cancelled") return res.json(booking);
+    if (booking.status === "cancelled") return res.json(await redactForRequest(booking, req));
     if (booking.status === "completed" || booking.status === "no_show")
       return res.status(409).json({ message: "This booking is already closed and can't be cancelled." });
 
@@ -733,7 +758,7 @@ const cancelBooking = async (req, res) => {
       cancelled_by: req.user.id === booking.host_id ? "host" : "guest",
     });
 
-    res.json(data);
+    res.json(await redactForRequest(data, req));
   } catch (error) {
     safeError(res, error);
   }
@@ -873,7 +898,7 @@ const completeBooking = async (req, res) => {
     }
     // Idempotent: re-completing must not re-stamp completed_at/revenue_recognized_at
     // (would silently shift revenue across a reporting period) or re-fire notifications.
-    if (booking.status === "completed") return res.json(booking);
+    if (booking.status === "completed") return res.json(await redactForRequest(booking, req));
     // P0-2: only a CONFIRMED booking may be completed. Without this a cancelled,
     // paid booking could be force-completed via the API — re-stamping revenue
     // recognition and re-entering the host's settlement balance for a session
@@ -894,7 +919,7 @@ const completeBooking = async (req, res) => {
 
     const { data, error } = await markBookingCompleted(booking, { notify: true });
     if (error) return safeError(res, error);
-    res.json(data);
+    res.json(await redactForRequest(data, req));
   } catch (error) {
     safeError(res, error);
   }
@@ -922,7 +947,7 @@ const markNoShow = async (req, res) => {
     if (!booking) return res.status(404).json({ message: "Booking not found" });
     if (req.user.id !== booking.host_id)
       return res.status(403).json({ message: "Only the host can mark a booking as no-show" });
-    if (booking.status === "no_show") return res.json(booking); // idempotent
+    if (booking.status === "no_show") return res.json(await redactForRequest(booking, req)); // idempotent
     if (booking.status !== "confirmed")
       return res.status(409).json({ message: "Only a confirmed booking can be marked no-show." });
 
@@ -961,7 +986,7 @@ const markNoShow = async (req, res) => {
       link: '/dashboard/bookings', data: { bookingId: booking.id },
     });
 
-    res.json(data);
+    res.json(await redactForRequest(data, req));
   } catch (error) {
     safeError(res, error);
   }
@@ -1255,7 +1280,7 @@ const rescheduleBooking = async (req, res) => {
       console.error("Reschedule email error:", emailError.message);
     }
 
-    res.json(updated);
+    res.json(await redactForRequest(updated, req));
 
     // The reschedule reset the reminder flags (so the cron re-fires for the new
     // time). If that new time is itself last-minute, the cron's band would miss
