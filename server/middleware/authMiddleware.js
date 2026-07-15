@@ -1,4 +1,28 @@
+const jwt = require('jsonwebtoken');
 const { supabaseAdmin } = require('../config/supabase');
+
+// Global session-invalidation check (Google RISC / "sign out everywhere").
+// Returns true if this token must be rejected because it was issued BEFORE the
+// user's sessions_valid_after watermark (stamped on a Google account-compromise
+// event — see controllers/securityRiscController.js).
+//
+// FAIL-OPEN by design: this is a revocation add-on, not the primary auth gate
+// (getUser already validated the token). Any error here — column missing before
+// v3.79 is applied, transient DB blip, unparseable token — must NOT lock out a
+// legitimate host, so we return false (allow) and let the token live out its
+// short TTL. Inert for everyone whose watermark is null (the normal case).
+const isTokenRevoked = async (userId, token) => {
+  try {
+    const iat = jwt.decode(token)?.iat; // seconds since epoch; no verify (getUser did)
+    if (!iat) return false;
+    const { data, error } = await supabaseAdmin
+      .from('profiles').select('sessions_valid_after').eq('id', userId).maybeSingle();
+    if (error || !data?.sessions_valid_after) return false;
+    return iat * 1000 < new Date(data.sessions_valid_after).getTime();
+  } catch (_) {
+    return false; // fail-open — never block a valid user on a revocation-check error
+  }
+};
 
 // Verify the Supabase access token. Network verification via getUser is kept:
 // measured at ~175ms and NOT the source of the /api/auth/me latency (that was
@@ -24,6 +48,11 @@ const protect = async (req, res, next) => {
 
     if (error || !user) {
       return res.status(401).json({ message: 'Not authorized, token failed' });
+    }
+
+    // Global logout: reject tokens issued before a RISC-stamped watermark.
+    if (await isTokenRevoked(user.id, token)) {
+      return res.status(401).json({ message: 'Session revoked, sign in again' });
     }
 
     req.user = { id: user.id, email: user.email };
