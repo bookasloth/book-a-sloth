@@ -1451,6 +1451,22 @@ const ServiceBooking = () => {
               platformFeeGst: confirmation.platform_fee_gst,
               total: confirmation.customer_total,
             };
+            // ponytail: inline SVGs instead of lucide — a missing lucide import breaks the whole /for build (known landmine), not worth a new import for 6 icons
+            const Row = ({ icon, label, children }) => (
+              <div className="flex items-center justify-between gap-3 py-2.5">
+                <span className="flex items-center gap-2.5 text-gray-500 shrink-0">
+                  <span style={{ color: tc }}>{icon}</span>{label}
+                </span>
+                <span className="font-medium text-right text-gray-800">{children}</span>
+              </div>
+            );
+            const ic = "w-4 h-4";
+            const calIcon = <svg className={ic} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4" strokeLinecap="round"/></svg>;
+            const clockIcon = <svg className={ic} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+            const userIcon = <svg className={ic} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6" strokeLinecap="round"/></svg>;
+            const pinIcon = <svg className={ic} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>;
+            const docIcon = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6" strokeLinejoin="round"/></svg>;
+            const mailIcon = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6" strokeLinecap="round" strokeLinejoin="round"/></svg>;
             return (
             <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-3xl mx-auto">
@@ -1458,41 +1474,43 @@ const ServiceBooking = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center">
                   {/* LEFT: success */}
                   <div className="text-center">
-                    <img src="/favicon.svg" alt="" className="w-12 h-12 mx-auto mb-3 bas-bob" />
-                    <div className="bas-pop w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: `${tc}18` }}>
-                      <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: tc }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
+                    <div className="relative w-20 h-20 mx-auto mb-5 bas-pop">
+                      <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: `${tc}18` }}>
+                        <img src="/favicon.svg" alt="" className="w-12 h-12 bas-bob" />
+                      </div>
+                      <span className="absolute bottom-0 right-0 w-7 h-7 rounded-full flex items-center justify-center border-2 border-white" style={{ background: tc }}>
+                        <svg className="w-4 h-4" fill="none" stroke={textOnTheme} strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      </span>
                     </div>
-                    <h2 className="text-2xl font-bold mb-2 bas-fade" style={{ color: tc }}>You're all set! 🦥</h2>
+                    <h2 className="text-2xl font-bold mb-2 bas-fade" style={{ color: tc }}>You're all set! 🎉</h2>
                     <p className="text-sm text-gray-500 mb-1 bas-fade">
                       See you {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
                     </p>
-                    <p className="text-sm text-gray-400 bas-fade">
+                    <p className="text-sm text-gray-400 bas-fade mb-5">
                       We've emailed everything you need.
                     </p>
+                    <div className="flex items-center gap-3 border border-gray-100 rounded-xl p-3 bg-gray-50/40 text-left">
+                      <span style={{ color: tc }}>{mailIcon}</span>
+                      <span className="text-xs text-gray-500 leading-snug">Confirmation email sent to<br /><span className="text-gray-700 font-medium break-all">{email}</span></span>
+                    </div>
                   </div>
                   {/* RIGHT: booking details */}
-                  <div className="border border-gray-100 rounded-xl p-4 text-sm text-left space-y-3 bg-gray-50/40">
-                    <div className="flex justify-between"><span className="text-gray-500">Service</span><span className="font-medium text-right">{service.title}</span></div>
-                    <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Date</span><span>{selectedDate?.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span></div>
-                    <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Time</span><span>{formatTime(selectedTime)} ({tzAbbr})</span></div>
-                    <div className="flex justify-between border-t pt-3"><span className="text-gray-500">Customer</span><span className="text-right">{`${firstName} ${lastName}`.trim()}</span></div>
+                  <div className="border border-gray-100 rounded-xl px-4 py-1.5 text-sm text-left divide-y divide-gray-100 bg-gray-50/40">
+                    <Row icon={calIcon} label="Service">{service.title}</Row>
+                    <Row icon={calIcon} label="Date">{selectedDate?.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</Row>
+                    <Row icon={clockIcon} label="Time">{formatTime(selectedTime)} ({tzAbbr})</Row>
+                    <Row icon={userIcon} label="Customer">{`${firstName} ${lastName}`.trim()}</Row>
                     {confirmation.meeting_link && (
-                      <div className="flex justify-between border-t pt-3 items-center">
-                        <span className="text-gray-500">Meeting</span>
-                        <a href={confirmation.meeting_link} target="_blank" rel="noreferrer" className="font-medium hover:underline" style={{ color: tc }}>Join Link</a>
-                      </div>
+                      <Row icon={pinIcon} label="Meeting">
+                        <a href={confirmation.meeting_link} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: tc }}>Join Link</a>
+                      </Row>
                     )}
                     {isOffline && !confirmation.meeting_link && (
-                      <div className="flex justify-between border-t pt-3 items-center">
-                        <span className="text-gray-500">Location</span>
+                      <Row icon={pinIcon} label="Location">
                         {mapLink ? (
-                          <a href={mapLink} target="_blank" rel="noreferrer" className="font-medium hover:underline" style={{ color: tc }}>Get directions</a>
-                        ) : (
-                          <span className="font-medium text-right">{venueText}</span>
-                        )}
-                      </div>
+                          <a href={mapLink} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: tc }}>Get directions</a>
+                        ) : venueText}
+                      </Row>
                     )}
                   </div>
                 </div>
@@ -1501,34 +1519,35 @@ const ServiceBooking = () => {
                 <div className="mt-6 max-w-md mx-auto text-center">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <a href={gUrl} target="_blank" rel="noreferrer"
-                      className="btn btn--outline inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                      className="btn btn--outline inline-flex items-center justify-center gap-2 py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
                       style={{ color: tc }}>
-                      Add to Google Calendar
+                      {calIcon} Add to Google Calendar
                     </a>
                     <a href={icsUrl} download={`${service.title.replace(/\s+/g, "-")}.ics`}
-                      className="btn inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                      className="btn inline-flex items-center justify-center gap-2 py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
                       style={{ background: tc, color: textOnTheme }}>
-                      Download iCal (.ics)
+                      {calIcon} Download iCal (.ics)
                     </a>
                   </div>
                   {isPaidBooking && (
                     <button type="button" onClick={() => downloadReceipt(receiptData)}
-                      className="btn btn--outline mt-3 w-full inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                      className="btn btn--outline mt-3 w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
                       style={{ color: tc }}>
-                      Download Receipt
+                      {docIcon} Download Receipt
                     </button>
                   )}
                   {invoiceRef && (
                     <a href={invoiceUrl(invoiceRef.id, invoiceRef.token)} target="_blank" rel="noreferrer"
-                      className="btn btn--outline mt-3 w-full inline-flex items-center justify-center py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                      className="btn btn--outline mt-3 w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
                       style={{ color: tc }}>
-                      Download GST Invoice
+                      {docIcon} Download GST Invoice
                     </a>
                   )}
-                  <p className="text-xs text-gray-400 mt-4">Confirmation email sent to {email}</p>
-                  <Link to={`/${profileSlug}`} className="block mt-3 text-sm hover:underline" style={{ color: tc }}>
-                    Back to {host.name}'s profile
-                  </Link>
+                  <div className="border-t border-gray-100 mt-6 pt-4">
+                    <Link to={`/${profileSlug}`} className="text-sm font-semibold hover:underline" style={{ color: tc }}>
+                      ← Back to {host.name}'s profile
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
