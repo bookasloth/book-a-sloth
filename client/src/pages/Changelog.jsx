@@ -50,6 +50,42 @@ const BLOBS = [
 
 const RELEASES = [
   {
+    date: 'Jul 15, 2026', version: 'v3.76',
+    title: 'Your clients, all in one place',
+    tags: ['New'],
+    points: [
+      'A built-in CRM for Studio hosts — every guest who books becomes a client, automatically, with their history in one view.',
+      'Keep private notes and files against each client, add your own labels, and export the whole list to CSV whenever you need it.',
+    ],
+  },
+  {
+    date: 'Jul 15, 2026', version: 'v3.78',
+    title: 'In-person bookings now come with a map',
+    tags: ['New', 'Improved'],
+    points: [
+      'Set your venue once and every offline, in-person booking carries a Google Maps link — right in the confirmation, the calendar invite and the WhatsApp message.',
+      'Guests know exactly where to go; online sessions keep their Meet links as before.',
+    ],
+  },
+  {
+    date: 'Jul 15, 2026',
+    title: 'Your contacts stay yours',
+    tags: ['Improved', 'Security'],
+    points: [
+      'Phone numbers are now shown only when they’re genuinely needed for a booking — keeping guest and host contacts protected.',
+      'Email and location details stay exactly where you expect them.',
+    ],
+  },
+  {
+    date: 'Jul 14, 2026', version: 'v3.77',
+    title: 'Refer a host, earn cash',
+    tags: ['New'],
+    points: [
+      'Love Book A Sloth? Refer a fellow creator and earn a cash reward once they’re up and running on a paid plan.',
+      'Track your referrals and rewards straight from your dashboard — clean and hands-off.',
+    ],
+  },
+  {
     date: 'Jul 13, 2026', version: 'v3.75',
     title: 'Book A Sloth, for teams',
     tags: ['New'],

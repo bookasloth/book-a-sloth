@@ -179,6 +179,12 @@ const BeASloth = () => {
             {loading ? 'Opening Google…' : 'Continue with Google'}
           </button>
 
+          <p className="mt-3 text-xs leading-relaxed text-gray-400">
+            By continuing, you agree to our{' '}
+            <Link to="/terms" className="hover:underline">Terms &amp; Conditions</Link> and{' '}
+            <Link to="/privacy" className="hover:underline">Privacy Policy</Link>.
+          </p>
+
           {/* Secondary providers — not yet available, shown disabled */}
           <button
             type="button"
