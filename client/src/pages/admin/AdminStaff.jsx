@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   adminListStaff, adminListRoles, adminCreateStaff,
   adminUpdateStaff, adminSetStaffActive, adminResetStaffPass,
+  adminHost360Managers, adminHost360CreateManager, adminHost360UpdateManager,
 } from '../../services/api';
 import toast from 'react-hot-toast';
 import { PageHeader, Btn, Badge, Skeleton } from '../../components/admin/ui';
@@ -157,6 +158,9 @@ const AdminStaff = () => {
         </div>
       )}
 
+      {/* Account Managers — assignable to hosts in Host 360. */}
+      <AccountManagers />
+
       {/* Create / edit modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShow(false)}>
@@ -193,6 +197,134 @@ const AdminStaff = () => {
                     onChange={(e) => setForm({ ...form, password: e.target.value })} />
                 </div>
               )}
+              <div className="flex gap-2 pt-2">
+                <Btn size="sm" type="submit" disabled={saving} className="flex-1">{saving ? 'Saving…' : 'Save'}</Btn>
+                <Btn variant="outline" size="sm" type="button" onClick={() => setShow(false)}>Cancel</Btn>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Account Managers — lightweight directory of people who own hosts. Assigned to
+// a host from Host 360. Managed here alongside staff (staff.manage gated).
+const AM_EMPTY = { name: '', email: '', phone: '' };
+
+const AccountManagers = () => {
+  const [managers, setManagers] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [showForm, setShow]     = useState(false);
+  const [editing, setEditing]   = useState(null);
+  const [form, setForm]         = useState(AM_EMPTY);
+  const [saving, setSaving]     = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const { data } = await adminHost360Managers();
+      setManagers(data.managers || []);
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Failed to load account managers');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { load(); }, []);
+
+  const openCreate = () => { setEditing(null); setForm(AM_EMPTY); setShow(true); };
+  const openEdit = (row) => { setEditing(row); setForm({ name: row.name, email: row.email || '', phone: row.phone || '' }); setShow(true); };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      if (editing) await adminHost360UpdateManager(editing.id, form);
+      else await adminHost360CreateManager(form);
+      toast.success('Saved');
+      setShow(false);
+      load();
+    } catch (e2) {
+      toast.error(e2.response?.data?.error || 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleActive = async (row) => {
+    try {
+      await adminHost360UpdateManager(row.id, { is_active: !row.is_active });
+      load();
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Action failed');
+    }
+  };
+
+  return (
+    <div className="mt-10">
+      <PageHeader title="Account Managers" subtitle="People who own hosts. Assign them from Host 360."
+        actions={<Btn size="sm" onClick={openCreate}>+ Add Manager</Btn>} />
+
+      {loading ? (
+        <div className="space-y-2">{[0, 1].map((i) => <Skeleton key={i} className="h-14" />)}</div>
+      ) : (
+        <div className="adm-card rounded-2xl overflow-hidden">
+          <table className="adm-table w-full text-sm">
+            <thead>
+              <tr className="text-left text-[11px] uppercase tracking-wide adm-t3 border-b adm-border">
+                <th className="px-4 py-3 font-semibold">Name</th>
+                <th className="px-4 py-3 font-semibold hidden md:table-cell">Email</th>
+                <th className="px-4 py-3 font-semibold hidden lg:table-cell">Phone</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {managers.map((row) => (
+                <tr key={row.id} className="border-b adm-border last:border-0 adm-hoverable transition-colors">
+                  <td className="px-4 py-3 font-semibold adm-t2">{row.name}</td>
+                  <td className="px-4 py-3 hidden md:table-cell adm-t3">{row.email || '—'}</td>
+                  <td className="px-4 py-3 hidden lg:table-cell adm-t3">{row.phone || '—'}</td>
+                  <td className="px-4 py-3"><Badge tone={row.is_active ? 'ok' : 'danger'}>{row.is_active ? 'Active' : 'Inactive'}</Badge></td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button onClick={() => openEdit(row)} className="text-[12px] adm-t3 hover:text-[color:var(--adm-text-1)] px-2 py-1 rounded adm-hoverable">Edit</button>
+                      <button onClick={() => toggleActive(row)} className={`text-[12px] px-2 py-1 rounded adm-hoverable ${row.is_active ? 'text-red-500' : 'text-green-600'}`}>
+                        {row.is_active ? 'Deactivate' : 'Activate'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {managers.length === 0 && (
+                <tr><td colSpan={5} className="px-4 py-12 text-center adm-t3">No account managers yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showForm && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShow(false)}>
+          <div className="adm-card rounded-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold adm-t1 mb-4">{editing ? 'Edit manager' : 'Add manager'}</h2>
+            <form onSubmit={submit} className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium adm-t3 mb-1">Full name</label>
+                <input className="fb-input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium adm-t3 mb-1">Email</label>
+                  <input className="fb-input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium adm-t3 mb-1">Phone</label>
+                  <input className="fb-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                </div>
+              </div>
               <div className="flex gap-2 pt-2">
                 <Btn size="sm" type="submit" disabled={saving} className="flex-1">{saving ? 'Saving…' : 'Save'}</Btn>
                 <Btn variant="outline" size="sm" type="button" onClick={() => setShow(false)}>Cancel</Btn>

@@ -177,10 +177,10 @@ const ClientDetail = () => {
   if (gated) {
     return (
       <div>
-        <PageHeader title="Client" subtitle="Studio Client CRM" />
+        <PageHeader title="Customer" subtitle="Your customers" />
         <Card className="border-2 border-dashed border-primary/30 text-center">
           <div className="mb-3 text-3xl">🗂️</div>
-          <h3 className="mb-1 font-semibold text-gray-900">Unlock the Client CRM</h3>
+          <h3 className="mb-1 font-semibold text-gray-900">Unlock Customers</h3>
           <p className="mb-4 text-sm text-gray-500">This is a Studio feature.</p>
           <Link to="/dashboard/upgrade" className={buttonClasses({ variant: 'primary' })}>
             Upgrade to Studio
@@ -193,8 +193,8 @@ const ClientDetail = () => {
   if (error || !customer) {
     return (
       <div>
-        <PageHeader title="Client" />
-        <ErrorState message="Couldn't load this client." onRetry={load} />
+        <PageHeader title="Customer" />
+        <ErrorState message="Couldn't load this customer." onRetry={load} />
       </div>
     );
   }
@@ -202,7 +202,7 @@ const ClientDetail = () => {
   return (
     <div>
       <Link to="/dashboard/clients" className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
-        <ArrowLeft className="h-4 w-4" /> Back to Clients
+        <ArrowLeft className="h-4 w-4" /> Back to Customers
       </Link>
 
       <Card className="mb-5">

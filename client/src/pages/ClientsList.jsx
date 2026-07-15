@@ -100,12 +100,12 @@ const ClientsList = () => {
   if (gated) {
     return (
       <div>
-        <PageHeader title="Clients" subtitle="Studio Client CRM" />
+        <PageHeader title="Customers" subtitle="Your customers" />
         <Card className="border-2 border-dashed border-primary/30 text-center">
           <div className="mb-3 text-3xl">🗂️</div>
-          <h3 className="mb-1 font-semibold text-gray-900">Unlock the Client CRM</h3>
+          <h3 className="mb-1 font-semibold text-gray-900">Unlock Customers</h3>
           <p className="mb-4 text-sm text-gray-500">
-            See every client's booking history, total spend, and private notes — a Studio feature.
+            See every customer's booking history, total spend, and private notes — a Studio feature.
           </p>
           <Link to="/dashboard/upgrade" className={buttonClasses({ variant: 'primary' })}>
             Upgrade to Studio
@@ -118,8 +118,8 @@ const ClientsList = () => {
   return (
     <div>
       <PageHeader
-        title="Clients"
-        subtitle={`${total} client${total === 1 ? '' : 's'}`}
+        title="Customers"
+        subtitle={`${total} customer${total === 1 ? '' : 's'}`}
         actions={
           <Button variant="secondary" size="sm" onClick={handleExport} disabled={loading || total === 0}>
             <Download className="h-4 w-4" /> Export CSV
@@ -163,8 +163,8 @@ const ClientsList = () => {
           empty={
             <EmptyState
               icon={Users}
-              title="No clients yet"
-              description="Clients show up here automatically once guests book and pay for your services."
+              title="No customers yet"
+              description="Customers show up here automatically once guests book and pay for your services."
             />
           }
         />

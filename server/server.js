@@ -150,6 +150,7 @@ app.use('/api/admin/service-categories', adminLimiter, scAdminRouter);
 app.use('/api/service-categories',       scPublicRouter);
 app.use('/api/services-directory', require('./routes/servicesDirectoryRoutes'));
 app.use('/api/admin/security', adminLimiter, require('./routes/adminSecurityRoutes')); // IP blocking mgmt (super-only)
+app.use('/api/admin/host360', adminLimiter, require('./routes/host360Routes')); // Host 360 command center (per-permission gated)
 app.use('/api/explore',     require('./routes/exploreRoutes'));
 app.use('/api/blogs',       require('./routes/blogRoutes'));
 app.use('/api/vendors',        require('./routes/badgePublicRoutes'));

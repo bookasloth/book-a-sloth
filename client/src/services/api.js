@@ -547,3 +547,27 @@ export const crmGetNotes          = (id)             => API.get(`/crm/customers/
 export const crmAddNote           = (id, body)       => API.post(`/crm/customers/${id}/notes`, { body });
 export const crmDeleteNote        = (id, noteId)     => API.delete(`/crm/customers/${id}/notes/${noteId}`);
 export const crmUpdateAttributes  = (id, data)       => API.patch(`/crm/customers/${id}/attributes`, data);
+
+// ── Admin: Host 360° ──────────────────────────────────────────
+// Super-admin operational command-center for a single host. All routes are
+// requireAdmin(<perm>)-gated server-side; the bas_admin token is attached
+// automatically by the request interceptor for /admin* URLs.
+export const adminHost360List       = (params)          => API.get('/admin/host360', { params });
+export const adminHost360Managers   = ()                => API.get('/admin/host360/account-managers');
+export const adminHost360CreateManager = (data)         => API.post('/admin/host360/account-managers', data);
+export const adminHost360UpdateManager = (id, data)     => API.patch(`/admin/host360/account-managers/${id}`, data);
+export const adminHost360Get        = (id)              => API.get(`/admin/host360/${id}`);
+export const adminHost360Usage      = (id)              => API.get(`/admin/host360/${id}/usage`);
+export const adminHost360Billing    = (id)              => API.get(`/admin/host360/${id}/billing`);
+export const adminHost360Timeline   = (id, params)     => API.get(`/admin/host360/${id}/timeline`, { params });
+export const adminHost360Customers  = (id)              => API.get(`/admin/host360/${id}/customers`);
+export const adminHost360Support    = (id)              => API.get(`/admin/host360/${id}/support`);
+export const adminHost360Documents  = (id)              => API.get(`/admin/host360/${id}/documents`);
+export const adminHost360Notes      = (id)              => API.get(`/admin/host360/${id}/notes`);
+export const adminHost360AddNote    = (id, body)       => API.post(`/admin/host360/${id}/notes`, body);
+export const adminHost360UpdateNote = (id, noteId, body) => API.put(`/admin/host360/${id}/notes/${noteId}`, body);
+export const adminHost360DeleteNote = (id, noteId)     => API.delete(`/admin/host360/${id}/notes/${noteId}`);
+export const adminHost360Suspend    = (id, body)       => API.post(`/admin/host360/${id}/actions/suspend`, body);
+export const adminHost360SetPlan    = (id, body)       => API.post(`/admin/host360/${id}/actions/plan`, body);
+export const adminHost360AssignAm   = (id, body)       => API.post(`/admin/host360/${id}/actions/assign-am`, body);
+export const adminHost360SendEmail  = (id, body)       => API.post(`/admin/host360/${id}/actions/email`, body);
