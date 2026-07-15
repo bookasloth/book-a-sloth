@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Seo from '../../components/common/Seo';
 
@@ -74,6 +75,12 @@ const GoogleStart = () => {
 
         <p className="mt-4 text-xs text-gray-400">
           Free to start. No credit card.
+        </p>
+
+        <p className="mt-2 text-xs text-gray-400">
+          By continuing, you agree to our{' '}
+          <Link to="/terms" className="hover:underline">Terms</Link> and{' '}
+          <Link to="/privacy" className="hover:underline">Privacy Policy</Link>.
         </p>
       </div>
     </div>
