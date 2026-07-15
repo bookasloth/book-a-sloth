@@ -5,7 +5,7 @@ import {
   LayoutDashboard, CalendarDays, Clock, LayoutGrid, Package, LineChart,
   Banknote, Receipt, User, Menu, X,
   ExternalLink, LogOut, Lock, Wallet, ShieldCheck,
-  Bell, LifeBuoy, Headset, ChevronDown, Sparkles, Settings, Gift,
+  Bell, LifeBuoy, Headset, ChevronDown, Sparkles, Settings, Gift, Users,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
@@ -23,6 +23,8 @@ const NAV_GROUPS = [
     items: [
       { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
       { to: '/dashboard/bookings', label: 'Bookings', icon: CalendarDays },
+      // Studio Client CRM — Studio + Supreme only.
+      { to: '/dashboard/clients', label: 'Clients', icon: Users, matchPrefix: '/dashboard/clients', locked: ['professional', 'supreme'] },
       { to: '/dashboard/availability', label: 'Availability', icon: Clock },
     ],
   },
@@ -61,6 +63,7 @@ const MOBILE_TABS = [
 
 // "More" sheet — everything not on the bottom bar.
 const MORE_LINKS = [
+  { to: '/dashboard/clients', label: 'Clients', icon: Users, locked: ['professional', 'supreme'] },
   { to: '/dashboard/availability', label: 'Availability', icon: Clock },
   { to: '/dashboard/products', label: 'Products', icon: Package, locked: 'supreme' },
   { to: '/dashboard/payments/payouts', label: 'Payouts', icon: Banknote },
@@ -85,12 +88,19 @@ const startsWithAny = (pathname, prefix) =>
 const isActive = (item, pathname) =>
   item.exact ? pathname === item.to : startsWithAny(pathname, item.matchPrefix || item.to);
 
+// item.locked holds the canonical plan slug(s) that unlock the item — a single
+// string (Products: 'supreme') or an array (Clients: Studio + Supreme). Anyone
+// on a plan not in the set sees the lock.
+const isLocked = (item, plan) => {
+  if (!item.locked) return false;
+  const allowed = Array.isArray(item.locked) ? item.locked : [item.locked];
+  return !allowed.includes(plan);
+};
+
 /** Sidebar item — icon-only on the md rail, icon + label on lg. */
 const SidebarItem = ({ item, pathname, plan }) => {
   const active = isActive(item, pathname);
-  // item.locked holds the canonical plan slug required to unlock; anyone below
-  // it sees the lock. (Products is Supreme-only for now.)
-  const locked = item.locked && plan !== item.locked;
+  const locked = isLocked(item, plan);
   const Icon = item.icon;
   const node = (
     <NavLink
@@ -116,7 +126,7 @@ const SidebarItem = ({ item, pathname, plan }) => {
 };
 
 const SheetLink = ({ item, plan, onNavigate }) => {
-  const locked = item.locked && plan !== item.locked;
+  const locked = isLocked(item, plan);
   const Icon = item.icon;
   const node = (
     <NavLink

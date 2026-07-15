@@ -197,4 +197,22 @@ const checkBookingReceiveLimit = async (hostId) => {
   }
 };
 
-module.exports = { attachPlan, checkServiceLimit, checkProductLimit, checkBookingReceiveLimit, canActivateMore, canAddFreeService };
+// Studio-only Client CRM gate (limits.crm: -1 = included for professional+supreme,
+// 0/absent = blocked). Requires attachPlan to have run first. Fails CLOSED.
+const requireCrm = async (req, res, next) => {
+  try {
+    const plan = req.vendorPlan || 'starter';
+    const planData = req.vendorPlanData || await planService.getPlan(plan);
+    const limit = planData.limits?.crm ?? 0;
+    if (limit === -1) return next();
+    return blockResponse(res, {
+      message: 'The Client CRM is a Studio feature. Upgrade to manage client records.',
+      plan, limit,
+    });
+  } catch (err) {
+    console.error('requireCrm error:', err.message);
+    return res.status(503).json({ message: 'Could not verify your plan. Please try again.' });
+  }
+};
+
+module.exports = { attachPlan, checkServiceLimit, checkProductLimit, checkBookingReceiveLimit, canActivateMore, canAddFreeService, requireCrm };
