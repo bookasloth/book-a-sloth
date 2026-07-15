@@ -22,7 +22,7 @@
 - **Migrations run manually on BOTH DBs** (staging Tokyo `xwvciqkayammbvsidqig` FIRST, then prod Mumbai `ayjhlwyzszykqtnaktpb`); keep code-side destructure fallback until confirmed applied. Migration file `v3.76_crm.sql` (v3.75 + v3.77 exist; 76 is the free slot reserved for CRM).
 - **Server tests:** `server/tests/unit/*.test.js`, jest (`describe`/`test`/`expect`, `require('../../...')`). **Client tests:** Vitest, NO jest-dom — assert with `.getAttribute()` / `.textContent`.
 - Preserve existing behaviour; do not rename routes/columns. Auth middleware is `{ protect, requireHost }` from `server/middleware/authMiddleware.js`. Plan resolution is `req.vendorPlan` / `req.vendorPlanData` via `attachPlan` (`planMiddleware`); Studio slug = `professional`.
-- **Do NOT build Phase 8 fast-follows:** custom-fields UI, note encryption (option B), manual/walk-in client creation, aggregation RPC.
+- **Phases 1-5 = v1** (already built by the 2026-07-15 scheduled run). **Phase 6** = Host-360 enrichments + walk-in cash bookings (this addendum). **Do NOT build Phase 8 fast-follows:** custom-fields UI, note encryption (option B), aggregation RPC, and the v1-gap-review backlog.
 
 ---
 
@@ -311,6 +311,94 @@ Add `requireCrm` to `module.exports`. Add featureRegistry row: `{ key: 'crm', la
 
 ---
 
+## PHASE 6 — "Host 360" enrichments + walk-in cash bookings
+
+> Added 2026-07-15 after v1 scope review. All of Phase 6 is **Studio (`professional`) and above** — same `requireCrm` gate as Phases 1-5; Supreme bypasses via its existing god-tier gate-bypass. Starter/Creator → 403 upgrade prompt on every endpoint AND the "+ Manual booking" button is hidden.
+>
+> Most of this is **derivable from data you already store** — no new columns except the walk-in `source` marker. Build order: Task 13 (insights, cheap) → 14 (rebook) → 15 (timeline notes) → 16 (walk-in, the only schema touch).
+
+### Task 13: Client insights — LTV rank, lapsed, no-show, first/last-seen
+
+**Files:**
+- Edit: `server/services/crmService.js` (extend the per-client aggregate)
+- Edit: `server/controllers/crmController.js`, `server/routes/crmRoutes.js` (new list views)
+- Edit: `client/src/pages/dashboard/Clients.jsx`, `ClientDetail.jsx`
+- Edit: `server/tests/unit/crmService.test.js`
+
+**Interfaces:** extend each client aggregate with `first_booked_at`, `last_booking_at`, `next_upcoming_at`, `no_show_count`, `cancel_count`, `ltv` (= existing `total_spent`). New read views:
+- `GET /api/crm/customers?sort=ltv` → clients ranked by spend (powers a "Top clients" view).
+- `GET /api/crm/customers?filter=lapsed` → clients with ≥N past bookings whose `last_booking_at` is older than the lapse window (default 60 days) and no upcoming booking. Win-back list.
+
+- [ ] **Step 1 (TDD):** aggregate emits `first_booked_at` (min), `next_upcoming_at` (min of future non-cancelled), `no_show_count`/`cancel_count` from booking status; `sort=ltv` orders desc; `filter=lapsed` returns only clients past the window with no upcoming and `bookings_count >= 2`. All derived in-Node from bookings already fetched — **no new query per client.**
+- [ ] **Step 2: UI** — Clients list gains a sort toggle (Recent / Top spend) + a "Lapsed" filter chip. Client card/detail shows "Client since {first_booked_at}", last-seen, next-upcoming, and a no-show badge when `no_show_count > 0`. Reuse existing tokens; no new colors. `// ponytail: lapse window hardcoded 60d; make it a host setting only if asked.`
+
+### Task 14: Rebook for client
+
+**Files:**
+- Edit: `client/src/pages/dashboard/ClientDetail.jsx`
+- Edit: `server/controllers/crmController.js` (only if a prefill endpoint is needed — prefer a client-side link)
+
+**Interfaces:** a "Rebook" action on a client → opens the host's existing booking/checkout flow prefilled with this client's name/phone/email + last service. Reuse the rebook-nudge / existing booking-create path — do NOT build a second booking pipeline.
+
+- [ ] **Step 1:** grep the existing rebook-nudge implementation; route "Rebook" to the same prefilled URL/flow with the client's contact + `service_id` of their most recent booking.
+- [ ] **Step 2 (TDD):** clicking Rebook navigates to the booking flow with the expected prefilled params (assert the href/params). `.getAttribute()` only.
+
+### Task 15: Timeline notes — pin a note to a specific booking
+
+**Files:**
+- Edit: `server/migrations/v3.76_crm.sql` (add nullable `crm_notes.booking_id UUID`)
+- Edit: `server/controllers/crmController.js`, `server/routes/crmRoutes.js`, `client/src/pages/dashboard/ClientDetail.jsx`
+- Edit: `server/tests/integration/crm.notes.test.js`
+
+**Interfaces:** `POST /api/crm/customers/:id/notes` accepts optional `booking_id`. A note with `booking_id` renders inline on that booking in the history timeline; a note without it stays in the general notes list (unchanged behaviour).
+
+- [ ] **Step 1: Migration** — `ALTER TABLE crm_notes ADD COLUMN IF NOT EXISTS booking_id UUID;` (nullable, no FK constraint needed — it references a booking id the host owns; validate ownership in the controller). Fold into `v3.76_crm.sql` if not yet applied; else a small `v3.76a` addendum applied to BOTH DBs.
+- [ ] **Step 2 (TDD):** a note posted with a `booking_id` the host doesn't own → 404/403; a valid one attaches; the timeline groups booking-pinned notes under their booking. Host-scoped as always.
+
+### Task 16: Walk-in / manual cash booking (the only schema-touching item)
+
+**Files:**
+- Edit: `server/migrations/v3.76_crm.sql` (add `bookings.source TEXT DEFAULT 'platform'`)
+- Create: manual-booking controller action + route (host bookings surface, Studio-gated)
+- Edit: platform-side aggregations to EXCLUDE `source = 'manual_cash'`
+- Edit: `client/src/pages/dashboard/*` bookings view — "+ Manual booking" button (Studio-gated)
+- Create: `server/tests/integration/crm.manualBooking.test.js`
+
+**Decisions (LOCKED 2026-07-15):**
+- **Model:** a walk-in is an **offline cash booking**, `source: 'manual_cash'`. Host revenue = YES; platform = NO. A standalone client (no booking) was rejected — it can't carry the revenue the host wants counted.
+- **Entry point:** the host's **bookings page** via "+ Manual booking" (NOT from the CRM client card). Studio-only; button hidden + endpoint 403 for non-Studio.
+- **Required fields:** name + (**phone OR email**, ≥1 required for identity/dedup) + `service_id` + amount + date. No contact → rejected (would orphan the client, never linking to future online bookings).
+- **Silent:** skip ALL of notify/reminder/WhatsApp/email-confirm, Google Calendar sync, invoice generation, Razorpay, and review-request. It already happened; it's a record.
+- **Private to host only.**
+
+**Interfaces:** `POST /api/crm/manual-booking` (or reuse the host bookings route with a `manual: true` guard) `{ name, phone?, email?, service_id, amount, date }` → inserts a `bookings` row with `source:'manual_cash'`, status = a completed/past state, no payment linkage. The client then appears in CRM automatically via the normal `customerKey` derivation.
+
+- [ ] **Step 1: Migration** — `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'platform';` on BOTH DBs. Existing rows default `'platform'` (no behaviour change).
+- [ ] **Step 2: EXCLUDE from platform math (CRITICAL).** Audit every platform-side booking aggregation and add `.neq('source','manual_cash')` (or SQL `AND source <> 'manual_cash'`):
+  - GMV / revenue dashboards (`/admin/revenue-breakdown`, super-dashboard cards)
+  - commission (`commission_applied` paths)
+  - settlement / payout (`computeSettlementBalance`)
+  - invoices (never generate for manual_cash)
+  - `checkBookingReceiveLimit` (manual_cash must NOT count toward `bookings_per_year`)
+  - public profile booking/review counts
+  Conversely, host-facing revenue/insights + CRM aggregates INCLUDE it. **Grep for every `.from('bookings')` count/sum and classify each as host-side (include) or platform-side (exclude).** This is the highest-risk task — a missed platform aggregation lets cash pollute GMV/commission.
+- [ ] **Step 3 (TDD):**
+  - non-Studio host → `POST /api/crm/manual-booking` = 403 `upgrade_required`.
+  - no phone AND no email → 400.
+  - happy path → booking row has `source:'manual_cash'`, NO invoice/payment/notification side-effects fired (assert the notify/invoice hooks were not called), and the client surfaces in `GET /api/crm/customers`.
+  - a manual_cash booking is EXCLUDED from a platform GMV/settlement query and INCLUDED in the host's own revenue + the client's LTV.
+  - manual_cash does NOT decrement `bookings_per_year`.
+- [ ] **Step 4: UI** — "+ Manual booking" on the host bookings page, Studio-gated (hidden otherwise). Simple form (name, phone/email, service, amount, date). Editable/deletable by the host (their own data, no platform money moved).
+
+### Phase 6 verify (added to Task 12's checklist)
+
+- [ ] Platform GMV / commission / settlement / payout / `bookings_per_year` / public counts all EXCLUDE `manual_cash` (spot-check each with a seeded manual_cash booking).
+- [ ] Host revenue view + client LTV INCLUDE it.
+- [ ] "+ Manual booking" hidden for non-Studio; endpoint 403s.
+- [ ] Lapsed/Top-spend views + timeline-pinned notes render for a Studio host.
+
+---
+
 ## Security model (must-holds, consolidated)
 
 1. **RLS enabled, zero policies** on all three CRM tables → reachable ONLY via `supabaseAdmin` (service role). anon/auth key can never read a note. (Directly answers the `supabase-anon-api-exposure` incident.)
@@ -324,7 +412,9 @@ Add `requireCrm` to `module.exports`. Add featureRegistry row: `{ key: 'crm', la
 
 - Custom-fields UI (storage exists in `attributes`).
 - Note encryption (option B).
-- Manual / walk-in client creation (no booking).
 - Aggregation RPC to replace in-Node groupBy (only if a host crosses ~5k bookings).
+- Follow-up reminders, segments/saved filters, duplicate-merge, intake forms, bulk broadcast, client portal (from the v1 gap review — not yet scoped).
+
+> **Walk-in / manual cash booking is NO LONGER deferred** — it is Phase 6, Task 16.
 
 See `staging-prod-pipeline-and-db-inversion` for the dual-DB rule (Tokyo = staging, Mumbai = prod).
