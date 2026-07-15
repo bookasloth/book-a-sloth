@@ -23,8 +23,8 @@ const NAV_GROUPS = [
     items: [
       { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
       { to: '/dashboard/bookings', label: 'Bookings', icon: CalendarDays },
-      // Studio Client CRM — Studio + Supreme only.
-      { to: '/dashboard/clients', label: 'Clients', icon: Users, matchPrefix: '/dashboard/clients', locked: ['professional', 'supreme'] },
+      // Customers (Studio Client CRM) — Studio + Supreme only.
+      { to: '/dashboard/clients', label: 'Customers', icon: Users, matchPrefix: '/dashboard/clients', locked: ['professional', 'supreme'] },
       { to: '/dashboard/availability', label: 'Availability', icon: Clock },
     ],
   },
@@ -63,7 +63,7 @@ const MOBILE_TABS = [
 
 // "More" sheet — everything not on the bottom bar.
 const MORE_LINKS = [
-  { to: '/dashboard/clients', label: 'Clients', icon: Users, locked: ['professional', 'supreme'] },
+  { to: '/dashboard/clients', label: 'Customers', icon: Users, locked: ['professional', 'supreme'] },
   { to: '/dashboard/availability', label: 'Availability', icon: Clock },
   { to: '/dashboard/products', label: 'Products', icon: Package, locked: 'supreme' },
   { to: '/dashboard/payments/payouts', label: 'Payouts', icon: Banknote },

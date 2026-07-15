@@ -27,7 +27,7 @@ test('renders a client row with name, phone, spend and a recurring badge', async
   await waitFor(() => expect(screen.getAllByText('Asha Rao').length).toBeGreaterThan(0));
   expect(screen.getAllByText('+911234567890').length).toBeGreaterThan(0);
   expect(screen.getAllByText('Recurring').length).toBeGreaterThan(0);
-  expect(screen.getByText('1 client')).toBeInTheDocument();
+  expect(screen.getByText('1 customer')).toBeInTheDocument();
 });
 
 test('typing in the search box refetches with ?q=', async () => {
@@ -43,5 +43,5 @@ test('typing in the search box refetches with ?q=', async () => {
 test('shows the empty state when there are no clients', async () => {
   crmGetCustomers.mockResolvedValueOnce({ data: { clients: [], total: 0, page: 1, pageSize: 50 } });
   renderList();
-  await waitFor(() => expect(screen.getByText('No clients yet')).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText('No customers yet')).toBeInTheDocument());
 });

@@ -42,6 +42,7 @@ export const DEPT_LINKS = [
   { label: 'Bookings',           icon: 'calCheck', to: '/admin/bookings',   desc: 'All guest bookings across the platform', depts: ['operation', 'support'] },
   { label: 'Services',           icon: 'layers',   to: '/admin/services',   desc: 'Every host service and listing',         depts: ['operation', 'marketing'] },
   { label: 'Hosts',              icon: 'userCheck',to: '/admin/providers',  desc: 'Manage hosts and their status',          depts: ['operation', 'support'] },
+  { label: 'Host 360°',          icon: 'badgeCheck',to: '/admin/host360',   desc: 'Full 360° view of a single host',        depts: ['operation', 'support', 'cxo'] },
   { label: 'Subscription Plans', icon: 'card',     to: '/admin/plans',      desc: 'Plan tiers, pricing, and limits',        depts: ['finance', 'marketing'] },
   { label: 'Refer & Earn',       icon: 'affiliate',to: '/admin/referrals',  desc: 'Referral rewards, config & ledger',      depts: ['marketing', 'finance'] },
   { label: 'Professions',        icon: 'layers',   to: '/admin/professions',desc: 'Profession taxonomy and categories',     depts: ['operation', 'marketing'] },
