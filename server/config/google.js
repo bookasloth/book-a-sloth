@@ -44,6 +44,10 @@ const getAuthUrl = (state) => {
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
+    // Incremental authorization: carry forward scopes the user already granted
+    // so re-consent doesn't silently drop prior grants. Also satisfies Google's
+    // "supports incremental authorization" OAuth verification requirement.
+    include_granted_scopes: true,
     scope: SCOPES,
     ...(state ? { state } : {}),
   });
