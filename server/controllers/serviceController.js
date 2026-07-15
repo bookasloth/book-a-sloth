@@ -515,10 +515,13 @@ const buildPublicServiceByProfileAndSlug = async (profileSlug, serviceSlug) => {
   // 3. Fetch supporting data
   const [
     { count: totalServices },
+    { count: totalBookings },
     { data: availability },
     { data: reviews },
   ] = await Promise.all([
     supabaseAdmin.from('services').select('id', { count: 'exact', head: true }).eq('host_id', vendor.id).eq('is_active', true),
+    // Host-level booking count (paid + free-confirmed both carry payment_status='paid').
+    supabaseAdmin.from('bookings').select('id', { count: 'exact', head: true }).eq('host_id', vendor.id).eq('payment_status', 'paid'),
     supabaseAdmin.from('availability').select('*').eq('host_id', vendor.id).single(),
     supabaseAdmin.from('reviews').select('id,rating,comment,created_at,profiles!reviews_reviewer_id_fkey(name,profile_image)').eq('service_id', svc.id).eq('direction', 'guest_to_host').neq('status', 'hidden').order('created_at', { ascending: false }).limit(20),
   ]);
@@ -567,6 +570,7 @@ const buildPublicServiceByProfileAndSlug = async (profileSlug, serviceSlug) => {
       vendor: vendor || {},
       appearance,
       totalServices: totalServices || 0,
+      totalBookings: totalBookings || 0,
       availability: availability || null,
       reviews: reviewList,
       avgRating,

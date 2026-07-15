@@ -9,7 +9,6 @@ import { svcGetPublicByProfile, getAvailableSlots } from '../services/api';
 import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/themeUtils';
 import Seo from '../components/common/Seo';
 import { useMinimalFooter } from '../context/ChromeContext';
-import HostBackground from '../backgrounds/HostBackground';
 import { resolveServiceSeo, serviceJsonLd, breadcrumbJsonLd, faqJsonLd, SITE_URL } from '../utils/seo';
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
@@ -23,15 +22,6 @@ const sanitizeHtml = (dirty) =>
   DOMPurify.sanitize(String(dirty || ''), { USE_PROFILES: { html: true } });
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-// Resolve which background type to render: host pick if it's enabled, else the
-// curated default, else the first enabled one, else null (no background).
-// Pure + exported so it can be unit-tested without mounting the component.
-export function resolveBackgroundKey(hostKey, enabled = [], defaultKey) {
-  const find = (k) => enabled.find((e) => e.key === k);
-  const chosen = find(hostKey) || find(defaultKey) || enabled[0] || { key: null, params: {} };
-  return chosen;
-}
 
 const fmtDuration = (min) => {
   if (!min) return '—';
@@ -224,7 +214,7 @@ const DeliverablesTab = ({ included = [], excluded = [] }) => (
   </div>
 );
 
-const HostTab = ({ vendor, totalServices }) => {
+const HostTab = ({ vendor, totalServices, totalBookings = 0 }) => {
   if (!vendor?.name) return <p className="text-gray-400 text-sm">No host info.</p>;
   return (
     <div className="flex flex-col sm:flex-row gap-5 items-start">
@@ -237,18 +227,19 @@ const HostTab = ({ vendor, totalServices }) => {
         <div className="flex items-center gap-2 mb-1">
           <h3 className="text-lg font-bold text-gray-900">{vendor.name}</h3>
           {vendor.is_verified && (
-            <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-label="Verified" style={{ transform: 'translate(-2px, 1px)' }}>
+              <path className="fill-primary" d="M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"/>
+              <path d="M8.5 12.5l2.25 2.25L15.5 10" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           )}
         </div>
         {(vendor.profession || vendor.tagline) && (
-          <p className="text-sm text-green-600 font-medium mb-2">{vendor.profession || vendor.tagline}</p>
+          <p className="text-sm text-primary font-medium mb-2">{vendor.profession || vendor.tagline}</p>
         )}
         {vendor.bio && <p className="text-sm text-gray-600 mb-3 leading-relaxed">{vendor.bio}</p>}
         <div className="flex flex-wrap gap-4 text-xs text-gray-500 mb-4">
           <span><strong className="text-gray-800">{totalServices}</strong> services</span>
-          <span><strong className="text-gray-800">{vendor.total_bookings || 0}</strong> bookings</span>
+          <span><strong className="text-gray-800">{totalBookings}</strong> bookings</span>
         </div>
         {vendor.username && (
           <Link to={`/${vendor.username}`}
@@ -469,7 +460,6 @@ const TRUST_SIGNALS = [
 
 const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown = { platformFee: 0, tax: 0 }, compact = false, motionOK = true }) => {
   const isFree = service.price === 0;
-  const [cancelTipOpen, setCancelTipOpen] = useState(false);
   const [feeTipOpen, setFeeTipOpen] = useState(false);
 
   const imgWrapRef = useRef(null);
@@ -543,7 +533,7 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown =
                           </div>
                           <div className="mt-1.5 flex items-center justify-between border-t border-gray-100 pt-1.5">
                             <span className="font-semibold text-gray-900">Total</span>
-                            <span className="font-bold text-gray-900">₹{total}</span>
+                            <span className="font-bold text-gray-900">₹{total.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
@@ -561,11 +551,17 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown =
           Book a Slot
         </button>
 
-        {/* Trust indicators + policies */}
-        <ul className="mt-5 pt-5 border-t border-gray-100 space-y-3">
+        {/* Guest policies agreement — directly under the CTA */}
+        <p className="mt-3 text-[11px] text-gray-400 leading-relaxed">
+          By proceeding, you agree to our{' '}
+          <Link to="/terms" className="underline hover:text-gray-600 transition-colors">Guest Policies</Link>.
+        </p>
+
+        {/* Trust indicators */}
+        <ul className="mt-5 pt-5 border-t border-gray-100 space-y-3 leading-5">
           {TRUST_SIGNALS.map(({ key, label, path }) => (
             <li key={key} className="flex items-start gap-2.5 text-xs text-gray-600">
-              <svg className="w-4 h-4 flex-shrink-0 text-green-500 mt-px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 flex-shrink-0 text-green-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={path}/>
               </svg>
               <span>{label}</span>
@@ -574,54 +570,20 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown =
 
           {/* Social proof */}
           <li className="flex items-start gap-2.5 text-xs text-gray-600">
-            <svg className="w-4 h-4 flex-shrink-0 text-orange-500 mt-px" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <svg className="w-4 h-4 flex-shrink-0 text-orange-500 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
             <span><strong className="text-gray-800">{recentBookers}</strong> people booked this in last 3 days</span>
           </li>
 
-          {/* Cancellation policy */}
-          <li className="relative flex items-start gap-2.5 text-xs text-gray-600">
-            <svg className="w-4 h-4 flex-shrink-0 text-blue-500 mt-px" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-            <span className="flex items-center gap-1">
-              Free cancellation available
-              <button type="button" onClick={() => setCancelTipOpen(o => !o)} aria-label="View cancellation policy"
-                className="text-gray-400 hover:text-gray-600 transition-colors">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="9"/><path strokeLinecap="round" d="M12 16v-4M12 8.5h.01"/>
-                </svg>
-              </button>
-            </span>
-            {cancelTipOpen && (
-              <>
-                <button type="button" aria-hidden tabIndex={-1}
-                  className="fixed inset-0 z-10 cursor-default" onClick={() => setCancelTipOpen(false)}/>
-                <div className="absolute z-20 left-0 top-full mt-1.5 w-72 rounded-xl bg-gray-900 text-white text-xs leading-relaxed p-3.5 shadow-lg">
-                  <span className="absolute -top-1.5 left-6 w-3 h-3 rotate-45 bg-gray-900"/>
-                  <p className="font-semibold mb-2">Cancellation Policy</p>
-                  <p className="mb-1">Cancel <strong>before</strong> the session starts — full refund as per our <a href="/refund" target="_blank" rel="noreferrer" className="underline text-blue-300 hover:text-blue-200">refund policy</a>.</p>
-                  <p>Cancel <strong>after</strong> the session start time — no refund, per our <a href="/refund" target="_blank" rel="noreferrer" className="underline text-blue-300 hover:text-blue-200">refund policy</a>.</p>
-                </div>
-              </>
-            )}
-          </li>
-
           {/* Safety */}
           <li className="flex items-start gap-2.5 text-xs text-gray-600">
-            <svg className="w-4 h-4 flex-shrink-0 text-green-500 mt-px" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <svg className="w-4 h-4 flex-shrink-0 text-green-500 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
             </svg>
             <span>Follow safety measures advised at the venue</span>
           </li>
         </ul>
-
-        {/* Guest policies agreement */}
-        <p className="mt-4 pt-4 border-t border-gray-100 text-[11px] text-gray-400 leading-relaxed">
-          By proceeding, you agree to our{' '}
-          <Link to="/terms" className="underline hover:text-gray-600 transition-colors">Guest Policies</Link>.
-        </p>
       </div>
     </div>
   );
@@ -904,13 +866,7 @@ export default function ServiceDetail() {
     </div>
   );
 
-  const { service, vendor, totalServices, reviews, avgRating, ratingBreakdown, bookingFee, bookingFeeBreakdown } = data;
-
-  // Host-picked brand colour drives the above-the-fold dot-grid backdrop.
-  const dotColor = isValidHex(vendor?.theme_color) ? vendor.theme_color : DEFAULT_THEME_COLOR;
-
-  // Resolve the above-the-fold background type from the curated appearance set.
-  const bg = resolveBackgroundKey(vendor?.background_key, data?.appearance?.backgrounds, data?.appearance?.default_background);
+  const { service, vendor, totalServices, totalBookings, reviews, avgRating, ratingBreakdown, bookingFee, bookingFeeBreakdown } = data;
 
   const handleBookNow = () => {
     // Navigate to /:profileSlug/booking/:serviceSlug
@@ -949,18 +905,15 @@ export default function ServiceDetail() {
   return (
     <div className="min-h-screen bg-[#f7f5ef] relative">
       <Seo {...seo} jsonLd={jsonLd} />
-      {/* ── Above-the-fold backdrop — host-themed background type ── */}
-      <HostBackground typeKey={bg.key} color={dotColor} params={bg.params} />
-      {/* Page-level decorative backdrop — brand gradient glows + calendar-inspired accents */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[40rem] overflow-hidden z-[1]">
-        {/* radial glows */}
-        <div className="absolute -top-24 -right-16 h-[30rem] w-[30rem] rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 18%, transparent), transparent 70%)' }}/>
-        <div className="absolute -top-20 -left-24 h-[26rem] w-[26rem] rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--profile-accent, #FE5100) 12%, transparent), transparent 70%)' }}/>
+      {/* ── Above-the-fold backdrop — flat dark-grey hero band + calendar-inspired
+           accents. Host theme colour no longer paints the hero; it stays on
+           CTAs/badges/tabs only. White dots read against the dark band. ── */}
+      <div aria-hidden data-bg-band
+        className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] sm:h-[30rem] overflow-hidden z-[1]"
+        style={{ background: '#2a2a2a' }}>
 
         {/* ── Dense dot grid — uniform repeating pattern via SVG <pattern> ── */}
-        <svg className="absolute inset-0 h-full w-full opacity-[0.12] sm:opacity-[0.14]"
+        <svg className="absolute inset-0 h-full w-full opacity-[0.22] sm:opacity-[0.26]"
           style={{ color: '#ffffff' }}>
           <defs>
             <pattern id="dot-grid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -992,7 +945,7 @@ export default function ServiceDetail() {
         </svg>
 
         {/* ── Calendar date grid — 7-col layout with date numbers, right-biased ── */}
-        <svg className="absolute top-6 right-0 hidden h-[26rem] w-[42rem] opacity-[0.16] sm:block lg:w-[52rem]"
+        <svg className="absolute top-6 right-0 hidden h-[26rem] w-[42rem] opacity-[0.30] sm:block lg:w-[52rem]"
           viewBox="0 0 700 400" fill="none" style={{ color: '#ffffff' }}>
           {/* row 1: dates 01-07 */}
           <text x="240" y="58" fill="currentColor" fontSize="13" fontFamily="monospace" opacity="0.6">01</text>
@@ -1074,7 +1027,7 @@ export default function ServiceDetail() {
         </svg>
 
         {/* ── Left side — very faint scattered dots + one ghost cell (kept ~70% cleaner) ── */}
-        <svg className="absolute top-12 left-0 hidden h-48 w-40 opacity-[0.06] sm:block"
+        <svg className="absolute top-12 left-0 hidden h-48 w-40 opacity-[0.12] sm:block"
           viewBox="0 0 160 200" fill="none" style={{ color: '#ffffff' }}>
           <circle cx="30" cy="30" r="1.5" fill="currentColor" opacity="0.4"/>
           <circle cx="80" cy="50" r="1.2" fill="currentColor" opacity="0.3"/>
@@ -1089,16 +1042,16 @@ export default function ServiceDetail() {
       {/* ── HERO + Content — single container so sidebar starts under h1 ── */}
       <div className="app-container pb-28 lg:pb-8 relative z-10" style={{ paddingTop: 44 }}>
         {/* Breadcrumb */}
-        <nav className="mb-4 text-xs text-gray-800/50 font-medium" aria-label="Breadcrumb">
-          <Link to="/explore" className="hover:text-gray-800 transition-colors">explore</Link>
+        <nav className="mb-4 text-xs text-white/50 font-medium" aria-label="Breadcrumb">
+          <Link to="/" className="hover:text-white transition-colors">home</Link>
           <span className="mx-1">/</span>
           {vendor?.username && (
             <>
-              <Link to={`/${vendor.username}`} className="hover:text-gray-800 transition-colors">{vendor.username}</Link>
+              <Link to={`/${vendor.username}`} className="hover:text-white transition-colors">{vendor.username}</Link>
               <span className="mx-1">/</span>
             </>
           )}
-          <span className="text-gray-800/70 max-w-[120px] sm:max-w-[200px] truncate inline-block align-bottom">{service.slug || 'service'}</span>
+          <span className="text-white/70 max-w-[120px] sm:max-w-[200px] truncate inline-block align-bottom">{service.slug || 'service'}</span>
         </nav>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -1108,37 +1061,40 @@ export default function ServiceDetail() {
 
               {/* Eyebrow */}
               {eyebrow && (
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-gray-800/50">{eyebrow}</p>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-white/60">{eyebrow}</p>
               )}
 
               {/* Title — 110% of content column width */}
-              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight" style={{ maxWidth: '110%' }}>
+              <h1 className="text-4xl sm:text-5xl font-black text-white mb-4 leading-[1.1] tracking-tight" style={{ maxWidth: '110%' }}>
                 {service.title}
               </h1>
 
               {/* Short description — 90% width */}
               {service.short_description && (
-                <p className="text-base sm:text-lg text-gray-700 mb-6 leading-relaxed" style={{ maxWidth: '90%' }}>{service.short_description}</p>
+                <p className="text-base sm:text-lg text-white/80 mb-6 leading-relaxed" style={{ maxWidth: '90%' }}>{service.short_description}</p>
               )}
 
               {/* Meta — clock | meet/in-person | hosted by — single horizontal line + Important Notes pill */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-800">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/90">
                 <span className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   {fmtDuration(service.duration)}
                 </span>
-                <span className="text-gray-300">|</span>
+                <span className="text-white/30">|</span>
                 <span className="flex items-center gap-1.5">
                   {service.meeting_mode === 'offline'
-                    ? <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
-                    : <><svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>Google Meet</>}
+                    ? <><svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>In-person</>
+                    : <><svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>Google Meet</>}
                 </span>
                 {vendor?.name && (
                   <>
-                    <span className="text-gray-300">|</span>
+                    <span className="text-white/30">|</span>
                     <span className="flex items-center gap-1.5">
                       <span>Hosted by</span>
-                      <Link to={`/${vendor.username}`} className="font-semibold hover:text-primary transition-colors underline decoration-gray-300 hover:decoration-current underline-offset-2">
+                      {vendor.profile_image && (
+                        <img src={vendor.profile_image} alt="" className="w-[23px] h-[23px] rounded-full object-cover ring-1 ring-primary" />
+                      )}
+                      <Link to={`/${vendor.username}`} className="font-semibold hover:text-primary transition-colors underline decoration-white/40 hover:decoration-current underline-offset-2">
                         {vendor.name}
                       </Link>
                     </span>
@@ -1146,7 +1102,7 @@ export default function ServiceDetail() {
                 )}
                 {service.important_note && (
                   <>
-                    <span className="text-gray-300">|</span>
+                    <span className="text-white/30">|</span>
                     <button type="button" onClick={() => setNotesModalOpen(true)}
                       className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-300 bg-amber-50 text-amber-800 text-xs font-semibold hover:bg-amber-100 transition-colors">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -1183,7 +1139,7 @@ export default function ServiceDetail() {
                 {tab === 'Deliverables' && <DeliverablesTab included={service.included_items} excluded={service.excluded_items}/>}
                 {tab === 'Host'         && (
                   <>
-                    <HostTab vendor={vendor} totalServices={totalServices}/>
+                    <HostTab vendor={vendor} totalServices={totalServices} totalBookings={totalBookings}/>
                     <AvailableSlotsPreview hostId={vendor?.id} serviceId={service.id} onViewAll={handleBookNow}/>
                   </>
                 )}
@@ -1204,7 +1160,7 @@ export default function ServiceDetail() {
                 </section>
                 <section className="p-6">
                   <h2 className="text-base font-bold text-gray-900 mb-4">Host</h2>
-                  <HostTab vendor={vendor} totalServices={totalServices}/>
+                  <HostTab vendor={vendor} totalServices={totalServices} totalBookings={totalBookings}/>
                   <AvailableSlotsPreview hostId={vendor?.id} serviceId={service.id} onViewAll={handleBookNow}/>
                 </section>
                 <section className="p-6">
