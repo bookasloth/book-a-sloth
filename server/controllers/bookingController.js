@@ -82,21 +82,27 @@ const splitWhen = (scheduledAt, tz = "Asia/Kolkata") => {
   };
 };
 // Placeholder map shared by customer + vendor booking emails.
-const bookingEmailData = ({ serviceTitle, hostName, hostPhone, guestName, scheduledAt, tz, bookingId, online, actionLink }) => {
+const bookingEmailData = ({ serviceTitle, hostName, hostPhone, guestName, scheduledAt, tz, bookingId, online, actionLink, mapLink, hostLocation }) => {
   const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
-  const link = actionLink || dashboard;
+  // Online → Meet link (or dashboard). Offline → the host's map link (or dashboard).
+  const link = online ? (actionLink || dashboard) : (mapLink || dashboard);
   return {
     service_name: serviceTitle || "Service",
     vendor_name: hostName || "Host",
     vendor_phone: hostPhone || "",
     user_name: guestName || "Customer",
     booking_id: bookingId || "",
-    location: online ? "Online" : "",
-    // Reminder CTA: Meet link when online, dashboard otherwise (offline maps
-    // link lands in Phase 2). action_label drives the button text once the
-    // engine resolves cta_label.
+    // Location line: "Online" for online; the host's city text for offline (or a
+    // neutral "In person" when only a map link is set). Empty when the caller
+    // passes no venue info at all — preserves the lifecycle emails (cancel /
+    // complete / reschedule) that don't carry mode/venue. Map link is the CTA below.
+    location: online ? "Online" : (hostLocation || (mapLink ? "In person" : "")),
+    // CTA: online → Join meeting when a Meet link exists; offline → Get directions
+    // when the host set a map link. Falls back to a plain "View booking" otherwise.
     action_link: link,
-    action_label: online && actionLink ? "Join meeting" : "View booking",
+    action_label: online
+      ? (actionLink ? "Join meeting" : "View booking")
+      : (mapLink ? "Get directions" : "View booking"),
     ...splitWhen(scheduledAt, tz),
   };
 };
@@ -150,7 +156,7 @@ const getServiceById = async (req, res) => {
       return res.status(404).json({ message: "Service not found" });
     const { data: host } = await supabaseAdmin
       .from("profiles")
-      .select("id, name, email, username, tagline, profile_image")
+      .select("id, name, email, username, tagline, profile_image, location, map_link")
       .eq("id", service.host_id)
       .single();
     res.json({ service, host });
@@ -511,6 +517,7 @@ const createBooking = async (req, res) => {
           serviceTitle: service.title, hostName: host.name, hostPhone: host.phone,
           guestName: guest_name, scheduledAt: scheduled_at, tz: hostTimezone,
           bookingId: booking.id, online: !!meetingLink,
+          mapLink: host.map_link, hostLocation: host.location,
         });
         await NotificationEngine.send({
           event: "BOOKING_CONFIRMED_CUSTOMER",
@@ -631,7 +638,7 @@ const cancelBooking = async (req, res) => {
     // BUG-01 fixed: verify caller owns this booking before allowing cancel
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("*, services(title), profiles!bookings_host_id_fkey(name, email, phone, username, location, google_calendar_connected)")
+      .select("*, services(title), profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link, google_calendar_connected)")
       .eq("id", req.params.id)
       .single();
     if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -744,7 +751,7 @@ const cancelBooking = async (req, res) => {
 // the revenue-recognition + settlement-eligibility fields and (optionally) fires
 // the completion notifications + badge re-evaluation. `booking` must be a row
 // selected with `services(title)` and the
-// `profiles!bookings_host_id_fkey(name, email, phone, username, location)` join.
+// `profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link)` join.
 const markBookingCompleted = async (booking, { notify = true } = {}) => {
   const nowIso = new Date().toISOString();
   const completionUpdate = {
@@ -856,14 +863,14 @@ const completeBooking = async (req, res) => {
     // BUG-01 fixed: only the host can mark a booking complete
     let { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("*, services(title, duration, grace_period_minutes), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
+      .select("*, services(title, duration, grace_period_minutes), profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link)")
       .eq("id", req.params.id)
       .single();
     // Fallback for a schema-cache state without grace_period_minutes.
     if (!booking) {
       ({ data: booking } = await supabaseAdmin
         .from("bookings")
-        .select("*, services(title, duration), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
+        .select("*, services(title, duration), profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link)")
         .eq("id", req.params.id)
         .single());
     }
@@ -908,14 +915,14 @@ const markNoShow = async (req, res) => {
   try {
     let { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("*, services(title, duration, grace_period_minutes), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
+      .select("*, services(title, duration, grace_period_minutes), profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link)")
       .eq("id", req.params.id)
       .single();
     // Fallback for a schema-cache state without grace_period_minutes.
     if (!booking) {
       ({ data: booking } = await supabaseAdmin
         .from("bookings")
-        .select("*, services(title, duration), profiles!bookings_host_id_fkey(name, email, phone, username, location)")
+        .select("*, services(title, duration), profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link)")
         .eq("id", req.params.id)
         .single());
     }
@@ -1369,12 +1376,18 @@ const sendBookingReminder = async (b, host, tz) => {
   // link may not be minted yet). Online → join link; offline → dashboard for now.
   const isOnline = (s?.meeting_mode || (b.meeting_link ? "online" : "offline")) === "online";
   const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
-  const actionLink = isOnline && b.meeting_link ? b.meeting_link : dashboard;
+  // WhatsApp reminder templates carry a 5th "join/directions" var: Meet link when
+  // online, the host's map link when offline (falls back to the dashboard).
+  const directions = host.map_link || "";
+  const actionLink = isOnline
+    ? (b.meeting_link || dashboard)
+    : (directions || dashboard);
   const ctx = { guestName: b.guest_name, serviceTitle: s?.title, hostName: host.name, when, actionLink };
   const emailData = bookingEmailData({
     serviceTitle: s?.title, hostName: host.name, hostPhone: host.phone,
     guestName: b.guest_name, scheduledAt: b.scheduled_at, tz, bookingId: b.id,
     online: isOnline, actionLink: isOnline && b.meeting_link ? b.meeting_link : "",
+    mapLink: directions, hostLocation: host.location,
   });
   await NotificationEngine.send({
     event: "BOOKING_REMINDER_CUSTOMER",
@@ -1509,7 +1522,7 @@ const AUTO_COMPLETE_BATCH = 200;
 
 const autoCompleteBookings = async () => {
   const now = Date.now();
-  const hostJoin = "profiles!bookings_host_id_fkey(name, email, phone, username, location)";
+  const hostJoin = "profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link)";
   // Coarse DB prefilter (confirmed + already past start); the precise
   // duration + grace + hold check is applied per-row in JS below because the
   // session end depends on each service's duration/grace.
@@ -1611,4 +1624,5 @@ module.exports = {
   confirmReschedule,
   processReminders,
   fireDueReminders,
+  bookingEmailData, // exported for unit testing (offline map-link surfacing)
 };

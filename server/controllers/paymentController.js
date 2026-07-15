@@ -367,13 +367,21 @@ const verifyPayment = async (req, res) => {
       const when = new Date(fullBooking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
 
       const d = new Date(fullBooking.scheduled_at);
+      const isOnline = svc?.meeting_mode !== "offline";
       const emailData = {
         service_name: svc?.title || "Service",
         vendor_name: host.name || "Host",
         vendor_phone: host.phone || "",
         user_name: fullBooking.guest_name || "Customer",
         booking_id: fullBooking.id,
-        location: fullBooking.meeting_link ? "Online (link in your dashboard)" : "",
+        // Online → dashboard has the Meet link. Offline → show the host's city text
+        // and (below) a Get-directions CTA to the map link when one is set.
+        location: isOnline
+          ? (fullBooking.meeting_link ? "Online (link in your dashboard)" : "Online")
+          : (host.location || "In person"),
+        ...(!isOnline && host.map_link
+          ? { action_link: host.map_link, action_label: "Get directions" }
+          : {}),
         booking_date: d.toLocaleDateString("en-IN", { timeZone: tz, weekday: "short", day: "numeric", month: "short", year: "numeric" }),
         booking_time: d.toLocaleTimeString("en-IN", { timeZone: tz, hour: "2-digit", minute: "2-digit" }),
         booking_day: d.toLocaleDateString("en-IN", { timeZone: tz, day: "2-digit" }),

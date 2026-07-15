@@ -124,6 +124,8 @@ const updateProfileRules = [
     .matches(/^[a-z0-9_-]+$/).withMessage('Username: lowercase letters, numbers, hyphens, underscores only'),
   body('profession').optional().trim().isLength({ max: 100 }),
   body('location').optional().trim().isLength({ max: 100 }),
+  // Offline-service venue link; sanitised (scheme-checked) in the controller.
+  body('map_link').optional().trim().isLength({ max: 500 }),
 ];
 
 // ── Service validators ────────────────────────────────────────

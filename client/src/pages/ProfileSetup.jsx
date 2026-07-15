@@ -193,6 +193,7 @@ const ProfileSetup = () => {
     profile_image: "",
     cover_image: "",
     location: "",
+    map_link: "",
     theme_color: DEFAULT_THEME_COLOR,
     reschedule_fee: 0,
     social_links: {
@@ -229,6 +230,7 @@ const ProfileSetup = () => {
         profile_image:  user.profile_image || "",
         cover_image:    user.cover_image || "",
         location:       user.location || "",
+        map_link:       user.map_link || "",
         theme_color:    user.theme_color || DEFAULT_THEME_COLOR,
         reschedule_fee: Number(user.reschedule_fee ?? 0),
         social_links: {
@@ -399,6 +401,13 @@ const ProfileSetup = () => {
                 <Input type="text" name="location" placeholder="e.g. Nagpur, Maharashtra" value={form.location} onChange={handleChange} />
               </FormField>
             </div>
+
+            <FormField
+              label="Google Maps link"
+              hint="Shown to guests who book an in-person (offline) service — in their confirmation, reminder, and calendar. Leave blank if all your services are online."
+            >
+              <Input type="url" name="map_link" placeholder="https://maps.app.goo.gl/…" value={form.map_link} onChange={handleChange} />
+            </FormField>
 
             <FormField label="Tagline" className="mb-0">
               <Input type="text" name="tagline" placeholder="Short one-liner about you" value={form.tagline} onChange={handleChange} maxLength={100} />

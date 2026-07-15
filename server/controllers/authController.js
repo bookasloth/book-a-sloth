@@ -120,6 +120,7 @@ const serializeProfile = async (profile, session) => {
   tagline:                  profile.tagline || '',
   profession:               profile.profession || '',
   location:                 profile.location || '',
+  map_link:                 profile.map_link || '',
   profile_image:            profile.profile_image || '',
   cover_image:              profile.cover_image || '',
   social_links:             profile.social_links || {},
