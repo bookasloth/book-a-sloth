@@ -388,9 +388,13 @@ const verifyPayment = async (req, res) => {
         booking_month: d.toLocaleDateString("en-IN", { timeZone: tz, month: "short" }).toUpperCase(),
         booking_year: d.toLocaleDateString("en-IN", { timeZone: tz, year: "numeric" }),
       };
+      // WhatsApp confirmation carries a 5th "link" var: Meet link when online,
+      // the host's map link when offline (dashboard as a last resort).
+      const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
+      const confirmLink = fullBooking.meeting_link || (isOnline ? "" : host.map_link) || dashboard;
       const ctx = {
-        customer: [fullBooking.guest_name || "Customer", svc?.title || "Service", host.name || "Host", when],
-        vendor:   [host.name || "Host", fullBooking.guest_name || "Customer", svc?.title || "Service", when],
+        customer: [fullBooking.guest_name || "Customer", svc?.title || "Service", host.name || "Host", when, confirmLink],
+        vendor:   [host.name || "Host", fullBooking.guest_name || "Customer", svc?.title || "Service", when, confirmLink],
       };
       await NotificationEngine.send({
         event: "BOOKING_CONFIRMED_CUSTOMER",

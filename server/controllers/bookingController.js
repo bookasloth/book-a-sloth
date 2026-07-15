@@ -39,10 +39,11 @@ const button = (href, label) =>
 // WhatsApp template params for the approved AiSensy booking templates:
 //   customer: [customerName, serviceTitle, vendorName, dateTime]
 //   vendor:   [vendorName, customerName, serviceTitle, dateTime]
-// `actionLink` is OPTIONAL and APPEND-ONLY: pass it only for the reminder
-// templates (which carry a 5th body variable = join/directions link). The
-// confirmed/cancelled/rescheduled AiSensy templates only have 4 vars, so
-// callers that omit actionLink keep the 4-param shape and never break.
+// `actionLink` is OPTIONAL and APPEND-ONLY: it fills a 5th body variable =
+// join/directions link (Meet link when online, host map link when offline).
+// The CONFIRMED + REMINDER AiSensy templates carry this 5th var, so those
+// callers pass actionLink. The cancelled/rescheduled templates are still
+// 4-var, so their callers omit actionLink and keep the 4-param shape.
 const customerParams = ({ guestName, serviceTitle, hostName, when, actionLink }) => {
   const p = [guestName || "Customer", serviceTitle || "Service", hostName || "Host", when];
   if (actionLink) p.push(actionLink);
@@ -512,7 +513,11 @@ const createBooking = async (req, res) => {
     if (service.price === 0) {
       runInBackground("createBooking:confirmation-emails", async () => {
         if (!(await featureFlags.isFeatureEnabled("confirmation_emails"))) return;
-        const ctx = { guestName: guest_name, serviceTitle: service.title, hostName: host.name, when };
+        // WhatsApp confirmation carries a 5th "link" var: Meet link when online,
+        // the host's map link when offline (dashboard as a last resort).
+        const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
+        const confirmLink = meetingLink || host.map_link || dashboard;
+        const ctx = { guestName: guest_name, serviceTitle: service.title, hostName: host.name, when, actionLink: confirmLink };
         const emailData = bookingEmailData({
           serviceTitle: service.title, hostName: host.name, hostPhone: host.phone,
           guestName: guest_name, scheduledAt: scheduled_at, tz: hostTimezone,
