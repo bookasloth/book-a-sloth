@@ -47,6 +47,20 @@ const exportCsv = async (req, res) => {
   } catch (err) { return fail(res, err, 'Could not export clients.'); }
 };
 
+// POST /api/crm/customers/resolve { customer_key } → { id }
+// Derived-only clients have no persisted row (list returns id:null) until they
+// get a note/attribute. The client calls this to obtain a stable UUID handle
+// before opening the detail page. Host-scoped; key travels in the BODY (no PII
+// in URLs). ensureCustomer is idempotent.
+const resolveCustomer = async (req, res) => {
+  try {
+    const key = String(req.body?.customer_key || '').trim();
+    if (!/^[pe]:/.test(key)) return res.status(400).json({ message: 'Invalid client key.' });
+    const row = await crmService.ensureCustomer(req.user.id, key);
+    return res.json({ id: row.id });
+  } catch (err) { return fail(res, err, 'Could not open client.'); }
+};
+
 // Resolve the crm_customers handle in :id to a host-owned row (or null).
 const ownedCustomer = async (hostId, id) => {
   if (!UUID_RE.test(id)) return null;
@@ -162,7 +176,7 @@ const createManualBooking = async (req, res) => {
 };
 
 module.exports = {
-  listCustomers, getCustomer, exportCsv,
+  listCustomers, getCustomer, exportCsv, resolveCustomer,
   addNote, listNotes, deleteNote, patchAttributes,
   createManualBooking,
 };

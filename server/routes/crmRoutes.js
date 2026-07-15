@@ -10,6 +10,7 @@ const c = require('../controllers/crmController');
 router.use(protect, requireHost, attachPlan, requireCrm);
 
 router.get('/customers.csv', c.exportCsv);
+router.post('/customers/resolve', c.resolveCustomer);
 router.get('/customers', c.listCustomers);
 router.get('/customers/:id', c.getCustomer);
 
