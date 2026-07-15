@@ -139,6 +139,7 @@ app.use('/api/admin',       adminLimiter, require('./routes/adminRoutes'));
 app.use('/api/reviews',     require('./routes/reviewRoutes'));
 app.use('/api/feedback',    require('./routes/feedbackRoutes'));
 app.use('/api/products',    require('./routes/productRoutes'));
+app.use('/api/crm',         require('./routes/crmRoutes'));
 app.use('/api/upload',      require('./routes/uploadRoutes'));
 app.use('/api/vendor',      require('./routes/vendorRoutes'));
 app.use('/api/referrals',   require('./routes/referralRoutes'));

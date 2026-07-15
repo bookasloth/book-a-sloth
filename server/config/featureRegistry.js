@@ -39,6 +39,9 @@ const REGISTRY = [
   // ── VENDOR · Products ────────────────────────────────────────
   { key: 'digital_products',     label: 'Digital Products',     category: 'Products', scope: 'vendor',   description: 'Sell downloadable digital products. Off = product mutations blocked.' },
 
+  // ── VENDOR · Clients (Studio CRM) ────────────────────────────
+  { key: 'crm',                  label: 'Client CRM',           category: 'Clients',  scope: 'vendor',   description: 'Studio client records, notes, files & walk-ins. Off = Clients section hidden and CRM API blocked.' },
+
   // ── VENDOR · Operations ──────────────────────────────────────
   { key: 'availability_editor',  label: 'Availability Editor',  category: 'Operations', scope: 'vendor', description: 'Weekly schedule + blocked dates editor. Off = availability locked.' },
   { key: 'payouts',              label: 'Payout Requests',      category: 'Operations', scope: 'vendor', description: 'Vendor payout requests. Off = payout requests blocked.' },
