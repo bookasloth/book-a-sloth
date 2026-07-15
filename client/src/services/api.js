@@ -532,3 +532,18 @@ export const invoiceUrl = (id, token) =>
 
 // The logged-in user's own GST invoices (subscriptions + bookings billed to them).
 export const getMyInvoices = () => API.get('/invoices/mine');
+
+// ── Studio Client CRM (Host 360) ──────────────────────────────
+// Every route is Studio-gated server-side (requireCrm); a non-Studio host gets
+// a 403 { upgrade_required: true } which the pages show as an upsell.
+export const crmGetCustomers      = (params)         => API.get('/crm/customers', { params });
+export const crmGetCustomer       = (id)             => API.get(`/crm/customers/${id}`);
+// Blob response — caller builds an object URL and triggers the download.
+export const crmExportCsv         = ()               => API.get('/crm/customers.csv', { responseType: 'blob' });
+// A client with id:null has no persisted row yet — resolve it to a UUID handle
+// before navigating to the detail page (ensureCustomer is idempotent server-side).
+export const crmResolveCustomer   = (customer_key)   => API.post('/crm/customers/resolve', { customer_key });
+export const crmGetNotes          = (id)             => API.get(`/crm/customers/${id}/notes`);
+export const crmAddNote           = (id, body)       => API.post(`/crm/customers/${id}/notes`, { body });
+export const crmDeleteNote        = (id, noteId)     => API.delete(`/crm/customers/${id}/notes/${noteId}`);
+export const crmUpdateAttributes  = (id, data)       => API.patch(`/crm/customers/${id}/attributes`, data);

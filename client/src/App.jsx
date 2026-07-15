@@ -89,6 +89,10 @@ const ReferEarn   = lazy(() => import('./pages/ReferEarn'));
 const Transactions = lazy(() => import('./pages/Transactions'));
 const Feedback     = lazy(() => import('./pages/Feedback'));
 
+// Studio Client CRM ("Host 360") — Studio+ only, gated server-side.
+const ClientsList  = lazy(() => import('./pages/ClientsList'));
+const ClientDetail = lazy(() => import('./pages/ClientDetail'));
+
 // KYC (host identity verification)
 const KycHome      = lazy(() => import('./pages/kyc/KycHome'));
 const KycFlow      = lazy(() => import('./pages/kyc/KycFlow'));
@@ -330,6 +334,8 @@ function App() {
           {/* Vendor dashboard */}
           <Route path="/dashboard" element={<DashboardWrapper><Dashboard /></DashboardWrapper>} />
           <Route path="/dashboard/bookings" element={<DashboardWrapper><Bookings /></DashboardWrapper>} />
+          <Route path="/dashboard/clients" element={<DashboardWrapper><ClientsList /></DashboardWrapper>} />
+          <Route path="/dashboard/clients/:id" element={<DashboardWrapper><ClientDetail /></DashboardWrapper>} />
           <Route path="/dashboard/earnings" element={<DashboardWrapper><Earnings /></DashboardWrapper>} />
           <Route path="/dashboard/services" element={<DashboardWrapper><ServicesList /></DashboardWrapper>} />
           <Route path="/dashboard/service/add-new" element={<DashboardWrapper><AddService /></DashboardWrapper>} />
