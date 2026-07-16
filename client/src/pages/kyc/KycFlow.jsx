@@ -1,6 +1,6 @@
 import { Outlet, Navigate, useLocation, Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
-import { KycProvider, useKyc } from '../../context/KycContext';
+import { useKyc } from '../../context/KycContext';
 import { cn } from '../../components/dashboard/ui';
 
 const STEPS = [
@@ -61,21 +61,24 @@ function Stepper() {
   );
 }
 
+// NOTE: KycProvider is mounted in App.jsx ABOVE DashboardLayout, not here.
+// DashboardLayout renders its children inside PageTransition, whose motion.div is
+// keyed on the pathname — so anything below it unmounts once the exit animation
+// finishes on every step navigation. Holding the flow state here wiped it on each
+// Continue and <Guard> bounced the host back to step one.
 export default function KycFlow() {
   return (
-    <KycProvider>
-      <div className="mx-auto flex min-h-[calc(100dvh-5rem)] max-w-2xl flex-col py-4">
-        <div className="mb-2 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-900">Identity Verification</h1>
-          <Link to="/dashboard/kyc" className="text-sm text-gray-400 hover:text-gray-600">Cancel</Link>
-        </div>
-        <Stepper />
-        <Guard>
-          <div className="flex-1">
-            <Outlet />
-          </div>
-        </Guard>
+    <div className="mx-auto flex min-h-[calc(100dvh-5rem)] max-w-2xl flex-col py-4">
+      <div className="mb-2 flex items-center justify-between">
+        <h1 className="text-lg font-bold text-gray-900">Identity Verification</h1>
+        <Link to="/dashboard/kyc" className="text-sm text-gray-400 hover:text-gray-600">Cancel</Link>
       </div>
-    </KycProvider>
+      <Stepper />
+      <Guard>
+        <div className="flex-1">
+          <Outlet />
+        </div>
+      </Guard>
+    </div>
   );
 }

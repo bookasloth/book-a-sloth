@@ -15,6 +15,7 @@ import ConsentBanner from './components/common/ConsentBanner';
 import ScrollToTop from './components/common/ScrollToTop';
 import RouteErrorBoundary from './components/common/RouteErrorBoundary';
 import { useAuth } from './context/AuthContext';
+import { KycProvider } from './context/KycContext';
 import { captureReferral } from './services/api';
 import lazyWithRetry from './utils/lazyWithRetry';
 
@@ -346,7 +347,10 @@ function App() {
           <Route path="/dashboard/availability" element={<DashboardWrapper><Availability /></DashboardWrapper>} />
           <Route path="/dashboard/profile" element={<DashboardWrapper><ProfileSetup /></DashboardWrapper>} />
           <Route path="/dashboard/kyc" element={<DashboardWrapper><KycHome /></DashboardWrapper>} />
-          <Route path="/dashboard/kyc/flow" element={<DashboardWrapper><KycFlow /></DashboardWrapper>}>
+          {/* KycProvider sits OUTSIDE DashboardWrapper on purpose: DashboardLayout
+              renders pages inside PageTransition (keyed on pathname), so a provider
+              below it would remount — and lose every field — on each step. */}
+          <Route path="/dashboard/kyc/flow" element={<KycProvider><DashboardWrapper><KycFlow /></DashboardWrapper></KycProvider>}>
             <Route index element={<Navigate to="start" replace />} />
             <Route path="start" element={<KycStart />} />
             <Route path="bank" element={<KycBank />} />
