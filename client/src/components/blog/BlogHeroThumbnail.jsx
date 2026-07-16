@@ -216,7 +216,10 @@ const PatternScatter = ({ icons, accent, gridColor, bg, w, h, pid }) => {
 
 const PATTERNS = [PatternGridCrosshairs, PatternCenterFocus, PatternDuoConnected, PatternScatter];
 
-const BlogHeroThumbnail = ({ post, theme }) => {
+// w/h are the pattern canvas, not CSS pixels — patterns lay themselves out
+// against it, so a wide short card (the /blog index) passes a wide short box
+// instead of letterboxing the tall hero canvas.
+const BlogHeroThumbnail = ({ post, theme, w = 600, h = 500 }) => {
   const icons = post.icons || CATEGORY_DEFAULTS[post.category] || CATEGORY_DEFAULTS.News;
   const hash = hashSlug(post.slug);
   const patternIdx = hash % PATTERNS.length;
@@ -229,7 +232,7 @@ const BlogHeroThumbnail = ({ post, theme }) => {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: bg }}>
-      <Pattern icons={icons} accent={accent} gridColor={gridColor} bg={bg} w={600} h={500} pid={pid} />
+      <Pattern icons={icons} accent={accent} gridColor={gridColor} bg={bg} w={w} h={h} pid={pid} />
     </div>
   );
 };

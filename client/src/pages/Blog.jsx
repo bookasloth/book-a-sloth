@@ -4,10 +4,12 @@ import { themeFor } from '../data/blogPosts';
 import { getBlogs } from '../services/api';
 import Seo from "../components/common/Seo";
 import { SITE_URL } from "../utils/seo";
+import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 
 // /blog — index of posts. Content now lives in the `blogs` table and is served
 // by GET /api/blogs (see server/controllers/blogController.js). Presentation
 // (category colours via themeFor) still comes from src/data/blogPosts.js.
+// Card art reuses the same visual the post hero uses, so index and post agree.
 
 const Tag = ({ label }) => {
   const s = themeFor(label);
@@ -18,6 +20,21 @@ const Tag = ({ label }) => {
     >
       {label}
     </span>
+  );
+};
+
+// Card art: the post's own image if it has one, else the generated hero
+// thumbnail (same component the post page uses — see BlogHeroThumbnail).
+const CardVisual = ({ post, className, w, h }) => {
+  const t = themeFor(post.category);
+  return (
+    <div className={`relative overflow-hidden ${className}`} style={{ backgroundColor: t.band }}>
+      {post.image ? (
+        <img src={post.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <BlogHeroThumbnail post={post} theme={t} w={w} h={h} />
+      )}
+    </div>
   );
 };
 
@@ -79,27 +96,30 @@ const Blog = () => {
             {/* Featured post */}
             <Link
               to={`/blog/${featured.slug}`}
-              className="page-card group mt-12 block p-6 transition-shadow hover:shadow-md hover:no-underline sm:mt-16 sm:p-8"
+              className="page-card group mt-12 grid overflow-hidden transition-shadow hover:shadow-md hover:no-underline sm:mt-16 sm:grid-cols-2"
             >
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <Tag label={featured.category} />
-                <time className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  {featured.date}
-                </time>
-                <span className="text-xs text-gray-400">· {featured.readMins} min read</span>
+              <CardVisual post={featured} w={600} h={440} className="h-44 sm:order-last sm:h-full sm:min-h-[16rem]" />
+              <div className="p-6 sm:p-8">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <Tag label={featured.category} />
+                  <time className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    {featured.date}
+                  </time>
+                  <span className="text-xs text-gray-400">· {featured.readMins} min read</span>
+                </div>
+                <h2 className="mt-3 font-heading text-2xl font-bold tracking-tight text-ink group-hover:text-primary-cta sm:text-3xl">
+                  {featured.title}
+                </h2>
+                <p className="mt-3 text-[15px] leading-relaxed text-gray-600">
+                  {featured.excerpt}
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-cta">
+                  Read post
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </span>
               </div>
-              <h2 className="mt-3 font-heading text-2xl font-bold tracking-tight text-ink group-hover:text-primary-cta sm:text-3xl">
-                {featured.title}
-              </h2>
-              <p className="mt-3 text-[15px] leading-relaxed text-gray-600">
-                {featured.excerpt}
-              </p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-cta">
-                Read post
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M5 12h14M13 6l6 6-6 6" />
-                </svg>
-              </span>
             </Link>
 
             {/* Rest of posts */}
@@ -109,23 +129,26 @@ const Blog = () => {
                   <Link
                     key={post.slug}
                     to={`/blog/${post.slug}`}
-                    className="page-card group flex flex-col p-5 transition-shadow hover:shadow-md hover:no-underline sm:p-6"
+                    className="page-card group flex flex-col overflow-hidden transition-shadow hover:shadow-md hover:no-underline"
                   >
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                      <Tag label={post.category} />
-                      <time className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                        {post.date}
-                      </time>
+                    <CardVisual post={post} w={600} h={240} className="h-36" />
+                    <div className="flex flex-1 flex-col p-5 sm:p-6">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                        <Tag label={post.category} />
+                        <time className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                          {post.date}
+                        </time>
+                      </div>
+                      <h2 className="mt-2.5 font-heading text-lg font-bold tracking-tight text-ink group-hover:text-primary-cta sm:text-xl">
+                        {post.title}
+                      </h2>
+                      <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-600">
+                        {post.excerpt}
+                      </p>
+                      <span className="mt-3 text-xs font-medium text-gray-400">
+                        {post.readMins} min read
+                      </span>
                     </div>
-                    <h2 className="mt-2.5 font-heading text-lg font-bold tracking-tight text-ink group-hover:text-primary-cta sm:text-xl">
-                      {post.title}
-                    </h2>
-                    <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-600">
-                      {post.excerpt}
-                    </p>
-                    <span className="mt-3 text-xs font-medium text-gray-400">
-                      {post.readMins} min read
-                    </span>
                   </Link>
                 ))}
               </div>
