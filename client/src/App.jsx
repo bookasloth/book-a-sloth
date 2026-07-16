@@ -232,6 +232,12 @@ function BookingRedirect() {
   return <Navigate to={`/${profileSlug}`} replace />;
 }
 
+// /blogs/* is a common mistype of the canonical /blog/* — keep the link alive.
+function BlogsRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={slug ? `/blog/${slug}` : '/blog'} replace />;
+}
+
 function App() {
   const location = useLocation();
   const { user } = useAuth();
@@ -304,6 +310,8 @@ function App() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/blogs" element={<BlogsRedirect />} />
+          <Route path="/blogs/:slug" element={<BlogsRedirect />} />
           <Route path="/about" element={<About />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/careers/:jobSlug" element={<JobDetail />} />

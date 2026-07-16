@@ -8,7 +8,7 @@
 //   title     — headline
 //   date      — display string (also sort order, newest first below)
 //   author    — byline (links to AUTHOR_URL on the post page)
-//   readMins  — rough read time, shown on cards
+//   readMins  — rough read time, shown on the post page (not on index cards)
 //   category  — drives the post-hero colour. Must be a key of CATEGORY_THEME.
 //   image     — hero image URL (right half of the split hero). null → a
 //               branded fallback panel is shown. Hidden on mobile either way.
@@ -34,6 +34,8 @@ export const AUTHOR_URL = 'https://bolt958.xyz';
 
 // One colour theme per blog category. The post hero (+ bottom CTA band) use
 // `band`; the dark reading body uses `accent`; index chips use chip*.
+// `chipFg` is the darkened band, so index cards also reuse it as the heading
+// hover colour (--card-hov in Blog.jsx).
 // `light: true` flips band text to ink (Growth / yellow).
 export const CATEGORY_THEME = {
   News:             { band: '#FE5100', accent: '#FF8A3D', light: false, chipBg: 'rgba(254,81,0,0.10)',  chipFg: '#c2410c' },

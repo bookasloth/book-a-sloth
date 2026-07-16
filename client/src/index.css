@@ -206,9 +206,41 @@ a {
   text-underline-offset: 0.2em;
 }
 
-/* No hover-underline anywhere app-wide (admin/host/guest) — blog pages opt back in below. */
-.blog-page a:hover {
-  text-decoration: underline;
+/* No hover-underline anywhere app-wide, blog pages included. Blog cards signal
+   hover by tinting the heading to the post's category colour; links in post
+   body copy wipe an underline in, below. */
+
+/* Post body links (rich() in BlogPost.jsx). The underline wipes in from the
+   left on hover, in the link's own colour — inherited, so each category keeps
+   its accent.
+
+   Drawn as a background-image rather than the usual absolutely-positioned
+   ::after: these links sit in prose and wrap across lines, and an absolute
+   ::after can only cover the first line box. A background stretches over every
+   line fragment, so a wrapped link underlines in full.
+
+   Body copy is 400, so 500 here is the +100 the design asks for. */
+.blog-page .blog-link {
+  font-weight: 500;
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  padding-bottom: 3px;
+  transition: background-size 0.25s ease;
+}
+
+.blog-page .blog-link:hover,
+.blog-page .blog-link:focus-visible {
+  background-size: 100% 2px;
+}
+
+/* Honour a reduced-motion preference: keep the underline, drop the wipe. */
+@media (prefers-reduced-motion: reduce) {
+  .blog-page .blog-link {
+    transition: none;
+  }
 }
 
 button,

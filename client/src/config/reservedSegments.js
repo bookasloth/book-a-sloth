@@ -9,7 +9,7 @@
 // When you add a top-level route to App.jsx, add its first segment here.
 export const RESERVED_FIRST_SEGMENTS = [
   'login', 'logout', 'signin', 'signup', 'register', 'forgot-password', 'reset-password',
-  'help', 'about', 'careers', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore', 'changelog', 'blog', 'pricing', 'services', 'features',
+  'help', 'about', 'careers', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore', 'changelog', 'blog', 'blogs', 'pricing', 'services', 'features',
   'contact', 'get-in-touch', 'enterprise',
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'lp', 'for',
