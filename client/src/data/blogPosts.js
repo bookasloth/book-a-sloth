@@ -8,7 +8,7 @@
 //   title     — headline
 //   date      — display string (also sort order, newest first below)
 //   author    — byline (links to AUTHOR_URL on the post page)
-//   readMins  — rough read time, shown on cards
+//   readMins  — rough read time, shown on the post page (not on index cards)
 //   category  — drives the post-hero colour. Must be a key of CATEGORY_THEME.
 //   image     — hero image URL (right half of the split hero). null → a
 //               branded fallback panel is shown. Hidden on mobile either way.

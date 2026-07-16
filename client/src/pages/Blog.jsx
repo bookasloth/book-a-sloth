@@ -23,19 +23,33 @@ const Tag = ({ label }) => {
   );
 };
 
-// Index byline. Deliberately not post.author (the `blogs` rows say "Bolt 958",
-// which the post page and the SEO author still use) and deliberately not a
-// link — these cards are one big <Link>, and <a> inside <a> is invalid.
-const BYLINE = 'by Bolt - The Sloth';
+// The byline below is deliberately not post.author (the `blogs` rows say
+// "Bolt 958", which the post page and the SEO author still use) and
+// deliberately not a link — a card is one big <Link>, and <a> in <a> is invalid.
 
-// Date · read time · byline, shared by both card shapes. Each separator rides
-// with the item after it, so a wrap can't strand a "·" at the end of a line.
+// Top corners of a card: category left, publish date right.
 const Meta = ({ post }) => (
-  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-400">
+  <div className="flex items-center justify-between gap-3">
     <Tag label={post.category} />
-    <time className="font-semibold uppercase tracking-wide">{post.date}</time>
-    <span>· {post.readMins} min read</span>
-    <span>· {BYLINE}</span>
+    <time className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+      {post.date}
+    </time>
+  </div>
+);
+
+// Bottom corners of a card: byline left, CTA right. The CTA takes the post's
+// category colour from --card-hov (set on the card <Link>).
+const CardFoot = () => (
+  <div className="mt-5 flex items-end justify-between gap-3">
+    <span className="text-xs text-gray-400">
+      by <span className="font-semibold text-gray-500">Bolt - The Sloth</span>
+    </span>
+    <span className="inline-flex items-center gap-1.5 text-sm font-semibold [color:var(--card-hov)]">
+      Read More
+      <svg viewBox="0 0 24 24" className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    </span>
   </div>
 );
 
@@ -116,20 +130,15 @@ const Blog = () => {
               className="page-card group mt-12 grid overflow-hidden transition-shadow hover:shadow-md sm:mt-16 sm:grid-cols-2"
             >
               <CardVisual post={featured} w={600} h={440} className="h-44 sm:order-last sm:h-full sm:min-h-[16rem]" />
-              <div className="p-6 sm:p-8">
+              <div className="flex flex-col p-6 sm:p-8">
                 <Meta post={featured} />
                 <h2 className="mt-3 font-heading text-2xl font-bold tracking-tight text-ink transition-colors duration-150 group-hover:[color:var(--card-hov)] sm:text-3xl">
                   {featured.title}
                 </h2>
-                <p className="mt-3 text-[15px] leading-relaxed text-gray-600">
+                <p className="mt-3 flex-1 text-[15px] leading-relaxed text-gray-600">
                   {featured.excerpt}
                 </p>
-                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold [color:var(--card-hov)]">
-                  Read post
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                </span>
+                <CardFoot />
               </div>
             </Link>
 
@@ -152,6 +161,7 @@ const Blog = () => {
                       <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-600">
                         {post.excerpt}
                       </p>
+                      <CardFoot />
                     </div>
                   </Link>
                 ))}
