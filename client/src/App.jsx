@@ -233,6 +233,9 @@ function BookingRedirect() {
 }
 
 // /blogs/* is a common mistype of the canonical /blog/* — keep the link alive.
+// In production Vercel 301s these before the app ever loads (client/vercel.json);
+// this covers what that cannot — local dev, and in-app <Link> navigation, which
+// never reaches the server. Both are needed.
 function BlogsRedirect() {
   const { slug } = useParams();
   return <Navigate to={slug ? `/blog/${slug}` : '/blog'} replace />;

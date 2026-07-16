@@ -1,6 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": { "deploymentEnabled": false },
+  "redirects": [
+    { "source": "/blogs", "destination": "/blog", "statusCode": 301 },
+    { "source": "/blogs/:slug", "destination": "/blog/:slug", "statusCode": 301 }
+  ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://book-a-sloth.onrender.com/sitemap.xml" },
     { "source": "/sitemap-:name.xml", "destination": "https://book-a-sloth.onrender.com/sitemap-:name.xml" },
