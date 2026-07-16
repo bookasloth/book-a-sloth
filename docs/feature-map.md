@@ -193,3 +193,18 @@
 - **Seed:** `server/config/serviceCategorySeed.js` + `server/scripts/seedServiceCategories.js` (gap-fills `description`; re-run after v3.60)
 - **SEO:** `/sitemap-professions.xml` sitemap-index child (`sitemapController.js`)
 - **Related:** Service Management, Host Dashboard, SEO + Sitemap
+
+---
+
+## 18. Blog (`/blog`) — DB-backed (v3.74), index redesign + paging 2026-07-16
+**Purpose:** Public build-in-public blog. Content lives in the `blogs` table; presentation (category colours, generated card/hero art) lives in the client.
+- **Primary (client):** `client/src/pages/Blog.jsx` (index `/blog`, paged), `client/src/pages/BlogPost.jsx` (`/blog/:slug`, split hero + dark reading body), `client/src/components/blog/BlogHeroThumbnail.jsx` (generated SVG art — used by BOTH the post hero and the index cards; takes its canvas as `w`/`h`)
+- **Presentation source:** `client/src/data/blogPosts.js` — `CATEGORY_THEME` (`band` = hero/CTA, `accent` = body links, `chip*` = index chips; `chipFg` doubles as the card hover colour `--card-hov`), `themeFor`, `AUTHOR_URL`. The `BLOG_POSTS` array is legacy seed data; live content comes from the API.
+- **Controller/API:** `server/controllers/blogController.js` → `GET /api/blogs` (returns **every** post in one payload — the index pages client-side off this), `GET /api/blogs/:slug`
+- **Admin:** `client/src/pages/admin/AdminBlogs.jsx` (route `/admin/content/blogs`), perm `cms.manage`
+- **DB Tables:** `blogs` (`body` = jsonb block array; migration v3.74)
+- **Paging:** `PER_PAGE = 13` in `Blog.jsx` (1 featured + 12 grid). URL-driven via `?page=N`, clamped; canonical follows the page
+- **Redirects:** `/blogs` + `/blogs/:slug` → `/blog*`. **Two layers, both needed:** `client/vercel.json` `redirects` (301 at the edge, for crawlers) and `BlogsRedirect` in `App.jsx` (local dev + in-app `<Link>` nav). `blogs` is in `client/src/config/reservedSegments.js`
+- **Styling landmine:** `.blog-link` in `index.css` draws the body-link hover underline as a **background-image**, not an `::after` — prose links wrap, and an absolute `::after` only covers the first line box
+- **Tests:** `client/src/pages/__tests__/Blog.test.jsx` (paging, clamp, pager, byline)
+- **Related:** SEO + Sitemap, Admin Panel

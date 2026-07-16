@@ -50,6 +50,13 @@ _Last updated: 2026-07-16 (KYC section only — the rest of this file was last r
 - Docs go to the private `kyc` bucket; uploads are magic-byte sniffed (`fileSniff.js`), client mimetype never trusted
 - **Flow state fix (#374, 2026-07-16):** `KycProvider` is mounted in `App.jsx` ABOVE `DashboardWrapper` on purpose. Below `PageTransition` (keyed on pathname) it remounted every step and bounced hosts back to step one. See `docs/current-work.md` for the full landmine.
 
+### Blog (v3.74, index redesign 2026-07-16)
+- `/blog` index + `/blog/:slug` posts; content in the `blogs` table, served by `GET /api/blogs`
+- Index is paged at 13/page (1 featured + 12 grid), URL-driven via `?page=N` — paging is client-side, since the API returns every post in one payload
+- Cards carry the same generated category-themed art as the post heroes (`BlogHeroThumbnail`); hover tints heading + CTA to the post's category colour
+- `/blogs` and `/blogs/:slug` 301 to the canonical `/blog*` at the edge (`client/vercel.json`), with the router redirect as the dev/in-app fallback. **Both layers are load-bearing** — see `docs/current-work.md`
+- Post body links wipe an underline in on hover; drawn as a background-image so wrapped links underline in full
+
 ### Reminders
 - 24h and 1h booking reminder emails
 - Cron runs every 5 minutes
