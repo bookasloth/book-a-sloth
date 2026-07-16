@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "og:blog": "node scripts/generateBlogOgImages.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

@@ -90,6 +90,20 @@ const professionEntries = (rows, siteUrl) => {
   ];
 };
 
+// Published blog posts -> /blog/:slug. `lastmod` prefers updated_at so an edited
+// post re-surfaces to crawlers, falling back to its publish date.
+const blogEntries = (rows, siteUrl) => {
+  const site = trimSlash(siteUrl);
+  return (rows || [])
+    .filter((r) => r && r.slug)
+    .map((r) => ({
+      loc: `${site}/blog/${r.slug}`,
+      lastmod: toLastmod(r.updated_at || r.published_at),
+      changefreq: 'monthly',
+      priority: '0.6',
+    }));
+};
+
 // ── DB fetchers ──────────────────────────────────────────────────────────────
 
 const schemaMissing = (err) => err && /Could not find the|column.*does not exist/i.test(err.message || '');
@@ -176,9 +190,23 @@ const fetchProfessions = async () => {
   return [...newest.entries()].map(([slug, updated_at]) => ({ slug, updated_at }));
 };
 
+// Published blog posts. Mirrors the public read in blogController exactly
+// (status only, no date gate) — any stricter filter here would sitemap a URL the
+// API still serves, or omit one it does.
+const fetchBlogs = async () => {
+  const r = await supabaseAdmin
+    .from('blogs')
+    .select('slug, published_at, updated_at')
+    .eq('status', 'published')
+    .not('slug', 'is', null)
+    .order('published_at', { ascending: false });
+  if (r.error) throw r.error;
+  return r.data || [];
+};
+
 module.exports = {
   // pure
-  trimSlash, hostUrl, serviceUrl, toLastmod, STATIC_ROUTES, staticEntries, hostEntries, serviceEntries, professionEntries,
+  trimSlash, hostUrl, serviceUrl, toLastmod, STATIC_ROUTES, staticEntries, hostEntries, serviceEntries, professionEntries, blogEntries,
   // db
-  fetchHosts, fetchServices, fetchProfessions,
+  fetchHosts, fetchServices, fetchProfessions, fetchBlogs,
 };

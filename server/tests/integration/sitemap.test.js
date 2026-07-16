@@ -13,13 +13,14 @@ jest.mock('../../services/sitemapService', () => {
     fetchHosts: jest.fn(),
     fetchServices: jest.fn(),
     fetchProfessions: jest.fn(),
+    fetchBlogs: jest.fn(),
   };
 });
 
 const request = require('supertest');
 const express = require('express');
 const sitemapRoutes = require('../../routes/sitemapRoutes');
-const { fetchHosts, fetchServices, fetchProfessions } = require('../../services/sitemapService');
+const { fetchHosts, fetchServices, fetchProfessions, fetchBlogs } = require('../../services/sitemapService');
 const { bustSitemapCache } = require('../../utils/sitemapCache');
 
 const app = express();
@@ -34,6 +35,9 @@ beforeEach(() => {
   fetchProfessions.mockResolvedValue([
     { slug: 'therapy', updated_at: '2026-06-20T10:00:00Z' },
   ]);
+  fetchBlogs.mockResolvedValue([
+    { slug: 'zero-commission-bet', published_at: '2026-06-25T10:00:00Z', updated_at: '2026-06-28T10:00:00Z' },
+  ]);
 });
 
 describe('GET /sitemap.xml (index)', () => {
@@ -46,10 +50,19 @@ describe('GET /sitemap.xml (index)', () => {
     expect(res.text).toContain('https://bookasloth.com/sitemap-hosts-1.xml');
     expect(res.text).toContain('https://bookasloth.com/sitemap-services-1.xml');
     expect(res.text).toContain('https://bookasloth.com/sitemap-professions.xml');
+    expect(res.text).toContain('https://bookasloth.com/sitemap-blog.xml');
   });
 });
 
 describe('child sitemaps', () => {
+  test('blog sitemap lists one URL per published post', async () => {
+    const res = await request(app).get('/sitemap-blog.xml');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/application\/xml/);
+    expect(res.text).toContain('<loc>https://bookasloth.com/blog/zero-commission-bet</loc>');
+    expect(res.text).toContain('<lastmod>2026-06-28</lastmod>');
+  });
+
   test('pages sitemap lists the homepage', async () => {
     const res = await request(app).get('/sitemap-pages.xml');
     expect(res.status).toBe(200);
