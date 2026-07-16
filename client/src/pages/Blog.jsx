@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { themeFor } from '../data/blogPosts';
 import { getBlogs } from '../services/api';
 import Seo from "../components/common/Seo";
@@ -10,6 +10,12 @@ import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 // by GET /api/blogs (see server/controllers/blogController.js). Presentation
 // (category colours via themeFor) still comes from src/data/blogPosts.js.
 // Card art reuses the same visual the post hero uses, so index and post agree.
+//
+// Paging is client-side: GET /api/blogs returns every post in one payload, so
+// slicing here costs nothing and needs no API change. Revisit if the post count
+// ever outgrows a single response.
+// ponytail: 13 = 1 featured + 12 in the 2-col grid (6 rows).
+const PER_PAGE = 13;
 
 const Tag = ({ label }) => {
   const s = themeFor(label);
@@ -23,10 +29,6 @@ const Tag = ({ label }) => {
   );
 };
 
-// The byline below is deliberately not post.author (the `blogs` rows say
-// "Bolt 958", which the post page and the SEO author still use) and
-// deliberately not a link — a card is one big <Link>, and <a> in <a> is invalid.
-
 // Top corners of a card: category left, publish date right.
 const Meta = ({ post }) => (
   <div className="flex items-center justify-between gap-3">
@@ -38,11 +40,13 @@ const Meta = ({ post }) => (
 );
 
 // Bottom corners of a card: byline left, CTA right. The CTA takes the post's
-// category colour from --card-hov (set on the card <Link>).
-const CardFoot = () => (
+// category colour from --card-hov (set on the card <Link>). The byline is
+// plain text, not an author link — a card is one big <Link>, and <a> inside
+// <a> is invalid markup.
+const CardFoot = ({ post }) => (
   <div className="mt-5 flex items-end justify-between gap-3">
     <span className="text-xs text-gray-400">
-      by <span className="font-semibold text-gray-500">Bolt - The Sloth</span>
+      by <span className="font-semibold text-gray-500">{post.author}</span>
     </span>
     <span className="inline-flex items-center gap-1.5 text-sm font-semibold [color:var(--card-hov)]">
       Read More
@@ -52,6 +56,53 @@ const CardFoot = () => (
     </span>
   </div>
 );
+
+// Pager. Real <Link>s, not buttons — a page is a URL, so it stays
+// middle-clickable, shareable and crawlable.
+const PageLink = ({ to, disabled, children, label }) =>
+  disabled ? (
+    <span aria-disabled="true" className="rounded-lg px-3 py-2 text-sm font-semibold text-gray-300">
+      {children}
+    </span>
+  ) : (
+    <Link
+      to={to}
+      aria-label={label}
+      className="rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-black/[0.04] hover:text-ink"
+    >
+      {children}
+    </Link>
+  );
+
+const Pager = ({ page, totalPages }) => {
+  if (totalPages <= 1) return null;
+  const href = (n) => (n === 1 ? '/blog' : `/blog?page=${n}`);
+  return (
+    <nav aria-label="Blog pages" className="mt-10 flex items-center justify-center gap-1 sm:mt-12">
+      <PageLink to={href(page - 1)} disabled={page === 1} label="Previous page">
+        ← Prev
+      </PageLink>
+      {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+        <Link
+          key={n}
+          to={href(n)}
+          aria-label={`Page ${n}`}
+          aria-current={n === page ? 'page' : undefined}
+          className={
+            n === page
+              ? 'rounded-lg bg-ink px-3.5 py-2 text-sm font-semibold text-white'
+              : 'rounded-lg px-3.5 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-black/[0.04] hover:text-ink'
+          }
+        >
+          {n}
+        </Link>
+      ))}
+      <PageLink to={href(page + 1)} disabled={page === totalPages} label="Next page">
+        Next →
+      </PageLink>
+    </nav>
+  );
+};
 
 // Card art: the post's own image if it has one, else the generated hero
 // thumbnail (same component the post page uses — see BlogHeroThumbnail).
@@ -71,6 +122,7 @@ const CardVisual = ({ post, className, w, h }) => {
 const Blog = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const prev = document.title;
@@ -85,22 +137,27 @@ const Blog = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const [featured, ...rest] = posts;
+  // Paging swaps the list in place, so without this page 2 opens halfway down.
+  const pageParam = searchParams.get('page');
+  useEffect(() => { window.scrollTo(0, 0); }, [pageParam]);
+
+  // Page 1 is /blog; later pages are /blog?page=N. Junk or out-of-range values
+  // clamp to a real page rather than rendering an empty list.
+  const totalPages = Math.max(1, Math.ceil(posts.length / PER_PAGE));
+  const page = Math.min(Math.max(1, parseInt(searchParams.get('page'), 10) || 1), totalPages);
+  const [featured, ...rest] = posts.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <div className="app-container blog-page py-12 sm:py-16">
       <Seo
         title="Book A Sloth Blog — Booking & Business Growth Tips"
         description="Guides on appointment scheduling, reducing no-shows, online payments, and growing your booking business. Practical tips from Book A Sloth."
-        canonical={`${SITE_URL}/blog`}
+        canonical={page === 1 ? `${SITE_URL}/blog` : `${SITE_URL}/blog?page=${page}`}
       />
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <header className="text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-cta">
-            Building in public
-          </p>
-          <h1 className="mt-2 font-heading text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          <h1 className="font-heading text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">
             The Book A Sloth blog
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-gray-500 sm:text-base">
@@ -138,7 +195,7 @@ const Blog = () => {
                 <p className="mt-3 flex-1 text-[15px] leading-relaxed text-gray-600">
                   {featured.excerpt}
                 </p>
-                <CardFoot />
+                <CardFoot post={featured} />
               </div>
             </Link>
 
@@ -161,12 +218,14 @@ const Blog = () => {
                       <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-600">
                         {post.excerpt}
                       </p>
-                      <CardFoot />
+                      <CardFoot post={post} />
                     </div>
                   </Link>
                 ))}
               </div>
             )}
+
+            <Pager page={page} totalPages={totalPages} />
           </>
         )}
 
