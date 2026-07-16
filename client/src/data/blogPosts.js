@@ -45,6 +45,13 @@ export const CATEGORY_THEME = {
   Growth:           { band: '#FFCC1C', accent: '#B98900', light: true,  chipBg: 'rgba(255,204,28,0.18)',chipFg: '#9a7400' },
   Engineering:      { band: '#1E63C9', accent: '#5BA8F5', light: false, chipBg: 'rgba(30,99,201,0.10)', chipFg: '#1e63c9' },
   Internal:         { band: '#E63B82', accent: '#FF7DAE', light: false, chipBg: 'rgba(230,59,130,0.10)',chipFg: '#c2326f' },
+  // Deliberately reuse the five hues above rather than mint new ones: blue reads
+  // as technical, yellow as money, pink as people. A reader learns five bands, not eleven.
+  Security:         { band: '#1E63C9', accent: '#5BA8F5', light: false, chipBg: 'rgba(30,99,201,0.10)', chipFg: '#1e63c9' },
+  Postmortem:       { band: '#1E63C9', accent: '#5BA8F5', light: false, chipBg: 'rgba(30,99,201,0.10)', chipFg: '#1e63c9' },
+  Money:            { band: '#FFCC1C', accent: '#B98900', light: true,  chipBg: 'rgba(255,204,28,0.18)',chipFg: '#9a7400' },
+  Comparison:       { band: '#FFCC1C', accent: '#B98900', light: true,  chipBg: 'rgba(255,204,28,0.18)',chipFg: '#9a7400' },
+  'Host Story':     { band: '#E63B82', accent: '#FF7DAE', light: false, chipBg: 'rgba(230,59,130,0.10)',chipFg: '#c2326f' },
 };
 export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME.News;
 
