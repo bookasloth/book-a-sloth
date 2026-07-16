@@ -18,7 +18,7 @@
  * to redo a single post, --dry to render into scripts/.og-preview/ without uploading.
  */
 import { createClient } from '@supabase/supabase-js';
-import { mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { themeFor } from '../src/data/blogPosts.js';
@@ -29,6 +29,22 @@ const W = 1200;
 const H = 630;
 const BUCKET = 'images';
 const PREFIX = 'blog-og';
+
+// The site self-hosts its fonts, so the card embeds those exact files as data
+// URIs. An earlier version pulled them from the Google Fonts CDN, which made
+// every render wait on the network and timed out 33 of 34 cards. Inlining means
+// zero requests, deterministic output, and typography identical to the site's.
+const fontUri = (file) =>
+  `data:font/woff2;base64,${readFileSync(join(__dirname, '..', 'public', 'fonts', file)).toString('base64')}`;
+
+const FONT_FACES = `
+  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 200 800; font-display: block;
+               src: url(${fontUri('plus-jakarta-sans-latin-var.woff2')}) format('woff2'); }
+  @font-face { font-family: 'Poppins'; font-weight: 400; font-display: block;
+               src: url(${fontUri('poppins-latin-400.woff2')}) format('woff2'); }
+  @font-face { font-family: 'Poppins'; font-weight: 600; font-display: block;
+               src: url(${fontUri('poppins-latin-600.woff2')}) format('woff2'); }
+`;
 
 const args = process.argv.slice(2);
 const only = (args.find((a) => a.startsWith('--only=')) || '').split('=')[1] || null;
@@ -49,7 +65,7 @@ const cardHtml = ({ title, category, author, readMins }) => {
   const size = title.length > 90 ? 52 : title.length > 60 ? 62 : 72;
   return `<!doctype html><html><head><meta charset="utf-8">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Poppins:wght@400;600&display=swap');
+  ${FONT_FACES}
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { width: ${W}px; height: ${H}px; background: ${t.band}; color: ${ink};
          font-family: 'Poppins', system-ui, sans-serif; display: flex; flex-direction: column;
@@ -101,7 +117,10 @@ async function main() {
   let ok = 0;
   for (const p of posts) {
     try {
-      await page.setContent(cardHtml({ title: p.title, category: p.category, author: p.author, readMins: p.read_mins }), { waitUntil: 'networkidle0' });
+      // Everything is inline, so there is no network to idle on — waiting for
+      // fonts to actually parse is the real readiness signal, and it can't hang.
+      await page.setContent(cardHtml({ title: p.title, category: p.category, author: p.author, readMins: p.read_mins }), { waitUntil: 'load' });
+      await page.evaluate(() => document.fonts.ready);
       const png = await page.screenshot({ type: 'png' });
 
       if (dry) {
@@ -132,6 +151,13 @@ async function main() {
 
   await browser.close();
   console.log(`\n${dry ? 'rendered' : 'generated + uploaded'} ${ok}/${posts.length} cards${dry ? ` → ${outDir}` : ''}`);
+
+  // Exit non-zero on ANY miss. A partial run previously reported success while
+  // writing 1 of 34 cards, which is indistinguishable from a good run in a log.
+  if (ok < posts.length) {
+    console.error(`INCOMPLETE: ${posts.length - ok} card(s) failed — see FAIL lines above.`);
+    process.exit(1);
+  }
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
