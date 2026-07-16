@@ -102,4 +102,4 @@ _Last updated: 2026-07-16 (KYC section only — the rest of this file was last r
 - Auth: Supabase Auth with service role on server
 - Payments: Razorpay (test/live keys in env)
 - Email: SMTP via Nodemailer
-- Upload: Cloudinary
+- Upload: Supabase Storage (bucket `images`)

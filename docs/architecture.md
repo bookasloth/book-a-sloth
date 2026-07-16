@@ -55,7 +55,7 @@
 External:
   Razorpay API    ← payment orders + verification
   Google Calendar ← Meet event creation
-  Cloudinary      ← image uploads
+  Supabase Storage ← image uploads (bucket `images`)
   SMTP/Resend/SES ← transactional email
   AiSensy         ← WhatsApp notifications
 ```

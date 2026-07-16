@@ -122,8 +122,8 @@ const Terms = () => (
     <Section title="9. Third-party services">
       <p>
         The Platform integrates third-party services including <strong>Razorpay</strong> (payments),{' '}
-        <strong>Supabase</strong> (hosting/auth/database), <strong>Cloudinary</strong> (image storage),{' '}
-        <strong>Google</strong> (calendar and meeting links), and email/messaging providers. Your use of these features
+        <strong>Supabase</strong> (hosting/auth/database/storage), <strong>Google</strong> (calendar and meeting links),{' '}
+        and email/messaging providers. Your use of these features
         may be subject to those providers' terms. We are not responsible for third-party services or their availability.
       </p>
     </Section>

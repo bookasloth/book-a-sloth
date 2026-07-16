@@ -160,7 +160,7 @@ const SeoDrawer = ({ kind, entity, onClose, onSaved }) => {
             <textarea value={form.og_description} onChange={set('og_description')} rows={2} className={input} />
           </Field>
 
-          {/* SEO image — Cloudinary upload */}
+          {/* SEO image — uploads via /api/upload/image to Supabase Storage */}
           <Field label="SEO Image" hint="1200×630 recommended. Falls back to the thumbnail/photo.">
             <div className="mt-1 flex items-center gap-3">
               <div className="flex h-16 w-28 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
