@@ -4,8 +4,8 @@ jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }
 
 const { supabaseAdmin } = require('../../config/supabase');
 const {
-  toLastmod, hostUrl, serviceUrl, staticEntries, hostEntries, serviceEntries, professionEntries,
-  fetchProfessions,
+  toLastmod, hostUrl, serviceUrl, staticEntries, hostEntries, serviceEntries, professionEntries, blogEntries,
+  fetchProfessions, fetchBlogs,
 } = require('../../services/sitemapService');
 
 const SITE = 'https://bookasloth.com';
@@ -87,6 +87,52 @@ describe('professionEntries', () => {
       { loc: 'https://bookasloth.com/services/therapy', lastmod: '2026-06-20', changefreq: 'weekly', priority: '0.6' },
       { loc: 'https://bookasloth.com/services/coaching', lastmod: '2026-06-15', changefreq: 'weekly', priority: '0.6' },
     ]);
+  });
+});
+
+describe('blogEntries', () => {
+  test('maps published posts to /blog/:slug', () => {
+    const rows = [
+      { slug: 'zero-commission-bet', published_at: '2026-06-25T10:00:00Z', updated_at: '2026-06-28T10:00:00Z' },
+    ];
+    expect(blogEntries(rows, SITE)).toEqual([
+      { loc: 'https://bookasloth.com/blog/zero-commission-bet', lastmod: '2026-06-28', changefreq: 'monthly', priority: '0.6' },
+    ]);
+  });
+
+  test('falls back to published_at when a post has never been edited', () => {
+    const rows = [{ slug: 'hello-world', published_at: '2026-04-30T10:00:00Z', updated_at: null }];
+    expect(blogEntries(rows, SITE)[0].lastmod).toBe('2026-04-30');
+  });
+
+  test('drops rows with no slug rather than emitting /blog/undefined', () => {
+    expect(blogEntries([{ slug: null }, undefined], SITE)).toEqual([]);
+    expect(blogEntries([], SITE)).toEqual([]);
+    expect(blogEntries(null, SITE)).toEqual([]);
+  });
+});
+
+describe('fetchBlogs', () => {
+  // Mirrors blogController's public read: status only, no date gate. A stricter
+  // filter here would omit a URL the API still serves.
+  const chain = (resolved) => {
+    const obj = {};
+    ['select', 'eq', 'not', 'order'].forEach((m) => { obj[m] = jest.fn().mockReturnValue(obj); });
+    obj.then = (resolve, reject) => Promise.resolve(resolved).then(resolve, reject);
+    return obj;
+  };
+
+  test('filters to published and returns rows', async () => {
+    const c = chain({ data: [{ slug: 'a', published_at: '2026-07-01T00:00:00Z', updated_at: null }], error: null });
+    supabaseAdmin.from.mockReturnValue(c);
+    await expect(fetchBlogs()).resolves.toEqual([{ slug: 'a', published_at: '2026-07-01T00:00:00Z', updated_at: null }]);
+    expect(supabaseAdmin.from).toHaveBeenCalledWith('blogs');
+    expect(c.eq).toHaveBeenCalledWith('status', 'published');
+  });
+
+  test('propagates a query error instead of silently emitting an empty sitemap', async () => {
+    supabaseAdmin.from.mockReturnValue(chain({ data: null, error: { message: 'boom' } }));
+    await expect(fetchBlogs()).rejects.toBeDefined();
   });
 });
 

@@ -6,6 +6,7 @@
  *   /sitemap-pages.xml      -> static marketing/legal routes
  *   /sitemap-hosts-N.xml    -> verified+indexable host profiles, 45k/page
  *   /sitemap-services-N.xml -> active+indexable service pages, 45k/page
+ *   /sitemap-blog.xml       -> published blog posts
  *
  * Rendered XML is cached (sitemapCache, TTL) and busted on the mutation points
  * (service CRUD/toggle, profile-URL change, vendor verify) — the SPA-stack
@@ -17,7 +18,8 @@
 const { buildUrlset, buildSitemapIndex, paginate } = require('../utils/sitemapXml');
 const { sitemapCache } = require('../utils/sitemapCache');
 const {
-  trimSlash, staticEntries, hostEntries, serviceEntries, professionEntries, fetchHosts, fetchServices, fetchProfessions,
+  trimSlash, staticEntries, hostEntries, serviceEntries, professionEntries, blogEntries,
+  fetchHosts, fetchServices, fetchProfessions, fetchBlogs,
 } = require('../services/sitemapService');
 const { logger } = require('../utils/logger');
 
@@ -33,12 +35,15 @@ const loadEntries = async () => {
   if (cached) return cached;
 
   const site = getSiteUrl();
-  const [hosts, services, professions] = await Promise.all([fetchHosts(), fetchServices(), fetchProfessions()]);
+  const [hosts, services, professions, blogs] = await Promise.all([
+    fetchHosts(), fetchServices(), fetchProfessions(), fetchBlogs(),
+  ]);
   const value = {
     pages: staticEntries(site),
     hosts: hostEntries(hosts, site),
     services: serviceEntries(services, site),
     professions: professionEntries(professions, site),
+    blog: blogEntries(blogs, site),
   };
   sitemapCache.set('__entries', value);
   return value;
@@ -80,6 +85,7 @@ const sitemapIndex = (req, res) => serveCached(req, res, (entries) => {
   hostPages.forEach((pg, i) => children.push({ loc: `${site}/sitemap-hosts-${i + 1}.xml`, lastmod: newestLastmod(pg) }));
   servicePages.forEach((pg, i) => children.push({ loc: `${site}/sitemap-services-${i + 1}.xml`, lastmod: newestLastmod(pg) }));
   children.push({ loc: `${site}/sitemap-professions.xml`, lastmod: newestLastmod(entries.professions) });
+  children.push({ loc: `${site}/sitemap-blog.xml`, lastmod: newestLastmod(entries.blog) });
 
   return buildSitemapIndex(children);
 });
@@ -87,6 +93,8 @@ const sitemapIndex = (req, res) => serveCached(req, res, (entries) => {
 const sitemapPages = (req, res) => serveCached(req, res, (entries) => buildUrlset(entries.pages));
 
 const sitemapProfessions = (req, res) => serveCached(req, res, (entries) => buildUrlset(entries.professions));
+
+const sitemapBlog = (req, res) => serveCached(req, res, (entries) => buildUrlset(entries.blog));
 
 // page param comes from the regex route (group 1); defaults to 1. Out-of-range -> 404.
 const childPage = (collection) => (req, res) => serveCached(req, res, (entries) => {
@@ -102,6 +110,7 @@ module.exports = {
   sitemapHosts: childPage('hosts'),
   sitemapServices: childPage('services'),
   sitemapProfessions,
+  sitemapBlog,
   PER_SITEMAP,
   getSiteUrl,
   loadEntries,

@@ -98,3 +98,6 @@ book-a-sloth-messaging-bible.md
 BookASloth_12Month_Roadmap_Tracker.xlsx
 BookASloth_12Month_Value_Roadmap.docx
 BookASloth_12Month_Value_Roadmap.pdf
+
+# Local-only OG card previews from client/scripts/generateBlogOgImages.mjs --dry
+client/scripts/.og-preview/

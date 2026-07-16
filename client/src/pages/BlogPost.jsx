@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { themeFor, AUTHOR_URL } from '../data/blogPosts';
 import { getBlogBySlug, getBlogs } from '../services/api';
 import Seo from '../components/common/Seo';
-import { SITE_URL, articleJsonLd, breadcrumbJsonLd } from '../utils/seo';
+import { SITE_URL, articleJsonLd, breadcrumbJsonLd, faqJsonLd } from '../utils/seo';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 
 // /blog/:slug — immersive post page. A split hero (left = category colour +
@@ -157,8 +157,34 @@ const Block = ({ block, accent }) => {
       </div>
     );
   }
+  // A visible Q&A list that doubles as the FAQPage JSON-LD source (see faqsFrom).
+  // Native <details> gives us the disclosure behaviour for free, and keeps the
+  // answer text in the DOM for crawlers even while collapsed.
+  if (block.faq) {
+    return (
+      <div className="mt-10">
+        <h2 className="text-xl font-bold tracking-tight sm:text-2xl" style={{ color: HEAD_TX }}>
+          {block.faqTitle || 'Common questions'}
+        </h2>
+        {block.faq.map((item, i) => (
+          <details key={i} className="mt-3 rounded-xl border p-4" style={{ borderColor: 'rgba(255,255,255,0.10)' }}>
+            <summary className="cursor-pointer text-[15px] font-semibold" style={{ color: HEAD_TX }}>{item.q}</summary>
+            <p className="mt-2 text-sm leading-relaxed" style={{ color: BODY_DIM }}>{rich(item.a, accent)}</p>
+          </details>
+        ))}
+      </div>
+    );
+  }
   return <p className="mt-5 text-[15px] leading-relaxed sm:text-base" style={{ color: BODY_TX }}>{rich(block.p, accent)}</p>;
 };
+
+// Flatten every faq block in a post body into the {q,a} pairs faqJsonLd wants.
+// One source: edit the block, and the visible list and the structured data move together.
+export const faqsFrom = (body) =>
+  (Array.isArray(body) ? body : [])
+    .filter((b) => b && Array.isArray(b.faq))
+    .flatMap((b) => b.faq)
+    .filter((f) => f && f.q && f.a);
 
 // ── Share row ───────────────────────────────────────────────────────
 const ShareRow = ({ title }) => {
@@ -238,6 +264,7 @@ const BlogPost = () => {
   const canonical = `${SITE_URL}/blog/${post.slug}`;
   // Posts without a hero image still need an og:image so social/AI cards aren't blank.
   const ogImage = post.image || `${SITE_URL}/og-image.png`;
+  const faqs = faqsFrom(post.body);
 
   return (
     <article className="blog-page" style={{ backgroundColor: BODY_BG }}>
@@ -256,6 +283,9 @@ const BlogPost = () => {
             { name: 'Blog', path: '/blog' },
             { name: post.title, path: `/blog/${post.slug}` },
           ] }),
+          // Only emit FAQPage when the post actually shows the Q&A on the page —
+          // structured data for content a reader can't see is what earns a manual action.
+          ...(faqs.length ? [faqJsonLd({ faqs })] : []),
         ]}
       />
       {/* ── Split hero: left colour + text, right image (hidden on mobile) ── */}

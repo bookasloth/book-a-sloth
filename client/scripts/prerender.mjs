@@ -1,7 +1,8 @@
 /**
- * prerender.mjs — Post-build static prerender for marketing routes.
+ * prerender.mjs — Post-build static prerender for marketing routes + blog posts.
  *
- * Renders each route in PRERENDER_ROUTES using Puppeteer against the built SPA,
+ * Renders each route in PRERENDER_ROUTES (plus every published /blog/:slug, which
+ * blogRoutes() pulls from the API at build time) using Puppeteer against the built SPA,
  * captures the final HTML (with Seo.jsx-injected meta/OG/JSON-LD), and writes
  * it as the static .html for that path. Vercel serves these directly to social
  * scrapers and non-JS crawlers.
@@ -14,6 +15,7 @@ import { createServer } from 'http';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { loadEnv } from 'vite';
 import { FEATURES } from '../src/pages/features/featureData.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -60,6 +62,34 @@ const PRERENDER_ROUTES = [
   ...FEATURES.map((f) => `/features/${f.slug}`),
 ];
 
+/**
+ * Blog posts live in the DB, so their routes can't be a static list — ask the
+ * same public API the SPA uses. Best-effort by design: a build with no reachable
+ * API still ships every static route above, and posts fall back to SPA rendering
+ * (which humans see fine, but crawlers and AI answer engines largely don't).
+ */
+async function blogRoutes() {
+  // This is a standalone node process, so Vite has not put .env into process.env
+  // for us — loadEnv reads the .env files AND real env vars (how Vercel sets it).
+  const env = loadEnv(process.env.NODE_ENV || 'production', join(__dirname, '..'), '');
+  const base = (env.VITE_API_URL || process.env.VITE_API_URL || '').replace(/\/+$/, '');
+  if (!base) {
+    console.warn('[prerender] VITE_API_URL unset — skipping blog posts');
+    return [];
+  }
+  try {
+    const res = await fetch(`${base}/blogs`, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { posts } = await res.json();
+    const routes = (posts || []).map((p) => p && p.slug).filter(Boolean).map((s) => `/blog/${s}`);
+    console.log(`[prerender] ${routes.length} blog posts from ${base}`);
+    return routes;
+  } catch (err) {
+    console.warn(`[prerender] blog posts skipped (${err.message}) — static routes still render`);
+    return [];
+  }
+}
+
 function createStaticServer() {
   const mime = {
     '.html': 'text/html',
@@ -102,6 +132,8 @@ function createStaticServer() {
 async function prerender() {
   const puppeteer = await import('puppeteer');
 
+  const routes = [...PRERENDER_ROUTES, ...(await blogRoutes())];
+
   const server = createStaticServer();
   await new Promise((resolve) => server.listen(PORT, resolve));
   console.log(`[prerender] Static server on ${ORIGIN}`);
@@ -114,7 +146,7 @@ async function prerender() {
   let rendered = 0;
   let failed = 0;
 
-  for (const route of PRERENDER_ROUTES) {
+  for (const route of routes) {
     try {
       const page = await browser.newPage();
 
