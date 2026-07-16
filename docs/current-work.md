@@ -1,6 +1,23 @@
 # Current Work — Book A Sloth
 _Last updated: 2026-07-16_
 
+## Blog: index redesign + paging (#381) and a real 301 on `/blogs` (#382) — MERGED 2026-07-16
+
+> **Status: MERGED to main (`2aed5f1`, `a1da54c`), deployed and verified live. No DB migration, no API change — the blog list endpoint was already returning everything this needed. CI green both.**
+
+`/blog` was a wall of text cards, and `bookasloth.com/blogs` — the plural everyone types — 404'd.
+
+- **Card art was already built, just unused.** Post pages generate category-themed SVG heroes (`BlogHeroThumbnail`); the index rendered none. `GET /api/blogs` already returned `image` + `icons`, so the index now renders the *same component* — index and post agree by construction, with no server change. `BlogHeroThumbnail` now takes its pattern canvas as `w`/`h` props (defaults = the old 600×500) because the tall hero box clipped the scatter pattern inside the index's short wide cards.
+- **Hover: the underline came from CSS, not the cards.** Hovering a card underlined *every line of text in it* and forced brand orange regardless of category. Cause was `.blog-page a:hover { text-decoration: underline }` in `index.css`, outranking the cards' own `hover:no-underline`. Deleted at the source rather than patched per link. Heading + CTA now tint to the post's own category via a `--card-hov` var reusing `CATEGORY_THEME.chipFg` (already the darkened band, already contrast-checked on white).
+- **Paging is client-side on purpose:** `GET /api/blogs` returns every post in one payload, so slicing costs nothing and needs no API change. 13/page = 1 featured + 12 in the 2-col grid. Pages are URLs (`/blog?page=N`) so they stay shareable/crawlable/middle-clickable, and the SEO canonical follows the page. Junk and out-of-range values clamp to a real page instead of rendering an empty list. **Revisit when the post count outgrows one response.**
+- **LANDMINE — the index byline is `post.author`, the card is one big `<Link>`.** It renders as plain text, NOT an author link to `AUTHOR_URL`: `<a>` inside `<a>` is invalid markup and browsers silently unnest it. The post page's `AuthorLink` is fine — it isn't nested in a card link.
+- **LANDMINE — post body links are drawn with a background-image, not the usual `::after`.** The hover underline-wipe (`.blog-link`, `index.css`) uses `background-size: 0% → 100%`. An absolutely-positioned `::after` only covers the *first line box*, so a link that wraps mid-sentence — which prose links do — would underline its first line and leave the rest bare. Do not "simplify" it back to a pseudo-element. Honours `prefers-reduced-motion` (underline appears, wipe doesn't).
+- **LANDMINE — `/blogs` needs BOTH redirects, neither is dead code.** `client/vercel.json` 301s at the edge for crawlers; `BlogsRedirect` in `App.jsx` covers what that cannot — local dev (`vercel.json` doesn't apply off Vercel) and in-app `<Link>` navigation (never reaches the server). `blogs` is in `reservedSegments.js` so it can't be claimed as a username; the sync test enforces that.
+- **Why `redirects` and not `rewrites` (#382):** a rewrite serves `/blog`'s content at `/blogs` — still a 200, still a duplicate URL, which was the actual problem. Only a redirect emits the 301. `statusCode: 301` rather than `permanent: true` (which emits 308) — both are permanent to Google, 301 is what SEO tooling expects. Vercel evaluates `redirects` before `rewrites`, so the catch-all `index.html` rewrite doesn't swallow them.
+- **Verified live after deploy** (`curl -I`): `/blogs` → 301 → `/blog`; `/blogs/:slug` → 301 with the slug preserved, resolving in one hop; `/blog` still 200.
+- **First test coverage this page has ever had:** `client/src/pages/__tests__/Blog.test.jsx` (9 tests — page sizes, the clamp, pager visibility, byline). **TESTING LANDMINE:** the footer CTA link renders during the loading skeleton, so a plain `findAllByRole('link')` resolves *before any post exists* and silently asserts on zero cards. The helper waits for post links specifically — that wait is load-bearing. Mutation-checked: set `PER_PAGE` to 10 and the suite fails.
+- **Deliberately NOT done:** category filters on the index; server-side paging; renaming the `blogs.author` rows (still `"Bolt 958"`, which the post page and the SEO JSON-LD author read). `readMins` is now unused on the index but still drives the post page's "N min" stat — the field stays.
+
 ## Fix: KYC flow state reset — hosts stuck on step one (#374 / #376) — MERGED 2026-07-16
 
 > **Status: MERGED to main (`3b6c7c8`, `7373f12`), deployed. No DB migration. CI green (client 4m12s, server 40s, smoke).**
