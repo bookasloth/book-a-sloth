@@ -206,10 +206,9 @@ a {
   text-underline-offset: 0.2em;
 }
 
-/* No hover-underline anywhere app-wide (admin/host/guest) — blog pages opt back in below. */
-.blog-page a:hover {
-  text-decoration: underline;
-}
+/* No hover-underline anywhere app-wide, blog pages included. Post body links
+   carry a permanent underline of their own (linkStyle in BlogPost.jsx); blog
+   cards signal hover by tinting the heading to the post's category colour. */
 
 button,
 input,

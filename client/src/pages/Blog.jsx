@@ -96,7 +96,8 @@ const Blog = () => {
             {/* Featured post */}
             <Link
               to={`/blog/${featured.slug}`}
-              className="page-card group mt-12 grid overflow-hidden transition-shadow hover:shadow-md hover:no-underline sm:mt-16 sm:grid-cols-2"
+              style={{ '--card-hov': themeFor(featured.category).chipFg }}
+              className="page-card group mt-12 grid overflow-hidden transition-shadow hover:shadow-md sm:mt-16 sm:grid-cols-2"
             >
               <CardVisual post={featured} w={600} h={440} className="h-44 sm:order-last sm:h-full sm:min-h-[16rem]" />
               <div className="p-6 sm:p-8">
@@ -107,7 +108,7 @@ const Blog = () => {
                   </time>
                   <span className="text-xs text-gray-400">· {featured.readMins} min read</span>
                 </div>
-                <h2 className="mt-3 font-heading text-2xl font-bold tracking-tight text-ink group-hover:text-primary-cta sm:text-3xl">
+                <h2 className="mt-3 font-heading text-2xl font-bold tracking-tight text-ink transition-colors duration-150 group-hover:[color:var(--card-hov)] sm:text-3xl">
                   {featured.title}
                 </h2>
                 <p className="mt-3 text-[15px] leading-relaxed text-gray-600">
@@ -129,7 +130,8 @@ const Blog = () => {
                   <Link
                     key={post.slug}
                     to={`/blog/${post.slug}`}
-                    className="page-card group flex flex-col overflow-hidden transition-shadow hover:shadow-md hover:no-underline"
+                    style={{ '--card-hov': themeFor(post.category).chipFg }}
+                    className="page-card group flex flex-col overflow-hidden transition-shadow hover:shadow-md"
                   >
                     <CardVisual post={post} w={600} h={240} className="h-36" />
                     <div className="flex flex-1 flex-col p-5 sm:p-6">
@@ -139,7 +141,7 @@ const Blog = () => {
                           {post.date}
                         </time>
                       </div>
-                      <h2 className="mt-2.5 font-heading text-lg font-bold tracking-tight text-ink group-hover:text-primary-cta sm:text-xl">
+                      <h2 className="mt-2.5 font-heading text-lg font-bold tracking-tight text-ink transition-colors duration-150 group-hover:[color:var(--card-hov)] sm:text-xl">
                         {post.title}
                       </h2>
                       <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-600">

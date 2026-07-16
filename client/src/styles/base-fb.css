@@ -57,7 +57,7 @@ a {
     text-decoration: none;
 }
 
-/* No hover-underline app-wide — blog pages opt back in via .blog-page a:hover (index.css). */
+/* No hover-underline app-wide, blog pages included. */
 
 /* Focus and accessibility */
 :focus {
