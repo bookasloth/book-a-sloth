@@ -21,8 +21,24 @@ const ICONS = {
   star: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
   lightning: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z',
   palette: 'M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.1-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zM8 13a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm2-5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm4 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm4 4a1.5 1.5 0 110-3 1.5 1.5 0 010 3z',
+  lock: 'M5 11h14a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8a1 1 0 011-1zM8 11V7a4 4 0 118 0v4M12 15v3',
+  key: 'M12.5 11.5a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L19 5m0 0l3 3 2-2-3-3-2 2zm0 0l2.5 2.5',
+  bug: 'M8 6V5a4 4 0 018 0v1M6 6h12v6a6 6 0 01-12 0V6zM3 9h3M18 9h3M3 15h3M18 15h3M12 12v6',
+  search: 'M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35',
+  clipboard: 'M9 4H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2h-2M9 2h6a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1V3a1 1 0 011-1zM9 12h6M9 16h4',
+  wallet: 'M3 6a2 2 0 012-2h13v4M3 6v13a2 2 0 002 2h15v-5M3 6h17a1 1 0 011 1v3M17 12h5v4h-5a2 2 0 010-4z',
+  coins: 'M9 13a6 6 0 100-12 6 6 0 000 12zM9 5v4M15.5 8.1a6 6 0 11-6.4 10.4M17 15v4M15 17h4',
+  'trending-up': 'M23 6l-9.5 9.5-5-5L1 18M17 6h6v6',
+  scale: 'M12 3v18M8 21h8M3 7h18M6.5 7L3 14h7L6.5 7zM17.5 7L14 14h7l-3.5-7z',
+  columns: 'M4 3h16a1 1 0 011 1v16a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1zM12 3v18',
+  trophy: 'M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M6 4h12v5a6 6 0 01-12 0V4zM9 21h6M12 15v6',
+  heart: 'M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l8.84 8.84 8.84-8.84a5.5 5.5 0 000-7.78z',
+  quote: 'M8 3H4a2 2 0 00-2 2v6a2 2 0 002 2h4c0 5-2 7-5 8M20 3h-4a2 2 0 00-2 2v6a2 2 0 002 2h4c0 5-2 7-5 8',
+  'user-check': 'M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M8.5 11a4 4 0 100-8 4 4 0 000 8zM17 11l2 2 4-4',
 };
 
+// Six entries per category are a POOL, not a render list — `pickIcons` draws a
+// slug-stable subset so two posts in the same category don't get identical art.
 const CATEGORY_DEFAULTS = {
   News:             ['rocket', 'megaphone', 'star'],
   Product:          ['calendar', 'users', 'lightning'],
@@ -31,7 +47,22 @@ const CATEGORY_DEFAULTS = {
   Growth:           ['megaphone', 'money', 'target'],
   Engineering:      ['server', 'database', 'terminal'],
   Internal:         ['palette', 'star', 'code'],
+  Security:         ['server', 'star', 'database', 'shield', 'lock', 'key'],
+  Postmortem:       ['server', 'terminal', 'bell', 'bug', 'search', 'clipboard'],
+  Money:            ['money', 'chart', 'lightning', 'wallet', 'coins', 'trending-up'],
+  Comparison:       ['chart', 'target', 'money', 'scale', 'columns', 'trophy'],
+  'Host Story':     ['users', 'star', 'calendar', 'heart', 'quote', 'user-check'],
 };
+
+// PatternGridCrosshairs lays every icon in one row, so an unbounded pool would
+// overflow the card. Cap at 3, rotating the start by slug hash for variety.
+// Pools of <=3 pass through untouched, keeping every pre-existing post's art identical.
+const MAX_ICONS = 3;
+export const pickIcons = (pool, hash) => (
+  pool.length <= MAX_ICONS
+    ? pool
+    : Array.from({ length: MAX_ICONS }, (_, i) => pool[(hash + i) % pool.length])
+);
 
 const hashSlug = (slug) => {
   let h = 0;
@@ -220,8 +251,11 @@ const PATTERNS = [PatternGridCrosshairs, PatternCenterFocus, PatternDuoConnected
 // against it, so a wide short card (the /blog index) passes a wide short box
 // instead of letterboxing the tall hero canvas.
 const BlogHeroThumbnail = ({ post, theme, w = 600, h = 500 }) => {
-  const icons = post.icons || CATEGORY_DEFAULTS[post.category] || CATEGORY_DEFAULTS.News;
   const hash = hashSlug(post.slug);
+  // `blogs.icons` defaults to jsonb '[]', and [] is truthy — a length check, not
+  // `||`, is what actually falls back to the category pool for admin-created posts.
+  const pool = post.icons?.length ? post.icons : (CATEGORY_DEFAULTS[post.category] || CATEGORY_DEFAULTS.News);
+  const icons = pickIcons(pool, hash);
   const patternIdx = hash % PATTERNS.length;
   const Pattern = PATTERNS[patternIdx];
 
