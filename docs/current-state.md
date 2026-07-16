@@ -1,5 +1,5 @@
 # Current State — Book A Sloth
-_Last updated: 2026-06-13_
+_Last updated: 2026-07-16 (KYC section only — the rest of this file was last reviewed 2026-06-13)_
 
 ## ✅ Working Features
 
@@ -43,6 +43,12 @@ _Last updated: 2026-06-13_
 - Commission: 5% of amount above ₹200 (free plan, after 30-day grace)
 - Paid plans: 0% commission
 - Plan limits enforced (services, bookings/month, products)
+
+### Host KYC (v3.68)
+- 4-step flow at `/dashboard/kyc/flow` (personal → bank → live selfie → PAN/Aadhaar docs), gates payouts
+- PAN/Aadhaar/account number encrypted at rest (`kycCrypto`, AES-256-GCM); `GET /api/kyc/me` returns masked values only
+- Docs go to the private `kyc` bucket; uploads are magic-byte sniffed (`fileSniff.js`), client mimetype never trusted
+- **Flow state fix (#374, 2026-07-16):** `KycProvider` is mounted in `App.jsx` ABOVE `DashboardWrapper` on purpose. Below `PageTransition` (keyed on pathname) it remounted every step and bounced hosts back to step one. See `docs/current-work.md` for the full landmine.
 
 ### Reminders
 - 24h and 1h booking reminder emails
