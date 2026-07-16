@@ -35,6 +35,33 @@ const HeroVisual = ({ post, t }) => (
   </div>
 );
 
+// Inline rich-text: turn [label](href) into links. Internal hrefs ('/x') use
+// the SPA router (no full reload); external ('http…') open in a new, safe tab.
+// Anything without a link token passes straight through as plain text.
+// ponytail: markdown-link only — no bold/italic parsing, which the copy doesn't need.
+const linkStyle = (accent) => ({ color: accent, textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500 });
+const rich = (text, accent) => {
+  if (typeof text !== 'string' || text.indexOf('](') === -1) return text;
+  const re = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+  const out = [];
+  let last = 0;
+  let m;
+  let k = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    const [full, label, href] = m;
+    const st = linkStyle(accent);
+    out.push(
+      href.startsWith('/')
+        ? <Link key={k++} to={href} style={st} className="hover:opacity-80">{label}</Link>
+        : <a key={k++} href={href} target="_blank" rel="noopener noreferrer" style={st} className="hover:opacity-80">{label}</a>,
+    );
+    last = m.index + full.length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+};
+
 // ── Body block renderer ─────────────────────────────────────────────
 const Block = ({ block, accent }) => {
   if (block.h2) {
@@ -46,7 +73,7 @@ const Block = ({ block, accent }) => {
         {block.ul.map((item, i) => (
           <li key={i} className="flex gap-3 text-[15px] leading-relaxed sm:text-base" style={{ color: BODY_TX }}>
             <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: accent }} />
-            <span>{item}</span>
+            <span>{rich(item, accent)}</span>
           </li>
         ))}
       </ul>
@@ -58,7 +85,7 @@ const Block = ({ block, accent }) => {
         {block.ol.map((item, i) => (
           <li key={i} className="flex gap-3 text-[15px] leading-relaxed sm:text-base" style={{ color: BODY_TX }}>
             <span className="shrink-0 font-semibold tabular-nums" style={{ color: accent }}>{i + 1}.</span>
-            <span>{item}</span>
+            <span>{rich(item, accent)}</span>
           </li>
         ))}
       </ol>
@@ -72,7 +99,7 @@ const Block = ({ block, accent }) => {
             <span className="shrink-0 pt-0.5 font-mono text-xs font-bold tabular-nums tracking-wider" style={{ color: accent }}>
               {String(i + 1).padStart(2, '0')}
             </span>
-            <span>{item}</span>
+            <span>{rich(item, accent)}</span>
           </li>
         ))}
       </ol>
@@ -82,7 +109,7 @@ const Block = ({ block, accent }) => {
     return (
       <blockquote className="mt-10 border-l-2 pl-5" style={{ borderColor: accent }}>
         <p className="text-lg font-semibold leading-snug sm:text-xl" style={{ color: HEAD_TX }}>{block.quote}</p>
-        {block.cite && <cite className="mt-1.5 block text-xs not-italic" style={{ color: accent }}>— {block.cite}</cite>}
+        {block.cite && <cite className="mt-1.5 block text-xs not-italic" style={{ color: accent }}>{block.cite}</cite>}
       </blockquote>
     );
   }
@@ -123,11 +150,11 @@ const Block = ({ block, accent }) => {
           </svg>
           <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: HEAD_TX }}>{block.info.title}</span>
         </div>
-        <p className="mt-2 text-sm leading-relaxed" style={{ color: BODY_DIM }}>{block.info.text}</p>
+        <p className="mt-2 text-sm leading-relaxed" style={{ color: BODY_DIM }}>{rich(block.info.text, accent)}</p>
       </div>
     );
   }
-  return <p className="mt-5 text-[15px] leading-relaxed sm:text-base" style={{ color: BODY_TX }}>{block.p}</p>;
+  return <p className="mt-5 text-[15px] leading-relaxed sm:text-base" style={{ color: BODY_TX }}>{rich(block.p, accent)}</p>;
 };
 
 // ── Share row ───────────────────────────────────────────────────────
@@ -206,16 +233,21 @@ const BlogPost = () => {
   const t = themeFor(post.category);
   const tt = bandText(t);
   const canonical = `${SITE_URL}/blog/${post.slug}`;
+  // Posts without a hero image still need an og:image so social/AI cards aren't blank.
+  const ogImage = post.image || `${SITE_URL}/og-image.png`;
 
   return (
     <article className="blog-page" style={{ backgroundColor: BODY_BG }}>
       <Seo
-        title={`${post.title} — Book A Sloth Blog`}
+        title={`${post.title} | Book A Sloth Blog`}
         description={post.excerpt}
         canonical={canonical}
-        image={post.image || undefined}
+        image={ogImage}
+        siteName="Book A Sloth"
+        locale="en_IN"
+        themeColor={t.band}
         jsonLd={[
-          articleJsonLd({ post: { slug: post.slug, title: post.title, excerpt: post.excerpt, image: post.image, author: post.author } }),
+          articleJsonLd({ post: { slug: post.slug, title: post.title, excerpt: post.excerpt, image: ogImage, author: post.author, published_at: post.published_at, updated_at: post.updated_at } }),
           breadcrumbJsonLd({ items: [
             { name: 'Home', path: '/' },
             { name: 'Blog', path: '/blog' },
@@ -314,7 +346,7 @@ const BlogPost = () => {
               Want this for your own bookings?
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm sm:text-base" style={{ color: tt.soft }}>
-              Set up your page, sync your calendar and start getting paid — at 0% commission.
+              Set up your page, sync your calendar, and start getting paid at 0% commission.
             </p>
             <Link to="/be-a-sloth"
               className="btn mt-6 inline-flex items-center px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:no-underline"

@@ -27,6 +27,9 @@ const toSummary = (r) => ({
   icons: Array.isArray(r.icons) ? r.icons : [],
   readMins: r.read_mins || null,
   date: fmtDate(r.published_at),
+  // Raw timestamps for JSON-LD (datePublished / dateModified). `date` stays the display string.
+  published_at: r.published_at || null,
+  updated_at: r.updated_at || null,
 });
 const toFull = (r) => ({ ...toSummary(r), body: Array.isArray(r.body) ? r.body : [] });
 
@@ -36,7 +39,7 @@ async function listBlogs(req, res) {
     const payload = await responseCache.getOrSet('blogs:list:v1', BLOG_CACHE_MS, async () => {
       const { data, error } = await supabaseAdmin
         .from('blogs')
-        .select('slug,title,excerpt,category,author,image,icons,read_mins,published_at')
+        .select('slug,title,excerpt,category,author,image,icons,read_mins,published_at,updated_at')
         .eq('status', 'published')
         .order('published_at', { ascending: false });
       if (error) throw error;
@@ -57,7 +60,7 @@ async function getBlogBySlug(req, res) {
     const payload = await responseCache.getOrSet(`blogs:post:v1:${slug}`, BLOG_CACHE_MS, async () => {
       const { data, error } = await supabaseAdmin
         .from('blogs')
-        .select('slug,title,excerpt,body,category,author,image,icons,read_mins,published_at')
+        .select('slug,title,excerpt,body,category,author,image,icons,read_mins,published_at,updated_at')
         .eq('slug', slug)
         .eq('status', 'published')
         .maybeSingle();
