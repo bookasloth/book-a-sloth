@@ -563,6 +563,18 @@ export const adminHost360Timeline   = (id, params)     => API.get(`/admin/host36
 export const adminHost360Customers  = (id)              => API.get(`/admin/host360/${id}/customers`);
 export const adminHost360Support    = (id)              => API.get(`/admin/host360/${id}/support`);
 export const adminHost360Documents  = (id)              => API.get(`/admin/host360/${id}/documents`);
+// Admin paperwork against a host (contracts/agreements) — multipart field "file",
+// stored in the private kyc bucket. Needs documents.manage (v3.81).
+export const adminHost360UploadDoc  = (id, file, docType) => {
+  const fd = new FormData();
+  fd.append('file', file);
+  if (docType) fd.append('doc_type', docType);
+  return API.post(`/admin/host360/${id}/documents`, fd);
+};
+export const adminHost360DeleteDoc  = (id, docId)      => API.delete(`/admin/host360/${id}/documents/${docId}`);
+// Unmasked KYC PAN/Aadhaar/bank. Needs kyc.decide and is audited server-side on
+// every call — only fetch it in response to a deliberate admin action.
+export const adminHost360RevealKyc  = (id)             => API.get(`/admin/host360/${id}/documents/reveal`);
 export const adminHost360Notes      = (id)              => API.get(`/admin/host360/${id}/notes`);
 export const adminHost360AddNote    = (id, body)       => API.post(`/admin/host360/${id}/notes`, body);
 export const adminHost360UpdateNote = (id, noteId, body) => API.put(`/admin/host360/${id}/notes/${noteId}`, body);

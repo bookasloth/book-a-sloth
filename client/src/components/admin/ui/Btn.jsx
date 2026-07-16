@@ -1,5 +1,6 @@
 // client/src/components/admin/ui/Btn.jsx
 import Ic from '../Ic';
+import { IC } from '../adminNav';
 
 const VARIANTS = {
   primary: 'bg-[#FE5100] text-white hover:bg-[#e54900]',
@@ -17,7 +18,10 @@ const Btn = ({ variant = 'primary', size = 'md', icon, children, className = '',
       ${VARIANTS[variant]} ${className}`}
     {...rest}
   >
-    {icon && <Ic d={icon} size={size === 'sm' ? 13 : 15} />}
+    {/* `icon` is an IC key ("ban", "tag"…). Passing the key straight to <Ic d>
+        renders <path d="ban" />, which draws nothing — every Btn icon in the
+        admin was silently invisible. Raw path data still works. */}
+    {icon && <Ic d={IC[icon] || icon} size={size === 'sm' ? 13 : 15} />}
     {children}
   </button>
 );

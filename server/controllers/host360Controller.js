@@ -18,9 +18,12 @@ const planService = require('../services/planService');
 const platformConfig = require('../services/platformConfig');
 const communicationEngine = require('../services/email/communicationEngine');
 const { getProvider } = require('../services/email/providers');
-const { maskPan, maskAadhaar, maskAccount, maskPhone } = require('../utils/kycCrypto');
+const { maskPan, maskAadhaar, maskAccount, maskPhone, decrypt } = require('../utils/kycCrypto');
+const { sniff } = require('../utils/fileSniff');
+const { hasPermission } = require('../lib/adminPermissions');
 
 const KYC_BUCKET = 'kyc'; // host_documents live here too, namespaced host-docs/<hostId>/
+const MAX_DOC_BYTES = 5 * 1024 * 1024; // 5MB — mirrors the KYC upload cap
 
 // Never leak OAuth tokens / OTP secrets in any response (mirrors adminController.getUserById).
 const stripSensitive = (p) => {
@@ -115,6 +118,27 @@ const rowsOrEmpty = async (builder) => {
   try { const { data } = await builder; return data || []; } catch (_) { return []; }
 };
 
+// Average guest rating for a set of hosts → Map(hostId → { avg, count }).
+// One query for the whole page, averaged in Node (same shape as the settlement
+// batch above). Fail-soft: on error every host simply has no rating.
+const hostRatings = async (hostIds) => {
+  const out = new Map();
+  if (!hostIds.length) return out;
+  const rows = await rowsOrEmpty(supabaseAdmin.from('reviews')
+    .select('host_id, rating')
+    .in('host_id', hostIds)
+    .eq('direction', 'guest_to_host')
+    .neq('status', 'hidden'));
+  for (const r of rows) {
+    if (typeof r.rating !== 'number') continue;
+    const acc = out.get(r.host_id) || { sum: 0, count: 0 };
+    acc.sum += r.rating; acc.count += 1;
+    out.set(r.host_id, acc);
+  }
+  for (const [id, acc] of out) out.set(id, { avg: Math.round((acc.sum / acc.count) * 10) / 10, count: acc.count });
+  return out;
+};
+
 // ══════════════════════════════════════
 // LIST
 // ══════════════════════════════════════
@@ -125,7 +149,7 @@ const listHosts = async (req, res) => {
     const { plan, status, account_manager_id } = req.query;
 
     let q = supabaseAdmin.from('profiles')
-      .select('id, name, email, username, plan, plan_expires_at, is_verified, is_banned, account_manager_id, google_calendar_connected, whatsapp_verified, created_at', { count: 'exact' })
+      .select('id, name, email, phone, whatsapp_number, profile_image, username, plan, plan_expires_at, is_verified, is_banned, account_manager_id, google_calendar_connected, whatsapp_verified, created_at', { count: 'exact' })
       .eq('role', 'host')
       .order('created_at', { ascending: false })
       .range((page - 1) * pageSize, page * pageSize - 1);
@@ -159,15 +183,25 @@ const listHosts = async (req, res) => {
       balances = await computeAllSettlementBalances(clearingDays);
     } catch (_) {}
 
+    // Guest-facing rating per host, for the page's hosts only: one query, averaged
+    // in Node. Mirrors serviceController's public rule — guest_to_host reviews,
+    // admin-hidden ones excluded — so the admin number matches the public profile.
+    const ratings = await hostRatings((data || []).map((h) => h.id));
+
     const hosts = (data || []).map((h) => {
       const am = h.account_manager_id ? amMap.get(h.account_manager_id) : null;
+      const r = ratings.get(h.id);
       return {
         id: h.id, name: h.name, email: h.email, username: h.username, plan: h.plan,
+        phone: h.phone || h.whatsapp_number || null,
+        profile_image: h.profile_image || null,
         plan_expires_at: h.plan_expires_at, is_verified: h.is_verified, is_banned: h.is_banned,
         account_manager: h.account_manager_id ? { id: h.account_manager_id, name: am ? am.name : null } : null,
         google_calendar_connected: !!h.google_calendar_connected,
         whatsapp_verified: !!h.whatsapp_verified,
         revenue: balances.get(h.id)?.lifetimeEarned || 0,
+        rating: r ? r.avg : null,          // null = no reviews yet, distinct from 0
+        reviews_count: r ? r.count : 0,
         created_at: h.created_at,
       };
     });
@@ -448,15 +482,127 @@ const getDocuments = async (req, res) => {
       };
     }
 
-    const { data: docs } = await supabaseAdmin.from('host_documents')
-      .select('id, file_name, doc_type, size_bytes, storage_key, created_at')
-      .eq('host_id', host.id).order('created_at', { ascending: false });
-    const documents = await Promise.all((docs || []).map(async (d) => ({
-      id: d.id, name: d.file_name, file_name: d.file_name, doc_type: d.doc_type, size_bytes: d.size_bytes,
-      created_at: d.created_at, url: await sign(d.storage_key),
-    })));
+    // Admin-uploaded paperwork is a separate grant from KYC identity docs (v3.81):
+    // the route is kyc.view-gated, but reading this list needs documents.view.
+    const canReadDocs = hasPermission(req.admin?.permissions, 'documents.view');
+    let documents = [];
+    if (canReadDocs) {
+      const { data: docs } = await supabaseAdmin.from('host_documents')
+        .select('id, file_name, doc_type, size_bytes, storage_key, created_at')
+        .eq('host_id', host.id).order('created_at', { ascending: false });
+      documents = await Promise.all((docs || []).map(async (d) => ({
+        id: d.id, name: d.file_name, file_name: d.file_name, doc_type: d.doc_type, size_bytes: d.size_bytes,
+        created_at: d.created_at, url: await sign(d.storage_key),
+      })));
+    }
 
-    res.json({ kyc, documents });
+    res.json({ kyc, documents, documents_locked: !canReadDocs });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// GET /:id/documents/reveal — the ONLY endpoint in the codebase that returns KYC
+// PAN / Aadhaar / bank numbers in the clear. Everything else is masked-only.
+//
+// SECURITY: gated on kyc.decide (a strictly smaller set than kyc.view — a reader
+// cannot reveal), and every call writes an audit row naming the admin and the
+// host whose PII was exposed, BEFORE the response is sent, so a reveal is on the
+// record even if the client never receives it. Values are never logged.
+const revealKycPii = async (req, res) => {
+  try {
+    const host = await loadHost(req, res);
+    if (!host) return;
+
+    const { data: k } = await supabaseAdmin.from('kyc_submissions')
+      .select('id, pan_number, aadhaar_number, account_number, phone, ifsc')
+      .eq('user_id', host.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (!k) return res.status(404).json({ message: 'No KYC submission for this host' });
+
+    await audit(req, {
+      action: 'kyc.pii_revealed', resource_type: 'profile', resource_id: host.id,
+      after: { kyc_id: k.id, fields: ['pan_number', 'aadhaar_number', 'account_number', 'phone'] },
+    });
+
+    // decrypt() returns null on a key mismatch rather than throwing — a blank
+    // reveal means the wrong KYC_ENCRYPTION_KEY, not missing data (see kycCrypto).
+    res.json({
+      pan_number: decrypt(k.pan_number),
+      aadhaar_number: decrypt(k.aadhaar_number),
+      account_number: decrypt(k.account_number),
+      phone: k.phone || null,
+      ifsc: k.ifsc || null,
+    });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// POST /:id/documents (multipart field "file") — admin uploads paperwork against
+// a host: contracts, agreements, signed forms. Stored in the private kyc bucket
+// under host-docs/<hostId>/ so it inherits the same no-public-read posture.
+const uploadHostDocument = async (req, res) => {
+  try {
+    const host = await loadHost(req, res);
+    if (!host) return;
+    if (!req.file) return res.status(400).json({ message: 'No file provided' });
+
+    const { size, buffer, originalname } = req.file;
+    if (size > MAX_DOC_BYTES) return res.status(400).json({ message: 'File size must be under 5MB' });
+
+    const sniffed = sniff(buffer, true); // paperwork is usually a PDF
+    if (!sniffed) return res.status(400).json({ message: 'Document must be a JPG, PNG, WEBP or PDF.' });
+
+    const rand = Math.random().toString(36).slice(2, 8);
+    const key = `host-docs/${host.id}/${Date.now()}_${rand}.${sniffed.ext}`;
+    const { error: upErr } = await supabaseAdmin.storage.from(KYC_BUCKET)
+      .upload(key, buffer, { contentType: sniffed.mime, upsert: false, contentDisposition: 'attachment' });
+    if (upErr) return safeError(res, upErr);
+
+    // Keep the display name but never let it carry a path — the storage key is
+    // ours, and file_name is only ever rendered as text.
+    const fileName = String(originalname || 'document').split(/[\\/]/).pop().slice(0, 200);
+    const { data, error } = await supabaseAdmin.from('host_documents')
+      .insert({
+        host_id: host.id,
+        uploaded_by: req.admin?.id || null,
+        storage_key: key,
+        file_name: fileName,
+        mime_type: sniffed.mime,
+        size_bytes: size,
+        doc_type: String(req.body?.doc_type || '').trim().slice(0, 50) || null,
+      })
+      .select('id, file_name, doc_type, size_bytes, created_at').single();
+    if (error) return safeError(res, error);
+
+    await audit(req, { action: 'host_document.upload', resource_type: 'profile', resource_id: host.id,
+      after: { document_id: data.id, file_name: data.file_name, doc_type: data.doc_type } });
+    res.status(201).json({ document: data });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+const deleteHostDocument = async (req, res) => {
+  try {
+    const host = await loadHost(req, res);
+    if (!host) return;
+    if (!isUuid(req.params.docId)) return res.status(400).json({ message: 'Invalid document id' });
+
+    // Scoped by host_id so a document can't be reached through another host.
+    const { data: doc } = await supabaseAdmin.from('host_documents')
+      .select('id, storage_key, file_name').eq('id', req.params.docId).eq('host_id', host.id).maybeSingle();
+    if (!doc) return res.status(404).json({ message: 'Document not found' });
+
+    const { error } = await supabaseAdmin.from('host_documents').delete().eq('id', doc.id).eq('host_id', host.id);
+    if (error) return safeError(res, error);
+    // ponytail: storage removal is best-effort — the row is the index, so an
+    // orphaned object is invisible; a failure here must not fail the delete.
+    try { await supabaseAdmin.storage.from(KYC_BUCKET).remove([doc.storage_key]); } catch (_) {}
+
+    await audit(req, { action: 'host_document.delete', resource_type: 'profile', resource_id: host.id,
+      after: { document_id: doc.id, file_name: doc.file_name } });
+    res.json({ ok: true });
   } catch (error) {
     safeError(res, error);
   }
@@ -633,7 +779,8 @@ const emailHost = async (req, res) => {
 module.exports = {
   listHosts,
   listManagers, createManager, updateManager,
-  getHost, getUsage, getBilling, getTimeline, getCustomers, getSupport, getDocuments,
+  getHost, getUsage, getBilling, getTimeline, getCustomers, getSupport,
+  getDocuments, revealKycPii, uploadHostDocument, deleteHostDocument,
   listNotes, createNote, updateNote, deleteNote,
   suspendHost, assignHostPlan, assignAccountManager, emailHost,
 };

@@ -68,9 +68,14 @@ Items previously listed here as pending are now live:
 - **v3.53** (profession-scoped `service_categories` redesign + `seedServiceCategories.js`) — applied.
 - **v3.57** (two partial `bookings` indexes for host paid-booking reads) — applied 2026-07-01.
 
-No migration is currently outstanding. Workflow for any NEW migration: run it in the
-Supabase SQL Editor on BOTH DBs, and keep the code-side schema fallback (SELECT/INSERT
-destructure) until it is confirmed applied everywhere.
+**OUTSTANDING: v3.81** (`v3.81_host_documents_permissions.sql`) — grants `documents.view` /
+`documents.manage` to the `operations` role in `admin_roles`. Until it is run on BOTH DBs,
+ops admins cannot see or upload host documents in Host 360 (login reads permissions from
+`admin_roles` first — `lib/adminPermissions.js` is only the fallback). Support losing access
+is the intended effect and needs no migration. Takes effect on each admin's NEXT login.
+
+Workflow for any NEW migration: run it in the Supabase SQL Editor on BOTH DBs, and keep the
+code-side schema fallback (SELECT/INSERT destructure) until it is confirmed applied everywhere.
 
 ## Documentation Map
 | File | Purpose |

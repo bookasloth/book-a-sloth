@@ -4,11 +4,13 @@
 // Modelled on AdminProviders.jsx (debounced server search, RowActions overflow
 // menu, pagination, react-hot-toast). New api helpers (adminHost360*) are added
 // separately in services/api.js.
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminHost360List, adminHost360Managers, adminHost360Suspend } from '../../services/api';
+import { adminHost360List, adminHost360Managers } from '../../services/api';
 import toast from 'react-hot-toast';
-import { PageHeader, Badge } from '../../components/admin/ui';
+import { PageHeader, Btn } from '../../components/admin/ui';
+import Ic from '../../components/admin/Ic';
+import { IC } from '../../components/admin/adminNav';
 import { normalizePlan, getPlanBorderLabel } from '../../utils/themeUtils';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -25,58 +27,38 @@ const PlanBadge = ({ plan }) => {
   return <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colors}`}>{label}</span>;
 };
 
-// Overflow menu — fixed-positioned so it escapes the table's overflow clipping
-// (copied from AdminProviders' RowActions pattern).
-const MENU_W = 176;
-const RowActions = ({ host, onOpen, onSuspend }) => {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const btnRef = useRef(null);
-
-  const toggle = (e) => {
-    e.stopPropagation();
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 4, left: Math.max(8, r.right - MENU_W) });
-    }
-    setOpen(o => !o);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    window.addEventListener('scroll', close, true);
-    window.addEventListener('resize', close);
-    return () => {
-      window.removeEventListener('scroll', close, true);
-      window.removeEventListener('resize', close);
-    };
-  }, [open]);
-
-  const item = 'block w-full text-left px-3 py-2 text-[12px] hover:bg-gray-50';
+// Host avatar — real photo when we have one, initial only as the fallback.
+const Avatar = ({ host }) => {
+  const [broken, setBroken] = useState(false);
+  const src = host.profile_image;
+  if (src && !broken) {
+    return (
+      <img src={src} alt="" loading="lazy" onError={() => setBroken(true)}
+        className="w-8 h-8 rounded-lg object-cover flex-shrink-0 bg-gray-100" />
+    );
+  }
   return (
-    <>
-      <button ref={btnRef} type="button" onClick={toggle}
-        className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50">
-        Manage
-        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
-          <div className="fixed z-50 rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
-            style={{ top: pos.top, left: pos.left, width: MENU_W }}>
-            {host.username && (
-              <a href={`/${host.username}`} target="_blank" rel="noreferrer" className={`${item} text-gray-700`} onClick={(e) => e.stopPropagation()}>View profile</a>
-            )}
-            <button onClick={(e) => { e.stopPropagation(); setOpen(false); onOpen(host); }} className={`${item} text-gray-700`}>Open 360°</button>
-            <button onClick={(e) => { e.stopPropagation(); setOpen(false); onSuspend(host); }} className={`${item} text-amber-600`}>
-              {host.is_banned ? 'Reactivate' : 'Suspend'}
-            </button>
-          </div>
-        </>
-      )}
-    </>
+    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 bg-blue-500">
+      {(host.name || '?')[0].toUpperCase()}
+    </div>
+  );
+};
+
+// Average guest rating. Colour tracks the number so a bad host is visible while
+// scanning: 4.5+ green, 4+ lime, 3+ amber, below 3 red. null = never reviewed,
+// which is different from a low score and must not read as one.
+const RatingPill = ({ rating, count }) => {
+  if (rating == null) return <span className="text-[11px] adm-t3">No reviews</span>;
+  const tone = rating >= 4.5 ? 'bg-emerald-50 text-emerald-700'
+    : rating >= 4 ? 'bg-lime-50 text-lime-700'
+    : rating >= 3 ? 'bg-amber-50 text-amber-700'
+    : 'bg-red-50 text-red-600';
+  return (
+    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${tone}`}
+      title={`${count} review${count === 1 ? '' : 's'}`}>
+      <Ic d={IC.star} size={11} />
+      {rating.toFixed(1)}
+    </span>
   );
 };
 
@@ -130,28 +112,20 @@ const Host360List = () => {
   useEffect(() => { setPage(1); }, [debounced, plan, statusF, amId]);
   useEffect(() => { fetchHosts(); }, [page, debounced, plan, statusF, amId]);
 
-  const handleSuspend = async (h) => {
-    const next = !h.is_banned;
-    if (!window.confirm(`${next ? 'Suspend' : 'Reactivate'} ${h.name}?`)) return;
-    try {
-      await adminHost360Suspend(h.id, { suspend: next });
-      toast.success(next ? 'Suspended' : 'Reactivated');
-      fetchHosts();
-    } catch { toast.error('Failed'); }
-  };
-
   const openDetail = (h) => navigate(`/admin/host360/${h.id}`);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const selCls = 'adm-card border rounded-xl px-3 py-2 text-[13px] adm-t1 outline-none focus:border-[#FE5100] focus:ring-2 focus:ring-[#FE5100]/25 transition';
+  const selCls = 'adm-card border rounded-xl px-3 py-2 text-[13px] adm-t1 outline-none focus:border-[#FE5100] focus:ring-2 focus:ring-[#FE5100]/25 transition flex-shrink-0';
 
   return (
     <div>
       <PageHeader title="Host 360°" subtitle={`${total} host${total !== 1 ? 's' : ''}`} />
 
-      {/* Filters */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[240px] flex-1 max-w-md">
+      {/* Filters — search + all three dropdowns share one horizontal line. The
+          selects hold their width and the search takes the slack; on a narrow
+          viewport the row scrolls sideways rather than wrapping. */}
+      <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="relative flex-1 min-w-[200px]">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 adm-t3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={SEARCH_ICON} />
           </svg>
@@ -196,7 +170,7 @@ const Host360List = () => {
           <div className="overflow-x-auto">
             <table className="adm-table w-full text-sm">
               <thead className="bg-gray-50 border-b adm-border">
-                <tr>{['Business','Owner','Plan','Status','Revenue','Account Manager','Actions'].map(h => (
+                <tr>{['Business','Contact Details','Plan','Rating','Revenue','Account Manager','Actions'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-[10px] font-bold adm-t3 uppercase tracking-wider">{h}</th>
                 ))}</tr>
               </thead>
@@ -205,26 +179,27 @@ const Host360List = () => {
                   <tr key={h.id} onClick={() => openDetail(h)} className="adm-hoverable cursor-pointer transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 bg-blue-500">
-                          {(h.name || '?')[0].toUpperCase()}
-                        </div>
+                        <Avatar host={h} />
                         <div>
                           <p className="font-medium adm-t1 text-[13px]">{h.name}</p>
                           {h.username && <p className="text-[11px] adm-t3">@{h.username}</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[12px] adm-t3">{h.email || '—'}</td>
-                    <td className="px-4 py-3"><PlanBadge plan={h.plan} /></td>
                     <td className="px-4 py-3">
-                      {h.is_banned ? <Badge tone="danger">Banned</Badge>
-                        : !h.is_verified ? <Badge tone="warn">Unverified</Badge>
-                        : <Badge tone="ok">Active</Badge>}
+                      <div className="space-y-0.5">
+                        <p className="text-[12px] adm-t2">{h.phone || '—'}</p>
+                        <p className="text-[11px] adm-t3">{h.email || '—'}</p>
+                      </div>
                     </td>
+                    <td className="px-4 py-3"><PlanBadge plan={h.plan} /></td>
+                    {/* Status lives in the filter dropdown, so the column earns
+                        its width with the rating instead of repeating it. */}
+                    <td className="px-4 py-3"><RatingPill rating={h.rating} count={h.reviews_count} /></td>
                     <td className="px-4 py-3 text-[13px] adm-t2 font-medium">{inr(h.revenue)}</td>
                     <td className="px-4 py-3 text-[12px] adm-t2">{h.account_manager?.name || '—'}</td>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      <RowActions host={h} onOpen={openDetail} onSuspend={handleSuspend} />
+                      <Btn size="sm" variant="outline" icon="external" onClick={() => openDetail(h)}>Open 360°</Btn>
                     </td>
                   </tr>
                 ))}

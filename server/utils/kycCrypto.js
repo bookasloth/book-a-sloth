@@ -17,6 +17,22 @@ const KEY_SOURCE = process.env.KYC_ENCRYPTION_KEY
   || process.env.SUPER_ADMIN_JWT_SECRET
   || 'insecure-dev-only-kyc-key-change-me';
 
+// The fallbacks keep dev working, but on a real deployment they are a trap: rows
+// encrypted under one key decrypt to null under another, and every mask/decrypt
+// path fails SOFT (returns null). Without this warning that surfaces as "the
+// host's KYC data is blank" rather than "this box has the wrong key". Warn once
+// at require time — loud enough to find in the boot log, never fatal.
+if (!process.env.KYC_ENCRYPTION_KEY && process.env.NODE_ENV !== 'test') {
+  console.warn(
+    process.env.SUPER_ADMIN_JWT_SECRET
+      ? '[kycCrypto] KYC_ENCRYPTION_KEY is not set — falling back to SUPER_ADMIN_JWT_SECRET. '
+        + 'Rotating that secret will orphan every encrypted KYC row (PAN/Aadhaar/bank read back blank). '
+        + 'Set a dedicated KYC_ENCRYPTION_KEY.'
+      : '[kycCrypto] KYC_ENCRYPTION_KEY is not set and there is no SUPER_ADMIN_JWT_SECRET to fall back on — '
+        + 'using the insecure built-in dev key. KYC PII written now is NOT meaningfully encrypted.',
+  );
+}
+
 // 32 bytes for AES-256, deterministically derived so the same secret always
 // yields the same key (required to decrypt previously-stored rows).
 const KEY = crypto.scryptSync(KEY_SOURCE, 'kyc-pii-v1', 32);

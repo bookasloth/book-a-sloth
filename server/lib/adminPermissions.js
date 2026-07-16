@@ -25,6 +25,11 @@ const PERMISSIONS = [
   // Professionals / KYC
   'professionals.view', 'professionals.verify', 'professionals.feature',
   'kyc.view', 'kyc.decide',
+  // Host documents (contracts/agreements an admin uploads against a host).
+  // Deliberately NOT covered by kyc.view: a KYC reviewer needs the identity
+  // documents the host submitted, which is not a reason to read the commercial
+  // paperwork ops keeps on file. Separate need, separate grant.
+  'documents.view', 'documents.manage',
   // Services
   'services.view', 'services.manage',
   // Bookings
@@ -81,6 +86,7 @@ const ROLES = {
       'users.view', 'users.edit', 'users.suspend',
       'professionals.view', 'professionals.verify', 'professionals.feature',
       'kyc.view', 'kyc.decide',
+      'documents.view', 'documents.manage',
       'services.view', 'services.manage',
       'bookings.view', 'bookings.edit', 'bookings.cancel',
       'finance.view',

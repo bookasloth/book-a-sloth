@@ -10,20 +10,11 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const { encrypt, maskPan, maskAadhaar, maskAccount, maskPhone, RE } = require('../utils/kycCrypto');
+// Selfie must be an image; PAN/Aadhaar docs may be image or PDF (allowPdf).
+const { sniff } = require('../utils/fileSniff');
 
 const KYC_BUCKET = 'kyc';
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB — KYC docs (scans/photos) are larger than avatars
-
-// Magic-byte sniff — client mimetype/extension are attacker-controlled and never
-// trusted. Selfie must be an image; PAN/Aadhaar docs may be image or PDF.
-const sniff = (buf, allowPdf) => {
-  if (!buf || buf.length < 4) return null;
-  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return { ext: 'jpg', mime: 'image/jpeg' };
-  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return { ext: 'png', mime: 'image/png' };
-  if (buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') return { ext: 'webp', mime: 'image/webp' };
-  if (allowPdf && buf.toString('ascii', 0, 4) === '%PDF') return { ext: 'pdf', mime: 'application/pdf' };
-  return null;
-};
 
 // POST /api/kyc/upload?type=selfie|pan|aadhaar  (multipart field "file")
 // Returns { key } — the private-bucket storage key to send back in POST /api/kyc.
