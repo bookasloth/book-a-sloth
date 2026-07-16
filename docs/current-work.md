@@ -1,5 +1,17 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-07-02_
+_Last updated: 2026-07-16_
+
+## Fix: KYC flow state reset — hosts stuck on step one (#374 / #376) — MERGED 2026-07-16
+
+> **Status: MERGED to main (`3b6c7c8`, `7373f12`), deployed. No DB migration. CI green (client 4m12s, server 40s, smoke).**
+
+Hosts could never get past the first KYC step: every **Continue** landed them back on *Personal details* with PAN/Aadhaar wiped. The KYC flow (v3.68) had been broken this way since it shipped.
+
+- **Root cause — a routing/animation interaction, not a KYC bug.** `DashboardLayout` renders every page inside `PageTransition`, whose `motion.div` is keyed on the pathname. `KycProvider` sat *below* that, inside `KycFlow`. Each step navigation changed the key → framer-motion unmounted the subtree once the 180ms exit finished → the provider remounted with `EMPTY_PERSONAL`/`EMPTY_BANK` → `Guard` recomputed every step as not-done and redirected to `/flow/start` → which changed the pathname again. Name/email/phone appeared to survive only because `KycStart`'s prefill effect refills them from the account, which is why it read as "it forgets my PAN".
+- **Fix (#374):** mount `KycProvider` in `App.jsx` **above** `DashboardWrapper`, so it sits above `PageTransition` and stays mounted across steps. `KycFlow` now only consumes the context. Pages still animate; the flow state no longer dies with them.
+- **LANDMINE — any future multi-step flow under `/dashboard`:** its state provider MUST be mounted above the layout, in the route element in `App.jsx`. A provider below `PageTransition` remounts empty on every step. `/dashboard/kyc/flow` is currently the ONLY route nesting children under `DashboardLayout` (the `GuestLayout` group sits outside it), so there are no other instances today.
+- **TESTING LANDMINE:** `AnimatePresence mode="wait"` keeps the outgoing subtree mounted through its exit animation, so **a test that asserts immediately after navigating passes even when the provider is doomed to remount**. `client/src/tests/KycFlow.test.jsx` waits for the exit to settle before asserting — that wait is load-bearing, not flake padding. Verified both ways: fails with the provider inside `KycFlow`, passes with it hoisted.
+- **Deliberately NOT done:** keying `PageTransition` on the matched route pattern instead of the raw pathname. It would break the animation it exists for (`/dashboard/service/edit/1` → `/edit/2` is the same pattern), and RR 6.20 has no cheap pattern accessor here (`useMatches` is data-router-only; this app uses `<BrowserRouter>` + `<Routes>`), so it would mean `UNSAFE_RouteContext` on the component every dashboard page renders through. Wide blast radius, zero current instances. Recorded as a comment on `PageTransition` itself instead (#376).
 
 ## Sprint: Service Category Redesign (branch `feat/service-categories`) — built 2026-07-02
 
