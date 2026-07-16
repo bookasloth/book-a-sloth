@@ -39,7 +39,10 @@ const HeroVisual = ({ post, t }) => (
 // the SPA router (no full reload); external ('http…') open in a new, safe tab.
 // Anything without a link token passes straight through as plain text.
 // ponytail: markdown-link only — no bold/italic parsing, which the copy doesn't need.
-const linkStyle = (accent) => ({ color: accent, textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500 });
+// Colour is per-category, so it stays inline; the underline-wipe and the
+// +100 weight live in .blog-link (index.css) — a pseudo/background effect
+// CSS has to own.
+const linkStyle = (accent) => ({ color: accent });
 const rich = (text, accent) => {
   if (typeof text !== 'string' || text.indexOf('](') === -1) return text;
   const re = /\[([^\]]+)\]\(([^)\s]+)\)/g;
@@ -53,8 +56,8 @@ const rich = (text, accent) => {
     const st = linkStyle(accent);
     out.push(
       href.startsWith('/')
-        ? <Link key={k++} to={href} style={st} className="hover:opacity-80">{label}</Link>
-        : <a key={k++} href={href} target="_blank" rel="noopener noreferrer" style={st} className="hover:opacity-80">{label}</a>,
+        ? <Link key={k++} to={href} style={st} className="blog-link">{label}</Link>
+        : <a key={k++} href={href} target="_blank" rel="noopener noreferrer" style={st} className="blog-link">{label}</a>,
     );
     last = m.index + full.length;
   }
