@@ -9,14 +9,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   adminHost360Get, adminHost360Usage, adminHost360Billing, adminHost360Timeline,
-  adminHost360Support, adminHost360Documents,
+  adminHost360Support, adminHost360Documents, adminHost360UploadDoc, adminHost360DeleteDoc,
+  adminHost360RevealKyc,
   adminHost360Notes, adminHost360AddNote, adminHost360UpdateNote, adminHost360DeleteNote,
   adminHost360Suspend, adminHost360SetPlan, adminHost360AssignAm, adminHost360SendEmail,
   adminHost360Managers,
 } from '../../services/api';
 import toast from 'react-hot-toast';
 import { PageHeader, Card, StatCard, Btn, Badge, Table, Skeleton } from '../../components/admin/ui';
-import { sessionCan } from '../../components/admin/adminNav';
+import Ic from '../../components/admin/Ic';
+import { sessionCan, IC } from '../../components/admin/adminNav';
 import { normalizePlan, getPlanBorderLabel } from '../../utils/themeUtils';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -209,11 +211,11 @@ const OverviewTab = ({ overview, goTab }) => {
   const timeline = overview?.recent_timeline || overview?.timeline || [];
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Services" value={counts.services ?? '—'} icon="layers" iconColor="bg-blue-500" to="?tab=usage" />
-        <StatCard label="Bookings" value={counts.bookings ?? '—'} icon="calCheck" iconColor="bg-emerald-500" to="?tab=usage" />
-        <StatCard label="Customers" value={counts.customers ?? '—'} icon="users" iconColor="bg-purple-500" to="?tab=usage" />
-        <StatCard label="Revenue" value={inr(revenue.total ?? overview?.revenue_total)} icon="rupee" iconColor="bg-amber-500" to="?tab=billing" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+        <StatCard compact label="Services" value={counts.services ?? '—'} icon="layers" iconColor="bg-blue-500" to="?tab=usage" />
+        <StatCard compact label="Bookings" value={counts.bookings ?? '—'} icon="calCheck" iconColor="bg-emerald-500" to="?tab=usage" />
+        <StatCard compact label="Customers" value={counts.customers ?? '—'} icon="users" iconColor="bg-purple-500" to="?tab=usage" />
+        <StatCard compact label="Revenue" value={inr(revenue.total ?? overview?.revenue_total)} icon="rupee" iconColor="bg-amber-500" to="?tab=billing" />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
@@ -466,42 +468,152 @@ const NotesTab = ({ hostId, active }) => {
   );
 };
 
+// KYC identity block as a field/value table, with an eye toggle that swaps the
+// masked values for the real ones.
+//
+// Revealing is a real de-masking: it calls a kyc.decide-gated endpoint that
+// decrypts server-side and writes an audit row naming this admin. So it is an
+// explicit click, never on mount, and the values are dropped from state on hide.
+const KycCard = ({ hostId, kyc }) => {
+  const canReveal = sessionCan(getSession(), 'kyc.decide');
+  const [real, setReal] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const toggle = async () => {
+    if (real) { setReal(null); return; }
+    setBusy(true);
+    try {
+      const { data } = await adminHost360RevealKyc(hostId);
+      setReal(data);
+    } catch (e) { toast.error(e.response?.data?.message || 'Could not reveal'); }
+    finally { setBusy(false); }
+  };
+
+  if (!kyc) {
+    return (
+      <Card>
+        <h3 className="text-[13px] font-bold adm-t1 mb-3">KYC</h3>
+        <EmptyText>No KYC submitted.</EmptyText>
+      </Card>
+    );
+  }
+
+  const rows = [
+    ['Status', <Badge key="s" tone={kyc.status === 'approved' ? 'ok' : kyc.status === 'rejected' ? 'danger' : 'warn'}>{kyc.status}</Badge>],
+    ['Full name', kyc.full_name || '—'],
+    ['Phone', real?.phone || kyc.phone || '—'],
+    ['PAN', real?.pan_number || kyc.pan_masked || '—'],
+    ['Aadhaar', real?.aadhaar_number || kyc.aadhaar_masked || '—'],
+    ['Bank account', real?.account_number || kyc.bank_masked || '—'],
+    ['IFSC', real?.ifsc || kyc.ifsc || '—'],
+    ['Submitted', fmtDate(kyc.created_at)],
+    ['Reviewed', kyc.reviewed_at ? fmtDate(kyc.reviewed_at) : '—'],
+  ];
+
+  return (
+    <Card>
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-[13px] font-bold adm-t1">KYC</h3>
+        {canReveal && (
+          <button onClick={toggle} disabled={busy}
+            title={real ? 'Hide the full numbers' : 'Reveal the full numbers — this is recorded in the audit log'}
+            className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#FE5100] disabled:opacity-50">
+            <Ic d={IC.eye} size={13} />
+            {busy ? 'Revealing…' : real ? 'Hide' : 'Reveal'}
+          </button>
+        )}
+      </div>
+      <table className="w-full text-[13px]">
+        <tbody className="divide-y adm-border">
+          {rows.map(([label, value]) => (
+            <tr key={label}>
+              <td className="py-1.5 pr-4 adm-t3 whitespace-nowrap w-px">{label}</td>
+              <td className={`py-1.5 adm-t1 text-right ${real ? 'font-mono' : ''}`}>{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {real && (
+        <p className="mt-2 text-[10.5px] adm-t3">Full details shown. This reveal was recorded in the audit log.</p>
+      )}
+      {Array.isArray(kyc.documents) && kyc.documents.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-3 border-t adm-border pt-3">
+          {kyc.documents.map((d, i) => (
+            <a key={i} href={d.url} target="_blank" rel="noreferrer" className="text-[#FE5100] text-[12px] font-medium">{d.label || `Document ${i + 1}`}</a>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+};
+
 const DocumentsTab = ({ hostId, active }) => {
-  const [s] = useTabData(() => adminHost360Documents(hostId), active);
+  const [s, setS] = useTabData(() => adminHost360Documents(hostId), active);
+  const session = getSession();
+  const canManage = sessionCan(session, 'documents.manage');
+  const [busy, setBusy] = useState(false);
+
+  const refetch = async () => {
+    try { const { data } = await adminHost360Documents(hostId); setS(prev => ({ ...prev, data })); }
+    catch { /* keep the old list */ }
+  };
+  const upload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // let the same file be re-picked after an error
+    if (!file) return;
+    setBusy(true);
+    try { await adminHost360UploadDoc(hostId, file); await refetch(); toast.success('Document uploaded'); }
+    catch (err) { toast.error(err.response?.data?.message || 'Upload failed'); }
+    finally { setBusy(false); }
+  };
+  const remove = async (doc) => {
+    if (!window.confirm(`Delete ${doc.name || 'this document'}? This cannot be undone.`)) return;
+    try { await adminHost360DeleteDoc(hostId, doc.id); await refetch(); toast.success('Document deleted'); }
+    catch (err) { toast.error(err.response?.data?.message || 'Delete failed'); }
+  };
+
   if (s.loading) return <TabSkeleton />;
   if (s.denied) return <AccessDenied />;
   if (!s.data) return <EmptyText>Nothing to show.</EmptyText>;
-  const { kyc, documents = [] } = s.data;
+  const { kyc, documents = [], documents_locked } = s.data;
   return (
     <div className="space-y-4">
-      <Card>
-        <h3 className="text-[13px] font-bold adm-t1 mb-3">KYC</h3>
-        {!kyc ? <EmptyText>No KYC submitted.</EmptyText> : (
-          <div className="space-y-1.5 text-[13px]">
-            <div className="flex justify-between"><span className="adm-t3">Status</span>
-              <Badge tone={kyc.status === 'approved' ? 'ok' : kyc.status === 'rejected' ? 'danger' : 'warn'}>{kyc.status}</Badge></div>
-            {kyc.pan_masked && <div className="flex justify-between"><span className="adm-t3">PAN</span><span className="adm-t1">{kyc.pan_masked}</span></div>}
-            {kyc.aadhaar_masked && <div className="flex justify-between"><span className="adm-t3">Aadhaar</span><span className="adm-t1">{kyc.aadhaar_masked}</span></div>}
-            {kyc.bank_masked && <div className="flex justify-between"><span className="adm-t3">Bank</span><span className="adm-t1">{kyc.bank_masked}</span></div>}
-            {Array.isArray(kyc.documents) && kyc.documents.length > 0 && (
-              <div className="pt-2 flex flex-wrap gap-3">
-                {kyc.documents.map((d, i) => (
-                  <a key={i} href={d.url} target="_blank" rel="noreferrer" className="text-[#FE5100] text-[12px] font-medium">{d.label || `Document ${i + 1}`}</a>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </Card>
+      <KycCard hostId={hostId} kyc={kyc} />
       <div>
-        <h3 className="text-[13px] font-bold adm-t1 mb-2">Documents</h3>
-        <Table
-          columns={[
-            { key: 'name', label: 'Name', render: r => r.name || r.label || 'Document' },
-            { key: 'created_at', label: 'Uploaded', render: r => fmtDate(r.created_at) },
-            { key: 'url', label: '', render: r => r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="text-[#FE5100] font-medium">Download</a> : '—' },
-          ]}
-          rows={documents} rowKey={r => r.id} empty={<EmptyText>No documents.</EmptyText>} />
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-[13px] font-bold adm-t1">Documents</h3>
+          {canManage && !documents_locked && (
+            <label className={`text-[12px] font-medium ${busy ? 'adm-t3' : 'text-[#FE5100] cursor-pointer'}`}>
+              {busy ? 'Uploading…' : '+ Upload'}
+              <input type="file" className="hidden" disabled={busy} onChange={upload}
+                accept=".pdf,.jpg,.jpeg,.png,.webp" />
+            </label>
+          )}
+        </div>
+        {documents_locked ? (
+          <Card className="text-center py-6 adm-t3 text-[13px]">
+            You don't have access to this host's uploaded documents.
+          </Card>
+        ) : (
+          <Table
+            columns={[
+              { key: 'name', label: 'Name', render: r => r.name || r.label || 'Document' },
+              { key: 'doc_type', label: 'Type', render: r => r.doc_type || '—' },
+              { key: 'created_at', label: 'Uploaded', render: r => fmtDate(r.created_at) },
+              {
+                key: 'url',
+                label: '',
+                render: r => (
+                  <div className="flex justify-end gap-3">
+                    {r.url && <a href={r.url} target="_blank" rel="noreferrer" className="text-[#FE5100] font-medium">Download</a>}
+                    {canManage && <button onClick={() => remove(r)} className="font-medium text-red-500 hover:text-red-600">Delete</button>}
+                  </div>
+                ),
+              },
+            ]}
+            rows={documents} rowKey={r => r.id}
+            empty={<EmptyText>{canManage ? 'No documents yet. Upload contracts or signed agreements here.' : 'No documents.'}</EmptyText>} />
+        )}
       </div>
     </div>
   );
@@ -585,24 +697,50 @@ const Host360Detail = () => {
       <PageHeader
         title={host.name || 'Host'}
         subtitle={host.email}
-        actions={<Btn variant="ghost" size="sm" onClick={() => navigate('/admin/host360')}>← All hosts</Btn>}
+        actions={
+          <div className="flex items-center gap-2">
+            <Btn variant="ghost" size="sm" onClick={() => navigate('/admin/host360')}>← All hosts</Btn>
+            {/* Seeing what the host's guests see is the most common jump off this
+                page, so it sits in the header rather than in the action row. */}
+            {host.username ? (
+              <a href={`/${host.username}`} target="_blank" rel="noreferrer">
+                <Btn size="sm" icon="external">View profile</Btn>
+              </a>
+            ) : (
+              <Btn size="sm" icon="external" disabled title="This host hasn't claimed a username yet">View profile</Btn>
+            )}
+          </div>
+        }
       />
 
-      {/* Persistent header */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-        <StatCard label="Username" value={host.username ? `@${host.username}` : '—'} icon="userCheck" iconColor="bg-blue-500" />
-        <StatCard label="Plan" value={getPlanBorderLabel(normalizePlan(host.plan))} icon="tag" iconColor="bg-purple-500" />
-        <StatCard label="Joined" value={fmtDate(host.created_at)} icon="calendar" iconColor="bg-emerald-500" />
-        <StatCard label="Renewal" value={fmtDate(host.plan_expires_at || host.current_period_end)} icon="clock" iconColor="bg-amber-500" />
+      {/* Persistent header — metadata, so compact cards: small heading with the
+          icon and value side by side rather than a full metric card each. */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-3">
+        <StatCard compact label="Username" value={host.username ? `@${host.username}` : '—'} icon="userCheck" iconColor="bg-blue-500" />
+        <StatCard compact label="Plan" value={getPlanBorderLabel(normalizePlan(host.plan))} icon="tag" iconColor="bg-purple-500" />
+        <StatCard compact label="Joined" value={fmtDate(host.created_at)} icon="calendar" iconColor="bg-emerald-500" />
+        <StatCard compact label="Renewal" value={fmtDate(host.plan_expires_at || host.current_period_end)} icon="clock" iconColor="bg-amber-500" />
       </div>
+      {/* Label-over-value pairs read as a table, not a run-on sentence. */}
       <Card className="mb-4">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px]">
-          <div className="flex items-center gap-2"><span className="adm-t3">Status</span>{status}</div>
-          <div className="flex items-center gap-2"><span className="adm-t3">Verification</span>
-            <Badge tone={host.is_verified ? 'ok' : 'warn'}>{host.is_verified ? 'Verified' : 'Unverified'}</Badge></div>
-          <div className="flex items-center gap-2"><span className="adm-t3">Account manager</span>
-            <span className="adm-t1 font-medium">{host.account_manager?.name || overview.account_manager?.name || '—'}</span></div>
-        </div>
+        <table className="w-full text-[13px]">
+          <tbody>
+            <tr>
+              {['Status', 'Verification', 'Account manager'].map(h => (
+                <th key={h} className="w-1/3 pb-1 text-left text-[10px] font-semibold adm-t3 uppercase tracking-wide">{h}</th>
+              ))}
+            </tr>
+            <tr>
+              <td className="pt-0.5">{status}</td>
+              <td className="pt-0.5">
+                <Badge tone={host.is_verified ? 'ok' : 'warn'}>{host.is_verified ? 'Verified' : 'Unverified'}</Badge>
+              </td>
+              <td className="pt-0.5 adm-t1 font-medium">
+                {host.account_manager?.name || overview.account_manager?.name || '—'}
+              </td>
+            </tr>
+          </tbody>
+        </table>
         {Array.isArray(host.red_flags) && host.red_flags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {host.red_flags.map((f, i) => (
@@ -614,11 +752,6 @@ const Host360Detail = () => {
 
       {/* Quick actions */}
       <div className="mb-5 flex flex-wrap gap-2">
-        {host.username && (
-          <a href={`/${host.username}`} target="_blank" rel="noreferrer">
-            <Btn variant="outline" size="sm" icon="external">Public profile</Btn>
-          </a>
-        )}
         {sessionCan(session, 'users.edit') && (
           <Btn variant="outline" size="sm" icon="ban" onClick={handleSuspend}>{host.is_banned ? 'Reactivate' : 'Suspend'}</Btn>
         )}

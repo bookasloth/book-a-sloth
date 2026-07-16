@@ -68,9 +68,15 @@ Items previously listed here as pending are now live:
 - **v3.53** (profession-scoped `service_categories` redesign + `seedServiceCategories.js`) — applied.
 - **v3.57** (two partial `bookings` indexes for host paid-booking reads) — applied 2026-07-01.
 
-No migration is currently outstanding. Workflow for any NEW migration: run it in the
-Supabase SQL Editor on BOTH DBs, and keep the code-side schema fallback (SELECT/INSERT
-destructure) until it is confirmed applied everywhere.
+- **v3.81** (`v3.81_host_documents_permissions.sql`) — applied 2026-07-16 on BOTH DBs and
+  verified: `operations` now holds `documents.view` / `documents.manage` (32 → 34 perms,
+  matching `lib/adminPermissions.js` exactly); `support` deliberately holds neither; `super`
+  is wildcard and untouched. Takes effect on each admin's NEXT login (permissions are
+  embedded in the admin JWT at sign-in — an ops admin logged in before this still 403s on
+  host documents until they re-login).
+
+No migration is currently outstanding. Workflow for any NEW migration: run it on BOTH DBs, and keep the
+code-side schema fallback (SELECT/INSERT destructure) until it is confirmed applied everywhere.
 
 ## Documentation Map
 | File | Purpose |

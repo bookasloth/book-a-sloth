@@ -80,6 +80,19 @@ describe('role matrix — least privilege spot checks', () => {
     expect(can('operations', 'staff.manage')).toBe(false);
   });
 
+  // v3.81 — host paperwork is a separate grant from KYC identity review.
+  test('support reviews KYC but cannot read admin-uploaded host documents', () => {
+    expect(can('support', 'kyc.view')).toBe(true);
+    expect(can('support', 'documents.view')).toBe(false);
+    expect(can('support', 'documents.manage')).toBe(false);
+  });
+
+  test('operations holds both KYC review and host documents', () => {
+    expect(can('operations', 'kyc.view')).toBe(true);
+    expect(can('operations', 'documents.view')).toBe(true);
+    expect(can('operations', 'documents.manage')).toBe(true);
+  });
+
   test('marketing owns growth + content, not operations data', () => {
     expect(can('marketing', 'cms.manage')).toBe(true);
     expect(can('marketing', 'coupons.manage')).toBe(true);
