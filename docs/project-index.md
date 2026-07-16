@@ -109,7 +109,7 @@
 | `adminAuthController.js` | Admin login + OTP verification |
 | `reviewController.js` | Create review, get host reviews |
 | `productController.js` | Digital products CRUD, purchase, download |
-| `uploadController.js` | Cloudinary image upload |
+| `uploadController.js` | Supabase Storage image upload (bucket `images`) |
 
 ### routes/
 | File | Base Path |

@@ -21,8 +21,8 @@ Extends `auth.users`. One row per user (host or guest).
 | bio | TEXT | |
 | tagline | TEXT | Short headline |
 | profession | TEXT | |
-| profile_image | TEXT | Cloudinary URL |
-| cover_image | TEXT | Cloudinary URL |
+| profile_image | TEXT | Supabase Storage public URL |
+| cover_image | TEXT | Supabase Storage public URL |
 | social_links | JSONB | `{ instagram, youtube, linkedin, ... }` |
 | theme_color | TEXT | Hex color (plan-gated palette) |
 | is_verified | BOOLEAN | Admin-set verification badge |
@@ -59,7 +59,7 @@ One service per row. Services belong to a host.
 | price | NUMERIC(10,2) | 0 = free |
 | currency | TEXT | Default `'INR'` |
 | meeting_mode | TEXT | `'online'` \| `'offline'` |
-| thumbnail_url | TEXT | Cloudinary URL |
+| thumbnail_url | TEXT | Supabase Storage public URL |
 | grace_period_minutes | INTEGER | Default 10 — overlap buffer |
 | slug | TEXT | URL slug — **globally unique** (see Indexes below) |
 | category | TEXT | Service category slug (v3.22); paired with `primary_category` since v3.60 |
@@ -219,7 +219,7 @@ Digital downloadable products.
 | title | TEXT | |
 | description | TEXT | |
 | price | NUMERIC | 0 = free |
-| file_url | TEXT | Cloudinary or signed URL |
+| file_url | TEXT | Supabase Storage or signed URL |
 | thumbnail_url | TEXT | |
 | is_active | BOOLEAN | |
 | purchase_count | INTEGER | Incremented via DB function |

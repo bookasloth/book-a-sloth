@@ -19,7 +19,7 @@ Read these 4 files before touching any code:
 | Payments | Razorpay (orders + subscriptions) |
 | Email | Nodemailer (SMTP) |
 | WhatsApp | AiSensy (active, DB-configured via `notification_providers`) |
-| Uploads | Cloudinary |
+| Uploads | Supabase Storage (bucket `images`; private `kyc` bucket for documents) |
 | Calendar | Google Calendar API |
 
 ## Repo Layout

@@ -80,7 +80,7 @@ Open **http://localhost:5173** — the app is running.
 | Payments | Razorpay (orders + subscriptions) |
 | Email | Nodemailer / Resend / AWS SES (pluggable) |
 | WhatsApp | AiSensy (DB-configured, no hardcoded keys) |
-| Uploads | Cloudinary |
+| Uploads | Supabase Storage |
 | Calendar | Google Calendar API |
 
 ---
