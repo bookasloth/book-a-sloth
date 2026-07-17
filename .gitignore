@@ -101,6 +101,3 @@ BookASloth_12Month_Value_Roadmap.pdf
 
 # Local-only OG card previews from client/scripts/generateBlogOgImages.mjs --dry
 client/scripts/.og-preview/
-
-# puppeteer Chrome download, pinned into the project by client/.puppeteerrc.cjs
-client/.cache/
