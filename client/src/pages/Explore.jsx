@@ -119,7 +119,7 @@ function ExploreFull() {
   const firstLoad = fetching && services.length === 0;
 
   return (
-    <div className="min-h-screen bg-[#FFF8EE]">
+    <div className="min-h-screen bg-surface">
       <Seo
         title="Explore Services — Book A Sloth"
         description="Discover and book 1:1 services from coaches, consultants, therapists and creators on Book A Sloth. Search by skill or browse by category."
@@ -128,37 +128,39 @@ function ExploreFull() {
 
       {/* Thin top progress bar while (re)fetching. */}
       {fetching && (
-        <div className="fixed top-0 left-0 right-0 h-0.5 bg-[#FE5100]/30 z-50 overflow-hidden">
-          <div className="h-full w-1/3 bg-[#FE5100] animate-[explore-bar_1s_ease-in-out_infinite]" />
+        <div className="fixed top-0 left-0 right-0 h-0.5 bg-primary/30 z-50 overflow-hidden">
+          <div className="h-full w-1/3 bg-primary animate-[explore-bar_1s_ease-in-out_infinite]" />
         </div>
       )}
 
-      {/* HERO / SEARCH */}
-      <div className="bg-[#1E1E1E] border-b-4 border-[#1E1E1E]">
-        <div className="max-w-5xl mx-auto px-4 py-12 text-center">
-          <h1 className="text-3xl md:text-5xl font-black text-white mb-2 leading-tight tracking-tight">
+      {/* HERO / SEARCH — a browsing page should be quiet so the results are the
+          loud part. Same restrained language as /blog: hairline rules, ink on
+          white, colour reserved for the one action. */}
+      <div className="border-b border-black/5">
+        <div className="app-container py-12 text-center sm:py-16">
+          <h1 className="font-heading text-3xl font-bold tracking-tight text-ink sm:text-5xl">
             Find Your Perfect Sloth
           </h1>
-          <p className="text-[#FFF8EE]/70 text-base mb-8">
+          <p className="mt-3 text-base text-muted">
             Book 1:1 services with coaches, therapists, mentors &amp; more
           </p>
-          <form onSubmit={handleSearchSubmit} className="relative max-w-xl mx-auto">
-            <div className="flex border-2 border-[#FE5100] rounded-[6px] overflow-hidden shadow-[4px_4px_0_#FE5100]">
+          <form onSubmit={handleSearchSubmit} className="relative mx-auto mt-8 max-w-xl">
+            <div className="flex overflow-hidden rounded-xl border border-black/10 bg-white transition-shadow focus-within:border-primary/40 focus-within:shadow-md">
               <input
                 value={inputVal}
                 onChange={e => setInputVal(e.target.value)}
                 placeholder="Search services by skill or topic..."
                 aria-label="Search services"
-                className="flex-1 px-4 py-3 bg-white text-[#1E1E1E] text-[15px] font-medium outline-none placeholder:text-[#64748b]"
+                className="flex-1 bg-transparent px-4 py-3 text-[15px] text-ink outline-none placeholder:text-muted"
               />
               {inputVal && (
                 <button type="button" onClick={clearSearch}
-                  className="px-3 bg-white text-[#64748b] hover:text-[#1E1E1E]" aria-label="Clear search">
+                  className="px-3 text-muted transition-colors hover:text-ink" aria-label="Clear search">
                   <X size={16} />
                 </button>
               )}
-              <button type="submit"
-                className="px-5 bg-[#FE5100] text-white font-bold text-sm hover:bg-[#e04800] transition-colors">
+              <button type="submit" aria-label="Search"
+                className="bg-primary-cta px-5 text-white transition-colors hover:bg-[#a83400]">
                 <Search size={18} />
               </button>
             </div>
@@ -166,13 +168,13 @@ function ExploreFull() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <div className="app-container space-y-8 py-8">
         <CategoryFilter categories={categories} selected={category} onChange={handleCategory} />
 
         {/* Toolbar */}
         <div>
-          <h2 className="text-xl font-black text-[#1E1E1E]">{headingText}</h2>
-          <p className="text-sm text-[#64748b] mt-0.5">
+          <h2 className="font-heading text-xl font-bold tracking-tight text-ink">{headingText}</h2>
+          <p className="mt-0.5 text-sm text-muted">
             {fetching && services.length === 0 ? 'Searching…' : `${meta.total} service${meta.total === 1 ? '' : 's'} found`}
           </p>
         </div>
@@ -199,38 +201,36 @@ function ExploreFull() {
         {firstLoad ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Array.from({ length: PAGE_SIZE }).map((_, i) => (
-              <div key={i} className="border-2 border-[#E5E5E5] rounded-[6px] bg-white overflow-hidden animate-pulse">
-                <div className="aspect-[4/3] bg-[#F1F1F1] border-b-2 border-[#E5E5E5]" />
-                <div className="p-3.5 space-y-2">
-                  <div className="h-3 w-16 bg-[#F1F1F1] rounded" />
-                  <div className="h-4 w-full bg-[#F1F1F1] rounded" />
-                  <div className="h-4 w-2/3 bg-[#F1F1F1] rounded" />
-                  <div className="h-3 w-1/2 bg-[#F1F1F1] rounded" />
+              <div key={i} className="page-card animate-pulse overflow-hidden">
+                <div className="aspect-[4/3] bg-black/[0.04]" />
+                <div className="space-y-2 p-3.5">
+                  <div className="h-3 w-16 rounded bg-black/[0.04]" />
+                  <div className="h-4 w-full rounded bg-black/[0.04]" />
+                  <div className="h-4 w-2/3 rounded bg-black/[0.04]" />
+                  <div className="h-3 w-1/2 rounded bg-black/[0.04]" />
                 </div>
               </div>
             ))}
           </div>
         ) : services.length === 0 ? (
-          <div className="text-center py-20 border-2 border-dashed border-[#E5E5E5] rounded-[6px] bg-white">
-            <div className="text-5xl mb-4">🦥</div>
-            <p className="text-lg font-bold text-[#1E1E1E]">No services found</p>
-            <p className="text-sm text-[#64748b] mt-1">
+          <div className="rounded-2xl border border-black/5 bg-[#FFF8EE] px-6 py-16 text-center">
+            <div className="mb-4 text-5xl">🦥</div>
+            <p className="font-heading text-lg font-bold text-ink">No services found</p>
+            <p className="mt-1 text-sm text-muted">
               {q ? 'Try a different search' : 'Try a different category'} or clear your filters.
             </p>
             {(q || category || service) && (
               <button
                 onClick={() => setSearchParams({}, { replace: true })}
-                className="btn mt-4 px-4 py-2 bg-[#FE5100] text-white font-bold border-2 border-[#1E1E1E]
-                           shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]">
+                className="btn mt-5 inline-flex items-center bg-primary-cta px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#a83400] hover:no-underline">
                 Clear filters
               </button>
             )}
             {categories.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-2 mt-6">
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {categories.slice(0, 6).map(c => (
                   <button key={c.slug} onClick={() => handleCategory(c.slug)}
-                    className="text-sm bg-white border-2 border-[#1E1E1E] rounded-[4px] px-3 py-1 font-medium
-                               shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]">
+                    className="rounded-lg border border-black/10 bg-white px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:bg-black/[0.04]">
                     {c.label}
                   </button>
                 ))}
@@ -242,7 +242,7 @@ function ExploreFull() {
           <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity
                           ${fetching ? 'opacity-60' : 'opacity-100'}`}>
             {services.map((s, idx) => (
-              <ServiceCard key={s.id || idx} service={s} rank={(page - 1) * PAGE_SIZE + idx + 1} />
+              <ServiceCard key={s.id || idx} service={s} rank={(page - 1) * PAGE_SIZE + idx + 1} variant="flat" />
             ))}
           </div>
         )}
@@ -250,15 +250,13 @@ function ExploreFull() {
         <Pagination page={page} totalPages={meta.totalPages} hrefFor={hrefFor} />
 
         {/* BE A SLOTH CTA */}
-        <section className="border-2 border-[#1E1E1E] rounded-[6px] bg-white shadow-[4px_4px_0_#1E1E1E]
-                            p-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
-            <p className="text-xl font-black text-[#1E1E1E]">You could be on this page 🦥</p>
-            <p className="text-sm text-[#64748b] mt-1">Join coaches, mentors &amp; experts on Book A Sloth</p>
+        <section className="flex flex-col items-center justify-between gap-4 rounded-2xl border border-black/5 bg-[#FFF8EE] p-8 md:flex-row">
+          <div className="text-center md:text-left">
+            <p className="font-heading text-xl font-bold text-ink">You could be on this page 🦥</p>
+            <p className="mt-1 text-sm text-muted">Join coaches, mentors &amp; experts on Book A Sloth</p>
           </div>
           <Link to="/be-a-sloth"
-            className="btn shrink-0 px-6 py-3 bg-[#FE5100] text-white font-black text-sm border-2 border-[#1E1E1E]
-                       shadow-[4px_4px_0_#1E1E1E] hover:shadow-[6px_6px_0_#1E1E1E] transition-shadow whitespace-nowrap">
+            className="btn inline-flex shrink-0 items-center bg-primary-cta px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#a83400] hover:no-underline">
             Become a Sloth →
           </Link>
         </section>
@@ -271,10 +269,9 @@ function ExploreFull() {
 
 function FilterPill({ label, onClear }) {
   return (
-    <span className="flex items-center gap-1 text-sm bg-white border-2 border-[#1E1E1E]
-                     rounded-[4px] px-3 py-1 font-medium shadow-[2px_2px_0_#1E1E1E]">
+    <span className="flex items-center gap-1 rounded-full border border-black/10 bg-white px-3 py-1 text-sm font-medium text-ink">
       {label}
-      <button onClick={onClear} className="ml-1 text-[#64748b] hover:text-[#FE5100]" aria-label="Remove filter">
+      <button onClick={onClear} className="ml-1 text-muted transition-colors hover:text-ink" aria-label="Remove filter">
         <X size={13} />
       </button>
     </span>
@@ -283,36 +280,30 @@ function FilterPill({ label, onClear }) {
 
 function ExploreComingSoon() {
   return (
-    <div className="min-h-screen bg-[#FFF8EE] flex items-center justify-center px-4 py-16">
+    <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-16">
       <Seo
         title="Explore Services — Book A Sloth"
         description="Discover and book 1:1 services from coaches, consultants, therapists and creators on Book A Sloth."
         canonical={`${SITE_URL}/explore`}
       />
-      <div className="max-w-lg w-full text-center">
-        <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide
-                         bg-amber-400 text-[#1E1E1E] border-2 border-[#1E1E1E] rounded-[4px] px-3 py-1
-                         shadow-[2px_2px_0_#1E1E1E] mb-6">
+      <div className="w-full max-w-lg text-center">
+        <span className="mb-6 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
           <Sparkles size={13} /> Coming Soon
         </span>
-        <div className="text-6xl mb-5" aria-hidden="true">🦥</div>
-        <h1 className="text-3xl md:text-4xl font-black text-[#1E1E1E] leading-tight tracking-tight mb-3">
+        <div className="mb-5 text-6xl" aria-hidden="true">🦥</div>
+        <h1 className="mb-3 font-heading text-3xl font-bold leading-tight tracking-tight text-ink md:text-4xl">
           Explore is on its way
         </h1>
-        <p className="text-[15px] text-[#64748b] leading-relaxed mb-8">
+        <p className="mb-8 text-[15px] leading-relaxed text-muted">
           A place to discover coaches, mentors, therapists &amp; experts — search by skill and book instantly.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link to="/categories"
-            className="btn w-full sm:w-auto px-6 py-3 bg-[#FE5100] text-white font-black text-sm
-                       border-2 border-[#1E1E1E] shadow-[4px_4px_0_#1E1E1E]
-                       hover:shadow-[6px_6px_0_#1E1E1E] transition-shadow whitespace-nowrap">
+            className="btn inline-flex w-full items-center justify-center bg-primary-cta px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#a83400] hover:no-underline sm:w-auto">
             Browse Categories
           </Link>
           <Link to="/be-a-sloth"
-            className="btn btn--outline w-full sm:w-auto px-6 py-3 bg-white text-[#1E1E1E] font-black text-sm
-                       border-2 border-[#1E1E1E] shadow-[4px_4px_0_#1E1E1E]
-                       hover:shadow-[6px_6px_0_#1E1E1E] transition-shadow whitespace-nowrap">
+            className="btn btn--outline inline-flex w-full items-center justify-center border border-black/10 bg-white px-5 py-2.5 text-sm font-semibold text-ink transition-colors duration-150 hover:bg-black/[0.04] hover:no-underline sm:w-auto">
             Become a Sloth →
           </Link>
         </div>

@@ -101,3 +101,6 @@ BookASloth_12Month_Value_Roadmap.pdf
 
 # Local-only OG card previews from client/scripts/generateBlogOgImages.mjs --dry
 client/scripts/.og-preview/
+
+# Vercel CLI local link state (project/org ids) — created by `vercel link`
+.vercel/

@@ -8,8 +8,10 @@
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+// Flat, matching /blog's pager: current page is an ink fill, the rest are quiet
+// until hovered. Explore-only — the admin pages have their own Pagination.
 const cellBase =
-  'w-9 h-9 flex items-center justify-center font-bold text-sm border-2 border-[#1E1E1E] rounded-[4px] transition-shadow';
+  'flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold transition-colors duration-150';
 
 export default function Pagination({ page, totalPages, hrefFor }) {
   if (!totalPages || totalPages <= 1) return null;
@@ -24,9 +26,9 @@ export default function Pagination({ page, totalPages, hrefFor }) {
         aria-label="Previous page"
         aria-disabled={page === 1}
         onClick={(e) => (page === 1 ? e.preventDefault() : toTop())}
-        className={`${cellBase} bg-white ${page === 1
-          ? 'opacity-40 pointer-events-none'
-          : 'shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]'}`}
+        className={`${cellBase} ${page === 1
+          ? 'pointer-events-none text-gray-300'
+          : 'text-gray-600 hover:bg-black/[0.04] hover:text-ink'}`}
       >
         <ChevronLeft size={16} />
       </Link>
@@ -38,8 +40,8 @@ export default function Pagination({ page, totalPages, hrefFor }) {
           aria-current={p === page ? 'page' : undefined}
           onClick={toTop}
           className={`${cellBase} ${p === page
-            ? 'bg-[#FE5100] text-white shadow-[2px_2px_0_#1E1E1E]'
-            : 'bg-white text-[#1E1E1E] shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]'}`}
+            ? 'bg-ink text-white'
+            : 'text-gray-600 hover:bg-black/[0.04] hover:text-ink'}`}
         >
           {p}
         </Link>
@@ -51,9 +53,9 @@ export default function Pagination({ page, totalPages, hrefFor }) {
         aria-label="Next page"
         aria-disabled={page === totalPages}
         onClick={(e) => (page === totalPages ? e.preventDefault() : toTop())}
-        className={`${cellBase} bg-white ${page === totalPages
-          ? 'opacity-40 pointer-events-none'
-          : 'shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]'}`}
+        className={`${cellBase} ${page === totalPages
+          ? 'pointer-events-none text-gray-300'
+          : 'text-gray-600 hover:bg-black/[0.04] hover:text-ink'}`}
       >
         <ChevronRight size={16} />
       </Link>
