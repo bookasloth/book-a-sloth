@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { themeFor } from '../data/blogPosts';
 import { getBlogs } from '../services/api';
 import Seo from "../components/common/Seo";
+import { ogCard } from "../config/ogImages";
 import { SITE_URL } from "../utils/seo";
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 
@@ -152,6 +153,7 @@ const Blog = () => {
       <Seo
         title="Book A Sloth Blog — Booking & Business Growth Tips"
         description="Guides on appointment scheduling, reducing no-shows, online payments, and growing your booking business. Practical tips from Book A Sloth."
+        image={ogCard('blog-index')}
         canonical={page === 1 ? `${SITE_URL}/blog` : `${SITE_URL}/blog?page=${page}`}
       />
       <div className="mx-auto max-w-4xl">

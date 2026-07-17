@@ -1,4 +1,5 @@
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import useAboutMotion from '../components/about/useAboutMotion';
 import CareersHero from '../components/careers/CareersHero';
 import WhyWorkHere from '../components/careers/WhyWorkHere';
@@ -22,6 +23,7 @@ export default function Careers() {
       <Seo
         title="Careers at Book A Sloth — build the calm way to get booked"
         description="Join Book A Sloth. Open roles across marketing, engineering, and sales. Remote-first, creators-first."
+        image={ogCard('careers')}
         canonical="https://bookasloth.com/careers"
         jsonLd={JSON_LD}
       />

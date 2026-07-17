@@ -18,6 +18,7 @@ import useUtm from "../../hooks/useUtm";
 import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
 import Seo from "../../components/common/Seo";
+import { ogCard } from "../../config/ogImages";
 import { SITE_URL } from "../../utils/seo";
 import HowItWorks from "../../components/home/HowItWorks";
 import LogoMarquee from "../../components/about/LogoMarquee";
@@ -177,6 +178,7 @@ const SimplybookAlternative = () => {
       <Seo
         title="Best SimplyBook.me Alternative for India — Book A Sloth"
         description="Looking for a SimplyBook.me alternative? Book A Sloth gives you UPI payments, WhatsApp reminders, and GST invoices — with pricing you can actually see upfront."
+        image={ogCard('lp-simplybook-alternative')}
         canonical={`${SITE_URL}/lp/simplybook-alternative`}
       />
 

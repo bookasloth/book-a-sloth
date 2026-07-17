@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Reveal from '../components/home/Reveal';
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import { analytics, EVENTS } from '../services/analytics';
 import EnterpriseFaq from './enterprise/EnterpriseFaq';
 import EnterpriseLeadForm from './enterprise/EnterpriseLeadForm';
@@ -151,6 +152,7 @@ export default function Enterprise() {
       <Seo
         title={ENT_SEO.title}
         description={ENT_SEO.description}
+        image={ogCard('enterprise')}
         canonical={ENT_SEO.canonical}
         keywords={ENT_SEO.keywords}
         ogTitle={ENT_SEO.ogTitle}

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Seo from "../components/common/Seo";
+import { ogCard } from "../config/ogImages";
 import { SITE_URL } from "../utils/seo";
 
 // /changelog — public "What's New" timeline. Marketing-facing product updates,
@@ -425,6 +426,7 @@ const Changelog = () => {
       <Seo
         title="What's New — Book A Sloth Changelog"
         description="Every feature, improvement, and fix shipped to Book A Sloth. Follow the latest updates to the appointment booking platform."
+        image={ogCard('changelog')}
         canonical={`${SITE_URL}/changelog`}
       />
       {/* Decorative animated mesh backdrop (fixed, full-bleed) */}

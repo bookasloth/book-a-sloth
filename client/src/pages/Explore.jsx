@@ -13,6 +13,7 @@ import ServiceCard from '../components/guest/ServiceCard';
 import Pagination from '../components/guest/Pagination';
 import CategoryFilter from '../components/guest/CategoryFilter';
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import { SITE_URL } from '../utils/seo';
 import { getExploreServices, getExploreCategories } from '../services/api';
 
@@ -123,6 +124,7 @@ function ExploreFull() {
       <Seo
         title="Explore Services — Book A Sloth"
         description="Discover and book 1:1 services from coaches, consultants, therapists and creators on Book A Sloth. Search by skill or browse by category."
+        image={ogCard('explore')}
         canonical={`${SITE_URL}/explore`}
       />
 
@@ -284,6 +286,7 @@ function ExploreComingSoon() {
       <Seo
         title="Explore Services — Book A Sloth"
         description="Discover and book 1:1 services from coaches, consultants, therapists and creators on Book A Sloth."
+        image={ogCard('explore')}
         canonical={`${SITE_URL}/explore`}
       />
       <div className="w-full max-w-lg text-center">

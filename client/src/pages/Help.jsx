@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MessageCircle, MessageSquare, Phone, Mail, Sparkles, Copy, Check } from "lucide-react";
 import Seo from "../components/common/Seo";
+import { ogCard } from "../config/ogImages";
 import { SITE_URL, faqJsonLd } from "../utils/seo";
 
 /**
@@ -117,6 +118,7 @@ const Help = () => (
     <Seo
       title="Help & Support — Book A Sloth"
       description="Get help with bookings, rescheduling, payments, and becoming a host on Book A Sloth. Answers to common questions plus WhatsApp, email, and phone support."
+      image={ogCard('help')}
       canonical={`${SITE_URL}/help`}
       jsonLd={faqJsonLd({ faqs: FAQ })}
     />

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Seo from '../../components/common/Seo';
+import { ogCard } from '../../config/ogImages';
 import { SITE_URL } from '../../utils/seo';
 import { getServicesDirectory } from '../../services/api';
 import { iconFor } from '../../config/professionIcons';
@@ -18,6 +19,7 @@ export default function ServicesDirectory() {
       <Seo
         title="Browse Services by Profession | Book A Sloth"
         description="Find bookable services from photographers, coaches, designers, tutors and more — compare professionals and book online."
+        image={ogCard('services')}
         canonical={`${SITE_URL}/services`}
       />
       <h1 className="font-heading text-[2.1rem] font-extrabold leading-[1.12] tracking-tight text-[#1E1E1E] xl:text-[2.7rem]">

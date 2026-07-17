@@ -18,6 +18,7 @@ import useUtm from "../../hooks/useUtm";
 import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
 import Seo from "../../components/common/Seo";
+import { ogCard } from "../../config/ogImages";
 import { SITE_URL } from "../../utils/seo";
 import HowItWorks from "../../components/home/HowItWorks";
 import LogoMarquee from "../../components/about/LogoMarquee";
@@ -195,6 +196,7 @@ const ZohoBookingsAlternative = () => {
       <Seo
         title="The Best Zoho Bookings Alternative for Creators — Book A Sloth"
         description="Looking for a Zoho Bookings alternative? Book A Sloth offers simple scheduling with UPI payments, GST invoices, and WhatsApp reminders — built for Indian professionals."
+        image={ogCard('lp-zoho-bookings-alternative')}
         canonical={`${SITE_URL}/lp/zoho-bookings-alternative`}
       />
 

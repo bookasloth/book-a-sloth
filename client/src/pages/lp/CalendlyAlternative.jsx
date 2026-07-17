@@ -14,6 +14,7 @@ import useUtm from "../../hooks/useUtm";
 import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
 import Seo from "../../components/common/Seo";
+import { ogCard } from "../../config/ogImages";
 import { SITE_URL } from "../../utils/seo";
 import HowItWorks from "../../components/home/HowItWorks";
 import LogoMarquee from "../../components/about/LogoMarquee";
@@ -253,6 +254,7 @@ const CalendlyAlternative = () => {
       <Seo
         title="The Best Calendly Alternative for Creators — Book A Sloth"
         description="Looking for a Calendly alternative? Book A Sloth adds payments, reminders, and a booking page built for coaches, consultants, and creators."
+        image={ogCard('lp-calendly-alternative')}
         canonical={`${SITE_URL}/lp/calendly-alternative`}
       />
       {/* ══════ HEADER ══════ */}

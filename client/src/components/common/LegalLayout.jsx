@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import useDocumentMeta from '../../hooks/useDocumentMeta';
 import Seo from './Seo';
 import { SITE_URL } from '../../utils/seo';
+import { ogCard } from '../../config/ogImages';
 
 /**
  * Shared chrome for the legal pages (/terms, /privacy, /refund). Keeps the three
@@ -32,6 +33,7 @@ export default function LegalLayout({ title, updated = '20 June 2026', current, 
       title={`${title} | Book A Sloth`}
       description={description || `${title} for Book A Sloth — the online appointment booking and scheduling platform.`}
       canonical={canonical}
+      image={current ? ogCard(current.replace(/^\//, '')) : undefined}
     />
     <div className="app-container py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
