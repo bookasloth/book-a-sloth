@@ -1,0 +1,62 @@
+# MANUAL FALLBACK deployer. Not the normal path.
+#
+# Production normally deploys through Vercel's own Git integration
+# (client/vercel.json → git.deploymentEnabled: true), which runs `vercel-build`:
+# vitest → vite build → prerender, failing the deploy on any error.
+#
+# DELIBERATELY workflow_dispatch ONLY — no `on: push`. With the Git integration
+# connected, a push trigger here would deploy the same commit twice, racing itself
+# for the production alias. This exists purely as a break-glass: run it by hand
+# from the Actions tab if Vercel's Git integration stops firing.
+#
+# Note it will NOT run while the Actions spending limit is exhausted — jobs are
+# refused before checkout ("recent account payments have failed or your spending
+# limit needs to be increased"). If both this and the Git integration are dead,
+# deploy from a machine with the Vercel CLI:
+#
+#   npx vercel deploy --prod        # run from the REPO ROOT (project root dir is `client`)
+#
+# WHY TOKEN-AUTH: the Vercel project sits on a Hobby team, and Vercel's git
+# integration blocks deployments whose commit author isn't the team owner ("does
+# not have contributing access"). Token-authenticated CLI deploys run AS the
+# owner and bypass that check — which is why this remains a useful fallback even
+# though the Git integration is the primary path.
+#
+# REQUIRED SECRET (GitHub repo → Settings → Secrets and variables → Actions):
+#   VERCEL_TOKEN — create at vercel.com → Account Settings → Tokens.
+# Org/project IDs are not secrets; they are pinned below.
+
+name: Deploy to Vercel (manual fallback)
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: team_zIeLwmD7MoWJWDJyb2YEb8IK
+  VERCEL_PROJECT_ID: prj_b02XYKuwhxoZakgucihWVXgUdUIA
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      # Build REMOTELY on Vercel (no `vercel build` + `--prebuilt`). Local CI
+      # builds via `vercel pull` cannot access env vars marked Sensitive in the
+      # Vercel dashboard, so the 2026-07-08 deploy shipped a bundle with no
+      # VITE_* vars baked in — a total white screen. Remote builds run inside
+      # Vercel's infra where ALL project env vars (sensitive included) exist,
+      # and run `vercel-build`, so the tests + prerender gate apply here too.
+      - name: Deploy (remote build)
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
