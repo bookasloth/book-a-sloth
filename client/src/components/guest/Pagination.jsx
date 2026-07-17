@@ -1,22 +1,33 @@
 /**
- * Pagination.jsx — numbered pager for Explore. Max 8 pages (96-cap ÷ 12), so we
- * render every page number, no ellipsis. Uses <Link> (crawlable) with hrefs that
- * preserve q + filters; rel="prev"/"next" on the arrows; scrolls to top on change.
+ * Pagination.jsx — "Slooooooooooth" doodle pager for Explore, à la Google's
+ * "Goooogle". The word always spells sloth with a fixed TEN o's — one per page
+ * slot, left→right = pages 1‥10. The current page's 'o' lights up in a palette
+ * colour; o's for pages that exist stay clickable greyscale; o's past the real
+ * page count are dimmed and dead. S/l/t/h are decoration. Arrows carry
+ * rel="prev"/"next" and scroll to top on change.
  *
  * Props: page, totalPages, hrefFor(pageNum) => string
  */
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Flat, matching /blog's pager: current page is an ink fill, the rest are quiet
-// until hovered. Explore-only — the admin pages have their own Pagination.
-const cellBase =
-  'flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold transition-colors duration-150';
+// Ten fixed slots so the brand word is always "Slooooooooooth".
+const SLOTS = 10;
+// Founder palette (photo), black/white excluded. Cycled by page → across 10
+// slots each colour lands exactly twice. Only the active o shows its colour.
+const PAGE_COLORS = ['#FE5100', '#FF4D93', '#4AB765', '#FFCC1C', '#269CEF'];
+const colorFor = (p) => PAGE_COLORS[(p - 1) % PAGE_COLORS.length];
+
+const wordBase = 'font-heading text-4xl font-extrabold tracking-tight sm:text-5xl';
+const arrowBase =
+  'flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-150';
 
 export default function Pagination({ page, totalPages, hrefFor }) {
-  if (!totalPages || totalPages <= 1) return null;
+  // Show the full "Slooooooooooth" word from the first page on as brand
+  // decoration — only truly empty results (no pages) hide it.
+  if (!totalPages) return null;
   const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const slots = Array.from({ length: SLOTS }, (_, i) => i + 1);
 
   return (
     <nav className="flex items-center justify-center gap-2 mt-10" aria-label="Pagination">
@@ -26,26 +37,41 @@ export default function Pagination({ page, totalPages, hrefFor }) {
         aria-label="Previous page"
         aria-disabled={page === 1}
         onClick={(e) => (page === 1 ? e.preventDefault() : toTop())}
-        className={`${cellBase} ${page === 1
+        className={`${arrowBase} ${page === 1
           ? 'pointer-events-none text-gray-300'
           : 'text-gray-600 hover:bg-black/[0.04] hover:text-ink'}`}
       >
-        <ChevronLeft size={16} />
+        <ChevronLeft size={18} />
       </Link>
 
-      {pages.map((p) => (
-        <Link
-          key={p}
-          to={hrefFor(p)}
-          aria-current={p === page ? 'page' : undefined}
-          onClick={toTop}
-          className={`${cellBase} ${p === page
-            ? 'bg-ink text-white'
-            : 'text-gray-600 hover:bg-black/[0.04] hover:text-ink'}`}
-        >
-          {p}
-        </Link>
-      ))}
+      {/* Sl-oooooooooo-th. Ten o's: real pages link, the rest are dead word. */}
+      <span className={`${wordBase} select-none flex items-baseline`}>
+        <span className="text-gray-300" aria-hidden="true">Sl</span>
+        {slots.map((p) => {
+          const real = p <= totalPages;
+          const active = p === page;
+          // Past the real page count: decorative dim 'o', not a link.
+          if (!real) {
+            return <span key={p} className="text-gray-200" aria-hidden="true">o</span>;
+          }
+          return (
+            <Link
+              key={p}
+              to={hrefFor(p)}
+              aria-label={`Page ${p}`}
+              aria-current={active ? 'page' : undefined}
+              onClick={toTop}
+              style={active ? { color: colorFor(p) } : undefined}
+              className={`transition-colors duration-150 ${active
+                ? ''
+                : 'text-gray-300 hover:text-gray-500'}`}
+            >
+              o
+            </Link>
+          );
+        })}
+        <span className="text-gray-300" aria-hidden="true">th</span>
+      </span>
 
       <Link
         to={hrefFor(Math.min(totalPages, page + 1))}
@@ -53,11 +79,11 @@ export default function Pagination({ page, totalPages, hrefFor }) {
         aria-label="Next page"
         aria-disabled={page === totalPages}
         onClick={(e) => (page === totalPages ? e.preventDefault() : toTop())}
-        className={`${cellBase} ${page === totalPages
+        className={`${arrowBase} ${page === totalPages
           ? 'pointer-events-none text-gray-300'
           : 'text-gray-600 hover:bg-black/[0.04] hover:text-ink'}`}
       >
-        <ChevronRight size={16} />
+        <ChevronRight size={18} />
       </Link>
     </nav>
   );
