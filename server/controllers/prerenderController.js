@@ -22,10 +22,29 @@ const truncate = (s, n = 160) => {
   return str.length <= n ? str : str.slice(0, n - 1).trimEnd() + '…';
 };
 
+/**
+ * Google profile photos come back as `=s96-c` — 96px. Facebook's minimum for a
+ * link card is 200x200, so a host's own avatar was UNDER the floor and Facebook
+ * and WhatsApp rendered no card at all, rather than a small one. The size is just
+ * a URL parameter, so ask for one that clears it. Only touches Google's
+ * `=s<N>-c` suffix; every other image URL passes through untouched.
+ */
+const upscaleAvatar = (url) => String(url || '').replace(/=s\d+-c$/, '=s512-c');
+
 function buildHtml({ title, description, canonical, ogTitle, ogDescription, image, robots, jsonLd }) {
   const site = trimSlash(SITE_URL);
   const img = image || `${site}/og-image.png`;
   const rob = robots || 'index,follow';
+  // Only the site fallback has dimensions we actually know. Host avatars and
+  // service thumbnails are whatever the host uploaded — declaring 1200x630 over a
+  // square avatar told scrapers a size the file does not have. Omit the hint and
+  // let them measure the real thing.
+  // ponytail: a square image under a summary_large_image card renders letterboxed.
+  // Right fix is a generated 1200x630 card per host (as /blog already does), not
+  // guessing here.
+  const sizeHints = image
+    ? ''
+    : '\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -41,9 +60,7 @@ function buildHtml({ title, description, canonical, ogTitle, ogDescription, imag
 <meta property="og:title" content="${esc(ogTitle || title)}">
 <meta property="og:description" content="${esc(ogDescription || description)}">
 <meta property="og:url" content="${esc(canonical)}">
-<meta property="og:image" content="${esc(img)}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+<meta property="og:image" content="${esc(img)}">${sizeHints}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(ogTitle || title)}">
 <meta name="twitter:description" content="${esc(ogDescription || description)}">
@@ -81,6 +98,10 @@ const renderProfileMeta = async (req, res) => {
     const description = host.seo_description
       || truncate(host.bio || `Book sessions with ${name} on Book A Sloth.`);
     const canonical = `${site}/${host.username}`;
+    // Resolved once: the OG tag and the JSON-LD both point at the host's photo,
+    // and upscaling only one of them is how you get a card that works next to
+    // structured data that still says 96px.
+    const avatar = upscaleAvatar(host.seo_image || host.profile_image) || undefined;
 
     const jsonLd = {
       '@context': 'https://schema.org',
@@ -92,7 +113,7 @@ const renderProfileMeta = async (req, res) => {
         url: canonical,
         jobTitle: host.profession || undefined,
         description: host.seo_description || host.bio || undefined,
-        image: host.seo_image || host.profile_image || undefined,
+        image: avatar,
         ...(Array.isArray(services) && services.length ? {
           makesOffer: services.filter(s => s && s.title).map(s => ({
             '@type': 'Offer',
@@ -108,7 +129,7 @@ const renderProfileMeta = async (req, res) => {
       canonical,
       ogTitle: host.og_title || host.seo_title || name,
       ogDescription: host.og_description || description,
-      image: host.seo_image || host.profile_image,
+      image: avatar,
       robots: host.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
       jsonLd,
     });

@@ -54,7 +54,10 @@ const PRERENDER_ROUTES = [
   '/privacy',
   '/terms',
   '/refund',
-  '/badges',
+  // No '/badges' — there is no such page. The badge routes are /:profileSlug/badges
+  // and /admin/badges; a bare /badges falls through to the /:profileSlug route and
+  // looks up a host named "badges". It rendered, and shipped the homepage's <head>
+  // verbatim as a result.
   '/services',
   '/explore',
   '/for/lawyers',
@@ -138,6 +141,17 @@ async function launchOptions() {
 }
 
 function createStaticServer() {
+  // Snapshot the pristine shell BEFORE any route is rendered into it.
+  //
+  // `/` is written to dist/index.html, and that same file is the SPA fallback
+  // every OTHER route is served from. Read it off disk per request and the moment
+  // `/` finishes, every later route renders on top of the homepage's <head> —
+  // inheriting its og:image and any tag its own <Seo> does not overwrite. That is
+  // how /terms and /lp/* ended up pointing at the homepage's card. With a
+  // concurrent pool it is also a race: which routes inherit depends on when `/`
+  // happens to land. Serving the snapshot keeps every route's <head> its own.
+  const shell = readFileSync(join(DIST, 'index.html'));
+
   const mime = {
     '.html': 'text/html',
     '.js': 'application/javascript',
@@ -155,10 +169,15 @@ function createStaticServer() {
   };
 
   return createServer((req, res) => {
-    let filePath = join(DIST, req.url === '/' ? 'index.html' : req.url);
+    const urlPath = req.url === '/' ? '/index.html' : req.url;
+    const filePath = join(DIST, urlPath);
 
-    if (!existsSync(filePath)) {
-      filePath = join(DIST, 'index.html');
+    // `/` and every unknown path (i.e. every SPA route) serve the snapshot, not
+    // whatever is on disk by now.
+    if (urlPath === '/index.html' || !existsSync(filePath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(shell);
+      return;
     }
 
     const ext = '.' + filePath.split('.').pop();
@@ -169,9 +188,10 @@ function createStaticServer() {
       res.writeHead(200, { 'Content-Type': contentType });
       res.end(content);
     } catch {
-      const fallback = readFileSync(join(DIST, 'index.html'));
+      // Real assets only reach here on an unreadable file (e.g. an already-created
+      // route directory) — the SPA shell is still the right answer.
       res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(fallback);
+      res.end(shell);
     }
   });
 }
