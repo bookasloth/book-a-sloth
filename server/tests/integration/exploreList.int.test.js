@@ -152,4 +152,26 @@ describe('GET /api/explore', () => {
     const res = await request(app).get('/api/explore');
     expect(res.status).toBe(500);
   });
+
+  test('card carries description (short preferred) + meetingMode', async () => {
+    supabaseAdmin.from.mockReturnValueOnce(awaitable({
+      data: [row({ short_description: 'Short one.', description: 'Long one.', meeting_mode: 'offline' })],
+      error: null,
+    }));
+    const res = await request(app).get('/api/explore?category=photographer');
+    expect(res.status).toBe(200);
+    expect(res.body.services[0].description).toBe('Short one.');
+    expect(res.body.services[0].meetingMode).toBe('offline');
+  });
+
+  test('description falls back to the long field; meetingMode defaults to online', async () => {
+    supabaseAdmin.from.mockReturnValueOnce(awaitable({
+      data: [row({ short_description: null, description: 'Long one.', meeting_mode: null })],
+      error: null,
+    }));
+    const res = await request(app).get('/api/explore?category=photographer');
+    expect(res.status).toBe(200);
+    expect(res.body.services[0].description).toBe('Long one.');
+    expect(res.body.services[0].meetingMode).toBe('online');
+  });
 });

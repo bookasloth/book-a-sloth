@@ -18,7 +18,8 @@ import { getExploreServices, getExploreCategories } from '../services/api';
 
 // Launch flag: flip true to show the placeholder instead of the live page.
 const COMING_SOON = false;
-const PAGE_SIZE = 12;
+// 9 = three whole rows of the 3-up grid. The card is portrait; 4-up gives slivers.
+const PAGE_SIZE = 9;
 
 function ExploreFull() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -199,15 +200,22 @@ function ExploreFull() {
 
         {/* Grid / skeleton / empty */}
         {firstLoad ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: PAGE_SIZE }).map((_, i) => (
               <div key={i} className="page-card animate-pulse overflow-hidden">
                 <div className="aspect-[4/3] bg-black/[0.04]" />
-                <div className="space-y-2 p-3.5">
-                  <div className="h-3 w-16 rounded bg-black/[0.04]" />
-                  <div className="h-4 w-full rounded bg-black/[0.04]" />
-                  <div className="h-4 w-2/3 rounded bg-black/[0.04]" />
-                  <div className="h-3 w-1/2 rounded bg-black/[0.04]" />
+                <div className="space-y-2 p-4">
+                  <div className="h-5 w-3/4 rounded bg-black/[0.04]" />
+                  <div className="h-3 w-full rounded bg-black/[0.04]" />
+                  <div className="h-3 w-2/3 rounded bg-black/[0.04]" />
+                  <div className="flex gap-1.5 pt-1">
+                    <div className="h-6 w-20 rounded-full bg-black/[0.04]" />
+                    <div className="h-6 w-16 rounded-full bg-black/[0.04]" />
+                  </div>
+                  <div className="flex items-end justify-between pt-3">
+                    <div className="h-7 w-20 rounded bg-black/[0.04]" />
+                    <div className="h-9 w-28 rounded bg-black/[0.04]" />
+                  </div>
                 </div>
               </div>
             ))}
@@ -239,10 +247,10 @@ function ExploreFull() {
           </div>
         ) : (
           // Keep previous results rendered while a new page loads (dim only).
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity
+          <div className={`grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 transition-opacity
                           ${fetching ? 'opacity-60' : 'opacity-100'}`}>
             {services.map((s, idx) => (
-              <ServiceCard key={s.id || idx} service={s} rank={(page - 1) * PAGE_SIZE + idx + 1} variant="flat" />
+              <ServiceCard key={s.id || idx} service={s} rank={(page - 1) * PAGE_SIZE + idx + 1} />
             ))}
           </div>
         )}

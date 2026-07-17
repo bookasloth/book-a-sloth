@@ -52,6 +52,9 @@ function toCard(row) {
     id: row.id,
     slug: row.slug,
     title: row.title || '',
+    // Card blurb: hosts write a short one for cards, long one for the detail page.
+    // 20 of 38 live services have neither — the card omits the block entirely.
+    description: row.short_description || row.description || '',
     price: row.price == null ? null : Number(row.price),
     currency: row.currency || 'INR',
     coverImage: row.thumbnail_url || null,
@@ -62,6 +65,9 @@ function toCard(row) {
     reviewCount: row.total_reviews || 0,
     category: row.category || host.primary_category || '',
     area: host.location || '',
+    // Host's own pick at service-create time. Column is `meeting_mode`;
+    // `service_type` is a client-side alias that does not exist in Postgres.
+    meetingMode: row.meeting_mode === 'offline' ? 'offline' : 'online',
     url: host.username && row.slug ? `/${host.username}/${row.slug}` : null,
     badges: {
       instantBook: false,                                // no instant-book flag in schema (PROGRESS deferrals)
@@ -89,7 +95,7 @@ function logSearchEvent(req, { q, filters, page, results }) {
 async function fetchRanked(category, service, q) {
   let sel = supabaseAdmin
     .from('services')
-    .select(`id, slug, title, description, price, currency, category, thumbnail_url, rating, total_reviews,
+    .select(`id, slug, title, description, short_description, meeting_mode, price, currency, category, thumbnail_url, rating, total_reviews,
              profiles!inner(name, username, profile_image, is_verified, is_banned, location, primary_category, created_at, role),
              service_scores(effective_score, score_components)`)
     .eq('is_active', true)
