@@ -64,9 +64,13 @@ const PRERENDER_ROUTES = [
 
 /**
  * Blog posts live in the DB, so their routes can't be a static list — ask the
- * same public API the SPA uses. Best-effort by design: a build with no reachable
- * API still ships every static route above, and posts fall back to SPA rendering
- * (which humans see fine, but crawlers and AI answer engines largely don't).
+ * same public API the SPA uses.
+ *
+ * On Vercel an unreachable API is FATAL. This function is fail-open by nature,
+ * and a silent fallback there would ship a "successful" deploy that quietly
+ * dropped every blog post from the prerender — the exact failure we spent a night
+ * chasing, wearing a green tick. Locally it stays a warning: a dev without the API
+ * running still wants a build.
  */
 async function blogRoutes() {
   // This is a standalone node process, so Vite has not put .env into process.env
@@ -74,6 +78,7 @@ async function blogRoutes() {
   const env = loadEnv(process.env.NODE_ENV || 'production', join(__dirname, '..'), '');
   const base = (env.VITE_API_URL || process.env.VITE_API_URL || '').replace(/\/+$/, '');
   if (!base) {
+    if (process.env.VERCEL) throw new Error('VITE_API_URL unset — cannot resolve blog posts');
     console.warn('[prerender] VITE_API_URL unset — skipping blog posts');
     return [];
   }
@@ -85,6 +90,7 @@ async function blogRoutes() {
     console.log(`[prerender] ${routes.length} blog posts from ${base}`);
     return routes;
   } catch (err) {
+    if (process.env.VERCEL) throw new Error(`blog posts unresolvable (${err.message})`);
     console.warn(`[prerender] blog posts skipped (${err.message}) — static routes still render`);
     return [];
   }
@@ -226,10 +232,23 @@ async function prerender() {
   await browser.close();
   server.close();
 
-  console.log(`[prerender] Done: ${rendered} rendered, ${failed} skipped`);
+  console.log(`[prerender] Done: ${rendered} rendered, ${failed} failed (${routes.length} routes)`);
+
+  // A route that failed to render ships as the bare SPA shell: 200 OK, no title,
+  // no og:image, no JSON-LD. Crawlers and WhatsApp see nothing. That is invisible
+  // to humans and is precisely how this went unnoticed for weeks, so it fails the
+  // build rather than deploying quietly.
+  //
+  // Deliberately NOT a check for exactly 77: the count is 43 static + however many
+  // posts are published, so it moves every time you publish. "Nothing failed" is
+  // the invariant that actually matters and it does not need maintaining.
+  if (failed > 0) {
+    console.error(`[prerender] FAILED: ${failed} of ${routes.length} route(s) did not render — refusing to ship a partially-rendered build.`);
+    process.exit(1);
+  }
 }
 
 prerender().catch((err) => {
-  console.error('[prerender] Fatal error (build continues):', err.message);
-  process.exit(0); // Non-blocking — SPA fallback works without prerender
+  console.error('[prerender] FAILED:', err.message);
+  process.exit(1);
 });

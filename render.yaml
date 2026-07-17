@@ -14,7 +14,16 @@ services:
     region: singapore
     plan: starter # $7/mo, always-on (no spin-down → reminder/email crons keep running)
     branch: main
-    buildCommand: npm ci
+    # Tests gate the deploy: the server ships from HERE, so this is the only place
+    # a failing server test can actually stop a bad server reaching production.
+    # (Running them in the Vercel build instead would gate the *client* deploy on
+    # server tests — wrong service — and would mean putting the service-role key
+    # into the client's deploy project just to run jest.)
+    #
+    # Unit tests only — `npm test` would also run tests/integration, which hit live
+    # Supabase/SMTP with this service's real credentials. Firing those at production
+    # on every deploy is not a build check, it is a side effect.
+    buildCommand: npm ci && npm run test:unit
     startCommand: npm start
     healthCheckPath: /health
     autoDeploy: true # deploy automatically on push to main
@@ -89,7 +98,10 @@ services:
     region: singapore
     plan: free
     branch: staging
-    buildCommand: npm ci
+    # Unit tests only — `npm test` would also run tests/integration, which hit live
+    # Supabase/SMTP with this service's real credentials. Firing those at a live DB
+    # on every deploy is not a build check, it is a side effect.
+    buildCommand: npm ci && npm run test:unit
     startCommand: npm start
     healthCheckPath: /health
     autoDeploy: true # auto-deploy on push to the `staging` branch
