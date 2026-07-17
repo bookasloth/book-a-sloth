@@ -3,34 +3,42 @@
  *
  * Props:
  *   service — flat card from GET /api/explore .services[]:
- *     { id, slug, title, price, currency, coverImage, hostName, hostUsername,
- *       hostAvatar, avgRating, reviewCount, category, area, url,
- *       badges:{ instantBook, isNew, availableThisWeek } }
+ *     { id, slug, title, description, price, currency, coverImage, hostName,
+ *       hostUsername, hostAvatar, avgRating, reviewCount, area, meetingMode,
+ *       url, badges:{ isNew, availableThisWeek } }
  *   rank    — 1-based position in the current result set (for click analytics).
  *
  * Explore-only. HostProfile has its OWN local ServiceCard (defined inline there),
  * so restyling this one cannot reach it — checked by import, not by name.
- * Flat minimal, matching /blog: page-card chrome, hairline rules, tinted pills.
  */
 import { Link } from 'react-router-dom';
-import { Star, BadgeCheck, Zap, MapPin, CalendarCheck } from 'lucide-react';
+import { Star, BadgeCheck, MapPin, CalendarCheck, Users, Sparkles, ArrowRight } from 'lucide-react';
 import { logExploreClick } from '../../services/api';
 
 const AVATAR_FALLBACK = 'https://api.dicebear.com/7.x/initials/svg?seed=';
 
+const Pill = ({ icon: Icon, tone, children }) => (
+  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium
+                    ${tone === 'green'
+                      ? 'border-green-200 bg-green-50 text-green-700'
+                      : 'border-black/10 bg-black/[0.02] text-muted'}`}>
+    <Icon size={11} className="shrink-0" /> {children}
+  </span>
+);
+
 export default function ServiceCard({ service, rank }) {
   const {
-    id, slug, title = '', price, currency = 'INR', coverImage,
+    id, slug, title = '', description = '', price, currency = 'INR', coverImage,
     hostName = 'Host', hostUsername = '#', hostAvatar,
-    avgRating, reviewCount = 0, category = '', area = '',
+    avgRating, reviewCount = 0, area = '', meetingMode = 'online',
     url, badges = {},
   } = service || {};
 
-  const to = url || (hostUsername && slug ? `/${hostUsername}/${slug}` : '#');
-  const priceLabel = price > 0
-    ? `From ${currency === 'INR' ? '₹' : '$'}${Number(price).toLocaleString('en-IN')}`
-    : 'Free';
+  const to        = url || (hostUsername && slug ? `/${hostUsername}/${slug}` : '#');
+  const isFree    = !(price > 0);
+  const priceText = isFree ? 'Free' : `${currency === 'INR' ? '₹' : '$'}${Number(price).toLocaleString('en-IN')}`;
   const avatarSrc = hostAvatar || `${AVATAR_FALLBACK}${encodeURIComponent(hostName)}`;
+  const modeLabel = meetingMode === 'offline' ? 'In-person' : 'Online';
 
   return (
     <Link
@@ -39,78 +47,77 @@ export default function ServiceCard({ service, rank }) {
       style={{ textDecoration: 'none' }}
       className="page-card group flex flex-col overflow-hidden transition-shadow hover:shadow-md"
     >
-      {/* Cover 4:3 */}
+      {/* Cover 4:3, host chip overlaid on it */}
       <div className="relative aspect-[4/3] overflow-hidden bg-[#FFF8EE]">
         {coverImage ? (
-          <img
-            src={coverImage}
-            alt={title}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-          />
+          <img src={coverImage} alt={title} loading="lazy"
+               className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl" aria-hidden="true">🦥</div>
+          <div className="flex h-full w-full items-center justify-center text-4xl" aria-hidden="true">🦥</div>
         )}
 
-        {/* Badges */}
-        <div className="absolute top-2 left-2 flex flex-wrap gap-1">
-          {badges.isNew && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">New</span>
-          )}
-          {badges.instantBook && (
-            <span className="flex items-center gap-1 rounded-full bg-primary-cta px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-              <Zap size={9} fill="white" /> Instant
-            </span>
-          )}
+        {badges.isNew && (
+          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-amber-100
+                           px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+            <Sparkles size={9} /> New
+          </span>
+        )}
+
+        {/* Scrim: white chip text is unreadable over a light host photo without it. */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent pt-8">
+          <div className="flex items-center gap-2 p-3">
+            <img src={avatarSrc} alt=""
+                 className="h-8 w-8 shrink-0 rounded-full border-2 border-white/80 object-cover" />
+            <div className="min-w-0">
+              <span className="flex items-center gap-1 text-[13px] font-semibold text-white">
+                <span className="truncate">{hostName}</span>
+                {/* Explore only lists is_verified hosts, so this is always true here. */}
+                <BadgeCheck size={13} className="shrink-0 text-secondary" />
+              </span>
+              {reviewCount > 0 && (
+                <span className="flex items-center gap-1 text-[11px] text-white/80">
+                  <Star size={10} className="fill-secondary text-secondary" />
+                  {avgRating?.toFixed(1)} · {reviewCount} review{reviewCount === 1 ? '' : 's'}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Body */}
-      <div className="flex flex-col flex-1 p-3.5">
-        {category && (
-          <span className="mb-2 self-start rounded-full bg-black/[0.04] px-2 py-0.5 text-[10px] font-semibold text-muted">
-            {category}
-          </span>
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="font-heading text-lg font-bold leading-snug text-ink line-clamp-2
+                       transition-colors duration-150 group-hover:text-primary-cta">
+          {title}
+        </h3>
+
+        {description && (
+          <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-muted">{description}</p>
         )}
 
-        <h3 className="font-heading text-[15px] font-bold leading-snug text-ink line-clamp-2 transition-colors duration-150 group-hover:text-primary-cta">{title}</h3>
-
-        {/* Host row */}
-        <div className="flex items-center gap-2 mt-2">
-          <img src={avatarSrc} alt={hostName}
-               className="h-5 w-5 rounded-full border border-black/10 bg-[#FFF8EE] object-cover" />
-          <span className="truncate text-[12px] text-muted">{hostName}</span>
-        </div>
-
-        {/* Meta: rating + area */}
-        <div className="flex items-center gap-3 mt-2 text-[12px]">
-          {avgRating > 0 ? (
-            <span className="flex items-center gap-1 font-semibold text-ink">
-              <Star size={12} className="fill-amber-400 text-amber-400" />
-              {avgRating.toFixed(1)}
-              {reviewCount > 0 && <span className="font-normal text-muted">({reviewCount})</span>}
-            </span>
-          ) : (
-            <span className="text-muted">No reviews yet</span>
-          )}
-          {area && (
-            <span className="flex items-center gap-1 truncate text-muted">
-              <MapPin size={11} /> <span className="truncate">{area}</span>
-            </span>
+        <div className="mb-4 mt-3 flex flex-wrap gap-1.5">
+          {area && <Pill icon={MapPin}>{area}</Pill>}
+          <Pill icon={Users}>{modeLabel}</Pill>
+          {badges.availableThisWeek && (
+            <Pill icon={CalendarCheck} tone="green">Available this week</Pill>
           )}
         </div>
 
-        {badges.availableThisWeek && (
-          <span className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-green-600">
-            <CalendarCheck size={12} /> Available this week
-          </span>
-        )}
-
-        {/* Footer: price + verified host */}
-        <div className="flex items-center justify-between mt-auto pt-3">
-          <span className="text-[13px] font-bold text-ink">{priceLabel}</span>
-          <span className="flex items-center gap-1 text-[11px] text-muted">
-            <BadgeCheck size={13} className="text-primary-cta" /> Verified
+        {/* Footer: mt-auto keeps footers aligned across a row when a card has no description. */}
+        <div className="mt-auto flex items-end justify-between gap-3 border-t border-black/5 pt-3.5">
+          <div>
+            {!isFree && (
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Starts at</p>
+            )}
+            <p className="font-heading text-xl font-bold leading-tight text-ink">{priceText}</p>
+            {!isFree && <p className="text-[11px] text-muted">per session</p>}
+          </div>
+          {/* A <span>, not an <a> — the whole card is already a <Link>; nesting anchors is invalid. */}
+          <span className="btn inline-flex shrink-0 items-center gap-1.5 bg-primary-cta px-4 py-2
+                           text-[13px] font-semibold text-white transition-colors duration-150
+                           group-hover:bg-[#a83400]">
+            Book Now <ArrowRight size={14} />
           </span>
         </div>
       </div>
