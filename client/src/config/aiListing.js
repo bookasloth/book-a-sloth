@@ -1,8 +1,7 @@
 // "Write with Bolt" AI listing autofill availability.
 //
-// Kept FALSE until go-live: ANTHROPIC_API_KEY provisioned (server + Render),
-// v3.69 migration applied on both DBs, and subscription_plans.limits seeded
-// with ai_generations. While false the ServiceForm button renders greyscaled +
-// inactive so hosts see the feature is coming without hitting a 503.
-// Flip to true as the final go-live step.
-export const BOLT_ENABLED = false;
+// LIVE as of 2026-07-xx go-live: v3.69 migration applied on both DBs (with RLS
+// lockdown), subscription_plans.limits seeded with ai_generations, and
+// ANTHROPIC_API_KEY set on the Render backend. When true the ServiceForm button
+// is active; when false it renders greyscaled + inactive (the pre-key state).
+export const BOLT_ENABLED = true;
