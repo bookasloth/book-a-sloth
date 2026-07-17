@@ -23,7 +23,9 @@ const arrowBase =
   'flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-150';
 
 export default function Pagination({ page, totalPages, hrefFor }) {
-  if (!totalPages || totalPages <= 1) return null;
+  // Show the full "Slooooooooooth" word from the first page on as brand
+  // decoration — only truly empty results (no pages) hide it.
+  if (!totalPages) return null;
   const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   const slots = Array.from({ length: SLOTS }, (_, i) => i + 1);
 
