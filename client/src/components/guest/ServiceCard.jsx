@@ -18,11 +18,11 @@ import { logExploreClick } from '../../services/api';
 const AVATAR_FALLBACK = 'https://api.dicebear.com/7.x/initials/svg?seed=';
 
 const Pill = ({ icon: Icon, tone, children }) => (
-  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium
+  <span className={`inline-flex min-w-0 max-w-full items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium
                     ${tone === 'green'
                       ? 'border-green-200 bg-green-50 text-green-700'
                       : 'border-black/10 bg-black/[0.02] text-muted'}`}>
-    <Icon size={11} className="shrink-0" /> {children}
+    <Icon size={11} className="shrink-0" /> <span className="truncate">{children}</span>
   </span>
 );
 
