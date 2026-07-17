@@ -16,7 +16,7 @@ const ROUTES = [
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'lp', 'for',
   'og', // /og/blog/:slug — render target for the OG card generator
-  'my-bookings', 'profile', 'reviews', 'loyalty', 'settings', 'search',
+  'my-bookings', 'profile', 'reviews', 'loyalty', 'settings', 'search', 'wall-of-love',
   'sitemap', 'robots', 'health', 'manifest', 'favicon', 'get-in-touch',
 ];
 
