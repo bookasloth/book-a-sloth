@@ -34,11 +34,13 @@ const ORIGIN = `http://localhost:${PORT}`;
 
 const DEFAULT_TITLE = 'Book A Sloth — booked & paid at 0% commission';
 
-// 15s was enough locally and timed out on a cold Vercel builder, failing the whole
-// deploy for one slow page. Two attempts at 30s each: generous enough that a real
-// failure means the page is genuinely broken, not just unlucky.
+// 15s was enough locally and timed out on a cold Vercel builder. A first pass at
+// 30s runs 4-wide; anything that misses is retried serially at 60s on a now-idle
+// builder (see the two passes below). The retry number is generous on purpose:
+// by then nothing else competes for the builder, so a failure there is a
+// genuinely broken page, not an unlucky one.
 const NAV_TIMEOUT_MS = 30000;
-const ATTEMPTS = 2;
+const RETRY_TIMEOUT_MS = 60000;
 
 const PRERENDER_ROUTES = [
   '/',
@@ -190,7 +192,7 @@ async function prerender() {
   let rendered = 0;
   let failed = 0;
 
-  const renderOnce = async (route) => {
+  const renderOnce = async (route, navTimeout = NAV_TIMEOUT_MS) => {
     const page = await browser.newPage();
     try {
       // Block analytics/tracking requests — avoids phantom pageviews and speeds up render
@@ -204,7 +206,7 @@ async function prerender() {
         }
       });
 
-      await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle0', timeout: NAV_TIMEOUT_MS });
+      await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle0', timeout: navTimeout });
 
       // Wait for Seo.jsx useEffect to fire (title changes from default)
       await page.waitForFunction(
@@ -242,43 +244,51 @@ async function prerender() {
     }
   };
 
-  const renderWithRetry = async (route) => {
-    let lastErr;
-    // Retry once. A route failing here is not usually a broken page — it is a
-    // cold Vercel builder being slow, and the whole build now rides on this, so a
-    // single flaky navigation must not block a production deploy. A route that
-    // fails TWICE is a real problem and should stop the release.
-    for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
-      try {
-        const outPath = await renderOnce(route);
-        rendered++;
-        const note = attempt > 1 ? ` (attempt ${attempt})` : '';
-        console.log(`[prerender] ${route} → ${outPath.replace(DIST, 'dist')}${note}`);
-        return;
-      } catch (err) {
-        lastErr = err;
-        if (attempt < ATTEMPTS) console.warn(`[prerender] retry ${route}: ${err.message}`);
-      }
-    }
-    failed++;
-    console.error(`[prerender] FAIL ${route}: ${lastErr.message}`);
-  };
-
-  // Routes render through a pool of concurrent tabs. They are independent, and
-  // most of a route's wall clock is `networkidle0` waiting on its own requests —
-  // serially that wait was paid 77 times back to back; overlapped, it mostly
-  // disappears. Counters above stay exact: this is one event loop, no data races.
+  // First pass, 4-wide. Routes are independent and most of a route's wall clock
+  // is `networkidle0` waiting on its own requests — overlapped across a pool that
+  // wait mostly disappears. NO in-place retry: a timeout here is almost always
+  // the 4 tabs saturating the ~4-vCPU builder (and/or a backend the page fetches
+  // from being cold), and an immediate retry just re-enters the same jam — which
+  // is exactly how a run of adjacent /lp/ routes failed a deploy. Defer the
+  // stragglers to the serial pass below instead.
   // ponytail: fixed pool of 4, sized for the ~4-vCPU Vercel builder — lower it
   // first if prerender starts OOMing there, raise it if the builder grows.
   const POOL = 4;
+  const deferred = [];
   const queue = [...routes];
   await Promise.all(
     Array.from({ length: POOL }, async () => {
       while (queue.length > 0) {
-        await renderWithRetry(queue.shift());
+        const route = queue.shift();
+        try {
+          const outPath = await renderOnce(route);
+          rendered++;
+          console.log(`[prerender] ${route} → ${outPath.replace(DIST, 'dist')}`);
+        } catch (err) {
+          console.warn(`[prerender] defer ${route}: ${err.message}`);
+          deferred.push(route);
+        }
       }
     }),
   );
+
+  // Second pass: the deferred stragglers, one at a time on a now-idle builder
+  // (pool drained, any cold backend long since warm) with a longer timeout.
+  // Usually empty. A route that fails HERE is a real, reproducible failure and
+  // stops the release. Counters stay exact: one event loop, no data races.
+  if (deferred.length > 0) {
+    console.log(`[prerender] serial retry of ${deferred.length} deferred: ${deferred.join(', ')}`);
+    for (const route of deferred) {
+      try {
+        const outPath = await renderOnce(route, RETRY_TIMEOUT_MS);
+        rendered++;
+        console.log(`[prerender] ${route} → ${outPath.replace(DIST, 'dist')} (deferred retry)`);
+      } catch (err) {
+        failed++;
+        console.error(`[prerender] FAIL ${route}: ${err.message}`);
+      }
+    }
+  }
 
   await browser.close();
   server.close();
