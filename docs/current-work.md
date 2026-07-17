@@ -1,5 +1,11 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-07-16_
+_Last updated: 2026-07-18_
+
+## Deploy: prerender no longer flakes a merge's prod deploy (#405) — MERGED 2026-07-18
+
+> **Status: MERGED to main (`f734362`). Every merge to main already auto-deploys prod (`deploy-vercel.yml`, `on: push:[main]`, token-authed) — this removes the one thing that ever forced a manual re-run.**
+
+`client/scripts/prerender.mjs` retried a timed-out route **in place**, so a burst of adjacent `/lp/*` routes saturating the 4-wide pool (and/or hitting a cold backend) re-entered the same jam and failed the whole deploy — even though the same routes rendered fine seconds later. Now two passes: the pool **defers** stragglers instead of retrying in place, and a **serial** second pass re-renders them one at a time on a now-idle builder at 60s. Fail-on-any-miss guard unchanged, so a genuinely broken route still stops the release.
 
 ## Blog: index redesign + paging (#381) and a real 301 on `/blogs` (#382) — MERGED 2026-07-16
 
