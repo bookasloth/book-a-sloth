@@ -1,103 +1,81 @@
 /**
- * generateBlogOgImages.mjs — render a per-post OG card and store its URL on the post.
+ * generateBlogOgImages.mjs — render each post's icon thumbnail as a social card.
  *
- * Without this every post shares /og-image.png, so 22 different articles produce
- * one identical card in WhatsApp, LinkedIn, Slack and AI answer surfaces.
+ * Without this every post shares /og-image.png, so 34 different articles produce
+ * one identical preview in WhatsApp, LinkedIn and Slack.
  *
- * Lives in client/ because both dependencies it needs are already here: puppeteer
- * (the prerender's) and @supabase/supabase-js. Adding a rasteriser to server/
- * would have made Render download Chromium on every deploy — its build is `npm ci`,
- * which installs devDependencies.
+ * The card is a screenshot of the post's REAL BlogHeroThumbnail, served by the
+ * /og/blog/:slug route at exactly 1200x630. That route renders the same React
+ * component the site does, so a card can never drift from the site's art — change
+ * the icons or the palette and the next run follows. An earlier version drew its
+ * own title card in the script; it looked nothing like the blog.
  *
- * Run once per DB with that DB's credentials. Uses node's built-in --env-file
- * rather than dotenv, which client/ doesn't depend on and doesn't need to:
- *   node --env-file=../server/.env scripts/generateBlogOgImages.mjs              # staging
- *   node --env-file=../server/.env.production scripts/generateBlogOgImages.mjs   # prod
+ * Writes to blogs.og_image, NEVER blogs.image. `image` is the on-page hero and
+ * setting it suppresses the icon thumbnail on both the post page and the index —
+ * which is exactly the regression that produced this column (v3.82).
  *
- * Idempotent: re-running overwrites each card at a stable path. Pass --only=<slug>
- * to redo a single post, --dry to render into scripts/.og-preview/ without uploading.
+ * Needs the built site served locally, because it screenshots a real route:
+ *   cd client
+ *   npm run build:no-prerender          # dist/ must exist
+ *   node --env-file=../server/.env.production scripts/generateBlogOgImages.mjs
+ *
+ * The API it reads posts from is whatever VITE_API_URL points at, so the built
+ * dist and the SUPABASE_* env must target the SAME environment.
+ *
+ * --only=<slug>  one post   --dry  write PNGs to scripts/.og-preview/, upload nothing
  */
 import { createClient } from '@supabase/supabase-js';
-import { mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { createServer } from 'http';
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { themeFor } from '../src/data/blogPosts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const DIST = join(__dirname, '..', 'dist');
 
 const W = 1200;
 const H = 630;
+const PORT = 4174; // not 4173 — prerender.mjs uses that
+const ORIGIN = `http://localhost:${PORT}`;
 const BUCKET = 'images';
 const PREFIX = 'blog-og';
-
-// The site self-hosts its fonts, so the card embeds those exact files as data
-// URIs. An earlier version pulled them from the Google Fonts CDN, which made
-// every render wait on the network and timed out 33 of 34 cards. Inlining means
-// zero requests, deterministic output, and typography identical to the site's.
-const fontUri = (file) =>
-  `data:font/woff2;base64,${readFileSync(join(__dirname, '..', 'public', 'fonts', file)).toString('base64')}`;
-
-const FONT_FACES = `
-  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 200 800; font-display: block;
-               src: url(${fontUri('plus-jakarta-sans-latin-var.woff2')}) format('woff2'); }
-  @font-face { font-family: 'Poppins'; font-weight: 400; font-display: block;
-               src: url(${fontUri('poppins-latin-400.woff2')}) format('woff2'); }
-  @font-face { font-family: 'Poppins'; font-weight: 600; font-display: block;
-               src: url(${fontUri('poppins-latin-600.woff2')}) format('woff2'); }
-`;
 
 const args = process.argv.slice(2);
 const only = (args.find((a) => a.startsWith('--only=')) || '').split('=')[1] || null;
 const dry = args.includes('--dry');
 
-const esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => (
-  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
-));
-
-// Title-only card. Deliberately NOT a reuse of BlogHeroThumbnail: those are
-// text-free geometry sized for a card, this has to stay legible as a 1200x630
-// thumbnail in a chat app. Same band colour, so the two still read as one system.
-const cardHtml = ({ title, category, author, readMins }) => {
-  const t = themeFor(category);
-  const ink = t.light ? '#1a1a1a' : '#ffffff';
-  const dim = t.light ? 'rgba(0,0,0,0.62)' : 'rgba(255,255,255,0.72)';
-  // Long headlines shrink rather than overflow the card.
-  const size = title.length > 90 ? 52 : title.length > 60 ? 62 : 72;
-  return `<!doctype html><html><head><meta charset="utf-8">
-<style>
-  ${FONT_FACES}
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { width: ${W}px; height: ${H}px; background: ${t.band}; color: ${ink};
-         font-family: 'Poppins', system-ui, sans-serif; display: flex; flex-direction: column;
-         justify-content: space-between; padding: 72px; overflow: hidden; }
-  .cat { font-size: 20px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: ${dim}; }
-  h1 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weight: 800;
-       font-size: ${size}px; line-height: 1.12; letter-spacing: -.02em;
-       display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-  .foot { display: flex; align-items: center; justify-content: space-between; font-size: 22px; color: ${dim}; }
-  .brand { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weight: 800; font-size: 26px; color: ${ink}; }
-</style></head><body>
-  <div class="cat">${esc(category || 'Book A Sloth')}</div>
-  <h1>${esc(title)}</h1>
-  <div class="foot">
-    <span>by ${esc(author || 'Book A Sloth')}${readMins ? ` · ${readMins} min read` : ''}</span>
-    <!-- Wordmark only: an emoji here rasterises to whatever font the rendering
-         machine happens to have, which is a mangled glyph or tofu, not a sloth. -->
-    <span class="brand">Book A Sloth</span>
-  </div>
-</body></html>`;
+// Same SPA-fallback static server the prerender uses: any unknown path serves
+// index.html so client-side routes like /og/blog/:slug resolve.
+const staticServer = () => {
+  const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json' };
+  return createServer((req, res) => {
+    let f = join(DIST, req.url === '/' ? 'index.html' : req.url.split('?')[0]);
+    if (!existsSync(f) || f.endsWith('/')) f = join(DIST, 'index.html');
+    try {
+      const body = readFileSync(f);
+      res.writeHead(200, { 'Content-Type': mime['.' + f.split('.').pop()] || 'application/octet-stream' });
+      res.end(body);
+    } catch {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(readFileSync(join(DIST, 'index.html')));
+    }
+  });
 };
 
 async function main() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
-    console.error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set. See the header for the dotenv invocation.');
+    console.error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set — see the header for the --env-file invocation.');
     process.exit(1);
   }
-  const db = createClient(url, key, { auth: { persistSession: false } });
+  if (!existsSync(join(DIST, 'index.html'))) {
+    console.error('client/dist not found. Run `npm run build:no-prerender` first — this screenshots the built site.');
+    process.exit(1);
+  }
 
-  let q = db.from('blogs').select('slug,title,category,author,read_mins').eq('status', 'published');
+  const db = createClient(url, key, { auth: { persistSession: false } });
+  let q = db.from('blogs').select('slug').eq('status', 'published');
   if (only) q = q.eq('slug', only);
   const { data: posts, error } = await q;
   if (error) throw error;
@@ -105,6 +83,9 @@ async function main() {
     console.error(only ? `No published post with slug "${only}"` : 'No published posts.');
     process.exit(1);
   }
+
+  const server = staticServer();
+  await new Promise((r) => server.listen(PORT, r));
 
   const puppeteer = await import('puppeteer');
   const browser = await puppeteer.default.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
@@ -117,11 +98,19 @@ async function main() {
   let ok = 0;
   for (const p of posts) {
     try {
-      // Everything is inline, so there is no network to idle on — waiting for
-      // fonts to actually parse is the real readiness signal, and it can't hang.
-      await page.setContent(cardHtml({ title: p.title, category: p.category, author: p.author, readMins: p.read_mins }), { waitUntil: 'load' });
-      await page.evaluate(() => document.fonts.ready);
-      const png = await page.screenshot({ type: 'png' });
+      await page.goto(`${ORIGIN}/og/blog/${p.slug}`, { waitUntil: 'networkidle0', timeout: 30000 });
+
+      // OgCard sets data-og-ready once the post has loaded and the thumbnail is
+      // mounted, or "error" if the fetch failed — so a bad post fails fast
+      // instead of silently screenshotting a blank page.
+      const state = await page.waitForFunction(
+        () => document.querySelector('[data-og-ready]')?.getAttribute('data-og-ready'),
+        { timeout: 20000 },
+      ).then((h) => h.jsonValue());
+      if (state === 'error') throw new Error('post failed to load in the render route');
+
+      const el = await page.$('[data-og-ready="true"]');
+      const png = await el.screenshot({ type: 'png' });
 
       if (dry) {
         writeFileSync(join(outDir, `${p.slug}.png`), png);
@@ -135,25 +124,25 @@ async function main() {
       if (up.error) throw up.error;
 
       const { data: { publicUrl } } = db.storage.from(BUCKET).getPublicUrl(path);
-      // Cache-bust: the path is stable across re-runs, so a title edit would
-      // otherwise keep serving the old card from the CDN and every scraper cache.
+      // Cache-bust: the path is stable across runs, so without this the CDN and
+      // every scraper cache would keep serving the old card after a redesign.
       const imageUrl = `${publicUrl}?v=${Date.now()}`;
-      const upd = await db.from('blogs').update({ image: imageUrl }).eq('slug', p.slug);
+      const upd = await db.from('blogs').update({ og_image: imageUrl }).eq('slug', p.slug);
       if (upd.error) throw upd.error;
 
-      console.log('ok  ', p.slug, '→', imageUrl);
+      console.log('ok  ', p.slug);
       ok += 1;
     } catch (err) {
       console.error('FAIL', p.slug, '-', err.message);
-      process.exitCode = 1;
     }
   }
 
   await browser.close();
+  server.close();
   console.log(`\n${dry ? 'rendered' : 'generated + uploaded'} ${ok}/${posts.length} cards${dry ? ` → ${outDir}` : ''}`);
 
-  // Exit non-zero on ANY miss. A partial run previously reported success while
-  // writing 1 of 34 cards, which is indistinguishable from a good run in a log.
+  // Exit non-zero on ANY miss: a partial run once wrote 1 of 34 and still
+  // reported success, which in a log is indistinguishable from a good run.
   if (ok < posts.length) {
     console.error(`INCOMPLETE: ${posts.length - ok} card(s) failed — see FAIL lines above.`);
     process.exit(1);

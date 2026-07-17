@@ -262,8 +262,10 @@ const BlogPost = () => {
   const t = themeFor(post.category);
   const tt = bandText(t);
   const canonical = `${SITE_URL}/blog/${post.slug}`;
-  // Posts without a hero image still need an og:image so social/AI cards aren't blank.
-  const ogImage = post.image || `${SITE_URL}/og-image.png`;
+  // Share card only. Deliberately NOT `post.image` first: `image` is the on-page
+  // hero and setting it suppresses the icon thumbnail, so the two must stay
+  // separate concerns. Falls back to a real hero photo, then the site-wide card.
+  const ogImage = post.ogImage || post.image || `${SITE_URL}/og-image.png`;
   const faqs = faqsFrom(post.body);
 
   return (

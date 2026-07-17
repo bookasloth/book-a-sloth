@@ -23,7 +23,11 @@ const toSummary = (r) => ({
   excerpt: r.excerpt || '',
   category: r.category || 'News',
   author: r.author || 'Book A Sloth Team',
+  // `image` = on-page hero; when set it REPLACES the icon thumbnail on the post
+  // page and the index card. `ogImage` is the social share card and is read only
+  // by the og:image meta tag — never render it as the hero.
   image: r.image || null,
+  ogImage: r.og_image || null,
   icons: Array.isArray(r.icons) ? r.icons : [],
   readMins: r.read_mins || null,
   date: fmtDate(r.published_at),
@@ -36,10 +40,11 @@ const toFull = (r) => ({ ...toSummary(r), body: Array.isArray(r.body) ? r.body :
 // GET /api/blogs — published posts, newest first (summaries, no body).
 async function listBlogs(req, res) {
   try {
-    const payload = await responseCache.getOrSet('blogs:list:v1', BLOG_CACHE_MS, async () => {
+    // v2: payload shape gained ogImage — a v1 key would serve it back without the field.
+    const payload = await responseCache.getOrSet('blogs:list:v2', BLOG_CACHE_MS, async () => {
       const { data, error } = await supabaseAdmin
         .from('blogs')
-        .select('slug,title,excerpt,category,author,image,icons,read_mins,published_at,updated_at')
+        .select('slug,title,excerpt,category,author,image,og_image,icons,read_mins,published_at,updated_at')
         .eq('status', 'published')
         .order('published_at', { ascending: false });
       if (error) throw error;
@@ -57,10 +62,10 @@ async function listBlogs(req, res) {
 async function getBlogBySlug(req, res) {
   try {
     const slug = String(req.params.slug || '').trim();
-    const payload = await responseCache.getOrSet(`blogs:post:v1:${slug}`, BLOG_CACHE_MS, async () => {
+    const payload = await responseCache.getOrSet(`blogs:post:v2:${slug}`, BLOG_CACHE_MS, async () => {
       const { data, error } = await supabaseAdmin
         .from('blogs')
-        .select('slug,title,excerpt,body,category,author,image,icons,read_mins,published_at,updated_at')
+        .select('slug,title,excerpt,body,category,author,image,og_image,icons,read_mins,published_at,updated_at')
         .eq('slug', slug)
         .eq('status', 'published')
         .maybeSingle();

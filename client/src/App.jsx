@@ -63,6 +63,7 @@ const Changelog      = lazy(() => import('./pages/Changelog'));
 const Pricing        = lazy(() => import('./pages/Pricing'));
 const Blog           = lazy(() => import('./pages/Blog'));
 const BlogPost       = lazy(() => import('./pages/BlogPost'));
+const OgCard         = lazy(() => import('./pages/OgCard'));
 const GoogleAuthDone = lazy(() => import('./pages/GoogleAuthDone'));
 
 // Vendor Onboarding (Google-first 7-step flow)
@@ -313,6 +314,9 @@ function App() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
+          {/* Render target for the OG card generator, not a page for humans.
+              noindex + absent from the sitemap and prerender lists. */}
+          <Route path="/og/blog/:slug" element={<OgCard />} />
           <Route path="/blogs" element={<BlogsRedirect />} />
           <Route path="/blogs/:slug" element={<BlogsRedirect />} />
           <Route path="/about" element={<About />} />
