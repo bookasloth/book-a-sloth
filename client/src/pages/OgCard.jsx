@@ -1,58 +1,40 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { themeFor } from '../data/blogPosts';
-import { getBlogBySlug } from '../services/api';
 import { useHideChrome } from '../context/ChromeContext';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 
-// /og/blog/:slug — a render target for scripts/generateBlogOgImages.mjs, not a
-// page for humans. It draws the post's real BlogHeroThumbnail at exactly
-// 1200x630 so puppeteer can screenshot it into a social card.
+// /og/blog/:slug?category=...&icons=a,b,c — a render target for
+// scripts/generateBlogOgImages.mjs, not a page for humans. It draws the post's
+// real BlogHeroThumbnail at exactly 1200x630 so puppeteer can screenshot it.
 //
-// The point of rendering the actual component (rather than re-drawing the art in
-// the script) is that the card cannot drift from the site: it IS the site's
-// thumbnail. Change the icons or the palette and the cards follow on the next run.
+// Rendering the actual component (rather than re-drawing the art in the script)
+// means the card cannot drift from the site: it IS the site's thumbnail.
 //
-// noindex, and left out of the sitemap + prerender lists on purpose.
+// Post data comes from the query string, not an API call. The generator already
+// has DB access, and a page served from localhost fetching the production API is
+// blocked by CORS — which is exactly how the first run failed, 34 for 34.
+//
+// noindex, and deliberately absent from the sitemap + prerender lists.
 const OG_W = 1200;
 const OG_H = 630;
 
 // BlogHeroThumbnail's patterns use fixed pixel sizes (72-100px icon cards, an
-// 80px grid) tuned for a card roughly this size. Handing it a 1200x630 canvas
-// leaves those icons marooned in a huge empty field, so instead draw it at its
-// natural size and scale the whole thing up — the art keeps its proportions.
+// 80px grid) tuned for a card-sized canvas. Handing it 1200x630 leaves the icons
+// marooned in a huge empty field, so draw at natural size and scale up — same
+// 1.905 aspect, so the scale is uniform and proportions hold.
 const BASE_W = 480;
-const BASE_H = 252; // same 1.905 aspect as 1200x630, so the scale is uniform
+const BASE_H = 252;
 const SCALE = OG_W / BASE_W;
 
 const OgCard = () => {
   const { slug } = useParams();
-  const [post, setPost] = useState(null);
-  const [failed, setFailed] = useState(false);
-  useHideChrome(); // no navbar/footer — this is a render target, not a page
+  const [params] = useSearchParams();
+  useHideChrome(); // drops navbar, footer and the consent banner
 
-  useEffect(() => {
-    let alive = true;
-    getBlogBySlug(slug)
-      .then((res) => { if (alive) setPost(res.data.post); })
-      .catch(() => { if (alive) setFailed(true); });
-    return () => { alive = false; };
-  }, [slug]);
-
-  useEffect(() => {
-    const m = document.createElement('meta');
-    m.name = 'robots';
-    m.content = 'noindex,nofollow';
-    document.head.appendChild(m);
-    return () => { document.head.removeChild(m); };
-  }, []);
-
-  // The screenshot script waits for [data-og-ready]; a failed load marks itself
-  // ready="error" so the run reports a real failure instead of hanging to timeout.
-  if (failed) return <div data-og-ready="error" />;
-  if (!post) return null;
-
-  const theme = themeFor(post.category);
+  const category = params.get('category') || 'News';
+  const icons = (params.get('icons') || '').split(',').filter(Boolean);
+  const theme = themeFor(category);
+  const post = { slug, category, icons };
 
   return (
     <div

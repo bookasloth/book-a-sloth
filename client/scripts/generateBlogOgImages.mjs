@@ -17,10 +17,13 @@
  * Needs the built site served locally, because it screenshots a real route:
  *   cd client
  *   npm run build:no-prerender          # dist/ must exist
- *   node --env-file=../server/.env.production scripts/generateBlogOgImages.mjs
+ *   node --env-file=../server/.env.production scripts/generateBlogOgImages.mjs   # prod
+ *   node --env-file=../server/.env scripts/generateBlogOgImages.mjs              # staging
  *
- * The API it reads posts from is whatever VITE_API_URL points at, so the built
- * dist and the SUPABASE_* env must target the SAME environment.
+ * The dist is environment-agnostic here: post data is read from the DB by this
+ * script and handed to the route as query params, so VITE_API_URL is irrelevant
+ * and no API call happens during rendering. Only SUPABASE_* decides which
+ * environment is written to.
  *
  * --only=<slug>  one post   --dry  write PNGs to scripts/.og-preview/, upload nothing
  */
@@ -75,7 +78,10 @@ async function main() {
   }
 
   const db = createClient(url, key, { auth: { persistSession: false } });
-  let q = db.from('blogs').select('slug').eq('status', 'published');
+  // category + icons are handed to the render route as query params. The route
+  // deliberately does NOT fetch the API: a page served from localhost calling the
+  // production API is blocked by CORS, which failed all 34 on the first attempt.
+  let q = db.from('blogs').select('slug,category,icons').eq('status', 'published');
   if (only) q = q.eq('slug', only);
   const { data: posts, error } = await q;
   if (error) throw error;
@@ -98,16 +104,15 @@ async function main() {
   let ok = 0;
   for (const p of posts) {
     try {
-      await page.goto(`${ORIGIN}/og/blog/${p.slug}`, { waitUntil: 'networkidle0', timeout: 30000 });
+      const qs = new URLSearchParams({
+        category: p.category || 'News',
+        icons: (Array.isArray(p.icons) ? p.icons : []).join(','),
+      });
+      await page.goto(`${ORIGIN}/og/blog/${p.slug}?${qs}`, { waitUntil: 'networkidle0', timeout: 30000 });
 
-      // OgCard sets data-og-ready once the post has loaded and the thumbnail is
-      // mounted, or "error" if the fetch failed — so a bad post fails fast
-      // instead of silently screenshotting a blank page.
-      const state = await page.waitForFunction(
-        () => document.querySelector('[data-og-ready]')?.getAttribute('data-og-ready'),
-        { timeout: 20000 },
-      ).then((h) => h.jsonValue());
-      if (state === 'error') throw new Error('post failed to load in the render route');
+      // The route marks itself ready once the thumbnail is mounted, so a blank or
+      // half-painted page fails here rather than being screenshotted silently.
+      await page.waitForSelector('[data-og-ready="true"] svg', { timeout: 20000 });
 
       const el = await page.$('[data-og-ready="true"]');
       const png = await el.screenshot({ type: 'png' });
