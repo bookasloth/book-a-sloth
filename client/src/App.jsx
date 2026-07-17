@@ -62,6 +62,8 @@ const HostLogin      = lazy(() => import('./pages/HostLogin'));
 const Changelog      = lazy(() => import('./pages/Changelog'));
 const Pricing        = lazy(() => import('./pages/Pricing'));
 const Blog           = lazy(() => import('./pages/Blog'));
+const Search         = lazy(() => import('./pages/Search'));
+const WallOfLove     = lazy(() => import('./pages/WallOfLove'));
 const BlogPost       = lazy(() => import('./pages/BlogPost'));
 const OgCard         = lazy(() => import('./pages/OgCard'));
 const GoogleAuthDone = lazy(() => import('./pages/GoogleAuthDone'));
@@ -312,6 +314,8 @@ function App() {
           <Route path="/help" element={<Help />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/wall-of-love" element={<WallOfLove />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           {/* Render target for the OG card generator, not a page for humans.
