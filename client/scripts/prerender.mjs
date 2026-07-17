@@ -90,6 +90,32 @@ async function blogRoutes() {
   }
 }
 
+/**
+ * Vercel's build image ships no Chrome and none of its system libraries, so a
+ * downloaded Chrome installs fine and then dies on launch:
+ *
+ *   Failed to launch the browser process: Code: 127
+ *   chrome: error while loading shared libraries: libnspr4.so: cannot open shared object file
+ *
+ * That is why the prerender silently produced nothing there for weeks, and no
+ * amount of fixing the *download* helped. @sparticuz/chromium is a Chromium build
+ * that carries its own libraries and points LD_LIBRARY_PATH at them, which is the
+ * standard answer for this environment. Pinned to 148 to match puppeteer's own
+ * Chrome major — a protocol mismatch between the two is a genuinely confusing bug.
+ *
+ * Locally we use puppeteer's normal Chrome: sparticuz ships a Linux binary and is
+ * useless on a dev machine.
+ */
+async function launchOptions() {
+  if (!process.env.VERCEL) {
+    return { headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] };
+  }
+  const chromium = (await import('@sparticuz/chromium')).default;
+  const executablePath = await chromium.executablePath();
+  console.log(`[prerender] Vercel — @sparticuz/chromium at ${executablePath}`);
+  return { args: chromium.args, executablePath, headless: chromium.headless };
+}
+
 function createStaticServer() {
   const mime = {
     '.html': 'text/html',
@@ -138,10 +164,7 @@ async function prerender() {
   await new Promise((resolve) => server.listen(PORT, resolve));
   console.log(`[prerender] Static server on ${ORIGIN}`);
 
-  const browser = await puppeteer.default.launch({
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
+  const browser = await puppeteer.default.launch(await launchOptions());
 
   let rendered = 0;
   let failed = 0;
