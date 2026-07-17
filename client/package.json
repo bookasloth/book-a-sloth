@@ -10,6 +10,7 @@
     "dev": "vite",
     "ensure-chrome": "node scripts/ensureChrome.mjs",
     "build": "npm run ensure-chrome && vite build && node scripts/prerender.mjs",
+    "vercel-build": "vitest run && npm run build",
     "build:no-prerender": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
