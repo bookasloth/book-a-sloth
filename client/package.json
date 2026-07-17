@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prerender.mjs",
+    "ensure-chrome": "puppeteer browsers install chrome",
+    "build": "npm run ensure-chrome && vite build && node scripts/prerender.mjs",
     "build:no-prerender": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
