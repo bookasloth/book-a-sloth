@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import { SITE_URL, contactPageJsonLd } from '../utils/seo';
 import { sendContactMessage } from '../services/api';
 
@@ -39,6 +40,7 @@ const Contact = () => {
       <Seo
         title="Contact Book A Sloth — Talk to Our Team"
         description="Get in touch with Book A Sloth. Reach our support and sales teams for help with bookings, hosting, payments, and partnerships."
+        image={ogCard('contact')}
         canonical={`${SITE_URL}/contact`}
         jsonLd={contactPageJsonLd({})}
       />

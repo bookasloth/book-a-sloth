@@ -58,7 +58,7 @@ export const PROFESSION_LANDING = {
       ogTitle: 'Your law practice still runs on WhatsApp? Fix it for ₹10/day.',
       ogDescription:
         "Clients book your consultation, pay the fee upfront, and get reminded — automatically. The booking page every advocate & CA should've had years ago.",
-      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-lawyers-og-1200x630.png',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-lawyers-og-1200x630.jpg',
     },
 
     // ── Hero ─────────────────────────────────────────────────────────────────
@@ -273,7 +273,7 @@ export const PROFESSION_LANDING = {
       ogTitle: 'Half your patients no-show? Fix your clinic booking for ₹10/day.',
       ogDescription:
         'Patients book their own slot, pay upfront, and get reminded — automatically. The online appointment page every clinic in India should already have.',
-      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-doctors-og-1200x630.png',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-doctors-og-1200x630.jpg',
     },
 
     // ── Hero ─────────────────────────────────────────────────────────────────
@@ -484,7 +484,7 @@ export const PROFESSION_LANDING = {
       ogTitle: 'Still booking discovery calls over email? Fix it for ₹10/day.',
       ogDescription:
         'Clients book your strategy session, pay upfront, and get reminded — automatically. The booking page every independent consultant should already have.',
-      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-business-consultant-og-1200x630.png',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-business-consultant-og-1200x630.jpg',
     },
 
     // ── Hero ─────────────────────────────────────────────────────────────────
@@ -695,7 +695,7 @@ export const PROFESSION_LANDING = {
       ogTitle: 'Still taking salon bookings on WhatsApp? Fix it for ₹10/day.',
       ogDescription:
         'Clients book their own slot, pay a deposit, and get reminded — automatically. The booking page every salon and spa in India should already have.',
-      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-salon-og-1200x630.png',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-salon-og-1200x630.jpg',
     },
 
     // ── Hero ─────────────────────────────────────────────────────────────────
@@ -906,7 +906,7 @@ export const PROFESSION_LANDING = {
       ogTitle: 'Still chasing freelance clients for payment? Fix it for ₹10/day.',
       ogDescription:
         'Clients book your call, pay an advance upfront, and get reminded — automatically. The booking + payment link every freelancer in India should already have.',
-      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-freelancers-og-1200x630.png',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-freelancers-og-1200x630.jpg',
     },
 
     // ── Hero ─────────────────────────────────────────────────────────────────
@@ -1117,7 +1117,7 @@ export const PROFESSION_LANDING = {
       ogTitle: 'Still booking gym clients on WhatsApp? Fix it for ₹10/day.',
       ogDescription:
         'Clients book their session, pay for the package upfront, and get reminded — automatically. The booking page every trainer and studio in India should already have.',
-      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-fitness-og-1200x630.png',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-fitness-og-1200x630.jpg',
     },
 
     // ── Hero ─────────────────────────────────────────────────────────────────
@@ -1320,7 +1320,7 @@ export const PROFESSION_LANDING = {
       ogTitle: 'Still fixing tuition timings over WhatsApp? Fix it for ₹10/day.',
       ogDescription:
         'Students and parents book a slot, pay upfront, and get reminded — automatically. The booking page every tutor and coaching class in India should already have.',
-      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-tutors-og-1200x630.png',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-tutors-og-1200x630.jpg',
     },
     hero: {
       eyebrow: 'For Tutors, Coaching Classes & Educators',
@@ -1410,7 +1410,7 @@ export const PROFESSION_LANDING = {
       ogTitle: 'Still booking shoots in your Instagram DMs? Fix it for ₹10/day.',
       ogDescription:
         'Clients book a shoot slot, pay a deposit upfront, and get reminded — automatically. The booking page every photographer in India should already have.',
-      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-photographers-og-1200x630.png',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-photographers-og-1200x630.jpg',
     },
     hero: {
       eyebrow: 'For Photographers, Studios & Videographers',
@@ -1500,7 +1500,7 @@ export const PROFESSION_LANDING = {
       ogTitle: 'Still locking event dates over phone calls? Fix it for ₹10/day.',
       ogDescription:
         'Clients book a consultation, pay an advance to hold the date, and get reminded — automatically. The booking page every event planner in India should already have.',
-      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-events-og-1200x630.png',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-events-og-1200x630.jpg',
     },
     hero: {
       eyebrow: 'For Event Planners, Organisers & Decorators',
@@ -1590,7 +1590,7 @@ export const PROFESSION_LANDING = {
       ogTitle: 'Still scheduling discovery calls over email chains? Fix it for ₹10/day.',
       ogDescription:
         'Clients book a call with the right person on your team, pay upfront, and get reminded — automatically. The booking page every agency and studio should already have.',
-      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-agencies-og-1200x630.png',
+      ogImage: 'https://company-assets.bookasloth.in/images/seo/for-agencies-og-1200x630.jpg',
     },
     hero: {
       eyebrow: 'For Agencies, Studios & Creative Teams',
@@ -1681,7 +1681,7 @@ PROFESSION_LANDING['doctors-india'] = {
   seo: {
     ...PROFESSION_LANDING.doctors.seo,
     title: 'Appointment Booking Software for Doctors in India | Book A Sloth',
-    ogImage: 'https://company-assets.bookasloth.in/images/seo/for-doctors-india-og-1200x630.png',
+    ogImage: 'https://company-assets.bookasloth.in/images/seo/for-doctors-india-og-1200x630.jpg',
   },
 };
 

@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Check, Star, ChevronDown } from 'lucide-react';
 import Reveal from '../../components/home/Reveal';
 import Seo from '../../components/common/Seo';
+import { ogCard } from '../../config/ogImages';
 import { SITE_URL } from '../../utils/seo';
 import { getFeature } from './featureData';
 
@@ -528,7 +529,7 @@ export default function FeaturePage() {
         themeColor={feature.accent}
         ogTitle={feature.seo?.title || feature.title}
         ogDescription={feature.seo?.description || feature.description}
-        image={feature.heroImage}
+        image={ogCard(`features-${feature.slug}`)}
         jsonLd={jsonLd}
       />
 

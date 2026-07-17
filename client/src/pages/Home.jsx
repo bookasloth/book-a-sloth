@@ -59,6 +59,7 @@ import { HERO, HERO_FACES, PERSONAS, NEWSLETTER } from "../components/home/image
 import { PAID_PLANS, STARTER_PLAN } from "../data/plans";
 import { TESTIMONIALS } from "../data/testimonials";
 import Seo from "../components/common/Seo";
+import { ogCard } from "../config/ogImages";
 
 /* Real funnel routes — do not point CTAs anywhere else. */
 const ROUTE_START = "/be-a-sloth";
@@ -68,7 +69,7 @@ const ROUTE_LOGIN = "/login-as-vendor";
    OG/Twitter image + Organization logo must be uploaded to these exact URLs
    on company-assets.bookasloth.in (1200×630 for OG). */
 const SITE_URL = "https://bookasloth.com";
-const OG_IMAGE = "https://company-assets.bookasloth.in/images/seo/home-og-1200x630.png";
+const OG_IMAGE = ogCard('home');
 const ORG_LOGO = "https://company-assets.bookasloth.in/images/brand/logo.png";
 
 const HOME_JSONLD = [

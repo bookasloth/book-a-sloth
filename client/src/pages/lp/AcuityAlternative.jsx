@@ -20,6 +20,7 @@ import useUtm from "../../hooks/useUtm";
 import useDocumentMeta from "../../hooks/useDocumentMeta";
 import { analytics, EVENTS } from "../../services/analytics";
 import Seo from "../../components/common/Seo";
+import { ogCard } from "../../config/ogImages";
 import { SITE_URL } from "../../utils/seo";
 import HowItWorks from "../../components/home/HowItWorks";
 import LogoMarquee from "../../components/about/LogoMarquee";
@@ -197,6 +198,7 @@ const AcuityAlternative = () => {
       <Seo
         title="The Best Acuity Scheduling Alternative for India — Book A Sloth"
         description="Looking for an Acuity alternative? Book A Sloth adds UPI payments, WhatsApp reminders, GST invoices, and a booking page built for Indian professionals."
+        image={ogCard('lp-acuity-alternative')}
         canonical={`${SITE_URL}/lp/acuity-alternative`}
       />
 

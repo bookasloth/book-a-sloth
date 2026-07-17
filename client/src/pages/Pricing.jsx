@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, X } from "lucide-react";
 import Seo from "../components/common/Seo";
+import { ogCard } from "../config/ogImages";
 import { ALL_PLANS, PLAN_COLUMNS, PLAN_MATRIX } from "../data/plans";
 
 // /pricing — dedicated public pricing page. Plan cards + full feature comparison.
@@ -40,6 +41,7 @@ export default function Pricing() {
       <Seo
         title="Pricing — Book A Sloth | Zero-commission booking from ₹0"
         description="Simple, honest pricing. Start free, keep 0% commission on paid plans. Compare Starter, Host+ and Studio side by side — prices in INR, excl. GST."
+        image={ogCard('pricing')}
         jsonLd={JSON_LD}
       />
 

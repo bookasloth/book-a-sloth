@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import { SITE_URL } from '../utils/seo';
 
 /**
@@ -15,6 +16,7 @@ const Support = () => {
       <Seo
         title="Support — Book A Sloth"
         description="Contact Book A Sloth support for help with bookings, payments, rescheduling, and becoming a host. We're here to help."
+        image={ogCard('support')}
         canonical={`${SITE_URL}/support`}
       />
       <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary mb-3">Support</p>
