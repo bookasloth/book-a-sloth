@@ -18,6 +18,15 @@ import { fileURLToPath } from 'url';
 import { loadEnv } from 'vite';
 import { FEATURES } from '../src/pages/features/featureData.js';
 
+// Preview deploys already get the real regression gates from vercel-build
+// (vitest, then the vite build). The prerendered HTML only matters for what
+// PRODUCTION serves to crawlers and link scrapers — rendering all ~77 routes
+// on every PR preview was minutes of pure waste per push.
+if (process.env.VERCEL && process.env.VERCEL_ENV !== 'production') {
+  console.log(`[prerender] ${process.env.VERCEL_ENV} deploy — skipped (prerender is production-only)`);
+  process.exit(0);
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, '..', 'dist');
 const PORT = 4173;
@@ -233,7 +242,7 @@ async function prerender() {
     }
   };
 
-  for (const route of routes) {
+  const renderWithRetry = async (route) => {
     let lastErr;
     // Retry once. A route failing here is not usually a broken page — it is a
     // cold Vercel builder being slow, and the whole build now rides on this, so a
@@ -245,18 +254,31 @@ async function prerender() {
         rendered++;
         const note = attempt > 1 ? ` (attempt ${attempt})` : '';
         console.log(`[prerender] ${route} → ${outPath.replace(DIST, 'dist')}${note}`);
-        lastErr = null;
-        break;
+        return;
       } catch (err) {
         lastErr = err;
         if (attempt < ATTEMPTS) console.warn(`[prerender] retry ${route}: ${err.message}`);
       }
     }
-    if (lastErr) {
-      failed++;
-      console.error(`[prerender] FAIL ${route}: ${lastErr.message}`);
-    }
-  }
+    failed++;
+    console.error(`[prerender] FAIL ${route}: ${lastErr.message}`);
+  };
+
+  // Routes render through a pool of concurrent tabs. They are independent, and
+  // most of a route's wall clock is `networkidle0` waiting on its own requests —
+  // serially that wait was paid 77 times back to back; overlapped, it mostly
+  // disappears. Counters above stay exact: this is one event loop, no data races.
+  // ponytail: fixed pool of 4, sized for the ~4-vCPU Vercel builder — lower it
+  // first if prerender starts OOMing there, raise it if the builder grows.
+  const POOL = 4;
+  const queue = [...routes];
+  await Promise.all(
+    Array.from({ length: POOL }, async () => {
+      while (queue.length > 0) {
+        await renderWithRetry(queue.shift());
+      }
+    }),
+  );
 
   await browser.close();
   server.close();
