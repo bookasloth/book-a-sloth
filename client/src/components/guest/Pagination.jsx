@@ -1,18 +1,20 @@
 /**
- * Pagination.jsx — "Slooooth" doodle pager for Explore, à la Google's
- * "Goooogle". The word spells sloth with one 'o' per page (max 8, so it stays a
- * word, no ellipsis). Each 'o' is a crawlable <Link> to its page; the current
- * page's 'o' lights up in a palette colour, the rest stay greyscale. S/l/t/h are
- * decoration. Arrows carry rel="prev"/"next" and scroll to top on change.
+ * Pagination.jsx — "Slooooooooooth" doodle pager for Explore, à la Google's
+ * "Goooogle". The word always spells sloth with a fixed TEN o's — one per page
+ * slot, left→right = pages 1‥10. The current page's 'o' lights up in a palette
+ * colour; o's for pages that exist stay clickable greyscale; o's past the real
+ * page count are dimmed and dead. S/l/t/h are decoration. Arrows carry
+ * rel="prev"/"next" and scroll to top on change.
  *
  * Props: page, totalPages, hrefFor(pageNum) => string
  */
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Founder palette (photo), black/white excluded. Cycled by page, so with the
-// 8-page cap each colour lands once or twice — a full 10 pages would use each
-// exactly twice.
+// Ten fixed slots so the brand word is always "Slooooooooooth".
+const SLOTS = 10;
+// Founder palette (photo), black/white excluded. Cycled by page → across 10
+// slots each colour lands exactly twice. Only the active o shows its colour.
 const PAGE_COLORS = ['#FE5100', '#FF4D93', '#4AB765', '#FFCC1C', '#269CEF'];
 const colorFor = (p) => PAGE_COLORS[(p - 1) % PAGE_COLORS.length];
 
@@ -23,7 +25,7 @@ const arrowBase =
 export default function Pagination({ page, totalPages, hrefFor }) {
   if (!totalPages || totalPages <= 1) return null;
   const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const slots = Array.from({ length: SLOTS }, (_, i) => i + 1);
 
   return (
     <nav className="flex items-center justify-center gap-2 mt-10" aria-label="Pagination">
@@ -40,24 +42,32 @@ export default function Pagination({ page, totalPages, hrefFor }) {
         <ChevronLeft size={18} />
       </Link>
 
-      {/* Sl-oooo…-th. The o's are the page links; the rest is just the word. */}
+      {/* Sl-oooooooooo-th. Ten o's: real pages link, the rest are dead word. */}
       <span className={`${wordBase} select-none flex items-baseline`}>
         <span className="text-gray-300" aria-hidden="true">Sl</span>
-        {pages.map((p) => (
-          <Link
-            key={p}
-            to={hrefFor(p)}
-            aria-label={`Page ${p}`}
-            aria-current={p === page ? 'page' : undefined}
-            onClick={toTop}
-            style={p === page ? { color: colorFor(p) } : undefined}
-            className={`transition-colors duration-150 ${p === page
-              ? ''
-              : 'text-gray-300 hover:text-gray-500'}`}
-          >
-            o
-          </Link>
-        ))}
+        {slots.map((p) => {
+          const real = p <= totalPages;
+          const active = p === page;
+          // Past the real page count: decorative dim 'o', not a link.
+          if (!real) {
+            return <span key={p} className="text-gray-200" aria-hidden="true">o</span>;
+          }
+          return (
+            <Link
+              key={p}
+              to={hrefFor(p)}
+              aria-label={`Page ${p}`}
+              aria-current={active ? 'page' : undefined}
+              onClick={toTop}
+              style={active ? { color: colorFor(p) } : undefined}
+              className={`transition-colors duration-150 ${active
+                ? ''
+                : 'text-gray-300 hover:text-gray-500'}`}
+            >
+              o
+            </Link>
+          );
+        })}
         <span className="text-gray-300" aria-hidden="true">th</span>
       </span>
 

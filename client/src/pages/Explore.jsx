@@ -29,7 +29,7 @@ function ExploreFull() {
   const q        = searchParams.get('q') || '';
   const category = searchParams.get('category') || '';
   const service  = searchParams.get('service') || '';
-  const page     = Math.max(1, Math.min(8, parseInt(searchParams.get('page'), 10) || 1));
+  const page     = Math.max(1, Math.min(10, parseInt(searchParams.get('page'), 10) || 1));
 
   const [inputVal,   setInputVal]   = useState(q);
   const [categories, setCategories] = useState([]);
