@@ -55,6 +55,9 @@ coverage/
 .temp/
 tmp/
 
+# Vercel CLI link data (org/project IDs) — local only
+.vercel/
+
 # Superpowers brainstorm artifacts — local only
 .superpowers/
 
