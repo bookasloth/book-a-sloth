@@ -2,11 +2,12 @@ name: CI
 
 # Server unit tests on every push and PR to main.
 #
-# CI does NOT deploy, and is NOT the deployment gate. Since 2026-07-17 both
-# deploys own their own checks, so a green deploy means the checks passed:
-#   - Client → Vercel Git integration. `vercel-build` runs vitest, then the build,
-#     then the prerender; any failure fails the deploy. Preview builds run the same
-#     thing on every PR, so client regressions surface there.
+# CI does NOT deploy, and is NOT the deployment gate. Both deploys own their own
+# checks, so a green deploy means the checks passed:
+#   - Client → deploy-vercel.yml runs `vercel deploy --prod` on push to main (a
+#     REMOTE build, so `vercel-build` runs vitest → build → prerender; any failure
+#     fails the deploy). Vercel still builds a PREVIEW on every PR, so client
+#     regressions surface there before merge.
 #   - Server → Render. buildCommand runs `npm run test:unit`; a failing test means
 #     the server does not ship. Render is where the server actually deploys, which
 #     is the only place a server test can gate a server release.
@@ -16,10 +17,10 @@ name: CI
 # job stays because Render only builds on push to main/staging — it is the one
 # place server tests run BEFORE a merge.
 #
-# deploy-vercel.yml was deleted with this change. Native Vercel builds run inside
-# Vercel and can read env vars marked Sensitive, which a CI-side
-# `vercel build --prebuilt` cannot — that mismatch caused the 2026-07-08
-# white-screen outage, so native git deploys remove the whole failure class.
+# Remote builds (whether via deploy-vercel.yml or a PR preview) run inside Vercel
+# and can read env vars marked Sensitive, which a CI-side `vercel build --prebuilt`
+# cannot — that mismatch caused the 2026-07-08 white-screen outage, so we never
+# prebuild client bundles in CI.
 
 on:
   push:
