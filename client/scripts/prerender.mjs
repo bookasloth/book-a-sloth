@@ -25,6 +25,12 @@ const ORIGIN = `http://localhost:${PORT}`;
 
 const DEFAULT_TITLE = 'Book A Sloth — booked & paid at 0% commission';
 
+// 15s was enough locally and timed out on a cold Vercel builder, failing the whole
+// deploy for one slow page. Two attempts at 30s each: generous enough that a real
+// failure means the page is genuinely broken, not just unlucky.
+const NAV_TIMEOUT_MS = 30000;
+const ATTEMPTS = 2;
+
 const PRERENDER_ROUTES = [
   '/',
   '/pricing',
@@ -175,10 +181,9 @@ async function prerender() {
   let rendered = 0;
   let failed = 0;
 
-  for (const route of routes) {
+  const renderOnce = async (route) => {
+    const page = await browser.newPage();
     try {
-      const page = await browser.newPage();
-
       // Block analytics/tracking requests — avoids phantom pageviews and speeds up render
       await page.setRequestInterception(true);
       page.on('request', (req) => {
@@ -190,7 +195,7 @@ async function prerender() {
         }
       });
 
-      await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle0', timeout: 15000 });
+      await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle0', timeout: NAV_TIMEOUT_MS });
 
       // Wait for Seo.jsx useEffect to fire (title changes from default)
       await page.waitForFunction(
@@ -208,7 +213,6 @@ async function prerender() {
       });
 
       const html = await page.content();
-      await page.close();
 
       // Write to dist/<route>/index.html (or dist/index.html for /)
       let outPath;
@@ -221,11 +225,36 @@ async function prerender() {
       }
 
       writeFileSync(outPath, html, 'utf-8');
-      rendered++;
-      console.log(`[prerender] ${route} → ${outPath.replace(DIST, 'dist')}`);
-    } catch (err) {
+      return outPath;
+    } finally {
+      // Always close, including on a timeout — an orphaned page holds memory for
+      // the rest of the run, and there are 77 of them.
+      await page.close().catch(() => {});
+    }
+  };
+
+  for (const route of routes) {
+    let lastErr;
+    // Retry once. A route failing here is not usually a broken page — it is a
+    // cold Vercel builder being slow, and the whole build now rides on this, so a
+    // single flaky navigation must not block a production deploy. A route that
+    // fails TWICE is a real problem and should stop the release.
+    for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+      try {
+        const outPath = await renderOnce(route);
+        rendered++;
+        const note = attempt > 1 ? ` (attempt ${attempt})` : '';
+        console.log(`[prerender] ${route} → ${outPath.replace(DIST, 'dist')}${note}`);
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < ATTEMPTS) console.warn(`[prerender] retry ${route}: ${err.message}`);
+      }
+    }
+    if (lastErr) {
       failed++;
-      console.warn(`[prerender] SKIP ${route}: ${err.message}`);
+      console.error(`[prerender] FAIL ${route}: ${lastErr.message}`);
     }
   }
 
