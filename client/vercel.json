@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "git": { "deploymentEnabled": true },
+  "git": { "deploymentEnabled": { "main": false } },
   "redirects": [
     { "source": "/blogs", "destination": "/blog", "statusCode": 301 },
     { "source": "/blogs/:slug", "destination": "/blog/:slug", "statusCode": 301 }
