@@ -10,7 +10,9 @@ vi.mock('../services/api', async (orig) => ({
   aiGenerateListing: vi.fn(),
 }));
 
-// No BOLT_ENABLED mock → real config value (false): dormant, pre-key state.
+// Pin the flag OFF so this keeps covering the dormant/pre-key state regardless
+// of the shipped BOLT_ENABLED value (now true post-go-live).
+vi.mock('../config/aiListing', () => ({ BOLT_ENABLED: false }));
 
 const renderForm = () => render(<MemoryRouter><ServiceForm /></MemoryRouter>);
 
