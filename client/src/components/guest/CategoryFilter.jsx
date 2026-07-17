@@ -11,9 +11,11 @@ export default function CategoryFilter({ categories = [], selected = '', onChang
 
   return (
     <div className="relative">
-      {/* Fade edges on scroll */}
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-12
-                      bg-gradient-to-l from-[#FFF8EE] to-transparent z-10" />
+      {/* Fade the right edge so a scrollable row reads as scrollable. MUST match
+          the page background (Explore is bg-surface); fading to the old cream
+          left a visible smudge once the page went white. */}
+      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-12
+                      bg-gradient-to-l from-surface to-transparent" />
 
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {all.map((cat) => {
@@ -22,12 +24,13 @@ export default function CategoryFilter({ categories = [], selected = '', onChang
             <button
               key={cat.id}
               onClick={() => onChange(cat.slug)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[4px]
-                          text-[13px] font-semibold border-2 border-[#1E1E1E]
-                          transition-all duration-100
+              // Selection reads as fill vs outline rather than shadow depth —
+              // same pill language as /blog. Only used by Explore.
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5
+                          text-[13px] font-semibold transition-colors duration-150
                           ${active
-                            ? 'bg-[#FE5100] text-white shadow-[2px_2px_0_#1E1E1E]'
-                            : 'bg-white text-[#1E1E1E] hover:bg-[#FFF8EE] shadow-[2px_2px_0_#1E1E1E] hover:shadow-[3px_3px_0_#1E1E1E]'
+                            ? 'bg-ink text-white'
+                            : 'border border-black/10 bg-white text-muted hover:bg-black/[0.04] hover:text-ink'
                           }`}
             >
               {cat.icon_url && (
