@@ -63,7 +63,12 @@ exports.ask = async (req, res) => {
     const result = await askBot({ question, conversationId, sessionRef });
 
     if (result.escalate) {
-      await notifySupport({ question, conversationId: result.conversationId, sessionRef });
+      // Fire-and-forget: the user must NOT wait on the internal support email.
+      // A slow/hanging SMTP handshake was blocking the whole HTTP response (the
+      // reply is already computed here). notifySupport swallows its own errors,
+      // so an unhandled rejection can't escape; Render is long-running so the
+      // background send completes after we respond.
+      notifySupport({ question, conversationId: result.conversationId, sessionRef });
     }
 
     return res.json({
