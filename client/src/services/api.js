@@ -577,6 +577,10 @@ export const adminListBotFaqs  = ()         => API.get('/admin/bot/faqs');
 export const adminCreateBotFaq = (data)     => API.post('/admin/bot/faqs', data);
 export const adminUpdateBotFaq = (id, data) => API.patch(`/admin/bot/faqs/${id}`, data);
 export const adminDeleteBotFaq = (id)       => API.delete(`/admin/bot/faqs/${id}`);
+export const adminBotAnalytics = ()         => API.get('/admin/bot/analytics');
+export const adminBotGraph     = ()         => API.get('/admin/bot/graph');
+export const adminListBotCache = ()         => API.get('/admin/bot/cache');
+export const adminDeleteBotCache = (id)     => API.delete(`/admin/bot/cache/${id}`);
 // ── Reschedule fee ────────────────────────────────────────────
 export const createRescheduleFeeOrder = (bookingId) => API.post('/payment/reschedule-fee/create-order', { booking_id: bookingId });
 

@@ -143,4 +143,106 @@ const deleteFaq = async (req, res) => {
   }
 };
 
-module.exports = { listGaps, updateGap, listFaqs, createFaq, updateFaq, deleteFaq };
+// GET /api/admin/bot/analytics — engine health over the last 30 days: how each
+// layer is pulling its weight (the whole point is Claude carrying LESS over time).
+const analytics = async (req, res) => {
+  try {
+    const since = new Date(Date.now() - 30 * 864e5).toISOString();
+    const LAYERS = ['smalltalk', 'faq', 'cache', 'model', 'escalation'];
+    const bySource = {};
+    await Promise.all(LAYERS.map(async (s) => {
+      const { count } = await supabaseAdmin
+        .from('bot_messages').select('id', { count: 'exact', head: true })
+        .eq('role', 'assistant').eq('source', s).gte('created_at', since);
+      bySource[s] = count || 0;
+    }));
+    const answered = LAYERS.reduce((a, s) => a + bySource[s], 0);
+    const pct = (n) => (answered ? Math.round((n / answered) * 1000) / 10 : 0);
+
+    const [{ count: cacheSize }, { count: openGaps }, { count: faqCount }] = await Promise.all([
+      supabaseAdmin.from('bot_semantic_cache').select('id', { count: 'exact', head: true }),
+      supabaseAdmin.from('knowledge_gaps').select('id', { count: 'exact', head: true }).eq('resolved', false),
+      supabaseAdmin.from('bot_faqs').select('id', { count: 'exact', head: true }).eq('enabled', true),
+    ]);
+
+    res.json({
+      since, answered,
+      bySource,
+      // Deflection = solved WITHOUT Claude (smalltalk + faq + cache). ai = model.
+      pct: {
+        ai: pct(bySource.model),
+        cache: pct(bySource.cache),
+        faq: pct(bySource.faq),
+        smalltalk: pct(bySource.smalltalk),
+        escalation: pct(bySource.escalation),
+        deflected: pct(bySource.smalltalk + bySource.faq + bySource.cache),
+      },
+      cacheSize: cacheSize || 0,
+      openGaps: openGaps || 0,
+      liveFaqs: faqCount || 0,
+    });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// GET /api/admin/bot/graph — the lightweight knowledge graph: which docs answer the
+// most questions (edges = assistant answers → the docs they cited). A relational
+// view over recent traffic, not a heavy graph engine.
+const graph = async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('bot_messages').select('cited_sources')
+      .eq('role', 'assistant').not('cited_sources', 'is', null)
+      .order('created_at', { ascending: false }).limit(1000);
+    if (error) return safeError(res, error);
+
+    const counts = new Map();
+    for (const m of data || []) {
+      for (const s of m.cited_sources || []) {
+        const key = s.source_file;
+        if (!key) continue;
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+    }
+    const topDocs = [...counts.entries()]
+      .map(([source_file, answers]) => ({ source_file, answers }))
+      .sort((a, b) => b.answers - a.answers).slice(0, 20);
+    res.json({ topDocs, sampled: (data || []).length });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// GET /api/admin/bot/cache — cached answers, most-reused first.
+const listCache = async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('bot_semantic_cache').select('id, question, answer, hits, created_at, last_used_at')
+      .order('hits', { ascending: false }).order('created_at', { ascending: false }).limit(200);
+    if (error) return safeError(res, error);
+    res.json({ cache: data || [] });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// DELETE /api/admin/bot/cache/:id — evict one entry. :id="all" clears the cache.
+const deleteCache = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (id === 'all') {
+      const { error } = await supabaseAdmin.from('bot_semantic_cache').delete().not('id', 'is', null);
+      if (error) return safeError(res, error);
+      return res.json({ ok: true, cleared: 'all' });
+    }
+    if (!UUID_RE.test(id)) return res.status(400).json({ message: 'Invalid cache id.' });
+    const { error } = await supabaseAdmin.from('bot_semantic_cache').delete().eq('id', id);
+    if (error) return safeError(res, error);
+    res.json({ ok: true });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+module.exports = { listGaps, updateGap, listFaqs, createFaq, updateFaq, deleteFaq, analytics, graph, listCache, deleteCache };
