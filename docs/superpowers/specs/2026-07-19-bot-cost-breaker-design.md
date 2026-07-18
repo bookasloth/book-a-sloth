@@ -42,9 +42,12 @@ New module `server/lib/botBudget.js`:
 tryConsume() -> { allowed: boolean, reason: 'minute' | 'day' | null }
 ```
 
-- Maintains two rolling counters in the shared rate-limit store: **per-minute**
+- Maintains two fixed-window counters in the shared rate-limit store: **per-minute**
   (burst control) and **per-day** (hard ceiling). `tryConsume()` increments both and
   returns `allowed:false` with the tripped `reason` if either is over its limit.
+  (Fixed windows reset at the boundary — up to ~2× a limit can pass across a
+  boundary, negligible for a generous cost ceiling; a true sliding window isn't
+  worth the complexity here.)
 - Limits from env, tunable defaults:
   - `BOT_MODEL_CALLS_PER_MIN` = 60
   - `BOT_MODEL_CALLS_PER_DAY` = 5000
