@@ -34,6 +34,10 @@ export default defineConfig(({ command, mode }) => {
     proxy: {
       '/api': 'http://localhost:5000',
     },
+    // Help-center articles are imported from ../docs/help/*.md (repo root, outside
+    // the client root). Let the dev server read the parent dir; the build bundles
+    // them regardless of this.
+    fs: { allow: ['..'] },
   },
 
   build: {

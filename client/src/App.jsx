@@ -38,6 +38,8 @@ const VendorSignup   = lazy(() => import('./pages/VendorSignup'));
 const ErrorPage      = lazy(() => import('./pages/ErrorPage'));
 const Offline        = lazy(() => import('./pages/Offline'));
 const Help           = lazy(() => import('./pages/Help'));
+const HelpDocs       = lazy(() => import('./pages/HelpDocs'));
+const HelpDoc        = lazy(() => import('./pages/HelpDoc'));
 const Support        = lazy(() => import('./pages/Support'));
 const Contact        = lazy(() => import('./pages/Contact'));
 const Privacy        = lazy(() => import('./pages/Privacy'));
@@ -323,6 +325,8 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/help" element={<Help />} />
+          <Route path="/help/docs" element={<HelpDocs />} />
+          <Route path="/help/docs/:slug" element={<HelpDoc />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/search" element={<Search />} />
