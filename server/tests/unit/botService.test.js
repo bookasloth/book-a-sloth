@@ -4,12 +4,21 @@
 
 jest.mock('../../services/ai/anthropicClient', () => {
   const create = jest.fn();
+  const stream = jest.fn();
   return {
     __create: create,
+    __stream: stream,
     MODELS: { generate: 'gen', regenerate: 'regen' },
     isConfigured: jest.fn(() => true),
-    getClient: () => ({ messages: { create } }),
+    getClient: () => ({ messages: { create, stream } }),
   };
+});
+
+// A fake Anthropic streaming response: async-iterates text_delta events.
+const streamOf = (pieces) => ({
+  async *[Symbol.asyncIterator]() {
+    for (const text of pieces) yield { type: 'content_block_delta', delta: { type: 'text_delta', text } };
+  },
 });
 
 jest.mock('../../config/supabase', () => {
@@ -27,7 +36,7 @@ jest.mock('../../config/supabase', () => {
 
 const client = require('../../services/ai/anthropicClient');
 const sb = require('../../config/supabase');
-const { askBot, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES } = require('../../services/botService');
+const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES } = require('../../services/botService');
 
 const answerReply = (input) => ({ content: [{ type: 'tool_use', name: 'emit_answer', input }] });
 const chunk = (over = {}) => ({ id: 'c1', source_file: 'docs/architecture.md', heading: 'Google Calendar Integration', content: 'Connect via /api/auth/google.', rank: 0.9, ...over });
@@ -113,7 +122,8 @@ test('a greeting in front of a real question is NOT swallowed as small talk', as
   sb.__rpc.mockResolvedValue({ data: [], error: null });
   const out = await askBot({ question: 'hi, how do I book a service?' });
   expect(out.escalate).toBe(true);
-  expect(out.answer).toMatch(/connecting you with a human/);
+  expect(out.answer.length).toBeGreaterThan(0);
+  expect(out.answer).not.toBe(SMALLTALK_REPLIES.greeting); // proves it wasn't the small-talk shortcut
 });
 
 test('informational money question is NOT sensitive — it gets answered', async () => {
@@ -173,4 +183,37 @@ test('persists the exchange and returns conversation + message ids', async () =>
   expect(out.messageId).toBe('row-id');
   expect(sb.supabaseAdmin.from).toHaveBeenCalledWith('bot_conversations');
   expect(sb.supabaseAdmin.from).toHaveBeenCalledWith('bot_messages');
+});
+
+test('FAQ layer answers a matching question without retrieval or the model', async () => {
+  // bot_faqs read (the first .eq call in askBot) yields one row whose pattern is
+  // contained in the question → served verbatim, no LLM, no retrieval.
+  sb.__chain.eq.mockResolvedValueOnce({ data: [{ pattern: 'contact support', answer: 'Email support@bookasloth.' }], error: null });
+  const out = await askBot({ question: 'how do I contact support?' });
+  expect(out.escalate).toBe(false);
+  expect(out.source).toBe('faq');
+  expect(out.answer).toBe('Email support@bookasloth.');
+  expect(client.__create).not.toHaveBeenCalled();
+  expect(sb.__rpc).not.toHaveBeenCalled(); // short-circuits before FTS
+});
+
+test('askBotStream streams deltas and cites the retrieved sources', async () => {
+  sb.__rpc.mockResolvedValue({ data: [chunk()], error: null });
+  client.__stream.mockReturnValue(streamOf(['Go to ', 'Dashboard → ', 'Google Calendar.']));
+  const deltas = [];
+  const out = await askBotStream({ question: 'How do I connect Google Calendar?', onDelta: (t) => deltas.push(t) });
+  expect(out.escalate).toBe(false);
+  expect(deltas.join('')).toBe('Go to Dashboard → Google Calendar.');
+  expect(out.answer).toBe('Go to Dashboard → Google Calendar.');
+  expect(out.cited_sources.length).toBeGreaterThan(0);
+});
+
+test('askBotStream escalates on the sentinel and never leaks it to the user', async () => {
+  sb.__rpc.mockResolvedValue({ data: [chunk()], error: null });
+  client.__stream.mockReturnValue(streamOf(['[[ESCALATE]]']));
+  const deltas = [];
+  const out = await askBotStream({ question: 'something the docs do not cover', onDelta: (t) => deltas.push(t) });
+  expect(out.escalate).toBe(true);
+  expect(deltas.join('')).not.toMatch(/ESCALATE/); // sentinel withheld
+  expect(out.answer.length).toBeGreaterThan(0);     // spoken handoff line instead
 });

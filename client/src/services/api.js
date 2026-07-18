@@ -115,9 +115,64 @@ export const subscribeNewsletter = (email)     => API.post('/email/subscribe', {
 export const sendContactMessage = (data) => API.post('/contact', data);
 export const submitEnterpriseLead = (data) => API.post('/enterprise-lead', data);
 
-// ── Bolt 958 support bot (public) ─────────────────────────────
+// ── Bolt support bot (public) ─────────────────────────────────
 export const askBot = (data) => API.post('/bot/ask', data);
 export const sendBotFeedback = (data) => API.post('/bot/feedback', data);
+
+// Streaming ask over SSE. Uses fetch (axios can't stream response bodies in the
+// browser). Calls onDelta(text) per chunk, onDone({escalate, cited_sources,
+// conversationId, messageId}) at the end, onError({message}) on failure. Returns a
+// promise that resolves when the stream closes; pass an AbortSignal to cancel.
+export async function streamBot({ question, conversationId }, { onDelta, onDone, onError, signal } = {}) {
+  const base = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const session = JSON.parse(localStorage.getItem('user') || 'null');
+  const headers = { 'Content-Type': 'application/json' };
+  if (session?.token) headers.Authorization = `Bearer ${session.token}`;
+
+  let res;
+  try {
+    res = await fetch(`${base}/bot/ask/stream`, {
+      method: 'POST', headers, body: JSON.stringify({ question, conversationId }), signal,
+    });
+  } catch (e) {
+    if (e.name !== 'AbortError') onError?.({ message: 'network' });
+    return;
+  }
+  if (!res.ok || !res.body) { onError?.({ message: 'network' }); return; }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  const dispatch = (frame) => {
+    let event = 'message';
+    const dataLines = [];
+    for (const line of frame.split('\n')) {
+      if (line.startsWith('event:')) event = line.slice(6).trim();
+      else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+    }
+    if (!dataLines.length) return;
+    let data; try { data = JSON.parse(dataLines.join('\n')); } catch { return; }
+    if (event === 'delta') onDelta?.(data.text);
+    else if (event === 'done') onDone?.(data);
+    else if (event === 'error') onError?.(data);
+  };
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) >= 0) {
+        const frame = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        if (frame.trim()) dispatch(frame);
+      }
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') onError?.({ message: 'network' });
+  }
+}
 
 // ── Email preferences (public, signed-token gated) ────────────
 export const getUnsubscribeStatus = (token)    => API.get('/email/unsubscribe', { params: { token } });

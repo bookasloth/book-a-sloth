@@ -1,14 +1,18 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import BotWidget from '../BotWidget';
-import { askBot, sendBotFeedback } from '../../../services/api';
+import { streamBot, sendBotFeedback } from '../../../services/api';
 
+// The widget now streams over SSE via streamBot(payload, { onDelta, onDone }).
 vi.mock('../../../services/api', () => ({
-  askBot: vi.fn(),
+  streamBot: vi.fn(),
   sendBotFeedback: vi.fn().mockResolvedValue({ data: { ok: true } }),
 }));
 
-const open = () => fireEvent.click(screen.getByRole('button', { name: /open bolt 958/i }));
+// Markdown renders <Link>, so the widget must sit inside a router.
+const renderWidget = () => render(<BotWidget />, { wrapper: MemoryRouter });
+const open = () => fireEvent.click(screen.getByRole('button', { name: /open bolt support/i }));
 const ask = (text) => {
   fireEvent.change(screen.getByLabelText(/type your question/i), { target: { value: text } });
   fireEvent.click(screen.getByRole('button', { name: /^send$/i }));
@@ -18,30 +22,44 @@ beforeEach(() => vi.clearAllMocks());
 
 describe('BotWidget', () => {
   it('renders the launcher button', () => {
-    render(<BotWidget />);
-    expect(screen.getByRole('button', { name: /open bolt 958/i })).toBeInTheDocument();
+    renderWidget();
+    expect(screen.getByRole('button', { name: /open bolt support/i })).toBeInTheDocument();
   });
 
-  it('sends a question and renders the grounded answer with a citation', async () => {
-    askBot.mockResolvedValue({
-      data: {
-        answer: 'Connect Google Calendar from your dashboard settings.',
-        cited_sources: [{ source_file: 'docs/architecture.md', heading: 'Google Calendar Integration' }],
-        escalate: false, conversationId: 'c1', messageId: 'm1',
-      },
+  it('shows the welcome screen with starter suggestions when opened', () => {
+    renderWidget();
+    open();
+    expect(screen.getByText(/hey, i'm bolt/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /how do i book a service/i })).toBeInTheDocument();
+  });
+
+  it('streams a grounded answer and renders its cited source', async () => {
+    streamBot.mockImplementation(async (_payload, { onDelta, onDone }) => {
+      onDelta('Connect Google Calendar from your dashboard settings.');
+      onDone({
+        escalate: false,
+        cited_sources: [{ source_file: 'docs/help/availability.md', heading: 'Google Calendar' }],
+        conversationId: 'c1', messageId: 'm1',
+      });
     });
-    render(<BotWidget />);
+    renderWidget();
     open();
     ask('How do I connect Google Calendar?');
 
     expect(await screen.findByText(/connect google calendar from your dashboard/i)).toBeInTheDocument();
-    expect(screen.getByText(/Google Calendar Integration/)).toBeInTheDocument();
-    expect(askBot).toHaveBeenCalledWith({ question: 'How do I connect Google Calendar?', conversationId: null });
+    expect(screen.getByText('Google Calendar')).toBeInTheDocument(); // the source chip
+    expect(streamBot).toHaveBeenCalledWith(
+      { question: 'How do I connect Google Calendar?', conversationId: null },
+      expect.any(Object),
+    );
   });
 
   it('records thumbs feedback for an answered message', async () => {
-    askBot.mockResolvedValue({ data: { answer: 'Yes.', cited_sources: [], escalate: false, conversationId: 'c1', messageId: 'm1' } });
-    render(<BotWidget />);
+    streamBot.mockImplementation(async (_p, { onDelta, onDone }) => {
+      onDelta('Yes.');
+      onDone({ escalate: false, cited_sources: [], conversationId: 'c1', messageId: 'm1' });
+    });
+    renderWidget();
     open();
     ask('Can I add a service?');
     await screen.findByText('Yes.');
@@ -49,11 +67,14 @@ describe('BotWidget', () => {
     await waitFor(() => expect(sendBotFeedback).toHaveBeenCalledWith({ messageId: 'm1', feedback: 'up' }));
   });
 
-  it('shows the human-handoff state when the reply escalates', async () => {
-    askBot.mockResolvedValue({ data: { answer: 'Connecting you to a human.', cited_sources: [], escalate: true, conversationId: 'c1', messageId: 'm2' } });
-    render(<BotWidget />);
+  it('shows the honest async handoff card when the reply escalates', async () => {
+    streamBot.mockImplementation(async (_p, { onDelta, onDone }) => {
+      onDelta("Yeah — I'm pulling in a human from the team.");
+      onDone({ escalate: true, cited_sources: [], conversationId: 'c1', messageId: 'm2' });
+    });
+    renderWidget();
     open();
     ask('I need a refund');
-    expect(await screen.findByText(/a human from our team will reach out/i)).toBeInTheDocument();
+    expect(await screen.findByText(/passing this to a human/i)).toBeInTheDocument();
   });
 });

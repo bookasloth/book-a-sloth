@@ -6,10 +6,11 @@
 'use strict';
 
 const router = require('express').Router();
-const { ask, feedback } = require('../controllers/botController');
+const { ask, askStream, feedback } = require('../controllers/botController');
 const { botLimiter } = require('../middleware/security');
 
 router.post('/ask', botLimiter, ask);
+router.post('/ask/stream', botLimiter, askStream);
 router.post('/feedback', botLimiter, feedback);
 
 module.exports = router;

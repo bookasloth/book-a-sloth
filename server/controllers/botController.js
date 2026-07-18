@@ -3,7 +3,7 @@
 // rate-limited at the route. On escalation it emails the support inbox (reusing the
 // existing sendEmail util, same as contactController) so a human picks it up.
 
-const { askBot, recordFeedback, getRecentMessages } = require('../services/botService');
+const { askBot, askBotStream, recordFeedback, getRecentMessages } = require('../services/botService');
 const sendEmail = require('../utils/sendEmail');
 const { safeError } = require('../utils/httpError');
 
@@ -80,6 +80,56 @@ exports.ask = async (req, res) => {
     });
   } catch (err) {
     return safeError(res, err);
+  }
+};
+
+// Streaming twin of ask(). Same validation + escalation email; streams the answer
+// to the browser over Server-Sent Events so it types out live.
+//   event: delta  data: { text }        — one or more, the answer as it's produced
+//   event: done   data: { escalate, cited_sources, conversationId, messageId }
+//   event: error  data: { message }     — on a hard failure
+exports.askStream = async (req, res) => {
+  const question = String(req.body?.question || '').trim();
+  const conversationId = req.body?.conversationId || null;
+  if (!question) return res.status(400).json({ message: 'Please enter a question.' });
+  if (question.length > MAX_QUESTION_LEN) {
+    return res.status(400).json({ message: 'That question is too long. Please shorten it.' });
+  }
+  if (conversationId && !UUID_RE.test(conversationId)) {
+    return res.status(400).json({ message: 'Invalid conversation reference.' });
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no', // don't let a proxy (nginx/Render) buffer the stream
+  });
+  const sse = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+
+  try {
+    const sessionRef = req.user?.id || null;
+    const result = await askBotStream({
+      question, conversationId, sessionRef,
+      onDelta: (text) => sse('delta', { text }),
+    });
+
+    if (result.escalate) {
+      // Fire-and-forget — the user must not wait on the internal support email.
+      notifySupport({ question, conversationId: result.conversationId, sessionRef });
+    }
+
+    sse('done', {
+      escalate: result.escalate,
+      cited_sources: result.cited_sources,
+      conversationId: result.conversationId,
+      messageId: result.messageId,
+    });
+    res.end();
+  } catch (err) {
+    console.error('[bot] stream failed:', err.message);
+    sse('error', { message: 'Something went wrong. Please try again.' });
+    res.end();
   }
 };
 
