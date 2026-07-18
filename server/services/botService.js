@@ -32,6 +32,28 @@ const HANDOFF =
   "I don't have a confident answer to that from the Book A Sloth help docs, so I'm " +
   "connecting you with a human on our team — they'll follow up over WhatsApp or email shortly.";
 
+// Greetings, thanks, and sign-offs are not questions — they retrieve no chunks and
+// used to fall straight into the escalation path, which handed the user to a human
+// AND emailed support on every "hi". Match a message that is ENTIRELY small talk
+// (a greeting in front of a real question — "hi, how do I book?" — still falls
+// through to the normal answer path) and reply warmly without escalating.
+const SMALLTALK = [
+  { re: /^(hi+|he+y+|hello+|hiya|yo+|namaste|hola|sup|wass?up|greetings|good\s*(morning|afternoon|evening|day)|how\s*(are|r)\s*(you|u|ya)|how'?s\s*it\s*going)(\s+(there|bolt|team|guys))?[\s!.,?]*$/i,
+    reply: "Hey! I'm Bolt, the Book A Sloth assistant. Ask me about booking a service, payments, plans, or becoming a host — happy to help." },
+  { re: /^(thanks?|thank\s*(you|u)|thx|tysm|ty|cheers|appreciate\s*(it|you)|much\s*appreciated)[\s!.,]*$/i,
+    reply: "You're welcome! Anything else about Book A Sloth I can help with?" },
+  { re: /^(ok(ay)?|k+|cool|great|nice|awesome|perfect|got\s*it|understood|alright|right|sounds\s*good|makes\s*sense)[\s!.,]*$/i,
+    reply: "Glad that helps! If anything else about Book A Sloth comes up, just ask." },
+  { re: /^(bye+|goodbye|good\s*night|see\s*(ya|you)|take\s*care|later|gtg|catch\s*you\s*later)[\s!.,]*$/i,
+    reply: "Take care! Come back any time you need a hand with Book A Sloth." },
+];
+
+// Returns a canned reply for a pure-small-talk message, else null.
+const smalltalkReply = (q) => {
+  for (const s of SMALLTALK) if (s.re.test(q)) return s.reply;
+  return null;
+};
+
 const SYSTEM = [
   'You are Bolt 958, the friendly support assistant for Book A Sloth — a SaaS appointment-booking platform where creators ("hosts") publish services and guests book them.',
   'You are given numbered Sources: excerpts from Book A Sloth\'s own documentation. Answer the user\'s question using the facts in those Sources, and ONLY those Sources — do not add outside knowledge.',
@@ -159,6 +181,16 @@ async function persist({ conversationId, sessionRef, question, answer, cited_sou
  */
 async function askBot({ question, conversationId = null, sessionRef = null } = {}) {
   const q = String(question || '').trim();
+
+  // Small talk ("hi", "thanks", "bye") is not a question — answer it warmly and
+  // never escalate, so a greeting doesn't hand the user to a human or email support.
+  const small = q && smalltalkReply(q);
+  if (small) {
+    const { conversationId: convId, messageId } = await persist({
+      conversationId, sessionRef, question: q, answer: small, cited_sources: [], escalate: false,
+    });
+    return { answer: small, cited_sources: [], escalate: false, conversationId: convId, messageId };
+  }
 
   // Prior turns of this conversation (best-effort). Used both to seed the FTS
   // query for follow-ups and to give the model context. Empty for a first turn.

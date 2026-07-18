@@ -76,6 +76,29 @@ test('sensitive topic escalates even when chunks match', async () => {
   expect(client.__create).not.toHaveBeenCalled();
 });
 
+test.each(['Hi', 'hello', 'hey there', 'thanks!', 'thank you', 'ok', 'bye'])(
+  'small talk %p replies warmly without escalating or calling the model',
+  async (msg) => {
+    sb.__rpc.mockResolvedValue({ data: [chunk()], error: null });
+    const out = await askBot({ question: msg });
+    expect(out.escalate).toBe(false);
+    expect(out.cited_sources).toEqual([]);
+    expect(out.answer.length).toBeGreaterThan(0);
+    expect(out.answer).not.toMatch(/connecting you with a human/);
+    expect(client.__create).not.toHaveBeenCalled(); // no retrieval/model work for a greeting
+  },
+);
+
+test('a greeting in front of a real question is NOT swallowed as small talk', async () => {
+  // "hi, how do I book?" must fall through to the normal answer path, not the
+  // greeting shortcut. With no chunks it escalates — but via retrieval, proving
+  // it was not short-circuited as small talk.
+  sb.__rpc.mockResolvedValue({ data: [], error: null });
+  const out = await askBot({ question: 'hi, how do I book a service?' });
+  expect(out.escalate).toBe(true);
+  expect(out.answer).toMatch(/connecting you with a human/);
+});
+
 test('informational money question is NOT sensitive — it gets answered', async () => {
   // Narrowed SENSITIVE_RE: "how do payouts work" no longer hard-escalates; only
   // reversals/compromise (refund, chargeback, hacked, account access) do.
