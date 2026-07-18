@@ -34,24 +34,38 @@ const HANDOFF =
 
 // Greetings, thanks, and sign-offs are not questions — they retrieve no chunks and
 // used to fall straight into the escalation path, which handed the user to a human
-// AND emailed support on every "hi". Match a message that is ENTIRELY small talk
-// (a greeting in front of a real question — "hi, how do I book?" — still falls
-// through to the normal answer path) and reply warmly without escalating.
-const SMALLTALK = [
-  { re: /^(hi+|he+y+|hello+|hiya|yo+|namaste|hola|sup|wass?up|greetings|good\s*(morning|afternoon|evening|day)|how\s*(are|r)\s*(you|u|ya)|how'?s\s*it\s*going)(\s+(there|bolt|team|guys))?[\s!.,?]*$/i,
-    reply: "Hey! I'm Bolt, the Book A Sloth assistant. Ask me about booking a service, payments, plans, or becoming a host — happy to help." },
-  { re: /^(thanks?|thank\s*(you|u)|thx|tysm|ty|cheers|appreciate\s*(it|you)|much\s*appreciated)[\s!.,]*$/i,
-    reply: "You're welcome! Anything else about Book A Sloth I can help with?" },
-  { re: /^(ok(ay)?|k+|cool|great|nice|awesome|perfect|got\s*it|understood|alright|right|sounds\s*good|makes\s*sense)[\s!.,]*$/i,
-    reply: "Glad that helps! If anything else about Book A Sloth comes up, just ask." },
-  { re: /^(bye+|goodbye|good\s*night|see\s*(ya|you)|take\s*care|later|gtg|catch\s*you\s*later)[\s!.,]*$/i,
-    reply: "Take care! Come back any time you need a hand with Book A Sloth." },
-];
+// AND emailed support on every "hi". Detect small talk by VOCABULARY, not fixed
+// phrases: a message is small talk iff every word is a known greeting / thanks /
+// affirmation / sign-off (or harmless filler) and it is short. That catches combos
+// and intensifiers a phrase list misses — "ok thank you", "thank you so much",
+// "great thanks", "see you later", "gm" — while any real content word ("book",
+// "cancel", "plan", "payout") makes the message fall through to the normal answer.
+const SMALLTALK_REPLIES = {
+  greeting: "Hey! I'm Bolt, the Book A Sloth assistant. Ask me about booking a service, payments, plans, or becoming a host — happy to help.",
+  thanks: "You're welcome! Anything else about Book A Sloth I can help with?",
+  affirm: "Glad that helps! If anything else about Book A Sloth comes up, just ask.",
+  bye: "Take care! Come back any time you need a hand with Book A Sloth.",
+};
+const _GREET = new Set(['hi', 'hii', 'hiii', 'hiya', 'hey', 'heyy', 'heyyy', 'hello', 'helloo', 'hellooo', 'yo', 'yoo', 'sup', 'wassup', 'wasup', 'whatsup', 'namaste', 'hola', 'greetings', 'morning', 'afternoon', 'evening', 'gm', 'ge', 'howdy', 'how', 'hows']);
+const _THANKS = new Set(['thanks', 'thanx', 'thanks', 'thank', 'thankyou', 'thx', 'tysm', 'ty', 'tq', 'cheers', 'appreciate', 'appreciated']);
+const _AFFIRM = new Set(['ok', 'okay', 'okey', 'k', 'kk', 'cool', 'great', 'nice', 'awesome', 'perfect', 'fine', 'got', 'understood', 'alright', 'right', 'sounds', 'makes', 'sense', 'noted', 'done', 'yep', 'yeah', 'yes', 'sure']);
+const _BYE = new Set(['bye', 'byee', 'byeee', 'goodbye', 'gtg', 'gn', 'goodnight', 'night', 'see', 'later', 'ttyl', 'cya']);
+// Harmless connective/filler words that may sit inside small talk. NO content words.
+const _FILLER = new Set(['you', 'u', 'ya', 'yaa', 'r', 'are', 'is', 'it', 'im', 'so', 'much', 'a', 'an', 'the', 'lot', 'very', 'really', 'quite', 'there', 'bolt', 'team', 'guys', 'and', 'to', 'for', 'going', 'doing', 'up', 'all', 'good', 'take', 'care', 'catch']);
+const _VOCAB = new Set([..._GREET, ..._THANKS, ..._AFFIRM, ..._BYE, ..._FILLER]);
 
 // Returns a canned reply for a pure-small-talk message, else null.
 const smalltalkReply = (q) => {
-  for (const s of SMALLTALK) if (s.re.test(q)) return s.reply;
-  return null;
+  const cleaned = String(q).toLowerCase().replace(/[^a-z\s]/g, ' ').trim();
+  // Pure emoji/punctuation and very short (e.g. "👋", "!!") — treat as a hello.
+  if (!cleaned) return String(q).trim().length <= 4 ? SMALLTALK_REPLIES.greeting : null;
+  const tokens = cleaned.split(/\s+/);
+  if (tokens.length > 6 || !tokens.every((t) => _VOCAB.has(t))) return null;
+  if (tokens.some((t) => _THANKS.has(t))) return SMALLTALK_REPLIES.thanks;
+  if (tokens.some((t) => _BYE.has(t))) return SMALLTALK_REPLIES.bye;
+  if (tokens.some((t) => _GREET.has(t))) return SMALLTALK_REPLIES.greeting;
+  if (tokens.some((t) => _AFFIRM.has(t))) return SMALLTALK_REPLIES.affirm;
+  return SMALLTALK_REPLIES.greeting; // only-filler ("you there") — default to hello
 };
 
 const SYSTEM = [
@@ -269,5 +283,5 @@ async function getRecentMessages(conversationId, limit = 10) {
 
 module.exports = {
   askBot, recordFeedback, getRecentMessages, HANDOFF, SENSITIVE_RE, MIN_RANK,
-  buildRetrievalQuery, toModelHistory,
+  buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES,
 };

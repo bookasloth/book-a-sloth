@@ -27,7 +27,7 @@ jest.mock('../../config/supabase', () => {
 
 const client = require('../../services/ai/anthropicClient');
 const sb = require('../../config/supabase');
-const { askBot, buildRetrievalQuery, toModelHistory } = require('../../services/botService');
+const { askBot, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES } = require('../../services/botService');
 
 const answerReply = (input) => ({ content: [{ type: 'tool_use', name: 'emit_answer', input }] });
 const chunk = (over = {}) => ({ id: 'c1', source_file: 'docs/architecture.md', heading: 'Google Calendar Integration', content: 'Connect via /api/auth/google.', rank: 0.9, ...over });
@@ -76,7 +76,12 @@ test('sensitive topic escalates even when chunks match', async () => {
   expect(client.__create).not.toHaveBeenCalled();
 });
 
-test.each(['Hi', 'hello', 'hey there', 'thanks!', 'thank you', 'ok', 'bye'])(
+test.each([
+  'Hi', 'hello', 'hey there', 'hii', 'yo', 'sup', 'good morning', 'gm', 'namaste',
+  'how are you?', 'thanks!', 'thank you', 'thank you so much', 'thanks a lot',
+  'ok thank you', 'great thanks', 'ok', 'okay cool', 'perfect', 'got it thanks',
+  'bye', 'see you later', 'take care', '👋',
+])(
   'small talk %p replies warmly without escalating or calling the model',
   async (msg) => {
     sb.__rpc.mockResolvedValue({ data: [chunk()], error: null });
@@ -88,6 +93,18 @@ test.each(['Hi', 'hello', 'hey there', 'thanks!', 'thank you', 'ok', 'bye'])(
     expect(client.__create).not.toHaveBeenCalled(); // no retrieval/model work for a greeting
   },
 );
+
+test('smalltalkReply picks the right category and ignores real questions', () => {
+  expect(smalltalkReply('thank you so much')).toBe(SMALLTALK_REPLIES.thanks);
+  expect(smalltalkReply('ok thank you')).toBe(SMALLTALK_REPLIES.thanks); // thanks beats affirm
+  expect(smalltalkReply('see you later')).toBe(SMALLTALK_REPLIES.bye);
+  expect(smalltalkReply('good morning')).toBe(SMALLTALK_REPLIES.greeting);
+  expect(smalltalkReply('okay cool')).toBe(SMALLTALK_REPLIES.affirm);
+  // Real questions (a content word present) are NOT small talk.
+  for (const q of ['hi how do I book?', 'how much is host+', 'can I cancel', 'great plan', 'is it free']) {
+    expect(smalltalkReply(q)).toBeNull();
+  }
+});
 
 test('a greeting in front of a real question is NOT swallowed as small talk', async () => {
   // "hi, how do I book?" must fall through to the normal answer path, not the
