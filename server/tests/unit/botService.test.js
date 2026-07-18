@@ -271,3 +271,15 @@ test('over-budget serves the busy message, does not escalate or call the model',
   expect(out.cited_sources).toEqual([]);
   expect(client.__create).not.toHaveBeenCalled(); // model was NOT called
 });
+
+test('over-budget in the streaming path emits the busy message, does not escalate or call the model', async () => {
+  sb.__rpc.mockResolvedValue({ data: [chunk()], error: null });
+  botBudget.tryConsume.mockResolvedValueOnce({ allowed: false, reason: 'minute' });
+  const deltas = [];
+  const out = await askBotStream({ question: 'How do I add a service?', onDelta: (t) => deltas.push(t) });
+  expect(out.escalate).toBe(false);
+  expect(out.source).toBe('over_budget');
+  expect(out.answer).toBe(OVER_BUDGET_MSG);
+  expect(deltas.join('')).toBe(OVER_BUDGET_MSG); // the busy line is streamed, NOT the HANDOFF escalation line
+  expect(client.__create).not.toHaveBeenCalled();
+});
