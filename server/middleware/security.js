@@ -282,6 +282,22 @@ const botLimiter = rateLimit({
   skip: skipWhenLoadTest,
 });
 
+// Global request cap for the bot — a SINGLE bucket across ALL IPs (constant key),
+// so rotating IPs can't bypass it the way they bypass the per-IP botLimiter. This
+// bounds total request volume (DB/CPU/embedding load); the model-call budget
+// (lib/botBudget.js) is the tighter control on the expensive path. `max` is a
+// function so BOT_GLOBAL_MAX_PER_MIN retunes at runtime without a redeploy.
+const botGlobalLimiter = rateLimit({
+  store: makeRateLimitStore('bot-global'),
+  windowMs: 60 * 1000,
+  max: () => Number(process.env.BOT_GLOBAL_MAX_PER_MIN) || 300,
+  keyGenerator: () => 'bot-global',
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Bolt is very busy right now. Please try again in a moment.' },
+  skip: skipWhenLoadTest,
+});
+
 // File uploads — each call streams up to 2MB into Supabase Storage, so cap
 // them tighter than the global apiLimiter to stop an authenticated account from
 // burning storage/bandwidth. Keyed per ACCOUNT (req.user.id), set by `protect`
@@ -408,6 +424,7 @@ module.exports = {
   newsletterEmailLimiter,
   newsletterIpLimiter,
   botLimiter,
+  botGlobalLimiter,
   speedLimiter,
   hppMiddleware,
   sanitizeBody,

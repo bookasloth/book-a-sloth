@@ -17,6 +17,7 @@
 const anthropicClient = require('./ai/anthropicClient');
 const voyageClient = require('./ai/voyageClient');
 const { supabaseAdmin } = require('../config/supabase');
+const botBudget = require('../lib/botBudget');
 
 // Pull a generous top-N so the authoritative chunk survives noisier docs; the
 // model still answers only from what's relevant and escalates when none cover it.
@@ -114,6 +115,10 @@ const UNSUPPORTED_INPUT_MSG =
   "I can only help in English right now. You can type Hindi and other Indian " +
   'languages using English letters (for example "booking kaise kare") — please ' +
   "rephrase that way and I'll help.";
+
+const OVER_BUDGET_MSG =
+  "Bolt's getting a lot of questions right now — please try again in a little " +
+  'while, or browse the help center at /help/docs.';
 
 // ── Voice (shared by the streamed + structured paths) ──────────────────────────
 // The "how would Shubham explain this in a WhatsApp chat" system prompt. Grounding
@@ -506,23 +511,32 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
 
   const canAnswer = q && retrievalOk && chunks.length && !sensitive && anthropicClient.isConfigured();
   if (canAnswer) {
-    try {
-      const out = await callModel(q, chunks, history);
-      if (out && !out.escalate && String(out.answer || '').trim()) {
-        escalate = false;
-        source = 'model';
-        answer = String(out.answer).trim();
-        const nums = Array.isArray(out.source_numbers) ? out.source_numbers : [];
-        cited_sources = dedupeSources(
-          nums.map((n) => chunks[n - 1]).filter(Boolean)
-            .map((c) => ({ source_file: c.source_file, heading: c.heading || null }))
-        );
-        if (!cited_sources.length) cited_sources = sourcesFromChunks(chunks);
-        // Cache this grounded answer for near-identical future questions (best-effort).
-        semanticCacheStore(q, queryEmbedding, answer, cited_sources);
+    const budget = await botBudget.tryConsume();
+    if (!budget.allowed) {
+      console.warn('[bot] model budget exceeded', { reason: budget.reason });
+      escalate = false;
+      source = 'over_budget';
+      answer = OVER_BUDGET_MSG;
+      cited_sources = [];
+    } else {
+      try {
+        const out = await callModel(q, chunks, history);
+        if (out && !out.escalate && String(out.answer || '').trim()) {
+          escalate = false;
+          source = 'model';
+          answer = String(out.answer).trim();
+          const nums = Array.isArray(out.source_numbers) ? out.source_numbers : [];
+          cited_sources = dedupeSources(
+            nums.map((n) => chunks[n - 1]).filter(Boolean)
+              .map((c) => ({ source_file: c.source_file, heading: c.heading || null }))
+          );
+          if (!cited_sources.length) cited_sources = sourcesFromChunks(chunks);
+          // Cache this grounded answer for near-identical future questions (best-effort).
+          semanticCacheStore(q, queryEmbedding, answer, cited_sources);
+        }
+      } catch (e) {
+        console.error('[bot] model call failed:', e.message);
       }
-    } catch (e) {
-      console.error('[bot] model call failed:', e.message);
     }
   }
 
@@ -608,17 +622,27 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
 
   const canAnswer = q && retrievalOk && chunks.length && !sensitive && anthropicClient.isConfigured();
   if (canAnswer) {
-    try {
-      const out = await streamGrounded(q, chunks, history, onDelta);
-      if (!out.escalate && out.text) {
-        escalate = false;
-        source = 'model';
-        answer = out.text;
-        cited_sources = sourcesFromChunks(chunks); // streamed prose → cite all retrieved
-        semanticCacheStore(q, queryEmbedding, answer, cited_sources); // best-effort
+    const budget = await botBudget.tryConsume();
+    if (!budget.allowed) {
+      console.warn('[bot] model budget exceeded', { reason: budget.reason });
+      escalate = false;
+      source = 'over_budget';
+      answer = OVER_BUDGET_MSG;
+      cited_sources = [];
+      onDelta(OVER_BUDGET_MSG);
+    } else {
+      try {
+        const out = await streamGrounded(q, chunks, history, onDelta);
+        if (!out.escalate && out.text) {
+          escalate = false;
+          source = 'model';
+          answer = out.text;
+          cited_sources = sourcesFromChunks(chunks); // streamed prose → cite all retrieved
+          semanticCacheStore(q, queryEmbedding, answer, cited_sources); // best-effort
+        }
+      } catch (e) {
+        console.error('[bot] stream model call failed:', e.message);
       }
-    } catch (e) {
-      console.error('[bot] stream model call failed:', e.message);
     }
   }
 
@@ -694,5 +718,5 @@ module.exports = {
   askBot, askBotStream, recordFeedback, getRecentMessages, matchFaq, logGap,
   HANDOFF, SENSITIVE_RE, MIN_RANK, ESCALATE_TOKEN, buildRetrievalQuery, toModelHistory,
   smalltalkReply, SMALLTALK_REPLIES, mergeChunks,
-  isUnsupportedInput, UNSUPPORTED_INPUT_MSG,
+  isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG,
 };
