@@ -136,6 +136,7 @@ export const NAV = [
   { id:'support', section:'SUPPORT', items:[
     { label:'Reviews Moderation', icon:'msgSq', to:'/admin/support/reviews', perm:'reviews.moderate' },
     { label:'Host Feedback',    icon:'msgSq', to:'/admin/feedback', perm:'feedback.view' },
+    { label:'Bolt Support',     icon:'chat',  to:'/admin/support/bolt', perm:'support.view' },
   ]},
   { id:'platform', section:'PLATFORM', items:[
     { label:'Appearance',       icon:'palette', to:'/admin/platform/appearance', perm:'branding.manage' },
