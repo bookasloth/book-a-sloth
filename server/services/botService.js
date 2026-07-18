@@ -116,6 +116,27 @@ const UNSUPPORTED_INPUT_MSG =
   'languages using English letters (for example "booking kaise kare") — please ' +
   "rephrase that way and I'll help.";
 
+// Input tripwire — flags common prompt-injection phrasing for observability. LOG
+// ONLY: it never blocks or changes the reply (the hardened prompt handles
+// behaviour). Returns the matched pattern label, or null.
+const _INJECTION_PATTERNS = [
+  [/ignore (?:the |your |all |previous |prior )*(?:instructions|rules|prompt)/i, 'ignore-instructions'],
+  [/disregard (?:the |your |all |previous )*(?:instructions|rules)/i, 'disregard'],
+  [/\bsystem prompt\b/i, 'system-prompt'],
+  [/you are (?:now|a|an) /i, 'roleplay'],
+  [/\bact as (?:a |an |the )?/i, 'act-as'],
+  [/repeat (?:the )?(?:text|words|everything|prompt) (?:above|before)/i, 'repeat-above'],
+  [/\bdeveloper mode\b/i, 'developer-mode'],
+  [/\bDAN\b/, 'dan'],
+  [/\bjailbreak/i, 'jailbreak'],
+  [/(?:reveal|print|show|repeat) (?:me )?(?:your )?(?:the )?(?:instructions|prompt|system)/i, 'reveal-instructions'],
+];
+function detectInjection(q) {
+  const s = String(q || '');
+  for (const [re, label] of _INJECTION_PATTERNS) if (re.test(s)) return label;
+  return null;
+}
+
 const OVER_BUDGET_MSG =
   "Bolt's getting a lot of questions right now — please try again in a little " +
   'while, or browse the help center at /help/docs.';
@@ -486,6 +507,12 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
     return { answer: UNSUPPORTED_INPUT_MSG, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'unsupported' };
   }
 
+  const _inj = q && detectInjection(q);
+  if (_inj) {
+    console.warn('[bot] injection attempt', { pattern: _inj });
+    logGap({ question: q, reason: 'injection_attempt', conversationId }).catch(() => {});
+  }
+
   const small = q && smalltalkReply(q);
   if (small) {
     const { conversationId: convId, messageId } = await persist({
@@ -601,6 +628,12 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
       conversationId, sessionRef, question: q, answer: UNSUPPORTED_INPUT_MSG, cited_sources: [], escalate: false, source: 'unsupported',
     });
     return { answer: UNSUPPORTED_INPUT_MSG, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'unsupported' };
+  }
+
+  const _inj = q && detectInjection(q);
+  if (_inj) {
+    console.warn('[bot] injection attempt', { pattern: _inj });
+    logGap({ question: q, reason: 'injection_attempt', conversationId }).catch(() => {});
   }
 
   const small = q && smalltalkReply(q);
@@ -764,5 +797,5 @@ module.exports = {
   smalltalkReply, SMALLTALK_REPLIES, mergeChunks,
   isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG,
   buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED,
-  sanitizeAnswer, BLOCKED_MSG,
+  sanitizeAnswer, BLOCKED_MSG, detectInjection,
 };
