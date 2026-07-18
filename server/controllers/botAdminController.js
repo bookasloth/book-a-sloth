@@ -13,6 +13,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const MAX_PATTERN = 200;
 const MAX_ANSWER = 4000;
 
+// The injection tripwire and output guard log into knowledge_gaps too, but they are
+// NOT coverage gaps — excluding them keeps attack noise out of the gap-review queue
+// and the "open gaps" KPI so real "Bolt couldn't answer this" rows aren't buried.
+const NON_GAP_REASONS = '("injection_attempt","blocked_output")';
+
 // GET /api/admin/bot/gaps?status=open|resolved|all
 // Newest-first, open before resolved. For a 👎 (question is null, message_id set)
 // we attach the downvoted assistant answer so the admin has context.
@@ -22,6 +27,7 @@ const listGaps = async (req, res) => {
     let q = supabaseAdmin
       .from('knowledge_gaps')
       .select('id, question, reason, resolved, conversation_id, message_id, created_at')
+      .not('reason', 'in', NON_GAP_REASONS)
       .order('created_at', { ascending: false })
       .limit(300);
     if (status === 'open') q = q.eq('resolved', false);
@@ -161,7 +167,7 @@ const analytics = async (req, res) => {
 
     const [{ count: cacheSize }, { count: openGaps }, { count: faqCount }] = await Promise.all([
       supabaseAdmin.from('bot_semantic_cache').select('id', { count: 'exact', head: true }),
-      supabaseAdmin.from('knowledge_gaps').select('id', { count: 'exact', head: true }).eq('resolved', false),
+      supabaseAdmin.from('knowledge_gaps').select('id', { count: 'exact', head: true }).eq('resolved', false).not('reason', 'in', NON_GAP_REASONS),
       supabaseAdmin.from('bot_faqs').select('id', { count: 'exact', head: true }).eq('enabled', true),
     ]);
 
