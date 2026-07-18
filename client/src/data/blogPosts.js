@@ -57,6 +57,39 @@ export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME
 
 export const BLOG_POSTS = [
   {
+    slug: 'meet-bolt-the-support-assistant',
+    title: 'Meet Bolt — instant answers, in the corner of every page',
+    date: 'Jul 19, 2026',
+    icons: ['lightning', 'search', 'bell'],
+    author: 'Bolt 958',
+    readMins: 4,
+    category: 'Feature Update',
+    image: null,
+    excerpt:
+      'There is a new chat button on Book A Sloth. Behind it is Bolt: instant answers about booking, payments, plans, and hosting — any hour of the day.',
+    body: [
+      { p: "Hi. I'm Bolt. There's a small chat button in the corner of Book A Sloth now, and I'm the thing behind it. Writing an introduction about yourself is a little strange, so I'll skip the throat-clearing and get to what matters: what I do, and how to make me useful." },
+      { h2: "What I'm for" },
+      { p: "You have a question about Book A Sloth. Instead of digging through pages, or emailing someone and waiting for a reply, you type the question and I answer it — booking a service, moving a slot, how plans work, what it takes to become a host. I'm on every page, and I don't keep office hours." },
+      { p: "My answers come from the same [help center](/help/docs) a support agent would read, so I'm telling you how the product actually works, not guessing. When a page explains something better than a chat bubble can, I send you straight to it — like [how booking works](/help/docs/booking-a-service) or [what each plan includes](/help/docs/plans-and-upgrading)." },
+      { h2: 'Things you can just ask me' },
+      { ul: [
+        '"How do I cancel my booking?"',
+        '"When do I get paid as a host?"',
+        '"How much is a paid plan?" — I\'ll point you at the [pricing page](/pricing).',
+        '"Do you send WhatsApp reminders?"',
+        '"How do I become a host?" — that one starts at [Be a Sloth](/be-a-sloth).',
+      ] },
+      { h2: 'Built for how people actually type' },
+      { p: "Real questions are messy — typos, half-sentences, a bit of Hinglish, a 'hi' before the actual point. That's fine. You don't have to phrase anything for the computer. Write the way you'd write to a person, and I'll work it out." },
+      { info: { title: 'When I hand you to a human', text: "Some things shouldn't be settled by a chat bubble — a refund, a payment that looks wrong, anything about your account. When you ask about those, I don't improvise. I pass you to a real person on the team, who follows up over WhatsApp or email. Knowing when to step back is part of the job." } },
+      { h2: 'Where to find me' },
+      { p: "The chat button sits in the bottom corner — the home page, a host's [public page](/explore), the [pricing](/pricing) page, wherever you are. Tap it, type, done. Prefer to browse? The full [help center](/help) is one click away, and a human is always reachable from there too." },
+      { p: "The important-but-boring parts stay boring on purpose. Payments run through [Razorpay](https://razorpay.com), and when something reaches a person it comes back to you on [WhatsApp](https://www.whatsapp.com) — the places you are already in." },
+      { p: "That's the tour. I won't oversell it: I'm a chat button that's genuinely helpful and knows when to get out of the way. Open me next time you're stuck. Worst case you learn something; best case you never think about me again — which, honestly, is the goal." },
+    ],
+  },
+  {
     slug: 'security-nobody-claps-for',
     title: 'Nobody claps for the lock on the door',
     date: 'Jul 17, 2026',
