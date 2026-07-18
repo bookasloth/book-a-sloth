@@ -325,6 +325,9 @@ describe('sanitizeAnswer (layer 2 output guard)', () => {
   test('a normal answer containing generic words is not falsely blocked', () => {
     expect(sanitizeAnswer('Follow these instructions: open Services and click Add.').safe).toBe(true);
   });
+  test('strips protocol-relative // links too', () => {
+    expect(sanitizeAnswer('see [x](//evil.com)').text).toBe('see x');
+  });
 });
 
 test('a model answer that leaks is replaced with BLOCKED_MSG, source blocked, not escalated', async () => {

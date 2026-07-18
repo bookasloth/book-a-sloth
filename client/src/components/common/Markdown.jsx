@@ -28,7 +28,7 @@ function renderInline(text, keyBase, externalLinks) {
       const label = m[1];
       const href = m[2];
       nodes.push(
-        href.startsWith('/') ? (
+        href.startsWith('/') && !href.startsWith('//') ? (
           <Link key={key} to={href} className="text-[#FE5100] hover:underline">{label}</Link>
         ) : externalLinks === 'strip' ? (
           <span key={key}>{label}</span>

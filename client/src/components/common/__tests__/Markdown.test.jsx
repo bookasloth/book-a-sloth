@@ -22,4 +22,9 @@ describe('Markdown externalLinks prop', () => {
     const c = html(<Markdown source="See [x](https://ok.com)" />);
     expect(c.querySelector('a[href="https://ok.com"]')).not.toBeNull();
   });
+  it('strip: protocol-relative // link renders as plain text, no anchor', () => {
+    const c = html(<Markdown source="see [x](//evil.com)" externalLinks="strip" />);
+    expect(c.querySelector('a')).toBeNull();
+    expect(c.textContent).toContain('x');
+  });
 });
