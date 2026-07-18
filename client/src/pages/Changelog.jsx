@@ -51,6 +51,14 @@ const BLOBS = [
 
 const RELEASES = [
   {
+    date: 'Jul 19, 2026',
+    title: 'Sharper preview when you share a host',
+    tags: ['Fixed'],
+    points: [
+      'Paste a host’s profile link into WhatsApp, Facebook or a message and it now shows their photo in a proper preview card. Before, the photo came through too small and some apps showed no card at all.',
+    ],
+  },
+  {
     date: 'Jul 17, 2026', version: 'v3.69',
     title: 'Your listing, written for you',
     tags: ['New'],
