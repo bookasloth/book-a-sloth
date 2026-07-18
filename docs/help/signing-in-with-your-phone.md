@@ -2,6 +2,22 @@
 
 If you're booking a service, your phone number is your identity — there's no separate sign-up, and no password to remember.
 
+## How do I log in?
+
+To **log in** (or sign in) as a guest, go to the [login page](/login) and enter your phone number. We send you a 6-digit code by WhatsApp and email — enter it and you're logged in. No password needed to log in.
+
+**Hosts (creators) log in differently** — with Google, not a phone number. See [Becoming a host](/help/docs/becoming-a-host).
+
+## Trouble logging in?
+
+If you can't log in, it's almost always one of these:
+
+- **The code didn't arrive** — check WhatsApp and your email (including spam). See [OTP problems](/help/docs/otp-problems).
+- **"That number is a host account"** — you're using guest login with a host number; log in with Google instead.
+- **Wrong login for your account** — guests log in with a phone number; hosts log in with Google.
+
+If you still can't log in after checking those, reach us from the [Help](/help) page and we'll help you get back in.
+
 ## How guest sign-in works
 
 Go to the [login page](/login) and enter your phone number. We send a 6-digit code by WhatsApp and email — enter it, and you're in. That's the whole flow.

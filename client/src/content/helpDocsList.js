@@ -40,6 +40,7 @@ export const HELP_DOCS = [
   { slug: 'what-is-book-a-sloth', category: 'General' },
   { slug: 'pricing-and-commission', category: 'General' },
   { slug: 'is-my-payment-and-data-safe', category: 'General' },
+  { slug: 'whats-not-supported-yet', category: 'General' },
   { slug: 'contact-support', category: 'General' },
 ];
 
