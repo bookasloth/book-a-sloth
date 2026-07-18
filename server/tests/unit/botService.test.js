@@ -27,7 +27,7 @@ jest.mock('../../config/supabase', () => {
 
 const client = require('../../services/ai/anthropicClient');
 const sb = require('../../config/supabase');
-const { askBot } = require('../../services/botService');
+const { askBot, buildRetrievalQuery, toModelHistory } = require('../../services/botService');
 
 const answerReply = (input) => ({ content: [{ type: 'tool_use', name: 'emit_answer', input }] });
 const chunk = (over = {}) => ({ id: 'c1', source_file: 'docs/architecture.md', heading: 'Google Calendar Integration', content: 'Connect via /api/auth/google.', rank: 0.9, ...over });
@@ -74,6 +74,38 @@ test('sensitive topic escalates even when chunks match', async () => {
   const out = await askBot({ question: 'I need a refund for my payment' });
   expect(out.escalate).toBe(true);
   expect(client.__create).not.toHaveBeenCalled();
+});
+
+test('informational money question is NOT sensitive — it gets answered', async () => {
+  // Narrowed SENSITIVE_RE: "how do payouts work" no longer hard-escalates; only
+  // reversals/compromise (refund, chargeback, hacked, account access) do.
+  sb.__rpc.mockResolvedValue({ data: [chunk()], error: null });
+  client.__create.mockResolvedValueOnce(answerReply({
+    answer: 'Request a payout from Earnings; the minimum is ₹100.', escalate: false, source_numbers: [1],
+  }));
+  const out = await askBot({ question: 'how do payouts work?' });
+  expect(out.escalate).toBe(false);
+  expect(client.__create).toHaveBeenCalled();
+});
+
+test('buildRetrievalQuery seeds a follow-up with the last user turns', () => {
+  const history = [
+    { role: 'user', content: 'how much is Host+?' },
+    { role: 'assistant', content: 'Host+ is a paid plan; see the pricing page.' },
+  ];
+  // The bare follow-up has no keywords of its own; the prior user turn supplies them.
+  expect(buildRetrievalQuery('what about the other plan?', history))
+    .toBe('how much is Host+? what about the other plan?');
+  // First turn (no history) is just the question.
+  expect(buildRetrievalQuery('how do I book?', [])).toBe('how do I book?');
+});
+
+test('toModelHistory maps roles, drops empties, and caps length', () => {
+  const long = Array.from({ length: 10 }, (_, i) => ({ role: i % 2 ? 'assistant' : 'user', content: `m${i}` }));
+  const out = toModelHistory(long);
+  expect(out).toHaveLength(6);                 // capped to HISTORY_TURNS
+  expect(out.every((m) => m.role === 'user' || m.role === 'assistant')).toBe(true);
+  expect(toModelHistory([{ role: 'user', content: '  ' }])).toEqual([]); // blank dropped
 });
 
 test('escalates when the API key is not configured', async () => {

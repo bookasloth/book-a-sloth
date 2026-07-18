@@ -19,9 +19,14 @@ const MATCH_COUNT = 8;
 // below this. ponytail: single constant knob — retune here if recall feels off.
 const MIN_RANK = 0.02;
 
-// Topics we deliberately never let the bot answer, however good the doc match —
-// money, identity, and account-access questions go to a human every time.
-const SENSITIVE_RE = /\b(refund|charge ?backs?|payments?|pay(?:ing|out|outs)?|razorpay|billing|invoices?|gst|kyc|withdraw(?:al)?s?|bank|password|log ?in|logged? out|locked out|can'?t (?:log|sign) ?in|account access|access my account|delete my account|hacked|unauthor)/i;
+// Topics we always send to a human, however good the doc match — money REVERSALS
+// and account-COMPROMISE, where a wrong-but-confident answer does real harm.
+// Deliberately NOT here: informational money/account questions ("how do payouts
+// work", "how does billing work", "how do I log in", "what is KYC") — those now
+// have help articles and should be answered, not handed off. This regex is the
+// narrow "a human must handle this" set: refunds, chargebacks/disputes, being
+// wrongly charged, fraud/hacked/locked-out, and account access/deletion.
+const SENSITIVE_RE = /\b(refunds?|charge ?backs?|disputes?|charged (?:me )?(?:twice|again|wrong|extra)|double ?charged?|fraud|hacked|stolen|compromis|locked out|can'?t (?:log|sign) ?in|account access|access my account|delete (?:my )?account|close (?:my )?account|unauthor)/i;
 
 const HANDOFF =
   "I don't have a confident answer to that from the Book A Sloth help docs, so I'm " +
@@ -31,6 +36,7 @@ const SYSTEM = [
   'You are Bolt 958, the friendly support assistant for Book A Sloth — a SaaS appointment-booking platform where creators ("hosts") publish services and guests book them.',
   'You are given numbered Sources: excerpts from Book A Sloth\'s own documentation. Answer the user\'s question using the facts in those Sources, and ONLY those Sources — do not add outside knowledge.',
   'Default to answering. If the Sources contain the relevant information, write a clear, concise answer (a couple of sentences) and put the 1-based numbers of the Sources you used in source_numbers.',
+  'Earlier turns of this conversation may be included before the current question. Use them to interpret follow-ups ("what about the other plan?", "and cancelling?"), but still answer ONLY from the Sources given for the current turn.',
   'Only set escalate=true when the Sources genuinely do not address the question at all. Do NOT escalate merely because the wording differs, the detail is partial, or you are being cautious — a partial but grounded answer is better than a handoff.',
   'Never invent prices, guarantees, links, dates, or policy that is not written in the Sources. When (and only when) you escalate, leave answer empty.',
   'Always respond by calling the emit_answer tool.',
@@ -63,13 +69,37 @@ const dedupeSources = (arr) => {
   });
 };
 
-async function retrieve(question) {
+async function retrieve(queryText) {
   const { data, error } = await supabaseAdmin.rpc('search_kb_chunks', {
-    query_text: question,
+    query_text: queryText,
     match_count: MATCH_COUNT,
   });
   if (error) throw error;
   return (data || []).filter((c) => (c.rank ?? 0) >= MIN_RANK);
+}
+
+// Follow-ups like "what about the other plan?" carry no keywords of their own, so
+// FTS on the bare question retrieves nothing useful. Prepend the last couple of
+// user turns to seed the query with their subject. ponytail: plain concatenation,
+// no extra model call — upgrade to a model-based query rewrite only if this proves
+// too weak in practice.
+function buildRetrievalQuery(question, history) {
+  const priorUserTurns = (history || [])
+    .filter((m) => m.role === 'user')
+    .slice(-2)
+    .map((m) => m.content);
+  return [...priorUserTurns, question].join(' ').trim();
+}
+
+// Prior turns as alternating messages for model context (persist() always writes a
+// user+assistant pair, so history stays well-formed). Capped so long chats don't
+// blow the token budget.
+const HISTORY_TURNS = 6;
+function toModelHistory(history) {
+  return (history || [])
+    .slice(-HISTORY_TURNS)
+    .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || '') }))
+    .filter((m) => m.content.trim());
 }
 
 function buildUserMessage(question, chunks) {
@@ -79,7 +109,7 @@ function buildUserMessage(question, chunks) {
   return `Question: ${question}\n\nSources:\n${sources}`;
 }
 
-async function callModel(question, chunks) {
+async function callModel(question, chunks, history = []) {
   const client = anthropicClient.getClient();
   const resp = await client.messages.create({
     model: anthropicClient.MODELS.generate,
@@ -87,7 +117,10 @@ async function callModel(question, chunks) {
     system: SYSTEM,
     tools: [ANSWER_TOOL],
     tool_choice: { type: 'tool', name: 'emit_answer' },
-    messages: [{ role: 'user', content: buildUserMessage(question, chunks) }],
+    messages: [
+      ...toModelHistory(history),
+      { role: 'user', content: buildUserMessage(question, chunks) },
+    ],
   });
   return (resp.content || []).find((b) => b.type === 'tool_use' && b.name === 'emit_answer')?.input || null;
 }
@@ -127,11 +160,15 @@ async function persist({ conversationId, sessionRef, question, answer, cited_sou
 async function askBot({ question, conversationId = null, sessionRef = null } = {}) {
   const q = String(question || '').trim();
 
+  // Prior turns of this conversation (best-effort). Used both to seed the FTS
+  // query for follow-ups and to give the model context. Empty for a first turn.
+  const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
+
   let chunks = [];
   let retrievalOk = true;
   if (q) {
     try {
-      chunks = await retrieve(q);
+      chunks = await retrieve(buildRetrievalQuery(q, history));
     } catch (e) {
       retrievalOk = false;
       if (!_isMissingSchema(e)) console.error('[bot] retrieval failed:', e.message);
@@ -146,7 +183,7 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
   const canAnswer = q && retrievalOk && chunks.length && !sensitive && anthropicClient.isConfigured();
   if (canAnswer) {
     try {
-      const out = await callModel(q, chunks);
+      const out = await callModel(q, chunks, history);
       if (out && !out.escalate && String(out.answer || '').trim()) {
         escalate = false;
         answer = String(out.answer).trim();
@@ -198,4 +235,7 @@ async function getRecentMessages(conversationId, limit = 10) {
   }
 }
 
-module.exports = { askBot, recordFeedback, getRecentMessages, HANDOFF, SENSITIVE_RE, MIN_RANK };
+module.exports = {
+  askBot, recordFeedback, getRecentMessages, HANDOFF, SENSITIVE_RE, MIN_RANK,
+  buildRetrievalQuery, toModelHistory,
+};
