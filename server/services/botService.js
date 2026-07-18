@@ -120,6 +120,20 @@ const OVER_BUDGET_MSG =
   "Bolt's getting a lot of questions right now — please try again in a little " +
   'while, or browse the help center at /help/docs.';
 
+const BLOCKED_MSG = 'I can only help with questions about Book A Sloth — what can I help you find?';
+
+// Output guard: strip external links (phishing) and flag hard leaks. Internal
+// "/..." links are kept. `safe:false` means the model echoed the escalate sentinel
+// or its own instructions — caller replaces the answer with BLOCKED_MSG and does
+// not cache it.
+const _EXT_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/gi;
+const _LEAK_RE = /you are bolt 958|system prompt|these instructions|my instructions are/i;
+function sanitizeAnswer(text) {
+  const cleaned = String(text || '').replace(_EXT_LINK_RE, '$1');
+  const safe = !cleaned.includes(ESCALATE_TOKEN) && !_LEAK_RE.test(cleaned);
+  return { text: cleaned, safe };
+}
+
 // ── Voice (shared by the streamed + structured paths) ──────────────────────────
 // The "how would Shubham explain this in a WhatsApp chat" system prompt. Grounding
 // is non-negotiable; personality rides on top of it.
@@ -543,8 +557,15 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
               .map((c) => ({ source_file: c.source_file, heading: c.heading || null }))
           );
           if (!cited_sources.length) cited_sources = sourcesFromChunks(chunks);
-          // Cache this grounded answer for near-identical future questions (best-effort).
-          semanticCacheStore(q, queryEmbedding, answer, cited_sources);
+          const clean = sanitizeAnswer(answer);
+          if (!clean.safe) {
+            console.warn('[bot] blocked output (leak/sentinel)');
+            answer = BLOCKED_MSG; source = 'blocked'; cited_sources = [];
+          } else {
+            answer = clean.text;
+            // Cache this grounded answer for near-identical future questions (best-effort).
+            semanticCacheStore(q, queryEmbedding, answer, cited_sources);
+          }
         }
       } catch (e) {
         console.error('[bot] model call failed:', e.message);
@@ -556,6 +577,7 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
     conversationId, sessionRef, question: q, answer, cited_sources, escalate, source,
   });
   if (escalate) await logGap({ question: q, reason: 'escalated', conversationId: convId });
+  else if (source === 'blocked') await logGap({ question: q, reason: 'blocked_output', conversationId: convId });
 
   return { answer, cited_sources, escalate, conversationId: convId, messageId, source };
 }
@@ -650,7 +672,14 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
           source = 'model';
           answer = out.text;
           cited_sources = sourcesFromChunks(chunks); // streamed prose → cite all retrieved
-          semanticCacheStore(q, queryEmbedding, answer, cited_sources); // best-effort
+          const clean = sanitizeAnswer(answer);
+          if (!clean.safe) {
+            console.warn('[bot] blocked output (leak/sentinel)');
+            answer = BLOCKED_MSG; source = 'blocked'; cited_sources = [];
+          } else {
+            answer = clean.text;
+            semanticCacheStore(q, queryEmbedding, answer, cited_sources); // best-effort
+          }
         }
       } catch (e) {
         console.error('[bot] stream model call failed:', e.message);
@@ -667,6 +696,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     conversationId, sessionRef, question: q, answer, cited_sources, escalate, source,
   });
   if (escalate) await logGap({ question: q, reason: 'escalated', conversationId: convId });
+  else if (source === 'blocked') await logGap({ question: q, reason: 'blocked_output', conversationId: convId });
 
   return { answer, cited_sources, escalate, conversationId: convId, messageId, source };
 }
@@ -732,4 +762,5 @@ module.exports = {
   smalltalkReply, SMALLTALK_REPLIES, mergeChunks,
   isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG,
   buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED,
+  sanitizeAnswer, BLOCKED_MSG,
 };
