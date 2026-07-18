@@ -111,6 +111,9 @@ function relativeResolvePlugin() {
 
 export default defineConfig({
   root: ROOT,
+  // Help articles import ../docs/help/*.md (repo root, outside the client root).
+  // Let the test module-server read the parent dir, same as vite.config.js does.
+  server: { fs: { allow: [ROOT, path.resolve(ROOT, '..')] } },
   plugins: [nodeResolvePlugin(), relativeResolvePlugin()],
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],

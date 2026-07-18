@@ -1,19 +1,25 @@
 /**
- * seedKnowledgeBase.js — walk docs/, split each markdown file into heading-scoped
- * chunks (~300–800 words), and clear + reinsert kb_chunks so a re-run is idempotent.
- * Powers the "Bolt 958" support bot's Postgres full-text retrieval (v3.83).
+ * seedKnowledgeBase.js — walk docs/help/, split each markdown file into
+ * heading-scoped chunks (~300–800 words), and clear + reinsert kb_chunks so a
+ * re-run is idempotent. Powers the "Bolt 958" support bot's Postgres full-text
+ * retrieval (v3.83).
+ *
+ * Corpus is docs/help/ ONLY — user-facing help articles, never the internal dev
+ * docs (schema, specs, playbooks). Seeding dev docs made the bot retrieve
+ * developer content for guest questions and over-escalate; help-only is the fix.
+ * Anything a guest or host could read is fair game; nothing internal goes in here.
  *
  * Run:        node scripts/seedKnowledgeBase.js
  * Self-check: node scripts/seedKnowledgeBase.js --check   (chunker asserts, no DB)
  *
- * Re-run manually whenever docs/ changes. Mirrors scripts/seedEmailTemplates.js.
+ * Re-run manually whenever docs/help/ changes. Mirrors scripts/seedEmailTemplates.js.
  */
 'use strict';
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 
-const DOCS_DIR = path.resolve(__dirname, '../../docs');
+const DOCS_DIR = path.resolve(__dirname, '../../docs/help');
 const MIN_WORDS = 300;
 const MAX_WORDS = 800;
 const HEADING_RE = /^(#{1,6})\s+(.*)$/;

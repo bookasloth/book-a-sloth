@@ -153,7 +153,12 @@ const Help = () => (
       </div>
 
       {/* FAQ */}
-      <h2 className="text-lg font-bold mb-3">Frequently asked questions</h2>
+      <div className="flex items-baseline justify-between mb-3">
+        <h2 className="text-lg font-bold">Frequently asked questions</h2>
+        <Link to="/help/docs" className="text-sm font-semibold text-[#FE5100] hover:underline whitespace-nowrap">
+          All help articles →
+        </Link>
+      </div>
       <div className="space-y-3">
         {FAQ.map(({ q, a }) => (
           <div key={q} className="bg-white border rounded-2xl p-5">
@@ -165,7 +170,8 @@ const Help = () => (
         ))}
       </div>
 
-      <div className="text-center mt-8">
+      <div className="text-center mt-8 space-x-4">
+        <Link to="/help/docs" className="text-[#FE5100] hover:underline text-sm">Browse all help articles</Link>
         <Link to="/" className="text-[#FE5100] hover:underline text-sm">Go home</Link>
       </div>
     </div>

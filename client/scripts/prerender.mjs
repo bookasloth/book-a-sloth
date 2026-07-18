@@ -17,6 +17,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { loadEnv } from 'vite';
 import { FEATURES } from '../src/pages/features/featureData.js';
+import { HELP_SLUGS } from '../src/content/helpDocsList.js';
 
 // Preview deploys already get the real regression gates from vercel-build
 // (vitest, then the vite build). The prerendered HTML only matters for what
@@ -48,6 +49,8 @@ const PRERENDER_ROUTES = [
   '/enterprise',
   '/about',
   '/help',
+  '/help/docs',
+  ...HELP_SLUGS.map((s) => `/help/docs/${s}`),
   '/contact',
   '/support',
   '/blog',
