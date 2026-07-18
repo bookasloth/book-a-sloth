@@ -10,7 +10,10 @@
 const anthropicClient = require('./ai/anthropicClient');
 const { supabaseAdmin } = require('../config/supabase');
 
-const MATCH_COUNT = 5;
+// Pull a generous top-N so the authoritative chunk survives noisier docs (specs,
+// plans, blog posts) that share the same keywords; the model still answers only
+// from what's relevant and escalates when none of them actually cover the question.
+const MATCH_COUNT = 8;
 // ts_rank floor a chunk must clear to count as a real match. Tuned against the
 // seeded corpus: genuine hits rank ~0.3–0.95, incidental term overlap ranks well
 // below this. ponytail: single constant knob — retune here if recall feels off.
@@ -25,12 +28,11 @@ const HANDOFF =
   "connecting you with a human on our team — they'll follow up over WhatsApp or email shortly.";
 
 const SYSTEM = [
-  'You are Bolt 958, the support assistant for Book A Sloth (a SaaS appointment-booking platform for creators/hosts).',
-  'Answer the user ONLY using the numbered Sources provided in the user message. The sources are excerpts from our own documentation.',
-  'If the sources do not clearly contain the answer, do NOT guess or use outside knowledge:',
-  'set escalate=true and leave answer empty — the system will hand off to a human.',
-  'When you can answer, be concise and specific, and put the 1-based numbers of the sources you used in source_numbers.',
-  'Never invent prices, guarantees, links, or policy you cannot see in the sources.',
+  'You are Bolt 958, the friendly support assistant for Book A Sloth — a SaaS appointment-booking platform where creators ("hosts") publish services and guests book them.',
+  'You are given numbered Sources: excerpts from Book A Sloth\'s own documentation. Answer the user\'s question using the facts in those Sources, and ONLY those Sources — do not add outside knowledge.',
+  'Default to answering. If the Sources contain the relevant information, write a clear, concise answer (a couple of sentences) and put the 1-based numbers of the Sources you used in source_numbers.',
+  'Only set escalate=true when the Sources genuinely do not address the question at all. Do NOT escalate merely because the wording differs, the detail is partial, or you are being cautious — a partial but grounded answer is better than a handoff.',
+  'Never invent prices, guarantees, links, dates, or policy that is not written in the Sources. When (and only when) you escalate, leave answer empty.',
   'Always respond by calling the emit_answer tool.',
 ].join(' ');
 

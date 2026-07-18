@@ -42,13 +42,21 @@ CREATE INDEX IF NOT EXISTS bot_messages_conv_idx ON bot_messages (conversation_i
 -- ── Retrieval RPC: top-N chunks by ts_rank for a plain query ────────────────────
 -- Keeps ranking in Postgres (PostgREST .textSearch() returns no rank). Callable by
 -- the service via supabaseAdmin.rpc('search_kb_chunks', { query_text, match_count }).
+--
+-- plainto_tsquery ANDs every lexeme, so a long natural-language question ("how many
+-- services can a Creator vs Professional host have?") demands ONE chunk containing
+-- every word and usually matches nothing. We flip the & operators to | so it's an
+-- OR match instead — ts_rank still floats the chunks that hit more (and rarer)
+-- terms to the top, and the caller's MIN_RANK + top-N cap keep weak hits out.
 CREATE OR REPLACE FUNCTION search_kb_chunks(query_text TEXT, match_count INT DEFAULT 5)
 RETURNS TABLE (id UUID, source_file TEXT, heading TEXT, content TEXT, rank REAL)
 LANGUAGE sql STABLE AS $$
-  SELECT c.id, c.source_file, c.heading, c.content,
-         ts_rank(c.tsv, plainto_tsquery('english', query_text)) AS rank
-  FROM kb_chunks c
-  WHERE c.tsv @@ plainto_tsquery('english', query_text)
+  WITH q AS (
+    SELECT replace(plainto_tsquery('english', query_text)::text, '&', '|')::tsquery AS tsq
+  )
+  SELECT c.id, c.source_file, c.heading, c.content, ts_rank(c.tsv, q.tsq) AS rank
+  FROM kb_chunks c, q
+  WHERE q.tsq::text <> '' AND c.tsv @@ q.tsq
   ORDER BY rank DESC
   LIMIT GREATEST(match_count, 1);
 $$;
