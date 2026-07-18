@@ -268,6 +268,20 @@ const newsletterIpLimiter = rateLimit({
   skip: skipWhenLoadTest,
 });
 
+// Support bot — every /bot/ask hits the Anthropic API (real cost), so cap it
+// per IP well under the global apiLimiter. Public + unauthenticated, so IP is the
+// only key we have. Feedback shares the same router but is cheap; this bound is
+// sized for the ask path.
+const botLimiter = rateLimit({
+  store: makeRateLimitStore('bot'),
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'You’re sending messages too quickly. Please wait a moment and try again.' },
+  skip: skipWhenLoadTest,
+});
+
 // File uploads — each call streams up to 2MB into Supabase Storage, so cap
 // them tighter than the global apiLimiter to stop an authenticated account from
 // burning storage/bandwidth. Keyed per ACCOUNT (req.user.id), set by `protect`
@@ -393,6 +407,7 @@ module.exports = {
   downloadTokenLimiter,
   newsletterEmailLimiter,
   newsletterIpLimiter,
+  botLimiter,
   speedLimiter,
   hppMiddleware,
   sanitizeBody,

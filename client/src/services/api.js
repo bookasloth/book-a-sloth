@@ -115,6 +115,10 @@ export const subscribeNewsletter = (email)     => API.post('/email/subscribe', {
 export const sendContactMessage = (data) => API.post('/contact', data);
 export const submitEnterpriseLead = (data) => API.post('/enterprise-lead', data);
 
+// ── Bolt 958 support bot (public) ─────────────────────────────
+export const askBot = (data) => API.post('/bot/ask', data);
+export const sendBotFeedback = (data) => API.post('/bot/feedback', data);
+
 // ── Email preferences (public, signed-token gated) ────────────
 export const getUnsubscribeStatus = (token)    => API.get('/email/unsubscribe', { params: { token } });
 export const unsubscribeEmail     = (token)    => API.post('/email/unsubscribe', { token });

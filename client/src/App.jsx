@@ -4,6 +4,7 @@ import ChromeContext from './context/ChromeContext';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
+import BotWidget from './components/common/BotWidget';
 import DashboardLayout from './components/common/DashboardLayout';
 import AdminLayout from './components/common/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -279,6 +280,16 @@ function App() {
 
   const hideFooter = (hideNavbar || !!user || isAuthPage) && !isBookingPage;
 
+  // Support bot rides along on public + host surfaces, but not admin, onboarding,
+  // auth, or the stripped error/offline chrome.
+  const hideBot =
+    chromeHidden ||
+    isAuthPage ||
+    location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/super-dashboard') ||
+    location.pathname.startsWith('/vendor-register') ||
+    location.pathname === '/hello-sloth';
+
   return (
     <ChromeContext.Provider value={chromeValue}>
       <ScrollToTop />
@@ -552,6 +563,7 @@ function App() {
         ? !chromeHidden && <Footer variant="minimal" />
         : !hideFooter && <Footer variant={isBookingPage ? 'minimal' : 'full'} />}
       </RouteErrorBoundary>
+      {!hideBot && <BotWidget />}
     </ChromeContext.Provider>
   );
 }
