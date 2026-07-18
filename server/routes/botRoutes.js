@@ -7,10 +7,10 @@
 
 const router = require('express').Router();
 const { ask, askStream, feedback } = require('../controllers/botController');
-const { botLimiter } = require('../middleware/security');
+const { botLimiter, botGlobalLimiter } = require('../middleware/security');
 
-router.post('/ask', botLimiter, ask);
-router.post('/ask/stream', botLimiter, askStream);
+router.post('/ask', botGlobalLimiter, botLimiter, ask);
+router.post('/ask/stream', botGlobalLimiter, botLimiter, askStream);
 router.post('/feedback', botLimiter, feedback);
 
 module.exports = router;
