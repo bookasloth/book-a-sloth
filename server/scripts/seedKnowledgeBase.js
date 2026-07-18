@@ -123,6 +123,23 @@ async function main() {
     perFile.push([rel, chunks.length]);
   }
 
+  // Embed each chunk for semantic retrieval (SIE phase B). Best-effort: with no
+  // VOYAGE_API_KEY the embedding column stays NULL and the bot runs FTS-only until
+  // reseeded with a key. Heading is prepended so the vector reflects the topic too.
+  const voyageClient = require('../services/ai/voyageClient');
+  if (voyageClient.isConfigured() && rows.length) {
+    const texts = rows.map((r) => (r.heading ? `${r.heading}\n` : '') + r.content);
+    const vectors = [];
+    for (let i = 0; i < texts.length; i += 100) {
+      const batch = await voyageClient.embed(texts.slice(i, i + 100), 'document');
+      vectors.push(...(batch || []));
+    }
+    rows.forEach((r, i) => { if (vectors[i]) r.embedding = vectors[i]; });
+    console.log(`Embedded ${vectors.length} chunks (voyage ${voyageClient.MODEL}).`);
+  } else {
+    console.log('VOYAGE_API_KEY not set — seeding text only (embeddings NULL; FTS-only until reseeded with a key).');
+  }
+
   // Clear + reinsert so the script is fully idempotent/rerunnable.
   const { error: delErr } = await supabaseAdmin.from('kb_chunks').delete().not('id', 'is', null);
   if (delErr) throw new Error(`clear kb_chunks: ${delErr.message}`);

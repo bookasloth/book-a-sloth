@@ -15,6 +15,7 @@
 // jest.spyOn / mocked isConfigured intercept live, same as generateListing.js.
 
 const anthropicClient = require('./ai/anthropicClient');
+const voyageClient = require('./ai/voyageClient');
 const { supabaseAdmin } = require('../config/supabase');
 
 // Pull a generous top-N so the authoritative chunk survives noisier docs; the
@@ -24,6 +25,12 @@ const MATCH_COUNT = 8;
 // paraphrases aren't dropped before the model even sees them — the model is the
 // real relevance judge, MIN_RANK only sheds pure noise. ponytail: single knob.
 const MIN_RANK = 0.01;
+
+// Vector retrieval (SIE phase B, hybrid). How many nearest chunks to pull and the
+// cosine-similarity floor a vector hit must clear. Only exercised when VOYAGE_API_KEY
+// is set AND kb_chunks has embeddings; otherwise retrieval is FTS-only (graceful).
+const VEC_MATCH_COUNT = 6;
+const MIN_SIMILARITY = 0.4;
 
 // Topics we always send to a human, however good the doc match — money REVERSALS
 // and account-COMPROMISE, where a wrong-but-confident answer does real harm.
@@ -163,13 +170,69 @@ async function matchFaq(question) {
   return null;
 }
 
-async function retrieve(queryText) {
+// Keyword retrieval (Postgres FTS). Throws on a hard error so the caller can flag
+// retrieval as failed; a missing RPC/table surfaces as an error the caller handles.
+async function ftsRetrieve(queryText) {
   const { data, error } = await supabaseAdmin.rpc('search_kb_chunks', {
     query_text: queryText,
     match_count: MATCH_COUNT,
   });
   if (error) throw error;
   return (data || []).filter((c) => (c.rank ?? 0) >= MIN_RANK);
+}
+
+// Semantic retrieval (pgvector cosine). Best-effort: any failure (RPC not deployed,
+// no embeddings yet, Voyage error upstream) returns [] so hybrid degrades to FTS.
+async function vectorRetrieve(queryEmbedding) {
+  if (!queryEmbedding) return [];
+  try {
+    const { data, error } = await supabaseAdmin.rpc('match_kb_chunks', {
+      query_embedding: queryEmbedding,
+      match_count: VEC_MATCH_COUNT,
+    });
+    if (error) throw error;
+    return (data || []).filter((c) => (c.similarity ?? 0) >= MIN_SIMILARITY);
+  } catch (e) {
+    if (!_isMissingSchema(e)) console.error('[bot] vector retrieval failed:', e.message);
+    return [];
+  }
+}
+
+// Merge vector + FTS candidates: vector hits first (semantic match usually beats
+// keyword overlap), then FTS, deduped by id and capped so the model's token budget
+// stays bounded. The model is still the relevance judge over whatever survives.
+function mergeChunks(vec, fts, cap = MATCH_COUNT) {
+  const seen = new Set();
+  const out = [];
+  for (const c of [...vec, ...fts]) {
+    if (!c || seen.has(c.id)) continue;
+    seen.add(c.id);
+    out.push(c);
+    if (out.length >= cap) break;
+  }
+  return out;
+}
+
+// Hybrid retrieve. FTS errors propagate (caller flags retrieval failed); vector is
+// additive + best-effort. queryEmbedding is null when Voyage is unconfigured.
+async function retrieve(queryText, queryEmbedding = null) {
+  const [fts, vec] = await Promise.all([
+    ftsRetrieve(queryText),
+    vectorRetrieve(queryEmbedding),
+  ]);
+  return mergeChunks(vec, fts);
+}
+
+// Embed the retrieval query for the vector leg. Best-effort + null when Voyage is
+// off, so a slow/failed embed never blocks the answer — retrieval just goes FTS-only.
+async function embedRetrievalQuery(text) {
+  if (!voyageClient.isConfigured()) return null;
+  try {
+    return await voyageClient.embedQuery(text);
+  } catch (e) {
+    console.error('[bot] query embed failed:', e.message);
+    return null;
+  }
 }
 
 // Follow-ups ("what about the other plan?") carry no keywords of their own — seed
@@ -329,8 +392,10 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
   let chunks = [];
   let retrievalOk = true;
   if (q) {
+    const retrievalQuery = buildRetrievalQuery(q, history);
+    const queryEmbedding = await embedRetrievalQuery(retrievalQuery);
     try {
-      chunks = await retrieve(buildRetrievalQuery(q, history));
+      chunks = await retrieve(retrievalQuery, queryEmbedding);
     } catch (e) {
       retrievalOk = false;
       if (!_isMissingSchema(e)) console.error('[bot] retrieval failed:', e.message);
@@ -403,8 +468,10 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
   let chunks = [];
   let retrievalOk = true;
   if (q) {
+    const retrievalQuery = buildRetrievalQuery(q, history);
+    const queryEmbedding = await embedRetrievalQuery(retrievalQuery);
     try {
-      chunks = await retrieve(buildRetrievalQuery(q, history));
+      chunks = await retrieve(retrievalQuery, queryEmbedding);
     } catch (e) {
       retrievalOk = false;
       if (!_isMissingSchema(e)) console.error('[bot] retrieval failed:', e.message);
@@ -474,5 +541,5 @@ async function getRecentMessages(conversationId, limit = 10) {
 module.exports = {
   askBot, askBotStream, recordFeedback, getRecentMessages, matchFaq, logGap,
   HANDOFF, SENSITIVE_RE, MIN_RANK, ESCALATE_TOKEN, buildRetrievalQuery, toModelHistory,
-  smalltalkReply, SMALLTALK_REPLIES,
+  smalltalkReply, SMALLTALK_REPLIES, mergeChunks,
 };
