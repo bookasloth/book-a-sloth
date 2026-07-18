@@ -3,7 +3,7 @@
 // rate-limited at the route. On escalation it emails the support inbox (reusing the
 // existing sendEmail util, same as contactController) so a human picks it up.
 
-const { askBot, askBotStream, recordFeedback, getRecentMessages } = require('../services/botService');
+const { askBot, askBotStream, recordFeedback, getRecentMessages, redactPii } = require('../services/botService');
 const sendEmail = require('../utils/sendEmail');
 const { safeError } = require('../utils/httpError');
 
@@ -20,10 +20,14 @@ const esc = (s = '') =>
 // successful bot reply into an error for the user.
 async function notifySupport({ question, conversationId, sessionRef }) {
   try {
+    // PII-redact before it hits the support inbox. The transcript comes from
+    // getRecentMessages (bot_messages), which is already stored redacted; the raw
+    // question passed here is not, so redact it explicitly.
+    const q = redactPii(question);
     const history = await getRecentMessages(conversationId, 10);
     const transcript = history.length
       ? history.map((m) => `<p><strong>${esc(m.role)}:</strong> ${esc(m.content)}</p>`).join('')
-      : `<p><strong>user:</strong> ${esc(question)}</p>`;
+      : `<p><strong>user:</strong> ${esc(q)}</p>`;
     await sendEmail({
       to: SUPPORT_EMAIL,
       subject: '[Bolt 958] Support escalation — a user needs a human',
@@ -31,7 +35,7 @@ async function notifySupport({ question, conversationId, sessionRef }) {
         <h2>Bolt 958 could not answer confidently</h2>
         <p>A visitor asked something the bot escalated (no confident doc match, or a
         sensitive topic). Please follow up over WhatsApp/email.</p>
-        <p><strong>Question:</strong> ${esc(question)}</p>
+        <p><strong>Question:</strong> ${esc(q)}</p>
         <p><strong>Conversation:</strong> ${esc(conversationId || '—')}</p>
         <p><strong>Session:</strong> ${esc(sessionRef || 'anonymous')}</p>
         <hr/>

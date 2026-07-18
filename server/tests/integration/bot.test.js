@@ -8,6 +8,7 @@ jest.mock('../../services/botService', () => ({
   askBot: jest.fn(),
   recordFeedback: jest.fn().mockResolvedValue(undefined),
   getRecentMessages: jest.fn().mockResolvedValue([]),
+  redactPii: (s) => String(s ?? ''), // controller redacts the escalation email; identity in tests
 }));
 jest.mock('../../utils/sendEmail', () => jest.fn().mockResolvedValue(undefined));
 
