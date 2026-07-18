@@ -103,8 +103,13 @@ export default function AdminBotSupport() {
       <PageHeader title="Bolt Support" subtitle="Review what Bolt couldn't answer, and turn gaps into instant FAQ answers." />
 
       <div className="mb-4 flex flex-wrap gap-2">
-        {[['insights', 'Insights'], ['gaps', 'Knowledge gaps'], ['faqs', 'FAQ layer'], ['cache', 'Semantic cache']].map(([t, label]) => (
-          <button key={t} onClick={() => setTab(t)}
+        {[
+          ['insights', 'Stats', 'How Bolt performed over the last 30 days.'],
+          ['gaps', 'Needs answer', "Questions Bolt couldn't answer — your to-do list."],
+          ['faqs', 'FAQs', 'Your saved answers, sent word-for-word with no AI.'],
+          ['cache', 'Auto-saved', 'Past answers Bolt saved and reuses automatically.'],
+        ].map(([t, label, tip]) => (
+          <button key={t} onClick={() => setTab(t)} title={tip}
             className={'rounded-lg px-3 py-1.5 text-sm font-medium ' + (tab === t ? 'bg-[#FE5100] text-white' : 'border adm-border adm-t2')}>
             {label}
           </button>
@@ -118,14 +123,14 @@ export default function AdminBotSupport() {
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide adm-t3">Last 30 days · {stats.answered} answers</p>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {[
-                  ['Solved without AI', `${stats.pct.deflected}%`, 'smalltalk + FAQ + cache'],
-                  ['Reached Claude', `${stats.pct.ai}%`, 'the goal: shrink this'],
-                  ['Cache hits', `${stats.pct.cache}%`, `${stats.cacheSize} cached`],
-                  ['FAQ layer', `${stats.pct.faq}%`, `${stats.liveFaqs} live FAQs`],
-                  ['Escalated', `${stats.pct.escalation}%`, `${stats.openGaps} open gaps`],
-                  ['Small talk', `${stats.pct.smalltalk}%`, 'greetings etc.'],
-                ].map(([label, val, sub]) => (
-                  <div key={label} className="rounded-xl border adm-border p-3">
+                  ['Solved without AI', `${stats.pct.deflected}%`, 'greetings + FAQs + reused', 'Share answered for free — greetings, FAQs, or reused answers. No AI cost.'],
+                  ['Used AI', `${stats.pct.ai}%`, 'the goal: shrink this', 'Share that reached the paid AI model. Lower is better.'],
+                  ['Reused Answers', `${stats.pct.cache}%`, `${stats.cacheSize} saved`, 'Share answered by reusing a past answer.'],
+                  ['Via FAQs', `${stats.pct.faq}%`, `${stats.liveFaqs} live FAQs`, 'Share answered by your saved FAQs.'],
+                  ['Sent to Human', `${stats.pct.escalation}%`, `${stats.openGaps} still unanswered`, "Share Bolt couldn't handle and passed to a human."],
+                  ['Greetings', `${stats.pct.smalltalk}%`, 'hi, thanks, etc.', 'Share that were just small talk — hi / thanks.'],
+                ].map(([label, val, sub, tip]) => (
+                  <div key={label} title={tip} className="rounded-xl border adm-border p-3">
                     <p className="text-[11px] font-medium adm-t3">{label}</p>
                     <p className="text-2xl font-bold adm-t1">{val}</p>
                     <p className="text-[11px] adm-t3">{sub}</p>
@@ -159,19 +164,19 @@ export default function AdminBotSupport() {
       {tab === 'cache' && (
         <>
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm adm-t3">{cache.length} cached answers (most-reused first)</p>
-            {cache.length > 0 && <button onClick={() => evictCache('all')} className="rounded-lg border adm-border px-2.5 py-1 text-xs text-red-600">Clear all</button>}
+            <p className="text-sm adm-t3">{cache.length} reused answers</p>
+            {cache.length > 0 && <button onClick={() => evictCache('all')} title="Delete every saved answer. Refills from traffic." className="rounded-lg border adm-border px-2.5 py-1 text-xs text-red-600">Clear all</button>}
           </div>
           {loading ? <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-12" />)}</div>
-            : cache.length === 0 ? <p className="text-sm adm-t3">Cache is empty. It fills as questions get answered (needs the Voyage key live).</p>
+            : cache.length === 0 ? <p className="text-sm adm-t3">No reused answers yet. Fills as questions get answered (needs the Voyage key live).</p>
               : (
                 <div className="space-y-2">
                   {cache.map((c) => (
                     <div key={c.id} className="rounded-xl border adm-border p-3">
                       <div className="mb-1 flex items-center gap-2">
-                        <Badge tone={c.hits > 0 ? 'ok' : 'neutral'}>{c.hits} hit{c.hits === 1 ? '' : 's'}</Badge>
+                        <Badge tone={c.hits > 0 ? 'ok' : 'neutral'} title="How many times this saved answer was reused.">used {c.hits} time{c.hits === 1 ? '' : 's'}</Badge>
                         <span className="flex-1 truncate text-sm adm-t1" title={c.question}>{c.question}</span>
-                        <button onClick={() => evictCache(c.id)} className="rounded-lg border adm-border px-2 py-0.5 text-xs text-red-600">Evict</button>
+                        <button onClick={() => evictCache(c.id)} title="Delete this one saved answer." className="rounded-lg border adm-border px-2 py-0.5 text-xs text-red-600">Remove</button>
                       </div>
                       <p className="text-xs adm-t3">{c.answer.slice(0, 160)}{c.answer.length > 160 ? '…' : ''}</p>
                     </div>
@@ -185,32 +190,32 @@ export default function AdminBotSupport() {
         <>
           <div className="mb-3">
             <select value={gapStatus} onChange={(e) => setGapStatus(e.target.value)}
-              className="border adm-border rounded-lg px-3 py-1.5 text-sm">
-              <option value="open">Open</option>
-              <option value="resolved">Resolved</option>
+              title="Filter: to-do, done, or all questions." className="border adm-border rounded-lg px-3 py-1.5 text-sm">
+              <option value="open">To do</option>
+              <option value="resolved">Done</option>
               <option value="all">All</option>
             </select>
           </div>
           {loading ? <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-14" />)}</div>
-            : gaps.length === 0 ? <p className="text-sm adm-t3">Nothing here — Bolt is answering everything. 🎉</p>
+            : gaps.length === 0 ? <p className="text-sm adm-t3">Nothing here — Bolt is answering everything.</p>
               : (
                 <div className="space-y-2">
                   {gaps.map((g) => (
                     <div key={g.id} className="rounded-xl border adm-border p-3">
                       <div className="mb-1 flex items-center gap-2">
-                        <Badge tone={REASON_TONE[g.reason] || 'neutral'}>{g.reason === 'thumbs_down' ? '👎 unhelpful' : 'escalated'}</Badge>
+                        <Badge tone={REASON_TONE[g.reason] || 'neutral'} title={g.reason === 'thumbs_down' ? 'A user marked this answer unhelpful (👎).' : "Bolt couldn't answer and passed it to a human."}>{g.reason === 'thumbs_down' ? 'Answer Disliked' : 'Bolt Gave Up'}</Badge>
                         <span className="text-xs adm-t3">{fmtDate(g.created_at)}</span>
-                        {g.resolved && <Badge tone="ok">resolved</Badge>}
+                        {g.resolved && <Badge tone="ok" title="Marked done — off the to-do list.">Done</Badge>}
                       </div>
                       <p className="text-sm adm-t1">
                         {g.question || (g.downvoted_answer ? <span className="adm-t2">Downvoted answer: “{g.downvoted_answer.slice(0, 160)}”</span> : <span className="adm-t3">—</span>)}
                       </p>
                       <div className="mt-2 flex gap-2">
                         {g.question && (
-                          <button onClick={() => promote(g)} className="rounded-lg bg-[#FE5100] px-2.5 py-1 text-xs font-medium text-white">Promote → FAQ</button>
+                          <button onClick={() => promote(g)} title="Turn this question into a saved answer (FAQ)." className="rounded-lg bg-[#FE5100] px-2.5 py-1 text-xs font-medium text-white">Make FAQ</button>
                         )}
-                        <button onClick={() => resolveGap(g.id, !g.resolved)} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">
-                          {g.resolved ? 'Reopen' : 'Resolve'}
+                        <button onClick={() => resolveGap(g.id, !g.resolved)} title={g.resolved ? 'Put this back on the to-do list.' : 'Mark handled — remove from the to-do list.'} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">
+                          {g.resolved ? 'Reopen' : 'Mark done'}
                         </button>
                       </div>
                     </div>
@@ -223,7 +228,7 @@ export default function AdminBotSupport() {
       {tab === 'faqs' && (
         <>
           <div className="mb-3">
-            <button onClick={() => setForm({ pattern: '', answer: '' })} className="rounded-lg bg-[#FE5100] px-3 py-1.5 text-sm font-medium text-white">+ Add FAQ</button>
+            <button onClick={() => setForm({ pattern: '', answer: '' })} title="Write a new saved answer Bolt sends word-for-word." className="rounded-lg bg-[#FE5100] px-3 py-1.5 text-sm font-medium text-white">+ Add FAQ</button>
           </div>
 
           {form && (
@@ -249,13 +254,13 @@ export default function AdminBotSupport() {
                     <div key={f.id} className="rounded-xl border adm-border p-3">
                       <div className="mb-1 flex items-center gap-2">
                         <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-xs text-[#1E1E1E]">{f.pattern}</code>
-                        <Badge tone={f.enabled ? 'ok' : 'neutral'}>{f.enabled ? 'live' : 'off'}</Badge>
+                        <Badge tone={f.enabled ? 'ok' : 'neutral'} title={f.enabled ? 'Active — Bolt uses this answer.' : 'Paused — not in use, not deleted.'}>{f.enabled ? 'live' : 'off'}</Badge>
                       </div>
                       <p className="text-sm adm-t2">{f.answer.slice(0, 200)}{f.answer.length > 200 ? '…' : ''}</p>
                       <div className="mt-2 flex gap-2">
-                        <button onClick={() => setForm({ pattern: f.pattern, answer: f.answer, editingId: f.id })} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Edit</button>
-                        <button onClick={() => toggleFaq(f)} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">{f.enabled ? 'Disable' : 'Enable'}</button>
-                        <button onClick={() => deleteFaq(f)} className="rounded-lg border adm-border px-2.5 py-1 text-xs text-red-600">Delete</button>
+                        <button onClick={() => setForm({ pattern: f.pattern, answer: f.answer, editingId: f.id })} title="Edit this saved answer." className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Edit</button>
+                        <button onClick={() => toggleFaq(f)} title={f.enabled ? 'Pause this answer without deleting it.' : 'Turn this answer back on.'} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">{f.enabled ? 'Disable' : 'Enable'}</button>
+                        <button onClick={() => deleteFaq(f)} title="Delete this saved answer for good." className="rounded-lg border adm-border px-2.5 py-1 text-xs text-red-600">Delete</button>
                       </div>
                     </div>
                   ))}
