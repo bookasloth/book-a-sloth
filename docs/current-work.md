@@ -1,6 +1,21 @@
 # Current Work — Book A Sloth
 _Last updated: 2026-07-18_
 
+## Bolt 958 support bot — Phase 1 (knowledge bot) — branch `feat/bolt-958-support-bot`
+
+> **Status: BUILT on branch (not merged). Migration v3.83 APPLIED + verified on BOTH DBs. server 1489/1489 + client build green. Grounded answers need `ANTHROPIC_API_KEY` (present on Render, ABSENT in local `server/.env` — so the bot escalates on every question locally, by design).**
+
+In-app support chatbot that answers Book A Sloth questions grounded ONLY on our own `docs/`, cites sources, and escalates to a human on low confidence / no match / sensitive topics. No embeddings, no new vendor — Postgres full-text search.
+
+- **Retrieval = Postgres FTS, not embeddings.** `kb_chunks(source_file, heading, content, tsv GENERATED, GIN)` + `search_kb_chunks(query_text, match_count)` RPC returning `ts_rank`. Seeded from `docs/` by `server/scripts/seedKnowledgeBase.js` (heading-aware, ~300–800-word chunks, clear+reinsert; `--check` self-tests the chunker). **809 chunks / 149 docs on staging.**
+- **LANDMINE — `plainto_tsquery` ANDs every lexeme.** A long question ("how many services can a Creator vs Professional host have?") then requires ONE chunk containing every word → matched nothing → always escalated. The RPC flips `&`→`|` (OR match; `ts_rank` still floats the best hits). Verified via direct SQL. If you ever recreate this RPC, keep the OR flip.
+- **LANDMINE — `docs/` is DEVELOPER docs, not a help centre.** Seeding all 149 files pulls in specs/plans/blog drafts that share keywords with real answers and out-rank them, so the bot honestly escalates a lot. `MATCH_COUNT=8` + an answer-by-default system prompt mitigate it. Real fix later = a curated user-facing help corpus (or exclude `superpowers/`, `*-plan.md`, blog drafts from the seed).
+- **Grounding + escalation.** `server/services/botService.js` `askBot()`: RPC → filter `rank >= MIN_RANK (0.02)` → sensitive-topic regex (payments/refunds/KYC/account access → always escalate, per spec) → Claude **Haiku** forced through an `emit_answer` tool that answers ONLY from the numbered sources. Never a dead end: no match / sensitive / unconfigured key / model or DB error all escalate with a fixed human-handoff line. Persists to `bot_conversations`/`bot_messages` best-effort.
+- **Escalation reuses the email engine** — `botController` emails `SUPPORT_EMAIL` (bolt@bookasloth.in) with the transcript via `sendEmail` (same as `contactController`), best-effort so a mail failure never breaks the reply.
+- **Routes:** `POST /api/bot/ask`, `POST /api/bot/feedback` (both `botLimiter`, 20/min/IP — the ask path costs an Anthropic call). Public, no auth. Client: floating `BotWidget.jsx` mounted app-wide in `App.jsx` (hidden on admin/onboarding/auth/error), calls via `api.js` `askBot`/`sendBotFeedback`, renders answer + cited-source chips + 👍/👎 + a human-handoff card on escalate.
+- **Tests:** `server/tests/unit/botService.test.js` (7, Anthropic+Supabase mocked — proves grounded answer + citation mapping + every escape path), `server/tests/integration/bot.test.js` (9, validation + escalation email + feedback), `client/src/components/common/__tests__/BotWidget.test.jsx` (4). Live browser smoke confirmed the widget renders/sends/escalates cleanly and feedback persists (👍 → `POST /bot/feedback 200`); the grounded path is proven by the mocked unit test + live SQL retrieval (local has no key).
+- **TO SEED PROD:** run `node scripts/seedKnowledgeBase.js` from an env whose Supabase creds point at prod (`.env.production`) — the script targets whatever `server/.env*` is loaded (default `.env` = staging). Re-run whenever `docs/` changes.
+
 ## Deploy: prerender no longer flakes a merge's prod deploy (#405) — MERGED 2026-07-18
 
 > **Status: MERGED to main (`f734362`). Every merge to main already auto-deploys prod (`deploy-vercel.yml`, `on: push:[main]`, token-authed) — this removes the one thing that ever forced a manual re-run.**
