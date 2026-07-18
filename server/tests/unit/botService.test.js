@@ -36,7 +36,7 @@ jest.mock('../../config/supabase', () => {
 
 const client = require('../../services/ai/anthropicClient');
 const sb = require('../../config/supabase');
-const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks } = require('../../services/botService');
+const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks, isUnsupportedInput, UNSUPPORTED_INPUT_MSG } = require('../../services/botService');
 
 const answerReply = (input) => ({ content: [{ type: 'tool_use', name: 'emit_answer', input }] });
 const chunk = (over = {}) => ({ id: 'c1', source_file: 'docs/architecture.md', heading: 'Google Calendar Integration', content: 'Connect via /api/auth/google.', rank: 0.9, ...over });
@@ -124,6 +124,36 @@ test('a greeting in front of a real question is NOT swallowed as small talk', as
   expect(out.escalate).toBe(true);
   expect(out.answer.length).toBeGreaterThan(0);
   expect(out.answer).not.toBe(SMALLTALK_REPLIES.greeting); // proves it wasn't the small-talk shortcut
+});
+
+describe('isUnsupportedInput (non-Latin / hidden-char guard)', () => {
+  test.each([
+    'बुकिंग कैसे करें',   // Devanagari
+    '你好，怎么预订',       // Chinese
+    'Привет как дела',    // Cyrillic
+    'مرحبا كيف احجز',      // Arabic
+    'hi​there',      // zero-width space
+    'book‮me',       // right-to-left override
+  ])('rejects %p', (s) => expect(isUnsupportedInput(s)).toBe(true));
+
+  test.each([
+    'how do I book a service?',
+    'booking kaise kare',        // romanized Hindi = Latin letters, allowed
+    'café José Zürich',          // accented Latin, allowed
+    'how much 💰 for host+ 🦥',  // emoji are symbols, not letters
+    '₹100 minimum payout',
+    'ok thanks!',
+  ])('allows %p', (s) => expect(isUnsupportedInput(s)).toBe(false));
+});
+
+test('non-Latin input replies with a rephrase message, no escalation or model call', async () => {
+  sb.__rpc.mockResolvedValue({ data: [chunk()], error: null });
+  const out = await askBot({ question: 'बुकिंग कैसे करें' });
+  expect(out.escalate).toBe(false);
+  expect(out.answer).toBe(UNSUPPORTED_INPUT_MSG);
+  expect(out.source).toBe('unsupported');
+  expect(out.cited_sources).toEqual([]);
+  expect(client.__create).not.toHaveBeenCalled();
 });
 
 test('informational money question is NOT sensitive — it gets answered', async () => {
