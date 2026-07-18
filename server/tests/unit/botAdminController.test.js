@@ -38,6 +38,15 @@ test('listGaps attaches the downvoted answer to a thumbs-down row', async () => 
   expect(arg.gaps[0].downvoted_answer).toBe('a bad answer');
 });
 
+test('listGaps excludes injection/blocked-output rows from the queue', async () => {
+  setTables({ knowledge_gaps: { data: [], error: null } });
+  const res = mockRes();
+  await ctrl.listGaps({ query: { status: 'open' } }, res);
+  const chain = supabaseAdmin.from.mock.results[0].value; // the knowledge_gaps chain
+  expect(chain.not).toHaveBeenCalledWith('reason', 'in', expect.stringContaining('injection_attempt'));
+  expect(chain.not).toHaveBeenCalledWith('reason', 'in', expect.stringContaining('blocked_output'));
+});
+
 test('createFaq rejects empty pattern/answer', async () => {
   setTables({});
   const res = mockRes();
