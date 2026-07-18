@@ -36,7 +36,7 @@ jest.mock('../../config/supabase', () => {
 
 const client = require('../../services/ai/anthropicClient');
 const sb = require('../../config/supabase');
-const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES } = require('../../services/botService');
+const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks } = require('../../services/botService');
 
 const answerReply = (input) => ({ content: [{ type: 'tool_use', name: 'emit_answer', input }] });
 const chunk = (over = {}) => ({ id: 'c1', source_file: 'docs/architecture.md', heading: 'Google Calendar Integration', content: 'Connect via /api/auth/google.', rank: 0.9, ...over });
@@ -206,6 +206,16 @@ test('askBotStream streams deltas and cites the retrieved sources', async () => 
   expect(deltas.join('')).toBe('Go to Dashboard → Google Calendar.');
   expect(out.answer).toBe('Go to Dashboard → Google Calendar.');
   expect(out.cited_sources.length).toBeGreaterThan(0);
+});
+
+test('mergeChunks dedupes by id, keeps vector hits first, caps the total', () => {
+  const vec = [{ id: 'a', content: 'va' }, { id: 'b', content: 'vb' }];
+  const fts = [{ id: 'b', content: 'fb' }, { id: 'c' }, { id: 'd' }, { id: 'e' }, { id: 'f' }, { id: 'g' }, { id: 'h' }, { id: 'i' }, { id: 'j' }];
+  const out = mergeChunks(vec, fts);
+  expect(out[0].id).toBe('a');                                   // vector first
+  expect(out.find((c) => c.id === 'b').content).toBe('vb');      // vector 'b' wins over fts 'b'
+  expect(new Set(out.map((c) => c.id)).size).toBe(out.length);   // no dupes
+  expect(out.length).toBeLessThanOrEqual(8);                     // MATCH_COUNT cap
 });
 
 test('askBotStream escalates on the sentinel and never leaks it to the user', async () => {
