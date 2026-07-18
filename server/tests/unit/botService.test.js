@@ -34,9 +34,12 @@ jest.mock('../../config/supabase', () => {
   return { __rpc: rpc, __single: single, __chain: chain, supabaseAdmin: { rpc, from: jest.fn(() => chain) } };
 });
 
+jest.mock('../../lib/botBudget', () => ({ tryConsume: jest.fn().mockResolvedValue({ allowed: true, reason: null }) }));
+
 const client = require('../../services/ai/anthropicClient');
 const sb = require('../../config/supabase');
-const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks, isUnsupportedInput, UNSUPPORTED_INPUT_MSG } = require('../../services/botService');
+const botBudget = require('../../lib/botBudget');
+const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks, isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG } = require('../../services/botService');
 
 const answerReply = (input) => ({ content: [{ type: 'tool_use', name: 'emit_answer', input }] });
 const chunk = (over = {}) => ({ id: 'c1', source_file: 'docs/architecture.md', heading: 'Google Calendar Integration', content: 'Connect via /api/auth/google.', rank: 0.9, ...over });
@@ -256,4 +259,15 @@ test('askBotStream escalates on the sentinel and never leaks it to the user', as
   expect(out.escalate).toBe(true);
   expect(deltas.join('')).not.toMatch(/ESCALATE/); // sentinel withheld
   expect(out.answer.length).toBeGreaterThan(0);     // spoken handoff line instead
+});
+
+test('over-budget serves the busy message, does not escalate or call the model', async () => {
+  sb.__rpc.mockResolvedValue({ data: [chunk()], error: null }); // retrieval finds chunks
+  botBudget.tryConsume.mockResolvedValueOnce({ allowed: false, reason: 'minute' });
+  const out = await askBot({ question: 'How do I add a service?' });
+  expect(out.escalate).toBe(false);
+  expect(out.source).toBe('over_budget');
+  expect(out.answer).toBe(OVER_BUDGET_MSG);
+  expect(out.cited_sources).toEqual([]);
+  expect(client.__create).not.toHaveBeenCalled(); // model was NOT called
 });
