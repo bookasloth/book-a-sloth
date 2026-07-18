@@ -127,6 +127,15 @@ const feedbackAdmin = require('../controllers/feedbackAdminController');
 router.get('/feedback',         requireAdmin('feedback.view'),   feedbackAdmin.listFeedback);
 router.patch('/feedback/:id',   requireAdmin('feedback.manage'), feedbackAdmin.updateFeedbackStatus);
 
+// ── Bolt support console (knowledge gaps + FAQ layer) ──────────
+const botAdmin = require('../controllers/botAdminController');
+router.get('/bot/gaps',         requireAdmin('support.view'),   botAdmin.listGaps);
+router.patch('/bot/gaps/:id',   requireAdmin('support.assign'), botAdmin.updateGap);
+router.get('/bot/faqs',         requireAdmin('support.view'),   botAdmin.listFaqs);
+router.post('/bot/faqs',        requireAdmin('support.assign'), botAdmin.createFaq);
+router.patch('/bot/faqs/:id',   requireAdmin('support.assign'), botAdmin.updateFaq);
+router.delete('/bot/faqs/:id',  requireAdmin('support.assign'), botAdmin.deleteFaq);
+
 // ── Badge system ───────────────────────────────────────────────
 const badges = require('../controllers/badgeAdminController');
 router.get('/badges/meta',                requireAdmin('badges.manage'), badges.getMeta);

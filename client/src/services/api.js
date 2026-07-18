@@ -569,6 +569,14 @@ export const adminCreateFeature = (payload)      => API.post('/admin/features', 
 // ── Admin: Feedback ──────────────────────────────────────────
 export const adminListFeedback   = (params)   => API.get('/admin/feedback', { params });
 export const adminUpdateFeedback = (id, data) => API.patch(`/admin/feedback/${id}`, data);
+
+// Bolt support console — knowledge gaps + FAQ layer
+export const adminListBotGaps  = (params)   => API.get('/admin/bot/gaps', { params });
+export const adminResolveBotGap = (id, data) => API.patch(`/admin/bot/gaps/${id}`, data);
+export const adminListBotFaqs  = ()         => API.get('/admin/bot/faqs');
+export const adminCreateBotFaq = (data)     => API.post('/admin/bot/faqs', data);
+export const adminUpdateBotFaq = (id, data) => API.patch(`/admin/bot/faqs/${id}`, data);
+export const adminDeleteBotFaq = (id)       => API.delete(`/admin/bot/faqs/${id}`);
 // ── Reschedule fee ────────────────────────────────────────────
 export const createRescheduleFeeOrder = (bookingId) => API.post('/payment/reschedule-fee/create-order', { booking_id: bookingId });
 
