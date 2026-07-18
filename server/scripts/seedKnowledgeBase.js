@@ -113,12 +113,16 @@ function selfCheck() {
 
 async function main() {
   const { supabaseAdmin } = require('../config/supabase');
+  const crypto = require('crypto');
   const files = walk(DOCS_DIR);
   const rows = [];
   const perFile = [];
+  const fileHashes = {}; // source_file → sha1(content), for version-aware cache invalidation
   for (const file of files) {
     const rel = path.relative(path.resolve(__dirname, '../..'), file).replace(/\\/g, '/');
-    const chunks = chunkMarkdown(fs.readFileSync(file, 'utf8'));
+    const raw = fs.readFileSync(file, 'utf8');
+    fileHashes[rel] = crypto.createHash('sha1').update(raw).digest('hex');
+    const chunks = chunkMarkdown(raw);
     for (const c of chunks) rows.push({ source_file: rel, heading: c.heading, content: c.content });
     perFile.push([rel, chunks.length]);
   }
@@ -147,6 +151,29 @@ async function main() {
   for (let i = 0; i < rows.length; i += 500) {
     const { error } = await supabaseAdmin.from('kb_chunks').insert(rows.slice(i, i + 500));
     if (error) throw new Error(`insert batch @${i}: ${error.message}`);
+  }
+
+  // Version-aware cache invalidation (SIE phase C): expire ONLY the cached answers
+  // whose source doc actually changed (or was removed) — never the whole cache.
+  // Best-effort: if the v3.86/v3.87 tables aren't there yet, just skip.
+  try {
+    const { data: prevVersions } = await supabaseAdmin.from('bot_doc_versions').select('source_file, content_hash');
+    const prev = Object.fromEntries((prevVersions || []).map((v) => [v.source_file, v.content_hash]));
+    const changed = Object.keys(fileHashes).filter((f) => prev[f] !== fileHashes[f]);
+    const removed = Object.keys(prev).filter((f) => !(f in fileHashes));
+    const stale = [...new Set([...changed, ...removed])];
+
+    for (const f of stale) {
+      await supabaseAdmin.from('bot_semantic_cache').delete().contains('cited_sources', [{ source_file: f }]);
+    }
+    const versionRows = Object.entries(fileHashes).map(([source_file, content_hash]) => ({
+      source_file, content_hash, updated_at: new Date().toISOString(),
+    }));
+    if (versionRows.length) await supabaseAdmin.from('bot_doc_versions').upsert(versionRows, { onConflict: 'source_file' });
+    if (removed.length) await supabaseAdmin.from('bot_doc_versions').delete().in('source_file', removed);
+    console.log(`Cache invalidation: ${stale.length} changed/removed doc(s) → cleared their cached answers.`);
+  } catch (e) {
+    console.log(`Cache invalidation skipped (${e.message}).`);
   }
 
   perFile.sort((a, b) => b[1] - a[1]);

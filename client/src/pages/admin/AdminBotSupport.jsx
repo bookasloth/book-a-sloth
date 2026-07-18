@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import {
   adminListBotGaps, adminResolveBotGap,
   adminListBotFaqs, adminCreateBotFaq, adminUpdateBotFaq, adminDeleteBotFaq,
+  adminBotAnalytics, adminBotGraph, adminListBotCache, adminDeleteBotCache,
 } from '../../services/api';
 import { PageHeader, Badge, Skeleton } from '../../components/admin/ui';
 
@@ -14,10 +15,13 @@ const REASON_TONE = { escalated: 'warn', thumbs_down: 'danger' };
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '');
 
 export default function AdminBotSupport() {
-  const [tab, setTab] = useState('gaps');
+  const [tab, setTab] = useState('insights');
   const [gapStatus, setGapStatus] = useState('open');
   const [gaps, setGaps] = useState([]);
   const [faqs, setFaqs] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [topDocs, setTopDocs] = useState([]);
+  const [cache, setCache] = useState([]);
   const [loading, setLoading] = useState(true);
   // FAQ editor — { pattern, answer, gapId?, editingId? }. null = closed.
   const [form, setForm] = useState(null);
@@ -34,8 +38,34 @@ export default function AdminBotSupport() {
     catch { toast.error('Could not load FAQs'); }
     finally { setLoading(false); }
   };
+  const loadInsights = async () => {
+    setLoading(true);
+    try {
+      const [a, g] = await Promise.all([adminBotAnalytics(), adminBotGraph()]);
+      setStats(a.data); setTopDocs(g.data.topDocs || []);
+    } catch { toast.error('Could not load insights'); }
+    finally { setLoading(false); }
+  };
+  const loadCache = async () => {
+    setLoading(true);
+    try { const { data } = await adminListBotCache(); setCache(data.cache || []); }
+    catch { toast.error('Could not load cache'); }
+    finally { setLoading(false); }
+  };
 
-  useEffect(() => { tab === 'gaps' ? loadGaps() : loadFaqs(); /* eslint-disable-next-line */ }, [tab, gapStatus]);
+  useEffect(() => {
+    if (tab === 'gaps') loadGaps();
+    else if (tab === 'faqs') loadFaqs();
+    else if (tab === 'insights') loadInsights();
+    else if (tab === 'cache') loadCache();
+    /* eslint-disable-next-line */
+  }, [tab, gapStatus]);
+
+  const evictCache = async (id) => {
+    if (id === 'all' && !window.confirm('Clear the entire semantic cache? It refills from traffic.')) return;
+    try { await adminDeleteBotCache(id); toast.success(id === 'all' ? 'Cache cleared' : 'Evicted'); loadCache(); }
+    catch { toast.error('Delete failed'); }
+  };
 
   const resolveGap = async (id, resolved) => {
     try { await adminResolveBotGap(id, { resolved }); toast.success(resolved ? 'Resolved' : 'Reopened'); loadGaps(); }
@@ -72,14 +102,84 @@ export default function AdminBotSupport() {
     <div>
       <PageHeader title="Bolt Support" subtitle="Review what Bolt couldn't answer, and turn gaps into instant FAQ answers." />
 
-      <div className="mb-4 flex gap-2">
-        {['gaps', 'faqs'].map((t) => (
+      <div className="mb-4 flex flex-wrap gap-2">
+        {[['insights', 'Insights'], ['gaps', 'Knowledge gaps'], ['faqs', 'FAQ layer'], ['cache', 'Semantic cache']].map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)}
             className={'rounded-lg px-3 py-1.5 text-sm font-medium ' + (tab === t ? 'bg-[#FE5100] text-white' : 'border adm-border adm-t2')}>
-            {t === 'gaps' ? 'Knowledge gaps' : 'FAQ layer'}
+            {label}
           </button>
         ))}
       </div>
+
+      {tab === 'insights' && (
+        loading || !stats ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-20" />)}</div> : (
+          <div className="space-y-5">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide adm-t3">Last 30 days · {stats.answered} answers</p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {[
+                  ['Solved without AI', `${stats.pct.deflected}%`, 'smalltalk + FAQ + cache'],
+                  ['Reached Claude', `${stats.pct.ai}%`, 'the goal: shrink this'],
+                  ['Cache hits', `${stats.pct.cache}%`, `${stats.cacheSize} cached`],
+                  ['FAQ layer', `${stats.pct.faq}%`, `${stats.liveFaqs} live FAQs`],
+                  ['Escalated', `${stats.pct.escalation}%`, `${stats.openGaps} open gaps`],
+                  ['Small talk', `${stats.pct.smalltalk}%`, 'greetings etc.'],
+                ].map(([label, val, sub]) => (
+                  <div key={label} className="rounded-xl border adm-border p-3">
+                    <p className="text-[11px] font-medium adm-t3">{label}</p>
+                    <p className="text-2xl font-bold adm-t1">{val}</p>
+                    <p className="text-[11px] adm-t3">{sub}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide adm-t3">Which docs answer the most (last 1000 answers)</p>
+              {topDocs.length === 0 ? <p className="text-sm adm-t3">No cited answers yet.</p> : (
+                <div className="space-y-1.5">
+                  {topDocs.map((d) => {
+                    const max = topDocs[0].answers || 1;
+                    return (
+                      <div key={d.source_file} className="flex items-center gap-2">
+                        <div className="w-40 shrink-0 truncate text-xs adm-t2" title={d.source_file}>{d.source_file.replace(/^docs\/help\//, '').replace(/\.md$/, '')}</div>
+                        <div className="h-4 flex-1 rounded bg-[#1E1E1E]/5">
+                          <div className="h-4 rounded bg-[#FE5100]" style={{ width: `${Math.round((d.answers / max) * 100)}%` }} />
+                        </div>
+                        <div className="w-8 shrink-0 text-right text-xs adm-t3">{d.answers}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      )}
+
+      {tab === 'cache' && (
+        <>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm adm-t3">{cache.length} cached answers (most-reused first)</p>
+            {cache.length > 0 && <button onClick={() => evictCache('all')} className="rounded-lg border adm-border px-2.5 py-1 text-xs text-red-600">Clear all</button>}
+          </div>
+          {loading ? <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-12" />)}</div>
+            : cache.length === 0 ? <p className="text-sm adm-t3">Cache is empty. It fills as questions get answered (needs the Voyage key live).</p>
+              : (
+                <div className="space-y-2">
+                  {cache.map((c) => (
+                    <div key={c.id} className="rounded-xl border adm-border p-3">
+                      <div className="mb-1 flex items-center gap-2">
+                        <Badge tone={c.hits > 0 ? 'ok' : 'neutral'}>{c.hits} hit{c.hits === 1 ? '' : 's'}</Badge>
+                        <span className="flex-1 truncate text-sm adm-t1" title={c.question}>{c.question}</span>
+                        <button onClick={() => evictCache(c.id)} className="rounded-lg border adm-border px-2 py-0.5 text-xs text-red-600">Evict</button>
+                      </div>
+                      <p className="text-xs adm-t3">{c.answer.slice(0, 160)}{c.answer.length > 160 ? '…' : ''}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+        </>
+      )}
 
       {tab === 'gaps' && (
         <>

@@ -13,7 +13,7 @@ const mockRes = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest
 const chainFor = (result) => {
   const c = {};
   const self = () => c;
-  for (const m of ['select', 'eq', 'in', 'order', 'limit', 'update', 'insert', 'delete']) c[m] = jest.fn(self);
+  for (const m of ['select', 'eq', 'in', 'not', 'gte', 'order', 'limit', 'update', 'insert', 'delete']) c[m] = jest.fn(self);
   c.single = jest.fn(() => Promise.resolve(result));
   c.then = (resolve, reject) => Promise.resolve(result).then(resolve, reject);
   return c;
@@ -64,4 +64,26 @@ test('updateGap and deleteFaq reject a malformed id', async () => {
   const res2 = mockRes(); await ctrl.deleteFaq({ params: { id: 'nope' } }, res2);
   expect(res1.status).toHaveBeenCalledWith(400);
   expect(res2.status).toHaveBeenCalledWith(400);
+});
+
+test('graph ranks docs by how many answers cite them', async () => {
+  setTables({
+    bot_messages: { data: [
+      { cited_sources: [{ source_file: 'a' }, { source_file: 'b' }] },
+      { cited_sources: [{ source_file: 'a' }] },
+    ], error: null },
+  });
+  const res = mockRes();
+  await ctrl.graph({}, res);
+  const { topDocs } = res.json.mock.calls[0][0];
+  expect(topDocs[0]).toEqual({ source_file: 'a', answers: 2 });
+  expect(topDocs[1]).toEqual({ source_file: 'b', answers: 1 });
+});
+
+test('deleteCache clears all on "all" and rejects a bad id', async () => {
+  setTables({ bot_semantic_cache: { data: null, error: null } });
+  const resAll = mockRes(); await ctrl.deleteCache({ params: { id: 'all' } }, resAll);
+  expect(resAll.json).toHaveBeenCalledWith(expect.objectContaining({ cleared: 'all' }));
+  const resBad = mockRes(); await ctrl.deleteCache({ params: { id: 'nope' } }, resBad);
+  expect(resBad.status).toHaveBeenCalledWith(400);
 });

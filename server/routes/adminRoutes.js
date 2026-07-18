@@ -135,6 +135,10 @@ router.get('/bot/faqs',         requireAdmin('support.view'),   botAdmin.listFaq
 router.post('/bot/faqs',        requireAdmin('support.assign'), botAdmin.createFaq);
 router.patch('/bot/faqs/:id',   requireAdmin('support.assign'), botAdmin.updateFaq);
 router.delete('/bot/faqs/:id',  requireAdmin('support.assign'), botAdmin.deleteFaq);
+router.get('/bot/analytics',    requireAdmin('support.view'),   botAdmin.analytics);
+router.get('/bot/graph',        requireAdmin('support.view'),   botAdmin.graph);
+router.get('/bot/cache',        requireAdmin('support.view'),   botAdmin.listCache);
+router.delete('/bot/cache/:id', requireAdmin('support.assign'), botAdmin.deleteCache);
 
 // ── Badge system ───────────────────────────────────────────────
 const badges = require('../controllers/badgeAdminController');

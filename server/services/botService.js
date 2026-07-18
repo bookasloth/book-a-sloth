@@ -92,6 +92,29 @@ const smalltalkReply = (q) => {
   return SMALLTALK_REPLIES.greeting; // only-filler ("you there") — default to hello
 };
 
+// Input hardening. The bot serves English — romanized Hindi/Hinglish ("booking
+// kaise kare") works because those are Latin letters. We reject any letter from a
+// NON-Latin script (Devanagari, CJK, Cyrillic, Arabic, Greek, Thai…) and invisible
+// bidi/format characters (zero-width, right-to-left override). This shrinks the
+// prompt-injection surface — homoglyph and RTL-override tricks that hide
+// instructions from a human reviewer — and stops non-Latin questions from silently
+// escalating to a human. Accented Latin (café, José, Zürich) stays allowed.
+// ponytail: per-code-point \p{L}/\p{Script=Latin} test, NOT the `v`-flag set
+// difference — the v-flag regex literal throws at module load on Node < 20 and
+// would take the whole bot down; this form is safe on every modern Node.
+const _LETTER_RE = /\p{L}/u;
+const _LATIN_RE = /\p{Script=Latin}/u;
+const _HIDDEN_RE = /\p{Cf}/u; // zero-width space, LRO/RLO bidi overrides, etc.
+const isUnsupportedInput = (s) => {
+  if (_HIDDEN_RE.test(s)) return true;
+  for (const ch of String(s)) if (_LETTER_RE.test(ch) && !_LATIN_RE.test(ch)) return true;
+  return false;
+};
+const UNSUPPORTED_INPUT_MSG =
+  "I can only help in English right now. You can type Hindi and other Indian " +
+  'languages using English letters (for example "booking kaise kare") — please ' +
+  "rephrase that way and I'll help.";
+
 // ── Voice (shared by the streamed + structured paths) ──────────────────────────
 // The "how would Shubham explain this in a WhatsApp chat" system prompt. Grounding
 // is non-negotiable; personality rides on top of it.
@@ -370,7 +393,9 @@ async function streamGrounded(question, chunks, history, onDelta) {
 }
 
 // Best-effort persistence — a logging failure must never break the user's reply.
-async function persist({ conversationId, sessionRef, question, answer, cited_sources, escalate }) {
+// `source` names the layer that answered (analytics); tolerated-absent so this stays
+// safe before the v3.87 column exists.
+async function persist({ conversationId, sessionRef, question, answer, cited_sources, escalate, source = null }) {
   try {
     let convId = conversationId;
     if (!convId) {
@@ -380,15 +405,17 @@ async function persist({ conversationId, sessionRef, question, answer, cited_sou
       convId = data.id;
     }
     await supabaseAdmin.from('bot_messages').insert({ conversation_id: convId, role: 'user', content: question });
-    const { data: msg, error: mErr } = await supabaseAdmin
-      .from('bot_messages')
-      .insert({
-        conversation_id: convId, role: 'assistant', content: answer,
-        cited_sources: cited_sources.length ? cited_sources : null, escalated: escalate,
-      })
-      .select('id').single();
-    if (mErr) throw mErr;
-    return { conversationId: convId, messageId: msg.id };
+    const row = {
+      conversation_id: convId, role: 'assistant', content: answer,
+      cited_sources: cited_sources.length ? cited_sources : null, escalated: escalate, source,
+    };
+    let ins = await supabaseAdmin.from('bot_messages').insert(row).select('id').single();
+    if (ins.error && _isMissingSchema(ins.error) && /source/.test(ins.error.message || '')) {
+      delete row.source; // pre-v3.87 DB — retry without the new column
+      ins = await supabaseAdmin.from('bot_messages').insert(row).select('id').single();
+    }
+    if (ins.error) throw ins.error;
+    return { conversationId: convId, messageId: ins.data.id };
   } catch (e) {
     console.error('[bot] persist failed:', e.message);
     return { conversationId: conversationId || null, messageId: null };
@@ -417,10 +444,19 @@ async function logGap({ question = null, reason, conversationId = null, messageI
 async function askBot({ question, conversationId = null, sessionRef = null } = {}) {
   const q = String(question || '').trim();
 
+  // Reject non-Latin scripts / hidden characters before any retrieval or model
+  // call — never escalates (no support email), just asks for a rephrase.
+  if (q && isUnsupportedInput(q)) {
+    const { conversationId: convId, messageId } = await persist({
+      conversationId, sessionRef, question: q, answer: UNSUPPORTED_INPUT_MSG, cited_sources: [], escalate: false, source: 'unsupported',
+    });
+    return { answer: UNSUPPORTED_INPUT_MSG, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'unsupported' };
+  }
+
   const small = q && smalltalkReply(q);
   if (small) {
     const { conversationId: convId, messageId } = await persist({
-      conversationId, sessionRef, question: q, answer: small, cited_sources: [], escalate: false,
+      conversationId, sessionRef, question: q, answer: small, cited_sources: [], escalate: false, source: 'smalltalk',
     });
     return { answer: small, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'smalltalk' };
   }
@@ -428,7 +464,7 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
   const faq = q && await matchFaq(q);
   if (faq) {
     const { conversationId: convId, messageId } = await persist({
-      conversationId, sessionRef, question: q, answer: faq, cited_sources: [], escalate: false,
+      conversationId, sessionRef, question: q, answer: faq, cited_sources: [], escalate: false, source: 'faq',
     });
     return { answer: faq, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'faq' };
   }
@@ -446,7 +482,7 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
     const cached = await semanticCacheLookup(queryEmbedding);
     if (cached) {
       const { conversationId: convId, messageId } = await persist({
-        conversationId, sessionRef, question: q, answer: cached.answer, cited_sources: cached.cited_sources, escalate: false,
+        conversationId, sessionRef, question: q, answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, source: 'cache',
       });
       return { answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, conversationId: convId, messageId, source: 'cache' };
     }
@@ -491,7 +527,7 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
   }
 
   const { conversationId: convId, messageId } = await persist({
-    conversationId, sessionRef, question: q, answer, cited_sources, escalate,
+    conversationId, sessionRef, question: q, answer, cited_sources, escalate, source,
   });
   if (escalate) await logGap({ question: q, reason: 'escalated', conversationId: convId });
 
@@ -507,11 +543,21 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
 async function askBotStream({ question, conversationId = null, sessionRef = null, onDelta = () => {} } = {}) {
   const q = String(question || '').trim();
 
+  // Reject non-Latin scripts / hidden characters (see isUnsupportedInput). Streams
+  // the rephrase message as a single delta; never escalates.
+  if (q && isUnsupportedInput(q)) {
+    onDelta(UNSUPPORTED_INPUT_MSG);
+    const { conversationId: convId, messageId } = await persist({
+      conversationId, sessionRef, question: q, answer: UNSUPPORTED_INPUT_MSG, cited_sources: [], escalate: false, source: 'unsupported',
+    });
+    return { answer: UNSUPPORTED_INPUT_MSG, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'unsupported' };
+  }
+
   const small = q && smalltalkReply(q);
   if (small) {
     onDelta(small);
     const { conversationId: convId, messageId } = await persist({
-      conversationId, sessionRef, question: q, answer: small, cited_sources: [], escalate: false,
+      conversationId, sessionRef, question: q, answer: small, cited_sources: [], escalate: false, source: 'smalltalk',
     });
     return { answer: small, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'smalltalk' };
   }
@@ -520,7 +566,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
   if (faq) {
     onDelta(faq);
     const { conversationId: convId, messageId } = await persist({
-      conversationId, sessionRef, question: q, answer: faq, cited_sources: [], escalate: false,
+      conversationId, sessionRef, question: q, answer: faq, cited_sources: [], escalate: false, source: 'faq',
     });
     return { answer: faq, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'faq' };
   }
@@ -538,7 +584,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     if (cached) {
       onDelta(cached.answer);
       const { conversationId: convId, messageId } = await persist({
-        conversationId, sessionRef, question: q, answer: cached.answer, cited_sources: cached.cited_sources, escalate: false,
+        conversationId, sessionRef, question: q, answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, source: 'cache',
       });
       return { answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, conversationId: convId, messageId, source: 'cache' };
     }
@@ -582,19 +628,48 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
   }
 
   const { conversationId: convId, messageId } = await persist({
-    conversationId, sessionRef, question: q, answer, cited_sources, escalate,
+    conversationId, sessionRef, question: q, answer, cited_sources, escalate, source,
   });
   if (escalate) await logGap({ question: q, reason: 'escalated', conversationId: convId });
 
   return { answer, cited_sources, escalate, conversationId: convId, messageId, source };
 }
 
-// Store 👍/👎 on an assistant message. On 👎, seed a knowledge gap (best-effort) so
-// unhelpful answers become a review queue. Throws on the primary DB error only.
+// Store 👍/👎 on an assistant message. On 👎, seed a knowledge gap. On 👍, auto-suggest
+// a FAQ from the Q&A (disabled — an admin enables it in the console). Both best-effort;
+// throws only on the primary update error.
 async function recordFeedback(messageId, feedback) {
   const { error } = await supabaseAdmin.from('bot_messages').update({ feedback }).eq('id', messageId);
   if (error) throw error;
   if (feedback === 'down') await logGap({ reason: 'thumbs_down', messageId });
+  if (feedback === 'up') await autopromoteFromFeedback(messageId);
+}
+
+// Learning loop: a 👍'd grounded answer becomes a *disabled* FAQ suggestion, keyed on
+// the question that earned it. An admin reviews + enables it in the Bolt console; it is
+// never served automatically (enabled=false) and never duplicates an existing pattern.
+// Best-effort — never let a suggestion failure surface to the user.
+async function autopromoteFromFeedback(messageId) {
+  try {
+    const { data: msg } = await supabaseAdmin
+      .from('bot_messages').select('content, conversation_id, created_at, escalated').eq('id', messageId).single();
+    if (!msg || msg.escalated || !String(msg.content || '').trim()) return;
+
+    // The user question this answer replied to = the last user turn before it.
+    const { data: prior } = await supabaseAdmin
+      .from('bot_messages').select('content')
+      .eq('conversation_id', msg.conversation_id).eq('role', 'user').lt('created_at', msg.created_at)
+      .order('created_at', { ascending: false }).limit(1);
+    const question = prior && prior[0] && prior[0].content;
+    const pattern = normalize(question).slice(0, 120);
+    if (!pattern) return;
+
+    const { data: existing } = await supabaseAdmin.from('bot_faqs').select('id').eq('pattern', pattern).limit(1);
+    if (existing && existing.length) return; // already covered
+    await supabaseAdmin.from('bot_faqs').insert({ pattern, answer: msg.content, enabled: false });
+  } catch (e) {
+    if (!_isMissingSchema(e)) console.error('[bot] autopromote failed:', e.message);
+  }
 }
 
 // Recent turns (best-effort; [] on any failure).
@@ -619,4 +694,5 @@ module.exports = {
   askBot, askBotStream, recordFeedback, getRecentMessages, matchFaq, logGap,
   HANDOFF, SENSITIVE_RE, MIN_RANK, ESCALATE_TOKEN, buildRetrievalQuery, toModelHistory,
   smalltalkReply, SMALLTALK_REPLIES, mergeChunks,
+  isUnsupportedInput, UNSUPPORTED_INPUT_MSG,
 };
