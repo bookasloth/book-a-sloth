@@ -171,7 +171,7 @@ export default function BotWidget() {
                       {m.role === 'user' ? (
                         <p className="whitespace-pre-wrap">{m.content}</p>
                       ) : m.content ? (
-                        <div className="bolt-md"><Markdown source={m.content} /></div>
+                        <div className="bolt-md"><Markdown source={m.content} externalLinks="strip" /></div>
                       ) : (
                         <div className="flex gap-1 py-1" aria-label="Bolt is typing">
                           <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1E1E1E]/40 [animation-delay:0ms]" />

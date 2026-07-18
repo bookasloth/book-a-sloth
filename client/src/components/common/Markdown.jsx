@@ -15,7 +15,7 @@ import { Link } from 'react-router-dom';
 
 const INLINE_RE = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|`([^`]+)`/g;
 
-function renderInline(text, keyBase) {
+function renderInline(text, keyBase, externalLinks) {
   const nodes = [];
   let last = 0;
   let i = 0;
@@ -30,6 +30,8 @@ function renderInline(text, keyBase) {
       nodes.push(
         href.startsWith('/') ? (
           <Link key={key} to={href} className="text-[#FE5100] hover:underline">{label}</Link>
+        ) : externalLinks === 'strip' ? (
+          <span key={key}>{label}</span>
         ) : (
           <a key={key} href={href} target="_blank" rel="noreferrer" className="text-[#FE5100] hover:underline">{label}</a>
         ),
@@ -87,19 +89,19 @@ const H_CLASS = {
   3: 'text-base font-semibold text-gray-900 mt-6 mb-1.5',
 };
 
-export default function Markdown({ source }) {
+export default function Markdown({ source, externalLinks = 'allow' }) {
   const blocks = parseBlocks(source);
   return (
     <div className="text-[15px] leading-relaxed text-gray-700">
       {blocks.map((b, i) => {
         if (b.type === 'h') {
           const Tag = `h${Math.min(b.level, 3)}`;
-          return <Tag key={i} className={H_CLASS[Math.min(b.level, 3)]}>{renderInline(b.text, `h${i}`)}</Tag>;
+          return <Tag key={i} className={H_CLASS[Math.min(b.level, 3)]}>{renderInline(b.text, `h${i}`, externalLinks)}</Tag>;
         }
         if (b.type === 'p') {
-          return <p key={i} className="mb-4">{renderInline(b.text, `p${i}`)}</p>;
+          return <p key={i} className="mb-4">{renderInline(b.text, `p${i}`, externalLinks)}</p>;
         }
-        const items = b.items.map((it, j) => <li key={j} className="mb-1.5">{renderInline(it, `l${i}-${j}`)}</li>);
+        const items = b.items.map((it, j) => <li key={j} className="mb-1.5">{renderInline(it, `l${i}-${j}`, externalLinks)}</li>);
         return b.type === 'ol'
           ? <ol key={i} className="list-decimal pl-5 mb-4 space-y-0.5">{items}</ol>
           : <ul key={i} className="list-disc pl-5 mb-4 space-y-0.5">{items}</ul>;
