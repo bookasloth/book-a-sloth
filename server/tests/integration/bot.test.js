@@ -64,6 +64,9 @@ describe('POST /api/bot/ask', () => {
     const res = await request(app).post('/api/bot/ask').send({ question: 'I want a refund' });
     expect(res.status).toBe(200);
     expect(res.body.escalate).toBe(true);
+    // notifySupport is now fire-and-forget (not awaited before the response), so
+    // flush the pending microtasks before asserting the background email fired.
+    await new Promise((r) => setImmediate(r));
     expect(sendEmail).toHaveBeenCalledTimes(1);
     expect(sendEmail.mock.calls[0][0].to).toBeTruthy();
     expect(sendEmail.mock.calls[0][0].subject).toMatch(/Bolt 958/);
