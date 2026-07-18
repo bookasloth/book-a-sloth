@@ -159,6 +159,7 @@ app.use('/api/notifications', require('./routes/notificationWebhookRoutes')); //
 app.use('/api/notifications', require('./routes/notificationRoutes'));         // in-app feed (bell panel, auth-gated)
 app.use('/api/email',         require('./routes/emailRoutes')); // public unsubscribe (signed-token gated)
 app.use('/api/contact',       require('./routes/contactRoutes')); // public contact form → support email
+app.use('/api/bot',           require('./routes/botRoutes')); // public "Bolt 958" support bot (grounded on docs/)
 app.use('/api/enterprise-lead', require('./routes/enterpriseLeadRoutes')); // public /enterprise page lead form → support email
 app.use('/api/whatsapp',      require('./routes/whatsappRoutes'));
 app.use('/api/username',      require('./routes/usernameRoutes')); // public resolve (edge 301) + auth check
