@@ -51,6 +51,15 @@ const BLOBS = [
 
 const RELEASES = [
   {
+    date: 'Jul 17, 2026', version: 'v3.69',
+    title: 'Your listing, written for you',
+    tags: ['New'],
+    points: [
+      'Meet Write with Bolt: give your service a title and our AI drafts the rest — description, what’s included, FAQs and more — in seconds. Everything stays yours to edit; it’s a head start, not a template.',
+      'Not quite your voice? Regenerate with a quick nudge like “make it warmer” until it feels right.',
+    ],
+  },
+  {
     date: 'Jul 15, 2026', version: 'v3.76',
     title: 'Your clients, all in one place',
     tags: ['New'],
