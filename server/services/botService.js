@@ -32,6 +32,12 @@ const MIN_RANK = 0.01;
 const VEC_MATCH_COUNT = 6;
 const MIN_SIMILARITY = 0.4;
 
+// Semantic answer cache (SIE phase B part 2): a near-identical past question reuses
+// its grounded answer with NO model call — the core "reduce AI dependency" lever.
+// Threshold is deliberately high so a subtly different question can't be served a
+// stale/wrong cached answer; below it, the question falls through to retrieval+model.
+const CACHE_THRESHOLD = 0.93;
+
 // Topics we always send to a human, however good the doc match — money REVERSALS
 // and account-COMPROMISE, where a wrong-but-confident answer does real harm.
 // Informational money/account questions ("how do payouts work", "how do I log in")
@@ -235,6 +241,44 @@ async function embedRetrievalQuery(text) {
   }
 }
 
+// Semantic cache lookup — best-effort. Returns { id, answer, cited_sources } for a
+// near-identical prior question (>= CACHE_THRESHOLD), else null. Bumps the hit count
+// in the background. Any failure (RPC/table missing, etc.) returns null → the normal
+// retrieval+model path runs.
+async function semanticCacheLookup(embedding) {
+  if (!embedding) return null;
+  try {
+    const { data, error } = await supabaseAdmin.rpc('match_semantic_cache', {
+      query_embedding: embedding, similarity_threshold: CACHE_THRESHOLD,
+    });
+    if (error) throw error;
+    const hit = (data || [])[0];
+    if (!hit) return null;
+    bumpCacheHit(hit.id); // fire-and-forget
+    return { id: hit.id, answer: hit.answer, cited_sources: Array.isArray(hit.cited_sources) ? hit.cited_sources : [] };
+  } catch (e) {
+    if (!_isMissingSchema(e)) console.error('[bot] cache lookup failed:', e.message);
+    return null;
+  }
+}
+
+// Store a fresh grounded answer for future reuse. Best-effort, never awaited on the
+// response path. Only non-escalated model answers are cached (callers gate this).
+async function semanticCacheStore(question, embedding, answer, cited_sources) {
+  if (!embedding || !String(answer || '').trim()) return;
+  try {
+    await supabaseAdmin.from('bot_semantic_cache').insert({
+      question, embedding, answer, cited_sources: cited_sources.length ? cited_sources : null,
+    });
+  } catch (e) {
+    if (!_isMissingSchema(e)) console.error('[bot] cache store failed:', e.message);
+  }
+}
+
+function bumpCacheHit(id) {
+  supabaseAdmin.rpc('bump_cache_hit', { cache_id: id }).then(() => {}, () => {}); // best-effort
+}
+
 // Follow-ups ("what about the other plan?") carry no keywords of their own — seed
 // the FTS query with the last couple of user turns. ponytail: plain concat, no
 // rewrite model call.
@@ -388,12 +432,27 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
   }
 
   const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
+  const sensitive = SENSITIVE_RE.test(q);
+
+  // Embed the query once (Voyage) — reused by the semantic cache AND hybrid retrieval.
+  const retrievalQuery = q ? buildRetrievalQuery(q, history) : '';
+  const queryEmbedding = q ? await embedRetrievalQuery(retrievalQuery) : null;
+
+  // Semantic cache: a near-identical past question reuses its answer, no model call.
+  // Never for sensitive topics — those must escalate, never serve a cached answer.
+  if (queryEmbedding && !sensitive) {
+    const cached = await semanticCacheLookup(queryEmbedding);
+    if (cached) {
+      const { conversationId: convId, messageId } = await persist({
+        conversationId, sessionRef, question: q, answer: cached.answer, cited_sources: cached.cited_sources, escalate: false,
+      });
+      return { answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, conversationId: convId, messageId, source: 'cache' };
+    }
+  }
 
   let chunks = [];
   let retrievalOk = true;
   if (q) {
-    const retrievalQuery = buildRetrievalQuery(q, history);
-    const queryEmbedding = await embedRetrievalQuery(retrievalQuery);
     try {
       chunks = await retrieve(retrievalQuery, queryEmbedding);
     } catch (e) {
@@ -402,7 +461,6 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
     }
   }
 
-  const sensitive = SENSITIVE_RE.test(q);
   let answer = HANDOFF;
   let escalate = true;
   let cited_sources = [];
@@ -422,6 +480,8 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
             .map((c) => ({ source_file: c.source_file, heading: c.heading || null }))
         );
         if (!cited_sources.length) cited_sources = sourcesFromChunks(chunks);
+        // Cache this grounded answer for near-identical future questions (best-effort).
+        semanticCacheStore(q, queryEmbedding, answer, cited_sources);
       }
     } catch (e) {
       console.error('[bot] model call failed:', e.message);
@@ -464,12 +524,27 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
   }
 
   const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
+  const sensitive = SENSITIVE_RE.test(q);
+
+  // Embed the query once (Voyage) — reused by the semantic cache AND hybrid retrieval.
+  const retrievalQuery = q ? buildRetrievalQuery(q, history) : '';
+  const queryEmbedding = q ? await embedRetrievalQuery(retrievalQuery) : null;
+
+  // Semantic cache hit → stream the cached answer as one delta, no model call.
+  if (queryEmbedding && !sensitive) {
+    const cached = await semanticCacheLookup(queryEmbedding);
+    if (cached) {
+      onDelta(cached.answer);
+      const { conversationId: convId, messageId } = await persist({
+        conversationId, sessionRef, question: q, answer: cached.answer, cited_sources: cached.cited_sources, escalate: false,
+      });
+      return { answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, conversationId: convId, messageId, source: 'cache' };
+    }
+  }
 
   let chunks = [];
   let retrievalOk = true;
   if (q) {
-    const retrievalQuery = buildRetrievalQuery(q, history);
-    const queryEmbedding = await embedRetrievalQuery(retrievalQuery);
     try {
       chunks = await retrieve(retrievalQuery, queryEmbedding);
     } catch (e) {
@@ -478,7 +553,6 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     }
   }
 
-  const sensitive = SENSITIVE_RE.test(q);
   let answer = '';
   let escalate = true;
   let cited_sources = [];
@@ -493,6 +567,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
         source = 'model';
         answer = out.text;
         cited_sources = sourcesFromChunks(chunks); // streamed prose → cite all retrieved
+        semanticCacheStore(q, queryEmbedding, answer, cited_sources); // best-effort
       }
     } catch (e) {
       console.error('[bot] stream model call failed:', e.message);
