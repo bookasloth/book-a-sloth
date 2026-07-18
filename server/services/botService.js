@@ -124,12 +124,15 @@ const _INJECTION_PATTERNS = [
   [/disregard (?:the |your |all |previous )*(?:instructions|rules)/i, 'disregard'],
   [/\bsystem prompt\b/i, 'system-prompt'],
   [/you are (?:now|a|an) /i, 'roleplay'],
-  [/\bact as (?:a |an |the )?/i, 'act-as'],
+  [/\bpretend (?:you'?re|you are|to be)\b/i, 'pretend'],
+  [/\bact as (?:a |an |the )?(?:jailbroken|unrestricted|uncensored|different (?:ai|assistant|persona)|dan\b)/i, 'act-as'],
   [/repeat (?:the )?(?:text|words|everything|prompt) (?:above|before)/i, 'repeat-above'],
   [/\bdeveloper mode\b/i, 'developer-mode'],
   [/\bDAN\b/, 'dan'],
   [/\bjailbreak/i, 'jailbreak'],
-  [/(?:reveal|print|show|repeat) (?:me )?(?:your )?(?:the )?(?:instructions|prompt|system)/i, 'reveal-instructions'],
+  // "system" only counts paired with "prompt" (bare "system" false-positives on
+  // things like "system requirements" or "the system message you sent").
+  [/(?:reveal|print|show|repeat) (?:me )?(?:your )?(?:the )?(?:instructions|prompt|system prompt)\b/i, 'reveal-instructions'],
 ];
 function detectInjection(q) {
   const s = String(q || '');
