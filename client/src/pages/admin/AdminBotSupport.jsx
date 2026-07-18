@@ -63,7 +63,7 @@ export default function AdminBotSupport() {
 
   const evictCache = async (id) => {
     if (id === 'all' && !window.confirm('Clear the entire semantic cache? It refills from traffic.')) return;
-    try { await adminDeleteBotCache(id); toast.success(id === 'all' ? 'Cache cleared' : 'Evicted'); loadCache(); }
+    try { await adminDeleteBotCache(id); toast.success(id === 'all' ? 'Cache cleared' : 'Removed'); loadCache(); }
     catch { toast.error('Delete failed'); }
   };
 
