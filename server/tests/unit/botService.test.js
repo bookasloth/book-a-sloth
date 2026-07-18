@@ -39,7 +39,7 @@ jest.mock('../../lib/botBudget', () => ({ tryConsume: jest.fn().mockResolvedValu
 const client = require('../../services/ai/anthropicClient');
 const sb = require('../../config/supabase');
 const botBudget = require('../../lib/botBudget');
-const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks, isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG, buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED, sanitizeAnswer, BLOCKED_MSG, detectInjection } = require('../../services/botService');
+const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks, isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG, buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED, sanitizeAnswer, BLOCKED_MSG, detectInjection, redactPii } = require('../../services/botService');
 
 const answerReply = (input) => ({ content: [{ type: 'tool_use', name: 'emit_answer', input }] });
 const chunk = (over = {}) => ({ id: 'c1', source_file: 'docs/architecture.md', heading: 'Google Calendar Integration', content: 'Connect via /api/auth/google.', rank: 0.9, ...over });
@@ -345,6 +345,32 @@ test('a model answer with an external link is returned link-stripped', async () 
   const out = await askBot({ question: 'how do I book?' });
   expect(out.answer).toBe('Visit x now');
   expect(out.source).toBe('model');
+});
+
+describe('redactPii', () => {
+  test('redacts email, Indian phone, card, and 12-digit id', () => {
+    expect(redactPii('mail a.b+x@mail.co.uk')).toBe('mail [email]');
+    expect(redactPii('call 9876543210')).toBe('call [phone]');
+    expect(redactPii('my num is +91 9876543210')).toBe('my num is [phone]');
+    expect(redactPii('call 98765 43210')).toBe('call [phone]');   // 5-5 spaced (common Indian format)
+    expect(redactPii('num 98765-43210')).toBe('num [phone]');     // 5-5 hyphenated
+    expect(redactPii('card 4111 1111 1111 1111 ok')).toBe('card [card] ok');
+    expect(redactPii('aadhaar 1234 5678 9012')).toBe('aadhaar [id]');
+    expect(redactPii('reach a@b.com or 9876543210')).toBe('reach [email] or [phone]');
+  });
+  test('does NOT over-redact OTPs, short numbers, or non-mobile 10-digit', () => {
+    expect(redactPii('my otp is 123456')).toBe('my otp is 123456');
+    expect(redactPii('7 nights, 2 guests')).toBe('7 nights, 2 guests');
+    expect(redactPii('order 1234567890')).toBe('order 1234567890'); // starts with 1, not a mobile
+  });
+});
+
+test('askBot PII-redacts the question before persisting it', async () => {
+  sb.__rpc.mockResolvedValue({ data: [chunk()], error: null });
+  client.__create.mockResolvedValueOnce(answerReply({ answer: 'ok', escalate: false, source_numbers: [1] }));
+  await askBot({ question: 'change my number to 9876543210' });
+  const userInsert = sb.__chain.insert.mock.calls.map((c) => c[0]).find((r) => r && r.role === 'user');
+  expect(userInsert.content).toBe('change my number to [phone]');
 });
 
 describe('detectInjection (layer 3 tripwire)', () => {

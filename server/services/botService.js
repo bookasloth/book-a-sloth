@@ -449,9 +449,24 @@ async function streamGrounded(question, chunks, history, onDelta) {
   return { text: escalate ? '' : full.trim(), escalate };
 }
 
+// Best-effort PII redaction. Users routinely paste personal data into support
+// chat; this keeps it out of what we STORE (bot_messages, knowledge_gaps), SEND to
+// third parties (Voyage embeddings, the Claude call), and EMAIL to support. India-
+// aware, order matters (longest digit runs first so a card isn't split into a
+// "phone"). ponytail: precise patterns over an exhaustive PII library — we
+// deliberately do NOT touch 6-digit / short numbers (OTPs, booking refs) to avoid
+// mangling legitimate content. Best-effort, not a compliance guarantee.
+function redactPii(text) {
+  return String(text ?? '')
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, '[email]')      // email
+    .replace(/\b\d(?:[ -]?\d){12,18}\b/g, '[card]')                                  // card / long account no. (13-19 digits, digit-bounded)
+    .replace(/\b\d{4}[ -]?\d{4}[ -]?\d{4}\b/g, '[id]')                               // 12-digit (Aadhaar)
+    .replace(/(?:\+?91[ -]?|\b0)?[6-9]\d{4}[ -]?\d{5}\b/g, '[phone]');               // Indian mobile (allows 5-5 spaced/hyphenated)
+}
+
 // Best-effort persistence — a logging failure must never break the user's reply.
 // `source` names the layer that answered (analytics); tolerated-absent so this stays
-// safe before the v3.87 column exists.
+// safe before the v3.87 column exists. Content is PII-redacted before storage.
 async function persist({ conversationId, sessionRef, question, answer, cited_sources, escalate, source = null }) {
   try {
     let convId = conversationId;
@@ -461,9 +476,9 @@ async function persist({ conversationId, sessionRef, question, answer, cited_sou
       if (error) throw error;
       convId = data.id;
     }
-    await supabaseAdmin.from('bot_messages').insert({ conversation_id: convId, role: 'user', content: question });
+    await supabaseAdmin.from('bot_messages').insert({ conversation_id: convId, role: 'user', content: redactPii(question) });
     const row = {
-      conversation_id: convId, role: 'assistant', content: answer,
+      conversation_id: convId, role: 'assistant', content: redactPii(answer),
       cited_sources: cited_sources.length ? cited_sources : null, escalated: escalate, source,
     };
     let ins = await supabaseAdmin.from('bot_messages').insert(row).select('id').single();
@@ -484,7 +499,7 @@ async function persist({ conversationId, sessionRef, question, answer, cited_sou
 async function logGap({ question = null, reason, conversationId = null, messageId = null }) {
   try {
     await supabaseAdmin.from('knowledge_gaps').insert({
-      question, reason, conversation_id: conversationId, message_id: messageId,
+      question: question == null ? null : redactPii(question), reason, conversation_id: conversationId, message_id: messageId,
     });
   } catch (e) {
     if (!_isMissingSchema(e)) console.error('[bot] logGap failed:', e.message);
@@ -500,6 +515,7 @@ async function logGap({ question = null, reason, conversationId = null, messageI
  */
 async function askBot({ question, conversationId = null, sessionRef = null } = {}) {
   const q = String(question || '').trim();
+  const qSafe = q ? redactPii(q) : q; // PII-redacted copy for third parties (Voyage embed, Claude, cache)
 
   // Reject non-Latin scripts / hidden characters before any retrieval or model
   // call — never escalates (no support email), just asks for a rephrase.
@@ -536,7 +552,7 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
   const sensitive = SENSITIVE_RE.test(q);
 
   // Embed the query once (Voyage) — reused by the semantic cache AND hybrid retrieval.
-  const retrievalQuery = q ? buildRetrievalQuery(q, history) : '';
+  const retrievalQuery = q ? buildRetrievalQuery(qSafe, history) : '';
   const queryEmbedding = q ? await embedRetrievalQuery(retrievalQuery) : null;
 
   // Semantic cache: a near-identical past question reuses its answer, no model call.
@@ -578,7 +594,7 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
       cited_sources = [];
     } else {
       try {
-        const out = await callModel(q, chunks, history);
+        const out = await callModel(qSafe, chunks, history);
         if (out && !out.escalate && String(out.answer || '').trim()) {
           escalate = false;
           source = 'model';
@@ -596,7 +612,7 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
           } else {
             answer = clean.text;
             // Cache this grounded answer for near-identical future questions (best-effort).
-            semanticCacheStore(q, queryEmbedding, answer, cited_sources);
+            semanticCacheStore(qSafe, queryEmbedding, answer, cited_sources);
           }
         }
       } catch (e) {
@@ -622,6 +638,7 @@ async function askBot({ question, conversationId = null, sessionRef = null } = {
  */
 async function askBotStream({ question, conversationId = null, sessionRef = null, onDelta = () => {} } = {}) {
   const q = String(question || '').trim();
+  const qSafe = q ? redactPii(q) : q; // PII-redacted copy for third parties (Voyage embed, Claude, cache)
 
   // Reject non-Latin scripts / hidden characters (see isUnsupportedInput). Streams
   // the rephrase message as a single delta; never escalates.
@@ -661,7 +678,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
   const sensitive = SENSITIVE_RE.test(q);
 
   // Embed the query once (Voyage) — reused by the semantic cache AND hybrid retrieval.
-  const retrievalQuery = q ? buildRetrievalQuery(q, history) : '';
+  const retrievalQuery = q ? buildRetrievalQuery(qSafe, history) : '';
   const queryEmbedding = q ? await embedRetrievalQuery(retrievalQuery) : null;
 
   // Semantic cache hit → stream the cached answer as one delta, no model call.
@@ -704,7 +721,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
       onDelta(OVER_BUDGET_MSG);
     } else {
       try {
-        const out = await streamGrounded(q, chunks, history, onDelta);
+        const out = await streamGrounded(qSafe, chunks, history, onDelta);
         if (!out.escalate && out.text) {
           escalate = false;
           source = 'model';
@@ -716,7 +733,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
             answer = BLOCKED_MSG; source = 'blocked'; cited_sources = [];
           } else {
             answer = clean.text;
-            semanticCacheStore(q, queryEmbedding, answer, cited_sources); // best-effort
+            semanticCacheStore(qSafe, queryEmbedding, answer, cited_sources); // best-effort
           }
         }
       } catch (e) {
@@ -797,7 +814,7 @@ async function getRecentMessages(conversationId, limit = 10) {
 module.exports = {
   askBot, askBotStream, recordFeedback, getRecentMessages, matchFaq, logGap,
   HANDOFF, SENSITIVE_RE, MIN_RANK, ESCALATE_TOKEN, buildRetrievalQuery, toModelHistory,
-  smalltalkReply, SMALLTALK_REPLIES, mergeChunks,
+  smalltalkReply, SMALLTALK_REPLIES, mergeChunks, redactPii,
   isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG,
   buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED,
   sanitizeAnswer, BLOCKED_MSG, detectInjection,
