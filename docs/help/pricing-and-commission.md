@@ -8,6 +8,17 @@ Full, current prices and limits are always on the [pricing](/pricing) page — t
 - **Host+** — a flat annual price, higher limits, and extra features.
 - **Studio** — the top tier, with unlimited services and bookings plus advanced tools.
 
+## How much does each plan cost?
+
+If you're wondering how much Book A Sloth costs, what the price of Host+ or Studio is, or what the monthly or yearly fee comes to — the current prices for every plan are listed on the [pricing](/pricing) page.
+
+Here's the shape of it:
+
+- **Starter** costs nothing — it's free forever (a small per-booking commission applies).
+- **Host+** and **Studio** are paid plans billed on a flat subscription. Host+ is the mid tier; Studio is the top tier with the most included.
+
+Prices can change and are set by Book A Sloth, so for the exact amount of any plan — Starter, Host+, or Studio — check the [pricing](/pricing) page for the up-to-date figure.
+
 ## Commission
 
 - On **paid plans (Host+ and Studio), commission is 0%** — you keep the full service price your client pays.
