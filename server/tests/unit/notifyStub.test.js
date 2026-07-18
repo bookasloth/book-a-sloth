@@ -1,6 +1,12 @@
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: {} }));
 jest.mock('../../services/aisensyService', () => ({ sendCampaign: jest.fn() }));
-jest.mock('../../services/email/communicationEngine', () => ({ send: jest.fn() }));
+// sendEmail now routes through the provider abstraction: loadSettings() picks
+// the provider, getProvider() dispatches. Point it at 'smtp' so the nodemailer
+// mock below still intercepts the actual send.
+jest.mock('../../services/email/communicationEngine', () => ({
+  send: jest.fn(),
+  loadSettings: jest.fn().mockResolvedValue({ provider: 'smtp', from_name: 'BAS', from_email: 'x@bas.in' }),
+}));
 
 const aisensy = require('../../services/aisensyService');
 const comm = require('../../services/email/communicationEngine');
