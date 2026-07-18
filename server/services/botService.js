@@ -40,9 +40,11 @@ const CACHE_THRESHOLD = 0.93;
 
 // Topics we always send to a human, however good the doc match — money REVERSALS
 // and account-COMPROMISE, where a wrong-but-confident answer does real harm.
-// Informational money/account questions ("how do payouts work", "how do I log in")
-// are NOT here — those have help articles and should be answered.
-const SENSITIVE_RE = /\b(refunds?|charge ?backs?|disputes?|charged (?:me )?(?:twice|again|wrong|extra)|double ?charged?|fraud|hacked|stolen|compromis|locked out|can'?t (?:log|sign) ?in|account access|access my account|delete (?:my )?account|close (?:my )?account|unauthor)/i;
+// Ordinary login trouble ("how do I log in", "I can't log in") is NOT here — the
+// sign-in / OTP articles answer it and route to support if unresolved, so a plain
+// login question shouldn't email a human. Informational money/account questions
+// ("how do payouts work", "what is KYC") are likewise handled by help articles.
+const SENSITIVE_RE = /\b(refunds?|charge ?backs?|disputes?|charged (?:me )?(?:twice|again|wrong|extra)|double ?charged?|fraud|hacked|stolen|compromis|locked out|account access|access my account|delete (?:my )?account|close (?:my )?account|unauthor)/i;
 
 // The handoff line the user hears — in voice, honest, calm (money/frustrated
 // contexts land here too, so no jokes). The visual "async handoff card" is the
