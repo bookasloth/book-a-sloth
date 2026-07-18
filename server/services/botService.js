@@ -461,7 +461,7 @@ function redactPii(text) {
     .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, '[email]')      // email
     .replace(/\b\d(?:[ -]?\d){12,18}\b/g, '[card]')                                  // card / long account no. (13-19 digits, digit-bounded)
     .replace(/\b\d{4}[ -]?\d{4}[ -]?\d{4}\b/g, '[id]')                               // 12-digit (Aadhaar)
-    .replace(/(?:\+?91[ -]?|\b0)?[6-9]\d{9}\b/g, '[phone]');                         // Indian mobile
+    .replace(/(?:\+?91[ -]?|\b0)?[6-9]\d{4}[ -]?\d{5}\b/g, '[phone]');               // Indian mobile (allows 5-5 spaced/hyphenated)
 }
 
 // Best-effort persistence — a logging failure must never break the user's reply.

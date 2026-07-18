@@ -352,6 +352,8 @@ describe('redactPii', () => {
     expect(redactPii('mail a.b+x@mail.co.uk')).toBe('mail [email]');
     expect(redactPii('call 9876543210')).toBe('call [phone]');
     expect(redactPii('my num is +91 9876543210')).toBe('my num is [phone]');
+    expect(redactPii('call 98765 43210')).toBe('call [phone]');   // 5-5 spaced (common Indian format)
+    expect(redactPii('num 98765-43210')).toBe('num [phone]');     // 5-5 hyphenated
     expect(redactPii('card 4111 1111 1111 1111 ok')).toBe('card [card] ok');
     expect(redactPii('aadhaar 1234 5678 9012')).toBe('aadhaar [id]');
     expect(redactPii('reach a@b.com or 9876543210')).toBe('reach [email] or [phone]');
