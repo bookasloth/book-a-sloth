@@ -26,7 +26,7 @@ export default function LpTestimonials() {
               type="button"
               onClick={() => scroll(-1)}
               aria-label="Previous testimonials"
-              className="grid h-11 w-11 place-items-center rounded-[6px] bg-white text-ink shadow-sm transition-transform hover:-translate-y-0.5"
+              className="grid h-11 w-11 place-items-center rounded-[6px] bg-white text-ink shadow-sm transition-transform"
             >
               <ChevronLeft size={20} />
             </button>
@@ -34,7 +34,7 @@ export default function LpTestimonials() {
               type="button"
               onClick={() => scroll(1)}
               aria-label="Next testimonials"
-              className="grid h-11 w-11 place-items-center rounded-[6px] bg-white text-ink shadow-sm transition-transform hover:-translate-y-0.5"
+              className="grid h-11 w-11 place-items-center rounded-[6px] bg-white text-ink shadow-sm transition-transform"
             >
               <ChevronRight size={20} />
             </button>

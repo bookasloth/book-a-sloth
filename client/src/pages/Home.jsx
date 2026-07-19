@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import {
   motion,
@@ -24,7 +24,6 @@ import {
   Check,
   MessageCircle,
   ArrowUpRight,
-  Video,
   Link2,
   ShieldCheck,
   Code2,
@@ -51,6 +50,8 @@ import {
   CalendarX2,
 } from "lucide-react";
 import { searchVendors, subscribeNewsletter } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 import useLenis from "../hooks/useLenis";
 import Reveal from "../components/home/Reveal";
 import HowItWorks from "../components/home/HowItWorks";
@@ -115,6 +116,16 @@ const HOME_JSONLD = [
 ];
 
 const EASE = [0.22, 1, 0.36, 1];
+
+/* Google "G" mark — matches the button on /be-a-sloth. */
+const GoogleIcon = () => (
+  <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" />
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0012 23z" />
+    <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 010-4.2V7.06H2.18a11 11 0 000 9.88l3.66-2.84z" />
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15A11 11 0 0012 1 11 11 0 002.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" />
+  </svg>
+);
 
 /* ════════════════════════════════════════════════════════════
    ODOMETER — mechanical rolling-digit stat. Each numeric character rides a
@@ -389,22 +400,18 @@ const FEATURES = [
 /* "…and so much more" — features + integrations.
    Line icons, per-card colour + subtle glow; hover reveals the description. */
 const MOREFEATURES = [
-  // Features
-  { icon: CreditCard, title: "Accept payments", desc: "UPI, cards & netbanking — clients pay before the session starts.", color: "#2563eb" },
-  { icon: Video, title: "Built-in video calls", desc: "A meeting link is created automatically for every online booking.", color: "#7c3aed" },
+  // Features — payments, video and reminders are covered by their named integrations below.
   { icon: Link2, title: "Short booking links", desc: "bookasloth.com/you — one calm link for everything you offer.", color: "#0ea5e9" },
   { icon: ShieldCheck, title: "Privacy first", desc: "Your data stays yours. Encrypted, access-controlled, never sold.", color: "#059669" },
   { icon: Code2, title: "Easy embeds", desc: "Drop your booking widget into any website in one line.", color: "#4f46e5" },
   { icon: Palette, title: "Simple customization", desc: "Brand your page — colours, logo and theme in a few clicks.", color: "#db2777" },
-  { icon: BellRing, title: "Smart reminders", desc: "Email + WhatsApp nudges cut no-shows to almost zero.", color: "#f59e0b" },
   { icon: Star, title: "Reviews & ratings", desc: "Two-way reviews build trust after every session.", color: "#eab308" },
   { icon: BarChart3, title: "Insightful analytics", desc: "Bookings, revenue and no-shows — all at a glance.", color: "#0891b2" },
   // Integrations
-  { icon: IndianRupee, title: "Razorpay", desc: "Payments, payouts and subscriptions, India-native.", color: "#3b82f6" },
+  { icon: IndianRupee, title: "Razorpay", desc: "UPI, cards & netbanking — clients pay before the session starts.", color: "#3b82f6" },
   { icon: Calendar, title: "Google Calendar", desc: "Two-way sync keeps your real availability accurate.", color: "#ea4335" },
   { icon: Webcam, title: "Google Meet", desc: "Auto-generated meet links on confirmed online bookings.", color: "#16a34a" },
-  { icon: MessageCircle, title: "WhatsApp", desc: "Confirmations and reminders land where clients actually look.", color: "#25d366" },
-  { icon: Mail, title: "Email", desc: "Beautiful transactional emails for every booking event.", color: "#dc2626" },
+  { icon: MessageCircle, title: "WhatsApp & Email", desc: "Confirmations and reminders land where clients look — WhatsApp and inbox.", color: "#25d366" },
 ];
 
 /* Industry Discovery — the 20 live (active) categories, grouped by industry.
@@ -556,7 +563,19 @@ const TRUST = [
    ════════════════════════════════════════════════════════════ */
 const Home = () => {
   useLenis();
-  const navigate = useNavigate();
+  const { startVendorGoogleAuth } = useAuth();
+
+  // ── Google-only host funnel — same entry as /be-a-sloth ──
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const startGoogle = async () => {
+    setGoogleLoading(true);
+    try {
+      await startVendorGoogleAuth("signup");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not start Google sign-up");
+      setGoogleLoading(false);
+    }
+  };
 
   // ── Preloader readiness: fonts loaded + hero image decoded (real, not timed) ──
   const [assetsReady, setAssetsReady] = useState(false);
@@ -574,15 +593,6 @@ const Home = () => {
     const safety = setTimeout(finish, 4000); // never strand the preloader
     return () => clearTimeout(safety);
   }, []);
-
-  // ── Hero username / SlothPage claim ──
-  const [username, setUsername] = useState("");
-  const claim = () => {
-    const handle = username.trim();
-    // Carry the typed handle through the (Google-only) funnel instead of dropping it.
-    if (handle) sessionStorage.setItem("pendingSlothPage", handle);
-    navigate(ROUTE_START, { state: { desiredUsername: handle || undefined } });
-  };
 
   // ── Newsletter ──
   const [emailInput, setEmailInput] = useState("");
@@ -762,12 +772,12 @@ const Home = () => {
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* LEFT */}
           <div>
-            <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-bold leading-[1.1] tracking-[-0.02em] text-ink sm:text-[4.5rem] sm:leading-[1.04]">
-              Get booked &amp; paid
+            <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[4.5rem] sm:leading-[1.04]">
+              Create your
               <br />
-              <span className="font-normal italic text-primary">before the first</span>
+              <span className="font-bold text-primary">Appointment Booking Page</span>
               <br />
-              message.
+              in 42 seconds.
             </Reveal>
 
             <Reveal as="p" delay={0.12} className="mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg">
@@ -775,37 +785,25 @@ const Home = () => {
               one calm link — for bookings, payments and reminders.
             </Reveal>
 
-            {/* URL creator */}
+            {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
             <Reveal delay={0.18} className="mt-6 sm:mt-9">
-              <div className="flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 sm:rounded-[5px] sm:border sm:border-black/[0.07] sm:bg-white sm:p-1.5 sm:shadow-[0_10px_30px_-10px_rgba(26,26,26,0.18)]">
-                {/* URL prefix + input — own card on mobile, merges into pill on desktop */}
-                <div className="flex min-h-[3.5rem] flex-1 items-center min-w-0 rounded-[5px] border border-black/[0.07] bg-white px-5 shadow-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-4 sm:shadow-none">
-                  <span className="select-none whitespace-nowrap text-sm font-medium text-neutral-400 shrink-0">
-                    bookasloth.com/
-                  </span>
-                  <input
-                    aria-label="Your SlothPage username"
-                    value={username}
-                    onChange={(e) =>
-                      setUsername(e.target.value.replace(/[^a-z0-9-]/gi, "").toLowerCase())
-                    }
-                    onKeyDown={(e) => e.key === "Enter" && claim()}
-                    placeholder="yourname"
-                    className="!min-h-0 !w-auto flex-1 min-w-0 !border-0 !bg-transparent !p-0 py-3.5 text-sm font-medium text-ink placeholder:font-normal placeholder:text-neutral-400 !shadow-none focus:!ring-0 sm:py-2.5"
-                  />
-                </div>
+              <div className="max-w-[22rem]">
                 <button
-                  onClick={claim}
-                  className="btn inline-flex min-h-[3.5rem] w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[5px] bg-primary-cta px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark sm:min-h-0 sm:w-auto sm:py-3"
+                  onClick={startGoogle}
+                  disabled={googleLoading}
+                  className="btn btn--outline flex w-full items-center justify-center gap-3 rounded-[5px] border border-black/[0.12] bg-white py-3.5 text-sm font-semibold text-ink shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:border-black/20 disabled:opacity-50"
                 >
-                  Let's Get Started
-                  <ArrowRight size={15} />
+                  <GoogleIcon />
+                  {googleLoading ? "Opening Google…" : "Continue with Google Account"}
                 </button>
+                <p className="mt-3 text-xs leading-relaxed text-neutral-400">
+                  By continuing, you agree to our{" "}
+                  <Link to="/terms" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Terms &amp; Conditions</Link> and{" "}
+                  <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.{" "}
+                  Why we{" "}
+                  <a href="#how-google" className="font-medium text-primary underline underline-offset-2 hover:text-primary-dark">ask for Google</a>.
+                </p>
               </div>
-              <p className="mt-3 flex items-center gap-1.5 text-xs text-neutral-400">
-                <Check size={13} className="text-primary" />
-                Free forever · No card needed
-              </p>
             </Reveal>
 
             {/* Social proof */}
@@ -877,12 +875,12 @@ const Home = () => {
         <div aria-hidden className="sloth-hero-aura" />
 
         <div className="relative z-10 mx-auto max-w-md text-center">
-          <Reveal as="h1" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-bold leading-[1.08] tracking-[-0.02em] text-ink">
-            Get booked &amp; paid
+          <Reveal as="h1" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
+            Create your
             <br />
-            <span className="font-normal italic text-primary">before the first</span>
+            <span className="font-bold text-primary">Appointment Booking Page</span>
             <br />
-            message.
+            in 42 seconds.
           </Reveal>
 
           <Reveal as="p" delay={0.12} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500">
@@ -890,36 +888,25 @@ const Home = () => {
             one calm link — for bookings, payments and reminders.
           </Reveal>
 
-          {/* URL creator */}
+          {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
           <Reveal delay={0.18} className="mt-6">
-            <div className="mx-auto flex max-w-lg flex-col gap-2">
-              <div className="flex min-h-[3.5rem] flex-1 items-center min-w-0 rounded-[5px] border border-black/[0.07] bg-white px-5 shadow-sm">
-                <span className="select-none whitespace-nowrap text-sm font-medium text-neutral-400 shrink-0">
-                  bookasloth.com/
-                </span>
-                <input
-                  aria-label="Your SlothPage username"
-                  value={username}
-                  onChange={(e) =>
-                    setUsername(e.target.value.replace(/[^a-z0-9-]/gi, "").toLowerCase())
-                  }
-                  onKeyDown={(e) => e.key === "Enter" && claim()}
-                  placeholder="yourname"
-                  className="!min-h-0 !w-auto flex-1 min-w-0 !border-0 !bg-transparent !p-0 py-3.5 text-sm font-medium text-ink placeholder:font-normal placeholder:text-neutral-400 !shadow-none focus:!ring-0"
-                />
-              </div>
+            <div className="mx-auto max-w-[22rem]">
               <button
-                onClick={claim}
-                className="btn inline-flex min-h-[3.5rem] w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[5px] bg-primary-cta px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark"
+                onClick={startGoogle}
+                disabled={googleLoading}
+                className="btn btn--outline flex w-full items-center justify-center gap-3 rounded-[5px] border border-black/[0.12] bg-white py-3.5 text-sm font-semibold text-ink shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:border-black/20 disabled:opacity-50"
               >
-                Let's Get Started
-                <ArrowRight size={15} />
+                <GoogleIcon />
+                {googleLoading ? "Opening Google…" : "Continue with Google Account"}
               </button>
+              <p className="mt-3 text-xs leading-relaxed text-neutral-400">
+                By continuing, you agree to our{" "}
+                <Link to="/terms" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Terms &amp; Conditions</Link> and{" "}
+                <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.{" "}
+                Why we{" "}
+                <a href="#how-google" className="font-medium text-primary underline underline-offset-2 hover:text-primary-dark">ask for Google</a>.
+              </p>
             </div>
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-neutral-400">
-              <Check size={13} className="text-primary" />
-              Free forever · No card needed
-            </p>
           </Reveal>
 
           {/* Social proof */}
@@ -1021,7 +1008,7 @@ const Home = () => {
             Industries we support
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Built for your <span className="italic text-primary">profession.</span>
+            Built for your <span className="inline-block rounded-lg bg-primary/5 px-2 py-0.5 font-extrabold text-primary ring-1 ring-primary/10 backdrop-blur-sm">profession.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             Whatever you charge for — sessions, audits, consultations, classes — there's a place for it on Book A Sloth.
@@ -1081,7 +1068,7 @@ const Home = () => {
                     </div>
                     <Link
                       to={`${ROUTE_START}?industry=${ind.slug}`}
-                      className="mt-auto inline-flex w-fit items-center gap-1.5 rounded-[6px] bg-primary-cta px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
+                      className="mt-auto inline-flex w-fit items-center gap-1.5 rounded-[6px] bg-primary-cta px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:bg-primary-dark hover:no-underline"
                     >
                       See professions <ArrowRight size={15} />
                     </Link>
@@ -1248,7 +1235,7 @@ const Home = () => {
             Sound familiar?
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            The admin that eats your week — <span className="italic text-primary">gone.</span>
+            The admin that eats your week — <span className="inline-block rounded-lg bg-primary/5 px-2 py-0.5 font-extrabold text-primary ring-1 ring-primary/10 backdrop-blur-sm">gone.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             You didn't get into this to chase payments and send reminders. Book A Sloth handles the back-office so you don't have to.
@@ -1280,7 +1267,7 @@ const Home = () => {
       <section id="how-it-works" className="bg-neutral-800 px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="h2" className="mx-auto max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            From link to paid. <span className="italic text-primary">In three steps.</span>
+            From link to paid. <span className="inline-block rounded-lg bg-primary/5 px-2 py-0.5 font-extrabold text-primary ring-1 ring-primary/10 backdrop-blur-sm">In three steps.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-200">
             No back-and-forth. No payment awkwardness. No reminders to write.
@@ -1315,7 +1302,7 @@ const Home = () => {
                 </div>
                 <Link
                   to={ROUTE_START}
-                  className="mt-8 inline-flex w-fit items-center gap-2 rounded-full bg-primary-cta px-6 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
+                  className="mt-8 inline-flex w-fit items-center gap-2 rounded-full bg-primary-cta px-6 py-3 text-sm font-semibold text-white transition-transform hover:bg-primary-dark hover:no-underline"
                 >
                   Get Started <ArrowRight size={16} />
                 </Link>
@@ -1388,7 +1375,7 @@ const Home = () => {
             See it in action
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            Calm to look at. <span className="italic text-primary">Calm to use.</span>
+            Calm to look at. <span className="inline-block rounded-lg bg-primary/5 px-2 py-0.5 font-extrabold text-primary ring-1 ring-primary/10 backdrop-blur-sm">Calm to use.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             Your booking page, service pages, checkout and dashboard — all clean, all connected, all working while you're not.
@@ -1434,7 +1421,7 @@ const Home = () => {
                   >
                     {shot.title}
                     {shot.kind === "dashboard" && (
-                      <span className="mt-0.5 block text-sm font-normal italic text-primary">
+                      <span className="mt-0.5 block text-sm font-medium text-primary">
                         This is what your Monday morning looks like.
                       </span>
                     )}
@@ -1453,7 +1440,7 @@ const Home = () => {
             Everything you need
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Four jobs. <span className="italic text-primary">One calm tool.</span>
+            Four jobs. <span className="inline-block rounded-lg bg-primary/5 px-2 py-0.5 font-extrabold text-primary ring-1 ring-primary/10 backdrop-blur-sm">One calm tool.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             Not a feature list — just the four things every service business actually needs, done properly.
@@ -1610,7 +1597,7 @@ const Home = () => {
             <h2 className="mt-4 text-4xl leading-[1.05] text-ink sm:text-5xl">
               Work slower.
               <br />
-              <span className="italic text-neutral-400">Earn smarter.</span>
+              <span className="font-extrabold text-neutral-400">Earn smarter.</span>
             </h2>
           </Reveal>
 
@@ -1648,7 +1635,7 @@ const Home = () => {
             Why Book A Sloth
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Made for India. <span className="italic text-primary">Not adapted for it.</span>
+            Made for India. <span className="inline-block rounded-lg bg-primary/5 px-2 py-0.5 font-extrabold text-primary ring-1 ring-primary/10 backdrop-blur-sm">Not adapted for it.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             Most booking tools are built for the West and patched for India. Book A Sloth starts from INR, GST and UPI — and works outward from there.
@@ -1746,7 +1733,7 @@ const Home = () => {
 
                     <Link
                       to={ROUTE_START}
-                      className={`mt-6 inline-flex items-center justify-center rounded-[6px] px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:no-underline ${
+                      className={`mt-6 inline-flex items-center justify-center rounded-[6px] px-6 py-3 text-sm font-semibold transition-transform hover:no-underline ${
                         p.recommended
                           ? "bg-primary-cta text-white hover:bg-primary-dark"
                           : "bg-ink text-white hover:bg-neutral-800"
@@ -1797,7 +1784,7 @@ const Home = () => {
               <div className="mt-6 lg:mt-0 lg:shrink-0">
                 <Link
                   to={ROUTE_START}
-                  className="inline-flex w-full items-center justify-center rounded-[6px] bg-ink px-7 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-neutral-800 hover:no-underline lg:w-auto"
+                  className="inline-flex w-full items-center justify-center rounded-[6px] bg-ink px-7 py-3 text-sm font-semibold text-white transition-transform hover:bg-neutral-800 hover:no-underline lg:w-auto"
                 >
                   Let's Get Started
                 </Link>
@@ -1886,7 +1873,7 @@ const Home = () => {
                   </ul>
                   <Link
                     to={ROUTE_START}
-                    className={`mt-8 inline-flex items-center justify-center rounded-full py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:no-underline ${
+                    className={`mt-8 inline-flex items-center justify-center rounded-full py-3 text-sm font-semibold transition-transform hover:no-underline ${
                       p.popular
                         ? "bg-primary-cta text-white hover:bg-primary-dark"
                         : "bg-neutral-100 text-ink hover:bg-neutral-200"
@@ -1914,7 +1901,7 @@ const Home = () => {
               </div>
               <Link
                 to={ROUTE_START}
-                className="inline-flex items-center gap-2 rounded-full bg-ink px-7 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:no-underline"
+                className="inline-flex items-center gap-2 rounded-full bg-ink px-7 py-3.5 text-sm font-semibold text-white transition-transform hover:no-underline"
               >
                 Get Started <ArrowRight size={15} />
               </Link>
@@ -2057,7 +2044,7 @@ const Home = () => {
             Trust & security
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            Your money and data, <span className="italic text-primary">handled carefully.</span>
+            Your money and data, <span className="inline-block rounded-lg bg-primary/5 px-2 py-0.5 font-extrabold text-primary ring-1 ring-primary/10 backdrop-blur-sm">handled carefully.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             The unsexy-but-important stuff — done right.
@@ -2085,36 +2072,43 @@ const Home = () => {
           {/* How we use Google — plain-language version of the OAuth consent
               screen, for hosts (and Google's verification reviewers). */}
           <Reveal delay={0.1} className="mt-12">
-            <div className="mx-auto max-w-4xl rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-8">
-              <div className="flex items-start gap-4">
-                <span
-                  className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl sm:flex"
-                  style={{ backgroundColor: "color-mix(in srgb, #ea4335 12%, transparent)", color: "#ea4335" }}
-                >
-                  <Calendar size={22} />
-                </span>
-                <div>
-                  <h3 className="font-heading text-lg font-bold text-ink">How Book A Sloth uses Google</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-                    Hosts sign in with Google — no passwords to remember or leak. With your permission,
-                    Book A Sloth connects to your Google Calendar so your availability and bookings stay
-                    in sync. We request only the minimum permissions needed:
-                  </p>
-                </div>
-              </div>
-              <ul className="mt-5 space-y-3 sm:pl-16">
-                {GOOGLE_SCOPES.map((s) => (
-                  <li key={s.scope} className="flex items-start gap-2.5">
-                    <Check size={16} className="mt-0.5 shrink-0 text-primary" />
-                    <p className="text-sm leading-relaxed text-neutral-500">
-                      <span className="font-semibold text-ink">{s.name}</span>{" "}
-                      <span className="rounded-[4px] bg-black/5 px-1.5 py-0.5 font-mono text-[11px] text-neutral-500">{s.scope}</span>{" "}
-                      — {s.desc}
+            <div id="how-google" className="mx-auto max-w-6xl scroll-mt-24 rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-8 lg:p-10">
+              <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+                {/* LEFT — icon + headline + intro */}
+                <div className="flex items-start gap-4">
+                  <span
+                    className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl sm:flex"
+                    style={{ backgroundColor: "color-mix(in srgb, #ea4335 12%, transparent)", color: "#ea4335" }}
+                  >
+                    <Calendar size={22} />
+                  </span>
+                  <div>
+                    <h3 className="font-heading text-lg font-bold text-ink">How Book A Sloth uses Google</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+                      Hosts sign in with Google — no passwords to remember or leak. With your permission,
+                      Book A Sloth connects to your Google Calendar so your availability and bookings stay
+                      in sync. We request only the minimum permissions needed:
                     </p>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-5 text-sm leading-relaxed text-neutral-500 sm:pl-16">
+                  </div>
+                </div>
+
+                {/* RIGHT — the permissions (bullet points) */}
+                <ul className="space-y-3">
+                  {GOOGLE_SCOPES.map((s) => (
+                    <li key={s.scope} className="flex items-start gap-2.5">
+                      <Check size={16} className="mt-0.5 shrink-0 text-primary" />
+                      <p className="text-sm leading-relaxed text-neutral-500">
+                        <span className="font-semibold text-ink">{s.name}</span>{" "}
+                        <span className="rounded-[4px] bg-black/5 px-1.5 py-0.5 font-mono text-[11px] text-neutral-500">{s.scope}</span>{" "}
+                        — {s.desc}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* BOTTOM — full-width policy / revoke note */}
+              <p className="mt-8 border-t border-black/5 pt-6 text-sm leading-relaxed text-neutral-500">
                 Your Google data is used only to provide these scheduling features — never for advertising,
                 never sold. You can revoke access at any time from your{" "}
                 <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
@@ -2169,7 +2163,7 @@ const Home = () => {
                 <button
                   type="submit"
                   disabled={newsletterState === "loading"}
-                  className="inline-flex items-center justify-center rounded-full bg-primary-cta px-6 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark disabled:opacity-60"
+                  className="inline-flex items-center justify-center rounded-full bg-primary-cta px-6 py-3 text-sm font-semibold text-white transition-transform hover:bg-primary-dark disabled:opacity-60"
                 >
                   {newsletterState === "loading" ? "Joining…" : "Join the Collective"}
                 </button>
