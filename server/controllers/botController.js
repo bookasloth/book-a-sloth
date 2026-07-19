@@ -90,7 +90,7 @@ exports.ask = async (req, res) => {
 // Streaming twin of ask(). Same validation + escalation email; streams the answer
 // to the browser over Server-Sent Events so it types out live.
 //   event: delta  data: { text }        — one or more, the answer as it's produced
-//   event: done   data: { escalate, cited_sources, conversationId, messageId }
+//   event: done   data: { escalate, cited_sources, followups, conversationId, messageId }
 //   event: error  data: { message }     — on a hard failure
 exports.askStream = async (req, res) => {
   const question = String(req.body?.question || '').trim();
@@ -126,6 +126,7 @@ exports.askStream = async (req, res) => {
     sse('done', {
       escalate: result.escalate,
       cited_sources: result.cited_sources,
+      followups: result.followups || [],
       conversationId: result.conversationId,
       messageId: result.messageId,
     });
