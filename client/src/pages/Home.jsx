@@ -1008,7 +1008,7 @@ const Home = () => {
             Industries we support
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Built for your <span className="font-extrabold text-primary/70">profession.</span>
+            Built for your <span className="font-extrabold text-primary">profession.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             Whatever you charge for — sessions, audits, consultations, classes — there's a place for it on Book A Sloth.
@@ -1235,7 +1235,7 @@ const Home = () => {
             Sound familiar?
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            The admin that eats your week — <span className="font-extrabold text-primary/70">gone.</span>
+            The admin that eats your week — <span className="font-extrabold text-primary">gone.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             You didn't get into this to chase payments and send reminders. Book A Sloth handles the back-office so you don't have to.
@@ -1267,7 +1267,7 @@ const Home = () => {
       <section id="how-it-works" className="bg-neutral-800 px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal as="h2" className="mx-auto max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            From link to paid. <span className="font-extrabold text-primary/70">In three steps.</span>
+            From link to paid. <span className="font-extrabold text-primary">In three steps.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-200">
             No back-and-forth. No payment awkwardness. No reminders to write.
@@ -1375,7 +1375,7 @@ const Home = () => {
             See it in action
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            Calm to look at. <span className="font-extrabold text-primary/70">Calm to use.</span>
+            Calm to look at. <span className="font-extrabold text-primary">Calm to use.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             Your booking page, service pages, checkout and dashboard — all clean, all connected, all working while you're not.
@@ -1440,7 +1440,7 @@ const Home = () => {
             Everything you need
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Four jobs. <span className="font-extrabold text-primary/70">One calm tool.</span>
+            Four jobs. <span className="font-extrabold text-primary">One calm tool.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             Not a feature list — just the four things every service business actually needs, done properly.
@@ -1635,7 +1635,7 @@ const Home = () => {
             Why Book A Sloth
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Made for India. <span className="font-extrabold text-primary/70">Not adapted for it.</span>
+            Made for India. <span className="font-extrabold text-primary">Not adapted for it.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
             Most booking tools are built for the West and patched for India. Book A Sloth starts from INR, GST and UPI — and works outward from there.
@@ -2044,7 +2044,7 @@ const Home = () => {
             Trust & security
           </Reveal>
           <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            Your money and data, <span className="font-extrabold text-primary/70">handled carefully.</span>
+            Your money and data, <span className="font-extrabold text-primary">handled carefully.</span>
           </Reveal>
           <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             The unsexy-but-important stuff — done right.
