@@ -1,4 +1,4 @@
-// Vercel Edge Middleware — two jobs:
+// Vercel Edge Middleware — three jobs:
 //
 // 1. BOT PRERENDER: detect social scrapers / non-JS crawlers and proxy them to
 //    the server-side /prerender endpoint, which serves a lightweight HTML page
@@ -8,6 +8,13 @@
 //
 // 2. USERNAME REDIRECT: for OLD/changed usernames, issue a 301 to the current
 //    username (like Facebook/GitHub). The SPA can't emit real 301s.
+//
+// 3. USERNAME 404: a slug the resolver has NEVER seen returns a real 404
+//    instead of the 200 SPA shell. Without this every dead/mistyped profile
+//    URL is a soft-404 that stays indexed forever (2026-07-19 audit). Only an
+//    explicit 404 from the resolver triggers it — network errors still fail
+//    open to the SPA. /:username/:slug service URLs are NOT covered (the
+//    resolver only knows usernames); acceptable: the profile 404 is the bulk.
 //
 // Requirements:
 //   - Env var API_ORIGIN = your API base WITHOUT trailing /api
@@ -93,6 +100,22 @@ export default async function middleware(request) {
       });
     } finally {
       clearTimeout(timeout);
+    }
+    if (res.status === 404) {
+      // Resolver is explicit: this username never existed. Real 404, noindex —
+      // humans get a link out, crawlers drop the URL instead of indexing the
+      // 200 homepage shell.
+      return new Response(
+        `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">` +
+        `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+        `<title>Profile not found | Book A Sloth</title>` +
+        `<meta name="robots" content="noindex">` +
+        `</head><body style="font-family:sans-serif;display:grid;place-items:center;min-height:90vh;text-align:center">` +
+        `<div><h1>This profile doesn't exist</h1>` +
+        `<p>No host at <strong>/${slug.replace(/[^a-z0-9._-]/g, '')}</strong> — the link may be mistyped or the profile removed.</p>` +
+        `<p><a href="https://bookasloth.com/explore">Explore hosts on Book A Sloth</a></p></div></body></html>`,
+        { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } },
+      );
     }
     if (!res.ok) return;
     const data = await res.json();

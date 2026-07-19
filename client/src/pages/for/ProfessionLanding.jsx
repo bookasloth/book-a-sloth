@@ -260,7 +260,9 @@ export default function ProfessionLanding() {
         { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${STARTER_PLAN.name} plan` },
         { '@type': 'Offer', price: String(PAID_PLANS[0].yearly), priceCurrency: 'INR', name: `${PAID_PLANS[0].name} plan (yearly)` },
       ],
-      aggregateRating: { '@type': 'AggregateRating', ratingValue: '5', reviewCount: String(TESTIMONIALS.length), bestRating: '5' },
+      // No aggregateRating: a testimonial-derived 5.0 self-rating is exactly the
+      // "self-serving review" markup Google's policy flags (enterpriseSeo.js made
+      // the same call). Re-add only if backed by genuine on-page review data.
     },
     {
       '@context': 'https://schema.org',

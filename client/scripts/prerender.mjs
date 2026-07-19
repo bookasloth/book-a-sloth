@@ -19,6 +19,20 @@ import { loadEnv } from 'vite';
 import { FEATURES } from '../src/pages/features/featureData.js';
 import { HELP_SLUGS } from '../src/content/helpDocsList.js';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DIST = join(__dirname, '..', 'dist');
+
+// The SPA fallback served for every route WITHOUT its own prerendered file
+// (vercel.json rewrites them to /spa-shell.html). It must be the BARE vite
+// shell: the prerender overwrites dist/index.html with the fully-rendered
+// homepage, and serving THAT as the fallback stamped `canonical=/` + homepage
+// JSON-LD on every unrendered route's raw HTML (the 2026-07-19 audit's top
+// finding). Copy the bare shell aside BEFORE any rendering — and before the
+// preview-deploy early-exit below, because previews skip rendering but still
+// need the fallback file to exist or the rewrite 404s every route.
+writeFileSync(join(DIST, 'spa-shell.html'), readFileSync(join(DIST, 'index.html')));
+console.log('[prerender] bare shell → dist/spa-shell.html (SPA fallback)');
+
 // Preview deploys already get the real regression gates from vercel-build
 // (vitest, then the vite build). The prerendered HTML only matters for what
 // PRODUCTION serves to crawlers and link scrapers — rendering all ~77 routes
@@ -27,9 +41,6 @@ if (process.env.VERCEL && process.env.VERCEL_ENV !== 'production') {
   console.log(`[prerender] ${process.env.VERCEL_ENV} deploy — skipped (prerender is production-only)`);
   process.exit(0);
 }
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DIST = join(__dirname, '..', 'dist');
 const PORT = 4173;
 const ORIGIN = `http://localhost:${PORT}`;
 
@@ -107,6 +118,19 @@ async function blogRoutes() {
     const { posts } = await res.json();
     const routes = (posts || []).map((p) => p && p.slug).filter(Boolean).map((s) => `/blog/${s}`);
     console.log(`[prerender] ${routes.length} blog posts from ${base}`);
+
+    // A published post without its generated card ships the generic site-wide
+    // og:image — invisible to humans, identical to a good deploy in the logs,
+    // and exactly how the two 2026-07-18 posts went out with the wrong card.
+    // Same philosophy as the render-failure guard below: fail the PROD build
+    // loudly with the fix in the message, warn-only everywhere else.
+    const missingCards = (posts || []).filter((p) => p && p.slug && !p.ogImage).map((p) => p.slug);
+    if (missingCards.length > 0) {
+      const msg = `${missingCards.length} published post(s) have no og_image card: ${missingCards.join(', ')}. ` +
+        'Run `npm run build:no-prerender && node --env-file=../server/.env.production scripts/generateBlogOgImages.mjs`, then redeploy.';
+      if (process.env.VERCEL) throw new Error(msg);
+      console.warn(`[prerender] WARNING: ${msg}`);
+    }
     return routes;
   } catch (err) {
     if (process.env.VERCEL) throw new Error(`blog posts unresolvable (${err.message})`);

@@ -54,6 +54,10 @@ const HELP_DOC_SLUGS = [
   'is-my-payment-and-data-safe', 'whats-not-supported-yet', 'contact-support',
 ];
 
+// Open roles (/careers/:jobSlug). KEEP IN SYNC with
+// client/src/components/careers/careersContent.js (same ESM/CJS constraint).
+const JOB_SLUGS = ['digital-marketeer', 'mern-stack-developer', 'sales-associate'];
+
 // Public, crawlable static routes. Host/service URLs come from the DB below.
 const STATIC_ROUTES = [
   { path: '/',                         changefreq: 'daily',   priority: '1.0' },
@@ -63,6 +67,7 @@ const STATIC_ROUTES = [
   { path: '/enterprise',               changefreq: 'monthly', priority: '0.7' },
   { path: '/about',                    changefreq: 'monthly', priority: '0.5' },
   { path: '/careers',                  changefreq: 'weekly',  priority: '0.5' },
+  ...JOB_SLUGS.map((s) => ({ path: `/careers/${s}`, changefreq: 'weekly', priority: '0.5' })),
   { path: '/blog',                     changefreq: 'daily',   priority: '0.6' },
   { path: '/changelog',                changefreq: 'weekly',  priority: '0.4' },
   { path: '/contact',                  changefreq: 'monthly', priority: '0.4' },

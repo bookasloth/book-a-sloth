@@ -1,6 +1,7 @@
 import { useParams, useSearchParams } from 'react-router-dom';
 import { themeFor } from '../data/blogPosts';
 import { useHideChrome } from '../context/ChromeContext';
+import Seo from '../components/common/Seo';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 
 // /og/blog/:slug?category=...&icons=a,b,c — a render target for
@@ -44,6 +45,10 @@ const OgCard = () => {
         backgroundColor: theme.band,
       }}
     >
+      {/* The header comment promised noindex; this is the mechanism (plus the
+          robots.txt /og/ disallow). A JS-rendering crawler that wanders in via
+          a stray link otherwise indexes a 1200x630 blank-titled art board. */}
+      <Seo robots="noindex" />
       <div style={{ width: BASE_W, height: BASE_H, transform: `scale(${SCALE})`, transformOrigin: 'top left' }}>
         <BlogHeroThumbnail post={post} theme={theme} w={BASE_W} h={BASE_H} />
       </div>

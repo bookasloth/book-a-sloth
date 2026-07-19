@@ -49,6 +49,7 @@ describe('staticEntries', () => {
       '/lp/setmore-alternative', '/lp/acuity-alternative', '/lp/simplybook-alternative',
       '/lp/zoho-bookings-alternative', '/features/payments', '/features/online-scheduling',
       '/help/docs', '/help/docs/what-is-book-a-sloth', '/wall-of-love',
+      '/careers/mern-stack-developer',
     ]) {
       expect(locs.has(`https://bookasloth.com${path}`)).toBe(true);
     }

@@ -278,6 +278,9 @@ const BlogPost = () => {
         siteName="Book A Sloth"
         locale="en_IN"
         themeColor={t.band}
+        ogType="article"
+        articlePublishedTime={post.published_at}
+        articleModifiedTime={post.updated_at}
         jsonLd={[
           articleJsonLd({ post: { slug: post.slug, title: post.title, excerpt: post.excerpt, image: ogImage, author: post.author, published_at: post.published_at, updated_at: post.updated_at } }),
           breadcrumbJsonLd({ items: [
