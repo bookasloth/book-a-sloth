@@ -53,6 +53,9 @@ export default function JobDetail() {
     title: job.title,
     description: job.summary,
     datePosted: job.postedDate,
+    // Without validThrough, Google Jobs drops the posting 30 days after
+    // datePosted. Emit it only when the role sets one — never fabricate a date.
+    ...(job.validThrough ? { validThrough: job.validThrough } : {}),
     employmentType: job.type,
     hiringOrganization: { '@type': 'Organization', name: 'Book A Sloth', sameAs: 'https://bookasloth.com' },
     jobLocation: { '@type': 'Place', address: { '@type': 'PostalAddress', addressCountry: 'IN' } },

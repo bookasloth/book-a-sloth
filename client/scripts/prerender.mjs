@@ -70,6 +70,13 @@ const PRERENDER_ROUTES = [
   '/privacy',
   '/terms',
   '/refund',
+  '/wall-of-love',
+  // KEEP IN SYNC with careersContent.js `jobs` slugs (it imports lucide-react,
+  // so this node script can't import it the way it does featureData/helpDocsList).
+  // Without prerender, a job page's raw HTML has no JobPosting JSON-LD at all.
+  '/careers/digital-marketeer',
+  '/careers/mern-stack-developer',
+  '/careers/sales-associate',
   '/services',
   '/explore',
   '/for/lawyers',
@@ -182,11 +189,18 @@ function createStaticServer() {
     '.txt': 'text/plain',
   };
 
+  // SPA fallback is the BARE shell (spa-shell.html), never dist/index.html:
+  // once the '/' route has rendered, index.html is the full homepage with its
+  // JSON-LD baked in — and every route rendered after it through that fallback
+  // captured the homepage's SoftwareApplication/WebSite blocks alongside its
+  // own (found by the 2026-07-19 rich-results validation, live on all 67
+  // prerendered pages). Seo.jsx can't remove them: it only cleans up nodes it
+  // created at runtime, not ones baked into the served HTML.
   return createServer((req, res) => {
     let filePath = join(DIST, req.url === '/' ? 'index.html' : req.url);
 
     if (!existsSync(filePath)) {
-      filePath = join(DIST, 'index.html');
+      filePath = join(DIST, 'spa-shell.html');
     }
 
     const ext = '.' + filePath.split('.').pop();
@@ -197,7 +211,7 @@ function createStaticServer() {
       res.writeHead(200, { 'Content-Type': contentType });
       res.end(content);
     } catch {
-      const fallback = readFileSync(join(DIST, 'index.html'));
+      const fallback = readFileSync(join(DIST, 'spa-shell.html'));
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(fallback);
     }
