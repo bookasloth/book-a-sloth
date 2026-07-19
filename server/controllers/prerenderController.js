@@ -31,20 +31,18 @@ const truncate = (s, n = 160) => {
  */
 const upscaleAvatar = (url) => String(url || '').replace(/=s\d+-c$/, '=s512-c');
 
-function buildHtml({ title, description, canonical, ogTitle, ogDescription, image, robots, jsonLd }) {
+function buildHtml({ title, description, canonical, ogTitle, ogDescription, image, robots, jsonLd, cardImage }) {
   const site = trimSlash(SITE_URL);
   const img = image || `${site}/og-image.png`;
   const rob = robots || 'index,follow';
-  // Only the site fallback has dimensions we actually know. Host avatars and
-  // service thumbnails are whatever the host uploaded — declaring 1200x630 over a
-  // square avatar told scrapers a size the file does not have. Omit the hint and
-  // let them measure the real thing.
-  // ponytail: a square image under a summary_large_image card renders letterboxed.
-  // Right fix is a generated 1200x630 card per host (as /blog already does), not
-  // guessing here.
-  const sizeHints = image
-    ? ''
-    : '\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">';
+  // Emit 1200x630 size hints only when we KNOW the image is that size: the site
+  // fallback card, and (now) a generated host card — both are exactly 1200x630.
+  // A service thumbnail is whatever the host uploaded, so declaring a size over
+  // it would be a lie scrapers act on; omit the hint and let them measure.
+  const knownCard = cardImage || !image;
+  const sizeHints = knownCard
+    ? '\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">'
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -103,6 +101,17 @@ const renderProfileMeta = async (req, res) => {
     // structured data that still says 96px.
     const avatar = upscaleAvatar(host.seo_image || host.profile_image) || undefined;
 
+    // og:image is a SHARE CARD, not the avatar. A square Google photo letterboxes
+    // inside a summary_large_image card, so we serve the generated 1200x630 host
+    // card whenever one EXISTS — including a 'dirty' one (a visible field changed
+    // and a regen is queued): a slightly-stale personal card beats dropping to the
+    // generic site card, which is exactly the design's "dirty => serve old image".
+    // Only a host with no card yet ('none') gets the site-wide default.
+    // The avatar still feeds JSON-LD Person.image below, which is correct there.
+    // ponytail: default = the existing site card; swap for a host-flavoured
+    // default 1200x630 when one's designed.
+    const ogCard = host.og_image || `${site}/og-image.png`;
+
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'ProfilePage',
@@ -129,7 +138,8 @@ const renderProfileMeta = async (req, res) => {
       canonical,
       ogTitle: host.og_title || host.seo_title || name,
       ogDescription: host.og_description || description,
-      image: avatar,
+      image: ogCard,
+      cardImage: true, // ogCard is always a known 1200x630 card (generated or site default)
       robots: host.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
       jsonLd,
     });

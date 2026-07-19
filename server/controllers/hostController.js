@@ -66,7 +66,7 @@ const HOST_PUBLIC_COLS =
   "id, name, username, role, bio, tagline, profession, location, profile_image, " +
   "cover_image, social_links, badges, theme_color, plan, is_verified, google_calendar_connected, primary_category";
 const HOST_SEO_COLS =
-  "seo_title, seo_description, og_title, og_description, seo_image, is_indexable";
+  "seo_title, seo_description, og_title, og_description, seo_image, is_indexable, og_image, og_status";
 
 // Public service columns for the profile listing. PERF: never select('*') here —
 // the profile can carry up to 100 services and '*' drags every heavy text column
@@ -378,6 +378,15 @@ const updateProfile = async (req, res) => {
       updates.reschedule_fee = rf;
     }
 
+    // A change to any field the OG share card renders marks it stale; the next
+    // generateHostOgImages sweep regenerates. Safe to set on a 'none' row too:
+    // the generator gates on card-ready and skips non-ready rows, and og_hash
+    // resets an unchanged row back to 'ready' without re-rendering.
+    // ponytail: doesn't diff old vs new value — a same-value save marks dirty,
+    // but og_hash makes that a cheap no-op regen, not a wasted render.
+    const OG_CARD_FIELDS = ['name', 'profile_image', 'profession', 'bio', 'username'];
+    if (OG_CARD_FIELDS.some((f) => f in updates)) updates.og_status = 'dirty';
+
     let result = await supabaseAdmin
       .from("profiles")
       .update(updates)
@@ -385,9 +394,11 @@ const updateProfile = async (req, res) => {
       .select()
       .single();
 
-    // Graceful fallback: if theme_color column doesn't exist yet, retry without it
-    if (result.error && /Could not find the '(theme_color)' column/i.test(result.error.message)) {
-      const { theme_color: _tc, ...safeUpdates } = updates;
+    // Graceful fallback: drop columns the DB doesn't have yet (pre-migration) and
+    // retry. Covers theme_color (v-old) and og_status (v3.88) — keep both here
+    // until the migration is confirmed applied everywhere.
+    if (result.error && /Could not find the '(theme_color|og_status)' column/i.test(result.error.message)) {
+      const { theme_color: _tc, og_status: _og, ...safeUpdates } = updates;
       result = await supabaseAdmin
         .from("profiles")
         .update(safeUpdates)
