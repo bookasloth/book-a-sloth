@@ -136,8 +136,13 @@ const renderProfileMeta = async (req, res) => {
       title,
       description,
       canonical,
-      ogTitle: host.og_title || host.seo_title || name,
-      ogDescription: host.og_description || description,
+      // Share-card copy is its own fixed voice — the SAME line across every host
+      // profile, deliberately NOT derived from bio/profession. The <title>/meta
+      // description above stay SEO-flavoured for Google; these OG tags carry the
+      // brand share line. Explicit og_/seo_ fields still override when set.
+      ogTitle: host.og_title || host.seo_title || `${name} — now taking bookings on Book A Sloth.`,
+      ogDescription: host.og_description || host.seo_description
+        || `Skip the back-and-forth — ${name}'s calendar is open. Book a slot with them.`,
       image: ogCard,
       cardImage: true, // ogCard is always a known 1200x630 card (generated or site default)
       robots: host.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
