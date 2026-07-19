@@ -75,74 +75,95 @@ export default function HostOgCard() {
     >
       <Seo robots="noindex" />
 
-      {/* One soft orange bloom behind the portrait — the only texture. Restraint
-          is the authority here; the old dotted grid + frame + panels competed. */}
+      <Seo robots="noindex" />
 
-      {/* Brand — quiet, top-left */}
-      <div style={{ position: 'absolute', top: 56, left: 72, display: 'flex', alignItems: 'center', gap: 13 }}>
+      {/* Brand — quiet, top-left (the domain, not a wordmark) */}
+      <div style={{ position: 'absolute', top: 54, left: 72, display: 'flex', alignItems: 'center', gap: 13 }}>
         <img src="/favicon.svg" alt="" style={{ width: 40, height: 40, borderRadius: 9 }}
              onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-        <span style={{ fontSize: 23, fontWeight: 700, color: 'rgba(245,245,247,0.85)', letterSpacing: -0.3 }}>Book A Sloth</span>
+        <span style={{ fontSize: 24, fontWeight: 700, color: 'rgba(245,245,247,0.9)', letterSpacing: -0.3 }}>bookasloth.com</span>
       </div>
 
-      {/* URL — the single call to action, bottom-left */}
-      {username && (
-        <div style={{ position: 'absolute', bottom: 56, left: 72, fontSize: 27, fontWeight: 700, color: C.orange, letterSpacing: -0.3 }}>
-          bookasloth.com/{username}
-        </div>
-      )}
-
-      {/* Centre band: identity (left) + portrait (right) */}
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 72px', gap: 56 }}>
+      {/* Centre band: identity (left) + portrait stack (right) */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '86px 72px 56px', gap: 60 }}>
+        {/* ── Left: identity + branding ─────────────────── */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Name + one verified mark */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-            <span style={{
-              fontSize: name.length > 20 ? 58 : name.length > 13 ? 66 : 78, fontWeight: 800,
-              color: C.white, lineHeight: 1.0, letterSpacing: -2,
-            }}>{name}</span>
-            {verified && <VerifiedTick />}
+          {/* Name + verified mark. Inline (not a flex sibling) so the tick flows
+              right after the last word — a 2-line name otherwise left it floating
+              in the middle. verticalAlign keeps it on the name's line. */}
+          <div style={{
+            fontSize: name.length > 21 ? 48 : name.length > 14 ? 56 : name.length > 10 ? 66 : 76,
+            fontWeight: 800, color: C.white, lineHeight: 1.06, letterSpacing: -2,
+          }}>
+            {name}
+            {verified && (
+              <span style={{ display: 'inline-flex', verticalAlign: 'middle', marginLeft: 18, transform: 'translateY(-3px)' }}>
+                <VerifiedTick />
+              </span>
+            )}
           </div>
 
-          {/* Profession */}
-          {profession && (
-            <div style={{ marginTop: 14, fontSize: 32, fontWeight: 600, color: C.orange, letterSpacing: -0.3 }}>
-              {profession}
-            </div>
-          )}
-
-          {/* One proof line — real numbers, or an honest new-host line. No stat grid. */}
-          <div style={{ marginTop: 26, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          {/* Profession + rating chip, one row */}
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            {profession && (
+              <span style={{ fontSize: 31, fontWeight: 600, color: C.orange, letterSpacing: -0.3 }}>{profession}</span>
+            )}
             {hasRating && (
               <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 16px',
+                display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 14px',
                 borderRadius: 999, background: 'rgba(254,81,0,0.14)', color: C.white,
-                fontSize: 22, fontWeight: 700,
+                fontSize: 20, fontWeight: 700,
               }}>
                 <span style={{ color: C.orangeSoft }}>★</span> {rating.toFixed(1)}
               </span>
             )}
-            <span style={{ fontSize: 21, color: C.grey, fontWeight: 500 }}>
-              {[
-                hasRating ? `${reviews} review${reviews === 1 ? '' : 's'}` : null,
-                bookings > 0 ? `${compact(bookings)} booked` : null,
-                (!hasRating && bookings === 0 && since) ? `New host · since ${since}` : null,
-              ].filter(Boolean).join('  ·  ')}
-            </span>
+          </div>
+
+          {/* Branding line — fills the space under the profession */}
+          <div style={{ marginTop: 30, maxWidth: 560, fontSize: 22, lineHeight: 1.55, color: 'rgba(245,245,247,0.6)', fontWeight: 400 }}>
+            Meet, book, and connect with people worth your time. Powered by{' '}
+            <span style={{ color: 'rgba(245,245,247,0.92)', fontWeight: 600 }}>Book A Sloth</span>, where great bookings begin.
           </div>
         </div>
 
-        {/* Portrait — the anchor. Large, glowing, nothing stacked under it. */}
-        <div style={{
-          width: 300, height: 300, flexShrink: 0, borderRadius: '50%', padding: 5,
-          background: `conic-gradient(from 140deg, ${C.orange}, ${C.orangeSoft}, ${C.orange})`,
-          boxShadow: '0 0 90px -10px rgba(254,81,0,0.5)',
-        }}>
-          <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: C.panel2 }}>
-            {avatar
-              ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 110, fontWeight: 800, color: C.grey }}>{name.charAt(0)}</div>}
+        {/* ── Right: portrait → @username → stats → CTA ──── */}
+        <div style={{ width: 360, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{
+            width: 268, height: 268, borderRadius: '50%', padding: 5,
+            background: `conic-gradient(from 140deg, ${C.orange}, ${C.orangeSoft}, ${C.orange})`,
+            boxShadow: '0 0 90px -10px rgba(254,81,0,0.5)',
+          }}>
+            <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: C.panel2 }}>
+              {avatar
+                ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 100, fontWeight: 800, color: C.grey }}>{name.charAt(0)}</div>}
+            </div>
           </div>
+
+          {/* @username with sloth mark */}
+          {username && (
+            <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 9 }}>
+              <img src="/favicon.svg" alt="" style={{ width: 26, height: 26, borderRadius: 6 }}
+                   onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              <span style={{ fontSize: 24, fontWeight: 700, color: C.white, letterSpacing: -0.2 }}>@{username}</span>
+            </div>
+          )}
+
+          {/* Stats / honest new-host line */}
+          <div style={{ marginTop: 10, fontSize: 18, color: C.grey, fontWeight: 500 }}>
+            {[
+              hasRating ? `${reviews} review${reviews === 1 ? '' : 's'}` : null,
+              bookings > 0 ? `${compact(bookings)} booked` : null,
+              (!hasRating && bookings === 0 && since) ? `New host · since ${since}` : null,
+            ].filter(Boolean).join('  ·  ')}
+          </div>
+
+          {/* CTA */}
+          <div style={{
+            marginTop: 22, padding: '15px 30px', borderRadius: 12, background: C.orange,
+            color: '#fff', fontSize: 20, fontWeight: 700, letterSpacing: -0.2,
+            boxShadow: '0 16px 40px -14px rgba(254,81,0,0.6)',
+          }}>Book an Appointment Now</div>
         </div>
       </div>
     </div>
