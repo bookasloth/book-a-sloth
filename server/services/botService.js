@@ -59,6 +59,64 @@ const HANDOFF =
 // genuinely don't cover the question. Never shown to the user.
 const ESCALATE_TOKEN = '[[ESCALATE]]';
 
+// Predictive follow-ups: the model appends a trailing "[[FOLLOWUPS]] a | b | c" block
+// after the answer. The stream gate strips it (never shown as text); the client renders
+// the parts as clickable chips that re-ask the bot. Uppercase literal — matching is
+// case-insensitive but the token is compared against an upper-cased buffer.
+const FOLLOWUP_TOKEN = '[[FOLLOWUPS]]';
+const FOLLOWUP_MAX = 3;
+
+// Longest suffix of `s` (starting at/after `from`) that is a prefix of FOLLOWUP_TOKEN —
+// i.e. a partial token still streaming. Returns its start index, or s.length if none.
+// Lets flushSafe hold back "[[FOL…" mid-stream without truncating answers that merely
+// contain "[[" (e.g. "[[1,2]]") — those don't match the token prefix so they flush.
+const followupPartialStart = (s, from) => {
+  const maxK = Math.min(FOLLOWUP_TOKEN.length - 1, s.length - from);
+  for (let k = maxK; k > 0; k -= 1) {
+    if (FOLLOWUP_TOKEN.startsWith(s.slice(s.length - k).toUpperCase())) {
+      // Hold the whitespace separating the answer from the (partial) token too, so a
+      // "\n[[FOL…" split across deltas never streams the bare "\n". Plain trailing
+      // whitespace with no partial token is not held (loop only fires on a match).
+      let start = s.length - k;
+      while (start > from && /\s/.test(s[start - 1])) start -= 1;
+      return start;
+    }
+  }
+  return s.length;
+};
+
+// Split a raw "[[FOLLOWUPS]] a | b | c" tail into trimmed parts (pre-hygiene).
+const parseFollowups = (text) => {
+  const idx = String(text || '').toUpperCase().indexOf(FOLLOWUP_TOKEN);
+  if (idx < 0) return [];
+  return String(text).slice(idx + FOLLOWUP_TOKEN.length).split('|').map((s) => s.trim()).filter(Boolean);
+};
+
+// Cap + hygiene on model-proposed follow-up chips: trim, drop empties/dupes and
+// anything that just echoes the current or a prior question, bound length + count.
+// ponytail: grounding is the prompt's job (followups drawn from the same Sources);
+// this only sheds noise. A weak suggestion is self-correcting — clicking it re-runs
+// the same grounded pipeline, which answers or escalates. Add a hard action-catalog
+// whitelist here only if hallucinated features show up in practice.
+function cleanFollowups(followups, question, history) {
+  const asked = new Set(
+    [question, ...(history || []).filter((m) => m.role === 'user').map((m) => m.content)]
+      .map((s) => normalize(s)).filter(Boolean),
+  );
+  const seen = new Set();
+  const out = [];
+  for (const raw of followups || []) {
+    const text = String(raw || '').trim().replace(/\s+/g, ' ');
+    if (!text || text.length > 80) continue;
+    const key = normalize(text);
+    if (!key || asked.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
+    if (out.length >= FOLLOWUP_MAX) break;
+  }
+  return out;
+}
+
 // Greetings, thanks, and sign-offs are not questions — they retrieve no chunks and
 // used to fall straight into escalation. Detect small talk by VOCABULARY, not fixed
 // phrases: a message is small talk iff every word is a known greeting / thanks /
@@ -180,6 +238,7 @@ const SYSTEM_STREAM = [
   VOICE,
   `If the Sources genuinely do not cover the question, do NOT guess — reply with exactly "${ESCALATE_TOKEN}" and nothing else; the app hands off to a human. Only escalate when the Sources truly do not address it: a partial-but-grounded answer beats a handoff.`,
   'Otherwise write the answer in your natural voice. You may use light markdown: **bold**, `code`, "- " bullets, and [text](/internal-link). No headings.',
+  `After the answer, on a new final line, output exactly "${FOLLOWUP_TOKEN}" then up to 3 things the user is most likely to ask or do next, separated by " | ". Phrase each in the user's first person ("How long does a refund take?", "Talk to a human"), keep it under 8 words, and only suggest what the Sources actually support — never invent a feature. Skip the whole line if nothing sensible follows. This line is stripped before display; never mention it, and never output it when you escalate.`,
 ].join(' ');
 
 // Structured path (kept for /ask + tests): same voice, emit via tool.
@@ -405,8 +464,9 @@ async function callModel(question, chunks, history = []) {
 }
 
 // Streaming model call — emits text deltas via onDelta as they arrive, holding the
-// first few chars back until it can tell an answer from the escalation sentinel
-// (so the sentinel is never shown). Returns { text, escalate }.
+// first few chars back until it can tell an answer from the escalation sentinel (so
+// the sentinel is never shown), and holding the trailing "[[FOLLOWUPS]] …" block back
+// so it never streams as text. Returns { text, escalate, followups }.
 async function streamGrounded(question, chunks, history, onDelta) {
   const client = anthropicClient.getClient();
   const stream = client.messages.stream({
@@ -420,17 +480,29 @@ async function streamGrounded(question, chunks, history, onDelta) {
   });
 
   let full = '';
-  let gateOpen = false; // once open, deltas flow straight through
+  let gateOpen = false; // once open, deltas flow (minus the reserved followups tail)
   let escalate = false;
+  let emitted = 0; // chars of `full` already sent to the client
 
-  const emit = (t) => { if (t) onDelta(t); };
+  // Emit answer text up to the followups token: everything from a real "[[FOLLOWUPS]]"
+  // onward is dropped; mid-stream, a partial-token tail ("[[FOL…") is held until the
+  // next delta disambiguates it. On the final call, held partials that never became
+  // the token are flushed as ordinary content.
+  const flushSafe = (final) => {
+    const hit = full.toUpperCase().indexOf(FOLLOWUP_TOKEN, emitted);
+    const cut = hit >= 0 ? hit : (final ? full.length : followupPartialStart(full, emitted));
+    if (cut <= emitted) return;
+    let seg = full.slice(emitted, cut);
+    if (hit >= 0) seg = seg.replace(/\s+$/, ''); // drop the whitespace separating answer from the token
+    emitted = cut;
+    if (seg) onDelta(seg);
+  };
 
   for await (const ev of stream) {
     if (ev.type !== 'content_block_delta' || ev.delta?.type !== 'text_delta') continue;
-    const piece = ev.delta.text;
-    full += piece;
+    full += ev.delta.text;
     if (escalate) continue;
-    if (gateOpen) { emit(piece); continue; }
+    if (gateOpen) { flushSafe(false); continue; }
 
     // Gate closed: decide whether this is an escalation before showing anything.
     const t = full.trimStart();
@@ -440,13 +512,15 @@ async function streamGrounded(question, chunks, history, onDelta) {
       if (t.length < ESCALATE_TOKEN.length) continue; // not enough chars to decide
     }
     gateOpen = true;
-    emit(full); // flush everything buffered so far
+    flushSafe(false); // flush everything buffered so far (minus a reserved tail)
   }
 
-  // Answer shorter than the sentinel that never opened the gate — flush it.
-  if (!gateOpen && !escalate && full.trim()) { gateOpen = true; emit(full); }
+  if (!escalate) { gateOpen = true; flushSafe(true); } // flush any remaining answer text
 
-  return { text: escalate ? '' : full.trim(), escalate };
+  const followups = escalate ? [] : parseFollowups(full);
+  const idx = full.toUpperCase().indexOf(FOLLOWUP_TOKEN);
+  const text = escalate ? '' : (idx >= 0 ? full.slice(0, idx) : full).trim();
+  return { text, escalate, followups };
 }
 
 // Best-effort PII redaction. Users routinely paste personal data into support
@@ -707,6 +781,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
   let answer = '';
   let escalate = true;
   let cited_sources = [];
+  let followups = [];
   let source = 'escalation';
 
   const canAnswer = q && retrievalOk && chunks.length && !sensitive && anthropicClient.isConfigured();
@@ -733,6 +808,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
             answer = BLOCKED_MSG; source = 'blocked'; cited_sources = [];
           } else {
             answer = clean.text;
+            followups = cleanFollowups(out.followups, q, history); // predictive chips
             semanticCacheStore(qSafe, queryEmbedding, answer, cited_sources); // best-effort
           }
         }
@@ -753,7 +829,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
   if (escalate) await logGap({ question: q, reason: 'escalated', conversationId: convId });
   else if (source === 'blocked') await logGap({ question: q, reason: 'blocked_output', conversationId: convId });
 
-  return { answer, cited_sources, escalate, conversationId: convId, messageId, source };
+  return { answer, cited_sources, followups, escalate, conversationId: convId, messageId, source };
 }
 
 // Store 👍/👎 on an assistant message. On 👎, seed a knowledge gap. On 👍, auto-suggest
@@ -818,4 +894,5 @@ module.exports = {
   isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG,
   buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED,
   sanitizeAnswer, BLOCKED_MSG, detectInjection,
+  parseFollowups, cleanFollowups, FOLLOWUP_TOKEN,
 };

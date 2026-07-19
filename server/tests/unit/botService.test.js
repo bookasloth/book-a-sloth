@@ -39,7 +39,7 @@ jest.mock('../../lib/botBudget', () => ({ tryConsume: jest.fn().mockResolvedValu
 const client = require('../../services/ai/anthropicClient');
 const sb = require('../../config/supabase');
 const botBudget = require('../../lib/botBudget');
-const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks, isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG, buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED, sanitizeAnswer, BLOCKED_MSG, detectInjection, redactPii } = require('../../services/botService');
+const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks, isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG, buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED, sanitizeAnswer, BLOCKED_MSG, detectInjection, redactPii, parseFollowups, cleanFollowups } = require('../../services/botService');
 
 const answerReply = (input) => ({ content: [{ type: 'tool_use', name: 'emit_answer', input }] });
 const chunk = (over = {}) => ({ id: 'c1', source_file: 'docs/architecture.md', heading: 'Google Calendar Integration', content: 'Connect via /api/auth/google.', rank: 0.9, ...over });
@@ -239,6 +239,36 @@ test('askBotStream streams deltas and cites the retrieved sources', async () => 
   expect(deltas.join('')).toBe('Go to Dashboard → Google Calendar.');
   expect(out.answer).toBe('Go to Dashboard → Google Calendar.');
   expect(out.cited_sources.length).toBeGreaterThan(0);
+});
+
+test('askBotStream strips the trailing [[FOLLOWUPS]] block from the answer and returns chips', async () => {
+  sb.__rpc.mockResolvedValue({ data: [chunk()], error: null });
+  client.__stream.mockReturnValue(streamOf([
+    'Go to Dashboard → ', 'Google Calendar to connect it.',
+    '\n[[FOLLOWUPS]] How do ', 'I disconnect it? | Talk to a human',
+  ]));
+  const deltas = [];
+  const out = await askBotStream({ question: 'How do I connect Google Calendar?', onDelta: (t) => deltas.push(t) });
+  expect(deltas.join('')).toBe('Go to Dashboard → Google Calendar to connect it.'); // block never streamed
+  expect(deltas.join('')).not.toMatch(/FOLLOWUPS/);
+  expect(out.answer).toBe('Go to Dashboard → Google Calendar to connect it.');
+  expect(out.followups).toEqual(['How do I disconnect it?', 'Talk to a human']);
+});
+
+test('parseFollowups + cleanFollowups: split, cap at 3, drop dupes and echoes of the question', () => {
+  const raw = parseFollowups('answer text\n[[FOLLOWUPS]] A? | B? | A? | C? | D?');
+  expect(raw).toEqual(['A?', 'B?', 'A?', 'C?', 'D?']); // parse keeps order + dupes
+  const clean = cleanFollowups(['How do I book?', 'How do I book?', 'Cancel a booking?', 'Change plan?', 'Add a service?'], 'how do i book', []);
+  expect(clean).toEqual(['Cancel a booking?', 'Change plan?', 'Add a service?']); // echo dropped, dedup, cap 3
+});
+
+test('the stream gate does not truncate an answer that merely contains "[["', async () => {
+  sb.__rpc.mockResolvedValue({ data: [chunk()], error: null });
+  client.__stream.mockReturnValue(streamOf(['A matrix like ', '[[1,2],', '[3,4]] is fine.']));
+  const deltas = [];
+  const out = await askBotStream({ question: 'show a matrix', onDelta: (t) => deltas.push(t) });
+  expect(out.answer).toBe('A matrix like [[1,2],[3,4]] is fine.');
+  expect(out.followups).toEqual([]);
 });
 
 test('mergeChunks dedupes by id, keeps vector hits first, caps the total', () => {

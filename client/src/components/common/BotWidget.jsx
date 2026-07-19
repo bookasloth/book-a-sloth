@@ -40,6 +40,15 @@ const sourceLabel = (s) => {
   return s.heading ? `${s.heading}` : file;
 };
 
+// A cited KB doc maps 1:1 to its public help article: docs/help/<slug>.md → /help/docs/<slug>
+// (same slug convention as client/src/content/helpDocs.js). So the citation renders as a
+// real link the guest can open, not a dead label. Section anchors aren't supported yet —
+// Markdown.jsx emits no heading ids — so we link the page, not the #heading.
+const sourceHref = (s) => {
+  const slug = (s.source_file || '').split('/').pop().replace(/\.md$/, '').trim();
+  return slug ? `/help/docs/${slug}` : null;
+};
+
 // Apply fn to the last assistant message (the one currently streaming).
 const patchLastAssistant = (msgs, fn) => {
   let idx = -1;
@@ -87,7 +96,7 @@ export default function BotWidget() {
     setMessages((m) => [
       ...m,
       { role: 'user', content: question },
-      { role: 'assistant', content: '', streaming: true, cited_sources: [], escalate: false, messageId: null, feedback: null },
+      { role: 'assistant', content: '', streaming: true, cited_sources: [], followups: [], escalate: false, messageId: null, feedback: null },
     ]);
     setStreaming(true);
     await streamBot(
@@ -97,7 +106,7 @@ export default function BotWidget() {
         onDone: (d) => {
           if (d.conversationId) setConversationId(d.conversationId);
           setMessages((m) => patchLastAssistant(m, (a) => ({
-            ...a, streaming: false, cited_sources: d.cited_sources || [],
+            ...a, streaming: false, cited_sources: d.cited_sources || [], followups: d.followups || [],
             escalate: !!d.escalate, messageId: d.messageId || null,
           })));
         },
@@ -208,14 +217,26 @@ export default function BotWidget() {
                         </div>
                       )}
 
-                      {/* Sources */}
+                      {/* Sources — real links to the help article the answer was grounded on,
+                          opened in a new tab so the guest keeps their chat. Falls back to a
+                          plain label only if the slug can't be derived. */}
                       {m.role === 'assistant' && !m.escalate && !m.streaming && m.cited_sources?.length > 0 && (
                         <div className="mt-2.5 flex flex-wrap gap-1 border-t border-dashed border-[#1E1E1E]/15 pt-2">
-                          {m.cited_sources.map((s, j) => (
-                            <span key={j} className="rounded-md bg-[#FFF4EC] px-1.5 py-0.5 text-[10px] font-medium text-[#1E1E1E]/60">
-                              {sourceLabel(s)}
-                            </span>
-                          ))}
+                          {m.cited_sources.map((s, j) => {
+                            const href = sourceHref(s);
+                            return href ? (
+                              <a
+                                key={j} href={href} target="_blank" rel="noopener noreferrer"
+                                className="rounded-md bg-[#FFF4EC] px-1.5 py-0.5 text-[10px] font-medium text-[#FE5100] underline decoration-[#FE5100]/40 underline-offset-2 hover:bg-[#FFE4D1]"
+                              >
+                                {sourceLabel(s)}
+                              </a>
+                            ) : (
+                              <span key={j} className="rounded-md bg-[#FFF4EC] px-1.5 py-0.5 text-[10px] font-medium text-[#1E1E1E]/60">
+                                {sourceLabel(s)}
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -250,6 +271,22 @@ export default function BotWidget() {
                             </button>
                           </>
                         )}
+                      </div>
+                    )}
+
+                    {/* Predictive follow-ups — clickable chips of likely next questions.
+                        Only on the newest answer (i === last): pushing a new turn makes the
+                        prior message no longer last, so its chips disappear on their own. */}
+                    {m.role === 'assistant' && !m.streaming && !m.escalate && i === messages.length - 1 && m.followups?.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5 pl-1">
+                        {m.followups.map((f) => (
+                          <button
+                            key={f} type="button" onClick={() => send(f)} disabled={streaming}
+                            className="rounded-md border border-[#FE5100]/70 bg-transparent px-2 py-px text-[10px] font-medium text-[#FE5100] transition-colors hover:bg-[#FFE4D1] hover:border-[#FE5100] disabled:opacity-50"
+                          >
+                            {f}
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
