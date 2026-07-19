@@ -59,7 +59,6 @@ const PRERENDER_ROUTES = [
   '/privacy',
   '/terms',
   '/refund',
-  '/badges',
   '/services',
   '/explore',
   '/for/lawyers',
