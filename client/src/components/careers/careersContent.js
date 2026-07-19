@@ -56,6 +56,7 @@ export const jobs = [
       'SEO/content-led growth experience.',
     ],
     postedDate: '2026-06-26',
+    validThrough: '2026-12-31T23:59:59+05:30',
     status: 'open',
   },
   {
@@ -85,6 +86,7 @@ export const jobs = [
       'Worked on a payments or scheduling product.',
     ],
     postedDate: '2026-06-26',
+    validThrough: '2026-12-31T23:59:59+05:30',
     status: 'open',
   },
   {
@@ -114,6 +116,7 @@ export const jobs = [
       'Regional language fluency.',
     ],
     postedDate: '2026-06-26',
+    validThrough: '2026-12-31T23:59:59+05:30',
     status: 'open',
   },
 ];
