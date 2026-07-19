@@ -40,10 +40,50 @@ const compact = (n) => {
 const VerifiedTick = () => (
   <span style={{
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    width: 40, height: 40, borderRadius: '50%', background: C.orange,
-    color: '#fff', fontSize: 22, fontWeight: 700, flexShrink: 0,
+    width: 38, height: 38, borderRadius: '50%', background: C.orange,
+    color: '#fff', fontSize: 21, fontWeight: 700,
   }}>✓</span>
 );
+
+// Faint booking-themed backdrop: a big grid + scattered product icons (calendar,
+// clock, WhatsApp, rupee, video) at very low opacity — a whisper of branding
+// behind the content, never competing with it.
+const BrandBackdrop = () => {
+  const S = { fill: 'none', stroke: 'rgba(255,255,255,0.05)', strokeWidth: 4, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  return (
+    <svg width={OG_W} height={OG_H} viewBox={`0 0 ${OG_W} ${OG_H}`} style={{ position: 'absolute', inset: 0 }} aria-hidden="true">
+      {/* big grid */}
+      <g stroke="rgba(255,255,255,0.022)" strokeWidth="2">
+        {[210, 420, 630, 840, 1050].map((x) => <line key={`v${x}`} x1={x} y1="0" x2={x} y2={OG_H} />)}
+        {[157, 314, 471].map((y) => <line key={`h${y}`} x1="0" y1={y} x2={OG_W} y2={y} />)}
+      </g>
+      {/* calendar */}
+      <g transform="translate(96 92) scale(1.1)" {...S}>
+        <rect x="0" y="10" width="96" height="82" rx="10" />
+        <line x1="0" y1="34" x2="96" y2="34" /><line x1="26" y1="0" x2="26" y2="20" /><line x1="70" y1="0" x2="70" y2="20" />
+        <rect x="16" y="48" width="16" height="14" rx="3" /><rect x="42" y="48" width="16" height="14" rx="3" /><rect x="68" y="48" width="14" height="14" rx="3" />
+      </g>
+      {/* clock */}
+      <g transform="translate(520 430) scale(1.15)" {...S}>
+        <circle cx="48" cy="48" r="46" /><line x1="48" y1="48" x2="48" y2="20" /><line x1="48" y1="48" x2="70" y2="56" />
+      </g>
+      {/* WhatsApp-ish chat bubble */}
+      <g transform="translate(1000 96) scale(1.05)" {...S}>
+        <path d="M18 20 h64 a12 12 0 0 1 12 12 v30 a12 12 0 0 1 -12 12 h-42 l-18 16 v-16 a12 12 0 0 1 -6 -10 v-32 a12 12 0 0 1 12 -12 z" />
+      </g>
+      {/* rupee */}
+      <text x="250" y="520" fontFamily="Poppins, sans-serif" fontSize="120" fontWeight="700" fill="rgba(255,255,255,0.045)">₹</text>
+      {/* video camera */}
+      <g transform="translate(690 74) scale(1.0)" {...S}>
+        <rect x="0" y="18" width="70" height="54" rx="10" /><path d="M74 34 L100 18 V72 L74 56 Z" />
+      </g>
+      {/* small clock, lower-left */}
+      <g transform="translate(60 350) scale(0.8)" {...S}>
+        <circle cx="40" cy="40" r="38" /><line x1="40" y1="40" x2="40" y2="18" /><line x1="40" y1="40" x2="56" y2="46" />
+      </g>
+    </svg>
+  );
+};
 
 export default function HostOgCard() {
   const [params] = useSearchParams();
@@ -64,6 +104,12 @@ export default function HostOgCard() {
   // than a hollow "0.0 / 0 bookings" that reads worse than saying nothing.
   const hasRating = reviews > 0 && rating > 0;
 
+  const proofText = [
+    hasRating ? `${reviews} review${reviews === 1 ? '' : 's'}` : null,
+    bookings > 0 ? `${compact(bookings)} booked` : null,
+    (!hasRating && bookings === 0 && since) ? `New host · since ${since}` : null,
+  ].filter(Boolean).join('  ·  ');
+
   return (
     <div
       data-og-ready="true"
@@ -74,33 +120,25 @@ export default function HostOgCard() {
       }}
     >
       <Seo robots="noindex" />
+      <BrandBackdrop />
 
-      <Seo robots="noindex" />
-
-      {/* Brand — quiet, top-left (the domain, not a wordmark) */}
-      <div style={{ position: 'absolute', top: 54, left: 72, display: 'flex', alignItems: 'center', gap: 13 }}>
-        <img src="/favicon.svg" alt="" style={{ width: 40, height: 40, borderRadius: 9 }}
-             onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-        <span style={{ fontSize: 24, fontWeight: 700, color: 'rgba(245,245,247,0.9)', letterSpacing: -0.3 }}>bookasloth.com</span>
+      {/* Brand — the domain only, no icon, top-left */}
+      <div style={{ position: 'absolute', top: 56, left: 72, fontSize: 24, fontWeight: 700, color: 'rgba(245,245,247,0.9)', letterSpacing: -0.3 }}>
+        www.bookasloth.com
       </div>
 
       {/* Centre band: identity (left) + portrait stack (right) */}
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '86px 72px 56px', gap: 60 }}>
-        {/* ── Left: identity + branding ─────────────────── */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '90px 72px 56px', gap: 60 }}>
+        {/* ── Left: identity + proof + branding ─────────── */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Name + verified mark. Inline (not a flex sibling) so the tick flows
-              right after the last word — a 2-line name otherwise left it floating
-              in the middle. verticalAlign keeps it on the name's line. */}
+          {/* Name — the verified tick flows inline right after the last character,
+              no fixed offset, so it always sits at the name's end whatever the length. */}
           <div style={{
             fontSize: name.length > 21 ? 48 : name.length > 14 ? 56 : name.length > 10 ? 66 : 76,
-            fontWeight: 800, color: C.white, lineHeight: 1.06, letterSpacing: -2,
+            fontWeight: 800, color: C.white, lineHeight: 1.08, letterSpacing: -2,
           }}>
             {name}
-            {verified && (
-              <span style={{ display: 'inline-flex', verticalAlign: 'middle', marginLeft: 18, transform: 'translateY(-3px)' }}>
-                <VerifiedTick />
-              </span>
-            )}
+            {verified && <span style={{ display: 'inline-flex', verticalAlign: 'middle', marginLeft: 16 }}><VerifiedTick /></span>}
           </div>
 
           {/* Profession + rating chip, one row */}
@@ -119,19 +157,24 @@ export default function HostOgCard() {
             )}
           </div>
 
-          {/* Branding line — fills the space under the profession */}
-          <div style={{ marginTop: 30, maxWidth: 560, fontSize: 22, lineHeight: 1.55, color: 'rgba(245,245,247,0.6)', fontWeight: 400 }}>
+          {/* Proof line — directly under the profession */}
+          {proofText && (
+            <div style={{ marginTop: 12, fontSize: 20, color: C.grey, fontWeight: 500 }}>{proofText}</div>
+          )}
+
+          {/* Branding line — fills the space below */}
+          <div style={{ marginTop: 26, maxWidth: 560, fontSize: 22, lineHeight: 1.55, color: 'rgba(245,245,247,0.6)', fontWeight: 400 }}>
             Meet, book, and connect with people worth your time. Powered by{' '}
             <span style={{ color: 'rgba(245,245,247,0.92)', fontWeight: 600 }}>Book A Sloth</span>, where great bookings begin.
           </div>
         </div>
 
-        {/* ── Right: portrait → @username → stats → CTA ──── */}
+        {/* ── Right: portrait → @username → CTA ──────────── */}
         <div style={{ width: 360, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{
             width: 268, height: 268, borderRadius: '50%', padding: 5,
             background: `conic-gradient(from 140deg, ${C.orange}, ${C.orangeSoft}, ${C.orange})`,
-            boxShadow: '0 0 90px -10px rgba(254,81,0,0.5)',
+            boxShadow: '0 0 90px -10px rgba(254,81,0,0.25)', // glow halved
           }}>
             <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: C.panel2 }}>
               {avatar
@@ -140,29 +183,21 @@ export default function HostOgCard() {
             </div>
           </div>
 
-          {/* @username with sloth mark */}
+          {/* @username with the Book A Sloth thumbnail mark (CDN) */}
           {username && (
-            <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 9 }}>
-              <img src="/favicon.svg" alt="" style={{ width: 26, height: 26, borderRadius: 6 }}
+            <div style={{ marginTop: 22, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <img src="https://company-assets.bookasloth.in/images/seo/og/og-thumbnail-icon.png" alt=""
+                   style={{ width: 28, height: 28, borderRadius: 6 }}
                    onError={(e) => { e.currentTarget.style.display = 'none'; }} />
               <span style={{ fontSize: 24, fontWeight: 700, color: C.white, letterSpacing: -0.2 }}>@{username}</span>
             </div>
           )}
 
-          {/* Stats / honest new-host line */}
-          <div style={{ marginTop: 10, fontSize: 18, color: C.grey, fontWeight: 500 }}>
-            {[
-              hasRating ? `${reviews} review${reviews === 1 ? '' : 's'}` : null,
-              bookings > 0 ? `${compact(bookings)} booked` : null,
-              (!hasRating && bookings === 0 && since) ? `New host · since ${since}` : null,
-            ].filter(Boolean).join('  ·  ')}
-          </div>
-
-          {/* CTA */}
+          {/* CTA — glow reduced ~90% (a hair of depth, no orange bloom) */}
           <div style={{
             marginTop: 22, padding: '15px 30px', borderRadius: 12, background: C.orange,
             color: '#fff', fontSize: 20, fontWeight: 700, letterSpacing: -0.2,
-            boxShadow: '0 16px 40px -14px rgba(254,81,0,0.6)',
+            boxShadow: '0 3px 8px -5px rgba(0,0,0,0.4)',
           }}>Book an Appointment Now</div>
         </div>
       </div>

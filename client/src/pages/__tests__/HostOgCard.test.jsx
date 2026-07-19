@@ -17,7 +17,7 @@ describe('HostOgCard (share-card render target)', () => {
     renderCard('name=Priya+Sharma&profession=Clinical+Psychologist&username=priya&rating=4.9&reviews=247&bookings=820&since=2024&verified=1');
     expect(screen.getByText('Priya Sharma')).toBeTruthy();
     expect(screen.getByText('Clinical Psychologist')).toBeTruthy();
-    expect(screen.getByText('bookasloth.com')).toBeTruthy();   // brand, top-left
+    expect(screen.getByText('www.bookasloth.com')).toBeTruthy(); // brand, top-left
     expect(screen.getByText('@priya')).toBeTruthy();           // handle under the portrait
     expect(screen.getByText('✓')).toBeTruthy();                // single verified mark
     expect(screen.getByText(/4\.9/)).toBeTruthy();             // rating chip beside profession
