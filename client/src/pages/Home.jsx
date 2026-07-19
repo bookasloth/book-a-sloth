@@ -525,11 +525,21 @@ const FAQS = [
   { q: "Can clients pay while booking?", a: "Yes — that's the whole point. Clients pay via UPI, card or netbanking at checkout. You get paid before the session starts." },
   { q: "Do clients need an account?", a: "No. Clients book and pay without creating an account." },
   { q: "Can I connect Google Calendar?", a: "Yes. Two-way sync — your availability updates automatically and bookings appear in your calendar in real time." },
+  { q: "What Google permissions does Book A Sloth request?", a: "Only the minimum needed for scheduling: create and manage booking events on your calendar, read your free/busy times so booked slots stay hidden, and read your calendar timezone once. Google data is used solely to provide these features — never for ads, never sold — and you can revoke access anytime from your Google Account settings." },
   { q: "Can I take deposits or advance payments?", a: "Yes. You can collect a deposit or full payment upfront — your choice per service." },
   { q: "Is GST handled?", a: "Yes. GST invoices are generated automatically for every booking." },
   { q: "Will reminders reduce my no-shows?", a: "Consistently. Automated email and WhatsApp reminders go out before every session. Most hosts report a significant drop in no-shows within the first month." },
   { q: "Can I cancel anytime?", a: "Yes. No contracts, no lock-in. Cancel from your dashboard whenever you like." },
   { q: "Can I move from another platform?", a: "Yes. Set up your services and share your new link — most hosts are live the same day." },
+];
+
+/* ── Google integration — keep aligned with the consent screen scopes in
+   server/config/google.js (3 sensitive scopes, nothing more). Shown in the
+   Trust & security section; also part of the Google OAuth verification story. */
+const GOOGLE_SCOPES = [
+  { name: "Calendar events", scope: "calendar.events", desc: "Creates, reschedules and cancels booking events on your calendar — with Google Meet links attached." },
+  { name: "Free/busy times", scope: "calendar.freebusy", desc: "Reads when you're busy so already-taken slots are hidden from your public booking page." },
+  { name: "Calendar settings", scope: "calendar.settings.readonly", desc: "Reads your calendar's timezone once, to set your availability correctly." },
 ];
 
 /* ── Trust & security badges ── */
@@ -2071,6 +2081,54 @@ const Home = () => {
               </Reveal>
             ))}
           </div>
+
+          {/* How we use Google — plain-language version of the OAuth consent
+              screen, for hosts (and Google's verification reviewers). */}
+          <Reveal delay={0.1} className="mt-12">
+            <div className="mx-auto max-w-4xl rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] sm:p-8">
+              <div className="flex items-start gap-4">
+                <span
+                  className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl sm:flex"
+                  style={{ backgroundColor: "color-mix(in srgb, #ea4335 12%, transparent)", color: "#ea4335" }}
+                >
+                  <Calendar size={22} />
+                </span>
+                <div>
+                  <h3 className="font-heading text-lg font-bold text-ink">How Book A Sloth uses Google</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+                    Hosts sign in with Google — no passwords to remember or leak. With your permission,
+                    Book A Sloth connects to your Google Calendar so your availability and bookings stay
+                    in sync. We request only the minimum permissions needed:
+                  </p>
+                </div>
+              </div>
+              <ul className="mt-5 space-y-3 sm:pl-16">
+                {GOOGLE_SCOPES.map((s) => (
+                  <li key={s.scope} className="flex items-start gap-2.5">
+                    <Check size={16} className="mt-0.5 shrink-0 text-primary" />
+                    <p className="text-sm leading-relaxed text-neutral-500">
+                      <span className="font-semibold text-ink">{s.name}</span>{" "}
+                      <span className="rounded-[4px] bg-black/5 px-1.5 py-0.5 font-mono text-[11px] text-neutral-500">{s.scope}</span>{" "}
+                      — {s.desc}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-5 text-sm leading-relaxed text-neutral-500 sm:pl-16">
+                Your Google data is used only to provide these scheduling features — never for advertising,
+                never sold. You can revoke access at any time from your{" "}
+                <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                  Google Account settings
+                </a>
+                . Book A Sloth's use of information received from Google APIs adheres to the{" "}
+                <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                  Google API Services User Data Policy
+                </a>
+                , including the Limited Use requirements. Read more in our{" "}
+                <Link to="/privacy" className="font-medium text-primary hover:underline">Privacy Policy</Link>.
+              </p>
+            </div>
+          </Reveal>
 
           <p className="mx-auto mt-10 max-w-[750px] text-center text-sm font-medium text-ink">
             Book A Sloth does not sell or share your data with third parties. <span className="text-primary">Ever.</span>

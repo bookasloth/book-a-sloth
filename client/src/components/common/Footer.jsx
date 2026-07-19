@@ -23,6 +23,7 @@ const COLUMNS = [
   { h: 'Support', links: [
     { t: 'Help', href: '/help' },
     { t: 'Get support', href: '/support' },
+    { t: 'Contact', href: '/contact' },
     { t: 'Terms', href: '/terms' },
     { t: 'Privacy', href: '/privacy' },
     { t: 'Refund', href: '/refund' },
@@ -135,6 +136,10 @@ export default function Footer({ variant = 'full' }) {
               Made with Speed and Calm by{' '}
               <a href={BOLT_URL} target="_blank" rel="noopener noreferrer" className="text-white/60 underline-offset-2 transition-colors hover:text-white">Bolt the Sloth</a>
             </span>
+            <span className="text-white/25">·</span>
+            {/* Company ownership visible site-wide — part of the Google OAuth
+                verification checklist (homepage must identify the operator). */}
+            <span>Operated by Timewheel Internet Private Limited · CIN U62012OD2026PTC052654</span>
           </div>
           <p className="text-white/40">Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
         </div>

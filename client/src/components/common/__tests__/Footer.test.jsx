@@ -36,6 +36,9 @@ describe('<Footer>', () => {
     expect(screen.getByRole('link', { name: 'Terms' }).getAttribute('href')).toBe('/terms');
     expect(screen.getByRole('link', { name: 'Privacy' }).getAttribute('href')).toBe('/privacy');
     expect(screen.getByRole('link', { name: 'Refund' }).getAttribute('href')).toBe('/refund');
+    expect(screen.getByRole('link', { name: 'Contact' }).getAttribute('href')).toBe('/contact');
+    // Company ownership line — required by the Google OAuth verification checklist.
+    expect(screen.getByText(/Operated by Timewheel Internet Private Limited/i)).toBeTruthy();
     const mail = screen
       .getAllByRole('link')
       .find((a) => a.getAttribute('href') === 'mailto:bolt@bookasloth.in');
