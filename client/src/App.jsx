@@ -68,6 +68,8 @@ const Blog           = lazy(() => import('./pages/Blog'));
 const Search         = lazy(() => import('./pages/Search'));
 const WallOfLove     = lazy(() => import('./pages/WallOfLove'));
 const BlogPost       = lazy(() => import('./pages/BlogPost'));
+const Moments        = lazy(() => import('./pages/Moments'));
+const MomentPage     = lazy(() => import('./pages/MomentPage'));
 const OgCard         = lazy(() => import('./pages/OgCard'));
 const HostOgCard     = lazy(() => import('./pages/HostOgCard'));
 const GoogleAuthDone = lazy(() => import('./pages/GoogleAuthDone'));
@@ -335,6 +337,8 @@ function App() {
           <Route path="/wall-of-love" element={<WallOfLove />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/moments" element={<Moments />} />
+          <Route path="/moments/:slug" element={<MomentPage />} />
           {/* Render target for the OG card generator, not a page for humans.
               noindex + absent from the sitemap and prerender lists. */}
           <Route path="/og/blog/:slug" element={<OgCard />} />
