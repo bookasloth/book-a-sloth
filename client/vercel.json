@@ -2,13 +2,19 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": { "deploymentEnabled": false },
   "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.bookasloth.com" }],
+      "destination": "https://bookasloth.com/:path*",
+      "statusCode": 308
+    },
     { "source": "/blogs", "destination": "/blog", "statusCode": 301 },
     { "source": "/blogs/:slug", "destination": "/blog/:slug", "statusCode": 301 }
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://book-a-sloth.onrender.com/sitemap.xml" },
     { "source": "/sitemap-:name.xml", "destination": "https://book-a-sloth.onrender.com/sitemap-:name.xml" },
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+    { "source": "/((?!assets/).*)", "destination": "/spa-shell.html" }
   ],
   "headers": [
     {
@@ -19,6 +25,10 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" }
       ]
+    },
+    {
+      "source": "/spa-shell.html",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
     }
   ]
 }

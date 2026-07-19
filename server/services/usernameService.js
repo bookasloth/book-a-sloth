@@ -47,7 +47,21 @@ async function resolve(slug) {
     .select('user_id, is_current')
     .ilike('username', s)
     .maybeSingle();
-  if (!row) return null;
+  if (!row) {
+    // History is written best-effort (see recordInitialUsername) and was never
+    // backfilled for pre-v3.17 accounts — 28 of 59 live prod usernames have no
+    // history row (checked 2026-07-19). History miss therefore does NOT mean
+    // "never existed": fall back to profiles before saying not-found. This
+    // matters since the edge middleware turns an explicit resolver 404 into a
+    // real HTTP 404 for the profile URL.
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('id, username')
+      .ilike('username', s)
+      .maybeSingle();
+    if (!profile) return null;
+    return { userId: profile.id, currentUsername: profile.username, isCurrent: true };
+  }
 
   const { data: current } = await supabaseAdmin
     .from('username_history')

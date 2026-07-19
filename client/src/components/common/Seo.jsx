@@ -16,6 +16,9 @@ export default function Seo({
   title, description, canonical, robots, keywords,
   ogTitle, ogDescription, image, jsonLd,
   siteName, locale, themeColor,
+  // 'website' (default) | 'article' (blog posts) — article additionally emits
+  // article:published_time / article:modified_time when provided.
+  ogType, articlePublishedTime, articleModifiedTime,
 }) {
   useEffect(() => {
     const restores = [];
@@ -66,7 +69,11 @@ export default function Seo({
     }
 
     // Open Graph + Twitter
-    upsertMeta('property', 'og:type', 'website');
+    upsertMeta('property', 'og:type', ogType || 'website');
+    if (ogType === 'article') {
+      upsertMeta('property', 'article:published_time', articlePublishedTime);
+      upsertMeta('property', 'article:modified_time', articleModifiedTime);
+    }
     upsertMeta('property', 'og:site_name', siteName);
     upsertMeta('property', 'og:locale', locale);
     upsertMeta('property', 'og:title', ogTitle || title);
@@ -91,7 +98,7 @@ export default function Seo({
       restores.reverse().forEach((fn) => fn());
       if (script) script.remove();
     };
-  }, [title, description, canonical, robots, keywords, ogTitle, ogDescription, image, siteName, locale, themeColor, JSON.stringify(jsonLd)]);
+  }, [title, description, canonical, robots, keywords, ogTitle, ogDescription, image, siteName, locale, themeColor, ogType, articlePublishedTime, articleModifiedTime, JSON.stringify(jsonLd)]);
 
   return null;
 }

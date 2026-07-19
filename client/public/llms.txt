@@ -1,27 +1,62 @@
 # Book A Sloth
 
-> Book A Sloth is an India-first appointment-booking platform for creators and professionals — coaches, tutors, consultants, designers, wellness practitioners and more (called "hosts"). Hosts publish services, share one short booking link, and get paid up-front at **0% commission**. Guests book in seconds via OTP or a free account; payments run through Razorpay (UPI, cards, netbanking).
+> Book A Sloth is an India-first appointment-booking platform for creators and professionals — coaches, tutors, consultants, designers, wellness practitioners and more (called "hosts"). Hosts publish services, share one short booking link, and get paid up-front — with 0% commission on paid plans. Guests book in seconds via OTP or a free account; payments run through Razorpay (UPI, cards, netbanking).
 
 Key facts:
 
-- **0% commission** — hosts keep 100% of what they earn.
-- **Plans:** Free (Starter), Creator ₹199/mo, Pro ₹499/mo — annual billing available at a discount.
-- **India-native:** INR pricing, GST handling and UPI built in.
+- **Plans:** Starter (free, 5% per booking), Host+ ₹229/mo (₹1,499/yr), Studio ₹555/mo (₹3,650/yr). Prices in INR, excl. GST.
+- **0% commission on paid plans** — Host+ and Studio hosts keep 100% of what they earn.
+- **India-native:** INR pricing, GST invoicing and UPI built in.
 - **Runs the whole booking:** payments up-front, email + WhatsApp reminders, two-way Google Calendar sync, and auto-generated video-call links.
 - **Personal page:** every host gets `bookasloth.com/their-username` — a mini-site that books, bills and brands them.
-- Positioned as a calmer, India-first alternative to tools like Topmate and Calendly.
+- Positioned as a calmer, India-first alternative to tools like Topmate, Calendly, Setmore, Acuity, SimplyBook.me and Zoho Bookings.
 
 ## Main pages
 
 - [Home](https://bookasloth.com/): What Book A Sloth is — features, pricing and how booking works.
+- [Pricing](https://bookasloth.com/pricing): Full plan comparison — Starter, Host+ and Studio.
+- [Explore](https://bookasloth.com/explore): Browse bookable services across professions.
+- [Services directory](https://bookasloth.com/services): Services grouped by profession.
 - [Become a host](https://bookasloth.com/be-a-sloth): Why and how to start taking bookings on Book A Sloth.
+- [Enterprise](https://bookasloth.com/enterprise): For teams, studios and larger practices.
 - [About](https://bookasloth.com/about): The company, mission and the "calm economy" positioning.
-- [Help](https://bookasloth.com/help): Common questions for hosts and guests.
+- [Blog](https://bookasloth.com/blog): Product updates and guides.
+- [Help](https://bookasloth.com/help): Common questions for hosts and guests, with a full article index at [/help/docs](https://bookasloth.com/help/docs).
+
+## Features
+
+- [Online scheduling](https://bookasloth.com/features/online-scheduling)
+- [Payments & GST invoicing](https://bookasloth.com/features/payments)
+- [Google Calendar sync](https://bookasloth.com/features/google-calendar)
+- [Email + WhatsApp notifications](https://bookasloth.com/features/notifications)
+- [Booking pages](https://bookasloth.com/features/booking-pages)
+- [Digital products](https://bookasloth.com/features/digital-products)
+- [Reviews](https://bookasloth.com/features/reviews)
+- [Availability management](https://bookasloth.com/features/availability)
+- [Analytics](https://bookasloth.com/features/analytics)
+- [Client management](https://bookasloth.com/features/client-management)
 
 ## Comparisons
 
-- [Book A Sloth vs Topmate](https://bookasloth.com/lp/topmate-vs-bookasloth): The 0%-commission case versus Topmate.
-- [A calmer Calendly alternative](https://bookasloth.com/lp/calendly-alternative): Booking + payments + reminders in one place.
+- [Book A Sloth vs Topmate](https://bookasloth.com/lp/topmate-vs-bookasloth)
+- [Calendly alternative](https://bookasloth.com/lp/calendly-alternative)
+- [Setmore alternative](https://bookasloth.com/lp/setmore-alternative)
+- [Acuity alternative](https://bookasloth.com/lp/acuity-alternative)
+- [SimplyBook.me alternative](https://bookasloth.com/lp/simplybook-alternative)
+- [Zoho Bookings alternative](https://bookasloth.com/lp/zoho-bookings-alternative)
+
+## For professions
+
+- [Lawyers](https://bookasloth.com/for/lawyers)
+- [Doctors](https://bookasloth.com/for/doctors) · [Doctors in India](https://bookasloth.com/for/doctors-india)
+- [Business consultants](https://bookasloth.com/for/business-consultant)
+- [Salons](https://bookasloth.com/for/salon)
+- [Freelancers](https://bookasloth.com/for/freelancers)
+- [Fitness trainers](https://bookasloth.com/for/fitness)
+- [Tutors](https://bookasloth.com/for/tutors)
+- [Photographers](https://bookasloth.com/for/photographers)
+- [Event professionals](https://bookasloth.com/for/events)
+- [Agencies](https://bookasloth.com/for/agencies)
 
 ## Legal
 

@@ -11,16 +11,20 @@
     <title>Book A Sloth — booked &amp; paid at 0% commission</title>
     <meta name="description" content="The calm booking + payments platform for India's freelancers, coaches, tutors and studios. Keep what you earn — 0% commission, flat pricing, UPI &amp; GST built in." />
     <meta name="theme-color" content="#FE5100" />
-    <link rel="canonical" href="https://bookasloth.com/" />
+    <!-- NO static canonical / og:url here, on purpose. This file is the SPA
+         fallback for EVERY route (via dist/spa-shell.html — see prerender.mjs):
+         a hardcoded homepage canonical shipped `canonical=/` in the raw HTML of
+         every non-prerendered page. Seo.jsx sets the correct per-route canonical
+         at runtime; prerendered routes bake theirs at build time. -->
 
     <!-- Open Graph / social link previews. NOTE: static (scrapers don't run JS).
-         One shared card for all routes; per-LP cards need SSR/prerender.
-         TODO: add a 1200x630 og-image.png to client/public/. -->
+         Generic site-wide card only — no og:url, so an unrendered route never
+         claims the homepage's identity. Per-page cards come from Seo.jsx
+         (runtime) and the prerender (build time). -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Book A Sloth" />
     <meta property="og:title" content="Book A Sloth — booked &amp; paid at 0% commission" />
     <meta property="og:description" content="The calm booking + payments platform for India. Keep what you earn — 0% commission, flat pricing, UPI &amp; GST built in." />
-    <meta property="og:url" content="https://bookasloth.com/" />
     <meta property="og:image" content="https://bookasloth.com/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />

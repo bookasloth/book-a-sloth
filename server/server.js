@@ -197,6 +197,14 @@ app.get('/google7afa06c4734ff5fc.html', (req, res) =>
   res.type('text/html').send('google-site-verification: google7afa06c4734ff5fc.html')
 );
 
+// This origin (book-a-sloth.onrender.com) is an API host, never a site to
+// index — sitemap + prerender HTML reach crawlers only via the Vercel proxy on
+// bookasloth.com, whose own robots.txt governs them. Blanket-disallow direct
+// crawling here so the raw origin can't become a duplicate "site" in an index.
+app.get('/robots.txt', (req, res) =>
+  res.type('text/plain').send('User-agent: *\nDisallow: /\n')
+);
+
 app.get('/', (req, res) => res.json({ message: 'Book A Sloth API v1.4 running' }));
 
 app.use(require('./middleware/errorMiddleware'));

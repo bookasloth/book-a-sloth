@@ -31,6 +31,33 @@ const toLastmod = (ts) => {
   return d.toISOString().slice(0, 10);
 };
 
+// Feature marketing pages (/features/:slug). KEEP IN SYNC with
+// client/src/pages/features/featureData.js — that file is ESM and this server is
+// CJS on a separately-rooted deploy, so the slugs are mirrored here by hand.
+// Drift symptom: a live /features page missing from sitemap-pages.xml.
+const FEATURE_SLUGS = [
+  'online-scheduling', 'payments', 'google-calendar', 'notifications',
+  'booking-pages', 'digital-products', 'reviews', 'availability',
+  'analytics', 'client-management',
+];
+
+// Help-center articles (/help/docs/:slug). KEEP IN SYNC with
+// client/src/content/helpDocsList.js (same ESM/CJS constraint as above).
+const HELP_DOC_SLUGS = [
+  'booking-a-service', 'signing-in-with-your-phone', 'otp-problems',
+  'is-my-booking-confirmed', 'reschedule-or-cancel', 'refunds-and-failed-payments',
+  'leaving-a-review', 'buying-digital-products', 'your-profile-and-email-preferences',
+  'becoming-a-host', 'creating-and-managing-services', 'availability-and-google-calendar',
+  'getting-paid', 'plans-and-upgrading', 'why-am-i-not-getting-bookings',
+  'your-username-and-booking-link', 'branding-and-theme-colours', 'selling-digital-products',
+  'reminders-notifications-and-badges', 'what-is-book-a-sloth', 'pricing-and-commission',
+  'is-my-payment-and-data-safe', 'whats-not-supported-yet', 'contact-support',
+];
+
+// Open roles (/careers/:jobSlug). KEEP IN SYNC with
+// client/src/components/careers/careersContent.js (same ESM/CJS constraint).
+const JOB_SLUGS = ['digital-marketeer', 'mern-stack-developer', 'sales-associate'];
+
 // Public, crawlable static routes. Host/service URLs come from the DB below.
 const STATIC_ROUTES = [
   { path: '/',                         changefreq: 'daily',   priority: '1.0' },
@@ -40,6 +67,7 @@ const STATIC_ROUTES = [
   { path: '/enterprise',               changefreq: 'monthly', priority: '0.7' },
   { path: '/about',                    changefreq: 'monthly', priority: '0.5' },
   { path: '/careers',                  changefreq: 'weekly',  priority: '0.5' },
+  ...JOB_SLUGS.map((s) => ({ path: `/careers/${s}`, changefreq: 'weekly', priority: '0.5' })),
   { path: '/blog',                     changefreq: 'daily',   priority: '0.6' },
   { path: '/changelog',                changefreq: 'weekly',  priority: '0.4' },
   { path: '/contact',                  changefreq: 'monthly', priority: '0.4' },
@@ -48,8 +76,16 @@ const STATIC_ROUTES = [
   { path: '/privacy',                  changefreq: 'yearly',  priority: '0.3' },
   { path: '/terms',                    changefreq: 'yearly',  priority: '0.3' },
   { path: '/refund',                   changefreq: 'yearly',  priority: '0.3' },
+  { path: '/wall-of-love',             changefreq: 'weekly',  priority: '0.5' },
+  { path: '/help/docs',                changefreq: 'monthly', priority: '0.4' },
+  ...HELP_DOC_SLUGS.map((s) => ({ path: `/help/docs/${s}`, changefreq: 'monthly', priority: '0.4' })),
+  ...FEATURE_SLUGS.map((s) => ({ path: `/features/${s}`, changefreq: 'monthly', priority: '0.7' })),
   { path: '/lp/topmate-vs-bookasloth', changefreq: 'monthly', priority: '0.7' },
   { path: '/lp/calendly-alternative',  changefreq: 'monthly', priority: '0.7' },
+  { path: '/lp/setmore-alternative',   changefreq: 'monthly', priority: '0.7' },
+  { path: '/lp/acuity-alternative',    changefreq: 'monthly', priority: '0.7' },
+  { path: '/lp/simplybook-alternative', changefreq: 'monthly', priority: '0.7' },
+  { path: '/lp/zoho-bookings-alternative', changefreq: 'monthly', priority: '0.7' },
   { path: '/for/lawyers',              changefreq: 'monthly', priority: '0.8' },
   { path: '/for/doctors',              changefreq: 'monthly', priority: '0.8' },
   { path: '/for/doctors-india',        changefreq: 'monthly', priority: '0.8' },
