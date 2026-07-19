@@ -122,13 +122,17 @@ export default function HostOgCard() {
       <Seo robots="noindex" />
       <BrandBackdrop />
 
-      {/* Brand — the domain only, no icon, top-left */}
-      <div style={{ position: 'absolute', top: 56, left: 72, fontSize: 24, fontWeight: 700, color: 'rgba(245,245,247,0.9)', letterSpacing: -0.3 }}>
-        www.bookasloth.com
+      {/* Brand — logo mark + domain, top-left */}
+      <div style={{ position: 'absolute', top: 48, left: 72, display: 'flex', alignItems: 'center', gap: 15 }}>
+        <img src="https://company-assets.bookasloth.in/images/email/footer-logo.png" alt=""
+             style={{ width: 54, height: 54, borderRadius: '50%', objectFit: 'cover', background: '#fff' }}
+             onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+        <span style={{ fontSize: 25, fontWeight: 700, color: 'rgba(245,245,247,0.9)', letterSpacing: -0.3 }}>www.bookasloth.com</span>
       </div>
 
-      {/* Centre band: identity (left) + portrait stack (right) */}
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '90px 72px 56px', gap: 60 }}>
+      {/* Centre band: identity (left) + portrait stack (right). Bottom-aligned so
+          the branding line's last row sits level with the CTA button. */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', padding: '128px 72px 60px', gap: 60 }}>
         {/* ── Left: identity + proof + branding ─────────── */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Name — the verified tick flows inline right after the last character,
@@ -183,13 +187,10 @@ export default function HostOgCard() {
             </div>
           </div>
 
-          {/* @username with the Book A Sloth thumbnail mark (CDN) */}
+          {/* @username */}
           {username && (
-            <div style={{ marginTop: 22, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <img src="https://company-assets.bookasloth.in/images/seo/og/og-thumbnail-icon.png" alt=""
-                   style={{ width: 28, height: 28, borderRadius: 6 }}
-                   onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-              <span style={{ fontSize: 24, fontWeight: 700, color: C.white, letterSpacing: -0.2 }}>@{username}</span>
+            <div style={{ marginTop: 22, fontSize: 24, fontWeight: 700, color: C.white, letterSpacing: -0.2 }}>
+              @{username}
             </div>
           )}
 
