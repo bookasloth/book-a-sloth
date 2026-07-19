@@ -775,8 +775,7 @@ const Home = () => {
             <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[3.4rem] sm:leading-[1.05] lg:text-[3.9rem]">
               Create your
               <br />
-              <span className="font-bold text-primary">Appointment Booking Page</span>
-              <br />
+              <span className="font-bold text-primary">Appointment Booking Page</span>{" "}
               in 42 seconds.
             </Reveal>
 
@@ -878,8 +877,7 @@ const Home = () => {
           <Reveal as="h1" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
             Create your
             <br />
-            <span className="font-bold text-primary">Appointment Booking Page</span>
-            <br />
+            <span className="font-bold text-primary">Appointment Booking Page</span>{" "}
             in 42 seconds.
           </Reveal>
 
