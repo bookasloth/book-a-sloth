@@ -31,6 +31,16 @@ export default function MomentPage() {
         image={moment.image}
         ogType="article"
         canonical={`https://bookasloth.com/moments/${moment.slug}`}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CreativeWork',
+          name: moment.title,
+          abstract: moment.excerpt,
+          image: moment.image,
+          url: `https://bookasloth.com/moments/${moment.slug}`,
+          datePublished: moment.date,
+          creator: { '@type': 'Organization', name: 'Book A Sloth' },
+        }}
       />
 
       <Link to="/moments" className="inline-flex items-center gap-1.5 text-sm text-muted transition hover:text-primary">
