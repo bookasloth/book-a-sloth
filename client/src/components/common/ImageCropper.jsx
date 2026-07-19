@@ -38,10 +38,9 @@ const ImageCropper = ({ aspect = 1, folder = 'uploads', currentUrl, onUploaded, 
     const ctx = canvasRef.current.getContext('2d');
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
     ctx.drawImage(imgEl, offset.x, offset.y, imgEl.naturalWidth * scale, imgEl.naturalHeight * scale);
-    // Crop border
-    ctx.strokeStyle = 'rgba(99,102,241,0.9)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, CANVAS_W - 2, CANVAS_H - 2);
+    // NOTE: the crop-area guide border is drawn via CSS on the <canvas> element
+    // (see style below), NOT stroked onto the canvas — a canvas stroke gets baked
+    // into the exported JPEG and would show a permanent border on every upload.
   }, [imgEl, scale, offset, CANVAS_W, CANVAS_H]);
 
   useEffect(() => { draw(); }, [draw]);
@@ -130,7 +129,7 @@ const ImageCropper = ({ aspect = 1, folder = 'uploads', currentUrl, onUploaded, 
                 ref={canvasRef}
                 width={CANVAS_W}
                 height={CANVAS_H}
-                style={{ display:'block', maxWidth:'100%', cursor: dragging ? 'grabbing' : 'grab', borderRadius: 10 }}
+                style={{ display:'block', maxWidth:'100%', cursor: dragging ? 'grabbing' : 'grab', borderRadius: 10, border: '2px solid rgba(99,102,241,0.9)' }}
                 onMouseDown={e => startDrag(e.clientX, e.clientY)}
                 onMouseMove={e => moveDrag(e.clientX, e.clientY)}
                 onMouseUp={endDrag}
