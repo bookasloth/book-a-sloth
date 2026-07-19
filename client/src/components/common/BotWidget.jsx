@@ -1,6 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { streamBot, sendBotFeedback } from '../../services/api';
 import Markdown from './Markdown';
+
+// Bolt only shows on these pages (home, help/support, privacy/policy, terms).
+const isAllowedPath = (p) =>
+  p === '/' || p === '/privacy' || p === '/terms' || p === '/help' || p.startsWith('/help/');
 
 // Bolt — Book A Sloth's floating support assistant. Mounted app-wide (App.jsx).
 // Blended look: reference-widget layout + polish, on Book A Sloth's brand (orange
@@ -10,6 +15,15 @@ import Markdown from './Markdown';
 
 const PRIMARY = '#FE5100';
 const INK = '#1E1E1E';
+
+// Brand icons cycled on the closed launcher — booking/host/support motifs.
+const LAUNCHER_ICONS = [
+  <path key="cal" d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />,
+  <path key="clock" d="M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z" />,
+  <path key="chat" d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />,
+  <path key="bolt" d="M13 2 3 14h8l-1 8 10-12h-8Z" />,
+  <path key="spark" d="M12 3v6M12 15v6M3 12h6M15 12h6M6 6l3 3M18 18l-3-3M18 6l-3 3M6 18l3-3" />,
+];
 
 // Starter prompts on the welcome screen — one tap sends the question.
 const SUGGESTIONS = [
@@ -51,11 +65,20 @@ export default function BotWidget() {
   const [streaming, setStreaming] = useState(false);
   const [conversationId, setConversationId] = useState(null);
   const [messages, setMessages] = useState([]); // empty → welcome screen
+  const [iconIdx, setIconIdx] = useState(0);
   const listRef = useRef(null);
+  const { pathname } = useLocation();
 
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages, open]);
+
+  // Cycle the launcher's brand icons while the chat is closed.
+  useEffect(() => {
+    if (open) return;
+    const id = setInterval(() => setIconIdx((i) => (i + 1) % LAUNCHER_ICONS.length), 1200);
+    return () => clearInterval(id);
+  }, [open]);
 
   const send = async (text) => {
     const question = (text ?? input).trim();
@@ -102,14 +125,19 @@ export default function BotWidget() {
 
   const copy = (content) => { try { navigator.clipboard?.writeText(content); } catch (_) { /* ignore */ } };
 
+  if (!isAllowedPath(pathname)) return null;
+
   return (
     <div className="fixed bottom-5 right-5 z-[60] font-sans">
+      {/* ponytail: approximated genie (scale+translate from launcher corner), not a real mesh warp */}
+      {/* ponytail: clean emerge from launcher corner — mild scale + slight stretch, no extreme pinch (pixel-faithful genie smears live DOM). */}
+      <style>{`@keyframes boltGenie{0%{opacity:0;transform:translateY(28px) scale(.82) scaleY(.9)}60%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes boltIconIn{0%{opacity:0;transform:scale(.5) rotate(-12deg)}100%{opacity:1;transform:scale(1) rotate(0)}}`}</style>
       {open && (
         <div
           role="dialog"
           aria-label="Bolt support chat"
           className="mb-3 flex h-[34rem] w-[23rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-          style={{ border: `2px solid ${INK}` }}
+          style={{ border: `2px solid ${INK}`, transformOrigin: 'bottom right', animation: 'boltGenie .3s cubic-bezier(.2,.8,.3,1) both' }}
         >
           {/* Header */}
           <div className="flex items-center gap-2.5 px-3.5 py-3 text-white" style={{ background: PRIMARY, borderBottom: `2px solid ${INK}` }}>
@@ -118,8 +146,8 @@ export default function BotWidget() {
               <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#22c55e]" />
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-heading text-sm font-extrabold leading-tight">Bolt</h3>
-              <p className="text-[11px] leading-tight text-white/90">Book A Sloth support · online</p>
+              <h3 className="font-heading text-sm font-extrabold leading-tight">Bolt 958</h3>
+              <p className="text-[11px] leading-tight text-white/90">Fastest Support Bot Alive · Running</p>
             </div>
             <button
               type="button" onClick={restart} aria-label="Restart chat" title="Restart"
@@ -136,7 +164,7 @@ export default function BotWidget() {
           </div>
 
           {/* Messages / Welcome */}
-          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto bg-[#FFF8F4] px-3.5 py-4">
+          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[#FFF8F4] px-3.5 py-4">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center px-2 text-center">
                 <Avatar size={52} ring />
@@ -148,7 +176,7 @@ export default function BotWidget() {
                   {SUGGESTIONS.map((s) => (
                     <button
                       key={s} type="button" onClick={() => send(s)}
-                      className="rounded-full border-2 border-[#1E1E1E]/12 bg-white px-3 py-1.5 text-[12.5px] font-medium text-[#1E1E1E]/80 transition-colors hover:border-transparent hover:bg-[#FFE4D1] hover:text-[#1E1E1E]"
+                      className="rounded-md border border-[#FE5100]/70 bg-transparent px-2 py-px text-[10px] font-medium text-[#FE5100] transition-colors hover:bg-[#FFE4D1] hover:border-[#FE5100]"
                     >
                       {s}
                     </button>
@@ -161,7 +189,7 @@ export default function BotWidget() {
                   <div className={'max-w-[86%] ' + (m.role === 'user' ? '' : 'w-full')}>
                     <div
                       className={
-                        'rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed ' +
+                        'rounded-2xl px-3.5 py-2.5 text-[12px] leading-relaxed ' +
                         (m.role === 'user'
                           ? 'text-white'
                           : 'border-2 border-[#1E1E1E]/10 bg-white text-[#1E1E1E] shadow-sm')
@@ -171,7 +199,7 @@ export default function BotWidget() {
                       {m.role === 'user' ? (
                         <p className="whitespace-pre-wrap">{m.content}</p>
                       ) : m.content ? (
-                        <div className="bolt-md"><Markdown source={m.content} externalLinks="strip" /></div>
+                        <div className="bolt-md [&>div]:text-[12px]"><Markdown source={m.content} externalLinks="strip" /></div>
                       ) : (
                         <div className="flex gap-1 py-1" aria-label="Bolt is typing">
                           <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1E1E1E]/40 [animation-delay:0ms]" />
@@ -239,7 +267,7 @@ export default function BotWidget() {
               onKeyDown={onKeyDown}
               placeholder="Ask anything…"
               aria-label="Type your question"
-              className="max-h-24 flex-1 resize-none rounded-xl border-2 border-[#1E1E1E]/12 px-3 py-2 text-[13px] outline-none focus:border-[#FE5100]"
+              className="h-10 min-h-10 max-h-24 flex-1 resize-none rounded-xl border-2 border-[#1E1E1E]/12 px-3 pt-[11px] pb-[5px] text-[13px] leading-tight outline-none focus:!border-[#FE5100] focus:!shadow-none focus:!ring-0 focus:!outline-none"
             />
             <button
               type="button" onClick={() => send()} disabled={streaming || !input.trim()} aria-label="Send"
@@ -256,13 +284,15 @@ export default function BotWidget() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? 'Close support chat' : 'Open Bolt support chat'}
-        className="ml-auto flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-[3px_3px_0_#1E1E1E] transition-transform"
-        style={{ background: PRIMARY, border: `2px solid ${INK}` }}
+        className="ml-auto grid h-14 w-14 place-items-center rounded-full bg-white transition-transform hover:scale-105 active:scale-95"
+        style={{ border: `1.5px solid ${PRIMARY}`, color: PRIMARY }}
       >
         {open ? (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         ) : (
-          <img src="/favicon.svg" alt="" className="h-8 w-8 object-contain" />
+          <svg key={iconIdx} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'boltIconIn .4s ease' }}>
+            {LAUNCHER_ICONS[iconIdx]}
+          </svg>
         )}
       </button>
     </div>
