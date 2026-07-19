@@ -36,21 +36,13 @@ const compact = (n) => {
   return String(v);
 };
 
-const Stat = ({ icon, value, label }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 26 }}>{icon}</span>
-      <span style={{ fontSize: 30, fontWeight: 700, color: C.white, lineHeight: 1 }}>{value}</span>
-    </div>
-    <span style={{ fontSize: 15, color: C.grey, letterSpacing: 0.2 }}>{label}</span>
-  </div>
-);
-
-const TrustLine = ({ icon, text }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: C.white, fontSize: 19 }}>
-    <span style={{ fontSize: 20, opacity: 0.9 }}>{icon}</span>
-    <span>{text}</span>
-  </div>
+// A single verified check — one authoritative mark, not a pill repeated elsewhere.
+const VerifiedTick = () => (
+  <span style={{
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: 40, height: 40, borderRadius: '50%', background: C.orange,
+    color: '#fff', fontSize: 22, fontWeight: 700, flexShrink: 0,
+  }}>✓</span>
 );
 
 export default function HostOgCard() {
@@ -59,12 +51,9 @@ export default function HostOgCard() {
 
   const name = params.get('name') || 'Book A Sloth Host';
   const profession = params.get('profession') || '';
-  const bio = params.get('bio') || '';
   const username = params.get('username') || '';
   const avatar = params.get('avatar') || '';
   const verified = params.get('verified') === '1';
-  const online = params.get('online') === '1';
-  const meet = params.get('meet') === '1';
 
   const reviews = Number(params.get('reviews')) || 0;
   const rating = Number(params.get('rating')) || 0;
@@ -86,133 +75,74 @@ export default function HostOgCard() {
     >
       <Seo robots="noindex" />
 
-      {/* Dotted-grid texture */}
-      <div style={{
-        position: 'absolute', inset: 0, opacity: 0.4,
-        backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)',
-        backgroundSize: '26px 26px',
-      }} />
+      {/* One soft orange bloom behind the portrait — the only texture. Restraint
+          is the authority here; the old dotted grid + frame + panels competed. */}
 
-      {/* Inner framed card */}
-      <div style={{
-        position: 'absolute', inset: 28, borderRadius: 24, overflow: 'hidden',
-        border: `1px solid ${C.line}`,
-        boxShadow: '0 0 0 1px rgba(254,81,0,0.06), 0 40px 120px -40px rgba(254,81,0,0.25)',
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0))',
-        display: 'flex', flexDirection: 'column',
-      }}>
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', padding: '38px 52px 26px' }}>
-          {/* ── Left content ─────────────────────────────── */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingRight: 40 }}>
-            {/* Brand */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img src="/favicon.svg" alt="" style={{ width: 40, height: 40, borderRadius: 9 }}
-                   onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-              <span style={{ fontSize: 25, fontWeight: 700, color: C.white, letterSpacing: -0.3 }}>Book A Sloth</span>
-            </div>
+      {/* Brand — quiet, top-left */}
+      <div style={{ position: 'absolute', top: 56, left: 72, display: 'flex', alignItems: 'center', gap: 13 }}>
+        <img src="/favicon.svg" alt="" style={{ width: 40, height: 40, borderRadius: 9 }}
+             onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+        <span style={{ fontSize: 23, fontWeight: 700, color: 'rgba(245,245,247,0.85)', letterSpacing: -0.3 }}>Book A Sloth</span>
+      </div>
 
-            {/* Verified pill */}
-            {verified && (
-              <div style={{
-                marginTop: 22, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8,
-                background: 'rgba(254,81,0,0.14)', color: C.orangeSoft,
-                padding: '7px 14px', borderRadius: 999, fontSize: 15, fontWeight: 600, letterSpacing: 0.4,
-              }}>
-                <span style={{ fontSize: 16 }}>✔</span> VERIFIED HOST
-              </div>
-            )}
+      {/* URL — the single call to action, bottom-left */}
+      {username && (
+        <div style={{ position: 'absolute', bottom: 56, left: 72, fontSize: 27, fontWeight: 700, color: C.orange, letterSpacing: -0.3 }}>
+          bookasloth.com/{username}
+        </div>
+      )}
 
-            {/* Name */}
-            <div style={{
-              marginTop: verified ? 14 : 22, fontSize: name.length > 20 ? 52 : name.length > 13 ? 60 : 70,
-              fontWeight: 800, color: C.white, lineHeight: 1.02, letterSpacing: -1.5,
-            }}>{name}</div>
-
-            {/* Profession */}
-            {profession && (
-              <div style={{ marginTop: 10, fontSize: 30, fontWeight: 600, color: C.orange, letterSpacing: -0.3 }}>
-                {profession}
-              </div>
-            )}
-
-            {/* Bio (2-line clamp) */}
-            {bio && (
-              <div style={{
-                marginTop: 16, fontSize: 20, lineHeight: 1.4, color: 'rgba(245,245,247,0.72)',
-                maxHeight: 56, overflow: 'hidden',
-                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-              }}>{bio}</div>
-            )}
-
-            <div style={{ flex: 1 }} />
-
-            {/* Stats */}
-            <div style={{ display: 'flex', gap: 46, marginBottom: 26 }}>
-              <Stat icon="⭐" value={hasRating ? rating.toFixed(1) : 'New'}
-                    label={hasRating ? `${reviews} Reviews` : 'Just launched'} />
-              <Stat icon="📅" value={bookings > 0 ? compact(bookings) : '—'} label="Bookings" />
-              {since && <Stat icon="🌱" value={since} label="Member since" />}
-            </div>
-
-            {/* CTA row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                border: `1px solid ${C.line}`, borderRadius: 10, padding: '13px 20px',
-                color: C.white, fontSize: 17, fontWeight: 600, background: 'rgba(255,255,255,0.03)',
-              }}>📅 Book Instantly</div>
-              {username && (
-                <div style={{
-                  borderRadius: 10, padding: '13px 22px', background: C.orange,
-                  color: '#fff', fontSize: 17, fontWeight: 700,
-                }}>bookasloth.com/{username}</div>
-              )}
-            </div>
+      {/* Centre band: identity (left) + portrait (right) */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 72px', gap: 56 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Name + one verified mark */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <span style={{
+              fontSize: name.length > 20 ? 58 : name.length > 13 ? 66 : 78, fontWeight: 800,
+              color: C.white, lineHeight: 1.0, letterSpacing: -2,
+            }}>{name}</span>
+            {verified && <VerifiedTick />}
           </div>
 
-          {/* ── Right panel: avatar + trust ──────────────── */}
-          <div style={{ width: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
-            <div style={{
-              width: 250, height: 250, borderRadius: '50%', padding: 5,
-              background: `conic-gradient(from 140deg, ${C.orange}, ${C.orangeSoft}, ${C.orange})`,
-              boxShadow: '0 0 60px -12px rgba(254,81,0,0.55)',
-            }}>
-              <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: C.panel2 }}>
-                {avatar
-                  ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 90, fontWeight: 800, color: C.grey }}>{name.charAt(0)}</div>}
-              </div>
+          {/* Profession */}
+          {profession && (
+            <div style={{ marginTop: 14, fontSize: 32, fontWeight: 600, color: C.orange, letterSpacing: -0.3 }}>
+              {profession}
             </div>
+          )}
 
-            <div style={{ marginTop: 34, display: 'flex', flexDirection: 'column', gap: 18, alignSelf: 'stretch', paddingLeft: 14 }}>
-              {online && <TrustLine icon="🌐" text="Available Online" />}
-              {meet && <TrustLine icon="🎥" text="Google Meet" />}
-              <TrustLine icon="🛡️" text="Trusted & Verified" />
-            </div>
+          {/* One proof line — real numbers, or an honest new-host line. No stat grid. */}
+          <div style={{ marginTop: 26, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            {hasRating && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 16px',
+                borderRadius: 999, background: 'rgba(254,81,0,0.14)', color: C.white,
+                fontSize: 22, fontWeight: 700,
+              }}>
+                <span style={{ color: C.orangeSoft }}>★</span> {rating.toFixed(1)}
+              </span>
+            )}
+            <span style={{ fontSize: 21, color: C.grey, fontWeight: 500 }}>
+              {[
+                hasRating ? `${reviews} review${reviews === 1 ? '' : 's'}` : null,
+                bookings > 0 ? `${compact(bookings)} booked` : null,
+                (!hasRating && bookings === 0 && since) ? `New host · since ${since}` : null,
+              ].filter(Boolean).join('  ·  ')}
+            </span>
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Portrait — the anchor. Large, glowing, nothing stacked under it. */}
         <div style={{
-          borderTop: `1px solid ${C.line}`, padding: '18px 52px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          color: C.grey, fontSize: 17,
+          width: 300, height: 300, flexShrink: 0, borderRadius: '50%', padding: 5,
+          background: `conic-gradient(from 140deg, ${C.orange}, ${C.orangeSoft}, ${C.orange})`,
+          boxShadow: '0 0 90px -10px rgba(254,81,0,0.5)',
         }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/favicon.svg" alt="" style={{ width: 22, height: 22, borderRadius: 5 }}
-                 onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            The simplest way to book the best.
-          </span>
-          {/* Inline tricolour, not the 🇮🇳 flag emoji — headless Chrome can't render
-              regional-indicator glyphs, and the screenshot is final (shows "IN"). */}
-          <span style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            Made in India
-            <span style={{ display: 'inline-flex', flexDirection: 'column', width: 22, height: 15, borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.15)' }}>
-              <span style={{ flex: 1, background: '#FF9933' }} />
-              <span style={{ flex: 1, background: '#FFFFFF' }} />
-              <span style={{ flex: 1, background: '#138808' }} />
-            </span>
-          </span>
+          <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: C.panel2 }}>
+            {avatar
+              ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 110, fontWeight: 800, color: C.grey }}>{name.charAt(0)}</div>}
+          </div>
         </div>
       </div>
     </div>
