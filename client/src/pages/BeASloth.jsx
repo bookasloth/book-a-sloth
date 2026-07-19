@@ -114,7 +114,7 @@ const BeASloth = () => {
             {PERSONAS.map((p) => (
               <div
                 key={p.label}
-                className="flex items-center gap-2.5 rounded-[6px] border border-black/5 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-transform duration-200 motion-safe:hover:-translate-y-0.5"
+                className="flex items-center gap-2.5 rounded-[6px] border border-black/5 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-transform duration-200 motion-safe:"
               >
                 <span
                   className="grid h-9 w-9 shrink-0 place-items-center rounded-[6px]"

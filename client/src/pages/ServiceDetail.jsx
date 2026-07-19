@@ -693,7 +693,7 @@ const DisplayAdCard = () => (
 
       {/* bottom row — pill CTA + wordmark */}
       <div className="flex items-center justify-between gap-2 pt-2">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#0A2A66] py-2 pl-4 pr-1.5 text-sm font-bold text-white transition-transform group-hover:-translate-y-0.5">
+        <span className="inline-flex items-center gap-2 rounded-full bg-[#0A2A66] py-2 pl-4 pr-1.5 text-sm font-bold text-white transition-transform group-">
           Get started
           <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ background: '#FFC400' }}>
             <svg className="w-4 h-4 text-[#0A2A66]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>

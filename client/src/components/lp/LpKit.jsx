@@ -29,7 +29,7 @@ export function CtaButton({ slot, children = "Start My Page", variant = "dark", 
   }
 
   const base =
-    "group inline-flex items-center gap-2.5 rounded-[6px] px-6 py-3.5 text-[15px] font-semibold transition-all hover:-translate-y-0.5 hover:no-underline";
+    "group inline-flex items-center gap-2.5 rounded-[6px] px-6 py-3.5 text-[15px] font-semibold transition-all hover:no-underline";
   const skin =
     variant === "light"
       ? "bg-white text-ink shadow-[0_10px_30px_-12px_rgba(0,0,0,0.5)] hover:bg-white"

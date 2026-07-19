@@ -36,7 +36,7 @@ export function LpCta({ slug, slot, label = "Get started", variant = "primary", 
       <Link
         to={ROUTE_START}
         onClick={track}
-        className={`flex w-full items-center justify-center gap-3 rounded-[6px] border-2 border-black/10 bg-white py-3 text-sm font-semibold text-ink shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition hover:-translate-y-0.5 hover:border-black/20 hover:no-underline ${className}`}
+        className={`flex w-full items-center justify-center gap-3 rounded-[6px] border-2 border-black/10 bg-white py-3 text-sm font-semibold text-ink shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition hover:border-black/20 hover:no-underline ${className}`}
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
@@ -53,7 +53,7 @@ export function LpCta({ slug, slot, label = "Get started", variant = "primary", 
     <Link
       to={ROUTE_START}
       onClick={track}
-      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:opacity-95 hover:no-underline ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-95 hover:no-underline ${className}`}
       style={{ background: BAS_CTA }}
     >
       {label}

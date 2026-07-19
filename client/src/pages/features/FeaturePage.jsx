@@ -44,7 +44,7 @@ function Header() {
         </Link>
         <Link
           to={ROUTE}
-          className="hidden items-center gap-1.5 rounded px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:no-underline sm:inline-flex"
+          className="hidden items-center gap-1.5 rounded px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:no-underline sm:inline-flex"
           style={{ background: '#FE5100' }}
         >
           Get Started Free <ArrowRight size={15} />
@@ -70,7 +70,7 @@ function CtaButton({ children = 'Get Started Free', className = '' }) {
   return (
     <Link
       to={ROUTE}
-      className={`inline-flex items-center justify-center gap-2 rounded px-7 py-4 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5 hover:no-underline ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded px-7 py-4 text-sm font-semibold text-white shadow-lg transition-transform hover:no-underline ${className}`}
       style={{ background: '#FE5100' }}
     >
       {children} <ArrowRight size={16} />

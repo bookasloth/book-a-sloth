@@ -125,7 +125,7 @@ export default function Pricing() {
 
                 <Link
                   to={ROUTE_START}
-                  className={`mt-6 inline-flex items-center justify-center rounded-[6px] px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:no-underline ${
+                  className={`mt-6 inline-flex items-center justify-center rounded-[6px] px-6 py-3 text-sm font-semibold transition-transform hover:no-underline ${
                     p.recommended ? "bg-primary-cta text-white hover:bg-primary-dark" : "bg-ink text-white hover:bg-neutral-800"
                   }`}
                 >
@@ -192,7 +192,7 @@ export default function Pricing() {
           </p>
           <Link
             to={ROUTE_START}
-            className="mt-7 inline-flex items-center justify-center rounded-[6px] bg-primary-cta px-7 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-primary-dark hover:no-underline"
+            className="mt-7 inline-flex items-center justify-center rounded-[6px] bg-primary-cta px-7 py-3 text-sm font-semibold text-white transition-transform hover:bg-primary-dark hover:no-underline"
           >
             Let's Get Started
           </Link>

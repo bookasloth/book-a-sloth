@@ -399,7 +399,7 @@ const ZohoBookingsAlternative = () => {
                 {INTEGRATIONS.map((int) => (
                   <div
                     key={int.name}
-                    className="flex flex-col items-center gap-1.5 rounded-[6px] border border-gray-100 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    className="flex flex-col items-center gap-1.5 rounded-[6px] border border-gray-100 bg-white p-3 shadow-sm transition hover:shadow-md"
                   >
                     <div className="flex h-9 w-9 items-center justify-center rounded-[6px] border border-gray-100 bg-white">
                       <img
@@ -424,7 +424,7 @@ const ZohoBookingsAlternative = () => {
                   <AccentCard
                     key={card.title}
                     accent={card.color}
-                    className="rounded-[6px] border border-gray-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    className="rounded-[6px] border border-gray-100 bg-white p-4 shadow-sm transition hover:shadow-md"
                   >
                     <div className="flex items-start justify-between">
                       <div>

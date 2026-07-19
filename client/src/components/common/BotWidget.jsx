@@ -256,7 +256,7 @@ export default function BotWidget() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? 'Close support chat' : 'Open Bolt support chat'}
-        className="ml-auto flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-[3px_3px_0_#1E1E1E] transition-transform hover:-translate-y-0.5"
+        className="ml-auto flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-[3px_3px_0_#1E1E1E] transition-transform"
         style={{ background: PRIMARY, border: `2px solid ${INK}` }}
       >
         {open ? (

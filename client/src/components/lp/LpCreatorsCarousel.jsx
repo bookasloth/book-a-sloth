@@ -60,7 +60,7 @@ export default function LpCreatorsCarousel() {
               type="button"
               onClick={() => scroll(-1)}
               aria-label="Previous creators"
-              className="grid h-11 w-11 place-items-center rounded-[6px] bg-white text-ink transition-transform hover:-translate-y-0.5"
+              className="grid h-11 w-11 place-items-center rounded-[6px] bg-white text-ink transition-transform"
             >
               <ChevronLeft size={20} />
             </button>
@@ -68,7 +68,7 @@ export default function LpCreatorsCarousel() {
               type="button"
               onClick={() => scroll(1)}
               aria-label="Next creators"
-              className="grid h-11 w-11 place-items-center rounded-[6px] bg-white text-ink transition-transform hover:-translate-y-0.5"
+              className="grid h-11 w-11 place-items-center rounded-[6px] bg-white text-ink transition-transform"
             >
               <ChevronRight size={20} />
             </button>

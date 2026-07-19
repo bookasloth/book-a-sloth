@@ -107,7 +107,7 @@ const BadgeShowcase = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {badges.map((b) => (
               <button key={b.id} onClick={() => openModal(b)}
-                className={`bg-white rounded text-left p-4 border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-[#FE5100] ${b.is_bas_team ? 'border-[#FE5100]/50 ring-1 ring-[#FE5100]/20' : 'border-gray-200'}`}
+                className={`bg-white rounded text-left p-4 border shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-[#FE5100] ${b.is_bas_team ? 'border-[#FE5100]/50 ring-1 ring-[#FE5100]/20' : 'border-gray-200'}`}
                 style={{ borderRadius: 4 }}>
                 {b.image_url
                   ? <img src={b.image_url} alt={`${b.name} badge`} className="w-14 h-14 mx-auto mb-3 object-contain" />

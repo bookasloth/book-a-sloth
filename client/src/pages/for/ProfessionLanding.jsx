@@ -39,7 +39,7 @@ function ForHeader({ ctaText }) {
         </Link>
         <Link
           to={ROUTE_START}
-          className="hidden items-center gap-1.5 rounded-[6px] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:no-underline sm:inline-flex"
+          className="hidden items-center gap-1.5 rounded-[6px] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:no-underline sm:inline-flex"
           style={{ background: 'var(--lp-accent-cta)' }}
         >
           {ctaText} <ArrowRight size={15} />
@@ -123,7 +123,7 @@ function MidCta({ text, ctaText }) {
         <p className="text-lg font-bold text-white sm:text-xl">{text}</p>
         <Link
           to={ROUTE_START}
-          className="inline-flex flex-shrink-0 items-center gap-2 rounded-[6px] px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:no-underline"
+          className="inline-flex flex-shrink-0 items-center gap-2 rounded-[6px] px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:no-underline"
           style={{ background: 'var(--lp-accent-cta)' }}
         >
           {ctaText} <ArrowRight size={16} />
@@ -344,7 +344,7 @@ export default function ProfessionLanding() {
             <Reveal delay={0.18} className="mt-9 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
               <Link
                 to={ROUTE_START}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-7 py-4 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:no-underline sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-7 py-4 text-sm font-semibold text-white shadow-lg transition-all hover:no-underline sm:w-auto"
                 style={{ background: 'var(--lp-accent-cta)' }}
               >
                 {hero.ctaText}
@@ -537,7 +537,7 @@ export default function ProfessionLanding() {
             {pricing.line}
           </Reveal>
           <Reveal delay={0.16} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-2 rounded-[6px] px-7 py-4 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:no-underline" style={{ background: 'var(--lp-accent-cta)' }}>
+            <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-2 rounded-[6px] px-7 py-4 text-sm font-semibold text-white transition-all hover:no-underline" style={{ background: 'var(--lp-accent-cta)' }}>
               Start free <ArrowRight size={16} />
             </Link>
             <Link to="/pricing" className="text-sm font-semibold text-[color:var(--lp-primary)] underline-offset-4 hover:underline">
@@ -580,7 +580,7 @@ export default function ProfessionLanding() {
             {finalCta.subline}
           </Reveal>
           <Reveal delay={0.18} className="mt-8">
-            <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-2 rounded-[6px] px-8 py-4 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:no-underline" style={{ background: 'var(--lp-accent-cta)' }}>
+            <Link to={ROUTE_START} className="inline-flex items-center justify-center gap-2 rounded-[6px] px-8 py-4 text-sm font-semibold text-white shadow-lg transition-all hover:no-underline" style={{ background: 'var(--lp-accent-cta)' }}>
               {finalCta.ctaText} <ArrowRight size={16} />
             </Link>
           </Reveal>

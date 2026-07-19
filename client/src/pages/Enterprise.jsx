@@ -175,7 +175,7 @@ export default function Enterprise() {
               <button
                 type="button"
                 onClick={handleHeroCta}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-7 py-4 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-7 py-4 text-sm font-semibold text-white shadow-lg transition-all sm:w-auto"
                 style={{ background: 'var(--ent-cta)' }}
               >
                 {HERO.primary} <ArrowRight size={16} />
@@ -183,7 +183,7 @@ export default function Enterprise() {
               <button
                 type="button"
                 onClick={handleDemoCta}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-black/10 px-7 py-4 text-sm font-semibold text-[color:var(--ent-ink)] transition-all hover:-translate-y-0.5 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-black/10 px-7 py-4 text-sm font-semibold text-[color:var(--ent-ink)] transition-all sm:w-auto"
               >
                 {HERO.secondary}
               </button>
@@ -433,7 +433,7 @@ export default function Enterprise() {
             <button
               type="button"
               onClick={handleSalesCta}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-7 py-4 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-7 py-4 text-sm font-semibold text-white shadow-lg transition-all sm:w-auto"
               style={{ background: 'var(--ent-cta)' }}
             >
               {HERO.primary} <ArrowRight size={16} />
@@ -441,7 +441,7 @@ export default function Enterprise() {
             <button
               type="button"
               onClick={handleDemoCta}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-black/10 px-7 py-4 text-sm font-semibold text-[color:var(--ent-ink)] transition-all hover:-translate-y-0.5 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-black/10 px-7 py-4 text-sm font-semibold text-[color:var(--ent-ink)] transition-all sm:w-auto"
             >
               {HERO.secondary}
             </button>
