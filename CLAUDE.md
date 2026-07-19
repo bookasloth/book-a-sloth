@@ -75,6 +75,13 @@ Items previously listed here as pending are now live:
   embedded in the admin JWT at sign-in — an ops admin logged in before this still 403s on
   host documents until they re-login).
 
+- **v3.88** (`v3.88_profiles_og_card.sql`) — applied 2026-07-19 on BOTH DBs (prod 59
+  profiles + staging 7 defaulted to og_status='none'). Adds host OG share-card columns
+  (og_image/og_status/og_generated_at/og_version/og_hash/og_error) + status check +
+  partial pending index. Code keeps a schema fallback (hostController strips og_status
+  on "column not found"). Cards generated off-Render via `client/scripts/generateHostOgImages.mjs`
+  (blog pipeline clone) → Supabase images/host-og/.
+
 No migration is currently outstanding. Workflow for any NEW migration: run it on BOTH DBs, and keep the
 code-side schema fallback (SELECT/INSERT destructure) until it is confirmed applied everywhere.
 

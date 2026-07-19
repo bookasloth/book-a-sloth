@@ -35,41 +35,53 @@ const render = async () => {
 beforeEach(() => jest.clearAllMocks());
 
 describe('profile OG card', () => {
-  // The bug: Google hands back =s96-c, Facebook's card minimum is 200x200, so
-  // hosts got NO card at all. If this regresses the avatar silently drops under
-  // the floor again and nothing else in the suite notices.
-  test('upscales a Google avatar past the 200px card floor', async () => {
+  const ogImageContent = (html) => (html.match(/property="og:image" content="([^"]*)"/) || [])[1];
+
+  // v3.88: og:image is a generated 1200x630 CARD, never the square avatar (which
+  // letterboxes under summary_large_image). The avatar moves to JSON-LD instead.
+  test('uses the generated card as og:image when one is ready', async () => {
     wireHost({
-      profile_image:
-        'https://lh3.googleusercontent.com/a/ACg8ocLZvMp-AmfFAiz5QpR8eTTT-MYDH5U4qD1ovA1CuByRIoFobQ=s96-c',
+      og_status: 'ready',
+      og_image: 'https://cdn.supabase/images/host-og/ketaki.png?v=1',
+      profile_image: 'https://lh3.googleusercontent.com/a/xyz=s96-c',
     });
+    const html = await render();
+
+    expect(ogImageContent(html)).toBe('https://cdn.supabase/images/host-og/ketaki.png?v=1');
+    // Known 1200x630 card => size hints are honest here.
+    expect(html).toContain('<meta property="og:image:width" content="1200">');
+    expect(html).toContain('<meta property="og:image:height" content="630">');
+  });
+
+  // Until a host's own card is generated, serve the site-wide card — a real
+  // 1200x630 image — NOT the bare avatar.
+  test('falls back to the site card when no generated card exists', async () => {
+    wireHost({ og_status: 'none', og_image: null, profile_image: 'https://cdn.example.com/pic.png' });
+    const html = await render();
+
+    expect(ogImageContent(html)).toBe('https://bookasloth.com/og-image.png');
+    expect(html).not.toContain('content="https://cdn.example.com/pic.png"'); // avatar is NOT the og:image
+  });
+
+  test('a dirty card still serves its (stale) image, never the avatar', async () => {
+    wireHost({
+      og_status: 'dirty',
+      og_image: 'https://cdn.supabase/host-og/ketaki.png?v=1',
+      profile_image: 'https://cdn.example.com/pic.png',
+    });
+    const html = await render();
+    // Design: dirty => serve the OLD card while a regen is queued, not the generic.
+    expect(ogImageContent(html)).toBe('https://cdn.supabase/host-og/ketaki.png?v=1');
+    expect(html).not.toContain('content="https://cdn.example.com/pic.png"');
+  });
+
+  // The avatar still belongs in structured data (Person.image), upscaled past
+  // Google's =s96-c so it isn't a thumbnail there either.
+  test('upscales the Google avatar in the JSON-LD Person image', async () => {
+    wireHost({ profile_image: 'https://lh3.googleusercontent.com/a/xyz=s96-c' });
     const html = await render();
 
     expect(html).toContain('=s512-c');
     expect(html).not.toContain('=s96-c');
-  });
-
-  test('leaves a non-Google image URL alone', async () => {
-    wireHost({ profile_image: 'https://cdn.example.com/pic.png' });
-    expect(await render()).toContain('content="https://cdn.example.com/pic.png"');
-  });
-
-  // A host photo is whatever they uploaded — usually square. Claiming 1200x630
-  // over it is a lie scrapers act on.
-  test('omits size hints when the image is the host\'s own photo', async () => {
-    wireHost({ profile_image: 'https://cdn.example.com/pic.png' });
-    const html = await render();
-
-    expect(html).not.toContain('og:image:width');
-    expect(html).not.toContain('og:image:height');
-  });
-
-  test('keeps size hints for the site fallback card, whose size we do know', async () => {
-    wireHost({ profile_image: null });
-    const html = await render();
-
-    expect(html).toContain('https://bookasloth.com/og-image.png');
-    expect(html).toContain('<meta property="og:image:width" content="1200">');
-    expect(html).toContain('<meta property="og:image:height" content="630">');
   });
 });
