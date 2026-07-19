@@ -14,12 +14,7 @@ import {
 } from 'lucide-react';
 import Seo from '../components/common/Seo';
 import { useHideChrome } from '../context/ChromeContext';
-
-// Featured moment — image on the company CDN, links to the public moment page.
-const MOMENT_SLUG = 'fifa-2026-winners-argentina';
-const MOMENT_TITLE = 'FIFA 2026 Winners — Argentina';
-const MOMENT_IMG = `https://company-assets.bookasloth.in/images/moments/${MOMENT_SLUG}.png`;
-const MOMENT_URL = `https://bookasloth.com/moments/${MOMENT_SLUG}`;
+import { FEATURED } from '../data/moments';
 
 // Discovery pills. Each links to a real route so the launcher is usable today.
 const PILLS = [
@@ -49,7 +44,7 @@ export default function Search() {
   const submit = (e) => {
     e.preventDefault();
     const v = q.trim();
-    if (!v) { window.location.href = 'https://bookasloth.com/moments'; return; }
+    if (!v) { navigate('/moments'); return; }
     navigate(`/explore?q=${encodeURIComponent(v)}`);
   };
 
@@ -79,13 +74,13 @@ export default function Search() {
         {/* Featured moment — original image ratio. Width capped to 75% of the search
             bar on mobile, 50% on desktop; max-h keeps the page within 100dvh. */}
         <div className="mb-5 flex w-full max-w-3xl justify-center">
-          <a href={MOMENT_URL} title={MOMENT_TITLE} aria-label={MOMENT_TITLE} className="block w-3/4 sm:w-1/2">
+          <Link to={`/moments/${FEATURED.slug}`} title={FEATURED.title} aria-label={FEATURED.title} className="block w-3/4 sm:w-1/2">
             <img
-              src={MOMENT_IMG}
-              alt={MOMENT_TITLE}
+              src={FEATURED.image}
+              alt={FEATURED.title}
               className="mx-auto h-auto max-h-[32vh] w-full rounded-xl object-contain"
             />
-          </a>
+          </Link>
         </div>
 
         <h1 className="mb-8 text-center font-heading text-2xl font-semibold text-muted sm:text-3xl">
