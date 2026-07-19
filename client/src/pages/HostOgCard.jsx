@@ -45,41 +45,62 @@ const VerifiedTick = () => (
   }}>✓</span>
 );
 
-// Faint booking-themed backdrop: a big grid + scattered product icons (calendar,
-// clock, WhatsApp, rupee, video) at very low opacity — a whisper of branding
-// behind the content, never competing with it.
+// Faint calendar-motif backdrop, inspired by a scheduling grid: a dotted grid
+// with a few numbered date cells + connectors, concentrated in the top-right and
+// faded diagonally toward the centre. A whisper of product icons (clock, chat,
+// rupee, video) sits small and near-invisible on the left. Never competes with
+// the content — "there, but not there".
+const CAL_CELLS = [
+  { x: 726, y: 70, n: '05' }, { x: 862, y: 70, n: '06' }, { x: 998, y: 70, n: '07' },
+  { x: 794, y: 168, n: '12' }, { x: 930, y: 168, n: '13' },
+  { x: 658, y: 266, n: '18' }, { x: 1066, y: 266, n: '20' },
+];
 const BrandBackdrop = () => {
   const S = { fill: 'none', stroke: 'rgba(255,255,255,0.05)', strokeWidth: 4, strokeLinecap: 'round', strokeLinejoin: 'round' };
   return (
     <svg width={OG_W} height={OG_H} viewBox={`0 0 ${OG_W} ${OG_H}`} style={{ position: 'absolute', inset: 0 }} aria-hidden="true">
-      {/* big grid */}
-      <g stroke="rgba(255,255,255,0.022)" strokeWidth="2">
-        {[210, 420, 630, 840, 1050].map((x) => <line key={`v${x}`} x1={x} y1="0" x2={x} y2={OG_H} />)}
-        {[157, 314, 471].map((y) => <line key={`h${y}`} x1="0" y1={y} x2={OG_W} y2={y} />)}
+      <defs>
+        <pattern id="cal-dots" width="30" height="30" patternUnits="userSpaceOnUse">
+          <circle cx="1.6" cy="1.6" r="1.6" fill="rgba(255,255,255,0.07)" />
+        </pattern>
+        {/* opaque top-right → transparent bottom-left, so the calendar fades on the diagonal */}
+        <linearGradient id="cal-fade" x1="1" y1="0" x2="0.15" y2="0.9">
+          <stop offset="0" stopColor="#fff" stopOpacity="1" />
+          <stop offset="0.55" stopColor="#fff" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+        <mask id="cal-mask"><rect width={OG_W} height={OG_H} fill="url(#cal-fade)" /></mask>
+      </defs>
+
+      {/* Calendar grid + date cells — masked to the top-right diagonal */}
+      <g mask="url(#cal-mask)">
+        <rect x="520" y="0" width="680" height="470" fill="url(#cal-dots)" />
+        {/* thin connectors between a few cells */}
+        <g stroke="rgba(255,255,255,0.06)" strokeWidth="2" fill="none">
+          <path d="M749 116 V168" /><path d="M817 116 V168" />
+          <path d="M817 214 V266" /><path d="M953 214 V266 H1089" />
+          <path d="M681 214 V266" />
+        </g>
+        {CAL_CELLS.map((c) => (
+          <g key={c.n}>
+            <rect x={c.x} y={c.y} width="46" height="46" rx="12" fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="2" />
+            <text x={c.x + 23} y={c.y + 30} textAnchor="middle" fontFamily="Poppins, sans-serif" fontSize="17" fontWeight="600" fill="rgba(255,255,255,0.11)">{c.n}</text>
+          </g>
+        ))}
       </g>
-      {/* calendar */}
-      <g transform="translate(96 92) scale(1.1)" {...S}>
-        <rect x="0" y="10" width="96" height="82" rx="10" />
-        <line x1="0" y1="34" x2="96" y2="34" /><line x1="26" y1="0" x2="26" y2="20" /><line x1="70" y1="0" x2="70" y2="20" />
-        <rect x="16" y="48" width="16" height="14" rx="3" /><rect x="42" y="48" width="16" height="14" rx="3" /><rect x="68" y="48" width="14" height="14" rx="3" />
-      </g>
-      {/* clock */}
-      <g transform="translate(520 430) scale(1.15)" {...S}>
-        <circle cx="48" cy="48" r="46" /><line x1="48" y1="48" x2="48" y2="20" /><line x1="48" y1="48" x2="70" y2="56" />
-      </g>
-      {/* WhatsApp-ish chat bubble */}
-      <g transform="translate(1000 96) scale(1.05)" {...S}>
-        <path d="M18 20 h64 a12 12 0 0 1 12 12 v30 a12 12 0 0 1 -12 12 h-42 l-18 16 v-16 a12 12 0 0 1 -6 -10 v-32 a12 12 0 0 1 12 -12 z" />
-      </g>
-      {/* rupee */}
-      <text x="250" y="520" fontFamily="Poppins, sans-serif" fontSize="120" fontWeight="700" fill="rgba(255,255,255,0.045)">₹</text>
-      {/* video camera */}
-      <g transform="translate(690 74) scale(1.0)" {...S}>
-        <rect x="0" y="18" width="70" height="54" rx="10" /><path d="M74 34 L100 18 V72 L74 56 Z" />
-      </g>
-      {/* small clock, lower-left */}
-      <g transform="translate(60 350) scale(0.8)" {...S}>
-        <circle cx="40" cy="40" r="38" /><line x1="40" y1="40" x2="40" y2="18" /><line x1="40" y1="40" x2="56" y2="46" />
+
+      {/* Product icons — small, faint, pushed to the left. "There but not there." */}
+      <g opacity="0.5">
+        <g transform="translate(70 300) scale(0.5)" {...S}>
+          <circle cx="40" cy="40" r="38" /><line x1="40" y1="40" x2="40" y2="18" /><line x1="40" y1="40" x2="56" y2="46" />
+        </g>
+        <g transform="translate(150 430) scale(0.42)" {...S}>
+          <path d="M18 20 h64 a12 12 0 0 1 12 12 v30 a12 12 0 0 1 -12 12 h-42 l-18 16 v-16 a12 12 0 0 1 -6 -10 v-32 a12 12 0 0 1 12 -12 z" />
+        </g>
+        <text x="60" y="510" fontFamily="Poppins, sans-serif" fontSize="52" fontWeight="700" fill="rgba(255,255,255,0.04)">₹</text>
+        <g transform="translate(250 250) scale(0.4)" {...S}>
+          <rect x="0" y="18" width="70" height="54" rx="10" /><path d="M74 34 L100 18 V72 L74 56 Z" />
+        </g>
       </g>
     </svg>
   );
@@ -123,7 +144,7 @@ export default function HostOgCard() {
       <BrandBackdrop />
 
       {/* Brand — logo mark + domain, top-left */}
-      <div style={{ position: 'absolute', top: 48, left: 72, display: 'flex', alignItems: 'center', gap: 15 }}>
+      <div style={{ position: 'absolute', top: 68, left: 72, display: 'flex', alignItems: 'center', gap: 15 }}>
         <img src="https://company-assets.bookasloth.in/images/email/footer-logo.png" alt=""
              style={{ width: 54, height: 54, borderRadius: '50%', objectFit: 'cover', background: '#fff' }}
              onError={(e) => { e.currentTarget.style.display = 'none'; }} />
