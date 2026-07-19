@@ -173,7 +173,7 @@ export default function BotWidget() {
           </div>
 
           {/* Messages / Welcome */}
-          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[#FFF8F4] px-3.5 py-4">
+          <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[#FFF8F4] px-3.5 py-4">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center px-2 text-center">
                 <Avatar size={52} ring />
