@@ -238,9 +238,8 @@ const ThumbnailCropper = ({ currentUrl, onUploaded }) => {
     const ctx = canvasRef.current.getContext('2d');
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
     ctx.drawImage(imgEl, offset.x, offset.y, imgEl.naturalWidth * scale, imgEl.naturalHeight * scale);
-    ctx.strokeStyle = 'rgba(99,102,241,0.8)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, CANVAS_W - 2, CANVAS_H - 2);
+    // NOTE: crop-guide border is CSS on the <canvas> element, NOT stroked here —
+    // a canvas stroke bakes into the exported JPEG (permanent border on uploads).
   }, [imgEl, scale, offset]);
 
   useEffect(() => { draw(); }, [draw]);
