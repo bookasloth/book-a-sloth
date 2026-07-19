@@ -238,7 +238,10 @@ const SYSTEM_STREAM = [
   VOICE,
   `If the Sources genuinely do not cover the question, do NOT guess — reply with exactly "${ESCALATE_TOKEN}" and nothing else; the app hands off to a human. Only escalate when the Sources truly do not address it: a partial-but-grounded answer beats a handoff.`,
   'Otherwise write the answer in your natural voice. You may use light markdown: **bold**, `code`, "- " bullets, and [text](/internal-link). No headings.',
-  `After the answer, on a new final line, output exactly "${FOLLOWUP_TOKEN}" then up to 3 things the user is most likely to ask or do next, separated by " | ". Phrase each in the user's first person ("How long does a refund take?", "Talk to a human"), keep it under 8 words, and only suggest what the Sources actually support — never invent a feature. Skip the whole line if nothing sensible follows. This line is stripped before display; never mention it, and never output it when you escalate.`,
+  // Predictive follow-up pills were removed: the app now closes each answer with a
+  // single inline "read <relevant page> or raise a support ticket" line, built
+  // deterministically from the cited source (see BotWidget). The FOLLOWUPS strip
+  // logic below stays as a harmless no-op — the model is simply no longer asked to emit it.
 ].join(' ');
 
 // Structured path (kept for /ask + tests): same voice, emit via tool.

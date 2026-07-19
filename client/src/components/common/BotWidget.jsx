@@ -217,28 +217,27 @@ export default function BotWidget() {
                         </div>
                       )}
 
-                      {/* Sources — real links to the help article the answer was grounded on,
-                          opened in a new tab so the guest keeps their chat. Falls back to a
-                          plain label only if the slug can't be derived. */}
-                      {m.role === 'assistant' && !m.escalate && !m.streaming && m.cited_sources?.length > 0 && (
-                        <div className="mt-2.5 flex flex-wrap gap-1 border-t border-dashed border-[#1E1E1E]/15 pt-2">
-                          {m.cited_sources.map((s, j) => {
-                            const href = sourceHref(s);
-                            return href ? (
-                              <a
-                                key={j} href={href} target="_blank" rel="noopener noreferrer"
-                                className="rounded-md bg-[#FFF4EC] px-1.5 py-0.5 text-[10px] font-medium text-[#FE5100] underline decoration-[#FE5100]/40 underline-offset-2 hover:bg-[#FFE4D1]"
-                              >
-                                {sourceLabel(s)}
-                              </a>
-                            ) : (
-                              <span key={j} className="rounded-md bg-[#FFF4EC] px-1.5 py-0.5 text-[10px] font-medium text-[#1E1E1E]/60">
-                                {sourceLabel(s)}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
+                      {/* One inline closing suggestion instead of a row of chips: link the
+                          single most-relevant help page (when we can derive its slug) and
+                          always offer a human handoff. Deterministic — built from the top
+                          cited source, so no hallucinated links. */}
+                      {m.role === 'assistant' && !m.escalate && !m.streaming && m.content && (() => {
+                        const top = (m.cited_sources || []).find((s) => sourceHref(s));
+                        const href = top && sourceHref(top);
+                        return (
+                          <div className="mt-2.5 border-t border-dashed border-[#1E1E1E]/15 pt-2 text-[11px] leading-snug text-[#1E1E1E]/60">
+                            {href ? <>Want the full details? Read{' '}
+                              <a href={href} target="_blank" rel="noopener noreferrer"
+                                className="font-medium text-[#FE5100] underline decoration-[#FE5100]/40 underline-offset-2 hover:text-[#FE5100]/80">
+                                {sourceLabel(top)}
+                              </a>{' or '}</> : <>Still stuck? </>}
+                            <a href="/support" target="_blank" rel="noopener noreferrer"
+                              className="font-medium text-[#FE5100] underline decoration-[#FE5100]/40 underline-offset-2 hover:text-[#FE5100]/80">
+                              raise a support ticket
+                            </a>.
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Honest async handoff card (no fake agent, no fake timer) */}
@@ -274,21 +273,6 @@ export default function BotWidget() {
                       </div>
                     )}
 
-                    {/* Predictive follow-ups — clickable chips of likely next questions.
-                        Only on the newest answer (i === last): pushing a new turn makes the
-                        prior message no longer last, so its chips disappear on their own. */}
-                    {m.role === 'assistant' && !m.streaming && !m.escalate && i === messages.length - 1 && m.followups?.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5 pl-1">
-                        {m.followups.map((f) => (
-                          <button
-                            key={f} type="button" onClick={() => send(f)} disabled={streaming}
-                            className="rounded-md border border-[#FE5100]/70 bg-transparent px-2 py-px text-[10px] font-medium text-[#FE5100] transition-colors hover:bg-[#FFE4D1] hover:border-[#FE5100] disabled:opacity-50"
-                          >
-                            {f}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               ))
