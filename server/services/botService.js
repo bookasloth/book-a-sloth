@@ -52,10 +52,12 @@ const SENSITIVE_RE = /\b(refunds?|charge ?backs?|disputes?|charged (?:me )?(?:tw
 // The handoff line the user hears — in voice, honest, calm (money/frustrated
 // contexts land here too, so no jokes). The visual "async handoff card" is the
 // client's job; this is just the spoken line.
+// Neutral handoff line — works whether we escalate immediately (logged-in) or first
+// ask an anonymous visitor how to be reached. The client adds the concrete next step
+// (a "Support Request Sent" card with the reference, or the contact-choice buttons).
 const HANDOFF =
-  "Yeah — I don't have a solid answer for that one from the help docs, and I'm not " +
-  "going to guess and risk getting it wrong. I'm pulling in a human from the team; " +
-  "they'll follow up over WhatsApp or email.";
+  "I couldn't confidently verify that from our help documentation, so I'm getting " +
+  "this to a human on our support team.";
 
 // Escalation sentinel the streaming model emits (and nothing else) when the Sources
 // genuinely don't cover the question. Never shown to the user.
@@ -852,7 +854,14 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     }
   }
 
+  // Why we're escalating — surfaced to support (and stored on the escalation record).
+  let escalateReason = null;
   if (escalate) {
+    escalateReason = sensitive ? 'sensitive'
+      : !retrievalOk ? 'retrieval_error'
+      : !chunks.length ? 'no_match'
+      : !anthropicClient.isConfigured() ? 'ai_unavailable'
+      : 'model_unsure';
     answer = HANDOFF;
     onDelta(HANDOFF); // the spoken handoff line; the client also shows the async card
   }
@@ -864,7 +873,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
   else if (source === 'blocked') await logGap({ question: q, reason: 'blocked_output', conversationId: convId });
 
   const pillList = await pills.buildPills({ question: q, source, escalate, cited_sources, answer });
-  return { answer, cited_sources, followups, escalate, conversationId: convId, messageId, source, pills: pillList, locked: false };
+  return { answer, cited_sources, followups, escalate, escalateReason, conversationId: convId, messageId, source, pills: pillList, locked: false };
 }
 
 // Store 👍/👎 on an assistant message. On 👎, seed a knowledge gap. On 👍, auto-suggest

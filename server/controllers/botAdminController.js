@@ -251,4 +251,108 @@ const deleteCache = async (req, res) => {
   }
 };
 
-module.exports = { listGaps, updateGap, listFaqs, createFaq, updateFaq, deleteFaq, analytics, graph, listCache, deleteCache };
+// ── Escalations (human handoffs) — full thread + reply ─────────────────────
+const MAX_REPLY = 4000;
+
+// GET /api/admin/bot/escalations?status=open|replied|closed|all — newest first.
+const listEscalations = async (req, res) => {
+  try {
+    const status = req.query?.status || 'open';
+    let q = supabaseAdmin
+      .from('bot_escalations')
+      .select('id, reference, conversation_id, logged_in, is_host, name, email, phone, contact_channel, contact_verified, reason, summary, status, page_url, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (status !== 'all') q = q.eq('status', status);
+    const { data, error } = await q;
+    if (error) return safeError(res, error);
+    res.json({ escalations: data || [] });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// GET /api/admin/bot/escalations/:id — one escalation + full transcript + replies.
+const getEscalation = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!UUID_RE.test(id)) return res.status(400).json({ message: 'Invalid escalation id.' });
+    const { data: esc, error } = await supabaseAdmin.from('bot_escalations').select('*').eq('id', id).single();
+    if (error || !esc) return res.status(404).json({ message: 'Escalation not found.' });
+
+    let transcript = [];
+    if (esc.conversation_id) {
+      const { data: msgs } = await supabaseAdmin
+        .from('bot_messages').select('role, content, source, escalated, created_at')
+        .eq('conversation_id', esc.conversation_id).order('created_at', { ascending: true }).limit(200);
+      transcript = msgs || [];
+    }
+    const { data: replies } = await supabaseAdmin
+      .from('bot_escalation_replies').select('id, channel, body, sent_by, delivered, created_at')
+      .eq('escalation_id', id).order('created_at', { ascending: true });
+
+    res.json({ escalation: esc, transcript, replies: replies || [] });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// POST /api/admin/bot/escalations/:id/reply { channel:'email'|'note', body }
+// Email replies go out via the existing sendEmail util (WhatsApp free-form isn't
+// possible on the AiSensy campaign API — the UI offers a wa.me link for that instead,
+// and a 'note' just records an internal action). Sets status → replied on delivery.
+const replyEscalation = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!UUID_RE.test(id)) return res.status(400).json({ message: 'Invalid escalation id.' });
+    const channel = req.body?.channel === 'note' ? 'note' : 'email';
+    const body = String(req.body?.body || '').trim();
+    if (!body) return res.status(400).json({ message: 'Write a reply first.' });
+    if (body.length > MAX_REPLY) return res.status(400).json({ message: 'Reply is too long.' });
+
+    const { data: esc, error } = await supabaseAdmin.from('bot_escalations').select('id, reference, email').eq('id', id).single();
+    if (error || !esc) return res.status(404).json({ message: 'Escalation not found.' });
+
+    let delivered = false;
+    if (channel === 'email') {
+      if (!esc.email) return res.status(400).json({ message: 'No verified email on this escalation — use WhatsApp or a note.' });
+      const sendEmail = require('../utils/sendEmail');
+      const escHtml = (s = '') => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      await sendEmail({
+        to: esc.email,
+        subject: `Re: your Book A Sloth support request (${esc.reference})`,
+        html: `<p>${escHtml(body).replace(/\n/g, '<br/>')}</p><hr/><p style="color:#888;font-size:12px">Reference ${escHtml(esc.reference)} · Book A Sloth support</p>`,
+      });
+      delivered = true;
+    }
+
+    const { data: reply } = await supabaseAdmin
+      .from('bot_escalation_replies')
+      .insert({ escalation_id: id, channel, body, sent_by: req.admin?.email || req.admin?.username || req.admin?.id || null, delivered })
+      .select('id, channel, body, sent_by, delivered, created_at').single();
+    await supabaseAdmin.from('bot_escalations').update({ status: 'replied' }).eq('id', id);
+    res.json({ ok: true, reply });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// PATCH /api/admin/bot/escalations/:id { status: open|replied|closed }
+const updateEscalation = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!UUID_RE.test(id)) return res.status(400).json({ message: 'Invalid escalation id.' });
+    const status = req.body?.status;
+    if (!['open', 'replied', 'closed'].includes(status)) return res.status(400).json({ message: 'Invalid status.' });
+    const { error } = await supabaseAdmin.from('bot_escalations').update({ status }).eq('id', id);
+    if (error) return safeError(res, error);
+    res.json({ ok: true });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+module.exports = {
+  listGaps, updateGap, listFaqs, createFaq, updateFaq, deleteFaq, analytics, graph, listCache, deleteCache,
+  listEscalations, getEscalation, replyEscalation, updateEscalation,
+};

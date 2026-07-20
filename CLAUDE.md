@@ -82,6 +82,12 @@ Items previously listed here as pending are now live:
   on "column not found"). Cards generated off-Render via `client/scripts/generateHostOgImages.mjs`
   (blog pipeline clone) → Supabase images/host-og/.
 
+- **v3.89** (`v3.89_bot_escalations.sql`) — applied 2026-07-20 on BOTH DBs. Adds
+  `bot_escalations` + `bot_escalation_replies` (Bolt human-handoff records + admin reply
+  thread; additive, RLS-on/no-policy/service_role-only). escalationService keeps the
+  code-side schema fallback (degrades to email-only on "table/column missing"). See
+  `docs/bolt-escalation-flow.md`.
+
 No migration is currently outstanding. Workflow for any NEW migration: run it on BOTH DBs, and keep the
 code-side schema fallback (SELECT/INSERT destructure) until it is confirmed applied everywhere.
 
