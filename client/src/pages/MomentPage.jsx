@@ -8,9 +8,17 @@ import { MOMENTS, getMoment } from '../data/moments';
 
 function Block({ block }) {
   if (block.h2) {
-    return <h2 className="mt-10 font-heading text-xl font-bold tracking-tight text-ink sm:text-2xl">{block.h2}</h2>;
+    return <h2 className="mt-12 font-heading text-xl font-bold tracking-tight text-ink sm:text-2xl">{block.h2}</h2>;
   }
-  return <p className="mt-5 text-[15px] leading-relaxed text-muted sm:text-base">{block.p}</p>;
+  // Quiet ending — one line to remember. Large, centered, hairline above.
+  if (block.quote) {
+    return (
+      <p className="mx-auto mt-14 max-w-xl border-t-2 border-ink/10 pt-10 text-center font-heading text-xl font-semibold leading-snug tracking-tight text-ink sm:text-2xl">
+        {block.quote}
+      </p>
+    );
+  }
+  return <p className="mt-6 text-base leading-relaxed text-muted sm:text-[17px]">{block.p}</p>;
 }
 
 export default function MomentPage() {
@@ -24,12 +32,14 @@ export default function MomentPage() {
   const next = MOMENTS[idx - 1]; // newer
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10 sm:py-14">
+    <div className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
       <Seo
         title={`${moment.title} — Moments · Book A Sloth`}
+        ogTitle={moment.title}
         description={moment.excerpt}
         image={moment.image}
         ogType="article"
+        articlePublishedTime={new Date(moment.date).toISOString()}
         canonical={`https://bookasloth.com/moments/${moment.slug}`}
         jsonLd={{
           '@context': 'https://schema.org',
@@ -50,24 +60,24 @@ export default function MomentPage() {
       <img
         src={moment.image}
         alt={moment.alt}
-        className="mx-auto mt-6 h-auto w-full max-w-2xl rounded-xl border-2 border-ink/10 object-contain"
+        className="mx-auto mt-10 h-auto w-full max-w-2xl rounded-xl object-contain shadow-sm"
       />
 
-      <p className="mt-6 text-sm font-medium text-primary">{moment.date}</p>
-      <h1 className="mt-1 font-heading text-2xl font-bold tracking-tight text-ink sm:text-3xl">{moment.title}</h1>
+      <p className="mt-10 text-sm font-medium text-primary">{moment.date}</p>
+      <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-ink sm:text-4xl">{moment.title}</h1>
 
       <div className="mt-2">
         {moment.body.map((block, i) => <Block key={i} block={block} />)}
       </div>
 
-      {moment.credits && <p className="mt-8 text-xs italic text-muted">{moment.credits}</p>}
+      {moment.credits && <p className="mt-12 text-xs italic text-muted">{moment.credits}</p>}
 
       {moment.cta && (
         <Link
           to={moment.cta.href}
-          className="mt-8 inline-flex rounded-xl border-2 border-primary bg-primary px-6 py-2.5 text-sm font-semibold text-surface transition hover:brightness-95"
+          className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition hover:gap-2.5"
         >
-          {moment.cta.label}
+          {moment.cta.label} <ArrowRight className="h-4 w-4" />
         </Link>
       )}
 

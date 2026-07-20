@@ -58,6 +58,11 @@ const HELP_DOC_SLUGS = [
 // client/src/components/careers/careersContent.js (same ESM/CJS constraint).
 const JOB_SLUGS = ['digital-marketeer', 'mern-stack-developer', 'sales-associate'];
 
+// Moment archive pages (/moments/:slug). KEEP IN SYNC with the MOMENTS array in
+// client/src/data/moments.js (ESM data file, mirrored here by hand like above).
+// Drift symptom: a live /moments/:slug missing from sitemap-pages.xml.
+const MOMENT_SLUGS = ['fifa-2026-winners-spain'];
+
 // Public, crawlable static routes. Host/service URLs come from the DB below.
 const STATIC_ROUTES = [
   { path: '/',                         changefreq: 'daily',   priority: '1.0' },
@@ -77,6 +82,8 @@ const STATIC_ROUTES = [
   { path: '/terms',                    changefreq: 'yearly',  priority: '0.3' },
   { path: '/refund',                   changefreq: 'yearly',  priority: '0.3' },
   { path: '/wall-of-love',             changefreq: 'weekly',  priority: '0.5' },
+  { path: '/moments',                  changefreq: 'weekly',  priority: '0.5' },
+  ...MOMENT_SLUGS.map((s) => ({ path: `/moments/${s}`, changefreq: 'monthly', priority: '0.5' })),
   { path: '/help/docs',                changefreq: 'monthly', priority: '0.4' },
   ...HELP_DOC_SLUGS.map((s) => ({ path: `/help/docs/${s}`, changefreq: 'monthly', priority: '0.4' })),
   ...FEATURE_SLUGS.map((s) => ({ path: `/features/${s}`, changefreq: 'monthly', priority: '0.7' })),

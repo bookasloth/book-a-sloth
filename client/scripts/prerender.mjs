@@ -18,6 +18,7 @@ import { fileURLToPath } from 'url';
 import { loadEnv } from 'vite';
 import { FEATURES } from '../src/pages/features/featureData.js';
 import { HELP_SLUGS } from '../src/content/helpDocsList.js';
+import { MOMENTS } from '../src/data/moments.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, '..', 'dist');
@@ -79,6 +80,10 @@ const PRERENDER_ROUTES = [
   '/careers/sales-associate',
   '/services',
   '/explore',
+  // Moments archive + each moment. Imported from the static data file (pure ESM,
+  // no lucide) so this list never drifts as moments are added.
+  '/moments',
+  ...MOMENTS.map((m) => `/moments/${m.slug}`),
   '/for/lawyers',
   '/for/doctors',
   '/for/doctors-india',
