@@ -72,9 +72,11 @@ they are **still attributed**. `active=false` gates the LANDING (redirect to `/`
 not attribution. Stamping validates slug *existence*, not `active`.
 
 ### Slug reservation
-`invite` becomes a new top-level route → MUST be added to `reservedSegments.js`
-(client) and `reservedNamespaces.js` (server), or the route-manifest drift test
-fails the whole deploy. (Known landmine.)
+`invite` becomes a new top-level route. It is **already reserved server-side**
+(`reservedNamespaces.js` → `ACCOUNT` array). It is **missing from the client**
+`reservedSegments.js` → add `'invite'` there, or the `routeManifestSync` /
+`reservedSegmentsSync` CI tests fail the whole deploy. (Known landmine — client
+list only.)
 
 ## Components & flow
 
@@ -95,12 +97,14 @@ fails the whole deploy. (Known landmine.)
     `localStorage['bas_invite'] = slug` AND set the invite-specific UTM source to
     `invite/<slug>` in the UTM stash (`useUtm.js` / `sessionStorage['bas_utm']`).
     Existing non-invite UTM data is preserved per the existing UTM attribution
-    rules. (`bas_invite` mirrors `bas_ref` and survives OAuth; it — not
+    rules. (`bas_invite` mirrors `bas_ref`, survives days/sessions; it — not
     sessionStorage — is the durable gate, so the two stores can't diverge on source.)
   - Fire-and-forget `POST /api/invite/:slug/visit`.
 - Dynamic greeting: inject `label` into the hero headline, e.g.
   *"Welcome, {label} 🦥"*. One line; no per-slug design.
-- CTA → existing host onboarding (Google-only). No new auth flow.
+- CTA → existing host onboarding (Google-only). **At CTA click, read `bas_invite`
+  and pass it into the Google OAuth `state`** (see Attribution capture). No new
+  auth flow — same vendor-auth OAuth start, one extra field in `state`.
 
 ### 2. Bot / inflated-visit handling
 Social + QR links attract preview/unfurl bots (WhatsApp, FB, Slack) and
@@ -111,17 +115,35 @@ scrapers. `POST /api/invite/:slug/visit`:
 - `// ponytail: UA-skip + IP/day dedupe is a heuristic, not exact. Upgrade to a
   visit-log table only if sales needs precise unique-visitor counts.`
 
-### 3. Attribution capture (NEW profile creation branch ONLY)
-- Attribution lives **inside the new-profile-creation branch** of the sign-in
-  path. Existing profiles never enter the invite-attribution write path AT ALL —
-  regardless of whether their `invite_slug` is null. (A null-guarded update alone
-  is NOT sufficient: an old account can have `invite_slug IS NULL` and would be
-  wrongly stamped. The branch, not the guard, is the gate.)
-- In that new-profile branch: client passes `bas_invite`; server validates the
-  slug exists in `invite_links`; set `invite_slug` inline in the creation INSERT.
-  The `invite_slug IS NULL` condition is kept only as a belt-and-suspenders
-  write-once safety, not as the returning-account gate.
-- Clear the stash after. Independent of referral capture.
+### 3. Attribution capture — HYBRID: durable stash + OAuth-state + server-side stamp (LOCKED)
+Chosen for the long term over both a pure client-POST (trusts the browser, extra
+endpoint, can double-fire) and a pure OAuth-state approach (loses cross-session
+first-touch). This combines durability with a single race-free server write.
+
+**Slug carriage (durability):**
+1. `/invite/:slug` stashes `bas_invite` in `localStorage`, first-touch — survives
+   days / bookmarks / a signup that happens in a later session.
+2. At the Google CTA, the client reads `bas_invite` and injects it into the OAuth
+   `state` payload alongside the existing `flow: 'vendor_auth'`. (Same OAuth start
+   as today — one extra field. localStorage carries it across sessions; `state`
+   carries it race-free through the redirect.)
+
+**Server stamp (correctness) — `authController.googleCallback`, Flow A:**
+3. The stamp lives ONLY inside the brand-new-profile branch: `if (!profileId)`
+   (authController.js ~line 487), right after `markGoogleVendorOnboarding`. Existing
+   profiles NEVER enter the invite-attribution path — the branch, not a null-guard,
+   is the gate. (An old account can have `invite_slug IS NULL`; a guard alone would
+   wrongly stamp it.)
+4. In that branch: read `slug` from OAuth `state`; validate it EXISTS in
+   `invite_links` (existence only — a since-deactivated slug still attributes);
+   set `invite_slug` inline in the `upsertProfile` INSERT (or an atomic conditional
+   update `... WHERE id=$2 AND invite_slug IS NULL` as belt-and-suspenders).
+   No separate `/api/invite/capture` endpoint. No client-POST-after-auth.
+5. Independent of referral capture (`bas_ref` keeps its own client-POST path — a
+   host may carry both a payout referrer AND an invite source).
+
+**Fallback:** if `state` carries no slug (e.g. user disabled localStorage), no
+attribution — acceptable; never guess a source.
 
 ### 4. Admin UI (alongside `AdminReferrals`)
 - Create: `slug` + `label` + `assigned_to` (+ optional `metadata`). Slug validated
@@ -140,13 +162,21 @@ scrapers. `POST /api/invite/:slug/visit`:
 | POST | `/api/admin/invite-links`       | admin  | create (slug immutable hereafter) |
 | PATCH| `/api/admin/invite-links/:slug` | admin  | edit `label`/`assigned_to`/`active`/`metadata` only |
 
-(No capture endpoint — attribution is stamped inline in the existing host-creation
-path, since it's new-signups-only.)
+(No capture endpoint — the slug rides the Google OAuth `state` and is stamped
+inline in `googleCallback`'s brand-new-profile branch. See Attribution capture.)
 
 ## Migration
-- `v3.90_invite_links.sql` — create `invite_links` (incl. `unique_visits`,
-  `metadata jsonb`) + add `profiles.invite_slug` + partial index.
-- Apply to **BOTH** DBs (prod Mumbai + staging Tokyo).
+- **File name:** `v3.90_invite_links.sql` is TAKEN (`v3.90_bot_escalation_rating.sql`
+  exists). Use the next free number — `v3.91_invite_links.sql` (verify against
+  `server/migrations/` at build time).
+- Create `invite_links` (incl. `unique_visits`, `metadata jsonb`, `created_by`) +
+  add `profiles.invite_slug` + partial index.
+- SQL style (match `v3.77_referral_program.sql`): header comment w/ APPLY-ON-BOTH-DBs
+  note, `create table if not exists`, additive `alter table … add column if not
+  exists`, RLS enabled + `revoke all … from anon, authenticated` (service-role only),
+  partial index `where invite_slug is not null`, idempotent seeds `on conflict do nothing`.
+- Apply to **BOTH** DBs (prod Mumbai `ayjhlwyzszykqtnaktpb` + staging Tokyo
+  `xwvciqkayammbvsidqig`). Additive only — no destructive changes.
 - Code keeps schema-fallback (SELECT/INSERT degrade on "table/column not found")
   until confirmed applied everywhere. House rule.
 
@@ -157,15 +187,15 @@ path, since it's new-signups-only.)
 - Reserved-slug / duplicate blocked at admin create.
 
 ## Testing (minimal, per house style)
-- Backend: attribution happens ONLY in the new-profile branch (an EXISTING
-  account with `invite_slug IS NULL` that carries a slug is NOT stamped);
-  atomic write-once (concurrent new-profile creates → one wins, no overwrite);
-  server rejects a slug not in `invite_links`; a since-deactivated (but existing)
-  slug STILL attributes;
-  bot UA skips `unique_visits` increment; inactive slug config returns `active:false`.
+- Backend: slug from OAuth `state` is stamped ONLY in `googleCallback`'s
+  `if (!profileId)` branch (an EXISTING account whose `state` carries a slug is
+  NOT stamped); server rejects a slug not in `invite_links`; a since-deactivated
+  (but existing) slug STILL attributes; invite attribution NEVER writes a
+  `referrals` row; bot UA skips `unique_visits` increment; inactive slug config
+  returns `active:false`.
 - Client: `/invite/:slug` stashes `bas_invite` first-touch, no overwrite; sets
-  `utm_source=invite/<slug>`.
-- Route-manifest drift test passes (`invite` in both reserved lists).
+  `utm_source=invite/<slug>`; CTA injects `bas_invite` into OAuth `state`.
+- Route-manifest drift test passes (`invite` added to client `reservedSegments.js`).
 
 ## Rollout
 1. Migration on both DBs.
