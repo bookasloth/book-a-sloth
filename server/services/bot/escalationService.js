@@ -107,9 +107,11 @@ async function verifyContactOtp({ channel, contact, otp }) {
 //             contact_verified, visitor_uuid }
 async function recordAndNotify({ conversationId, question, reason, pageUrl, userAgent, identity = {} }) {
   const reference = buildReference(conversationId);
-  const summary = await summarize(conversationId, question);
   const contact = identity.contact_channel === 'whatsapp' ? identity.phone : identity.email;
 
+  // 1. Insert the record NOW (fast) so the caller gets an id back for the rating step.
+  //    The one-line summary (Haiku) and the support email (SMTP) are slow, so they run
+  //    in the background — the "Support Request Sent" confirmation must not wait on them.
   let escalationId = null;
   try {
     const { data } = await supabaseAdmin
@@ -129,7 +131,6 @@ async function recordAndNotify({ conversationId, question, reason, pageUrl, user
         page_url: pageUrl || null,
         user_agent: userAgent || null,
         reason: reason || null,
-        summary,
       })
       .select('id')
       .single();
@@ -138,48 +139,70 @@ async function recordAndNotify({ conversationId, question, reason, pageUrl, user
     if (!isMissingSchema(e)) console.error('[bot] escalation record failed:', e.message);
   }
 
-  // Enriched support email — best-effort, swallows its own errors.
-  try {
-    const history = await getRecentMessages(conversationId, 12);
-    const transcript = history.length
-      ? history.map((m) => `<p><strong>${esc(m.role)}:</strong> ${esc(m.content)}</p>`).join('')
-      : `<p><strong>user:</strong> ${esc(redactPii(question))}</p>`;
-    const who = identity.logged_in
-      ? `${esc(identity.name || '—')} · ${identity.is_host ? 'Host' : 'Guest'} · ${esc(identity.user_id || '')}`
-      : 'Anonymous visitor';
-    await sendEmail({
-      to: SUPPORT_EMAIL,
-      subject: `[Bolt 958] ${reference} — ${esc(summary)}`,
-      html: `
-        <h2>Bolt handed a conversation to support</h2>
-        <p style="font-size:15px"><strong>${esc(summary)}</strong></p>
-        <table cellpadding="4" style="border-collapse:collapse;font-size:13px">
-          <tr><td><strong>Reference</strong></td><td>${esc(reference)}</td></tr>
-          <tr><td><strong>Who</strong></td><td>${who}</td></tr>
-          <tr><td><strong>Logged in</strong></td><td>${identity.logged_in ? 'Yes' : 'No'}</td></tr>
-          <tr><td><strong>Contact</strong></td><td>${esc(contact || '—')} (${esc(identity.contact_channel || 'n/a')}${identity.contact_verified ? ', verified' : ''})</td></tr>
-          <tr><td><strong>Email</strong></td><td>${esc(identity.email || '—')}</td></tr>
-          <tr><td><strong>Phone</strong></td><td>${esc(identity.phone || '—')}</td></tr>
-          <tr><td><strong>Conversation</strong></td><td>${esc(conversationId || '—')}</td></tr>
-          <tr><td><strong>Visitor UUID</strong></td><td>${esc(identity.visitor_uuid || '—')}</td></tr>
-          <tr><td><strong>Reason</strong></td><td>${esc(reason || '—')}</td></tr>
-          <tr><td><strong>Page</strong></td><td>${esc(pageUrl || '—')}</td></tr>
-          <tr><td><strong>Browser</strong></td><td>${esc(userAgent || '—')}</td></tr>
-        </table>
-        <hr/>
-        <h3>Transcript</h3>
-        ${transcript}
-      `,
-    });
-  } catch (err) {
-    console.error('[bot] escalation email failed:', err.message);
-  }
+  // 2. Background: summarize → store the summary → email support. Best-effort.
+  (async () => {
+    const summary = await summarize(conversationId, question);
+    if (escalationId) {
+      try { await supabaseAdmin.from('bot_escalations').update({ summary }).eq('id', escalationId); }
+      catch (_) { /* summary is a nice-to-have */ }
+    }
+    try {
+      const history = await getRecentMessages(conversationId, 12);
+      const transcript = history.length
+        ? history.map((m) => `<p><strong>${esc(m.role)}:</strong> ${esc(m.content)}</p>`).join('')
+        : `<p><strong>user:</strong> ${esc(redactPii(question))}</p>`;
+      const who = identity.logged_in
+        ? `${esc(identity.name || '—')} · ${identity.is_host ? 'Host' : 'Guest'} · ${esc(identity.user_id || '')}`
+        : 'Anonymous visitor';
+      await sendEmail({
+        to: SUPPORT_EMAIL,
+        subject: `[Bolt 958] ${reference} — ${esc(summary)}`,
+        html: `
+          <h2>Bolt handed a conversation to support</h2>
+          <p style="font-size:15px"><strong>${esc(summary)}</strong></p>
+          <table cellpadding="4" style="border-collapse:collapse;font-size:13px">
+            <tr><td><strong>Reference</strong></td><td>${esc(reference)}</td></tr>
+            <tr><td><strong>Who</strong></td><td>${who}</td></tr>
+            <tr><td><strong>Logged in</strong></td><td>${identity.logged_in ? 'Yes' : 'No'}</td></tr>
+            <tr><td><strong>Contact</strong></td><td>${esc(contact || '—')} (${esc(identity.contact_channel || 'n/a')}${identity.contact_verified ? ', verified' : ''})</td></tr>
+            <tr><td><strong>Email</strong></td><td>${esc(identity.email || '—')}</td></tr>
+            <tr><td><strong>Phone</strong></td><td>${esc(identity.phone || '—')}</td></tr>
+            <tr><td><strong>Conversation</strong></td><td>${esc(conversationId || '—')}</td></tr>
+            <tr><td><strong>Visitor UUID</strong></td><td>${esc(identity.visitor_uuid || '—')}</td></tr>
+            <tr><td><strong>Reason</strong></td><td>${esc(reason || '—')}</td></tr>
+            <tr><td><strong>Page</strong></td><td>${esc(pageUrl || '—')}</td></tr>
+            <tr><td><strong>Browser</strong></td><td>${esc(userAgent || '—')}</td></tr>
+          </table>
+          <hr/>
+          <h3>Transcript</h3>
+          ${transcript}
+        `,
+      });
+    } catch (err) {
+      console.error('[bot] escalation email failed:', err.message);
+    }
+  })().catch(() => {});
 
-  return { reference, summary, escalationId };
+  return { reference, escalationId };
+}
+
+// Store the 1–5 satisfaction rating the widget collects after the handoff.
+async function recordRating(escalationId, rating) {
+  const r = Number(rating);
+  if (!Number.isInteger(r) || r < 1 || r > 5) return { ok: false, reason: 'bad_rating' };
+  try {
+    const { error } = await supabaseAdmin.from('bot_escalations').update({ rating: r }).eq('id', escalationId);
+    if (error) throw error;
+    return { ok: true };
+  } catch (e) {
+    if (isMissingSchema(e)) return { ok: true }; // column not applied yet — don't error the user
+    console.error('[bot] rating save failed:', e.message);
+    return { ok: false, reason: 'save_failed' };
+  }
 }
 
 module.exports = {
   buildReference, otpKey, summarize,
-  sendContactOtp, verifyContactOtp, recordAndNotify,
+  sendContactOtp, verifyContactOtp, recordAndNotify, recordRating,
   _isMissingSchema: isMissingSchema,
 };

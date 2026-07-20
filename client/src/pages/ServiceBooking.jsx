@@ -1289,8 +1289,7 @@ const ServiceBooking = () => {
               </div>
               <h2 className="text-xl font-bold mb-2">Check your messages</h2>
               <p className="text-sm text-gray-500 mb-6">
-                We sent a 6-digit code to <strong>{phone}</strong> on WhatsApp
-                {email ? <> (and <strong>{email}</strong> as backup)</> : null}
+                We sent a 6-digit code to <strong>{phone}</strong> on WhatsApp.
               </p>
               <input
                 type="text"

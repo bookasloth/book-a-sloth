@@ -121,6 +121,7 @@ export const sendBotFeedback = (data) => API.post('/bot/feedback', data);
 // Anonymous escalation: verify a WhatsApp number / email before handing to support.
 export const botEscalateSendOtp = (data) => API.post('/bot/escalate/send-otp', data);
 export const botEscalateVerifyOtp = (data) => API.post('/bot/escalate/verify-otp', data);
+export const botEscalateRating = (data) => API.post('/bot/escalate/rating', data);
 
 // Streaming ask over SSE. Uses fetch (axios can't stream response bodies in the
 // browser). Calls onDelta(text) per chunk, onDone({escalate, cited_sources,

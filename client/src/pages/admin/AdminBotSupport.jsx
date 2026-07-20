@@ -14,6 +14,7 @@ import { PageHeader, Badge, Skeleton } from '../../components/admin/ui';
 
 const REASON_TONE = { escalated: 'warn', thumbs_down: 'danger' };
 const STATUS_TONE = { open: 'warn', replied: 'ok', closed: 'neutral' };
+const RATING_EMOJI = { 1: '😠', 2: '😕', 3: '😐', 4: '🙂', 5: '🤩' };
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '');
 const fmtDateTime = (s) => (s ? new Date(s).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
 
@@ -231,6 +232,7 @@ export default function AdminBotSupport() {
                       <div><span className="adm-t3">Email:</span> {e.email || '—'}</div>
                       <div><span className="adm-t3">Phone:</span> {e.phone || '—'}</div>
                       <div><span className="adm-t3">Reason:</span> {e.reason || '—'}</div>
+                      <div><span className="adm-t3">Rating:</span> {e.rating ? `${RATING_EMOJI[e.rating]} ${e.rating}/5` : '—'}</div>
                       <div className="truncate"><span className="adm-t3">Page:</span> {e.page_url || '—'}</div>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -312,6 +314,7 @@ export default function AdminBotSupport() {
                           <Badge tone={STATUS_TONE[e.status] || 'neutral'}>{e.status}</Badge>
                           <span className="text-xs adm-t3">{e.logged_in ? (e.is_host ? 'Host' : 'Guest') : 'Anon'}</span>
                           {e.contact_verified && <Badge tone="ok">verified</Badge>}
+                          {e.rating && <span className="text-xs" title={`Rated ${e.rating}/5`}>{RATING_EMOJI[e.rating]} {e.rating}/5</span>}
                           <span className="ml-auto text-xs adm-t3">{fmtDate(e.created_at)}</span>
                         </div>
                         <p className="text-sm adm-t1">{e.summary || '—'}</p>

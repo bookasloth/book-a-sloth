@@ -8,7 +8,7 @@
 'use strict';
 
 const router = require('express').Router();
-const { ask, askStream, feedback, escalateSendOtp, escalateVerifyOtp } = require('../controllers/botController');
+const { ask, askStream, feedback, escalateSendOtp, escalateVerifyOtp, escalateRating } = require('../controllers/botController');
 const { botLimiter, botGlobalLimiter, otpLimiter, otpContactLimiter } = require('../middleware/security');
 const { optionalProtect } = require('../middleware/authMiddleware');
 
@@ -19,5 +19,6 @@ router.post('/feedback', botLimiter, feedback);
 // Anonymous escalation contact verification (verify-only, no account created).
 router.post('/escalate/send-otp', otpLimiter, otpContactLimiter, escalateSendOtp);
 router.post('/escalate/verify-otp', otpLimiter, otpContactLimiter, escalateVerifyOtp);
+router.post('/escalate/rating', botLimiter, escalateRating);
 
 module.exports = router;
