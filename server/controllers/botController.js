@@ -64,7 +64,7 @@ exports.ask = async (req, res) => {
     // else anonymous. No auth is required (Phase 1 = public knowledge bot).
     const sessionRef = req.user?.id || null;
 
-    const result = await askBot({ question, conversationId, sessionRef });
+    const result = await askBot({ question, conversationId, sessionRef, ip: req.ip });
 
     if (result.escalate) {
       // Fire-and-forget: the user must NOT wait on the internal support email.
@@ -81,6 +81,8 @@ exports.ask = async (req, res) => {
       escalate: result.escalate,
       conversationId: result.conversationId,
       messageId: result.messageId,
+      pills: result.pills || [],
+      locked: !!result.locked,
     });
   } catch (err) {
     return safeError(res, err);
@@ -114,7 +116,7 @@ exports.askStream = async (req, res) => {
   try {
     const sessionRef = req.user?.id || null;
     const result = await askBotStream({
-      question, conversationId, sessionRef,
+      question, conversationId, sessionRef, ip: req.ip,
       onDelta: (text) => sse('delta', { text }),
     });
 
@@ -129,6 +131,8 @@ exports.askStream = async (req, res) => {
       followups: result.followups || [],
       conversationId: result.conversationId,
       messageId: result.messageId,
+      pills: result.pills || [],
+      locked: !!result.locked,
     });
     res.end();
   } catch (err) {

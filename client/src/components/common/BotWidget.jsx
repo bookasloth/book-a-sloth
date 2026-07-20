@@ -134,6 +134,8 @@ export default function BotWidget() {
 
   const send = async (text) => {
     const question = (text ?? input).trim();
+    // Cool-off / IP lockout from the abuse gate freezes the composer for this convo.
+    if (messages[messages.length - 1]?.locked) return;
     if (!question || streaming) return;
     setInput('');
     setMessages((m) => [
@@ -151,6 +153,7 @@ export default function BotWidget() {
           setMessages((m) => patchLastAssistant(m, (a) => ({
             ...a, streaming: false, cited_sources: d.cited_sources || [], followups: d.followups || [],
             escalate: !!d.escalate, messageId: d.messageId || null,
+            pills: Array.isArray(d.pills) ? d.pills : [], locked: !!d.locked,
           })));
         },
         onError: () => setMessages((m) => patchLastAssistant(m, (a) => ({
@@ -176,6 +179,10 @@ export default function BotWidget() {
   };
 
   const copy = (content) => { try { navigator.clipboard?.writeText(content); } catch (_) { /* ignore */ } };
+
+  // Composer freezes when the last turn locked the conversation (5-strike cool-off
+  // or threat IP lockout from the abuse gate). Refresh/restart clears it.
+  const locked = messages.length > 0 && !!messages[messages.length - 1]?.locked;
 
   if (!isAllowedPath(pathname)) return null;
 
@@ -317,6 +324,25 @@ export default function BotWidget() {
                       </div>
                     )}
 
+                    {/* Context pills — short next actions. 'route' navigates, 'send' asks it. */}
+                    {m.role === 'assistant' && !m.streaming && Array.isArray(m.pills) && m.pills.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5 pl-1">
+                        {m.pills.map((p, pi) => (
+                          p.action?.type === 'route' ? (
+                            <a key={pi} href={p.action.value}
+                              className="rounded-md border border-[#FE5100]/70 px-2 py-0.5 text-[11px] font-medium text-[#FE5100] transition-colors hover:bg-[#FFE4D1]">
+                              {p.label}
+                            </a>
+                          ) : (
+                            <button key={pi} type="button" disabled={streaming} onClick={() => send(p.action?.value || p.label)}
+                              className="rounded-md border border-[#FE5100]/70 px-2 py-0.5 text-[11px] font-medium text-[#FE5100] transition-colors hover:bg-[#FFE4D1] disabled:opacity-50">
+                              {p.label}
+                            </button>
+                          )
+                        ))}
+                      </div>
+                    )}
+
                   </div>
                 </div>
               ))
@@ -330,12 +356,13 @@ export default function BotWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Ask anything…"
+              disabled={locked}
+              placeholder={locked ? 'Chat paused — raise a ticket at /support' : 'Ask anything…'}
               aria-label="Type your question"
-              className="h-10 min-h-10 max-h-24 flex-1 resize-none rounded-xl border-2 border-[#1E1E1E]/12 px-3 pt-[11px] pb-[5px] text-[13px] leading-tight outline-none focus:!border-[#FE5100] focus:!shadow-none focus:!ring-0 focus:!outline-none"
+              className="h-10 min-h-10 max-h-24 flex-1 resize-none rounded-xl border-2 border-[#1E1E1E]/12 px-3 pt-[11px] pb-[5px] text-[13px] leading-tight outline-none focus:!border-[#FE5100] focus:!shadow-none focus:!ring-0 focus:!outline-none disabled:cursor-not-allowed disabled:bg-[#1E1E1E]/5"
             />
             <button
-              type="button" onClick={() => send()} disabled={streaming || !input.trim()} aria-label="Send"
+              type="button" onClick={() => send()} disabled={locked || streaming || !input.trim()} aria-label="Send"
               className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:bg-[#1E1E1E]/15 disabled:text-[#1E1E1E]/40"
               style={!streaming && input.trim() ? { background: PRIMARY } : undefined}
             >
