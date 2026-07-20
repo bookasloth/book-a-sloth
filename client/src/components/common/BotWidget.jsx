@@ -1,7 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { streamBot, sendBotFeedback } from '../../services/api';
+import { streamBot, sendBotFeedback, botEscalateSendOtp, botEscalateVerifyOtp, botEscalateRating } from '../../services/api';
 import Markdown from './Markdown';
+
+// Persisted across reloads: a stable anonymous visitor id (so support can recognise
+// repeat visitors) and the current conversation id (so a refresh keeps the thread).
+const VISITOR_KEY = 'bas_bot_visitor';
+const CONVO_KEY = 'bas_bot_convo';
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
+const lsDel = (k) => { try { localStorage.removeItem(k); } catch { /* ignore */ } };
+function getVisitorId() {
+  let v = lsGet(VISITOR_KEY);
+  if (!v) { v = (crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`); lsSet(VISITOR_KEY, v); }
+  return v;
+}
 
 // Bolt only shows on these pages (home, help/support, privacy/policy, terms).
 const isAllowedPath = (p) =>
@@ -15,6 +28,15 @@ const isAllowedPath = (p) =>
 
 const PRIMARY = '#FE5100';
 const INK = '#1E1E1E';
+
+// Post-handoff satisfaction scale — 1..5, coloured worst→best. Click = auto-submit.
+const FEEDBACK = [
+  { n: 1, e: '😠', c: '#ef4444' },
+  { n: 2, e: '😕', c: '#f97316' },
+  { n: 3, e: '😐', c: '#eab308' },
+  { n: 4, e: '🙂', c: '#84cc16' },
+  { n: 5, e: '🤩', c: '#22c55e' },
+];
 
 // Brand icons cycled on the closed launcher — booking/host/support motifs.
 const LAUNCHER_ICONS = [
@@ -49,6 +71,18 @@ const sourceHref = (s) => {
   return slug ? `/help/docs/${slug}` : null;
 };
 
+// Should a wheel gesture over the chat be swallowed (preventDefault) so the page
+// behind doesn't scroll? Only when the list can't consume it: not scrollable at all
+// (short conversation) or already at the boundary in the scroll direction. When the
+// list can scroll mid-content, we return false and let native scrolling run untouched.
+// Exported for unit test.
+export const shouldSwallowScroll = (deltaY, { scrollTop, scrollHeight, clientHeight }) => {
+  const canScroll = scrollHeight > clientHeight;
+  const atTop = scrollTop <= 0;
+  const atBottom = scrollHeight - scrollTop - clientHeight <= 0;
+  return !canScroll || (deltaY < 0 && atTop) || (deltaY > 0 && atBottom);
+};
+
 // Apply fn to the last assistant message (the one currently streaming).
 const patchLastAssistant = (msgs, fn) => {
   let idx = -1;
@@ -72,15 +106,50 @@ export default function BotWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
-  const [conversationId, setConversationId] = useState(null);
+  const [conversationId, setConversationId] = useState(() => lsGet(CONVO_KEY) || null);
   const [messages, setMessages] = useState([]); // empty → welcome screen
   const [iconIdx, setIconIdx] = useState(0);
+  // Active human-handoff. null = none. { step, reason, question, channel, contact,
+  // otp, busy, error, reference }. step: 'choose'|'form'|'otp'|'done'.
+  const [escalation, setEscalation] = useState(null);
+  const [visitorId] = useState(getVisitorId);
   const listRef = useRef(null);
+  const panelRef = useRef(null);
   const { pathname } = useLocation();
 
+  // Auto-stick to the newest message, but ONLY when the user is already near the
+  // bottom. Streaming mutates `messages` every token; an unconditional re-pin here
+  // yanks the list back down on each delta, making it impossible to scroll up and
+  // re-read while Bolt is answering. Track "was near bottom" before React repaints.
+  const stickRef = useRef(true);
   useEffect(() => {
-    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [messages, open]);
+    const el = listRef.current;
+    if (!el) return;
+    if (stickRef.current) el.scrollTop = el.scrollHeight;
+  }, [messages, open, escalation]);
+
+  const onListScroll = () => {
+    const el = listRef.current;
+    if (!el) return;
+    stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+  };
+
+  // Stop the page behind from scrolling when the wheel gesture is over the chat but
+  // the list can't take it — short conversations (list not scrollable) or at a scroll
+  // boundary. `overscroll-contain` alone only covers an *overflowing* list, so a short
+  // chat still leaked scroll to the page. Native listener with passive:false because
+  // React attaches onWheel as passive (preventDefault would be a no-op there).
+  useEffect(() => {
+    const panel = panelRef.current;
+    const list = listRef.current;
+    if (!open || !panel || !list) return;
+    const onWheel = (e) => { if (shouldSwallowScroll(e.deltaY, list)) e.preventDefault(); };
+    panel.addEventListener('wheel', onWheel, { passive: false });
+    // ponytail: wheel-only. Touch chaining on an *overflowing* list is covered by
+    // `overscroll-contain`; a short list on touch can still leak — add a touchmove
+    // handler (track startY) if mobile users report it.
+    return () => panel.removeEventListener('wheel', onWheel);
+  }, [open]);
 
   // Cycle the launcher's brand icons while the chat is closed.
   useEffect(() => {
@@ -91,6 +160,8 @@ export default function BotWidget() {
 
   const send = async (text) => {
     const question = (text ?? input).trim();
+    // Cool-off / IP lockout from the abuse gate freezes the composer for this convo.
+    if (messages[messages.length - 1]?.locked) return;
     if (!question || streaming) return;
     setInput('');
     setMessages((m) => [
@@ -100,15 +171,24 @@ export default function BotWidget() {
     ]);
     setStreaming(true);
     await streamBot(
-      { question, conversationId },
+      { question, conversationId, visitorId, pageUrl: window.location.href },
       {
         onDelta: (t) => setMessages((m) => patchLastAssistant(m, (a) => ({ ...a, content: a.content + t }))),
         onDone: (d) => {
-          if (d.conversationId) setConversationId(d.conversationId);
+          if (d.conversationId) { setConversationId(d.conversationId); lsSet(CONVO_KEY, d.conversationId); }
           setMessages((m) => patchLastAssistant(m, (a) => ({
             ...a, streaming: false, cited_sources: d.cited_sources || [], followups: d.followups || [],
             escalate: !!d.escalate, messageId: d.messageId || null,
+            pills: Array.isArray(d.pills) ? d.pills : [], locked: !!d.locked,
           })));
+          // Escalation handoff. Logged-in users are escalated server-side already
+          // (reference returned) → show the confirmation. Anonymous visitors must
+          // first choose a verified contact channel.
+          if (d.escalate && d.reference) {
+            setEscalation({ step: 'done', reference: d.reference, escalationId: d.escalationId || null });
+          } else if (d.escalate && d.needsContact) {
+            setEscalation({ step: 'choose', reason: d.escalateReason || 'model_unsure', question, conversationId: d.conversationId || conversationId });
+          }
         },
         onError: () => setMessages((m) => patchLastAssistant(m, (a) => ({
           ...a, streaming: false, escalate: true,
@@ -123,7 +203,50 @@ export default function BotWidget() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   };
 
-  const restart = () => { setMessages([]); setConversationId(null); setInput(''); };
+  const restart = () => { setMessages([]); setConversationId(null); setInput(''); setEscalation(null); lsDel(CONVO_KEY); };
+
+  // ---- Anonymous escalation contact flow --------------------------------
+  const chooseChannel = (channel) => {
+    if (channel === 'browsing') { setEscalation(null); return; } // "just browsing" → keep chatting, no escalation
+    setEscalation((e) => ({ ...e, channel, step: 'form', contact: '', otp: '', error: '', busy: false }));
+  };
+  const patchEsc = (patch) => setEscalation((e) => (e ? { ...e, ...patch } : e));
+
+  const sendContactOtp = async () => {
+    const e = escalation;
+    if (!e?.contact?.trim() || e.busy) return;
+    patchEsc({ busy: true, error: '' });
+    try {
+      await botEscalateSendOtp({ channel: e.channel, contact: e.contact.trim(), conversationId: e.conversationId });
+      patchEsc({ step: 'otp', busy: false, otp: '' });
+    } catch (err) {
+      patchEsc({ busy: false, error: err?.response?.data?.message || "Couldn't send the code. Try again." });
+    }
+  };
+
+  const verifyContactOtp = async () => {
+    const e = escalation;
+    if (!/^\d{6}$/.test(String(e?.otp || '')) || e.busy) return;
+    patchEsc({ busy: true, error: '' });
+    try {
+      const { data } = await botEscalateVerifyOtp({
+        channel: e.channel, contact: e.contact.trim(), otp: e.otp, conversationId: e.conversationId,
+        visitorId, pageUrl: window.location.href, reason: e.reason, question: e.question,
+      });
+      patchEsc({ step: 'done', busy: false, reference: data?.reference || null, escalationId: data?.escalationId || null });
+    } catch (err) {
+      patchEsc({ busy: false, error: err?.response?.data?.message || 'Incorrect code. Try again.' });
+    }
+  };
+
+  // Satisfaction rating — one click auto-submits, then we offer ticket tracking.
+  const rateEscalation = async (n) => {
+    if (escalation?.ratingBusy || escalation?.rated) return;
+    patchEsc({ ratingBusy: true });
+    try { if (escalation.escalationId) await botEscalateRating({ escalationId: escalation.escalationId, rating: n }); }
+    catch (_) { /* non-fatal — still advance the UI */ }
+    patchEsc({ rated: n, ratingBusy: false });
+  };
 
   const rate = async (idx, value) => {
     const msg = messages[idx];
@@ -134,6 +257,10 @@ export default function BotWidget() {
 
   const copy = (content) => { try { navigator.clipboard?.writeText(content); } catch (_) { /* ignore */ } };
 
+  // Composer freezes when the last turn locked the conversation (5-strike cool-off
+  // or threat IP lockout from the abuse gate). Refresh/restart clears it.
+  const locked = messages.length > 0 && !!messages[messages.length - 1]?.locked;
+
   if (!isAllowedPath(pathname)) return null;
 
   return (
@@ -143,8 +270,14 @@ export default function BotWidget() {
       <style>{`@keyframes boltGenie{0%{opacity:0;transform:translateY(28px) scale(.82) scaleY(.9)}60%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes boltIconIn{0%{opacity:0;transform:scale(.5) rotate(-12deg)}100%{opacity:1;transform:scale(1) rotate(0)}}`}</style>
       {open && (
         <div
+          ref={panelRef}
           role="dialog"
           aria-label="Bolt support chat"
+          // Lenis smooth-scroll hijacks wheel at the window level and preventDefaults it,
+          // which ate the chat's native scroll. data-lenis-prevent exempts this whole
+          // subtree so the messages list scrolls normally (our own wheel handler +
+          // overscroll-contain still stop page chaining at the boundaries).
+          data-lenis-prevent=""
           className="mb-3 flex h-[34rem] w-[23rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
           style={{ border: `2px solid ${INK}`, transformOrigin: 'bottom right', animation: 'boltGenie .3s cubic-bezier(.2,.8,.3,1) both' }}
         >
@@ -173,7 +306,7 @@ export default function BotWidget() {
           </div>
 
           {/* Messages / Welcome */}
-          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[#FFF8F4] px-3.5 py-4">
+          <div ref={listRef} onScroll={onListScroll} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[#FFF8F4] px-3.5 py-4">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center px-2 text-center">
                 <Avatar size={52} ring />
@@ -217,40 +350,31 @@ export default function BotWidget() {
                         </div>
                       )}
 
-                      {/* Sources — real links to the help article the answer was grounded on,
-                          opened in a new tab so the guest keeps their chat. Falls back to a
-                          plain label only if the slug can't be derived. */}
-                      {m.role === 'assistant' && !m.escalate && !m.streaming && m.cited_sources?.length > 0 && (
-                        <div className="mt-2.5 flex flex-wrap gap-1 border-t border-dashed border-[#1E1E1E]/15 pt-2">
-                          {m.cited_sources.map((s, j) => {
-                            const href = sourceHref(s);
-                            return href ? (
-                              <a
-                                key={j} href={href} target="_blank" rel="noopener noreferrer"
-                                className="rounded-md bg-[#FFF4EC] px-1.5 py-0.5 text-[10px] font-medium text-[#FE5100] underline decoration-[#FE5100]/40 underline-offset-2 hover:bg-[#FFE4D1]"
-                              >
-                                {sourceLabel(s)}
-                              </a>
-                            ) : (
-                              <span key={j} className="rounded-md bg-[#FFF4EC] px-1.5 py-0.5 text-[10px] font-medium text-[#1E1E1E]/60">
-                                {sourceLabel(s)}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
+                      {/* One inline closing suggestion instead of a row of chips: link the
+                          single most-relevant help page (when we can derive its slug) and
+                          always offer a human handoff. Deterministic — built from the top
+                          cited source, so no hallucinated links. */}
+                      {m.role === 'assistant' && !m.escalate && !m.streaming && m.content && (() => {
+                        const top = (m.cited_sources || []).find((s) => sourceHref(s));
+                        const href = top && sourceHref(top);
+                        return (
+                          <div className="mt-2.5 border-t border-dashed border-[#1E1E1E]/15 pt-2 text-[11px] leading-snug text-[#1E1E1E]/60">
+                            {href ? <>Want the full details? Read{' '}
+                              <a href={href} target="_blank" rel="noopener noreferrer"
+                                className="font-medium text-[#FE5100] underline decoration-[#FE5100]/40 underline-offset-2 hover:text-[#FE5100]/80">
+                                {sourceLabel(top)}
+                              </a>{' or '}</> : <>Still stuck? </>}
+                            <a href="/support" target="_blank" rel="noopener noreferrer"
+                              className="font-medium text-[#FE5100] underline decoration-[#FE5100]/40 underline-offset-2 hover:text-[#FE5100]/80">
+                              raise a support ticket
+                            </a>.
+                          </div>
+                        );
+                      })()}
                     </div>
 
-                    {/* Honest async handoff card (no fake agent, no fake timer) */}
-                    {m.role === 'assistant' && m.escalate && !m.streaming && (
-                      <div className="mt-2 flex items-center gap-2.5 rounded-xl border-2 border-[#1E1E1E]/10 bg-white p-3 shadow-sm">
-                        <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-[#FFE4D1] text-base">🧑‍💻</span>
-                        <div className="text-[12px] leading-snug text-[#1E1E1E]/70">
-                          <strong className="text-[#1E1E1E]">Passing this to a human.</strong><br />
-                          They'll follow up over WhatsApp or email. You can keep chatting meanwhile.
-                        </div>
-                      </div>
-                    )}
+                    {/* The escalation handoff (contact choice / confirmation) renders once
+                        below the whole thread — see the escalation panel after the list. */}
 
                     {/* Actions */}
                     {m.role === 'assistant' && !m.streaming && m.content && (
@@ -274,24 +398,143 @@ export default function BotWidget() {
                       </div>
                     )}
 
-                    {/* Predictive follow-ups — clickable chips of likely next questions.
-                        Only on the newest answer (i === last): pushing a new turn makes the
-                        prior message no longer last, so its chips disappear on their own. */}
-                    {m.role === 'assistant' && !m.streaming && !m.escalate && i === messages.length - 1 && m.followups?.length > 0 && (
+                    {/* Context pills — short next actions. 'route' navigates, 'send' asks it. */}
+                    {m.role === 'assistant' && !m.streaming && Array.isArray(m.pills) && m.pills.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5 pl-1">
-                        {m.followups.map((f) => (
-                          <button
-                            key={f} type="button" onClick={() => send(f)} disabled={streaming}
-                            className="rounded-md border border-[#FE5100]/70 bg-transparent px-2 py-px text-[10px] font-medium text-[#FE5100] transition-colors hover:bg-[#FFE4D1] hover:border-[#FE5100] disabled:opacity-50"
-                          >
-                            {f}
-                          </button>
+                        {m.pills.map((p, pi) => (
+                          p.action?.type === 'route' ? (
+                            <a key={pi} href={p.action.value}
+                              className="rounded-md border border-[#FE5100]/70 px-2 py-0.5 text-[11px] font-medium text-[#FE5100] transition-colors hover:bg-[#FFE4D1]">
+                              {p.label}
+                            </a>
+                          ) : (
+                            <button key={pi} type="button" disabled={streaming} onClick={() => send(p.action?.value || p.label)}
+                              className="rounded-md border border-[#FE5100]/70 px-2 py-0.5 text-[11px] font-medium text-[#FE5100] transition-colors hover:bg-[#FFE4D1] disabled:opacity-50">
+                              {p.label}
+                            </button>
+                          )
                         ))}
                       </div>
                     )}
+
                   </div>
                 </div>
               ))
+            )}
+
+            {/* Human handoff — contact choice → OTP verify → confirmation. Shown once,
+                below the thread. Anonymous visitors pick a channel; logged-in users
+                land straight on the confirmation (escalated server-side already). */}
+            {escalation && (
+              <div className="rounded-xl border-2 border-[#1E1E1E]/10 bg-white p-3 shadow-sm">
+                {escalation.step === 'done' ? (
+                  <div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-[#DCFCE7] text-base">✅</span>
+                      <div className="text-[12px] leading-relaxed text-[#1E1E1E]/80">
+                        <strong className="text-[#1E1E1E]">Support Request Sent</strong><br />
+                        We'll contact you via WhatsApp or Email.
+                        {escalation.reference && (
+                          <><br />Reference: <span className="font-mono font-semibold text-[#1E1E1E]">{escalation.reference}</span></>
+                        )}
+                      </div>
+                    </div>
+
+                    {!escalation.rated ? (
+                      <div className="mt-3 border-t border-[#1E1E1E]/10 pt-2.5">
+                        <p className="mb-1.5 text-[12px] text-[#1E1E1E]/70">How was your experience?</p>
+                        <div className="flex justify-between gap-1">
+                          {FEEDBACK.map((f) => (
+                            <button key={f.n} type="button" onClick={() => rateEscalation(f.n)} disabled={escalation.ratingBusy}
+                              aria-label={`Rate ${f.n} of 5`} title={`${f.n}/5`}
+                              className="grid h-9 w-9 place-items-center rounded-full border-2 text-lg transition-transform hover:scale-110 disabled:opacity-50"
+                              style={{ borderColor: f.c, background: `${f.c}14` }}>
+                              {f.e}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 border-t border-[#1E1E1E]/10 pt-2.5">
+                        <p className="mb-2 text-[12px] text-[#1E1E1E]/80">Thanks for the feedback! Want to track your request?</p>
+                        <a href="/support/tickets" target="_blank" rel="noopener noreferrer"
+                          className="inline-block rounded-lg bg-[#FE5100] px-3 py-1.5 text-[12px] font-semibold text-white">
+                          Track ticket status →
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ) : escalation.step === 'choose' ? (
+                  <div>
+                    <p className="mb-2 text-[12px] leading-snug text-[#1E1E1E]/80">
+                      Before I send this to our support team, how would you like us to contact you?
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      <button type="button" onClick={() => chooseChannel('whatsapp')}
+                        className="rounded-lg border-2 border-[#FE5100]/70 px-3 py-1.5 text-[12px] font-semibold text-[#FE5100] transition-colors hover:bg-[#FFE4D1]">
+                        Continue with WhatsApp
+                      </button>
+                      <button type="button" onClick={() => chooseChannel('email')}
+                        className="rounded-lg border-2 border-[#FE5100]/70 px-3 py-1.5 text-[12px] font-semibold text-[#FE5100] transition-colors hover:bg-[#FFE4D1]">
+                        Continue with Email
+                      </button>
+                      <button type="button" onClick={() => chooseChannel('browsing')}
+                        className="rounded-lg px-3 py-1.5 text-[12px] font-medium text-[#1E1E1E]/50 transition-colors hover:bg-[#1E1E1E]/5">
+                        I'm just browsing
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="mb-1.5 text-[12px] font-semibold text-[#1E1E1E]">
+                      {escalation.channel === 'whatsapp' ? 'Your WhatsApp number' : 'Your email'}
+                    </p>
+                    {escalation.step === 'form' ? (
+                      <div className="flex gap-1.5">
+                        <input
+                          value={escalation.contact || ''}
+                          onChange={(e) => patchEsc({ contact: e.target.value })}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); sendContactOtp(); } }}
+                          type={escalation.channel === 'email' ? 'email' : 'tel'}
+                          inputMode={escalation.channel === 'email' ? 'email' : 'tel'}
+                          placeholder={escalation.channel === 'whatsapp' ? '9876543210' : 'you@email.com'}
+                          className="min-w-0 flex-1 rounded-lg border-2 border-[#1E1E1E]/12 px-2.5 py-1.5 text-[12px] outline-none focus:!border-[#FE5100]"
+                        />
+                        <button type="button" onClick={sendContactOtp} disabled={escalation.busy || !(escalation.contact || '').trim()}
+                          className="flex-shrink-0 rounded-lg bg-[#FE5100] px-3 py-1.5 text-[12px] font-semibold text-white disabled:bg-[#1E1E1E]/15 disabled:text-[#1E1E1E]/40">
+                          {escalation.busy ? '…' : 'Send code'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="mb-1.5 text-[11px] text-[#1E1E1E]/60">Enter the 6-digit code sent to {escalation.contact}.</p>
+                        <div className="flex gap-1.5">
+                          <input
+                            value={escalation.otp || ''}
+                            onChange={(e) => patchEsc({ otp: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); verifyContactOtp(); } }}
+                            inputMode="numeric" placeholder="123456"
+                            className="min-w-0 flex-1 rounded-lg border-2 border-[#1E1E1E]/12 px-2.5 py-1.5 text-[12px] tracking-widest outline-none focus:!border-[#FE5100]"
+                          />
+                          <button type="button" onClick={verifyContactOtp} disabled={escalation.busy || !/^\d{6}$/.test(escalation.otp || '')}
+                            className="flex-shrink-0 rounded-lg bg-[#FE5100] px-3 py-1.5 text-[12px] font-semibold text-white disabled:bg-[#1E1E1E]/15 disabled:text-[#1E1E1E]/40">
+                            {escalation.busy ? '…' : 'Verify'}
+                          </button>
+                        </div>
+                        <button type="button" onClick={sendContactOtp} disabled={escalation.busy}
+                          className="mt-1 text-[10px] font-medium text-[#FE5100] hover:underline disabled:opacity-50">
+                          Resend code
+                        </button>
+                      </div>
+                    )}
+                    {escalation.error && <p className="mt-1 text-[10px] text-[#ef4444]">{escalation.error}</p>}
+                    <button type="button" onClick={() => chooseChannel('browsing')}
+                      className="mt-1.5 text-[10px] font-medium text-[#1E1E1E]/40 hover:text-[#1E1E1E]/70">
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -302,12 +545,13 @@ export default function BotWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Ask anything…"
+              disabled={locked}
+              placeholder={locked ? 'Chat paused — raise a ticket at /support' : 'Ask anything…'}
               aria-label="Type your question"
-              className="h-10 min-h-10 max-h-24 flex-1 resize-none rounded-xl border-2 border-[#1E1E1E]/12 px-3 pt-[11px] pb-[5px] text-[13px] leading-tight outline-none focus:!border-[#FE5100] focus:!shadow-none focus:!ring-0 focus:!outline-none"
+              className="h-10 min-h-10 max-h-24 flex-1 resize-none rounded-xl border-2 border-[#1E1E1E]/12 px-3 pt-[11px] pb-[5px] text-[13px] leading-tight outline-none focus:!border-[#FE5100] focus:!shadow-none focus:!ring-0 focus:!outline-none disabled:cursor-not-allowed disabled:bg-[#1E1E1E]/5"
             />
             <button
-              type="button" onClick={() => send()} disabled={streaming || !input.trim()} aria-label="Send"
+              type="button" onClick={() => send()} disabled={locked || streaming || !input.trim()} aria-label="Send"
               className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:bg-[#1E1E1E]/15 disabled:text-[#1E1E1E]/40"
               style={!streaming && input.trim() ? { background: PRIMARY } : undefined}
             >

@@ -118,12 +118,16 @@ export const submitEnterpriseLead = (data) => API.post('/enterprise-lead', data)
 // ── Bolt support bot (public) ─────────────────────────────────
 export const askBot = (data) => API.post('/bot/ask', data);
 export const sendBotFeedback = (data) => API.post('/bot/feedback', data);
+// Anonymous escalation: verify a WhatsApp number / email before handing to support.
+export const botEscalateSendOtp = (data) => API.post('/bot/escalate/send-otp', data);
+export const botEscalateVerifyOtp = (data) => API.post('/bot/escalate/verify-otp', data);
+export const botEscalateRating = (data) => API.post('/bot/escalate/rating', data);
 
 // Streaming ask over SSE. Uses fetch (axios can't stream response bodies in the
 // browser). Calls onDelta(text) per chunk, onDone({escalate, cited_sources,
 // conversationId, messageId}) at the end, onError({message}) on failure. Returns a
 // promise that resolves when the stream closes; pass an AbortSignal to cancel.
-export async function streamBot({ question, conversationId }, { onDelta, onDone, onError, signal } = {}) {
+export async function streamBot({ question, conversationId, visitorId, pageUrl }, { onDelta, onDone, onError, signal } = {}) {
   const base = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   const session = JSON.parse(localStorage.getItem('user') || 'null');
   const headers = { 'Content-Type': 'application/json' };
@@ -132,7 +136,7 @@ export async function streamBot({ question, conversationId }, { onDelta, onDone,
   let res;
   try {
     res = await fetch(`${base}/bot/ask/stream`, {
-      method: 'POST', headers, body: JSON.stringify({ question, conversationId }), signal,
+      method: 'POST', headers, body: JSON.stringify({ question, conversationId, visitorId, pageUrl }), signal,
     });
   } catch (e) {
     if (e.name !== 'AbortError') onError?.({ message: 'network' });
@@ -581,6 +585,11 @@ export const adminBotAnalytics = ()         => API.get('/admin/bot/analytics');
 export const adminBotGraph     = ()         => API.get('/admin/bot/graph');
 export const adminListBotCache = ()         => API.get('/admin/bot/cache');
 export const adminDeleteBotCache = (id)     => API.delete(`/admin/bot/cache/${id}`);
+// Escalations (human handoffs) — list, thread, reply, status
+export const adminListEscalations  = (params)   => API.get('/admin/bot/escalations', { params });
+export const adminGetEscalation    = (id)       => API.get(`/admin/bot/escalations/${id}`);
+export const adminReplyEscalation  = (id, data) => API.post(`/admin/bot/escalations/${id}/reply`, data);
+export const adminUpdateEscalation = (id, data) => API.patch(`/admin/bot/escalations/${id}`, data);
 // ── Reschedule fee ────────────────────────────────────────────
 export const createRescheduleFeeOrder = (bookingId) => API.post('/payment/reschedule-fee/create-order', { booking_id: bookingId });
 

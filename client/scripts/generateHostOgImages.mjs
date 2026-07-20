@@ -190,8 +190,20 @@ async function main() {
       if (!dry) await db.from('profiles').update({ og_status: 'generating' }).eq('id', p.id);
 
       const qs = new URLSearchParams(fields);
-      await page.goto(`${ORIGIN}/og/host/${p.username}?${qs}`, { waitUntil: 'networkidle0', timeout: 30000 });
+      // NOT networkidle0: the built SPA boots and fires background calls (auth,
+      // analytics) to whatever VITE_API_URL was built in — a placeholder in CI —
+      // which never settle, so networkidle0 timed out on every card. The card is
+      // static data from the query string; wait for the marker, then for its
+      // images (avatar + CDN logo) to actually paint, then shoot.
+      await page.goto(`${ORIGIN}/og/host/${p.username}?${qs}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.waitForSelector('[data-og-ready="true"]', { timeout: 20000 });
+      await page.evaluate(() => {
+        const pending = Array.from(document.images).filter((i) => !i.complete);
+        return Promise.race([
+          Promise.all(pending.map((i) => new Promise((r) => { i.onload = i.onerror = r; }))),
+          new Promise((r) => setTimeout(r, 6000)), // a dead image must not hang the run
+        ]);
+      });
       const el = await page.$('[data-og-ready="true"]');
       const png = await el.screenshot({ type: 'png' });
 

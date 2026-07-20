@@ -52,10 +52,60 @@ const BLOBS = [
 const RELEASES = [
   {
     date: 'Jul 19, 2026',
+    title: 'A fresh new homepage',
+    tags: ['Improved'],
+    points: [
+      'Rebuilt the homepage around a cleaner, Google-first welcome — clearer messaging, a tighter features grid and a faster path to getting started.',
+    ],
+  },
+  {
+    date: 'Jul 19, 2026',
+    title: 'Moments',
+    tags: ['New'],
+    points: [
+      'A little archive of the moments worth celebrating — playful, Google-Doodle-style pages we’ll keep adding to.',
+    ],
+  },
+  {
+    date: 'Jul 19, 2026',
+    title: 'Cleaner photo uploads',
+    tags: ['Fixed'],
+    points: [
+      'Fixed a faint coloured line that could get baked into photos while cropping — your avatar and service images now upload crisp and border-free.',
+    ],
+  },
+  {
+    date: 'Jul 19, 2026',
     title: 'Sharper preview when you share a host',
     tags: ['Fixed'],
     points: [
       'Paste a host’s profile link into WhatsApp, Facebook or a message and it now shows their photo in a proper preview card. Before, the photo came through too small and some apps showed no card at all.',
+    ],
+  },
+  {
+    date: 'Jul 18, 2026',
+    title: 'Meet Bolt, your support assistant',
+    tags: ['New'],
+    points: [
+      'A friendly chat assistant, right on the site — ask how anything works and Bolt answers in seconds, drawing from our real help docs and linking you to the source.',
+      'It remembers the conversation, so you can ask follow-ups naturally, and hands you to a human whenever you’d rather talk to one.',
+    ],
+  },
+  {
+    date: 'Jul 18, 2026',
+    title: 'Find anything, faster',
+    tags: ['Improved'],
+    points: [
+      'A redesigned search launcher makes hosts, services and pages easier to reach.',
+      'Our Help centre now has full-text search, so the answer you need is only a keyword away.',
+    ],
+  },
+  {
+    date: 'Jul 18, 2026',
+    title: 'A wall of love',
+    tags: ['New'],
+    points: [
+      'A new home for the kind words creators and guests share about Book A Sloth, gathered from across the web in one place.',
     ],
   },
   {

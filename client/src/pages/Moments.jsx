@@ -8,6 +8,10 @@ import { Sparkles, ArrowRight } from 'lucide-react';
 import Seo from '../components/common/Seo';
 import { MOMENTS, FEATURED } from '../data/moments';
 
+// Fixed share card for the archive index — constant, unlike the featured
+// moment's art which changes as moments are added. Upload once to the CDN.
+const OG_IMAGE = 'https://company-assets.bookasloth.in/images/moments/moments-og.png';
+
 export default function Moments() {
   const rest = MOMENTS.slice(1);
   const railRef = useRef(null);
@@ -31,6 +35,7 @@ export default function Moments() {
           title="Moments — Book A Sloth"
           description="A little archive of the days the world stopped to watch. Book A Sloth moments, doodle-style."
           canonical="https://bookasloth.com/moments"
+          image={OG_IMAGE}
         />
 
         <header className="text-center">
