@@ -71,10 +71,17 @@ jobs:
       - name: Ensure Chromium is present
         run: npx puppeteer browsers install chrome
 
-      # The /og/host route reads all data from query params (no API call), so the
-      # build needs no VITE_* secrets — the card can't drift on missing env.
+      # The /og/host route reads all data from query params — no API or Supabase
+      # call — so these values are never used at render time. They exist only to
+      # satisfy vite.config.js's required-env guard (which prevents shipping a
+      # white-screen bundle). The dist is screenshotted then discarded, so
+      # placeholders are correct and keep real keys out of CI.
       - name: Build (no prerender)
         run: npm run build:no-prerender
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key-unused-by-og-route
+          VITE_API_URL: https://placeholder.invalid/api
 
       - name: Decide mode
         id: mode
