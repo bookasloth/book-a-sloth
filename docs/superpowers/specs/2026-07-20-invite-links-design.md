@@ -46,6 +46,7 @@ separate from the Refer & Earn `referrals` table and its payout machinery.
 | `active`        | boolean default true | Off → landing redirects to `/`. Editable. |
 | `unique_visits` | bigint default 0 | Estimated unique landing hits (de-botted + IP/day deduped). Named `unique_visits` in DB and admin so the estimate is honest. |
 | `metadata`      | jsonb default '{}' | Free-form campaign details (budget, notes, dates…) without a future migration. |
+| `created_by`    | uuid NULL   | Admin/sales-manager who created it (FK → admin id). Audit + "my links" filter. |
 | `created_at`    | timestamptz default now() | |
 
 Only `label`, `assigned_to`, `active`, `metadata` are editable. `slug` is immutable.
@@ -89,11 +90,13 @@ fails the whole deploy. (Known landmine.)
 - On mount:
   - Fetch `GET /api/invite/:slug` → `{ label, active }`. Missing / `active:false`
     → redirect to `/`.
-  - Set BOTH stashes together, **first-touch, atomically** — never overwrite if
-    either already set — so DB attribution and analytics never disagree on source:
-    - `localStorage['bas_invite'] = slug` (mirrors existing `bas_ref`; survives OAuth).
-    - `utm_source = "invite/<slug>"` into the UTM stash (`useUtm.js` /
-      `sessionStorage['bas_utm']`) so PostHog/GA get the same source free.
+  - First-touch rule (single source of truth = `bas_invite`): **if `bas_invite`
+    already exists, change neither attribution value.** Otherwise set
+    `localStorage['bas_invite'] = slug` AND set the invite-specific UTM source to
+    `invite/<slug>` in the UTM stash (`useUtm.js` / `sessionStorage['bas_utm']`).
+    Existing non-invite UTM data is preserved per the existing UTM attribution
+    rules. (`bas_invite` mirrors `bas_ref` and survives OAuth; it — not
+    sessionStorage — is the durable gate, so the two stores can't diverge on source.)
   - Fire-and-forget `POST /api/invite/:slug/visit`.
 - Dynamic greeting: inject `label` into the hero headline, e.g.
   *"Welcome, {label} 🦥"*. One line; no per-slug design.
@@ -108,14 +111,17 @@ scrapers. `POST /api/invite/:slug/visit`:
 - `// ponytail: UA-skip + IP/day dedupe is a heuristic, not exact. Upgrade to a
   visit-log table only if sales needs precise unique-visitor counts.`
 
-### 3. Attribution capture (account creation only)
-- At the moment the `profiles` row is first inserted (first Google sign-in via
-  the invite CTA), the client passes `bas_invite`; the server validates the slug
-  exists in `invite_links`, then stamps `invite_slug` atomically (conditional
-  update / inline INSERT, only when null). Clear the stash after.
-- Returning/existing accounts: never stamped (their row already exists → the
-  `invite_slug IS NULL` guard makes it a no-op even if they carry a slug).
-- Idempotent + write-once at DB level; independent of referral capture.
+### 3. Attribution capture (NEW profile creation branch ONLY)
+- Attribution lives **inside the new-profile-creation branch** of the sign-in
+  path. Existing profiles never enter the invite-attribution write path AT ALL —
+  regardless of whether their `invite_slug` is null. (A null-guarded update alone
+  is NOT sufficient: an old account can have `invite_slug IS NULL` and would be
+  wrongly stamped. The branch, not the guard, is the gate.)
+- In that new-profile branch: client passes `bas_invite`; server validates the
+  slug exists in `invite_links`; set `invite_slug` inline in the creation INSERT.
+  The `invite_slug IS NULL` condition is kept only as a belt-and-suspenders
+  write-once safety, not as the returning-account gate.
+- Clear the stash after. Independent of referral capture.
 
 ### 4. Admin UI (alongside `AdminReferrals`)
 - Create: `slug` + `label` + `assigned_to` (+ optional `metadata`). Slug validated
@@ -151,9 +157,11 @@ path, since it's new-signups-only.)
 - Reserved-slug / duplicate blocked at admin create.
 
 ## Testing (minimal, per house style)
-- Backend: attribution atomic write-once (concurrent stamps → one wins, no
-  overwrite); existing account never stamped; server rejects a slug not in
-  `invite_links`; a since-deactivated (but existing) slug STILL attributes;
+- Backend: attribution happens ONLY in the new-profile branch (an EXISTING
+  account with `invite_slug IS NULL` that carries a slug is NOT stamped);
+  atomic write-once (concurrent new-profile creates → one wins, no overwrite);
+  server rejects a slug not in `invite_links`; a since-deactivated (but existing)
+  slug STILL attributes;
   bot UA skips `unique_visits` increment; inactive slug config returns `active:false`.
 - Client: `/invite/:slug` stashes `bas_invite` first-touch, no overwrite; sets
   `utm_source=invite/<slug>`.
