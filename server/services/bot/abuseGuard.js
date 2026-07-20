@@ -17,6 +17,11 @@ const IP_BLOCK_MSG = "You're on a timeout. Come back in a bit. For real issues, 
 const THREAT_MSG = "Not okay — I'm ending this here. If you're in a real crisis, please reach out to someone you trust or a helpline. For account issues, raise a ticket at /support.";
 const COOLOFF_MSG = "Alright, that's enough — I'm tapping out. Go cool off. Got a genuine issue? Raise a ticket at /support and a human picks it up.";
 
+// Fallback-only sarcasm — fires when the Haiku roast is down or over-budget.
+// Picked by a hash of the message (see cannedRoast) so a given insult gets the
+// same dry comeback every time and the whole pool actually gets used (the old
+// code was pinned to index 0). Same rules as the live roast: dry, one line,
+// redirect to the real problem, no slurs / no corporate mush.
 const CANNED = {
   en: [
     "Fair enough. What do you actually need?",
@@ -27,17 +32,36 @@ const CANNED = {
     "Noted. What are you trying to get done?",
     "Anyway. What's broken?",
     "Loud. Not useful. What do you need help with?",
+    "Ten out of ten venting. Zero out of ten detail. What's up?",
+    "Impressive. Now — the actual issue?",
+    "Great warmup. What's the real question?",
+    "Duly filed under 'not my problem'. What can I fix?",
+    "You done? Good. What do you need?",
+    "Big energy. Small ask, please — what's wrong?",
   ],
   hi: [
     "Theek hai. Kaam bol — kya chahiye?",
     "Bahut ho gaya. Ab problem bata.",
     "Samajh gaya. Kaunse page pe dikkat?",
     "Itni energy — kaam kya hai?",
+    "Wah. Ab asli sawaal?",
+    "Note kar liya. Kya theek karna hai?",
+    "Garmi kam, kaam zyada. Bol?",
+    "Achha. Booking, payment, ya kuch aur?",
+    "Shaandaar. Ab dikkat kya hai?",
+    "Ho gaya? Chalo — kya chahiye?",
   ],
   mr: [
     "Theek aahe. Kaam sang.",
     "Bas. Ata problem kay te sang.",
     "Kalale. Kuthe atakla?",
+    "Wah. Ata khara prashna?",
+    "Note kela. Kay durust karaycha?",
+    "Energy jasti, kaam kami. Bol?",
+    "Bara. Booking, payment ki kahi tari?",
+    "Zhala? Chala — kay pahije?",
+    "Chhan. Ata problem kay?",
+    "Sadhya kaam sang. Kuthe adkla?",
   ],
 };
 
@@ -178,7 +202,7 @@ async function classifyAbuse(msg) {
 }
 
 async function dynamicRoast(msg, lang) {
-  const fallback = () => cannedRoast(lang, 0);
+  const fallback = () => cannedRoast(lang, msg);
   try {
     if (!anthropicClient.isConfigured()) return fallback();
     const budget = await botBudget.tryConsume();
@@ -213,10 +237,15 @@ async function dynamicRoast(msg, lang) {
   }
 }
 
-function cannedRoast(lang, counter) {
+// Pick a fallback line by hashing the (normalized) message: same insult → same
+// comeback, different insults spread across the whole pool. Deterministic, so
+// it's testable and never repeats on a retry of the same message.
+function cannedRoast(lang, msg) {
   const pool = CANNED[lang] || CANNED.en;
-  const i = ((Number(counter) || 0) % pool.length + pool.length) % pool.length;
-  return pool[i];
+  const key = normalizeForMatch(msg).spaced;
+  let h = 7;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return pool[h % pool.length];
 }
 
 // ---- Strikes --------------------------------------------------------------
@@ -291,5 +320,5 @@ function _reset() { /* no module cache to clear */ }
 
 module.exports = {
   evaluate, checkListed, normalizeForMatch, HOSTILITY_RE,
-  IP_BLOCK_MSG, THREAT_MSG, COOLOFF_MSG, _reset,
+  IP_BLOCK_MSG, THREAT_MSG, COOLOFF_MSG, cannedRoast, CANNED, _reset,
 };
