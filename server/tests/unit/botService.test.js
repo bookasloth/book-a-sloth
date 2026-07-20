@@ -39,7 +39,7 @@ jest.mock('../../lib/botBudget', () => ({ tryConsume: jest.fn().mockResolvedValu
 const client = require('../../services/ai/anthropicClient');
 const sb = require('../../config/supabase');
 const botBudget = require('../../lib/botBudget');
-const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks, isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG, buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED, sanitizeAnswer, BLOCKED_MSG, detectInjection, redactPii, parseFollowups, cleanFollowups } = require('../../services/botService');
+const { askBot, askBotStream, buildRetrievalQuery, toModelHistory, smalltalkReply, SMALLTALK_REPLIES, mergeChunks, isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG, buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED, sanitizeAnswer, BLOCKED_MSG, detectInjection, redactPii, parseFollowups, cleanFollowups, pricingReply } = require('../../services/botService');
 
 const answerReply = (input) => ({ content: [{ type: 'tool_use', name: 'emit_answer', input }] });
 const chunk = (over = {}) => ({ id: 'c1', source_file: 'docs/architecture.md', heading: 'Google Calendar Integration', content: 'Connect via /api/auth/google.', rank: 0.9, ...over });
@@ -127,6 +127,30 @@ test('a greeting in front of a real question is NOT swallowed as small talk', as
   expect(out.escalate).toBe(true);
   expect(out.answer.length).toBeGreaterThan(0);
   expect(out.answer).not.toBe(SMALLTALK_REPLIES.greeting); // proves it wasn't the small-talk shortcut
+});
+
+describe('pricingReply (deterministic pricing layer)', () => {
+  it('answers the NAMED plan only, with the buy link', () => {
+    expect(pricingReply('how much is studio')).toMatch(/Studio/);
+    expect(pricingReply('how much is studio')).toMatch(/\/pricing/);
+    expect(pricingReply('studio pricing')).not.toMatch(/Host\+/); // that plan only
+    expect(pricingReply('host+ price')).toMatch(/Host\+/);
+    expect(pricingReply('what does the starter plan cost')).toMatch(/Starter/);
+  });
+  it('quotes yearly per-day + the GST note', () => {
+    expect(pricingReply('studio yearly cost')).toMatch(/₹10\/day/);
+    expect(pricingReply('host plus yearly price')).toMatch(/₹4\/day/);
+    expect(pricingReply('studio price')).toMatch(/18% GST/);
+  });
+  it('gives an overview when no plan is named', () => {
+    const r = pricingReply('what are your prices');
+    expect(r).toMatch(/Starter/); expect(r).toMatch(/Host\+/); expect(r).toMatch(/Studio/);
+  });
+  it('does NOT hijack non-pricing questions (incl. plan management / becoming a host)', () => {
+    expect(pricingReply('how do I change my plan')).toBeNull();
+    expect(pricingReply('how do I become a host')).toBeNull();
+    expect(pricingReply('how do I book a service')).toBeNull();
+  });
 });
 
 describe('isUnsupportedInput (non-Latin / hidden-char guard)', () => {
