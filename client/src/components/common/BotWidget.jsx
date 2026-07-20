@@ -255,6 +255,11 @@ export default function BotWidget() {
           ref={panelRef}
           role="dialog"
           aria-label="Bolt support chat"
+          // Lenis smooth-scroll hijacks wheel at the window level and preventDefaults it,
+          // which ate the chat's native scroll. data-lenis-prevent exempts this whole
+          // subtree so the messages list scrolls normally (our own wheel handler +
+          // overscroll-contain still stop page chaining at the boundaries).
+          data-lenis-prevent=""
           className="mb-3 flex h-[34rem] w-[23rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
           style={{ border: `2px solid ${INK}`, transformOrigin: 'bottom right', animation: 'boltGenie .3s cubic-bezier(.2,.8,.3,1) both' }}
         >
