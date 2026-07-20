@@ -636,7 +636,8 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     const { conversationId: convId, messageId } = await persist({
       conversationId, sessionRef, question: q, answer: faq, cited_sources: [], escalate: false, source: 'faq',
     });
-    return { answer: faq, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'faq' };
+    const fp = await pills.buildPills({ question: q, source: 'faq', escalate: false, cited_sources: [], answer: faq });
+    return { answer: faq, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'faq', pills: fp, locked: false };
   }
 
   const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
@@ -654,7 +655,8 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
       const { conversationId: convId, messageId } = await persist({
         conversationId, sessionRef, question: q, answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, source: 'cache',
       });
-      return { answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, conversationId: convId, messageId, source: 'cache' };
+      const cp = await pills.buildPills({ question: q, source: 'cache', escalate: false, cited_sources: cached.cited_sources, answer: cached.answer });
+      return { answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, conversationId: convId, messageId, source: 'cache', pills: cp, locked: false };
     }
   }
 
@@ -775,7 +777,8 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     const { conversationId: convId, messageId } = await persist({
       conversationId, sessionRef, question: q, answer: faq, cited_sources: [], escalate: false, source: 'faq',
     });
-    return { answer: faq, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'faq' };
+    const fp = await pills.buildPills({ question: q, source: 'faq', escalate: false, cited_sources: [], answer: faq });
+    return { answer: faq, cited_sources: [], followups: [], escalate: false, conversationId: convId, messageId, source: 'faq', pills: fp, locked: false };
   }
 
   const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
@@ -793,7 +796,8 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
       const { conversationId: convId, messageId } = await persist({
         conversationId, sessionRef, question: q, answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, source: 'cache',
       });
-      return { answer: cached.answer, cited_sources: cached.cited_sources, escalate: false, conversationId: convId, messageId, source: 'cache' };
+      const cp = await pills.buildPills({ question: q, source: 'cache', escalate: false, cited_sources: cached.cited_sources, answer: cached.answer });
+      return { answer: cached.answer, cited_sources: cached.cited_sources, followups: [], escalate: false, conversationId: convId, messageId, source: 'cache', pills: cp, locked: false };
     }
   }
 
