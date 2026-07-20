@@ -78,9 +78,22 @@ export default function BotWidget() {
   const listRef = useRef(null);
   const { pathname } = useLocation();
 
+  // Auto-stick to the newest message, but ONLY when the user is already near the
+  // bottom. Streaming mutates `messages` every token; an unconditional re-pin here
+  // yanks the list back down on each delta, making it impossible to scroll up and
+  // re-read while Bolt is answering. Track "was near bottom" before React repaints.
+  const stickRef = useRef(true);
   useEffect(() => {
-    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+    const el = listRef.current;
+    if (!el) return;
+    if (stickRef.current) el.scrollTop = el.scrollHeight;
   }, [messages, open]);
+
+  const onListScroll = () => {
+    const el = listRef.current;
+    if (!el) return;
+    stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+  };
 
   // Cycle the launcher's brand icons while the chat is closed.
   useEffect(() => {
@@ -173,7 +186,7 @@ export default function BotWidget() {
           </div>
 
           {/* Messages / Welcome */}
-          <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[#FFF8F4] px-3.5 py-4">
+          <div ref={listRef} onScroll={onListScroll} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[#FFF8F4] px-3.5 py-4">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center px-2 text-center">
                 <Avatar size={52} ring />
