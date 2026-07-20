@@ -8,6 +8,8 @@ import { streamBot, sendBotFeedback } from '../../../services/api';
 vi.mock('../../../services/api', () => ({
   streamBot: vi.fn(),
   sendBotFeedback: vi.fn().mockResolvedValue({ data: { ok: true } }),
+  botEscalateSendOtp: vi.fn().mockResolvedValue({ data: { ok: true } }),
+  botEscalateVerifyOtp: vi.fn().mockResolvedValue({ data: { ok: true, reference: 'CHAT-123456' } }),
 }));
 
 // Markdown renders <Link>, so the widget must sit inside a router.
@@ -49,7 +51,7 @@ describe('BotWidget', () => {
     expect(await screen.findByText(/connect google calendar from your dashboard/i)).toBeInTheDocument();
     expect(screen.getByText('Google Calendar')).toBeInTheDocument(); // the source chip
     expect(streamBot).toHaveBeenCalledWith(
-      { question: 'How do I connect Google Calendar?', conversationId: null },
+      expect.objectContaining({ question: 'How do I connect Google Calendar?', conversationId: null }),
       expect.any(Object),
     );
   });
@@ -67,14 +69,29 @@ describe('BotWidget', () => {
     await waitFor(() => expect(sendBotFeedback).toHaveBeenCalledWith({ messageId: 'm1', feedback: 'up' }));
   });
 
-  it('shows the honest async handoff card when the reply escalates', async () => {
+  it('asks an anonymous visitor how to be contacted when the reply escalates', async () => {
     streamBot.mockImplementation(async (_p, { onDelta, onDone }) => {
-      onDelta("Yeah — I'm pulling in a human from the team.");
-      onDone({ escalate: true, cited_sources: [], conversationId: 'c1', messageId: 'm2' });
+      onDelta("I'm getting this to a human on our support team.");
+      onDone({ escalate: true, needsContact: true, escalateReason: 'sensitive', cited_sources: [], conversationId: 'c1', messageId: 'm2' });
     });
     renderWidget();
     open();
     ask('I need a refund');
-    expect(await screen.findByText(/passing this to a human/i)).toBeInTheDocument();
+    expect(await screen.findByText(/how would you like us to contact you/i)).toBeInTheDocument();
+    // Choosing WhatsApp reveals the number field (reuses the OTP verify flow).
+    fireEvent.click(screen.getByRole('button', { name: /continue with whatsapp/i }));
+    expect(await screen.findByText(/your whatsapp number/i)).toBeInTheDocument();
+  });
+
+  it('shows a Support Request Sent confirmation with the reference for a logged-in user', async () => {
+    streamBot.mockImplementation(async (_p, { onDelta, onDone }) => {
+      onDelta("I'm getting this to a human on our support team.");
+      onDone({ escalate: true, needsContact: false, reference: 'CHAT-8F92AB', cited_sources: [], conversationId: 'c1', messageId: 'm3' });
+    });
+    renderWidget();
+    open();
+    ask('Something only a human can fix');
+    expect(await screen.findByText(/support request sent/i)).toBeInTheDocument();
+    expect(screen.getByText('CHAT-8F92AB')).toBeInTheDocument();
   });
 });

@@ -1,7 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { streamBot, sendBotFeedback } from '../../services/api';
+import { streamBot, sendBotFeedback, botEscalateSendOtp, botEscalateVerifyOtp } from '../../services/api';
 import Markdown from './Markdown';
+
+// Persisted across reloads: a stable anonymous visitor id (so support can recognise
+// repeat visitors) and the current conversation id (so a refresh keeps the thread).
+const VISITOR_KEY = 'bas_bot_visitor';
+const CONVO_KEY = 'bas_bot_convo';
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
+const lsDel = (k) => { try { localStorage.removeItem(k); } catch { /* ignore */ } };
+function getVisitorId() {
+  let v = lsGet(VISITOR_KEY);
+  if (!v) { v = (crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`); lsSet(VISITOR_KEY, v); }
+  return v;
+}
 
 // Bolt only shows on these pages (home, help/support, privacy/policy, terms).
 const isAllowedPath = (p) =>
@@ -84,9 +97,13 @@ export default function BotWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
-  const [conversationId, setConversationId] = useState(null);
+  const [conversationId, setConversationId] = useState(() => lsGet(CONVO_KEY) || null);
   const [messages, setMessages] = useState([]); // empty → welcome screen
   const [iconIdx, setIconIdx] = useState(0);
+  // Active human-handoff. null = none. { step, reason, question, channel, contact,
+  // otp, busy, error, reference }. step: 'choose'|'form'|'otp'|'done'.
+  const [escalation, setEscalation] = useState(null);
+  const [visitorId] = useState(getVisitorId);
   const listRef = useRef(null);
   const panelRef = useRef(null);
   const { pathname } = useLocation();
@@ -100,7 +117,7 @@ export default function BotWidget() {
     const el = listRef.current;
     if (!el) return;
     if (stickRef.current) el.scrollTop = el.scrollHeight;
-  }, [messages, open]);
+  }, [messages, open, escalation]);
 
   const onListScroll = () => {
     const el = listRef.current;
@@ -145,16 +162,24 @@ export default function BotWidget() {
     ]);
     setStreaming(true);
     await streamBot(
-      { question, conversationId },
+      { question, conversationId, visitorId, pageUrl: window.location.href },
       {
         onDelta: (t) => setMessages((m) => patchLastAssistant(m, (a) => ({ ...a, content: a.content + t }))),
         onDone: (d) => {
-          if (d.conversationId) setConversationId(d.conversationId);
+          if (d.conversationId) { setConversationId(d.conversationId); lsSet(CONVO_KEY, d.conversationId); }
           setMessages((m) => patchLastAssistant(m, (a) => ({
             ...a, streaming: false, cited_sources: d.cited_sources || [], followups: d.followups || [],
             escalate: !!d.escalate, messageId: d.messageId || null,
             pills: Array.isArray(d.pills) ? d.pills : [], locked: !!d.locked,
           })));
+          // Escalation handoff. Logged-in users are escalated server-side already
+          // (reference returned) → show the confirmation. Anonymous visitors must
+          // first choose a verified contact channel.
+          if (d.escalate && d.reference) {
+            setEscalation({ step: 'done', reference: d.reference });
+          } else if (d.escalate && d.needsContact) {
+            setEscalation({ step: 'choose', reason: d.escalateReason || 'model_unsure', question, conversationId: d.conversationId || conversationId });
+          }
         },
         onError: () => setMessages((m) => patchLastAssistant(m, (a) => ({
           ...a, streaming: false, escalate: true,
@@ -169,7 +194,41 @@ export default function BotWidget() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   };
 
-  const restart = () => { setMessages([]); setConversationId(null); setInput(''); };
+  const restart = () => { setMessages([]); setConversationId(null); setInput(''); setEscalation(null); lsDel(CONVO_KEY); };
+
+  // ---- Anonymous escalation contact flow --------------------------------
+  const chooseChannel = (channel) => {
+    if (channel === 'browsing') { setEscalation(null); return; } // "just browsing" → keep chatting, no escalation
+    setEscalation((e) => ({ ...e, channel, step: 'form', contact: '', otp: '', error: '', busy: false }));
+  };
+  const patchEsc = (patch) => setEscalation((e) => (e ? { ...e, ...patch } : e));
+
+  const sendContactOtp = async () => {
+    const e = escalation;
+    if (!e?.contact?.trim() || e.busy) return;
+    patchEsc({ busy: true, error: '' });
+    try {
+      await botEscalateSendOtp({ channel: e.channel, contact: e.contact.trim(), conversationId: e.conversationId });
+      patchEsc({ step: 'otp', busy: false, otp: '' });
+    } catch (err) {
+      patchEsc({ busy: false, error: err?.response?.data?.message || "Couldn't send the code. Try again." });
+    }
+  };
+
+  const verifyContactOtp = async () => {
+    const e = escalation;
+    if (!/^\d{6}$/.test(String(e?.otp || '')) || e.busy) return;
+    patchEsc({ busy: true, error: '' });
+    try {
+      const { data } = await botEscalateVerifyOtp({
+        channel: e.channel, contact: e.contact.trim(), otp: e.otp, conversationId: e.conversationId,
+        visitorId, pageUrl: window.location.href, reason: e.reason, question: e.question,
+      });
+      patchEsc({ step: 'done', busy: false, reference: data?.reference || null });
+    } catch (err) {
+      patchEsc({ busy: false, error: err?.response?.data?.message || 'Incorrect code. Try again.' });
+    }
+  };
 
   const rate = async (idx, value) => {
     const msg = messages[idx];
@@ -291,16 +350,8 @@ export default function BotWidget() {
                       })()}
                     </div>
 
-                    {/* Honest async handoff card (no fake agent, no fake timer) */}
-                    {m.role === 'assistant' && m.escalate && !m.streaming && (
-                      <div className="mt-2 flex items-center gap-2.5 rounded-xl border-2 border-[#1E1E1E]/10 bg-white p-3 shadow-sm">
-                        <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-[#FFE4D1] text-base">🧑‍💻</span>
-                        <div className="text-[12px] leading-snug text-[#1E1E1E]/70">
-                          <strong className="text-[#1E1E1E]">Passing this to a human.</strong><br />
-                          They'll follow up over WhatsApp or email. You can keep chatting meanwhile.
-                        </div>
-                      </div>
-                    )}
+                    {/* The escalation handoff (contact choice / confirmation) renders once
+                        below the whole thread — see the escalation panel after the list. */}
 
                     {/* Actions */}
                     {m.role === 'assistant' && !m.streaming && m.content && (
@@ -346,6 +397,96 @@ export default function BotWidget() {
                   </div>
                 </div>
               ))
+            )}
+
+            {/* Human handoff — contact choice → OTP verify → confirmation. Shown once,
+                below the thread. Anonymous visitors pick a channel; logged-in users
+                land straight on the confirmation (escalated server-side already). */}
+            {escalation && (
+              <div className="rounded-xl border-2 border-[#1E1E1E]/10 bg-white p-3 shadow-sm">
+                {escalation.step === 'done' ? (
+                  <div className="flex items-start gap-2.5">
+                    <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-[#DCFCE7] text-base">✅</span>
+                    <div className="text-[12px] leading-relaxed text-[#1E1E1E]/80">
+                      <strong className="text-[#1E1E1E]">Support Request Sent</strong><br />
+                      We'll contact you via WhatsApp or Email.
+                      {escalation.reference && (
+                        <><br />Reference: <span className="font-mono font-semibold text-[#1E1E1E]">{escalation.reference}</span></>
+                      )}
+                      <br /><span className="text-[#1E1E1E]/50">You can continue chatting while we review your request.</span>
+                    </div>
+                  </div>
+                ) : escalation.step === 'choose' ? (
+                  <div>
+                    <p className="mb-2 text-[12px] leading-snug text-[#1E1E1E]/80">
+                      Before I send this to our support team, how would you like us to contact you?
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      <button type="button" onClick={() => chooseChannel('whatsapp')}
+                        className="rounded-lg border-2 border-[#FE5100]/70 px-3 py-1.5 text-[12px] font-semibold text-[#FE5100] transition-colors hover:bg-[#FFE4D1]">
+                        Continue with WhatsApp
+                      </button>
+                      <button type="button" onClick={() => chooseChannel('email')}
+                        className="rounded-lg border-2 border-[#FE5100]/70 px-3 py-1.5 text-[12px] font-semibold text-[#FE5100] transition-colors hover:bg-[#FFE4D1]">
+                        Continue with Email
+                      </button>
+                      <button type="button" onClick={() => chooseChannel('browsing')}
+                        className="rounded-lg px-3 py-1.5 text-[12px] font-medium text-[#1E1E1E]/50 transition-colors hover:bg-[#1E1E1E]/5">
+                        I'm just browsing
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="mb-1.5 text-[12px] font-semibold text-[#1E1E1E]">
+                      {escalation.channel === 'whatsapp' ? 'Your WhatsApp number' : 'Your email'}
+                    </p>
+                    {escalation.step === 'form' ? (
+                      <div className="flex gap-1.5">
+                        <input
+                          value={escalation.contact || ''}
+                          onChange={(e) => patchEsc({ contact: e.target.value })}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); sendContactOtp(); } }}
+                          type={escalation.channel === 'email' ? 'email' : 'tel'}
+                          inputMode={escalation.channel === 'email' ? 'email' : 'tel'}
+                          placeholder={escalation.channel === 'whatsapp' ? '9876543210' : 'you@email.com'}
+                          className="min-w-0 flex-1 rounded-lg border-2 border-[#1E1E1E]/12 px-2.5 py-1.5 text-[12px] outline-none focus:!border-[#FE5100]"
+                        />
+                        <button type="button" onClick={sendContactOtp} disabled={escalation.busy || !(escalation.contact || '').trim()}
+                          className="flex-shrink-0 rounded-lg bg-[#FE5100] px-3 py-1.5 text-[12px] font-semibold text-white disabled:bg-[#1E1E1E]/15 disabled:text-[#1E1E1E]/40">
+                          {escalation.busy ? '…' : 'Send code'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="mb-1.5 text-[11px] text-[#1E1E1E]/60">Enter the 6-digit code sent to {escalation.contact}.</p>
+                        <div className="flex gap-1.5">
+                          <input
+                            value={escalation.otp || ''}
+                            onChange={(e) => patchEsc({ otp: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); verifyContactOtp(); } }}
+                            inputMode="numeric" placeholder="123456"
+                            className="min-w-0 flex-1 rounded-lg border-2 border-[#1E1E1E]/12 px-2.5 py-1.5 text-[12px] tracking-widest outline-none focus:!border-[#FE5100]"
+                          />
+                          <button type="button" onClick={verifyContactOtp} disabled={escalation.busy || !/^\d{6}$/.test(escalation.otp || '')}
+                            className="flex-shrink-0 rounded-lg bg-[#FE5100] px-3 py-1.5 text-[12px] font-semibold text-white disabled:bg-[#1E1E1E]/15 disabled:text-[#1E1E1E]/40">
+                            {escalation.busy ? '…' : 'Verify'}
+                          </button>
+                        </div>
+                        <button type="button" onClick={sendContactOtp} disabled={escalation.busy}
+                          className="mt-1 text-[10px] font-medium text-[#FE5100] hover:underline disabled:opacity-50">
+                          Resend code
+                        </button>
+                      </div>
+                    )}
+                    {escalation.error && <p className="mt-1 text-[10px] text-[#ef4444]">{escalation.error}</p>}
+                    <button type="button" onClick={() => chooseChannel('browsing')}
+                      className="mt-1.5 text-[10px] font-medium text-[#1E1E1E]/40 hover:text-[#1E1E1E]/70">
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

@@ -139,6 +139,10 @@ router.get('/bot/analytics',    requireAdmin('support.view'),   botAdmin.analyti
 router.get('/bot/graph',        requireAdmin('support.view'),   botAdmin.graph);
 router.get('/bot/cache',        requireAdmin('support.view'),   botAdmin.listCache);
 router.delete('/bot/cache/:id', requireAdmin('support.assign'), botAdmin.deleteCache);
+router.get('/bot/escalations',              requireAdmin('support.view'),   botAdmin.listEscalations);
+router.get('/bot/escalations/:id',          requireAdmin('support.view'),   botAdmin.getEscalation);
+router.post('/bot/escalations/:id/reply',   requireAdmin('support.assign'), botAdmin.replyEscalation);
+router.patch('/bot/escalations/:id',        requireAdmin('support.assign'), botAdmin.updateEscalation);
 
 // ── Badge system ───────────────────────────────────────────────
 const badges = require('../controllers/badgeAdminController');
