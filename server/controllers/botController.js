@@ -1,50 +1,60 @@
 'use strict';
-// Bolt 958 support bot — thin HTTP layer over botService. Public + unauthenticated;
-// rate-limited at the route. On escalation it emails the support inbox (reusing the
-// existing sendEmail util, same as contactController) so a human picks it up.
+// Bolt 958 support bot — thin HTTP layer over botService + escalationService.
+// Public + rate-limited. Routes use optionalProtect, so req.user is set when the
+// caller is logged in (host or guest) and absent for anonymous visitors.
+//
+// Escalation flow:
+//   • logged-in → escalate immediately, auto-attaching identity + a one-line summary.
+//   • anonymous → DON'T email yet; the client asks how to be reached (WhatsApp/email),
+//     verifies via OTP, then hits /escalate/verify which records + emails support.
 
-const { askBot, askBotStream, recordFeedback, getRecentMessages, redactPii } = require('../services/botService');
-const sendEmail = require('../utils/sendEmail');
+const { askBot, askBotStream, recordFeedback } = require('../services/botService');
+const escalation = require('../services/bot/escalationService');
 const { safeError } = require('../utils/httpError');
 
-const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'bolt@bookasloth.in';
 const MAX_QUESTION_LEN = 2000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const OTP_RE = /^\d{6}$/;
 
-const esc = (s = '') =>
-  String(s).replace(/[&<>"']/g, (c) => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-  ));
+// Normalize a contact so the OTP is stored + verified under the same key, and so the
+// WhatsApp number carries a country code (10 digits → 91XXXXXXXXXX).
+function normalizeContact(channel, raw) {
+  const s = String(raw || '').trim();
+  if (channel === 'email') return s.toLowerCase();
+  const digits = s.replace(/[^\d]/g, '');
+  if (/^\d{10}$/.test(digits)) return '91' + digits;
+  return digits; // already has country code (or invalid — caller validates length)
+}
+const validContact = (channel, c) =>
+  channel === 'email' ? EMAIL_RE.test(c) : /^\d{10,15}$/.test(c);
 
-// Fire the support handoff email. Best-effort: a mail failure must never turn a
-// successful bot reply into an error for the user.
-async function notifySupport({ question, conversationId, sessionRef }) {
+// Pull the logged-in caller's identity for auto-attach. Best-effort — a lookup miss
+// still escalates, just with thinner detail.
+async function resolveIdentity(req, visitorUuid) {
+  if (!req.user?.id) {
+    return { logged_in: false, visitor_uuid: visitorUuid || null };
+  }
+  const { supabaseAdmin } = require('../config/supabase'); // lazy: only the logged-in path needs it
   try {
-    // PII-redact before it hits the support inbox. The transcript comes from
-    // getRecentMessages (bot_messages), which is already stored redacted; the raw
-    // question passed here is not, so redact it explicitly.
-    const q = redactPii(question);
-    const history = await getRecentMessages(conversationId, 10);
-    const transcript = history.length
-      ? history.map((m) => `<p><strong>${esc(m.role)}:</strong> ${esc(m.content)}</p>`).join('')
-      : `<p><strong>user:</strong> ${esc(q)}</p>`;
-    await sendEmail({
-      to: SUPPORT_EMAIL,
-      subject: '[Bolt 958] Support escalation — a user needs a human',
-      html: `
-        <h2>Bolt 958 could not answer confidently</h2>
-        <p>A visitor asked something the bot escalated (no confident doc match, or a
-        sensitive topic). Please follow up over WhatsApp/email.</p>
-        <p><strong>Question:</strong> ${esc(q)}</p>
-        <p><strong>Conversation:</strong> ${esc(conversationId || '—')}</p>
-        <p><strong>Session:</strong> ${esc(sessionRef || 'anonymous')}</p>
-        <hr/>
-        <h3>Transcript</h3>
-        ${transcript}
-      `,
-    });
-  } catch (err) {
-    console.error('[bot] support escalation email failed:', err.message);
+    const { data } = await supabaseAdmin
+      .from('profiles')
+      .select('name, email, phone, whatsapp_number, is_host')
+      .eq('id', req.user.id)
+      .single();
+    const p = data || {};
+    return {
+      logged_in: true,
+      user_id: req.user.id,
+      is_host: !!p.is_host,
+      name: p.name || null,
+      email: p.email || req.user.email || null,
+      phone: p.phone || p.whatsapp_number || null,
+      contact_channel: 'auto',
+      contact_verified: true,
+    };
+  } catch (_) {
+    return { logged_in: true, user_id: req.user.id, email: req.user.email || null, contact_channel: 'auto', contact_verified: true };
   }
 }
 
@@ -53,86 +63,79 @@ exports.ask = async (req, res) => {
     const question = String(req.body?.question || '').trim();
     const conversationId = req.body?.conversationId || null;
     if (!question) return res.status(400).json({ message: 'Please enter a question.' });
-    if (question.length > MAX_QUESTION_LEN) {
-      return res.status(400).json({ message: 'That question is too long. Please shorten it.' });
-    }
-    if (conversationId && !UUID_RE.test(conversationId)) {
-      return res.status(400).json({ message: 'Invalid conversation reference.' });
-    }
+    if (question.length > MAX_QUESTION_LEN) return res.status(400).json({ message: 'That question is too long. Please shorten it.' });
+    if (conversationId && !UUID_RE.test(conversationId)) return res.status(400).json({ message: 'Invalid conversation reference.' });
 
-    // Identity is best-effort: a logged-in user's id if the request carries one,
-    // else anonymous. No auth is required (Phase 1 = public knowledge bot).
-    const sessionRef = req.user?.id || null;
-
+    const sessionRef = req.user?.id || req.body?.visitorId || null;
     const result = await askBot({ question, conversationId, sessionRef, ip: req.ip });
 
+    let reference = null;
+    let needsContact = false;
     if (result.escalate) {
-      // Fire-and-forget: the user must NOT wait on the internal support email.
-      // A slow/hanging SMTP handshake was blocking the whole HTTP response (the
-      // reply is already computed here). notifySupport swallows its own errors,
-      // so an unhandled rejection can't escape; Render is long-running so the
-      // background send completes after we respond.
-      notifySupport({ question, conversationId: result.conversationId, sessionRef });
+      if (req.user?.id) {
+        reference = escalation.buildReference(result.conversationId);
+        const identity = await resolveIdentity(req);
+        // Fire-and-forget — the user must not wait on summary + support email.
+        escalation.recordAndNotify({
+          conversationId: result.conversationId, question, reason: result.escalateReason,
+          pageUrl: req.body?.pageUrl, userAgent: req.get('user-agent'), identity,
+        });
+      } else {
+        needsContact = true; // anon: client will collect a verified contact, then /escalate/verify
+      }
     }
 
     return res.json({
-      answer: result.answer,
-      cited_sources: result.cited_sources,
-      escalate: result.escalate,
-      conversationId: result.conversationId,
-      messageId: result.messageId,
-      pills: result.pills || [],
-      locked: !!result.locked,
+      answer: result.answer, cited_sources: result.cited_sources, escalate: result.escalate,
+      escalateReason: result.escalateReason || null, needsContact, reference,
+      conversationId: result.conversationId, messageId: result.messageId,
+      pills: result.pills || [], locked: !!result.locked,
     });
   } catch (err) {
     return safeError(res, err);
   }
 };
 
-// Streaming twin of ask(). Same validation + escalation email; streams the answer
-// to the browser over Server-Sent Events so it types out live.
-//   event: delta  data: { text }        — one or more, the answer as it's produced
-//   event: done   data: { escalate, cited_sources, followups, conversationId, messageId }
-//   event: error  data: { message }     — on a hard failure
 exports.askStream = async (req, res) => {
   const question = String(req.body?.question || '').trim();
   const conversationId = req.body?.conversationId || null;
   if (!question) return res.status(400).json({ message: 'Please enter a question.' });
-  if (question.length > MAX_QUESTION_LEN) {
-    return res.status(400).json({ message: 'That question is too long. Please shorten it.' });
-  }
-  if (conversationId && !UUID_RE.test(conversationId)) {
-    return res.status(400).json({ message: 'Invalid conversation reference.' });
-  }
+  if (question.length > MAX_QUESTION_LEN) return res.status(400).json({ message: 'That question is too long. Please shorten it.' });
+  if (conversationId && !UUID_RE.test(conversationId)) return res.status(400).json({ message: 'Invalid conversation reference.' });
 
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache, no-transform',
     Connection: 'keep-alive',
-    'X-Accel-Buffering': 'no', // don't let a proxy (nginx/Render) buffer the stream
+    'X-Accel-Buffering': 'no',
   });
   const sse = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 
   try {
-    const sessionRef = req.user?.id || null;
-    const result = await askBotStream({
-      question, conversationId, sessionRef, ip: req.ip,
-      onDelta: (text) => sse('delta', { text }),
-    });
+    const sessionRef = req.user?.id || req.body?.visitorId || null;
+    const result = await askBotStream({ question, conversationId, sessionRef, ip: req.ip, onDelta: (text) => sse('delta', { text }) });
 
+    let reference = null;
+    let needsContact = false;
     if (result.escalate) {
-      // Fire-and-forget — the user must not wait on the internal support email.
-      notifySupport({ question, conversationId: result.conversationId, sessionRef });
+      if (req.user?.id) {
+        reference = escalation.buildReference(result.conversationId);
+        const identity = await resolveIdentity(req);
+        escalation.recordAndNotify({
+          conversationId: result.conversationId, question, reason: result.escalateReason,
+          pageUrl: req.body?.pageUrl, userAgent: req.get('user-agent'), identity,
+        });
+      } else {
+        needsContact = true;
+      }
     }
 
     sse('done', {
-      escalate: result.escalate,
-      cited_sources: result.cited_sources,
-      followups: result.followups || [],
-      conversationId: result.conversationId,
-      messageId: result.messageId,
-      pills: result.pills || [],
-      locked: !!result.locked,
+      escalate: result.escalate, escalateReason: result.escalateReason || null,
+      needsContact, reference,
+      cited_sources: result.cited_sources, followups: result.followups || [],
+      conversationId: result.conversationId, messageId: result.messageId,
+      pills: result.pills || [], locked: !!result.locked,
     });
     res.end();
   } catch (err) {
@@ -142,15 +145,66 @@ exports.askStream = async (req, res) => {
   }
 };
 
+// Anonymous visitor: send an OTP to the chosen WhatsApp number / email.
+exports.escalateSendOtp = async (req, res) => {
+  try {
+    const channel = req.body?.channel;
+    const conversationId = req.body?.conversationId || null;
+    if (channel !== 'whatsapp' && channel !== 'email') return res.status(400).json({ message: 'Choose WhatsApp or email.' });
+    if (conversationId && !UUID_RE.test(conversationId)) return res.status(400).json({ message: 'Invalid conversation reference.' });
+    const contact = normalizeContact(channel, req.body?.contact);
+    if (!validContact(channel, contact)) return res.status(400).json({ message: channel === 'email' ? 'Enter a valid email.' : 'Enter a valid phone number.' });
+
+    const out = await escalation.sendContactOtp({ channel, contact, name: req.body?.name });
+    if (!out.ok) {
+      const code = out.reason === 'rate_limited' || out.reason === 'locked_out' ? 429 : 502;
+      return res.status(code).json({ message: out.reason === 'delivery_failed' ? "Couldn't send the code — try the other channel." : 'Too many attempts. Try again later.' });
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    return safeError(res, err);
+  }
+};
+
+// Anonymous visitor: verify the OTP, then record + email the escalation.
+exports.escalateVerifyOtp = async (req, res) => {
+  try {
+    const channel = req.body?.channel;
+    const conversationId = req.body?.conversationId || null;
+    const otp = String(req.body?.otp || '').trim();
+    if (channel !== 'whatsapp' && channel !== 'email') return res.status(400).json({ message: 'Choose WhatsApp or email.' });
+    if (!OTP_RE.test(otp)) return res.status(400).json({ message: 'Enter the 6-digit code.' });
+    if (conversationId && !UUID_RE.test(conversationId)) return res.status(400).json({ message: 'Invalid conversation reference.' });
+    const contact = normalizeContact(channel, req.body?.contact);
+    if (!validContact(channel, contact)) return res.status(400).json({ message: 'Invalid contact.' });
+
+    const v = await escalation.verifyContactOtp({ channel, contact, otp });
+    if (!v.valid) return res.status(400).json({ message: v.reason === 'expired' ? 'That code expired. Request a new one.' : 'Incorrect code. Try again.' });
+
+    const identity = {
+      logged_in: false,
+      visitor_uuid: req.body?.visitorId || null,
+      name: req.body?.name || null,
+      contact_channel: channel,
+      contact_verified: true,
+      email: channel === 'email' ? contact : null,
+      phone: channel === 'whatsapp' ? contact : null,
+    };
+    const rec = await escalation.recordAndNotify({
+      conversationId, question: req.body?.question || '', reason: req.body?.reason || 'model_unsure',
+      pageUrl: req.body?.pageUrl, userAgent: req.get('user-agent'), identity,
+    });
+    return res.json({ ok: true, reference: rec.reference });
+  } catch (err) {
+    return safeError(res, err);
+  }
+};
+
 exports.feedback = async (req, res) => {
   try {
     const { messageId, feedback } = req.body || {};
-    if (!messageId || !UUID_RE.test(messageId)) {
-      return res.status(400).json({ message: 'A valid messageId is required.' });
-    }
-    if (feedback !== 'up' && feedback !== 'down') {
-      return res.status(400).json({ message: "feedback must be 'up' or 'down'." });
-    }
+    if (!messageId || !UUID_RE.test(messageId)) return res.status(400).json({ message: 'A valid messageId is required.' });
+    if (feedback !== 'up' && feedback !== 'down') return res.status(400).json({ message: "feedback must be 'up' or 'down'." });
     await recordFeedback(messageId, feedback);
     return res.json({ ok: true });
   } catch (err) {
