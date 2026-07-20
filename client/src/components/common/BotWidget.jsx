@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { streamBot, sendBotFeedback, botEscalateSendOtp, botEscalateVerifyOtp } from '../../services/api';
+import { streamBot, sendBotFeedback, botEscalateSendOtp, botEscalateVerifyOtp, botEscalateRating } from '../../services/api';
 import Markdown from './Markdown';
 
 // Persisted across reloads: a stable anonymous visitor id (so support can recognise
@@ -28,6 +28,15 @@ const isAllowedPath = (p) =>
 
 const PRIMARY = '#FE5100';
 const INK = '#1E1E1E';
+
+// Post-handoff satisfaction scale — 1..5, coloured worst→best. Click = auto-submit.
+const FEEDBACK = [
+  { n: 1, e: '😠', c: '#ef4444' },
+  { n: 2, e: '😕', c: '#f97316' },
+  { n: 3, e: '😐', c: '#eab308' },
+  { n: 4, e: '🙂', c: '#84cc16' },
+  { n: 5, e: '🤩', c: '#22c55e' },
+];
 
 // Brand icons cycled on the closed launcher — booking/host/support motifs.
 const LAUNCHER_ICONS = [
@@ -176,7 +185,7 @@ export default function BotWidget() {
           // (reference returned) → show the confirmation. Anonymous visitors must
           // first choose a verified contact channel.
           if (d.escalate && d.reference) {
-            setEscalation({ step: 'done', reference: d.reference });
+            setEscalation({ step: 'done', reference: d.reference, escalationId: d.escalationId || null });
           } else if (d.escalate && d.needsContact) {
             setEscalation({ step: 'choose', reason: d.escalateReason || 'model_unsure', question, conversationId: d.conversationId || conversationId });
           }
@@ -224,10 +233,19 @@ export default function BotWidget() {
         channel: e.channel, contact: e.contact.trim(), otp: e.otp, conversationId: e.conversationId,
         visitorId, pageUrl: window.location.href, reason: e.reason, question: e.question,
       });
-      patchEsc({ step: 'done', busy: false, reference: data?.reference || null });
+      patchEsc({ step: 'done', busy: false, reference: data?.reference || null, escalationId: data?.escalationId || null });
     } catch (err) {
       patchEsc({ busy: false, error: err?.response?.data?.message || 'Incorrect code. Try again.' });
     }
+  };
+
+  // Satisfaction rating — one click auto-submits, then we offer ticket tracking.
+  const rateEscalation = async (n) => {
+    if (escalation?.ratingBusy || escalation?.rated) return;
+    patchEsc({ ratingBusy: true });
+    try { if (escalation.escalationId) await botEscalateRating({ escalationId: escalation.escalationId, rating: n }); }
+    catch (_) { /* non-fatal — still advance the UI */ }
+    patchEsc({ rated: n, ratingBusy: false });
   };
 
   const rate = async (idx, value) => {
@@ -410,16 +428,41 @@ export default function BotWidget() {
             {escalation && (
               <div className="rounded-xl border-2 border-[#1E1E1E]/10 bg-white p-3 shadow-sm">
                 {escalation.step === 'done' ? (
-                  <div className="flex items-start gap-2.5">
-                    <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-[#DCFCE7] text-base">✅</span>
-                    <div className="text-[12px] leading-relaxed text-[#1E1E1E]/80">
-                      <strong className="text-[#1E1E1E]">Support Request Sent</strong><br />
-                      We'll contact you via WhatsApp or Email.
-                      {escalation.reference && (
-                        <><br />Reference: <span className="font-mono font-semibold text-[#1E1E1E]">{escalation.reference}</span></>
-                      )}
-                      <br /><span className="text-[#1E1E1E]/50">You can continue chatting while we review your request.</span>
+                  <div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-[#DCFCE7] text-base">✅</span>
+                      <div className="text-[12px] leading-relaxed text-[#1E1E1E]/80">
+                        <strong className="text-[#1E1E1E]">Support Request Sent</strong><br />
+                        We'll contact you via WhatsApp or Email.
+                        {escalation.reference && (
+                          <><br />Reference: <span className="font-mono font-semibold text-[#1E1E1E]">{escalation.reference}</span></>
+                        )}
+                      </div>
                     </div>
+
+                    {!escalation.rated ? (
+                      <div className="mt-3 border-t border-[#1E1E1E]/10 pt-2.5">
+                        <p className="mb-1.5 text-[12px] text-[#1E1E1E]/70">How was your experience?</p>
+                        <div className="flex justify-between gap-1">
+                          {FEEDBACK.map((f) => (
+                            <button key={f.n} type="button" onClick={() => rateEscalation(f.n)} disabled={escalation.ratingBusy}
+                              aria-label={`Rate ${f.n} of 5`} title={`${f.n}/5`}
+                              className="grid h-9 w-9 place-items-center rounded-full border-2 text-lg transition-transform hover:scale-110 disabled:opacity-50"
+                              style={{ borderColor: f.c, background: `${f.c}14` }}>
+                              {f.e}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 border-t border-[#1E1E1E]/10 pt-2.5">
+                        <p className="mb-2 text-[12px] text-[#1E1E1E]/80">Thanks for the feedback! Want to track your request?</p>
+                        <a href="/support/tickets" target="_blank" rel="noopener noreferrer"
+                          className="inline-block rounded-lg bg-[#FE5100] px-3 py-1.5 text-[12px] font-semibold text-white">
+                          Track ticket status →
+                        </a>
+                      </div>
+                    )}
                   </div>
                 ) : escalation.step === 'choose' ? (
                   <div>

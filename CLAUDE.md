@@ -88,6 +88,9 @@ Items previously listed here as pending are now live:
   code-side schema fallback (degrades to email-only on "table/column missing"). See
   `docs/bolt-escalation-flow.md`.
 
+- **v3.90** (`v3.90_bot_escalation_rating.sql`) — applied 2026-07-20 on BOTH DBs. Adds
+  `bot_escalations.rating` (1–5 post-handoff satisfaction). Additive, schema-fallback safe.
+
 No migration is currently outstanding. Workflow for any NEW migration: run it on BOTH DBs, and keep the
 code-side schema fallback (SELECT/INSERT destructure) until it is confirmed applied everywhere.
 

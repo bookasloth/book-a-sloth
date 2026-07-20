@@ -70,16 +70,17 @@ exports.ask = async (req, res) => {
     const result = await askBot({ question, conversationId, sessionRef, ip: req.ip });
 
     let reference = null;
+    let escalationId = null;
     let needsContact = false;
     if (result.escalate) {
       if (req.user?.id) {
-        reference = escalation.buildReference(result.conversationId);
         const identity = await resolveIdentity(req);
-        // Fire-and-forget — the user must not wait on summary + support email.
-        escalation.recordAndNotify({
+        const rec = await escalation.recordAndNotify({
           conversationId: result.conversationId, question, reason: result.escalateReason,
           pageUrl: req.body?.pageUrl, userAgent: req.get('user-agent'), identity,
         });
+        reference = rec.reference;
+        escalationId = rec.escalationId;
       } else {
         needsContact = true; // anon: client will collect a verified contact, then /escalate/verify
       }
@@ -87,7 +88,7 @@ exports.ask = async (req, res) => {
 
     return res.json({
       answer: result.answer, cited_sources: result.cited_sources, escalate: result.escalate,
-      escalateReason: result.escalateReason || null, needsContact, reference,
+      escalateReason: result.escalateReason || null, needsContact, reference, escalationId,
       conversationId: result.conversationId, messageId: result.messageId,
       pills: result.pills || [], locked: !!result.locked,
     });
@@ -116,15 +117,19 @@ exports.askStream = async (req, res) => {
     const result = await askBotStream({ question, conversationId, sessionRef, ip: req.ip, onDelta: (text) => sse('delta', { text }) });
 
     let reference = null;
+    let escalationId = null;
     let needsContact = false;
     if (result.escalate) {
       if (req.user?.id) {
-        reference = escalation.buildReference(result.conversationId);
         const identity = await resolveIdentity(req);
-        escalation.recordAndNotify({
+        // Await only the fast insert (summary + email run in the background) so the
+        // done event carries the reference + id the rating step needs.
+        const rec = await escalation.recordAndNotify({
           conversationId: result.conversationId, question, reason: result.escalateReason,
           pageUrl: req.body?.pageUrl, userAgent: req.get('user-agent'), identity,
         });
+        reference = rec.reference;
+        escalationId = rec.escalationId;
       } else {
         needsContact = true;
       }
@@ -132,7 +137,7 @@ exports.askStream = async (req, res) => {
 
     sse('done', {
       escalate: result.escalate, escalateReason: result.escalateReason || null,
-      needsContact, reference,
+      needsContact, reference, escalationId,
       cited_sources: result.cited_sources, followups: result.followups || [],
       conversationId: result.conversationId, messageId: result.messageId,
       pills: result.pills || [], locked: !!result.locked,
@@ -194,7 +199,21 @@ exports.escalateVerifyOtp = async (req, res) => {
       conversationId, question: req.body?.question || '', reason: req.body?.reason || 'model_unsure',
       pageUrl: req.body?.pageUrl, userAgent: req.get('user-agent'), identity,
     });
-    return res.json({ ok: true, reference: rec.reference });
+    return res.json({ ok: true, reference: rec.reference, escalationId: rec.escalationId });
+  } catch (err) {
+    return safeError(res, err);
+  }
+};
+
+// Post-handoff satisfaction rating (1–5) from the widget's emoji picker.
+exports.escalateRating = async (req, res) => {
+  try {
+    const escalationId = req.body?.escalationId;
+    const rating = req.body?.rating;
+    if (!escalationId || !UUID_RE.test(escalationId)) return res.status(400).json({ message: 'Invalid escalation id.' });
+    const out = await escalation.recordRating(escalationId, rating);
+    if (!out.ok) return res.status(400).json({ message: 'Rating must be 1–5.' });
+    return res.json({ ok: true });
   } catch (err) {
     return safeError(res, err);
   }

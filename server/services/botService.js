@@ -293,6 +293,33 @@ const sourcesFromChunks = (chunks) =>
 // punctuation. Keeps the match dumb + explainable.
 const normalize = (s) => String(s || '').toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
 
+// ── Pricing layer: deterministic, exact figures from the pricing page so Bolt never
+// guesses a price. Answers about the NAMED plan only (or a short overview when none is
+// named), always linking the on-site /pricing page to buy. Per-day = yearly ÷ 365; all
+// prices exclude tax (+ 18% GST). Update here if the pricing page changes.
+const PRICING = {
+  starter: '**Starter — ₹0, free forever.** Plus 5% per booking. For professionals just getting started (up to 3 services). [See plans & get started](/pricing).',
+  host:    '**Host+ — ₹229/month**, or **₹1,499/year** (~₹4/day, save 45%). For solo creators & freelancers. Prices exclude tax (+ 18% GST). [Get Host+](/pricing).',
+  studio:  '**Studio — ₹555/month**, or **₹3,650/year** (~₹10/day, save 45%). Top tier for growing practices & studios. Prices exclude tax (+ 18% GST). [Get Studio](/pricing).',
+};
+// Pricing intent — deliberately excludes bare "plan"/"plans" so it doesn't hijack
+// plan-management questions ("how do I change my plan"). Plan name alone isn't enough.
+const PRICING_INTENT = /\bpric\w*|\bcosts?\b|\bcharges?\b|\bfees?\b|\bhow much\b|\bper (?:month|year)\b|\bmonthly\b|\byearly\b|\bannual\b|\bsubscription\b|\bupgrade\b|\brupees?\b|\brs\b/;
+const pricingReply = (question) => {
+  const nq = normalize(question);
+  if (!nq) return null;
+  const raw = String(question || '').toLowerCase();
+  if (!PRICING_INTENT.test(nq) && !raw.includes('₹')) return null;
+  if (nq.includes('studio')) return PRICING.studio;
+  if (/\bhost\b/.test(nq) || raw.includes('host+') || nq.includes('host plus')) return PRICING.host;
+  if (nq.includes('starter') || nq.includes('free')) return PRICING.starter;
+  return 'Our plans:\n\n' +
+    '- **Starter** — ₹0 forever (+5% per booking)\n' +
+    '- **Host+** — ₹229/mo or ₹1,499/yr (~₹4/day)\n' +
+    '- **Studio** — ₹555/mo or ₹3,650/yr (~₹10/day)\n\n' +
+    'Yearly saves ~45%. Prices exclude tax (+ 18% GST). Ask about a specific plan for details, or [see all plans](/pricing).';
+};
+
 // ── FAQ layer: deterministic canned answer, no LLM. Best-effort — a missing table
 // or DB hiccup just skips the layer (returns null → pipeline continues). ─────────
 async function matchFaq(question) {
@@ -633,6 +660,14 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     return { answer: small, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'smalltalk' };
   }
 
+  const price = q && pricingReply(q);
+  if (price) {
+    const { conversationId: convId, messageId } = await persist({
+      conversationId, sessionRef, question: q, answer: price, cited_sources: [], escalate: false, source: 'pricing',
+    });
+    return { answer: price, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'pricing' };
+  }
+
   const faq = q && await matchFaq(q);
   if (faq) {
     const { conversationId: convId, messageId } = await persist({
@@ -771,6 +806,15 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
       conversationId, sessionRef, question: q, answer: small, cited_sources: [], escalate: false, source: 'smalltalk',
     });
     return { answer: small, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'smalltalk' };
+  }
+
+  const price = q && pricingReply(q);
+  if (price) {
+    onDelta(price);
+    const { conversationId: convId, messageId } = await persist({
+      conversationId, sessionRef, question: q, answer: price, cited_sources: [], escalate: false, source: 'pricing',
+    });
+    return { answer: price, cited_sources: [], followups: [], escalate: false, conversationId: convId, messageId, source: 'pricing', pills: [], locked: false };
   }
 
   const faq = q && await matchFaq(q);
@@ -934,7 +978,7 @@ async function getRecentMessages(conversationId, limit = 10) {
 module.exports = {
   askBot, askBotStream, recordFeedback, getRecentMessages, matchFaq, logGap,
   HANDOFF, SENSITIVE_RE, MIN_RANK, ESCALATE_TOKEN, buildRetrievalQuery, toModelHistory,
-  smalltalkReply, SMALLTALK_REPLIES, mergeChunks, redactPii,
+  smalltalkReply, SMALLTALK_REPLIES, mergeChunks, redactPii, pricingReply,
   isUnsupportedInput, UNSUPPORTED_INPUT_MSG, OVER_BUDGET_MSG,
   buildUserMessage, SYSTEM_STREAM, SYSTEM_STRUCTURED,
   sanitizeAnswer, BLOCKED_MSG, detectInjection,

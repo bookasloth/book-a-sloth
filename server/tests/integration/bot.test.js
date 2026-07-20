@@ -12,9 +12,10 @@ jest.mock('../../services/botService', () => ({
 }));
 jest.mock('../../services/bot/escalationService', () => ({
   buildReference: jest.fn(() => 'CHAT-ABCDEF'),
-  recordAndNotify: jest.fn().mockResolvedValue({ reference: 'CHAT-ABCDEF', summary: 's' }),
+  recordAndNotify: jest.fn().mockResolvedValue({ reference: 'CHAT-ABCDEF', escalationId: 'e-1' }),
   sendContactOtp: jest.fn().mockResolvedValue({ ok: true }),
   verifyContactOtp: jest.fn().mockResolvedValue({ valid: true }),
+  recordRating: jest.fn().mockResolvedValue({ ok: true }),
 }));
 // optionalProtect loads config/supabase at import; stub it as anonymous pass-through.
 jest.mock('../../middleware/authMiddleware', () => ({
@@ -122,9 +123,29 @@ describe('POST /api/bot/escalate/verify-otp', () => {
       .send({ channel: 'email', contact: 'a@b.com', otp: '123456', conversationId: UUID, visitorId: 'v-1' });
     expect(res.status).toBe(200);
     expect(res.body.reference).toBe('CHAT-ABCDEF');
+    expect(res.body.escalationId).toBe('e-1');
     expect(escalation.recordAndNotify).toHaveBeenCalledWith(expect.objectContaining({
       identity: expect.objectContaining({ contact_channel: 'email', email: 'a@b.com', contact_verified: true }),
     }));
+  });
+});
+
+describe('POST /api/bot/escalate/rating', () => {
+  const EID = '22222222-2222-4222-8222-222222222222';
+  it('400s on a non-uuid escalation id', async () => {
+    const res = await request(app).post('/api/bot/escalate/rating').send({ escalationId: 'nope', rating: 5 });
+    expect(res.status).toBe(400);
+    expect(escalation.recordRating).not.toHaveBeenCalled();
+  });
+  it('400s when the service rejects the rating value', async () => {
+    escalation.recordRating.mockResolvedValueOnce({ ok: false, reason: 'bad_rating' });
+    const res = await request(app).post('/api/bot/escalate/rating').send({ escalationId: EID, rating: 9 });
+    expect(res.status).toBe(400);
+  });
+  it('saves a valid rating', async () => {
+    const res = await request(app).post('/api/bot/escalate/rating').send({ escalationId: EID, rating: 4 });
+    expect(res.status).toBe(200);
+    expect(escalation.recordRating).toHaveBeenCalledWith(EID, 4);
   });
 });
 

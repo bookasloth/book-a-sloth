@@ -2,14 +2,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import BotWidget from '../BotWidget';
-import { streamBot, sendBotFeedback } from '../../../services/api';
+import { streamBot, sendBotFeedback, botEscalateRating } from '../../../services/api';
 
 // The widget now streams over SSE via streamBot(payload, { onDelta, onDone }).
 vi.mock('../../../services/api', () => ({
   streamBot: vi.fn(),
   sendBotFeedback: vi.fn().mockResolvedValue({ data: { ok: true } }),
   botEscalateSendOtp: vi.fn().mockResolvedValue({ data: { ok: true } }),
-  botEscalateVerifyOtp: vi.fn().mockResolvedValue({ data: { ok: true, reference: 'CHAT-123456' } }),
+  botEscalateVerifyOtp: vi.fn().mockResolvedValue({ data: { ok: true, reference: 'CHAT-123456', escalationId: 'e-1' } }),
+  botEscalateRating: vi.fn().mockResolvedValue({ data: { ok: true } }),
 }));
 
 // Markdown renders <Link>, so the widget must sit inside a router.
@@ -93,5 +94,21 @@ describe('BotWidget', () => {
     ask('Something only a human can fix');
     expect(await screen.findByText(/support request sent/i)).toBeInTheDocument();
     expect(screen.getByText('CHAT-8F92AB')).toBeInTheDocument();
+  });
+
+  it('collects an emoji rating after the handoff, then offers ticket tracking', async () => {
+    streamBot.mockImplementation(async (_p, { onDelta, onDone }) => {
+      onDelta('to a human.');
+      onDone({ escalate: true, needsContact: false, reference: 'CHAT-8F92AB', escalationId: 'e-9', cited_sources: [], conversationId: 'c1', messageId: 'm4' });
+    });
+    renderWidget();
+    open();
+    ask('human please');
+    // rating scale appears
+    const rate5 = await screen.findByRole('button', { name: /rate 5 of 5/i });
+    fireEvent.click(rate5);
+    await waitFor(() => expect(botEscalateRating).toHaveBeenCalledWith({ escalationId: 'e-9', rating: 5 }));
+    // then the track-ticket prompt replaces the scale
+    expect(await screen.findByRole('link', { name: /track ticket status/i })).toBeInTheDocument();
   });
 });

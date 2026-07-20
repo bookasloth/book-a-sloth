@@ -260,7 +260,7 @@ const listEscalations = async (req, res) => {
     const status = req.query?.status || 'open';
     let q = supabaseAdmin
       .from('bot_escalations')
-      .select('id, reference, conversation_id, logged_in, is_host, name, email, phone, contact_channel, contact_verified, reason, summary, status, page_url, created_at')
+      .select('id, reference, conversation_id, logged_in, is_host, name, email, phone, contact_channel, contact_verified, reason, summary, status, rating, page_url, created_at')
       .order('created_at', { ascending: false })
       .limit(200);
     if (status !== 'all') q = q.eq('status', status);
