@@ -49,6 +49,18 @@ const sourceHref = (s) => {
   return slug ? `/help/docs/${slug}` : null;
 };
 
+// Should a wheel gesture over the chat be swallowed (preventDefault) so the page
+// behind doesn't scroll? Only when the list can't consume it: not scrollable at all
+// (short conversation) or already at the boundary in the scroll direction. When the
+// list can scroll mid-content, we return false and let native scrolling run untouched.
+// Exported for unit test.
+export const shouldSwallowScroll = (deltaY, { scrollTop, scrollHeight, clientHeight }) => {
+  const canScroll = scrollHeight > clientHeight;
+  const atTop = scrollTop <= 0;
+  const atBottom = scrollHeight - scrollTop - clientHeight <= 0;
+  return !canScroll || (deltaY < 0 && atTop) || (deltaY > 0 && atBottom);
+};
+
 // Apply fn to the last assistant message (the one currently streaming).
 const patchLastAssistant = (msgs, fn) => {
   let idx = -1;
@@ -76,6 +88,7 @@ export default function BotWidget() {
   const [messages, setMessages] = useState([]); // empty → welcome screen
   const [iconIdx, setIconIdx] = useState(0);
   const listRef = useRef(null);
+  const panelRef = useRef(null);
   const { pathname } = useLocation();
 
   // Auto-stick to the newest message, but ONLY when the user is already near the
@@ -94,6 +107,23 @@ export default function BotWidget() {
     if (!el) return;
     stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
   };
+
+  // Stop the page behind from scrolling when the wheel gesture is over the chat but
+  // the list can't take it — short conversations (list not scrollable) or at a scroll
+  // boundary. `overscroll-contain` alone only covers an *overflowing* list, so a short
+  // chat still leaked scroll to the page. Native listener with passive:false because
+  // React attaches onWheel as passive (preventDefault would be a no-op there).
+  useEffect(() => {
+    const panel = panelRef.current;
+    const list = listRef.current;
+    if (!open || !panel || !list) return;
+    const onWheel = (e) => { if (shouldSwallowScroll(e.deltaY, list)) e.preventDefault(); };
+    panel.addEventListener('wheel', onWheel, { passive: false });
+    // ponytail: wheel-only. Touch chaining on an *overflowing* list is covered by
+    // `overscroll-contain`; a short list on touch can still leak — add a touchmove
+    // handler (track startY) if mobile users report it.
+    return () => panel.removeEventListener('wheel', onWheel);
+  }, [open]);
 
   // Cycle the launcher's brand icons while the chat is closed.
   useEffect(() => {
@@ -156,6 +186,7 @@ export default function BotWidget() {
       <style>{`@keyframes boltGenie{0%{opacity:0;transform:translateY(28px) scale(.82) scaleY(.9)}60%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes boltIconIn{0%{opacity:0;transform:scale(.5) rotate(-12deg)}100%{opacity:1;transform:scale(1) rotate(0)}}`}</style>
       {open && (
         <div
+          ref={panelRef}
           role="dialog"
           aria-label="Bolt support chat"
           className="mb-3 flex h-[34rem] w-[23rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
