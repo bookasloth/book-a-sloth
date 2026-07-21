@@ -52,6 +52,7 @@ export const CATEGORY_THEME = {
   Money:            { band: '#FFCC1C', accent: '#B98900', light: true,  chipBg: 'rgba(255,204,28,0.18)',chipFg: '#9a7400' },
   Comparison:       { band: '#FFCC1C', accent: '#B98900', light: true,  chipBg: 'rgba(255,204,28,0.18)',chipFg: '#9a7400' },
   'Host Story':     { band: '#E63B82', accent: '#FF7DAE', light: false, chipBg: 'rgba(230,59,130,0.10)',chipFg: '#c2326f' },
+  'Internal Story': { band: '#E63B82', accent: '#FF7DAE', light: false, chipBg: 'rgba(230,59,130,0.10)',chipFg: '#c2326f' },
 };
 export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME.News;
 
@@ -1033,6 +1034,40 @@ export const BLOG_POSTS = [
       ] },
       { info: { title: 'Sent is not delivered', text: 'We learned the hard way that a provider accepting a message is not the same as it landing. The log tracks both, so “it said it sent” is never the end of the investigation.' } },
       { p: 'Boring infrastructure, but it is the kind of boring that lets both you and your guests sleep. It is the same reliability floor we describe in [payments and calendars on autopilot](/blog/payments-and-calendars-on-autopilot).' },
+    ],
+  },
+  {
+    slug: 'welcome-mohini-daf',
+    title: 'Welcome Mohini Daf to Book A Sloth',
+    date: 'Jun 1, 2026',
+    icons: ['users', 'heart', 'megaphone'],
+    author: 'Book A Sloth',
+    readMins: 5,
+    category: 'Internal Story',
+    image: null,
+    excerpt:
+      'A third-year student applied for an internship meant for final-years, because the rules looked more like a guideline than a wall. That decision said everything.',
+    body: [
+      { p: "Every once in a while, you come across someone who reminds you that opportunities aren't always given. Sometimes they're taken." },
+      { p: 'When we opened applications for our internship through the college Training and Placement Cell, it was meant for final-year students. That was the requirement, the expectation, and honestly, what everyone followed. Almost everyone.' },
+      { p: 'Mohini Daf, a third-year student, decided that the rules were more of a guideline than a wall. She applied anyway. Not because she expected special treatment, but because she believed that if there was an opportunity to learn, build, and contribute, she should at least try. That small decision said more about her than any resume ever could.' },
+      { p: "At Book A Sloth, we don't hire people because they tick every checkbox. We hire people because they show signs of curiosity, ownership, and the willingness to build something real. Skills can be taught. Frameworks change every few years. AI can write code. But genuine curiosity and the habit of taking initiative are surprisingly rare." },
+      { p: 'Mohini had both.' },
+      { p: "During our conversations, she showed us a project she had built that revolved around a booking system. It wasn't about whether the project was perfect or whether every feature matched what we're building. It showed us that she had already spent time thinking about problems that businesses actually face. She wasn't just following tutorials. She was trying to solve something. That's exactly the kind of thinking we value." },
+      { p: "Outside technology, Mohini has another side that immediately stood out to us. She enjoys writing and has already published two books through Notion Press. I think that's a wonderful combination for someone working in marketing automation. Technology often gets reduced to APIs, dashboards, and automation workflows, but behind every email, every WhatsApp notification, every chatbot reply, and every onboarding journey is a human being reading it. Great communication isn't just about delivering information. It's about making someone feel understood, respected, and confident about what's happening next." },
+      { p: "That's the space Mohini has joined." },
+      { p: "As part of our Marketing Automation team, she's working on improving how Book A Sloth communicates with everyone who interacts with our platform, whether they're hosts running their businesses, guests making bookings, or people who are simply exploring what we offer. Her work spans automated email journeys, WhatsApp integrations, chatbot development, and even interactive experiences like games that make engagement a little more enjoyable. Most people never notice these systems when they're working well, but they're often the difference between software that feels mechanical and software that feels thoughtful." },
+      { p: 'There is one thing I have noticed about Mohini during her time with us so far.' },
+      { p: 'She has ideas.' },
+      { p: 'Good ones.' },
+      { p: "Sometimes they're genuinely better than what AI comes up with. But like many people who are just starting their careers, she's occasionally hesitant to say them out loud. Maybe she thinks they aren't polished enough. Maybe she assumes someone else has already thought of them. Maybe she worries they'll sound silly." },
+      { p: 'I keep telling her the same thing.' },
+      { quote: "Don't be scared to pitch ideas. Even a shitty, funny, half-baked, completely unpolished idea is better than no idea at all." },
+      { p: "A startup doesn't move forward because someone always has the perfect answer. It moves forward because people keep throwing ideas onto the table, challenging them, improving them, combining them, and sometimes discovering something unexpectedly brilliant. The only ideas that never become products are the ones that stay inside someone's head." },
+      { p: "That's something I hope Mohini carries long after this internship ends." },
+      { p: "Internships, at least the way we think about them at Book A Sloth, aren't about assigning busy work for a few months and handing over a certificate at the end. They're about giving someone a chance to work on real systems used by real people, make mistakes that actually matter, learn how products evolve, and hopefully leave with the confidence that they can build things that make a difference." },
+      { p: "We're genuinely excited to have Mohini as part of our journey. Not because she's another intern joining the company, but because she's someone who chose to chase an opportunity before anyone told her it was her turn." },
+      { p: "Welcome to Book A Sloth, Mohini. We can't wait to see the ideas you'll bring to life, especially the ones you're still a little afraid to say out loud." },
     ],
   },
   {
