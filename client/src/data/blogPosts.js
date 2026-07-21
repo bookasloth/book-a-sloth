@@ -52,7 +52,6 @@ export const CATEGORY_THEME = {
   Money:            { band: '#FFCC1C', accent: '#B98900', light: true,  chipBg: 'rgba(255,204,28,0.18)',chipFg: '#9a7400' },
   Comparison:       { band: '#FFCC1C', accent: '#B98900', light: true,  chipBg: 'rgba(255,204,28,0.18)',chipFg: '#9a7400' },
   'Host Story':     { band: '#E63B82', accent: '#FF7DAE', light: false, chipBg: 'rgba(230,59,130,0.10)',chipFg: '#c2326f' },
-  'Internal Story': { band: '#E63B82', accent: '#FF7DAE', light: false, chipBg: 'rgba(230,59,130,0.10)',chipFg: '#c2326f' },
 };
 export const themeFor = (category) => CATEGORY_THEME[category] || CATEGORY_THEME.News;
 
@@ -1043,7 +1042,7 @@ export const BLOG_POSTS = [
     icons: ['users', 'code', 'rocket'],
     author: 'Book A Sloth',
     readMins: 6,
-    category: 'Internal Story',
+    category: 'Internal',
     image: null,
     excerpt:
       'Some people join looking for an internship. Some for experience. And then there are people who join because they genuinely want to build. That is Aastha Nikhare.',
@@ -1099,7 +1098,7 @@ export const BLOG_POSTS = [
     icons: ['users', 'heart', 'megaphone'],
     author: 'Book A Sloth',
     readMins: 5,
-    category: 'Internal Story',
+    category: 'Internal',
     image: null,
     excerpt:
       'A third-year student applied for an internship meant for final-years, because the rules looked more like a guideline than a wall. That decision said everything.',
