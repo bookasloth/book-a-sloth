@@ -568,6 +568,11 @@ export default function ServiceForm({ initialData, serviceId }) {
               </div>
               <Input type="text" value={form.title} maxLength={60} required onChange={e => set('title', e.target.value)} placeholder="e.g. SEO Consultancy by Shubham Datarkar" />
               {aiError && <p className="mt-1 text-xs text-red-500">{aiError}</p>}
+              {aiFields.size > 0 && !aiError && !aiLoading && (
+                <p className="mt-1 text-xs text-green-600">
+                  ✨ Bolt filled {aiFields.size} field{aiFields.size === 1 ? '' : 's'} — review and edit before saving.
+                </p>
+              )}
               {aiSession && !aiLoading && (
                 <div className="mt-2 flex items-center gap-2">
                   <input value={aiTweak} onChange={e => setAiTweak(e.target.value)} placeholder="make it more… (optional)"

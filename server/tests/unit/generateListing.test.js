@@ -20,6 +20,9 @@ test('returns sanitized fields from tool output (generate → haiku)', async () 
   expect(out.fields.title).toBe('SEO Consultancy');
   expect(client.__create).toHaveBeenCalledWith(expect.objectContaining({
     model: 'gen-id', tool_choice: { type: 'tool', name: 'emit_listing' },
+    // thinking must stay disabled — sonnet-5 defaults thinking on, and a forced
+    // tool_choice 400s while thinking is on (regression: every regenerate failed).
+    thinking: { type: 'disabled' },
   }));
 });
 

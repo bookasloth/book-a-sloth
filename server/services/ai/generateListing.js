@@ -12,7 +12,9 @@ const SYSTEM = [
   'Rules: English only. Primary keyword (from the title) appears in the title, the first',
   'sentence of long_description, and at least one FAQ — natural density, no stuffing.',
   'short_description and every FAQ answer lead with the direct answer and stand alone.',
+  'Write in second person ("you"), benefit-led and concrete — name what the client walks away with, not adjectives.',
   'long_description opens definitionally ("<Service> is a ..."), factual, entity-rich.',
+  'included_items/excluded_items are specific deliverables, not vague promises.',
   'NEVER invent prices, guarantees, certifications, licenses, medical/legal claims,',
   'specific results, reviews, ratings, addresses, or phone numbers. Leave unknowable',
   'facts out. Only choose a category from the allowed list; omit category if none fit.',
@@ -31,11 +33,18 @@ function buildUserMessage({ title, category, price, duration, city, audience, tw
 }
 
 async function callOnce(client, { model, system, user }) {
-  // ponytail: no temperature/top_p/top_k — MODELS.regenerate (claude-sonnet-5)
-  // rejects any non-default sampling param with an HTTP 400. Regenerate
-  // variety comes from the tweak text in the prompt, not sampling params.
+  // Both models are Haiku 4.5. No temperature/top_p/top_k and thinking kept
+  // explicitly disabled: forced tool_choice ({type:'tool'}) is rejected with an
+  // HTTP 400 when thinking is on, so disabling it keeps a forced tool call safe
+  // regardless of the model's default, gives the full max_tokens budget to the
+  // tool call, and keeps output deterministic for structured extraction.
+  //
+  // max_tokens 4096: the full listing (long_description + 4-6 included/excluded
+  // bullets + 4-5 FAQs + note) overruns 1500, truncating the forced tool call
+  // into invalid/partial JSON → AI_INVALID. 4096 leaves headroom.
   const resp = await client.messages.create({
-    model, max_tokens: 1500, system,
+    model, max_tokens: 4096, system,
+    thinking: { type: 'disabled' },
     tools: [LISTING_TOOL], tool_choice: { type: 'tool', name: 'emit_listing' },
     messages: [{ role: 'user', content: user }],
   });

@@ -2,9 +2,11 @@
 // Owns the Anthropic SDK instance + model ids. Key-optional: returns null when
 // ANTHROPIC_API_KEY is unset so the feature degrades gracefully (no import crash).
 
+// Both generate and regenerate use Haiku 4.5 — regenerate variety comes from the
+// tweak text in the prompt, not from a stronger/costlier model.
 const MODELS = {
   generate: 'claude-haiku-4-5-20251001',
-  regenerate: 'claude-sonnet-5',
+  regenerate: 'claude-haiku-4-5-20251001',
 };
 
 let _client;
