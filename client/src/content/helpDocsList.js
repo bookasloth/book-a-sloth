@@ -36,6 +36,7 @@ export const HELP_DOCS = [
   { slug: 'branding-and-theme-colours', category: 'Hosts' },
   { slug: 'selling-digital-products', category: 'Hosts' },
   { slug: 'reminders-notifications-and-badges', category: 'Hosts' },
+  { slug: 'kyc-and-verification', category: 'Hosts' },
   // General / Trust
   { slug: 'what-is-book-a-sloth', category: 'General' },
   { slug: 'pricing-and-commission', category: 'General' },
