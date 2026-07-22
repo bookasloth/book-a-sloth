@@ -458,6 +458,7 @@ function App() {
           <Route path="/admin/support/reviews" element={<AdminWrapper><AdminReviews /></AdminWrapper>} />
           <Route path="/admin/feedback" element={<AdminWrapper><AdminFeedback /></AdminWrapper>} />
           <Route path="/admin/support/bolt" element={<AdminWrapper><AdminBotSupport /></AdminWrapper>} />
+          <Route path="/admin/support/bolt/:page" element={<AdminWrapper><AdminBotSupport /></AdminWrapper>} />
 
           {/* Platform */}
           <Route path="/admin/platform/appearance" element={<AdminWrapper><AdminAppearance /></AdminWrapper>} />

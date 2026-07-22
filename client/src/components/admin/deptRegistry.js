@@ -70,6 +70,7 @@ export const DEPT_LINKS = [
   { label: 'Testimonials', icon: 'star', to: '/admin/content/testimonials', desc: 'Customer testimonials on site',     depts: ['marketing'] },
 
   // Support
+  { label: 'Bolt Support',       icon: 'chat',  to: '/admin/support/bolt',     desc: 'Support-bot console, FAQs & escalations', depts: ['support'] },
   { label: 'Reviews Moderation', icon: 'msgSq', to: '/admin/support/reviews',  desc: 'Approve or reject user reviews',   depts: ['support', 'marketing'] },
   { label: 'Tickets',            icon: 'chat',  to: '/admin/support/tickets',  desc: 'Customer support ticket queue',    depts: ['support'] },
   { label: 'Disputes',           icon: 'alert', to: '/admin/support/disputes', desc: 'Booking and payment disputes',     depts: ['support', 'finance'] },
