@@ -11,6 +11,7 @@
 const { askBot, askBotStream, recordFeedback } = require('../services/botService');
 const escalation = require('../services/bot/escalationService');
 const { safeError } = require('../utils/httpError');
+const { getClientIp } = require('../lib/clientIp');
 
 const MAX_QUESTION_LEN = 2000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -67,7 +68,7 @@ exports.ask = async (req, res) => {
     if (conversationId && !UUID_RE.test(conversationId)) return res.status(400).json({ message: 'Invalid conversation reference.' });
 
     const sessionRef = req.user?.id || req.body?.visitorId || null;
-    const result = await askBot({ question, conversationId, sessionRef, ip: req.ip });
+    const result = await askBot({ question, conversationId, sessionRef, ip: getClientIp(req) });
 
     let reference = null;
     let escalationId = null;
@@ -118,7 +119,7 @@ exports.askStream = async (req, res) => {
 
   try {
     const sessionRef = req.user?.id || req.body?.visitorId || null;
-    const result = await askBotStream({ question, conversationId, sessionRef, ip: req.ip, onDelta: (text) => sse('delta', { text }) });
+    const result = await askBotStream({ question, conversationId, sessionRef, ip: getClientIp(req), onDelta: (text) => sse('delta', { text }) });
 
     let reference = null;
     let escalationId = null;

@@ -278,6 +278,9 @@ const botLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  // Key on the resolved client IP (honours CLIENT_IP_HEADER behind an edge proxy),
+  // matching the bot abuse/IP-block path so both see the same address.
+  keyGenerator: (req) => getClientIp(req) || req.ip,
   message: { message: 'You’re sending messages too quickly. Please wait a moment and try again.' },
   skip: skipWhenLoadTest,
 });
