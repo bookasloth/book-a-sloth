@@ -1,5 +1,18 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-07-18_
+_Last updated: 2026-07-23_
+
+## Bolt support bot — 4-area gap audit + fixes (#488) — MERGED 2026-07-23
+
+> **Status: MERGED to main (`ec17cc0`). server 1696/1696, client build green (114 routes). Both DBs reseeded (kb_chunks: prod 70 chunks/70 embeddings, staging 70 FTS-only — no VOYAGE key on staging).**
+
+Ran four parallel audits of the Bolt support bot (KB/FAQ, escalation, intent layer, abuse gate). Fixed the live + actionable gaps across 17 files.
+
+- **KB / FAQ (live — bot serves these).** Removed the nonexistent "phone + password" login claim; corrected Google Calendar from "one-way" to **two-way**; reconciled two conflicting onboarding step lists to the real Google-first flow; stated Starter's **5% commission** explicitly and consistently (was "small commission" in one doc, hard 5% in another); added an IST time-zone answer and a guest account/data-deletion answer; dropped "message the host directly" (no messaging feature exists). **Post-merge:** required a `kb_chunks` reseed on BOTH DBs — done.
+- **Escalation (always-on).** `escalationService.recordAndNotify` destructured only `{ data }` — supabase-js resolves `{ data, error }` and **never throws** on a query error, so genuine insert failures went silent with `escalationId:null`; now checks `error`. Transcript fetched once (was twice). `listEscalations` is now schema-fallback safe for the v3.90 `rating` column (was a hard 500 risk). WhatsApp replies can now be **logged** (wa.me send is manual) so the thread has an audit trail and status advances — server accepts `channel:'whatsapp'`, `EscalationsPage` offers it.
+- **Intent layer.** The payments clarify chip + cards sent "How do payments and **refunds** work?", which trips `SENSITIVE_RE` and **escalates to a human** instead of hitting the deterministic payments handler. Reworded to "payments and invoices" so the chips route as intended; refund *requests* still escalate by design. Added a regression test asserting no intent-layer `send` value contains a sensitive term.
+- **Abuse gate.** Bot resolved IP via raw `req.ip` in `ask`/`askStream` (and `botLimiter`), unlike every other consumer — now uses `getClientIp` (honours `CLIENT_IP_HEADER`), so the IP-block/rate-limit path keys on the real client behind an edge proxy. Already-blocked IPs are now enforced **before** the `BOT_ROAST_ENABLED` gate, so a block survives the roast flag being toggled off. All bot flags + `CLIENT_IP_HEADER` documented in `.env.example` (were undiscoverable).
+- **LANDMINE — supabase-js NEVER throws on a query error.** It resolves `{ data, error }`. Any `try { const { data } = await supabase…() }` that ignores `error` swallows real failures silently. Check `error` (or `if (error) throw error`) everywhere the failure matters.
+- **DEFERRED (latent — whole abuse gate is flag-OFF by default, `BOT_ROAST_ENABLED` unset):** per-IP strike aggregation (strikes key on client-supplied, rotatable `conversationId`); durable IP-block store (`lib/botIpBlock.js` is an in-memory Map — lost on restart, single-instance, invisible to the admin "Blocked IPs" UI); threat cool-off; model-budget fail-open on store error. Intent layer also still dead in prod (`BOT_INTENT_ENABLED` unset).
 
 ## Bolt 958 support bot — Phase 1 (knowledge bot) — branch `feat/bolt-958-support-bot`
 
