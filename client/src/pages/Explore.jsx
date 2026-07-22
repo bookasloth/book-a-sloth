@@ -14,7 +14,7 @@ import Pagination from '../components/guest/Pagination';
 import CategoryFilter from '../components/guest/CategoryFilter';
 import Seo from '../components/common/Seo';
 import { ogCard } from '../config/ogImages';
-import { SITE_URL } from '../utils/seo';
+import { SITE_URL, collectionPageJsonLd, breadcrumbJsonLd } from '../utils/seo';
 import { getExploreServices, getExploreCategories } from '../services/api';
 
 // Launch flag: flip true to show the placeholder instead of the live page.
@@ -127,6 +127,14 @@ function ExploreFull() {
         description="Discover and book 1:1 services from coaches, consultants, therapists and creators on Book A Sloth. Search by skill or browse by category."
         image={ogCard('explore')}
         canonical={`${SITE_URL}/explore`}
+        jsonLd={[
+          collectionPageJsonLd({
+            name: 'Explore Services — Book A Sloth',
+            description: 'Discover and book 1:1 services from coaches, consultants, therapists and creators on Book A Sloth. Search by skill or browse by category.',
+            url: '/explore',
+          }),
+          breadcrumbJsonLd({ items: [{ name: 'Home', path: '/' }, { name: 'Explore', path: '/explore' }] }),
+        ]}
       />
 
       {/* Thin top progress bar while (re)fetching. */}
@@ -296,6 +304,14 @@ function ExploreComingSoon() {
         description="Discover and book 1:1 services from coaches, consultants, therapists and creators on Book A Sloth."
         image={ogCard('explore')}
         canonical={`${SITE_URL}/explore`}
+        jsonLd={[
+          collectionPageJsonLd({
+            name: 'Explore Services — Book A Sloth',
+            description: 'Discover and book 1:1 services from coaches, consultants, therapists and creators on Book A Sloth.',
+            url: '/explore',
+          }),
+          breadcrumbJsonLd({ items: [{ name: 'Home', path: '/' }, { name: 'Explore', path: '/explore' }] }),
+        ]}
       />
       <div className="w-full max-w-lg text-center">
         <span className="mb-6 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800">

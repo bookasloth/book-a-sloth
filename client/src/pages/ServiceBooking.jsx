@@ -14,6 +14,7 @@ import {
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { analytics, EVENTS, gaClientId } from "../services/analytics";
+import useUtm from "../hooks/useUtm";
 import toast from "react-hot-toast";
 import {
   DEFAULT_THEME_COLOR,
@@ -230,6 +231,7 @@ const ServiceBooking = () => {
   const [verifying, setVerifying] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const utm = useUtm(); // first-touch ad attribution → carried into the paid conversion event
   const [profileOpen, setProfileOpen] = useState(false); // Section 1: collapsed by default
   const [slotsLoading, setSlotsLoading] = useState(false); // skeleton while slots fetch
   const [finalizing, setFinalizing] = useState(false);     // labour-illusion screen
@@ -643,6 +645,16 @@ const ServiceBooking = () => {
         description: service.title,
         order_id: order.razorpay_order_id,
         handler: (response) => {
+          // Browser-side conversion for retargeting. Authoritative count is the
+          // server CAPI/MP hit (paymentController); Meta/GA4 de-dupe on the shared
+          // event_id = razorpay_payment_id. UTM spread stitches ad-click → paid.
+          analytics.track(EVENTS.BOOKING_PAID, {
+            booking_id: confirmation.id, service_id: service.id, host_id: host.id,
+            value: Number(confirmation?.customer_total) || 0, currency: "INR",
+            event_id: response.razorpay_payment_id,
+            transaction_id: response.razorpay_payment_id, // GA4 purchase de-dupe key
+            ...utm,
+          });
           // Move to the "wrapping up" screen INSTANTLY so the return from
           // Razorpay never feels frozen. The verify round-trip runs in the
           // background and the labour animation covers its latency; the screen
@@ -674,8 +686,22 @@ const ServiceBooking = () => {
           contact: phone,
         },
         theme: { color: tc },
+        // Guest closed the Razorpay modal without paying. Re-enable the Pay button
+        // (stays on the payment step) so they can retry; booking remains unpaid.
+        modal: {
+          ondismiss: () => {
+            setPaymentLoading(false);
+            toast("Payment cancelled — you can try again when ready.", { icon: "🫤" });
+          },
+        },
       };
       const rzp = new window.Razorpay(options);
+      // A failed charge inside the modal (declined card / failed UPI). Surface a
+      // message and keep the user on the payment step to retry.
+      rzp.on("payment.failed", (resp) => {
+        setPaymentLoading(false);
+        toast.error(resp?.error?.description || "Payment failed — please try again.");
+      });
       rzp.open();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to initiate payment");

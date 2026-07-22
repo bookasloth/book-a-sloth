@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Seo from '../../components/common/Seo';
 import { ogCard } from '../../config/ogImages';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, collectionPageJsonLd, breadcrumbJsonLd } from '../../utils/seo';
 import { getServicesDirectory } from '../../services/api';
 import { iconFor } from '../../config/professionIcons';
 
@@ -14,6 +14,10 @@ export default function ServicesDirectory() {
     getServicesDirectory().then((res) => setGroups(res.data.groups)).catch(() => setGroups([]));
   }, []);
 
+  const professionItems = (groups || [])
+    .flatMap((g) => g.professions || [])
+    .map((p) => ({ name: p.label, url: `/services/${p.slug}` }));
+
   return (
     <div className="app-container py-12">
       <Seo
@@ -21,6 +25,15 @@ export default function ServicesDirectory() {
         description="Find bookable services from photographers, coaches, designers, tutors and more — compare professionals and book online."
         image={ogCard('services')}
         canonical={`${SITE_URL}/services`}
+        jsonLd={[
+          collectionPageJsonLd({
+            name: 'Browse Services by Profession | Book A Sloth',
+            description: 'Find bookable services from photographers, coaches, designers, tutors and more — compare professionals and book online.',
+            url: '/services',
+            items: professionItems,
+          }),
+          breadcrumbJsonLd({ items: [{ name: 'Home', path: '/' }, { name: 'Services', path: '/services' }] }),
+        ]}
       />
       <h1 className="font-heading text-[2.1rem] font-extrabold leading-[1.12] tracking-tight text-[#1E1E1E] xl:text-[2.7rem]">
         What do you want to get done?
