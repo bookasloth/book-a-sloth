@@ -94,7 +94,7 @@ export const getMe            = ()             => API.get('/auth/me');
 export const updateMe         = (data)         => API.put('/auth/me', data);
 export const getGoogleAuthUrl = ()             => API.get('/auth/google');
 // Vendor Google auth (public): one consent screen = identity + calendar scopes
-export const getVendorGoogleUrl = (intent = 'login') => API.get('/auth/google/vendor', { params: { intent } });
+export const getVendorGoogleUrl = (intent = 'login', invite) => API.get('/auth/google/vendor', { params: { intent, ...(invite ? { invite } : {}) } });
 export const sendOtp          = (data)         => API.post('/auth/send-otp', data);
 export const verifyOtp        = (data)         => API.post('/auth/verify-otp', data);
 // Phone-primary user login
@@ -245,6 +245,13 @@ export const adminGetPayoutClearing = ()            => API.get('/admin/payouts/c
 export const adminGetReferralRules  = ()            => API.get('/admin/referral-rules');
 export const adminUpdateReferralRule = (id, data)   => API.patch(`/admin/referral-rules/${id}`, data);
 export const adminGetReferrals      = (status)      => API.get('/admin/referrals', { params: status ? { status } : {} });
+
+// Invite links (lead-source attribution) — public + admin.
+export const getInviteConfig       = (slug)      => API.get(`/invite/${slug}`);
+export const recordInviteVisit     = (slug)      => API.post(`/invite/${slug}/visit`);
+export const adminGetInviteLinks   = ()          => API.get('/admin/invite-links');
+export const adminCreateInviteLink = (data)      => API.post('/admin/invite-links', data);
+export const adminUpdateInviteLink = (slug, d)   => API.patch(`/admin/invite-links/${slug}`, d);
 
 // Admin — Reviews moderation
 export const adminGetReviews     = (params)         => API.get('/admin/reviews', { params });

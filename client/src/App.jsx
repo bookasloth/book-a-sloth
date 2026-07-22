@@ -61,6 +61,7 @@ const ZohoBookingsAlternative = lazy(() => import('./pages/lp/ZohoBookingsAltern
 
 // Vendor Google auth (Google-only signup/login)
 const BeASloth       = lazy(() => import('./pages/BeASloth'));
+const InviteLanding  = lazy(() => import('./pages/InviteLanding'));
 const HostLogin      = lazy(() => import('./pages/HostLogin'));
 const Changelog      = lazy(() => import('./pages/Changelog'));
 const Pricing        = lazy(() => import('./pages/Pricing'));
@@ -192,6 +193,7 @@ const AdminStaff = lazy(() => import('./pages/admin/AdminStaff'));
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
 const AdminReservedSlugs = lazy(() => import('./pages/admin/AdminReservedSlugs'));
 const AdminReferrals = lazy(() => import('./pages/admin/AdminReferrals'));
+const AdminInviteLinks = lazy(() => import('./pages/admin/AdminInviteLinks'));
 const AdminBlockedIps = lazy(() => import('./pages/admin/AdminBlockedIps'));
 
 // Admin — Departments (org placeholder shells)
@@ -328,6 +330,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/invite/:slug" element={<InviteLanding />} />
           <Route path="/help" element={<Help />} />
           <Route path="/help/docs" element={<HelpDocs />} />
           <Route path="/help/docs/:slug" element={<HelpDoc />} />
@@ -425,6 +428,7 @@ function App() {
           <Route path="/admin/addons" element={<AdminWrapper><AdminAddons /></AdminWrapper>} />
           <Route path="/admin/plans" element={<AdminWrapper><AdminPlans /></AdminWrapper>} />
           <Route path="/admin/referrals" element={<AdminWrapper><AdminReferrals /></AdminWrapper>} />
+          <Route path="/admin/invite-links" element={<AdminWrapper><AdminInviteLinks /></AdminWrapper>} />
           <Route path="/admin/professions" element={<AdminWrapper><AdminCategories /></AdminWrapper>} />
           <Route path="/admin/explore"     element={<AdminWrapper><AdminExplore /></AdminWrapper>} />
 
