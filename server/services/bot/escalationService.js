@@ -107,7 +107,14 @@ async function verifyContactOtp({ channel, contact, otp }) {
 //             contact_verified, visitor_uuid }
 async function recordAndNotify({ conversationId, question, reason, pageUrl, userAgent, identity = {} }) {
   const reference = buildReference(conversationId);
-  const contact = identity.contact_channel === 'whatsapp' ? identity.phone : identity.email;
+  // Resolve the concrete channel we'll actually reach them on. Anon flows pin a
+  // verified channel; logged-in identities are 'auto' (both on file) — prefer
+  // WhatsApp when a number exists, else email. Returned so the widget can confirm it.
+  const channel =
+    identity.contact_channel === 'whatsapp' ? 'whatsapp'
+      : identity.contact_channel === 'email' ? 'email'
+        : (identity.phone ? 'whatsapp' : 'email');
+  const contact = channel === 'whatsapp' ? identity.phone : identity.email;
 
   // 1. Insert the record NOW (fast) so the caller gets an id back for the rating step.
   //    The one-line summary (Haiku) and the support email (SMTP) are slow, so they run
@@ -164,7 +171,7 @@ async function recordAndNotify({ conversationId, question, reason, pageUrl, user
             <tr><td><strong>Reference</strong></td><td>${esc(reference)}</td></tr>
             <tr><td><strong>Who</strong></td><td>${who}</td></tr>
             <tr><td><strong>Logged in</strong></td><td>${identity.logged_in ? 'Yes' : 'No'}</td></tr>
-            <tr><td><strong>Contact</strong></td><td>${esc(contact || '—')} (${esc(identity.contact_channel || 'n/a')}${identity.contact_verified ? ', verified' : ''})</td></tr>
+            <tr><td><strong>Contact</strong></td><td>${esc(contact || '—')} (${esc(channel)}${identity.contact_verified ? ', verified' : ''})</td></tr>
             <tr><td><strong>Email</strong></td><td>${esc(identity.email || '—')}</td></tr>
             <tr><td><strong>Phone</strong></td><td>${esc(identity.phone || '—')}</td></tr>
             <tr><td><strong>Conversation</strong></td><td>${esc(conversationId || '—')}</td></tr>
@@ -183,7 +190,7 @@ async function recordAndNotify({ conversationId, question, reason, pageUrl, user
     }
   })().catch(() => {});
 
-  return { reference, escalationId };
+  return { reference, escalationId, channel, contact };
 }
 
 // Store the 1–5 satisfaction rating the widget collects after the handoff.

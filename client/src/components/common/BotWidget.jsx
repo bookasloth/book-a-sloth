@@ -185,7 +185,7 @@ export default function BotWidget() {
           // (reference returned) → show the confirmation. Anonymous visitors must
           // first choose a verified contact channel.
           if (d.escalate && d.reference) {
-            setEscalation({ step: 'done', reference: d.reference, escalationId: d.escalationId || null });
+            setEscalation({ step: 'done', reference: d.reference, escalationId: d.escalationId || null, channel: d.channel || null, contact: d.contact || null });
           } else if (d.escalate && d.needsContact) {
             setEscalation({ step: 'choose', reason: d.escalateReason || 'model_unsure', question, conversationId: d.conversationId || conversationId });
           }
@@ -433,7 +433,11 @@ export default function BotWidget() {
                       <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-[#DCFCE7] text-base">✅</span>
                       <div className="text-[12px] leading-relaxed text-[#1E1E1E]/80">
                         <strong className="text-[#1E1E1E]">Support Request Sent</strong><br />
-                        We'll contact you via WhatsApp or Email.
+                        {escalation.channel === 'whatsapp' || escalation.channel === 'email' ? (
+                          <>We'll contact you on {escalation.channel === 'whatsapp' ? 'WhatsApp' : 'Email'}{escalation.contact ? <> at <span className="font-semibold text-[#1E1E1E]">{escalation.contact}</span></> : ''}.</>
+                        ) : (
+                          "We'll contact you via WhatsApp or Email."
+                        )}
                         {escalation.reference && (
                           <><br />Reference: <span className="font-mono font-semibold text-[#1E1E1E]">{escalation.reference}</span></>
                         )}
