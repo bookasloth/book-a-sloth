@@ -4,6 +4,22 @@ All significant changes are recorded here by sprint. Most recent first.
 
 ---
 
+## [Sprint 9] Bolt Support Bot Hardening + Pricing Redesign — 2026-07-23
+
+### Added
+- Pricing redesign — Relume-style shared `PricingCards` component reused on Home and `/pricing`, new 4th **Enterprise** tier linking to `/enterprise` (#485)
+- Bolt admin console split into routed pages + FAQ category management (#484)
+- Troubleshooting & error-message FAQ content for the support bot (#483)
+
+### Changed
+- Pricing plan cards & comparison table synced to a consistent width across Home and `/pricing`, then widened +15px each (960px → 1005px container) (#486, #487)
+- Support-bot gaps closed from a 4-area audit — knowledge base, escalation, intent detection, and abuse handling (#488, #489)
+
+### Fixed
+- Bolt abuse-gate hardening — per-IP strike tracking (conversation-id no longer rotatable to reset strikes), durable IP-block store, threat cool-off window, and budget checks now fail closed (#490)
+
+---
+
 ## [Sprint 8] Admin RBAC Foundation (M0 + M1) — 2026-06-11
 
 ### Added
