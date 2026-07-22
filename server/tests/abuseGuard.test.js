@@ -10,12 +10,19 @@ jest.mock('../lib/botBudget', () => ({
   tryConsume: jest.fn(async () => ({ allowed: true, reason: null })),
   _reset: () => {},
 }));
-jest.mock('../lib/botIpBlock', () => ({
-  isBlocked: jest.fn(async () => false),
-  block: jest.fn(async () => {}),
-}), { virtual: true });
+jest.mock('../lib/ipBlocklist', () => ({
+  isBlocked: jest.fn(() => false),
+  recordAttack: jest.fn(async () => {}),
+}));
+jest.mock('../lib/botStrikes', () => ({
+  add: jest.fn(async () => 1),
+  _reset: () => {},
+}));
 
 jest.mock('../config/supabase', () => ({ supabaseAdmin: {} }));
+
+const ipBlocklist = require('../lib/ipBlocklist');
+const botStrikes = require('../lib/botStrikes');
 
 const guard = require('../services/bot/abuseGuard');
 // countStrikes reads supabaseAdmin; stub it by spying on the module fn is not
@@ -123,5 +130,32 @@ describe('evaluate', () => {
     const r = await guard.evaluate({ q: 'kill yourself', conversationId: 'c1' });
     expect(r.source).toBe('threat');
     expect(r.answer).toBe(guard.THREAT_MSG);
+  });
+
+  it('blocked IP short-circuits to the timeout message (durable blocklist)', async () => {
+    process.env.BOT_THREAT_IPBLOCK_ENABLED = 'true';
+    ipBlocklist.isBlocked.mockReturnValueOnce(true);
+    const r = await guard.evaluate({ q: 'hello', conversationId: 'c1', ip: '1.2.3.4' });
+    expect(r.source).toBe('ip_block');
+    expect(r.locked).toBe(true);
+    expect(ipBlocklist.isBlocked).toHaveBeenCalledWith('1.2.3.4');
+  });
+
+  it('threat with IP records a durable ban + counts strikes', async () => {
+    process.env.BOT_ROAST_ENABLED = 'true';
+    process.env.BOT_THREAT_IPBLOCK_ENABLED = 'true';
+    botStrikes.add.mockResolvedValueOnce(2); // under STRIKE_MAX
+    const r = await guard.evaluate({ q: 'kill yourself', conversationId: 'c1', ip: '9.9.9.9' });
+    expect(r.source).toBe('threat');
+    expect(ipBlocklist.recordAttack).toHaveBeenCalledWith('9.9.9.9', 'bot_threat');
+    expect(botStrikes.add).toHaveBeenCalledWith('9.9.9.9', 2);
+  });
+
+  it('per-IP strikes reaching the max lock the user (rotated conversationId cannot reset)', async () => {
+    process.env.BOT_ROAST_ENABLED = 'true';
+    botStrikes.add.mockResolvedValueOnce(5); // IP counter is authoritative, ignores conversationId
+    const r = await guard.evaluate({ q: 'you fuck', conversationId: 'brand-new-convo', ip: '5.5.5.5' });
+    expect(r.source).toBe('abuse_lock');
+    expect(r.locked).toBe(true);
   });
 });
