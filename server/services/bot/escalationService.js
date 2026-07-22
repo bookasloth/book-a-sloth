@@ -41,13 +41,13 @@ function otpKey(channel, contact) {
 
 // One-sentence summary of the issue, so support gets the gist without reading 80 lines.
 // Budget-gated Haiku; falls back to the first user message. Never throws.
-async function summarize(conversationId, question) {
+async function summarize(conversationId, question, preHistory) {
   const firstLine = () => {
     const base = String(question || '').replace(/\s+/g, ' ').trim();
     return base ? (base.length > 140 ? base.slice(0, 137) + '…' : base) : 'Visitor needs help (no question captured).';
   };
   try {
-    const history = await getRecentMessages(conversationId, 12);
+    const history = preHistory || await getRecentMessages(conversationId, 12);
     const transcript = history.length
       ? history.map((m) => `${m.role}: ${m.content}`).join('\n')
       : `user: ${redactPii(question)}`;
@@ -121,7 +121,10 @@ async function recordAndNotify({ conversationId, question, reason, pageUrl, user
   //    in the background — the "Support Request Sent" confirmation must not wait on them.
   let escalationId = null;
   try {
-    const { data } = await supabaseAdmin
+    // supabase-js resolves { data, error } — it does NOT throw on a query error, so
+    // the error field must be inspected explicitly or genuine insert failures
+    // (schema missing, constraint, RLS) go silent and escalationId stays null.
+    const { data, error } = await supabaseAdmin
       .from('bot_escalations')
       .insert({
         conversation_id: conversationId || null,
@@ -141,6 +144,7 @@ async function recordAndNotify({ conversationId, question, reason, pageUrl, user
       })
       .select('id')
       .single();
+    if (error) throw error;
     escalationId = data ? data.id : null;
   } catch (e) {
     if (!isMissingSchema(e)) console.error('[bot] escalation record failed:', e.message);
@@ -148,13 +152,14 @@ async function recordAndNotify({ conversationId, question, reason, pageUrl, user
 
   // 2. Background: summarize → store the summary → email support. Best-effort.
   (async () => {
-    const summary = await summarize(conversationId, question);
+    // Fetch the transcript once; summarize and the support email both reuse it.
+    const history = await getRecentMessages(conversationId, 12);
+    const summary = await summarize(conversationId, question, history);
     if (escalationId) {
       try { await supabaseAdmin.from('bot_escalations').update({ summary }).eq('id', escalationId); }
       catch (_) { /* summary is a nice-to-have */ }
     }
     try {
-      const history = await getRecentMessages(conversationId, 12);
       const transcript = history.length
         ? history.map((m) => `<p><strong>${esc(m.role)}:</strong> ${esc(m.content)}</p>`).join('')
         : `<p><strong>user:</strong> ${esc(redactPii(question))}</p>`;
