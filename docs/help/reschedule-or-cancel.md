@@ -20,4 +20,4 @@ Cancelling doesn't automatically refund a payment. Refunds are handled case by c
 
 ## "Reschedule is currently disabled"
 
-Occasionally a host has rescheduling turned off. If you see this and need to change your time, message the host directly, or reach us from the [Help](/help) page.
+Occasionally a host has rescheduling turned off. If you see this and need to change your time, reach us from the [Help](/help) page and we'll sort it out.

@@ -393,6 +393,10 @@ If the booking hasn't been completed yet, contact support or the host immediatel
 
 Yes. [My Bookings](/my-bookings) helps you track upcoming, completed, and cancelled appointments in one place.
 
+## What time zone are booking times shown in?
+
+All slots, confirmations, and reminders use **India Standard Time (IST)**. Book A Sloth is India-first, so times aren't localized to your device yet. If you're booking from outside India, convert the slot to your local time before you confirm — a 3:00 PM IST slot is 3:00 PM in India.
+
 ## How can I get help with my booking?
 
 Contact Book A Sloth Support and provide your Booking ID, registered phone number, and payment reference (if applicable), so the team can investigate and help as quickly as possible.

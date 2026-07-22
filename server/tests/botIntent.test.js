@@ -63,3 +63,24 @@ describe('buildClarify — loop guard', () => {
     }
   });
 });
+
+// Regression: a 'send' card/chip whose text trips the upstream SENSITIVE_RE gate in
+// botService escalates to a human instead of routing to its intent handler (the exact
+// bug where "How do payments and refunds work?" self-defeated the payments chip). Every
+// intent-layer send value must both classify AND stay clear of the sensitive gate.
+describe('intent send-values never trip the sensitive-escalation gate', () => {
+  // Mirror of the topic-overlapping terms in botService's SENSITIVE_RE (kept local so
+  // this stays a pure test — botService pulls in the Supabase client on import). If a
+  // sensitive term is added there that an intent topic could plausibly use, add it here.
+  const SENSITIVE_OVERLAP = /\b(refunds?|charge ?backs?|disputes?|double ?charged?|fraud|unauthor)/i;
+  const sendValues = [
+    ...Object.values(CLARIFY_PROMPTS).map((p) => p.value),
+    ...Object.values(HANDLERS).flatMap((h) => h.cards.filter((c) => c.action.type === 'send').map((c) => c.action.value)),
+  ];
+  it('has at least one send value to check', () => {
+    expect(sendValues.length).toBeGreaterThan(0);
+  });
+  it.each([...new Set(sendValues)])('"%s" would not be caught by the sensitive gate', (value) => {
+    expect(SENSITIVE_OVERLAP.test(value)).toBe(false);
+  });
+});

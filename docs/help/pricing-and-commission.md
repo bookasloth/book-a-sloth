@@ -14,7 +14,7 @@ If you're wondering how much Book A Sloth costs, what the price of Host+ or Stud
 
 Here's the shape of it:
 
-- **Starter** costs nothing — it's free forever (a small per-booking commission applies).
+- **Starter** costs nothing — it's free forever (a 5% per-booking commission applies).
 - **Host+** and **Studio** are paid plans billed on a flat subscription. Host+ is the mid tier; Studio is the top tier with the most included.
 
 Prices can change and are set by Book A Sloth, so for the exact amount of any plan — Starter, Host+, or Studio — check the [pricing](/pricing) page for the up-to-date figure.
@@ -22,7 +22,7 @@ Prices can change and are set by Book A Sloth, so for the exact amount of any pl
 ## Commission
 
 - On **paid plans (Host+ and Studio), commission is 0%** — you keep the full service price your client pays.
-- On the **free Starter plan**, a small commission applies per booking. That's what funds a genuinely free tier instead of a limited trial.
+- On the **free Starter plan**, a 5% commission applies per booking. That's what funds a genuinely free tier instead of a limited trial.
 
 The exact percentage and prices are on the [pricing](/pricing) page.
 

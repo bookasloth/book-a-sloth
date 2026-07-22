@@ -38,7 +38,7 @@ export default function EscalationsPage() {
     setReply((r) => ({ ...r, busy: true }));
     try {
       await adminReplyEscalation(escSel.escalation.id, { channel: reply.channel, body });
-      toast.success(reply.channel === 'email' ? 'Email sent' : 'Note saved');
+      toast.success(reply.channel === 'email' ? 'Email sent' : reply.channel === 'whatsapp' ? 'WhatsApp reply logged' : 'Note saved');
       await openEscalation(escSel.escalation.id);
       load();
     } catch (e) {
@@ -118,21 +118,26 @@ export default function EscalationsPage() {
 
           <div className="rounded-xl border adm-border p-3">
             <div className="mb-2 flex gap-2">
-              {['email', 'note'].map((ch) => (
-                <button key={ch} onClick={() => setReply((r) => ({ ...r, channel: ch }))} disabled={ch === 'email' && !e.email}
-                  className={'rounded-lg px-2.5 py-1 text-xs font-medium ' + (reply.channel === ch ? 'bg-[#FE5100] text-white' : 'border adm-border adm-t2') + (ch === 'email' && !e.email ? ' opacity-40' : '')}>
-                  {ch === 'email' ? 'Email reply' : 'Internal note'}
-                </button>
-              ))}
+              {['email', 'whatsapp', 'note'].map((ch) => {
+                const disabled = (ch === 'email' && !e.email) || (ch === 'whatsapp' && !e.phone);
+                const label = ch === 'email' ? 'Email reply' : ch === 'whatsapp' ? 'Log WhatsApp' : 'Internal note';
+                return (
+                  <button key={ch} onClick={() => setReply((r) => ({ ...r, channel: ch }))} disabled={disabled}
+                    className={'rounded-lg px-2.5 py-1 text-xs font-medium ' + (reply.channel === ch ? 'bg-[#FE5100] text-white' : 'border adm-border adm-t2') + (disabled ? ' opacity-40' : '')}>
+                    {label}
+                  </button>
+                );
+              })}
             </div>
             <textarea value={reply.body} onChange={(ev) => setReply((r) => ({ ...r, body: ev.target.value }))} rows={3}
-              placeholder={reply.channel === 'email' ? `Reply to ${e.email || 'the visitor'}…` : 'Log an internal note (not sent to the visitor)…'}
+              placeholder={reply.channel === 'email' ? `Reply to ${e.email || 'the visitor'}…` : reply.channel === 'whatsapp' ? 'Paste what you sent on WhatsApp (logs it to the thread)…' : 'Log an internal note (not sent to the visitor)…'}
               className="mb-2 w-full rounded-lg border adm-border px-3 py-2 text-sm" />
             <button onClick={sendReply} disabled={reply.busy || !reply.body.trim()}
               className="rounded-lg bg-[#FE5100] px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40">
-              {reply.busy ? 'Sending…' : reply.channel === 'email' ? 'Send email' : 'Save note'}
+              {reply.busy ? 'Saving…' : reply.channel === 'email' ? 'Send email' : reply.channel === 'whatsapp' ? 'Log WhatsApp reply' : 'Save note'}
             </button>
             {reply.channel === 'email' && !e.email && <p className="mt-1 text-xs adm-t3">No verified email — use WhatsApp or a note.</p>}
+            {reply.channel === 'whatsapp' && <p className="mt-1 text-xs adm-t3">Send the message via the "Reply on WhatsApp ↗" link above, then log it here for the record.</p>}
           </div>
         </div>
       </div>

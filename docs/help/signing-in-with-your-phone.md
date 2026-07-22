@@ -28,7 +28,7 @@ The first time you book, an account is created for you automatically from your p
 
 Most people book a session once and don't want to create an account for it. A phone number is simpler, it's how you already get confirmations, and it means one less password in your life.
 
-If you've set a password on your account, you can use phone + password instead of a code — either works.
+There's no password login — a fresh 6-digit code every time is the only way in as a guest. That's deliberate: nothing to set, forget, or leak.
 
 ## "That number is a host account"
 

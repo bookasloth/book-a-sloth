@@ -27,8 +27,8 @@ const HANDLERS = {
       "Reschedule or Cancel. Any refund on a cancellation follows the host's policy shown " +
       "at checkout.",
     cards: [
-      { label: 'My bookings',       action: { type: 'route', value: '/my-bookings' } },
-      { label: 'How refunds work',  action: { type: 'send',  value: 'How do payments and refunds work?' } },
+      { label: 'My bookings',    action: { type: 'route', value: '/my-bookings' } },
+      { label: 'How payments work', action: { type: 'send',  value: 'How do payments and invoices work?' } },
     ],
   },
   payments: {
@@ -37,8 +37,8 @@ const HANDLERS = {
       "payment succeeds, and a receipt/invoice is emailed to you. For a specific charge on " +
       "your account, a human on our team can look it up.",
     cards: [
-      { label: 'Payments & refunds', action: { type: 'send',  value: 'How do payments and refunds work?' } },
-      { label: 'Raise a ticket',     action: { type: 'route', value: '/support' } },
+      { label: 'How payments work', action: { type: 'send',  value: 'How do payments and invoices work?' } },
+      { label: 'Raise a ticket',    action: { type: 'route', value: '/support' } },
     ],
   },
   calendar: {
@@ -82,7 +82,7 @@ const HANDLERS = {
 // this is the loop guard (no server state needed).
 const CLARIFY_PROMPTS = {
   reschedule:    { label: 'Reschedule or cancel', value: 'I want to reschedule or cancel a booking' },
-  payments:      { label: 'Payments & refunds',   value: 'How do payments and refunds work?' },
+  payments:      { label: 'Payments & invoices',  value: 'How do payments and invoices work?' },
   calendar:      { label: 'Calendar sync',        value: 'How does calendar sync work?' },
   notifications: { label: 'Notifications',         value: 'How do booking notifications work?' },
   reviews:       { label: 'Reviews',               value: 'How do reviews work?' },

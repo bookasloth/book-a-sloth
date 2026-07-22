@@ -14,6 +14,10 @@ The price shown when you book is locked at that moment. If a host changes their 
 
 Your account and booking information are used to run your bookings and send you confirmations — not sold. See the [privacy policy](/privacy) for the full detail on what's collected and how it's handled.
 
+## Can I delete my account or my data?
+
+Yes — reach us from the [Help](/help) page and we'll handle account and data-deletion requests. One thing to know: your **booking history can't be erased** while the bookings themselves stand, because both you and the host need an accurate record of what was booked and paid. If you'd rather stop receiving marketing emails, you can opt out any time from the link in any such email or your email preferences — that's separate from deleting your account.
+
 ## Something looks wrong
 
 If you ever see a charge you don't recognize or a booking that doesn't look right, contact us from the [Help](/help) page with the details and we'll investigate — payment discrepancies are treated as a priority, not a routine query.

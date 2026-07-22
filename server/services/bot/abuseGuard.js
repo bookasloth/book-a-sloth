@@ -267,17 +267,18 @@ async function countStrikes(conversationId) {
 
 // ---- Orchestrator ---------------------------------------------------------
 async function evaluate({ q, conversationId, ip } = {}) {
-  const ROAST_ON = process.env.BOT_ROAST_ENABLED === 'true';
-  if (!ROAST_ON) return null;
-
   const IPBLOCK_ON = process.env.BOT_THREAT_IPBLOCK_ENABLED === 'true';
   const BLOCK_SECS = Number(process.env.BOT_THREAT_BLOCK_SECONDS) || 1800;
 
   try {
-    // Step 0: already-blocked IP.
+    // Step 0: already-blocked IP — enforced independently of the roast flag, so an IP
+    // blocked for a prior threat stays blocked even if roasting is later toggled off.
     if (IPBLOCK_ON && ip && (await botIpBlock.isBlocked(ip))) {
       return { answer: IP_BLOCK_MSG, source: 'ip_block', cited_sources: [], escalate: false, locked: true };
     }
+
+    // Roast/threat detection itself is gated by the roast flag.
+    if (process.env.BOT_ROAST_ENABLED !== 'true') return null;
 
     const listed = checkListed(q);
     let route = null; // 'threat' | 'roast' | null

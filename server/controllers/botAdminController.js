@@ -269,13 +269,20 @@ const MAX_REPLY = 4000;
 const listEscalations = async (req, res) => {
   try {
     const status = req.query?.status || 'open';
-    let q = supabaseAdmin
-      .from('bot_escalations')
-      .select('id, reference, conversation_id, logged_in, is_host, name, email, phone, contact_channel, contact_verified, reason, summary, status, rating, page_url, created_at')
-      .order('created_at', { ascending: false })
-      .limit(200);
-    if (status !== 'all') q = q.eq('status', status);
-    const { data, error } = await q;
+    // `rating` is v3.90; keep the list schema-fallback safe so it never 500s on a DB
+    // where that column isn't applied yet (matches the migration's additive claim).
+    const withRating = 'id, reference, conversation_id, logged_in, is_host, name, email, phone, contact_channel, contact_verified, reason, summary, status, rating, page_url, created_at';
+    const withoutRating = withRating.replace(', rating', '');
+    const run = (cols) => {
+      let q = supabaseAdmin.from('bot_escalations').select(cols)
+        .order('created_at', { ascending: false }).limit(200);
+      if (status !== 'all') q = q.eq('status', status);
+      return q;
+    };
+    let { data, error } = await run(withRating);
+    if (error && (error.code === '42703' || /does not exist|schema cache/i.test(error.message || ''))) {
+      ({ data, error } = await run(withoutRating));
+    }
     if (error) return safeError(res, error);
     res.json({ escalations: data || [] });
   } catch (error) {
@@ -316,7 +323,10 @@ const replyEscalation = async (req, res) => {
   try {
     const id = req.params.id;
     if (!UUID_RE.test(id)) return res.status(400).json({ message: 'Invalid escalation id.' });
-    const channel = req.body?.channel === 'note' ? 'note' : 'email';
+    // 'whatsapp' logs the reply the admin sent via the wa.me link (AiSensy free-form
+    // isn't possible, so we can't deliver it programmatically — we just record it so
+    // the thread has an audit trail and status advances). schema CHECK allows it.
+    const channel = ['note', 'whatsapp'].includes(req.body?.channel) ? req.body.channel : 'email';
     const body = String(req.body?.body || '').trim();
     if (!body) return res.status(400).json({ message: 'Write a reply first.' });
     if (body.length > MAX_REPLY) return res.status(400).json({ message: 'Reply is too long.' });
