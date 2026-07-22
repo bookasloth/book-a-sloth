@@ -152,7 +152,7 @@ const OdometerDigit = ({ digit, delay, inView }) => {
   );
 };
 
-const Odometer = ({ value, className }) => {
+export const Odometer = ({ value, className }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
   const chars = String(value).split("");
@@ -482,7 +482,7 @@ const TRENDING = [
 ];
 
 /* ── Stats strip — live launch numbers ── */
-const STATS = [
+export const STATS = [
   { icon: Users, value: "20+", label: "Professionals already on Book A Sloth" },
   { icon: CalendarCheck, value: "100+", label: "Sessions booked" },
   { icon: Wallet, value: "₹40K+", label: "Processed through the platform" },
@@ -874,7 +874,10 @@ const Home = () => {
         <div aria-hidden className="sloth-hero-aura" />
 
         <div className="relative z-10 mx-auto max-w-md text-center">
-          <Reveal as="h1" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
+          {/* Mobile hero is the responsive twin of the desktop <h1> above; both
+              render in the DOM (CSS-hidden per breakpoint), so this one is an h2
+              to keep a single H1 per page for crawlers. */}
+          <Reveal as="h2" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
             Create your
             <br />
             <span className="font-bold text-primary">Appointment Booking Page</span>{" "}

@@ -13,7 +13,18 @@ const bcrypt = require("bcryptjs");
 const { encrypt: encryptToken } = require("../utils/cryptoTokens");
 const profileSecrets = require("../utils/profileSecrets");
 const planService = require("../services/planService");
+const inviteService = require("../services/inviteService");
 const { SAFETY_KEYS } = require("../config/featureRegistry");
+
+// Invite-link attribution: stamp only in the brand-new-profile branch (caller
+// guarantees profileId was just created). Existing accounts never reach here.
+// No-ops when state carries no slug or the slug is unknown (service-validated).
+// Never writes a referrals row — attribution and payout are separate axes.
+async function maybeStampInvite(profileId, statePayload) {
+  const slug = statePayload?.invite;
+  if (!slug) return;
+  await inviteService.stampInviteSlug(profileId, slug);
+}
 
 // HMAC secret for the OAuth `state` parameter (CSRF protection on the Google
 // round-trip). Dedicated env var preferred; service-role key is a safe,
@@ -337,8 +348,13 @@ const googleAuth = (req, res) => {
 // creates or logs in the vendor. No password ever exists for these accounts.
 const googleVendorAuth = (req, res) => {
   const intent = req.query.intent === "signup" ? "signup" : "login";
+  // Invite-link lead-source: carried through the signed OAuth state so the
+  // callback can stamp it race-free on a brand-new host (see maybeStampInvite).
+  const invite = req.query.invite
+    ? String(req.query.invite).trim().toLowerCase().slice(0, 40)
+    : undefined;
   const state = jwt.sign(
-    { flow: "vendor_auth", intent },
+    { flow: "vendor_auth", intent, ...(invite ? { invite } : {}) },
     OAUTH_STATE_SECRET,
     { expiresIn: "15m" },
   );
@@ -512,6 +528,9 @@ const googleCallback = async (req, res) => {
         // confirmed). Next step (2) is slug claim via the authed claim-slug
         // endpoint. calendar_skipped=true because they connected via Google here.
         await markGoogleVendorOnboarding(profileId, profile.username);
+
+        // Invite-link attribution — new host ONLY, write-once, never a referrals row.
+        await maybeStampInvite(profileId, statePayload);
       }
 
       await attachGoogleToProfile(profileId, tokens, googleUser);
@@ -1299,4 +1318,5 @@ module.exports = {
   becomeHost,
   forgotPassword,
   resetPassword,
+  maybeStampInvite,
 };

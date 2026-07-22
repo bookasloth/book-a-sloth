@@ -166,6 +166,12 @@ router.get('/referral-rules',       requireAdmin('referrals.view'),   referralAd
 router.patch('/referral-rules/:id', requireAdmin('referrals.manage'), referralAdmin.updateRule);
 router.get('/referrals',            requireAdmin('referrals.view'),   referralAdmin.listReferrals);
 
+// ── Invite links (lead-source attribution — reuses referrals.* perms) ──────────
+const inviteAdmin = require('../controllers/inviteAdminController');
+router.get('/invite-links',         requireAdmin('referrals.view'),   inviteAdmin.list);
+router.post('/invite-links',        requireAdmin('referrals.manage'), inviteAdmin.create);
+router.patch('/invite-links/:slug', requireAdmin('referrals.manage'), inviteAdmin.update);
+
 // ── Payout approval ────────────────────────────────────────────
 const payouts = require('../controllers/payoutAdminController');
 router.get('/payouts/clearing',     requireAdmin('payouts.view'),    payouts.listClearing);

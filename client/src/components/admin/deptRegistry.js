@@ -45,6 +45,7 @@ export const DEPT_LINKS = [
   { label: 'Host 360°',          icon: 'badgeCheck',to: '/admin/host360',   desc: 'Full 360° view of a single host',        depts: ['operation', 'support', 'cxo'] },
   { label: 'Subscription Plans', icon: 'card',     to: '/admin/plans',      desc: 'Plan tiers, pricing, and limits',        depts: ['finance', 'marketing'] },
   { label: 'Refer & Earn',       icon: 'affiliate',to: '/admin/referrals',  desc: 'Referral rewards, config & ledger',      depts: ['marketing', 'finance'] },
+  { label: 'Invite Links',       icon: 'affiliate',to: '/admin/invite-links', desc: 'Lead-source attribution links (no payouts)', depts: ['marketing', 'finance'] },
   { label: 'Professions',        icon: 'layers',   to: '/admin/professions',desc: 'Profession taxonomy and categories',     depts: ['operation', 'marketing'] },
   { label: 'Addons',             icon: 'package',  to: '/admin/addons',     desc: 'Paid add-ons and upsells',               depts: ['finance', 'operation'] },
   { label: 'Badges',             icon: 'star',     to: '/admin/badges',     desc: 'Host trust and achievement badges',      depts: ['marketing', 'operation'] },
