@@ -64,14 +64,6 @@ function PaidCard({ plan, yearly }) {
           : undefined
       }
     >
-      {plan.recommended && (
-        <span
-          className="absolute right-6 top-6 rounded-full px-3 py-1 text-xs font-semibold text-white"
-          style={{ background: plan.accent }}
-        >
-          Recommended
-        </span>
-      )}
       <div className="flex items-center justify-between">
         <span
           className="rounded-[6px] border px-2.5 py-1 font-heading text-lg font-bold"
@@ -79,7 +71,16 @@ function PaidCard({ plan, yearly }) {
         >
           {plan.name}
         </span>
-        <AccentIcon name={plan.icon} accent={plan.accent} />
+        {plan.recommended ? (
+          <span
+            className="rounded-full px-3 py-1 text-xs font-semibold text-white"
+            style={{ background: plan.accent }}
+          >
+            Recommended
+          </span>
+        ) : (
+          <AccentIcon name={plan.icon} accent={plan.accent} />
+        )}
       </div>
       <p className="mt-3 text-sm text-neutral-500">{plan.tagline}</p>
 
@@ -104,7 +105,7 @@ function PaidCard({ plan, yearly }) {
 
       <Link
         to={cta.to}
-        className="mt-6 inline-flex items-center justify-center rounded-[6px] px-6 py-3 text-sm font-semibold text-white transition-transform hover:no-underline"
+        className="mt-6 inline-flex items-center justify-center rounded-[6px] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 hover:no-underline"
         style={{ background: plan.recommended ? plan.accent : "#1a1a1a" }}
       >
         {cta.label}

@@ -1658,7 +1658,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ════════════════ PRICING (2 plans · yearly active) ════════════════ */}
+      {/* ════════════════ PRICING (shared PricingCards — 4 plans) ════════════════ */}
       <section id="pricing" className="px-5 pb-12 pt-20 sm:px-8 lg:pb-16 lg:pt-28">
         <div className="mx-auto max-w-4xl">
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
