@@ -58,6 +58,9 @@ export default function Pricing() {
       {/* ── Plan cards ─────────────────────────────────────── */}
       <section className="px-5 sm:px-8">
         <PricingCards />
+        <p className="mx-auto mt-6 max-w-5xl text-center text-xs text-neutral-400">
+          0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
+        </p>
       </section>
 
       {/* ── Full feature comparison ────────────────────────── */}
@@ -124,9 +127,9 @@ function FragmentSection({ section }) {
       {section.rows.map((row) => (
         <tr key={row.label} className="border-b border-black/5">
           <td className="py-3 pr-4 text-sm text-neutral-700">{row.label}</td>
-          <td className="px-3 py-3 text-center"><Cell value={row.starter} /></td>
-          <td className="px-3 py-3 text-center"><Cell value={row.hostplus} /></td>
-          <td className="px-3 py-3 text-center"><Cell value={row.studio} /></td>
+          {PLAN_COLUMNS.map((c) => (
+            <td key={c.key} className="px-3 py-3 text-center"><Cell value={row[c.key]} /></td>
+          ))}
         </tr>
       ))}
     </>
