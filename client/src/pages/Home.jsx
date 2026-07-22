@@ -57,8 +57,8 @@ import Reveal from "../components/home/Reveal";
 import HowItWorks from "../components/home/HowItWorks";
 import BrandPreloader from "../components/preloader/BrandPreloader";
 import { HERO, HERO_FACES, PERSONAS, NEWSLETTER } from "../components/home/images";
-import { PAID_PLANS, STARTER_PLAN } from "../data/plans";
 import { TESTIMONIALS } from "../data/testimonials";
+import PricingCards from "../components/pricing/PricingCards";
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
 
@@ -731,11 +731,6 @@ const Home = () => {
   }, []);  const tFrac = tW >= 1024 ? 0.44 : tW >= 640 ? 0.6 : 0.84;
   const tCardW = tW ? tW * tFrac : 0;
   const tOffset = tW ? (tW - tCardW) / 2 - activeT * (tCardW + T_GAP) : 0;
-
-  // ── Pricing: 2 plans, Yearly active by default ──
-  const [yearly, setYearly] = useState(true);
-  // Pricing data lives in src/data/plans.js — single source shared with landing pages.
-  const PLANS = PAID_PLANS;
 
   // ── Competitor comparison tiles (favicons via Google's favicon service) ──
   const COMPETITORS = [
@@ -1673,124 +1668,8 @@ const Home = () => {
             Start free. Upgrade when your bookings demand it. Keep everything you earn — always.
           </Reveal>
 
-          {/* Billing toggle — Yearly active by default */}
-          <Reveal delay={0.12} className="mt-8 flex justify-center">
-            <div className="inline-flex items-center gap-1 rounded-full border border-black/5 bg-white p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setYearly(false)}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${!yearly ? "bg-ink text-white" : "text-neutral-500 hover:text-ink"}`}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                onClick={() => setYearly(true)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${yearly ? "bg-ink text-white" : "text-neutral-500 hover:text-ink"}`}
-              >
-                Yearly
-                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${yearly ? "bg-primary text-white" : "bg-primary/10 text-primary"}`}>
-                  Best value
-                </span>
-              </button>
-            </div>
-          </Reveal>
-
-          {/* Plans */}
-          <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {PLANS.map((p, i) => {
-              const perMo = Math.round(p.yearly / 12);
-              const savePct = Math.round((1 - p.yearly / 12 / p.monthly) * 100);
-              const bigPrice = yearly ? p.yearly : p.monthly;
-              return (
-                <Reveal key={p.name} delay={i * 0.08}>
-                  <div
-                    className={`relative flex h-full flex-col rounded-[6px] border bg-white p-7 sm:p-8 ${
-                      p.recommended
-                        ? "border-primary/30 shadow-[0_24px_60px_-30px_rgba(254,81,0,0.45)] ring-1 ring-primary/20"
-                        : "border-black/5 shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
-                    }`}
-                  >
-                    {p.recommended && (
-                      <span className="absolute right-6 top-6 rounded-full bg-primary-cta px-3 py-1 text-xs font-semibold text-white">
-                        Recommended
-                      </span>
-                    )}
-                    <h3 className="font-heading text-2xl font-bold text-ink">{p.name}</h3>
-                    <p className="mt-1 text-sm text-neutral-500">{p.tagline}</p>
-
-                    <div className="mt-6 flex items-end gap-2">
-                      <span className="text-5xl font-extrabold text-ink">₹{bigPrice.toLocaleString("en-IN")}</span>
-                      <span className="mb-1.5 text-sm text-neutral-400">/ {yearly ? "year" : "month"}</span>
-                      {yearly && (
-                        <span className="mb-2 rounded-full bg-sand px-2 py-0.5 text-xs font-semibold text-primary">
-                          Save {savePct}%
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1 text-xs text-neutral-400">
-                      {yearly ? `just ₹${perMo}/month, billed yearly` : "billed monthly"}
-                    </p>
-
-                    <Link
-                      to={ROUTE_START}
-                      className={`mt-6 inline-flex items-center justify-center rounded-[6px] px-6 py-3 text-sm font-semibold transition-transform hover:no-underline ${
-                        p.recommended
-                          ? "bg-primary-cta text-white hover:bg-primary-dark"
-                          : "bg-ink text-white hover:bg-neutral-800"
-                      }`}
-                    >
-                      Let's Get Started
-                    </Link>
-
-                    <p className="mt-7 text-sm font-semibold text-ink">{p.intro}</p>
-                    <ul className="mt-4 space-y-3">
-                      {p.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                          <Check size={16} className="mt-0.5 flex-shrink-0 text-primary" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </Reveal>
-              );
-            })}
-          </div>
-
-          {/* Free plan — horizontal on desktop, stacked (like the cards above) on mobile */}
-          <Reveal delay={0.16} className="mt-5">
-            <div className="rounded-[6px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8 lg:flex lg:items-center lg:gap-8">
-              <div className="lg:shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <h3 className="font-heading text-2xl font-bold text-ink">{STARTER_PLAN.name}</h3>
-                  <span className="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-primary">{STARTER_PLAN.badge}</span>
-                </div>
-                <p className="mt-1 text-sm text-neutral-500">{STARTER_PLAN.tagline}</p>
-                <div className="mt-4 flex items-end gap-2">
-                  <span className="text-4xl font-extrabold text-ink">₹0</span>
-                  <span className="mb-1 text-sm text-neutral-400">/ forever</span>
-                </div>
-              </div>
-
-              <ul className="mt-6 grid gap-3 lg:mt-0 lg:flex-1 lg:grid-cols-2 lg:gap-x-8">
-                {STARTER_PLAN.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                    <Check size={16} className="mt-0.5 flex-shrink-0 text-primary" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-6 lg:mt-0 lg:shrink-0">
-                <Link
-                  to={ROUTE_START}
-                  className="inline-flex w-full items-center justify-center rounded-[6px] bg-ink px-7 py-3 text-sm font-semibold text-white transition-transform hover:bg-neutral-800 hover:no-underline lg:w-auto"
-                >
-                  Let's Get Started
-                </Link>
-              </div>
-            </div>
+          <Reveal delay={0.12} className="mt-8">
+            <PricingCards />
           </Reveal>
 
           <p className="mt-8 text-center text-sm text-neutral-500">
