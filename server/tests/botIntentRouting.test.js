@@ -26,8 +26,11 @@ function routeOf(q) {
   const s = String(q || '').trim();
   if (!s) return 'empty';
   if (isUnsupportedInput(s)) return 'unsupported';
+  const sens = SENSITIVE_RE.test(s);
   if (smalltalkReply(s)) return 'smalltalk';
-  if (pricingReply(s)) return 'pricing';
+  // Sensitive topics skip the pricing/FAQ layers (keyword overlap like "charge") and
+  // go straight to escalation — mirrors the guard added in botService.
+  if (!sens && pricingReply(s)) return 'pricing';
   // FAQ layer (DB exact-match canned answers) runs HERE, before intent — preserved.
   // The harness assumes no canned FAQ hit for these queries.
   if (!SENSITIVE_RE.test(s)) {
@@ -170,13 +173,11 @@ describe('Bolt intent routing matrix', () => {
     }
   });
 
-  // PRE-EXISTING ISSUE (independent of the intent layer): the deterministic pricing
-  // layer runs BEFORE the sensitive check, and PRICING_INTENT matches the word
-  // "charge". So "fraudulent charge" is answered with pricing info and never escalates.
-  // Documented here so it isn't silently lost; the fix (hoist SENSITIVE_RE above the
-  // pricing/FAQ layers) is a change to the shared ladder and needs product sign-off,
-  // so it is NOT applied in this validation pass.
-  it('KNOWN ISSUE: "charge" pricing-intent shadows sensitive escalation', () => {
-    expect(routeOf('this is a fraudulent charge')).toBe('pricing'); // asserts the CURRENT buggy behavior
+  // Regression guard for the sensitive-precedence fix: PRICING_INTENT matches "charge",
+  // but the sensitive check now runs BEFORE the pricing/FAQ layers, so a fraud report
+  // escalates instead of getting a pricing answer.
+  it('sensitive beats pricing keyword overlap ("fraudulent charge" → escalate)', () => {
+    expect(routeOf('this is a fraudulent charge')).toBe('escalate:sensitive');
+    expect(routeOf('I was charged twice for my booking')).toBe('escalate:sensitive');
   });
 });

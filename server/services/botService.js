@@ -690,6 +690,12 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     logGap({ question: q, reason: 'injection_attempt', conversationId }).catch(() => {});
   }
 
+  // Money-reversal / account-compromise ALWAYS goes to a human. Computed up here (not
+  // mid-ladder) so it wins over the pricing and FAQ layers, whose keyword matches can
+  // overlap a sensitive query — e.g. "fraudulent charge" contains "charge" (a pricing
+  // keyword), which used to short-circuit to a pricing answer and never escalate.
+  const sensitive = q && SENSITIVE_RE.test(q);
+
   const small = q && smalltalkReply(q);
   if (small) {
     const { conversationId: convId, messageId } = await persist({
@@ -698,7 +704,7 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     return { answer: small, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'smalltalk' };
   }
 
-  const price = q && pricingReply(q);
+  const price = q && !sensitive && pricingReply(q);
   if (price) {
     const { conversationId: convId, messageId } = await persist({
       conversationId, sessionRef, question: q, answer: price, cited_sources: [], escalate: false, source: 'pricing',
@@ -706,7 +712,7 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     return { answer: price, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'pricing' };
   }
 
-  const faq = q && await matchFaq(q);
+  const faq = q && !sensitive && await matchFaq(q);
   if (faq) {
     const { conversationId: convId, messageId } = await persist({
       conversationId, sessionRef, question: q, answer: faq, cited_sources: [], escalate: false, source: 'faq',
@@ -719,7 +725,6 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
   if (intentRes) return intentRes;
 
   const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
-  const sensitive = SENSITIVE_RE.test(q);
 
   // Embed the query once (Voyage) — reused by the semantic cache AND hybrid retrieval.
   const retrievalQuery = q ? buildRetrievalQuery(qSafe, history) : '';
@@ -840,6 +845,11 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     logGap({ question: q, reason: 'injection_attempt', conversationId }).catch(() => {});
   }
 
+  // Sensitive (money-reversal / account-compromise) always escalates — computed up here
+  // so it wins over the pricing/FAQ layers whose keywords overlap it (e.g. "fraudulent
+  // charge" contains the pricing keyword "charge"). See the structured pipeline above.
+  const sensitive = q && SENSITIVE_RE.test(q);
+
   const small = q && smalltalkReply(q);
   if (small) {
     onDelta(small);
@@ -849,7 +859,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     return { answer: small, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'smalltalk' };
   }
 
-  const price = q && pricingReply(q);
+  const price = q && !sensitive && pricingReply(q);
   if (price) {
     onDelta(price);
     const { conversationId: convId, messageId } = await persist({
@@ -858,7 +868,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     return { answer: price, cited_sources: [], followups: [], escalate: false, conversationId: convId, messageId, source: 'pricing', pills: [], locked: false };
   }
 
-  const faq = q && await matchFaq(q);
+  const faq = q && !sensitive && await matchFaq(q);
   if (faq) {
     onDelta(faq);
     const { conversationId: convId, messageId } = await persist({
@@ -872,7 +882,6 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
   if (intentRes) return intentRes;
 
   const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
-  const sensitive = SENSITIVE_RE.test(q);
 
   // Embed the query once (Voyage) — reused by the semantic cache AND hybrid retrieval.
   const retrievalQuery = q ? buildRetrievalQuery(qSafe, history) : '';
