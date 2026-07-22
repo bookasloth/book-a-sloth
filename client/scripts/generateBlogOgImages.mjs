@@ -46,6 +46,10 @@ const PREFIX = 'blog-og';
 const args = process.argv.slice(2);
 const only = (args.find((a) => a.startsWith('--only=')) || '').split('=')[1] || null;
 const dry = args.includes('--dry');
+// --missing: only posts with no card yet (og_image IS NULL). Used by the deploy
+// workflow so each deploy generates cards for freshly-published posts only, fast,
+// instead of re-rendering every published post every time.
+const missing = args.includes('--missing');
 
 // Same SPA-fallback static server the prerender uses: any unknown path serves
 // index.html so client-side routes like /og/blog/:slug resolve.
@@ -83,9 +87,13 @@ async function main() {
   // production API is blocked by CORS, which failed all 34 on the first attempt.
   let q = db.from('blogs').select('slug,category,icons').eq('status', 'published');
   if (only) q = q.eq('slug', only);
+  if (missing) q = q.is('og_image', null);
   const { data: posts, error } = await q;
   if (error) throw error;
   if (!posts.length) {
+    // In --missing mode "nothing to do" is success, not an error — the deploy
+    // step must not fail just because every published post already has a card.
+    if (missing) { console.log('No posts missing an OG card — nothing to generate.'); return; }
     console.error(only ? `No published post with slug "${only}"` : 'No published posts.');
     process.exit(1);
   }
