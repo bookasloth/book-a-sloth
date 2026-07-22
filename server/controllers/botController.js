@@ -71,6 +71,8 @@ exports.ask = async (req, res) => {
 
     let reference = null;
     let escalationId = null;
+    let channel = null;
+    let contact = null;
     let needsContact = false;
     if (result.escalate) {
       if (req.user?.id) {
@@ -81,6 +83,8 @@ exports.ask = async (req, res) => {
         });
         reference = rec.reference;
         escalationId = rec.escalationId;
+        channel = rec.channel;
+        contact = rec.contact;
       } else {
         needsContact = true; // anon: client will collect a verified contact, then /escalate/verify
       }
@@ -88,7 +92,7 @@ exports.ask = async (req, res) => {
 
     return res.json({
       answer: result.answer, cited_sources: result.cited_sources, escalate: result.escalate,
-      escalateReason: result.escalateReason || null, needsContact, reference, escalationId,
+      escalateReason: result.escalateReason || null, needsContact, reference, escalationId, channel, contact,
       conversationId: result.conversationId, messageId: result.messageId,
       pills: result.pills || [], locked: !!result.locked,
     });
@@ -118,6 +122,8 @@ exports.askStream = async (req, res) => {
 
     let reference = null;
     let escalationId = null;
+    let channel = null;
+    let contact = null;
     let needsContact = false;
     if (result.escalate) {
       if (req.user?.id) {
@@ -130,6 +136,8 @@ exports.askStream = async (req, res) => {
         });
         reference = rec.reference;
         escalationId = rec.escalationId;
+        channel = rec.channel;
+        contact = rec.contact;
       } else {
         needsContact = true;
       }
@@ -137,7 +145,7 @@ exports.askStream = async (req, res) => {
 
     sse('done', {
       escalate: result.escalate, escalateReason: result.escalateReason || null,
-      needsContact, reference, escalationId,
+      needsContact, reference, escalationId, channel, contact,
       cited_sources: result.cited_sources, followups: result.followups || [],
       conversationId: result.conversationId, messageId: result.messageId,
       pills: result.pills || [], locked: !!result.locked,
