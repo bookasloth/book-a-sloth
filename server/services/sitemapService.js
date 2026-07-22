@@ -50,7 +50,8 @@ const HELP_DOC_SLUGS = [
   'becoming-a-host', 'creating-and-managing-services', 'availability-and-google-calendar',
   'getting-paid', 'plans-and-upgrading', 'why-am-i-not-getting-bookings',
   'your-username-and-booking-link', 'branding-and-theme-colours', 'selling-digital-products',
-  'reminders-notifications-and-badges', 'what-is-book-a-sloth', 'pricing-and-commission',
+  'reminders-notifications-and-badges', 'kyc-and-verification',
+  'what-is-book-a-sloth', 'pricing-and-commission',
   'is-my-payment-and-data-safe', 'whats-not-supported-yet', 'contact-support',
 ];
 
