@@ -42,7 +42,64 @@ env:
   VERCEL_PROJECT_ID: prj_b02XYKuwhxoZakgucihWVXgUdUIA
 
 jobs:
+  # Generate OG social cards for any freshly-published blog post BEFORE the deploy.
+  # WHY first: the Vercel remote build's prerender HARD-FAILS if a published post
+  # has no og_image card (see the blog-OG guard). Blogs are DB-backed, so a card
+  # can't be produced at prerender time inside Vercel — Chromium is kept off both
+  # Render and Vercel build. This job renders the /og/blog route with Puppeteer
+  # here (Actions has Chromium + prod secrets), uploads the PNG, and stamps
+  # blogs.og_image. `--missing` only touches posts with no card yet, so a normal
+  # deploy with nothing new is a fast no-op. Mirrors host-og-cards.yml.
+  blog-og:
+    name: Generate blog OG cards (missing only)
+    runs-on: ubuntu-latest
+    if: github.repository == 'bookasloth/book-a-sloth'
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - run: npm ci
+
+      # Puppeteer's bundled Chromium needs these shared libs on the runner. The
+      # `|| true` fallback covers Ubuntu's libasound2 → libasound2t64 rename.
+      - name: Chromium system libraries
+        working-directory: .
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 libatk-bridge2.0-0 libcups2 libxkbcommon0 libxcomposite1 \
+            libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64 \
+            || sudo apt-get install -y libasound2
+
+      - name: Ensure Chromium is present
+        run: npx puppeteer browsers install chrome
+
+      # The /og/blog route reads all data from query params — no API/Supabase call
+      # at render time — so these placeholders are never used; they only satisfy
+      # vite.config.js's required-env guard. The dist is screenshotted then discarded.
+      - name: Build (no prerender)
+        run: npm run build:no-prerender
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key-unused-by-og-route
+          VITE_API_URL: https://placeholder.invalid/api
+
+      - name: Generate cards for newly-published posts
+        run: node scripts/generateBlogOgImages.mjs --missing
+        env:
+          SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
+
   deploy:
+    needs: blog-og      # cards must exist in the DB before the remote prerender runs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
