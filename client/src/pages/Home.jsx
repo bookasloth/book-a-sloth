@@ -1660,7 +1660,7 @@ const Home = () => {
 
       {/* ════════════════ PRICING (shared PricingCards — 4 plans) ════════════════ */}
       <section id="pricing" className="px-5 pb-12 pt-20 sm:px-8 lg:pb-16 lg:pt-28">
-        <div className="mx-auto max-w-[960px]">
+        <div className="mx-auto max-w-[1005px]">
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
             Simple pricing. <span className="text-primary">Zero commission.</span>
           </Reveal>
