@@ -94,13 +94,9 @@ Yes, whenever required.
 
 Customers may keep seeing your previously configured slots until you change them.
 
-## Can I block specific time slots?
+## Can I block part of a day?
 
-Yes. Block individual slots when you're unavailable during part of a day.
-
-## Can I reopen blocked time slots?
-
-Yes, whenever needed.
+There's no per-slot block. To be unavailable for part of a day, shorten that day's working hours; to be off the whole day, block the date. Reopen by restoring the hours or removing the blocked date.
 
 ## Can customers see my available slots?
 
@@ -108,15 +104,11 @@ Yes. They only see slots currently available for booking.
 
 ## Can I control how far in advance customers can book?
 
-Yes. Booking availability follows your scheduling settings and booking rules.
+There isn't a separate advance-notice or booking-window setting. Times that have already passed are automatically removed, and guests can book any open future slot in your working hours. To limit near-term bookings, block those dates or adjust your hours.
 
 ## Can I stop accepting same-day bookings?
 
-Yes, if supported by your booking settings — require customers to book in advance.
-
-## Can I allow same-day bookings?
-
-Yes, if your schedule allows them.
+There's no same-day on/off switch. If you don't want same-day bookings, block today's date or set that day's hours so no slots remain.
 
 ## Can multiple customers book the same time slot?
 
@@ -156,7 +148,7 @@ No. If you've blocked those slots, they can't be booked.
 
 ## Can I set different availability for different services?
 
-If service-specific availability is supported, you can configure separate schedules per service.
+No. Your schedule is set per host and shared across all your services — there isn't a separate schedule per service.
 
 ## Does availability sync with my booking page?
 
@@ -225,3 +217,25 @@ If you can't update your schedule, contact Book A Sloth Support with details of 
 ## How can I manage my availability effectively?
 
 Keep working hours updated, block holidays in advance, review your schedule regularly, and make sure availability reflects your real working hours.
+
+## Google Calendar sync — common questions
+
+**What does connecting Google Calendar do?** Two things: times you're **busy** on Google are removed from your bookable slots (so you're not double-booked), and every confirmed booking is **written to your Google Calendar** as an event — and updated or removed there if it's rescheduled or cancelled.
+
+**Is it read-only?** No. It reads your busy times *and* adds, updates, and removes your Book A Sloth booking events on your calendar. It doesn't touch your other personal events.
+
+**Is it optional?** Yes. You can run purely on your Availability schedule without connecting. Connect (or disconnect) any time from your dashboard.
+
+**Do I need a Google account?** Yes — Google Calendar sync requires connecting a Google account.
+
+**Is it limited to certain plans?** No. Google Calendar connection is available to hosts on all plans. (The *number of calendars* you can connect can depend on your plan.)
+
+**Will customers see my calendar events?** No. Your calendar stays private — guests only see open booking slots, never your event details.
+
+**It's not blocking my busy times.** Check the calendar is still connected, then reconnect from your dashboard — authorization can expire. Sync failures are designed to fail safe (they won't wrongly hide your availability), so reconnecting restores busy-time blocking.
+
+**Does it create bookings by itself?** No. It only mirrors Book A Sloth bookings onto your calendar and reads your busy times — it never creates a Book A Sloth booking on its own.
+
+**What happens if I disconnect?** Existing bookings stay. Your availability then relies only on your working hours and blocked dates. Reconnect any time.
+
+**Can Support help me reconnect?** Yes — if you can't reconnect, contact Book A Sloth Support.

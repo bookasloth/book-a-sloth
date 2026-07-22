@@ -21,3 +21,27 @@ See the [pricing](/pricing) page for exactly what each plan includes.
 Badges appear on your public page to build trust. Most are awarded automatically as you hit milestones — this runs on a schedule, so a newly earned badge can take a little while to show up. Some badges are awarded by our team.
 
 If a badge you expected hasn't appeared, give it some time first. For verification questions, reach us from the [Help](/help) page.
+
+## Notifications — common questions
+
+**What notifications does Book A Sloth send?** Booking confirmations, reschedules, cancellations, payment confirmations, refund updates, and (on paid plans) session reminders — over **email and WhatsApp**. Both guests and hosts get the ones relevant to them. They're triggered automatically when the related action happens.
+
+**Do reminders go out for every booking?** Confirmations do, always. **Reminders are plan-based** — the free tier has none, Host+ includes a reminder before the session, and Studio includes the full set. See [pricing](/pricing).
+
+**Do free bookings still get notifications?** Yes. A ₹0 booking gets the same confirmation as a paid one.
+
+**Will I get a WhatsApp confirmation?** Where WhatsApp is available for the event, yes — some notifications go over both channels, others over one.
+
+**I didn't get my notification.** Check your inbox *and* spam/junk folder, and confirm the email address and phone number on your account are correct. WhatsApp messages need an active WhatsApp account on your registered number. Delivery can occasionally take a few minutes.
+
+**Why did I get a duplicate?** Occasionally a retry attempt can deliver twice. If duplicates keep happening, contact Support.
+
+**A notification failed to send — is my booking affected?** No. Notification delays or failures never change your actual booking or payment status. Failed emails are retried automatically through the send queue.
+
+**How do I change where notifications go?** Update your email address and phone number on your [Profile](/profile). Future notifications use the new details.
+
+**Can I turn off all notifications?** Essential transactional messages (booking, payment, refund) are sent automatically so you stay informed. Marketing/newsletter emails are separate and can be unsubscribed — see [Your profile and email preferences](/help/docs/your-profile-and-email-preferences).
+
+**Are notification templates and providers managed by me?** No — email/WhatsApp templates and providers are configured by Book A Sloth administrators, not individual hosts.
+
+**Still missing important notifications?** With correct contact details and spam checked, contact Book A Sloth Support and include your booking ID so they can verify whether the notification was generated.

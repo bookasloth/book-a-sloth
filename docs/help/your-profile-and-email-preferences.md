@@ -12,6 +12,22 @@ Every marketing email has an **unsubscribe** link at the bottom. Click it, or vi
 
 Unsubscribing stops marketing and newsletter emails. You'll still get essential messages about your actual bookings — confirmations, reminders, and reschedule or cancellation notices — because those are about services you booked, not promotions.
 
+### Newsletter — common questions
+
+**What is the newsletter?** Occasional emails about platform updates, new features, events, and announcements. It's free.
+
+**How do I subscribe / do I need an account?** Where the subscribe option is available, any valid email address works — an account isn't required.
+
+**How often does it go out?** Only when there's something to share, not on a fixed schedule. You won't get one the instant you subscribe; the next campaign comes when it's sent.
+
+**How do I unsubscribe?** Use the unsubscribe link at the bottom of any marketing email, or the [unsubscribe](/unsubscribe) page. You can resubscribe any time by signing up again.
+
+**Does unsubscribing affect my bookings or account?** No. It only stops promotional/newsletter emails — you keep getting essential booking messages and can use the platform normally.
+
+**I'm not getting newsletters.** Check your spam/junk folder and confirm you subscribed with the right address. If it still doesn't arrive, contact Book A Sloth Support.
+
+**Are newsletters the same as booking emails?** No — booking confirmations, reminders, and payment/refund updates are transactional and sent regardless of newsletter preferences.
+
 ## Deleting your account
 
 If you want your account removed, contact us from the [Help](/help) page and we'll handle it — this isn't something we do automatically, so a real person will confirm it with you first.
