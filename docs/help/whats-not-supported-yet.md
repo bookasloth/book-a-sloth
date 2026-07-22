@@ -20,7 +20,7 @@ Not yet — Book A Sloth is single-host today: one person's services, calendar, 
 
 ## Do you sync with Outlook or iCloud, or pull in my other calendars?
 
-Calendar sync is one-way today: confirmed bookings are pushed to your Google Calendar so your time is blocked automatically. Book A Sloth doesn't yet pull busy times *in* from Outlook, iCloud, or other calendar providers.
+Google Calendar is fully two-way: confirmed bookings are pushed to your Google Calendar (and updated or removed when they change), and your existing Google busy times are read back in so you're never double-booked. The limitation is other providers — Book A Sloth doesn't yet sync with Outlook, iCloud, or non-Google calendars.
 
 ## Something else?
 

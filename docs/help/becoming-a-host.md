@@ -12,14 +12,14 @@ Using Google also lets you connect your Google Calendar later, so your bookings 
 
 A guided setup walks you through everything you need to go live:
 
-1. **Claim your username** — this becomes your public link, `bookasloth.com/your-name`.
-2. **Verify your WhatsApp number** — so booking alerts and confirmations reach you.
-3. **Set up your profile** — photo, bio, and what you do.
-4. **Set your working hours** — when you're available to be booked.
-5. **Add your first service** — what you offer, how long it takes, and the price.
+1. **Sign in with Google** — no password to create; your Google email is already verified.
+2. **Claim your username** — this becomes your public link, `bookasloth.com/your-name`.
+3. **Tell us about you** — individual or business, and whether you work online, offline, or both.
+4. **Pick your category / profession** — so you show up in the right place.
+5. **Verify your WhatsApp number** — so booking alerts and confirmations reach you (this is the one step you can skip for now).
 6. **Choose a plan** — start free on Starter, or pick a paid plan for more.
 
-Once that's done, your page is live and bookable.
+Then you launch and you're live. Your profile, working hours, and first service are set up from the dashboard right after launch.
 
 ## Finish the setup to reach your dashboard
 

@@ -4,7 +4,7 @@ Book A Sloth has three plans. See the [pricing](/pricing) page for current price
 
 ## The plans
 
-- **Starter** — free forever, with real online payment collection built in. Best for getting started. A small commission applies per booking on this tier.
+- **Starter** — free forever, with real online payment collection built in. Best for getting started. A 5% commission applies per booking on this tier.
 - **Host+** — a flat annual price, **0% commission**, higher limits, custom branding, reminders, and auto invoices.
 - **Studio** — everything in Host+ plus unlimited services and bookings, advanced analytics, client CRM, and premium branding.
 
