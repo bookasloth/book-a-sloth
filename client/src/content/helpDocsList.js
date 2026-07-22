@@ -42,6 +42,7 @@ export const HELP_DOCS = [
   { slug: 'pricing-and-commission', category: 'General' },
   { slug: 'is-my-payment-and-data-safe', category: 'General' },
   { slug: 'whats-not-supported-yet', category: 'General' },
+  { slug: 'troubleshooting-and-errors', category: 'General' },
   { slug: 'contact-support', category: 'General' },
 ];
 

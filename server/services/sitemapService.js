@@ -52,7 +52,8 @@ const HELP_DOC_SLUGS = [
   'your-username-and-booking-link', 'branding-and-theme-colours', 'selling-digital-products',
   'reminders-notifications-and-badges', 'kyc-and-verification',
   'what-is-book-a-sloth', 'pricing-and-commission',
-  'is-my-payment-and-data-safe', 'whats-not-supported-yet', 'contact-support',
+  'is-my-payment-and-data-safe', 'whats-not-supported-yet',
+  'troubleshooting-and-errors', 'contact-support',
 ];
 
 // Open roles (/careers/:jobSlug). KEEP IN SYNC with
