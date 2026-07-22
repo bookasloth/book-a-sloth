@@ -12,6 +12,7 @@ const { safeError } = require('../utils/httpError');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_PATTERN = 200;
 const MAX_ANSWER = 4000;
+const MAX_CATEGORY = 60;
 
 // The injection tripwire and output guard log into knowledge_gaps too, but they are
 // NOT coverage gaps — excluding them keeps attack noise out of the gap-review queue
@@ -75,7 +76,7 @@ const updateGap = async (req, res) => {
 const listFaqs = async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
-      .from('bot_faqs').select('id, pattern, answer, enabled, created_at')
+      .from('bot_faqs').select('id, pattern, answer, category, enabled, created_at')
       .order('created_at', { ascending: false });
     if (error) return safeError(res, error);
     res.json({ faqs: data || [] });
@@ -84,23 +85,30 @@ const listFaqs = async (req, res) => {
   }
 };
 
-// POST /api/admin/bot/faqs  { pattern, answer }
-// Optional gapId: mark that gap resolved in the same step (promote flow).
+// POST /api/admin/bot/faqs  { pattern, answer, category? }
+// Optional gapId:   mark that gap resolved in the same step (promote-from-gap flow).
+// Optional cacheId: evict that semantic-cache row (promote-from-auto-saved flow) —
+//                   the entry "moves" out of Auto-saved into the Final FAQ list.
 const createFaq = async (req, res) => {
   try {
     const pattern = String(req.body?.pattern || '').trim();
     const answer = String(req.body?.answer || '').trim();
+    const category = String(req.body?.category || 'General').trim().slice(0, MAX_CATEGORY) || 'General';
     if (!pattern || !answer) return res.status(400).json({ message: 'pattern and answer are required.' });
     if (pattern.length > MAX_PATTERN) return res.status(400).json({ message: 'Pattern is too long.' });
     if (answer.length > MAX_ANSWER) return res.status(400).json({ message: 'Answer is too long.' });
 
     const { data, error } = await supabaseAdmin
-      .from('bot_faqs').insert({ pattern, answer }).select('id, pattern, answer, enabled, created_at').single();
+      .from('bot_faqs').insert({ pattern, answer, category }).select('id, pattern, answer, category, enabled, created_at').single();
     if (error) return safeError(res, error);
 
     const gapId = req.body?.gapId;
     if (gapId && UUID_RE.test(gapId)) {
       await supabaseAdmin.from('knowledge_gaps').update({ resolved: true }).eq('id', gapId);
+    }
+    const cacheId = req.body?.cacheId;
+    if (cacheId && UUID_RE.test(cacheId)) {
+      await supabaseAdmin.from('bot_semantic_cache').delete().eq('id', cacheId);
     }
     res.status(201).json(data);
   } catch (error) {
@@ -123,12 +131,15 @@ const updateFaq = async (req, res) => {
       if (!answer || answer.length > MAX_ANSWER) return res.status(400).json({ message: 'Invalid answer.' });
       patch.answer = answer;
     }
+    if (req.body?.category !== undefined) {
+      patch.category = String(req.body.category).trim().slice(0, MAX_CATEGORY) || 'General';
+    }
     if (req.body?.enabled !== undefined) patch.enabled = !!req.body.enabled;
     if (!Object.keys(patch).length) return res.status(400).json({ message: 'Nothing to update.' });
 
     const { data, error } = await supabaseAdmin
       .from('bot_faqs').update(patch).eq('id', req.params.id)
-      .select('id, pattern, answer, enabled, created_at').single();
+      .select('id, pattern, answer, category, enabled, created_at').single();
     if (error) return safeError(res, error);
     if (!data) return res.status(404).json({ message: 'FAQ not found.' });
     res.json(data);
