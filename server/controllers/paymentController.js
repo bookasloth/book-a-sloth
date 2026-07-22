@@ -140,11 +140,28 @@ const createOrder = async (req, res) => {
 
     const totalPaise = Math.round(customerTotal * 100);
     const razorpay = await razorpayConfig.getClient();
-    const order = await razorpay.orders.create({
-      amount: totalPaise, currency: "INR",
-      receipt: `bkg_${booking_id.slice(0, 20)}`,
-      notes: { booking_id, service: booking.services?.title, platform_fee: platformFee, gst },
-    });
+
+    // Idempotency: a rapid re-click (or a re-opened checkout) must not mint a
+    // second live order for the same booking. If we already have an open order
+    // for the same amount, reuse it instead of creating a new one.
+    let order = null;
+    if (booking.razorpay_order_id) {
+      try {
+        const existing = await razorpay.orders.fetch(booking.razorpay_order_id);
+        if (existing && existing.status === "created" && Number(existing.amount) === totalPaise) {
+          order = existing;
+        }
+      } catch (_) {
+        // Stale/unfetchable id — fall through and create a fresh order.
+      }
+    }
+    if (!order) {
+      order = await razorpay.orders.create({
+        amount: totalPaise, currency: "INR",
+        receipt: `bkg_${booking_id.slice(0, 20)}`,
+        notes: { booking_id, service: booking.services?.title, platform_fee: platformFee, gst },
+      });
+    }
 
     // Only update razorpay_order_id — the fee/GST snapshot is immutable
     await supabaseAdmin.from("bookings")
@@ -1277,11 +1294,19 @@ const handleWebhook = async (req, res) => {
       }
     } else if (event.event === 'payment.failed') {
       const notes = payment.notes || {};
-      if (notes.booking_id) {
+      // reschedule_fee notes ALSO carry booking_id — check kind first so a failed
+      // reschedule fee never flips the original (already-paid) booking to "failed".
+      if (notes.kind === 'reschedule_fee') {
+        securityLog('WEBHOOK_PAYMENT_FAILED', { reschedule_booking_id: notes.booking_id || null, payment_id: payment.id, error: payment.error_description });
+      } else if (notes.booking_id) {
         await supabaseAdmin.from("bookings")
           .update({ payment_status: "failed", updated_at: new Date().toISOString() })
           .eq("id", notes.booking_id).eq("payment_status", "unpaid");
         securityLog('WEBHOOK_PAYMENT_FAILED', { booking_id: notes.booking_id, error: payment.error_description });
+      } else if (notes.product_id) {
+        // Products materialize a row only on success, so there is nothing to
+        // mark failed — but log it so the failure isn't silently dropped.
+        securityLog('WEBHOOK_PAYMENT_FAILED', { product_id: notes.product_id, payment_id: payment.id, error: payment.error_description });
       }
     }
   } catch (err) {

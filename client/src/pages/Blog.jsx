@@ -4,7 +4,7 @@ import { themeFor } from '../data/blogPosts';
 import { getBlogs } from '../services/api';
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
-import { SITE_URL } from "../utils/seo";
+import { SITE_URL, collectionPageJsonLd, breadcrumbJsonLd } from "../utils/seo";
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 
 // /blog — index of posts. Content now lives in the `blogs` table and is served
@@ -148,6 +148,10 @@ const Blog = () => {
   const page = Math.min(Math.max(1, parseInt(searchParams.get('page'), 10) || 1), totalPages);
   const [featured, ...rest] = posts.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
+  const postItems = posts
+    .filter((p) => p && p.slug && p.title)
+    .map((p) => ({ name: p.title, url: `/blog/${p.slug}` }));
+
   return (
     <div className="app-container blog-page py-12 sm:py-16">
       <Seo
@@ -155,6 +159,15 @@ const Blog = () => {
         description="Guides on appointment scheduling, reducing no-shows, online payments, and growing your booking business. Practical tips from Book A Sloth."
         image={ogCard('blog-index')}
         canonical={page === 1 ? `${SITE_URL}/blog` : `${SITE_URL}/blog?page=${page}`}
+        jsonLd={[
+          collectionPageJsonLd({
+            name: 'Book A Sloth Blog — Booking & Business Growth Tips',
+            description: 'Guides on appointment scheduling, reducing no-shows, online payments, and growing your booking business. Practical tips from Book A Sloth.',
+            url: '/blog',
+            items: postItems,
+          }),
+          breadcrumbJsonLd({ items: [{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog' }] }),
+        ]}
       />
       <div className="mx-auto max-w-4xl">
         {/* Header */}

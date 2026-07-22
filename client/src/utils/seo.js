@@ -176,6 +176,30 @@ export const breadcrumbJsonLd = ({ items = [], siteUrl = SITE_URL } = {}) => {
   };
 };
 
+// CollectionPage for a public list/index page. `items` (optional [{ url, name }])
+// becomes an embedded ItemList so the crawler sees the page's members; omit it
+// and no mainEntity is emitted.
+export const collectionPageJsonLd = ({ name, description, url, siteUrl = SITE_URL, items = [] } = {}) => {
+  const site = trimSlash(siteUrl);
+  const abs = (p) => (/^https?:/i.test(p) ? p : `${site}${String(p || '').startsWith('/') ? '' : '/'}${p || ''}`);
+  const ld = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name,
+    description,
+    url: url ? abs(url) : `${site}/`,
+  };
+  if (Array.isArray(items) && items.length) {
+    ld.mainEntity = {
+      '@type': 'ItemList',
+      itemListElement: items
+        .filter((it) => it && it.url && it.name)
+        .map((it, i) => ({ '@type': 'ListItem', position: i + 1, url: abs(it.url), name: it.name })),
+    };
+  }
+  return ld;
+};
+
 // FAQPage from [{ q, a }]. `a` may contain plain text; strip to a safe string.
 export const faqJsonLd = ({ faqs = [] } = {}) => ({
   '@context': 'https://schema.org',

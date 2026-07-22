@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
-import { SITE_URL } from "../utils/seo";
+import { SITE_URL, collectionPageJsonLd, breadcrumbJsonLd } from "../utils/seo";
 
 // /changelog — public "What's New" timeline. Marketing-facing product updates,
 // newest first. Entries are curated release notes (backdated to launch window).
@@ -495,6 +495,14 @@ const Changelog = () => {
         description="Every feature, improvement, and fix shipped to Book A Sloth. Follow the latest updates to the appointment booking platform."
         image={ogCard('changelog')}
         canonical={`${SITE_URL}/changelog`}
+        jsonLd={[
+          collectionPageJsonLd({
+            name: "What's New — Book A Sloth Changelog",
+            description: 'Every feature, improvement, and fix shipped to Book A Sloth. Follow the latest updates to the appointment booking platform.',
+            url: '/changelog',
+          }),
+          breadcrumbJsonLd({ items: [{ name: 'Home', path: '/' }, { name: 'Changelog', path: '/changelog' }] }),
+        ]}
       />
       {/* Decorative animated mesh backdrop (fixed, full-bleed) */}
       <style>{`

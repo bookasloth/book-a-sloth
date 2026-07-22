@@ -12,6 +12,7 @@ import {
   Heart, MessageCircle, Repeat2, ThumbsUp, Share2, Send, Bookmark, Play, ArrowRight,
 } from 'lucide-react';
 import Seo from '../components/common/Seo';
+import { collectionPageJsonLd, breadcrumbJsonLd } from '../utils/seo';
 
 const BRAND = (name) => `/assets/brands/${name}.svg`;
 
@@ -232,6 +233,14 @@ export default function WallOfLove() {
       <Seo
         title="Wall of Love — Book A Sloth"
         description="Real words from hosts and guests who book, get booked, and get paid on Book A Sloth — across X, Google, LinkedIn, YouTube and Instagram."
+        jsonLd={[
+          collectionPageJsonLd({
+            name: 'Wall of Love — Book A Sloth',
+            description: 'Real words from hosts and guests who book, get booked, and get paid on Book A Sloth — across X, Google, LinkedIn, YouTube and Instagram.',
+            url: '/wall-of-love',
+          }),
+          breadcrumbJsonLd({ items: [{ name: 'Home', path: '/' }, { name: 'Wall of Love', path: '/wall-of-love' }] }),
+        ]}
       />
 
       {/* Hero */}

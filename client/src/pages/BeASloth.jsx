@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import WhatsNewLink from '../components/auth/WhatsNewLink';
+import Seo from '../components/common/Seo';
+import { SITE_URL } from '../utils/seo';
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -89,6 +91,11 @@ const BeASloth = () => {
 
   return (
     <div className="grid min-h-[calc(100vh-72px)] w-full lg:grid-cols-[1.05fr_1fr]">
+      <Seo
+        title="Become a Host on Book A Sloth — Sign Up Free"
+        description="Start taking bookings in minutes. Create your Book A Sloth host page, publish services, and get paid — sign up free with Google."
+        canonical={`${SITE_URL}/be-a-sloth`}
+      />
       {/* ── LEFT · colourful brand panel (lg+ only) ──────────────────────────── */}
       <aside className="relative hidden overflow-hidden border-r border-black/5 bg-[#FFF8EE] px-10 py-12 lg:flex lg:flex-col lg:justify-center xl:px-16">
         {/* decorative colour wash */}

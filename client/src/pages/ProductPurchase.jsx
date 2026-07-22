@@ -10,10 +10,13 @@ import {
   resendProductLink,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
-import { gaClientId } from "../services/analytics";
+import { analytics, EVENTS, gaClientId } from "../services/analytics";
+import useUtm from "../hooks/useUtm";
 import { isValidHex } from "../utils/themeUtils";
 import { useMinimalFooter } from "../context/ChromeContext";
 import loadRazorpay from "../utils/loadRazorpay";
+import Seo from "../components/common/Seo";
+import { SITE_URL } from "../utils/seo";
 import toast from "react-hot-toast";
 
 const TYPE_ICONS = {
@@ -55,6 +58,7 @@ const ProductPurchase = () => {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [order, setOrder] = useState(null); // Razorpay order, created at the OTP step (paid)
+  const utm = useUtm(); // first-touch ad attribution → carried into the paid conversion event
   const [otpSending, setOtpSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
@@ -186,14 +190,34 @@ const ProductPurchase = () => {
             setDownloadToken(data.download_token);
             setStep("done");
             toast.success("Payment successful!");
+            // Browser-side conversion for retargeting. Server CAPI/MP is the
+            // authoritative count; de-dupe on event_id = razorpay_payment_id.
+            analytics.track(EVENTS.PRODUCT_PURCHASED, {
+              product_id: product.id,
+              value: Number(total) || 0, currency: "INR",
+              event_id: response.razorpay_payment_id,
+              transaction_id: response.razorpay_payment_id, // GA4 purchase de-dupe key
+              ...utm,
+            });
           } catch {
             toast.error("Payment verification failed. Contact support.");
           }
         },
         prefill: { name, email, contact: phone },
         theme: { color: accent },
+        modal: {
+          ondismiss: () => {
+            setPaymentLoading(false);
+            toast("Payment cancelled — you can try again when ready.", { icon: "🫤" });
+          },
+        },
       };
-      new window.Razorpay(options).open();
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (resp) => {
+        setPaymentLoading(false);
+        toast.error(resp?.error?.description || "Payment failed — please try again.");
+      });
+      rzp.open();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to initiate payment");
     } finally {
@@ -274,6 +298,13 @@ const ProductPurchase = () => {
 
   return (
     <div className="min-h-screen bg-[#f7f5ef]">
+      <Seo
+        title={`${product.title} — ${host?.name || "Book A Sloth"}`}
+        description={(product.description || `Buy ${product.title} from ${host?.name || "this creator"} on Book A Sloth.`).slice(0, 160)}
+        canonical={`${SITE_URL}/${username}/product/${productId}`}
+        image={product.cover_image || host?.profile_image || undefined}
+        robots="noindex"
+      />
       <div className="app-container py-8 max-w-2xl">
         <Link
           to={`/${username}`}
