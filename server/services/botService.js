@@ -20,6 +20,8 @@ const { supabaseAdmin } = require('../config/supabase');
 const botBudget = require('../lib/botBudget');
 const abuseGuard = require('./bot/abuseGuard'); // pre-ladder abuse/roast gate (flag-gated)
 const pills = require('./bot/pills'); // context quick-reply pills (flag-gated)
+const { classify: classifyIntent } = require('./bot/intent'); // zero-cost pre-retrieval intent (flag-gated)
+const intentHandlers = require('./bot/intentHandlers'); // deterministic per-topic answers + cards
 
 // Pull a generous top-N so the authoritative chunk survives noisier docs; the
 // model still answers only from what's relevant and escalates when none cover it.
@@ -615,6 +617,42 @@ async function logGap({ question = null, reason, conversationId = null, messageI
   }
 }
 
+// ── Intent layer (flag-gated): a zero-cost regex classifier + deterministic per-topic
+// handlers that run AFTER the FAQ layer and BEFORE retrieval. Returns a fully-formed,
+// already-persisted response (short answer + action cards riding the pills channel) for
+// a confidently-classified topic, a single clarifying question for an ambiguous one, or
+// null to fall through to the unchanged retrieval → Claude → escalation path. Sensitive
+// money/account topics are excluded so SENSITIVE_RE escalation downstream still wins.
+// One definition, called identically by askBot + askBotStream (onDelta streams the line).
+// ponytail: no clarify loop guard — the clarify chips are phrased to each classify to a
+// single intent, so a tap always resolves to a handler and never re-clarifies. Add a
+// history-source check if free-text users report a loop.
+async function tryIntentLayer({ q, conversationId, sessionRef, onDelta }) {
+  if (!q || process.env.BOT_INTENT_ENABLED !== 'true' || SENSITIVE_RE.test(q)) return null;
+  const cls = classifyIntent(q);
+
+  if (cls.confidence === 'low' && cls.candidates.length > 1) {
+    const clar = intentHandlers.buildClarify(cls.candidates);
+    if (onDelta) onDelta(clar.answer);
+    const { conversationId: convId, messageId } = await persist({
+      conversationId, sessionRef, question: q, answer: clar.answer, cited_sources: [], escalate: false, source: 'clarify',
+    });
+    return { answer: clar.answer, cited_sources: [], followups: [], escalate: false, conversationId: convId, messageId, source: 'clarify', pills: pills.validate(clar.cards), locked: false };
+  }
+
+  if (cls.intent) {
+    const h = intentHandlers.handle(cls.intent);
+    if (h) {
+      if (onDelta) onDelta(h.answer);
+      const { conversationId: convId, messageId } = await persist({
+        conversationId, sessionRef, question: q, answer: h.answer, cited_sources: [], escalate: false, source: 'intent',
+      });
+      return { answer: h.answer, cited_sources: [], followups: [], escalate: false, conversationId: convId, messageId, source: 'intent', pills: pills.validate(h.cards), locked: false };
+    }
+  }
+  return null;
+}
+
 /**
  * askBot({ question, conversationId?, sessionRef? })  — non-streaming, structured.
  * Kept for POST /api/bot/ask (backward-compatible) and unit/integration tests.
@@ -652,6 +690,12 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     logGap({ question: q, reason: 'injection_attempt', conversationId }).catch(() => {});
   }
 
+  // Money-reversal / account-compromise ALWAYS goes to a human. Computed up here (not
+  // mid-ladder) so it wins over the pricing and FAQ layers, whose keyword matches can
+  // overlap a sensitive query — e.g. "fraudulent charge" contains "charge" (a pricing
+  // keyword), which used to short-circuit to a pricing answer and never escalate.
+  const sensitive = q && SENSITIVE_RE.test(q);
+
   const small = q && smalltalkReply(q);
   if (small) {
     const { conversationId: convId, messageId } = await persist({
@@ -660,7 +704,7 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     return { answer: small, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'smalltalk' };
   }
 
-  const price = q && pricingReply(q);
+  const price = q && !sensitive && pricingReply(q);
   if (price) {
     const { conversationId: convId, messageId } = await persist({
       conversationId, sessionRef, question: q, answer: price, cited_sources: [], escalate: false, source: 'pricing',
@@ -668,7 +712,7 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     return { answer: price, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'pricing' };
   }
 
-  const faq = q && await matchFaq(q);
+  const faq = q && !sensitive && await matchFaq(q);
   if (faq) {
     const { conversationId: convId, messageId } = await persist({
       conversationId, sessionRef, question: q, answer: faq, cited_sources: [], escalate: false, source: 'faq',
@@ -677,8 +721,10 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     return { answer: faq, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'faq', pills: fp, locked: false };
   }
 
+  const intentRes = await tryIntentLayer({ q, conversationId, sessionRef });
+  if (intentRes) return intentRes;
+
   const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
-  const sensitive = SENSITIVE_RE.test(q);
 
   // Embed the query once (Voyage) — reused by the semantic cache AND hybrid retrieval.
   const retrievalQuery = q ? buildRetrievalQuery(qSafe, history) : '';
@@ -799,6 +845,11 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     logGap({ question: q, reason: 'injection_attempt', conversationId }).catch(() => {});
   }
 
+  // Sensitive (money-reversal / account-compromise) always escalates — computed up here
+  // so it wins over the pricing/FAQ layers whose keywords overlap it (e.g. "fraudulent
+  // charge" contains the pricing keyword "charge"). See the structured pipeline above.
+  const sensitive = q && SENSITIVE_RE.test(q);
+
   const small = q && smalltalkReply(q);
   if (small) {
     onDelta(small);
@@ -808,7 +859,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     return { answer: small, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'smalltalk' };
   }
 
-  const price = q && pricingReply(q);
+  const price = q && !sensitive && pricingReply(q);
   if (price) {
     onDelta(price);
     const { conversationId: convId, messageId } = await persist({
@@ -817,7 +868,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     return { answer: price, cited_sources: [], followups: [], escalate: false, conversationId: convId, messageId, source: 'pricing', pills: [], locked: false };
   }
 
-  const faq = q && await matchFaq(q);
+  const faq = q && !sensitive && await matchFaq(q);
   if (faq) {
     onDelta(faq);
     const { conversationId: convId, messageId } = await persist({
@@ -827,8 +878,10 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     return { answer: faq, cited_sources: [], followups: [], escalate: false, conversationId: convId, messageId, source: 'faq', pills: fp, locked: false };
   }
 
+  const intentRes = await tryIntentLayer({ q, conversationId, sessionRef, onDelta });
+  if (intentRes) return intentRes;
+
   const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
-  const sensitive = SENSITIVE_RE.test(q);
 
   // Embed the query once (Voyage) — reused by the semantic cache AND hybrid retrieval.
   const retrievalQuery = q ? buildRetrievalQuery(qSafe, history) : '';
