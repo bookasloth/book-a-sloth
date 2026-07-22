@@ -20,6 +20,8 @@ const { supabaseAdmin } = require('../config/supabase');
 const botBudget = require('../lib/botBudget');
 const abuseGuard = require('./bot/abuseGuard'); // pre-ladder abuse/roast gate (flag-gated)
 const pills = require('./bot/pills'); // context quick-reply pills (flag-gated)
+const { classify: classifyIntent } = require('./bot/intent'); // zero-cost pre-retrieval intent (flag-gated)
+const intentHandlers = require('./bot/intentHandlers'); // deterministic per-topic answers + cards
 
 // Pull a generous top-N so the authoritative chunk survives noisier docs; the
 // model still answers only from what's relevant and escalates when none cover it.
@@ -615,6 +617,42 @@ async function logGap({ question = null, reason, conversationId = null, messageI
   }
 }
 
+// ── Intent layer (flag-gated): a zero-cost regex classifier + deterministic per-topic
+// handlers that run AFTER the FAQ layer and BEFORE retrieval. Returns a fully-formed,
+// already-persisted response (short answer + action cards riding the pills channel) for
+// a confidently-classified topic, a single clarifying question for an ambiguous one, or
+// null to fall through to the unchanged retrieval → Claude → escalation path. Sensitive
+// money/account topics are excluded so SENSITIVE_RE escalation downstream still wins.
+// One definition, called identically by askBot + askBotStream (onDelta streams the line).
+// ponytail: no clarify loop guard — the clarify chips are phrased to each classify to a
+// single intent, so a tap always resolves to a handler and never re-clarifies. Add a
+// history-source check if free-text users report a loop.
+async function tryIntentLayer({ q, conversationId, sessionRef, onDelta }) {
+  if (!q || process.env.BOT_INTENT_ENABLED !== 'true' || SENSITIVE_RE.test(q)) return null;
+  const cls = classifyIntent(q);
+
+  if (cls.confidence === 'low' && cls.candidates.length > 1) {
+    const clar = intentHandlers.buildClarify(cls.candidates);
+    if (onDelta) onDelta(clar.answer);
+    const { conversationId: convId, messageId } = await persist({
+      conversationId, sessionRef, question: q, answer: clar.answer, cited_sources: [], escalate: false, source: 'clarify',
+    });
+    return { answer: clar.answer, cited_sources: [], followups: [], escalate: false, conversationId: convId, messageId, source: 'clarify', pills: pills.validate(clar.cards), locked: false };
+  }
+
+  if (cls.intent) {
+    const h = intentHandlers.handle(cls.intent);
+    if (h) {
+      if (onDelta) onDelta(h.answer);
+      const { conversationId: convId, messageId } = await persist({
+        conversationId, sessionRef, question: q, answer: h.answer, cited_sources: [], escalate: false, source: 'intent',
+      });
+      return { answer: h.answer, cited_sources: [], followups: [], escalate: false, conversationId: convId, messageId, source: 'intent', pills: pills.validate(h.cards), locked: false };
+    }
+  }
+  return null;
+}
+
 /**
  * askBot({ question, conversationId?, sessionRef? })  — non-streaming, structured.
  * Kept for POST /api/bot/ask (backward-compatible) and unit/integration tests.
@@ -676,6 +714,9 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     const fp = await pills.buildPills({ question: q, source: 'faq', escalate: false, cited_sources: [], answer: faq });
     return { answer: faq, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'faq', pills: fp, locked: false };
   }
+
+  const intentRes = await tryIntentLayer({ q, conversationId, sessionRef });
+  if (intentRes) return intentRes;
 
   const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
   const sensitive = SENSITIVE_RE.test(q);
@@ -826,6 +867,9 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
     const fp = await pills.buildPills({ question: q, source: 'faq', escalate: false, cited_sources: [], answer: faq });
     return { answer: faq, cited_sources: [], followups: [], escalate: false, conversationId: convId, messageId, source: 'faq', pills: fp, locked: false };
   }
+
+  const intentRes = await tryIntentLayer({ q, conversationId, sessionRef, onDelta });
+  if (intentRes) return intentRes;
 
   const history = conversationId ? await getRecentMessages(conversationId, HISTORY_TURNS) : [];
   const sensitive = SENSITIVE_RE.test(q);
