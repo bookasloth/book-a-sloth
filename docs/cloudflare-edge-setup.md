@@ -9,9 +9,61 @@ second layer for app-specific abuse.
 you move DNS to Cloudflare. No application code changes; this is all dashboard/ops,
 plus **one env var** at the end (`CLIENT_IP_HEADER`).
 
+> **⚠️ The shared-IP failure in Step 9 is ALREADY ACTIVE (not future).** `CLIENT_IP_HEADER`
+> is unset, so `lib/clientIp.js` falls back to `req.ip`, which resolves to Render's
+> **internal `10.x` proxy IP** — shared across all traffic. A single auto-ban on that
+> IP locks out the entire API. Observed recurring on 2026-07-23. See the incident
+> section immediately below; the permanent fix is Step 9 (`CLIENT_IP_HEADER`).
+
 **Topology today:** apex `bookasloth.com` → Vercel (React client); the client calls
 same-origin `/api/*` which Vercel rewrites to the Render API
 (`book-a-sloth.onrender.com`). Cloudflare will sit in front of the public domain.
+
+---
+
+## ⚠️ Incident response — mass "Access denied." 403 lockout
+
+**Symptom:** every `/api/*` (except the exempt webhook / health / prerender / sitemap
+paths) returns `403 {"message":"Access denied."}`. Users see an empty blog, blank
+data, or can't log in. It hits everyone at once, admins included.
+
+**Root cause:** `server/middleware/ipGuard.js` is blocking the request's client IP.
+With `CLIENT_IP_HEADER` unset, `getClientIp` (`server/lib/clientIp.js`) returns
+Render's shared **internal `10.x`** proxy IP, and the attack-pattern matcher
+(`ipBlockConfig.attack` — a single suspicious request → 24h ban, no threshold)
+auto-bans that shared IP → the whole platform is locked out.
+
+**Confirm it's this:** `curl -s https://book-a-sloth.onrender.com/api/blogs` returns
+`{"message":"Access denied."}` (403). Then check the ban table (Supabase prod Mumbai
+`ayjhlwyzszykqtnaktpb`):
+```sql
+select ip, source, reason, created_at, expires_at from blocked_ips
+where expires_at is null or expires_at > now() order by created_at desc;
+```
+If the active rows are private ranges (`10.x`, `172.16–31.x`, `192.168.x`), it's this bug.
+
+**Immediate recovery** (site back within ~60s) — delete the bogus private-range bans:
+```sql
+delete from blocked_ips
+where ip << inet '10.0.0.0/8'
+   or ip << inet '172.16.0.0/12'
+   or ip << inet '192.168.0.0/16';
+```
+The in-app cache re-syncs from the DB every `IP_BLOCK_CACHE_REFRESH_MS` (default 60s).
+Verify recovery: `curl -s -o /dev/null -w "%{http_code}\n" https://book-a-sloth.onrender.com/api/blogs` → `200`.
+
+**Notes:**
+- The admin "Blocked IPs" UI can't fix this — the admin API is *also* behind `ipGuard`,
+  so admins are locked out too. Use the SQL above (service-role) or the kill-switch.
+- `seedBlogs.js` and other service-role scripts write straight to the DB and **succeed
+  even while the API is 403'd** — a green reseed does NOT mean the site is up. Check
+  `/api/blogs` separately.
+
+**Kill-switch** (neutralise the entire guard, no deploy): set `IP_BLOCK_ENABLED=false`
+on Render. Re-enable once `CLIENT_IP_HEADER` is fixed.
+
+**This recurs until Step 9 is done.** Each recurrence needs a manual unban. The
+permanent fix is to key the guard on the real client IP — see Step 9 below.
 
 ---
 
@@ -78,6 +130,11 @@ These complement the app's per-route limiters by stopping floods at the edge.
 ---
 
 ## Step 9 — CRITICAL: set the real client-IP header
+
+> **Do this NOW — do not wait for the Cloudflare migration.** The shared-IP lockout is
+> already happening (bans on Render's internal `10.x`), so this fix is needed today,
+> independent of Steps 1–8. Follow 9.1 against the *current* production path to find the
+> header, then set the env var (9.2). Redo 9.1 after the Cloudflare move if the header changes.
 
 Once traffic flows through Cloudflare → (Vercel rewrite) → Render, the address
 Express sees in `req.ip` is **no longer the real visitor**. The real client IP is
