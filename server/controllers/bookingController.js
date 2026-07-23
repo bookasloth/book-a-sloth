@@ -102,7 +102,7 @@ const splitWhen = (scheduledAt, tz = "Asia/Kolkata") => {
 };
 // Placeholder map shared by customer + vendor booking emails.
 const bookingEmailData = ({ serviceTitle, hostName, hostPhone, guestName, scheduledAt, tz, bookingId, online, actionLink, mapLink, hostLocation }) => {
-  const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
+  const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.com"}/dashboard`;
   // Online → Meet link (or dashboard). Offline → the host's map link (or dashboard).
   const link = online ? (actionLink || dashboard) : (mapLink || dashboard);
   return {
@@ -126,7 +126,7 @@ const bookingEmailData = ({ serviceTitle, hostName, hostPhone, guestName, schedu
     // confirmed-customer email CTA points here so anonymous guests (no login)
     // aren't stranded. Falls back to the dashboard if no booking id.
     manage_url: bookingId
-      ? `${process.env.CLIENT_URL || "https://bookasloth.in"}/manage-booking/${manageBookingToken.sign(bookingId)}`
+      ? `${process.env.CLIENT_URL || "https://bookasloth.com"}/manage-booking/${manageBookingToken.sign(bookingId)}`
       : dashboard,
     ...splitWhen(scheduledAt, tz),
   };
@@ -541,7 +541,7 @@ const createBooking = async (req, res) => {
         if (!(await featureFlags.isFeatureEnabled("confirmation_emails"))) return;
         // WhatsApp confirmation carries a 5th "link" var: Meet link when online,
         // the host's map link when offline (dashboard as a last resort).
-        const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
+        const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.com"}/dashboard`;
         const confirmLink = meetingLink || host.map_link || dashboard;
         const ctx = { guestName: guest_name, serviceTitle: service.title, hostName: host.name, when, actionLink: confirmLink };
         const emailData = bookingEmailData({
@@ -858,7 +858,7 @@ const markBookingCompleted = async (booking, { notify = true } = {}) => {
       });
       // The review CTA ({{review_url}}) opens the dedicated review page for THIS
       // booking. Keep profile_url too (still referenced elsewhere / as fallback).
-      const websiteBase = process.env.CLIENT_URL || "https://bookasloth.in";
+      const websiteBase = process.env.CLIENT_URL || "https://bookasloth.com";
       const completedCustomerData = {
         ...emailData,
         review_url: `${websiteBase}/review/${booking.id}`,
@@ -1439,7 +1439,7 @@ const sendBookingReminder = async (b, host, tz) => {
   // Mode of truth = service.meeting_mode (NOT meeting_link presence — the Meet
   // link may not be minted yet). Online → join link; offline → dashboard for now.
   const isOnline = (s?.meeting_mode || (b.meeting_link ? "online" : "offline")) === "online";
-  const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
+  const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.com"}/dashboard`;
   // WhatsApp reminder templates carry a 5th "join/directions" var: Meet link when
   // online, the host's map link when offline (falls back to the dashboard).
   const directions = host.map_link || "";

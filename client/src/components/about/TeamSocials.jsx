@@ -27,7 +27,7 @@ const ICONS = {
   },
 };
 
-const SLOTH = { label: "Book A Sloth", href: "https://bookasloth.in", icon: "/favicon-96x96.png" };
+const SLOTH = { label: "Book A Sloth", href: "https://bookasloth.com", icon: "/favicon-96x96.png" };
 
 /**
  * Social icon row — full brand colours, opens in a new tab. Each member picks

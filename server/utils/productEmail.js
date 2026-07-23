@@ -28,7 +28,7 @@ const esc = (s) =>
 // Build the deep link to the purchase page's download step. productId (not slug)
 // keeps the link stable regardless of slug routing/renames.
 const buildDownloadLink = (username, productId, token) => {
-  const base = (process.env.CLIENT_URL || 'https://bookasloth.in').replace(/\/+$/, '');
+  const base = (process.env.CLIENT_URL || 'https://bookasloth.com').replace(/\/+$/, '');
   return `${base}/${encodeURIComponent(username || '')}/product/${encodeURIComponent(productId)}?dl=${encodeURIComponent(token)}`;
 };
 
