@@ -321,6 +321,12 @@ async function prerender() {
       // that got captured during render — they'll reload on hydration anyway.
       await page.evaluate(() => {
         document.querySelectorAll('script[src*="posthog"], script[src*="clarity"], script[src*="google"]').forEach(el => el.remove());
+        // fontLoader.js injects the preloader greeting subsets as media="print"
+        // (non-blocking) and flips them to media="all" once loaded. By snapshot
+        // time they are "all", so serializing baked ~12 render-blocking Google
+        // Fonts stylesheets into every static page (~1.2s of blocked render).
+        // They re-inject on hydration, so dropping them here is lossless.
+        document.querySelectorAll('link[data-preloader-font]').forEach(el => el.remove());
       });
 
       const html = await page.content();
