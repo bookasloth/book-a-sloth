@@ -75,17 +75,17 @@ export default function Pricing() {
 
       {/* ── Plan cards ─────────────────────────────────────── */}
       <section className="px-5 sm:px-8">
-        <div className="mx-auto max-w-[1005px]">
+        <div className="mx-auto max-w-[1050px]">
           <PricingCards />
         </div>
-        <p className="mx-auto mt-6 max-w-[1005px] text-center text-xs text-neutral-400">
+        <p className="mx-auto mt-6 max-w-[1050px] text-center text-xs text-neutral-400">
           0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
         </p>
       </section>
 
       {/* ── Full feature comparison ────────────────────────── */}
       <section className="px-5 pb-20 pt-16 sm:px-8 lg:pt-24">
-        <div className="mx-auto max-w-[1005px]">
+        <div className="mx-auto max-w-[1050px]">
           <h2 className="text-center text-3xl font-extrabold text-ink sm:text-4xl">Compare every feature</h2>
           <p className="mx-auto mt-3 max-w-[600px] text-center text-neutral-500">
             Everything each plan includes — no fine print, no surprises.
