@@ -120,8 +120,10 @@ export default function ManageBooking() {
               {booking.payment_status === "paid" && (
                 <p className="mt-2 flex items-start gap-1.5 text-xs text-gray-500">
                   <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-                  Cancelling does not refund automatically — contact the host or{" "}
-                  <a href="mailto:bolt@bookasloth.in" className="underline">support</a>.
+                  <span>
+                    Cancellations are generally non-refundable — refunds apply only in limited cases (e.g. host no-show). See our{" "}
+                    <a href="/refund" target="_blank" rel="noreferrer" className="underline">Refund Policy</a>.
+                  </span>
                 </p>
               )}
               <p className="mt-3 text-center text-xs text-gray-400">

@@ -147,7 +147,7 @@ const CustomerBookings = () => {
   const handleCancel = async (id) => {
     const b = bookings.find((x) => x.id === id);
     const msg = b?.payment_status === "paid"
-      ? "Cancel this paid booking? Cancelling does not refund automatically — contact the host or support for a refund. This cannot be undone."
+      ? "Cancel this paid booking? Cancellations are generally non-refundable — refunds apply only in limited cases (see our Refund Policy at /refund). This cannot be undone."
       : "Cancel this booking? This cannot be undone.";
     if (!window.confirm(msg)) return;
     setCancelling(id);
