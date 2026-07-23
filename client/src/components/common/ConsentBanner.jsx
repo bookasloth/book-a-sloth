@@ -76,7 +76,7 @@ export default function ConsentBanner({ variant = "full" }) {
           href="/privacy"
           className="rounded-[4px] border-2 border-current bg-[whitesmoke] px-3.5 py-2 text-sm text-[#2196f3] no-underline transition-all duration-300 hover:bg-[#2196f3]/15"
         >
-          Learn More
+          Privacy Policy
         </a>
       </div>
     </div>

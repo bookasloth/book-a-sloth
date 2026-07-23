@@ -377,7 +377,7 @@ const Navbar = () => {
           </Link>
 
           {/* Center nav (desktop only) */}
-          <div className="hidden md:flex items-stretch flex-1 justify-center" role="list">
+          <div className="hidden md:flex items-stretch flex-1 justify-center">
             {!user ? <PublicCenterNav /> : navItems.map((item) => {
               const active = isActive(item);
               const Icon   = item.icon;
@@ -385,7 +385,6 @@ const Navbar = () => {
                 <NavLink
                   key={item.href}
                   to={item.href}
-                  role="listitem"
                   aria-current={active ? 'page' : undefined}
                   aria-label={item.badge && badges[item.badge] > 0
                     ? `${item.label}, ${badges[item.badge]} unread`

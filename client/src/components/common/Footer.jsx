@@ -134,7 +134,7 @@ export default function Footer({ variant = 'full' }) {
             <span className="text-white/25">·</span>
             <span>
               Made with Speed and Calm by{' '}
-              <a href={BOLT_URL} target="_blank" rel="noopener noreferrer" className="text-white/60 underline-offset-2 transition-colors hover:text-white">Bolt the Sloth</a>
+              <a href={BOLT_URL} target="_blank" rel="noopener noreferrer" className="text-white/60 underline underline-offset-2 transition-colors hover:text-white">Bolt the Sloth</a>
             </span>
             <span className="text-white/25">·</span>
             {/* Company ownership visible site-wide — part of the Google OAuth

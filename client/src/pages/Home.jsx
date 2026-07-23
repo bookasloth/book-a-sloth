@@ -158,7 +158,7 @@ export const Odometer = ({ value, className }) => {
   const chars = String(value).split("");
   let di = 0; // running index of digit columns, for the cascade stagger
   return (
-    <div ref={ref} className={className} aria-label={String(value)}>
+    <div ref={ref} className={className} role="img" aria-label={String(value)}>
       <span className="inline-flex items-center tabular-nums" aria-hidden="true">
         {chars.map((c, i) => {
           if (/\d/.test(c)) {
