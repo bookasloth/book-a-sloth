@@ -21,6 +21,7 @@ const { verifySignature } = require("../utils/razorpaySignature");
 const { finalizeBookingCapture } = require("../services/bookingCapture");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { trackServer } = require("../utils/trackServer");
+const manageBookingToken = require("../utils/manageBookingToken");
 const { runInBackground } = require("../utils/background");
 const otpStore = require("../utils/otpStore");
 const { sendProductDownloadEmail } = require("../utils/productEmail");
@@ -391,6 +392,8 @@ const verifyPayment = async (req, res) => {
         vendor_phone: host.phone || "",
         user_name: fullBooking.guest_name || "Customer",
         booking_id: fullBooking.id,
+        // Session-less manage/cancel link for THIS booking (#516) — the email CTA.
+        manage_url: `${process.env.CLIENT_URL || "https://bookasloth.in"}/manage-booking/${manageBookingToken.sign(fullBooking.id)}`,
         // Online → dashboard has the Meet link. Offline → show the host's city text
         // and (below) a Get-directions CTA to the map link when one is set.
         location: isOnline

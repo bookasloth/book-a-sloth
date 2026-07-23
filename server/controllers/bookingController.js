@@ -122,6 +122,12 @@ const bookingEmailData = ({ serviceTitle, hostName, hostPhone, guestName, schedu
     action_label: online
       ? (actionLink ? "Join meeting" : "View booking")
       : (mapLink ? "Get directions" : "View booking"),
+    // Public, session-less manage/cancel link for THIS booking (#516). The
+    // confirmed-customer email CTA points here so anonymous guests (no login)
+    // aren't stranded. Falls back to the dashboard if no booking id.
+    manage_url: bookingId
+      ? `${process.env.CLIENT_URL || "https://bookasloth.in"}/manage-booking/${manageBookingToken.sign(bookingId)}`
+      : dashboard,
     ...splitWhen(scheduledAt, tz),
   };
 };
