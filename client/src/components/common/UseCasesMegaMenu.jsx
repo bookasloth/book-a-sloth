@@ -125,7 +125,7 @@ const UseCasesMegaMenu = () => {
           size={16}
           className={open ? 'text-[#FE5100]' : 'text-gray-400 group-hover:text-[#FE5100]/80'}
         />
-        Use Cases
+        Explore
         <ChevronDown
           size={13}
           strokeWidth={2.5}
@@ -144,7 +144,7 @@ const UseCasesMegaMenu = () => {
               : 'opacity-0 -translate-y-2 pointer-events-none',
           ].join(' ')}
           role="menu"
-          aria-label="Use Cases"
+          aria-label="Explore"
         >
           <div className="w-full max-w-[860px] bg-white rounded-2xl border border-gray-200 shadow-[0_16px_48px_rgba(0,0,0,0.12)] overflow-hidden">
             <div className="p-5">
