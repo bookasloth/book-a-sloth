@@ -4,7 +4,6 @@ import ChromeContext from './context/ChromeContext';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
-import BotWidget from './components/common/BotWidget';
 import DashboardLayout from './components/common/DashboardLayout';
 import AdminLayout from './components/common/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -24,6 +23,10 @@ import lazyWithRetry from './utils/lazyWithRetry';
 // on a stale-chunk-after-deploy 404, does a one-shot full reload to pull the
 // fresh build — instead of throwing an unrecoverable white screen.
 const lazy = lazyWithRetry;
+
+// Floating chat bubble — not first-paint content. Lazy so its ~585 lines + the
+// Markdown renderer stay off the initial bundle on every page.
+const BotWidget = lazy(() => import('./components/common/BotWidget'));
 
 // ── Route-level lazy loading ──────────────────────────────────────────────────
 // Layout / guard components stay eager (always needed, small).
@@ -580,7 +583,7 @@ function App() {
         ? !chromeHidden && <Footer variant="minimal" />
         : !hideFooter && <Footer variant={isBookingPage ? 'minimal' : 'full'} />}
       </RouteErrorBoundary>
-      {!hideBot && <BotWidget />}
+      {!hideBot && <Suspense fallback={null}><BotWidget /></Suspense>}
     </ChromeContext.Provider>
   );
 }
