@@ -12,6 +12,7 @@ jest.mock('../../config/supabase', () => {
       delete:   jest.fn().mockReturnThis(),
       eq:       jest.fn().mockReturnThis(),
       neq:      jest.fn().mockReturnThis(),
+      is:       jest.fn().mockResolvedValue({ error: null }),
       single:   jest.fn().mockResolvedValue({ data: null, error: null }),
       maybeSingle: jest.fn().mockResolvedValue({ data: null }),
     };

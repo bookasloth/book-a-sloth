@@ -186,6 +186,22 @@ describe('verifyOtpLogin', () => {
     expect(mintSessionForEmail).toHaveBeenCalledWith(GUEST.email);
   });
 
+  test('back-fills orphaned anonymous bookings for the verified phone', async () => {
+    otpStore.verify.mockResolvedValue({ valid: true });
+    const bookingsChain = chain({ data: null });
+    queueFrom(
+      chain({ data: GUEST }), // profiles lookup by phone → existing guest
+      bookingsChain,          // backfillGuestBookings → bookings update
+    );
+    mintSessionForEmail.mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' });
+    const r = res();
+    await verifyOtpLogin(req({ phone: '+919876543210', otp: '123456' }), r);
+    // Assign this guest to prior anonymous rows — scoped to the phone AND guest_id IS NULL.
+    expect(bookingsChain.update).toHaveBeenCalledWith(expect.objectContaining({ guest_id: GUEST.id }));
+    expect(bookingsChain.eq).toHaveBeenCalledWith('guest_phone', '+919876543210');
+    expect(bookingsChain.is).toHaveBeenCalledWith('guest_id', null);
+  });
+
   test('new phone: creates account, mints session', async () => {
     otpStore.verify.mockResolvedValue({ valid: true });
     const newProfile = { ...GUEST, id: 'new-uuid', password_set: false };
