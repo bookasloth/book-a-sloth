@@ -15,6 +15,7 @@ const platformConfig = require("../services/platformConfig");
 const availabilityService = require("../services/availabilityService");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
+const { trackServer } = require("../utils/trackServer");
 const { runInBackground } = require("../utils/background");
 const { hostOf } = require("../utils/hostOf");
 const profileSecrets = require("../utils/profileSecrets");
@@ -575,7 +576,10 @@ const createBooking = async (req, res) => {
       });
     }
 
-    phCapture(resolveGuestId({ guestId: resolvedGuestId, guestEmail: guest_email }), "booking_created", {
+    // booking_created is a CONVERSION (GA4 begin_checkout / Meta InitiateCheckout).
+    // trackServer forwards to PostHog unchanged AND fans out to GA4 MP + Meta CAPI
+    // with the amount + match keys; eventId=booking.id de-dupes vs the browser pixel.
+    trackServer(resolveGuestId({ guestId: resolvedGuestId, guestEmail: guest_email }), "booking_created", {
       booking_id: booking.id,
       service_id,
       service_title: service.title,
@@ -583,6 +587,11 @@ const createBooking = async (req, res) => {
       price: service.price,
       is_paid: service.price > 0,
       payment_status: booking.payment_status,
+    }, {
+      value: service.price,
+      currency: "INR",
+      email: guest_email,
+      eventId: booking.id,
     });
   } catch (error) {
     safeError(res, error);
