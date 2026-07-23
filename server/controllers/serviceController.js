@@ -16,6 +16,7 @@ const { resolveAndValidateCategory } = require('../lib/serviceCategory');
 const SERVICE_DETAIL_CACHE_MS = Number(process.env.SERVICE_DETAIL_CACHE_MS) || 120_000;
 const { canActivateMore, canAddFreeService } = require('../middleware/planMiddleware');
 const { getPublicAppearanceData } = require('./appearanceController');
+const { capture: phCapture } = require('../utils/posthog');
 
 // Clamp service money/time fields to safe bounds (audit P1-11). parseFloat/parseInt
 // alone let a negative price through (parseFloat('-500') === -500), which breaks
@@ -242,6 +243,10 @@ const createService = async (req, res) => {
     if (error) return safeError(res, error);
     bustSitemapCache(); // new service may now be indexable
     bustPublicReadCaches();
+    // Activation: a host published a live service. Services are created active
+    // (is_active=true), so this IS a publish. PostHog's first-occurrence-per-user
+    // gives the activation funnel; PostHog-only (not an ad conversion).
+    phCapture(req.user.id, "service_published", { service_id: data?.id, price: Number(p.price ?? 0), category: p.category });
     res.status(201).json(data);
   } catch (err) {
     safeError(res, err);

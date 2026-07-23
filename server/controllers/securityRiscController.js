@@ -1,10 +1,11 @@
 /**
  * securityRiscController.js — Google Cross-Account Protection (RISC) receiver.
  *
- * ⚠️ DRAFT / NOT WIRED INTO PROD. The route is scaffolded but intentionally left
- *    un-mounted in server.js (see the commented block there). Enable only after
- *    the manual Google Cloud steps below are done and the token→host mapping
- *    decisions (flagged in the PR summary) are resolved.
+ * MOUNTED IN PROD (#512): server.js mounts this receiver at /api/security. The
+ *    SET (a Google-signed JWT) is the auth — there is no protect/requireHost.
+ *    Complete the manual Google Cloud steps below and set RISC_AUDIENCE in prod
+ *    so the receiver enforces the token audience (see verifySet / the startup
+ *    warning by the RISC_AUDIENCE constant).
  *
  * WHAT THIS IS
  *   Google RISC (Risk & Incident Sharing and Coordination) lets Google push us a
@@ -46,6 +47,12 @@ const RISC_ISSUER = 'https://accounts.google.com';
 // receiver rejects any token not addressed to us. Set in server/.env once the
 // stream is registered (manual step 3 above).
 const RISC_AUDIENCE = process.env.RISC_AUDIENCE || null;
+// SECURITY: with no audience configured, verifySet skips the audience check, so a
+// valid Google-signed SET minted for a DIFFERENT receiver could be replayed to
+// force-logout a host whose google_id/email matches. Warn loudly in prod.
+if (process.env.NODE_ENV === 'production' && !RISC_AUDIENCE) {
+  console.warn('[security] RISC_AUDIENCE not set — the RISC receiver does NOT enforce the SET audience. Set RISC_AUDIENCE in production to close a SET-replay vector.');
+}
 
 // RISC event types we act on (SET `events` claim keys are full URIs).
 const ACTIONABLE_EVENTS = new Set([

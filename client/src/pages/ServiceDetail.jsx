@@ -2,7 +2,7 @@
  * ServiceDetail — public service page at /:username/:slug
  * Sections: Hero · Tabs (Overview, Deliverables, Host, FAQ, How it Works, Reviews) · Sticky sidebar
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { svcGetPublicByProfile, getAvailableSlots } from '../services/api';
@@ -134,8 +134,10 @@ const OverviewTab = ({ html }) => {
   const [fullH, setFullH] = useState(0);
 
   // Measure full content height so max-height can animate to a real px value
-  // (CSS can't transition to `auto`). Re-measure on content + viewport changes.
-  useEffect(() => {
+  // (CSS can't transition to `auto`). useLayoutEffect so the collapse is applied
+  // BEFORE paint — a plain useEffect measures after paint and snaps the height,
+  // which is a visible CLS jump on this prerendered ad-landing page.
+  useLayoutEffect(() => {
     const measure = () => {
       if (!ref.current) return;
       const h = ref.current.scrollHeight;
@@ -464,7 +466,8 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown =
 
   const imgWrapRef = useRef(null);
   const [imgH, setImgH] = useState(0);
-  useEffect(() => {
+  // useLayoutEffect: reserve the image height before paint to avoid a CLS jump.
+  useLayoutEffect(() => {
     if (imgWrapRef.current) setImgH(imgWrapRef.current.scrollHeight);
   }, [service.thumbnail_url]);
 
@@ -595,7 +598,7 @@ const AdSpaceCard = () => (
     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">Sponsored</p>
     <h3 className="mt-2 text-sm font-bold text-gray-900">Ad space available</h3>
     <p className="mt-1 text-xs leading-relaxed text-gray-500">Reach buyers actively booking services.</p>
-    <a href="mailto:bookasloth@gmail.com?subject=Ad%20space%20enquiry"
+    <a href="mailto:bolt@bookasloth.in?subject=Ad%20space%20enquiry"
       className="mt-3 inline-flex items-center gap-1 text-sm font-semibold no-underline hover:underline"
       style={{ color: 'var(--profile-accent, #FE5100)' }}>
       Advertise here →

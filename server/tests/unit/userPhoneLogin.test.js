@@ -186,6 +186,22 @@ describe('verifyOtpLogin', () => {
     expect(mintSessionForEmail).toHaveBeenCalledWith(GUEST.email);
   });
 
+  test('back-fills orphaned anonymous bookings for the verified phone', async () => {
+    otpStore.verify.mockResolvedValue({ valid: true });
+    const bookingsChain = chain({ data: null });
+    queueFrom(
+      chain({ data: GUEST }), // profiles lookup by phone → existing guest
+      bookingsChain,          // backfillGuestBookings → bookings update
+    );
+    mintSessionForEmail.mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' });
+    const r = res();
+    await verifyOtpLogin(req({ phone: '+919876543210', otp: '123456' }), r);
+    // Assign this guest to prior anonymous rows — scoped to the phone AND guest_id IS NULL.
+    expect(bookingsChain.update).toHaveBeenCalledWith(expect.objectContaining({ guest_id: GUEST.id }));
+    expect(bookingsChain.eq).toHaveBeenCalledWith('guest_phone', '+919876543210');
+    expect(bookingsChain.is).toHaveBeenCalledWith('guest_id', null);
+  });
+
   test('new phone: creates account, mints session', async () => {
     otpStore.verify.mockResolvedValue({ valid: true });
     const newProfile = { ...GUEST, id: 'new-uuid', password_set: false };
@@ -336,15 +352,22 @@ describe('setPassword', () => {
     supabaseAdmin.auth.admin.updateUserById.mockResolvedValue({ data: { user: { id: GUEST.id } }, error: null });
     queueFrom(chain({ data: { id: GUEST.id }, error: null })); // profiles update
     const r = res();
-    await setPassword(req({ password: 'secret12' }, { id: GUEST.id }), r);
-    expect(supabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(GUEST.id, { password: 'secret12' });
+    await setPassword(req({ password: 'Secret12' }, { id: GUEST.id }), r);
+    expect(supabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(GUEST.id, { password: 'Secret12' });
     expect(r.json.mock.calls[0][0].ok).toBe(true);
+  });
+
+  test('400 when password lacks an uppercase letter or a number', async () => {
+    const r = res();
+    await setPassword(req({ password: 'alllower1' }, { id: GUEST.id }), r); // number but no uppercase
+    expect(r.status).toHaveBeenCalledWith(400);
+    expect(supabaseAdmin.auth.admin.updateUserById).not.toHaveBeenCalled();
   });
 
   test('400 when Supabase rejects the password update', async () => {
     supabaseAdmin.auth.admin.updateUserById.mockResolvedValue({ data: null, error: { message: 'weak' } });
     const r = res();
-    await setPassword(req({ password: 'secret12' }, { id: GUEST.id }), r);
+    await setPassword(req({ password: 'Secret12' }, { id: GUEST.id }), r);
     expect(r.status).toHaveBeenCalledWith(400);
   });
 });

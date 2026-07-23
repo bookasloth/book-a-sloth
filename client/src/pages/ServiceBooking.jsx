@@ -621,12 +621,14 @@ const ServiceBooking = () => {
 
   // Task 7: Razorpay handler
   const handlePayment = async () => {
+    if (paymentLoading) return;      // ignore double-clicks — one Razorpay modal at a time
+    setPaymentLoading(true);         // disable the button BEFORE the async gateway load
     const loaded = await loadRazorpay();
     if (!loaded) {
       toast.error("Payment gateway failed to load");
+      setPaymentLoading(false);
       return;
     }
-    setPaymentLoading(true);
     analytics.track(EVENTS.CHECKOUT_STARTED, {
       booking_id: confirmation.id, service_id: service.id, host_id: host.id,
       value: Number(confirmation?.customer_total) || 0, currency: "INR",
@@ -1264,7 +1266,7 @@ const ServiceBooking = () => {
               {/* Full-width Continue */}
               <button
                 onClick={handleSendOtp}
-                disabled={otpSending || !firstName || !email || (!user && !isPhoneValid)}
+                disabled={otpSending || verifying || !firstName || !email || (!user && !isPhoneValid)}
                 className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
                 style={{ background: tc, color: textOnTheme }}
               >

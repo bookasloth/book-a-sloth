@@ -49,6 +49,7 @@ const NotificationEngine = require("../services/notificationEngine");
 const { runInBackground } = require("../utils/background");
 const usernameService = require("../services/usernameService");
 const featureFlags = require("../services/featureFlags");
+const { trackServer } = require("../utils/trackServer");
 const { isReserved } = require("../utils/reservedUsernames");
 const { normalizeSlug } = require("../utils/slugNormalize");
 
@@ -531,6 +532,11 @@ const googleCallback = async (req, res) => {
 
         // Invite-link attribution — new host ONLY, write-once, never a referrals row.
         await maybeStampInvite(profileId, statePayload);
+
+        // Acquisition conversion: brand-new host account created. Server-side so
+        // the signup survives ad-blockers; fans out to GA4 (sign_up) + Meta
+        // (CompleteRegistration). Fire-and-forget — never blocks the redirect.
+        trackServer(profileId, "user_registered", { method: "google", role: "host" }, { email: googleEmail });
       }
 
       await attachGoogleToProfile(profileId, tokens, googleUser);
@@ -836,6 +842,26 @@ const findOrCreateProfileByPhone = async (normalizedPhone) => {
   return profile;
 };
 
+// Reunite a now-authenticated guest with the bookings they made anonymously on
+// this phone. Anonymous OTP bookings are stored guest_id=NULL (the booker has no
+// session at booking time), so they never surface in /user/my-bookings and can't
+// be cancelled/rescheduled. This assigns those orphans to the resolved guest.
+// Additive + idempotent (only rewrites NULL rows for THIS verified phone) and
+// never throws — a login must not fail because a back-fill did.
+const backfillGuestBookings = async (guestId, normalizedPhone) => {
+  if (!guestId || !normalizedPhone) return;
+  try {
+    const { error } = await supabaseAdmin
+      .from("bookings")
+      .update({ guest_id: guestId, updated_at: new Date().toISOString() })
+      .eq("guest_phone", normalizedPhone)
+      .is("guest_id", null);
+    if (error) console.error("backfillGuestBookings (non-fatal):", error.message);
+  } catch (e) {
+    console.error("backfillGuestBookings threw (non-fatal):", e.message);
+  }
+};
+
 // POST /api/auth/login-phone — end-user login with phone + password
 const loginWithPhone = async (req, res) => {
   try {
@@ -909,6 +935,9 @@ const verifyOtpLogin = async (req, res) => {
     if (!unifiedLogin && (profile.is_host || profile.role === "superadmin"))
       return res.status(409).json({ message: "This number is registered as a host. Please use host login." });
 
+    // Reunite the guest with any anonymous bookings made on this verified number.
+    await backfillGuestBookings(profile.id, normalized);
+
     const session = await mintSessionForEmail(profile.email);
     res.json(await serializeProfile(profile, session));
   } catch (error) {
@@ -921,8 +950,18 @@ const verifyOtpLogin = async (req, res) => {
 const setPassword = async (req, res) => {
   try {
     const { password } = req.body;
-    if (!password || password.length < 8)
-      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    // Match the registration/reset password policy (8–128 chars, upper + number)
+    // — this path previously accepted any 8-char string, unlike registerRules.
+    if (
+      !password ||
+      password.length < 8 ||
+      password.length > 128 ||
+      !/[A-Z]/.test(password) ||
+      !/[0-9]/.test(password)
+    )
+      return res.status(400).json({
+        message: "Password must be 8–128 characters and include an uppercase letter and a number",
+      });
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(req.user.id, { password });
     if (error) {
@@ -1319,4 +1358,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   maybeStampInvite,
+  backfillGuestBookings,
 };

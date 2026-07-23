@@ -393,6 +393,15 @@ export default function AdminExplore() {
     <div className="space-y-6">
       <PageHeader title="Explore Page" subtitle="Manage paid placements and revenue features on the public Explore page." />
 
+      {/* Not-live warning. The public reads for these placements are stubs today —
+          exploreController getFeatured/getCollections/getSponsored return []. So
+          Featured Slots, Sponsored Keywords and Collections created here do NOT
+          render on the public site yet. Remove this banner when those reads ship. */}
+      <div className="rounded-xl border-2 border-amber-400 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+        ⚠️ Featured Slots, Sponsored Keywords and Collections don’t render on the public Explore page yet
+        (their public endpoints return empty). Don’t sell these placements until the public reads are wired.
+      </div>
+
       {/* Tab nav */}
       <div className="flex flex-wrap gap-2 border-b-2 adm-border pb-0">
         {TABS.map(t => {
