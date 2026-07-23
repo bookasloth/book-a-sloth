@@ -27,6 +27,11 @@ export function ensureGreetingFonts() {
     link.rel = 'stylesheet';
     link.href = href;
     link.dataset.preloaderFont = family;
+    // ponytail: media="print" makes the fetch non-render-blocking (Lighthouse
+    // flagged these as blocking FCP/LCP); flip to "all" on load so the glyphs
+    // still apply. display=swap already shows a fallback until it lands.
+    link.media = 'print';
+    link.onload = () => { link.media = 'all'; };
     document.head.appendChild(link);
   });
 }
