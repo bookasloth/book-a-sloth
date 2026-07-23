@@ -17,10 +17,15 @@ dilutes equity across too many links and reads as a link farm, which Google disc
 ## Non-goals (YAGNI)
 
 - No admin UI for tags/clusters.
-- No per-post manual `related` override.
+- No per-*post* manual `related` override (cluster-level `priorityLinks` covers curation).
 - No live `/api/blogs` fetch in the post page (static data only).
 - No auto all-to-all linker.
 - No DB migration, no API change, no `blogs`-table column.
+- **No build-time precomputed related index.** The selector is pure over ~40 static posts;
+  per-render cost is trivial and a generated artifact only adds a staleness surface. If the
+  post count ever makes this measurable, the upgrade path is a module-level memo inside
+  `relatedPosts.js` (compute once on first call) — not a build step. The orphan test runs the
+  pure selector directly, so it needs no precomputed index.
 
 ## Key distinction: cluster ≠ display category
 
@@ -55,11 +60,19 @@ Adding a cluster later = one row in `BLOG_CLUSTERS` + tagging the relevant posts
   ```js
   export const BLOG_CLUSTERS = [
     { key: 'commission', keyword: '0% commission', pillar: 'zero-commission-bet',
-      tags: ['0% commission', 'pricing', 'earnings'] },
+      tags: ['0% commission', 'pricing', 'earnings'],
+      priority: 100,                       // optional; higher wins when clusters tie
+      description: 'Why 0% commission…',   // optional; maintenance/authoring note only
+      priorityLinks: ['the-first-host-who-paid'] }, // optional; curated siblings floated first
     // …7 more (one per cluster above)
   ];
   ```
-  Each cluster's `tags` are the keywords that pull posts into it; `pillar` is its hub slug.
+  - `tags` — keywords that pull posts into the cluster; `pillar` — its hub slug.
+  - `priority` (optional, default 0) — favors this cluster when several match a post with
+    equal tag overlap (see selector step 3). Lets important clusters win ties deterministically.
+  - `description` (optional) — human note for authors; no runtime effect.
+  - `priorityLinks` (optional, default `[]`) — curated sibling slugs that float to the top of
+    the sibling ranking for posts in this cluster, for cases where pure tag-overlap isn't ideal.
 
 ## Selector — `client/src/lib/relatedPosts.js` (pure, testable)
 
@@ -67,12 +80,14 @@ Adding a cluster later = one row in `BLOG_CLUSTERS` + tagging the relevant posts
 
 1. Resolve the current post + its `tags`.
 2. Candidate clusters = clusters whose `tags` intersect the post's `tags`.
-3. **Primary cluster** = the candidate with the most tag overlap; tiebreak = order in `BLOG_CLUSTERS`.
+3. **Primary cluster** = the candidate with the most tag overlap; tiebreak = `priority` desc,
+   then order in `BLOG_CLUSTERS`.
 4. **Pillar** = primary cluster's `pillar` → slot 1. If the current post *is* that pillar,
    skip it (no self-link) and fill all 3 slots with spokes.
-5. **Siblings** = all other posts sharing ≥1 tag with the current post, ranked by shared-tag
-   count desc, tiebreak newest (`published_at`/date desc). Fill remaining slots, excluding
-   the current post and the already-chosen pillar. Dedup by slug.
+5. **Siblings** = all other posts sharing ≥1 tag with the current post. Ranking: the primary
+   cluster's `priorityLinks` (that are eligible siblings) come first, in listed order; then the
+   rest by shared-tag count desc, tiebreak newest (`published_at`/date desc). Fill remaining
+   slots, excluding the current post and the already-chosen pillar. Dedup by slug.
 6. **Fallbacks** (block is never empty, never self-links, never >3):
    - No/unknown tags or no candidate cluster → 3 newest posts of the same `category`.
    - Cluster smaller than 3 → top up from same-category, then newest overall.
@@ -126,6 +141,12 @@ dotenv_config_path=.env.staging` then `…=.env.production` (idempotent upsert b
 - `client/src/components/blog/__tests__/RelatedPosts.test.jsx` — renders ≤3 cards with correct
   `href`s. **LANDMINE:** client vitest has no jest-dom (node22 ESM) — assert with
   `.getAttribute('href')`, not `toHaveAttribute`.
+- **Orphan guard** in `relatedPosts.test.js` — build the incoming-link map by running
+  `selectRelated` over every published slug, then assert **no published post has zero incoming
+  links** (every post is reachable via the Related block of at least one other post). This
+  catches a post that was tagged such that nothing ever links to it. Scope: the structural
+  Related-block graph only (not in-body prose anchors, which would need markdown parsing).
+  Fails loudly with the orphan slug(s) named, so fixing = add a tag or a `priorityLinks` entry.
 
 ## Gates / rollout
 
