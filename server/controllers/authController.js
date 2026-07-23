@@ -49,6 +49,7 @@ const NotificationEngine = require("../services/notificationEngine");
 const { runInBackground } = require("../utils/background");
 const usernameService = require("../services/usernameService");
 const featureFlags = require("../services/featureFlags");
+const { trackServer } = require("../utils/trackServer");
 const { isReserved } = require("../utils/reservedUsernames");
 const { normalizeSlug } = require("../utils/slugNormalize");
 
@@ -531,6 +532,11 @@ const googleCallback = async (req, res) => {
 
         // Invite-link attribution — new host ONLY, write-once, never a referrals row.
         await maybeStampInvite(profileId, statePayload);
+
+        // Acquisition conversion: brand-new host account created. Server-side so
+        // the signup survives ad-blockers; fans out to GA4 (sign_up) + Meta
+        // (CompleteRegistration). Fire-and-forget — never blocks the redirect.
+        trackServer(profileId, "user_registered", { method: "google", role: "host" }, { email: googleEmail });
       }
 
       await attachGoogleToProfile(profileId, tokens, googleUser);

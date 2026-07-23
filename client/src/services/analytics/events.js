@@ -32,7 +32,13 @@ export const EVENTS = Object.freeze({
   // ── Host / account ──
   SIGNUP_STARTED:     'signup_started',      // vendor opened onboarding
   ONBOARDING_STEP:    'onboarding_step_completed',
+  ONBOARDING_COMPLETED:'onboarding_completed', // server-emitted (markComplete)
+  SERVICE_PUBLISHED:  'service_published',    // server-emitted — activation (first live service)
   PLAN_VIEWED:        'plan_viewed',         // pricing/plans seen
+
+  // ── Churn / drop-off (server-emitted, PostHog-only) ──
+  PAYMENT_FAILED:        'payment_failed',        // booking/product payment failed at the gateway
+  SUBSCRIPTION_CANCELLED:'subscription_cancelled', // host churn (webhook or user-initiated)
 
   // ── Conversions (ALSO fired server-side → GA4 MP + Meta CAPI). Listed here so
   //    client retargeting pixels can fire the browser-side counterpart. ──

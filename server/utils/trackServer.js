@@ -33,7 +33,7 @@ const CONVERSIONS = {
   subscription_purchased:{ ga4: 'purchase',       meta: 'Subscribe' },
   subscription_renewed:  { ga4: 'purchase',       meta: 'Subscribe' },
   booking_created:       { ga4: 'begin_checkout', meta: 'InitiateCheckout' },
-  // user_registered: add the event emit first, then a row here (not fired yet).
+  user_registered:       { ga4: 'sign_up',        meta: 'CompleteRegistration' },
 };
 
 const sha256 = (v) =>

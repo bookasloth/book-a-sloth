@@ -8,6 +8,7 @@ const { isReserved } = require("../utils/reservedUsernames");
 const { isBlocked } = require("../utils/adultContentFilter");
 const usernameService = require("../services/usernameService");
 const planService = require("../services/planService");
+const { capture: phCapture } = require("../utils/posthog");
 
 // ─── Slug validation & generation ───────────────────────────────────────
 const isValidSlug = (slug) => {
@@ -435,6 +436,9 @@ const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
     .single();
 
   if (error) throw error;
+  // Onboarding funnel: each completed step. First-occurrence-per-step in PostHog
+  // gives the drop-off/abandonment funnel. PostHog-only (not an ad conversion).
+  phCapture(vendorId, "onboarding_step_completed", { step: stepNumber });
   return profile;
 };
 
@@ -513,6 +517,9 @@ const markComplete = async (vendorId) => {
     .select()
     .single();
   if (error) throw error;
+  // Activation milestone: onboarding finished (sole writer of onboarding_completed).
+  // PostHog-only — the acquisition conversion already fired at user_registered.
+  phCapture(vendorId, "onboarding_completed", { plan });
   return data;
 };
 
