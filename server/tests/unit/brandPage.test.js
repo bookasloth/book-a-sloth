@@ -1,4 +1,4 @@
-const { brandPage, wantsBrandedHtml } = require('../../utils/brandPage');
+const { brandPage, statusPage, wantsBrandedHtml } = require('../../utils/brandPage');
 
 // Fake req: `accepts(['json','html'])` returns the best match for the given
 // Accept header, mirroring Express. Browsers → 'html'; curl `*/*` → 'json'.
@@ -43,5 +43,22 @@ describe('brandPage', () => {
     const html = brandPage({ heading: 'x', body: '<script>alert(1)</script>' });
     expect(html).not.toContain('<script>alert(1)</script>');
     expect(html).toContain('&lt;script&gt;');
+  });
+});
+
+describe('statusPage', () => {
+  it('shows all-operational + Ready when the DB is reachable', () => {
+    const html = statusPage({ db: true, uptimeSec: 3661 });
+    expect(html).toContain('All systems operational');
+    expect(html).toContain('Ready');
+    expect(html).toContain('1h 1m'); // uptime formatted
+    expect(html).toContain('dot ok');
+  });
+
+  it('shows partial-outage + Unreachable when the DB check fails', () => {
+    const html = statusPage({ db: false, uptimeSec: 0 });
+    expect(html).toContain('Partial outage');
+    expect(html).toContain('Unreachable');
+    expect(html).toContain('dot bad');
   });
 });
