@@ -1,6 +1,19 @@
 # Current Work — Book A Sloth
 _Last updated: 2026-07-23_
 
+## Bolt abuse-gate hardening (#490) — MERGED 2026-07-23 (kept after review)
+
+> **Status: MERGED to main (`de0a70e`). server 1693/1693. Merged outside the authoring session (GitHub UI / another session). Reviewed post-merge — deliberately KEPT, not reverted.**
+
+Implemented the four abuse-gate follow-ups that #488 deferred. The whole gate is **live in prod** (`BOT_ROAST_ENABLED` is set in the Render dashboard — NOT in any repo `.env`, so it's invisible to a repo grep; confirmed by a curl probe returning a roast, not a KB answer).
+
+- **Per-IP strikes (`lib/botStrikes.js`).** Strike count now keys on the resolved client IP instead of the client-supplied `conversationId` (which an abuser rotated/omitted to reset strikes to 0 every message). Durable + cross-instance via the shared rate-limit store when `RATE_LIMIT_STORE_URL` is set; in-memory fallback otherwise. No-IP requests fall back to the legacy per-conversation count. **Live now** (roast flag on).
+- **Durable → APP-WIDE IP ban.** Bot threats now ban via the DB-backed, admin-visible `ipBlocklist` (`recordAttack`) instead of an in-memory `Map` that died on restart and was invisible to the admin Blocked-IPs UI. **Deleted `lib/botIpBlock.js`.** ⚠️ **Behaviour change / reverses #488's bot-scoped block:** a threat (danger tier only — violence/self-harm, NOT rudeness) now bans the IP **site-wide**, TTL-bounded, allowlist-safe. **Only activates if `BOT_THREAT_IPBLOCK_ENABLED` AND the IP-block master switch are set in Render** — state there unverified, so this may be dormant.
+- **Threat cool-off.** Threats now weigh 2 toward the strike lock, so a threat-only spammer trips cool-off, not just the ban (previously threats returned before the strike check).
+- **Budget fail-closed.** The abuse Haiku judge now denies on a budget-store error (skips the roast) instead of failing open and letting a flood keep spending; user-facing summary/generate paths keep the default fail-open.
+- **Config.** `.env.example`: `BOT_STRIKE_MAX` + `BOT_STRIKE_WINDOW_SECONDS`; dropped now-unused `BOT_THREAT_BLOCK_SECONDS` (block TTL comes from the IP-block config).
+- **Review outcome:** the audit had parked these as low-severity/latent (the gate is largely cosmetic roasts; spend is already bounded by `botBudget`). The one real behaviour change is the app-wide ban. After weighing it, the decision was to **leave #490 merged as-is** rather than revert. If the app-wide ban later proves undesirable, revert just that piece (restore a bot-scoped block) while keeping the three safe fixes.
+
 ## Bolt support bot — 4-area gap audit + fixes (#488) — MERGED 2026-07-23
 
 > **Status: MERGED to main (`ec17cc0`). server 1696/1696, client build green (114 routes). Both DBs reseeded (kb_chunks: prod 70 chunks/70 embeddings, staging 70 FTS-only — no VOYAGE key on staging).**
