@@ -117,7 +117,9 @@ const TEMPLATES = [
       lead('Your appointment is confirmed. Here are the details:') +
       C.heroDate(t, { day: '{{booking_day}}', mon: '{{booking_month}}', year: '{{booking_year}}', title: '{{service_name}}', time: '{{booking_time}}', sub: 'with {{vendor_name}}' }) +
       C.statusTags([{ label: 'Confirmed', tone: 'confirmed' }]),
-    cta_label: 'View booking', cta_url: '{{dashboard_url}}',
+    // CTA → the public manage/cancel page (works without a login, unlike the
+    // dashboard) so anonymous OTP guests can self-serve (#516).
+    cta_label: 'View or manage booking', cta_url: '{{manage_url}}',
   }; })(),
 
   (() => { const t = themeForCategory('New Booking'); return {

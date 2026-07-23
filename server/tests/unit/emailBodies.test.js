@@ -25,6 +25,7 @@ const data = {
   feedback_subject: 'Dark mode please', status_label: 'Reviewing', admin_response: 'On our roadmap.',
   login_time: 'now', ip_address: '1.1.1.1', device_name: 'Chrome on Mac', location: 'Online',
   action_label: 'Join meeting', action_link: 'https://bookasloth.in/x',
+  manage_url: 'https://bookasloth.in/manage-booking/tok',
 };
 
 // Mirror of communicationEngine.renderEmail (kept DB-free for unit testing).
