@@ -12,7 +12,7 @@ export const RESERVED_FIRST_SEGMENTS = [
   'help', 'about', 'careers', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore', 'changelog', 'blog', 'blogs', 'pricing', 'services', 'features',
   'contact', 'get-in-touch', 'enterprise',
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
-  'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'lp', 'for', 'invite',
+  'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'manage-booking', 'lp', 'for', 'invite',
   // /og/blog/:slug — render target for the OG card generator (see pages/OgCard.jsx).
   'og',
   'my-bookings', 'profile', 'reviews', 'loyalty', 'sitemap', 'robots', 'health',

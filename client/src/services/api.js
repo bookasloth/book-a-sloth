@@ -319,6 +319,9 @@ export const createBooking     = (data)            => API.post('/bookings', data
 export const getHostBookings   = ()                => API.get('/bookings/host');
 export const getGuestBookings  = ()                => API.get('/bookings/guest');
 export const cancelBooking     = (id)              => API.put(`/bookings/${id}/cancel`);
+// Public token-authed guest self-service (no session) — /manage-booking/:token (#516)
+export const getManageBooking    = (token)         => API.get(`/manage-booking/${token}`);
+export const cancelManageBooking = (token)         => API.post(`/manage-booking/${token}/cancel`);
 export const completeBooking   = (id)              => API.put(`/bookings/${id}/complete`);
 export const markNoShow        = (id)              => API.put(`/bookings/${id}/no-show`);
 export const rescheduleBooking = (id, data)        => API.put(`/bookings/${id}/reschedule`, data);
