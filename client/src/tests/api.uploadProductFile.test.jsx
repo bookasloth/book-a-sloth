@@ -18,7 +18,7 @@ vi.mock('axios', () => ({
 }));
 
 // supabaseClient is imported by api.js for the refresh flow; stub it.
-vi.mock('../services/supabaseClient', () => ({ default: { auth: { refreshSession: vi.fn() } } }));
+vi.mock('../services/supabaseClient', () => ({ getSupabase: () => Promise.resolve({ auth: { refreshSession: vi.fn() } }) }));
 
 import { uploadProductFile } from '../services/api';
 

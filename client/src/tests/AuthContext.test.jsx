@@ -17,14 +17,14 @@ vi.mock('../services/api', () => ({
 
 // Mock Supabase client
 vi.mock('../services/supabaseClient', () => ({
-  default: {
+  getSupabase: () => Promise.resolve({
     auth: {
       onAuthStateChange: vi.fn(() => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       })),
       signOut: vi.fn().mockResolvedValue({ error: null }),
     },
-  },
+  }),
 }));
 
 import { loginUser, registerVendor, registerUser, getMe } from '../services/api';
