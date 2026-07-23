@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getHostProfile, getHostReviews, getHostProducts, getVendorBadges } from "../services/api";
 import { analytics, EVENTS } from "../services/analytics";
@@ -367,7 +367,10 @@ const HostProfile = () => {
   }, []);
 
   // Measure collapsed-bar + full-card heights so the max-height curtain is smooth.
-  useEffect(() => {
+  // useLayoutEffect (not useEffect) so the measured heights are committed BEFORE the
+  // browser paints — otherwise the guessed `maxHeight` fallbacks (200 / 2000) paint
+  // first and then jump to the real value, which registers as layout shift (CLS).
+  useLayoutEffect(() => {
     if (!host) return;
     const measure = () => {
       if (barRef.current)      setBarH(barRef.current.scrollHeight);
@@ -450,7 +453,7 @@ const HostProfile = () => {
               <div className="flex-shrink-0 overflow-hidden"
                 style={{ width: 48, height: 48, borderRadius: 10, background: C.card }}>
                 {host.profile_image
-                  ? <img src={host.profile_image} alt={host.name} className="w-full h-full object-cover" />
+                  ? <img src={host.profile_image} alt={host.name} width={48} height={48} decoding="async" className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center text-lg font-bold"
                       style={{ background: `${tc}18`, color: tc }}>
                       {host.name?.charAt(0)?.toUpperCase()}
@@ -508,7 +511,7 @@ const HostProfile = () => {
                   flexShrink: 0,
                 }}>
                   {host.profile_image
-                    ? <img src={host.profile_image} alt={host.name} className="w-full h-full object-cover" />
+                    ? <img src={host.profile_image} alt={host.name} width={100} height={100} fetchpriority="high" decoding="async" className="w-full h-full object-cover" />
                     : <div className="w-full h-full flex items-center justify-center text-3xl font-bold"
                         style={{ background: `${tc}18`, color: tc }}>
                         {host.name?.charAt(0)?.toUpperCase()}
