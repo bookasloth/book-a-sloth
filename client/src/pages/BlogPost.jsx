@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { themeFor, AUTHOR_URL } from '../data/blogPosts';
-import { getBlogBySlug, getBlogs } from '../services/api';
+import { getBlogBySlug } from '../services/api';
 import Seo from '../components/common/Seo';
 import { SITE_URL, articleJsonLd, breadcrumbJsonLd, faqJsonLd } from '../utils/seo';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
+import RelatedPosts from '../components/blog/RelatedPosts';
 
 // /blog/:slug — immersive post page. A split hero (left = category colour +
 // text, right = image, hidden on mobile) over a dark reading body, finished
@@ -234,7 +235,6 @@ const AuthorLink = ({ name, className, style }) => (
 const BlogPost = () => {
   const { slug } = useParams();
   const [post, setPost] = useState(null);
-  const [more, setMore] = useState([]);
   const [status, setStatus] = useState('loading'); // loading | ready | notfound
 
   useEffect(() => {
@@ -244,9 +244,6 @@ const BlogPost = () => {
     getBlogBySlug(slug)
       .then((res) => { if (alive) { setPost(res.data.post); setStatus('ready'); } })
       .catch(() => { if (alive) setStatus('notfound'); });
-    getBlogs()
-      .then((res) => { if (alive) setMore((res.data.posts || []).filter((p) => p.slug !== slug).slice(0, 2)); })
-      .catch(() => {});
     return () => { alive = false; };
   }, [slug]);
 
@@ -354,25 +351,8 @@ const BlogPost = () => {
             <ShareRow title={post.title} />
           </div>
 
-          {/* Keep reading */}
-          {more.length > 0 && (
-            <div className="mt-14">
-              <h2 className="text-lg font-bold tracking-tight" style={{ color: HEAD_TX }}>Keep reading</h2>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                {more.map((p) => {
-                  const pt = themeFor(p.category);
-                  return (
-                    <Link key={p.slug} to={`/blog/${p.slug}`}
-                      className="group rounded-xl border p-4 transition-colors hover:no-underline"
-                      style={{ borderColor: 'rgba(255,255,255,0.10)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: pt.accent }}>{p.category}</span>
-                      <h3 className="mt-1 font-heading text-base font-bold tracking-tight" style={{ color: HEAD_TX }}>{p.title}</h3>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* Related reading — cluster-aware internal links (static, prerendered) */}
+          <RelatedPosts slug={post.slug} />
         </div>
       </div>
 
