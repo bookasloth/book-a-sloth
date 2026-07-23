@@ -206,7 +206,33 @@ app.get('/robots.txt', (req, res) =>
   res.type('text/plain').send('User-agent: *\nDisallow: /\n')
 );
 
-app.get('/', (req, res) => res.json({ message: 'Book A Sloth API v1.4 running' }));
+// Browser-facing pages carry the brand; API/JSON clients keep the machine payload.
+const { brandPage, wantsBrandedHtml } = require('./utils/brandPage');
+
+app.get('/', (req, res) => {
+  if (wantsBrandedHtml(req)) {
+    return res.type('html').send(brandPage({
+      title: 'API',
+      heading: 'You found the engine room',
+      body: 'This is the Book A Sloth API — nothing to book here. The actual site, where you get set up and paid at 0% commission, is one tap away.',
+    }));
+  }
+  res.json({ message: 'Book A Sloth API v1.4 running' });
+});
+
+// 404 — branded page for browsers, JSON for API/clients. Must come after every
+// route mount and before the error handler.
+app.use((req, res) => {
+  if (wantsBrandedHtml(req)) {
+    return res.status(404).type('html').send(brandPage({
+      code: 404,
+      title: 'Not found',
+      heading: 'This page took a nap',
+      body: 'We could not find what you were looking for. Head back to Book A Sloth to book a session or manage your account.',
+    }));
+  }
+  res.status(404).json({ message: 'Not found' });
+});
 
 app.use(require('./middleware/errorMiddleware'));
 
