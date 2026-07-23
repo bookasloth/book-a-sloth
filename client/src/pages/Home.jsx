@@ -1498,6 +1498,14 @@ const Home = () => {
               Loops forward forever (tripled list, animation-off seamless reset). */}
           <div
             ref={tWrapRef}
+            role="region"
+            aria-roledescription="carousel"
+            aria-label="What our customers say — use the arrow keys to browse"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight") { e.preventDefault(); setActiveT((a) => a + 1); }
+              else if (e.key === "ArrowLeft") { e.preventDefault(); setActiveT((a) => a - 1); }
+            }}
             onMouseEnter={() => { tPausedRef.current = true; }}
             onMouseLeave={() => { tPausedRef.current = false; }}
             onPointerDown={(e) => {
@@ -1532,7 +1540,7 @@ const Home = () => {
               setDragDX(0);
               tPausedRef.current = false;
             }}
-            className="relative z-10 cursor-grab touch-pan-y select-none overflow-hidden py-12 active:cursor-grabbing"
+            className="relative z-10 cursor-grab touch-pan-y select-none overflow-hidden rounded-[6px] py-12 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:cursor-grabbing"
           >
             <div
               className={`flex ${tAnim && !dragging ? "transition-transform duration-700 ease-out motion-reduce:transition-none" : ""}`}
@@ -1564,7 +1572,7 @@ const Home = () => {
                         <TAvatar src={t.avatar} name={t.name} />
                         <div>
                           <div className="text-sm font-semibold text-ink">{t.name}</div>
-                          <div className="text-xs text-neutral-400">{t.role}</div>
+                          <div className="text-xs text-neutral-500">{t.role}</div>
                         </div>
                       </figcaption>
                     </figure>
@@ -1818,15 +1826,17 @@ const Home = () => {
                 <div className="rounded-[6px] border border-black/5 bg-white px-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
                   <button
                     type="button"
+                    id={`faq-q-${i}`}
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
                     aria-expanded={openFaq === i}
+                    aria-controls={`faq-a-${i}`}
                     className="flex w-full cursor-pointer items-center justify-between gap-4 py-5 text-left font-heading text-base font-bold text-ink"
                   >
                     {f.q}
                     <Plus size={18} className={`flex-shrink-0 text-primary transition-transform duration-300 ${openFaq === i ? 'rotate-45' : ''}`} />
                   </button>
                   {openFaq === i && (
-                    <p className="-mt-1 pb-5 text-sm leading-relaxed text-neutral-500">{f.a}</p>
+                    <p id={`faq-a-${i}`} role="region" aria-labelledby={`faq-q-${i}`} className="-mt-1 pb-5 text-sm leading-relaxed text-neutral-500">{f.a}</p>
                   )}
                 </div>
               </Reveal>
