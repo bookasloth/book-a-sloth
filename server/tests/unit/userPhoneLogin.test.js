@@ -336,15 +336,22 @@ describe('setPassword', () => {
     supabaseAdmin.auth.admin.updateUserById.mockResolvedValue({ data: { user: { id: GUEST.id } }, error: null });
     queueFrom(chain({ data: { id: GUEST.id }, error: null })); // profiles update
     const r = res();
-    await setPassword(req({ password: 'secret12' }, { id: GUEST.id }), r);
-    expect(supabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(GUEST.id, { password: 'secret12' });
+    await setPassword(req({ password: 'Secret12' }, { id: GUEST.id }), r);
+    expect(supabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(GUEST.id, { password: 'Secret12' });
     expect(r.json.mock.calls[0][0].ok).toBe(true);
+  });
+
+  test('400 when password lacks an uppercase letter or a number', async () => {
+    const r = res();
+    await setPassword(req({ password: 'alllower1' }, { id: GUEST.id }), r); // number but no uppercase
+    expect(r.status).toHaveBeenCalledWith(400);
+    expect(supabaseAdmin.auth.admin.updateUserById).not.toHaveBeenCalled();
   });
 
   test('400 when Supabase rejects the password update', async () => {
     supabaseAdmin.auth.admin.updateUserById.mockResolvedValue({ data: null, error: { message: 'weak' } });
     const r = res();
-    await setPassword(req({ password: 'secret12' }, { id: GUEST.id }), r);
+    await setPassword(req({ password: 'Secret12' }, { id: GUEST.id }), r);
     expect(r.status).toHaveBeenCalledWith(400);
   });
 });

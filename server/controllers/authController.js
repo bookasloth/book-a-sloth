@@ -921,8 +921,18 @@ const verifyOtpLogin = async (req, res) => {
 const setPassword = async (req, res) => {
   try {
     const { password } = req.body;
-    if (!password || password.length < 8)
-      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    // Match the registration/reset password policy (8–128 chars, upper + number)
+    // — this path previously accepted any 8-char string, unlike registerRules.
+    if (
+      !password ||
+      password.length < 8 ||
+      password.length > 128 ||
+      !/[A-Z]/.test(password) ||
+      !/[0-9]/.test(password)
+    )
+      return res.status(400).json({
+        message: "Password must be 8–128 characters and include an uppercase letter and a number",
+      });
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(req.user.id, { password });
     if (error) {
