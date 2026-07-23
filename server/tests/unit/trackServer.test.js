@@ -31,7 +31,7 @@ describe('trackServer → PostHog forwarding', () => {
 describe('CONVERSIONS map', () => {
   test('covers every money/acquisition event with ga4 + meta names', () => {
     for (const key of ['booking_paid', 'product_purchased', 'subscription_purchased',
-                       'subscription_renewed', 'booking_created']) {
+                       'subscription_renewed', 'booking_created', 'user_registered']) {
       expect(CONVERSIONS[key]).toEqual({ ga4: expect.any(String), meta: expect.any(String) });
     }
   });

@@ -855,6 +855,8 @@ const cancelVendorSubscription = async (req, res) => {
       .update({ subscription_status: "cancelled", updated_at: new Date().toISOString() })
       .eq("id", req.user.id);
     auditLog('SUBSCRIPTION_CANCELLED', req.user.id, { subscription_id: prof.razorpay_subscription_id });
+    // Churn: host cancelled their own subscription. PostHog-only.
+    phCapture(req.user.id, "subscription_cancelled", { subscription_id: prof.razorpay_subscription_id, source: "user" });
     res.json({ message: "Subscription cancelled. You keep access until the end of the current period." });
   } catch (error) {
     safeError(res, error);
@@ -1189,6 +1191,11 @@ const handleWebhook = async (req, res) => {
         } else if (event.event === 'subscription.cancelled') {
           await subscriptionService.markCancelled(rzpSub);
           auditLog('WEBHOOK_SUBSCRIPTION_CANCELLED', null, { subscription_id: rzpSub.id });
+          // Churn: subscription cancelled at Razorpay. Key on vendor_id carried in
+          // the subscription notes (set at creation). PostHog-only.
+          if (rzpSub.notes?.vendor_id) {
+            phCapture(rzpSub.notes.vendor_id, "subscription_cancelled", { subscription_id: rzpSub.id, source: "razorpay_webhook" });
+          }
         }
       }
     } catch (err) {
@@ -1299,14 +1306,22 @@ const handleWebhook = async (req, res) => {
       if (notes.kind === 'reschedule_fee') {
         securityLog('WEBHOOK_PAYMENT_FAILED', { reschedule_booking_id: notes.booking_id || null, payment_id: payment.id, error: payment.error_description });
       } else if (notes.booking_id) {
-        await supabaseAdmin.from("bookings")
+        const { data: failedRow } = await supabaseAdmin.from("bookings")
           .update({ payment_status: "failed", updated_at: new Date().toISOString() })
-          .eq("id", notes.booking_id).eq("payment_status", "unpaid");
+          .eq("id", notes.booking_id).eq("payment_status", "unpaid")
+          .select("guest_id, guest_email").maybeSingle();
         securityLog('WEBHOOK_PAYMENT_FAILED', { booking_id: notes.booking_id, error: payment.error_description });
+        // Drop-off signal: a booking payment failed. PostHog-only (not a conversion).
+        if (failedRow) {
+          phCapture(resolveGuestId({ guestId: failedRow.guest_id, guestEmail: failedRow.guest_email }),
+            "payment_failed", { kind: "booking", booking_id: notes.booking_id, reason: payment.error_description || null });
+        }
       } else if (notes.product_id) {
         // Products materialize a row only on success, so there is nothing to
         // mark failed — but log it so the failure isn't silently dropped.
         securityLog('WEBHOOK_PAYMENT_FAILED', { product_id: notes.product_id, payment_id: payment.id, error: payment.error_description });
+        phCapture(resolveGuestId({ guestEmail: notes.buyer_email }),
+          "payment_failed", { kind: "product", product_id: notes.product_id, reason: payment.error_description || null });
       }
     }
   } catch (err) {
