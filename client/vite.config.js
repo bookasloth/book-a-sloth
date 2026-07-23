@@ -59,6 +59,10 @@ export default defineConfig(({ command, mode }) => {
           'vendor-supabase': ['@supabase/supabase-js'],
           // HTTP client
           'vendor-axios': ['axios'],
+          // Animation libs (framer-motion is heavy) — isolate into their own
+          // cacheable chunk instead of bloating the main app bundle the landing
+          // page pulls. gsap is already dynamically imported (its own chunk).
+          'vendor-motion': ['framer-motion', 'lenis'],
         },
       },
     },
