@@ -12,7 +12,7 @@ const { renderLayout } = require('../../services/email/emailLayout');
 
 const settings = {
   brand_color: '#FE5100', from_name: 'Book A Sloth', logo_url: 'https://cdn.test/x.png',
-  website_url: 'https://bookasloth.in', support_email: 's@x.test',
+  website_url: 'https://bookasloth.com', support_email: 's@x.test',
 };
 
 const data = {
@@ -24,8 +24,8 @@ const data = {
   milestone_value: '10', completion_percentage: '80', verification_status: 'approved',
   feedback_subject: 'Dark mode please', status_label: 'Reviewing', admin_response: 'On our roadmap.',
   login_time: 'now', ip_address: '1.1.1.1', device_name: 'Chrome on Mac', location: 'Online',
-  action_label: 'Join meeting', action_link: 'https://bookasloth.in/x',
-  manage_url: 'https://bookasloth.in/manage-booking/tok',
+  action_label: 'Join meeting', action_link: 'https://bookasloth.com/x',
+  manage_url: 'https://bookasloth.com/manage-booking/tok',
 };
 
 // Mirror of communicationEngine.renderEmail (kept DB-free for unit testing).

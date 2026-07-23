@@ -58,7 +58,7 @@ const scheduleFollowups = async ({ sourceType, sourceId, hostId, entity, complet
 
 const PROCESS_BATCH = 200;
 const MAX_ATTEMPTS = 3;
-const CLIENT_URL = process.env.CLIENT_URL || 'https://bookasloth.in';
+const CLIENT_URL = process.env.CLIENT_URL || 'https://bookasloth.com';
 
 const setStatus = (id, vals) =>
   supabaseAdmin.from('scheduled_followups')

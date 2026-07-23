@@ -393,7 +393,7 @@ const verifyPayment = async (req, res) => {
         user_name: fullBooking.guest_name || "Customer",
         booking_id: fullBooking.id,
         // Session-less manage/cancel link for THIS booking (#516) — the email CTA.
-        manage_url: `${process.env.CLIENT_URL || "https://bookasloth.in"}/manage-booking/${manageBookingToken.sign(fullBooking.id)}`,
+        manage_url: `${process.env.CLIENT_URL || "https://bookasloth.com"}/manage-booking/${manageBookingToken.sign(fullBooking.id)}`,
         // Online → dashboard has the Meet link. Offline → show the host's city text
         // and (below) a Get-directions CTA to the map link when one is set.
         location: isOnline
@@ -410,7 +410,7 @@ const verifyPayment = async (req, res) => {
       };
       // WhatsApp confirmation carries a 5th "link" var: Meet link when online,
       // the host's map link when offline (dashboard as a last resort).
-      const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.in"}/dashboard`;
+      const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.com"}/dashboard`;
       const confirmLink = fullBooking.meeting_link || (isOnline ? "" : host.map_link) || dashboard;
       const ctx = {
         customer: [fullBooking.guest_name || "Customer", svc?.title || "Service", host.name || "Host", when, confirmLink],

@@ -26,7 +26,7 @@ const htmlEscape = (s) =>
 
 /** Build the global placeholder context from email settings + a user object. */
 function buildGlobals(settings = {}, user = {}) {
-  const websiteUrl = settings.website_url || 'https://bookasloth.in';
+  const websiteUrl = settings.website_url || 'https://bookasloth.com';
   const name = user.name || user.user_name || '';
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
   return {
