@@ -2,7 +2,7 @@
  * ServiceDetail — public service page at /:username/:slug
  * Sections: Hero · Tabs (Overview, Deliverables, Host, FAQ, How it Works, Reviews) · Sticky sidebar
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { svcGetPublicByProfile, getAvailableSlots } from '../services/api';
@@ -134,8 +134,10 @@ const OverviewTab = ({ html }) => {
   const [fullH, setFullH] = useState(0);
 
   // Measure full content height so max-height can animate to a real px value
-  // (CSS can't transition to `auto`). Re-measure on content + viewport changes.
-  useEffect(() => {
+  // (CSS can't transition to `auto`). useLayoutEffect so the collapse is applied
+  // BEFORE paint — a plain useEffect measures after paint and snaps the height,
+  // which is a visible CLS jump on this prerendered ad-landing page.
+  useLayoutEffect(() => {
     const measure = () => {
       if (!ref.current) return;
       const h = ref.current.scrollHeight;
@@ -464,7 +466,8 @@ const BookingCard = ({ service, onBookNow, bookingFee = 0, bookingFeeBreakdown =
 
   const imgWrapRef = useRef(null);
   const [imgH, setImgH] = useState(0);
-  useEffect(() => {
+  // useLayoutEffect: reserve the image height before paint to avoid a CLS jump.
+  useLayoutEffect(() => {
     if (imgWrapRef.current) setImgH(imgWrapRef.current.scrollHeight);
   }, [service.thumbnail_url]);
 
