@@ -14,42 +14,27 @@ const TAG_STYLES = {
   Security: { bg: 'rgba(124,58,237,0.10)', fg: '#7c3aed' },
 };
 
-// Decorative animated mesh backdrop for the changelog.
-// Brief composition (top → bottom): orange dominant (~50%), with blue,
-// green-yellow, white, black and pink accents woven in as soft radial
-// "blobs" that slowly drift + breathe for a fluid, organic feel. Top is
-// kept lighter so the dark header stays legible; orange deepens through
-// the middle; cooler/darker notes settle low. Motion = cheap GPU
-// transforms only; honours prefers-reduced-motion (see <style> below).
-const BASE_WASH =
-  'linear-gradient(180deg, #FFE7D2 0%, #FF8A3D 24%, #FE5100 55%, #D64400 84%, #B23800 100%)';
-
-// Each blob: position + size + radial fill + which drift animation it rides.
-const BLOBS = [
-  // white highlight, top-left — lifts the header (dominant readability zone)
-  { top: '-8%',  left: '-6%',  w: '60%', h: '55%', anim: 'clDrift1', dur: '17s', delay: '0s',
-    fill: 'radial-gradient(closest-side, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%)' },
-  // pink accent, top-right
-  { top: '-10%', left: '58%',  w: '55%', h: '50%', anim: 'clDrift2', dur: '21s', delay: '-4s',
-    fill: 'radial-gradient(closest-side, rgba(255,77,141,0.6) 0%, rgba(255,77,141,0) 70%)' },
-  // bright orange core, upper-mid (dominant)
-  { top: '12%',  left: '20%',  w: '75%', h: '60%', anim: 'clDrift3', dur: '19s', delay: '-2s',
-    fill: 'radial-gradient(closest-side, rgba(255,122,46,0.85) 0%, rgba(255,122,46,0) 72%)' },
-  // green-yellow accent, mid-right
-  { top: '42%',  left: '66%',  w: '52%', h: '48%', anim: 'clDrift1', dur: '23s', delay: '-7s',
-    fill: 'radial-gradient(closest-side, rgba(185,217,0,0.5) 0%, rgba(185,217,0,0) 70%)' },
-  // blue accent, mid-left
-  { top: '52%',  left: '-12%', w: '55%', h: '50%', anim: 'clDrift2', dur: '20s', delay: '-9s',
-    fill: 'radial-gradient(closest-side, rgba(37,99,235,0.45) 0%, rgba(37,99,235,0) 70%)' },
-  // deep orange pool, lower-mid (dominant)
-  { top: '64%',  left: '28%',  w: '80%', h: '60%', anim: 'clDrift3', dur: '18s', delay: '-5s',
-    fill: 'radial-gradient(closest-side, rgba(214,68,0,0.95) 0%, rgba(214,68,0,0) 72%)' },
-  // black settle, bottom-right
-  { top: '74%',  left: '70%',  w: '55%', h: '50%', anim: 'clDrift1', dur: '25s', delay: '-3s',
-    fill: 'radial-gradient(closest-side, rgba(11,11,11,0.5) 0%, rgba(11,11,11,0) 68%)' },
-];
-
+// Newest release renders first. Entries are hand-authored below in roughly
+// reverse-chronological order; the render step sorts by date defensively so a
+// misplaced entry can't show out of order (see SORTED_RELEASES).
 const RELEASES = [
+  {
+    date: 'Jul 22, 2026',
+    title: 'Pricing, reimagined',
+    tags: ['Improved', 'New'],
+    points: [
+      'A cleaner pricing page with our plans laid out side by side, so it’s easy to compare what each one includes and pick the right fit.',
+      'New Enterprise option for agencies and larger teams who need bookings across a whole roster.',
+    ],
+  },
+  {
+    date: 'Jul 22, 2026',
+    title: 'Bolt keeps getting smarter',
+    tags: ['Improved'],
+    points: [
+      'Our support assistant now answers more questions accurately, links you to the right help article, and hands you to a human more reliably when you’d rather talk to one.',
+    ],
+  },
   {
     date: 'Jul 19, 2026',
     title: 'A fresh new homepage',
@@ -469,6 +454,10 @@ const RELEASES = [
   },
 ];
 
+// Sort by date, newest first. `new Date('Jul 19, 2026')` parses the display
+// string fine; sort is stable so same-day entries keep their authored order.
+const SORTED_RELEASES = [...RELEASES].sort((a, b) => new Date(b.date) - new Date(a.date));
+
 const Tag = ({ label }) => {
   const s = TAG_STYLES[label] || TAG_STYLES.New;
   return (
@@ -489,7 +478,7 @@ const Changelog = () => {
   }, []);
 
   return (
-    <div className="relative isolate">
+    <div className="relative">
       <Seo
         title="What's New — Book A Sloth Changelog"
         description="Every feature, improvement, and fix shipped to Book A Sloth. Follow the latest updates to the appointment booking platform."
@@ -504,37 +493,6 @@ const Changelog = () => {
           breadcrumbJsonLd({ items: [{ name: 'Home', path: '/' }, { name: 'Changelog', path: '/changelog' }] }),
         ]}
       />
-      {/* Decorative animated mesh backdrop (fixed, full-bleed) */}
-      <style>{`
-        @keyframes clDrift1 { 0%,100% { transform: translate3d(0,0,0) scale(1); }
-          50% { transform: translate3d(4%,6%,0) scale(1.12); } }
-        @keyframes clDrift2 { 0%,100% { transform: translate3d(0,0,0) scale(1.05); }
-          50% { transform: translate3d(-5%,4%,0) scale(0.92); } }
-        @keyframes clDrift3 { 0%,100% { transform: translate3d(0,0,0) scale(0.96); }
-          50% { transform: translate3d(3%,-5%,0) scale(1.1); } }
-        @media (prefers-reduced-motion: reduce) {
-          .cl-blob { animation: none !important; }
-        }
-      `}</style>
-      <div
-        aria-hidden="true"
-        className="fixed inset-0 -z-10 overflow-hidden"
-        style={{ backgroundColor: '#FF5A12', backgroundImage: BASE_WASH }}
-      >
-        {BLOBS.map((b, i) => (
-          <span
-            key={i}
-            className="cl-blob absolute"
-            style={{
-              top: b.top, left: b.left, width: b.w, height: b.h,
-              backgroundImage: b.fill,
-              animation: `${b.anim} ${b.dur} ease-in-out ${b.delay} infinite`,
-              willChange: 'transform',
-            }}
-          />
-        ))}
-      </div>
-
       <div className="app-container py-12 sm:py-16">
       <div className="mx-auto max-w-3xl">
         {/* Header */}
@@ -553,14 +511,20 @@ const Changelog = () => {
 
         {/* Timeline */}
         <ol className="relative mt-12 border-l border-gray-200 sm:mt-16">
-          {RELEASES.map((r) => (
-            <li key={r.date + r.title} className="relative ml-5 pb-10 last:pb-0 sm:ml-7">
+          {SORTED_RELEASES.map((r, i) => {
+            // Accent = colour of the release's primary (first) tag. Drives both
+            // the timeline node and the card's left border, replacing the old
+            // animated background with a quieter, per-card cue.
+            const accent = (TAG_STYLES[r.tags[0]] || TAG_STYLES.New).fg;
+            return (
+            <li key={i} className="relative ml-5 pb-10 last:pb-0 sm:ml-7">
               {/* node */}
               <span
                 aria-hidden="true"
-                className="absolute -left-[26px] top-1.5 grid h-3.5 w-3.5 place-items-center rounded-full border-2 border-white bg-primary shadow-[0_0_0_3px_rgba(254,81,0,0.12)] sm:-left-[34px]"
+                className="absolute -left-[26px] top-1.5 grid h-3.5 w-3.5 place-items-center rounded-full border-2 border-white sm:-left-[34px]"
+                style={{ backgroundColor: accent, boxShadow: `0 0 0 3px ${accent}1f` }}
               />
-              <div className="page-card p-5 sm:p-6">
+              <div className="page-card p-5 sm:p-6" style={{ borderLeft: `4px solid ${accent}` }}>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <time className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                     {r.date}
@@ -591,7 +555,8 @@ const Changelog = () => {
                 </ul>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ol>
 
         {/* Footer CTA */}
