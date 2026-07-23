@@ -790,7 +790,7 @@ const Home = () => {
                   <GoogleIcon />
                   {googleLoading ? "Opening Google…" : "Continue with Google Account"}
                 </button>
-                <p className="mt-3 text-xs leading-relaxed text-neutral-400">
+                <p className="mt-3 text-xs leading-relaxed text-neutral-500">
                   By continuing, you agree to our{" "}
                   <Link to="/terms" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Terms &amp; Conditions</Link> and{" "}
                   <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.{" "}
@@ -814,7 +814,7 @@ const Home = () => {
                   ))}
                   <span className="ml-1 text-sm font-semibold text-ink">5/5</span>
                 </div>
-                <p className="text-xs text-neutral-400">
+                <p className="text-xs text-neutral-500">
                   Loved by India's first calm professionals.
                 </p>
               </div>
@@ -895,7 +895,7 @@ const Home = () => {
                 <GoogleIcon />
                 {googleLoading ? "Opening Google…" : "Continue with Google Account"}
               </button>
-              <p className="mt-3 text-xs leading-relaxed text-neutral-400">
+              <p className="mt-3 text-xs leading-relaxed text-neutral-500">
                 By continuing, you agree to our{" "}
                 <Link to="/terms" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Terms &amp; Conditions</Link> and{" "}
                 <Link to="/privacy" className="text-neutral-500 underline decoration-neutral-300 underline-offset-2 hover:text-ink">Privacy Policy</Link>.{" "}
@@ -919,7 +919,7 @@ const Home = () => {
                 ))}
                 <span className="ml-1 text-sm font-semibold text-ink">5/5</span>
               </div>
-              <p className="text-center text-xs text-neutral-400">
+              <p className="text-center text-xs text-neutral-500">
                 Loved by India's first calm professionals.
               </p>
             </div>
@@ -1680,7 +1680,7 @@ const Home = () => {
               Compare all plans &amp; features →
             </Link>
           </p>
-          <p className="mt-3 text-center text-xs text-neutral-400">
+          <p className="mt-3 text-center text-xs text-neutral-500">
             0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
           </p>
         </div>
