@@ -126,6 +126,7 @@ const CustomerBookings = lazy(() => import('./pages/CustomerBookings'));
 const CustomerProfile  = lazy(() => import('./pages/CustomerProfile'));
 const CustomerReviews  = lazy(() => import('./pages/CustomerReviews'));
 const ReviewPage       = lazy(() => import('./pages/ReviewPage'));
+const ManageBooking    = lazy(() => import('./pages/ManageBooking'));
 const Loyalty          = lazy(() => import('./pages/Loyalty'));
 
 // Public host / service pages
@@ -568,6 +569,11 @@ function App() {
               Shared + ownership-checked: either party to a booking may use it, so it
               stays role-agnostic and top-level — NOT under /user. */}
           <Route path="/review/:bookingId" element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
+
+          {/* Public, token-authorized guest self-service (MF3 #516). No auth guard —
+              the signed manage-booking token IS the auth. Reachable by an anonymous
+              (no-session) guest from their confirmation link / email. */}
+          <Route path="/manage-booking/:token" element={<ManageBooking />} />
 
           {/* Backward-compat: old flat guest paths → /user/* (in-flight emails, bookmarks). */}
           <Route path="/my-bookings" element={<Navigate to="/user/my-bookings" replace />} />

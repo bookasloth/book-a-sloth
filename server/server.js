@@ -132,6 +132,7 @@ app.use('/api/admin-auth',  adminLimiter, require('./routes/adminAuthRoutes'));
 app.use('/api/onboarding',  require('./routes/vendorOnboardingRoutes'));
 app.use('/api/host',        require('./routes/hostRoutes'));
 app.use('/api/bookings',    require('./routes/bookingRoutes'));
+app.use('/api/manage-booking', require('./routes/manageBookingRoutes')); // public, token-authed guest self-service (#516)
 app.use('/api/payment',     require('./routes/paymentRoutes'));
 app.use('/api/invoices',   require('./routes/invoiceRoutes'));
 app.use('/api/kyc',         require('./routes/kycRoutes'));

@@ -1574,6 +1574,14 @@ const ServiceBooking = () => {
                     <Link to={`/${profileSlug}`} className="text-sm font-semibold hover:underline" style={{ color: tc }}>
                       ← Back to {host.name}'s profile
                     </Link>
+                    {/* Manage link works without a session — the token IS the auth (#516). */}
+                    {confirmation?.manage_token && (
+                      <p className="mt-3 text-xs text-gray-400">
+                        <Link to={`/manage-booking/${confirmation.manage_token}`} className="font-medium hover:underline" style={{ color: tc }}>
+                          Manage or cancel this booking
+                        </Link>
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

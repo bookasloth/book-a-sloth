@@ -16,6 +16,7 @@ const availabilityService = require("../services/availabilityService");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { trackServer } = require("../utils/trackServer");
+const manageBookingToken = require("../utils/manageBookingToken");
 const { runInBackground } = require("../utils/background");
 const { hostOf } = require("../utils/hostOf");
 const profileSecrets = require("../utils/profileSecrets");
@@ -508,7 +509,9 @@ const createBooking = async (req, res) => {
 
     // Respond now; confirmation emails (WhatsApp + SMTP) and analytics are
     // best-effort side-effects that should not add seconds to the user's wait.
-    res.status(201).json(booking);
+    // manage_token lets an anonymous guest (no session) view/cancel THIS booking
+    // via the public /manage-booking/:token page (MF3 #516).
+    res.status(201).json({ ...booking, manage_token: manageBookingToken.sign(booking.id) });
 
     // In-app: notify the host of the new booking (fires for both free + paid).
     inAppNotify({
@@ -671,6 +674,106 @@ const getGuestBookings = async (req, res) => {
   }
 };
 
+// Shared cancel execution — runs AFTER the caller's auth + status guards. Flips
+// the booking to cancelled, removes the Google event, notifies both parties and
+// records analytics. Used by the session handler (cancelBooking) AND the
+// token-authorized manage-booking path (manageBookingController). Returns the
+// updated row; throws on a DB error (callers wrap in try/catch).
+//   cancelledBy : 'host' | 'guest' (for analytics).
+//   actorUserId : the acting user id, or null for an anonymous manage-link guest.
+//                 The party that is NOT the actor gets the in-app notification.
+const cancelBookingRecord = async (booking, { cancelledBy, actorUserId = null } = {}) => {
+  const { data, error } = await supabaseAdmin
+    .from("bookings")
+    .update({ status: "cancelled", settlement_status: "cancelled", updated_at: new Date().toISOString() })
+    .eq("id", booking.id)
+    .select()
+    .single();
+  if (error) throw error;
+
+  // P1-7: remove the Google Calendar event so a cancelled booking doesn't leave
+  // a ghost event (with Meet link) on the host's + guest's calendars. Best-effort.
+  if (booking.google_event_id && hostOf(booking).google_calendar_connected) {
+    try {
+      const calHost = { id: booking.host_id };
+      await profileSecrets.attachGoogleTokens(calHost);
+      if (calHost.google_refresh_token) {
+        await deleteCalendarEvent(
+          decryptToken(calHost.google_access_token),
+          decryptToken(calHost.google_refresh_token),
+          booking.google_event_id,
+        );
+      }
+    } catch (calErr) {
+      console.error("Cancel calendar delete (non-fatal):", calErr.message);
+    }
+  }
+
+  // Notify both sides (engine decides channels per admin config)
+  try {
+    const host = hostOf(booking);
+    const tz = await resolveHostTz(booking.host_id);
+    const when = new Date(booking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
+    const ctx = { guestName: booking.guest_name, serviceTitle: booking.services?.title, hostName: host.name, when };
+    const emailData = bookingEmailData({
+      serviceTitle: booking.services?.title, hostName: host.name, hostPhone: host.phone,
+      guestName: booking.guest_name, scheduledAt: booking.scheduled_at, tz, bookingId: booking.id,
+    });
+    await NotificationEngine.send({
+      event: "BOOKING_CANCELLED_CUSTOMER",
+      data: {
+        email: booking.guest_email, phone: booking.guest_phone, name: booking.guest_name,
+        templateParams: customerParams(ctx),
+        emailData, emailUser: { name: booking.guest_name, email: booking.guest_email },
+        recipientUserId: booking.guest_id, bookingId: booking.id,
+      },
+    });
+    await NotificationEngine.send({
+      event: "BOOKING_CANCELLED_VENDOR",
+      data: {
+        email: host.email, phone: host.phone, name: host.name,
+        templateParams: vendorParams(ctx),
+        emailData, emailUser: { name: host.name, email: host.email, username: host.username },
+        recipientUserId: booking.host_id, bookingId: booking.id,
+      },
+    });
+    // In-app: notify the party that ISN'T the actor.
+    if (booking.guest_id && booking.guest_id !== actorUserId) {
+      inAppNotify({
+        userId: booking.guest_id,
+        role: 'guest',
+        type: 'BOOKING_CANCELLED',
+        title: 'Booking cancelled',
+        body: `${booking.services?.title || 'Your booking'} has been cancelled`,
+        link: '/user/my-bookings',
+        data: { bookingId: booking.id },
+      });
+    }
+    if (booking.host_id !== actorUserId) {
+      inAppNotify({
+        userId: booking.host_id,
+        role: 'host',
+        type: 'BOOKING_CANCELLED',
+        title: 'Booking cancelled',
+        body: `${booking.guest_name}'s booking for ${booking.services?.title || 'a service'} was cancelled`,
+        link: '/dashboard/bookings',
+        data: { bookingId: booking.id },
+      });
+    }
+  } catch (notifyError) {
+    console.error("Cancel notification error:", notifyError.message);
+  }
+
+  phCapture(actorUserId || booking.guest_id || booking.host_id, "booking_cancelled", {
+    booking_id: booking.id,
+    service_title: booking.services?.title,
+    host_id: booking.host_id,
+    cancelled_by: cancelledBy,
+  });
+
+  return data;
+};
+
 // PUT /api/bookings/:id/cancel
 const cancelBooking = async (req, res) => {
   try {
@@ -691,94 +794,10 @@ const cancelBooking = async (req, res) => {
     if (booking.status === "completed" || booking.status === "no_show")
       return res.status(409).json({ message: "This booking is already closed and can't be cancelled." });
 
-    const { data, error } = await supabaseAdmin
-      .from("bookings")
-      .update({ status: "cancelled", settlement_status: "cancelled", updated_at: new Date().toISOString() })
-      .eq("id", req.params.id)
-      .select()
-      .single();
-    if (error) return safeError(res, error);
-
-    // P1-7: remove the Google Calendar event so a cancelled booking doesn't leave
-    // a ghost event (with Meet link) on the host's + guest's calendars. Best-effort.
-    if (booking.google_event_id && hostOf(booking).google_calendar_connected) {
-      try {
-        const calHost = { id: booking.host_id };
-        await profileSecrets.attachGoogleTokens(calHost);
-        if (calHost.google_refresh_token) {
-          await deleteCalendarEvent(
-            decryptToken(calHost.google_access_token),
-            decryptToken(calHost.google_refresh_token),
-            booking.google_event_id,
-          );
-        }
-      } catch (calErr) {
-        console.error("Cancel calendar delete (non-fatal):", calErr.message);
-      }
-    }
-
-    // Notify both sides (engine decides channels per admin config)
-    try {
-      const host = hostOf(booking);
-      const tz = await resolveHostTz(booking.host_id);
-      const when = new Date(booking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
-      const ctx = { guestName: booking.guest_name, serviceTitle: booking.services?.title, hostName: host.name, when };
-      const emailData = bookingEmailData({
-        serviceTitle: booking.services?.title, hostName: host.name, hostPhone: host.phone,
-        guestName: booking.guest_name, scheduledAt: booking.scheduled_at, tz, bookingId: booking.id,
-      });
-      await NotificationEngine.send({
-        event: "BOOKING_CANCELLED_CUSTOMER",
-        data: {
-          email: booking.guest_email, phone: booking.guest_phone, name: booking.guest_name,
-          templateParams: customerParams(ctx),
-          emailData, emailUser: { name: booking.guest_name, email: booking.guest_email },
-          recipientUserId: booking.guest_id, bookingId: booking.id,
-        },
-      });
-      await NotificationEngine.send({
-        event: "BOOKING_CANCELLED_VENDOR",
-        data: {
-          email: host.email, phone: host.phone, name: host.name,
-          templateParams: vendorParams(ctx),
-          emailData, emailUser: { name: host.name, email: host.email, username: host.username },
-          recipientUserId: booking.host_id, bookingId: booking.id,
-        },
-      });
-      // In-app: notify the OTHER party about the cancellation (not the actor).
-      if (booking.guest_id && booking.guest_id !== req.user.id) {
-        inAppNotify({
-          userId: booking.guest_id,
-          role: 'guest',
-          type: 'BOOKING_CANCELLED',
-          title: 'Booking cancelled',
-          body: `${booking.services?.title || 'Your booking'} has been cancelled`,
-          link: '/user/my-bookings',
-          data: { bookingId: booking.id },
-        });
-      }
-      if (booking.host_id !== req.user.id) {
-        inAppNotify({
-          userId: booking.host_id,
-          role: 'host',
-          type: 'BOOKING_CANCELLED',
-          title: 'Booking cancelled',
-          body: `${booking.guest_name}'s booking for ${booking.services?.title || 'a service'} was cancelled`,
-          link: '/dashboard/bookings',
-          data: { bookingId: booking.id },
-        });
-      }
-    } catch (notifyError) {
-      console.error("Cancel notification error:", notifyError.message);
-    }
-
-    phCapture(req.user.id, "booking_cancelled", {
-      booking_id: booking.id,
-      service_title: booking.services?.title,
-      host_id: booking.host_id,
-      cancelled_by: req.user.id === booking.host_id ? "host" : "guest",
+    const data = await cancelBookingRecord(booking, {
+      cancelledBy: req.user.id === booking.host_id ? "host" : "guest",
+      actorUserId: req.user.id,
     });
-
     res.json(await redactForRequest(data, req));
   } catch (error) {
     safeError(res, error);
@@ -1654,6 +1673,7 @@ module.exports = {
   getHostBookings,
   getGuestBookings,
   cancelBooking,
+  cancelBookingRecord,
   completeBooking,
   markNoShow,
   markBookingCompleted,
