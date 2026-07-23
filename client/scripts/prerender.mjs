@@ -152,6 +152,61 @@ async function blogRoutes() {
 }
 
 /**
+ * Host profiles (/:username) and service pages (/:username/:slug) live in the DB
+ * and vastly outnumber the static marketing routes, so — like blog posts — their
+ * routes can't be a hardcoded list. They ARE already enumerated by the public
+ * sitemap (root-mounted on the same Express server, NOT under /api), which applies
+ * the exact indexability rules we want: only verified, non-banned, is_indexable
+ * hosts/services appear. Reusing it means the prerender list stays in lockstep with
+ * what we tell Google to crawl — a banned or de-indexed host silently drops from
+ * both at once — and we add zero new server surface.
+ *
+ * We fetch the sitemap INDEX, pick the host + service sub-sitemaps (handles their
+ * pagination for free), then pull every <loc> and reduce it to a path. Same
+ * fail-open/closed posture as blogRoutes(): on Vercel an unreachable/broken sitemap
+ * is FATAL (shipping a "green" build that quietly dropped the entire product
+ * catalog from prerender is the exact trap we keep falling into), a warning locally.
+ */
+async function hostServiceRoutes() {
+  const env = loadEnv(process.env.NODE_ENV || 'production', join(__dirname, '..'), '');
+  const apiBase = (env.VITE_API_URL || process.env.VITE_API_URL || '').replace(/\/+$/, '');
+  if (!apiBase) {
+    if (process.env.VERCEL) throw new Error('VITE_API_URL unset — cannot resolve host/service routes');
+    console.warn('[prerender] VITE_API_URL unset — skipping host/service routes');
+    return [];
+  }
+  // Sitemaps are root-mounted (server.js: `app.use(sitemapRoutes)`, no /api), so
+  // strip the /api segment VITE_API_URL carries for the JSON endpoints.
+  const origin = apiBase.replace(/\/api$/, '');
+  const locs = (xml) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+
+  try {
+    const indexRes = await fetch(`${origin}/sitemap.xml`, { signal: AbortSignal.timeout(15000) });
+    if (!indexRes.ok) throw new Error(`sitemap.xml HTTP ${indexRes.status}`);
+    // Only the host + service sub-sitemaps; pages/professions/blog are handled
+    // by PRERENDER_ROUTES + blogRoutes already. Fetch each by its OWN path off our
+    // reachable origin (the <loc> carries the public SITE_URL domain, which may
+    // route through Vercel — the path is all we need).
+    const subPaths = locs(await indexRes.text())
+      .map((u) => new URL(u).pathname)
+      .filter((p) => /\/sitemap-(hosts|services)/.test(p));
+
+    const routes = [];
+    for (const sub of subPaths) {
+      const res = await fetch(`${origin}${sub}`, { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) throw new Error(`${sub} HTTP ${res.status}`);
+      for (const u of locs(await res.text())) routes.push(new URL(u).pathname);
+    }
+    console.log(`[prerender] ${routes.length} host/service routes from ${subPaths.length} sub-sitemap(s)`);
+    return routes;
+  } catch (err) {
+    if (process.env.VERCEL) throw new Error(`host/service routes unresolvable (${err.message})`);
+    console.warn(`[prerender] host/service routes skipped (${err.message}) — static routes still render`);
+    return [];
+  }
+}
+
+/**
  * Vercel's build image ships no Chrome and none of its system libraries, so a
  * downloaded Chrome installs fine and then dies on launch:
  *
@@ -226,7 +281,7 @@ function createStaticServer() {
 async function prerender() {
   const puppeteer = await import('puppeteer');
 
-  const routes = [...PRERENDER_ROUTES, ...(await blogRoutes())];
+  const routes = [...PRERENDER_ROUTES, ...(await blogRoutes()), ...(await hostServiceRoutes())];
 
   const server = createStaticServer();
   await new Promise((resolve) => server.listen(PORT, resolve));
