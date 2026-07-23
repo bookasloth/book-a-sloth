@@ -20,10 +20,11 @@ import {
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
 
+// Help lives as its own top-level header link (high-intent), so it is
+// deliberately absent from More to avoid a duplicate entry.
 const MORE_MENU = [
   { label: 'How It Works', href: '/#how-it-works', icon: Sparkles },
   { label: 'FAQ',          href: '/#faq',          icon: MessageCircle },
-  { label: 'Help Center',  href: '/help',          icon: HelpCircle },
   { label: 'Contact',      href: '/contact',       icon: Mail },
   { label: 'Careers',      href: '/careers',       icon: Briefcase },
   { label: 'About',        href: '/about',         icon: Info },
@@ -232,6 +233,10 @@ const PublicCenterNav = () => (
       Pricing
     </Link>
 
+    <Link to="/help" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
+      Help
+    </Link>
+
     <NavDropdown label="More">
       <div className="py-1">
         {MORE_MENU.map((m) => {
@@ -428,6 +433,15 @@ const Navbar = () => {
 
           {/* Right actions */}
           <div className="flex items-center gap-1 ml-auto">
+
+            {/* Search — always-on creator discovery entry point → /search */}
+            <Link
+              to="/search"
+              aria-label="Search creators"
+              className="p-2.5 rounded-full text-gray-500 hover:text-[#FE5100] hover:bg-[#FE5100]/5 transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100] focus-visible:ring-offset-1 hover:no-underline"
+            >
+              <Search size={19} strokeWidth={1.7} />
+            </Link>
 
             {user ? (
               <>
@@ -650,11 +664,15 @@ const Navbar = () => {
                   <Tag size={16} className="flex-shrink-0 text-gray-400" /> Pricing
                 </Link>
 
-                {/* Use Cases (browse by industry) — collapsed by default */}
+                <Link to="/help" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                  <HelpCircle size={16} className="flex-shrink-0 text-gray-400" /> Help
+                </Link>
+
+                {/* Explore (browse by industry) — collapsed by default */}
                 <details className="group rounded-lg">
                   <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
                     <Compass size={16} className="flex-shrink-0 text-gray-400" />
-                    <span className="flex-1">Use Cases</span>
+                    <span className="flex-1">Explore</span>
                     <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
                   </summary>
                   <div className="space-y-0.5 pl-1 pt-0.5">

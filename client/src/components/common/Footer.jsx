@@ -7,7 +7,7 @@ const BOLT_URL = 'https://bolt958.xyz';
 const COLUMNS = [
   { h: 'Product', links: [
     { t: 'How it works', href: '/#how-it-works' },
-    { t: 'Pricing', href: '/#pricing' },
+    { t: 'Pricing', href: '/pricing' },
     { t: 'FAQ', href: '/#faq' },
     { t: 'Be a Host', href: '/be-a-sloth' },
     { t: 'Explore', href: '/explore' },
@@ -18,11 +18,10 @@ const COLUMNS = [
     { t: 'Blog', href: '/blog' },
     { t: 'Careers', href: '/careers' },
     { t: 'Reviews', href: '/#collective' },
-    { t: 'Log in', href: '/login-as-vendor' },
+    { t: 'Host log in', href: '/login-as-vendor' },
   ] },
   { h: 'Support', links: [
     { t: 'Help', href: '/help' },
-    { t: 'Get support', href: '/support' },
     { t: 'Contact', href: '/contact' },
     { t: 'Terms', href: '/terms' },
     { t: 'Privacy', href: '/privacy' },
