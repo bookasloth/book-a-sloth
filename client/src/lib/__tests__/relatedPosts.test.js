@@ -29,7 +29,7 @@ describe('selectRelated', () => {
     expect(r).toContain('the-first-host-who-paid');
   });
 
-  it('falls back to same-category posts when a post has no cluster match', () => {
+  it('returns [] for an unknown slug', () => {
     expect(selectRelated('does-not-exist')).toEqual([]);
   });
 
