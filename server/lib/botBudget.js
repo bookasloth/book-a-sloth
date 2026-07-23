@@ -44,7 +44,12 @@ let _day = makeCounter('bot-budget-day', DAY_WINDOW_MS);
 // Consume one model call from the budget. Increments minute first (so a sustained
 // flood keeps the minute window pegged and stays closed); the day counter only
 // advances for calls that pass the minute gate.
-async function tryConsume() {
+// opts.failClosed — deny on a store error instead of the default fail-open. Use it
+// for the abuse-judge path: a store blip there must not let a hostile-message flood
+// keep spending Haiku calls; denying just skips the roast and falls through to the
+// normal pipeline. The user-facing paths (summary/generate) keep the default
+// fail-open so a transient store error never breaks a legitimate answer.
+async function tryConsume(opts = {}) {
   try {
     const min = await _min('global');
     if (min.totalHits > minMax()) return { allowed: false, reason: 'minute' };
@@ -52,8 +57,9 @@ async function tryConsume() {
     if (day.totalHits > dayMax()) return { allowed: false, reason: 'day' };
     return { allowed: true, reason: null };
   } catch (e) {
-    console.error('[bot] budget store error — failing open:', e.message);
-    return { allowed: true, reason: null };
+    const mode = opts.failClosed ? 'failing closed' : 'failing open';
+    console.error(`[bot] budget store error — ${mode}:`, e.message);
+    return { allowed: !opts.failClosed, reason: opts.failClosed ? 'store_error' : null };
   }
 }
 

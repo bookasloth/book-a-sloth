@@ -3,7 +3,8 @@
 // Guards the fallback sarcasm pool: it must actually use the whole pool (the old
 // code was pinned to index 0) and be deterministic per message.
 jest.mock('../config/supabase', () => ({ supabaseAdmin: {} }));
-jest.mock('../lib/botIpBlock', () => ({ isBlocked: async () => false, block: async () => {} }), { virtual: true });
+jest.mock('../lib/ipBlocklist', () => ({ isBlocked: () => false, recordAttack: async () => {} }));
+jest.mock('../lib/botStrikes', () => ({ add: async () => 1, _reset: () => {} }));
 
 const { cannedRoast, CANNED } = require('../services/bot/abuseGuard');
 

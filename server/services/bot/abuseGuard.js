@@ -11,7 +11,8 @@ const { HARD_HI, HARD_MR, HARD_EN, MILD, PHRASES_DIRECTED, THREATS } = require('
 const anthropicClient = require('../ai/anthropicClient');
 const botBudget = require('../../lib/botBudget');
 const { supabaseAdmin } = require('../../config/supabase');
-const botIpBlock = require('../../lib/botIpBlock');
+const ipBlocklist = require('../../lib/ipBlocklist');
+const botStrikes = require('../../lib/botStrikes');
 
 const IP_BLOCK_MSG = "You're on a timeout. Come back in a bit. For real issues, raise a ticket at /support.";
 const THREAT_MSG = "Not okay — I'm ending this here. If you're in a real crisis, please reach out to someone you trust or a helpline. For account issues, raise a ticket at /support.";
@@ -161,7 +162,8 @@ async function classifyAbuse(msg) {
   const safe = { abusive: false, danger: false, language: 'en' };
   try {
     if (!anthropicClient.isConfigured()) return safe;
-    const budget = await botBudget.tryConsume();
+    // fail-closed: a budget-store error must not let the judge keep spending on a flood.
+    const budget = await botBudget.tryConsume({ failClosed: true });
     if (!budget.allowed) return safe;
     const client = anthropicClient.getClient();
     if (!client) return safe;
@@ -249,8 +251,21 @@ function cannedRoast(lang, msg) {
 }
 
 // ---- Strikes --------------------------------------------------------------
-// 'threat' rows count as 2, 'roast' rows as 1. Best-effort → 0 on any error.
-async function countStrikes(conversationId) {
+// Add this message's strike(s) and return the running total in the window. A threat
+// weighs 2, a roast 1. Preferred key is the client IP (stable across rotated/omitted
+// conversationIds); only when no IP is available do we fall back to the legacy
+// per-conversation count from persisted messages (still rotatable, but the best a
+// keyless request allows). Best-effort → the current weight on any error, so a
+// counter blip never *lowers* the effective strike count for this message.
+async function countStrikes({ ip, conversationId, weight = 1 }) {
+  if (ip) {
+    try { return await botStrikes.add(ip, weight); } catch (_) { /* fall through */ }
+  }
+  return (await legacyConvStrikes(conversationId)) + weight;
+}
+
+// Legacy no-IP path: count persisted roast/threat rows for the conversation.
+async function legacyConvStrikes(conversationId) {
   if (!conversationId) return 0;
   try {
     const { data, error } = await supabaseAdmin
@@ -268,12 +283,13 @@ async function countStrikes(conversationId) {
 // ---- Orchestrator ---------------------------------------------------------
 async function evaluate({ q, conversationId, ip } = {}) {
   const IPBLOCK_ON = process.env.BOT_THREAT_IPBLOCK_ENABLED === 'true';
-  const BLOCK_SECS = Number(process.env.BOT_THREAT_BLOCK_SECONDS) || 1800;
+  const STRIKE_MAX = Number(process.env.BOT_STRIKE_MAX) || 5;
 
   try {
-    // Step 0: already-blocked IP — enforced independently of the roast flag, so an IP
-    // blocked for a prior threat stays blocked even if roasting is later toggled off.
-    if (IPBLOCK_ON && ip && (await botIpBlock.isBlocked(ip))) {
+    // Step 0: already-blocked IP — read from the durable, admin-visible app blocklist
+    // (in-memory O(1) cache, DB-backed, survives restarts). Enforced independently of
+    // the roast flag; ipGuard also catches these upstream when IP blocking is on.
+    if (IPBLOCK_ON && ip && ipBlocklist.isBlocked(ip)) {
       return { answer: IP_BLOCK_MSG, source: 'ip_block', cited_sources: [], escalate: false, locked: true };
     }
 
@@ -301,13 +317,20 @@ async function evaluate({ q, conversationId, ip } = {}) {
     }
 
     if (route === 'threat') {
-      if (IPBLOCK_ON && ip) { try { await botIpBlock.block(ip, BLOCK_SECS); } catch (_) { /* best-effort */ } }
+      // Durable, admin-visible ban via the app blocklist (fire-and-forget; respects
+      // the IP master switch + allowlist). A threat also weighs 2 strikes toward the
+      // cool-off, so a threat-only spammer still trips the lock, not just the ban.
+      if (IPBLOCK_ON && ip) { ipBlocklist.recordAttack(ip, 'bot_threat').catch(() => {}); }
+      const strikes = await countStrikes({ ip, conversationId, weight: 2 });
+      if (strikes >= STRIKE_MAX) {
+        return { answer: COOLOFF_MSG, source: 'abuse_lock', cited_sources: [], escalate: false, locked: true };
+      }
       return { answer: THREAT_MSG, source: 'threat', cited_sources: [], escalate: false, locked: false };
     }
 
     // Roast path.
-    const strikes = await countStrikes(conversationId);
-    if (strikes + 1 >= 5) {
+    const strikes = await countStrikes({ ip, conversationId, weight: 1 });
+    if (strikes >= STRIKE_MAX) {
       return { answer: COOLOFF_MSG, source: 'abuse_lock', cited_sources: [], escalate: false, locked: true };
     }
     const roastText = await dynamicRoast(q, lang);
