@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Check, X } from "lucide-react";
+import { Check, X, Star } from "lucide-react";
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
 import { PLAN_COLUMNS, PLAN_MATRIX } from "../data/plans";
@@ -19,10 +19,17 @@ const JSON_LD = {
     "Zero-commission appointment booking for Indian creators — publish services, get booked via OTP or login, collect payments through Razorpay.",
   brand: { "@type": "Brand", name: "Book A Sloth" },
   offers: [
-    { "@type": "Offer", name: "Starter", price: "0", priceCurrency: "INR" },
-    { "@type": "Offer", name: "Host+", price: "229", priceCurrency: "INR" },
-    { "@type": "Offer", name: "Studio", price: "555", priceCurrency: "INR" },
+    { "@type": "Offer", name: "Starter", price: "0", priceCurrency: "INR", availability: "https://schema.org/InStock" },
+    { "@type": "Offer", name: "Host+", price: "229", priceCurrency: "INR", availability: "https://schema.org/InStock" },
+    { "@type": "Offer", name: "Studio", price: "555", priceCurrency: "INR", availability: "https://schema.org/InStock" },
   ],
+  // aggregateRating MUST stay in sync with the on-page rating badge below —
+  // Google ignores (or penalises) ratings that aren't visible to users.
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "5",
+    reviewCount: "30",
+  },
 };
 
 // One comparison cell: ✓ / ✗ for booleans, verbatim text otherwise.
@@ -52,6 +59,17 @@ export default function Pricing() {
           <p className="mx-auto mt-4 max-w-[640px] text-neutral-500">
             Start free, upgrade when your bookings demand it, and keep everything you earn — always.
           </p>
+          {/* Visible rating — mirrors aggregateRating in JSON_LD (Google requires on-page). */}
+          <div className="mt-5 flex items-center justify-center gap-2 text-sm text-neutral-600">
+            <span className="flex" aria-hidden="true">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <Star key={i} size={18} className="fill-yellow-400 text-yellow-400" />
+              ))}
+            </span>
+            <span>
+              <span className="font-semibold text-ink">5.0</span> from 30+ reviews
+            </span>
+          </div>
         </div>
       </section>
 
