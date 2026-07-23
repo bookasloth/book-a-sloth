@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { analytics } from '../services/analytics';
 import { registerVendor, registerUser, loginUser, loginUnified as apiLoginUnified, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost } from '../services/api';
-import supabase from '../services/supabaseClient';
+import { getSupabase } from '../services/supabaseClient';
 
 const AuthContext = createContext();
 
@@ -78,14 +78,22 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('user');
-        setUser(null);
-      }
+    // Cross-tab SIGNED_OUT sync. Supabase is dynamic-imported, so register the
+    // listener once the client resolves (after first paint). `cancelled` guards
+    // against the effect cleanup running before the import settles.
+    let subscription = null;
+    let cancelled = false;
+    getSupabase().then((sb) => {
+      if (cancelled) return;
+      subscription = sb.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      }).data.subscription;
     });
 
-    return () => subscription.unsubscribe();
+    return () => { cancelled = true; subscription?.unsubscribe(); };
   }, []);
 
   const login = async (email, password) => {
@@ -179,7 +187,7 @@ export const AuthProvider = ({ children }) => {
     // Route by capability BEFORE clearing: a host always lands back on the
     // host login door (never the generic guest /login); everyone else → home.
     const wasHost = user?.is_host === true || user?.role === 'host' || user?.role === 'superadmin';
-    await supabase.auth.signOut();
+    await (await getSupabase()).auth.signOut();
     localStorage.removeItem('user');
     setUser(null);
     window.location.assign(wasHost ? '/login-as-vendor' : '/');

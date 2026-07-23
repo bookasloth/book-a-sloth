@@ -16,7 +16,7 @@ API.interceptors.request.use((config) => {
 });
 
 // BUG-08 fixed: intercept 401s, try to refresh the token, retry once, else logout
-import supabase from './supabaseClient';
+import { getSupabase } from './supabaseClient';
 let isRefreshing = false;
 let refreshQueue = [];
 
@@ -49,7 +49,8 @@ API.interceptors.response.use(
       try {
         const stored = JSON.parse(localStorage.getItem('user'));
         if (stored?.refresh_token) {
-          const { data, error: refreshError } = await supabase.auth.refreshSession({
+          const sb = await getSupabase();
+          const { data, error: refreshError } = await sb.auth.refreshSession({
             refresh_token: stored.refresh_token,
           });
           if (!refreshError && data.session) {
