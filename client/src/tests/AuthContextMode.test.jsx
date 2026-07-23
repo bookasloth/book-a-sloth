@@ -12,12 +12,12 @@ vi.mock('../services/api', () => ({
   getMe: vi.fn(() => Promise.resolve({ data: {} })),
 }));
 vi.mock('../services/supabaseClient', () => ({
-  default: {
+  getSupabase: () => Promise.resolve({
     auth: {
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
       signOut: vi.fn(),
     },
-  },
+  }),
 }));
 
 import { AuthProvider, useAuth } from '../context/AuthContext';
