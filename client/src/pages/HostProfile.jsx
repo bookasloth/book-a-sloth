@@ -426,7 +426,13 @@ const HostProfile = () => {
             <Link to="/" className="mt-4 inline-block text-sm hover:underline" style={{ color: C.text }}>← Back to home</Link>
           </div>
         </div>
-      ) : !host ? null : (
+      ) : !host ? (
+        // Placeholder, NOT null: these routes are prerendered, so hydration runs
+        // with host===null for one API round-trip. Rendering nothing collapsed the
+        // document and threw the footer to the top and back — CLS 0.93. Holding
+        // full viewport height keeps everything below it still.
+        <div className="min-h-screen" style={{ background: C.bg }} />
+      ) : (
     <div ref={pageRef} className="host-profile min-h-screen" style={{ background: C.bg, paddingBottom: 64 }}>
 
       {host.is_verified === false && (
