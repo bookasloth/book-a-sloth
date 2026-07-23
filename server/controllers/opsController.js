@@ -16,9 +16,11 @@ const metrics = require('../utils/metrics');
 
 const READY_TIMEOUT_MS = Number(process.env.READY_DB_TIMEOUT_MS) || 2000;
 
-const readiness = async (req, res) => {
+// Cheap, timeout-guarded DB reachability check. Shared by /ready (JSON probe)
+// and the human /status page. Never throws — resolves { ready, error? }.
+const checkDbReady = async () => {
   try {
-    // Cheap DB reachability check: HEAD + count on a small always-present table.
+    // HEAD + count on a small always-present table.
     const check = supabaseAdmin
       .from('subscription_plans')
       .select('id', { head: true, count: 'exact' })
@@ -28,12 +30,18 @@ const readiness = async (req, res) => {
     );
     const result = await Promise.race([check, timeout]);
     if (result && result.error) throw result.error;
-    return res.status(200).json({ ready: true, ts: Date.now() });
+    return { ready: true };
   } catch (err) {
-    // 503 so an orchestrator/uptime check treats this instance as not-ready
-    // (e.g. DB unreachable) rather than fully down.
-    return res.status(503).json({ ready: false, error: err.message });
+    return { ready: false, error: err.message };
   }
+};
+
+const readiness = async (req, res) => {
+  const { ready, error } = await checkDbReady();
+  if (ready) return res.status(200).json({ ready: true, ts: Date.now() });
+  // 503 so an orchestrator/uptime check treats this instance as not-ready
+  // (e.g. DB unreachable) rather than fully down.
+  return res.status(503).json({ ready: false, error });
 };
 
 const exposeMetrics = (req, res) => {
@@ -47,4 +55,4 @@ const exposeMetrics = (req, res) => {
   return res.status(200).send(metrics.render());
 };
 
-module.exports = { readiness, exposeMetrics };
+module.exports = { readiness, exposeMetrics, checkDbReady };

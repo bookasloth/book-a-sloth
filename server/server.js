@@ -190,6 +190,14 @@ const opsController = require('./controllers/opsController');
 app.get('/ready', opsController.readiness);
 app.get('/metrics', opsController.exposeMetrics);
 
+// Human-facing branded status page. Distinct from /health + /ready (which stay
+// pure JSON for probes/monitors) — this one is for a person, always HTML.
+app.get('/status', async (req, res) => {
+  const { statusPage } = require('./utils/brandPage');
+  const { ready } = await opsController.checkDbReady();
+  res.type('html').send(statusPage({ db: ready, uptimeSec: process.uptime() }));
+});
+
 // Google Search Console site-ownership proof for OAuth verification. Served as a
 // route (no static dir on this API-only server). ponytail: onrender.com is a
 // shared/free-tier host — move OAuth redirect + this proof to api.bookasloth.in
