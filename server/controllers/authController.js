@@ -836,6 +836,26 @@ const findOrCreateProfileByPhone = async (normalizedPhone) => {
   return profile;
 };
 
+// Reunite a now-authenticated guest with the bookings they made anonymously on
+// this phone. Anonymous OTP bookings are stored guest_id=NULL (the booker has no
+// session at booking time), so they never surface in /user/my-bookings and can't
+// be cancelled/rescheduled. This assigns those orphans to the resolved guest.
+// Additive + idempotent (only rewrites NULL rows for THIS verified phone) and
+// never throws — a login must not fail because a back-fill did.
+const backfillGuestBookings = async (guestId, normalizedPhone) => {
+  if (!guestId || !normalizedPhone) return;
+  try {
+    const { error } = await supabaseAdmin
+      .from("bookings")
+      .update({ guest_id: guestId, updated_at: new Date().toISOString() })
+      .eq("guest_phone", normalizedPhone)
+      .is("guest_id", null);
+    if (error) console.error("backfillGuestBookings (non-fatal):", error.message);
+  } catch (e) {
+    console.error("backfillGuestBookings threw (non-fatal):", e.message);
+  }
+};
+
 // POST /api/auth/login-phone — end-user login with phone + password
 const loginWithPhone = async (req, res) => {
   try {
@@ -908,6 +928,9 @@ const verifyOtpLogin = async (req, res) => {
     const unifiedLogin = await featureFlags.isFeatureEnabled("unified_login");
     if (!unifiedLogin && (profile.is_host || profile.role === "superadmin"))
       return res.status(409).json({ message: "This number is registered as a host. Please use host login." });
+
+    // Reunite the guest with any anonymous bookings made on this verified number.
+    await backfillGuestBookings(profile.id, normalized);
 
     const session = await mintSessionForEmail(profile.email);
     res.json(await serializeProfile(profile, session));
@@ -1319,4 +1342,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   maybeStampInvite,
+  backfillGuestBookings,
 };
