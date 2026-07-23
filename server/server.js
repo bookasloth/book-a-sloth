@@ -127,6 +127,25 @@ app.use('/api', apiLimiter);
 const { maintenanceMiddleware } = require('./middleware/maintenanceMiddleware');
 app.use('/api', maintenanceMiddleware);
 
+// TEMP DEBUG (branch chore/debug-ip-echo) — echoes how the app resolves the client
+// IP, to verify CLIENT_IP_HEADER=cf-connecting-ip carries the real client at Render.
+// Only exposes IP-related headers (no full header dump → no cookie/auth leak).
+// REMOVE this block once the header is confirmed.
+app.get('/api/debug/ip', (req, res) => {
+  const { getClientIp } = require('./lib/clientIp');
+  res.json({
+    resolved: getClientIp(req),
+    reqIp: req.ip,
+    clientIpHeaderEnv: process.env.CLIENT_IP_HEADER || null,
+    headers: {
+      'cf-connecting-ip': req.headers['cf-connecting-ip'] || null,
+      'x-forwarded-for': req.headers['x-forwarded-for'] || null,
+      'x-real-ip': req.headers['x-real-ip'] || null,
+      'true-client-ip': req.headers['true-client-ip'] || null,
+    },
+  });
+});
+
 app.use('/api/auth',        require('./routes/authRoutes'));
 app.use('/api/admin-auth',  adminLimiter, require('./routes/adminAuthRoutes'));
 app.use('/api/onboarding',  require('./routes/vendorOnboardingRoutes'));
