@@ -584,11 +584,18 @@ const Home = () => {
     let done = false;
     const finish = () => { if (!done) { done = true; setAssetsReady(true); } };
     const fontsP = document.fonts ? document.fonts.ready : Promise.resolve();
-    const img = new Image();
-    img.src = HERO;
-    const imgP = img.decode
-      ? img.decode().catch(() => {})
-      : new Promise((r) => { img.onload = r; img.onerror = r; });
+    // The hero banner only renders at >= sm (640px). The mobile hero is text-only,
+    // so on phones don't block the preloader decoding an image the device never
+    // shows — that just delayed perceived load for ~90% of (mobile) traffic.
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches;
+    let imgP = Promise.resolve();
+    if (!isMobile) {
+      const img = new Image();
+      img.src = HERO;
+      imgP = img.decode
+        ? img.decode().catch(() => {})
+        : new Promise((r) => { img.onload = r; img.onerror = r; });
+    }
     Promise.all([fontsP, imgP]).then(finish);
     const safety = setTimeout(finish, 4000); // never strand the preloader
     return () => clearTimeout(safety);
