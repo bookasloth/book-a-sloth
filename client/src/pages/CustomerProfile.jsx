@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, Mail, Phone, User, Calendar, Users, Lock } from "lucide-react";
+import { Camera, Loader2, Mail, Phone, User, Lock } from "lucide-react";
 import { getMe, updateMe, uploadImage } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -140,12 +140,6 @@ const CustomerProfile = () => {
               </Field>
               <Field icon={Mail} label="Email" hint="can't be changed">
                 <input className={inputCls} disabled value={form.email} />
-              </Field>
-              <Field icon={Calendar} label="Date of birth" hint="coming soon">
-                <input className={inputCls} disabled placeholder="—" />
-              </Field>
-              <Field icon={Users} label="Gender" hint="coming soon">
-                <input className={inputCls} disabled placeholder="—" />
               </Field>
             </div>
 
