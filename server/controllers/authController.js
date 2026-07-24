@@ -4,13 +4,14 @@ const {
   getAuthUrl,
   getTokensFromCode,
   getCalendarTimezone,
+  revokeToken,
   oauth2Client,
 } = require("../config/google");
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
-const { encrypt: encryptToken } = require("../utils/cryptoTokens");
+const { encrypt: encryptToken, decrypt: decryptToken } = require("../utils/cryptoTokens");
 const profileSecrets = require("../utils/profileSecrets");
 const planService = require("../services/planService");
 const inviteService = require("../services/inviteService");
@@ -425,6 +426,33 @@ const attachGoogleToProfile = async (profileId, tokens, googleUser) => {
     ({ error } = await supabaseAdmin.from("profiles").update(base).eq("id", profileId));
   }
   if (error) throw error;
+
+  // Retire the PREVIOUS refresh token before storing the new one.
+  //
+  // Hosts who consented before we narrowed scopes hold a grant that still
+  // includes the removed full `auth/calendar` scope. Overwriting our stored copy
+  // does not touch that grant — Google keeps serving the "remove risky access"
+  // warning until the old token is actually revoked at the OAuth endpoint.
+  // Google's remediation guidance is revoke-then-reconsent; consent has just
+  // happened in this same request (getAuthUrl always sends prompt=consent), so
+  // the fresh token below replaces it with narrow scopes only.
+  //
+  // Revoking a refresh token invalidates that token and the access tokens
+  // derived from it, not the separate token we are about to persist. Worst case
+  // (Google widens revocation to the whole grant) the host lands on the existing
+  // google_calendar_connected=false reconnect path — recoverable, not data loss.
+  // Best-effort: never let this block the login it is attached to.
+  try {
+    const prior = await profileSecrets.getGoogleTokens(profileId);
+    const priorRefresh = decryptToken(prior.google_refresh_token);
+    // Only when Google actually issued a replacement — revoking without one
+    // would leave the host with no working refresh token at all.
+    if (priorRefresh && tokens.refresh_token && priorRefresh !== tokens.refresh_token) {
+      await revokeToken(priorRefresh);
+    }
+  } catch (e) {
+    console.error("legacy Google token revoke (non-fatal):", e.message);
+  }
 
   // Tokens are persisted ONLY to profile_private (RLS deny-all to anon/auth).
   try {
