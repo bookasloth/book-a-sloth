@@ -19,6 +19,16 @@ const TAG_STYLES = {
 // misplaced entry can't show out of order (see SORTED_RELEASES).
 const RELEASES = [
   {
+    date: 'Jul 24, 2026',
+    title: 'A cleaner Google sign-in',
+    tags: ['Fixed', 'Security'],
+    points: [
+      'Signing in with Google no longer shows a warning screen about the app being unverified — you go straight from Google to your dashboard.',
+      'We also trimmed what we ask Google for down to the minimum: permission to manage your booking events, check when you’re busy, and read your calendar’s time zone. Nothing more.',
+      'The first time you sign in after this update, Google will ask you to confirm those permissions once. After that it’s business as usual, and your calendar keeps syncing exactly as before.',
+    ],
+  },
+  {
     date: 'Jul 22, 2026',
     title: 'Pricing, reimagined',
     tags: ['Improved', 'New'],
