@@ -67,6 +67,18 @@ describe('appearanceController.update', () => {
     expect(res.body.navbar_logo_mode).toBe('festive');
   });
 
+  // Both background columns are NOT NULL. With an empty background registry the
+  // admin form posts backgrounds:{} / default_background:null, which used to be
+  // written straight through and 500'd on the NOT NULL constraint.
+  test('never writes an empty backgrounds map or a null default', async () => {
+    mockState.row = { navbar_logo_mode: 'icon_text', icon_url: 'i', logo_image_url: '', festive_logo_url: '' };
+    const res = makeRes();
+    await ctrl.update({ body: { navbar_logo_mode: 'image', backgrounds: {}, default_background: null } }, res);
+    expect(res.statusCode).toBe(200);
+    expect(mockState.lastUpsert).not.toHaveProperty('backgrounds');
+    expect(mockState.lastUpsert).not.toHaveProperty('default_background');
+  });
+
   test('surfaces a DB error as 500', async () => {
     mockState.upsertError = { message: 'boom' };
     const res = makeRes();

@@ -124,10 +124,18 @@ async function update(req, res) {
   if (festive_logo_url != null) patch.festive_logo_url = String(festive_logo_url);
 
   // Background library: validate the supplied map and pin a usable default.
+  // Both columns are NOT NULL, and the background registry is currently empty
+  // (client/src/backgrounds/registry.js + config/backgroundKeys.js), so a save
+  // from the logo-only form sanitizes down to {} / null. Writing that would
+  // both violate the NOT NULL on default_background and wipe any curated map,
+  // so only persist these when there is something real to persist.
   if (req.body && req.body.backgrounds != null) {
     const backgrounds = sanitizeBackgrounds(req.body.backgrounds);
-    patch.backgrounds = backgrounds;
-    patch.default_background = resolveDefaultBackground(req.body.default_background, backgrounds);
+    if (Object.keys(backgrounds).length) {
+      patch.backgrounds = backgrounds;
+      const nextDefault = resolveDefaultBackground(req.body.default_background, backgrounds);
+      if (nextDefault) patch.default_background = nextDefault;
+    }
   } else if (req.body && req.body.default_background != null) {
     patch.default_background = String(req.body.default_background);
   }
@@ -138,9 +146,13 @@ async function update(req, res) {
       .upsert({ id: 1, ...patch }, { onConflict: 'id' })
       .select('*')
       .single();
-    if (error) return res.status(500).json({ message: 'Could not save appearance settings.' });
+    if (error) {
+      console.error('[appearance] update failed:', error);
+      return res.status(500).json({ message: 'Could not save appearance settings.' });
+    }
     res.json(publicShape(data));
-  } catch (_) {
+  } catch (err) {
+    console.error('[appearance] update threw:', err);
     res.status(500).json({ message: 'Could not save appearance settings.' });
   }
 }
