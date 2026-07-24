@@ -44,13 +44,39 @@ const getAuthUrl = (state) => {
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
-    // Incremental authorization: carry forward scopes the user already granted
-    // so re-consent doesn't silently drop prior grants. Also satisfies Google's
-    // "supports incremental authorization" OAuth verification requirement.
-    include_granted_scopes: true,
+    // Incremental authorization is DELIBERATELY OFF. It carries forward every
+    // scope the user ever granted — including the full `auth/calendar` scope we
+    // removed from the Cloud Console. Re-attaching a scope the project no longer
+    // declares makes Google serve the "This app isn't verified" screen and the
+    // Security Center "remove risky access" warning. Google's own remediation
+    // guidance is explicit: set include_granted_scopes = false after narrowing
+    // scopes. Cost: we lose the "supports incremental authorization" checkbox in
+    // OAuth verification. Do NOT flip this back to true.
+    include_granted_scopes: false,
     scope: SCOPES,
     ...(state ? { state } : {}),
   });
+};
+
+// Revoke a Google refresh/access token at the OAuth endpoint. Used to retire
+// grants that still carry the removed full `auth/calendar` scope — nulling our
+// stored copy is NOT enough; the grant lives on the user's Google account and
+// keeps triggering the Security Center warning until it is revoked.
+// Best-effort by design: returns true/false, never throws. A 400 means the
+// token is already invalid/revoked, which is the desired end state anyway.
+const revokeToken = async (token) => {
+  if (!token) return false;
+  try {
+    const res = await fetch('https://oauth2.googleapis.com/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ token }).toString(),
+    });
+    return res.ok || res.status === 400;
+  } catch (err) {
+    console.error('google.revokeToken failed (non-fatal):', err.message);
+    return false;
+  }
 };
 
 const getTokensFromCode = async (code) => {
@@ -170,6 +196,7 @@ module.exports = {
   oauth2Client,
   getAuthUrl,
   getTokensFromCode,
+  revokeToken,
   createCalendarEvent,
   updateCalendarEvent,
   deleteCalendarEvent,

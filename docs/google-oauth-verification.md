@@ -11,6 +11,27 @@ Verification path: **sensitive scopes** (no CASA audit — see "Scope inventory"
 | 2026-07-15 | #365 incremental authorization (`include_granted_scopes`) + Limited Use disclosure |
 | 2026-07-16 | Google reviewed → **rejected on App Functionality** |
 | 2026-07-17 | Reply sent with public video + test credentials (this doc) |
+| 2026-07-24 | Google flagged the app for still *requesting* the removed full `calendar` scope → `include_granted_scopes` reverted to **false**, legacy refresh tokens now revoked on next sign-in |
+
+### The 2026-07-24 unverified-app flag
+
+Hosts still saw "This app isn't verified" (and the Security Center "remove risky
+access" warning) after the #321 scope narrowing. Two causes, both now fixed:
+
+1. **`include_granted_scopes: true`** (added in #365) carried forward every scope
+   a host had ever granted — including the full `auth/calendar` the Cloud Console
+   no longer declares. Requesting an undeclared scope is what triggers the
+   unverified screen. **Now `false`.** We deliberately give up the "supports
+   incremental authorization" checkbox; Google's own remediation guidance says to
+   flip it after narrowing scopes. Do not re-enable it.
+2. **Stale refresh tokens** kept the wide grant alive on each host's Google
+   account — nulling our stored copy does nothing. `attachGoogleToProfile` now
+   calls `revokeToken()` on the previous refresh token before persisting the new
+   one, so hosts are retired lazily at their next Google sign-in, right after
+   they re-consent to the narrow scopes.
+
+Hosts who never sign in again keep the stale grant; a blanket revoke script over
+`profile_private` would be needed to clear those.
 
 ### The 2026-07-16 rejection, verbatim
 
