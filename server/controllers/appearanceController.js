@@ -46,9 +46,13 @@ function resolveDefaultBackground(requested, backgrounds) {
   return firstEnabled || null;
 }
 
+// icon_url is served relative on purpose — it resolves to the client's own
+// origin (client/public/favicon-96x96.png), a 96x96 file for a 26px navbar mark
+// instead of the 800x800 CDN original. Mirrors DEFAULTS in
+// client/src/hooks/useAppearance.js; an admin-set icon_url still wins.
 const DEFAULTS = {
   navbar_logo_mode: 'icon_text',
-  icon_url: 'https://company-assets.bookasloth.in/images/email/sloth-icon-sqr.png',
+  icon_url: '/favicon-96x96.png',
   logo_image_url: '',
   festive_logo_url: '',
 };
