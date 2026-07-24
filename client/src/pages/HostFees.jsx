@@ -21,7 +21,7 @@ const Td = ({ children, className = '' }) => (
 const HostFees = () => (
   <LegalLayout
     title="Host Fee & Payment Schedule"
-    updated="24 July 2026"
+    updated="25 July 2026"
     effective="on your acceptance during host onboarding"
     current="/host-fees"
     description="What Book A Sloth charges hosts — booking charge, platform commission, payment processing, the payment cycle, and worked examples for GST and non-GST hosts."
@@ -185,6 +185,11 @@ const HostFees = () => (
     </Section>
 
     <Section title="5. If you are not registered under GST">
+      <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+        <strong>You do not need a GST number to sell on Book A Sloth.</strong> Because you supply to us rather than
+        through us as a marketplace, listing here does not by itself require you to register. Your own registration
+        obligations under the normal thresholds are unchanged.
+      </p>
       <p>
         Book A Sloth is the seller of record, so GST is chargeable on the whole sale at our GSTIN regardless of your own
         registration status. That is why the Guest Price is higher than your Target Earning by more than our charges
@@ -203,7 +208,29 @@ const HostFees = () => (
       </p>
     </Section>
 
-    <Section title="6. Payment cycle">
+    <Section title="6. Invoicing — what you have to do">
+      <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+        <strong>Nothing, after one click.</strong> You authorise us once during onboarding, and we raise every invoice
+        for you from then on.
+      </p>
+      <p>
+        <strong>If you are GST-registered.</strong> Under the Self-Billing Authorisation in clause 6.1 of the{' '}
+        <Link to="/host-agreement" className="text-primary hover:underline">Host Services Agreement</Link>, we raise the
+        tax invoice in your name and on your behalf for every Booking. It appears on your dashboard as soon as it is
+        raised. You never have to create, upload, or number an invoice yourself.
+      </p>
+      <p>
+        You are still responsible for what those invoices say and for reporting them in your GSTR-1 and paying the
+        output tax on them. Check them, and tell us within 7 days if anything is wrong. You can withdraw the
+        authorisation on 30 days&rsquo; notice and go back to issuing your own.
+      </p>
+      <p>
+        <strong>If you are not GST-registered.</strong> We issue you a <strong>Payment Advice</strong> instead. It is not
+        a tax invoice, carries no GST, and needs nothing from you.
+      </p>
+    </Section>
+
+    <Section title="7. Payment cycle">
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
           <thead className="bg-gray-50">
@@ -229,7 +256,7 @@ const HostFees = () => (
       </ul>
     </Section>
 
-    <Section title="7. What we may deduct">
+    <Section title="8. What we may deduct">
       <p>Under clause 9 of the Agreement we may deduct from amounts payable to you:</p>
       <ul className="list-disc pl-5 space-y-1.5">
         <li>refunds and credits given to a Guest for a Booking you supplied or failed to supply;</li>
@@ -244,7 +271,7 @@ const HostFees = () => (
       </ul>
     </Section>
 
-    <Section title="8. Cancellations and refunds">
+    <Section title="9. Cancellations and refunds">
       <ul className="list-disc pl-5 space-y-1.5">
         <li><strong>You cancel or do not attend.</strong> The Guest is refunded in full, including our charges. No consideration is payable to you, and clause 12.3 applies.</li>
         <li><strong>Guest cancels in the refundable window.</strong> The Guest is refunded the service portion. The Booking Charge and Payment Processing Charge are not refunded. No consideration is payable to you.</li>
@@ -252,7 +279,7 @@ const HostFees = () => (
       </ul>
     </Section>
 
-    <Section title="9. Changes to this Schedule">
+    <Section title="10. Changes to this Schedule">
       <p>
         We may amend this Schedule on <strong>30 days&rsquo; notice</strong> by email or in-Platform notification.
         Amended charges apply only to Bookings confirmed after the notice period ends. The charges applicable to a
@@ -261,7 +288,7 @@ const HostFees = () => (
       </p>
     </Section>
 
-    <Section title="10. Questions">
+    <Section title="11. Questions">
       <p>
         Email <Mail /> or call +91 8637758344. For anything tax-related that affects your own returns, please take your
         own professional advice &mdash; we can explain what we charge and what we deduct, but we cannot advise you on

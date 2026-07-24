@@ -38,6 +38,20 @@ label.** That is the specific thing we need confirmed.
 
 ---
 
+## 1A. Already confirmed by the CA (25 July 2026)
+
+These three are settled and the documents have been updated accordingly. Listed so nothing is
+re-litigated, and so the rest of the review can assume them.
+
+1. **Self-billing is acceptable.** Book A Sloth may raise tax invoices in a registered Host's name and
+   on their behalf under a one-time authorisation. Implemented as Host Agreement clause 6.1 (with 6.1.1
+   to 6.1.3 on scope, withdrawal on 30 days' notice, and the Host's continuing responsibility to check
+   the invoices and report them in GSTR-1). Fee Schedule section 6 explains it to Hosts.
+2. **GST registration is not compulsory for Hosts.** Supplying *to* us rather than *through* us does not
+   trigger registration. Host Agreement clause 6.8; Fee Schedule section 5.
+3. **SAC and rate are not uniform.** A single blanket code will not do — see section 2A, which is now the
+   sharpest open item in this brief.
+
 ## 2. Questions for the chartered accountant
 
 1. Confirm that as merchant of record — receiving guest payments as our own revenue and paying hosts as
@@ -46,21 +60,93 @@ label.** That is the specific thing we need confirmed.
    charge or self-invoicing route is available to recover it for our service categories.
 3. Confirm **§9(5) e-commerce operator liability** does not apply to our categories (we are not
    passenger transport, accommodation, restaurant, or housekeeping).
-4. **Confirm §24(ix) compulsory registration does not hit our hosts.** Our position is that a host
-   supplies *to* us, not *through* us, so the section does not engage. If correct this is a material
-   benefit to small hosts and we want to say so in the product.
+4. ~~Confirm §24(ix) compulsory registration does not hit our hosts.~~ **Confirmed — hosts do not need
+   to register.** See section 1A. Now stated in Host Agreement clause 6.8 and Fee Schedule section 5, and
+   we intend to use it in marketing. Please confirm that wording does not overstate the position.
 5. Correct **TDS section and rate** per service category (we have assumed 194-J at 10%), the current
    threshold, and the treatment where a host crosses it mid-year.
 6. Confirm **TCS under §194-O no longer applies**, since we are the supplier rather than a facilitator.
-7. **SAC codes and GST rates per service category.** We currently use a single 998314, which we do not
-   think survives at gross turnover.
+7. **SAC codes and GST rates per service category.** Confirmed as varying — now expanded into section 2A,
+   which is the highest-priority open item in this brief.
 8. **Place of supply** for online and in-person services supplied to unregistered guests — IGST vs
    CGST+SGST, and exactly what we must capture at checkout.
-9. Should registered hosts issue their **own tax invoices**, or is a documented self-billing arrangement
-   acceptable? We have drafted for host-issued with self-billing as an alternative.
+9. ~~Should registered hosts issue their own tax invoices, or is self-billing acceptable?~~
+   **Confirmed: self-billing is acceptable.** See section 1A. Remaining sub-question — please review the
+   wording of the authorisation in Host Agreement clause 6.1 and tell us whether anything further is
+   required to make it valid (for example a specific form of consent, or a record we must retain).
 10. Which **turnover thresholds** arrive earlier now that declared revenue is gross merchandise value
     rather than fee income — tax audit and any others.
 11. Whether our own **GST registration needs amendment** for the change in the nature of supply.
+
+---
+
+## 2A. The category-treatment problem — highest priority
+
+The CA has confirmed SAC and rate vary by category, and specifically raised **medical practitioners
+offering consultations** through the Platform. On examination this is not a rate question. It may be a
+structural one, and it may mean merchant-of-record is the wrong model for some categories.
+
+### The medical question
+
+Healthcare services are **exempt** under Notification 12/2017-CT(R), Entry 74. But the exemption is
+framed around *who supplies*: "a clinical establishment, an authorised medical practitioner or
+para-medics."
+
+Under merchant of record **the supplier is Book A Sloth**, which is none of those things.
+
+> **Q1. Does the Entry 74 exemption survive when Book A Sloth, as merchant of record, resells a
+> consultation performed by an authorised medical practitioner? Or does our outward supply become
+> taxable at 18%?**
+
+Both answers cost us, so we need to know which:
+
+- **Exemption does not carry** → a ₹1,000 consultation that attracts no GST when the doctor bills the
+  patient directly becomes roughly ₹1,190 through us. That is likely fatal for the category, and we
+  should not onboard doctors at all under this model.
+- **Exemption does carry** → we are making exempt supplies. That triggers input tax credit apportionment
+  under Rules 42 and 43, so part of the credit on *our own* costs (gateway charges, hosting, software)
+  becomes non-recoverable in proportion to exempt turnover — reducing margin across the entire book, not
+  only on medical bookings.
+
+> **Q2. If the exemption does carry, quantify the Rule 42/43 reversal on a book that is, say, 20% exempt
+> by value.**
+>
+> **Q3. Our ₹10 booking charge is presumably taxable even where the underlying service is exempt. Does
+> that make the transaction a composite or a mixed supply, and how must the invoice present it?**
+
+### Advocates and reverse charge
+
+Legal services supplied by an advocate to a business entity fall under reverse charge. We are a business
+entity, so a host who is an advocate supplies to us under RCM.
+
+> **Q4. Confirm that an advocate host's supply to us is under reverse charge, that we must self-invoice
+> under section 31(3)(f) and discharge the tax, and that we may then claim it as credit. Is the resulting
+> outward supply to the guest taxable at 18%?**
+
+This is a materially different money flow from every other category, not a different rate.
+
+### Everything else we think varies
+
+Our current understanding, for correction:
+
+| Category | What we think | Confirm? |
+|---|---|---|
+| Doctor / medical consultation | Exempt at source — survival on resale unknown | **Q1** |
+| Advocate / legal | Reverse charge to us as a business | **Q4** |
+| Yoga instruction | Exempt only where the supplier is registered under 12AA/12AB; a commercial instructor is 18% | ? |
+| Tutoring / coaching | 18% for a private tutor; exempt for an "educational institution" | ? |
+| Salon, fitness, photography, astrology, events, consulting | Plain 18% | ? |
+
+> **Q5. Please give us the treatment (taxable / exempt / reverse charge), the rate, and the SAC code for
+> each category, so we can hold them in a table rather than in code.**
+
+### What we intend to do meanwhile
+
+Launch with plain-18% categories only, and gate medical, legal, and charitable-yoga behind a flag until
+each is ruled on. Host Agreement clause 6.9 reserves the right to do this. Please confirm that is
+prudent, and flag any category in the table above that we have mis-assumed as safe.
+
+---
 
 ### Specific document points for the CA
 

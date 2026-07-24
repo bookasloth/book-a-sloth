@@ -18,7 +18,7 @@ const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary
 const HostAgreement = () => (
   <LegalLayout
     title="Host Services Agreement"
-    updated="24 July 2026"
+    updated="25 July 2026"
     effective="on your acceptance during host onboarding"
     current="/host-agreement"
     description="The agreement between Book A Sloth and its Hosts — how services are purchased, priced, invoiced, and paid for. Read before you list a service."
@@ -60,6 +60,7 @@ const HostAgreement = () => (
         <li><strong>&ldquo;Guest Price&rdquo;</strong> — the total amount payable by the Guest to Book A Sloth for a Booking, inclusive of GST.</li>
         <li><strong>&ldquo;Payment Cycle&rdquo;</strong> — the periodic payment of your invoices described in clause 7 and the Fee Schedule.</li>
         <li><strong>&ldquo;Plan&rdquo;</strong> — the subscription tier applicable to your Host account (Starter, Host+, Studio, or Enterprise).</li>
+        <li><strong>&ldquo;Self-Billing Authorisation&rdquo;</strong> — the one-time authorisation under clause 6.1 permitting Book A Sloth to raise tax invoices in your name and on your behalf.</li>
       </ul>
     </Section>
 
@@ -186,10 +187,25 @@ const HostAgreement = () => (
 
     <Section title="6. Invoicing and GST">
       <p>
-        <strong>6.1 If you are GST-registered.</strong> You will issue Book A Sloth a valid tax invoice complying with
-        the CGST Rules for each Booking or group of Bookings, showing your GSTIN, our GSTIN as recipient, the taxable
-        value H, and GST at the applicable rate. We may generate a draft invoice for your adoption; adopting it does
-        not transfer responsibility for its accuracy to us.
+        <strong>6.1 If you are GST-registered — self-billing.</strong> By accepting this Agreement you authorise Book A
+        Sloth, on a <strong>one-time basis</strong>, to raise tax invoices in your name and on your behalf for every
+        Booking, under a self-billing arrangement. Each invoice will show your GSTIN, our GSTIN as recipient, the
+        taxable value H, and GST at the applicable rate, and will be available to you on your Host dashboard as soon as
+        it is raised.
+      </p>
+      <p>
+        <strong>6.1.1</strong> You need take no further action for any individual Booking. The authorisation applies to
+        all Bookings from the date you give it until you withdraw it.
+      </p>
+      <p>
+        <strong>6.1.2</strong> You may withdraw the authorisation by <strong>30 days&rsquo;</strong> written notice to{' '}
+        <Mail />, after which you must issue your own compliant tax invoice for each Booking before payment falls due.
+      </p>
+      <p>
+        <strong>6.1.3</strong> Self-billing does not transfer your obligations to us. The invoices are your supplies.
+        You remain responsible for checking them, for reporting them under clause 6.2, and for discharging the output
+        tax on them. Notify us within <strong>7 days</strong> of any error in an invoice we have raised so it can be
+        corrected.
       </p>
       <p>
         <strong>6.2 Your filing obligation.</strong> You will report each such invoice in your GSTR-1 within the
@@ -222,6 +238,19 @@ const HostAgreement = () => (
       <p>
         <strong>6.7 Your own taxes.</strong> You are solely responsible for your own income tax, GST, professional tax,
         and any other tax on the amounts you receive, and for your own returns, records, and registrations.
+      </p>
+      <p>
+        <strong>6.8 You do not need to be GST-registered.</strong> Registration under GST is not a condition of
+        supplying under this Agreement. Because you supply <strong>to</strong> Book A Sloth rather than through it as a
+        marketplace, using the Platform does not by itself trigger compulsory registration. Your own registration
+        obligations under the general statutory thresholds are unaffected and remain your responsibility.
+      </p>
+      <p>
+        <strong>6.9 Treatment varies by service category.</strong> The GST rate and treatment applicable to a Service
+        depend on its category. Some categories may be exempt from GST or subject to reverse charge, and the correct
+        treatment is determined by Book A Sloth on professional advice. Book A Sloth may decline to make a category
+        available on the Platform, or make it available only on specified terms, where the treatment is unsettled or
+        where doing so would be inconsistent with clause 2.
       </p>
     </Section>
 

@@ -68,9 +68,16 @@ commission and processing split, the GST-registration snapshot.
 
 Not "nice to have before launch". These change the shape of the code.
 
+**Confirmed by the CA on 25 July 2026** (see `docs/legal-review-brief.md` §1A):
+
+- **Self-billing is allowed.** One-time authorisation from the host, then we raise every invoice in their
+  name. Build item, not a blocker — see Phase 3 and Phase 6.
+- **Hosts do not need GST registration.** Live in Host Agreement cl. 6.8 and Fee Schedule §5.
+- **SAC and rate are not uniform.** This one got worse on examination, not better — see the row below.
+
 | Blocker | Blocks | Why |
 |---|---|---|
-| CA: SAC code + GST rate **per service category** | Phases 1, 2 | `config/sellerIdentity.js` hardcodes `SAC_BOOKING = '998314'` for everything. Fine on a ₹10 fee. At gross GMV an under-collected rate is a real liability. |
+| **CA: category *treatment*, not just rate** | Phases 1, 2, 4, 6 | Confirmed to vary, and the CA raised medical consultations. Healthcare is **exempt** (Notif. 12/2017 Entry 74) — but the exemption is framed around the *supplier* being a clinical establishment or authorised practitioner, and under this model **the supplier is us**. If the exemption doesn't carry, medical is 18% through us vs 0% direct and the category is unusable. If it does carry, we make exempt supplies and eat Rule 42/43 ITC reversal across the **whole** book. Advocates are a third case — reverse charge, a different money flow entirely. Full questions in the brief §2A. |
 | CA: TDS section, rate, current threshold | Phase 7 | Sets the deduction table and the per-host per-FY tracker. Wrong = tax + penalty + 30% expense disallowance. |
 | CA: place-of-supply rule, online vs in-person, unregistered guests | Phase 5 | Decides the checkout field and IGST vs CGST+SGST. |
 | **CA: the 5 existing booking invoices** | cleanup | Real GST documents with serials in a gap-free series. ₹190 of tests, but if they were reported in GSTR-1 they are in a filed return. Ask whether to leave them or credit-note them. **Do not delete the rows either way — that breaks the serial series.** |
@@ -147,6 +154,16 @@ changes September's input-credit position.
 **`subscription_plans.limits`** gains `max_service_price` (Starter 5000), `booking_charge`,
 `commission_pct`, `pg_charge_pct`, `absorbs_pg`. Per the project rule, limits are never hardcoded.
 
+**`service_categories`** gains `gst_treatment TEXT` (`taxable` | `exempt` | `rcm`) · `gst_rate` ·
+`sac_code` · `onboarding_enabled BOOLEAN DEFAULT false`.
+
+Default `onboarding_enabled` to **false** and switch categories on as the CA rules on each. Launch with
+plain-18% categories only — salon, fitness, photography, coaching, consulting, tutoring, astrology, events.
+Medical, legal, and charitable-yoga stay off until answered. Host Agreement clause 6.9 reserves the right
+to gate categories exactly this way, so no agreement is breached by doing it.
+
+**`profiles`** also gains `self_billing_authorised_at` and `self_billing_authorisation_version`.
+
 ---
 
 ## Phase 3 — Host fields and agreement acceptance
@@ -157,6 +174,12 @@ changes September's input-credit position.
 | GSTIN legal name | A mismatch against our records denies input credit. Warn at entry; verify against GSTN if feasible. |
 | PAN | Already stored encrypted in `kyc_submissions.pan_number` via `utils/kycCrypto.js`. **Gate the first payment on it** — §206AA is 20% vs 10%, and the host will blame us. |
 | Agreement acceptance | Blocking step at dashboard entry, recorded with version and timestamp. |
+| **Self-billing authorisation** | `profiles.self_billing_authorised_at` + `self_billing_authorisation_version`. One click, covers every future booking, withdrawable on 30 days' notice (Agreement cl. 6.1.2). Only meaningful for GST-registered hosts, but capture it from everyone so a host who registers later needs no extra step. |
+
+**Self-billing is the highest-leverage thing in this phase.** Without it, every registered host has to
+generate, number, and upload a compliant GST invoice every fortnight — and the ones who don't cost us the
+input credit. With it, they click once and never think about invoicing again. Build the authorisation
+before the payment run (Phase 7) depends on it.
 
 With 53 friends and test accounts there is no campaign, no deadline, and no delisting logic. Ship the
 acceptance step for correctness and tell the real people directly.
@@ -199,9 +222,19 @@ invoicing problem. **Extend it, do not replace it.**
 - Guest tax invoice: taxable value becomes `targetEarning + bookingCharge`, not the fee. One line.
   **No host GSTIN anywhere on it.**
 - New series in `config/sellerIdentity.js`: `HB` for host bills, `CN` for credit notes.
-- Payment Advice generator: never renders as "Tax Invoice", carries the explicit no-input-credit line,
-  separate serial series.
+- **Self-billed host tax invoice** (registered hosts): raised by us in the host's name, showing the
+  host's GSTIN as supplier and ours as recipient. This is the host's document, not ours — it needs its own
+  series and must not be numbered from our outward series.
+- Payment Advice generator (unregistered hosts): never renders as "Tax Invoice", carries the explicit
+  no-input-credit line, separate serial series again.
 - Credit notes on refund, with the 30 November following-FY deadline tracked.
+- **Exempt categories, once any are enabled:** the invoice must read "exempt supply", not "GST @ 0%" —
+  different legal wording, and no tax line at all. The engine needs no change (`gstRate = 0` already
+  works); the document does.
+
+Three document types now flow through here — our outward invoice, the host's self-billed invoice, and the
+Payment Advice. Keeping their serial series separate is not cosmetic; sharing one would corrupt both sets
+of records.
 
 ---
 
@@ -319,6 +352,14 @@ Phase 6 deserves the most review attention, not the most code.
 
 ## Changelog
 
+- **v3** — CA confirmed three things. **Self-billing allowed**: build a one-time authorisation
+  (`profiles.self_billing_authorised_at`) and generate every registered host's invoice ourselves; this
+  removes the model's worst UX and its most likely ITC failure. **Hosts need no GST registration**: now an
+  acquisition line, live in Host Agreement cl. 6.8 and Fee Schedule §5. **SAC and rate vary** — and on
+  examination this is worse than a rate column: healthcare is exempt at source but the exemption is framed
+  around the *supplier*, and under this model the supplier is us. Added `service_categories.gst_treatment`
+  with `onboarding_enabled` defaulting to false, so we launch on plain-18% categories and switch the rest
+  on as answered. Host Agreement cl. 6.9 added to reserve that right.
 - **v2** — production checked: ₹190 GMV across 27 test bookings, so no migration is needed. Dropped the
   per-host `pricing_model` split and the dual pricing engine; `pricingEngine.js` is rewritten in place.
   Established that `settlementService` reads stored values and never recomputes, and that reusing
