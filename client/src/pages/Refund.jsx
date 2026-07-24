@@ -1,109 +1,213 @@
 import { Link } from 'react-router-dom';
-import LegalLayout, { Section } from '../components/common/LegalLayout';
+import LegalLayout, { Section, MOR_EFFECTIVE } from '../components/common/LegalLayout';
 
-// /refund — Refund & Cancellation Policy. Text mirrors /legal/REFUND_POLICY.md.
+// /refund — Refund & Cancellation Policy.
+//
+// Rewritten for the merchant-of-record model: Book A Sloth is the SELLER, so refunds
+// are our obligation to the guest and we recover from the host separately. The old
+// version said refunds relate to "a service that was paid out to a host" — payout
+// language that contradicts the model. Do not reintroduce it.
+//
+// The booking + processing charge is non-refundable on guest-initiated cancellations
+// because the gateway does not return MDR on a refund. That is only defensible while
+// it is disclosed BEFORE payment — keep the checkout disclosure in step with this page.
+
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
+
+const Th = ({ children }) => (
+  <th className="text-left p-2.5 font-semibold text-ink border-b-2 border-gray-200">{children}</th>
+);
+const Td = ({ children, className = '' }) => (
+  <td className={`p-2.5 border-b border-gray-100 ${className}`}>{children}</td>
+);
 
 const Refund = () => (
   <LegalLayout
     title="Refund & Cancellation Policy"
+    updated="24 July 2026"
+    effective={MOR_EFFECTIVE}
     current="/refund"
-    description="Book A Sloth refund and cancellation policy — how refunds work for bookings, digital products, and subscriptions, processed via Razorpay."
+    description="Book A Sloth refund and cancellation policy — cancellation windows, what is refundable, host cancellations, timelines, and how to claim."
     intro={
       <>
         <p>
-          This Refund &amp; Cancellation Policy applies to all payments made on the Book A Sloth platform (the "Platform"),
-          operated by <strong>Timewheel Internet Private Limited</strong> (CIN: U62012OD2026PTC052654,
-          GSTIN: 21AAMCT8270C1ZF) ("Book A Sloth", "we", "us"). It forms part of, and should be read together with, our{' '}
-          <Link to="/terms" className="text-primary hover:underline">Terms &amp; Conditions</Link> and{' '}
-          <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+          This Refund &amp; Cancellation Policy applies to every payment made on the Book A Sloth platform (the
+          &ldquo;<strong>Platform</strong>&rdquo;), operated by <strong>Timewheel Internet Private Limited</strong>{' '}
+          (CIN: U62012OD2026PTC052654, GSTIN: 21AAMCT8270C1ZF) (&ldquo;<strong>Book A Sloth</strong>&rdquo;,
+          &ldquo;we&rdquo;, &ldquo;us&rdquo;). It forms part of our{' '}
+          <Link to="/guest-terms" className="text-primary hover:underline">Guest Terms of Sale</Link> and our{' '}
+          <Link to="/terms" className="text-primary hover:underline">Terms of Use</Link>.
+        </p>
+        <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+          <strong>Book A Sloth is the seller.</strong> Refunds are our responsibility, not the host&rsquo;s. You never
+          need to chase a host for your money &mdash; you claim from us, and we deal with the host ourselves.
         </p>
         <p>
-          All payments are processed through our payment gateway <strong>Razorpay</strong>. All amounts are in Indian
-          Rupees (INR) unless stated otherwise.
+          Payments are processed through <strong>Razorpay</strong>. All amounts are in Indian Rupees.
         </p>
       </>
     }
   >
-    <Section title="1. General position — all sales are final">
+    <Section title="1. Cancellation windows for bookings">
       <p>
-        Bookings, digital product purchases, and plan/subscription fees on the Platform are <strong>final and
-        non-refundable</strong>, except in the limited circumstances described in Section 2.
+        The window that applies is shown at checkout before you pay. Unless the listing states a different window, the
+        default is:
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
+          <thead className="bg-gray-50">
+            <tr>
+              <Th>You cancel</Th>
+              <Th>Service amount</Th>
+              <Th>Booking &amp; processing charge</Th>
+            </tr>
+          </thead>
+          <tbody className="text-gray-600">
+            <tr><Td>More than <strong>24 hours</strong> before the start time</Td><Td><strong>Refunded in full</strong></Td><Td>Not refunded</Td></tr>
+            <tr><Td>Between <strong>6 and 24 hours</strong> before</Td><Td><strong>50% refunded</strong></Td><Td>Not refunded</Td></tr>
+            <tr><Td>Less than <strong>6 hours</strong> before</Td><Td>Not refunded</Td><Td>Not refunded</Td></tr>
+            <tr><Td className="border-b-0">You do not attend</Td><Td className="border-b-0">Not refunded</Td><Td className="border-b-0">Not refunded</Td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p className="pt-1">
+        The reason for the shorter windows is simple: the time was held for you and could not be sold to anyone else.
       </p>
       <p>
-        By completing a payment you acknowledge that you are paying for a service or product made available to you at
-        the time of purchase, and that you are not entitled to a refund merely because you change your mind, fail to
-        attend, or no longer want the service.
+        <strong>Free bookings</strong> (₹0) can be cancelled at any time at no cost.
       </p>
     </Section>
 
-    <Section title="2. When you are eligible for a refund">
-      <p>We will issue a refund in the following circumstances:</p>
-      <p><strong>(a) Duplicate or erroneous charges.</strong> You were charged more than once for the same booking or product, or a technical error caused an incorrect amount to be charged.</p>
-      <p><strong>(b) Payment succeeded but the booking/product was not delivered.</strong> Your payment was completed but, due to a technical failure on the Platform, your booking was not confirmed or your digital product could not be made available to you.</p>
-      <p><strong>(c) Host no-show or host cancellation.</strong> The host fails to attend the scheduled appointment, cancels the booking, or does not deliver the service that was paid for, and you did not receive a comparable alternative (such as an agreed reschedule).</p>
-      <p><strong>(d) Failed transactions.</strong> Money was debited from your account but the transaction failed or was not recognised by the Platform. In most cases the bank or payment provider reverses such amounts automatically within their standard timelines.</p>
-      <p>Refunds are limited to the amount actually paid for the affected booking or product. We do not provide compensation beyond the amount paid.</p>
+    <Section title="2. Why the booking and processing charge is not refunded">
+      <p>
+        The small booking charge and payment processing charge shown at checkout cover costs we incur the moment your
+        payment is taken. Our payment provider does not return its processing fee to us when a payment is refunded, so
+        that cost is real and already spent.
+      </p>
+      <p>
+        These charges are itemised at checkout <strong>before</strong> you pay, and marked non-refundable there. If you
+        do not accept that, do not complete the payment.
+      </p>
+      <p>
+        <strong>This does not apply where the fault is ours.</strong> If we or the host cancel, or the service is not
+        delivered, you get <strong>everything</strong> back, including these charges. See Section 3.
+      </p>
     </Section>
 
-    <Section title="3. What is not refundable">
+    <Section title="3. When you get a full refund, including all charges">
+      <p>We refund the entire amount you paid in each of these cases:</p>
       <ul className="list-disc pl-5 space-y-1.5">
-        <li><strong>Change of mind, no-shows, or late arrival by the guest.</strong></li>
-        <li><strong>Bookings the guest cancels</strong> outside the circumstances in Section 2.</li>
-        <li><strong>Services already delivered</strong> or partially delivered as described.</li>
-        <li><strong>Plan / subscription fees</strong> paid by hosts (e.g. Host+ or Studio plans), including any applicable GST, once the plan has been activated. These give immediate access to plan features and are non-refundable.</li>
-        <li><strong>Digital products</strong> that have been delivered or for which a download link has been issued.</li>
-        <li><strong>Payment gateway charges</strong>, where these are non-recoverable from the processor.</li>
+        <li><strong>The host does not attend</strong>, cancels, or does not deliver the service that was paid for.</li>
+        <li><strong>We cancel</strong> the booking for any reason.</li>
+        <li><strong>The service was not delivered</strong> because of a technical failure on the Platform after your payment succeeded.</li>
+        <li><strong>You were charged more than once</strong> for the same booking, or a technical error charged an incorrect amount.</li>
+        <li><strong>Money was debited but the transaction failed.</strong> In most cases your bank reverses this automatically within its own timelines.</li>
+        <li><strong>We substituted the person performing the service</strong> and you told us before the scheduled time that this was not acceptable to you.</li>
+        <li><strong>The service was materially different</strong> from its description, or fell materially below reasonable standards. We will investigate and may refund in full or in part depending on what we find.</li>
       </ul>
     </Section>
 
-    <Section title="4. How to request a refund">
-      <p>To request a refund under Section 2:</p>
+    <Section title="4. Rescheduling">
+      <p>
+        Where the listing allows it, you may reschedule free of charge up to the cut-off shown at checkout, subject to
+        availability. Rescheduling keeps your original payment &mdash; no refund is issued and no new payment is taken.
+      </p>
+      <p>
+        A reschedule requested after the cut-off is treated as a cancellation under Section 1. A rescheduled booking may
+        be rescheduled once; after that, the cancellation windows apply from the original booking time.
+      </p>
+    </Section>
+
+    <Section title="5. What is not refundable">
+      <ul className="list-disc pl-5 space-y-1.5">
+        <li><strong>Change of mind</strong> after the applicable cancellation window has closed.</li>
+        <li><strong>Non-attendance or late arrival</strong> by you, including where you arrive so late that the service cannot reasonably be delivered.</li>
+        <li><strong>Services already delivered</strong> as described.</li>
+        <li><strong>Sessions ended early</strong> because of abusive, threatening, discriminatory, or unsafe behaviour.</li>
+        <li><strong>Booking and payment processing charges</strong> on a cancellation you initiate (Section 2).</li>
+        <li><strong>Subscription and plan fees</strong> paid by hosts (Host+, Studio, Enterprise), including GST, once the plan is activated. These give immediate access to plan features. If you cancel a subscription, it stops renewing at the end of the paid period; the remainder of that period is not refunded.</li>
+        <li><strong>Digital products</strong> once delivered or once a download link has been issued.</li>
+        <li><strong>Your own costs</strong> &mdash; travel, data, equipment, time, or any other expense connected with a booking.</li>
+        <li><strong>Bank or card conversion charges</strong> on international payments.</li>
+      </ul>
+      <p className="pt-1">
+        Nothing in this Section removes your right to a remedy where a service was not delivered or was deficient. That
+        right is protected by law and is dealt with in Section 3.
+      </p>
+    </Section>
+
+    <Section title="6. How to claim a refund">
       <ol className="list-decimal pl-5 space-y-1.5">
-        <li>Email <Mail /> within <strong>7 days</strong> of the booking date, appointment time, or purchase.</li>
-        <li>Include your name, the email used for the booking, the booking or transaction reference (Razorpay payment ID if available), the date and time of the appointment, and a description of the issue.</li>
+        <li>Cancel through the Platform where the option is available &mdash; that is the fastest route and applies Section 1 automatically.</li>
+        <li>For anything in Section 3, email <Mail /> within <strong>7 days</strong> of the scheduled time.</li>
+        <li>Include your name, the phone number or email used for the booking, the booking reference (and the Razorpay payment ID if you have it), the date and time of the appointment, and what went wrong.</li>
       </ol>
-      <p>We will review your request and respond within a reasonable time. We may contact the host to verify the circumstances (for example, in a host no-show claim).</p>
+      <p>
+        We aim to acknowledge within <strong>48 hours</strong> and decide within <strong>7 working days</strong>. We may
+        contact the host to verify what happened, and we may ask you for further information. If we do, please reply
+        within 5 working days so we can close the matter.
+      </p>
     </Section>
 
-    <Section title="5. How refunds are processed">
+    <Section title="7. How refunds are paid">
       <ul className="list-disc pl-5 space-y-1.5">
-        <li>Approved refunds are processed back to your <strong>original payment method</strong> through Razorpay.</li>
-        <li>We will initiate eligible refunds within <strong>5–7 business days</strong> of approving your request.</li>
-        <li>After we initiate a refund, it typically takes <strong>5–10 business days</strong> for the amount to appear in your account, depending on your bank or payment provider's timelines, which are outside our control.</li>
-        <li>Refunds are made in INR. Any currency conversion differences or third-party charges are not our responsibility.</li>
+        <li>Approved refunds go back to your <strong>original payment method</strong> through Razorpay. We cannot refund to a different account, card, or person.</li>
+        <li>We initiate approved refunds within <strong>5&ndash;7 working days</strong> of approval.</li>
+        <li>After we initiate it, the amount usually reaches you in <strong>5&ndash;10 working days</strong>, depending on your bank or card issuer. Those timelines are outside our control.</li>
+        <li>Refunds are made in INR. Currency conversion differences and third-party charges are not our responsibility.</li>
+        <li>Where a refund is issued, we also issue a credit note against the original tax invoice and adjust the GST accordingly.</li>
+        <li>Where only part of a booking is refunded, the credit note reflects the refunded portion.</li>
       </ul>
     </Section>
 
-    <Section title="6. Role of hosts and the Platform">
+    <Section title="8. Our arrangement with hosts">
       <p>
-        Book A Sloth provides the technology that lets hosts publish services and receive payments, and facilitates
-        refunds through Razorpay. Hosts are responsible for delivering the services they offer. Where a refund relates
-        to a service that was paid out to a host, we may recover or adjust the relevant amount from the host as part of
-        processing your refund.
+        Book A Sloth buys the service from the host and sells it to you. Where we refund you for something the host
+        caused, we recover that amount from the host under our agreement with them. That is a matter between us and the
+        host and it never delays or reduces your refund.
       </p>
     </Section>
 
-    <Section title="7. Chargebacks and disputes">
+    <Section title="9. Chargebacks">
       <p>
-        If you have a concern about a payment, please contact us first at <Mail /> so we can try to resolve it. Raising
-        a chargeback with your bank without contacting us may delay resolution. We reserve the right to contest
-        chargebacks we believe are unwarranted and to provide relevant transaction records to the payment provider.
+        If you have a concern about a payment, please contact us first at <Mail />. We can usually resolve it faster
+        than a bank dispute.
+      </p>
+      <p>
+        Raising a chargeback without contacting us generally slows resolution down. We reserve the right to contest
+        chargebacks we consider unwarranted and to provide the relevant transaction records &mdash; booking
+        confirmation, attendance record, and correspondence &mdash; to the payment provider.
       </p>
     </Section>
 
-    <Section title="8. Changes to this Policy">
+    <Section title="10. Fraud and misuse">
       <p>
-        We may update this Policy from time to time. The version in effect at the time of your purchase governs that
-        purchase. We will post the revised version with a new "Last updated" date.
+        We may decline a refund, and may restrict or close an account, where we have reasonable grounds to believe a
+        claim is fraudulent, where cancellations are used repeatedly to hold time without intending to attend, or where
+        the Platform is used to obtain services without paying for them.
       </p>
     </Section>
 
-    <Section title="9. Contact">
-      <p>For any refund or cancellation query:</p>
+    <Section title="11. Changes to this Policy">
+      <p>
+        We may update this Policy. <strong>The version in force at the time of your purchase governs that
+        purchase</strong> &mdash; a later change never applies retrospectively to a booking you have already made. We
+        publish revised versions with a new &ldquo;Last updated&rdquo; date.
+      </p>
+    </Section>
+
+    <Section title="12. Your rights and how to escalate">
+      <p>
+        Nothing in this Policy limits any right you have under the <strong>Consumer Protection Act, 2019</strong> or
+        any other law that cannot be excluded by agreement.
+      </p>
+      <p>
+        If you are not satisfied with our decision, escalate to our Grievance Officer,{' '}
+        <strong>Shubham Narendra Datarkar</strong>, at <Mail />.
+      </p>
       <p><strong>Email:</strong> <Mail /> &middot; <strong>Phone:</strong> +91 8637758344</p>
-      <p className="pt-1"><strong>Timewheel Internet Private Limited</strong> (CIN: U62012OD2026PTC052654)</p>
-      <p>Registered office: Ground Floor, Holding No-55, Ward No-19, Natapada, Jajpur Road, Byasanagar, District Jajpur, Odisha – 755019, India</p>
+      <p className="pt-1"><strong>Timewheel Internet Private Limited</strong> (CIN: U62012OD2026PTC052654 | GSTIN: 21AAMCT8270C1ZF)</p>
+      <p>Registered office: Ground Floor, Holding No-55, Ward No-19, Natapada, Jajpur Road, Byasanagar, District Jajpur, Odisha &ndash; 755019, India</p>
       <p>Operations office: #6, 2nd Floor, Eureka Coworking, Mate Square, Nagpur, Maharashtra</p>
     </Section>
   </LegalLayout>

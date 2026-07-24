@@ -27,6 +27,11 @@ const COLUMNS = [
     { t: 'Privacy', href: '/privacy' },
     { t: 'Refund', href: '/refund' },
   ] },
+  { h: 'Legal', links: [
+    { t: 'Guest Terms of Sale', href: '/guest-terms' },
+    { t: 'Host Agreement', href: '/host-agreement' },
+    { t: 'Host Fee Schedule', href: '/host-fees' },
+  ] },
 ];
 
 // Brand-icon paths (simple-icons, 24x24, fill=currentColor). Email uses a heroicons envelope glyph.

@@ -10,6 +10,13 @@ import { ogCard } from '../../config/ogImages';
  * in each page component (Terms.jsx, Privacy.jsx, Refund.jsx).
  */
 
+// Effective date for the merchant-of-record document set (/guest-terms, /refund,
+// /terms, and the host pair). They describe how the platform will operate once the
+// model ships, NOT how it behaves today — publishing a legal page that contradicts
+// the running product is worse than publishing nothing. Change this ONE constant to
+// the real go-live date once pricingEngine, invoicing, and the payment cycle land.
+export const MOR_EFFECTIVE = '1 September 2026';
+
 export const Section = ({ title, children }) => (
   <section className="mb-7 last:mb-0">
     <h2 className="text-[15px] font-semibold mb-2 text-ink">{title}</h2>
@@ -18,12 +25,27 @@ export const Section = ({ title, children }) => (
 );
 
 const POLICIES = [
-  { to: '/terms',   label: 'Terms & Conditions' },
-  { to: '/privacy', label: 'Privacy Policy' },
-  { to: '/refund',  label: 'Refund & Cancellation' },
+  { to: '/terms',           label: 'Terms of Use' },
+  { to: '/privacy',         label: 'Privacy Policy' },
+  { to: '/guest-terms',     label: 'Guest Terms of Sale' },
+  { to: '/refund',          label: 'Refund & Cancellation' },
+  { to: '/host-agreement',  label: 'Host Agreement' },
+  { to: '/host-fees',       label: 'Host Fee Schedule' },
 ];
 
-export default function LegalLayout({ title, updated = '20 June 2026', current, intro, description, children }) {
+export default function LegalLayout({
+  title,
+  updated = '20 June 2026',
+  // `effective` defaults to `updated`. The merchant-of-record documents carry a
+  // FUTURE effective date on purpose: they describe how the platform will operate
+  // once the model ships, and a legal page that contradicts how the product
+  // actually behaves today is worse than no page at all.
+  effective,
+  current,
+  intro,
+  description,
+  children,
+}) {
   useDocumentMeta({ title: `${title} | Book A Sloth` });
   const canonical = current ? `${SITE_URL}${current}` : undefined;
 
@@ -38,7 +60,7 @@ export default function LegalLayout({ title, updated = '20 June 2026', current, 
     <div className="app-container py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <h1 className="text-2xl sm:text-3xl font-bold mb-1 text-ink">{title}</h1>
-        <p className="text-xs text-gray-400 mb-6">Last updated: {updated} &middot; Effective: {updated}</p>
+        <p className="text-xs text-gray-400 mb-6">Last updated: {updated} &middot; Effective: {effective || updated}</p>
 
         {/* Cross-links between the three documents */}
         <nav className="flex flex-wrap gap-2 mb-7" aria-label="Legal documents">

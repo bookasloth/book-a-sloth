@@ -13,6 +13,7 @@ const { normalizeSlug } = require('../utils/slugNormalize');
 const ROUTES = [
   'login', 'logout', 'signin', 'signup', 'register', 'forgot-password', 'reset-password',
   'help', 'about', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore',
+  'guest-terms', 'host-agreement', 'host-fees', // legal document set
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'manage-booking', 'lp', 'for',
   'og', // /og/blog/:slug — render target for the OG card generator
