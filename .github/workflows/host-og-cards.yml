@@ -82,6 +82,10 @@ jobs:
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: placeholder-anon-key-unused-by-og-route
           VITE_API_URL: https://placeholder.invalid/api
+          # Unset → index.html keeps a literal `%VITE_POSTHOG_HOST%` href and Vite's
+          # decodeURI throws "URI malformed". Every %PLACEHOLDER% in index.html needs
+          # a value here, used or not.
+          VITE_POSTHOG_HOST: https://placeholder.invalid
 
       - name: Decide mode
         id: mode
