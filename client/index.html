@@ -32,6 +32,20 @@
     <meta name="twitter:title" content="Book A Sloth — booked &amp; paid at 0% commission" />
     <meta name="twitter:description" content="Keep what you earn — 0% commission, flat pricing, UPI &amp; GST built in. Built for India." />
     <meta name="twitter:image" content="https://bookasloth.com/og-image.png" />
+    <!-- Preconnect to the four cross-origin hosts on the critical path, so the
+         DNS + TLS handshake overlaps the HTML parse instead of stalling the
+         first request to each. Lighthouse measured 660ms (PostHog) / 310ms (API)
+         / 300ms (CDN) of LCP sitting in connection setup. Keep this list at four
+         — more preconnects contend for bandwidth and stop paying for themselves.
+         Values come from the build env (Vite substitutes %VITE_*% in this file);
+         an unset var leaves an unparseable href the browser simply ignores. -->
+    <link rel="preconnect" href="%VITE_POSTHOG_HOST%" crossorigin />
+    <link rel="preconnect" href="%VITE_API_URL%" crossorigin />
+    <link rel="preconnect" href="https://company-assets.bookasloth.in" crossorigin />
+    <!-- Supabase Storage — host cover + profile photos, the LCP image on every
+         /:username profile page. -->
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
+
     <!-- Self-hosted fonts (see src/styles/fonts.css). Preload only the two
          above-the-fold weights — heading (Plus Jakarta Sans) + body (Poppins 400) —
          so the hero gets them fastest; the rest load on demand via @font-face. -->

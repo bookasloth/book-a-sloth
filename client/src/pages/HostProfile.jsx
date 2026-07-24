@@ -501,8 +501,14 @@ const HostProfile = () => {
                   borderRadius: '16px 16px 0 0',
                   background: host.cover_image ? undefined : `linear-gradient(135deg, ${tc}33, ${tc}88)`,
                 }}>
+                {/* The cover is the LCP element on a profile page: 3:1 and full
+                    width, it is the largest thing above the fold. Without
+                    fetchpriority it queues behind the JS chunks that discovered
+                    it, since it only enters the DOM after the host fetch
+                    resolves. */}
                 {host.cover_image && (
-                  <img src={host.cover_image} alt="" className="w-full h-full object-cover" />
+                  <img src={host.cover_image} alt="" fetchpriority="high" decoding="async"
+                       className="w-full h-full object-cover" />
                 )}
               </div>
 

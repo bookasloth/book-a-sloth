@@ -45,7 +45,7 @@ describe('appearanceController.getPublic', () => {
     const res = makeRes();
     await ctrl.getPublic({}, res);
     expect(res.body.navbar_logo_mode).toBe('icon_text');
-    expect(res.body.icon_url).toContain('sloth-icon-sqr.png');
+    expect(res.body.icon_url).toBe('/favicon-96x96.png');
   });
 });
 

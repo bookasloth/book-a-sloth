@@ -70,7 +70,8 @@ const NavbarLogo = ({ appearance }) => {
   if (mode === 'icon_text' && appearance?.icon_url) {
     return (
       <>
-        <img src={appearance.icon_url} alt="" className="h-[26px] w-[26px] rounded block" />
+        <img src={appearance.icon_url} alt="" width={26} height={26} decoding="async"
+             className="h-[26px] w-[26px] rounded block" />
         {wordmarkText()}
       </>
     );
@@ -99,9 +100,11 @@ const PhotoAvatar = ({ user, className = 'h-11 w-11' }) =>
 // ── Sloth avatar (guest) — always the brand mark, never initials/photo ───────
 // Guests have no profile image; the spec calls for the Sloth mark every time.
 // Uses the admin-managed icon, falling back to the bundled favicon (also Sloth).
+// The fallback is favicon-96x96.png, not favicon.svg — the SVG is a 126 KiB
+// traced export, far heavier than the raster for a 44px avatar.
 const SlothAvatar = ({ appearance, className = 'h-11 w-11' }) => (
   <img
-    src={appearance?.icon_url || '/favicon.svg'}
+    src={appearance?.icon_url || '/favicon-96x96.png'}
     alt="Book A Sloth"
     className={`${className} rounded-full object-contain bg-[#FE5100]/10 p-1 flex-shrink-0`}
   />

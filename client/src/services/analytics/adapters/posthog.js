@@ -37,6 +37,23 @@ export default {
         posthog.init(token, {
           api_host: import.meta.env.VITE_POSTHOG_HOST,
           defaults: '2026-01-30',
+          // Remote config auto-loads four extra bundles from
+          // us-assets.i.posthog.com on EVERY page: session recorder (53 KiB),
+          // surveys (33 KiB), web-vitals (3 KiB) and dead-click autocapture
+          // (7 KiB) — 98 KiB of third-party JS and ~150ms of main-thread work
+          // for features we do not use. Events, pageviews, funnels and
+          // identify() are unaffected; flip any of these back on the day the
+          // corresponding PostHog feature is actually wanted.
+          //
+          // NOTE: capture_dead_clicks stops dead-click EVENTS, but the 7 KiB
+          // extension still downloads because heatmaps lazy-loads it with a
+          // hard-coded isEnabled. Add `capture_heatmaps: false` to drop that
+          // last request (and its capture-phase click/mousemove listeners) —
+          // left on because heatmaps are a separate product decision.
+          disable_session_recording: true,
+          disable_surveys: true,
+          capture_dead_clicks: false,
+          capture_performance: { web_vitals: false },
         });
         ph = posthog;
         flush();

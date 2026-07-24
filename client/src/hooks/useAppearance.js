@@ -11,9 +11,13 @@ import { getAppearance } from "../services/api";
 
 const CACHE_KEY = "bas_appearance";
 
+// icon_url points at the bundled 96x96 mark, not the 800x800 CDN original: the
+// navbar renders it at 26px, so the CDN file shipped ~25 KiB to paint 46 device
+// pixels AND cost a cross-origin connection. Same artwork, same-origin, 13 KiB.
+// Keep in sync with DEFAULTS in server/controllers/appearanceController.js.
 const DEFAULTS = {
   navbar_logo_mode: "icon_text",
-  icon_url: "https://company-assets.bookasloth.in/images/email/sloth-icon-sqr.png",
+  icon_url: "/favicon-96x96.png",
   logo_image_url: "",
   festive_logo_url: "",
 };
