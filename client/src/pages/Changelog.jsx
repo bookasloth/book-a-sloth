@@ -29,6 +29,52 @@ const RELEASES = [
     ],
   },
   {
+    date: 'Jul 23, 2026',
+    title: 'Manage your booking without an account',
+    tags: ['New'],
+    points: [
+      'Booked as a guest without signing up? Every confirmation now carries a private link to your booking — open it any time to see the details or cancel, no account needed.',
+      'The link is right in your confirmation email, so it’s always one click away.',
+      'And if you later sign in with the same number, any bookings you made as a guest come with you and show up in your dashboard.',
+    ],
+  },
+  {
+    date: 'Jul 23, 2026',
+    title: 'A noticeably faster site',
+    tags: ['Improved'],
+    points: [
+      'Host profiles and service pages no longer jump around while loading — content now settles into place the first time, instead of shifting under your finger as you reach for a button.',
+      'Trimmed what loads before the first paint and cached the heavy bits properly, so pages appear sooner, especially on mobile data.',
+    ],
+  },
+  {
+    date: 'Jul 23, 2026',
+    title: 'Safer checkout',
+    tags: ['Fixed'],
+    points: [
+      'Closed a gap where an impatient double-tap on Confirm or Pay could start the same booking twice. One tap, one booking — every time.',
+    ],
+  },
+  {
+    date: 'Jul 23, 2026',
+    title: 'Easier to read, easier to find things',
+    tags: ['Improved'],
+    points: [
+      'Better colour contrast across the homepage and pricing page, and proper labelling throughout, so the site works well with screen readers and in bright sunlight alike.',
+      'Reorganised the header and footer so the page you want is where you’d expect it.',
+      'Cleared out half-finished profile fields that asked for details we weren’t using yet.',
+    ],
+  },
+  {
+    date: 'Jul 23, 2026',
+    title: 'Stronger account protection',
+    tags: ['Security'],
+    points: [
+      'Passwords now have to meet a real strength bar wherever you set one.',
+      'We also listen for security alerts from Google about connected accounts, so if something looks wrong with a linked Google account, we can act on it quickly.',
+    ],
+  },
+  {
     date: 'Jul 22, 2026',
     title: 'Pricing, reimagined',
     tags: ['Improved', 'New'],
