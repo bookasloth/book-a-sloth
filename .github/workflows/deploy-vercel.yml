@@ -85,12 +85,19 @@ jobs:
       # The /og/blog route reads all data from query params — no API/Supabase call
       # at render time — so these placeholders are never used; they only satisfy
       # vite.config.js's required-env guard. The dist is screenshotted then discarded.
+      #
+      # EVERY VITE_* referenced as a %PLACEHOLDER% in index.html must be set here,
+      # even when this job never uses the value. An unsubstituted `%VITE_FOO%` left
+      # in an href reaches Vite's HTML pass, which calls decodeURI on it and dies
+      # with "URI malformed" (`%VI` is not a valid percent escape) — failing this
+      # job and skipping the `deploy` job that needs it.
       - name: Build (no prerender)
         run: npm run build:no-prerender
         env:
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: placeholder-anon-key-unused-by-og-route
           VITE_API_URL: https://placeholder.invalid/api
+          VITE_POSTHOG_HOST: https://placeholder.invalid
 
       - name: Generate cards for newly-published posts
         run: node scripts/generateBlogOgImages.mjs --missing
