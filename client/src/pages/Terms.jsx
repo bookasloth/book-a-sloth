@@ -1,15 +1,23 @@
 import { Link } from 'react-router-dom';
-import LegalLayout, { Section } from '../components/common/LegalLayout';
+import LegalLayout, { Section, MOR_EFFECTIVE } from '../components/common/LegalLayout';
 
-// /terms — Terms & Conditions (aligned with India DPDP Act 2023 + DPDP Rules 2025).
+// /terms — Terms of Use. Umbrella terms for everyone (accounts, acceptable use, IP,
+// liability). The commercial contracts live separately: /guest-terms is the sale
+// contract with the guest, /host-agreement is the procurement contract with the host.
+//
+// Section 2 is load-bearing. Book A Sloth is the SELLER OF RECORD, not an intermediary.
+// The previous version said "We are an intermediary. The contract is directly between
+// the host and the guest" — that contradicts the GST position and the host agreement.
+// Do not reintroduce intermediary or marketplace language anywhere on this page.
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
 const Terms = () => (
   <LegalLayout
-    title="Terms & Conditions"
-    updated="3 July 2026"
+    title="Terms of Use"
+    updated="24 July 2026"
+    effective={MOR_EFFECTIVE}
     current="/terms"
-    description="The terms governing your use of Book A Sloth — accounts, bookings, payments, and host listings. Read before you book or list a service."
+    description="The terms governing your use of Book A Sloth — accounts, acceptable use, content, and liability. Read before you book or list a service."
     intro={
       <>
         <p>
@@ -21,33 +29,61 @@ const Terms = () => (
         </p>
         <p>
           By creating an account, booking a service, listing a service, or otherwise using the Platform, you agree to
-          these Terms, our <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>, and our{' '}
-          <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>. If you do
-          not agree, do not use the Platform.
+          these Terms and our <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>. If you
+          do not agree, do not use the Platform.
+        </p>
+        <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+          <strong>These Terms cover using the Platform. Your commercial contract is elsewhere.</strong>
+          <br />
+          If you are <strong>buying</strong>, your contract is the{' '}
+          <Link to="/guest-terms" className="text-primary hover:underline">Guest Terms of Sale</Link>, together with the{' '}
+          <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>.
+          <br />
+          If you are <strong>selling</strong>, your contract is the{' '}
+          <Link to="/host-agreement" className="text-primary hover:underline">Host Services Agreement</Link>, together
+          with the <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp; Payment Schedule</Link>.
+          <br />
+          Where those documents conflict with these Terms on a commercial matter, they prevail.
         </p>
       </>
     }
   >
     <Section title="1. Definitions">
       <ul className="list-disc pl-5 space-y-1.5">
-        <li><strong>"Host"</strong> — a user who publishes services or digital products and accepts bookings and payments through the Platform.</li>
-        <li><strong>"Guest"</strong> — a user who books services or buys products from a host. A guest may use the Platform with a registered account or by verifying via one-time password (OTP).</li>
+        <li><strong>"Host"</strong> — a person or business that supplies services to Book A Sloth for onward sale, under the <Link to="/host-agreement" className="text-primary hover:underline">Host Services Agreement</Link>.</li>
+        <li><strong>"Guest"</strong> — a customer who buys a service from Book A Sloth. A guest may use the Platform with a registered account or by verifying via one-time password (OTP).</li>
         <li><strong>"User", "you"</strong> — any host, guest, or visitor.</li>
-        <li><strong>"Services"</strong> — the appointment, consultation, group session, paid DM, or digital product offered by a host.</li>
-        <li><strong>"Platform Services"</strong> — the technology, hosting, payment facilitation, and tools we provide.</li>
+        <li><strong>"Services"</strong> — the appointment, consultation, group session, paid DM, or digital product sold through the Platform.</li>
+        <li><strong>"Platform"</strong> — the website, applications, tools, and systems we operate.</li>
       </ul>
     </Section>
 
-    <Section title="2. What Book A Sloth is (and is not)">
+    <Section title="2. What Book A Sloth is">
       <p>
-        Book A Sloth is a <strong>technology platform</strong> that lets hosts publish services, manage availability,
-        and accept bookings and payments, and lets guests discover and book those services.
+        <strong>2.1</strong> Book A Sloth <strong>buys services from hosts and sells them to guests in its own name and
+        on its own account</strong>. We are the <strong>seller and supplier of record</strong> for every paid booking
+        made through the Platform.
       </p>
       <p>
-        We are an intermediary. The contract for any service or product is <strong>directly between the host and the
-        guest</strong>. We are not the provider of the host's services, we do not control their quality, legality, or
-        delivery, and we are not a party to the host–guest contract except as the operator of the Platform and
-        facilitator of payments.
+        <strong>2.2</strong> A guest&rsquo;s contract is with Book A Sloth, not with the host. A host&rsquo;s contract
+        is with Book A Sloth, not with the guest. There is no contract between a host and a guest in respect of a
+        booking.
+      </p>
+      <p>
+        <strong>2.3</strong> The host named on a listing is the person who will perform the service. Naming them
+        identifies who performs it; it does not make them the seller.
+      </p>
+      <p>
+        <strong>2.4</strong> We issue the guest a tax invoice under our own GSTIN for the full amount, and we purchase
+        the service from the host against the host&rsquo;s invoice. Money received from a guest is our own revenue and
+        is not collected, held, or settled on behalf of any host.
+      </p>
+      <p>
+        <strong>2.5</strong> Because we are the seller, complaints, refunds, and consumer claims relating to a booking
+        are addressed to and handled by us. Guests do not need to pursue hosts.
+      </p>
+      <p>
+        <strong>2.6</strong> We are not an employer of hosts. Hosts are independent contractors who supply to us.
       </p>
     </Section>
 
@@ -62,12 +98,20 @@ const Terms = () => (
     </Section>
 
     <Section title="4. Host obligations">
-      <p>If you list services as a host, you agree that:</p>
+      <p>
+        Hosts are governed by the{' '}
+        <Link to="/host-agreement" className="text-primary hover:underline">Host Services Agreement</Link> and the{' '}
+        <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp; Payment Schedule</Link>, which
+        set out pricing, invoicing, payment cycles, deductions, and termination in full. In summary, if you supply
+        services as a host you agree that:
+      </p>
       <ul className="list-disc pl-5 space-y-1.5">
+        <li>You supply your services <strong>to Book A Sloth</strong>, which sells them onward to guests. You have no contract with the guest and must not tell a guest otherwise.</li>
         <li>You will provide accurate descriptions, pricing, duration, and availability for your services.</li>
-        <li>You are solely responsible for delivering your services lawfully, professionally, and as described.</li>
+        <li>You are responsible to us for delivering your services lawfully, professionally, safely, and as described.</li>
         <li>You hold all licences, registrations, and qualifications required to offer your services.</li>
-        <li>You will honour confirmed bookings or handle cancellations/reschedules fairly and in line with the <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>.</li>
+        <li>You will honour confirmed bookings, and cancellations by you are dealt with under clause 12 of the Host Services Agreement.</li>
+        <li>You will not take payment directly from a guest for a booking made or initiated through the Platform.</li>
         <li>You will use guest personal data only to deliver the booking, keep it confidential and secure, not retain it longer than needed, and comply with applicable data-protection law including the <strong>DPDP Act, 2023</strong> and DPDP Rules, 2025 (see <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>).</li>
         <li>You are responsible for your own tax obligations, including GST where applicable, on the income you earn.</li>
         <li>You will not list services that are illegal, harmful, deceptive, infringing, or that violate Section 7.</li>
@@ -78,20 +122,26 @@ const Terms = () => (
       <p>If you book as a guest, you agree that:</p>
       <ul className="list-disc pl-5 space-y-1.5">
         <li>You will provide accurate booking details and attend or cancel bookings responsibly.</li>
-        <li>You understand the service is delivered by the host, not by Book A Sloth.</li>
-        <li>You will treat hosts respectfully and comply with any reasonable requirements they set for the service.</li>
+        <li>You understand you are buying from Book A Sloth, and that the host named on the listing performs the service as our service partner.</li>
+        <li>You will treat the person performing the service respectfully and comply with any reasonable requirements notified for it.</li>
         <li>You are responsible for any equipment, connectivity, or location needed to receive the service.</li>
+        <li>You will not arrange to pay outside the Platform for a booking started on it. If you do, our Guest Terms of Sale, Refund Policy, and support do not apply to that transaction.</li>
       </ul>
+      <p>
+        Your purchase is governed in full by the{' '}
+        <Link to="/guest-terms" className="text-primary hover:underline">Guest Terms of Sale</Link>.
+      </p>
     </Section>
 
-    <Section title="6. Bookings, payments, fees, and payouts">
+    <Section title="6. Bookings, payments, and taxes">
       <ul className="list-disc pl-5 space-y-1.5">
-        <li><strong>Booking.</strong> A booking is confirmed when payment (where required) is completed and the Platform confirms the booking. Free bookings are confirmed on submission.</li>
-        <li><strong>Payments.</strong> All payments are processed by <strong>Razorpay</strong>. By paying, you agree to Razorpay's terms. We do not store your full payment details (see <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>, Section 6).</li>
-        <li><strong>Platform fees and commission.</strong> We may charge hosts a platform fee and/or commission on transactions, and charge for paid plans (e.g. Host+, Studio). Applicable fees, commission rates, and plan prices are shown on the Platform and may include GST. Fee snapshots are recorded at the time of each transaction.</li>
-        <li><strong>Payouts.</strong> Amounts owed to hosts (net of fees, commission, and applicable taxes) are settled through the payout process described on the Platform. We may withhold or adjust payouts to cover refunds, chargebacks, fraud, or amounts owed to us.</li>
-        <li><strong>Taxes.</strong> Each party is responsible for its own taxes. We will collect and remit taxes only where required by law.</li>
-        <li><strong>Refunds.</strong> Refunds are governed by the <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>.</li>
+        <li><strong>Booking.</strong> A booking is confirmed when payment (where required) is completed and the Platform confirms it. Free bookings are confirmed on submission.</li>
+        <li><strong>Payments.</strong> Payments are processed by <strong>Razorpay</strong> on our behalf, into an account operated by us as the seller. By paying, you agree to Razorpay's terms. We do not store your full payment details (see <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>, Section 6).</li>
+        <li><strong>Price.</strong> The price shown at checkout is the total payable and is inclusive of GST. It is itemised before you pay. We issue the guest a tax invoice under our GSTIN for the full amount.</li>
+        <li><strong>Purchases from hosts.</strong> We purchase each service from the host against the host's invoice or payment advice, at the consideration computed under the <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp; Payment Schedule</Link>, less any deduction we are entitled to make under the Host Services Agreement. This is a payment to a supplier, not a settlement of money held for anyone.</li>
+        <li><strong>Charges to hosts.</strong> Our booking charge, platform commission, and payment processing charge, together with subscription prices for paid plans, are published in the Fee Schedule and on the <Link to="/pricing" className="text-primary hover:underline">Pricing page</Link>. The charges applicable to a booking are recorded as a snapshot when it is confirmed.</li>
+        <li><strong>Taxes.</strong> We charge and account for GST on our sale to the guest. Hosts are responsible for their own tax obligations on what they receive. We deduct tax at source from host payments where the law requires it and issue the applicable certificate.</li>
+        <li><strong>Refunds.</strong> Governed by the <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>. As the seller, we make refunds to guests directly.</li>
       </ul>
     </Section>
 
@@ -138,21 +188,41 @@ const Terms = () => (
 
     <Section title="11. Disclaimers">
       <p>
-        The Platform is provided <strong>"as is" and "as available"</strong> without warranties of any kind, whether
-        express or implied, to the maximum extent permitted by law. We do not warrant that the Platform will be
-        uninterrupted, error-free, or secure, or that hosts' services will meet your expectations. We do not endorse
-        any host or guarantee the quality, safety, or legality of any service offered through the Platform.
+        <strong>11.1 The Platform itself</strong> is provided <strong>"as is" and "as available"</strong>, to the
+        maximum extent permitted by law. We do not warrant that it will be uninterrupted, error-free, or secure.
+      </p>
+      <p>
+        <strong>11.2 The services we sell</strong> are a different matter. We sell them as the supplier of record and
+        we stand behind them &mdash; this clause does not disclaim our responsibility for a service we sold you. That
+        responsibility is dealt with in the{' '}
+        <Link to="/guest-terms" className="text-primary hover:underline">Guest Terms of Sale</Link> and the{' '}
+        <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>.
+      </p>
+      <p>
+        <strong>11.3</strong> Services are supplied with reasonable skill and care. Unless a listing says so expressly,
+        no particular result or outcome is promised, and nothing sold through the Platform is medical, psychological,
+        legal, or financial advice unless the listing states that it is and the person performing it holds the
+        necessary qualifications.
       </p>
     </Section>
 
     <Section title="12. Limitation of liability">
-      <p>To the maximum extent permitted by applicable law:</p>
+      <p>
+        <strong>12.1</strong> This clause limits our liability for <strong>use of the Platform</strong>. It does not
+        limit our liability as seller for a service we sold you &mdash; that is dealt with in the{' '}
+        <Link to="/guest-terms" className="text-primary hover:underline">Guest Terms of Sale</Link>, clause 8.
+      </p>
+      <p><strong>12.2</strong> To the maximum extent permitted by applicable law:</p>
       <ul className="list-disc pl-5 space-y-1.5">
-        <li>Book A Sloth is not liable for the acts, omissions, services, or content of any host or guest.</li>
-        <li>We are not liable for any indirect, incidental, special, consequential, or punitive damages, or for loss of profits, data, goodwill, or opportunity.</li>
-        <li>Our total aggregate liability to you for any claim arising out of or relating to the Platform or these Terms will not exceed the total platform fees or commission you paid to us in the <strong>three (3) months</strong> preceding the event giving rise to the claim, or <strong>INR 5,000</strong>, whichever is lower.</li>
+        <li>We are not liable for the content, conduct, or communications of any user, or for anything a user does outside the Platform.</li>
+        <li>We are not liable for indirect, incidental, special, consequential, or punitive damages, or for loss of profits, data, goodwill, or opportunity.</li>
+        <li>Our total aggregate liability for any claim relating to your use of the Platform will not exceed the amounts you paid us in the <strong>three (3) months</strong> preceding the event giving rise to the claim.</li>
       </ul>
-      <p>Nothing in these Terms excludes liability that cannot be excluded under applicable law.</p>
+      <p>
+        <strong>12.3</strong> Nothing in these Terms excludes or limits liability that cannot be excluded under
+        applicable law, including any right you have under the <strong>Consumer Protection Act, 2019</strong> and any
+        liability for fraud.
+      </p>
     </Section>
 
     <Section title="13. Indemnity">
@@ -173,9 +243,20 @@ const Terms = () => (
 
     <Section title="15. Governing law and dispute resolution">
       <p>
-        These Terms are governed by the laws of <strong>India</strong>. Subject to any mandatory consumer-protection
-        rights you may have, the courts at <strong>Jajpur, Odisha</strong> will have exclusive jurisdiction over any
-        dispute arising out of or relating to these Terms or the Platform.
+        These Terms are governed by the laws of <strong>India</strong>.
+      </p>
+      <p>
+        <strong>Guests.</strong> Nothing here restricts your right as a consumer to bring proceedings in the consumer
+        forum having jurisdiction where you reside or work, as provided by the Consumer Protection Act, 2019.
+      </p>
+      <p>
+        <strong>Hosts.</strong> Disputes with hosts are resolved by arbitration seated at Nagpur, Maharashtra, under
+        clause 20 of the{' '}
+        <Link to="/host-agreement" className="text-primary hover:underline">Host Services Agreement</Link>.
+      </p>
+      <p>
+        <strong>Everyone else.</strong> For any other dispute relating to these Terms or the Platform, the courts at{' '}
+        <strong>Nagpur, Maharashtra</strong> have exclusive jurisdiction.
       </p>
       <p>
         Before initiating any formal proceedings, you agree to first contact us at <Mail /> so we can attempt to
