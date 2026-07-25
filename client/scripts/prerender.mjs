@@ -74,6 +74,7 @@ const PRERENDER_ROUTES = [
   '/guest-terms',
   '/host-agreement',
   '/host-fees',
+  '/earnings-calculator',
   '/wall-of-love',
   // KEEP IN SYNC with careersContent.js `jobs` slugs (it imports lucide-react,
   // so this node script can't import it the way it does featureData/helpDocsList).

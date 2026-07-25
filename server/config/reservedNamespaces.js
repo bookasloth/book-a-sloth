@@ -18,6 +18,7 @@ const ROUTES = [
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'manage-booking', 'lp', 'for',
   'og', // /og/blog/:slug — render target for the OG card generator
   'my-bookings', 'profile', 'reviews', 'loyalty', 'settings', 'search', 'wall-of-love', 'moments',
+  'earnings-calculator',
   'sitemap', 'robots', 'health', 'manifest', 'favicon', 'get-in-touch',
 ];
 

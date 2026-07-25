@@ -51,6 +51,7 @@ const Refund         = lazy(() => import('./pages/Refund'));
 const GuestTerms     = lazy(() => import('./pages/GuestTerms'));
 const HostAgreement  = lazy(() => import('./pages/HostAgreement'));
 const HostFees       = lazy(() => import('./pages/HostFees'));
+const EarningsCalculator = lazy(() => import('./pages/EarningsCalculator'));
 const Unsubscribe    = lazy(() => import('./pages/Unsubscribe'));
 const About          = lazy(() => import('./pages/About'));
 const Careers        = lazy(() => import('./pages/Careers'));
@@ -364,6 +365,7 @@ function App() {
           <Route path="/guest-terms" element={<GuestTerms />} />
           <Route path="/host-agreement" element={<HostAgreement />} />
           <Route path="/host-fees" element={<HostFees />} />
+          <Route path="/earnings-calculator" element={<EarningsCalculator />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           {/* Customers never register — accounts are created automatically
               during booking (phone OTP). Old signup URL redirects home. */}
