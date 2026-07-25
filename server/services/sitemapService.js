@@ -86,6 +86,7 @@ const STATIC_ROUTES = [
   { path: '/guest-terms',              changefreq: 'yearly',  priority: '0.3' },
   { path: '/host-agreement',           changefreq: 'yearly',  priority: '0.3' },
   { path: '/host-fees',                changefreq: 'yearly',  priority: '0.3' },
+  { path: '/earnings-calculator',      changefreq: 'monthly', priority: '0.6' },
   { path: '/wall-of-love',             changefreq: 'weekly',  priority: '0.5' },
   { path: '/moments',                  changefreq: 'weekly',  priority: '0.5' },
   ...MOMENT_SLUGS.map((s) => ({ path: `/moments/${s}`, changefreq: 'monthly', priority: '0.5' })),

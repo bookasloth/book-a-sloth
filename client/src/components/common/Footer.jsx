@@ -8,6 +8,7 @@ const COLUMNS = [
   { h: 'Product', links: [
     { t: 'How it works', href: '/#how-it-works' },
     { t: 'Pricing', href: '/pricing' },
+    { t: 'Earnings calculator', href: '/earnings-calculator' },
     { t: 'FAQ', href: '/#faq' },
     { t: 'Be a Host', href: '/be-a-sloth' },
     { t: 'Explore', href: '/explore' },
