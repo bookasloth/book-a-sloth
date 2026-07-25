@@ -151,6 +151,103 @@ function computeBreakdown({ servicePrice, commissionPercentage, platformFee, gst
   };
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// MERCHANT-OF-RECORD MODEL (docs/payment-model.md v3)
+// ════════════════════════════════════════════════════════════════════════════
+//
+// A DIFFERENT model from everything above. Here Book A Sloth is the SELLER: the
+// host supplies TO us, we sell TO the guest. The host states what he wants to
+// EARN (E); we add our charges and GST on top to reach the guest price. This
+// inverts the legacy model, where `servicePrice` was the guest-facing price and
+// the fee was added visibly on top.
+//
+//   V = E + bookingCharge                 taxable value of OUR sale
+//   G = V + gstAmount   (= V × (1+rate))  what the guest pays
+//   commission = E × commissionRate       0 on paid plans
+//   pgCharge   = absorbsPg ? 0 : G × pgRate
+//   H = E − commission − pgCharge          what the host receives (his consideration)
+//   platformMargin = bookingCharge + commission + pgCharge   (GROSS — before the
+//                    ACTUAL gateway fee, which is deducted at capture like the
+//                    legacy razorpayFee, so realised margin on a card booking is
+//                    lower than on UPI)
+//
+//   Host+/Studio, E=₹1000, 18%:  guest ₹1191.80, H ₹970.20, margin ₹39.80
+//   Starter,      E=₹1000, 18%:  guest ₹1191.80, H ₹950.00, margin ₹60.00
+//
+// RATES ARE FRACTIONS: gstRate 0.18, commissionRate 0.05, pgRate 0.025. (The
+// legacy functions above take a percentage NUMBER for commission — do not mix.)
+//
+// gstRate is INJECTED, never hardcoded: an exempt category is simply gstRate 0.
+// Category treatment (taxable / exempt / rcm), the rate, and the SAC live in
+// service_categories and are resolved by the caller — this stays pure.
+//
+// NOT WIRED YET. The booking/payment controllers still call the legacy
+// computeBreakdown until the host "target earning" UI (Phase 4) and checkout
+// (Phase 5) land. ponytail: delete the legacy functions above once those callers
+// move; kept side-by-side only for the transition, NOT as a permanent dual engine.
+
+const DEFAULT_BOOKING_CHARGE = 10; // ₹ flat, overridden by subscription_plans.limits
+
+/**
+ * Full money breakdown for a merchant-of-record booking.
+ *
+ * @param {object}  p
+ * @param {number}  p.targetEarning     E — what the host wants to earn (≥ 0)
+ * @param {number}  [p.bookingCharge]   flat ₹ charge added to taxable value (default 10)
+ * @param {number}  [p.commissionRate]  FRACTION, e.g. 0.05 (Starter) / 0 (paid). Default 0.
+ * @param {number}  [p.pgRate]          FRACTION, e.g. 0.025. Default 0.
+ * @param {boolean} [p.absorbsPg]       true → we bear processing (Starter); pgCharge = 0
+ * @param {number}  [p.gstRate]         FRACTION, e.g. 0.18; 0 for an exempt category. Default 0.18.
+ * @returns {{ targetEarning, bookingCharge, commission, pgCharge, hostConsideration,
+ *             taxableValue, gstAmount, guestTotal, platformMargin }}
+ */
+function computeMorBreakdown({
+  targetEarning,
+  bookingCharge = DEFAULT_BOOKING_CHARGE,
+  commissionRate = 0,
+  pgRate = 0,
+  absorbsPg = false,
+  gstRate = DEFAULTS.gstRate,
+}) {
+  assertNonNegative(targetEarning, 'targetEarning');
+  assertNonNegative(bookingCharge, 'bookingCharge');
+  assertNonNegative(commissionRate, 'commissionRate');
+  assertNonNegative(pgRate, 'pgRate');
+  assertNonNegative(gstRate, 'gstRate');
+
+  // Free service: no charge, no commission, no processing, no tax. Hard guard so
+  // a ₹0 booking never accrues the flat booking charge (payment-model.md Scenario 5).
+  if (Number(targetEarning) === 0) {
+    return {
+      targetEarning: 0, bookingCharge: 0, commission: 0, pgCharge: 0,
+      hostConsideration: 0, taxableValue: 0, gstAmount: 0, guestTotal: 0,
+      platformMargin: 0,
+    };
+  }
+
+  const taxableValue = round2(Number(targetEarning) + Number(bookingCharge));
+  const gstAmount    = round2(taxableValue * gstRate);
+  const guestTotal   = round2(taxableValue + gstAmount);
+  const commission   = round2(Number(targetEarning) * commissionRate);
+  const pgCharge     = absorbsPg ? 0 : round2(guestTotal * pgRate);
+  const hostConsideration = round2(Number(targetEarning) - commission - pgCharge);
+  const platformMargin    = round2(Number(bookingCharge) + commission + pgCharge);
+
+  return {
+    targetEarning: round2(targetEarning),
+    bookingCharge: round2(bookingCharge),
+    commission,
+    pgCharge,
+    hostConsideration,
+    taxableValue,
+    gstAmount,
+    guestTotal,
+    // GROSS margin — the ACTUAL gateway fee is deducted at capture, so realised
+    // margin on a card booking is lower than on zero-MDR UPI.
+    platformMargin,
+  };
+}
+
 // ─── Subscription breakdown (GST charged ON TOP of plan price — PRD §5.2) ────
 function computeSubscriptionBreakdown({ planPrice, gstRate }) {
   assertNonNegative(planPrice, 'planPrice');
@@ -173,6 +270,7 @@ module.exports = {
   calculateVendorPayout,
   calculateCustomerTotal,
   computeBreakdown,
+  computeMorBreakdown,
   computeSubscriptionBreakdown,
   round2,
 };
