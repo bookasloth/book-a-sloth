@@ -87,6 +87,7 @@ const GoogleStart     = lazy(() => import('./pages/onboarding/GoogleStart'));
 const SlugClaim       = lazy(() => import('./pages/onboarding/SlugClaim'));
 const AboutYouStep    = lazy(() => import('./pages/onboarding/AboutYouStep'));
 const CategoryStep    = lazy(() => import('./pages/onboarding/CategoryStep'));
+const PersonaStep     = lazy(() => import('./pages/onboarding/PersonaStep'));
 const WhatsAppStep    = lazy(() => import('./pages/onboarding/WhatsAppStep'));
 const PlansStep       = lazy(() => import('./pages/onboarding/PlansStep'));
 const ExploreWithBolt = lazy(() => import('./pages/onboarding/ExploreWithBolt'));
@@ -382,7 +383,8 @@ function App() {
           <Route path="/vendor-register" element={<GoogleStart />} />
           <Route path="/vendor-register/:slug/claim"    element={<SlugClaim />} />
           <Route path="/vendor-register/:slug/about"    element={<AboutYouStep />} />
-          <Route path="/vendor-register/:slug/category" element={<CategoryStep />} />
+          <Route path="/vendor-register/:slug/category" element={<PersonaStep />} />
+          <Route path="/vendor-register/:slug/category/all" element={<CategoryStep />} />
           <Route path="/vendor-register/:slug/whatsapp" element={<WhatsAppStep />} />
           <Route path="/vendor-register/:slug/plan"     element={<PlansStep />} />
           <Route path="/vendor-register/:slug/live"     element={<ExploreWithBolt />} />
