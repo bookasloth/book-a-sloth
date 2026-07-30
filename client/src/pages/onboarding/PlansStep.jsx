@@ -146,7 +146,7 @@ const PlansStep = () => {
   if (!ready) {
     return (
       <>
-        <ProgressBar current={5} total={6} />
+        <ProgressBar current={3} total={4} />
         <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
@@ -156,7 +156,7 @@ const PlansStep = () => {
 
   return (
     <>
-      <ProgressBar current={5} total={6} />
+      <ProgressBar current={3} total={4} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
         <div className="page-card w-full max-w-4xl p-5 sm:p-8">
           <button

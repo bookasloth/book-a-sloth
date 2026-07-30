@@ -3,9 +3,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getOnboardingStatus } from '../../services/api';
 
 // Maps stepCompleted → the segment the host should be on next.
-// stepCompleted=1 means Google identity done, host should be on claim.
-// stepCompleted=2 means slug claimed, host should be on about. Etc.
-const RESUME = { 1: 'claim', 2: 'about', 3: 'category', 4: 'whatsapp', 5: 'plan' };
+// Redesigned 4-screen flow (PR 2 of the host-onboarding redesign):
+//   1 = Google identity done       → claim slug
+//   2 = slug claimed               → persona (was /about in the 6-step flow)
+//   3 = persona saved              → preview (about + WhatsApp on one screen)
+//   4 = legacy: category-in-flight → preview (roll forward — legacy /about
+//                                     hosts still hit persona, which bumps to 3)
+//   5 = details saved              → plan
+// stepCompleted >= 6 => onboarding complete → dashboard (handled below).
+const RESUME = { 1: 'claim', 2: 'category', 3: 'preview', 4: 'preview', 5: 'plan' };
 
 /**
  * Server-truth resume guard for onboarding steps.

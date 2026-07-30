@@ -6,6 +6,8 @@ const {
   slugAvailableForUser,
   claimSlug,
   updateOnboardingStep,
+  savePersona,
+  saveDetails,
   activateFreePlan,
   advanceToLive,
   markComplete,
@@ -52,6 +54,30 @@ router.post('/update-step', protect, async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+});
+
+// ── Protected: Save persona (redesigned flow) ─────────────────────────────
+// POST /api/onboarding/save-persona
+// Body: { primary_category: 'life-coach' }
+// Writes primary_category + categories, bumps step to max(current, 3).
+router.post('/save-persona', protect, async (req, res) => {
+  try {
+    const { primary_category } = req.body;
+    const profile = await savePersona(req.user.id, primary_category);
+    res.json({ ok: true, profile });
+  } catch (e) { res.status(400).json({ message: e.message }); }
+});
+
+// ── Protected: Save details bundle (redesigned flow) ──────────────────────
+// POST /api/onboarding/save-details
+// Body: { vendor_type?, booking_type?, tagline?, whatsapp_skipped? }
+// Writes any provided fields, bumps step to max(current, 5). Requires
+// persona already saved (step >= 3).
+router.post('/save-details', protect, async (req, res) => {
+  try {
+    const profile = await saveDetails(req.user.id, req.body || {});
+    res.json({ ok: true, profile });
+  } catch (e) { res.status(400).json({ message: e.message }); }
 });
 
 // ── Protected: Get Onboarding Status ──────────────────────────────────────

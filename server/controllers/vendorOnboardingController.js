@@ -442,6 +442,78 @@ const updateOnboardingStep = async (vendorId, slug, stepNumber, data) => {
   return profile;
 };
 
+// ─── Batch writers (host-onboarding redesign, PR 2) ─────────────────────
+//
+// The classic step-per-column endpoint (updateOnboardingStep) is fine for the
+// legacy 6-step wizard, but the redesigned flow folds About + WhatsApp into
+// one screen with a live preview. These batch writers accept only the fields
+// they own and advance the step monotonically, so a client crash mid-save
+// never leaves the host at a lower step than the data on disk implies.
+
+// Save persona selection: writes primary_category + categories, bumps step to
+// max(current, 3). Requires the slug to already be claimed (step >= 2).
+// Called from the new persona picker (PersonaStep) — decouples the picker
+// from the numeric step-to-column mapping in updateOnboardingStep.
+const savePersona = async (vendorId, primaryCategory) => {
+  if (!primaryCategory || typeof primaryCategory !== "string") {
+    throw new Error("Pick a category to continue.");
+  }
+  const { data: cur } = await supabaseAdmin
+    .from("profiles").select("onboarding_step_completed").eq("id", vendorId).maybeSingle();
+  const current = cur?.onboarding_step_completed || 0;
+  if (current < 2) throw new Error("Please claim your URL first.");
+  const nextStep = Math.max(current, 3);
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update({
+      primary_category: primaryCategory,
+      categories: [primaryCategory],
+      onboarding_step_completed: nextStep,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", vendorId)
+    .select()
+    .single();
+  if (error) throw error;
+  phCapture(vendorId, "onboarding_step_completed", { step: nextStep });
+  return data;
+};
+
+// Save "about you + WhatsApp" bundle. All fields optional; only provided ones
+// are written. Bumps step to max(current, 5). Requires persona already saved
+// (step >= 3) so we cannot skip the taxonomy write.
+// data: { vendor_type?, booking_type?, whatsapp_skipped?, tagline? }
+// WhatsApp verification itself still goes through /api/whatsapp/verify-otp —
+// this endpoint only records the skip choice.
+const saveDetails = async (vendorId, data = {}) => {
+  const { data: cur } = await supabaseAdmin
+    .from("profiles").select("onboarding_step_completed").eq("id", vendorId).maybeSingle();
+  const current = cur?.onboarding_step_completed || 0;
+  if (current < 3) throw new Error("Pick your category before this step.");
+
+  const updates = {
+    onboarding_step_completed: Math.max(current, 5),
+    updated_at: new Date().toISOString(),
+  };
+  if (data.vendor_type)  updates.vendor_type  = data.vendor_type;
+  if (data.booking_type) updates.booking_type = data.booking_type;
+  if (data.tagline !== undefined) updates.tagline = data.tagline || null;
+  if (data.whatsapp_skipped === true) {
+    updates.whatsapp_verified = false;
+    updates.whatsapp_number = null;
+  }
+
+  const { data: profile, error } = await supabaseAdmin
+    .from("profiles")
+    .update(updates)
+    .eq("id", vendorId)
+    .select()
+    .single();
+  if (error) throw error;
+  phCapture(vendorId, "onboarding_step_completed", { step: updates.onboarding_step_completed });
+  return profile;
+};
+
 // ─── Completion helpers (state-machine contract) ────────────────────────
 //
 // The /live screen sits between plan activation and dashboard. The contract:
@@ -524,10 +596,14 @@ const markComplete = async (vendorId) => {
 };
 
 // ─── Get Onboarding Status ──────────────────────────────────────────────
+// Returns just enough profile state for the client to (a) route to the right
+// step and (b) hydrate the live-preview card on PreviewStep without a second
+// round-trip. Additive fields (name/photo/persona) are safe to ignore in the
+// legacy guard consumer, which only reads slug/stepCompleted/isComplete.
 const getOnboardingStatus = async (vendorId) => {
   const { data: profile, error } = await supabaseAdmin
     .from("profiles")
-    .select("onboarding_slug, onboarding_step_completed, onboarding_completed")
+    .select("onboarding_slug, onboarding_step_completed, onboarding_completed, name, profile_image, primary_category")
     .eq("id", vendorId)
     .maybeSingle();
 
@@ -539,6 +615,9 @@ const getOnboardingStatus = async (vendorId) => {
     slug: profile.onboarding_slug,
     stepCompleted: profile.onboarding_step_completed || 0,
     isComplete: profile.onboarding_completed || false,
+    name: profile.name || null,
+    profileImage: profile.profile_image || null,
+    primaryCategory: profile.primary_category || null,
   };
 };
 
@@ -552,6 +631,8 @@ module.exports = {
   verifyOtp,
   createVendorAccount,
   updateOnboardingStep,
+  savePersona,
+  saveDetails,
   getActivePlan,
   advanceToLive,
   activateFreePlan,

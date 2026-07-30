@@ -265,6 +265,8 @@ export const adminDeleteReview   = (id)             => API.delete(`/admin/review
 export const checkOnboardingSlug  = (slug)             => API.post('/onboarding/slug-available', { slug });
 export const claimOnboardingSlug  = (slug)             => API.post('/onboarding/claim-slug', { slug });
 export const updateOnboardingStep = (data)             => API.post('/onboarding/update-step', data);
+export const saveOnboardingPersona = (primary_category) => API.post('/onboarding/save-persona', { primary_category });
+export const saveOnboardingDetails = (data)             => API.post('/onboarding/save-details', data);
 export const getOnboardingStatus  = ()                 => API.get('/onboarding/status');
 export const whatsappSendOtp      = (phone)            => API.post('/whatsapp/send-otp', { phone });
 export const whatsappVerifyOtp    = (phone, otp)       => API.post('/whatsapp/verify-otp', { phone, otp });
