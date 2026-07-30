@@ -40,7 +40,11 @@ export default function useOnboardingGuard() {
         }
         const done = data?.stepCompleted || 1;
         const target = done >= 6 ? null : RESUME[done];
-        const here = window.location.pathname.replace(/\/$/, '').split('/').pop();
+        // Escape hatch: /category/all is the fallback search UI; treat it as
+        // still "on category" so the guard doesn't bounce the host back out.
+        const path = window.location.pathname.replace(/\/$/, '');
+        let here = path.split('/').pop();
+        if (target === 'category' && /\/category\/all$/.test(path)) here = 'category';
         if (target && target !== here) {
           navigate(`/vendor-register/${data.slug || slug}/${target}`, { replace: true });
           return;
