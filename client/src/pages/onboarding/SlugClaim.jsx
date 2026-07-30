@@ -131,7 +131,7 @@ const SlugClaim = () => {
 
   return (
     <>
-      <ProgressBar current={1} total={6} />
+      <ProgressBar current={1} total={4} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-6 sm:py-10">
         <div className="page-card w-full max-w-md p-5 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Claim your URL</h1>

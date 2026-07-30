@@ -1,23 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import {
-  Sparkles, Briefcase, Camera, Code2, Palette, HeartHandshake, ArrowRight, Loader2,
-} from 'lucide-react';
-import { updateOnboardingStep } from '../../services/api';
+import { ArrowRight, Loader2 } from 'lucide-react';
+import { saveOnboardingPersona } from '../../services/api';
 import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
-
-// Persona → real category slug (verified live in `categories` table).
-// "Something else" routes to the full search UI (CategoryStep) as fallback.
-const PERSONAS = [
-  { id: 'coach',      slug: 'life-coach',           label: 'Coach',       tag: 'Life · Career · Fitness',      Icon: Sparkles },
-  { id: 'consultant', slug: 'business-consultant',  label: 'Consultant',  tag: 'Business · Strategy · Advice', Icon: Briefcase },
-  { id: 'creator',    slug: 'content-creator',      label: 'Creator',     tag: 'Content · Media · Community',  Icon: Camera },
-  { id: 'engineer',   slug: 'software-engineer',    label: 'Engineer',    tag: 'Software · Product · Data',    Icon: Code2 },
-  { id: 'designer',   slug: 'visual-designer',      label: 'Designer',    tag: 'Visual · Fashion · UX',        Icon: Palette },
-  { id: 'therapist',  slug: 'psychologist',         label: 'Therapist',   tag: 'Mind · Body · Wellness',       Icon: HeartHandshake },
-];
+import { PERSONAS } from './personas';
 
 const PersonaStep = () => {
   const { slug } = useParams();
@@ -33,12 +21,8 @@ const PersonaStep = () => {
     if (!selected) return;
     setSaving(true);
     try {
-      await updateOnboardingStep({
-        slug,
-        step: 4,
-        data: { primary_category: selected.slug, categories: [selected.slug] },
-      });
-      navigate(`/vendor-register/${slug}/whatsapp`);
+      await saveOnboardingPersona(selected.slug);
+      navigate(`/vendor-register/${slug}/preview`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not save — please try again');
       setSaving(false);
@@ -48,7 +32,7 @@ const PersonaStep = () => {
   if (!ready) {
     return (
       <>
-        <ProgressBar current={3} total={6} />
+        <ProgressBar current={2} total={4} />
         <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
@@ -58,7 +42,7 @@ const PersonaStep = () => {
 
   return (
     <>
-      <ProgressBar current={3} total={6} />
+      <ProgressBar current={2} total={4} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-start sm:items-center justify-center py-6 sm:py-10">
         <div className="w-full max-w-3xl px-4">
           <div className="text-center mb-6 sm:mb-8">
