@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Check } from 'lucide-react';
+import { Check, ChevronDown, Rocket, Loader2 } from 'lucide-react';
 import { getPublicPlans, activateFreePlan, advanceToLive, createSubscription, syncSubscription, getMe } from '../../services/api';
 import { planLabel } from '../../utils/themeUtils';
+import { fireCelebration } from '../../utils/celebration';
 import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
 import loadRazorpay from '../../utils/loadRazorpay';
@@ -25,38 +26,44 @@ const featureLines = (plan) => {
   return lines;
 };
 
+const priceFor = (plan, c) => (c === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0);
+const isPaidPlan = (plan) => priceFor(plan, 'monthly') > 0 || priceFor(plan, 'annual') > 0;
+
 const PlansStep = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const ready = useOnboardingGuard();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [cadence, setCadence] = useState('annual'); // 'monthly' | 'annual'
+  const [cadence, setCadence] = useState('annual');
   const [busy, setBusy] = useState(null);            // plan slug | 'free' | null
-  const [me, setMe] = useState(null);               // fresh profile for Razorpay prefill
+  const [me, setMe] = useState(null);
+  const [showPaid, setShowPaid] = useState(false);   // drawer for paid plans
 
   useEffect(() => {
     getPublicPlans()
       .then((r) => setPlans(r.data || []))
       .catch(() => toast.error('Failed to load plans'))
       .finally(() => setLoading(false));
-    // Fetch fresh profile so the Razorpay prefill has name/email even after Google signup.
     getMe()
       .then((r) => setMe(r.data))
-      .catch(() => { /* non-fatal — prefill will be empty */ });
+      .catch(() => {});
   }, []);
 
-  const priceFor = (plan, c) => (c === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0);
-  const isPaid = (plan) => priceFor(plan, 'monthly') > 0 || priceFor(plan, 'annual') > 0;
+  const freePlan = plans.find((p) => !isPaidPlan(p)) || null;
+  const paidPlans = plans.filter(isPaidPlan);
 
   const goNext = () => navigate(`/vendor-register/${slug}/live`);
 
-  // Free plan: activate immediately via the new onboarding endpoint, then navigate to /live.
+  // Free plan: activate, fire celebration, navigate. The /live screen fires
+  // a second, larger burst on mount — this one is the "your click did
+  // something" acknowledgement so the transition doesn't feel silent.
   const chooseFree = async () => {
     setBusy('free');
     try {
       await activateFreePlan();
-      toast.success('Starter plan activated');
+      fireCelebration();
+      toast.success('You\'re live!');
       goNext();
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to activate plan');
@@ -64,7 +71,9 @@ const PlansStep = () => {
     }
   };
 
-  // Paid plan: open an auto-renewing Razorpay subscription (monthly or annual).
+  // Paid plan: Razorpay flow. Logic intact from the previous version — only
+  // the UI wrapper around it changed. See the header of this handler for the
+  // (deliberately unchanged) confirmation dance around webhook lag.
   const choosePaid = async (plan) => {
     const price = priceFor(plan, cadence);
     if (!(price > 0)) { toast.error(`No ${cadence} price for this plan.`); return; }
@@ -74,8 +83,6 @@ const PlansStep = () => {
     setBusy(plan.slug);
     try {
       const { data: sub } = await createSubscription({ plan: plan.slug, cadence });
-
-      // Use fresh profile for prefill (me fetched on mount); fall back to localStorage.
       const prefillData = me
         ? { name: me.name, email: me.email, contact: me.phone }
         : (() => {
@@ -83,24 +90,14 @@ const PlansStep = () => {
             catch { return {}; }
           })();
 
-      // A plan counts as active ONLY when getMe SUCCEEDS and returns a non-free
-      // slug. Returns true once activated+advanced+navigated, false otherwise.
-      // Never advances or navigates on a getMe error or a still-free/unset plan —
-      // that was the bug: a transient getMe failure used to show a false
-      // "activated!" toast and navigate optimistically before the plan was live.
       const FREE_SLUGS = ['explorer', 'starter', '', null, undefined];
       const tryFinalize = async () => {
-        try { await syncSubscription(); } catch { /* webhook will finalize shortly */ }
+        try { await syncSubscription(); } catch { /* webhook will finalize */ }
         let freshMe;
-        try {
-          ({ data: freshMe } = await getMe());
-        } catch {
-          return false; // getMe failed → cannot confirm → do NOT advance/navigate
-        }
-        if (FREE_SLUGS.includes(freshMe?.plan)) return false; // webhook lag — still free/unset
-        // Confirmed active: advance the onboarding step FIRST, then toast, then
-        // navigate (awaiting advance before the toast also fixes a toast-ordering nit).
+        try { ({ data: freshMe } = await getMe()); } catch { return false; }
+        if (FREE_SLUGS.includes(freshMe?.plan)) return false;
         await advanceToLive();
+        fireCelebration();
         toast.success(`${planLabel(plan.slug, plan.name)} active — renews ${cadence}.`);
         goNext();
         return true;
@@ -112,18 +109,11 @@ const PlansStep = () => {
         name: 'Book A Sloth',
         description: `${planLabel(plan.slug, plan.name)} — ${cadence} (auto-renews)`,
         handler: async () => {
-          // First attempt right after payment.
           if (await tryFinalize()) return;
-          // ONE short auto-retry to smooth the common brief webhook lag. The delay
-          // is skipped under test so the timer never hangs the suite.
           if (import.meta.env?.MODE !== 'test') {
             await new Promise((r) => setTimeout(r, 2000));
           }
           if (await tryFinalize()) return;
-          // Still not active: payment is captured but the plan isn't live yet. Do
-          // NOT advance or navigate. The createVendorSubscription idempotency guard
-          // makes the re-click safe — it re-syncs the existing mandate instead of
-          // double-charging, and once active the re-click advances to /live.
           toast.success('Payment received — finalizing your plan. Tap the plan again in a moment to continue.');
           setBusy(null);
         },
@@ -154,89 +144,155 @@ const PlansStep = () => {
     );
   }
 
+  const freeLines = freePlan ? featureLines(freePlan) : [];
+
   return (
     <>
       <ProgressBar current={3} total={4} />
-      <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-8 sm:py-12">
-        <div className="page-card w-full max-w-4xl p-5 sm:p-8">
+      <div className="app-container flex min-h-[calc(100vh-72px)] items-start sm:items-center justify-center py-8 sm:py-12">
+        <div className="w-full max-w-2xl px-4">
           <button
-            onClick={() => navigate(`/vendor-register/${slug}/whatsapp`)}
+            onClick={() => navigate(`/vendor-register/${slug}/preview`)}
             className="text-sm text-gray-500 hover:text-gray-800 mb-4 inline-block"
           >
             ← Back
           </button>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Choose your plan</h1>
-          <p className="text-gray-500 text-sm mb-6">
-            Paid plans auto-renew. Cancel anytime — you keep access until the period ends.
-          </p>
 
-          {/* Cadence toggle */}
-          <div className="flex items-center justify-center gap-2 mb-7">
-            <div className="inline-flex bg-gray-100 rounded-full p-1">
-              {['monthly', 'annual'].map((c) => (
-                <button key={c} type="button" onClick={() => setCadence(c)}
-                  className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-colors ${cadence === c ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}>
-                  {c === 'monthly' ? 'Monthly' : 'Annual'}
-                  {c === 'annual' && <span className="ml-1.5 text-[10px] text-emerald-600 font-bold">save more</span>}
-                </button>
-              ))}
+          {/* Hero — publish moment */}
+          <div className="text-center mb-6">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <Rocket className="h-7 w-7 text-primary" strokeWidth={2} />
             </div>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1">You're one click from live</h1>
+            <p className="text-gray-500 text-sm">
+              Publish on Starter for free. Upgrade whenever you're ready.
+            </p>
           </div>
 
           {loading ? (
             <p className="text-center text-sm text-gray-400 py-10">Loading plans…</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {plans.map((plan) => {
-                const paid = isPaid(plan);
-                const price = priceFor(plan, cadence);
-                const cadenceAvailable = price > 0;
-                const popular = plan.slug === 'creator';
-                const isBusy = busy === plan.slug || (!paid && busy === 'free');
-                return (
-                  <div key={plan.slug} className={`relative p-6 rounded-lg border-2 flex flex-col ${popular ? 'border-primary' : 'border-gray-200'}`}>
-                    {popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">Most Popular</span>
-                      </div>
-                    )}
-
-                    <h3 className="text-lg font-bold mb-2">{planLabel(plan.slug, plan.name)}</h3>
-                    {!paid ? (
-                      <p className="text-2xl font-bold text-primary mb-1">Free</p>
-                    ) : cadenceAvailable ? (
+            <>
+              {/* Primary CTA card — Starter */}
+              <div className="relative rounded-2xl border-2 border-primary bg-primary-light/60 p-6 sm:p-7 shadow-sm">
+                <div className="absolute -top-3 left-6">
+                  <span className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">Recommended</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold">
+                      {freePlan ? planLabel(freePlan.slug, freePlan.name) : 'Starter'}
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-0.5">Free forever · no credit card</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={chooseFree}
+                    disabled={busy !== null}
+                    className="btn bg-primary text-white py-3 px-6 text-sm font-semibold hover:bg-primary-dark disabled:opacity-60 transition inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    {busy === 'free' ? (
                       <>
-                        <p className="text-2xl font-bold text-primary mb-0.5">
-                          {inr(price)}<span className="text-sm font-normal text-gray-500">/{cadence === 'monthly' ? 'mo' : 'yr'}</span>
-                        </p>
-                        <p className="text-[11px] text-gray-500 mb-1">+ 18% GST · {inr(Math.round(price * (1 + GST_RATE)))} billed</p>
+                        <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />
+                        Publishing…
                       </>
                     ) : (
-                      <p className="text-sm font-semibold text-gray-400 py-2 mb-1">Annual billing only</p>
+                      <>
+                        <Rocket className="w-4 h-4" strokeWidth={2.5} />
+                        Publish free
+                      </>
                     )}
+                  </button>
+                </div>
 
-                    <ul className="space-y-2 mt-4 flex-1">
-                      {featureLines(plan).map((f, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm">
-                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" strokeWidth={3} />
-                          <span>{f}</span>
-                        </li>
+                {freeLines.length > 0 && (
+                  <ul className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                    {freeLines.map((f, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                        <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" strokeWidth={3} />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Paid drawer trigger */}
+              {paidPlans.length > 0 && (
+                <div className="mt-6 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowPaid((v) => !v)}
+                    aria-expanded={showPaid}
+                    className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-primary transition"
+                  >
+                    {showPaid ? 'Hide paid plans' : 'See Host+ and Studio plans'}
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showPaid ? 'rotate-180' : ''}`} strokeWidth={2.5} />
+                  </button>
+                </div>
+              )}
+
+              {/* Paid plans drawer */}
+              {showPaid && paidPlans.length > 0 && (
+                <div className="mt-5">
+                  <div className="flex items-center justify-center gap-2 mb-5">
+                    <div className="inline-flex bg-gray-100 rounded-full p-1">
+                      {['monthly', 'annual'].map((c) => (
+                        <button key={c} type="button" onClick={() => setCadence(c)}
+                          className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-colors ${cadence === c ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}>
+                          {c === 'monthly' ? 'Monthly' : 'Annual'}
+                          {c === 'annual' && <span className="ml-1.5 text-[10px] text-emerald-600 font-bold">save more</span>}
+                        </button>
                       ))}
-                    </ul>
-
-                    <button type="button"
-                      onClick={() => (paid ? choosePaid(plan) : chooseFree())}
-                      disabled={busy !== null || (paid && !cadenceAvailable)}
-                      className="btn w-full mt-6 bg-primary text-white py-2.5 text-sm font-semibold hover:bg-primary-dark disabled:opacity-50 transition">
-                      {isBusy ? 'Processing…'
-                        : !paid ? 'Get started'
-                        : !cadenceAvailable ? 'Annual only'
-                        : `Choose ${planLabel(plan.slug, plan.name)}`}
-                    </button>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {paidPlans.map((plan) => {
+                      const price = priceFor(plan, cadence);
+                      const cadenceAvailable = price > 0;
+                      const isBusy = busy === plan.slug;
+                      return (
+                        <div key={plan.slug} className="p-5 rounded-xl border border-gray-200 flex flex-col bg-white">
+                          <h3 className="text-base font-bold mb-1.5">{planLabel(plan.slug, plan.name)}</h3>
+                          {cadenceAvailable ? (
+                            <>
+                              <p className="text-xl font-bold text-primary mb-0.5">
+                                {inr(price)}<span className="text-sm font-normal text-gray-500">/{cadence === 'monthly' ? 'mo' : 'yr'}</span>
+                              </p>
+                              <p className="text-[11px] text-gray-500 mb-1">+ 18% GST · {inr(Math.round(price * (1 + GST_RATE)))} billed</p>
+                            </>
+                          ) : (
+                            <p className="text-sm font-semibold text-gray-400 py-2 mb-1">Annual billing only</p>
+                          )}
+
+                          <ul className="space-y-1.5 mt-3 flex-1">
+                            {featureLines(plan).slice(0, 5).map((f, i) => (
+                              <li key={i} className="flex items-start gap-2 text-xs">
+                                <Check className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" strokeWidth={3} />
+                                <span>{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          <button type="button"
+                            onClick={() => choosePaid(plan)}
+                            disabled={busy !== null || !cadenceAvailable}
+                            className="btn w-full mt-4 border border-primary text-primary py-2 text-sm font-semibold hover:bg-primary hover:text-white disabled:opacity-50 transition">
+                            {isBusy ? 'Processing…'
+                              : !cadenceAvailable ? 'Annual only'
+                              : `Choose ${planLabel(plan.slug, plan.name)}`}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-4 text-center text-xs text-gray-400">
+                    Paid plans auto-renew. Cancel anytime — you keep access until the period ends.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
