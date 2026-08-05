@@ -100,6 +100,19 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
       const { gstRate } = await platformConfig.getConfig();
       const planPrice = cadence === 'monthly' ? Number(plan?.monthly_price) || 0 : Number(plan?.annual_price) || 0;
       const totalCharged = computeSubscriptionBreakdown({ planPrice, gstRate }).totalCharged;
+      // Direct token-gated invoice link (the page prints itself to PDF). Falls
+      // back to the dashboard if the invoice or API_URL isn't resolvable.
+      let invoice_url = `${process.env.CLIENT_URL || 'https://bookasloth.com'}/dashboard`;
+      try {
+        const apiBase = process.env.API_URL;
+        if (apiBase && paymentId) {
+          const { data: inv } = await supabaseAdmin
+            .from('invoices').select('id, access_token').eq('payment_id', paymentId).maybeSingle();
+          if (inv?.id && inv?.access_token) {
+            invoice_url = `${apiBase.replace(/\/$/, '')}/api/invoices/${inv.id}?token=${encodeURIComponent(inv.access_token)}`;
+          }
+        }
+      } catch (_) { /* keep dashboard fallback */ }
       NotificationEngine.send({
         event: 'SUBSCRIPTION_PURCHASED',
         data: {
@@ -108,6 +121,7 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
             plan_name: plan?.name || planSlug,
             amount_charged: `₹${Number(totalCharged).toLocaleString('en-IN')}`,
             expiry_date: new Date(periodEndIso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+            invoice_url,
           },
           recipientUserId: vendorId,
         },
