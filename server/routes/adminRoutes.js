@@ -244,6 +244,7 @@ router.get('/finance/ledger/:accountId',  requireAdmin('finance.view'),   financ
 router.post('/finance/adjustment',        requireAdmin('finance.manage'), finance.postAdjustment);
 router.post('/finance/reversal',          requireAdmin('finance.manage'), finance.postReversal);
 router.post('/finance/bank-transfer',     requireAdmin('finance.manage'), finance.postBankTransfer);
+router.post('/finance/resend-subscription-receipt', requireAdmin('finance.manage'), finance.resendSubscriptionReceipt);
 
 
 // ── Explore Page Revenue Management ───────────────────────────

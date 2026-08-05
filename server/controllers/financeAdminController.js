@@ -246,7 +246,30 @@ const postBankTransfer = async (req, res) => {
   }
 };
 
+// ── POST /admin/finance/resend-subscription-receipt ───────────
+// Re-send a host's subscription receipt email (amount + GST invoice PDF link)
+// for one charge, by razorpay payment id. Mints the invoice first if missing.
+// Delivery truth is email_logs — a 200 means "attempted", not "delivered".
+const resendSubscriptionReceipt = async (req, res) => {
+  try {
+    const { payment_id } = req.body || {};
+    if (!payment_id) return res.status(400).json({ message: 'payment_id is required' });
+    const r = await require('../services/subscriptionService').resendReceiptForPayment(payment_id);
+    if (!r.ok) return res.status(404).json({ message: r.reason || 'Could not resend receipt' });
+    await audit(req, {
+      action: 'SUBSCRIPTION_RECEIPT_RESENT',
+      resource_type: 'subscription_payment',
+      resource_id: payment_id,
+      after: { event: r.event, vendor_id: r.vendorId },
+    });
+    res.json({ ok: true, event: r.event, vendor_id: r.vendorId });
+  } catch (e) {
+    safeError(res, e);
+  }
+};
+
 module.exports = {
   getSummary, getAccounts, listJournals, getJournal, getLedger,
   postAdjustment, postReversal, postBankTransfer,
+  resendSubscriptionReceipt,
 };
