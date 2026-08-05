@@ -414,7 +414,8 @@ const TEMPLATES = [
     html_content:
       eyebrow(t.text, 'Subscription') + h('Welcome to {{plan_name}}!') +
       lead('Your {{plan_name}} plan is now active. All features are unlocked on your dashboard.') +
-      C.infoCard(t, [['Plan', '{{plan_name}}'], ['Renews', '{{expiry_date}}']]),
+      C.infoCard(t, [['Plan', '{{plan_name}}'], ['Amount paid', '{{amount_charged}}'], ['Renews', '{{expiry_date}}']]) +
+      lead('Your GST tax invoice is ready — <a href="{{invoice_url}}" style="color:#FE5100;font-weight:600;text-decoration:none">view or download the PDF</a>. It is also under Transactions in your dashboard.'),
     cta_label: 'Explore features', cta_url: '{{dashboard_url}}',
   }; })(),
 
@@ -440,7 +441,8 @@ const TEMPLATES = [
     html_content:
       eyebrow(t.text, 'Subscription') + h("You're renewed, {{first_name}}") +
       lead('Your {{plan_name}} plan has been renewed.') +
-      C.infoCard(t, [['Plan', '{{plan_name}}'], ['Renews', '{{expiry_date}}']]),
+      C.infoCard(t, [['Plan', '{{plan_name}}'], ['Amount paid', '{{amount_charged}}'], ['Renews', '{{expiry_date}}']]) +
+      lead('Your GST tax invoice is ready — <a href="{{invoice_url}}" style="color:#FE5100;font-weight:600;text-decoration:none">view or download the PDF</a>. It is also under Transactions in your dashboard.'),
     cta_label: 'View dashboard', cta_url: '{{dashboard_url}}',
   }; })(),
 
