@@ -96,12 +96,17 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
   if (isInitial) {
     try {
       const { data: prof } = await supabaseAdmin.from('profiles').select('name, email').eq('id', vendorId).single();
+      // Amount actually charged (plan + GST) so the email reads as a receipt.
+      const { gstRate } = await platformConfig.getConfig();
+      const planPrice = cadence === 'monthly' ? Number(plan?.monthly_price) || 0 : Number(plan?.annual_price) || 0;
+      const totalCharged = computeSubscriptionBreakdown({ planPrice, gstRate }).totalCharged;
       NotificationEngine.send({
         event: 'SUBSCRIPTION_PURCHASED',
         data: {
           email: prof?.email, emailUser: { name: prof?.name, email: prof?.email },
           emailData: {
             plan_name: plan?.name || planSlug,
+            amount_charged: `₹${Number(totalCharged).toLocaleString('en-IN')}`,
             expiry_date: new Date(periodEndIso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
           },
           recipientUserId: vendorId,
@@ -220,28 +225,16 @@ async function recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, p
   } catch (e) { console.error('subscription ledger error (non-fatal):', e.message); }
 
   // v3.67: GST tax invoice for the subscription (best-effort, idempotent).
-  try {
-    const { generateInvoice } = require('./invoiceService');
-    const { data: prof } = await supabaseAdmin
-      .from('profiles').select('name, billing_details').eq('id', vendorId).maybeSingle();
-    const bd = prof?.billing_details || {};
-    await generateInvoice({
-      sourceType: 'subscription',
-      sourceId: subPayment.id,
-      paymentId,
-      issuedAt: paidIso,
-      buyer: {
-        name: bd.name || prof?.name || 'Customer',
-        address: bd.address || null,
-        stateCode: bd.state_code || null,
-        stateName: bd.state || null,
-        gstin: bd.gstin || null,
-        pan: bd.pan || null,
-      },
-      taxableValue: breakdown.planPrice,
-      gstAmount: breakdown.gstAmount,
-    });
-  } catch (e) { console.error('subscription invoice error (non-fatal):', e.message); }
+  // Shared with the reconciler's backfill sweep — one code path mints invoices
+  // so a silent failure here is self-healed later instead of lost forever.
+  await ensureSubscriptionInvoice({
+    id: subPayment.id,
+    vendor_id: vendorId,
+    plan_price: breakdown.planPrice,
+    gst_amount: breakdown.gstAmount,
+    paid_at: paidIso,
+    razorpay_payment_id: paymentId,
+  });
 
   // v3.77 Refer & Earn: a real (non-token) plan charge just booked for this host.
   // If they were referred, advance the referral toward its reward. Best-effort.
@@ -285,6 +278,80 @@ async function backfillSubscriptionPayments(rzpSub) {
   return { recorded };
 }
 
+/**
+ * Mint the GST tax invoice for one recorded subscription charge. Best-effort and
+ * idempotent (create_invoice is unique on source_type+source_id), so it is safe
+ * to call both inline at charge time AND from the reconciler backfill. Accepts a
+ * subscription_payments row (or an equivalent shape) — reads plan_price/gst_amount
+ * off the row so the money is never recomputed from a rate.
+ *
+ * @param {object} sp subscription_payments row: {id, vendor_id, plan_price,
+ *                     gst_amount, paid_at, razorpay_payment_id}
+ * @returns {Promise<object|null>} the invoice, or null on skip/failure
+ */
+async function ensureSubscriptionInvoice(sp) {
+  if (!sp?.id) return null;
+  try {
+    const { generateInvoice } = require('./invoiceService');
+    const { data: prof } = await supabaseAdmin
+      .from('profiles').select('name, billing_details').eq('id', sp.vendor_id).maybeSingle();
+    const bd = prof?.billing_details || {};
+    return await generateInvoice({
+      sourceType: 'subscription',
+      sourceId: sp.id,
+      paymentId: sp.razorpay_payment_id || null,
+      issuedAt: sp.paid_at || null,
+      buyer: {
+        name: bd.name || prof?.name || 'Customer',
+        address: bd.address || null,
+        stateCode: bd.state_code || null,
+        stateName: bd.state || null,
+        gstin: bd.gstin || null,
+        pan: bd.pan || null,
+      },
+      taxableValue: Number(sp.plan_price) || 0,
+      gstAmount: Number(sp.gst_amount) || 0,
+    });
+  } catch (e) {
+    console.error('ensureSubscriptionInvoice failed (non-fatal):', e.message);
+    return null;
+  }
+}
+
+/**
+ * Backfill GST invoices for paid subscription charges that have none. Heals the
+ * silent gap where generateInvoice failed at charge time (best-effort → the row
+ * existed but no invoice did, permanently). Idempotent; cheap once every charge
+ * is invoiced. Returns how many invoices it minted this pass.
+ *
+ * @param {number} [limit] max charges to scan per pass
+ * @returns {Promise<{minted:number, scanned:number}>}
+ */
+async function backfillMissingInvoices(limit = 200) {
+  // Recent paid charges, then subtract the ones that already have an invoice.
+  const { data: charges } = await supabaseAdmin
+    .from('subscription_payments')
+    .select('id, vendor_id, plan_price, gst_amount, paid_at, razorpay_payment_id')
+    .eq('status', 'paid')
+    .order('paid_at', { ascending: false })
+    .limit(limit);
+  if (!charges?.length) return { minted: 0, scanned: 0 };
+
+  const { data: existing } = await supabaseAdmin
+    .from('invoices').select('source_id')
+    .eq('source_type', 'subscription')
+    .in('source_id', charges.map((c) => c.id));
+  const invoiced = new Set((existing || []).map((r) => r.source_id));
+
+  let minted = 0;
+  for (const c of charges) {
+    if (invoiced.has(c.id)) continue;
+    const inv = await ensureSubscriptionInvoice(c);
+    if (inv) minted++;
+  }
+  return { minted, scanned: charges.length };
+}
+
 /** subscription.halted — repeated charge failure. Keep plan flag, mark halted. */
 async function markHalted(rzpSub) {
   if (!rzpSub?.id) return;
@@ -304,4 +371,4 @@ async function markCancelled(rzpSub) {
     .eq('razorpay_subscription_id', rzpSub.id);
 }
 
-module.exports = { activateFromSubscription, recordSubscriptionCharge, backfillSubscriptionPayments, markHalted, markCancelled, ACTIVE_STATES };
+module.exports = { activateFromSubscription, recordSubscriptionCharge, ensureSubscriptionInvoice, backfillSubscriptionPayments, backfillMissingInvoices, markHalted, markCancelled, ACTIVE_STATES };

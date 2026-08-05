@@ -414,7 +414,8 @@ const TEMPLATES = [
     html_content:
       eyebrow(t.text, 'Subscription') + h('Welcome to {{plan_name}}!') +
       lead('Your {{plan_name}} plan is now active. All features are unlocked on your dashboard.') +
-      C.infoCard(t, [['Plan', '{{plan_name}}'], ['Renews', '{{expiry_date}}']]),
+      C.infoCard(t, [['Plan', '{{plan_name}}'], ['Amount paid', '{{amount_charged}}'], ['Renews', '{{expiry_date}}']]) +
+      lead('Your GST tax invoice is available under Transactions in your dashboard.'),
     cta_label: 'Explore features', cta_url: '{{dashboard_url}}',
   }; })(),
 

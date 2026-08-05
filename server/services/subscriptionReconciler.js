@@ -111,8 +111,18 @@ async function reconcile() {
   // silently zeroed Collected revenue for admin/webhook-activated subscriptions.
   const recorded = await reconcileMissingPayments();
 
-  await recordStatus({ healed, released, recorded, scanned: (pending || []).length });
-  return { healed, released, recorded };
+  // Third pass: mint GST invoices for paid charges that never got one (the
+  // invoice step is best-effort at charge time, so a transient failure would
+  // otherwise leave the host permanently without a tax invoice).
+  let invoiced = 0;
+  try {
+    invoiced = (await subscriptionService.backfillMissingInvoices()).minted;
+  } catch (e) {
+    console.error('backfillMissingInvoices error', e.message);
+  }
+
+  await recordStatus({ healed, released, recorded, invoiced, scanned: (pending || []).length });
+  return { healed, released, recorded, invoiced };
 }
 
 /**
@@ -150,7 +160,7 @@ async function reconcileMissingPayments() {
  * Persist a running summary (last run + cumulative totals) to platform_settings.
  * Best-effort: a write failure never fails the reconcile pass.
  */
-async function recordStatus({ healed, released, recorded = 0, scanned }) {
+async function recordStatus({ healed, released, recorded = 0, invoiced = 0, scanned }) {
   try {
     const { data } = await supabaseAdmin
       .from('platform_settings').select('value').eq('key', STATUS_KEY).maybeSingle();
@@ -163,9 +173,11 @@ async function recordStatus({ healed, released, recorded = 0, scanned }) {
       last_healed: healed,
       last_released: released,
       last_recorded: recorded,
+      last_invoiced: invoiced,
       healed_total: (Number(prev.healed_total) || 0) + healed,
       released_total: (Number(prev.released_total) || 0) + released,
       recorded_total: (Number(prev.recorded_total) || 0) + recorded,
+      invoiced_total: (Number(prev.invoiced_total) || 0) + invoiced,
     };
     await supabaseAdmin.from('platform_settings')
       .upsert({ key: STATUS_KEY, value: JSON.stringify(next), updated_at: now }, { onConflict: 'key' });
