@@ -93,40 +93,19 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
     await recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, payment });
   }
 
-  if (isInitial) {
-    try {
-      const { data: prof } = await supabaseAdmin.from('profiles').select('name, email').eq('id', vendorId).single();
-      // Amount actually charged (plan + GST) so the email reads as a receipt.
-      const { gstRate } = await platformConfig.getConfig();
-      const planPrice = cadence === 'monthly' ? Number(plan?.monthly_price) || 0 : Number(plan?.annual_price) || 0;
-      const totalCharged = computeSubscriptionBreakdown({ planPrice, gstRate }).totalCharged;
-      // Direct token-gated invoice link (the page prints itself to PDF). Falls
-      // back to the dashboard if the invoice or API_URL isn't resolvable.
-      let invoice_url = `${process.env.CLIENT_URL || 'https://bookasloth.com'}/dashboard`;
-      try {
-        const apiBase = process.env.API_URL;
-        if (apiBase && paymentId) {
-          const { data: inv } = await supabaseAdmin
-            .from('invoices').select('id, access_token').eq('payment_id', paymentId).maybeSingle();
-          if (inv?.id && inv?.access_token) {
-            invoice_url = `${apiBase.replace(/\/$/, '')}/api/invoices/${inv.id}?token=${encodeURIComponent(inv.access_token)}`;
-          }
-        }
-      } catch (_) { /* keep dashboard fallback */ }
-      NotificationEngine.send({
-        event: 'SUBSCRIPTION_PURCHASED',
-        data: {
-          email: prof?.email, emailUser: { name: prof?.name, email: prof?.email },
-          emailData: {
-            plan_name: plan?.name || planSlug,
-            amount_charged: `₹${Number(totalCharged).toLocaleString('en-IN')}`,
-            expiry_date: new Date(periodEndIso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
-            invoice_url,
-          },
-          recipientUserId: vendorId,
-        },
-      }).catch((e) => console.error('subscription email error:', e.message));
-    } catch (_) { /* non-fatal */ }
+  // First charge → purchase receipt; later charges → renewal receipt. Both carry
+  // the amount + a link to the GST invoice PDF (see sendSubscriptionReceiptEmail).
+  if (paymentId) {
+    await sendSubscriptionReceiptEmail({
+      event: isInitial ? 'SUBSCRIPTION_PURCHASED' : 'SUBSCRIPTION_RENEWED',
+      vendorId, plan, planSlug, cadence, periodEndIso, paymentId,
+    });
+  } else if (isInitial) {
+    // Access granted without a payment entity (e.g. subscription.activated) —
+    // still send the purchase email; invoice_url falls back to the dashboard.
+    await sendSubscriptionReceiptEmail({
+      event: 'SUBSCRIPTION_PURCHASED', vendorId, plan, planSlug, cadence, periodEndIso, paymentId: null,
+    });
   }
 
   // Auto-renew analytics. Renewal charges flow ONLY through this path (webhook /
@@ -330,6 +309,57 @@ async function ensureSubscriptionInvoice(sp) {
     console.error('ensureSubscriptionInvoice failed (non-fatal):', e.message);
     return null;
   }
+}
+
+/**
+ * Send a subscription receipt email (purchase or renewal). Carries the amount
+ * charged (plan + GST) and a direct link to the GST invoice PDF — the token-gated
+ * invoice page prints itself. Falls back to the dashboard link when the invoice
+ * or API_URL isn't resolvable. Best-effort: never throws.
+ *
+ * @param {object} p
+ * @param {'SUBSCRIPTION_PURCHASED'|'SUBSCRIPTION_RENEWED'} p.event
+ * @param {string} p.vendorId
+ * @param {object} p.plan          plan record (monthly_price/annual_price/name)
+ * @param {string} p.planSlug
+ * @param {string} p.cadence       'monthly' | 'annual'
+ * @param {string} p.periodEndIso  current period end (renews-on date)
+ * @param {string|null} p.paymentId razorpay payment id of this charge (for the invoice link)
+ */
+async function sendSubscriptionReceiptEmail({ event, vendorId, plan, planSlug, cadence, periodEndIso, paymentId }) {
+  try {
+    const { data: prof } = await supabaseAdmin.from('profiles').select('name, email').eq('id', vendorId).single();
+    const { gstRate } = await platformConfig.getConfig();
+    const planPrice = cadence === 'monthly' ? Number(plan?.monthly_price) || 0 : Number(plan?.annual_price) || 0;
+    const totalCharged = computeSubscriptionBreakdown({ planPrice, gstRate }).totalCharged;
+
+    // Direct token-gated invoice link (the page prints itself to PDF).
+    let invoice_url = `${process.env.CLIENT_URL || 'https://bookasloth.com'}/dashboard`;
+    try {
+      const apiBase = process.env.API_URL;
+      if (apiBase && paymentId) {
+        const { data: inv } = await supabaseAdmin
+          .from('invoices').select('id, access_token').eq('payment_id', paymentId).maybeSingle();
+        if (inv?.id && inv?.access_token) {
+          invoice_url = `${apiBase.replace(/\/$/, '')}/api/invoices/${inv.id}?token=${encodeURIComponent(inv.access_token)}`;
+        }
+      }
+    } catch (_) { /* keep dashboard fallback */ }
+
+    await NotificationEngine.send({
+      event,
+      data: {
+        email: prof?.email, emailUser: { name: prof?.name, email: prof?.email },
+        emailData: {
+          plan_name: plan?.name || planSlug,
+          amount_charged: `₹${Number(totalCharged).toLocaleString('en-IN')}`,
+          expiry_date: new Date(periodEndIso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+          invoice_url,
+        },
+        recipientUserId: vendorId,
+      },
+    }).catch((e) => console.error('subscription email error:', e.message));
+  } catch (_) { /* non-fatal */ }
 }
 
 /**
