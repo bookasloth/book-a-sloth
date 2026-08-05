@@ -363,6 +363,40 @@ async function sendSubscriptionReceiptEmail({ event, vendorId, plan, planSlug, c
 }
 
 /**
+ * Re-send the receipt email for one already-recorded charge (looked up by
+ * razorpay payment id). Mints the invoice first if missing so the link resolves
+ * to the PDF. Picks PURCHASED vs RENEWED from the row's kind. Shared by the
+ * admin endpoint and the resend CLI so the logic lives in one place.
+ *
+ * @param {string} paymentId razorpay payment id
+ * @returns {Promise<{ok:boolean, event?:string, vendorId?:string, reason?:string}>}
+ */
+async function resendReceiptForPayment(paymentId) {
+  if (!paymentId) return { ok: false, reason: 'missing payment id' };
+  const { data: sp } = await supabaseAdmin
+    .from('subscription_payments')
+    .select('id, vendor_id, plan_type, billing_cadence, kind, razorpay_payment_id, billing_period_end')
+    .eq('razorpay_payment_id', paymentId).maybeSingle();
+  if (!sp) return { ok: false, reason: 'no charge found for payment id' };
+
+  await ensureSubscriptionInvoice(sp);
+
+  const cadence = normCadence(sp.billing_cadence) || 'monthly';
+  const plan = await planService.getPlan(planService.normalizeSlug(sp.plan_type));
+  const { data: prof } = await supabaseAdmin
+    .from('profiles').select('plan_expires_at').eq('id', sp.vendor_id).maybeSingle();
+  const periodEndIso = prof?.plan_expires_at
+    || (sp.billing_period_end ? new Date(sp.billing_period_end).toISOString() : new Date().toISOString());
+  const event = sp.kind === 'renewal' ? 'SUBSCRIPTION_RENEWED' : 'SUBSCRIPTION_PURCHASED';
+
+  await sendSubscriptionReceiptEmail({
+    event, vendorId: sp.vendor_id, plan, planSlug: sp.plan_type, cadence, periodEndIso,
+    paymentId: sp.razorpay_payment_id,
+  });
+  return { ok: true, event, vendorId: sp.vendor_id };
+}
+
+/**
  * Backfill GST invoices for paid subscription charges that have none. Heals the
  * silent gap where generateInvoice failed at charge time (best-effort → the row
  * existed but no invoice did, permanently). Idempotent; cheap once every charge
@@ -415,4 +449,4 @@ async function markCancelled(rzpSub) {
     .eq('razorpay_subscription_id', rzpSub.id);
 }
 
-module.exports = { activateFromSubscription, recordSubscriptionCharge, ensureSubscriptionInvoice, sendSubscriptionReceiptEmail, backfillSubscriptionPayments, backfillMissingInvoices, markHalted, markCancelled, ACTIVE_STATES };
+module.exports = { activateFromSubscription, recordSubscriptionCharge, ensureSubscriptionInvoice, sendSubscriptionReceiptEmail, resendReceiptForPayment, backfillSubscriptionPayments, backfillMissingInvoices, markHalted, markCancelled, ACTIVE_STATES };
