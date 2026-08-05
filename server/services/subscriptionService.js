@@ -415,4 +415,4 @@ async function markCancelled(rzpSub) {
     .eq('razorpay_subscription_id', rzpSub.id);
 }
 
-module.exports = { activateFromSubscription, recordSubscriptionCharge, ensureSubscriptionInvoice, backfillSubscriptionPayments, backfillMissingInvoices, markHalted, markCancelled, ACTIVE_STATES };
+module.exports = { activateFromSubscription, recordSubscriptionCharge, ensureSubscriptionInvoice, sendSubscriptionReceiptEmail, backfillSubscriptionPayments, backfillMissingInvoices, markHalted, markCancelled, ACTIVE_STATES };
