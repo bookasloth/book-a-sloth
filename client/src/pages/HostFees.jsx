@@ -5,9 +5,14 @@ import LegalLayout, { Section } from '../components/common/LegalLayout';
 // Agreement (/host-agreement), kept as a separate page so charges can be amended
 // on 30 days' notice under clause 5.6 without re-executing the Agreement.
 //
-// The worked examples are the source of truth hosts will quote back at us, so they
-// must stay numerically identical to docs/payment-model.md and to whatever
-// pricingEngine actually computes. If one changes, change all three.
+// ⚠️ DRAFT — MARKETPLACE MODEL v4 (docs/payment-model.md v4 + legal-marketplace-revert-brief.md).
+// Reverted from the abandoned merchant-of-record model. Pending lawyer sign-off; do
+// not deploy until the whole legal set is rewritten consistently and reviewed.
+//
+// The worked examples are the source of truth hosts quote back at us, so they must
+// stay numerically identical to docs/payment-model.md v4 and to what pricingEngine
+// computes (₹1000 → guest ₹1,011.80; host ₹959.76 paid / ₹909.76 free). If one
+// changes, change all three.
 
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
@@ -21,10 +26,10 @@ const Td = ({ children, className = '' }) => (
 const HostFees = () => (
   <LegalLayout
     title="Host Fee & Payment Schedule"
-    updated="24 July 2026"
+    updated="6 August 2026"
     effective="on your acceptance during host onboarding"
     current="/host-fees"
-    description="What Book A Sloth charges hosts — booking charge, platform commission, payment processing, the payment cycle, and worked examples for GST and non-GST hosts."
+    description="What Book A Sloth charges hosts — booking fee, platform commission, payment processing, TDS/TCS, the payment cycle, and worked examples."
     intro={
       <>
         <p>
@@ -34,9 +39,10 @@ const HostFees = () => (
           clause 5.6 of that Agreement.
         </p>
         <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-          <strong>The short version.</strong> You tell us what you want to earn. We add our charges and GST, and that
-          becomes the price your Guest pays. Your Guest pays the same amount whichever Plan you are on, whether or not
-          you are GST-registered, and however they choose to pay.
+          <strong>The short version.</strong> You set your price. Your Guest pays that price plus our small booking fee
+          and GST on the fee. You receive your price, minus our commission (if your Plan has one), the payment-gateway
+          charge, and the tax we are required to deduct at source (TDS and TCS). Your Guest pays the same amount
+          whichever Plan you are on and however they choose to pay.
         </p>
       </>
     }
@@ -47,7 +53,7 @@ const HostFees = () => (
           <thead className="bg-gray-50">
             <tr>
               <Th>Plan</Th>
-              <Th>Booking Charge</Th>
+              <Th>Booking Fee</Th>
               <Th>Platform Commission</Th>
               <Th>Payment Processing</Th>
               <Th>Max price per Service</Th>
@@ -56,23 +62,23 @@ const HostFees = () => (
           <tbody className="text-gray-600">
             <tr>
               <Td><strong>Starter</strong> (free)</Td>
-              <Td>₹10</Td>
-              <Td><strong>5%</strong> of Target Earning</Td>
-              <Td>included &mdash; we bear it</Td>
+              <Td>₹10 + GST</Td>
+              <Td><strong>5%</strong> of your price</Td>
+              <Td>actual gateway charge</Td>
               <Td><strong>₹5,000</strong></Td>
             </tr>
             <tr>
               <Td><strong>Host+</strong></Td>
-              <Td>₹10</Td>
+              <Td>₹10 + GST</Td>
               <Td>nil</Td>
-              <Td>2.5% of Guest Price</Td>
+              <Td>actual gateway charge</Td>
               <Td>no limit</Td>
             </tr>
             <tr>
               <Td><strong>Studio</strong></Td>
-              <Td>₹10</Td>
+              <Td>₹10 + GST</Td>
               <Td>nil</Td>
-              <Td>2.5% of Guest Price</Td>
+              <Td>actual gateway charge</Td>
               <Td>no limit</Td>
             </tr>
             <tr>
@@ -83,127 +89,111 @@ const HostFees = () => (
         </table>
       </div>
       <p className="pt-1">
-        Subscription prices for Host+, Studio, and Enterprise are shown on the{' '}
-        <Link to="/pricing" className="text-primary hover:underline">Pricing page</Link> and are charged separately
-        with GST. Studio and Host+ carry the same per-booking charges; Studio differs on Platform features, not on
-        price.
+        The <strong>booking fee</strong> is charged to your Guest on top of your price; the <strong>commission</strong>{' '}
+        (Starter only) is charged to you. Subscription prices for Host+, Studio, and Enterprise are shown on the{' '}
+        <Link to="/pricing" className="text-primary hover:underline">Pricing page</Link> and are charged separately with
+        GST. Studio and Host+ carry the same per-booking charges; Studio differs on Platform features, not on price.
       </p>
       <p>
-        <strong>Free bookings.</strong> A Service priced at ₹0 attracts no Booking Charge, no Platform Commission, and
-        no Payment Processing Charge.
+        <strong>Free bookings.</strong> A Service priced at ₹0 attracts no booking fee, no commission, no payment
+        processing charge, and no TDS or TCS.
       </p>
     </Section>
 
-    <Section title="2. Payment Processing Charge">
+    <Section title="2. Payment processing charge">
       <p>
-        The Payment Processing Charge is a <strong>flat 2.5% of the Guest Price</strong> and applies at the same rate to{' '}
-        <strong>every payment method</strong> &mdash; UPI, RuPay, debit card, credit card, net banking, wallet, and
-        international cards alike.
-      </p>
-      <p>
-        It is a flat blended charge, not a pass-through of what any particular transaction costs us. Our actual cost
-        varies by method: some methods cost us more than 2.5% and some cost us nothing at all. Where the actual cost is
-        higher, Book A Sloth bears the difference. Where it is lower, Book A Sloth retains the difference. We state this
-        plainly so there is nothing for you to discover later.
-      </p>
-      <p>
-        On the Starter Plan this charge is included in the 5% Platform Commission and is not deducted separately.
+        Payments are collected through our payment gateway. The <strong>actual gateway charge on the transaction is
+        borne by you</strong> and is deducted from your payout. The charge varies by the method your Guest uses (UPI,
+        card, net banking, wallet); we pass through what the gateway actually charges, not a marked-up rate.
       </p>
     </Section>
 
-    <Section title="3. How your consideration is computed">
+    <Section title="3. Tax deducted / collected at source">
+      <p>
+        As an e-commerce operator, we are required by law to deduct and deposit two amounts from the sale value of your
+        Service, against your PAN:
+      </p>
+      <ul className="list-disc pl-5 space-y-1.5">
+        <li><strong>TDS — 1%</strong> under <strong>section 194-O</strong> of the Income-tax Act, 1961.</li>
+        <li><strong>TCS — 1%</strong> under <strong>section 52</strong> of the CGST Act, 2017.</li>
+      </ul>
+      <p>
+        Neither is a charge by Book A Sloth and neither is retained by us. Both are deposited to your credit against
+        your PAN and are claimable in your income-tax and GST returns respectively. A <strong>valid PAN is mandatory
+        before you can accept paid bookings</strong> (194-O requires it).
+      </p>
+    </Section>
+
+    <Section title="4. How your payout is computed">
       <div className="rounded-xl border-2 border-gray-200 bg-white p-4 font-mono text-xs leading-relaxed">
-        E&nbsp;&nbsp;=&nbsp;your Target Earning (you set this)<br />
-        V&nbsp;&nbsp;=&nbsp;E + Booking Charge&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;taxable value<br />
-        G&nbsp;&nbsp;=&nbsp;V + GST&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;what your Guest pays<br />
-        H&nbsp;&nbsp;=&nbsp;E &minus; Commission &minus; Processing&nbsp;&nbsp;what we pay you
+        Guest pays&nbsp;&nbsp;=&nbsp;your price + ₹10 booking fee + GST on the fee<br />
+        You receive&nbsp;=&nbsp;your price &minus; commission &minus; gateway charge &minus; TDS (1%) &minus; TCS (1%)
       </div>
       <p>
-        Because <strong>V is always E + ₹10</strong>, the Guest Price depends only on what you choose to earn. Your
-        Plan, your GST status, and your Guest&rsquo;s payment method never change it.
+        Your Guest pays your listed price plus a flat ₹10 booking fee and 18% GST on that ₹10 (₹1.80). The booking fee
+        is the same regardless of your Plan, so <strong>your Guest pays the same amount whichever Plan you are on</strong>.
+        Commission, where it applies, is taken from your side, not added to the Guest&rsquo;s price.
       </p>
       <p>
-        GST is charged at the rate applicable to the service category. The examples below use <strong>18%</strong>,
-        which applies to most categories. Amounts are rounded to the nearest paisa.
+        The commission is <strong>inclusive of GST</strong> — the 5% already contains the 18% GST on our commission
+        service. We issue you a <strong>commission tax invoice</strong> for it so you can claim input credit if you are
+        GST-registered.
+      </p>
+      <p>
+        GST on your own service (your price) is your responsibility, not ours — we do not charge GST on your price. The
+        examples below use a payment-gateway charge of ~2% for illustration; your actual charge depends on the payment
+        method.
       </p>
     </Section>
 
-    <Section title="4. Worked examples — Target Earning ₹1,000">
-      <p className="font-semibold text-ink">4.1 Host+ or Studio</p>
+    <Section title="5. Worked examples — you list ₹1,000">
+      <p className="font-semibold text-ink">5.1 Host+ or Studio (no commission)</p>
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
-          <thead className="bg-gray-50">
-            <tr>
-              <Th>&nbsp;</Th>
-              <Th>GST-registered Host</Th>
-              <Th>Host not registered</Th>
-            </tr>
-          </thead>
           <tbody className="text-gray-600">
-            <tr><Td>Your Guest pays</Td><Td>₹1,191.80</Td><Td>₹1,191.80</Td></tr>
-            <tr><Td>Payment Processing 2.5%</Td><Td>₹29.80</Td><Td>₹29.80</Td></tr>
-            <tr><Td>Platform Commission</Td><Td>nil</Td><Td>nil</Td></tr>
-            <tr><Td><strong>Your consideration (H)</strong></Td><Td><strong>₹970.20</strong></Td><Td><strong>₹970.20</strong></Td></tr>
-            <tr><Td>Your document to us</Td><Td>tax invoice ₹1,144.84</Td><Td>Payment Advice ₹970.20</Td></tr>
-            <tr><Td>TDS at 10%</Td><Td>₹97.02</Td><Td>₹97.02</Td></tr>
-            <tr><Td><strong>Credited to your bank</strong></Td><Td><strong>₹1,047.82</strong></Td><Td><strong>₹873.18</strong></Td></tr>
-            <tr><Td className="border-b-0">You account for GST of</Td><Td className="border-b-0">₹174.64</Td><Td className="border-b-0">nil</Td></tr>
+            <tr><Td>Your price</Td><Td className="text-right">₹1,000.00</Td></tr>
+            <tr><Td>Booking fee (₹10) + GST (₹1.80) — paid by your Guest</Td><Td className="text-right">₹11.80</Td></tr>
+            <tr><Td><strong>Your Guest pays</strong></Td><Td className="text-right"><strong>₹1,011.80</strong></Td></tr>
+            <tr><Td>&minus; Payment gateway (~2%)</Td><Td className="text-right">₹20.24</Td></tr>
+            <tr><Td>&minus; TDS (194-O, 1%)</Td><Td className="text-right">₹10.00</Td></tr>
+            <tr><Td>&minus; TCS (§52, 1%)</Td><Td className="text-right">₹10.00</Td></tr>
+            <tr><Td className="border-b-0"><strong>You receive</strong></Td><Td className="border-b-0 text-right"><strong>₹959.76</strong></Td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p className="font-semibold text-ink pt-3">5.2 Starter (5% commission)</p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
+          <tbody className="text-gray-600">
+            <tr><Td>Your price</Td><Td className="text-right">₹1,000.00</Td></tr>
+            <tr><Td>Booking fee (₹10) + GST (₹1.80) — paid by your Guest</Td><Td className="text-right">₹11.80</Td></tr>
+            <tr><Td><strong>Your Guest pays</strong></Td><Td className="text-right"><strong>₹1,011.80</strong></Td></tr>
+            <tr><Td>&minus; Commission 5% (incl. GST ₹7.63)</Td><Td className="text-right">₹50.00</Td></tr>
+            <tr><Td>&minus; Payment gateway (~2%)</Td><Td className="text-right">₹20.24</Td></tr>
+            <tr><Td>&minus; TDS (194-O, 1%)</Td><Td className="text-right">₹10.00</Td></tr>
+            <tr><Td>&minus; TCS (§52, 1%)</Td><Td className="text-right">₹10.00</Td></tr>
+            <tr><Td className="border-b-0"><strong>You receive</strong></Td><Td className="border-b-0 text-right"><strong>₹909.76</strong></Td></tr>
           </tbody>
         </table>
       </div>
       <p className="text-xs pt-1">
-        Both Hosts end up with the same ₹970.20. The registered Host receives more into the bank because part of it is
-        GST he then accounts for himself. TDS is not a charge by us &mdash; it is deposited to your PAN and claimable
-        in your return.
-      </p>
-
-      <p className="font-semibold text-ink pt-3">4.2 Starter</p>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
-          <thead className="bg-gray-50">
-            <tr>
-              <Th>&nbsp;</Th>
-              <Th>GST-registered Host</Th>
-              <Th>Host not registered</Th>
-            </tr>
-          </thead>
-          <tbody className="text-gray-600">
-            <tr><Td>Your Guest pays</Td><Td>₹1,191.80</Td><Td>₹1,191.80</Td></tr>
-            <tr><Td>Platform Commission 5%</Td><Td>₹50.00</Td><Td>₹50.00</Td></tr>
-            <tr><Td>Payment Processing</Td><Td>included</Td><Td>included</Td></tr>
-            <tr><Td><strong>Your consideration (H)</strong></Td><Td><strong>₹950.00</strong></Td><Td><strong>₹950.00</strong></Td></tr>
-            <tr><Td>Your document to us</Td><Td>tax invoice ₹1,121.00</Td><Td>Payment Advice ₹950.00</Td></tr>
-            <tr><Td>TDS at 10%</Td><Td>₹95.00</Td><Td>₹95.00</Td></tr>
-            <tr><Td className="border-b-0"><strong>Credited to your bank</strong></Td><Td className="border-b-0"><strong>₹1,026.00</strong></Td><Td className="border-b-0"><strong>₹855.00</strong></Td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p className="text-xs pt-1">
-        The Guest Price is identical to the Host+ example. Moving to a paid Plan does not make you more expensive to
-        your Guest &mdash; it increases what you keep.
+        The Guest Price is identical in both examples — moving to a paid Plan does not make you more expensive to your
+        Guest, it increases what you keep. TDS and TCS are not charges by us; they are deposited to your PAN and
+        claimable in your returns.
       </p>
     </Section>
 
-    <Section title="5. If you are not registered under GST">
-      <p>
-        Book A Sloth is the seller of record, so GST is chargeable on the whole sale at our GSTIN regardless of your own
-        registration status. That is why the Guest Price is higher than your Target Earning by more than our charges
-        alone.
-      </p>
-      <p>
-        This is worth understanding before you list. If you sold the same service privately and were below the GST
-        registration threshold, no GST would arise and your customer would pay less. Selling through Book A Sloth brings
-        the sale inside the GST net. We show you the exact figures before you publish a price so you can decide with
-        the numbers in front of you.
-      </p>
-      <p>
-        If you later register for GST, tell us and we will record it. Your consideration does not change; only the
-        documentation and the split between payment and tax do. Changes apply from the date we record them and are
-        never applied to earlier Bookings.
-      </p>
+    <Section title="6. Your documents and GST">
+      <ul className="list-disc pl-5 space-y-1.5">
+        <li><strong>Payment Advice.</strong> For each paid Booking we issue you a Payment Advice recording your price and the amounts deducted. It is <strong>not</strong> a tax invoice and carries no GST — it is your record of what you earned and what was deducted.</li>
+        <li><strong>Commission tax invoice.</strong> Where commission applies, we issue you a tax invoice from Book A Sloth for the commission (with GST), so you may claim input credit if registered.</li>
+        <li><strong>Your own invoice.</strong> The sale of your Service is your sale to your Guest. If you are GST-registered, you are responsible for issuing your own tax invoice for your price and for accounting for GST on it. If you are not registered, no GST arises on your price.</li>
+        <li><strong>PAN.</strong> A valid PAN is required before you can accept paid bookings. TDS/TCS certificates are issued against it, and your TDS/TCS totals for any period are available on your dashboard.</li>
+      </ul>
     </Section>
 
-    <Section title="6. Payment cycle">
+    <Section title="7. Payment cycle">
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
           <thead className="bg-gray-50">
@@ -229,7 +219,7 @@ const HostFees = () => (
       </ul>
     </Section>
 
-    <Section title="7. What we may deduct">
+    <Section title="8. What we may deduct">
       <p>Under clause 9 of the Agreement we may deduct from amounts payable to you:</p>
       <ul className="list-disc pl-5 space-y-1.5">
         <li>refunds and credits given to a Guest for a Booking you supplied or failed to supply;</li>
@@ -244,15 +234,15 @@ const HostFees = () => (
       </ul>
     </Section>
 
-    <Section title="8. Cancellations and refunds">
+    <Section title="9. Cancellations and refunds">
       <ul className="list-disc pl-5 space-y-1.5">
-        <li><strong>You cancel or do not attend.</strong> The Guest is refunded in full, including our charges. No consideration is payable to you, and clause 12.3 applies.</li>
-        <li><strong>Guest cancels in the refundable window.</strong> The Guest is refunded the service portion. The Booking Charge and Payment Processing Charge are not refunded. No consideration is payable to you.</li>
-        <li><strong>Guest cancels late or does not attend.</strong> Handled under the <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>. Where the Booking is treated as non-refundable, your consideration remains payable.</li>
+        <li><strong>You cancel or do not attend.</strong> The Guest is refunded in full, including the booking fee. No payout is payable to you, and clause 12.3 applies.</li>
+        <li><strong>Guest cancels in the refundable window.</strong> The Guest is refunded your price. The booking fee and payment processing charge are not refunded. No payout is payable to you.</li>
+        <li><strong>Guest cancels late or does not attend.</strong> Handled under the <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>. Where the Booking is treated as non-refundable, your payout remains payable.</li>
       </ul>
     </Section>
 
-    <Section title="9. Changes to this Schedule">
+    <Section title="10. Changes to this Schedule">
       <p>
         We may amend this Schedule on <strong>30 days&rsquo; notice</strong> by email or in-Platform notification.
         Amended charges apply only to Bookings confirmed after the notice period ends. The charges applicable to a
@@ -261,7 +251,7 @@ const HostFees = () => (
       </p>
     </Section>
 
-    <Section title="10. Questions">
+    <Section title="11. Questions">
       <p>
         Email <Mail /> or call +91 8637758344. For anything tax-related that affects your own returns, please take your
         own professional advice &mdash; we can explain what we charge and what we deduct, but we cannot advise you on

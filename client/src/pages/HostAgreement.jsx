@@ -3,15 +3,15 @@ import LegalLayout, { Section } from '../components/common/LegalLayout';
 
 // /host-agreement — Host Services Agreement.
 //
-// This is the PROCUREMENT contract that the merchant-of-record model rests on:
-// the Host supplies the service TO Book A Sloth, and Book A Sloth supplies it
-// onward to the Guest in its own name and on its own account. Because we are the
-// seller and not an intermediary, nothing is "settled" to a third party and the
-// RBI Payment Aggregator Directions do not engage. See docs/payment-model.md.
-//
-// Do not soften clauses 2 (nature of relationship), 6 (invoicing), 8 (TDS), or
-// 16 (no collection on either's behalf) — they are the substance the structure
-// is judged on, not decoration.
+// ⚠️ SUPERSEDED BY MARKETPLACE MODEL v4 — NOT YET REWRITTEN. This document still
+// describes the ABANDONED merchant-of-record model (Host supplies TO Book A Sloth;
+// nothing "settled"). Under v4 the Host SELLS TO THE GUEST and authorises Book A Sloth
+// to COLLECT the guest payment and REMIT the Host's price net of commission, gateway,
+// TDS (194-O) and TCS (§52). Clauses 2 (nature of relationship) and 16 (no collection
+// on either's behalf) are the RBI Payment-Aggregator-sensitive core: their marketplace
+// wording MUST be authored by the lawyer + CA to match the PA-waiver exactly — do NOT
+// hand-edit them. Clause 8 becomes 194-O 1% + §52 TCS 1%, PAN mandatory before paid
+// bookings. Full spec: docs/legal-marketplace-revert-brief.md. Do not deploy as-is.
 
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
@@ -32,12 +32,12 @@ const HostAgreement = () => (
           &ldquo;our&rdquo;), and you, the person or entity offering services through the Platform (the
           &ldquo;<strong>Host</strong>&rdquo;, &ldquo;you&rdquo;, &ldquo;your&rdquo;).
         </p>
-        <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-          <strong>Read this first.</strong> Under this Agreement you sell your service <strong>to Book A Sloth</strong>,
-          and Book A Sloth sells it onward to the Guest in its own name. You do not have a contract with the Guest.
-          This is different from a marketplace arrangement and it changes how you are paid, invoiced, and taxed.
-          Clauses <strong>2</strong>, <strong>5</strong>, <strong>6</strong>, <strong>7</strong> and <strong>9</strong>{' '}
-          are the ones that affect your money — read them properly.
+        <p className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4 text-amber-900">
+          <strong>Draft under revision.</strong> This Agreement is being updated to Book A Sloth&rsquo;s marketplace
+          model: you are the seller of your service to the Guest, and Book A Sloth is the marketplace that lists it,
+          collects payment, and pays you your price net of its commission, the payment-gateway charge, and tax deducted
+          at source (TDS and TCS). The <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp;
+          Payment Schedule</Link> reflects the current figures; the clauses below are being revised to match.
         </p>
         <p>
           This Agreement incorporates the <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp;

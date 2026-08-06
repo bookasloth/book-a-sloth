@@ -1,18 +1,15 @@
 import { Link } from 'react-router-dom';
 import LegalLayout, { Section, MOR_EFFECTIVE } from '../components/common/LegalLayout';
 
-// /guest-terms — Guest Terms of Sale.
+// /guest-terms — Guest Terms.
 //
-// The sale contract between Book A Sloth and the Guest. Under the merchant-of-record
-// model WE are the seller and the supplier of record — the Host performs the service
-// as our service partner, not as the Guest's counterparty. Every consumer-facing
-// statement here must stay consistent with that, because the same characterisation
-// is what our GST filings and the Host Services Agreement rest on.
-//
-// Deliberately does NOT try to disclaim liability for the service itself: under the
-// Consumer Protection Act 2019 we are the supplier and cannot contract out of it.
-// Claiming otherwise would be an unfair contract term and would also contradict the
-// tax position. See docs/payment-model.md.
+// ⚠️ DRAFT — MARKETPLACE MODEL v4 (docs/payment-model.md v4 + legal-marketplace-revert-brief.md).
+// Reverted from the abandoned merchant-of-record model: the HOST is the seller/supplier;
+// the sale contract is host↔guest; Book A Sloth is the marketplace that facilitates the
+// booking, collects payment, and provides grievance redressal + refund facilitation under
+// the Consumer Protection (E-Commerce) Rules, 2020. Consumer rights under the CPA 2019 are
+// NOT excluded. The liability stance (§8) is a ⚖️ lawyer call — pending sign-off, do not
+// deploy until the whole legal set is reviewed.
 
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
@@ -32,10 +29,11 @@ const GuestTerms = () => (
           &ldquo;we&rdquo;, &ldquo;us&rdquo;).
         </p>
         <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-          <strong>Who you are buying from.</strong> You are buying the service <strong>from Book A Sloth</strong>. We
-          are the seller. The host shown on the listing performs the service as our service partner. Your contract, your
-          invoice, your payment, and any complaint or refund are all with us &mdash; not with the host. If something
-          goes wrong, you deal with one company: us.
+          <strong>Who you are buying from.</strong> You are buying the service <strong>from the host</strong> shown on
+          the listing, who is the seller and performs the service. <strong>Book A Sloth is the marketplace</strong> that
+          lists the service, takes your booking, collects your payment, and supports you. If something goes wrong you can
+          still come to us first &mdash; we provide grievance redressal and facilitate refunds &mdash; and your rights
+          as a consumer are fully preserved.
         </p>
         <p>
           Read these together with our{' '}
@@ -49,20 +47,22 @@ const GuestTerms = () => (
   >
     <Section title="1. Who is selling to you">
       <p>
-        <strong>1.1</strong> Book A Sloth buys the service from the host and sells it to you in its own name and on its
-        own account. We are the <strong>seller and supplier of record</strong>.
+        <strong>1.1</strong> The <strong>host</strong> shown on the listing is the seller and supplier of the service.
+        Your contract for the service is with the host.
       </p>
       <p>
-        <strong>1.2</strong> The host performs the service under an agreement with us. You do not enter into a separate
-        contract with the host, and the host is not your counterparty for the booking.
+        <strong>1.2</strong> <strong>Book A Sloth is the marketplace.</strong> We list the service, take your booking,
+        collect your payment, issue you a tax invoice for our booking fee, and provide support and grievance redressal.
+        We do not ourselves perform the service.
       </p>
       <p>
-        <strong>1.3</strong> This means you have one place to go for everything &mdash; the invoice, the payment, a
-        reschedule, a refund, or a complaint. You do not have to chase the host.
+        <strong>1.3</strong> Even though the host is the seller, you have <strong>one place to raise a problem</strong>{' '}
+        &mdash; you can come to us and we will help, provide grievance redressal, and facilitate a refund where due,
+        under the Consumer Protection (E-Commerce) Rules, 2020.
       </p>
       <p>
-        <strong>1.4</strong> Where a listing names a host, that name identifies who will perform the service. It does
-        not change who is selling it to you.
+        <strong>1.4</strong> The GST invoice you receive from Book A Sloth is for our booking fee. Where the host is
+        GST-registered, the host is responsible for invoicing their own service price.
       </p>
     </Section>
 
@@ -76,8 +76,9 @@ const GuestTerms = () => (
         tax. Please review it before confirming.
       </p>
       <p>
-        <strong>2.3</strong> We issue you a <strong>tax invoice from Book A Sloth</strong> under our GSTIN for the full
-        amount. Keep it &mdash; it is your record of purchase.
+        <strong>2.3</strong> We issue you a <strong>tax invoice from Book A Sloth</strong> for our booking fee. Where
+        the host is GST-registered, the host is responsible for invoicing their own service price. Keep your booking
+        confirmation and invoice &mdash; they are your record of purchase.
       </p>
       <p>
         <strong>2.4</strong> All prices are in Indian Rupees. If you pay using a card issued outside India, your bank
@@ -190,8 +191,9 @@ const GuestTerms = () => (
         find, we may offer a reschedule, a partial refund, or a full refund.
       </p>
       <p>
-        <strong>7.3</strong> Because we are the seller, you do not need to pursue the host. We deal with the host
-        ourselves.
+        <strong>7.3</strong> You can raise any problem with us first. As the marketplace we provide grievance redressal,
+        take the matter up with the host, and facilitate a refund where one is due &mdash; you do not have to chase the
+        host yourself.
       </p>
       <p>
         <strong>7.4</strong> Please come to us before raising a chargeback with your bank. A chargeback raised without
@@ -200,24 +202,29 @@ const GuestTerms = () => (
       </p>
     </Section>
 
-    <Section title="8. Our responsibility to you">
+    <Section title="8. Responsibility for the service">
+      {/* ⚖️ LAWYER CALL. Marketplace stance: the host (seller) is responsible for performing
+          the service; BAS is the marketplace and provides grievance redressal + refund
+          facilitation (CP E-Commerce Rules 2020) without excluding consumer rights. Counsel to
+          confirm the precise liability position and its fit with CP E-Commerce Rules Rule 4/5/7. */}
       <p>
-        <strong>8.1</strong> We supply services with reasonable skill and care, and we are responsible to you as the
-        seller of those services.
+        <strong>8.1</strong> The host is the seller and is responsible for supplying the service with reasonable skill
+        and care and as described. Book A Sloth operates the marketplace; it does not itself perform the service.
       </p>
       <p>
-        <strong>8.2</strong> Where we are liable for a booking that was not delivered or was deficient, our liability
-        is to refund the amount you paid for that booking and to compensate you for reasonably foreseeable direct loss
-        caused by our breach.
+        <strong>8.2</strong> As the marketplace, we provide grievance redressal and facilitate refunds and
+        cancellations. Where a booking was not delivered or was materially deficient, we will help resolve it and
+        facilitate a refund of what you paid where one is due under the{' '}
+        <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>.
       </p>
       <p>
-        <strong>8.3</strong> We are not liable for indirect or consequential loss, or for loss of profit, income,
-        opportunity, or data, or for loss caused by something outside our reasonable control.
+        <strong>8.3</strong> Our own liability for operating the Platform is not for indirect or consequential loss, or
+        for loss caused by something outside our reasonable control.
       </p>
       <p>
-        <strong>8.4</strong> Nothing in these Terms of Sale excludes or limits any right you have under the{' '}
-        <strong>Consumer Protection Act, 2019</strong> or any other law that cannot be excluded. Where anything here
-        conflicts with such a right, that right prevails.
+        <strong>8.4</strong> Nothing in these Terms excludes or limits any right you have under the{' '}
+        <strong>Consumer Protection Act, 2019</strong>, the Consumer Protection (E-Commerce) Rules, 2020, or any other
+        law that cannot be excluded. Where anything here conflicts with such a right, that right prevails.
       </p>
     </Section>
 

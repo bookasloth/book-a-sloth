@@ -3,10 +3,12 @@ import LegalLayout, { Section, MOR_EFFECTIVE } from '../components/common/LegalL
 
 // /refund — Refund & Cancellation Policy.
 //
-// Rewritten for the merchant-of-record model: Book A Sloth is the SELLER, so refunds
-// are our obligation to the guest and we recover from the host separately. The old
-// version said refunds relate to "a service that was paid out to a host" — payout
-// language that contradicts the model. Do not reintroduce it.
+// ⚠️ DRAFT — MARKETPLACE MODEL v4. Reverted from the merchant-of-record stance ("BAS is
+// the seller, refunds are our obligation") to the marketplace stance: the host is the
+// seller, and Book A Sloth FACILITATES refunds and grievance redressal under the Consumer
+// Protection (E-Commerce) Rules, 2020 — the guest can still claim from us. Consumer rights
+// are preserved. The refund-window mechanics/tables below are unchanged (factual). The
+// liability framing is a ⚖️ lawyer call. Full spec: docs/legal-marketplace-revert-brief.md.
 //
 // The booking + processing charge is non-refundable on guest-initiated cancellations
 // because the gateway does not return MDR on a refund. That is only defensible while
@@ -39,8 +41,9 @@ const Refund = () => (
           <Link to="/terms" className="text-primary hover:underline">Terms of Use</Link>.
         </p>
         <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-          <strong>Book A Sloth is the seller.</strong> Refunds are our responsibility, not the host&rsquo;s. You never
-          need to chase a host for your money &mdash; you claim from us, and we deal with the host ourselves.
+          <strong>You claim from us.</strong> Even though the host is the seller of the service, Book A Sloth
+          facilitates refunds and grievance redressal as the marketplace. You never need to chase a host for your money
+          &mdash; you claim from us, and we take it up with the host.
         </p>
         <p>
           Payments are processed through <strong>Razorpay</strong>. All amounts are in Indian Rupees.
