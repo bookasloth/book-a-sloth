@@ -31,12 +31,13 @@ const HostAgreement = () => (
           &ldquo;our&rdquo;), and you, the person or entity offering services through the Platform (the
           &ldquo;<strong>Host</strong>&rdquo;, &ldquo;you&rdquo;, &ldquo;your&rdquo;).
         </p>
-        <p className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4 text-amber-900">
-          <strong>Draft under revision.</strong> This Agreement is being updated to Book A Sloth&rsquo;s marketplace
-          model: you are the seller of your service to the Guest, and Book A Sloth is the marketplace that lists it,
-          collects payment, and pays you your price net of its commission, the payment-gateway charge, and tax deducted
-          at source (TDS and TCS). The <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp;
-          Payment Schedule</Link> reflects the current figures; the clauses below are being revised to match.
+        <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+          <strong>Read this first.</strong> You are the seller of your Service to the Guest. Book A Sloth is the
+          marketplace that lists your Service, takes the booking, collects payment, and pays you Your Price net of its
+          Platform Fee, the payment-gateway charge, and tax deducted or collected at source. See the{' '}
+          <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp; Payment Schedule</Link> for the
+          figures. Clauses <strong>2</strong>, <strong>5</strong>, <strong>6</strong>, <strong>7</strong>, <strong>8</strong>{' '}
+          and <strong>9</strong> are the ones that affect your money &mdash; read them properly.
         </p>
         <p>
           This Agreement incorporates the <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp;

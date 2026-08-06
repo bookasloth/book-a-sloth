@@ -66,8 +66,8 @@ beforeEach(() => {
 });
 
 describe('useOnboardingGuard', () => {
-  test('host at stepCompleted=3 visiting claim page redirects to category', async () => {
-    // stepCompleted=3 → RESUME[3]='category'
+  test('host at stepCompleted=3 visiting claim page redirects to preview', async () => {
+    // stepCompleted=3 → RESUME[3]='preview' (redesigned 4-screen flow)
     // window.location.pathname ends with 'claim' (the current page)
     getOnboardingStatus.mockResolvedValue({
       data: { stepCompleted: 3, isComplete: false, slug: 'john' },
@@ -94,7 +94,7 @@ describe('useOnboardingGuard', () => {
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
-        '/vendor-register/john/category',
+        '/vendor-register/john/preview',
         { replace: true }
       );
     });

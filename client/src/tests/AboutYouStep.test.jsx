@@ -15,6 +15,9 @@ vi.mock('../services/api', () => ({
 vi.mock('react-hot-toast', () => ({
   default: Object.assign(() => {}, { success: () => {}, error: () => {} }),
 }));
+// The resume guard (redesigned flow) redirects legacy /about away before render;
+// it has its own test — here we stub it ready so the component under test renders.
+vi.mock('../pages/onboarding/useOnboardingGuard', () => ({ default: () => true }));
 // Mock useNavigate so we can capture calls; useParams provides the slug.
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {

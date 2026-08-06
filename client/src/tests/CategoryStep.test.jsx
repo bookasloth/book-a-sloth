@@ -13,6 +13,9 @@ vi.mock('../services/api', () => ({
   ),
 }));
 
+// Redesigned guard redirects this legacy step; it has its own test — stub it ready.
+vi.mock('../pages/onboarding/useOnboardingGuard', () => ({ default: () => true }));
+
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal();

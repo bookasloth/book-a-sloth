@@ -10,16 +10,12 @@ import { ogCard } from '../../config/ogImages';
  * in each page component (Terms.jsx, Privacy.jsx, Refund.jsx).
  */
 
-// Future effective date for the commercial legal set (/guest-terms, /refund, /terms,
-// host pair). They describe how the platform will operate once the model ships, NOT how
-// it behaves today — a legal page that contradicts the running product is worse than
-// none. Change this ONE constant to the real go-live date once the model is live.
-//
-// ⚠️ The current copy still reflects the ABANDONED merchant-of-record model. It is being
-// reverted to the marketplace/intermediary model (v4) — see
-// docs/legal-marketplace-revert-brief.md. The name stays MOR_EFFECTIVE until the copy is
-// rewritten (rename → MARKETPLACE_EFFECTIVE then; ripples to GuestTerms/Refund imports).
-export const MOR_EFFECTIVE = '1 September 2026';
+// Effective date for the commercial legal set (/terms, /guest-terms, /refund, host pair).
+// Set to the go-live date of the marketplace model (v4). The copy across these pages now
+// reflects the marketplace / platform-facilitator model, matching the running product.
+// (Name kept MOR_EFFECTIVE to avoid churning the GuestTerms/Refund imports; it is now the
+// marketplace effective date.)
+export const MOR_EFFECTIVE = '7 August 2026';
 
 export const Section = ({ title, children }) => (
   <section className="mb-7 last:mb-0">
