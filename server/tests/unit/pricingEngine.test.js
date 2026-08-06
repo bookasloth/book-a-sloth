@@ -11,9 +11,9 @@
  *   tcs            = Sec 52,  1% of servicePrice (base only). Pass-through to govt.
  *   Host payout    = servicePrice − commission − razorpayFee − tds − tcs
  *
- * Worked reference: host "Atish" lists ₹1000, PG ₹20.24 (illustrative).
- *   Free plan (5% commission): payout 909.76
- *   Paid plan (0% commission): payout 959.76
+ * Worked reference: host lists ₹1000, PG ₹20.24 (illustrative).
+ *   Scenario B — free-plan host  (5% commission): payout 909.76
+ *   Scenario A — Atish, paid plan (0% commission): payout 959.76
  */
 
 'use strict';
@@ -156,11 +156,11 @@ describe('calculateCustomerTotal', () => {
 });
 
 // ─── computeBreakdown — worked examples from payment-model.md §2 ──────────────
-describe('computeBreakdown — marketplace v4 worked examples (host: Atish, ₹1000)', () => {
+describe('computeBreakdown — marketplace v4 worked examples (₹1000 listing)', () => {
   // PG ₹20.24 = illustrative 2% of the ₹1011.80 guest total.
   const PG = 20.24;
 
-  test('Scenario B — free plan, 5% commission → payout ₹909.76', () => {
+  test('Scenario B — free-plan host, 5% commission → payout ₹909.76', () => {
     const b = computeBreakdown({ servicePrice: 1000, commissionPercentage: 5, razorpayFee: PG });
     expect(b.platformFee).toBe(10);
     expect(b.gst).toBe(1.8);
@@ -174,7 +174,7 @@ describe('computeBreakdown — marketplace v4 worked examples (host: Atish, ₹1
     expect(b.platformRevenue).toBe(52.37);      // fee 10 + commission ex-GST 42.37
   });
 
-  test('Scenario A — paid plan, 0% commission → payout ₹959.76', () => {
+  test('Scenario A — Atish (paid plan), 0% commission → payout ₹959.76', () => {
     const b = computeBreakdown({ servicePrice: 1000, commissionPercentage: 0, razorpayFee: PG });
     expect(b.commission).toBe(0);
     expect(b.commissionGst).toBe(0);
