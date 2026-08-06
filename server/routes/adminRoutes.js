@@ -23,6 +23,10 @@ router.get('/provider-overview',        requireAdmin('professionals.view'),   ge
 router.get('/revenue-trend',            requireAdmin('analytics.view'),      getRevenueTrend);
 router.get('/revenue-breakdown',        requireAdmin('analytics.view'),      getRevenueBreakdown);
 
+// ── TDS (194-O) / TCS (§52) filing exports — 26Q + GSTR-8 (v4) ──
+const withholding = require('../controllers/withholdingAdminController');
+router.get('/reports/withholding',      requireAdmin('analytics.view'),      withholding.getWithholdingReport);
+
 // ── Marketing / performance insights (owned KPI tiles, Postgres-first) ──
 const insights = require('../controllers/insightsAdminController');
 router.get('/insights/kpis', requireAdmin('analytics.view'), insights.getKpis);
