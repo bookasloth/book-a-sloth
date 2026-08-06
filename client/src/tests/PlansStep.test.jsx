@@ -17,6 +17,9 @@ vi.mock('../services/api', () => ({
   ),
 }));
 vi.mock('react-hot-toast', () => ({ default: Object.assign(() => {}, { success: () => {}, error: () => {} }) }));
+// The publish celebration draws to a canvas (canvas-confetti); jsdom has no 2d
+// context → an unhandled clearRect(null) error fails `vitest run`. Stub it out.
+vi.mock('../utils/celebration', () => ({ fireCelebration: vi.fn() }));
 
 import {
   getPublicPlans,
