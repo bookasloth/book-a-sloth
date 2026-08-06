@@ -9,12 +9,39 @@
  *   platform_fee              default ₹10 (flat fee charged to the customer)
  *   platform_fee_gst_rate     default 0.18 (18% GST on the platform fee)
  *   settlement_clearing_days  default 7 (days after completion before a vendor payout matures)
+ *   fee_only_mode             default TRUE — INTERIM (no Razorpay Route yet). Hosts cannot
+ *                             list a paid service (prices forced to ₹0) and every booking
+ *                             collects only Book A Sloth's own booking fee + GST, with a
+ *                             guest invoice; NO host money moves, so no payment-aggregator
+ *                             exposure. Flip to false on Route go-live to enable host pricing
+ *                             + payouts. Defaults true so a DB blip fails SAFE (never
+ *                             accidentally enables collecting host money without Route).
  */
 
 const { supabaseAdmin } = require('../config/supabase');
 const { securityLog } = require('../utils/logger');
 
-const DEFAULTS = { platformFee: 10, gstRate: 0.18, clearingDays: 7 };
+const DEFAULTS = { platformFee: 10, gstRate: 0.18, clearingDays: 7, feeOnlyMode: true };
+
+// Coerce a platform_settings value into a boolean. Stored as raw bool, 'true'/'false',
+// 1/0, or JSON-stringified. Anything not clearly false resolves to the fallback.
+const toBool = (raw, fallback) => {
+  if (raw == null) return fallback;
+  let v = raw;
+  for (let i = 0; i < 8 && typeof v === 'string'; i++) {
+    const s = v.trim();
+    let parsed;
+    try { parsed = JSON.parse(s); } catch { break; }
+    if (parsed === v) break;
+    v = parsed;
+  }
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'number') return v !== 0;
+  const s = String(v).trim().toLowerCase();
+  if (['false', '0', 'no', 'off'].includes(s)) return false;
+  if (['true', '1', 'yes', 'on'].includes(s)) return true;
+  return fallback;
+};
 const CACHE_TTL_MS = 60 * 1000;
 let _cache = { at: 0, value: null };
 
@@ -44,15 +71,17 @@ const getConfig = async () => {
   let platformFee = DEFAULTS.platformFee;
   let gstRate = DEFAULTS.gstRate;
   let clearingDays = DEFAULTS.clearingDays;
+  let feeOnlyMode = DEFAULTS.feeOnlyMode;
   try {
     const { data } = await supabaseAdmin
       .from('platform_settings')
       .select('key, value')
-      .in('key', ['platform_fee', 'platform_fee_gst_rate', 'settlement_clearing_days']);
+      .in('key', ['platform_fee', 'platform_fee_gst_rate', 'settlement_clearing_days', 'fee_only_mode']);
     for (const row of data || []) {
       if (row.key === 'platform_fee') platformFee = toNumber(row.value, DEFAULTS.platformFee);
       if (row.key === 'platform_fee_gst_rate') gstRate = toNumber(row.value, DEFAULTS.gstRate);
       if (row.key === 'settlement_clearing_days') clearingDays = toNumber(row.value, DEFAULTS.clearingDays);
+      if (row.key === 'fee_only_mode') feeOnlyMode = toBool(row.value, DEFAULTS.feeOnlyMode);
     }
   } catch (err) {
     // A DB blip silently reverts platform_fee / gstRate to hardcoded defaults
@@ -67,7 +96,7 @@ const getConfig = async () => {
   if (!Number.isFinite(clearingDays) || clearingDays < 0) clearingDays = DEFAULTS.clearingDays;
   clearingDays = Math.floor(clearingDays);
 
-  _cache = { at: now, value: { platformFee, gstRate, clearingDays } };
+  _cache = { at: now, value: { platformFee, gstRate, clearingDays, feeOnlyMode } };
   return _cache.value;
 };
 

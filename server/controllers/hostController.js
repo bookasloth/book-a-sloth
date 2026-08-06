@@ -525,6 +525,9 @@ const createService = async (req, res) => {
       primary_category: chk.primary,
     };
     if (thumbnail_url !== undefined) payload.thumbnail_url = thumbnail_url;
+    // Interim fee-only mode (no Route yet): no paid listings — force ₹0.
+    const { feeOnlyMode } = await getPlatformConfig();
+    if (feeOnlyMode) payload.price = 0;
 
     // Free-service sub-cap: a new active price-0 service must fit the plan's
     // free_services limit (Starter 2; paid tiers unlimited). New host services
@@ -592,6 +595,9 @@ const updateService = async (req, res) => {
     if (meeting_mode !== undefined) updates.meeting_mode = meeting_mode;
     if (duration !== undefined) updates.duration = clampDuration(duration);
     if (price !== undefined) updates.price = clampPrice(price);
+    // Interim fee-only mode: no paid listings — force ₹0 on every update.
+    const { feeOnlyMode } = await getPlatformConfig();
+    if (feeOnlyMode) updates.price = 0;
     if (currency !== undefined) updates.currency = currency;
     if (is_active !== undefined) updates.is_active = is_active;
     if (thumbnail_url !== undefined) updates.thumbnail_url = thumbnail_url;

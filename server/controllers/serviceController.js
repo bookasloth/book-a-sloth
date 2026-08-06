@@ -224,6 +224,10 @@ const createService = async (req, res) => {
     const slug = await uniqueSlug(baseSlug, req.user.id);
 
     const p = buildPayload(req.body);
+    // Interim fee-only mode (no Razorpay Route yet): hosts cannot list a paid
+    // service — force the price to ₹0. Flip fee_only_mode off on Route go-live.
+    const { feeOnlyMode } = await getPlatformConfig();
+    if (feeOnlyMode) p.price = 0;
     p.category = chk.value;
     p.primary_category = chk.primary;
     p.host_id  = req.user.id;
@@ -291,6 +295,9 @@ const getServiceById = async (req, res) => {
 const updateService = async (req, res) => {
   try {
     const updates = buildPayload(req.body);
+    // Interim fee-only mode: no paid listings — force ₹0 on every update.
+    const { feeOnlyMode } = await getPlatformConfig();
+    if (feeOnlyMode) updates.price = 0;
     if (req.body.category !== undefined) {
       const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: false });
       if (!chk.ok) return res.status(chk.status).json({ message: chk.message });
@@ -556,8 +563,12 @@ const buildPublicServiceByProfileAndSlug = async (profileSlug, serviceSlug) => {
   // guest sees here matches what they pay. Falls back to 0 on error.
   let bookingFee = 0;
   let bookingFeeBreakdown = { platformFee: 0, tax: 0 };
+  // Interim fee-only mode: true = every booking (even a ₹0 service) pays the fee.
+  // Default true so the guest checkout fails safe toward charging the fee.
+  let feeOnly = true;
   try {
-    const { platformFee, gstRate } = await getPlatformConfig();
+    const { platformFee, gstRate, feeOnlyMode } = await getPlatformConfig();
+    feeOnly = feeOnlyMode;
     const tax = Math.round(platformFee * gstRate * 100) / 100;
     bookingFee = Math.round((platformFee + tax) * 100) / 100;
     bookingFeeBreakdown = { platformFee: Math.round(platformFee * 100) / 100, tax };
@@ -582,6 +593,7 @@ const buildPublicServiceByProfileAndSlug = async (profileSlug, serviceSlug) => {
       ratingBreakdown,
       bookingFee,
       bookingFeeBreakdown,
+      feeOnly,
     },
   };
 };

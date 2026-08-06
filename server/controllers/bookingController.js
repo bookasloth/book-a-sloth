@@ -380,8 +380,9 @@ const createBooking = async (req, res) => {
     const planRecord        = await planService.getPlan(effectivePlanSlug);
     const commissionPct     = Number(planRecord.commission_percentage) || 0;
 
-    // Platform fee + GST rate are admin-editable settings.
-    const { platformFee: feeSetting, gstRate } = await platformConfig.getConfig();
+    // Platform fee + GST rate are admin-editable settings. feeOnlyMode (interim,
+    // no Route): every booking still carries the platform fee even at ₹0 price.
+    const { platformFee: feeSetting, gstRate, feeOnlyMode } = await platformConfig.getConfig();
 
     // Razorpay fee is vendor-borne and only known at capture → finalised in
     // paymentController.verifyPayment. Here razorpayFee = 0 (payout provisional).
@@ -391,6 +392,7 @@ const createBooking = async (req, res) => {
       platformFee:          feeSetting,
       gstRate,
       razorpayFee:          0,
+      chargeFeeOnFree:      feeOnlyMode,   // ₹0 service still owes the booking fee
     });
     const platformFee  = pricing.platformFee;
     const commission   = pricing.commission;
@@ -406,7 +408,7 @@ const createBooking = async (req, res) => {
     const isOnline = service.meeting_mode !== "offline";
     if (
       isOnline &&
-      service.price === 0 &&
+      pricing.customerTotal === 0 &&
       host.google_calendar_connected &&
       host.google_refresh_token &&
       (await featureFlags.isFeatureEnabled("google_calendar"))
@@ -469,8 +471,10 @@ const createBooking = async (req, res) => {
       vendor_plan_type:      effectivePlanSlug,       // v2.8 snapshot
       reminder_24h_sent: false,
       reminder_1h_sent: false,
-      status: service.price === 0 ? "confirmed" : "pending",
-      payment_status: service.price === 0 ? "paid" : "unpaid",
+      // Branch on the amount actually payable, not the host price: in fee-only
+      // mode a ₹0 service still owes the booking fee, so it goes pending→pay.
+      status: pricing.customerTotal === 0 ? "confirmed" : "pending",
+      payment_status: pricing.customerTotal === 0 ? "paid" : "unpaid",
     };
 
     // Serialize the quota recheck + insert per host so two concurrent bookings
@@ -556,9 +560,10 @@ const createBooking = async (req, res) => {
       timeZone: hostTimezone,
     });
 
-    // BUG-12 fixed: only send confirmation emails for FREE services.
-    // Paid services: emails are sent in paymentController.verifyPayment after payment succeeds.
-    if (service.price === 0) {
+    // Only send confirmation emails when the booking is instant-confirmed (nothing
+    // to pay). Anything with an amount payable — a paid service OR a ₹0 service that
+    // still owes the booking fee in fee-only mode — sends emails in verifyPayment.
+    if (pricing.customerTotal === 0) {
       runInBackground("createBooking:confirmation-emails", async () => {
         if (!(await featureFlags.isFeatureEnabled("confirmation_emails"))) return;
         // WhatsApp confirmation carries a 5th "link" var: Meet link when online,

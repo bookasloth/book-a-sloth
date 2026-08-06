@@ -196,7 +196,7 @@ const ServiceBooking = () => {
   const [service, setService] = useState(null);
   // Admin-editable booking charge (platform fee + GST), from the server so the
   // summary always matches what Razorpay charges. Defaults until fetched.
-  const [fees, setFees] = useState({ bookingFee: 0, platformFee: 0, gstRate: 0.18 });
+  const [fees, setFees] = useState({ bookingFee: 0, platformFee: 0, gstRate: 0.18, feeOnly: true });
   const [availability, setAvailability] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -275,6 +275,8 @@ const ServiceBooking = () => {
           bookingFee:  Number(data.bookingFee ?? 0),
           platformFee: Number(data.platformFee ?? 0),
           gstRate:     Number(data.gstRate ?? 0.18),
+          // Interim fee-only mode: a ₹0 service still pays the booking fee.
+          feeOnly:     data.feeOnly ?? true,
         });
         // Section 1: host-level rating for the profile card (hidden when 0)
         try {
@@ -535,7 +537,9 @@ const ServiceBooking = () => {
         billing_details: billingDetails(),
       });
       setConfirmation(bookingResult);
-      if (service.price > 0) {
+      // Follow the server's decision: any amount payable (paid service OR the
+      // interim ₹0-service booking fee) comes back as customer_total > 0.
+      if (Number(bookingResult?.customer_total) > 0) {
         setStep("payment");
       } else {
         triggerFinalize("Booking confirmed!");
@@ -606,8 +610,9 @@ const ServiceBooking = () => {
       });
 
       setConfirmation(bookingResult);
-      // Task 7: paid services go to payment step
-      if (service.price > 0) {
+      // Follow the server's decision: any amount payable (paid service OR the
+      // interim ₹0-service booking fee) comes back as customer_total > 0.
+      if (Number(bookingResult?.customer_total) > 0) {
         setStep("payment");
       } else {
         triggerFinalize("Booking confirmed!");
@@ -731,7 +736,9 @@ const ServiceBooking = () => {
       </div>
     );
 
-  const isPaid = service.price > 0;
+  // Payment step is needed whenever there's an amount to pay: a paid service, OR
+  // (interim fee-only mode) a ₹0 service that still owes the booking fee.
+  const isPaid = service.price > 0 || fees.feeOnly;
   // BUG-16 fix: logged-in users skip the OTP verification step
   const STEPS = [
     "time",
@@ -1195,7 +1202,7 @@ const ServiceBooking = () => {
                     <div className="flex justify-between border-t pt-3 font-semibold text-base">
                       <span>Total Amount</span>
                       <span style={{ color: tc }}>
-                        {service.price === 0 ? "Free" : `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}`}
+                        {isPaid ? `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}` : "Free"}
                       </span>
                     </div>
                   </div>

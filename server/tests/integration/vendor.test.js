@@ -12,6 +12,13 @@ jest.mock('../../middleware/planMiddleware', () => ({
   attachPlan:        (_r, _s, n) => n(),
   checkServiceLimit: (_r, _s, n) => n(),
 }));
+// These tests validate normal-mode service CRUD (with real prices), so run with
+// fee-only mode OFF. Mocking getConfig also keeps it from consuming a queued
+// supabase mock response mid-flow. (Fee-only price-forcing is covered separately.)
+jest.mock('../../services/platformConfig', () => ({
+  getConfig: jest.fn().mockResolvedValue({ platformFee: 10, gstRate: 0.18, clearingDays: 7, feeOnlyMode: false }),
+  clearCache: jest.fn(),
+}));
 
 const request      = require('supertest');
 const express      = require('express');

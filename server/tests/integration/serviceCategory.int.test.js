@@ -14,6 +14,12 @@ jest.mock('../../middleware/planMiddleware', () => ({
 jest.mock('../../middleware/requireFeature', () => ({
   requireFeature: () => (_r, _s, n) => n(),
 }));
+// Isolate category logic under normal-mode pricing (fee-only OFF) and keep the
+// controllers' getConfig() call from consuming a queued supabase `from` response.
+jest.mock('../../services/platformConfig', () => ({
+  getConfig: jest.fn().mockResolvedValue({ platformFee: 10, gstRate: 0.18, clearingDays: 7, feeOnlyMode: false }),
+  clearCache: jest.fn(),
+}));
 
 const request  = require('supertest');
 const express  = require('express');

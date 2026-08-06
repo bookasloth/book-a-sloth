@@ -42,6 +42,10 @@ describe('calculatePlatformFee', () => {
   test('₹0 for a free service', () => {
     expect(calculatePlatformFee(0)).toBe(0);
   });
+  test('chargeFeeOnFree: a ₹0 service still carries the flat fee (interim fee-only mode)', () => {
+    expect(calculatePlatformFee(0, { chargeFeeOnFree: true })).toBe(10);
+    expect(calculatePlatformFee(0, { chargeFeeOnFree: true, platformFee: 12 })).toBe(12);
+  });
   test('admin-configurable override is honoured', () => {
     expect(calculatePlatformFee(100, { platformFee: 15 })).toBe(15);
     expect(calculatePlatformFee(100, { platformFee: 0 })).toBe(0);
@@ -201,6 +205,18 @@ describe('computeBreakdown — marketplace v4 worked examples (₹1000 listing)'
     expect(b.tcs).toBe(0);
     expect(b.customerTotal).toBe(0);
     expect(b.vendorPayout).toBe(0);
+  });
+
+  test('interim fee-only: ₹0 service with chargeFeeOnFree charges only the fee + GST', () => {
+    const b = computeBreakdown({ servicePrice: 0, commissionPercentage: 5, chargeFeeOnFree: true });
+    expect(b.platformFee).toBe(10);
+    expect(b.gst).toBe(1.8);
+    expect(b.commission).toBe(0);        // no host price → no commission
+    expect(b.tds).toBe(0);               // no host sale → no TDS/TCS
+    expect(b.tcs).toBe(0);
+    expect(b.customerTotal).toBe(11.8);  // 0 + 10 + 1.80
+    expect(b.vendorPayout).toBe(0);      // host gets nothing (no host money moves)
+    expect(b.platformRevenue).toBe(10);  // BAS keeps the fee
   });
 
   test('custom platform fee + GST rate flow through', () => {

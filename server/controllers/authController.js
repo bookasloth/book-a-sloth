@@ -108,6 +108,13 @@ const serializeProfile = async (profile, session) => {
     const plan = await planService.getPlan(planService.resolveVendorPlan(profile));
     bypasses_flags = !!plan?.bypasses_kill_switches;
   } catch (_) { /* fail-safe: no bypass hint, server still enforces */ }
+  // Interim fee-only mode: the host UI uses this to hide the service-price field
+  // (paid listings are disabled until Razorpay Route). Fail-safe true. Cached 60s.
+  let fee_only_mode = true;
+  try {
+    const { getConfig } = require('../services/platformConfig');
+    fee_only_mode = (await getConfig()).feeOnlyMode;
+  } catch (_) { /* fail-safe: default to fee-only */ }
   return {
   _id:                      profile.id,
   id:                       profile.id,
@@ -147,6 +154,7 @@ const serializeProfile = async (profile, session) => {
   // client's useFeature() can mirror the server's requireFeature() decision.
   bypasses_flags,
   safety_keys:              SAFETY_KEYS,
+  fee_only_mode,
   ...(session ? { token: session.access_token, refresh_token: session.refresh_token } : {}),
   };
 };

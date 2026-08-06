@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import FeatureGate from '../../components/common/FeatureGate';
 import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
 import { BOLT_ENABLED } from '../../config/aiListing';
+import { useAuth } from '../../context/AuthContext';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -400,6 +401,10 @@ const SuggestSubcategoryModal = ({ primary, onClose }) => {
 export default function ServiceForm({ initialData, serviceId }) {
   const navigate = useNavigate();
   const isEdit = !!serviceId;
+  const { user } = useAuth() || {};
+  // Interim fee-only mode: paid listings are disabled (no Razorpay Route yet), so
+  // hide the price field and force ₹0. Fail-safe true. Server enforces this too.
+  const feeOnly = user?.fee_only_mode ?? true;
 
   const [form, setForm] = useState(() => {
     if (initialData) {
@@ -490,7 +495,7 @@ export default function ServiceForm({ initialData, serviceId }) {
     e.preventDefault();
     if (!form.title.trim()) { toast.error('Title is required'); return; }
     if (!form.short_description.trim()) { toast.error('Short description is required'); return; }
-    if (!form.price && form.price !== 0) { toast.error('Price is required'); return; }
+    if (!feeOnly && !form.price && form.price !== 0) { toast.error('Price is required'); return; }
     if (!form.thumbnail_url) { toast.error('Thumbnail is required'); return; }
     if (!effectiveDuration || effectiveDuration < 1) { toast.error('Duration is required'); return; }
 
@@ -502,7 +507,7 @@ export default function ServiceForm({ initialData, serviceId }) {
         description:       form.short_description.trim(), // legacy compat
         service_type:      form.service_type,
         meeting_mode:      form.service_type,
-        price:             parseFloat(form.price) || 0,
+        price:             feeOnly ? 0 : (parseFloat(form.price) || 0),
         duration:          effectiveDuration,
         grace_period:      form.grace_period,
         grace_period_minutes: form.grace_period,
@@ -626,11 +631,19 @@ export default function ServiceForm({ initialData, serviceId }) {
 
             {/* Price */}
             <div>
-              <label className={fieldLabel}>Price <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-medium text-gray-500">₹</span>
-                <Input type="number" min={0} step={1} required value={form.price} onChange={e => set('price', e.target.value)} placeholder="1999" className="pl-7" />
-              </div>
+              <label className={fieldLabel}>Price</label>
+              {feeOnly ? (
+                <div className="rounded-xl border-2 border-gray-100 bg-gray-50 px-3 py-2.5 text-sm text-gray-500">
+                  Paid pricing is currently unavailable. Your service is listed as{' '}
+                  <span className="font-semibold text-ink">Free</span> — guests pay only Book A Sloth&rsquo;s
+                  booking fee at checkout.
+                </div>
+              ) : (
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-medium text-gray-500">₹</span>
+                  <Input type="number" min={0} step={1} required value={form.price} onChange={e => set('price', e.target.value)} placeholder="1999" className="pl-7" />
+                </div>
+              )}
             </div>
           </div>
 

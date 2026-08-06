@@ -52,12 +52,15 @@ const assertNonNegative = (value, label) => {
 // ─── Platform fee (charged to the customer, on top of the service price) ──────
 /**
  * @param {number} servicePrice  service amount (≥ 0)
- * @param {object} [opts]        { platformFee } override (e.g. from settings)
- * @returns {number} flat platform fee in ₹ (0 for a free service)
+ * @param {object} [opts]        { platformFee, chargeFeeOnFree } override (e.g. from settings)
+ *   chargeFeeOnFree — when true, a ₹0 service STILL carries the flat fee. Used by the
+ *   interim fee-only mode (host prices forced to ₹0, no Route yet): Book A Sloth collects
+ *   only its own booking fee + GST and no host money moves. Default false (₹0 → no fee).
+ * @returns {number} flat platform fee in ₹ (0 for a free service unless chargeFeeOnFree)
  */
 function calculatePlatformFee(servicePrice, opts = {}) {
   assertNonNegative(servicePrice, 'servicePrice');
-  if (servicePrice === 0) return 0;
+  if (servicePrice === 0 && !opts.chargeFeeOnFree) return 0;
   const fee = opts.platformFee != null ? Number(opts.platformFee) : DEFAULTS.platformFee;
   assertNonNegative(fee, 'platformFee');
   return round2(fee);
@@ -182,8 +185,8 @@ function calculateCustomerTotal(servicePrice, platformFee, gst) {
  * @returns {{ servicePrice, platformFee, gst, commission, commissionGst,
  *             razorpayFee, customerTotal, vendorPayout, platformRevenue }}
  */
-function computeBreakdown({ servicePrice, commissionPercentage, platformFee, gstRate, razorpayFee = 0, tdsRate, tcsRate }) {
-  const fee = calculatePlatformFee(servicePrice, { platformFee });
+function computeBreakdown({ servicePrice, commissionPercentage, platformFee, gstRate, razorpayFee = 0, tdsRate, tcsRate, chargeFeeOnFree = false }) {
+  const fee = calculatePlatformFee(servicePrice, { platformFee, chargeFeeOnFree });
   const gst = calculateGst(fee, { gstRate });
   const commission = calculateCommission(servicePrice, commissionPercentage);
   const commissionGst = calculateCommissionGst(commission, { gstRate });        // GST inside commission

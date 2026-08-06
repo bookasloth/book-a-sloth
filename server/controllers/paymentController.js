@@ -151,7 +151,6 @@ const createOrder = async (req, res) => {
     }
 
     const servicePrice = booking.services?.price || 0;
-    if (servicePrice === 0) return res.status(400).json({ message: "Cannot create order for a free service" });
 
     // Customer pays service + platform fee + GST. Use the immutable snapshot
     // captured at booking creation; recompute only for legacy rows without it.
@@ -159,10 +158,14 @@ const createOrder = async (req, res) => {
     let platformFee   = Number(booking.platform_fee_amount) || 0;
     let gst           = Number(booking.platform_fee_gst) || 0;
     if (customerTotal <= 0) {
-      const { platformFee: feeSetting, gstRate } = await platformConfig.getConfig();
-      const b = computeBreakdown({ servicePrice, commissionPercentage: 0, platformFee: feeSetting, gstRate });
+      const { platformFee: feeSetting, gstRate, feeOnlyMode } = await platformConfig.getConfig();
+      const b = computeBreakdown({ servicePrice, commissionPercentage: 0, platformFee: feeSetting, gstRate, chargeFeeOnFree: feeOnlyMode });
       customerTotal = b.customerTotal; platformFee = b.platformFee; gst = b.gst;
     }
+
+    // Nothing payable (a genuinely free booking, fee-only mode off) → no order.
+    // In fee-only mode even a ₹0 service owes the booking fee, so customerTotal > 0.
+    if (customerTotal <= 0) return res.status(400).json({ message: "Cannot create order for a free booking" });
 
     const totalPaise = Math.round(customerTotal * 100);
     const razorpay = await razorpayConfig.getClient();
