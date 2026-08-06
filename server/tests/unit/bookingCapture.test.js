@@ -26,9 +26,11 @@ const chainOf = (result) => {
   return c;
 };
 
+// v4 marketplace snapshot: free-plan host, ₹1000, 5% GST-inclusive commission.
 const PRICING = {
-  service_price: 1000, commission_applied: 200, commission_gst: 36,
-  platform_fee_amount: 1, platform_fee_gst: 0.18, customer_total: 1001.18, host_id: 'h1',
+  service_price: 1000, commission_applied: 50, commission_gst: 7.63, commission_taxable: 42.37,
+  tds_amount: 10, tcs_amount: 10,
+  platform_fee_amount: 10, platform_fee_gst: 1.8, customer_total: 1011.8, host_id: 'h1',
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -47,7 +49,11 @@ test('finalises payout with the real fee subtracted + posts the ledger', async (
   expect(chain.patch.razorpay_payment_id).toBe('pay_1');
   expect(chain.patch.razorpay_tax_actual).toBeCloseTo(3.6, 5);
   expect(chain.patch.razorpay_fee_actual).toBeCloseTo(20, 5);
-  expect(chain.patch.vendor_amount).toBe(calculateVendorPayout(1000, 200, 36, 23.6));
+  // v4: payout = price − commission(incl GST) − PG − TDS − TCS
+  expect(chain.patch.vendor_amount).toBe(calculateVendorPayout(1000, 50, 23.6, 10, 10));
+  expect(chain.patch.tds_amount).toBe(10);
+  expect(chain.patch.tcs_amount).toBe(10);
+  expect(chain.patch.commission_taxable).toBe(42.37);
   // idempotency + anti-resurrection guards present
   expect(chain.neq).toHaveBeenCalledWith('payment_status', 'paid');
   expect(chain.neq).toHaveBeenCalledWith('status', 'cancelled');
@@ -64,7 +70,22 @@ test('no fee available → payout finalises without subtracting a fee (fee=0)', 
 
   expect(chain.patch.razorpay_fee_actual).toBe(0);
   expect(chain.patch.razorpay_tax_actual).toBe(0);
-  expect(chain.patch.vendor_amount).toBe(calculateVendorPayout(1000, 200, 36, 0));
+  expect(chain.patch.vendor_amount).toBe(calculateVendorPayout(1000, 50, 0, 10, 10));
+});
+
+test('legacy row without TDS/TCS/taxable snapshot → recomputed at default rate', async () => {
+  const chain = chainOf({ data: [{ id: 'b1' }], error: null });
+  supabaseAdmin.from.mockReturnValue(chain);
+
+  // Pre-v3.93 snapshot: no tds_amount / tcs_amount / commission_taxable.
+  const legacy = { service_price: 1000, commission_applied: 50, commission_gst: 7.63,
+    platform_fee_amount: 10, platform_fee_gst: 1.8, customer_total: 1011.8, host_id: 'h1' };
+  await finalizeBookingCapture({ bookingId: 'b1', paymentId: 'pay_1', pricing: legacy });
+
+  expect(chain.patch.tds_amount).toBe(10);        // 1% of 1000, recomputed
+  expect(chain.patch.tcs_amount).toBe(10);
+  expect(chain.patch.commission_taxable).toBe(42.37);
+  expect(chain.patch.vendor_amount).toBe(calculateVendorPayout(1000, 50, 0, 10, 10));
 });
 
 test('idempotent: zero rows transitioned → updated null, no ledger post', async () => {

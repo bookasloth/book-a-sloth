@@ -3,15 +3,14 @@ import LegalLayout, { Section } from '../components/common/LegalLayout';
 
 // /host-agreement — Host Services Agreement.
 //
-// This is the PROCUREMENT contract that the merchant-of-record model rests on:
-// the Host supplies the service TO Book A Sloth, and Book A Sloth supplies it
-// onward to the Guest in its own name and on its own account. Because we are the
-// seller and not an intermediary, nothing is "settled" to a third party and the
-// RBI Payment Aggregator Directions do not engage. See docs/payment-model.md.
-//
-// Do not soften clauses 2 (nature of relationship), 6 (invoicing), 8 (TDS), or
-// 16 (no collection on either's behalf) — they are the substance the structure
-// is judged on, not decoration.
+// ⚠️ DRAFT — MARKETPLACE MODEL v4. Rewritten from the abandoned merchant-of-record model:
+// the Host SELLS TO THE GUEST; Book A Sloth is the platform/facilitator that lists, books,
+// collects payment, and remits the Host's price net of its platform fee/commission, the
+// gateway charge, and tax deducted at source. Clauses 2 and 16 (payment flow) are drafted
+// generically — the precise RBI Payment-Aggregator characterisation is ⚖️ lawyer + CA and
+// must match the PA-waiver. Clause 6 GST mechanics are ⚖️ CA-review, left generic. See
+// docs/legal-marketplace-rewrite-review.md + legal-marketplace-revert-brief.md. Pending
+// sign-off; do not deploy until the whole set is reviewed.
 
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
@@ -32,12 +31,12 @@ const HostAgreement = () => (
           &ldquo;our&rdquo;), and you, the person or entity offering services through the Platform (the
           &ldquo;<strong>Host</strong>&rdquo;, &ldquo;you&rdquo;, &ldquo;your&rdquo;).
         </p>
-        <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-          <strong>Read this first.</strong> Under this Agreement you sell your service <strong>to Book A Sloth</strong>,
-          and Book A Sloth sells it onward to the Guest in its own name. You do not have a contract with the Guest.
-          This is different from a marketplace arrangement and it changes how you are paid, invoiced, and taxed.
-          Clauses <strong>2</strong>, <strong>5</strong>, <strong>6</strong>, <strong>7</strong> and <strong>9</strong>{' '}
-          are the ones that affect your money — read them properly.
+        <p className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4 text-amber-900">
+          <strong>Draft under revision.</strong> This Agreement is being updated to Book A Sloth&rsquo;s marketplace
+          model: you are the seller of your service to the Guest, and Book A Sloth is the marketplace that lists it,
+          collects payment, and pays you your price net of its commission, the payment-gateway charge, and tax deducted
+          at source (TDS and TCS). The <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp;
+          Payment Schedule</Link> reflects the current figures; the clauses below are being revised to match.
         </p>
         <p>
           This Agreement incorporates the <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp;
@@ -52,12 +51,13 @@ const HostAgreement = () => (
     <Section title="1. Definitions">
       <ul className="list-disc pl-5 space-y-1.5">
         <li><strong>&ldquo;Platform&rdquo;</strong> — the Book A Sloth website, applications, and related systems.</li>
-        <li><strong>&ldquo;Guest&rdquo;</strong> — an end customer who purchases a Service from Book A Sloth through the Platform.</li>
-        <li><strong>&ldquo;Service&rdquo;</strong> — an appointment, consultation, session, class, or other service you supply under this Agreement.</li>
-        <li><strong>&ldquo;Booking&rdquo;</strong> — a confirmed order for a Service.</li>
-        <li><strong>&ldquo;Target Earning&rdquo;</strong> or <strong>&ldquo;E&rdquo;</strong> — the amount you specify on the Platform as what you wish to earn for a Service, before the deductions in clause 5.</li>
-        <li><strong>&ldquo;Host Consideration&rdquo;</strong> or <strong>&ldquo;H&rdquo;</strong> — the amount actually payable to you for a Booking, computed under clause 5.</li>
-        <li><strong>&ldquo;Guest Price&rdquo;</strong> — the total amount payable by the Guest to Book A Sloth for a Booking, inclusive of GST.</li>
+        <li><strong>&ldquo;Guest&rdquo;</strong> — an end customer who purchases a Service from you, the Host, through the Platform.</li>
+        <li><strong>&ldquo;Service&rdquo;</strong> — an appointment, consultation, session, class, or other service you sell and supply to Guests through the Platform.</li>
+        <li><strong>&ldquo;Booking&rdquo;</strong> — a confirmed order by a Guest for your Service.</li>
+        <li><strong>&ldquo;Your Price&rdquo;</strong> or <strong>&ldquo;E&rdquo;</strong> — the price you set on the Platform for a Service.</li>
+        <li><strong>&ldquo;Platform Fee&rdquo;</strong> — the booking fee and, on some Plans, the commission that Book A Sloth charges for the platform services, as set out in the Fee Schedule.</li>
+        <li><strong>&ldquo;Your Payout&rdquo;</strong> or <strong>&ldquo;H&rdquo;</strong> — the amount payable to you for a Booking, being Your Price less the Platform Fee, the payment-gateway charge, and tax deducted/collected at source, computed under clause 5.</li>
+        <li><strong>&ldquo;Guest Price&rdquo;</strong> — the total amount payable by the Guest for a Booking (Your Price plus the booking fee and applicable tax).</li>
         <li><strong>&ldquo;Payment Cycle&rdquo;</strong> — the periodic payment of your invoices described in clause 7 and the Fee Schedule.</li>
         <li><strong>&ldquo;Plan&rdquo;</strong> — the subscription tier applicable to your Host account (Starter, Host+, Studio, or Enterprise).</li>
       </ul>
@@ -65,25 +65,28 @@ const HostAgreement = () => (
 
     <Section title="2. Nature of the relationship">
       <p>
-        <strong>2.1 You supply to us.</strong> You supply the Services to Book A Sloth. Book A Sloth supplies those
-        Services onward to Guests <strong>in its own name and on its own account</strong> as the seller and supplier of
-        record.
+        <strong>2.1 You are the seller.</strong> You sell and supply your Services to Guests <strong>in your own name and
+        on your own account</strong>. Book A Sloth is a <strong>technology platform</strong> that lists your Services and
+        provides discovery, scheduling, payments, reminders, communication tools, and support. Book A Sloth does not buy,
+        resell, or supply your Services and is not the seller of record for them.
       </p>
       <p>
-        <strong>2.2 No contract with the Guest.</strong> You have no contractual relationship with the Guest in respect
-        of a Booking. The Guest&rsquo;s contract is with Book A Sloth. You may not represent to a Guest that they are
-        contracting with you.
+        <strong>2.2 Contract with the Guest.</strong> The contract for the Service is between you and the Guest. Book A
+        Sloth is not a party to it. You are responsible to the Guest for supplying the Service.
       </p>
       <p>
-        <strong>2.3 Independent contractor.</strong> You are an independent contractor. Nothing in this Agreement
+        <strong>2.3 Independent provider.</strong> You are an independent service provider. Nothing in this Agreement
         creates an agency, partnership, joint venture, franchise, or employment relationship between you and Book A
         Sloth. You are not entitled to any employment benefit, and you are responsible for your own establishment,
         staff, equipment, insurance, and statutory obligations.
       </p>
       <p>
-        <strong>2.4 Neither party collects for the other.</strong> Neither party collects money as agent for the other.
-        Amounts received by Book A Sloth from Guests are Book A Sloth&rsquo;s own revenue. Amounts paid by Book A Sloth
-        to you are payments against your invoice as a supplier. See also clause 16.
+        {/* ⚖️ Payment-flow characterisation — lawyer + CA to confirm the precise legal
+            description of the collection/remittance and its fit with the RBI PA position. */}
+        <strong>2.4 Payments.</strong> Book A Sloth collects the Guest Price through its payment partner and pays you
+        Your Payout &mdash; Your Price less the Platform Fee, the payment-gateway charge, and any tax deducted or
+        collected at source. Book A Sloth&rsquo;s own revenue is the <strong>Platform Fee</strong>; it does not own or
+        retain Your Price. See also clause 16.
       </p>
       <p>
         <strong>2.5 Non-exclusive.</strong> This Agreement is non-exclusive. You may supply the same or similar
@@ -93,11 +96,11 @@ const HostAgreement = () => (
 
     <Section title="3. Your appointment and how orders are placed">
       <p>
-        <strong>3.1</strong> Each confirmed Booking constitutes a purchase order from Book A Sloth to you for the
-        specified Service, at the specified date and time, at the Host Consideration computed under clause 5.
+        <strong>3.1</strong> Each confirmed Booking is an order placed by a Guest with you for the specified Service, at
+        the specified date and time, facilitated by the Platform, for which Your Payout is computed under clause 5.
       </p>
       <p>
-        <strong>3.2</strong> You accept a purchase order by publishing the availability against which it was booked. A
+        <strong>3.2</strong> You accept a Booking by publishing the availability against which it was booked. A
         Booking becomes binding on you when the Platform confirms it.
       </p>
       <p>
@@ -108,8 +111,8 @@ const HostAgreement = () => (
       </p>
       <p>
         <strong>3.4 Substitution.</strong> Where you are unable to perform a confirmed Booking, Book A Sloth may (but
-        is not obliged to) arrange for an equivalently qualified Host to perform it. Where it does so, no Host
-        Consideration is payable to you for that Booking and clause 12.3 applies.
+        is not obliged to) help the Guest find an equivalently qualified Host. Where the Booking is performed by another
+        Host, no Payout is payable to you for that Booking and clause 12.3 applies.
       </p>
     </Section>
 
@@ -135,41 +138,36 @@ const HostAgreement = () => (
 
     <Section title="5. Price and how your consideration is computed">
       <p>
-        <strong>5.1 You set your Target Earning.</strong> You specify, for each Service, the amount you wish to earn
-        (&ldquo;E&rdquo;). The Platform displays, before you confirm, the resulting Guest Price and the Host
-        Consideration payable to you. You are deemed to have seen and accepted that computation for every Service you
-        publish.
+        <strong>5.1 You set your price.</strong> You specify, for each Service, Your Price (&ldquo;E&rdquo;). The
+        Platform displays, before you confirm, the resulting Guest Price and Your Payout. You are deemed to have seen
+        and accepted that computation for every Service you publish.
       </p>
       <p>
-        <strong>5.2 All prices are tax-inclusive.</strong> The parties agree that all amounts stated on the Platform
-        are <strong>inclusive of GST and of all other applicable taxes, cesses, and levies</strong>. No amount is
-        payable by Book A Sloth over and above the amounts computed under this clause.
+        <strong>5.2 Amounts.</strong> Amounts stated on the Platform are stated inclusive of applicable taxes as
+        indicated at checkout. No amount is payable by Book A Sloth over and above Your Payout computed under this
+        clause.
       </p>
       <p>
         <strong>5.3 The computation.</strong> For each Booking:
       </p>
       <div className="rounded-xl border-2 border-gray-200 bg-white p-4 font-mono text-xs leading-relaxed">
-        Taxable value&nbsp;&nbsp;&nbsp;&nbsp;V = E + Booking Charge<br />
-        Guest Price&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G = V + GST at the applicable rate<br />
-        Your consideration&nbsp;H = E &minus; Platform Commission &minus; Payment Processing Charge
+        Guest Price&nbsp;&nbsp;=&nbsp;Your Price + booking fee + tax on the fee<br />
+        Your Payout&nbsp;&nbsp;=&nbsp;Your Price &minus; Platform Fee &minus; payment-gateway charge &minus; tax deducted/collected at source
       </div>
       <p>
-        The Booking Charge, Platform Commission, and Payment Processing Charge applicable to your Plan are set out in
-        the <Link to="/host-fees" className="text-primary hover:underline">Fee Schedule</Link>, which forms part of this
-        Agreement and contains worked examples.
+        The booking fee, Platform Commission (where applicable), payment-gateway charge, and the tax deducted/collected
+        at source are set out in the <Link to="/host-fees" className="text-primary hover:underline">Fee Schedule</Link>,
+        which forms part of this Agreement and contains worked examples.
       </p>
       <p>
-        <strong>5.4 Effect of your GST status.</strong> Your Host Consideration (H) is the same whether or not you are
-        registered under GST. What differs is only the mechanics of payment and documentation:
+        {/* ⚖️ GST — CA REVIEW. Left generic; do not determine treatment here. */}
+        <strong>5.4 Tax.</strong> Book A Sloth charges GST on its own Platform Fee. Book A Sloth does not charge GST on
+        Your Price &mdash; GST on your Service is a matter between you and the tax authorities, dealt with under clause 6.
       </p>
-      <ul className="list-disc pl-5 space-y-1.5">
-        <li>If you are <strong>GST-registered</strong>, we pay you H plus GST at the applicable rate against your tax invoice, and you account for that GST to the authorities.</li>
-        <li>If you are <strong>not GST-registered</strong>, we pay you H, and no GST component arises on your supply.</li>
-      </ul>
       <p>
-        <strong>5.5 You acknowledge</strong> that because Book A Sloth is the supplier of record, GST is chargeable on
-        the full Guest Price regardless of your own registration status, and that this is reflected in the computation
-        in clause 5.3. You confirm you have had the opportunity to take your own tax advice on this.
+        <strong>5.5 Your GST status.</strong> The effect of your own GST-registration status on how you invoice the
+        Guest and how your payment is documented is dealt with under clause 6. You confirm you have had the opportunity
+        to take your own tax advice.
       </p>
       <p>
         <strong>5.6 Changes to the Fee Schedule.</strong> Book A Sloth may amend the Fee Schedule on{' '}
@@ -185,11 +183,23 @@ const HostAgreement = () => (
     </Section>
 
     <Section title="6. Invoicing and GST">
+      <p className="rounded-xl border-2 border-amber-300 bg-amber-50 p-3 text-amber-900 text-xs">
+        {/* ⚖️ GST MECHANICS — CA REVIEW. The GST treatment, invoice contents, input-credit, and
+            return mechanics in this clause are to be confirmed by the CA and are not determined here. */}
+        <strong>Note:</strong> the GST treatment in this clause is subject to confirmation by our tax advisers and by
+        your own. The structural position is: you sell the Service to the Guest, and Book A Sloth charges you a Platform
+        Fee for the platform services.
+      </p>
       <p>
-        <strong>6.1 If you are GST-registered.</strong> You will issue Book A Sloth a valid tax invoice complying with
-        the CGST Rules for each Booking or group of Bookings, showing your GSTIN, our GSTIN as recipient, the taxable
-        value H, and GST at the applicable rate. We may generate a draft invoice for your adoption; adopting it does
-        not transfer responsibility for its accuracy to us.
+        <strong>6.1 Your invoice to the Guest.</strong> The Service is your sale to the Guest. If you are
+        GST-registered, you are responsible for issuing your own tax invoice to the Guest for Your Price and for
+        accounting for the GST on it. Book A Sloth may generate a draft or assist with issuance, but adopting it does
+        not transfer responsibility for its accuracy to Book A Sloth. If you are not registered, no GST arises on Your
+        Price.
+      </p>
+      <p>
+        <strong>6.1A Our invoice to you.</strong> Book A Sloth issues you a tax invoice for its Platform Fee (the
+        booking fee and any commission), so that you may claim input tax credit where you are entitled to it.
       </p>
       <p>
         <strong>6.2 Your filing obligation.</strong> You will report each such invoice in your GSTR-1 within the
@@ -204,9 +214,10 @@ const HostAgreement = () => (
         invoice until it appears in our GSTR-2B.
       </p>
       <p>
-        <strong>6.4 If you are not GST-registered.</strong> Book A Sloth will issue you a <strong>Payment Advice</strong>{' '}
-        recording the Host Consideration payable. A Payment Advice is <strong>not</strong> a tax invoice, carries no GST
-        component, and gives rise to no input tax credit. You must not represent it as a tax invoice.
+        <strong>6.4 Payment Advice.</strong> For each Booking, Book A Sloth issues you a <strong>Payment Advice</strong>{' '}
+        recording Your Payout and the amounts deducted. A Payment Advice is <strong>not</strong> a tax invoice, carries
+        no GST component, and gives rise to no input tax credit. It is your record of what you earned and what was
+        deducted; it is not a substitute for your own invoice to the Guest under clause 6.1.
       </p>
       <p>
         <strong>6.5 Change of status.</strong> You will notify us within <strong>7 days</strong> of becoming registered
@@ -334,9 +345,10 @@ const HostAgreement = () => (
 
     <Section title="10. Guest-facing responsibility and complaints">
       <p>
-        <strong>10.1</strong> Because Book A Sloth is the supplier of record, Guest complaints, refund requests, and
-        consumer claims are addressed to and handled by Book A Sloth. Its decision on whether to refund a Guest is
-        final as between Book A Sloth and the Guest.
+        <strong>10.1</strong> As the marketplace, Book A Sloth provides Guest-facing grievance redressal and
+        facilitates refunds and cancellations under the Consumer Protection (E-Commerce) Rules, 2020. The Service itself
+        is your responsibility as its seller. Book A Sloth&rsquo;s decision on whether to facilitate a refund to a Guest
+        is final as between Book A Sloth and the Guest, without prejudice to recovery from you under clause 9.
       </p>
       <p>
         <strong>10.2</strong> As between Book A Sloth and you, you remain responsible for any complaint, refund,
@@ -371,7 +383,7 @@ const HostAgreement = () => (
       </p>
       <p>
         <strong>12.2</strong> Where you cancel or fail to attend, the Guest receives a full refund of the Guest Price,
-        including the Booking Charge and Payment Processing Charge, and no Host Consideration is payable to you for
+        including the booking fee and payment-gateway charge, and no Payout is payable to you for
         that Booking.
       </p>
       <p>
@@ -386,7 +398,7 @@ const HostAgreement = () => (
       <p>
         <strong>12.5</strong> Cancellation by the Guest is governed by the{' '}
         <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>. Where a
-        Guest cancels within a window in which the Service is treated as non-refundable, the Host Consideration remains
+        Guest cancels within a window in which the Service is treated as non-refundable, Your Payout remains
         payable to you in accordance with that Policy.
       </p>
     </Section>
@@ -452,7 +464,7 @@ const HostAgreement = () => (
       <p>
         <strong>15.3 Liquidated damages.</strong> Breach of clause 15.1 or 15.2 causes loss that is difficult to
         quantify. You agree to pay, as a genuine pre-estimate of that loss and not as a penalty, an amount equal to{' '}
-        <strong>three times the Booking Charge and Platform Commission</strong> that would have applied had the booking
+        <strong>three times the Platform Fee</strong> that would have applied had the booking
         been made through the Platform, subject to a maximum of <strong>₹10,000</strong> per breach. This is
         recoverable under clause 9 and is without prejudice to termination under clause 19.2.
       </p>
@@ -463,13 +475,15 @@ const HostAgreement = () => (
       </p>
     </Section>
 
-    <Section title="16. No collection on either's behalf">
+    <Section title="16. Payment collection and remittance">
       <p>
-        Neither party collects, holds, or receives money as agent, trustee, or nominee for the other. Money received by
-        Book A Sloth from a Guest is received as the seller of the Service and is Book A Sloth&rsquo;s own revenue.
-        Money paid by Book A Sloth to you is paid as consideration for your supply to Book A Sloth against your invoice
-        or Payment Advice. Nothing in this Agreement is to be read as creating a settlement, escrow, trust, or
-        pass-through arrangement in respect of any Guest payment.
+        {/* ⚖️ RBI / PAYMENT-AGGREGATOR — lawyer + CA to confirm the precise characterisation of the
+            money flow below and its fit with the applicable payment regulations / PA-waiver. */}
+        Book A Sloth collects the Guest Price through its payment partner and remits Your Payout to you, being Your
+        Price less the Platform Fee, the payment-gateway charge, and any tax deducted or collected at source. Book A
+        Sloth&rsquo;s own revenue is the <strong>Platform Fee</strong>; Book A Sloth does not own or retain Your Price.
+        You authorise Book A Sloth and its payment partner to collect the Guest Price for a Booking and to make the
+        deductions in clauses 8 and 9 before remitting Your Payout in accordance with clause 7.
       </p>
     </Section>
 
@@ -503,7 +517,7 @@ const HostAgreement = () => (
       </p>
       <p>
         <strong>18.3</strong> Our total aggregate liability to you for all claims arising out of or relating to this
-        Agreement is limited to the total Booking Charges and Platform Commission actually retained by us from you in
+        Agreement is limited to the total Platform Fee actually retained by us from you in
         the <strong>three months</strong> preceding the event giving rise to the claim, or <strong>₹10,000</strong>,
         whichever is lower.
       </p>

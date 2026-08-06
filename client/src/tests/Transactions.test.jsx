@@ -20,8 +20,13 @@ const tx = {
   services: { title: 'Strategy call', price: 1000, duration: 45 },
   scheduled_at: '2026-06-20T05:00:00.000Z',
   created_at: '2026-06-18T05:00:00.000Z',
-  vendor_amount: 900,
-  platform_fee_amount: 100,
+  vendor_amount: 909.76,
+  platform_fee_amount: 10,
+  commission_applied: 50,
+  tds_amount: 10,
+  tcs_amount: 10,
+  razorpay_fee_actual: 20.24,
+  razorpay_tax_actual: 0,
   payment_status: 'paid',
   razorpay_order_id: 'order_ABC123',
   razorpay_payment_id: 'pay_XYZ789',
@@ -57,8 +62,13 @@ test('clicking a row opens the premium detail modal with grouped sections', asyn
   const inModal = within(dialog);
   expect(inModal.getByRole('heading', { name: 'Customer' })).toBeInTheDocument();
   expect(inModal.getByRole('heading', { name: 'Booking' })).toBeInTheDocument();
-  expect(inModal.getByRole('heading', { name: 'Earnings breakdown' })).toBeInTheDocument();
+  expect(inModal.getByRole('heading', { name: 'Payment advice' })).toBeInTheDocument();
   expect(inModal.getByRole('heading', { name: 'Gateway reference' })).toBeInTheDocument();
   // Gateway ids preserved.
   expect(inModal.getByText('order_ABC123')).toBeInTheDocument();
+  // v4 deduction breakdown: commission + gateway + TDS + TCS + net payout.
+  expect(inModal.getByText('− Commission')).toBeInTheDocument();
+  expect(inModal.getByText('− TDS (194-O, 1%)')).toBeInTheDocument();
+  expect(inModal.getByText('− TCS (GST §52, 1%)')).toBeInTheDocument();
+  expect(inModal.getByText('Net payout')).toBeInTheDocument();
 });

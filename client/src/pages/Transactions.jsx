@@ -103,6 +103,8 @@ const Section = ({ icon: Icon, title, children }) => (
 
 const Detail = ({ tx }) => {
   const isFree = tx.services?.price === 0;
+  // Payment-gateway charge borne by the host = actual Razorpay fee + tax.
+  const pg = Math.round(((Number(tx.razorpay_fee_actual) || 0) + (Number(tx.razorpay_tax_actual) || 0)) * 100) / 100;
   return (
     <div>
       {/* Summary band — emphasized earnings + payment status, copyable id */}
@@ -141,14 +143,34 @@ const Detail = ({ tx }) => {
           {tx.notes && <Row label="Notes" value={tx.notes} />}
         </Section>
 
-        <Section icon={IndianRupee} title="Earnings breakdown">
-          <Row label="Total Amount" value={isFree ? "Free" : fmtMoney(tx.services?.price, { decimals: true })} />
-          <Row label="Your Earnings" value={fmtMoney(tx.vendor_amount, { decimals: true })} />
-          <Row label="Platform Fee" value={fmtMoney(tx.platform_fee_amount, { decimals: true })} />
-          <div className="mt-1 flex items-center justify-between border-t border-gray-200/70 pt-2">
-            <span className="text-xs text-gray-500">Payment Status</span>
-            <StatusBadge status={tx.payment_status} />
-          </div>
+        <Section icon={IndianRupee} title="Payment advice">
+          {isFree ? (
+            <Row label="Service price" value="Free" />
+          ) : (
+            <>
+              {/* Marketplace v4: host earns the listed price minus commission, the
+                  payment-gateway charge, and statutory TDS/TCS. Deduction rows show
+                  only when non-zero (paid plans have no commission). */}
+              <Row label="Service price" value={fmtMoney(tx.services?.price, { decimals: true })} />
+              {Number(tx.commission_applied) > 0 && (
+                <Row label="− Commission" value={fmtMoney(tx.commission_applied, { decimals: true })} />
+              )}
+              {pg > 0 && <Row label="− Payment gateway" value={fmtMoney(pg, { decimals: true })} />}
+              {Number(tx.tds_amount) > 0 && (
+                <Row label="− TDS (194-O, 1%)" value={fmtMoney(tx.tds_amount, { decimals: true })} />
+              )}
+              {Number(tx.tcs_amount) > 0 && (
+                <Row label="− TCS (GST §52, 1%)" value={fmtMoney(tx.tcs_amount, { decimals: true })} />
+              )}
+              <div className="mt-1 flex items-center justify-between border-t border-gray-200/70 pt-2">
+                <span className="text-xs font-semibold text-gray-700">Net payout</span>
+                <span className="text-xs font-bold text-primary">{fmtMoney(tx.vendor_amount, { decimals: true })}</span>
+              </div>
+            </>
+          )}
+          <p className="mt-2 text-[10px] leading-snug text-gray-400">
+            Payment advice, not a tax invoice. TDS &amp; TCS are deposited with the government against your PAN — claim credit when you file.
+          </p>
         </Section>
 
         <Section icon={CreditCard} title="Gateway reference">

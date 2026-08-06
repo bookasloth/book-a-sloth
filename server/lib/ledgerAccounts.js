@@ -10,6 +10,8 @@ const ACCOUNTS = Object.freeze({
   VENDOR_PAYABLES:      '2000',
   GST_PAYABLE:          '2100',
   REFUND_LIABILITY:     '2200',
+  TDS_PAYABLE:          '2300',   // 194-O income-tax withheld from host (v4)
+  TCS_PAYABLE:          '2400',   // GST Sec 52 collected from host (v4)
   PLATFORM_FEE_REVENUE: '4000',
   COMMISSION_REVENUE:   '4100',
   SUBSCRIPTION_REVENUE: '4200',

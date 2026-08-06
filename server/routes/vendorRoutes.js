@@ -7,6 +7,7 @@ const {
   getPayoutRequests,
   requestPayout,
   toggleService,
+  getMyWithholding,
 } = require('../controllers/vendorController');
 
 // All vendor routes require auth
@@ -14,6 +15,9 @@ router.use(protect);
 
 // Transactions
 router.get('/transactions', getTransactions);
+
+// TDS/TCS certificate data (host's own withholding for a period)
+router.get('/withholding', getMyWithholding);
 
 // Payouts
 router.get('/payout/balance', getPayoutBalance);

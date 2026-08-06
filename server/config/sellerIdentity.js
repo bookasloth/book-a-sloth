@@ -25,10 +25,14 @@ const seller = {
 // both series until told otherwise; env-overridable per series if they ever diverge.
 const SAC_SUBSCRIPTION = env.SAC_SUBSCRIPTION || '998314';
 const SAC_BOOKING      = env.SAC_BOOKING      || '998314';
+// Commission = platform's service TO the host. 998311 = "services of commission
+// agents / brokerage". CA to confirm (docs/payment-model.md §7); env-overridable.
+const SAC_COMMISSION   = env.SAC_COMMISSION   || '998311';
 
 const SERIES = {
   subscription: { code: 'SUB', prefix: 'BAS-SUB' },
   booking:      { code: 'BKG', prefix: 'BAS-BKG' },
+  commission:   { code: 'COM', prefix: 'BAS-COM' },  // v4: BAS → host commission invoice
 };
 
-module.exports = { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SERIES };
+module.exports = { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SAC_COMMISSION, SERIES };

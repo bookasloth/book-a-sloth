@@ -34,16 +34,18 @@ const guestGrant = require('../../utils/bookingGrant');
 
 const res = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
 
-const wireSupabase = ({ service, host, avail }) => {
+const wireSupabase = ({ service, host, avail, panOnFile = true }) => {
   mockFrom.mockImplementation((table) => {
     const chain = {
       select: jest.fn(() => chain), eq: jest.fn(() => chain), neq: jest.fn(() => chain),
-      insert: jest.fn(() => chain),
+      not: jest.fn(() => chain), insert: jest.fn(() => chain),
       single: jest.fn().mockResolvedValue(
         table === 'services' ? { data: service } :
         table === 'profiles' ? { data: host } :
         { data: { id: 'bkg-1', ...service }, error: null }),
-      maybeSingle: jest.fn().mockResolvedValue({ data: avail }),
+      maybeSingle: jest.fn().mockResolvedValue(
+        table === 'kyc_submissions' ? { data: panOnFile ? { user_id: host?.id } : null } :
+        { data: avail }),
     };
     return chain;
   });
@@ -105,6 +107,34 @@ test('logged-in booking needs no OTP grant (reaches insert → 201)', async () =
     service: { id: 's1', title: 'SEO', duration: 30, price: 500, meeting_mode: 'online' },
     host: { id: 'h1', email: 'h@x.com' },
     avail: { timezone: 'Asia/Kolkata' },
+  });
+  const r = res();
+  const req = { user: { id: 'u1' }, body: { service_id: 's1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z' } };
+  await createBooking(req, r);
+  expect(r.status).toHaveBeenCalledWith(201);
+});
+
+// ── v4 TDS 194-O: PAN mandatory for PAID bookings ──
+test('paid booking is rejected 409 when the host has no PAN on file', async () => {
+  wireSupabase({
+    service: { id: 's1', title: 'SEO', duration: 30, price: 500, meeting_mode: 'online' },
+    host: { id: 'h1', email: 'h@x.com' },
+    avail: { timezone: 'Asia/Kolkata' },
+    panOnFile: false,
+  });
+  const r = res();
+  const req = { user: { id: 'u1' }, body: { service_id: 's1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z' } };
+  await createBooking(req, r);
+  expect(r.status).toHaveBeenCalledWith(409);
+  expect(createCalendarEvent).not.toHaveBeenCalled();
+});
+
+test('free booking is allowed even when the host has no PAN (no TDS on ₹0)', async () => {
+  wireSupabase({
+    service: { id: 's1', title: 'Intro', duration: 30, price: 0, meeting_mode: 'online' },
+    host: { id: 'h1', email: 'h@x.com', google_calendar_connected: true, google_refresh_token: 'r', google_access_token: 'a' },
+    avail: { timezone: 'Asia/Kolkata' },
+    panOnFile: false,
   });
   const r = res();
   const req = { user: { id: 'u1' }, body: { service_id: 's1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z' } };

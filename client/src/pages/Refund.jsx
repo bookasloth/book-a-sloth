@@ -3,10 +3,12 @@ import LegalLayout, { Section, MOR_EFFECTIVE } from '../components/common/LegalL
 
 // /refund — Refund & Cancellation Policy.
 //
-// Rewritten for the merchant-of-record model: Book A Sloth is the SELLER, so refunds
-// are our obligation to the guest and we recover from the host separately. The old
-// version said refunds relate to "a service that was paid out to a host" — payout
-// language that contradicts the model. Do not reintroduce it.
+// ⚠️ DRAFT — MARKETPLACE MODEL v4. Reverted from the merchant-of-record stance ("BAS is
+// the seller, refunds are our obligation") to the marketplace stance: the host is the
+// seller, and Book A Sloth FACILITATES refunds and grievance redressal under the Consumer
+// Protection (E-Commerce) Rules, 2020 — the guest can still claim from us. Consumer rights
+// are preserved. The refund-window mechanics/tables below are unchanged (factual). The
+// liability framing is a ⚖️ lawyer call. Full spec: docs/legal-marketplace-revert-brief.md.
 //
 // The booking + processing charge is non-refundable on guest-initiated cancellations
 // because the gateway does not return MDR on a refund. That is only defensible while
@@ -39,8 +41,9 @@ const Refund = () => (
           <Link to="/terms" className="text-primary hover:underline">Terms of Use</Link>.
         </p>
         <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-          <strong>Book A Sloth is the seller.</strong> Refunds are our responsibility, not the host&rsquo;s. You never
-          need to chase a host for your money &mdash; you claim from us, and we deal with the host ourselves.
+          <strong>You claim from us.</strong> Even though the host is the seller of the service, Book A Sloth
+          facilitates refunds and grievance redressal as the marketplace. You never need to chase a host for your money
+          &mdash; you claim from us, and we take it up with the host.
         </p>
         <p>
           Payments are processed through <strong>Razorpay</strong>. All amounts are in Indian Rupees.
@@ -155,16 +158,19 @@ const Refund = () => (
         <li>We initiate approved refunds within <strong>5&ndash;7 working days</strong> of approval.</li>
         <li>After we initiate it, the amount usually reaches you in <strong>5&ndash;10 working days</strong>, depending on your bank or card issuer. Those timelines are outside our control.</li>
         <li>Refunds are made in INR. Currency conversion differences and third-party charges are not our responsibility.</li>
-        <li>Where a refund is issued, we also issue a credit note against the original tax invoice and adjust the GST accordingly.</li>
-        <li>Where only part of a booking is refunded, the credit note reflects the refunded portion.</li>
+        {/* ⚖️ GST — CA REVIEW. Credit-note / GST-adjustment mechanics depend on which invoice
+            (platform fee vs the host's own service invoice) is being reversed; left generic. */}
+        <li>Where a refund is issued, any credit note and tax adjustment are made against the applicable invoice in accordance with law.</li>
+        <li>Where only part of a booking is refunded, the adjustment reflects the refunded portion.</li>
       </ul>
     </Section>
 
     <Section title="8. Our arrangement with hosts">
       <p>
-        Book A Sloth buys the service from the host and sells it to you. Where we refund you for something the host
-        caused, we recover that amount from the host under our agreement with them. That is a matter between us and the
-        host and it never delays or reduces your refund.
+        The host is the seller of the service; Book A Sloth is the marketplace that facilitates your booking, payment,
+        and refund. Where we facilitate a refund to you for something the host caused, we recover that amount from the
+        host under our agreement with them. That is a matter between us and the host and it never delays or reduces your
+        refund.
       </p>
     </Section>
 

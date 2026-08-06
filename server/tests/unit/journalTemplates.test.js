@@ -6,46 +6,68 @@ const { ACCOUNTS } = require('../../lib/ledgerAccounts');
 const sum = (lines, side) => Math.round(lines.reduce((s, l) => s + (l[side] || 0), 0) * 100) / 100;
 const lineFor = (lines, code, side) => lines.find((l) => l.account_code === code && l[side] > 0);
 
-describe('orderPaymentEntry', () => {
-  // PRD §3.1 fixture: Free plan ₹1000, fee ₹10, fee GST ₹1.80,
-  // commission ₹50, commission GST ₹9, razorpay 20 + 3.60
+describe('orderPaymentEntry (marketplace v4)', () => {
+  // v4 fixture: free plan ₹1000, fee ₹10 + GST ₹1.80, commission ₹50 GST-INCLUSIVE
+  // (taxable ₹42.37 + GST ₹7.63), TDS ₹10, TCS ₹10, gateway ₹20.24. payout ₹909.76.
   const snapshot = {
     booking_id: 'b1', host_id: 'v1',
     service_price: 1000, platform_fee_amount: 10, platform_fee_gst: 1.8,
-    commission_applied: 50, commission_gst: 9,
-    razorpay_fee_actual: 20, razorpay_tax_actual: 3.6,
-    vendor_amount: 917.4, customer_total: 1011.8,
+    commission_applied: 50, commission_gst: 7.63, commission_taxable: 42.37,
+    tds_amount: 10, tcs_amount: 10,
+    razorpay_fee_actual: 20.24, razorpay_tax_actual: 0,
+    vendor_amount: 909.76, customer_total: 1011.8,
   };
 
-  test('balances and carries PRD amounts (free plan)', () => {
+  test('balances; commission books at taxable; TDS/TCS booked (free plan)', () => {
     const { lines, description } = orderPaymentEntry(snapshot);
     expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
     expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'debit').debit).toBe(1011.8);
-    expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit').credit).toBe(23.6); // gateway relief
-    expect(lineFor(lines, ACCOUNTS.VENDOR_PAYABLES, 'credit').credit).toBe(917.4);
+    expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit').credit).toBe(20.24); // gateway relief
+    expect(lineFor(lines, ACCOUNTS.VENDOR_PAYABLES, 'credit').credit).toBe(909.76);
     expect(lineFor(lines, ACCOUNTS.PLATFORM_FEE_REVENUE, 'credit').credit).toBe(10);
-    expect(lineFor(lines, ACCOUNTS.GST_PAYABLE, 'credit').credit).toBe(10.8); // 1.80 + 9
-    expect(lineFor(lines, ACCOUNTS.COMMISSION_REVENUE, 'credit').credit).toBe(50);
-    expect(lineFor(lines, ACCOUNTS.RZP_CHARGES_ORDERS, 'debit').debit).toBe(23.6);
-    expect(lineFor(lines, ACCOUNTS.RZP_CHARGES_ORDERS, 'credit').credit).toBe(23.6); // vendor-borne, nets 0
+    expect(lineFor(lines, ACCOUNTS.GST_PAYABLE, 'credit').credit).toBe(9.43); // 1.80 + 7.63
+    expect(lineFor(lines, ACCOUNTS.COMMISSION_REVENUE, 'credit').credit).toBe(42.37); // ex-GST
+    expect(lineFor(lines, ACCOUNTS.TDS_PAYABLE, 'credit').credit).toBe(10);
+    expect(lineFor(lines, ACCOUNTS.TCS_PAYABLE, 'credit').credit).toBe(10);
+    expect(lineFor(lines, ACCOUNTS.RZP_CHARGES_ORDERS, 'debit').debit).toBe(20.24);
+    expect(lineFor(lines, ACCOUNTS.RZP_CHARGES_ORDERS, 'credit').credit).toBe(20.24); // vendor-borne, nets 0
     expect(description).toContain('b1');
-    // every line tagged for the vendor ledger
     expect(lines.every((l) => l.order_item_id === 'b1')).toBe(true);
     expect(lines.every((l) => l.vendor_id === 'v1')).toBe(true);
   });
 
-  test('paid plan omits commission lines', () => {
-    const { lines } = orderPaymentEntry({ ...snapshot, commission_applied: 0, commission_gst: 0, vendor_amount: 976.4 });
+  test('paid plan omits commission line; TDS/TCS still booked', () => {
+    const { lines } = orderPaymentEntry({
+      ...snapshot, commission_applied: 0, commission_gst: 0, commission_taxable: 0, vendor_amount: 959.76,
+    });
     expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
     expect(lines.find((l) => l.account_code === ACCOUNTS.COMMISSION_REVENUE)).toBeUndefined();
-    expect(lineFor(lines, ACCOUNTS.VENDOR_PAYABLES, 'credit').credit).toBe(976.4);
+    expect(lineFor(lines, ACCOUNTS.VENDOR_PAYABLES, 'credit').credit).toBe(959.76);
     expect(lineFor(lines, ACCOUNTS.GST_PAYABLE, 'credit').credit).toBe(1.8);
+    expect(lineFor(lines, ACCOUNTS.TDS_PAYABLE, 'credit').credit).toBe(10);
+    expect(lineFor(lines, ACCOUNTS.TCS_PAYABLE, 'credit').credit).toBe(10);
   });
 
   test('zero gateway fee (fee unknown at capture) omits charge lines and stays balanced', () => {
-    const { lines } = orderPaymentEntry({ ...snapshot, razorpay_fee_actual: 0, razorpay_tax_actual: 0, vendor_amount: 941 });
+    const { lines } = orderPaymentEntry({ ...snapshot, razorpay_fee_actual: 0, razorpay_tax_actual: 0, vendor_amount: 930 });
     expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
     expect(lines.find((l) => l.account_code === ACCOUNTS.RZP_CHARGES_ORDERS)).toBeUndefined();
+  });
+
+  test('legacy pre-v4 row (no commission_taxable/TDS/TCS) books commission gross and balances', () => {
+    const legacy = {
+      booking_id: 'b0', host_id: 'v1',
+      service_price: 1000, platform_fee_amount: 10, platform_fee_gst: 1.8,
+      commission_applied: 50, commission_gst: 9,
+      razorpay_fee_actual: 20, razorpay_tax_actual: 3.6,
+      vendor_amount: 917.4, customer_total: 1011.8,
+    };
+    const { lines } = orderPaymentEntry(legacy);
+    expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
+    expect(lineFor(lines, ACCOUNTS.COMMISSION_REVENUE, 'credit').credit).toBe(50); // gross, old regime
+    expect(lineFor(lines, ACCOUNTS.GST_PAYABLE, 'credit').credit).toBe(10.8); // 1.80 + 9
+    expect(lines.find((l) => l.account_code === ACCOUNTS.TDS_PAYABLE)).toBeUndefined();
+    expect(lines.find((l) => l.account_code === ACCOUNTS.TCS_PAYABLE)).toBeUndefined();
   });
 });
 

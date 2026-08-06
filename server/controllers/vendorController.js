@@ -200,10 +200,29 @@ const toggleService = async (req, res) => {
   }
 };
 
+// GET /api/vendor/withholding?from&to
+// Host's own TDS (194-O) + TCS (§52) certificate data for a period. PAN is masked
+// (the host knows their own PAN; no need to decrypt into the response).
+const getMyWithholding = async (req, res) => {
+  try {
+    const hostId = req.user.id;
+    const { from, to } = req.query;
+    const { buildWithholdingReport } = require('../services/withholdingReportService');
+    const rows = await buildWithholdingReport({ from, to, hostId, revealPan: false });
+    const mine = rows[0] || {
+      host_id: hostId, grossSales: 0, tds: 0, tcs: 0, bookings: 0, pan: null, name: null,
+    };
+    res.json({ from: from || null, to: to || null, ...mine });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 module.exports = {
   getTransactions,
   getPayoutBalance,
   getPayoutRequests,
   requestPayout,
   toggleService,
+  getMyWithholding,
 };
