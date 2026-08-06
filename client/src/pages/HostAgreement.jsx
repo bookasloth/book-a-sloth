@@ -3,14 +3,12 @@ import LegalLayout, { Section } from '../components/common/LegalLayout';
 
 // /host-agreement — Host Services Agreement.
 //
-// ⚠️ DRAFT — MARKETPLACE MODEL v4. Rewritten from the abandoned merchant-of-record model:
-// the Host SELLS TO THE GUEST; Book A Sloth is the platform/facilitator that lists, books,
-// collects payment, and remits the Host's price net of its platform fee/commission, the
-// gateway charge, and tax deducted at source. Clauses 2 and 16 (payment flow) are drafted
-// generically — the precise RBI Payment-Aggregator characterisation is ⚖️ lawyer + CA and
-// must match the PA-waiver. Clause 6 GST mechanics are ⚖️ CA-review, left generic. See
-// docs/legal-marketplace-rewrite-review.md + legal-marketplace-revert-brief.md. Pending
-// sign-off; do not deploy until the whole set is reviewed.
+// MARKETPLACE MODEL v4: the Host SELLS TO THE GUEST; Book A Sloth is the platform/
+// facilitator that lists, books, collects payment, and remits the Host's price net of its
+// Platform Fee/commission, the gateway charge, and tax deducted/collected at source.
+// Clauses 2 and 16 (payment flow) are drafted generically — the precise RBI Payment-
+// Aggregator characterisation is a ⚖️ lawyer + CA call (marked inline) and must match the
+// PA-waiver. Clause 6 GST mechanics carry ⚖️ CA-review markers inline.
 
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
@@ -20,7 +18,7 @@ const HostAgreement = () => (
     updated="24 July 2026"
     effective="on your acceptance during host onboarding"
     current="/host-agreement"
-    description="The agreement between Book A Sloth and its Hosts — how services are purchased, priced, invoiced, and paid for. Read before you list a service."
+    description="The agreement between Book A Sloth and its Hosts — how you sell your services to Guests through the Platform, and how you are priced, invoiced, and paid. Read before you list a service."
     intro={
       <>
         <p>

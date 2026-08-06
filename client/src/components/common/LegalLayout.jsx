@@ -11,11 +11,10 @@ import { ogCard } from '../../config/ogImages';
  */
 
 // Effective date for the commercial legal set (/terms, /guest-terms, /refund, host pair).
-// Set to the go-live date of the marketplace model (v4). The copy across these pages now
-// reflects the marketplace / platform-facilitator model, matching the running product.
-// (Name kept MOR_EFFECTIVE to avoid churning the GuestTerms/Refund imports; it is now the
-// marketplace effective date.)
-export const MOR_EFFECTIVE = '7 August 2026';
+// Set to the go-live date of the marketplace model (v4): the host is the seller, the
+// contract is host↔guest, and Book A Sloth invoices only its own fee + commission. Change
+// this ONE constant to shift the effective date across all the pages that import it.
+export const MARKETPLACE_EFFECTIVE = '7 August 2026';
 
 export const Section = ({ title, children }) => (
   <section className="mb-7 last:mb-0">
@@ -36,10 +35,10 @@ const POLICIES = [
 export default function LegalLayout({
   title,
   updated = '20 June 2026',
-  // `effective` defaults to `updated`. The merchant-of-record documents carry a
-  // FUTURE effective date on purpose: they describe how the platform will operate
-  // once the model ships, and a legal page that contradicts how the product
-  // actually behaves today is worse than no page at all.
+  // `effective` defaults to `updated`. The commercial legal set may carry a future
+  // effective date (see MARKETPLACE_EFFECTIVE) when it describes how the platform will
+  // operate once a pricing/model change ships — a legal page that contradicts how the
+  // product actually behaves today is worse than no page at all.
   effective,
   current,
   intro,

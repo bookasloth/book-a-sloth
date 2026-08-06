@@ -1,14 +1,12 @@
 import { Link } from 'react-router-dom';
-import LegalLayout, { Section, MOR_EFFECTIVE } from '../components/common/LegalLayout';
+import LegalLayout, { Section, MARKETPLACE_EFFECTIVE } from '../components/common/LegalLayout';
 
 // /refund — Refund & Cancellation Policy.
 //
-// ⚠️ DRAFT — MARKETPLACE MODEL v4. Reverted from the merchant-of-record stance ("BAS is
-// the seller, refunds are our obligation") to the marketplace stance: the host is the
-// seller, and Book A Sloth FACILITATES refunds and grievance redressal under the Consumer
-// Protection (E-Commerce) Rules, 2020 — the guest can still claim from us. Consumer rights
-// are preserved. The refund-window mechanics/tables below are unchanged (factual). The
-// liability framing is a ⚖️ lawyer call. Full spec: docs/legal-marketplace-revert-brief.md.
+// MARKETPLACE MODEL v4: the host is the seller, and Book A Sloth FACILITATES refunds and
+// grievance redressal under the Consumer Protection (E-Commerce) Rules, 2020 — the guest
+// can still claim from us. Consumer rights are preserved. The liability framing carries a
+// ⚖️ counsel-review marker inline.
 //
 // The booking + processing charge is non-refundable on guest-initiated cancellations
 // because the gateway does not return MDR on a refund. That is only defensible while
@@ -27,7 +25,7 @@ const Refund = () => (
   <LegalLayout
     title="Refund & Cancellation Policy"
     updated="24 July 2026"
-    effective={MOR_EFFECTIVE}
+    effective={MARKETPLACE_EFFECTIVE}
     current="/refund"
     description="Book A Sloth refund and cancellation policy — cancellation windows, what is refundable, host cancellations, timelines, and how to claim."
     intro={
