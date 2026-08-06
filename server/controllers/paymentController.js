@@ -51,6 +51,31 @@ async function generateBookingInvoice(bk) {
   });
 }
 
+// Mint the commission tax invoice — BAS's platform service TO the host (v4).
+// Only when commission was charged (free-plan bookings). Best-effort, idempotent
+// (one COM row per booking id). buyer = the host; POS falls back to the seller
+// state until host GSTIN/state is captured.
+// ponytail: no host GSTIN column yet → host ITC + IGST split are a follow-up.
+async function generateCommissionInvoice(bk) {
+  const taxable = Number(bk.commission_taxable) || 0;
+  if (taxable <= 0) return null; // paid plans have no commission → nothing to invoice
+  let hostName = 'Host';
+  try {
+    const { data: h } = await supabaseAdmin
+      .from('profiles').select('*').eq('id', bk.host_id).single();
+    hostName = h?.business_name || h?.name || h?.full_name || 'Host';
+  } catch (_) { /* non-fatal — fall back to 'Host' */ }
+  return generateInvoice({
+    sourceType: 'commission',
+    sourceId: bk.id,
+    paymentId: bk.razorpay_payment_id || bk.payment_id || null,
+    issuedAt: bk.paid_at || new Date().toISOString(),
+    buyer: { name: hostName },
+    taxableValue: taxable,
+    gstAmount: Number(bk.commission_gst) || 0,
+  });
+}
+
 // Annual plan price in paise, read from subscription_plans (DB-driven, spec v1.1)
 const getPlanPricePaise = async (slug) => {
   const plan = await planService.getPlan(slug);
@@ -288,6 +313,8 @@ const verifyPayment = async (req, res) => {
       const inv = await generateBookingInvoice({ ...updated, billing_details: booking.billing_details });
       if (inv) invoiceRef = { id: inv.id, token: inv.access_token };
     } catch (_) { /* non-fatal */ }
+    // v4: commission tax invoice to the host (best-effort; only when commission charged).
+    try { await generateCommissionInvoice(updated); } catch (_) { /* non-fatal */ }
 
     // Payment captured → now create the Google Calendar event (deferred from
     // booking time for paid services). A calendar failure must NOT fail an
@@ -1244,6 +1271,7 @@ const handleWebhook = async (req, res) => {
         auditLog('WEBHOOK_BOOKING_PAID', null, { booking_id: notes.booking_id, payment_id: payment.id });
         if (paid) {
           try { await generateBookingInvoice(paid); } catch (_) { /* non-fatal */ }
+          try { await generateCommissionInvoice(paid); } catch (_) { /* non-fatal */ }
           trackServer(resolveGuestId({ guestId: paid.guest_id, guestEmail: paid.guest_email }), "booking_paid", {
             booking_id: paid.id,
             service_title: paid.services?.title,
@@ -1353,5 +1381,5 @@ module.exports = {
   createOrder, verifyPayment, signatureValid, subscribePlan, verifySubscription,
   createVendorSubscription, syncVendorSubscription, cancelVendorSubscription,
   createProductOrder, verifyProductPayment, createRescheduleFeeOrder, handleWebhook,
-  generateBookingInvoice,
+  generateBookingInvoice, generateCommissionInvoice,
 };

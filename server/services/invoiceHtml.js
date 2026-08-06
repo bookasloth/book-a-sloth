@@ -10,14 +10,18 @@ const fmtDate = (iso) => { try { return new Date(iso).toLocaleDateString('en-IN'
 function buildTaxInvoiceHTML(inv = {}) {
   const s = { ...seller, ...(inv.seller_snapshot || {}) };
   const isSub = inv.source_type === 'subscription';
-  const itemDesc = isSub ? 'Book A Sloth — subscription plan' : 'Booking convenience / platform fee';
+  const itemDesc = isSub ? 'Book A Sloth — subscription plan'
+    : inv.source_type === 'commission' ? 'Book A Sloth — platform commission'
+    : 'Booking convenience / platform fee';
   const intra = Number(inv.igst) === 0 && (Number(inv.cgst) > 0 || Number(inv.sgst) > 0);
   const taxRows = intra
     ? `<div class="row"><span class="mut">CGST @ 9%</span><span>${inr(inv.cgst)}</span></div>
        <div class="row"><span class="mut">SGST @ 9%</span><span>${inr(inv.sgst)}</span></div>`
     : `<div class="row"><span class="mut">IGST @ 18%</span><span>${inr(inv.igst)}</span></div>`;
-  const bookingNote = isSub ? '' :
-    `<div class="note">This invoice covers Book A Sloth's platform fee only. The booked service is supplied by the host, who invoices separately if GST-registered.</div>`;
+  const bookingNote = isSub ? ''
+    : inv.source_type === 'commission'
+      ? `<div class="note">This invoice covers Book A Sloth's platform commission for facilitating the host's booking.</div>`
+      : `<div class="note">This invoice covers Book A Sloth's platform fee only. The booked service is supplied by the host, who invoices separately if GST-registered.</div>`;
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
