@@ -158,16 +158,19 @@ const Refund = () => (
         <li>We initiate approved refunds within <strong>5&ndash;7 working days</strong> of approval.</li>
         <li>After we initiate it, the amount usually reaches you in <strong>5&ndash;10 working days</strong>, depending on your bank or card issuer. Those timelines are outside our control.</li>
         <li>Refunds are made in INR. Currency conversion differences and third-party charges are not our responsibility.</li>
-        <li>Where a refund is issued, we also issue a credit note against the original tax invoice and adjust the GST accordingly.</li>
-        <li>Where only part of a booking is refunded, the credit note reflects the refunded portion.</li>
+        {/* ⚖️ GST — CA REVIEW. Credit-note / GST-adjustment mechanics depend on which invoice
+            (platform fee vs the host's own service invoice) is being reversed; left generic. */}
+        <li>Where a refund is issued, any credit note and tax adjustment are made against the applicable invoice in accordance with law.</li>
+        <li>Where only part of a booking is refunded, the adjustment reflects the refunded portion.</li>
       </ul>
     </Section>
 
     <Section title="8. Our arrangement with hosts">
       <p>
-        Book A Sloth buys the service from the host and sells it to you. Where we refund you for something the host
-        caused, we recover that amount from the host under our agreement with them. That is a matter between us and the
-        host and it never delays or reduces your refund.
+        The host is the seller of the service; Book A Sloth is the marketplace that facilitates your booking, payment,
+        and refund. Where we facilitate a refund to you for something the host caused, we recover that amount from the
+        host under our agreement with them. That is a matter between us and the host and it never delays or reduces your
+        refund.
       </p>
     </Section>
 
