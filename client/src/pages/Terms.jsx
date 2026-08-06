@@ -1,23 +1,21 @@
 import { Link } from 'react-router-dom';
-import LegalLayout, { Section, MOR_EFFECTIVE } from '../components/common/LegalLayout';
+import LegalLayout, { Section, MARKETPLACE_EFFECTIVE } from '../components/common/LegalLayout';
 
 // /terms — Terms of Use. Umbrella terms for everyone (accounts, acceptable use, IP,
 // liability). The commercial contracts live separately: /guest-terms is the sale
-// contract with the guest, /host-agreement is the procurement contract with the host.
+// contract with the guest, /host-agreement is the Host Services Agreement.
 //
-// ⚠️ DRAFT — MARKETPLACE MODEL v4. Reverted from the abandoned merchant-of-record model
-// to the intermediary/marketplace stance (host is the seller; contract is host↔guest; BAS
-// invoices only its fee + commission; the intermediary line PR #564 removed is BACK). §2.4
-// "collect and remit" and the consumer-liability position (§11.2/§12.1) are ⚖️ lawyer/CA
-// calls — the exact wording must match the PA-waiver. Pending sign-off; do not deploy until
-// the whole legal set is reviewed. Spec + v4 facts: docs/legal-marketplace-revert-brief.md.
+// MARKETPLACE MODEL v4: the host is the seller; the contract is host↔guest; Book A Sloth
+// invoices only its fee + commission. GST, the §2.4 "collect and remit" wording, and the
+// consumer-liability position (§11.2/§12.1) carry ⚖️ CA/counsel-review markers inline and
+// must match the PA-waiver before those points are treated as final.
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
 const Terms = () => (
   <LegalLayout
     title="Terms of Use"
     updated="24 July 2026"
-    effective={MOR_EFFECTIVE}
+    effective={MARKETPLACE_EFFECTIVE}
     current="/terms"
     description="The terms governing your use of Book A Sloth — accounts, acceptable use, content, and liability. Read before you book or list a service."
     intro={

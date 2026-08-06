@@ -5,9 +5,9 @@ import LegalLayout, { Section } from '../components/common/LegalLayout';
 // Agreement (/host-agreement), kept as a separate page so charges can be amended
 // on 30 days' notice under clause 5.6 without re-executing the Agreement.
 //
-// ⚠️ DRAFT — MARKETPLACE MODEL v4 (docs/payment-model.md v4 + legal-marketplace-revert-brief.md).
-// Reverted from the abandoned merchant-of-record model. Pending lawyer sign-off; do
-// not deploy until the whole legal set is rewritten consistently and reviewed.
+// MARKETPLACE MODEL v4: the host is the seller; Book A Sloth charges a Platform Fee
+// (booking fee + commission) and invoices only that. GST mechanics carry ⚖️ CA-review
+// markers inline.
 //
 // The worked examples are the source of truth hosts quote back at us, so they must
 // stay numerically identical to docs/payment-model.md v4 and to what pricingEngine

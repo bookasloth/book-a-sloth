@@ -1,15 +1,13 @@
 import { Link } from 'react-router-dom';
-import LegalLayout, { Section, MOR_EFFECTIVE } from '../components/common/LegalLayout';
+import LegalLayout, { Section, MARKETPLACE_EFFECTIVE } from '../components/common/LegalLayout';
 
-// /guest-terms — Guest Terms.
+// /guest-terms — Guest Terms of Sale.
 //
-// ⚠️ DRAFT — MARKETPLACE MODEL v4 (docs/payment-model.md v4 + legal-marketplace-revert-brief.md).
-// Reverted from the abandoned merchant-of-record model: the HOST is the seller/supplier;
-// the sale contract is host↔guest; Book A Sloth is the marketplace that facilitates the
-// booking, collects payment, and provides grievance redressal + refund facilitation under
-// the Consumer Protection (E-Commerce) Rules, 2020. Consumer rights under the CPA 2019 are
-// NOT excluded. The liability stance (§8) is a ⚖️ lawyer call — pending sign-off, do not
-// deploy until the whole legal set is reviewed.
+// MARKETPLACE MODEL v4: the HOST is the seller/supplier; the sale contract is host↔guest;
+// Book A Sloth is the marketplace that facilitates the booking, collects payment, and
+// provides grievance redressal + refund facilitation under the Consumer Protection
+// (E-Commerce) Rules, 2020. Consumer rights under the CPA 2019 are NOT excluded. The
+// liability stance (§8) carries a ⚖️ counsel-review marker inline.
 
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
@@ -17,9 +15,9 @@ const GuestTerms = () => (
   <LegalLayout
     title="Guest Terms of Sale"
     updated="24 July 2026"
-    effective={MOR_EFFECTIVE}
+    effective={MARKETPLACE_EFFECTIVE}
     current="/guest-terms"
-    description="The terms on which Book A Sloth sells services to guests — who you are buying from, what is included, cancellations, rescheduling, and your rights if something goes wrong."
+    description="The terms on which you buy a service from a host through Book A Sloth — who you are buying from, what is included, cancellations, rescheduling, and your rights if something goes wrong."
     intro={
       <>
         <p>
