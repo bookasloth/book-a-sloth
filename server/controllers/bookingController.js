@@ -353,6 +353,24 @@ const createBooking = async (req, res) => {
     if (!limitCheck.allowed)
       return res.status(403).json({ message: limitCheck.message });
 
+    // v4 — TDS 194-O: a PAID booking withholds income-tax from the host, which by
+    // law requires the host's PAN. So a host must have PAN on file before they can
+    // receive any paid booking. Free (₹0) bookings withhold nothing and are exempt.
+    // (With PAN guaranteed on every paid booking, TDS is always the 1% with-PAN rate.)
+    if (service.price > 0) {
+      const { data: panRow } = await supabaseAdmin
+        .from("kyc_submissions")
+        .select("user_id")
+        .eq("user_id", host_id)
+        .not("pan_number", "is", null)
+        .maybeSingle();
+      if (!panRow) {
+        return res.status(409).json({
+          message: "This host isn't set up to accept paid bookings yet. Please try again later.",
+        });
+      }
+    }
+
     // ── Pricing snapshot (final money model — pricingEngine, no inline formulas) ──
     const bookingValue = service.price; // service amount; add-ons not yet supported
 
