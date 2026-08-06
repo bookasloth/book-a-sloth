@@ -41,8 +41,20 @@ function orderPaymentEntry(snapshot) {
   }
   if (gstTotal > 0) lines.push(line(ACCOUNTS.GST_PAYABLE, 'credit', gstTotal, tags));
   if (Number(snapshot.commission_applied) > 0) {
-    lines.push(line(ACCOUNTS.COMMISSION_REVENUE, 'credit', snapshot.commission_applied, tags));
+    // v4: commission is GST-inclusive, so revenue books at the ex-GST taxable value
+    // (its GST is already in gstTotal). Legacy pre-v4 rows have no commission_taxable
+    // snapshot — those booked commission GST on top, so credit the gross amount to
+    // keep the historical entry balanced.
+    const commissionRevenue = snapshot.commission_taxable != null
+      ? Number(snapshot.commission_taxable)
+      : Number(snapshot.commission_applied);
+    lines.push(line(ACCOUNTS.COMMISSION_REVENUE, 'credit', commissionRevenue, tags));
   }
+  // v4 statutory withholdings — collected from the host, owed to the government.
+  const tds = round2(Number(snapshot.tds_amount || 0));
+  const tcs = round2(Number(snapshot.tcs_amount || 0));
+  if (tds > 0) lines.push(line(ACCOUNTS.TDS_PAYABLE, 'credit', tds, tags));
+  if (tcs > 0) lines.push(line(ACCOUNTS.TCS_PAYABLE, 'credit', tcs, tags));
   if (gatewayTotal > 0) {
     // Gateway deducts its fee from the remittance (relieve receivable)…
     lines.push(line(ACCOUNTS.RZP_CHARGES_ORDERS, 'debit', gatewayTotal, tags));

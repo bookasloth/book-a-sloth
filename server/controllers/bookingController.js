@@ -443,7 +443,10 @@ const createBooking = async (req, res) => {
       razorpay_fee_actual: 0,                      // set at payment capture (v2.2)
       razorpay_tax_actual: 0,                      // set at payment capture (v2.8)
       commission_applied:  commission,    // requires v1.7 migration
-      commission_gst:        pricing.commissionGst,   // v2.8: 18% GST on commission, vendor-borne
+      commission_gst:        pricing.commissionGst,      // v4: GST EXTRACTED from inside the (inclusive) commission
+      commission_taxable:    pricing.commissionTaxable,  // v3.93: commission ex-GST (host invoice taxable value)
+      tds_amount:            pricing.tds,                // v3.93: 194-O withholding on host gross sale
+      tcs_amount:            pricing.tcs,                // v3.93: GST Sec 52 collection
       commission_percentage: commissionPct,           // v2.8 snapshot
       vendor_plan_type:      effectivePlanSlug,       // v2.8 snapshot
       reminder_24h_sent: false,
@@ -488,6 +491,7 @@ const createBooking = async (req, res) => {
         commission_applied: _c, platform_fee_gst: _g, customer_total: _t,
         gst_rate: _r, razorpay_fee_actual: _f, razorpay_tax_actual: _rt,
         commission_gst: _cg, commission_percentage: _cp, vendor_plan_type: _vp,
+        commission_taxable: _ctx, tds_amount: _tds, tcs_amount: _tcs,
         google_event_id: _gei, billing_details: _bd, grace_minutes: _gm,
         ...payloadCore
       } = bookingPayload;

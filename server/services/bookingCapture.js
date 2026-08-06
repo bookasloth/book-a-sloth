@@ -19,7 +19,9 @@
  */
 
 const { supabaseAdmin } = require('../config/supabase');
-const { calculateVendorPayout } = require('../lib/pricingEngine');
+const {
+  calculateVendorPayout, calculateTds, calculateTcs, calculateCommissionTaxable,
+} = require('../lib/pricingEngine');
 
 const round2 = (n) => Math.round(Number(n) * 100) / 100;
 
@@ -41,13 +43,16 @@ async function finalizeBookingCapture({ bookingId, paymentId, feePaise, taxPaise
   if (!snap) {
     const { data: bk } = await supabaseAdmin
       .from('bookings')
-      .select('commission_applied, commission_gst, platform_fee_amount, platform_fee_gst, customer_total, host_id, services(price)')
+      .select('commission_applied, commission_gst, commission_taxable, tds_amount, tcs_amount, platform_fee_amount, platform_fee_gst, customer_total, host_id, services(price)')
       .eq('id', bookingId)
       .single();
     if (!bk) return { updated: null };
     snap = {
       commission_applied: bk.commission_applied,
       commission_gst: bk.commission_gst,
+      commission_taxable: bk.commission_taxable,
+      tds_amount: bk.tds_amount,
+      tcs_amount: bk.tcs_amount,
       platform_fee_amount: bk.platform_fee_amount,
       platform_fee_gst: bk.platform_fee_gst,
       customer_total: bk.customer_total,
@@ -64,13 +69,23 @@ async function finalizeBookingCapture({ bookingId, paymentId, feePaise, taxPaise
   const servicePrice = Number(snap.service_price) || 0;
   const commission = Number(snap.commission_applied) || 0;
   const commissionGst = Number(snap.commission_gst) || 0;
-  const vendorAmount = calculateVendorPayout(servicePrice, commission, commissionGst, feeTotal);
+  // v4 statutory withholdings from the host's gross sale. Prefer the booking-time
+  // snapshot; recompute at the default rate for legacy rows written before v3.93.
+  const tds = snap.tds_amount != null ? Number(snap.tds_amount)
+    : (servicePrice > 0 ? calculateTds(servicePrice) : 0);
+  const tcs = snap.tcs_amount != null ? Number(snap.tcs_amount)
+    : (servicePrice > 0 ? calculateTcs(servicePrice) : 0);
+  const commissionTaxable = snap.commission_taxable != null ? Number(snap.commission_taxable)
+    : (commission > 0 ? calculateCommissionTaxable(commission) : 0);
+  // commission is GST-inclusive (its GST is inside), so it is NOT re-subtracted here.
+  const vendorAmount = calculateVendorPayout(servicePrice, commission, feeTotal, tds, tcs);
 
   const paidAt = new Date().toISOString();
   const full = {
     payment_status: 'paid', status: 'confirmed', razorpay_payment_id: paymentId,
     razorpay_fee_actual: feeExclTax, razorpay_tax_actual: tax,
     vendor_amount: vendorAmount, paid_at: paidAt, updated_at: paidAt,
+    tds_amount: tds, tcs_amount: tcs, commission_taxable: commissionTaxable,
   };
   // Idempotent: only an unpaid, non-cancelled row transitions. The .neq('paid')
   // lets a failed→paid retry through; .neq('cancelled') stops a late payment from
@@ -81,8 +96,11 @@ async function finalizeBookingCapture({ bookingId, paymentId, feePaise, taxPaise
       .select('*, services(title)');
   let { data: rows, error } = await apply(full);
   if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
-    // Legacy DB without the v2.2/v2.8 columns.
-    const { razorpay_fee_actual: _a, razorpay_tax_actual: _b, paid_at: _c, ...core } = full;
+    // Legacy DB without the v2.2/v2.8/v3.93 columns.
+    const {
+      razorpay_fee_actual: _a, razorpay_tax_actual: _b, paid_at: _c,
+      tds_amount: _t, tcs_amount: _tc, commission_taxable: _ct, ...core
+    } = full;
     ({ data: rows, error } = await apply(core));
   }
   if (error) throw error;
@@ -108,6 +126,9 @@ async function finalizeBookingCapture({ bookingId, paymentId, feePaise, taxPaise
         platform_fee_gst: Number(snap.platform_fee_gst) || 0,
         commission_applied: commission,
         commission_gst: commissionGst,
+        commission_taxable: commissionTaxable,
+        tds_amount: tds,
+        tcs_amount: tcs,
         razorpay_fee_actual: feeExclTax,
         razorpay_tax_actual: tax,
         vendor_amount: vendorAmount,
