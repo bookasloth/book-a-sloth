@@ -5,10 +5,13 @@ import LegalLayout, { Section, MOR_EFFECTIVE } from '../components/common/LegalL
 // liability). The commercial contracts live separately: /guest-terms is the sale
 // contract with the guest, /host-agreement is the procurement contract with the host.
 //
-// Section 2 is load-bearing. Book A Sloth is the SELLER OF RECORD, not an intermediary.
-// The previous version said "We are an intermediary. The contract is directly between
-// the host and the guest" — that contradicts the GST position and the host agreement.
-// Do not reintroduce intermediary or marketplace language anywhere on this page.
+// ⚠️ SUPERSEDED BY MARKETPLACE MODEL v4 — DO NOT DEPLOY AS-IS.
+// This page's §2 (and the seller-of-record stance throughout) describes the ABANDONED
+// merchant-of-record model. The product is now a marketplace/intermediary (the host is
+// the seller; the contract is host↔guest; BAS invoices only its fee + commission). The
+// intermediary line PR #564 removed comes BACK. Clause-by-clause revert spec + the exact
+// v4 facts are in docs/legal-marketplace-revert-brief.md. Final copy is the lawyer's —
+// the consumer-liability flip (⚖️) is a legal judgment, not an engineering one.
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
 const Terms = () => (
