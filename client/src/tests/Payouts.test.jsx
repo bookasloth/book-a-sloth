@@ -10,6 +10,8 @@ vi.mock('../services/api', () => ({
   getPayoutRequests: vi.fn(() => Promise.resolve({ data: [] })),
   getMyKyc: vi.fn(() => Promise.resolve({ data: { status: 'approved' } })),
   requestPayout: vi.fn(),
+  getPayoutOnboarding: vi.fn(() => Promise.resolve({ data: { state: 'coming_soon' } })),
+  startPayoutOnboarding: vi.fn(),
 }));
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }));
 

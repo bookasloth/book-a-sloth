@@ -8,6 +8,8 @@ const {
   requestPayout,
   toggleService,
   getMyWithholding,
+  getPayoutOnboarding,
+  startPayoutOnboarding,
 } = require('../controllers/vendorController');
 
 // All vendor routes require auth
@@ -23,6 +25,9 @@ router.get('/withholding', getMyWithholding);
 router.get('/payout/balance', getPayoutBalance);
 router.get('/payout/requests', getPayoutRequests);
 router.post('/payout/request', requestPayout);
+// Route payout onboarding (dormant under fee-only mode)
+router.get('/payout/onboarding-status', getPayoutOnboarding);
+router.post('/payout/onboard', startPayoutOnboarding);
 
 // Service toggle (soft-disable / enable) — requireHost (P1-1: was protect-only)
 router.put('/services/:id/toggle', requireHost, toggleService);

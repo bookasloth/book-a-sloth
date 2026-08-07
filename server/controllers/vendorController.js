@@ -218,6 +218,36 @@ const getMyWithholding = async (req, res) => {
   }
 };
 
+// GET /api/vendor/payout/onboarding-status
+// Host's Razorpay Route payout-onboarding state (coming_soon | not_started |
+// created | active). Syncs from Razorpay when a created-but-not-active account
+// exists so the UI reflects verification progress.
+const getPayoutOnboarding = async (req, res) => {
+  try {
+    const svc = require('../services/routeOnboardingService');
+    let status = await svc.getOnboardingStatus(req.user.id);
+    if (status.state === 'created') status = await svc.syncOnboardingStatus(req.user.id);
+    res.json(status);
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// POST /api/vendor/payout/onboard
+// Start payout onboarding: create the host's Razorpay Route linked account.
+// No-op ("coming_soon") while fee-only mode is on.
+const startPayoutOnboarding = async (req, res) => {
+  try {
+    const svc = require('../services/routeOnboardingService');
+    const r = await svc.createLinkedAccountForHost(req.user.id);
+    if (r.skipped === 'fee_only_mode') return res.json({ state: 'coming_soon' });
+    if (r.error) return res.status(502).json({ message: 'Could not start payout setup. Please try again later.' });
+    res.json({ state: r.state, accountId: r.accountId });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 module.exports = {
   getTransactions,
   getPayoutBalance,
@@ -225,4 +255,6 @@ module.exports = {
   requestPayout,
   toggleService,
   getMyWithholding,
+  getPayoutOnboarding,
+  startPayoutOnboarding,
 };

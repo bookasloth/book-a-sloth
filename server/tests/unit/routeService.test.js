@@ -85,6 +85,16 @@ describe('host onboarding gate', () => {
     expect(r).toEqual({ skipped: 'host_not_onboarded' });
     expect(mockTransfer).not.toHaveBeenCalled();
   });
+
+  test('no transfer when account exists but onboarding is incomplete (not active)', async () => {
+    mockGetConfig.mockResolvedValue({ feeOnlyMode: false });
+    mockFrom.mockReturnValue({
+      select: () => ({ eq: () => ({ single: async () => ({ data: { razorpay_route_account_id: 'acc_X', razorpay_route_status: 'created' } }) }) }),
+    });
+    const r = await route.createHeldTransferForBooking({ id: 'b1', host_id: 'h1', razorpay_payment_id: 'pay_1', vendor_amount: 900, customer_total: 911.8 });
+    expect(r).toEqual({ skipped: 'onboarding_incomplete' });
+    expect(mockTransfer).not.toHaveBeenCalled();
+  });
 });
 
 // ─── Route ON + onboarded → creates a HELD transfer ──────────────────────────
@@ -93,7 +103,7 @@ describe('active Route path', () => {
     mockGetConfig.mockResolvedValue({ feeOnlyMode: false });
     const updateSpy = jest.fn(() => ({ eq: async () => ({}) }));
     mockFrom.mockImplementation((table) => {
-      if (table === 'profiles') return { select: () => ({ eq: () => ({ single: async () => ({ data: { razorpay_route_account_id: 'acc_XYZ' } }) }) }) };
+      if (table === 'profiles') return { select: () => ({ eq: () => ({ single: async () => ({ data: { razorpay_route_account_id: 'acc_XYZ', razorpay_route_status: 'active' } }) }) }) };
       return { update: updateSpy };
     });
     mockTransfer.mockResolvedValue({ items: [{ id: 'trf_123' }] });
@@ -113,7 +123,7 @@ describe('active Route path', () => {
     mockGetConfig.mockResolvedValue({ feeOnlyMode: false });
     const updateSpy = jest.fn(() => ({ eq: async () => ({}) }));
     mockFrom.mockImplementation((table) => {
-      if (table === 'profiles') return { select: () => ({ eq: () => ({ single: async () => ({ data: { razorpay_route_account_id: 'acc_XYZ' } }) }) }) };
+      if (table === 'profiles') return { select: () => ({ eq: () => ({ single: async () => ({ data: { razorpay_route_account_id: 'acc_XYZ', razorpay_route_status: 'active' } }) }) }) };
       return { update: updateSpy };
     });
     mockTransfer.mockRejectedValue(new Error('razorpay 500'));

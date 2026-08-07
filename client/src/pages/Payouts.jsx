@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Wallet, Clock, Hourglass, Banknote, Send, ShieldCheck } from "lucide-react";
-import { getPayoutBalance, getPayoutRequests, requestPayout, getMyKyc } from "../services/api";
+import { getPayoutBalance, getPayoutRequests, requestPayout, getMyKyc, getPayoutOnboarding, startPayoutOnboarding } from "../services/api";
 import toast from "react-hot-toast";
 import {
   PageHeader, Section, StatCard, DataTable, StatusBadge, Modal, Button,
@@ -92,6 +92,69 @@ const HISTORY_COLUMNS = [
   },
 ];
 
+// "Set up payouts" — Razorpay Route onboarding. Reflects the server state:
+//   coming_soon (fee-only mode) · not_started · created (verifying) · active.
+// While fee-only mode is on this shows a soft "launching soon" note and no action.
+const PayoutSetupCard = () => {
+  const [state, setState] = useState(undefined); // undefined = loading
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    getPayoutOnboarding()
+      .then((r) => setState(r.data?.state || "not_started"))
+      .catch(() => setState(null));
+  }, []);
+
+  if (state === undefined || state === null) return null;
+
+  if (state === "coming_soon") return (
+    <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+      Paid bookings and payouts are launching soon. You’ll set up your payout account here.
+    </div>
+  );
+
+  if (state === "active") return (
+    <div className="mb-4 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4">
+      <ShieldCheck className="h-5 w-5 shrink-0 text-green-600" />
+      <p className="text-sm font-semibold text-green-800">Payouts active — you can receive payments from paid bookings.</p>
+    </div>
+  );
+
+  if (state === "created") return (
+    <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+      <Hourglass className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+      <div>
+        <p className="text-sm font-semibold text-amber-800">Payout verification in progress</p>
+        <p className="text-xs text-amber-700">Our payment partner is verifying your details. Payouts unlock automatically once approved.</p>
+      </div>
+    </div>
+  );
+
+  // not_started
+  const start = async () => {
+    setBusy(true);
+    try {
+      const { data } = await startPayoutOnboarding();
+      setState(data?.state || "created");
+      toast.success("Payout setup started");
+    } catch (e) {
+      toast.error(e.response?.data?.message || "Could not start payout setup");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="mb-4 flex items-start gap-3 rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+      <Banknote className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+      <div className="flex-1">
+        <p className="text-sm font-semibold text-ink">Set up payouts</p>
+        <p className="text-xs text-gray-600">Connect your account with our payment partner to receive money from paid bookings.</p>
+      </div>
+      <Button size="sm" onClick={start} disabled={busy}>{busy ? "Starting…" : "Set up"}</Button>
+    </div>
+  );
+};
+
 const Payouts = () => {
   const [balance, setBalance] = useState(null);
   const [requests, setRequests] = useState([]);
@@ -163,6 +226,8 @@ const Payouts = () => {
           </Button>
         }
       />
+
+      <PayoutSetupCard />
 
       {!kycApproved && (
         <Link to="/dashboard/kyc" className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 hover:bg-amber-100">

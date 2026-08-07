@@ -370,18 +370,15 @@ const createBooking = async (req, res) => {
         });
       }
       // Route onboarding gate: once fee-only mode is OFF, a paid booking settles
-      // the host's money to their Razorpay Route linked account (never to us). No
-      // linked account → the host can't receive payment, so block the paid booking.
-      // In fee-only mode service.price is forced ₹0, so this never runs.
-      const { feeOnlyMode } = await platformConfig.getConfig();
-      if (!feeOnlyMode) {
-        const { data: acctRow } = await supabaseAdmin
-          .from("profiles").select("razorpay_route_account_id").eq("id", host_id).single();
-        if (!acctRow?.razorpay_route_account_id) {
-          return res.status(409).json({
-            message: "This host isn't set up to receive payments yet. Please try again later.",
-          });
-        }
+      // the host's money to their ACTIVE Razorpay Route linked account (never to
+      // us). Not onboarded / onboarding incomplete → block the paid booking. In
+      // fee-only mode service.price is forced ₹0, so this branch never runs.
+      const routeService = require("../services/routeService");
+      const routeGate = await routeService.routeActiveForHost(host_id);
+      if (!routeGate.active && routeGate.reason !== "fee_only_mode") {
+        return res.status(409).json({
+          message: "This host isn't set up to receive payments yet. Please try again later.",
+        });
       }
     }
 

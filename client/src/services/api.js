@@ -376,6 +376,8 @@ export const getTransactions    = (params)    => API.get('/vendor/transactions',
 export const getPayoutBalance   = ()          => API.get('/vendor/payout/balance');
 export const getPayoutRequests  = ()          => API.get('/vendor/payout/requests');
 export const requestPayout      = (data)      => API.post('/vendor/payout/request', data);
+export const getPayoutOnboarding = ()         => API.get('/vendor/payout/onboarding-status');
+export const startPayoutOnboarding = ()       => API.post('/vendor/payout/onboard');
 export const toggleService      = (id)        => API.put(`/vendor/services/${id}/toggle`);
 
 // ── Refer & Earn (host-refers-host) ───────────────────────────

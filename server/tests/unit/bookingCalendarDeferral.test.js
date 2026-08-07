@@ -62,7 +62,7 @@ beforeEach(() => jest.clearAllMocks());
 test('paid online service does NOT create a calendar event at booking time', async () => {
   wireSupabase({
     service: { id: 's1', title: 'SEO', duration: 30, price: 500, meeting_mode: 'online' },
-    host: { id: 'h1', email: 'h@x.com', google_calendar_connected: true, google_refresh_token: 'r', google_access_token: 'a', razorpay_route_account_id: 'acc_test' },
+    host: { id: 'h1', email: 'h@x.com', google_calendar_connected: true, google_refresh_token: 'r', google_access_token: 'a', razorpay_route_account_id: 'acc_test', razorpay_route_status: 'active' },
     avail: { timezone: 'Asia/Kolkata' },
   });
   const req = { body: { service_id: 's1', host_id: 'h1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z', booking_grant: guestGrant.issue({ email: 'g@x.com' }) } };
@@ -111,7 +111,7 @@ test('anonymous booking with a grant for a DIFFERENT contact is rejected 401', a
 test('logged-in booking needs no OTP grant (reaches insert → 201)', async () => {
   wireSupabase({
     service: { id: 's1', title: 'SEO', duration: 30, price: 500, meeting_mode: 'online' },
-    host: { id: 'h1', email: 'h@x.com', razorpay_route_account_id: 'acc_test' },
+    host: { id: 'h1', email: 'h@x.com', razorpay_route_account_id: 'acc_test', razorpay_route_status: 'active' },
     avail: { timezone: 'Asia/Kolkata' },
   });
   const r = res();

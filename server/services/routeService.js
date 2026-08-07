@@ -70,9 +70,11 @@ async function routeActiveForHost(hostId) {
   const { feeOnlyMode } = await platformConfig.getConfig();
   if (feeOnlyMode) return { active: false, reason: 'fee_only_mode' };
   const { data: host } = await supabaseAdmin
-    .from('profiles').select('razorpay_route_account_id').eq('id', hostId).single();
+    .from('profiles').select('razorpay_route_account_id, razorpay_route_status').eq('id', hostId).single();
   const acct = host?.razorpay_route_account_id || null;
   if (!acct) return { active: false, reason: 'host_not_onboarded' };
+  // A 'created' account without KYC/bank cannot receive money — require 'active'.
+  if (host?.razorpay_route_status !== 'active') return { active: false, reason: 'onboarding_incomplete' };
   return { active: true, account: acct };
 }
 
