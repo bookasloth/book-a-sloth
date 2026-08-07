@@ -146,7 +146,7 @@ const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
       <div className="max-w-md mx-auto text-center py-2">
-        <img src="/favicon.svg" alt="" className="w-14 h-14 mx-auto mb-4 bas-bob" />
+        <div className="w-10 h-10 mx-auto mb-4 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: tc }} />
         <h2 className="text-xl font-bold mb-1">Wrapping things up…</h2>
         <p className="text-sm text-gray-500 mb-6">Hang tight — almost there.</p>
         <ul className="text-left max-w-xs mx-auto space-y-3">
@@ -1508,20 +1508,12 @@ const ServiceBooking = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center">
                   {/* LEFT: success */}
                   <div className="text-center">
-                    <div className="relative w-20 h-20 mx-auto mb-5 bas-pop">
-                      <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: `${tc}18` }}>
-                        <img src="/favicon.svg" alt="" className="w-12 h-12 bas-bob" />
-                      </div>
-                      <span className="absolute bottom-0 right-0 w-7 h-7 rounded-full flex items-center justify-center border-2 border-white" style={{ background: tc }}>
-                        <svg className="w-4 h-4" fill="none" stroke={textOnTheme} strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                      </span>
+                    <div className="w-20 h-20 mx-auto mb-5 rounded-full flex items-center justify-center bas-pop" style={{ background: `${tc}18` }}>
+                      <svg className="w-10 h-10" fill="none" stroke={tc} strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                     </div>
-                    <h2 className="text-2xl font-bold mb-2 bas-fade" style={{ color: tc }}>You're all set! 🎉</h2>
-                    <p className="text-sm text-gray-500 mb-1 bas-fade">
+                    <h2 className="text-2xl font-bold mb-2 bas-fade" style={{ color: tc }}>Booking confirmed</h2>
+                    <p className="text-sm text-gray-500 mb-5 bas-fade">
                       See you {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
-                    </p>
-                    <p className="text-sm text-gray-400 bas-fade mb-5">
-                      We've emailed everything you need.
                     </p>
                     <div className="flex items-center gap-3 border border-gray-100 rounded-xl p-3 bg-gray-50/40 text-left">
                       <span style={{ color: tc }}>{mailIcon}</span>
@@ -1563,19 +1555,19 @@ const ServiceBooking = () => {
                       {calIcon} Download iCal (.ics)
                     </a>
                   </div>
-                  {isPaidBooking && (
-                    <button type="button" onClick={() => downloadReceipt(receiptData)}
-                      className="btn btn--outline mt-3 w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
-                      style={{ color: tc }}>
-                      {docIcon} Download Receipt
-                    </button>
-                  )}
-                  {invoiceRef && (
+                  {/* One download: the GST invoice when we have it, else the receipt. */}
+                  {invoiceRef ? (
                     <a href={invoiceUrl(invoiceRef.id, invoiceRef.token)} target="_blank" rel="noreferrer"
                       className="btn btn--outline mt-3 w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
                       style={{ color: tc }}>
-                      {docIcon} Download GST Invoice
+                      {docIcon} Download invoice
                     </a>
+                  ) : isPaidBooking && (
+                    <button type="button" onClick={() => downloadReceipt(receiptData)}
+                      className="btn btn--outline mt-3 w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 font-semibold text-sm transition-opacity hover:opacity-85"
+                      style={{ color: tc }}>
+                      {docIcon} Download receipt
+                    </button>
                   )}
                   <div className="border-t border-gray-100 mt-6 pt-4">
                     <Link to={`/${profileSlug}`} className="text-sm font-semibold hover:underline" style={{ color: tc }}>
