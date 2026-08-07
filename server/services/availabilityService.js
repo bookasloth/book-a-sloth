@@ -166,10 +166,24 @@ const getGoogleBusy = async (host, windowStart, windowEnd, day, { useCache = tru
     }
   }
 
+  // A connected host whose refresh token won't decrypt (key rotation, corrupt
+  // ciphertext, or a grant revoked/narrowed under #560) can never have their
+  // calendar read — every poll would throw and flag the guest with the amber
+  // "couldn't reach calendar" banner. decryptToken SILENTLY returns '' on failure,
+  // so without this it looks identical to a Google outage. Detect it, log it
+  // distinctly + actionably (the fix is a HOST reconnect, not a retry), and skip
+  // the doomed live call. Still fail-open + unverified (we genuinely can't check).
+  const refreshTok = decryptToken(host.google_refresh_token);
+  if (!refreshTok) {
+    console.error(`google freebusy: host ${host.id} calendar token unreadable — host must reconnect Google (fail-open)`);
+    const cached = day ? await readFreeBusyCache(host.id, day) : null;
+    return { intervals: cached?.intervals || [], unverified: true };
+  }
+
   try {
     const busy = await getFreeBusy(
       decryptToken(host.google_access_token),
-      decryptToken(host.google_refresh_token),
+      refreshTok,
       windowStart.toISOString(),
       windowEnd.toISOString(),
     );
@@ -177,7 +191,13 @@ const getGoogleBusy = async (host, windowStart, windowEnd, day, { useCache = tru
     if (day) writeFreeBusyCache(host.id, day, busy); // fire-and-forget
     return { intervals, unverified: false };
   } catch (err) {
-    console.error(`google freebusy failed for host ${host.id} (fail-open):`, err.message);
+    // Classify: an auth error (invalid_grant / 401 / 403 / insufficient scope)
+    // means the host must reconnect; anything else is a transient Google blip.
+    const authFail = /invalid_grant|invalid_credentials|unauthorized|no access|insufficient|401|403/i.test(err.message || "");
+    console.error(
+      `google freebusy failed for host ${host.id} (${authFail ? "auth — host must reconnect Google" : "transient outage"}, fail-open):`,
+      err.message,
+    );
     if (day) {
       const cached = await readFreeBusyCache(host.id, day);
       if (cached) return { intervals: cached.intervals, unverified: true };
