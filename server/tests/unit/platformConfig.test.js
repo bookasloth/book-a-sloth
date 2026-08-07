@@ -36,12 +36,35 @@ test('getConfig clamps negative clearingDays to default', async () => {
   expect(cfg.clearingDays).toBe(7);
 });
 
+test('feeOnlyMode defaults to TRUE when unset (interim fail-safe)', async () => {
+  supabaseAdmin.from.mockImplementation(() => chain({ data: [] }));
+  const cfg = await platformConfig.getConfig();
+  expect(cfg.feeOnlyMode).toBe(true);
+});
+
+test('feeOnlyMode reads false when explicitly disabled (Route go-live)', async () => {
+  supabaseAdmin.from.mockImplementation(() => chain({ data: [
+    { key: 'fee_only_mode', value: false },
+  ] }));
+  const cfg = await platformConfig.getConfig();
+  expect(cfg.feeOnlyMode).toBe(false);
+});
+
+test('feeOnlyMode coerces string "false" / "0" to false', async () => {
+  supabaseAdmin.from.mockImplementation(() => chain({ data: [
+    { key: 'fee_only_mode', value: '"false"' },
+  ] }));
+  const cfg = await platformConfig.getConfig();
+  expect(cfg.feeOnlyMode).toBe(false);
+});
+
 test('getConfig falls back to safe defaults AND logs a security event on DB error', async () => {
   supabaseAdmin.from.mockImplementation(() => { throw new Error('db down'); });
   const cfg = await platformConfig.getConfig();
   expect(cfg.platformFee).toBe(10);
   expect(cfg.gstRate).toBe(0.18);
   expect(cfg.clearingDays).toBe(7);
+  expect(cfg.feeOnlyMode).toBe(true);   // fail-safe: stays fee-only on DB error
   expect(securityLog).toHaveBeenCalledWith(
     'platform_config_db_fallback',
     expect.objectContaining({ error: 'db down' }),

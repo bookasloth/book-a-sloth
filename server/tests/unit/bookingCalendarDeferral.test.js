@@ -22,7 +22,13 @@ jest.mock('../../services/platformConfig', () => ({
 jest.mock('../../services/notificationEngine', () => ({ send: jest.fn().mockResolvedValue() }));
 jest.mock('../../utils/sendEmail', () => jest.fn().mockResolvedValue());
 jest.mock('../../lib/pricingEngine', () => ({
-  computeBreakdown: () => ({ platformFee: 10, commission: 0, vendorPayout: 100, gst: 1.8, customerTotal: 111.8 }),
+  // Input-sensitive so the calendar branch (keyed off customerTotal) is exercised:
+  // a genuinely-free booking (price 0, no fee) totals 0; a paid one totals > 0.
+  computeBreakdown: ({ servicePrice = 0, chargeFeeOnFree = false }) => {
+    const fee = servicePrice === 0 && !chargeFeeOnFree ? 0 : 10;
+    const gst = Math.round(fee * 0.18 * 100) / 100;
+    return { platformFee: fee, commission: 0, vendorPayout: servicePrice, commissionGst: 0, commissionTaxable: 0, tds: 0, tcs: 0, gst, customerTotal: servicePrice + fee + gst };
+  },
 }));
 
 const mockFrom = jest.fn();
