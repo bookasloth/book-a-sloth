@@ -370,11 +370,15 @@ const googleVendorAuth = (req, res) => {
     OAUTH_STATE_SECRET,
     { expiresIn: "15m" },
   );
-  // Signup needs a fresh refresh token → force consent. Login omits prompt so a
-  // returning host who already granted skips the consent screen entirely. (A truly
-  // new user who hits "login" still sees consent on their first grant — Google
-  // requires it — and still gets a refresh token, so the account sets up fine.)
-  res.json({ url: getAuthUrl(state, intent === "signup" ? { prompt: "consent" } : {}) });
+  // Never force the consent prompt on the public vendor flow — for signup OR login.
+  // Google shows consent to a GENUINELY new user on their first grant anyway (it's
+  // required) and still returns a refresh token then. An already-registered account
+  // that picks the same Google email — even via the "signup" button — has already
+  // granted, so Google skips consent and the callback just logs them in. This is
+  // why a registered user is no longer forced to re-check the calendar boxes.
+  // (Explicit calendar reconnect from the dashboard still forces consent — see
+  // googleAuth — because that path deliberately reissues a fresh refresh token.)
+  res.json({ url: getAuthUrl(state) });
 };
 
 // Seed onboarding state for a brand-new Google vendor. Step 1 = Google identity
