@@ -146,6 +146,16 @@ const listPublic = async (req, res) => {
 
 // ── Admin: create ────────────────────────────────────────────────────────────
 // POST /api/admin/service-categories  body: { primary_category, name, display_order?, is_active? }
+//
+// ⚠️ GST §9(5) GUARD (CGST Act) — do NOT add categories for services NOTIFIED under
+// §9(5): passenger transport, hotel/guesthouse ACCOMMODATION (lodging), HOUSEKEEPING
+// (plumber/carpenter type), or restaurant/cloud-kitchen food. For those, the platform
+// (e-commerce operator) is the DEEMED SUPPLIER and must pay GST on the FULL service
+// value (and TCS §52 does not apply) — which breaks the marketplace tax model here
+// (host handles own GST; we take TDS 1% + TCS 1%). The current catalogue is
+// consultations/coaching/classes/creative/beauty-wellness — all OUTSIDE §9(5).
+// Adding a §9(5) category needs a CA sign-off + deemed-supplier handling first.
+// See memory: gst-9-5-classification. (Beauty/salon/wellness are NOT §9(5).)
 const create = async (req, res) => {
   try {
     const primary = (req.body.primary_category || '').trim();
