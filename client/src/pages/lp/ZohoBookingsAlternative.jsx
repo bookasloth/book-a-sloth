@@ -23,6 +23,7 @@ import { SITE_URL } from "../../utils/seo";
 import HowItWorks from "../../components/home/HowItWorks";
 import LogoMarquee from "../../components/about/LogoMarquee";
 import { ALL_PLANS } from "../../data/plans";
+import useFeeOnly from "../../hooks/useFeeOnly";
 import { TESTIMONIALS } from "../../data/testimonials";
 import { LpCta, AccentCard as KitAccentCard, Avatar as KitAvatar, fmtINR, BAS_ORANGE, BAS_CTA, BAS_PEACH } from "./_altKit";
 
@@ -172,6 +173,8 @@ const FAQS = [
    PAGE
    ════════════════════════════════════════ */
 const ZohoBookingsAlternative = () => {
+  const feeOnly = useFeeOnly();
+  const plans = feeOnly ? ALL_PLANS.filter((p) => p.monthly !== 0) : ALL_PLANS;
   const utm = useUtm();
   const [billingAnnual, setBillingAnnual] = useState(true);
   const [openFaq, setOpenFaq] = useState(null);
@@ -558,8 +561,8 @@ const ZohoBookingsAlternative = () => {
             </div>
           </div>
 
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {ALL_PLANS.map((plan, i) => {
+          <div className={`mt-10 grid gap-5 ${feeOnly ? "sm:grid-cols-2 sm:max-w-3xl sm:mx-auto" : "md:grid-cols-3"}`}>
+            {plans.map((plan, i) => {
               const isFree = plan.monthly === 0;
               const perMo = isFree ? 0 : Math.round(plan.yearly / 12);
               const savePct = isFree ? 0 : Math.round((1 - plan.yearly / 12 / plan.monthly) * 100);
