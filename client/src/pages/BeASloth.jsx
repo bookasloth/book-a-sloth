@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import WhatsNewLink from '../components/auth/WhatsNewLink';
 import Seo from '../components/common/Seo';
+import useFeeOnly from '../hooks/useFeeOnly';
 import { SITE_URL } from '../utils/seo';
 
 const GoogleIcon = () => (
@@ -64,6 +65,9 @@ const PERSONAS = [
 // + calendar access, the account is created automatically in the callback.
 const BeASloth = () => {
   const { startVendorGoogleAuth, user } = useAuth();
+  // Interim (fee-only): soften "get paid / 0% commission" promises to "payments
+  // launching soon". Reverts on Route go-live. See useFeeOnly.
+  const feeOnly = useFeeOnly();
   const [loading, setLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -93,7 +97,9 @@ const BeASloth = () => {
     <div className="grid min-h-[calc(100vh-72px)] w-full lg:grid-cols-[1.05fr_1fr]">
       <Seo
         title="Become a Host on Book A Sloth — Sign Up Free"
-        description="Start taking bookings in minutes. Create your Book A Sloth host page, publish services, and get paid — sign up free with Google."
+        description={feeOnly
+          ? "Start taking bookings in minutes. Create your Book A Sloth host page, publish services, and manage your schedule — sign up free with Google. Paid bookings launching soon."
+          : "Start taking bookings in minutes. Create your Book A Sloth host page, publish services, and get paid — sign up free with Google."}
         canonical={`${SITE_URL}/be-a-sloth`}
       />
       {/* ── LEFT · colourful brand panel (lg+ only) ──────────────────────────── */}
@@ -112,8 +118,9 @@ const BeASloth = () => {
             <span className="text-primary">get booked for it.</span>
           </h2>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-gray-500 xl:text-[17px]">
-            Coaches, consultants, tutors and more run their entire booking
-            business on Book A Sloth — at 0% commission.
+            {feeOnly
+              ? "Coaches, consultants, tutors and more run their entire booking page on Book A Sloth — scheduling, reminders and Google Meet built in."
+              : "Coaches, consultants, tutors and more run their entire booking business on Book A Sloth — at 0% commission."}
           </p>
 
           {/* persona grid — one accent hue each · 3 across, 2 rows */}
@@ -139,7 +146,10 @@ const BeASloth = () => {
 
           {/* trust strip */}
           <div className="mt-9 flex flex-wrap gap-2">
-            {['0% commission', 'Calendar synced', 'Paid instantly', 'Google Meet built-in', 'No setup fees', 'Cancel anytime'].map((t) => (
+            {(feeOnly
+              ? ['Calendar synced', 'Google Meet built-in', 'Reminders included', 'No setup fees', 'Cancel anytime']
+              : ['0% commission', 'Calendar synced', 'Paid instantly', 'Google Meet built-in', 'No setup fees', 'Cancel anytime']
+            ).map((t) => (
               <span
                 key={t}
                 className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-gray-600 shadow-[0_1px_2px_rgba(16,24,40,0.05)] ring-1 ring-black/5"
@@ -164,11 +174,12 @@ const BeASloth = () => {
             Be a Sloth
           </h1>
           <p className="mt-1 text-base font-semibold text-gray-700">
-            Get booked. Get paid.
+            {feeOnly ? "Get booked. Grow your practice." : "Get booked. Get paid."}
           </p>
           <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-gray-500">
-            Publish your services, share your booking page and get paid —
-            calendar and Google Meet links set up automatically.
+            {feeOnly
+              ? "Publish your services and share your booking page — calendar and Google Meet links set up automatically. Paid bookings launching soon."
+              : "Publish your services, share your booking page and get paid — calendar and Google Meet links set up automatically."}
           </p>
 
           {desiredUsername && (
