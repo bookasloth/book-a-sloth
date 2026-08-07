@@ -32,8 +32,13 @@ describe('getAuthUrl — scopes actually requested', () => {
     expect(scopes).toContain('https://www.googleapis.com/auth/calendar.settings.readonly');
   });
 
-  it('forces a fresh consent so a new narrow-scope refresh token is issued', () => {
-    expect(url.searchParams.get('prompt')).toBe('consent');
+  it('omits prompt by default (returning-host login skips the consent screen)', () => {
+    expect(url.searchParams.get('prompt')).toBeNull();
+  });
+
+  it('forces consent when requested (signup / calendar reconnect → fresh refresh token)', () => {
+    const consentUrl = new URL(getAuthUrl('state-token', { prompt: 'consent' }));
+    expect(consentUrl.searchParams.get('prompt')).toBe('consent');
   });
 });
 
