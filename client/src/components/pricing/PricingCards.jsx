@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Sprout, Sparkles, Rocket, Building2 } from "lucide-react";
 import { PAID_PLANS, STARTER_PLAN, ENTERPRISE_PLAN } from "../../data/plans";
+import useFeeOnly from "../../hooks/useFeeOnly";
 
 const ROUTE_START = "/be-a-sloth"; // must match Home.jsx (confirmed in Task 2 Step 1)
 const ICONS = { Sprout, Sparkles, Rocket, Building2 };
@@ -120,6 +121,9 @@ function PaidCard({ plan, yearly }) {
 
 export default function PricingCards() {
   const [yearly, setYearly] = useState(true);
+  // Interim (fee-only) mode: hide the free Starter plan from the pricing display.
+  // Free signup still works — we just don't advertise it. Reverts on Route go-live.
+  const feeOnly = useFeeOnly();
   const paid = [...PAID_PLANS, ENTERPRISE_PLAN]; // Host+, Studio, Enterprise
 
   return (
@@ -154,7 +158,8 @@ export default function PricingCards() {
         ))}
       </div>
 
-      {/* Starter — wide card */}
+      {/* Starter — wide card (hidden in interim fee-only mode; free signup still works) */}
+      {!feeOnly && (
       <div className="mt-5 rounded-[6px] border border-black/5 bg-white p-7 shadow-[0_8px_30px_rgba(26,26,26,0.05)] sm:p-8 lg:flex lg:items-center lg:gap-8">
         <div className="lg:shrink-0">
           <div className="flex items-center gap-2.5">
@@ -190,6 +195,7 @@ export default function PricingCards() {
           </Link>
         </div>
       </div>
+      )}
     </div>
   );
 }

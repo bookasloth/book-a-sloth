@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import useFeeOnly from "../hooks/useFeeOnly";
 import {
   motion,
   useScroll,
@@ -564,6 +565,30 @@ const TRUST = [
 const Home = () => {
   useLenis();
   const { startVendorGoogleAuth } = useAuth();
+
+  // Interim (fee-only) mode: soften earn/commission promises to "payments
+  // launching soon". Reverts automatically when fee_only_mode flips on Route
+  // go-live. Marketing data lives in module-level arrays, so we remap the few
+  // earn-y items here at render time.
+  const feeOnly = useFeeOnly();
+  const featureGroups = feeOnly
+    ? FEATURE_GROUPS.map((g) => g.title === "Get paid"
+        ? { ...g, title: "Payments coming soon", desc: "Paid bookings and payouts are launching soon — take free bookings today.", items: ["UPI, cards & netbanking (soon)", "Advance & full payments (soon)", "Automatic GST invoices"] }
+        : g)
+    : FEATURE_GROUPS;
+  const whyCards = feeOnly
+    ? WHY_CARDS.map((w) => w.title === "0% commission"
+        ? { ...w, title: "Made for creators", desc: "Booking, scheduling and reminders — done right." }
+        : w)
+    : WHY_CARDS;
+  const faqs = feeOnly
+    ? FAQS.map((f) => {
+        if (f.q === "Is Book A Sloth really free?") return { q: "Is Book A Sloth free to start?", a: "Yes. Creating your booking page, publishing services and taking bookings is free. Paid bookings and payouts are launching soon." };
+        if (f.q === "Do you charge commission?") return { q: "Will I be able to charge for bookings?", a: "Paid bookings are launching soon. Today you can take free bookings and manage your schedule; you'll be able to charge guests once payments go live." };
+        if (f.q === "Can clients pay while booking?") return { q: "Can clients pay while booking?", a: "Paid bookings are launching soon. Right now clients can book your free sessions; payment at checkout is coming shortly." };
+        return f;
+      })
+    : FAQS;
 
   // ── Google-only host funnel — same entry as /be-a-sloth ──
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -1449,7 +1474,7 @@ const Home = () => {
             Not a feature list — just the four things every service business actually needs, done properly.
           </Reveal>
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
-            {FEATURE_GROUPS.map((g, i) => (
+            {featureGroups.map((g, i) => (
               <Reveal key={g.title} delay={(i % 4) * 0.07}>
                 {/* Subtle dark-theme hover: card lifts, border warms to orange, bg
                     brightens slightly, icon chip warms. Text + orange accents stay — no invert. */}
@@ -1608,7 +1633,7 @@ const Home = () => {
             <h2 className="mt-4 text-4xl leading-[1.05] text-ink sm:text-5xl">
               Work slower.
               <br />
-              <span className="font-extrabold text-neutral-400">Earn smarter.</span>
+              <span className="font-extrabold text-neutral-400">{feeOnly ? "Book smarter." : "Earn smarter."}</span>
             </h2>
           </Reveal>
 
@@ -1652,7 +1677,7 @@ const Home = () => {
             Most booking tools are built for the West and patched for India. Book A Sloth starts from INR, GST and UPI — and works outward from there.
           </Reveal>
           <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-            {WHY_CARDS.map((w, i) => (
+            {whyCards.map((w, i) => (
               <Reveal key={w.title} delay={(i % 3) * 0.07}>
                 <div className="flex h-full flex-col rounded-[6px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
                   <span
@@ -1677,7 +1702,7 @@ const Home = () => {
       <section id="pricing" className="px-5 pb-12 pt-20 sm:px-8 lg:pb-16 lg:pt-28">
         <div className="mx-auto max-w-[1050px]">
           <Reveal as="h2" className="text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
-            Simple pricing. <span className="text-primary">Zero commission.</span>
+            Simple pricing. <span className="text-primary">{feeOnly ? "Grow your practice." : "Zero commission."}</span>
           </Reveal>
           <Reveal as="p" delay={0.06} className="mx-auto mt-4 max-w-[750px] text-center text-neutral-500">
             Start free. Upgrade when your bookings demand it. Keep everything you earn — always.
@@ -1696,7 +1721,9 @@ const Home = () => {
             </Link>
           </p>
           <p className="mt-3 text-center text-xs text-neutral-500">
-            0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
+            {feeOnly
+              ? "Prices in INR, excl. GST · Paid bookings & payouts launching soon · Cancel anytime"
+              : "0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime"}
           </p>
         </div>
       </section>
@@ -1821,7 +1848,7 @@ const Home = () => {
             — we reply fast.
           </Reveal>
           <div className="mt-12 space-y-3">
-            {FAQS.map((f, i) => (
+            {faqs.map((f, i) => (
               <Reveal key={f.q} delay={Math.min(i * 0.04, 0.2)}>
                 <div className="rounded-[6px] border border-black/5 bg-white px-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)]">
                   <button

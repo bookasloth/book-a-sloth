@@ -23,6 +23,7 @@ import { SITE_URL } from '../../utils/seo';
 import { HERO_FACES } from '../../components/home/images';
 import { TESTIMONIALS } from '../../data/testimonials';
 import { STARTER_PLAN, PAID_PLANS } from '../../data/plans';
+import useFeeOnly from '../../hooks/useFeeOnly';
 import { getProfessionLanding } from './professionLandingData';
 
 const ROUTE_START = '/be-a-sloth';
@@ -225,6 +226,9 @@ export default function ProfessionLanding() {
   useLenis();
   const { profession } = useParams();
   const data = getProfessionLanding(profession);
+  // Interim (fee-only): a single honest banner caveats the earn/commission copy
+  // below (which stays as-is), and we drop the free Starter offer from JSON-LD.
+  const feeOnly = useFeeOnly();
 
   // Prefer profession-specific testimonials; fall back to weighted shared set.
   const testimonials = useMemo(() => {
@@ -256,10 +260,12 @@ export default function ProfessionLanding() {
       operatingSystem: 'Web',
       url: canonical,
       description: seo.description,
-      offers: [
-        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${STARTER_PLAN.name} plan` },
-        { '@type': 'Offer', price: String(PAID_PLANS[0].yearly), priceCurrency: 'INR', name: `${PAID_PLANS[0].name} plan (yearly)` },
-      ],
+      offers: feeOnly
+        ? [{ '@type': 'Offer', price: String(PAID_PLANS[0].yearly), priceCurrency: 'INR', name: `${PAID_PLANS[0].name} plan (yearly)` }]
+        : [
+            { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: `${STARTER_PLAN.name} plan` },
+            { '@type': 'Offer', price: String(PAID_PLANS[0].yearly), priceCurrency: 'INR', name: `${PAID_PLANS[0].name} plan (yearly)` },
+          ],
       // No aggregateRating: a testimonial-derived 5.0 self-rating is exactly the
       // "self-serving review" markup Google's policy flags (enterpriseSeo.js made
       // the same call). Re-add only if backed by genuine on-page review data.
@@ -318,6 +324,11 @@ export default function ProfessionLanding() {
         image={seo.ogImage}
         jsonLd={jsonLd}
       />
+      {feeOnly && (
+        <div className="bg-primary/10 px-5 py-2.5 text-center text-xs font-medium text-primary sm:text-sm">
+          Paid bookings &amp; payouts are launching soon — set up your booking page and take free bookings today.
+        </div>
+      )}
 
       <ForHeader ctaText="Get Started" />
 
