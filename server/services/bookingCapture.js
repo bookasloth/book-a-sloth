@@ -137,6 +137,16 @@ async function finalizeBookingCapture({ bookingId, paymentId, feePaise, taxPaise
     });
   }
 
+  // Route (post-go-live): create the host's ON-HOLD payout transfer to their
+  // linked account. No-op under fee-only mode or an un-onboarded host, and fully
+  // non-fatal — a Route failure must never unwind an already-captured payment
+  // (routeService marks route_payout_status='failed' for the retry cron). Lazy
+  // require keeps this isolated.
+  try {
+    const routeService = require('./routeService');
+    await routeService.createHeldTransferForBooking(updated);
+  } catch (_) { /* routeService is non-fatal by design; guard the require too */ }
+
   return { updated, vendorAmount, feeExclTax, tax };
 }
 

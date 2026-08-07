@@ -381,6 +381,21 @@ setInterval(async () => {
   } catch (err) { console.error('Referral release cron error:', err.message); }
 }, 60 * 60 * 1000);
 
+// Razorpay Route payout release (v3.95) — releases held per-booking transfers to
+// host linked accounts once the service is completed and the dispute window
+// (ROUTE_HOLD_HOURS, default 48h) has elapsed. No-op while fee_only_mode is on
+// (the current state — no host money moves), so this is free until Route go-live.
+// Idempotent; hourly.
+const routeService = require('./services/routeService');
+setInterval(async () => {
+  try {
+    await runLocked('route-payout-release', async () => {
+      const r = await routeService.releaseDueRoutePayouts();
+      if (r.released) console.log(`Route payout release: released ${r.released} (of ${r.considered} due, ${r.failed || 0} failed)`);
+    }, { leaseMs: 2 * 60 * 60 * 1000 });
+  } catch (err) { console.error('Route payout release cron error:', err.message); }
+}, 60 * 60 * 1000);
+
 // Rate-limit store housekeeping — prune expired rows so the rate_limit_hits table
 // can't grow unbounded once the persistent store is enabled (RATE_LIMIT_STORE_URL).
 // No-op while the store is off, so this is free on single-instance/in-memory setups.
