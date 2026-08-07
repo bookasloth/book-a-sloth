@@ -437,6 +437,12 @@ const verifyPayment = async (req, res) => {
         booking_day: d.toLocaleDateString("en-IN", { timeZone: tz, day: "2-digit" }),
         booking_month: d.toLocaleDateString("en-IN", { timeZone: tz, month: "short" }).toUpperCase(),
         booking_year: d.toLocaleDateString("en-IN", { timeZone: tz, year: "numeric" }),
+        // GST tax invoice: token-gated link the guest can open from the email
+        // without logging in (works for account-less guest checkout). Falls back to
+        // the dashboard when no invoice was minted (e.g. a free booking).
+        invoice_url: (invoiceRef && process.env.API_URL)
+          ? `${process.env.API_URL.replace(/\/$/, "")}/api/invoices/${invoiceRef.id}?token=${encodeURIComponent(invoiceRef.token)}`
+          : `${process.env.CLIENT_URL || "https://bookasloth.com"}/user/my-bookings`,
       };
       // WhatsApp confirmation carries a 5th "link" var: Meet link when online,
       // the host's map link when offline (dashboard as a last resort).

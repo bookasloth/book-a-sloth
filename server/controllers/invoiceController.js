@@ -18,6 +18,28 @@ async function getInvoice(req, res) {
   }
 }
 
+// GET /api/invoices/booking/:bookingId/view — OWNER-GATED invoice view for the
+// guest dashboard. Unlike the token link, this requires a session and checks the
+// booking belongs to the caller, so it is NOT shareable — opening it needs to be
+// logged in as the buyer. (The emailed token link stays for guests without an
+// account.) Fetched with the Bearer token and shown as a local blob by the client.
+async function viewBookingInvoice(req, res) {
+  try {
+    const { bookingId } = req.params;
+    const uid = req.user.id;
+    const { data: bk } = await supabaseAdmin
+      .from('bookings').select('id, guest_id').eq('id', bookingId).maybeSingle();
+    if (!bk) return res.status(404).send('Booking not found');
+    if (bk.guest_id !== uid) return res.status(403).send('Not authorized');
+    const { data: inv } = await supabaseAdmin
+      .from('invoices').select('*').eq('source_type', 'booking').eq('source_id', bookingId).maybeSingle();
+    if (!inv) return res.status(404).send('Invoice not available yet');
+    res.set('Content-Type', 'text/html; charset=utf-8').send(buildTaxInvoiceHTML(inv));
+  } catch (e) {
+    res.status(500).send('Could not render invoice');
+  }
+}
+
 // GET /api/invoices/mine — the logged-in host's own invoices (subscriptions +
 // bookings they were billed for). Buyer identity is the session user.
 async function listMyInvoices(req, res) {
@@ -43,4 +65,4 @@ async function listMyInvoices(req, res) {
   }
 }
 
-module.exports = { getInvoice, listMyInvoices };
+module.exports = { getInvoice, listMyInvoices, viewBookingInvoice };

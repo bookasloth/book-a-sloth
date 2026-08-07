@@ -57,9 +57,25 @@ const amountPaid = (b) => {
   return "Unpaid";
 };
 
-// Client-side receipt — uses the shared receipt builder (utils/receipt) so the
-// confirmation screen and My Bookings render identical documents.
-const downloadInvoice = (b, host) => {
+// Invoice download. Prefers the real GST tax invoice via the OWNER-GATED endpoint
+// (Bearer-authed → fetched as a local blob so the URL isn't shareable; only the
+// logged-in buyer can open it). Falls back to the client-side receipt for bookings
+// without a GST invoice (e.g. free bookings, or before the invoice is minted).
+const downloadInvoice = async (b, host) => {
+  try {
+    const base = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const session = JSON.parse(localStorage.getItem("user") || "null");
+    const res = await fetch(`${base}/invoices/booking/${b.id}/view`, {
+      headers: session?.token ? { Authorization: `Bearer ${session.token}` } : {},
+    });
+    if (res.ok) {
+      const url = URL.createObjectURL(new Blob([await res.text()], { type: "text/html" }));
+      window.open(url, "_blank", "noopener");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return;
+    }
+    // 404 (no GST invoice for this booking) → fall through to the client receipt.
+  } catch { /* network issue → fall through to the client receipt */ }
   downloadReceipt({
     receiptId: shortId(b.id),
     bookingId: b.id,
