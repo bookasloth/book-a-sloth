@@ -116,7 +116,8 @@ const TEMPLATES = [
       eyebrow(t.text, 'Booking confirmed') + h("You're all set, {{first_name}}") +
       lead('Your appointment is confirmed. Here are the details:') +
       C.heroDate(t, { day: '{{booking_day}}', mon: '{{booking_month}}', year: '{{booking_year}}', title: '{{service_name}}', time: '{{booking_time}}', sub: 'with {{vendor_name}}' }) +
-      C.statusTags([{ label: 'Confirmed', tone: 'confirmed' }]),
+      C.statusTags([{ label: 'Confirmed', tone: 'confirmed' }]) +
+      lead('Your GST tax invoice is ready — <a href="{{invoice_url}}" style="color:#FE5100;font-weight:600;text-decoration:none">view or download the PDF</a>. It is also under My Bookings in your dashboard.'),
     // CTA → the public manage/cancel page (works without a login, unlike the
     // dashboard) so anonymous OTP guests can self-serve (#516).
     cta_label: 'View or manage booking', cta_url: '{{manage_url}}',
