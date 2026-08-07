@@ -66,6 +66,16 @@ test('last-minute booking → ONE nudge, both elapsed windows marked sent', asyn
   );
 });
 
+test('non-imminent booking inside the 24h window → NO instant reminder (1h cron owns it), 24h suppressed', async () => {
+  // [24,1] plan, session 16h out: booked inside the 24h window but not imminent.
+  // A "reminder" seconds after the confirmation is noise — the 1h cron reminds
+  // later. So: no send, but the elapsed 24h flag is marked sent (1h left false).
+  await fireDueReminders(booking({ scheduled_at: minutesFromNow(16 * 60) }), HOST);
+  expect(NotificationEngine.send).not.toHaveBeenCalled();
+  expect(lastBookingUpdate).toEqual(expect.objectContaining({ reminder_24h_sent: true }));
+  expect(lastBookingUpdate.reminder_1h_sent).toBeUndefined();
+});
+
 test('future booking → no catch-up (cron owns it)', async () => {
   await fireDueReminders(booking({ scheduled_at: minutesFromNow(48 * 60) }), HOST);
   expect(NotificationEngine.send).not.toHaveBeenCalled();

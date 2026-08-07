@@ -1523,12 +1523,20 @@ const fireDueReminders = async (booking, host) => {
       (w) => startMs - w * 3600000 <= now && !booking[reminderFlagFor(w)],
     );
     if (!due.length) return;
-    const tz = await resolveHostTz(booking.host_id);
-    // One nudge only — guest needs a single "coming up" notice, not one per
-    // lapsed window — then suppress the rest so the cron skips them.
-    await sendBookingReminder(booking, host, tz);
+    // Only send an INSTANT catch-up when the session is within the SMALLEST
+    // entitled window. If a smaller window's reminder time is still in the future,
+    // the cron will send it then — firing a "reminder" seconds after the booking
+    // confirmation (e.g. a next-day booking tripping the 24h window) is redundant
+    // noise. We still mark every elapsed window sent so the cron never fires a
+    // stale one; a not-yet-due smaller window stays false for the cron to handle.
+    const smallest = Math.min(...windows);
+    const imminent = startMs - now <= smallest * 3600000;
     const flags = { updated_at: new Date().toISOString() };
     for (const w of due) flags[reminderFlagFor(w)] = true;
+    if (imminent) {
+      const tz = await resolveHostTz(booking.host_id);
+      await sendBookingReminder(booking, host, tz);
+    }
     await supabaseAdmin.from("bookings").update(flags).eq("id", booking.id);
   } catch (err) {
     console.error(`fireDueReminders error for booking ${booking?.id}:`, err.message);
