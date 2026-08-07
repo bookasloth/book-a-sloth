@@ -40,10 +40,18 @@ const buildOAuthClient = (accessToken, refreshToken) => {
 // state: opaque string (signed JWT) carried through the OAuth round-trip so the
 // callback can tell vendor-auth flows apart from legacy calendar-connect flows
 // and reject forged callbacks (CSRF).
-const getAuthUrl = (state) => {
+// `prompt` is caller-controlled so returning hosts aren't forced through the full
+// consent screen on every login:
+//   • undefined (login)  → Google skips consent when the grant already exists → a
+//     returning host lands straight through. New users still see consent on their
+//     FIRST authorization (Google requires it) and first-grant still returns a
+//     refresh token, so nothing is lost.
+//   • 'consent' (signup / calendar reconnect / legacy-scope revoke) → forces a
+//     fresh refresh token when we actually need to (re)issue one.
+const getAuthUrl = (state, { prompt } = {}) => {
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
-    prompt: 'consent',
+    ...(prompt ? { prompt } : {}),
     // Incremental authorization is DELIBERATELY OFF. It carries forward every
     // scope the user ever granted — including the full `auth/calendar` scope we
     // removed from the Cloud Console. Re-attaching a scope the project no longer

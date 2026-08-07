@@ -349,7 +349,9 @@ const googleAuth = (req, res) => {
     OAUTH_STATE_SECRET,
     { expiresIn: "15m" },
   );
-  const url = getAuthUrl(state);
+  // Explicit calendar (re)connect from the dashboard → force consent so Google
+  // reissues a fresh refresh token with the current (narrow) scopes.
+  const url = getAuthUrl(state, { prompt: "consent" });
   res.json({ url });
 };
 
@@ -368,7 +370,11 @@ const googleVendorAuth = (req, res) => {
     OAUTH_STATE_SECRET,
     { expiresIn: "15m" },
   );
-  res.json({ url: getAuthUrl(state) });
+  // Signup needs a fresh refresh token → force consent. Login omits prompt so a
+  // returning host who already granted skips the consent screen entirely. (A truly
+  // new user who hits "login" still sees consent on their first grant — Google
+  // requires it — and still gets a refresh token, so the account sets up fine.)
+  res.json({ url: getAuthUrl(state, intent === "signup" ? { prompt: "consent" } : {}) });
 };
 
 // Seed onboarding state for a brand-new Google vendor. Step 1 = Google identity
@@ -441,9 +447,11 @@ const attachGoogleToProfile = async (profileId, tokens, googleUser) => {
   // includes the removed full `auth/calendar` scope. Overwriting our stored copy
   // does not touch that grant — Google keeps serving the "remove risky access"
   // warning until the old token is actually revoked at the OAuth endpoint.
-  // Google's remediation guidance is revoke-then-reconsent; consent has just
-  // happened in this same request (getAuthUrl always sends prompt=consent), so
-  // the fresh token below replaces it with narrow scopes only.
+  // Google's remediation guidance is revoke-then-reconsent. We only revoke when
+  // Google issued a REPLACEMENT refresh token this round (the guard below) — which
+  // only happens on a consent-prompted flow (signup / calendar reconnect), never
+  // on a plain returning-host login. So the narrow-scope token replaces the legacy
+  // grant exactly when a fresh one exists, and returning logins are left untouched.
   //
   // Revoking a refresh token invalidates that token and the access tokens
   // derived from it, not the separate token we are about to persist. Worst case
@@ -523,7 +531,7 @@ const googleCallback = async (req, res) => {
     // ── Flow A: vendor signup/login via Google ──────────────────────────────
     if (statePayload?.flow === "vendor_auth") {
       const { data: existing } = await supabaseAdmin
-        .from("profiles").select("id, role, is_host, email").eq("email", googleEmail).maybeSingle();
+        .from("profiles").select("id, role, is_host, email, google_calendar_connected").eq("email", googleEmail).maybeSingle();
 
       let profileId = existing?.id || null;
       // Unified identity: an existing CUSTOMER signing in via "Be a Sloth" /
@@ -575,7 +583,17 @@ const googleCallback = async (req, res) => {
         trackServer(profileId, "user_registered", { method: "google", role: "host" }, { email: googleEmail });
       }
 
-      await attachGoogleToProfile(profileId, tokens, googleUser);
+      // Re-attach Google tokens only when there's something to (re)store: a
+      // brand-new host, a customer upgrading to host, an existing host who isn't
+      // calendar-connected, or Google actually issued a fresh token this round.
+      // A returning, already-connected host on a plain login (prompt omitted →
+      // usually no new refresh token) skips the revoke/re-write/timezone churn and
+      // just gets a session — no repeated "calendar access" dance.
+      const needsAttach =
+        !existing || upgraded || !existing.google_calendar_connected || !!tokens.refresh_token;
+      if (needsAttach) {
+        await attachGoogleToProfile(profileId, tokens, googleUser);
+      }
 
       // Mint a Supabase session without a password (magiclink redeem on a
       // disposable client). Tokens travel in the URL FRAGMENT — never logged.
