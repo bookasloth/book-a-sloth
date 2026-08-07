@@ -168,6 +168,18 @@ app.use('/api/whatsapp',      require('./routes/whatsappRoutes'));
 app.use('/api/username',      require('./routes/usernameRoutes')); // public resolve (edge 301) + auth check
 app.get('/api/appearance',  require('./controllers/appearanceController').getPublic); // public navbar logo
 app.get('/api/plans',       require('./controllers/planAdminController').publicPlans);
+// Public platform config — non-secret flags the client (incl. logged-out marketing
+// pages) reads to gate interim UI. feeOnlyMode drives the "payments launching soon"
+// copy + free-plan hiding; it auto-reverts when the DB flag flips on Route go-live.
+app.get('/api/config/public', async (req, res) => {
+  try {
+    const { getConfig } = require('./services/platformConfig');
+    const { feeOnlyMode } = await getConfig();
+    res.json({ feeOnlyMode });
+  } catch (_) {
+    res.json({ feeOnlyMode: true }); // fail-safe: interim until proven otherwise
+  }
+});
 
 // Dynamic sitemap — root-mounted (NOT /api) so the public URLs are
 // bookasloth.com/sitemap*.xml via the Vercel rewrite. DB-driven, cached, busted

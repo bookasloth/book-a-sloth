@@ -4,6 +4,7 @@ import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
 import { PLAN_COLUMNS, PLAN_MATRIX } from "../data/plans";
 import PricingCards from "../components/pricing/PricingCards";
+import useFeeOnly from "../hooks/useFeeOnly";
 
 // /pricing — dedicated public pricing page. Plan cards + full feature comparison.
 // Single-sourced from client/src/data/plans.js (mirrors DB migration v3.55), so
@@ -37,11 +38,15 @@ const Cell = ({ value }) => {
 };
 
 export default function Pricing() {
+  // Interim (fee-only) mode: hide the free Starter column + soften commission/earn
+  // copy. Reverts automatically when the DB flag flips on Route go-live.
+  const feeOnly = useFeeOnly();
+  const columns = feeOnly ? PLAN_COLUMNS.filter((c) => c.key !== "starter") : PLAN_COLUMNS;
   return (
     <main className="bg-white">
       <Seo
-        title="Pricing — Book A Sloth | Zero-commission booking from ₹0"
-        description="Simple, honest pricing. Start free, keep 0% commission on paid plans. Compare Starter, Host+ and Studio side by side — prices in INR, excl. GST."
+        title={feeOnly ? "Pricing — Book A Sloth | Plans for creators & professionals" : "Pricing — Book A Sloth | Zero-commission booking from ₹0"}
+        description={feeOnly ? "Simple, honest pricing for your booking page — scheduling, reminders, and payments launching soon. Compare Host+ and Studio side by side — prices in INR, excl. GST." : "Simple, honest pricing. Start free, keep 0% commission on paid plans. Compare Starter, Host+ and Studio side by side — prices in INR, excl. GST."}
         image={ogCard('pricing')}
         jsonLd={JSON_LD}
       />
@@ -50,10 +55,12 @@ export default function Pricing() {
       <section className="px-5 pb-10 pt-16 sm:px-8 lg:pt-24">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
-            Simple pricing. <span className="text-primary">Zero commission.</span>
+            Simple pricing. <span className="text-primary">{feeOnly ? "Grow your practice." : "Zero commission."}</span>
           </h1>
           <p className="mx-auto mt-4 max-w-[640px] text-neutral-500">
-            Start free, upgrade when your bookings demand it, and keep everything you earn — always.
+            {feeOnly
+              ? "Pick the plan that fits your booking page. Upgrade anytime — paid bookings and payouts are launching soon."
+              : "Start free, upgrade when your bookings demand it, and keep everything you earn — always."}
           </p>
         </div>
       </section>
@@ -64,7 +71,9 @@ export default function Pricing() {
           <PricingCards />
         </div>
         <p className="mx-auto mt-6 max-w-[1050px] text-center text-xs text-neutral-400">
-          0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime
+          {feeOnly
+            ? "Prices in INR, excl. GST · Paid bookings & payouts launching soon · Cancel anytime"
+            : "0% commission on paid plans · Prices in INR, excl. GST · ~2.4% payment gateway fee applies (not our charge) · Cancel anytime"}
         </p>
       </section>
 
@@ -81,7 +90,7 @@ export default function Pricing() {
               <thead>
                 <tr className="border-b border-black/10">
                   <th className="py-3 pr-4 text-sm font-semibold text-neutral-500">Feature</th>
-                  {PLAN_COLUMNS.map((c) => (
+                  {columns.map((c) => (
                     <th key={c.key} className="px-3 py-3 text-center">
                       <span className={`text-base font-bold ${c.recommended ? "text-primary" : "text-ink"}`}>{c.name}</span>
                       {c.recommended && (
@@ -93,7 +102,7 @@ export default function Pricing() {
               </thead>
               <tbody>
                 {PLAN_MATRIX.map((section) => (
-                  <FragmentSection key={section.group} section={section} />
+                  <FragmentSection key={section.group} section={section} columns={columns} />
                 ))}
               </tbody>
             </table>
@@ -121,18 +130,18 @@ export default function Pricing() {
 }
 
 // A grouped block of comparison rows with a section header row.
-function FragmentSection({ section }) {
+function FragmentSection({ section, columns = PLAN_COLUMNS }) {
   return (
     <>
       <tr className="bg-sand/40">
-        <td colSpan={PLAN_COLUMNS.length + 1} className="px-1 py-2.5 text-xs font-bold uppercase tracking-wide text-primary">
+        <td colSpan={columns.length + 1} className="px-1 py-2.5 text-xs font-bold uppercase tracking-wide text-primary">
           {section.group}
         </td>
       </tr>
       {section.rows.map((row) => (
         <tr key={row.label} className="border-b border-black/5">
           <td className="py-3 pr-4 text-sm text-neutral-700">{row.label}</td>
-          {PLAN_COLUMNS.map((c) => (
+          {columns.map((c) => (
             <td key={c.key} className="px-3 py-3 text-center"><Cell value={row[c.key]} /></td>
           ))}
         </tr>
