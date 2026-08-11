@@ -2,11 +2,15 @@
 // Owns the Anthropic SDK instance + model ids. Key-optional: returns null when
 // ANTHROPIC_API_KEY is unset so the feature degrades gracefully (no import crash).
 
-// Both generate and regenerate use Haiku 4.5 — regenerate variety comes from the
-// tweak text in the prompt, not from a stronger/costlier model.
+// generate/regenerate = the shared workhorse model, used by the Bolt support bot,
+// abuseGuard, pills, and escalationService as well as listing generation. Keep it
+// on Haiku (cheap, high volume) — do NOT bump it to move one feature, or every
+// bot call moves with it. "Write with Bolt" listing generation uses `listing`
+// (Sonnet 5) instead — set separately so the bot's cost/behaviour stays put.
 const MODELS = {
   generate: 'claude-haiku-4-5-20251001',
   regenerate: 'claude-haiku-4-5-20251001',
+  listing: 'claude-sonnet-5',
 };
 
 let _client;

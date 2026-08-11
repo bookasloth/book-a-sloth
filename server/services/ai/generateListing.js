@@ -33,10 +33,11 @@ function buildUserMessage({ title, category, price, duration, city, audience, tw
 }
 
 async function callOnce(client, { model, system, user }) {
-  // Both models are Haiku 4.5. No temperature/top_p/top_k and thinking kept
-  // explicitly disabled: forced tool_choice ({type:'tool'}) is rejected with an
-  // HTTP 400 when thinking is on, so disabling it keeps a forced tool call safe
-  // regardless of the model's default, gives the full max_tokens budget to the
+  // Both models are Sonnet 5. No temperature/top_p/top_k (Sonnet 5 rejects
+  // non-default sampling params) and thinking kept explicitly disabled: forced
+  // tool_choice ({type:'tool'}) is rejected with an HTTP 400 when thinking is on,
+  // and Sonnet 5 runs adaptive thinking by default — so disabling it is required
+  // to keep the forced tool call safe, gives the full max_tokens budget to the
   // tool call, and keeps output deterministic for structured extraction.
   //
   // max_tokens 4096: the full listing (long_description + 4-6 included/excluded
@@ -55,8 +56,11 @@ async function callOnce(client, { model, system, user }) {
 async function generateListing(opts = {}) {
   const client = anthropicClient.getClient();
   if (!client) throw new Error('AI_UNAVAILABLE');
-  const { regenerate = false, allowedCategorySlugs = [] } = opts;
-  const model = regenerate ? MODELS.regenerate : MODELS.generate;
+  const { allowedCategorySlugs = [] } = opts;
+  // Listing generation uses Sonnet 5 (MODELS.listing), not the shared bot model.
+  // generate vs regenerate no longer changes the model — variety comes from the
+  // tweak text in the prompt (buildUserMessage), so opts.regenerate is unused here.
+  const model = MODELS.listing;
   const user = buildUserMessage(opts);
 
   let raw = await callOnce(client, { model, system: SYSTEM, user });
