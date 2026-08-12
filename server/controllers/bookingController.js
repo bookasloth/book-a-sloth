@@ -1076,6 +1076,11 @@ const guestReportProblem = async (req, res) => {
         .reverseHeldTransfer(booking, { reason: `reported: ${reason}` });
     }
 
+    // Open a dispute so it lands in the admin queue (best-effort).
+    require("../services/disputeService")
+      .recordDispute({ bookingId: booking.id, raisedBy: "guest", reason, payoutAction: reversal.ok ? "reversed" : "none" })
+      .catch(() => {});
+
     // Alert admin to resolve (refund / manual payout decision).
     try {
       adminAlert({
