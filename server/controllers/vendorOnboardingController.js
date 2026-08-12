@@ -230,7 +230,7 @@ const savePersona = async (vendorId, primaryCategory) => {
 // this endpoint only records the skip choice.
 const saveDetails = async (vendorId, data = {}) => {
   const { data: cur } = await supabaseAdmin
-    .from("profiles").select("onboarding_step_completed").eq("id", vendorId).maybeSingle();
+    .from("profiles").select("onboarding_step_completed, whatsapp_verified").eq("id", vendorId).maybeSingle();
   const current = cur?.onboarding_step_completed || 0;
   if (current < 3) throw new Error("Pick your category before this step.");
 
@@ -241,7 +241,9 @@ const saveDetails = async (vendorId, data = {}) => {
   if (data.vendor_type)  updates.vendor_type  = data.vendor_type;
   if (data.booking_type) updates.booking_type = data.booking_type;
   if (data.tagline !== undefined) updates.tagline = data.tagline || null;
-  if (data.whatsapp_skipped === true) {
+  // Only record the skip if WhatsApp isn't already verified — a stale/duplicate
+  // skip:true must never wipe a number the host verified via /api/whatsapp/verify-otp.
+  if (data.whatsapp_skipped === true && !cur?.whatsapp_verified) {
     updates.whatsapp_verified = false;
     updates.whatsapp_number = null;
   }
