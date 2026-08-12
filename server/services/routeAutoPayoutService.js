@@ -28,6 +28,11 @@ const { securityLog } = require('../utils/logger');
 
 const toPaise = (rupees) => Math.round(Number(rupees) * 100);
 const HOLD_BUFFER_MS = 24 * 60 * 60 * 1000; // +24h after the service ends
+// Razorpay lets you CREATE a transfer under ₹1 but refuses to REVERSE one
+// ("amount must be atleast INR 1.00"). A sub-₹1 held transfer would therefore be
+// un-reversible on cancel/dispute and auto-release anyway. So we don't create one
+// below ₹1 — that payout just stays owed (accrues) instead.
+const MIN_TRANSFER_RUPEES = 1;
 
 const isMissingColumn = (err) => {
   const msg = (err?.message || err?.details || '').toLowerCase();
@@ -78,6 +83,8 @@ async function createHeldTransferForBooking(booking, { paymentId, vendorAmount }
     if (booking.razorpay_transfer_id) return { ok: true, transferId: booking.razorpay_transfer_id, skipped: 'already_transferred' };
     const amount = Number(vendorAmount);
     if (!(amount > 0)) return { ok: false, skipped: 'no_payout_due' };
+    // Below Razorpay's ₹1 reversal floor → don't hold a payout we couldn't reverse.
+    if (amount < MIN_TRANSFER_RUPEES) return { ok: false, skipped: 'below_min_transfer' };
     if (!paymentId) return { ok: false, skipped: 'no_payment_id' };
 
     if (await require('./paidMode').feeOnlyForHost(booking.host_id)) return { ok: false, skipped: 'fee_only_mode' };

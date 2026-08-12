@@ -81,6 +81,12 @@ describe('createHeldTransferForBooking gating', () => {
     expect(res).toEqual({ ok: false, skipped: 'no_payout_due' });
   });
 
+  test('below Razorpay ₹1 reversal floor → skipped (un-reversible if held)', async () => {
+    const res = await svc.createHeldTransferForBooking(booking(), { paymentId: 'pay_1', vendorAmount: 0.93 });
+    expect(res).toEqual({ ok: false, skipped: 'below_min_transfer' });
+    expect(razorpayConfig.getClient).not.toHaveBeenCalled();
+  });
+
   test('idempotent — booking already has a transfer', async () => {
     const res = await svc.createHeldTransferForBooking(booking({ razorpay_transfer_id: 'trf_x' }), { paymentId: 'pay_1', vendorAmount: 9.28 });
     expect(res).toMatchObject({ ok: true, skipped: 'already_transferred' });
