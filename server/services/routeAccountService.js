@@ -1,32 +1,34 @@
 /**
- * routeAccountService.js — Razorpay Route Phase 0: create a host LINKED ACCOUNT
- * from an approved KYC submission.
+ * routeAccountService.js — Razorpay Route onboarding: turn an approved KYC
+ * submission into a fully-configured Route LINKED ACCOUNT ready to receive
+ * TRANSFER-FROM-BALANCE payouts in a later phase. It configures the destination
+ * account; it never moves money and never creates a transfer.
  *
- * Scope (Phase 0 ONLY):
- *   • Bridge host KYC → a Razorpay Route linked account (`acc_...`), so a later
- *     phase can pay hosts via TRANSFER-FROM-BALANCE. This file creates the
- *     destination account; it never moves money and never creates a transfer.
+ * The onboarding chain (each payload validated against the live Route test API):
+ *   1. accounts.create ................ identity: name/email/phone + registered address
+ *   2. stakeholders.create ............ the individual's PAN (rejected on the account
+ *                                       itself for business_type 'individual')
+ *   3. products.requestProductConfiguration ... enable the 'route' product
+ *   4. products.edit .................. settlement bank account (from KYC bank fields)
  *
  * Guardrails:
  *   • DORMANT while fee_only_mode is true. fee_only_mode defaults true and fails
  *     safe (platformConfig), so nothing here runs until an admin flips it false on
  *     payout go-live. This mirrors every other host-money path in the codebase.
- *   • Idempotent — a row that already has razorpay_account_id is left untouched.
+ *   • RESUMABLE + idempotent — every step is skipped when its id is already stored,
+ *     so a partial run (e.g. account created, settlement failed) resumes cleanly.
+ *     A fully-onboarded row is a no-op.
  *   • Never throws to its caller. The KYC-approval hook is fire-and-forget; a
  *     Route failure must never fail (or roll back) an admin's approval decision.
- *   • Schema-fallback — the v3.95 columns (razorpay_account_id / route_status /
- *     route_error / route_synced_at) may not be applied yet on a given DB. A
- *     "column not found" degrades to a logged no-op, never a crash.
- *
- * The linked account carries IDENTITY only (name / email / phone / PAN). Bank
- * settlement details are configured against the account's Route product in a
- * later step — deliberately out of Phase 0 scope. See docs / PR for the map.
+ *   • Schema-fallback — the v3.95 / v3.97 columns may not be applied yet on a given
+ *     DB. A "column not found" degrades to a logged no-op, never a crash.
  */
 'use strict';
 
 const razorpayConfig = require('./razorpayConfig');
 const platformConfig = require('./platformConfig');
 const { supabaseAdmin } = require('../config/supabase');
+const { decrypt } = require('../utils/kycCrypto');
 const { securityLog } = require('../utils/logger');
 
 // Route account defaults. Individual hosts (not registered businesses) are the
@@ -99,8 +101,30 @@ function buildAccountPayload(kyc) {
   };
 }
 
+// Stakeholder payload — the individual's PAN lives here, NOT on the account
+// (Razorpay rejects legal_info.pan for business_type 'individual'). PAN is
+// decrypted from KYC here (never logged).
+function buildStakeholderPayload(kyc) {
+  const name = (kyc.full_name || kyc.holder_name || '').trim() || kyc.email;
+  const pan = decrypt(kyc.pan_number) || undefined;
+  const payload = { name, email: kyc.email };
+  if (pan) payload.kyc = { pan };
+  return payload;
+}
+
+// Settlement bank config for the Route product, from the host's KYC bank fields.
+// account_number is decrypted here. Returns null when any part is missing so the
+// caller skips the settlement step rather than sending a broken config.
+function buildSettlementConfig(kyc) {
+  const account_number = decrypt(kyc.account_number) || '';
+  const ifsc_code = (kyc.ifsc || '').trim().toUpperCase();
+  const beneficiary_name = (kyc.holder_name || kyc.full_name || '').trim();
+  if (!account_number || !ifsc_code || !beneficiary_name) return null;
+  return { account_number, ifsc_code, beneficiary_name };
+}
+
 // Persist Route bookkeeping onto the KYC row. Swallows a missing-column error
-// (migration not yet applied) so Phase 0 degrades gracefully.
+// (migration not yet applied) so onboarding degrades gracefully.
 async function persistRouteState(kycId, patch) {
   const { error } = await supabaseAdmin
     .from('kyc_submissions')
@@ -116,17 +140,29 @@ async function persistRouteState(kycId, patch) {
 }
 
 /**
- * Create a Razorpay Route linked account for an approved KYC submission.
- * No-op (returns a reason) when disabled, already linked, or ineligible.
+ * Onboard an approved KYC submission onto Razorpay Route: create the linked
+ * account, attach the stakeholder PAN, enable the 'route' product, and set the
+ * settlement bank account. Resumable — each already-completed step is skipped.
+ * No-op (returns a reason) when disabled or ineligible.
  *
  * @param {object} kyc  the full kyc_submissions row (approved).
- * @returns {Promise<{ ok: boolean, accountId?: string, skipped?: string, error?: string }>}
+ * @returns {Promise<{ ok, accountId?, stakeholderId?, productId?, skipped?, error? }>}
  */
 async function createLinkedAccount(kyc) {
   try {
     if (!kyc || !kyc.id) return { ok: false, skipped: 'no_kyc' };
     if (kyc.status !== 'approved') return { ok: false, skipped: 'not_approved' };
-    if (kyc.razorpay_account_id) return { ok: true, accountId: kyc.razorpay_account_id, skipped: 'already_linked' };
+
+    // Fully onboarded already → nothing to do.
+    if (kyc.razorpay_account_id && kyc.razorpay_stakeholder_id && kyc.razorpay_product_id) {
+      return {
+        ok: true,
+        accountId: kyc.razorpay_account_id,
+        stakeholderId: kyc.razorpay_stakeholder_id,
+        productId: kyc.razorpay_product_id,
+        skipped: 'already_onboarded',
+      };
+    }
 
     // Dormant until payout go-live. fee_only_mode true → no host money infra runs.
     const { feeOnlyMode } = await platformConfig.getConfig();
@@ -136,24 +172,57 @@ async function createLinkedAccount(kyc) {
     if (!kyc.email) return { ok: false, skipped: 'missing_email' };
 
     // Razorpay requires a registered address; an older KYC row without one is
-    // skipped (not errored) so it can be created later once the host adds it.
+    // skipped (not errored) so it can be onboarded later once the host adds it.
     const payload = buildAccountPayload(kyc);
     if (!payload) return { ok: false, skipped: 'missing_address' };
 
-    await persistRouteState(kyc.id, { route_status: 'pending', route_error: null });
-
     const razorpay = await razorpayConfig.getClient();
-    const account = await razorpay.accounts.create(payload);
-    const accountId = account?.id;
-    if (!accountId) throw new Error('Razorpay account create returned no id');
+    const now = () => new Date().toISOString();
 
-    await persistRouteState(kyc.id, {
-      razorpay_account_id: accountId,
-      route_status: 'created',
-      route_error: null,
-      route_synced_at: new Date().toISOString(),
-    });
-    return { ok: true, accountId };
+    // 1) Linked account (identity + address).
+    let accountId = kyc.razorpay_account_id;
+    if (!accountId) {
+      await persistRouteState(kyc.id, { route_status: 'pending', route_error: null });
+      const account = await razorpay.accounts.create(payload);
+      accountId = account?.id;
+      if (!accountId) throw new Error('Razorpay account create returned no id');
+      await persistRouteState(kyc.id, {
+        razorpay_account_id: accountId, route_status: 'created', route_error: null, route_synced_at: now(),
+      });
+    }
+
+    // 2) Stakeholder (individual PAN).
+    let stakeholderId = kyc.razorpay_stakeholder_id;
+    if (!stakeholderId) {
+      const sh = await razorpay.stakeholders.create(accountId, buildStakeholderPayload(kyc));
+      stakeholderId = sh?.id;
+      if (stakeholderId) await persistRouteState(kyc.id, { razorpay_stakeholder_id: stakeholderId });
+    }
+
+    // 3) Request the 'route' product configuration.
+    let productId = kyc.razorpay_product_id;
+    if (!productId) {
+      const prod = await razorpay.products.requestProductConfiguration(accountId, {
+        product_name: 'route', tnc_accepted: true,
+      });
+      productId = prod?.id;
+      if (productId) {
+        await persistRouteState(kyc.id, {
+          razorpay_product_id: productId, route_activation_status: prod?.activation_status || null,
+        });
+      }
+    }
+
+    // 4) Set the settlement bank account on the product (from KYC bank fields).
+    const settlements = buildSettlementConfig(kyc);
+    if (productId && settlements) {
+      const updated = await razorpay.products.edit(accountId, productId, { settlements, tnc_accepted: true });
+      await persistRouteState(kyc.id, {
+        route_activation_status: updated?.activation_status || null, route_error: null, route_synced_at: now(),
+      });
+    }
+
+    return { ok: true, accountId, stakeholderId, productId };
   } catch (err) {
     // Razorpay surfaces a structured { error: { description } }; fall back to message.
     const reason = err?.error?.description || err?.message || 'unknown error';
@@ -165,4 +234,10 @@ async function createLinkedAccount(kyc) {
   }
 }
 
-module.exports = { createLinkedAccount, buildAccountPayload, ACCOUNT_DEFAULTS };
+module.exports = {
+  createLinkedAccount,
+  buildAccountPayload,
+  buildStakeholderPayload,
+  buildSettlementConfig,
+  ACCOUNT_DEFAULTS,
+};
