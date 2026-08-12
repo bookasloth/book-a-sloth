@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   createBooking, getHostBookings, getGuestBookings,
-  cancelBooking, completeBooking, guestConfirmComplete, markNoShow, rescheduleBooking, confirmReschedule,
+  cancelBooking, completeBooking, guestConfirmComplete, guestReportProblem, markNoShow, rescheduleBooking, confirmReschedule,
   getServiceById, getBookedSlots, getAvailableSlots,
 } = require('../controllers/bookingController');
 const { protect, optionalProtect } = require('../middleware/authMiddleware');
@@ -20,6 +20,7 @@ router.get('/guest', protect, getGuestBookings);
 router.put('/:id/cancel', protect, cancelBooking);
 router.put('/:id/complete', protect, completeBooking);
 router.put('/:id/guest-complete', protect, guestConfirmComplete); // guest confirms → releases held payout
+router.put('/:id/report-problem', protect, guestReportProblem);   // guest reports → reverses held payout
 router.put('/:id/no-show', protect, markNoShow);   // P1-6: host records a no-show
 router.put('/:id/reschedule', protect, requireFeature('reschedule'), rescheduleBooking); // Task 5
 router.get('/:id/confirm-reschedule', requireFeature('reschedule'), confirmReschedule);

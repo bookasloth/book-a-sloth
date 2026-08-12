@@ -147,6 +147,34 @@ describe('releaseHeldTransfer (customer confirmed)', () => {
   });
 });
 
+describe('reverseHeldTransfer (dispute / cancel / report)', () => {
+  test('reverses the transfer and marks reversed', async () => {
+    const reverse = jest.fn(() => Promise.resolve({ id: 'rvsl_1' }));
+    razorpayConfig.getClient.mockResolvedValue({ transfers: { reverse } });
+    const res = await svc.reverseHeldTransfer(
+      { id: 'bk-1', razorpay_transfer_id: 'trf_1', transfer_status: 'pending' },
+      { reason: 'booking cancelled' },
+    );
+    expect(res).toEqual({ ok: true, reversed: true });
+    expect(reverse).toHaveBeenCalledWith('trf_1', {});
+    expect(merged()).toMatchObject({ transfer_status: 'reversed', transfer_error: 'booking cancelled' });
+  });
+
+  test('no-op when there is no transfer / already reversed', async () => {
+    expect(await svc.reverseHeldTransfer({ id: 'b' })).toEqual({ ok: false, skipped: 'no_transfer' });
+    expect(await svc.reverseHeldTransfer({ id: 'b', razorpay_transfer_id: 'trf', transfer_status: 'reversed' }))
+      .toEqual({ ok: true, skipped: 'already_reversed' });
+  });
+
+  test('reverseByPaymentId finds the booking and reverses', async () => {
+    state.bookingRow = { id: 'bk-1', razorpay_transfer_id: 'trf_1', transfer_status: 'pending' };
+    razorpayConfig.getClient.mockResolvedValue({ transfers: { reverse: jest.fn(() => Promise.resolve({ id: 'rvsl' })) } });
+    const res = await svc.reverseByPaymentId('pay_1', 'dispute');
+    expect(res).toEqual({ ok: true, reversed: true });
+    expect(merged()).toMatchObject({ transfer_status: 'reversed' });
+  });
+});
+
 describe('handleBookingTransferWebhook', () => {
   test('processed → finalises the booking payout once', async () => {
     state.bookingRow = { id: 'bk-1', host_id: 'host-1', vendor_amount: 9.28, razorpay_transfer_id: 'trf_1', transfer_status: 'pending' };

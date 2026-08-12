@@ -327,6 +327,7 @@ export const getManageBooking    = (token)         => API.get(`/manage-booking/$
 export const cancelManageBooking = (token)         => API.post(`/manage-booking/${token}/cancel`);
 export const completeBooking   = (id)              => API.put(`/bookings/${id}/complete`);
 export const guestCompleteBooking = (id)           => API.put(`/bookings/${id}/guest-complete`);
+export const guestReportProblem   = (id, reason)   => API.put(`/bookings/${id}/report-problem`, { reason });
 export const markNoShow        = (id)              => API.put(`/bookings/${id}/no-show`);
 export const rescheduleBooking = (id, data)        => API.put(`/bookings/${id}/reschedule`, data);
 export const getBookedSlots    = (host_id, date)   => API.get('/bookings/slots', { params: { host_id, date } });

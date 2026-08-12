@@ -156,6 +156,41 @@ async function releaseHeldTransfer(booking, { createdBy = null } = {}) {
 }
 
 /**
+ * Reverse a booking's held transfer so the host is NOT paid — used on refund,
+ * cancellation, a customer "report a problem", or a payment dispute. Safe while
+ * the transfer is held (the normal case, before the +24h release); a reversal of
+ * an already-released transfer is attempted too but may be outside Razorpay's
+ * window (recorded as an error for follow-up).
+ * @returns {Promise<{ ok, reversed?, skipped?, error? }>}
+ */
+async function reverseHeldTransfer(booking, { reason = 'reversed' } = {}) {
+  try {
+    if (!booking?.razorpay_transfer_id) return { ok: false, skipped: 'no_transfer' };
+    if (booking.transfer_status === 'reversed') return { ok: true, skipped: 'already_reversed' };
+
+    const razorpay = await razorpayConfig.getClient();
+    await razorpay.transfers.reverse(booking.razorpay_transfer_id, {});
+    await patchBooking(booking.id, { transfer_status: 'reversed', transfer_error: reason.slice(0, 500) });
+    return { ok: true, reversed: true };
+  } catch (err) {
+    const msg = err?.error?.description || err?.message || 'unknown error';
+    securityLog('route_auto_payout_reverse_error', { bookingId: booking?.id, reason: msg });
+    // Record the attempt so an admin can reconcile a transfer we couldn't reverse.
+    try { await patchBooking(booking.id, { transfer_error: `reverse failed: ${msg}`.slice(0, 500) }); } catch (_) { /* logged */ }
+    return { ok: false, error: msg };
+  }
+}
+
+// Reverse the held transfer for a booking identified by its razorpay_payment_id
+// (used by refund / dispute webhooks that carry a payment, not a booking).
+async function reverseByPaymentId(paymentId, reason) {
+  const { data: booking } = await supabaseAdmin
+    .from('bookings').select('*').eq('razorpay_payment_id', paymentId).maybeSingle();
+  if (!booking || !booking.razorpay_transfer_id) return { ok: false, skipped: 'no_held_transfer' };
+  return reverseHeldTransfer(booking, { reason });
+}
+
+/**
  * Apply a Route transfer.* webhook that belongs to a BOOKING held transfer.
  * transfer.processed (released — either via releaseHeldTransfer or Razorpay's
  * on_hold_until auto-release) → finalise the payout; failed/reversed → record it.
@@ -185,6 +220,6 @@ async function handleBookingTransferWebhook(transfer) {
 }
 
 module.exports = {
-  createHeldTransferForBooking, releaseHeldTransfer, handleBookingTransferWebhook,
-  finalizeReleasedTransfer, computeHoldUntil, toPaise,
+  createHeldTransferForBooking, releaseHeldTransfer, reverseHeldTransfer, reverseByPaymentId,
+  handleBookingTransferWebhook, finalizeReleasedTransfer, computeHoldUntil, toPaise,
 };

@@ -4,7 +4,7 @@ import {
   Eye, HelpCircle, ChevronDown, Download, X, Calendar, Clock,
   Hash, IndianRupee, Video, RotateCcw, Star, Repeat, CalendarClock,
 } from "lucide-react";
-import { getGuestBookings, cancelBooking, getBookingReview, guestCompleteBooking } from "../services/api";
+import { getGuestBookings, cancelBooking, getBookingReview, guestCompleteBooking, guestReportProblem } from "../services/api";
 import { downloadReceipt } from "../utils/receipt";
 import { useAuth } from "../context/AuthContext";
 import useFeatureFlags from "../hooks/useFeatureFlags";
@@ -197,6 +197,19 @@ const CustomerBookings = () => {
       setConfirming(null);
     }
   };
+  const handleReportProblem = async (id) => {
+    const reason = window.prompt("What went wrong? (e.g. host didn't show up)");
+    if (reason == null) return;
+    setConfirming(id);
+    try {
+      await guestReportProblem(id, reason);
+      toast.success("Reported — we've put the payout on hold and our team will look into it.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not report");
+    } finally {
+      setConfirming(null);
+    }
+  };
 
   const filtered = bookings.filter((b) => {
     if (filter === "all") return true;
@@ -254,10 +267,16 @@ const CustomerBookings = () => {
             </a>
           )}
           {canConfirm(b) && (
-            <button onClick={() => handleConfirmComplete(b.id)} disabled={confirming === b.id}
-              className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#FE5100] hover:bg-[#e04800] disabled:opacity-60 px-3 py-1.5 rounded-lg">
-              {confirming === b.id ? "Confirming…" : "Confirm completed"}
-            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <button onClick={() => handleReportProblem(b.id)} disabled={confirming === b.id}
+                className="text-sm font-medium text-gray-500 hover:text-rose-600 disabled:opacity-60 px-2.5 py-1.5 rounded-lg hover:bg-rose-50">
+                Report a problem
+              </button>
+              <button onClick={() => handleConfirmComplete(b.id)} disabled={confirming === b.id}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#FE5100] hover:bg-[#e04800] disabled:opacity-60 px-3 py-1.5 rounded-lg">
+                {confirming === b.id ? "Confirming…" : "Confirm completed"}
+              </button>
+            </div>
           )}
         </div>
       </div>

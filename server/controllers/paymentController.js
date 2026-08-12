@@ -1291,6 +1291,24 @@ const handleWebhook = async (req, res) => {
     return res.json({ received: true });
   }
 
+  // ── Payment dispute (Phase 2): a disputed booking must not pay the host.
+  // Reverse the held Route transfer so the money stays with the platform while
+  // the dispute is resolved. Carries a dispute entity (with a payment_id). ──
+  if (typeof event.event === 'string' && event.event.startsWith('dispute.')) {
+    const dispute = event.payload?.dispute?.entity;
+    const disputedPaymentId = dispute?.payment_id;
+    try {
+      if (disputedPaymentId) {
+        const r = await routeAutoPayoutService.reverseByPaymentId(disputedPaymentId, `dispute ${dispute.id} (${event.event})`);
+        auditLog('WEBHOOK_DISPUTE_REVERSE', null, { dispute_id: dispute.id, payment_id: disputedPaymentId, event: event.event, reversed: r.ok, reason: r.error || r.skipped });
+      }
+    } catch (err) {
+      securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
+      return res.status(500).json({ error: 'processing_failed' });
+    }
+    return res.json({ received: true });
+  }
+
   const payment = event.payload?.payment?.entity;
   if (!payment) return res.json({ received: true });
 
