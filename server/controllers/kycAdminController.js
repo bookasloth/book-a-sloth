@@ -9,6 +9,7 @@ const { safeError } = require('../utils/httpError');
 const { maskPan, maskAadhaar, maskAccount, maskPhone } = require('../utils/kycCrypto');
 const NotificationEngine = require('../services/notificationEngine');
 const { inAppNotify } = require('../utils/inAppNotify');
+const routeAccountService = require('../services/routeAccountService');
 
 const KYC_BUCKET = 'kyc';
 
@@ -167,6 +168,22 @@ const decideKyc = async (req, res) => {
         : (data.review_note || 'Your KYC could not be approved. Please review and resubmit.'),
       link: status === 'approved' ? '/dashboard/payments/payouts' : '/dashboard/kyc',
     });
+
+    // Route Phase 0 bridge: on approval, create the host's Razorpay Route linked
+    // account so a later payout phase can transfer to it. Fire-and-forget and
+    // self-gating — it no-ops while fee_only_mode is true (the current default),
+    // so no host-money infra is touched until payout go-live. Fetch the full row
+    // (the update above returns a slim projection) since the payload needs
+    // phone / holder_name / pan_number. A failure here must never fail approval.
+    if (status === 'approved') {
+      supabaseAdmin
+        .from('kyc_submissions')
+        .select('*')
+        .eq('id', data.id)
+        .maybeSingle()
+        .then(({ data: full }) => (full ? routeAccountService.createLinkedAccount(full) : null))
+        .catch((e) => console.error('Route linked-account bridge failed:', e.message));
+    }
 
     res.json({ id: data.id, status: data.status });
   } catch (error) {
