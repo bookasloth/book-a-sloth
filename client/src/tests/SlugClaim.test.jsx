@@ -152,7 +152,7 @@ describe('SlugClaim', () => {
 
     await waitFor(() => {
       expect(claimOnboardingSlug).toHaveBeenCalledWith('new-slug');
-      expect(mockNavigate).toHaveBeenCalledWith('/vendor-register/new-slug/about');
+      expect(mockNavigate).toHaveBeenCalledWith('/vendor-register/new-slug/category');
     });
   });
 

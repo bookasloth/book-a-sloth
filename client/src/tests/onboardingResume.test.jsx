@@ -7,10 +7,10 @@
  * rendered output (the "landed" route renders a sentinel element) rather
  * than spying on navigate directly.
  *
- * Covers:
- *  - stepCompleted:3 → /category (not /booking-type or any old path)
+ * Covers (canonical map — single source of truth in useOnboardingGuard):
+ *  - stepCompleted:3 → /preview
  *  - stepCompleted:1 → /claim
- *  - stepCompleted:4 → /whatsapp
+ *  - stepCompleted:4 → /preview (legacy in-flight rolls forward)
  *  - isComplete:true  → children render (no redirect)
  *  - no slug          → children render (legacy host, not trapped)
  *  - non-host         → children render, getOnboardingStatus never called
@@ -41,6 +41,7 @@ const Child       = () => <div data-testid="child">Protected child</div>;
 const LandClaim   = () => <div data-testid="land-claim">claim</div>;
 const LandAbout   = () => <div data-testid="land-about">about</div>;
 const LandCategory = () => <div data-testid="land-category">category</div>;
+const LandPreview = () => <div data-testid="land-preview">preview</div>;
 const LandWhatsapp = () => <div data-testid="land-whatsapp">whatsapp</div>;
 const LandPlan    = () => <div data-testid="land-plan">plan</div>;
 
@@ -87,6 +88,7 @@ function renderProtectedAt(initialPath = '/dashboard') {
         <Route path="/vendor-register/:slug/claim"    element={<LandClaim />} />
         <Route path="/vendor-register/:slug/about"    element={<LandAbout />} />
         <Route path="/vendor-register/:slug/category" element={<LandCategory />} />
+        <Route path="/vendor-register/:slug/preview"  element={<LandPreview />} />
         <Route path="/vendor-register/:slug/whatsapp" element={<LandWhatsapp />} />
         <Route path="/vendor-register/:slug/plan"     element={<LandPlan />} />
       </Routes>
@@ -99,7 +101,7 @@ beforeEach(() => {
 });
 
 describe('ProtectedRoute resume map', () => {
-  test('host with stepCompleted:3 (about done) is redirected to /category', async () => {
+  test('host with stepCompleted:3 (persona done) is redirected to /preview', async () => {
     mockUser.mockReturnValue({ role: 'host' });
     getOnboardingStatus.mockResolvedValue({
       data: { stepCompleted: 3, isComplete: false, slug: 'me' },
@@ -108,7 +110,7 @@ describe('ProtectedRoute resume map', () => {
     renderProtectedAt('/dashboard');
 
     await waitFor(() => {
-      expect(screen.getByTestId('land-category')).toBeTruthy();
+      expect(screen.getByTestId('land-preview')).toBeTruthy();
     });
     // Must NOT have landed on children or an old route
     expect(screen.queryByTestId('child')).toBeNull();
@@ -128,7 +130,7 @@ describe('ProtectedRoute resume map', () => {
     expect(screen.queryByTestId('child')).toBeNull();
   });
 
-  test('host with stepCompleted:4 (category done) is redirected to /whatsapp', async () => {
+  test('host with stepCompleted:4 (legacy in-flight) is redirected to /preview', async () => {
     mockUser.mockReturnValue({ role: 'host' });
     getOnboardingStatus.mockResolvedValue({
       data: { stepCompleted: 4, isComplete: false, slug: 'me' },
@@ -137,7 +139,7 @@ describe('ProtectedRoute resume map', () => {
     renderProtectedAt('/dashboard');
 
     await waitFor(() => {
-      expect(screen.getByTestId('land-whatsapp')).toBeTruthy();
+      expect(screen.getByTestId('land-preview')).toBeTruthy();
     });
     expect(screen.queryByTestId('child')).toBeNull();
   });

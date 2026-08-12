@@ -9,9 +9,17 @@ const RESEND_SECONDS = 30;
 const WhatsAppVerify = ({ initialPhone = '', initialCountry, onVerified, onPhoneChange }) => {
   const [screen, setScreen] = useState('number'); // 'number' | 'otp'
   const [country, setCountry] = useState(initialCountry || defaultDialCode());
-  const [number, setNumber] = useState((initialPhone || '').replace(/[^\d\s]/g, ''));
+  // Seed the local part only: if the passed number already carries the dial
+  // code, strip it so it isn't prepended twice in fullPhone.
+  const [number, setNumber] = useState(() => {
+    let digits = (initialPhone || '').replace(/[^\d]/g, '');
+    const cc = (initialCountry || '').replace(/[^\d]/g, '');
+    if (cc && digits.startsWith(cc)) digits = digits.slice(cc.length);
+    return digits;
+  });
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verified, setVerified] = useState(false);
   const [error, setError] = useState('');
   const [cooldown, setCooldown] = useState(0);
   const timerRef = useRef(null);
@@ -57,18 +65,29 @@ const WhatsAppVerify = ({ initialPhone = '', initialCountry, onVerified, onPhone
   };
 
   const handleVerify = async () => {
+    if (verified) return; // latch: never fire onVerified twice (double-navigate guard)
     setError('');
     if (otp.trim().length !== 6) { setError('Enter the 6-digit code.'); return; }
     setLoading(true);
     try {
       const { data } = await whatsappVerifyOtp(fullPhone, otp.trim());
       if (!data?.verified) { setError(data?.message || 'Invalid OTP.'); return; }
+      setVerified(true);
       onVerified?.(fullPhone);
     } catch (e) {
       setError(e.response?.data?.message || 'Could not verify OTP.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Return to the number screen to fix a wrong number (OTP screen dead-end fix).
+  const handleChangeNumber = () => {
+    setScreen('number');
+    setOtp('');
+    setError('');
+    clearInterval(timerRef.current);
+    setCooldown(0);
   };
 
   if (screen === 'number') {
@@ -108,15 +127,21 @@ const WhatsAppVerify = ({ initialPhone = '', initialCountry, onVerified, onPhone
       />
       {error && <p className="text-red-500 text-xs mt-1.5">{error}</p>}
       <button
-        onClick={handleVerify} disabled={loading}
+        onClick={handleVerify} disabled={loading || verified}
         className="btn bg-primary text-white w-full mt-4 flex items-center justify-center gap-2 disabled:opacity-60"
       >
         {loading && <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />}
-        Verify OTP
+        {verified ? 'Verified ✓' : 'Verify OTP'}
       </button>
-      <div className="mt-3 text-center">
+      <div className="mt-3 flex items-center justify-center gap-4">
         <button
-          onClick={handleSend} disabled={loading || cooldown > 0}
+          onClick={handleChangeNumber} disabled={loading || verified}
+          className="text-gray-500 text-sm font-medium hover:underline disabled:opacity-50 disabled:no-underline"
+        >
+          Change number
+        </button>
+        <button
+          onClick={handleSend} disabled={loading || verified || cooldown > 0}
           className="text-primary text-sm font-medium hover:underline disabled:opacity-50 disabled:no-underline"
         >
           {cooldown > 0 ? `Resend OTP in ${cooldown}s` : 'Resend OTP'}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Check, ChevronDown, Rocket, Loader2 } from 'lucide-react';
@@ -39,6 +39,9 @@ const PlansStep = () => {
   const [busy, setBusy] = useState(null);            // plan slug | 'free' | null
   const [me, setMe] = useState(null);
   const [showPaid, setShowPaid] = useState(false);   // drawer for paid plans
+  // Cache created subscriptions per plan+cadence. On a retry (webhook lag),
+  // reuse the existing subscription instead of minting a second one.
+  const subCacheRef = useRef({});
 
   useEffect(() => {
     getPublicPlans()
@@ -82,7 +85,14 @@ const PlansStep = () => {
 
     setBusy(plan.slug);
     try {
-      const { data: sub } = await createSubscription({ plan: plan.slug, cadence });
+      // Reuse an already-created subscription for this plan+cadence if the host
+      // is retrying after a webhook-lag "tap again" — prevents double subscriptions.
+      const cacheKey = `${plan.slug}:${cadence}`;
+      let sub = subCacheRef.current[cacheKey];
+      if (!sub) {
+        ({ data: sub } = await createSubscription({ plan: plan.slug, cadence }));
+        subCacheRef.current[cacheKey] = sub;
+      }
       const prefillData = me
         ? { name: me.name, email: me.email, contact: me.phone }
         : (() => {
@@ -136,7 +146,7 @@ const PlansStep = () => {
   if (!ready) {
     return (
       <>
-        <ProgressBar current={3} total={4} />
+        <ProgressBar current={4} total={4} />
         <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
@@ -148,7 +158,7 @@ const PlansStep = () => {
 
   return (
     <>
-      <ProgressBar current={3} total={4} />
+      <ProgressBar current={4} total={4} />
       <div className="app-container flex min-h-[calc(100vh-72px)] items-start sm:items-center justify-center py-8 sm:py-12">
         <div className="w-full max-w-2xl px-4">
           <button

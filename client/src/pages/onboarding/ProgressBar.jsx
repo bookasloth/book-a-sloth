@@ -1,6 +1,7 @@
+// `current` is the 1-indexed step number of the screen rendering this bar.
 const ProgressBar = ({ current, total }) => {
-  const step = Math.min(current + 1, total);
-  const percentage = Math.round((current / total) * 100);
+  const step = Math.min(current, total);
+  const percentage = Math.round((step / total) * 100);
 
   return (
     <div className="sticky top-0 z-10 border-b bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur">

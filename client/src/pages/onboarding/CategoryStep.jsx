@@ -113,7 +113,7 @@ const CategoryStep = () => {
   if (!ready) {
     return (
       <>
-        <ProgressBar current={3} total={6} />
+        <ProgressBar current={2} total={4} />
         <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
@@ -128,7 +128,7 @@ const CategoryStep = () => {
   // ensures the page never grows beyond the viewport.
   return (
     <>
-      <ProgressBar current={3} total={6} />
+      <ProgressBar current={2} total={4} />
 
       {/* Full-viewport column; no page-level scroll */}
       <div

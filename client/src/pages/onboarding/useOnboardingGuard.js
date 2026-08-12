@@ -11,7 +11,11 @@ import { getOnboardingStatus } from '../../services/api';
 //                                     hosts still hit persona, which bumps to 3)
 //   5 = details saved              → plan
 // stepCompleted >= 6 => onboarding complete → dashboard (handled below).
-const RESUME = { 1: 'claim', 2: 'category', 3: 'preview', 4: 'preview', 5: 'plan' };
+export const RESUME = { 1: 'claim', 2: 'category', 3: 'preview', 4: 'preview', 5: 'plan' };
+
+// Forward order of onboarding segments. The guard blocks *skipping ahead* but
+// allows revisiting any already-reached step (Back buttons must work).
+const ORDER = ['claim', 'category', 'preview', 'plan'];
 
 /**
  * Server-truth resume guard for onboarding steps.
@@ -44,10 +48,16 @@ export default function useOnboardingGuard() {
         // still "on category" so the guard doesn't bounce the host back out.
         const path = window.location.pathname.replace(/\/$/, '');
         let here = path.split('/').pop();
-        if (target === 'category' && /\/category\/all$/.test(path)) here = 'category';
-        if (target && target !== here) {
-          navigate(`/vendor-register/${data.slug || slug}/${target}`, { replace: true });
-          return;
+        if (/\/category\/all$/.test(path)) here = 'category';
+        if (target) {
+          const ti = ORDER.indexOf(target);
+          const hi = ORDER.indexOf(here);
+          // Allow revisiting any earlier/equal step (Back works); redirect only
+          // when jumping ahead of `target`, or when on an unknown segment.
+          if (hi === -1 || hi > ti) {
+            navigate(`/vendor-register/${data.slug || slug}/${target}`, { replace: true });
+            return;
+          }
         }
         setReady(true);
       })

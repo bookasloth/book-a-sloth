@@ -66,17 +66,16 @@ beforeEach(() => {
 });
 
 describe('useOnboardingGuard', () => {
-  test('host at stepCompleted=3 visiting claim page redirects to preview', async () => {
-    // stepCompleted=3 → RESUME[3]='preview' (redesigned 4-screen flow)
-    // window.location.pathname ends with 'claim' (the current page)
+  test('forward jump is blocked: step-1 host on plan page redirects back to claim', async () => {
+    // stepCompleted=1 → furthest allowed = 'claim'. Landing on /plan is a jump
+    // ahead → guard snaps back to the furthest reached step.
     getOnboardingStatus.mockResolvedValue({
-      data: { stepCompleted: 3, isComplete: false, slug: 'john' },
+      data: { stepCompleted: 1, isComplete: false, slug: 'john' },
     });
 
-    // Simulate current page being /vendor-register/john/claim
     Object.defineProperty(window, 'location', {
       writable: true,
-      value: { ...window.location, pathname: '/vendor-register/john/claim' },
+      value: { ...window.location, pathname: '/vendor-register/john/plan' },
     });
 
     const ProbeComponent = () => {
@@ -85,19 +84,52 @@ describe('useOnboardingGuard', () => {
     };
 
     render(
-      <MemoryRouter initialEntries={['/vendor-register/john/claim']}>
+      <MemoryRouter initialEntries={['/vendor-register/john/plan']}>
         <Routes>
-          <Route path="/vendor-register/:slug/claim" element={<ProbeComponent />} />
+          <Route path="/vendor-register/:slug/plan" element={<ProbeComponent />} />
         </Routes>
       </MemoryRouter>
     );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
-        '/vendor-register/john/preview',
+        '/vendor-register/john/claim',
         { replace: true }
       );
     });
+  });
+
+  test('backward revisit is allowed: step-3 host on category page does not redirect', async () => {
+    // stepCompleted=3 → furthest allowed = 'preview'. Visiting an EARLIER step
+    // (category) is a legitimate Back navigation → render it, don't bounce forward.
+    getOnboardingStatus.mockResolvedValue({
+      data: { stepCompleted: 3, isComplete: false, slug: 'john' },
+    });
+
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: { ...window.location, pathname: '/vendor-register/john/category' },
+    });
+
+    let capturedReady = false;
+    const ProbeComponent = () => {
+      const ready = useOnboardingGuard();
+      capturedReady = ready;
+      return <div data-testid="probe" data-ready={String(ready)} />;
+    };
+
+    const { getByTestId } = render(
+      <MemoryRouter initialEntries={['/vendor-register/john/category']}>
+        <Routes>
+          <Route path="/vendor-register/:slug/category" element={<ProbeComponent />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('probe').getAttribute('data-ready')).toBe('true');
+    });
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   test('host whose status isComplete is redirected to /dashboard', async () => {

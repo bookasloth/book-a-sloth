@@ -165,12 +165,23 @@ export const AuthProvider = ({ children }) => {
   // Adopt a session minted server-side (Google vendor auth): store tokens,
   // hydrate the profile via /auth/me, persist the merged shape.
   const adoptSession = async ({ token, refresh_token }) => {
+    // Token must be in storage before getMe (api reads it for auth), but if
+    // hydration fails we must NOT leave a half-authenticated {token}-only ghost
+    // session behind — roll it back so the caller's catch can nudge to sign in.
     localStorage.setItem('user', JSON.stringify({ token, refresh_token }));
-    const { data: fresh } = await getMe();
-    const merged = { ...fresh, token, refresh_token };
-    localStorage.setItem('user', JSON.stringify(merged));
-    setUser(merged);
-    return merged;
+    try {
+      const { data: fresh } = await getMe();
+      const merged = { ...fresh, token, refresh_token };
+      localStorage.setItem('user', JSON.stringify(merged));
+      setUser(merged);
+      // Entering via the vendor Google door as a host → be in hosting mode, so
+      // a freshly-onboarded host never lands in guest space.
+      if (merged.is_host) setMode('hosting');
+      return merged;
+    } catch (e) {
+      localStorage.removeItem('user');
+      throw e;
+    }
   };
 
   // Unified identity: add hosting capability to the CURRENT account, flip to
