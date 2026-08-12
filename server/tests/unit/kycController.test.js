@@ -123,8 +123,23 @@ test('submitKyc refuses document keys belonging to another user', async () => {
   await ctrl.submitKyc({ user: { id: USER }, body }, res);
 
   expect(res.status).toHaveBeenCalledWith(400);
-  expect(res.json.mock.calls[0][0].errors).toContain('PAN document is required.');
+  expect(res.json.mock.calls[0][0].errors).toContain('Invalid document reference.');
   expect(chain.upsert).not.toHaveBeenCalled();
+});
+
+test('submitKyc succeeds with NO documents and no Aadhaar (lean KYC)', async () => {
+  const chain = tableChain(null);
+  supabaseAdmin.from.mockReturnValue(chain);
+  const res = mockRes();
+  const b = { ...validBody() };
+  delete b.aadhaar_number; delete b.selfie_url; delete b.pan_doc_url; delete b.aadhaar_doc_url;
+
+  await ctrl.submitKyc({ user: { id: USER }, body: b }, res);
+
+  expect(res.status).toHaveBeenCalledWith(201);
+  const [payload] = chain.upsert.mock.calls[0];
+  expect(payload.aadhaar_number).toBeNull();
+  expect(payload.selfie_url).toBeNull();
 });
 
 // ── getMyKyc: masked reads only ─────────────────────────────────

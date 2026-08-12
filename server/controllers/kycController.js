@@ -119,7 +119,9 @@ const submitKyc = async (req, res) => {
     if (!RE.email.test(email)) errors.push('Valid email is required.');
     if (!RE.phone.test(phone)) errors.push('Valid phone number is required.');
     if (!RE.pan.test(pan)) errors.push('PAN must match ABCDE1234F.');
-    if (!RE.aadhaar.test(aadhaar)) errors.push('Aadhaar must be 12 digits.');
+    // Aadhaar is OPTIONAL — Razorpay Route verifies PAN + bank, not Aadhaar.
+    // Validate the format only if one is supplied.
+    if (aadhaar && !RE.aadhaar.test(aadhaar)) errors.push('Aadhaar must be 12 digits.');
 
     const holderName = String(b.holder_name || '').trim();
     const bankName = String(b.bank_name || '').trim();
@@ -148,13 +150,13 @@ const submitKyc = async (req, res) => {
     if (!addrState) errors.push('State is required.');
     if (!/^[0-9]{6}$/.test(addrPostal)) errors.push('PIN code must be 6 digits.');
 
-    // Document keys come from prior /upload calls. Enforce the key belongs to the
-    // caller (keys are prefixed with the user id) so nobody can attach someone
-    // else's uploaded document.
+    // Documents (selfie / PAN / Aadhaar photos) are OPTIONAL — Razorpay Route
+    // verifies the PAN number + bank directly, so uploads aren't required. If a key
+    // IS supplied it must belong to the caller (can't attach someone else's upload).
     const ownKey = (k) => typeof k === 'string' && k.startsWith(`${req.user.id}/`);
-    if (!ownKey(b.selfie_url)) errors.push('Live selfie is required.');
-    if (!ownKey(b.pan_doc_url)) errors.push('PAN document is required.');
-    if (!ownKey(b.aadhaar_doc_url)) errors.push('Aadhaar document is required.');
+    for (const k of ['selfie_url', 'pan_doc_url', 'aadhaar_doc_url']) {
+      if (b[k] && !ownKey(b[k])) errors.push('Invalid document reference.');
+    }
 
     if (errors.length) return res.status(400).json({ message: errors[0], errors });
 
@@ -164,7 +166,7 @@ const submitKyc = async (req, res) => {
       email,
       phone,
       pan_number: encrypt(pan),
-      aadhaar_number: encrypt(aadhaar),
+      aadhaar_number: aadhaar ? encrypt(aadhaar) : null,
       holder_name: holderName,
       bank_name: bankName,
       account_number: encrypt(account),
@@ -177,9 +179,9 @@ const submitKyc = async (req, res) => {
       addr_state: addrState,
       addr_postal_code: addrPostal,
       addr_country: addrCountry,
-      selfie_url: b.selfie_url,
-      pan_doc_url: b.pan_doc_url,
-      aadhaar_doc_url: b.aadhaar_doc_url,
+      selfie_url: b.selfie_url || null,
+      pan_doc_url: b.pan_doc_url || null,
+      aadhaar_doc_url: b.aadhaar_doc_url || null,
       status: 'pending',
       review_note: null,
       reviewed_by: null,
