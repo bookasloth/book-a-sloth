@@ -183,6 +183,7 @@ router.get('/payouts',              requireAdmin('payouts.view'),    payouts.lis
 router.post('/payouts/:id/approve', requireAdmin('payouts.approve'), payouts.approvePayout);
 router.post('/payouts/:id/reject',  requireAdmin('payouts.approve'), payouts.rejectPayout);
 router.post('/payouts/:id/pay',     requireAdmin('payouts.release'), payouts.markPayoutPaid);
+router.post('/payouts/:id/pay-route', requireAdmin('payouts.release'), payouts.releasePayoutViaRoute);
 
 // ── Subscription plans ─────────────────────────────────────────
 const plans = require('../controllers/planAdminController');
