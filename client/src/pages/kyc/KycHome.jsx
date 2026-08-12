@@ -41,6 +41,14 @@ export default function KycHome() {
           </p>
         </div>
       )}
+      {status === 'approved' && !payoutsReady && (
+        <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <p className="text-sm font-semibold text-blue-800">Finish your payout setup</p>
+          <p className="mt-1 text-sm text-blue-700">
+            Add your registered address and payout details so we can pay you via Razorpay Route. Tap “Update KYC details” below.
+          </p>
+        </div>
+      )}
       {status === 'not_started' ? (
         <Card className="flex flex-col items-center p-8 text-center">
           <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -72,9 +80,12 @@ export default function KycHome() {
                 <div><dt className="text-gray-400">Bank</dt><dd className="text-gray-800">{kyc?.bank_name || '—'}</dd></div>
                 <div><dt className="text-gray-400">Account</dt><dd className="text-gray-800">{kyc?.account_number || '—'}</dd></div>
               </dl>
-              {status === 'rejected' && (
+              {(status === 'rejected' || status === 'approved') && (
                 <div className="mt-5 max-w-xs">
-                  <Button size="lg" full onClick={() => navigate('/dashboard/kyc/flow/start')}>Re-submit</Button>
+                  <Button size="lg" full variant={status === 'approved' ? 'outline' : undefined}
+                    onClick={() => navigate('/dashboard/kyc/flow/start')}>
+                    {status === 'approved' ? 'Update KYC details' : 'Re-submit'}
+                  </Button>
                 </div>
               )}
             </div>
