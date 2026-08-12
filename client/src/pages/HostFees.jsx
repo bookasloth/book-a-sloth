@@ -6,8 +6,8 @@ import LegalLayout, { Section } from '../components/common/LegalLayout';
 // on 30 days' notice under clause 5.6 without re-executing the Agreement.
 //
 // MARKETPLACE MODEL v4: the host is the seller; Book A Sloth charges a Platform Fee
-// (booking fee + commission) and invoices only that. GST mechanics carry ⚖️ CA-review
-// markers inline.
+// (booking fee + commission) and invoices only that. GST positions are stated firmly
+// per the v4 model.
 //
 // The worked examples are the source of truth hosts quote back at us, so they must
 // stay numerically identical to docs/payment-model.md v4 and to what pricingEngine
@@ -26,7 +26,7 @@ const Td = ({ children, className = '' }) => (
 const HostFees = () => (
   <LegalLayout
     title="Host Fee & Payment Schedule"
-    updated="6 August 2026"
+    updated="12 August 2026"
     effective="on your acceptance during host onboarding"
     current="/host-fees"
     description="What Book A Sloth charges hosts — booking fee, platform commission, payment processing, TDS/TCS, the payment cycle, and worked examples."

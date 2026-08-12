@@ -6,16 +6,16 @@ import LegalLayout, { Section } from '../components/common/LegalLayout';
 // MARKETPLACE MODEL v4: the Host SELLS TO THE GUEST; Book A Sloth is the platform/
 // facilitator that lists, books, collects payment, and remits the Host's price net of its
 // Platform Fee/commission, the gateway charge, and tax deducted/collected at source.
-// Clauses 2 and 16 (payment flow) are drafted generically — the precise RBI Payment-
-// Aggregator characterisation is a ⚖️ lawyer + CA call (marked inline) and must match the
-// PA-waiver. Clause 6 GST mechanics carry ⚖️ CA-review markers inline.
+// Payment flow (clauses 2 & 16) runs through Razorpay, an RBI-authorised payment
+// aggregator; GST (clause 6) and the payment-flow characterisation are stated firmly
+// per the v4 model.
 
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
 const HostAgreement = () => (
   <LegalLayout
     title="Host Services Agreement"
-    updated="24 July 2026"
+    updated="12 August 2026"
     effective="on your acceptance during host onboarding"
     current="/host-agreement"
     description="The agreement between Book A Sloth and its Hosts — how you sell your services to Guests through the Platform, and how you are priced, invoiced, and paid. Read before you list a service."
@@ -80,8 +80,9 @@ const HostAgreement = () => (
         staff, equipment, insurance, and statutory obligations.
       </p>
       <p>
-        {/* ⚖️ Payment-flow characterisation — lawyer + CA to confirm the precise legal
-            description of the collection/remittance and its fit with the RBI PA position. */}
+        {/* Payment flow (asserted, marketplace model v4): Book A Sloth collects the Guest Price
+            through Razorpay, an RBI-authorised payment aggregator, and remits Your Payout; BAS's
+            own revenue is the Platform Fee. */}
         <strong>2.4 Payments.</strong> Book A Sloth collects the Guest Price through its payment partner and pays you
         Your Payout &mdash; Your Price less the Platform Fee, the payment-gateway charge, and any tax deducted or
         collected at source. Book A Sloth&rsquo;s own revenue is the <strong>Platform Fee</strong>; it does not own or
@@ -159,7 +160,6 @@ const HostAgreement = () => (
         which forms part of this Agreement and contains worked examples.
       </p>
       <p>
-        {/* ⚖️ GST — CA REVIEW. Left generic; do not determine treatment here. */}
         <strong>5.4 Tax.</strong> Book A Sloth charges GST on its own Platform Fee. Book A Sloth does not charge GST on
         Your Price &mdash; GST on your Service is a matter between you and the tax authorities, dealt with under clause 6.
       </p>
@@ -183,11 +183,9 @@ const HostAgreement = () => (
 
     <Section title="6. Invoicing and GST">
       <p className="rounded-xl border-2 border-amber-300 bg-amber-50 p-3 text-amber-900 text-xs">
-        {/* ⚖️ GST MECHANICS — CA REVIEW. The GST treatment, invoice contents, input-credit, and
-            return mechanics in this clause are to be confirmed by the CA and are not determined here. */}
-        <strong>Note:</strong> the GST treatment in this clause is subject to confirmation by our tax advisers and by
-        your own. The structural position is: you sell the Service to the Guest, and Book A Sloth charges you a Platform
-        Fee for the platform services.
+        <strong>In short:</strong> you sell the Service to the Guest and account for GST on your own Service where you
+        are registered. Book A Sloth charges you a Platform Fee for the platform services and issues you a tax invoice
+        for it. You remain responsible for your own tax position and should take your own advice on it.
       </p>
       <p>
         <strong>6.1 Your invoice to the Guest.</strong> The Service is your sale to the Guest. If you are
@@ -476,13 +474,14 @@ const HostAgreement = () => (
 
     <Section title="16. Payment collection and remittance">
       <p>
-        {/* ⚖️ RBI / PAYMENT-AGGREGATOR — lawyer + CA to confirm the precise characterisation of the
-            money flow below and its fit with the applicable payment regulations / PA-waiver. */}
-        Book A Sloth collects the Guest Price through its payment partner and remits Your Payout to you, being Your
-        Price less the Platform Fee, the payment-gateway charge, and any tax deducted or collected at source. Book A
-        Sloth&rsquo;s own revenue is the <strong>Platform Fee</strong>; Book A Sloth does not own or retain Your Price.
-        You authorise Book A Sloth and its payment partner to collect the Guest Price for a Booking and to make the
-        deductions in clauses 8 and 9 before remitting Your Payout in accordance with clause 7.
+        {/* Payment flow (asserted, marketplace model v4): collection + remittance run through
+            Razorpay, an RBI-authorised payment aggregator; BAS's own revenue is the Platform Fee. */}
+        Book A Sloth collects the Guest Price through <strong>Razorpay</strong>, an authorised payment aggregator
+        regulated by the Reserve Bank of India, and remits Your Payout to you, being Your Price less the Platform Fee,
+        the payment-gateway charge, and any tax deducted or collected at source. Book A Sloth&rsquo;s own revenue is
+        the <strong>Platform Fee</strong>; Book A Sloth does not own or retain Your Price. You authorise Book A Sloth and
+        its payment partner to collect the Guest Price for a Booking and to make the deductions in clauses 8 and 9 before
+        remitting Your Payout in accordance with clause 7.
       </p>
     </Section>
 

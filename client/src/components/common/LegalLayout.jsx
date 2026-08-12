@@ -26,7 +26,7 @@ export const Section = ({ title, children }) => (
 const POLICIES = [
   { to: '/terms',           label: 'Terms of Use' },
   { to: '/privacy',         label: 'Privacy Policy' },
-  { to: '/guest-terms',     label: 'Guest Terms of Sale' },
+  { to: '/guest-terms',     label: 'Guest Booking Terms' },
   { to: '/refund',          label: 'Refund & Cancellation' },
   { to: '/host-agreement',  label: 'Host Agreement' },
   { to: '/host-fees',       label: 'Host Fee Schedule' },

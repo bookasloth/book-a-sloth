@@ -1,27 +1,26 @@
 import { Link } from 'react-router-dom';
 import LegalLayout, { Section, MARKETPLACE_EFFECTIVE } from '../components/common/LegalLayout';
 
-// /guest-terms — Guest Terms of Sale.
+// /guest-terms — Guest Booking Terms.
 //
 // MARKETPLACE MODEL v4: the HOST is the seller/supplier; the sale contract is host↔guest;
 // Book A Sloth is the marketplace that facilitates the booking, collects payment, and
 // provides grievance redressal + refund facilitation under the Consumer Protection
-// (E-Commerce) Rules, 2020. Consumer rights under the CPA 2019 are NOT excluded. The
-// liability stance (§8) carries a ⚖️ counsel-review marker inline.
+// (E-Commerce) Rules, 2020. Consumer rights under the CPA 2019 are NOT excluded.
 
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
 const GuestTerms = () => (
   <LegalLayout
-    title="Guest Terms of Sale"
-    updated="24 July 2026"
+    title="Guest Booking Terms"
+    updated="12 August 2026"
     effective={MARKETPLACE_EFFECTIVE}
     current="/guest-terms"
     description="The terms on which you buy a service from a host through Book A Sloth — who you are buying from, what is included, cancellations, rescheduling, and your rights if something goes wrong."
     intro={
       <>
         <p>
-          These Guest Terms of Sale (&ldquo;<strong>Terms of Sale</strong>&rdquo;) apply every time you book or buy a
+          These Guest Booking Terms (&ldquo;<strong>Booking Terms</strong>&rdquo;) apply every time you book or buy a
           service on Book A Sloth. Book A Sloth is operated by <strong>Timewheel Internet Private Limited</strong>{' '}
           (CIN: U62012OD2026PTC052654, GSTIN: 21AAMCT8270C1ZF) (&ldquo;<strong>Book A Sloth</strong>&rdquo;,
           &ldquo;we&rdquo;, &ldquo;us&rdquo;).
@@ -38,7 +37,7 @@ const GuestTerms = () => (
           <Link to="/terms" className="text-primary hover:underline">Terms of Use</Link>, our{' '}
           <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>, and our{' '}
           <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>. If there is any conflict
-          about a purchase, these Terms of Sale prevail.
+          about a purchase, these Booking Terms prevail.
         </p>
       </>
     }
@@ -61,6 +60,12 @@ const GuestTerms = () => (
       <p>
         <strong>1.4</strong> The GST invoice you receive from Book A Sloth is for our booking fee. Where the host is
         GST-registered, the host is responsible for invoicing their own service price.
+      </p>
+      <p>
+        <strong>1.5 Who your host is.</strong> The identity of the host who will supply your service &mdash; their name,
+        and the details you need to identify and contact them about the booking &mdash; is shown on the listing and in
+        your booking confirmation. We will provide further details of the host on request, in accordance with the{' '}
+        <strong>Consumer Protection (E-Commerce) Rules, 2020</strong>.
       </p>
     </Section>
 
@@ -138,7 +143,7 @@ const GuestTerms = () => (
       <p>
         <strong>5.1</strong> Cancellation and refund entitlements are set out in the{' '}
         <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>, which forms
-        part of these Terms of Sale. Please read it before you book &mdash; the cancellation window is shown at
+        part of these Booking Terms. Please read it before you book &mdash; the cancellation window is shown at
         checkout.
       </p>
       <p>
@@ -174,7 +179,7 @@ const GuestTerms = () => (
         <li>Treat the person performing the service with respect. Abusive, threatening, discriminatory, or unsafe behaviour ends the service immediately, with no refund, and may end your access to the Platform.</li>
         <li>Disclose anything genuinely relevant to safe delivery, where the listing asks for it.</li>
         <li>Do not record, stream, or republish a session without the express consent of everyone involved.</li>
-        <li>Do not arrange to pay outside the Platform for a booking started on it. If you do, these Terms of Sale, our Refund Policy, and our support do not apply to that transaction, and we cannot help you if it goes wrong.</li>
+        <li>Do not arrange to pay outside the Platform for a booking started on it. If you do, these Booking Terms, our Refund Policy, and our support do not apply to that transaction, and we cannot help you if it goes wrong.</li>
       </ul>
     </Section>
 
@@ -201,10 +206,10 @@ const GuestTerms = () => (
     </Section>
 
     <Section title="8. Responsibility for the service">
-      {/* ⚖️ LAWYER CALL. Marketplace stance: the host (seller) is responsible for performing
-          the service; BAS is the marketplace and provides grievance redressal + refund
-          facilitation (CP E-Commerce Rules 2020) without excluding consumer rights. Counsel to
-          confirm the precise liability position and its fit with CP E-Commerce Rules Rule 4/5/7. */}
+      {/* Marketplace liability position (asserted, marketplace model v4): the host is the
+          seller and is responsible for performing the service; Book A Sloth is the marketplace
+          and provides grievance redressal + refund facilitation under the CP E-Commerce Rules
+          2020, and does not exclude any right the guest has under the CPA 2019. */}
       <p>
         <strong>8.1</strong> The host is the seller and is responsible for supplying the service with reasonable skill
         and care and as described. Book A Sloth operates the marketplace; it does not itself perform the service.
@@ -237,7 +242,7 @@ const GuestTerms = () => (
         required by applicable law.
       </p>
       <p>
-        <strong>9.3</strong> These Terms of Sale are governed by the laws of India.
+        <strong>9.3</strong> These Booking Terms are governed by the laws of India.
       </p>
       <p>
         <strong>9.4</strong> Nothing here restricts your right as a consumer to bring proceedings in the consumer forum
@@ -247,15 +252,15 @@ const GuestTerms = () => (
 
     <Section title="10. Changes">
       <p>
-        We may update these Terms of Sale. <strong>The version in force at the time of your booking governs that
+        We may update these Booking Terms. <strong>The version in force at the time of your booking governs that
         booking</strong>, so a later change never affects a purchase you have already made. We publish revised versions
         with a new &ldquo;Last updated&rdquo; date.
       </p>
     </Section>
 
-    <Section title="11. Seller details">
+    <Section title="11. Marketplace operator details">
       <ul className="list-disc pl-5 space-y-1.5">
-        <li><strong>Seller:</strong> Timewheel Internet Private Limited, trading as Book A Sloth</li>
+        <li><strong>Marketplace operator:</strong> Timewheel Internet Private Limited, operating Book A Sloth</li>
         <li><strong>CIN:</strong> U62012OD2026PTC052654 &middot; <strong>GSTIN:</strong> 21AAMCT8270C1ZF</li>
         <li><strong>Email:</strong> <Mail /> &middot; <strong>Phone:</strong> +91 8637758344</li>
         <li><strong>Grievance Officer:</strong> Shubham Narendra Datarkar</li>

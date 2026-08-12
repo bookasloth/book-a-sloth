@@ -6,7 +6,7 @@ const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary
 
 const USE_ROWS = [
   ['Provide the Platform', 'Create accounts, publish services, process bookings, generate meeting links', 'Performance of a contract; consent (DPDP)'],
-  ['Payments & payouts', 'Process payments via Razorpay, settle host payouts, maintain financial records', 'Contract; legal obligation'],
+  ['Payments', 'Process guest payments via Razorpay, remit host payments, maintain financial records', 'Contract; legal obligation'],
   ['Verification & security', 'Send OTPs, prevent fraud, secure accounts', 'Legitimate interests; consent'],
   ['Communications', 'Booking confirmations, reminders, reschedule notices, password resets', 'Contract; consent'],
   ['Marketing', 'Email/WhatsApp campaigns and offers (only if you opt in)', 'Consent'],
@@ -18,7 +18,7 @@ const USE_ROWS = [
 const Privacy = () => (
   <LegalLayout
     title="Privacy Policy"
-    updated="3 July 2026"
+    updated="12 August 2026"
     current="/privacy"
     description="How Book A Sloth collects, uses, and protects your data under India's DPDP Act 2023 and GDPR. Read our full privacy policy."
     intro={
@@ -52,7 +52,7 @@ const Privacy = () => (
     <Section title="1. Who this Policy applies to">
       <p>The Platform serves two main types of users, and we collect data from both:</p>
       <ul className="list-disc pl-5 space-y-1.5">
-        <li><strong>Hosts (creators)</strong> — individuals or businesses who publish services, accept bookings, sell digital products, and receive payouts.</li>
+        <li><strong>Hosts (creators)</strong> — individuals or businesses who publish services, accept bookings, sell digital products, and receive payments for them.</li>
         <li><strong>Guests</strong> — individuals who discover hosts, book appointments, buy products, and make payments. Guests may book either by creating an account or by verifying their email through a one-time password (OTP) without an account.</li>
       </ul>
       <p>This Policy also applies to visitors who browse public host profiles without booking.</p>
@@ -132,7 +132,7 @@ const Privacy = () => (
         Your card, UPI, netbanking, and wallet details are entered directly with Razorpay and are governed by{' '}
         <a href="https://razorpay.com/privacy/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Razorpay's privacy policy</a>.
         Book A Sloth does not collect, see, or store your full payment credentials. We retain only transaction metadata
-        (payment ID, amount, status) needed to confirm bookings, issue payouts, and keep accurate financial records.
+        (payment ID, amount, status) needed to confirm bookings, remit host payments, and keep accurate financial records.
       </p>
     </Section>
 

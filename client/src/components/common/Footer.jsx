@@ -29,7 +29,7 @@ const COLUMNS = [
     { t: 'Refund', href: '/refund' },
   ] },
   { h: 'Legal', links: [
-    { t: 'Guest Terms of Sale', href: '/guest-terms' },
+    { t: 'Guest Booking Terms', href: '/guest-terms' },
     { t: 'Host Agreement', href: '/host-agreement' },
     { t: 'Host Fee Schedule', href: '/host-fees' },
   ] },
