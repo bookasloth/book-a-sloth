@@ -1,5 +1,11 @@
 # Book A Sloth — Claude Project Memory
 
+## Task Workflow (default for every task)
+1. **Ask first.** Before starting any task, ask at least one clarifying question. Never dive in cold.
+2. **Fresh branch from main.** `git fetch origin && git switch -c <type>/<slug> origin/main`. Never work directly on `main` or reuse an old branch unless told to.
+3. **Work → commit → PR.** Do the change, commit, `gh pr create` (any type: feat/fix/docs/chore).
+4. **Stop at the PR.** Hand over the PR link. **Do NOT merge.** The user merges — merge auto-deploys to prod and the user controls timing/limit.
+
 ## Quick Start (every session)
 Read these 4 files before touching any code:
 1. `docs/ai-context.md` — project snapshot + active rules
