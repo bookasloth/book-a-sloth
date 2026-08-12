@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { adminGetPayouts, adminApprovePayout, adminRejectPayout, adminMarkPayoutPaid, adminReleasePayoutRoute, adminGetPayoutClearing, adminTestHeldTransfer } from '../../services/api';
+import { adminGetPayouts, adminApprovePayout, adminRejectPayout, adminMarkPayoutPaid, adminReleasePayoutRoute, adminGetPayoutClearing } from '../../services/api';
 import toast from 'react-hot-toast';
 import { PageHeader, Card, Btn, Badge, Skeleton } from '../../components/admin/ui';
 
@@ -70,23 +70,9 @@ const AdminPayouts = () => {
     catch (e) { toast.error(e?.response?.data?.message || 'Action failed'); }
   };
 
-  // TEMPORARY Phase 2 pre-check — verify payment-linked held transfers are enabled.
-  const testHeld = async () => {
-    try {
-      const { data } = await adminTestHeldTransfer();
-      window.alert(JSON.stringify(data, null, 2));
-    } catch (e) {
-      window.alert('Request failed: ' + (e?.response?.data?.message || e.message));
-    }
-  };
-
   return (
     <div className="max-w-[1100px]">
       <PageHeader title="Payouts" subtitle="Approve, reject, and mark host payout requests as paid." />
-      <button onClick={testHeld}
-        className="mb-4 rounded-lg border border-dashed border-amber-500 px-3 py-1.5 text-[12px] font-medium text-amber-600">
-        🔧 Test Route held-transfer (diagnostic)
-      </button>
 
       <div className="flex gap-1.5 mb-5">
         {TABS.map(t => (

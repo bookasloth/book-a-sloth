@@ -242,8 +242,6 @@ export const adminRejectPayout   = (id, reason)     => API.post(`/admin/payouts/
 export const adminMarkPayoutPaid = (id, reference)  => API.post(`/admin/payouts/${id}/pay`, { payment_reference: reference });
 export const adminReleasePayoutRoute = (id)         => API.post(`/admin/payouts/${id}/pay-route`);
 export const adminGetPayoutClearing = ()            => API.get('/admin/payouts/clearing');
-// TEMPORARY Phase 2 pre-check — remove after verifying held-transfer enablement.
-export const adminTestHeldTransfer = ()             => API.post('/admin/route/test-held-transfer');
 
 // Refer & Earn config ("what's paid for what, per plan+cadence") + ledger view.
 export const adminGetReferralRules  = ()            => API.get('/admin/referral-rules');

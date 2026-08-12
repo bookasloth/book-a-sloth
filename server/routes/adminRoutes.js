@@ -184,8 +184,6 @@ router.post('/payouts/:id/approve', requireAdmin('payouts.approve'), payouts.app
 router.post('/payouts/:id/reject',  requireAdmin('payouts.approve'), payouts.rejectPayout);
 router.post('/payouts/:id/pay',     requireAdmin('payouts.release'), payouts.markPayoutPaid);
 router.post('/payouts/:id/pay-route', requireAdmin('payouts.release'), payouts.releasePayoutViaRoute);
-// TEMPORARY Phase 2 pre-check — remove with routeDiagnosticController.
-router.post('/route/test-held-transfer', requireAdmin('payouts.release'), require('../controllers/routeDiagnosticController').testHeldTransfer);
 
 // ── Subscription plans ─────────────────────────────────────────
 const plans = require('../controllers/planAdminController');
