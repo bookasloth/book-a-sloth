@@ -70,6 +70,12 @@ const getMyKyc = async (req, res) => {
       ifsc: data.ifsc,
       branch: data.branch,
       account_type: data.account_type,
+      addr_street1: data.addr_street1,
+      addr_street2: data.addr_street2,
+      addr_city: data.addr_city,
+      addr_state: data.addr_state,
+      addr_postal_code: data.addr_postal_code,
+      addr_country: data.addr_country,
       has_selfie: !!data.selfie_url,
       has_pan_doc: !!data.pan_doc_url,
       has_aadhaar_doc: !!data.aadhaar_doc_url,
@@ -113,6 +119,20 @@ const submitKyc = async (req, res) => {
     if (!RE.ifsc.test(ifsc)) errors.push('IFSC must match ABCD0123456.');
     if (!['savings', 'current'].includes(accountType.toLowerCase())) errors.push('Account type must be savings or current.');
 
+    // Registered address — REQUIRED for the Razorpay Route linked account
+    // (profile.addresses.registered). street2 is optional; country defaults IN.
+    const addrStreet1 = String(b.addr_street1 || '').trim();
+    const addrStreet2 = String(b.addr_street2 || '').trim();
+    const addrCity = String(b.addr_city || '').trim();
+    const addrState = String(b.addr_state || '').trim();
+    const addrPostal = String(b.addr_postal_code || '').replace(/\s/g, '');
+    const addrCountry = String(b.addr_country || 'IN').trim().toUpperCase() || 'IN';
+
+    if (!addrStreet1) errors.push('Address line 1 is required.');
+    if (!addrCity) errors.push('City is required.');
+    if (!addrState) errors.push('State is required.');
+    if (!/^[0-9]{6}$/.test(addrPostal)) errors.push('PIN code must be 6 digits.');
+
     // Document keys come from prior /upload calls. Enforce the key belongs to the
     // caller (keys are prefixed with the user id) so nobody can attach someone
     // else's uploaded document.
@@ -136,6 +156,12 @@ const submitKyc = async (req, res) => {
       ifsc,
       branch,
       account_type: accountType.toLowerCase(),
+      addr_street1: addrStreet1,
+      addr_street2: addrStreet2 || null,
+      addr_city: addrCity,
+      addr_state: addrState,
+      addr_postal_code: addrPostal,
+      addr_country: addrCountry,
       selfie_url: b.selfie_url,
       pan_doc_url: b.pan_doc_url,
       aadhaar_doc_url: b.aadhaar_doc_url,
