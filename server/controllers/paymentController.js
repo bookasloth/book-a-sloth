@@ -1302,6 +1302,17 @@ const handleWebhook = async (req, res) => {
       if (disputedPaymentId) {
         const r = await routeAutoPayoutService.reverseByPaymentId(disputedPaymentId, `dispute ${dispute.id} (${event.event})`);
         auditLog('WEBHOOK_DISPUTE_REVERSE', null, { dispute_id: dispute.id, payment_id: disputedPaymentId, event: event.event, reversed: r.ok, reason: r.error || r.skipped });
+        // Open a dispute record for the admin queue (best-effort).
+        if (r.bookingId || r.ok || r.skipped === 'no_held_transfer') {
+          const { data: bk } = await supabaseAdmin.from('bookings').select('id').eq('razorpay_payment_id', disputedPaymentId).maybeSingle();
+          if (bk?.id) {
+            await require('../services/disputeService').recordDispute({
+              bookingId: bk.id, raisedBy: 'razorpay',
+              reason: `Razorpay dispute ${dispute.id} — ${dispute.reason_code || event.event}`,
+              payoutAction: r.ok ? 'reversed' : 'none',
+            });
+          }
+        }
       }
     } catch (err) {
       securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
