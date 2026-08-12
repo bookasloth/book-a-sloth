@@ -143,14 +143,13 @@ const GuestTerms = () => (
       <p>
         <strong>5.1</strong> Cancellation and refund entitlements are set out in the{' '}
         <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>, which forms
-        part of these Booking Terms. Please read it before you book &mdash; the cancellation window is shown at
-        checkout.
+        part of these Booking Terms. Please read it before you book.
       </p>
       <p>
         <strong>5.2 Booking and processing charges are not refundable.</strong> Where you cancel, the small booking
         charge and payment processing charge shown at checkout are retained, because they are costs we have already
-        incurred on your booking. This is displayed to you before you pay. Where <strong>we or the host</strong> cancel
-        or fail to deliver, you are refunded in full, including those charges.
+        incurred on your booking, as set out in this policy and the Refund &amp; Cancellation Policy. Where{' '}
+        <strong>we or the host</strong> cancel or fail to deliver, you are refunded in full, including those charges.
       </p>
       <p>
         <strong>5.3 Rescheduling.</strong> Where the listing allows it, you may reschedule free of charge up to the

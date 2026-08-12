@@ -8,11 +8,12 @@ const USE_ROWS = [
   ['Provide the Platform', 'Create accounts, publish services, process bookings, generate meeting links', 'Performance of a contract; consent (DPDP)'],
   ['Payments', 'Process guest payments via Razorpay, remit host payments, maintain financial records', 'Contract; legal obligation'],
   ['Verification & security', 'Send OTPs, prevent fraud, secure accounts', 'Legitimate interests; consent'],
+  ['Host verification & payouts', 'Verify host identity (PAN, bank, address, KYC), set up the Razorpay payout account, deduct and deposit TDS/TCS', 'Legal obligation; contract'],
   ['Communications', 'Booking confirmations, reminders, reschedule notices, password resets', 'Contract; consent'],
   ['Marketing', 'Email/WhatsApp campaigns and offers (only if you opt in)', 'Consent'],
   ['Reviews & ratings', 'Display feedback on host profiles', 'Contract; legitimate interests'],
   ['Legal & accounting', 'Tax, GST, double-entry financial records, dispute handling', 'Legal obligation'],
-  ['Improve the Platform', 'Analytics, troubleshooting, feature development', 'Legitimate interests; consent'],
+  ['Analytics & advertising', 'Product & session analytics (including session replay), troubleshooting, feature development, and — with your consent — measuring ad campaigns', 'Consent; legitimate interests'],
 ];
 
 const Privacy = () => (
@@ -61,7 +62,8 @@ const Privacy = () => (
     <Section title="2. The personal data we collect">
       <p className="font-medium text-ink">2.1 Data you provide directly</p>
       <p><strong>Account &amp; profile data (Hosts and registered Guests):</strong> name, email address, role (host/guest), username, bio, tagline, profession, profile and cover images, and social media links.</p>
-      <p><strong>Booking data (Guests):</strong> name, email address, phone number, the service booked, the scheduled date and time, and any notes you add to a booking. Guests booking without an account provide name, email, and phone at checkout.</p>
+      <p><strong>Booking data (Guests):</strong> name, email address, phone number, the service booked, the scheduled date and time, and any notes you add to a booking. Guests booking without an account provide name, email, and phone at checkout. For a paid booking we also collect the billing details you enter for your GST invoice.</p>
+      <p><strong>Host verification data (Hosts):</strong> to pay you and to meet our legal obligations, we collect your <strong>PAN</strong>, <strong>bank account details</strong>, and <strong>registered address</strong>, and optionally your <strong>Aadhaar</strong> and identity documents. These are stored <strong>encrypted</strong>, in a private store, and are used for KYC, for tax deducted/collected at source (TDS/TCS), and to set up your <strong>Razorpay payout (linked) account</strong>.</p>
       <p><strong>Verification data:</strong> one-time passwords (OTPs) sent to your email for booking confirmation, login, or password reset. OTPs are short-lived and stored only until they expire.</p>
       <p><strong>Reviews:</strong> the rating, comment, and display name you submit after a completed booking.</p>
       <p><strong>Communications:</strong> messages, support requests, and feedback you send us.</p>
@@ -105,8 +107,20 @@ const Privacy = () => (
     <Section title="4. How we share your data">
       <p>We share personal data only as needed to run the Platform:</p>
       <ul className="list-disc pl-5 space-y-1.5">
-        <li><strong>Between hosts and guests.</strong> When you book a service, the host receives your name, email, phone, scheduled time, and booking notes so they can deliver the service. Hosts must use this data only to fulfil the booking.</li>
-        <li><strong>Service providers (processors)</strong> who act on our instructions: <strong>Razorpay</strong> (payments), <strong>Supabase</strong> (database, authentication, and file/image storage), <strong>Google</strong> (calendar and meeting links), our <strong>email/SMTP provider</strong> (transactional and campaign email), and, where enabled, <strong>WhatsApp/messaging providers</strong> (notifications and campaigns).</li>
+        <li><strong>Between hosts and guests.</strong> When you book a service, the host receives your name, email, phone, scheduled time, and booking notes so they can deliver the service. Hosts must use this data only to fulfil the booking. Hosts on our <strong>Studio</strong> plan have a client-management tool that lets them see and <strong>export as a CSV the contact details of guests who have booked them</strong> — name, phone, email, and booking history — to manage their own client relationships.</li>
+        <li><strong>Service providers (processors)</strong> who act on our instructions:
+          <ul className="list-disc pl-5 pt-1 space-y-1">
+            <li><strong>Razorpay</strong> — payment collection and, via Razorpay Route, host payouts (including host KYC / linked-account onboarding).</li>
+            <li><strong>Supabase</strong> — database, authentication, and file/image storage.</li>
+            <li><strong>Google</strong> — calendar and meeting links (for Hosts who connect Google).</li>
+            <li><strong>Email (SMTP provider)</strong> — transactional and campaign email.</li>
+            <li><strong>AiSensy</strong> — WhatsApp notifications and campaigns.</li>
+            <li><strong>Analytics &amp; usability</strong> — PostHog (product analytics), Google Analytics 4 and Google Tag Manager, and Microsoft Clarity, which records anonymised session activity (a &ldquo;session replay&rdquo; of clicks, scrolls, and pages). These load per your consent choices (Section 8), except essential product analytics.</li>
+            <li><strong>Advertising measurement</strong> — the Meta (Facebook) Pixel and Conversions API and Google Ads. To measure ad campaigns we may send <strong>hashed (irreversible) identifiers</strong>, such as a SHA-256 hash of your email or phone number, to Meta and Google.</li>
+            <li><strong>Error monitoring</strong> — Sentry, to detect and diagnose faults.</li>
+            <li><strong>AI features</strong> — Anthropic (Claude) powers the &ldquo;Bolt&rdquo; support assistant and AI writing help, and Voyage AI generates search embeddings; text you enter into those features (including support-chat messages and listing content) is processed by them.</li>
+          </ul>
+        </li>
         <li><strong>Legal and regulatory authorities</strong> when required by law, court order, or to protect our rights, users, or the public.</li>
         <li><strong>Business transfers</strong> — in connection with a merger, acquisition, or sale of assets, subject to this Policy.</li>
       </ul>
@@ -123,7 +137,7 @@ const Privacy = () => (
         <li><strong>Marketing contact data</strong> — until you withdraw consent or opt out.</li>
         <li><strong>Processing and security logs</strong> — retained for at least one year, as required by the DPDP Rules and to detect, investigate, and prevent unauthorised access.</li>
       </ul>
-      <p>When data is no longer needed, we delete or anonymise it.</p>
+      <p>When data is no longer needed and our legal retention periods have passed, we delete or anonymise it. You can also ask us to erase your data (Section 7); we action erasure requests manually after verifying your identity, subject to records we are required by law to keep.</p>
     </Section>
 
     <Section title="6. Payments and PCI-DSS">
@@ -152,9 +166,11 @@ const Privacy = () => (
       <ul className="list-disc pl-5 space-y-1.5">
         <li><strong>Keep you signed in</strong> — authentication tokens and session cookies are essential for the Platform to work.</li>
         <li><strong>Remember preferences</strong> — such as theme and settings.</li>
-        <li><strong>Understand usage</strong> — basic analytics to improve performance and features.</li>
+        <li><strong>Understand usage</strong> — product analytics (PostHog) and, subject to your consent, Google Analytics 4 and Google Tag Manager.</li>
+        <li><strong>Improve usability</strong> — Microsoft Clarity, subject to your consent, records anonymised session activity (a &ldquo;session replay&rdquo; of clicks, scrolls, and page views) to help us find and fix problems.</li>
+        <li><strong>Measure advertising</strong> — subject to your consent, the Meta Pixel and Google Ads tags; and, on our servers, we may send hashed identifiers to Meta and Google to measure conversions.</li>
       </ul>
-      <p>Essential cookies are necessary for the Platform to function and cannot be switched off. You can control non-essential cookies through your browser settings; blocking some cookies may affect how the Platform works. Where required by law, we ask for your consent before placing non-essential cookies.</p>
+      <p>Essential cookies cannot be switched off. Non-essential analytics, session-replay, and advertising technologies load <strong>only after you accept them</strong> in our consent banner; you can change your choice at any time, and you can also control cookies through your browser. Blocking some cookies may affect how the Platform works.</p>
     </Section>
 
     <Section title="9. Data security">

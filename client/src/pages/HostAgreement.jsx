@@ -3,12 +3,12 @@ import LegalLayout, { Section } from '../components/common/LegalLayout';
 
 // /host-agreement — Host Services Agreement.
 //
-// MARKETPLACE MODEL v4: the Host SELLS TO THE GUEST; Book A Sloth is the platform/
-// facilitator that lists, books, collects payment, and remits the Host's price net of its
-// Platform Fee/commission, the gateway charge, and tax deducted/collected at source.
-// Payment flow (clauses 2 & 16) runs through Razorpay, an RBI-authorised payment
-// aggregator; GST (clause 6) and the payment-flow characterisation are stated firmly
-// per the v4 model.
+// MARKETPLACE MODEL v4 (reconciled to production main, Aug 2026): the Host SELLS TO THE
+// GUEST; Book A Sloth lists/books/collects and pays the Host via Razorpay Route (held
+// transfer to the host's linked account, released after the service or reversed on
+// cancel/dispute) net of Platform Fee/commission, gateway charge, and TDS/TCS. No twice-
+// monthly cycle / 10% holdback / Payment Advice doc / Form 16A exist in the product —
+// wording matches routeAutoPayoutService.js + payoutAdminController.js.
 
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
@@ -57,7 +57,7 @@ const HostAgreement = () => (
         <li><strong>&ldquo;Platform Fee&rdquo;</strong> — the booking fee and, on some Plans, the commission that Book A Sloth charges for the platform services, as set out in the Fee Schedule.</li>
         <li><strong>&ldquo;Your Payout&rdquo;</strong> or <strong>&ldquo;H&rdquo;</strong> — the amount payable to you for a Booking, being Your Price less the Platform Fee, the payment-gateway charge, and tax deducted/collected at source, computed under clause 5.</li>
         <li><strong>&ldquo;Guest Price&rdquo;</strong> — the total amount payable by the Guest for a Booking (Your Price plus the booking fee and applicable tax).</li>
-        <li><strong>&ldquo;Payment Cycle&rdquo;</strong> — the periodic payment of your invoices described in clause 7 and the Fee Schedule.</li>
+        <li><strong>&ldquo;Linked Account&rdquo;</strong> — your Razorpay Route account, activated from your KYC, to which Your Payout is transferred under clause 7.</li>
         <li><strong>&ldquo;Plan&rdquo;</strong> — the subscription tier applicable to your Host account (Starter, Host+, Studio, or Enterprise).</li>
       </ul>
     </Section>
@@ -80,13 +80,17 @@ const HostAgreement = () => (
         staff, equipment, insurance, and statutory obligations.
       </p>
       <p>
-        {/* Payment flow (asserted, marketplace model v4): Book A Sloth collects the Guest Price
-            through Razorpay, an RBI-authorised payment aggregator, and remits Your Payout; BAS's
-            own revenue is the Platform Fee. */}
-        <strong>2.4 Payments.</strong> Book A Sloth collects the Guest Price through its payment partner and pays you
-        Your Payout &mdash; Your Price less the Platform Fee, the payment-gateway charge, and any tax deducted or
-        collected at source. Book A Sloth&rsquo;s own revenue is the <strong>Platform Fee</strong>; it does not own or
-        retain Your Price. See also clause 16.
+        {/* Payment flow (marketplace v4, as built on main): guest pays into BAS's Razorpay
+            account; a HELD Razorpay Route transfer of Your Payout goes to the host's linked
+            account, released after the service (+~24h) or reversed on cancel/dispute.
+            routeAutoPayoutService.js. Requires an activated linked account. */}
+        <strong>2.4 Payments.</strong> Book A Sloth collects the Guest Price through <strong>Razorpay</strong>, an
+        authorised payment aggregator regulated by the Reserve Bank of India, and pays Your Payout to your{' '}
+        <strong>Razorpay Linked Account</strong> using <strong>Razorpay Route</strong> &mdash; Your Price less the
+        Platform Fee, the payment-gateway charge, and any tax deducted or collected at source. The transfer is created
+        when the Guest pays and released to you after the Service, or reversed if the Booking is cancelled or disputed
+        (clause 7). Paying you requires an activated Linked Account (clause 7.2). Book A Sloth&rsquo;s own revenue is the{' '}
+        <strong>Platform Fee</strong>; it does not own or retain Your Price. See also clause 16.
       </p>
       <p>
         <strong>2.5 Non-exclusive.</strong> This Agreement is non-exclusive. You may supply the same or similar
@@ -211,10 +215,11 @@ const HostAgreement = () => (
         invoice until it appears in our GSTR-2B.
       </p>
       <p>
-        <strong>6.4 Payment Advice.</strong> For each Booking, Book A Sloth issues you a <strong>Payment Advice</strong>{' '}
-        recording Your Payout and the amounts deducted. A Payment Advice is <strong>not</strong> a tax invoice, carries
-        no GST component, and gives rise to no input tax credit. It is your record of what you earned and what was
-        deducted; it is not a substitute for your own invoice to the Guest under clause 6.1.
+        <strong>6.4 Your payout statement.</strong> Your Host dashboard records, for each Booking, Your Price and the
+        amounts deducted (Platform Fee, payment-gateway charge, TDS, and TCS) to arrive at Your Payout. This statement
+        is <strong>not</strong> a tax invoice, carries no GST component, and gives rise to no input tax credit. It is
+        your record of what you earned and what was deducted; it is not a substitute for your own invoice to the Guest
+        under clause 6.1.
       </p>
       <p>
         <strong>6.5 Change of status.</strong> You will notify us within <strong>7 days</strong> of becoming registered
@@ -235,36 +240,24 @@ const HostAgreement = () => (
 
     <Section title="7. Payment terms">
       <p>
-        <strong>7.1 Cycle.</strong> Book A Sloth operates <strong>two Payment Cycles per calendar month</strong>. A
-        Booking is included in a cycle only if the Service was <strong>completed at least 7 days before the cycle
-        cut-off</strong> and the applicable cancellation and dispute window has closed.
-      </p>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left p-2.5 font-semibold text-ink border-b-2 border-gray-200">Services completed</th>
-              <th className="text-left p-2.5 font-semibold text-ink border-b-2 border-gray-200">Cut-off</th>
-              <th className="text-left p-2.5 font-semibold text-ink border-b-2 border-gray-200">Paid on or before</th>
-            </tr>
-          </thead>
-          <tbody className="text-gray-600">
-            <tr><td className="p-2.5 border-b border-gray-100">1st &ndash; 15th</td><td className="p-2.5 border-b border-gray-100">15th</td><td className="p-2.5 border-b border-gray-100">last working day of that month</td></tr>
-            <tr><td className="p-2.5">16th &ndash; end of month</td><td className="p-2.5">last day of month</td><td className="p-2.5">15th of the following month</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p>
-        <strong>7.2 Minimum payment threshold.</strong> Where the net amount payable in a cycle is less than{' '}
-        <strong>₹500</strong>, it is carried forward and paid in the first cycle in which the cumulative balance
-        reaches that threshold, or on termination, whichever is earlier.
+        <strong>7.1 How and when you are paid.</strong> Your Payout for a Booking is transferred to your Linked Account
+        through <strong>Razorpay Route</strong>. The transfer is created when the Guest&rsquo;s payment is captured and
+        is <strong>held</strong> until the Service is over plus a short buffer (currently the scheduled end of the
+        Service plus approximately <strong>24 hours</strong>). It is <strong>released</strong> to you when the Booking is
+        marked complete or automatically by our payment partner at the end of the hold. If the Booking is cancelled, not
+        delivered, or the subject of a dispute, the held transfer may be <strong>reversed</strong> under clause 12 and
+        the <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>.
       </p>
       <p>
-        <strong>7.3 Security holdback.</strong> For the first <strong>90 days</strong> of your Host account, or the
-        first 20 completed Bookings, whichever is later, Book A Sloth may retain a holdback of up to{' '}
-        <strong>10%</strong> of each amount otherwise payable. The holdback is applied against amounts recoverable
-        under clause 9 and any unapplied balance is released in the first cycle after that period ends. The holdback is
-        not a deposit, bears no interest, and is not a charge for services.
+        <strong>7.2 Activated Linked Account required.</strong> Before Your Payout can be transferred to you, you must
+        complete KYC and hold an <strong>activated Razorpay Linked Account</strong>. Until then, the amounts due are
+        recorded and held to your credit, and are paid once your Linked Account is activated. Nothing is forfeited by
+        the delay.
+      </p>
+      <p>
+        <strong>7.3 Minimum amount.</strong> A payout you request from your available balance is subject to a minimum of{' '}
+        <strong>₹100</strong>. An amount below <strong>₹1</strong> cannot be transferred and accrues to your credit
+        until the balance clears these minima.
       </p>
       <p>
         <strong>7.4 Right to defer.</strong> Book A Sloth may withhold or defer payment of any amount, in whole or in
@@ -275,10 +268,10 @@ const HostAgreement = () => (
         resolved.
       </p>
       <p>
-        <strong>7.5 Method.</strong> Payment is made by electronic transfer to the verified bank account on your Host
-        account, net of the deductions in clauses 8 and 9. Payment to that account discharges our obligation in full.
-        You are responsible for the accuracy of those details, and for any loss caused by details you supplied
-        incorrectly.
+        <strong>7.5 Method.</strong> Payouts are made through Razorpay Route to your Linked Account, which settles to
+        the bank account you provide in KYC, net of the deductions in clauses 8 and 9. Transfer to your Linked Account
+        discharges our obligation in full. You are responsible for the accuracy of those details, and for any loss
+        caused by details you supplied incorrectly.
       </p>
       <p>
         <strong>7.6 No interest.</strong> No interest is payable on any amount held, deferred, carried forward, or paid
@@ -293,18 +286,19 @@ const HostAgreement = () => (
 
     <Section title="8. Tax deducted at source">
       <p>
-        <strong>8.1</strong> Book A Sloth will deduct income tax at source from payments to you where required by the
-        Income-tax Act, 1961, and will deposit it and issue you the applicable TDS certificate (Form 16A) within the
-        statutory timelines.
+        <strong>8.1</strong> Book A Sloth deducts income tax at source (TDS under section 194-O) and collects tax at
+        source (TCS under section 52 of the CGST Act) from amounts due to you where required, deposits them to the
+        government against your PAN, and files the prescribed returns. The credit is available to you &mdash; reflected
+        in your Form 26AS and on the GST portal &mdash; to claim in your income-tax and GST returns.
       </p>
       <p>
         <strong>8.2</strong> TDS is <strong>not a charge by Book A Sloth</strong> and is not retained by us. It is tax
         deposited to your credit against your PAN, and you may claim it in your income tax return.
       </p>
       <p>
-        <strong>8.3 PAN is mandatory.</strong> You must provide a valid PAN before your first payment. Without one, tax
-        is deductible at the higher rate prescribed by section 206AA of the Income-tax Act, 1961, and Book A Sloth has
-        no liability for the resulting difference. We may withhold all payment until a valid PAN is on file.
+        <strong>8.3 PAN is mandatory.</strong> A valid PAN must be on file <strong>before you can accept a paid
+        Booking</strong> &mdash; the Platform will not let you take a paid Booking without one. You are responsible for
+        keeping it accurate, and Book A Sloth has no liability for any consequence of an incorrect or missing PAN.
       </p>
       <p>
         <strong>8.4</strong> If any tax, interest, or penalty is later demanded from Book A Sloth in respect of
@@ -321,7 +315,7 @@ const HostAgreement = () => (
       <ul className="list-disc pl-5 space-y-1.5">
         <li>refunds, price reductions, or credits given to a Guest in respect of a Booking you supplied or failed to supply;</li>
         <li>chargebacks, payment reversals, and the associated fees levied by any bank or payment provider;</li>
-        <li>a handling charge of <strong>₹500</strong> per chargeback or per Guest complaint upheld against you;</li>
+        <li>the payment-processing cost and any bank or gateway fee we incur on a refund, reversal, or chargeback relating to a Booking you supplied or failed to supply;</li>
         <li>input tax credit denied, reversed, or delayed under clause 6.3, with interest and penalty;</li>
         <li>tax, interest, or penalty demanded under clause 8.4;</li>
         <li>subscription fees, Plan charges, and any other sum you owe us;</li>
@@ -331,7 +325,7 @@ const HostAgreement = () => (
       </ul>
       <p>
         <strong>9.2</strong> If the amounts recoverable exceed the amounts payable to you, the balance is a debt due
-        and payable on demand within 15 days, and Book A Sloth may apply the holdback under clause 7.3, suspend your
+        and payable on demand within 15 days, and Book A Sloth may defer payment under clause 7.4, suspend your
         account, and pursue recovery.
       </p>
       <p>
@@ -384,9 +378,8 @@ const HostAgreement = () => (
         that Booking.
       </p>
       <p>
-        <strong>12.3</strong> In addition, Book A Sloth may recover under clause 9 the payment-processing cost it
-        incurs on the refund, together with a handling charge of <strong>₹250</strong> per cancellation or non-attendance
-        attributable to you.
+        <strong>12.3</strong> In addition, Book A Sloth may recover under clause 9 the payment-processing cost and any
+        gateway or transfer-reversal fee it incurs on the resulting refund or reversal.
       </p>
       <p>
         <strong>12.4</strong> Repeated cancellation or non-attendance is a material breach. Book A Sloth may restrict
@@ -474,14 +467,17 @@ const HostAgreement = () => (
 
     <Section title="16. Payment collection and remittance">
       <p>
-        {/* Payment flow (asserted, marketplace model v4): collection + remittance run through
-            Razorpay, an RBI-authorised payment aggregator; BAS's own revenue is the Platform Fee. */}
+        {/* Payment flow (marketplace v4, as built on main): collection via Razorpay; payout via
+            Razorpay Route held transfer to the host's linked account, released after the service
+            or reversed on cancel/dispute. routeAutoPayoutService.js / routeTransferService.js. */}
         Book A Sloth collects the Guest Price through <strong>Razorpay</strong>, an authorised payment aggregator
-        regulated by the Reserve Bank of India, and remits Your Payout to you, being Your Price less the Platform Fee,
-        the payment-gateway charge, and any tax deducted or collected at source. Book A Sloth&rsquo;s own revenue is
-        the <strong>Platform Fee</strong>; Book A Sloth does not own or retain Your Price. You authorise Book A Sloth and
-        its payment partner to collect the Guest Price for a Booking and to make the deductions in clauses 8 and 9 before
-        remitting Your Payout in accordance with clause 7.
+        regulated by the Reserve Bank of India, and transfers Your Payout to your Razorpay <strong>Linked Account</strong>{' '}
+        using <strong>Razorpay Route</strong> &mdash; Your Price less the Platform Fee, the payment-gateway charge, and
+        any tax deducted or collected at source. The transfer is held until after the Service and released or reversed
+        under clause 7. Book A Sloth&rsquo;s own revenue is the <strong>Platform Fee</strong>; it does not own or retain
+        Your Price. You authorise Book A Sloth and Razorpay to collect the Guest Price and to make the deductions in
+        clauses 8 and 9 before transferring Your Payout, and to reverse a held transfer where a Booking is cancelled,
+        undelivered, or disputed.
       </p>
     </Section>
 
@@ -544,9 +540,9 @@ const HostAgreement = () => (
       </p>
       <p>
         <strong>19.4 On termination:</strong> confirmed Bookings must still be honoured or will be refunded to the
-        Guest at your cost under clause 12; amounts properly due to you are paid in the next Payment Cycle after all
-        cancellation, dispute, and chargeback windows have closed, which may be up to <strong>120 days</strong> after
-        the last Booking; and amounts recoverable under clause 9 remain recoverable.
+        Guest at your cost under clause 12; amounts properly due to you are transferred once all cancellation, dispute,
+        and chargeback windows have closed, which may be up to <strong>120 days</strong> after the last Booking; and
+        amounts recoverable under clause 9 remain recoverable.
       </p>
       <p>
         <strong>19.5</strong> Clauses 2, 6.3, 8.4, 9, 10.2, 13, 14, 15, 16, 17, 18, 20, and 21 survive termination.
