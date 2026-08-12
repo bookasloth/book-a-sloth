@@ -27,7 +27,6 @@
 const razorpayConfig = require('./razorpayConfig');
 const platformConfig = require('./platformConfig');
 const { supabaseAdmin } = require('../config/supabase');
-const { decrypt } = require('../utils/kycCrypto');
 const { securityLog } = require('../utils/logger');
 
 // Route account defaults. Individual hosts (not registered businesses) are the
@@ -47,27 +46,57 @@ const isMissingColumn = (err) => {
   return err?.code === '42703' || /column .* does not exist|could not find the .* column/.test(msg);
 };
 
-// Build the Razorpay v2 Accounts create payload from a KYC row. PAN is decrypted
-// here (never logged); the caller passes the raw stored row.
+// Razorpay caps reference_id at 20 chars. Our host ids are 36-char UUIDs, so we
+// send a compact deterministic ref ('h' + 19 hex of the dash-stripped uuid). The
+// full acc_... <-> host mapping is stored on the kyc row, so nothing is lost.
+function shortHostRef(userId) {
+  return `h${String(userId || '').replace(/-/g, '').slice(0, 19)}`;
+}
+
+// A Route linked account requires a registered address. We source it from the
+// host's KYC address columns (v3.96). Returns null when incomplete — the caller
+// then skips creation (an old KYC row without an address is not an error).
+function registeredAddress(kyc) {
+  const street1 = (kyc.addr_street1 || '').trim();
+  const city = (kyc.addr_city || '').trim();
+  const state = (kyc.addr_state || '').trim();
+  const postal_code = String(kyc.addr_postal_code || '').trim();
+  if (!street1 || !city || !state || !postal_code) return null;
+  return {
+    street1,
+    street2: (kyc.addr_street2 || '').trim() || undefined,
+    city,
+    state,
+    postal_code,
+    country: (kyc.addr_country || 'IN').trim().toUpperCase(),
+  };
+}
+
+// Build the Razorpay v2 Accounts create payload from a KYC row.
+//   • reference_id — compact (<=20 chars), see shortHostRef.
+//   • NO legal_info — for business_type 'individual', legal_info.pan is the
+//     COMPANY pan and Razorpay rejects it. The individual's PAN is attached later
+//     via the stakeholder API (a Phase 0.5 step), not at account create.
+//   • profile.addresses.registered — REQUIRED by Razorpay; from KYC address cols.
+// Returns null when the KYC row has no usable registered address.
 function buildAccountPayload(kyc) {
+  const registered = registeredAddress(kyc);
+  if (!registered) return null;
   const contactName = (kyc.full_name || kyc.holder_name || '').trim();
-  const pan = decrypt(kyc.pan_number) || undefined;
-  const payload = {
+  return {
     email: kyc.email,
     phone: kyc.phone ? String(kyc.phone) : undefined,
     type: ACCOUNT_DEFAULTS.type,
-    // Correlate the linked account back to our host without leaking PII.
-    reference_id: `host_${kyc.user_id}`,
+    reference_id: shortHostRef(kyc.user_id),
     legal_business_name: contactName || kyc.email,
     business_type: ACCOUNT_DEFAULTS.business_type,
     contact_name: contactName || kyc.email,
     profile: {
       category: ACCOUNT_DEFAULTS.category,
       subcategory: ACCOUNT_DEFAULTS.subcategory,
+      addresses: { registered },
     },
   };
-  if (pan) payload.legal_info = { pan };
-  return payload;
 }
 
 // Persist Route bookkeeping onto the KYC row. Swallows a missing-column error
@@ -106,10 +135,15 @@ async function createLinkedAccount(kyc) {
     if (!(await razorpayConfig.isConfigured())) return { ok: false, skipped: 'razorpay_unconfigured' };
     if (!kyc.email) return { ok: false, skipped: 'missing_email' };
 
+    // Razorpay requires a registered address; an older KYC row without one is
+    // skipped (not errored) so it can be created later once the host adds it.
+    const payload = buildAccountPayload(kyc);
+    if (!payload) return { ok: false, skipped: 'missing_address' };
+
     await persistRouteState(kyc.id, { route_status: 'pending', route_error: null });
 
     const razorpay = await razorpayConfig.getClient();
-    const account = await razorpay.accounts.create(buildAccountPayload(kyc));
+    const account = await razorpay.accounts.create(payload);
     const accountId = account?.id;
     if (!accountId) throw new Error('Razorpay account create returned no id');
 

@@ -46,6 +46,12 @@ const approvedKyc = (over = {}) => ({
   phone: '9876543210',
   pan_number: encrypt('ABCDE1234F'),
   holder_name: 'Asha Rao',
+  addr_street1: '1 Test Street',
+  addr_street2: 'Andheri East',
+  addr_city: 'Mumbai',
+  addr_state: 'Maharashtra',
+  addr_postal_code: '400069',
+  addr_country: 'IN',
   razorpay_account_id: null,
   ...over,
 });
@@ -85,14 +91,29 @@ describe('createLinkedAccount happy path', () => {
     const res = await svc.createLinkedAccount(approvedKyc());
 
     expect(res).toEqual({ ok: true, accountId: 'acc_NEW123' });
-    // Payload maps KYC → Razorpay, with PAN decrypted and a PII-free reference_id.
     const payload = create.mock.calls[0][0];
     expect(payload.email).toBe('asha@example.com');
     expect(payload.type).toBe('route');
-    expect(payload.reference_id).toBe(`host_${USER}`);
-    expect(payload.legal_info.pan).toBe('ABCDE1234F');
+    expect(payload.business_type).toBe('individual');
+    // reference_id is compact (<=20 chars) — Razorpay rejects longer.
+    expect(payload.reference_id.length).toBeLessThanOrEqual(20);
+    // No legal_info for an individual (company-PAN rejection); PAN is a later step.
+    expect(payload.legal_info).toBeUndefined();
+    // Registered address is present and maps from the KYC address columns.
+    expect(payload.profile.addresses.registered).toMatchObject({
+      street1: '1 Test Street', city: 'Mumbai', state: 'Maharashtra',
+      postal_code: '400069', country: 'IN',
+    });
     // Final persisted patch records the created account.
     expect(lastUpdate).toMatchObject({ razorpay_account_id: 'acc_NEW123', route_status: 'created' });
+  });
+
+  test('skips (no Razorpay call) when the KYC row has no registered address', async () => {
+    const create = jest.fn();
+    razorpayConfig.getClient.mockResolvedValue({ accounts: { create } });
+    const res = await svc.createLinkedAccount(approvedKyc({ addr_street1: '', addr_city: '' }));
+    expect(res).toEqual({ ok: false, skipped: 'missing_address' });
+    expect(create).not.toHaveBeenCalled();
   });
 });
 
