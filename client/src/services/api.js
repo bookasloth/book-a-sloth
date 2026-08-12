@@ -240,6 +240,7 @@ export const adminGetPayouts     = (status)         => API.get('/admin/payouts',
 export const adminApprovePayout  = (id)             => API.post(`/admin/payouts/${id}/approve`);
 export const adminRejectPayout   = (id, reason)     => API.post(`/admin/payouts/${id}/reject`, { reason });
 export const adminMarkPayoutPaid = (id, reference)  => API.post(`/admin/payouts/${id}/pay`, { payment_reference: reference });
+export const adminReleasePayoutRoute = (id)         => API.post(`/admin/payouts/${id}/pay-route`);
 export const adminGetPayoutClearing = ()            => API.get('/admin/payouts/clearing');
 
 // Refer & Earn config ("what's paid for what, per plan+cadence") + ledger view.

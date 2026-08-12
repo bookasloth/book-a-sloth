@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { adminGetPayouts, adminApprovePayout, adminRejectPayout, adminMarkPayoutPaid, adminGetPayoutClearing } from '../../services/api';
+import { adminGetPayouts, adminApprovePayout, adminRejectPayout, adminMarkPayoutPaid, adminReleasePayoutRoute, adminGetPayoutClearing } from '../../services/api';
 import toast from 'react-hot-toast';
 import { PageHeader, Card, Btn, Badge, Skeleton } from '../../components/admin/ui';
 
@@ -166,9 +166,16 @@ const AdminPayouts = () => {
                         </>
                       )}
                       {r.status === 'approved' && (
-                        <Btn size="sm" onClick={() => setModal({ kind: 'pay', id: r.id })}>Mark Paid</Btn>
+                        <>
+                          <Btn size="sm" onClick={() => act(adminReleasePayoutRoute, r.id)}>Pay via Route</Btn>
+                          <Btn variant="outline" size="sm" onClick={() => setModal({ kind: 'pay', id: r.id })}>Mark Paid</Btn>
+                        </>
                       )}
-                      {r.status === 'paid' && <span className="text-[11.5px] adm-t3 font-mono">{r.payment_reference || '—'}</span>}
+                      {r.status === 'paid' && (
+                        <span className="text-[11.5px] adm-t3 font-mono" title={r.transfer_status ? `Route transfer: ${r.transfer_status}` : undefined}>
+                          {r.payment_reference || '—'}
+                        </span>
+                      )}
                       {r.status === 'rejected' && <span className="text-[11.5px] adm-t3 truncate max-w-[200px]" title={r.admin_note}>{r.admin_note || '—'}</span>}
                     </div>
                   </td>
