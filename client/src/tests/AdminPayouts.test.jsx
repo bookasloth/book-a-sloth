@@ -14,10 +14,11 @@ vi.mock('../services/api', () => ({
   adminApprovePayout: vi.fn(() => Promise.resolve({ data: {} })),
   adminRejectPayout: vi.fn(() => Promise.resolve({ data: {} })),
   adminMarkPayoutPaid: vi.fn(() => Promise.resolve({ data: {} })),
+  adminReleasePayoutRoute: vi.fn(() => Promise.resolve({ data: {} })),
 }));
 vi.mock('react-hot-toast', () => ({ default: Object.assign(() => {}, { success: () => {}, error: () => {} }) }));
 
-import { adminApprovePayout } from '../services/api';
+import { adminApprovePayout, adminGetPayouts, adminReleasePayoutRoute } from '../services/api';
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -33,4 +34,15 @@ test('approve calls the API', async () => {
   await waitFor(() => screen.getByRole('button', { name: 'Approve' }));
   fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
   await waitFor(() => expect(adminApprovePayout).toHaveBeenCalledWith('p1'));
+});
+
+test('approved row exposes "Pay via Route" which calls the API', async () => {
+  adminGetPayouts.mockResolvedValueOnce({ data: [
+    { id: 'p2', amount: 900, status: 'approved', created_at: '2026-06-15T10:00:00Z',
+      profiles: { name: 'Bina', username: 'bina', email: 'b@x.com' } },
+  ] });
+  renderPayouts();
+  await waitFor(() => screen.getByRole('button', { name: 'Pay via Route' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Pay via Route' }));
+  await waitFor(() => expect(adminReleasePayoutRoute).toHaveBeenCalledWith('p2'));
 });

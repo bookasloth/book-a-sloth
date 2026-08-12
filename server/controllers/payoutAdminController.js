@@ -15,6 +15,7 @@ const { payoutEntry } = require('../services/ledger/journalTemplates');
 const { inAppNotify } = require('../utils/inAppNotify');
 const { computeAllSettlementBalances } = require('../services/settlementService');
 const platformConfig = require('../services/platformConfig');
+const routeTransferService = require('../services/routeTransferService');
 
 const now = () => new Date().toISOString();
 
@@ -111,6 +112,46 @@ const markPayoutPaid = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// POST /admin/payouts/:id/pay-route
+// Phase 1: release an approved payout via a Razorpay Route transfer-from-balance
+// to the host's linked account (replaces the manual markPayoutPaid reference).
+// The ledger entry + approved→paid flip happen when the transfer is 'processed'
+// (synchronously here, or via the transfer.* webhook). Dormant behind fee_only_mode.
+const releasePayoutViaRoute = async (req, res) => {
+  try {
+    const p = await fetchPayout(req.params.id);
+    if (!p) return res.status(404).json({ message: 'Payout request not found' });
+    if (p.status !== 'approved') return res.status(409).json({ message: `Cannot pay a ${p.status} request` });
+
+    // Same segregation of duties as markPayoutPaid — approver ≠ releaser.
+    if (p.approved_by && p.approved_by === req.admin.id) {
+      return res.status(403).json({ message: 'A different admin must release a payout you approved.' });
+    }
+
+    const { feeOnlyMode } = await platformConfig.getConfig();
+    if (feeOnlyMode) {
+      return res.status(409).json({ message: 'Route payouts are not enabled yet (fee-only mode). Use manual release.' });
+    }
+
+    const result = await routeTransferService.releasePayout(p, { actorId: req.admin.id });
+    if (!result.ok) {
+      return res.status(422).json({ message: `Route transfer failed: ${result.error || result.skipped}` });
+    }
+
+    const updated = await fetchPayout(p.id);
+    await audit(req, {
+      action: 'payout.pay_route', resource_type: 'payout_request', resource_id: p.id,
+      before: { status: p.status }, after: { status: updated?.status, transfer_id: result.transferId },
+    });
+    inAppNotify({
+      userId: p.host_id, role: 'host', type: 'PAYOUT_UPDATE',
+      title: updated?.status === 'paid' ? 'Payout paid' : 'Payout processing',
+      link: '/dashboard/payments/payouts',
+    });
+    res.json(updated);
+  } catch (e) { safeError(res, e); }
+};
+
 // GET /admin/payouts/clearing
 // Platform-wide settlement visibility: every host with money in the pipeline that
 // is NOT yet a payout request — clearing (maturing), pending-completion, or matured
@@ -157,4 +198,4 @@ const listClearing = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { listPayouts, approvePayout, rejectPayout, markPayoutPaid, listClearing };
+module.exports = { listPayouts, approvePayout, rejectPayout, markPayoutPaid, releasePayoutViaRoute, listClearing };

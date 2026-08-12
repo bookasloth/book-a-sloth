@@ -19,6 +19,7 @@ const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const profileSecrets = require("../utils/profileSecrets");
 const { verifySignature } = require("../utils/razorpaySignature");
 const { finalizeBookingCapture } = require("../services/bookingCapture");
+const routeTransferService = require("../services/routeTransferService");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { trackServer } = require("../utils/trackServer");
 const manageBookingToken = require("../utils/manageBookingToken");
@@ -1250,6 +1251,34 @@ const handleWebhook = async (req, res) => {
           rzpSub?.id ? `Subscription: ${rzpSub.id}` : null,
           `Error: ${err.message}`,
           `Razorpay will retry. If this persists the subscription may stay pending — reconcile against the Razorpay dashboard.`,
+        ].filter(Boolean),
+      });
+      return res.status(500).json({ error: 'processing_failed' });
+    }
+    return res.json({ received: true });
+  }
+
+  // ── Route transfer lifecycle (Phase 1). transfer.processed finalizes a host
+  // payout (posts the SETTLEMENT ledger entry + flips the payout to paid);
+  // transfer.failed/reversed marks it retryable. Carries a transfer entity, no
+  // payment entity — handled BEFORE the payment guard below. ──
+  if (typeof event.event === 'string' && event.event.startsWith('transfer.')) {
+    const transfer = event.payload?.transfer?.entity;
+    try {
+      if (transfer) {
+        const r = await routeTransferService.handleTransferWebhook(transfer);
+        auditLog('WEBHOOK_ROUTE_TRANSFER', null, { transfer_id: transfer.id, event: event.event, status: transfer.status, handled: r.handled, reason: r.reason });
+      }
+    } catch (err) {
+      securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
+      adminAlert({
+        key: `webhook_error:${event.event}`,
+        subject: `Razorpay webhook failed: ${event.event}`,
+        lines: [
+          `Event: ${event.event}`,
+          transfer?.id ? `Transfer: ${transfer.id}` : null,
+          `Error: ${err.message}`,
+          `Razorpay will retry. If this persists a host payout may be stuck — reconcile against the Razorpay dashboard.`,
         ].filter(Boolean),
       });
       return res.status(500).json({ error: 'processing_failed' });
