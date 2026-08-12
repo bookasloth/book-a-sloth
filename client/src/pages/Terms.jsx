@@ -6,15 +6,15 @@ import LegalLayout, { Section, MARKETPLACE_EFFECTIVE } from '../components/commo
 // contract with the guest, /host-agreement is the Host Services Agreement.
 //
 // MARKETPLACE MODEL v4: the host is the seller; the contract is host↔guest; Book A Sloth
-// invoices only its fee + commission. GST, the §2.4 "collect and remit" wording, and the
-// consumer-liability position (§11.2/§12.1) carry ⚖️ CA/counsel-review markers inline and
-// must match the PA-waiver before those points are treated as final.
+// invoices only its fee + commission. Payment flow (§2.4/§6) runs through Razorpay, an
+// RBI-authorised payment aggregator; GST and consumer-liability positions are stated
+// firmly per the v4 model.
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
 const Terms = () => (
   <LegalLayout
     title="Terms of Use"
-    updated="24 July 2026"
+    updated="12 August 2026"
     effective={MARKETPLACE_EFFECTIVE}
     current="/terms"
     description="The terms governing your use of Book A Sloth — accounts, acceptable use, content, and liability. Read before you book or list a service."
@@ -36,7 +36,7 @@ const Terms = () => (
           <strong>These Terms cover using the Platform. Your commercial contract is elsewhere.</strong>
           <br />
           If you are <strong>buying</strong>, your contract is the{' '}
-          <Link to="/guest-terms" className="text-primary hover:underline">Guest Terms of Sale</Link>, together with the{' '}
+          <Link to="/guest-terms" className="text-primary hover:underline">Guest Booking Terms</Link>, together with the{' '}
           <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>.
           <br />
           If you are <strong>selling</strong>, your contract is the{' '}
@@ -75,8 +75,9 @@ const Terms = () => (
         not for the host&rsquo;s service price.
       </p>
       <p>
-        {/* ⚖️ The "collect and remit" characterisation below is tied to the RBI Payment-Aggregator
-            position in the CA/lawyer waiver — counsel to confirm the exact wording matches it. */}
+        {/* Payment flow (asserted, marketplace model v4): the guest's payment is collected and
+            processed through Razorpay, an RBI-authorised payment aggregator; Book A Sloth's own
+            revenue is its fee + commission, and the host's price is remitted to the host. */}
         <strong>2.4</strong> We collect the guest&rsquo;s payment and pay the host&rsquo;s price to the host, after
         deducting our commission (if any), the payment-gateway charge, and any tax we are required to deduct at source
         (TDS under section 194-O and TCS under section 52).
@@ -130,18 +131,18 @@ const Terms = () => (
         <li>You understand you are buying the service from the host, and that Book A Sloth operates the Platform that facilitates the booking, payment, and support.</li>
         <li>You will treat the person performing the service respectfully and comply with any reasonable requirements notified for it.</li>
         <li>You are responsible for any equipment, connectivity, or location needed to receive the service.</li>
-        <li>You will not arrange to pay outside the Platform for a booking started on it. If you do, our Guest Terms of Sale, Refund Policy, and support do not apply to that transaction.</li>
+        <li>You will not arrange to pay outside the Platform for a booking started on it. If you do, our Guest Booking Terms, Refund Policy, and support do not apply to that transaction.</li>
       </ul>
       <p>
         Your purchase is governed in full by the{' '}
-        <Link to="/guest-terms" className="text-primary hover:underline">Guest Terms of Sale</Link>.
+        <Link to="/guest-terms" className="text-primary hover:underline">Guest Booking Terms</Link>.
       </p>
     </Section>
 
     <Section title="6. Bookings, payments, and taxes">
       <ul className="list-disc pl-5 space-y-1.5">
         <li><strong>Booking.</strong> A booking is confirmed when payment (where required) is completed and the Platform confirms it. Free bookings are confirmed on submission.</li>
-        <li><strong>Payments.</strong> Payments are processed by <strong>Razorpay</strong> on our behalf, into an account operated by us as the Platform, from which we pay the host their price. By paying, you agree to Razorpay's terms. We do not store your full payment details (see <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>, Section 6).</li>
+        <li><strong>Payments.</strong> Payments are collected and processed by <strong>Razorpay</strong>, an authorised payment aggregator regulated by the Reserve Bank of India. Book A Sloth's own revenue is its booking fee and, on some plans, commission; the host's price is collected for the host and paid on to the host, net of the deductions set out in the <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp; Payment Schedule</Link>. By paying, you agree to Razorpay's terms. We do not store your full payment details (see <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>, Section 6).</li>
         <li><strong>Price.</strong> The price shown at checkout is the total payable and is inclusive of GST. It is itemised before you pay. We issue the guest a tax invoice for our booking fee; the host is responsible for invoicing their own service price where they are GST-registered.</li>
         <li><strong>Payments to hosts.</strong> We collect the guest's payment and pay the host their price, net of our commission (if any), the payment-gateway charge, and tax deducted at source, on the cycle set out in the <Link to="/host-fees" className="text-primary hover:underline">Host Fee &amp; Payment Schedule</Link>.</li>
         <li><strong>Charges.</strong> Our booking fee, platform commission, and subscription prices for paid plans are published in the Fee Schedule and on the <Link to="/pricing" className="text-primary hover:underline">Pricing page</Link>. The charges applicable to a booking are recorded as a snapshot when it is confirmed.</li>
@@ -200,7 +201,7 @@ const Terms = () => (
         <strong>11.2 The services</strong> are supplied by the host, who is the seller. Book A Sloth operates the
         marketplace and provides grievance redressal and refund facilitation, but does not itself perform or warrant a
         host&rsquo;s service. Your rights as a consumer are dealt with in the{' '}
-        <Link to="/guest-terms" className="text-primary hover:underline">Guest Terms of Sale</Link> and the{' '}
+        <Link to="/guest-terms" className="text-primary hover:underline">Guest Booking Terms</Link> and the{' '}
         <Link to="/refund" className="text-primary hover:underline">Refund &amp; Cancellation Policy</Link>, and nothing
         here excludes a right you have under the Consumer Protection Act, 2019.
       </p>
@@ -217,7 +218,7 @@ const Terms = () => (
         <strong>12.1</strong> This clause limits our liability for <strong>use of the Platform</strong>. Responsibility
         for the service itself lies with the host who supplies it; your rights as a consumer against the host and the
         marketplace are dealt with in the{' '}
-        <Link to="/guest-terms" className="text-primary hover:underline">Guest Terms of Sale</Link>, clause 8, and are
+        <Link to="/guest-terms" className="text-primary hover:underline">Guest Booking Terms</Link>, clause 8, and are
         unaffected by this clause.
       </p>
       <p><strong>12.2</strong> To the maximum extent permitted by applicable law:</p>

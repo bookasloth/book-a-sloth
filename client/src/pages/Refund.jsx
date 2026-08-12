@@ -5,8 +5,7 @@ import LegalLayout, { Section, MARKETPLACE_EFFECTIVE } from '../components/commo
 //
 // MARKETPLACE MODEL v4: the host is the seller, and Book A Sloth FACILITATES refunds and
 // grievance redressal under the Consumer Protection (E-Commerce) Rules, 2020 — the guest
-// can still claim from us. Consumer rights are preserved. The liability framing carries a
-// ⚖️ counsel-review marker inline.
+// can still claim from us. Consumer rights are preserved.
 //
 // The booking + processing charge is non-refundable on guest-initiated cancellations
 // because the gateway does not return MDR on a refund. That is only defensible while
@@ -24,7 +23,7 @@ const Td = ({ children, className = '' }) => (
 const Refund = () => (
   <LegalLayout
     title="Refund & Cancellation Policy"
-    updated="24 July 2026"
+    updated="12 August 2026"
     effective={MARKETPLACE_EFFECTIVE}
     current="/refund"
     description="Book A Sloth refund and cancellation policy — cancellation windows, what is refundable, host cancellations, timelines, and how to claim."
@@ -35,7 +34,7 @@ const Refund = () => (
           &ldquo;<strong>Platform</strong>&rdquo;), operated by <strong>Timewheel Internet Private Limited</strong>{' '}
           (CIN: U62012OD2026PTC052654, GSTIN: 21AAMCT8270C1ZF) (&ldquo;<strong>Book A Sloth</strong>&rdquo;,
           &ldquo;we&rdquo;, &ldquo;us&rdquo;). It forms part of our{' '}
-          <Link to="/guest-terms" className="text-primary hover:underline">Guest Terms of Sale</Link> and our{' '}
+          <Link to="/guest-terms" className="text-primary hover:underline">Guest Booking Terms</Link> and our{' '}
           <Link to="/terms" className="text-primary hover:underline">Terms of Use</Link>.
         </p>
         <p className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
@@ -156,8 +155,8 @@ const Refund = () => (
         <li>We initiate approved refunds within <strong>5&ndash;7 working days</strong> of approval.</li>
         <li>After we initiate it, the amount usually reaches you in <strong>5&ndash;10 working days</strong>, depending on your bank or card issuer. Those timelines are outside our control.</li>
         <li>Refunds are made in INR. Currency conversion differences and third-party charges are not our responsibility.</li>
-        {/* ⚖️ GST — CA REVIEW. Credit-note / GST-adjustment mechanics depend on which invoice
-            (platform fee vs the host's own service invoice) is being reversed; left generic. */}
+        {/* Credit-note / GST-adjustment is made against whichever invoice is reversed (our fee
+            invoice, or the host's own service invoice); stated in general terms in the copy. */}
         <li>Where a refund is issued, any credit note and tax adjustment are made against the applicable invoice in accordance with law.</li>
         <li>Where only part of a booking is refunded, the adjustment reflects the refunded portion.</li>
       </ul>
