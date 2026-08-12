@@ -20,6 +20,7 @@ const profileSecrets = require("../utils/profileSecrets");
 const { verifySignature } = require("../utils/razorpaySignature");
 const { finalizeBookingCapture } = require("../services/bookingCapture");
 const routeTransferService = require("../services/routeTransferService");
+const routeAutoPayoutService = require("../services/routeAutoPayoutService");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
 const { trackServer } = require("../utils/trackServer");
 const manageBookingToken = require("../utils/manageBookingToken");
@@ -1266,7 +1267,11 @@ const handleWebhook = async (req, res) => {
     const transfer = event.payload?.transfer?.entity;
     try {
       if (transfer) {
-        const r = await routeTransferService.handleTransferWebhook(transfer);
+        // A transfer id belongs to EITHER a booking held transfer (Phase 2 auto-
+        // payout) or a payout_request (Phase 1 manual release). Try the booking
+        // handler first; fall back to the payout-request handler.
+        let r = await routeAutoPayoutService.handleBookingTransferWebhook(transfer);
+        if (!r.handled) r = await routeTransferService.handleTransferWebhook(transfer);
         auditLog('WEBHOOK_ROUTE_TRANSFER', null, { transfer_id: transfer.id, event: event.event, status: transfer.status, handled: r.handled, reason: r.reason });
       }
     } catch (err) {
@@ -1281,6 +1286,24 @@ const handleWebhook = async (req, res) => {
           `Razorpay will retry. If this persists a host payout may be stuck — reconcile against the Razorpay dashboard.`,
         ].filter(Boolean),
       });
+      return res.status(500).json({ error: 'processing_failed' });
+    }
+    return res.json({ received: true });
+  }
+
+  // ── Payment dispute (Phase 2): a disputed booking must not pay the host.
+  // Reverse the held Route transfer so the money stays with the platform while
+  // the dispute is resolved. Carries a dispute entity (with a payment_id). ──
+  if (typeof event.event === 'string' && event.event.startsWith('dispute.')) {
+    const dispute = event.payload?.dispute?.entity;
+    const disputedPaymentId = dispute?.payment_id;
+    try {
+      if (disputedPaymentId) {
+        const r = await routeAutoPayoutService.reverseByPaymentId(disputedPaymentId, `dispute ${dispute.id} (${event.event})`);
+        auditLog('WEBHOOK_DISPUTE_REVERSE', null, { dispute_id: dispute.id, payment_id: disputedPaymentId, event: event.event, reversed: r.ok, reason: r.error || r.skipped });
+      }
+    } catch (err) {
+      securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
       return res.status(500).json({ error: 'processing_failed' });
     }
     return res.json({ received: true });

@@ -4,7 +4,7 @@ import {
   Eye, HelpCircle, ChevronDown, Download, X, Calendar, Clock,
   Hash, IndianRupee, Video, RotateCcw, Star, Repeat, CalendarClock,
 } from "lucide-react";
-import { getGuestBookings, cancelBooking, getBookingReview } from "../services/api";
+import { getGuestBookings, cancelBooking, getBookingReview, guestCompleteBooking, guestReportProblem } from "../services/api";
 import { downloadReceipt } from "../utils/receipt";
 import { useAuth } from "../context/AuthContext";
 import useFeatureFlags from "../hooks/useFeatureFlags";
@@ -181,6 +181,36 @@ const CustomerBookings = () => {
   const now = new Date();
   const isUpcoming = (b) => new Date(b.scheduled_at) >= now && b.status !== "cancelled" && b.status !== "completed";
 
+  // Guest confirms the session happened → completes the booking AND releases the
+  // host's payout instantly. Shown for a paid, confirmed booking whose slot has passed.
+  const [confirming, setConfirming] = useState(null);
+  const canConfirm = (b) => b.status === "confirmed" && b.payment_status === "paid" && new Date(b.scheduled_at) < now;
+  const handleConfirmComplete = async (id) => {
+    setConfirming(id);
+    try {
+      await guestCompleteBooking(id);
+      toast.success("Thanks for confirming — your host has been paid.");
+      setBookings((bs) => bs.map((b) => (b.id === id ? { ...b, status: "completed" } : b)));
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not confirm");
+    } finally {
+      setConfirming(null);
+    }
+  };
+  const handleReportProblem = async (id) => {
+    const reason = window.prompt("What went wrong? (e.g. host didn't show up)");
+    if (reason == null) return;
+    setConfirming(id);
+    try {
+      await guestReportProblem(id, reason);
+      toast.success("Reported — we've put the payout on hold and our team will look into it.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not report");
+    } finally {
+      setConfirming(null);
+    }
+  };
+
   const filtered = bookings.filter((b) => {
     if (filter === "all") return true;
     if (filter === "upcoming") return isUpcoming(b);
@@ -235,6 +265,18 @@ const CustomerBookings = () => {
               className="inline-flex items-center gap-1.5 text-sm font-medium text-[#FE5100] hover:underline px-2.5 py-1.5 ml-auto">
               <Video size={15} /> Join
             </a>
+          )}
+          {canConfirm(b) && (
+            <div className="ml-auto flex items-center gap-2">
+              <button onClick={() => handleReportProblem(b.id)} disabled={confirming === b.id}
+                className="text-sm font-medium text-gray-500 hover:text-rose-600 disabled:opacity-60 px-2.5 py-1.5 rounded-lg hover:bg-rose-50">
+                Report a problem
+              </button>
+              <button onClick={() => handleConfirmComplete(b.id)} disabled={confirming === b.id}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#FE5100] hover:bg-[#e04800] disabled:opacity-60 px-3 py-1.5 rounded-lg">
+                {confirming === b.id ? "Confirming…" : "Confirm completed"}
+              </button>
+            </div>
           )}
         </div>
       </div>

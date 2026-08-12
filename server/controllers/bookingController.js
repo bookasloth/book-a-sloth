@@ -1,5 +1,6 @@
 const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require('../utils/httpError');
+const { adminAlert } = require('../utils/adminAlert');
 const { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } = require("../config/google");
 const featureFlags = require("../services/featureFlags");
 const sendEmail = require("../utils/sendEmail");
@@ -724,6 +725,14 @@ const cancelBookingRecord = async (booking, { cancelledBy, actorUserId = null } 
     .single();
   if (error) throw error;
 
+  // Phase 2: a cancelled booking must not pay the host — reverse any held Route
+  // transfer (fire-and-forget; the money returns to the platform balance).
+  if (booking.razorpay_transfer_id) {
+    require("../services/routeAutoPayoutService")
+      .reverseHeldTransfer(booking, { reason: "booking cancelled" })
+      .catch((e) => console.error("cancel transfer reverse failed:", e.message));
+  }
+
   // P1-7: remove the Google Calendar event so a cancelled booking doesn't leave
   // a ghost event (with Meet link) on the host's + guest's calendars. Best-effort.
   if (booking.google_event_id && hostOf(booking).google_calendar_connected) {
@@ -993,6 +1002,96 @@ const completeBooking = async (req, res) => {
     const { data, error } = await markBookingCompleted(booking, { notify: true });
     if (error) return safeError(res, error);
     res.json(await redactForRequest(data, req));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// PUT /api/bookings/:id/guest-complete
+// The GUEST confirms the session happened → marks it completed AND releases the
+// host's held Route transfer immediately (instant payout). This is the trusted
+// release signal: a host completing a booking (completeBooking) never releases
+// money — only the customer's confirmation does, or Razorpay's +24h auto-release.
+const guestConfirmComplete = async (req, res) => {
+  try {
+    const { data: booking } = await supabaseAdmin
+      .from("bookings")
+      .select("*, services(title, duration, grace_period_minutes), profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link)")
+      .eq("id", req.params.id)
+      .single();
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    // Only the guest who owns this booking may confirm it.
+    if (req.user.id !== booking.guest_id) {
+      return res.status(403).json({ message: "Only the guest can confirm this booking." });
+    }
+    if (!["confirmed", "completed"].includes(booking.status)) {
+      return res.status(409).json({ message: "Only a confirmed booking can be confirmed complete." });
+    }
+    // Can only confirm after the session has actually ended (mirrors host guard).
+    const sessionMin = (booking.services?.duration || 30) + (booking.services?.grace_period_minutes || 0);
+    const sessionEnd = new Date(booking.scheduled_at).getTime() + sessionMin * 60000;
+    if (Number.isFinite(sessionEnd) && Date.now() < sessionEnd) {
+      return res.status(409).json({ message: "You can confirm completion only after the session has ended." });
+    }
+
+    // Stamp completion if not already (idempotent inside markBookingCompleted).
+    let row = booking;
+    if (booking.status !== "completed") {
+      const { data, error } = await markBookingCompleted(booking, { notify: false });
+      if (error) return safeError(res, error);
+      row = { ...booking, ...data };
+    }
+
+    // Release the host's held transfer now (fire-and-forget — the +24h auto-release
+    // + transfer webhook are the backstop, and this must never fail the response).
+    const { releaseHeldTransfer } = require("../services/routeAutoPayoutService");
+    releaseHeldTransfer(row).catch((e) => console.error("guest-complete release failed:", e.message));
+
+    res.json(await redactForRequest(row, req));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// PUT /api/bookings/:id/report-problem  { reason? }
+// The GUEST reports a problem (host no-show, service issue) → BLOCKS the host
+// payout by reversing the held transfer (money returns to the platform balance)
+// and alerts admin to resolve (refund the guest and/or pay the host manually).
+const guestReportProblem = async (req, res) => {
+  try {
+    const { data: booking } = await supabaseAdmin
+      .from("bookings").select("*, services(title)").eq("id", req.params.id).single();
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (req.user.id !== booking.guest_id) {
+      return res.status(403).json({ message: "Only the guest can report a problem on this booking." });
+    }
+    const reason = String(req.body?.reason || "").trim().slice(0, 500) || "guest reported a problem";
+
+    // Reverse the held payout so the host is not paid while we investigate.
+    let reversal = { ok: false };
+    if (booking.razorpay_transfer_id) {
+      reversal = await require("../services/routeAutoPayoutService")
+        .reverseHeldTransfer(booking, { reason: `reported: ${reason}` });
+    }
+
+    // Alert admin to resolve (refund / manual payout decision).
+    try {
+      adminAlert({
+        key: `booking_problem:${booking.id}`,
+        subject: `Guest reported a problem — booking ${booking.id}`,
+        lines: [
+          `Service: ${booking.services?.title || "—"}`,
+          `Guest: ${booking.guest_name || booking.guest_email || booking.guest_id}`,
+          `Reason: ${reason}`,
+          booking.razorpay_transfer_id
+            ? `Held payout ${booking.razorpay_transfer_id}: ${reversal.ok ? "reversed (host not paid)" : `reverse FAILED — ${reversal.error || reversal.skipped}`}`
+            : "No held payout for this booking.",
+          `Decide: refund the guest and/or pay the host manually.`,
+        ],
+      });
+    } catch (_) { /* non-fatal */ }
+
+    res.json({ ok: true, payout_held: !!booking.razorpay_transfer_id, reversed: !!reversal.ok });
   } catch (error) {
     safeError(res, error);
   }
@@ -1716,6 +1815,8 @@ module.exports = {
   cancelBooking,
   cancelBookingRecord,
   completeBooking,
+  guestConfirmComplete,
+  guestReportProblem,
   markNoShow,
   markBookingCompleted,
   autoCompleteBookings,

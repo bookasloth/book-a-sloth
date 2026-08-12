@@ -24,9 +24,23 @@ export default function KycHome() {
   const status = kyc?.status || 'not_started';
   const s = STATE[status];
 
+  const pending = Number(kyc?.pending_earnings) || 0;
+  const payoutsReady = !!kyc?.payouts_ready;
+
   return (
     <div>
       <PageHeader title="Verification" subtitle="Verify your identity to receive payouts." />
+      {pending > 0 && !payoutsReady && (
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <span className="text-2xl">💰</span>
+          <p className="text-sm text-amber-800">
+            You have <span className="font-bold">₹{pending.toLocaleString('en-IN')}</span> in pending earnings.
+            {status === 'approved'
+              ? ' Your payout account is being set up — you’ll receive them automatically once it’s active.'
+              : ' Complete your KYC to receive them.'}
+          </p>
+        </div>
+      )}
       {status === 'not_started' ? (
         <Card className="flex flex-col items-center p-8 text-center">
           <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">

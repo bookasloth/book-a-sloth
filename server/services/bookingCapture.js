@@ -137,6 +137,16 @@ async function finalizeBookingCapture({ bookingId, paymentId, feePaise, taxPaise
     });
   }
 
+  // Phase 2: auto-create a HELD Route transfer of the host's payout to their
+  // linked account (released when the customer marks complete, or at +24h).
+  // Fire-and-forget + self-gating (no-op in fee-only mode / no linked account) so
+  // it never blocks or breaks payment finalisation. Idempotent on the booking.
+  if (updated && vendorAmount > 0 && paymentId) {
+    const { createHeldTransferForBooking } = require('./routeAutoPayoutService');
+    createHeldTransferForBooking(updated, { paymentId, vendorAmount })
+      .catch((e) => console.error('auto-payout held transfer failed:', e.message));
+  }
+
   return { updated, vendorAmount, feeExclTax, tax };
 }
 
