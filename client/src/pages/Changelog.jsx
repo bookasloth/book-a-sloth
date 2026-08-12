@@ -19,6 +19,42 @@ const TAG_STYLES = {
 // misplaced entry can't show out of order (see SORTED_RELEASES).
 const RELEASES = [
   {
+    date: 'Aug 12, 2026',
+    title: 'Pick your plan at signup, verify faster',
+    tags: ['New', 'Improved'],
+    points: [
+      'You can now choose our Studio plan right as you set up your page — go live with everything unlocked in a single step, or start free and upgrade whenever you like.',
+      'Getting verified is simpler too: we now ask only for your PAN, bank details, and address — no documents to upload or wait on.',
+    ],
+  },
+  {
+    date: 'Aug 7, 2026',
+    title: 'Automatic GST invoices',
+    tags: ['New'],
+    points: [
+      'Every payment now generates a proper GST invoice automatically — it arrives in your email and is always available to download from your dashboard.',
+      'Subscription receipts are covered the same way, so your paperwork is ready whenever you need it.',
+    ],
+  },
+  {
+    date: 'Jul 30, 2026',
+    title: 'A friendlier way to set up your page',
+    tags: ['New', 'Improved'],
+    points: [
+      'Setting up as a host is now a guided flow: start by picking the persona that best describes what you do, instead of hunting through a long category list.',
+      'Fill in your details on one screen and watch your booking page take shape beside you in a live preview — no guessing how it’ll look.',
+      'The last step is a clear “publish” moment, so you know exactly when you’re live.',
+    ],
+  },
+  {
+    date: 'Jul 25, 2026',
+    title: 'See what you’ll earn',
+    tags: ['New'],
+    points: [
+      'A new earnings calculator on the pricing page lets you preview your take-home at any price and plan — before you commit to anything.',
+    ],
+  },
+  {
     date: 'Jul 24, 2026',
     title: 'A cleaner Google sign-in',
     tags: ['Fixed', 'Security'],

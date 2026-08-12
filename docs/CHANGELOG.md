@@ -4,6 +4,22 @@ All significant changes are recorded here by sprint. Most recent first.
 
 ---
 
+## [Sprint 10] Host Onboarding Redesign, Invoicing & Payout Infrastructure — 2026-08-12
+
+### Added
+- Redesigned host onboarding — persona picker replacing raw category search, split-screen live preview folding About + WhatsApp into one screen, and a publish-moment plan step (#568, #569, #570)
+- Studio annual plan preselected on the onboarding plan step (#603)
+- Host earnings calculator on the pricing page (#567)
+- Automatic GST invoicing — invoice emailed on payment with owner-gated dashboard download, plus self-heal + receipt email for subscription invoices (#573, #583, #576)
+- Streamlined KYC — PAN + bank + address only, no document uploads; approved hosts can update payout details post-approval (#597, #602)
+- Host payout infrastructure via Razorpay Route — linked-account onboarding on KYC approval, booking-linked held transfers released on completion, and an admin dispute queue with manual hold/reverse (#590, #591, #595, #598)
+
+### Changed
+- Host signup references the Host Agreement + Host Fees; onboarding step navigation and resume handling refined (#600, #605)
+- Cleaner booking confirmation screen (#585)
+
+---
+
 ## [Sprint 9] Bolt Support Bot Hardening + Pricing Redesign — 2026-07-23
 
 ### Added
