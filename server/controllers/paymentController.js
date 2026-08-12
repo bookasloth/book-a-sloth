@@ -1294,8 +1294,11 @@ const handleWebhook = async (req, res) => {
 
   // ── Payment dispute (Phase 2): a disputed booking must not pay the host.
   // Reverse the held Route transfer so the money stays with the platform while
-  // the dispute is resolved. Carries a dispute entity (with a payment_id). ──
-  if (typeof event.event === 'string' && event.event.startsWith('dispute.')) {
+  // the dispute is resolved. Carries a dispute entity (with a payment_id).
+  // Razorpay names these `payment.dispute.*` (e.g. payment.dispute.created);
+  // accept the bare `dispute.*` form too for forward-compat. ──
+  if (typeof event.event === 'string'
+      && (event.event.startsWith('payment.dispute.') || event.event.startsWith('dispute.'))) {
     const dispute = event.payload?.dispute?.entity;
     const disputedPaymentId = dispute?.payment_id;
     try {
