@@ -118,8 +118,6 @@ const KycHome      = lazy(() => import('./pages/kyc/KycHome'));
 const KycFlow      = lazy(() => import('./pages/kyc/KycFlow'));
 const KycStart     = lazy(() => import('./pages/kyc/KycStart'));
 const KycBank      = lazy(() => import('./pages/kyc/KycBank'));
-const KycSelfie    = lazy(() => import('./pages/kyc/KycSelfie'));
-const KycDocuments = lazy(() => import('./pages/kyc/KycDocuments'));
 const KycSubmitted = lazy(() => import('./pages/kyc/KycSubmitted'));
 
 // Service Module v2
@@ -414,8 +412,6 @@ function App() {
             <Route index element={<Navigate to="start" replace />} />
             <Route path="start" element={<KycStart />} />
             <Route path="bank" element={<KycBank />} />
-            <Route path="selfie" element={<KycSelfie />} />
-            <Route path="documents" element={<KycDocuments />} />
             <Route path="submitted" element={<KycSubmitted />} />
           </Route>
           <Route path="/dashboard/products" element={<DashboardWrapper><Products /></DashboardWrapper>} />

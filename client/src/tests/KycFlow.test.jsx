@@ -42,7 +42,6 @@ describe('KYC flow step persistence', () => {
 
     await waitFor(() => expect(screen.getByLabelText(/Full name/i).value).toBe('Asha Rao'));
     fireEvent.change(screen.getByLabelText(/PAN number/i), { target: { value: 'ABCDE1234F' } });
-    fireEvent.change(screen.getByLabelText(/Aadhaar number/i), { target: { value: '123456789012' } });
 
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
 

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useKyc } from '../../context/KycContext';
@@ -6,12 +7,14 @@ import { Card, FormField, Input, Select, Button } from '../../components/dashboa
 const IFSC = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 
 export default function KycBank() {
-  const { bank, setBank, address, setAddress } = useKyc();
+  const { bank, setBank, address, setAddress, submit } = useKyc();
   const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
   const set = (k) => (e) => setBank((b) => ({ ...b, [k]: e.target.value }));
   const setAddr = (k) => (e) => setAddress((a) => ({ ...a, [k]: e.target.value }));
 
-  const next = (e) => {
+  // Bank + address is the final step — submit the whole KYC here.
+  const onSubmit = async (e) => {
     e.preventDefault();
     const ifsc = bank.ifsc.trim().toUpperCase();
     const acct = bank.account_number.replace(/\s/g, '');
@@ -26,14 +29,21 @@ export default function KycBank() {
     if (!/^[0-9]{6}$/.test(pin)) return toast.error('PIN code must be 6 digits');
     setBank((b) => ({ ...b, ifsc, account_number: acct }));
     setAddress((a) => ({ ...a, addr_postal_code: pin }));
-    navigate('/dashboard/kyc/flow/selfie');
+    setSubmitting(true);
+    try {
+      await submit();
+      navigate('/dashboard/kyc/flow/submitted');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Could not submit. Please try again.');
+      setSubmitting(false);
+    }
   };
 
   return (
     <Card className="p-4 sm:p-5">
       <h2 className="mb-0.5 text-base font-semibold text-gray-900">Bank account</h2>
       <p className="mb-4 text-sm text-gray-500">Payouts are sent to this account after verification.</p>
-      <form onSubmit={next} className="space-y-3">
+      <form onSubmit={onSubmit} className="space-y-3">
         <FormField label="Account holder name" htmlFor="b-holder" required className="mb-0">
           <Input id="b-holder" value={bank.holder_name} onChange={set('holder_name')} placeholder="As per bank records" />
         </FormField>
@@ -86,7 +96,7 @@ export default function KycBank() {
 
         <div className="flex gap-3 pt-2">
           <Button type="button" size="lg" variant="outline" full onClick={() => navigate('/dashboard/kyc/flow/start')}>Back</Button>
-          <Button type="submit" size="lg" full>Continue</Button>
+          <Button type="submit" size="lg" full disabled={submitting}>{submitting ? 'Submitting…' : 'Submit for verification'}</Button>
         </div>
       </form>
     </Card>

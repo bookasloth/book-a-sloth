@@ -27,20 +27,18 @@ export default function KycStart() {
   const next = (e) => {
     e.preventDefault();
     const pan = personal.pan_number.trim().toUpperCase();
-    const aadhaar = personal.aadhaar_number.replace(/\D/g, '');
     if (!personal.full_name.trim()) return toast.error('Enter your full name');
     if (!RE.email.test(personal.email.trim())) return toast.error('Enter a valid email');
     if (!RE.phone.test(personal.phone.replace(/\D/g, ''))) return toast.error('Enter a valid phone number');
     if (!RE.pan.test(pan)) return toast.error('PAN must look like ABCDE1234F');
-    if (!RE.aadhaar.test(aadhaar)) return toast.error('Aadhaar must be 12 digits');
-    setPersonal((p) => ({ ...p, pan_number: pan, aadhaar_number: aadhaar }));
+    setPersonal((p) => ({ ...p, pan_number: pan }));
     navigate('/dashboard/kyc/flow/bank');
   };
 
   return (
     <Card className="p-4 sm:p-5">
       <h2 className="mb-0.5 text-base font-semibold text-gray-900">Personal details</h2>
-      <p className="mb-4 text-sm text-gray-500">These must match your PAN and Aadhaar exactly.</p>
+      <p className="mb-4 text-sm text-gray-500">These must match your PAN exactly.</p>
       <form onSubmit={next} className="space-y-3">
         <FormField label="Full name" htmlFor="k-name" required className="mb-0">
           <Input id="k-name" value={personal.full_name} onChange={set('full_name')} placeholder="As printed on PAN" />
@@ -53,14 +51,9 @@ export default function KycStart() {
             <Input id="k-phone" inputMode="numeric" value={personal.phone} onChange={set('phone')} placeholder="10-digit number" />
           </FormField>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="PAN number" htmlFor="k-pan" required hint="Format: ABCDE1234F" className="mb-0">
-            <Input id="k-pan" value={personal.pan_number} onChange={set('pan_number')} maxLength={10} className="uppercase" placeholder="ABCDE1234F" />
-          </FormField>
-          <FormField label="Aadhaar number" htmlFor="k-aadhaar" required hint="12 digits" className="mb-0">
-            <Input id="k-aadhaar" inputMode="numeric" value={personal.aadhaar_number} onChange={set('aadhaar_number')} maxLength={12} placeholder="1234 5678 9012" />
-          </FormField>
-        </div>
+        <FormField label="PAN number" htmlFor="k-pan" required hint="Format: ABCDE1234F" className="mb-0">
+          <Input id="k-pan" value={personal.pan_number} onChange={set('pan_number')} maxLength={10} className="uppercase" placeholder="ABCDE1234F" />
+        </FormField>
         <div className="pt-2">
           <Button type="submit" size="lg" full>Continue</Button>
         </div>
