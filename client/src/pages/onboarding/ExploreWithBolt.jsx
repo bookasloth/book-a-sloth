@@ -17,10 +17,20 @@ const ExploreWithBolt = () => {
   // Fire once on mount. Doubles the delight moment even if the host followed
   // a paid path where PlansStep already fired: canvas-confetti dedupes fine,
   // and the second burst reads as "and you're live!" not spam.
+  //
+  // Also complete onboarding HERE, not only on the button. If the host closes
+  // the /live tab, onboarding_completed must still flip — otherwise it stays
+  // false forever (guard/analytics/gating all read it). markComplete is
+  // idempotent, so the button re-calling it is harmless.
   useEffect(() => {
     if (ready && !firedRef.current) {
       firedRef.current = true;
       fireCelebration();
+      markOnboardingComplete().catch((error) => {
+        const msg = error.response?.data?.message || '';
+        // Missing category → recover instead of stranding the host here.
+        if (/categor/i.test(msg)) navigate(`/vendor-register/${slug}/category`);
+      });
     }
   }, [ready]);
 
@@ -41,7 +51,13 @@ const ExploreWithBolt = () => {
       await markOnboardingComplete();
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to complete');
+      const msg = error.response?.data?.message || 'Failed to complete';
+      toast.error(msg);
+      // Recovery: completion is gated on a category. If it's missing the host
+      // would otherwise be stranded here — send them back to pick one.
+      if (/categor/i.test(msg)) {
+        navigate(`/vendor-register/${slug}/category`);
+      }
     } finally {
       setLoading(false);
     }

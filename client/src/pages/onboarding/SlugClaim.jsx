@@ -106,7 +106,7 @@ const SlugClaim = () => {
     setClaiming(true);
     try {
       await claimOnboardingSlug(slug);
-      navigate(`/vendor-register/${slug}/about`);
+      navigate(`/vendor-register/${slug}/category`);
     } catch (err) {
       // Server sends { message }, not { error } — read message first (audit P2-10)
       // so the real reason ("Slug already taken") surfaces instead of a generic axios string.
