@@ -998,6 +998,52 @@ const completeBooking = async (req, res) => {
   }
 };
 
+// PUT /api/bookings/:id/guest-complete
+// The GUEST confirms the session happened → marks it completed AND releases the
+// host's held Route transfer immediately (instant payout). This is the trusted
+// release signal: a host completing a booking (completeBooking) never releases
+// money — only the customer's confirmation does, or Razorpay's +24h auto-release.
+const guestConfirmComplete = async (req, res) => {
+  try {
+    const { data: booking } = await supabaseAdmin
+      .from("bookings")
+      .select("*, services(title, duration, grace_period_minutes), profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link)")
+      .eq("id", req.params.id)
+      .single();
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    // Only the guest who owns this booking may confirm it.
+    if (req.user.id !== booking.guest_id) {
+      return res.status(403).json({ message: "Only the guest can confirm this booking." });
+    }
+    if (!["confirmed", "completed"].includes(booking.status)) {
+      return res.status(409).json({ message: "Only a confirmed booking can be confirmed complete." });
+    }
+    // Can only confirm after the session has actually ended (mirrors host guard).
+    const sessionMin = (booking.services?.duration || 30) + (booking.services?.grace_period_minutes || 0);
+    const sessionEnd = new Date(booking.scheduled_at).getTime() + sessionMin * 60000;
+    if (Number.isFinite(sessionEnd) && Date.now() < sessionEnd) {
+      return res.status(409).json({ message: "You can confirm completion only after the session has ended." });
+    }
+
+    // Stamp completion if not already (idempotent inside markBookingCompleted).
+    let row = booking;
+    if (booking.status !== "completed") {
+      const { data, error } = await markBookingCompleted(booking, { notify: false });
+      if (error) return safeError(res, error);
+      row = { ...booking, ...data };
+    }
+
+    // Release the host's held transfer now (fire-and-forget — the +24h auto-release
+    // + transfer webhook are the backstop, and this must never fail the response).
+    const { releaseHeldTransfer } = require("../services/routeAutoPayoutService");
+    releaseHeldTransfer(row).catch((e) => console.error("guest-complete release failed:", e.message));
+
+    res.json(await redactForRequest(row, req));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 // PUT /api/bookings/:id/no-show  (audit P1-6)
 // Host records that the guest did not attend. Distinct, auditable terminal state
 // — previously no-shows were silently auto-completed, so the host was paid and
@@ -1716,6 +1762,7 @@ module.exports = {
   cancelBooking,
   cancelBookingRecord,
   completeBooking,
+  guestConfirmComplete,
   markNoShow,
   markBookingCompleted,
   autoCompleteBookings,

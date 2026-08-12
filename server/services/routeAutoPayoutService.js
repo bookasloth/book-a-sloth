@@ -23,6 +23,8 @@
 const razorpayConfig = require('./razorpayConfig');
 const platformConfig = require('./platformConfig');
 const { supabaseAdmin } = require('../config/supabase');
+const { post } = require('./ledger/postingService');
+const { payoutEntry } = require('./ledger/journalTemplates');
 const { securityLog } = require('../utils/logger');
 
 const toPaise = (rupees) => Math.round(Number(rupees) * 100);
@@ -115,4 +117,74 @@ async function createHeldTransferForBooking(booking, { paymentId, vendorAmount }
   }
 }
 
-module.exports = { createHeldTransferForBooking, computeHoldUntil, toPaise };
+// Post the SETTLEMENT ledger entry (relieve Vendor Payables → Bank) and mark the
+// booking's transfer released. Idempotent on (SETTLEMENT, booking.id) + the
+// transfer_status guard, so calling from release AND the webhook settles once.
+async function finalizeReleasedTransfer(booking, createdBy = null) {
+  const amount = Number(booking.vendor_amount) || 0;
+  if (amount > 0) {
+    await post({
+      sourceType: 'SETTLEMENT', sourceId: booking.id,
+      journalDate: new Date().toISOString().slice(0, 10), createdBy,
+      template: payoutEntry({ host_id: booking.host_id, amount, reference: booking.razorpay_transfer_id }),
+    });
+  }
+  await patchBooking(booking.id, {
+    transfer_status: 'processed', transfer_released_at: new Date().toISOString(), transfer_error: null,
+  });
+}
+
+/**
+ * Release a booking's held transfer NOW (host is paid). Called when the CUSTOMER
+ * confirms the booking is complete. No-op if there's no held transfer.
+ */
+async function releaseHeldTransfer(booking, { createdBy = null } = {}) {
+  try {
+    if (!booking?.razorpay_transfer_id) return { ok: false, skipped: 'no_transfer' };
+    if (booking.transfer_status === 'processed') return { ok: true, skipped: 'already_released' };
+    if (booking.transfer_status === 'reversed') return { ok: false, skipped: 'reversed' };
+
+    const razorpay = await razorpayConfig.getClient();
+    await razorpay.transfers.edit(booking.razorpay_transfer_id, { on_hold: false });
+    await finalizeReleasedTransfer(booking, createdBy);
+    return { ok: true, released: true };
+  } catch (err) {
+    const reason = err?.error?.description || err?.message || 'unknown error';
+    securityLog('route_auto_payout_release_error', { bookingId: booking?.id, reason });
+    return { ok: false, error: reason };
+  }
+}
+
+/**
+ * Apply a Route transfer.* webhook that belongs to a BOOKING held transfer.
+ * transfer.processed (released — either via releaseHeldTransfer or Razorpay's
+ * on_hold_until auto-release) → finalise the payout; failed/reversed → record it.
+ * @returns {Promise<{ handled: boolean, reason?: string }>}
+ */
+async function handleBookingTransferWebhook(transfer) {
+  const transferId = transfer?.id;
+  if (!transferId) return { handled: false, reason: 'no_transfer_id' };
+  const { data: booking } = await supabaseAdmin
+    .from('bookings').select('*').eq('razorpay_transfer_id', transferId).maybeSingle();
+  if (!booking) return { handled: false, reason: 'not_a_booking_transfer' };
+
+  const status = transfer.status;
+  if (status === 'processed') {
+    if (booking.transfer_status === 'processed') return { handled: true, reason: 'already' };
+    await finalizeReleasedTransfer(booking, null);
+    return { handled: true };
+  }
+  if (status === 'failed' || status === 'reversed') {
+    await patchBooking(booking.id, {
+      transfer_status: status,
+      transfer_error: transfer.error?.description || status,
+    });
+    return { handled: true };
+  }
+  return { handled: true, reason: `ignored_status_${status || 'none'}` };
+}
+
+module.exports = {
+  createHeldTransferForBooking, releaseHeldTransfer, handleBookingTransferWebhook,
+  finalizeReleasedTransfer, computeHoldUntil, toPaise,
+};
