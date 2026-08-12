@@ -79,7 +79,8 @@ const GoogleStart = () => {
 
         <p className="mt-2 text-xs text-gray-400">
           By continuing, you agree to our{' '}
-          <Link to="/terms" className="hover:underline">Terms</Link> and{' '}
+          <Link to="/host-agreement" className="hover:underline">Host Agreement</Link>,{' '}
+          <Link to="/host-fees" className="hover:underline">Host Fees</Link>, and{' '}
           <Link to="/privacy" className="hover:underline">Privacy Policy</Link>.
         </p>
       </div>
