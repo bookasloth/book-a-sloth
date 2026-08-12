@@ -29,7 +29,7 @@ const HostFees = () => (
     updated="12 August 2026"
     effective="on your acceptance during host onboarding"
     current="/host-fees"
-    description="What Book A Sloth charges hosts — booking fee, platform commission, payment processing, TDS/TCS, the payment cycle, and worked examples."
+    description="What Book A Sloth charges hosts — booking fee, platform commission, payment processing, TDS/TCS, how and when you are paid, and worked examples."
     intro={
       <>
         <p>
@@ -186,35 +186,27 @@ const HostFees = () => (
 
     <Section title="6. Your documents and GST">
       <ul className="list-disc pl-5 space-y-1.5">
-        <li><strong>Payment Advice.</strong> For each paid Booking we issue you a Payment Advice recording your price and the amounts deducted. It is <strong>not</strong> a tax invoice and carries no GST — it is your record of what you earned and what was deducted.</li>
+        <li><strong>Payout statement.</strong> For each paid Booking, your dashboard records your price and the amounts deducted (commission, gateway charge, TDS, TCS). It is <strong>not</strong> a tax invoice and carries no GST — it is your record of what you earned and what was deducted.</li>
         <li><strong>Commission tax invoice.</strong> Where commission applies, we issue you a tax invoice from Book A Sloth for the commission (with GST), so you may claim input credit if registered.</li>
         <li><strong>Your own invoice.</strong> The sale of your Service is your sale to your Guest. If you are GST-registered, you are responsible for issuing your own tax invoice for your price and for accounting for GST on it. If you are not registered, no GST arises on your price.</li>
-        <li><strong>PAN.</strong> A valid PAN is required before you can accept paid bookings. TDS/TCS certificates are issued against it, and your TDS/TCS totals for any period are available on your dashboard.</li>
+        <li><strong>PAN.</strong> A valid PAN is required before you can accept paid bookings. TDS and TCS are deposited to the government against your PAN; your TDS/TCS totals for any period are shown on your dashboard, and the credit reflects in your Form 26AS and on the GST portal.</li>
       </ul>
     </Section>
 
-    <Section title="7. Payment cycle">
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
-          <thead className="bg-gray-50">
-            <tr>
-              <Th>Services completed</Th>
-              <Th>Cut-off</Th>
-              <Th>Paid on or before</Th>
-            </tr>
-          </thead>
-          <tbody className="text-gray-600">
-            <tr><Td>1st &ndash; 15th</Td><Td>15th</Td><Td>last working day of that month</Td></tr>
-            <tr><Td className="border-b-0">16th &ndash; end of month</Td><Td className="border-b-0">last day of month</Td><Td className="border-b-0">15th of the following month</Td></tr>
-          </tbody>
-        </table>
-      </div>
+    <Section title="7. How and when you are paid">
+      <p>
+        Your payout is transferred to your <strong>Razorpay Linked Account</strong> through <strong>Razorpay Route</strong>.
+        The transfer is created when your Guest pays and is <strong>held</strong> until after the Service (currently the
+        scheduled end plus about <strong>24 hours</strong>), then released &mdash; when the Booking is marked complete or
+        automatically at the end of the hold. If the Booking is cancelled, undelivered, or disputed, the held transfer
+        may be reversed. See clause 7 of the <Link to="/host-agreement" className="text-primary hover:underline">Host
+        Services Agreement</Link>.
+      </p>
       <ul className="list-disc pl-5 space-y-1.5 pt-2">
-        <li>A Booking enters a cycle only if the Service was completed <strong>at least 7 days before the cut-off</strong> and the cancellation and dispute window has closed.</li>
-        <li><strong>Minimum payment ₹500.</strong> Below that, the balance carries forward to the next cycle.</li>
-        <li>For your first <strong>90 days</strong> or first 20 completed Bookings, whichever is later, we may retain a <strong>10% security holdback</strong>, released after that period to the extent not applied against amounts you owe. See clause 7.3 of the Agreement.</li>
-        <li>We may defer payment while a complaint, refund, chargeback, or verification is open, or while your KYC, PAN, bank, or GST details are incomplete. See clause 7.4.</li>
-        <li>Payment is made to the verified bank account on your Host account. <strong>A valid PAN is required before your first payment.</strong></li>
+        <li><strong>Complete KYC first.</strong> Payouts require an <strong>activated Razorpay Linked Account</strong> (set up from your KYC). Until it is active, amounts due are held to your credit and paid once it is activated &mdash; nothing is lost.</li>
+        <li><strong>Minimum ₹100</strong> for a payout you request; amounts below ₹1 accrue to your credit.</li>
+        <li>We may defer payment while a complaint, refund, chargeback, or verification is open, or while your KYC, PAN, or bank details are incomplete. See clause 7.4 of the Agreement.</li>
+        <li>A valid PAN is required before you can accept paid bookings.</li>
         <li>Raise any query on a statement within <strong>30 days</strong>. After that it is treated as accepted.</li>
       </ul>
     </Section>
@@ -223,9 +215,8 @@ const HostFees = () => (
       <p>Under clause 9 of the Agreement we may deduct from amounts payable to you:</p>
       <ul className="list-disc pl-5 space-y-1.5">
         <li>refunds and credits given to a Guest for a Booking you supplied or failed to supply;</li>
-        <li>chargebacks and payment reversals, and the fees charged to us for them;</li>
-        <li>a <strong>₹500</strong> handling charge per chargeback or upheld Guest complaint;</li>
-        <li>a <strong>₹250</strong> handling charge per cancellation or non-attendance attributable to you, plus the processing cost of the resulting refund;</li>
+        <li>chargebacks and payment reversals, and the fees a bank or the payment gateway charges us for them;</li>
+        <li>the payment-processing and transfer-reversal cost we incur on a cancellation, refund, or dispute attributable to you;</li>
         <li>input tax credit denied or reversed because of your GST filing, with interest and penalty;</li>
         <li>tax, interest, or penalty demanded from us in respect of payments to you;</li>
         <li>subscription and Plan fees, and any other sum you owe us;</li>

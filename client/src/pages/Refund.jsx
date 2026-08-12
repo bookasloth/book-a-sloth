@@ -7,9 +7,12 @@ import LegalLayout, { Section, MARKETPLACE_EFFECTIVE } from '../components/commo
 // grievance redressal under the Consumer Protection (E-Commerce) Rules, 2020 — the guest
 // can still claim from us. Consumer rights are preserved.
 //
-// The booking + processing charge is non-refundable on guest-initiated cancellations
-// because the gateway does not return MDR on a refund. That is only defensible while
-// it is disclosed BEFORE payment — keep the checkout disclosure in step with this page.
+// RECONCILED TO PRODUCT (main, Aug 2026): there is NO automated guest-refund code — refunds
+// are assessed and issued MANUALLY by our team (Razorpay dashboard). The tiers below are the
+// POLICY we apply on review, not an automatic engine. FLAG for founder+lawyer: checkout
+// currently shows "Free to cancel" and does NOT mark the booking/processing charge
+// non-refundable — the non-refundable position needs the checkout disclosure fixed (product)
+// or the claim softened (lawyer call). Wording below no longer claims a checkout "non-refundable" notice.
 
 const Mail = () => <a href="mailto:team@timewheel.co.in" className="text-primary hover:underline">team@timewheel.co.in</a>;
 
@@ -50,8 +53,7 @@ const Refund = () => (
   >
     <Section title="1. Cancellation windows for bookings">
       <p>
-        The window that applies is shown at checkout before you pay. Unless the listing states a different window, the
-        default is:
+        Unless the listing states a different window, the default cancellation policy we apply is:
       </p>
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-2 border-gray-200 rounded-xl overflow-hidden">
@@ -85,8 +87,9 @@ const Refund = () => (
         that cost is real and already spent.
       </p>
       <p>
-        These charges are itemised at checkout <strong>before</strong> you pay, and marked non-refundable there. If you
-        do not accept that, do not complete the payment.
+        These charges are itemised at checkout as part of your total <strong>before</strong> you pay. Because our
+        payment provider does not return its fee to us on a refund, they are not returned on a cancellation you
+        initiate, as set out in this Policy.
       </p>
       <p>
         <strong>This does not apply where the fault is ours.</strong> If we or the host cancel, or the service is not
@@ -138,14 +141,15 @@ const Refund = () => (
 
     <Section title="6. How to claim a refund">
       <ol className="list-decimal pl-5 space-y-1.5">
-        <li>Cancel through the Platform where the option is available &mdash; that is the fastest route and applies Section 1 automatically.</li>
+        <li>Cancel through the Platform where the option is available, then email <Mail /> so we can process any refund due under Section 1.</li>
         <li>For anything in Section 3, email <Mail /> within <strong>7 days</strong> of the scheduled time.</li>
         <li>Include your name, the phone number or email used for the booking, the booking reference (and the Razorpay payment ID if you have it), the date and time of the appointment, and what went wrong.</li>
       </ol>
       <p>
-        We aim to acknowledge within <strong>48 hours</strong> and decide within <strong>7 working days</strong>. We may
-        contact the host to verify what happened, and we may ask you for further information. If we do, please reply
-        within 5 working days so we can close the matter.
+        Refunds are <strong>reviewed and issued by our team</strong> &mdash; they are not automatic. We aim to
+        acknowledge within <strong>48 hours</strong> and decide within <strong>7 working days</strong>. We may contact
+        the host to verify what happened, and we may ask you for further information. If we do, please reply within 5
+        working days so we can close the matter.
       </p>
     </Section>
 
