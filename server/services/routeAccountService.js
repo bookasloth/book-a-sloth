@@ -26,7 +26,6 @@
 'use strict';
 
 const razorpayConfig = require('./razorpayConfig');
-const platformConfig = require('./platformConfig');
 const { supabaseAdmin } = require('../config/supabase');
 const { decrypt } = require('../utils/kycCrypto');
 const { securityLog } = require('../utils/logger');
@@ -164,9 +163,9 @@ async function createLinkedAccount(kyc) {
       };
     }
 
-    // Dormant until payout go-live. fee_only_mode true → no host money infra runs.
-    const { feeOnlyMode } = await platformConfig.getConfig();
-    if (feeOnlyMode) return { ok: false, skipped: 'fee_only_mode' };
+    // Dormant until payout go-live (per-host: a paid-enabled pilot host onboards
+    // even while the platform is globally in fee-only mode).
+    if (await require('./paidMode').feeOnlyForHost(kyc.user_id)) return { ok: false, skipped: 'fee_only_mode' };
 
     if (!(await razorpayConfig.isConfigured())) return { ok: false, skipped: 'razorpay_unconfigured' };
     if (!kyc.email) return { ok: false, skipped: 'missing_email' };

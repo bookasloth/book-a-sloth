@@ -381,9 +381,11 @@ const createBooking = async (req, res) => {
     const planRecord        = await planService.getPlan(effectivePlanSlug);
     const commissionPct     = Number(planRecord.commission_percentage) || 0;
 
-    // Platform fee + GST rate are admin-editable settings. feeOnlyMode (interim,
-    // no Route): every booking still carries the platform fee even at ₹0 price.
-    const { platformFee: feeSetting, gstRate, feeOnlyMode } = await platformConfig.getConfig();
+    // Platform fee + GST rate are admin-editable settings. In fee-only mode every
+    // booking still carries the platform fee even at ₹0 price — but a paid-enabled
+    // host (pilot) is in normal paid mode, so the fee follows the real price.
+    const { platformFee: feeSetting, gstRate } = await platformConfig.getConfig();
+    const feeOnlyMode = await require('../services/paidMode').feeOnlyForHost(host_id);
 
     // Razorpay fee is vendor-borne and only known at capture → finalised in
     // paymentController.verifyPayment. Here razorpayFee = 0 (payout provisional).

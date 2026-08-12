@@ -160,7 +160,8 @@ const createOrder = async (req, res) => {
     let platformFee   = Number(booking.platform_fee_amount) || 0;
     let gst           = Number(booking.platform_fee_gst) || 0;
     if (customerTotal <= 0) {
-      const { platformFee: feeSetting, gstRate, feeOnlyMode } = await platformConfig.getConfig();
+      const { platformFee: feeSetting, gstRate } = await platformConfig.getConfig();
+      const feeOnlyMode = await require("../services/paidMode").feeOnlyForHost(booking.host_id);
       const b = computeBreakdown({ servicePrice, commissionPercentage: 0, platformFee: feeSetting, gstRate, chargeFeeOnFree: feeOnlyMode });
       customerTotal = b.customerTotal; platformFee = b.platformFee; gst = b.gst;
     }

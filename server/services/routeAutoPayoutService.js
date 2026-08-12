@@ -21,7 +21,6 @@
 'use strict';
 
 const razorpayConfig = require('./razorpayConfig');
-const platformConfig = require('./platformConfig');
 const { supabaseAdmin } = require('../config/supabase');
 const { post } = require('./ledger/postingService');
 const { payoutEntry } = require('./ledger/journalTemplates');
@@ -81,8 +80,7 @@ async function createHeldTransferForBooking(booking, { paymentId, vendorAmount }
     if (!(amount > 0)) return { ok: false, skipped: 'no_payout_due' };
     if (!paymentId) return { ok: false, skipped: 'no_payment_id' };
 
-    const { feeOnlyMode } = await platformConfig.getConfig();
-    if (feeOnlyMode) return { ok: false, skipped: 'fee_only_mode' };
+    if (await require('./paidMode').feeOnlyForHost(booking.host_id)) return { ok: false, skipped: 'fee_only_mode' };
     if (!(await razorpayConfig.isConfigured())) return { ok: false, skipped: 'razorpay_unconfigured' };
 
     // No linked account → money stays owed (host nudged to finish KYC). Not an error.

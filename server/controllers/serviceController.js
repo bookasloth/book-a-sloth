@@ -225,9 +225,10 @@ const createService = async (req, res) => {
 
     const p = buildPayload(req.body);
     // Interim fee-only mode (no Razorpay Route yet): hosts cannot list a paid
-    // service — force the price to ₹0. Flip fee_only_mode off on Route go-live.
-    const { feeOnlyMode } = await getPlatformConfig();
-    if (feeOnlyMode) p.price = 0;
+    // service — force the price to ₹0. A paid-enabled host (pilot allow-list) is
+    // exempt. Flip fee_only_mode off on full Route go-live.
+    const { feeOnlyForHost } = require('../services/paidMode');
+    if (await feeOnlyForHost(req.user.id)) p.price = 0;
     p.category = chk.value;
     p.primary_category = chk.primary;
     p.host_id  = req.user.id;
@@ -295,9 +296,10 @@ const getServiceById = async (req, res) => {
 const updateService = async (req, res) => {
   try {
     const updates = buildPayload(req.body);
-    // Interim fee-only mode: no paid listings — force ₹0 on every update.
-    const { feeOnlyMode } = await getPlatformConfig();
-    if (feeOnlyMode) updates.price = 0;
+    // Interim fee-only mode: no paid listings — force ₹0 on every update
+    // (a paid-enabled host on the pilot allow-list is exempt).
+    const { feeOnlyForHost } = require('../services/paidMode');
+    if (await feeOnlyForHost(req.user.id)) updates.price = 0;
     if (req.body.category !== undefined) {
       const chk = await resolveAndValidateCategory(supabaseAdmin, req.user.id, req.body.category, { required: false });
       if (!chk.ok) return res.status(chk.status).json({ message: chk.message });

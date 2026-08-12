@@ -23,7 +23,6 @@
 'use strict';
 
 const razorpayConfig = require('./razorpayConfig');
-const platformConfig = require('./platformConfig');
 const { supabaseAdmin } = require('../config/supabase');
 const { post } = require('./ledger/postingService');
 const { payoutEntry } = require('./ledger/journalTemplates');
@@ -94,9 +93,8 @@ async function releasePayout(payout, { actorId } = {}) {
     if (payout.status !== 'approved') return { ok: false, error: `cannot pay a ${payout.status} request` };
     if (payout.razorpay_transfer_id) return { ok: true, transferId: payout.razorpay_transfer_id, skipped: 'already_transferred' };
 
-    // Dormant until payout go-live.
-    const { feeOnlyMode } = await platformConfig.getConfig();
-    if (feeOnlyMode) return { ok: false, skipped: 'fee_only_mode' };
+    // Dormant until payout go-live (per-host: a paid-enabled pilot host is live).
+    if (await require('./paidMode').feeOnlyForHost(payout.host_id)) return { ok: false, skipped: 'fee_only_mode' };
     if (!(await razorpayConfig.isConfigured())) return { ok: false, error: 'razorpay_unconfigured' };
 
     const accountId = await getLinkedAccountId(payout.host_id);
