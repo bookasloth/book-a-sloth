@@ -110,10 +110,12 @@ const serializeProfile = async (profile, session) => {
   } catch (_) { /* fail-safe: no bypass hint, server still enforces */ }
   // Interim fee-only mode: the host UI uses this to hide the service-price field
   // (paid listings are disabled until Razorpay Route). Fail-safe true. Cached 60s.
+  // Per-host: a paid-enabled pilot host sees paid mode (price field unlocked) even
+  // while the platform is globally fee-only. Fail-safe true.
   let fee_only_mode = true;
   try {
-    const { getConfig } = require('../services/platformConfig');
-    fee_only_mode = (await getConfig()).feeOnlyMode;
+    const { feeOnlyForHost } = require('../services/paidMode');
+    fee_only_mode = await feeOnlyForHost(profile.id);
   } catch (_) { /* fail-safe: default to fee-only */ }
   return {
   _id:                      profile.id,
