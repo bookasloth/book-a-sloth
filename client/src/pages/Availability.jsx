@@ -192,11 +192,11 @@ const Availability = () => {
                       aria-label={`${open ? "Close" : "Open"} ${day}`}
                       onClick={() => toggleDay(day)}
                       className={cn(
-                        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40",
+                        "relative inline-flex h-[22px] min-h-0 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40",
                         open ? "bg-primary" : "bg-gray-200",
                       )}
                     >
-                      <span className={cn("inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform", open ? "translate-x-6" : "translate-x-1")} />
+                      <span className={cn("inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform", open ? "translate-x-[22px]" : "translate-x-[2px]")} />
                     </button>
                     <span className={cn("text-sm", open ? "text-gray-700" : "text-gray-400")}>{open ? "Available" : "Unavailable"}</span>
                   </div>
