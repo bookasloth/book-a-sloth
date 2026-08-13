@@ -9,25 +9,26 @@ import { isHost, routeRole } from '../../utils/roleRoutes';
 import { getNotifications, markAllNotificationsRead, markNotificationRead, getGuestBookings } from '../../services/api';
 import { getPlanBorderLabel, normalizePlan } from '../../utils/themeUtils';
 import {
-  Home, Tag, HelpCircle,
+  Tag,
   CalendarCheck, MessageCircle, Bookmark, BarChart2,
   Briefcase, Bell, X, Menu, ChevronDown, ChevronRight,
   Search, User, Settings, LogOut, TrendingUp,
   Clock, Wallet, LayoutDashboard, ExternalLink,
   Gift, Star, Info, Compass, Cpu, HeartPulse,
   GraduationCap, Sparkles, Mail, Award, Layers, Headset,
+  BookOpen, Building2,
 } from 'lucide-react';
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
 
-// Help lives as its own top-level header link (high-intent), so it is
-// deliberately absent from More to avoid a duplicate entry.
+// "More" overflow menu. How It Works, Pricing and Explore are top-level links
+// (see PublicCenterNav), so they are deliberately absent here.
 const MORE_MENU = [
-  { label: 'How It Works', href: '/#how-it-works', icon: Sparkles },
-  { label: 'FAQ',          href: '/#faq',          icon: MessageCircle },
-  { label: 'Contact',      href: '/contact',       icon: Mail },
-  { label: 'Careers',      href: '/careers',       icon: Briefcase },
-  { label: 'About',        href: '/about',         icon: Info },
+  { label: 'Blog',       href: '/blog',       icon: BookOpen },
+  { label: 'About',      href: '/about',      icon: Info },
+  { label: 'Careers',    href: '/careers',    icon: Briefcase },
+  { label: 'Enterprise', href: '/enterprise', icon: Building2 },
+  { label: 'Contact',    href: '/contact',    icon: Mail },
 ];
 
 // Slim guest profile menu (logged-in guests). The navbar carries nothing but the
@@ -227,18 +228,19 @@ const NavDropdown = ({ label, icon: Icon, wide = false, children }) => {
   );
 };
 
-// ── Public center nav (logged-out): Use Cases mega + Pricing + More ──────────
+// ── Public center nav (logged-out): How It Works + Pricing + Explore + More ──
 const PublicCenterNav = () => (
   <>
-    <UseCasesMegaMenu />
+    <Link to="/how-it-works" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
+      How It Works
+    </Link>
 
     <Link to="/pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
       Pricing
     </Link>
 
-    <Link to="/help" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
-      Help
-    </Link>
+    {/* Explore = browse creators by industry (mega-menu) */}
+    <UseCasesMegaMenu />
 
     <NavDropdown label="More">
       <div className="py-1">
@@ -655,20 +657,16 @@ const Navbar = () => {
               })}
             </div>
 
-            {/* Public (mobile): Home / Pricing / Use Cases / More, then the CTA.
-                Industry + info collapsed so the drawer stays short. */}
+            {/* Public (mobile): How It Works / Pricing / Explore / More, then the
+                CTA. Industry + info collapsed so the drawer stays short. */}
             {!user && (
               <div className="px-2 pt-2 space-y-1.5">
-                <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-                  <Home size={16} className="flex-shrink-0 text-gray-400" /> Home
+                <Link to="/how-it-works" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                  <Sparkles size={16} className="flex-shrink-0 text-gray-400" /> How It Works
                 </Link>
 
                 <Link to="/pricing" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
                   <Tag size={16} className="flex-shrink-0 text-gray-400" /> Pricing
-                </Link>
-
-                <Link to="/help" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-                  <HelpCircle size={16} className="flex-shrink-0 text-gray-400" /> Help
                 </Link>
 
                 {/* Explore (browse by industry) — collapsed by default */}
