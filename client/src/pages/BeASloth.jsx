@@ -165,7 +165,9 @@ const BeASloth = () => {
       {/* ── RIGHT · signup card ──────────────────────────────────────────────── */}
       <main className="flex flex-col items-center justify-center px-5 py-10 sm:py-12">
         <div className="page-card w-full max-w-lg p-6 text-center sm:p-8">
-          <Logo className="mx-auto h-14 w-14" />
+          <Link to="/" aria-label="Book A Sloth — home" className="inline-block">
+            <Logo className="mx-auto h-14 w-14" />
+          </Link>
 
           <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-cta">
             Become a host
@@ -203,7 +205,7 @@ const BeASloth = () => {
             <Link to="/privacy" className="hover:underline">Privacy Policy</Link>.
           </p>
 
-          {/* Secondary providers — not yet available, shown disabled */}
+          {/* Secondary providers — hidden (kept for later re-enable)
           <button
             type="button"
             disabled
@@ -224,6 +226,7 @@ const BeASloth = () => {
             <MailIcon />
             Login with Email
           </button>
+          */}
 
           <ul className="mt-6 space-y-2 text-left text-xs text-gray-500">
             <li className="flex gap-2">
@@ -239,6 +242,21 @@ const BeASloth = () => {
               <span>Google Meet links created for every online booking</span>
             </li>
           </ul>
+
+          {/* Book a demo — 1:1 onboarding call with the founder */}
+          <div className="my-4 flex items-center gap-3">
+            <span className="h-px flex-1 bg-black/10" />
+            <span className="text-xs font-medium uppercase tracking-wide text-gray-400">Or</span>
+            <span className="h-px flex-1 bg-black/10" />
+          </div>
+          <a
+            href="https://bookasloth.com/sndatarkar/booking/book-a-sloth-app-online-demo-30-min-advisory-session"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn flex w-full items-center justify-center gap-3 border-2 border-primary-cta bg-primary-cta py-3 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:bg-black hover:text-primary-cta"
+          >
+            Book A Demo
+          </a>
 
           <p className="mt-8 text-sm text-gray-500">
             Already a sloth?{' '}

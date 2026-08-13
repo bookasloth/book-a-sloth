@@ -283,6 +283,7 @@ function App() {
     location.pathname.startsWith('/lp') ||
     location.pathname.startsWith('/for/') ||
     location.pathname.startsWith('/features') ||
+    location.pathname === '/be-a-sloth' ||
     location.pathname === '/hello-sloth';
 
   const isAuthPage =
