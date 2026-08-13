@@ -134,6 +134,9 @@ function CategoryModal({ open, onClose, onSaved, editing, primary, primaryLabel 
               <span className="text-sm text-gray-700">Active</span>
               <button
                 type="button"
+                role="switch"
+                aria-checked={isActive}
+                aria-label="Active"
                 onClick={() => setIsActive((v) => !v)}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isActive ? 'bg-[#FE5100]' : 'bg-gray-300'}`}
               >

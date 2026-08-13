@@ -8,8 +8,8 @@ import {
 } from '../../services/api';
 import { PageHeader, Card, Btn, Badge } from '../../components/admin/ui';
 
-const Toggle = ({ on, onChange, color = 'bg-emerald-500' }) => (
-  <button onClick={onChange} type="button"
+const Toggle = ({ on, onChange, color = 'bg-emerald-500', label }) => (
+  <button onClick={onChange} type="button" role="switch" aria-checked={on} aria-label={label}
     className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${on ? color : 'bg-gray-300'}`}>
     <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${on ? 'left-[22px]' : 'left-0.5'}`} />
   </button>
