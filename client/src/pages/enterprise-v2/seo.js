@@ -1,5 +1,8 @@
-import { FAQ } from './enterpriseData';
+// SEO for /enterprise. Ported from the previous pages/enterprise/enterpriseSeo.js
+// so the head tags + JSON-LD survive the design swap. FAQ copy is imported from
+// the FAQ component (single source of truth) to feed faqJsonLd.
 import { SITE_URL, organizationJsonLd, faqJsonLd, breadcrumbJsonLd } from '../../utils/seo';
+import { faqs } from './components/FAQ';
 
 const URL = `${SITE_URL}/enterprise`;
 
@@ -12,9 +15,6 @@ export const ENT_SEO = {
   ogDescription: 'Booking infrastructure for organizations with multiple teams, locations, and workflows.',
 };
 
-// utils/seo.js has no SoftwareApplication builder yet and Enterprise is the
-// only page that needs this @type, so it's kept local rather than added to
-// the shared file. ponytail: promote to utils/seo.js if a second page needs it.
 const softwareApplicationJsonLd = () => ({
   '@type': 'SoftwareApplication',
   name: 'Book A Sloth Enterprise',
@@ -25,9 +25,8 @@ const softwareApplicationJsonLd = () => ({
   // No aggregateRating/review — do not fabricate.
 });
 
-// organizationJsonLd/faqJsonLd/breadcrumbJsonLd each return a full
-// {'@context', '@type', ...} document; strip '@context' before nesting
-// multiple nodes under one shared '@graph'.
+// Each shared builder returns a full {'@context', '@type', ...} document; strip
+// '@context' before nesting multiple nodes under one shared '@graph'.
 const stripContext = ({ '@context': _ctx, ...rest }) => rest;
 
 export function buildEnterpriseJsonLd() {
@@ -36,7 +35,7 @@ export function buildEnterpriseJsonLd() {
     '@graph': [
       stripContext(organizationJsonLd({ siteUrl: SITE_URL })),
       softwareApplicationJsonLd(),
-      stripContext(faqJsonLd({ faqs: FAQ })),
+      stripContext(faqJsonLd({ faqs })),
       stripContext(breadcrumbJsonLd({
         siteUrl: SITE_URL,
         items: [
