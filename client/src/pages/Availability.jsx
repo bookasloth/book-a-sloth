@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2, MoreHorizontal, Globe, Clock, Settings } from "lucide-react";
 import {
   setAvailability as saveAvailability,
   getAvailability,
@@ -7,22 +7,41 @@ import {
 import BackButton from "../components/common/BackButton";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Button, FormField, Select, Input, StickyActionBar, cn,
+  PageHeader, Card, Button, FormField, Select, Input, StickyActionBar,
+  ContextMenu, cn,
 } from "../components/dashboard/ui";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 const DEFAULT_SCHEDULE = DAYS.reduce((acc, day) => { acc[day] = []; return acc; }, {});
 
+// 30-min preset grid, stored as 24h "HH:MM", displayed 12h. Old records saved via
+// <input type=time> may hold off-grid values — TimeSelect injects a fallback option
+// so a legacy "09:15" still shows instead of rendering blank.
+const pad = (n) => String(n).padStart(2, "0");
+const to12h = (h, m) => `${h % 12 === 0 ? 12 : h % 12}:${pad(m)} ${h < 12 ? "AM" : "PM"}`;
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2), m = (i % 2) * 30;
+  return { value: `${pad(h)}:${pad(m)}`, label: to12h(h, m) };
+});
+
+const TimeSelect = ({ value, onChange }) => {
+  const known = TIME_OPTIONS.some((o) => o.value === value);
+  return (
+    <Select value={value} onChange={onChange}>
+      {!known && value && <option value={value}>{value}</option>}
+      {TIME_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </Select>
+  );
+};
+
 const Availability = () => {
   const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
   const [timezone, setTimezone] = useState("Asia/Kolkata");
-  const [bufferMinutes, setBufferMinutes] = useState(0); // Task 13
+  const [bufferMinutes, setBufferMinutes] = useState(0);
   const [blockedDates, setBlockedDates] = useState([]); // "YYYY-MM-DD" strings
   const [newBlockedDate, setNewBlockedDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [hasSaved, setHasSaved] = useState(false);
 
   const fetchAvailability = async () => {
     try {
@@ -32,56 +51,51 @@ const Availability = () => {
         setTimezone(data.timezone || "Asia/Kolkata");
         setBufferMinutes(data.buffer_minutes || 0);
         setBlockedDates(Array.isArray(data.blocked_dates) ? data.blocked_dates : []);
-        // Any configured day means availability was set before → open in view mode.
-        const configured = Object.values(data.weekly_schedule || {}).some(
-          (slots) => Array.isArray(slots) && slots.length > 0
-        );
-        setHasSaved(configured);
-        setIsEditing(!configured);
-      } else {
-        setIsEditing(true);
       }
-    } catch {
-      setIsEditing(true); /* no record yet — let them set it up */
-    }
+    } catch { /* no record yet — start with defaults */ }
   };
 
   useEffect(() => { fetchAvailability(); }, []);
 
   const addSlot = (day) => {
-    setSchedule({ ...schedule, [day]: [...schedule[day], { start: "09:00", end: "17:00" }] });
+    setSchedule((s) => ({ ...s, [day]: [...(s[day] || []), { start: "09:00", end: "17:00" }] }));
     setDirty(true);
   };
   const removeSlot = (day, idx) => {
-    setSchedule({ ...schedule, [day]: schedule[day].filter((_, i) => i !== idx) });
+    setSchedule((s) => ({ ...s, [day]: s[day].filter((_, i) => i !== idx) }));
     setDirty(true);
   };
   const updateSlot = (day, idx, field, val) => {
-    const updated = [...schedule[day]];
-    updated[idx] = { ...updated[idx], [field]: val };
-    setSchedule({ ...schedule, [day]: updated });
+    setSchedule((s) => {
+      const updated = [...s[day]];
+      updated[idx] = { ...updated[idx], [field]: val };
+      return { ...s, [day]: updated };
+    });
     setDirty(true);
   };
-  // Per-day open/closed. A day is "open" when it has ≥1 slot; toggling on seeds a
-  // default 9–5 window, toggling off clears the day (matches the save model where
-  // an empty slot array = unavailable). Removing the last slot also closes the day.
+  // A day is "open" when it has ≥1 slot; toggling on seeds a default 9–5 window,
+  // toggling off clears the day (empty slot array = unavailable in the save model).
   const isDayOpen = (day) => (schedule[day]?.length || 0) > 0;
   const toggleDay = (day) => {
     setSchedule((s) => ({ ...s, [day]: s[day]?.length ? [] : [{ start: "09:00", end: "17:00" }] }));
     setDirty(true);
   };
-  const copyToAll = (sourceDay) => {
-    const src = schedule[sourceDay];
-    const newSch = {};
-    DAYS.forEach((d) => { newSch[d] = src.map((s) => ({ ...s })); });
-    setSchedule(newSch);
-    toast.success("Copied to all days");
+  // "Apply Monday's hours to…" — copy Monday's windows onto a scope of days.
+  const applyMondayTo = (scope) => {
+    const src = schedule.monday || [];
+    if (!src.length) { toast.error("Set Monday's hours first"); return; }
+    const targets = scope === "weekdays" ? DAYS.slice(0, 5) : scope === "weekend" ? DAYS.slice(5) : DAYS;
+    setSchedule((s) => {
+      const next = { ...s };
+      targets.forEach((d) => { next[d] = src.map((w) => ({ ...w })); });
+      return next;
+    });
+    toast.success("Applied Monday's hours");
     setDirty(true);
   };
 
-  // Mirror the server validation (P1-10) for instant feedback: each window must
-  // have end > start and windows on a day must not overlap. HH:MM strings from
-  // <input type="time"> compare lexically, so string comparison is correct.
+  // Mirror server validation (P1-10): each window needs end > start, no overlaps on
+  // a day. HH:MM strings compare lexically, so string comparison is correct.
   const validateSchedule = () => {
     for (const day of DAYS) {
       const windows = schedule[day] || [];
@@ -113,8 +127,6 @@ const Availability = () => {
       });
       toast.success("Availability saved!");
       setDirty(false);
-      setHasSaved(true);
-      setIsEditing(false);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to save");
     } finally {
@@ -122,84 +134,57 @@ const Availability = () => {
     }
   };
 
+  const scrollToSettings = () => {
+    document.getElementById("schedule-settings")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const rowMenu = (day, idx) => [
+    { label: "Add slot", icon: Plus, onSelect: () => addSlot(day) },
+    { label: "Remove slot", icon: Trash2, danger: true, onSelect: () => removeSlot(day, idx) },
+    { label: "Mark unavailable", onSelect: () => isDayOpen(day) && toggleDay(day) },
+  ];
+
   return (
-    <div className="mx-auto max-w-3xl">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
       <BackButton hasUnsavedChanges={dirty} />
       <PageHeader title="Set Your Availability" subtitle="Define when guests can book time with you." />
 
-      {!isEditing ? (
-        <div className="space-y-4">
-          <Card>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900">Your weekly hours</h2>
-              <span className="text-xs text-gray-400">
-                {timezone}{bufferMinutes ? ` · ${bufferMinutes}m buffer` : ""}
-              </span>
-            </div>
-            <div className="space-y-1.5">
-              {DAYS.map((day) => (
-                <div key={day} className="flex items-center justify-between text-sm">
-                  <span className="capitalize text-gray-700">{day}</span>
-                  <span className={schedule[day]?.length ? "font-medium text-gray-900" : "text-gray-400"}>
-                    {schedule[day]?.length ? schedule[day].map((s) => `${s.start}–${s.end}`).join(", ") : "Unavailable"}
-                  </span>
-                </div>
-              ))}
-            </div>
-            {blockedDates.length > 0 && (
-              <p className="mt-3 text-xs text-gray-500">
-                {blockedDates.length} blocked date{blockedDates.length > 1 ? "s" : ""}
-              </p>
-            )}
-          </Card>
-          <Button onClick={() => setIsEditing(true)} className="w-full sm:w-auto sm:px-8">Edit Availability</Button>
+      {/* Weekly schedule */}
+      <Card className="mb-5">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Weekly schedule</h2>
+            <p className="text-xs text-gray-400">Set the days and times you are available for bookings.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+            <span className="inline-flex items-center gap-1"><Globe className="h-3.5 w-3.5" /> {timezone}</span>
+            {bufferMinutes > 0 && <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {bufferMinutes} min buffer</span>}
+            <Button type="button" variant="secondary" size="sm" onClick={scrollToSettings}>
+              <Settings className="h-3.5 w-3.5" /> Schedule settings
+            </Button>
+          </div>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          {/* Timezone + Buffer settings */}
-          <Card className="mb-5">
-            <h2 className="mb-4 text-base font-semibold text-gray-900">Settings</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField label="Timezone" htmlFor="av-tz" className="mb-0">
-                <Select id="av-tz" value={timezone} onChange={(e) => { setTimezone(e.target.value); setDirty(true); }}>
-                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
-                  <option value="America/New_York">America/New_York (EST)</option>
-                  <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
-                  <option value="Europe/London">Europe/London (GMT)</option>
-                  <option value="Europe/Berlin">Europe/Berlin (CET)</option>
-                  <option value="Asia/Dubai">Asia/Dubai (GST)</option>
-                  <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
-                </Select>
-              </FormField>
-              <FormField
-                label={<>Buffer Between Sessions <span className="ml-1 font-normal text-gray-400">(break after each booking)</span></>}
-                htmlFor="av-buffer"
-                className="mb-0"
-              >
-                <Select id="av-buffer" value={bufferMinutes} onChange={(e) => { setBufferMinutes(parseInt(e.target.value)); setDirty(true); }}>
-                  <option value={0}>No buffer</option>
-                  <option value={5}>5 minutes</option>
-                  <option value={10}>10 minutes</option>
-                  <option value={15}>15 minutes</option>
-                  <option value={30}>30 minutes</option>
-                  <option value={60}>1 hour</option>
-                </Select>
-                {bufferMinutes > 0 && (
-                  <p className="mt-1 text-xs text-blue-600">Guests will see {bufferMinutes} min gaps between available slots.</p>
-                )}
-              </FormField>
-            </div>
-          </Card>
 
-          {/* Weekly schedule */}
-          <div className="space-y-4">
-            {DAYS.map((day) => {
-              const open = isDayOpen(day);
-              return (
-              <Card key={day}>
-                <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    {/* Per-day on/off switch */}
+        {/* Column headers (sm+) */}
+        <div className="hidden border-b border-gray-100 pb-2 text-xs font-medium text-gray-400 sm:grid sm:grid-cols-[8rem_9rem_1fr_2.5rem]">
+          <span>Day</span><span>Availability</span><span>Time slots</span><span />
+        </div>
+
+        <div className="divide-y divide-gray-100">
+          {DAYS.map((day) => {
+            const open = isDayOpen(day);
+            const slots = open ? schedule[day] : [null]; // one row even when closed
+            return slots.map((slot, i) => (
+              <div
+                key={`${day}-${i}`}
+                className="grid grid-cols-1 items-center gap-2 py-3 sm:grid-cols-[8rem_9rem_1fr_2.5rem]"
+              >
+                {/* Day name — only on first row of the day */}
+                <span className="font-medium capitalize text-gray-900">{i === 0 ? day : ""}</span>
+
+                {/* Availability toggle — only first row */}
+                {i === 0 ? (
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       role="switch"
@@ -207,106 +192,151 @@ const Availability = () => {
                       aria-label={`${open ? "Close" : "Open"} ${day}`}
                       onClick={() => toggleDay(day)}
                       className={cn(
-                        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40",
+                        "relative inline-flex h-[22px] min-h-0 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40",
                         open ? "bg-primary" : "bg-gray-200",
                       )}
                     >
-                      <span className={cn("inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform", open ? "translate-x-6" : "translate-x-1")} />
+                      <span className={cn("inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform", open ? "translate-x-[22px]" : "translate-x-[2px]")} />
                     </button>
-                    <h3 className="font-medium capitalize text-gray-900">{day}</h3>
-                    {!open && <span className="text-xs text-gray-400">Closed</span>}
+                    <span className={cn("text-sm", open ? "text-gray-700" : "text-gray-400")}>{open ? "Available" : "Unavailable"}</span>
                   </div>
-                  {open && (
-                    <div className="flex flex-wrap items-center gap-3">
-                      <button type="button" onClick={() => copyToAll(day)} className="text-xs font-medium text-primary hover:underline">Copy to all</button>
-                      <Button type="button" variant="secondary" size="sm" onClick={() => addSlot(day)}>
-                        <Plus className="h-3.5 w-3.5" /> Add slot
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                {open && (
-                  <div className="space-y-2">
-                    {schedule[day].map((slot, i) => (
-                      <div key={i} className="grid items-center gap-2 sm:grid-cols-[1fr_auto_1fr_auto]">
-                        <Input type="time" value={slot.start} onChange={(e) => updateSlot(day, i, "start", e.target.value)} />
-                        <span className="text-center text-gray-400">to</span>
-                        <Input type="time" value={slot.end} onChange={(e) => updateSlot(day, i, "end", e.target.value)} />
-                        <button type="button" onClick={() => removeSlot(day, i)} className="justify-self-start text-sm text-red-500 hover:text-red-600 sm:ml-1">Remove</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
-              );
-            })}
-          </div>
+                ) : <span className="hidden sm:block" />}
 
-          {/* Blocked dates — full days guests can never book */}
-          <Card className="mt-5">
-            <h2 className="mb-1 text-base font-semibold text-gray-900">Blocked Dates</h2>
-            <p className="mb-3 text-xs text-gray-400">Holidays, time off — these dates show no slots regardless of your weekly schedule.</p>
-            <div className="mb-3 flex gap-2">
-              <Input
-                type="date"
-                className="flex-1"
-                min={new Date().toISOString().slice(0, 10)}
-                value={newBlockedDate}
-                onChange={(e) => setNewBlockedDate(e.target.value)}
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  if (!newBlockedDate) return;
-                  if (blockedDates.includes(newBlockedDate)) { toast.error("Date already blocked"); return; }
-                  setBlockedDates([...blockedDates, newBlockedDate].sort());
-                  setNewBlockedDate("");
-                  setDirty(true);
-                }}
-              >
-                <Plus className="h-3.5 w-3.5" /> Block date
-              </Button>
-            </div>
-            {blockedDates.length === 0 ? (
-              <p className="text-sm text-gray-400">No blocked dates</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {blockedDates.map((d) => (
-                  <span key={d} className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700">
-                    {d}
-                    <button
-                      type="button"
-                      onClick={() => { setBlockedDates(blockedDates.filter((x) => x !== d)); setDirty(true); }}
-                      className="font-bold text-red-400 hover:text-red-600"
-                      aria-label={`Unblock ${d}`}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
+                {/* Time slots */}
+                {open ? (
+                  <div className="grid items-center gap-2 sm:grid-cols-[1fr_auto_1fr]">
+                    <TimeSelect value={slot.start} onChange={(e) => updateSlot(day, i, "start", e.target.value)} />
+                    <span className="hidden text-center text-gray-400 sm:block">–</span>
+                    <TimeSelect value={slot.end} onChange={(e) => updateSlot(day, i, "end", e.target.value)} />
+                  </div>
+                ) : <span className="text-sm text-gray-400">Closed</span>}
+
+                {/* Row menu */}
+                {open ? (
+                  <ContextMenu
+                    openOnClick
+                    title={`${day} slot`}
+                    items={rowMenu(day, i)}
+                    trigger={
+                      <button type="button" aria-label={`${day} slot options`} className="justify-self-end rounded-lg p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-600">
+                        <MoreHorizontal className="h-5 w-5" />
+                      </button>
+                    }
+                  />
+                ) : <span />}
               </div>
-            )}
-          </Card>
+            ));
+          })}
+        </div>
 
-          <StickyActionBar>
-            {hasSaved && (
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={loading}
-                onClick={() => { fetchAvailability(); setIsEditing(false); setDirty(false); }}
-              >
-                Cancel
-              </Button>
-            )}
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save Availability"}
-            </Button>
-          </StickyActionBar>
-        </form>
-      )}
-    </div>
+        {/* Apply Monday's hours to… */}
+        <div className="mt-4 flex justify-end border-t border-gray-100 pt-4">
+          <Select
+            value=""
+            onChange={(e) => { if (e.target.value) applyMondayTo(e.target.value); e.target.value = ""; }}
+            className="w-auto"
+            aria-label="Apply Monday's hours to a group of days"
+          >
+            <option value="">Apply Monday's hours to…</option>
+            <option value="all">All days</option>
+            <option value="weekdays">Weekdays (Mon–Fri)</option>
+            <option value="weekend">Weekend (Sat–Sun)</option>
+          </Select>
+        </div>
+      </Card>
+
+      {/* Blocked dates — full days guests can never book */}
+      <Card className="mb-5">
+        <h2 className="mb-1 text-base font-semibold text-gray-900">Blocked dates</h2>
+        <p className="mb-3 text-xs text-gray-400">Holidays, time off — these dates show no slots regardless of your weekly schedule.</p>
+        <div className="mb-3 flex gap-2">
+          <Input
+            type="date"
+            className="flex-1"
+            min={new Date().toISOString().slice(0, 10)}
+            value={newBlockedDate}
+            onChange={(e) => setNewBlockedDate(e.target.value)}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              if (!newBlockedDate) return;
+              if (blockedDates.includes(newBlockedDate)) { toast.error("Date already blocked"); return; }
+              setBlockedDates([...blockedDates, newBlockedDate].sort());
+              setNewBlockedDate("");
+              setDirty(true);
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" /> Block date
+          </Button>
+        </div>
+        {blockedDates.length === 0 ? (
+          <p className="text-sm text-gray-400">No blocked dates</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {blockedDates.map((d) => (
+              <span key={d} className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700">
+                {d}
+                <button
+                  type="button"
+                  onClick={() => { setBlockedDates(blockedDates.filter((x) => x !== d)); setDirty(true); }}
+                  className="font-bold text-red-400 hover:text-red-600"
+                  aria-label={`Unblock ${d}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Schedule settings — timezone + buffer */}
+      <Card id="schedule-settings" className="mb-5">
+        <h2 className="mb-1 text-base font-semibold text-gray-900">Schedule settings</h2>
+        <p className="mb-4 text-xs text-gray-400">Update your timezone and buffer between bookings.</p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <FormField label="Time zone" htmlFor="av-tz" className="mb-0">
+            <Select id="av-tz" value={timezone} onChange={(e) => { setTimezone(e.target.value); setDirty(true); }}>
+              <option value="Asia/Kolkata">Asia/Kolkata (GMT +05:30)</option>
+              <option value="America/New_York">America/New_York (EST)</option>
+              <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+              <option value="Europe/London">Europe/London (GMT)</option>
+              <option value="Europe/Berlin">Europe/Berlin (CET)</option>
+              <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+              <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+            </Select>
+          </FormField>
+          <FormField label="Buffer between bookings" htmlFor="av-buffer" className="mb-0">
+            <Select id="av-buffer" value={bufferMinutes} onChange={(e) => { setBufferMinutes(parseInt(e.target.value)); setDirty(true); }}>
+              <option value={0}>No buffer</option>
+              <option value={5}>5 minutes</option>
+              <option value={10}>10 minutes</option>
+              <option value={15}>15 minutes</option>
+              <option value={30}>30 minutes</option>
+              <option value={60}>1 hour</option>
+            </Select>
+          </FormField>
+        </div>
+        <p className="mt-2 text-xs text-gray-400">A buffer is the gap between the end of one booking and the start of the next.</p>
+      </Card>
+
+      <StickyActionBar>
+        {dirty && <span className="mr-auto text-sm text-gray-500">You have unsaved changes</span>}
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={loading}
+          onClick={() => { fetchAvailability(); setDirty(false); }}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? "Saving..." : "Save availability"}
+        </Button>
+      </StickyActionBar>
+    </form>
   );
 };
 
