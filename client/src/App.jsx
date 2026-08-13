@@ -57,6 +57,7 @@ const About          = lazy(() => import('./pages/About'));
 const Careers        = lazy(() => import('./pages/Careers'));
 const JobDetail      = lazy(() => import('./pages/JobDetail'));
 const Enterprise     = lazy(() => import('./pages/Enterprise'));
+const HowItWorks     = lazy(() => import('./pages/HowItWorks'));
 
 // Paid-traffic landing pages (/lp/*) — own header/footer, global nav hidden
 const TopmateVsBookASloth = lazy(() => import('./pages/lp/TopmateVsBookASloth'));
@@ -118,6 +119,7 @@ const KycHome      = lazy(() => import('./pages/kyc/KycHome'));
 const KycFlow      = lazy(() => import('./pages/kyc/KycFlow'));
 const KycStart     = lazy(() => import('./pages/kyc/KycStart'));
 const KycBank      = lazy(() => import('./pages/kyc/KycBank'));
+const KycAddress   = lazy(() => import('./pages/kyc/KycAddress'));
 const KycSubmitted = lazy(() => import('./pages/kyc/KycSubmitted'));
 
 // Service Module v2
@@ -413,6 +415,7 @@ function App() {
             <Route index element={<Navigate to="start" replace />} />
             <Route path="start" element={<KycStart />} />
             <Route path="bank" element={<KycBank />} />
+            <Route path="address" element={<KycAddress />} />
             <Route path="submitted" element={<KycSubmitted />} />
           </Route>
           <Route path="/dashboard/products" element={<DashboardWrapper><Products /></DashboardWrapper>} />
@@ -528,6 +531,7 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/get-in-touch" element={<Contact />} />
           <Route path="/enterprise" element={<Enterprise />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
 
           {/* Branded error pages — config-driven (see config/errorCatalog.js).
               One <ErrorPage> component renders all of them; adding a code = a

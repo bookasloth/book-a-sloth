@@ -21,9 +21,9 @@ export function KycProvider({ children }) {
   // Step completion — drives the guards. A step is done when its data is present.
   const done = useMemo(() => {
     const p = personal.full_name && personal.email && personal.phone && personal.pan_number;
-    const b = bank.holder_name && bank.bank_name && bank.account_number && bank.ifsc && bank.account_type
-      && address.addr_street1 && address.addr_city && address.addr_state && address.addr_postal_code;
-    return { personal: !!p, bank: !!b };
+    const b = bank.holder_name && bank.bank_name && bank.account_number && bank.ifsc && bank.account_type;
+    const a = address.addr_street1 && address.addr_city && address.addr_state && address.addr_postal_code;
+    return { personal: !!p, bank: !!b, address: !!a };
   }, [personal, bank, address]);
 
   const submit = useCallback(async () => {
