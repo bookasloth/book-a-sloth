@@ -164,6 +164,7 @@ app.use('/api/email',         require('./routes/emailRoutes')); // public unsubs
 app.use('/api/contact',       require('./routes/contactRoutes')); // public contact form → support email
 app.use('/api/bot',           require('./routes/botRoutes')); // public "Bolt 958" support bot (grounded on docs/)
 app.use('/api/enterprise-lead', require('./routes/enterpriseLeadRoutes')); // public /enterprise page lead form → support email
+app.use('/api/opening',       require('./routes/openingRoutes')); // public "The Opening" launch event (ribbon cut + Inaugurators Wall)
 app.use('/api/whatsapp',      require('./routes/whatsappRoutes'));
 app.use('/api/username',      require('./routes/usernameRoutes')); // public resolve (edge 301) + auth check
 app.get('/api/appearance',  require('./controllers/appearanceController').getPublic); // public navbar logo
