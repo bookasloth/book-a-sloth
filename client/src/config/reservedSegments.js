@@ -12,7 +12,7 @@ export const RESERVED_FIRST_SEGMENTS = [
   'help', 'about', 'careers', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore', 'changelog', 'blog', 'blogs', 'pricing', 'services', 'features',
   // Legal document set — see components/common/LegalLayout.jsx POLICIES.
   'guest-terms', 'host-agreement', 'host-fees',
-  'contact', 'get-in-touch', 'enterprise', 'earnings-calculator',
+  'contact', 'get-in-touch', 'enterprise', 'earnings-calculator', 'how-it-works',
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'manage-booking', 'lp', 'for', 'invite',
   // /og/blog/:slug — render target for the OG card generator (see pages/OgCard.jsx).

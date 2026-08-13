@@ -12,7 +12,7 @@ const { normalizeSlug } = require('../utils/slugNormalize');
 // Every first path-segment the app owns today (client App.jsx + server root routes).
 const ROUTES = [
   'login', 'logout', 'signin', 'signup', 'register', 'forgot-password', 'reset-password',
-  'help', 'about', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore',
+  'help', 'about', 'privacy', 'terms', 'refund', 'unsubscribe', 'support', 'explore', 'how-it-works',
   'guest-terms', 'host-agreement', 'host-fees', // legal document set
   'be-a-sloth', 'login-as-vendor', 'vendor', 'vendor-register', 'auth',
   'hello-sloth', 'super-dashboard', 'admin', 'dashboard', 'user', 'review', 'manage-booking', 'lp', 'for',
