@@ -10,7 +10,7 @@ export default function KycSubmitted() {
         Your KYC is under review. To fast-track approval, schedule a short video KYC call —
         payouts unlock once verified.
       </p>
-      <a href="https://kyc.bookasloth.in" target="_blank" rel="noopener noreferrer" className="w-full max-w-xs">
+      <a href="https://bookasloth.com/sndatarkar/booking/video-kyc-for-book-a-sloth" target="_blank" rel="noopener noreferrer" className="w-full max-w-xs">
         <Button size="lg" full><Video className="h-4 w-4" /> Schedule a Video KYC</Button>
       </a>
     </Card>

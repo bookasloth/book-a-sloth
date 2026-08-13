@@ -56,7 +56,7 @@ export default function KycHome() {
           </span>
           <h2 className="mb-1 text-lg font-bold text-gray-900">Complete your KYC</h2>
           <p className="mb-6 max-w-sm text-sm text-gray-500">
-            A quick 4-step check — personal details, bank account, a live selfie, and your PAN + Aadhaar. Required before your first payout.
+            A quick 3-step check — personal details, bank account, and your registered address. Required before your first payout.
           </p>
           <div className="w-full max-w-xs">
             <Button size="lg" full onClick={() => navigate('/dashboard/kyc/flow/start')}>Start verification</Button>

@@ -5,7 +5,8 @@ import { cn } from '../../components/dashboard/ui';
 
 const STEPS = [
   { path: 'start', label: 'Personal' },
-  { path: 'bank', label: 'Bank & address' },
+  { path: 'bank', label: 'Bank' },
+  { path: 'address', label: 'Address' },
   { path: 'submitted', label: 'Done' },
 ];
 const ORDER = STEPS.map((s) => s.path);
@@ -16,8 +17,8 @@ function Guard({ children }) {
   const { pathname } = useLocation();
   const cur = pathname.split('/').pop();
 
-  const doneByStep = { start: done.personal, bank: done.bank };
-  const seq = ['start', 'bank'];
+  const doneByStep = { start: done.personal, bank: done.bank, address: done.address };
+  const seq = ['start', 'bank', 'address'];
   const target = seq.find((s) => !doneByStep[s]) || 'submitted';
 
   if (ORDER.indexOf(cur) > ORDER.indexOf(target)) {
