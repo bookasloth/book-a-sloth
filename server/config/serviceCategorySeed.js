@@ -15,6 +15,14 @@
 // NOTE: the picker a host sees is driven by their profiles.primary_category, so a
 // profession with no entry here simply shows an empty picker (service stays
 // uncategorised — allowed).
+//
+// ⚠️ GST §9(5) GUARD: do NOT add services NOTIFIED under §9(5) CGST — passenger
+// transport, hotel/guesthouse ACCOMMODATION (lodging), HOUSEKEEPING (plumber/
+// carpenter type), restaurant/cloud-kitchen food. For those the platform is the
+// DEEMED SUPPLIER (pays GST on the full value; TCS §52 doesn't apply), which breaks
+// the marketplace tax model (host handles own GST; we take TDS+TCS). Today's
+// catalogue is all OUTSIDE §9(5). Any such addition needs CA sign-off + deemed-
+// supplier handling first. See memory: gst-9-5-classification.
 
 const SERVICE_CATEGORY_SEED = {
   // ── Technology & Product ────────────────────────────────────────────────────
