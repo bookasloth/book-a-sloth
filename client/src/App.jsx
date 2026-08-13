@@ -76,6 +76,8 @@ const Pricing        = lazy(() => import('./pages/Pricing'));
 const Blog           = lazy(() => import('./pages/Blog'));
 const Search         = lazy(() => import('./pages/Search'));
 const WallOfLove     = lazy(() => import('./pages/WallOfLove'));
+const Opening        = lazy(() => import('./pages/Opening'));
+const Inaugurators   = lazy(() => import('./pages/Inaugurators'));
 const BlogPost       = lazy(() => import('./pages/BlogPost'));
 const Moments        = lazy(() => import('./pages/Moments'));
 const MomentPage     = lazy(() => import('./pages/MomentPage'));
@@ -286,6 +288,7 @@ function App() {
     location.pathname.startsWith('/for/') ||
     location.pathname.startsWith('/features') ||
     location.pathname === '/be-a-sloth' ||
+    location.pathname === '/opening' ||
     location.pathname === '/hello-sloth';
 
   const isAuthPage =
@@ -349,6 +352,8 @@ function App() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/search" element={<Search />} />
           <Route path="/wall-of-love" element={<WallOfLove />} />
+          <Route path="/opening" element={<Opening />} />
+          <Route path="/inaugurators" element={<Inaugurators />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/moments" element={<Moments />} />
