@@ -13,24 +13,37 @@ Not a confetti gimmick — a **monument**. The feeling to manufacture: *"I was
 there the day Book A Sloth opened, and my name proves it."*
 
 Three loads every design decision carries:
-1. **Ownership** — a permanent opener **number** (#47 can never be minted again).
-2. **A place to return** — the Wall lives on the site forever; you find your name years later.
+1. **Ownership** — your **stone** on the wall, your name on it, placed the day it opened. Yours, permanent. (An ordered number exists under the hood but is never shown — the stone is the keepsake.)
+2. **A place to return** — the Wall lives on the site forever; you find your stone years later.
 3. **Emotion** — the physical cut, the curtain, the storm of confetti.
 
 ## 2. Scope — phased
 
-**Phase 1 (this branch, ships first):**
+**Phase 1 (this branch, ships first — the working model):**
 - `/opening` — curtain + ribbon-cut interaction (finger on mobile, mouse on desktop) + confetti.
 - Name capture (name + optional message).
-- `/inaugurators` — permanent, ordered, public Wall.
-- Backend: 1 table, 3 endpoints, 24-hour window enforcement.
+- Reward CTA after the cut (see §4.5).
+- `/inaugurators` — permanent public **stone wall** (SVG stones, random shades, name on each).
+- Backend: 1 table, 3 endpoints, window enforcement.
+
+Phase 1 is a **standalone, testable model** — reachable at `/opening` any time,
+so we can build and QA before the event without touching the live site.
+
+**Phase 1b (the event, 15 Aug): site-wide takeover.**
+On event day the ceremony wraps the **whole site**: any visitor to any route
+during the window sees the ceremony first (once per browser), then continues to
+the normal site. This is a thin gate layered on the same phase-1 components — no
+new build, just a mount point + a "seen it" flag. Details §4.6.
 
 **Phase 2 (deferred, designed here so phase 1 doesn't box us in):**
 - Optional **WhatsApp verification** of an opener's number → `✓ verified` badge (event-scoped OTP, see §7).
-- Auto-generated **share card** (OG image) + share flow.
 
 Everything in phase 1 must leave clean seams for phase 2 (schema columns exist,
 UI has a disabled/placeholder verify affordance). No rework.
+
+**Explicitly OUT of scope** (founder call): per-opener share links, per-opener
+pages, auto share cards, visible opener numbers. Numbers are stored for ordering
+only and never shown.
 
 ## 3. Routes
 
@@ -65,27 +78,41 @@ On cut:
 - Curtains sweep open (CSS transform, both sides translate outward, eased ~1s).
 - **Confetti storm** — full-screen, gold + sloth-green, layered, slow fall, ~4–6s. Not a sprinkle. Optional cheer chime (respect muted/reduced-motion).
 - Behind curtain: the real homepage / brand reveal.
-- Headline lands: **"You opened Book A Sloth. You're Opener #3,413."** (number from `POST /open`).
+- Headline lands: **"You opened Book A Sloth."** (Number is allocated server-side but **never shown** — founder call.)
+- Behind the curtain: the live site (event day) or a brand splash (standalone model). See §4.6.
 
 `prefers-reduced-motion`: skip curtain physics + confetti storm, still show the
-number and name capture. Accessibility is not optional.
+name capture + reward. Accessibility is not optional.
 
 ### 4.4 Name capture
 Soft prompt: *"Put your name on the wall — forever?"*
 - Fields: **name** (required, 2–40 chars), **message** (optional, ≤80 chars).
 - Phase-2 affordance: a greyed **"Verify my number on WhatsApp"** row, disabled with a "coming soon" tag. Wire it in phase 2, no layout change.
-- Submit → `POST /open` → returns their permanent `number`. Show their stone:
-  **"Opener #3,413 — [Name] — opened the doors on 13 Aug 2026."**
+- Submit → `POST /open` → server allocates hidden number, returns their **stone** (name + shade). Show it dropping onto the wall.
 - Anti-abuse (phase 1, lightweight): one open per browser (localStorage token +
   server-side IP+ua soft rate-limit via existing limiter). Real dedupe is
   phase-2 WhatsApp verify. Do NOT gate phase 1 on verification.
 
-### 4.5 The Wall — `/inaugurators`
-- Permanent public page, lives on the site forever (also linkable from footer/About after event).
-- Ordered list, **#1 at top**, number · name · optional message · date · (phase 2) ✓ verified.
-- Search box to find your own name.
-- Pagination / windowed render (could be thousands of rows) — server paginates, client infinite-scrolls.
-- After the 24h window closes: page becomes read-only ("Doors sealed on … · N openers"). No new names ever.
+### 4.5 The reward — after the cut
+Shown **after they place their stone OR skip** (never blocks the moment):
+> *"You opened the doors. Open a business on it too — register today and save **18% on any yearly plan.**"*
+- CTA → host registration / plan selection with the yearly-discount context.
+- 18% yearly discount already exists in the plan matrix — reuse it, do NOT invent
+  a new coupon. Confirm the exact discount mechanism against `subscription_plans`
+  / pricing before wiring (see open Q4).
+- Skippable. "Maybe later" → straight to the site / wall. Reward is a gift, not a toll.
+
+### 4.6 Behind the curtain / the reveal target
+- **Standalone model (build + QA):** curtain opens onto a brand splash + link to the Wall. Self-contained, no dependency on event timing.
+- **Event day (site-wide takeover):** the ceremony is an overlay mounted above the app root. On cut/skip it dismisses and reveals whatever route the visitor actually requested (usually the homepage). One flag in localStorage (`opening_seen`) + a server `open` window means each browser sees it once, then browses normally. No route is blocked, nothing behind it is gated.
+
+### 4.7 The Wall — `/inaugurators`
+- Permanent public page, lives on the site forever.
+- **Mosaic of SVG stones** — each opener is one stone in a **random shade** (palette of sloth-brand tones), **name rendered on the stone**. Ordered by hidden number (earliest first / seed layout). No numbers shown, no links, no per-stone pages.
+- Zoom/scroll the field; **search** highlights your stone.
+- Stones render from a small SVG set × shade variants (deterministic shade per row, e.g. hash of number → palette index — stable across reloads).
+- Windowed render (could be thousands) — server paginates, client lazy-loads tiles.
+- After the window closes: read-only ("Doors sealed 16 Aug · N openers"). No new stones ever.
 
 ## 5. Data model — `v3.100_opening_ceremony.sql`
 
@@ -120,7 +147,14 @@ counter row, so concurrent opens never collide or skip. Do NOT compute
 
 **Window config:** store `opening_opens_at` / `opening_closes_at` in
 `platform_settings` (existing table) — not hardcoded. Server is the clock;
-client only renders the countdown from a server value.
+client only renders the countdown from a server value. Admin-adjustable so we
+can dry-run before the day and shift if needed.
+
+**Event window (Independence Day):** **15 Aug 2026 ~08:00 IST → 16 Aug 2026
+~08:00 IST** ("morning to morning", ~24h). Exact minutes set in
+`platform_settings` and confirmed before the day. Standalone model ignores the
+window (always open at `/opening`) via a `preview` flag or admin bypass, so QA
+doesn't wait for Aug 15.
 
 Migration workflow (per CLAUDE.md): apply on **BOTH** DBs (prod Mumbai +
 staging Tokyo), keep code-side schema fallback until confirmed applied on both.
@@ -151,12 +185,11 @@ All under existing Express app. New router `server/routes/openingRoutes.js` +
   `POST /api/opening/verify/confirm { code }` → sets `openers.verified=true`,
   `phone`, `verified_at`. Enforced by `openers_phone_unique` (one wall entry per
   real number).
-- Verified openers get `✓` on the Wall + their stone "locked" to them. This is
-  the anti-fake layer and the status flex. Optional — unverified names still
-  count and stay on the wall.
-- Share card: reuse OG-card pipeline (host-og / blog clone,
-  `client/scripts/generate*OgImages.mjs`) → per-opener card
-  ("I opened Book A Sloth 🦥 — Opener #3,413"). Store URL on the row or render on demand.
+- Verified openers get `✓` on their stone + it "locks" to them. This is the
+  anti-fake layer and the status flex. Optional — unverified names still count
+  and stay on the wall.
+
+(Auto share cards / per-opener links dropped — see §2 out-of-scope.)
 
 ## 8. File map (planned)
 
@@ -196,9 +229,17 @@ docs/opening-ceremony-spec.md  # this file
 - **Migration on both DBs**, code-side schema fallback until confirmed (CLAUDE.md rule).
 - **Don't gate the real site** behind the ceremony. `/opening` is a moment, not a wall in front of the product.
 
-## 11. Open questions (pre-build)
+## 11. Decisions (resolved) + remaining checks
 
-1. What does "the reveal" show behind the curtain — homepage, or a dedicated brand splash?
-2. Exact 24-hour window date/time (Asia/Kolkata) — set at build or via admin toggle?
-3. Footer/About link to `/inaugurators` after the event — in scope now or later?
-4. Reward tie-in (booking credit / founder badge) — phase 1, phase 2, or separate epic?
+Resolved by founder:
+1. **Reveal:** standalone model → brand splash; event day → site-wide takeover reveals the real site (§4.6).
+2. **Window:** 15 Aug ~08:00 → 16 Aug ~08:00 IST, in `platform_settings`, admin-adjustable (§5).
+3. **No `/inaugurators` links, no visible numbers.** Wall = SVG stones, random shades, names only (§4.7).
+4. **Reward:** post-cut CTA — register today, 18% off yearly plan; skippable (§4.5).
+
+Remaining to confirm before wiring:
+- **Q4 mechanics:** exact 18%-off-yearly mechanism in the current plan matrix —
+  is it an existing coupon/flag or does it need one? Confirm against
+  `subscription_plans` / pricing before building the CTA target.
+- **Exact window minutes** for 15–16 Aug (default 08:00 IST both ends).
+- **Stone palette + SVG set:** how many base stone shapes × how many brand shades.
