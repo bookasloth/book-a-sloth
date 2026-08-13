@@ -402,6 +402,13 @@ table {
   }
 }
 
+/* Toggle switches are decorative pills, not tap-target buttons — the 44px
+   mobile min-height above stretches the track and floats the knob. Higher
+   specificity than bare `button`, so it wins in and out of the media query. */
+button[role='switch'] {
+  min-height: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   *,
