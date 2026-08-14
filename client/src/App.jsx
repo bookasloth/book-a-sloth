@@ -27,6 +27,7 @@ const lazy = lazyWithRetry;
 // Floating chat bubble — not first-paint content. Lazy so its ~585 lines + the
 // Markdown renderer stay off the initial bundle on every page.
 const BotWidget = lazy(() => import('./components/common/BotWidget'));
+const OpeningTakeover = lazy(() => import('./components/opening/OpeningTakeover'));
 
 // ── Route-level lazy loading ──────────────────────────────────────────────────
 // Layout / guard components stay eager (always needed, small).
@@ -608,6 +609,8 @@ function App() {
         : !hideFooter && <Footer variant={isBookingPage ? 'minimal' : 'full'} />}
       </RouteErrorBoundary>
       {!hideBot && <Suspense fallback={null}><BotWidget /></Suspense>}
+      {/* Site-wide "The Opening" takeover — self-gates on window + route + one-per-device. */}
+      <Suspense fallback={null}><OpeningTakeover /></Suspense>
     </ChromeContext.Provider>
   );
 }
