@@ -1,14 +1,18 @@
 /**
- * ConfettiStorm.jsx — the celebration. Fires a real, sustained confetti storm
- * (canvas-confetti) on mount. Skips entirely under prefers-reduced-motion.
+ * ConfettiStorm.jsx — the celebration (canvas-confetti).
  *
- * Brand colours: sloth orange + gold + greens. Not a polite sprinkle — layered
- * bursts + a ~2.5s side-cannon fall so it reads as a celebration, not a toast.
+ * Timing (founder spec): 6s total. First 3s = full, steady rate + amount; next 3s
+ * = same but tapering down (fewer, slower) to a calm stop. Skipped entirely under
+ * prefers-reduced-motion.
+ *
+ * Brand colours: sloth orange + gold + greens + violet.
  */
 import { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 
-const COLORS = ['#FE5100', '#f59e0b', '#059669', '#ffd166', '#ffffff'];
+const COLORS = ['#FE5100', '#f59e0b', '#10b981', '#a78bfa', '#ffd166', '#ffffff'];
+const FULL_MS = 3000;   // steady phase
+const TOTAL_MS = 6000;  // then taper to zero
 
 export default function ConfettiStorm() {
   useEffect(() => {
@@ -17,19 +21,28 @@ export default function ConfettiStorm() {
     const fire = (opts) => confetti({ colors: COLORS, disableForReducedMotion: true, ...opts });
 
     // opening bang
-    fire({ particleCount: 160, spread: 90, startVelocity: 55, origin: { y: 0.6 } });
-    fire({ particleCount: 80, angle: 60, spread: 70, origin: { x: 0 } });
-    fire({ particleCount: 80, angle: 120, spread: 70, origin: { x: 1 } });
+    fire({ particleCount: 140, spread: 95, startVelocity: 52, origin: { y: 0.55 } });
 
-    // sustained fall
-    const end = Date.now() + 2500;
+    const start = performance.now();
     let raf;
-    const rain = () => {
-      fire({ particleCount: 6, angle: 60, spread: 60, startVelocity: 45, origin: { x: 0, y: 0.4 } });
-      fire({ particleCount: 6, angle: 120, spread: 60, startVelocity: 45, origin: { x: 1, y: 0.4 } });
-      if (Date.now() < end) raf = requestAnimationFrame(rain);
+    let last = 0;
+    const tick = (now) => {
+      const elapsed = now - start;
+      if (elapsed >= TOTAL_MS) { return; }
+      // emit every ~140ms
+      if (now - last >= 140) {
+        last = now;
+        // steady for first 3s, then linearly ramp to 0 over the next 3s
+        const p = elapsed < FULL_MS ? 1 : Math.max(0, 1 - (elapsed - FULL_MS) / (TOTAL_MS - FULL_MS));
+        const count = Math.max(1, Math.round(7 * p));
+        const vel = 22 + 28 * p; // slows as it tapers
+        fire({ particleCount: count, angle: 60, spread: 62, startVelocity: vel, origin: { x: 0, y: 0.5 } });
+        fire({ particleCount: count, angle: 120, spread: 62, startVelocity: vel, origin: { x: 1, y: 0.5 } });
+        fire({ particleCount: count, angle: 90, spread: 80, startVelocity: vel * 0.9, origin: { x: 0.5, y: 0.35 } });
+      }
+      raf = requestAnimationFrame(tick);
     };
-    rain();
+    raf = requestAnimationFrame(tick);
 
     return () => { cancelAnimationFrame(raf); confetti.reset(); };
   }, []);
