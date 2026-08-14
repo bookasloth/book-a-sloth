@@ -1,0 +1,57 @@
+/* opening.css — "The Opening" ceremony visuals. Scoped under .opening-stage. */
+
+.opening-stage {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 0%, #2a1206 0%, #160a04 60%, #0b0502 100%);
+  color: #fff;
+}
+
+/* Curtains — two velvet panels that sweep outward on cut. */
+.opening-curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  pointer-events: none;
+}
+.opening-curtain__panel {
+  width: 50%;
+  height: 100%;
+  background:
+    repeating-linear-gradient(90deg, #7a0d0d 0 22px, #5e0909 22px 44px),
+    linear-gradient(#8b1111, #4c0707);
+  box-shadow: inset -18px 0 40px rgba(0, 0, 0, 0.5), inset 18px 0 40px rgba(0, 0, 0, 0.5);
+  transition: transform 1.15s cubic-bezier(0.7, 0, 0.2, 1);
+  will-change: transform;
+}
+.opening-curtain__panel--r { transform: none; }
+.opening-curtain--open .opening-curtain__panel--l { transform: translateX(-102%); }
+.opening-curtain--open .opening-curtain__panel--r { transform: translateX(102%); }
+
+/* Gold valance + rope trim across the top. */
+.opening-valance {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 46px;
+  z-index: 21;
+  background: linear-gradient(#e8b23a, #b8860b);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: transform 0.8s ease;
+}
+.opening-curtain--open .opening-valance { transform: translateY(-110%); }
+
+/* Ribbon */
+.opening-ribbon { touch-action: none; cursor: grab; }
+.opening-ribbon:active { cursor: grabbing; }
+.opening-ribbon--cut { pointer-events: none; }
+
+/* Reduced motion: no sweep, panels just fade out. */
+@media (prefers-reduced-motion: reduce) {
+  .opening-curtain__panel,
+  .opening-valance { transition: opacity 0.3s ease; }
+  .opening-curtain--open .opening-curtain__panel--l,
+  .opening-curtain--open .opening-curtain__panel--r { transform: none; opacity: 0; }
+  .opening-curtain--open .opening-valance { transform: none; opacity: 0; }
+}
