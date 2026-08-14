@@ -1,18 +1,20 @@
 /**
  * openingRoutes.js — public "The Opening" launch event. Mounted at /api/opening.
  *
- * GET  /status        window + live count (drives countdown)
- * POST /open          cut the ribbon + place a stone (IP rate-limited)
- * GET  /wall          paginated Inaugurators Wall
+ * GET  /status          window + live count
+ * POST /verify/start    send WhatsApp OTP (Booking OTP campaign) to the number
+ * POST /verify/confirm  verify OTP + place the stone (create-on-verify)
+ * GET  /wall            paginated Inaugurators Wall
  */
 'use strict';
 
 const router = require('express').Router();
-const { getStatus, open, getWall } = require('../controllers/openingController');
-const { newsletterIpLimiter } = require('../middleware/security');
+const { getStatus, startVerify, confirmVerify, getWall } = require('../controllers/openingController');
+const { otpLimiter } = require('../middleware/security');
 
 router.get('/status', getStatus);
-router.post('/open', newsletterIpLimiter, open); // reuse the per-IP write limiter
+router.post('/verify/start', otpLimiter, startVerify);   // per-IP OTP limiter (otpStore adds per-number cap)
+router.post('/verify/confirm', otpLimiter, confirmVerify);
 router.get('/wall', getWall);
 
 module.exports = router;
