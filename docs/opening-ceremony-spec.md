@@ -29,7 +29,7 @@ Three loads every design decision carries:
 Phase 1 is a **standalone, testable model** — reachable at `/opening` any time,
 so we can build and QA before the event without touching the live site.
 
-**Phase 1b (the event, 15 Aug): site-wide takeover.**
+**Phase 1b (the event, 18 Aug): site-wide takeover.**
 On event day the ceremony wraps the **whole site**: any visitor to any route
 during the window sees the ceremony first (once per browser), then continues to
 the normal site. This is a thin gate layered on the same phase-1 components — no
@@ -112,7 +112,7 @@ Shown **after they place their stone OR skip** (never blocks the moment):
 - Zoom/scroll the field; **search** highlights your stone.
 - Stones render from a small SVG set × shade variants (deterministic shade per row, e.g. hash of number → palette index — stable across reloads).
 - Windowed render (could be thousands) — server paginates, client lazy-loads tiles.
-- After the window closes: read-only ("Doors sealed 16 Aug · N openers"). No new stones ever.
+- After the window closes: read-only ("Doors sealed 19 Aug · N openers"). No new stones ever.
 
 ## 5. Data model — `v3.100_opening_ceremony.sql`
 
@@ -150,8 +150,8 @@ counter row, so concurrent opens never collide or skip. Do NOT compute
 client only renders the countdown from a server value. Admin-adjustable so we
 can dry-run before the day and shift if needed.
 
-**Event window (Independence Day):** **15 Aug 2026 ~08:00 IST → 16 Aug 2026
-~08:00 IST** ("morning to morning", ~24h). Exact minutes set in
+**Event window:** **18 Aug 2026 12:00 IST → 19 Aug 2026
+12:00 IST** ("morning to morning", ~24h). Exact minutes set in
 `platform_settings` and confirmed before the day. Standalone model ignores the
 window (always open at `/opening`) via a `preview` flag or admin bypass, so QA
 doesn't wait for Aug 15.
@@ -233,7 +233,7 @@ docs/opening-ceremony-spec.md  # this file
 
 Resolved by founder:
 1. **Reveal:** standalone model → brand splash; event day → site-wide takeover reveals the real site (§4.6).
-2. **Window:** 15 Aug ~08:00 → 16 Aug ~08:00 IST, in `platform_settings`, admin-adjustable (§5).
+2. **Window:** 18 Aug 12:00 → 19 Aug 12:00 IST, in `platform_settings`, admin-adjustable (§5).
 3. **No `/inaugurators` links, no visible numbers.** Wall = SVG stones, random shades, names only (§4.7).
 4. **Reward:** post-cut CTA — register today, 18% off yearly plan; skippable (§4.5).
 
@@ -241,5 +241,5 @@ Remaining to confirm before wiring:
 - **Q4 mechanics:** exact 18%-off-yearly mechanism in the current plan matrix —
   is it an existing coupon/flag or does it need one? Confirm against
   `subscription_plans` / pricing before building the CTA target.
-- **Exact window minutes** for 15–16 Aug (default 08:00 IST both ends).
+- **Exact window minutes** for 18–19 Aug (default 12:00 IST both ends).
 - **Stone palette + SVG set:** how many base stone shapes × how many brand shades.
