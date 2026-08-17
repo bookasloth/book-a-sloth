@@ -2,7 +2,23 @@ import axios from 'axios';
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  timeout: 30000, // give up on a stalled request instead of hanging forever
 });
+
+// Principle #4 — control the data exchange: retry transient failures.
+// SECURITY/MONEY: only idempotent reads (GET/HEAD) are ever retried. A retried
+// POST could double-book a slot or double-charge a card, so mutations get ONE
+// shot and their error propagates untouched.
+export function shouldRetry(error, method) {
+  const m = (method || 'get').toLowerCase();
+  if (m !== 'get' && m !== 'head') return false;
+  const status = error?.response?.status;
+  const noResponse = !error?.response;          // network failure
+  const timedOut   = error?.code === 'ECONNABORTED';
+  const serverErr  = status >= 500 && status <= 599;
+  return noResponse || timedOut || serverErr;
+}
+const MAX_RETRIES = 2;
 
 API.interceptors.request.use((config) => {
   // SECURITY: Admin routes ONLY use the isolated 'bas_admin' session.
@@ -81,6 +97,18 @@ API.interceptors.response.use(
       refreshQueue = [];
       window.location.href = wasHost ? '/login-as-vendor' : '/login';
     }
+
+    // Retry idempotent reads on transient failures (network / timeout / 5xx),
+    // with exponential backoff. Mutations are excluded by shouldRetry().
+    if (original && shouldRetry(error, original.method)) {
+      original._retryCount = (original._retryCount || 0) + 1;
+      if (original._retryCount <= MAX_RETRIES) {
+        const backoff = 300 * 2 ** (original._retryCount - 1); // 300ms, 600ms
+        await new Promise((r) => setTimeout(r, backoff));
+        return API.request(original);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
