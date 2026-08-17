@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { sendOtp } from "../services/api";
@@ -30,6 +30,7 @@ const Login = () => {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
+  const verifying = useRef(false); // in-flight guard: auto-submit + button can't double-fire
 
   // A host who logs in here still lands in the dashboard; everyone else goes to
   // the requested page.
@@ -54,19 +55,34 @@ const Login = () => {
     }
   };
 
-  const handleOtpLogin = async (e) => {
-    e.preventDefault();
-    if (otp.length !== 6) return toast.error("Enter the 6-digit code");
+  // Principle #2 (act immediately on input): verify the code the moment all six
+  // digits land — no separate "click Verify" step — so a paste or the last
+  // keystroke goes straight to the server. This is NOT optimistic auth: the
+  // session is only granted once the server confirms. A wrong code clears the
+  // input, which both prompts a retype and stops the auto-submit effect from
+  // re-firing the same failed code in a loop.
+  const submitOtp = async () => {
+    if (verifying.current) return;
+    if (otp.length !== 6) return;
+    verifying.current = true;
     setBusy(true);
     try {
       const data = await loginWithOtp(phone, otp);
       finish(data);
     } catch (err) {
       toast.error(err.response?.data?.message || "Invalid code");
+      setOtp("");
     } finally {
+      verifying.current = false;
       setBusy(false);
     }
   };
+
+  // Auto-submit as soon as the code is complete.
+  useEffect(() => {
+    if (step === "otp" && otp.length === 6) submitOtp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otp, step]);
 
   return (
     <div className="app-container flex min-h-[calc(100vh-72px)] flex-col items-center justify-center py-8 sm:py-12">
@@ -120,15 +136,18 @@ const Login = () => {
             <p className="mb-6 text-sm text-gray-500">
               We sent a 6-digit code to <strong>{phone}</strong> on WhatsApp.
             </p>
-            <form onSubmit={handleOtpLogin} className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); submitOtp(); }} className="space-y-4">
               <input
                 inputMode="numeric"
                 maxLength={6}
+                autoFocus
                 placeholder="123456"
                 className="fb-input text-center tracking-[0.5em] text-lg"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
               />
+              {/* Verify fires automatically on the 6th digit; this button is a
+                  fallback (e.g. if the code was cleared after a wrong attempt). */}
               <button
                 type="submit"
                 disabled={busy || otp.length !== 6}
