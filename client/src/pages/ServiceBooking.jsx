@@ -228,6 +228,8 @@ const ServiceBooking = () => {
 
   const [otp, setOtp] = useState("");
   const [otpSending, setOtpSending] = useState(false);
+  const verifyingRef = useRef(false); // in-flight guard (auto-submit + button)
+  const autoTriedRef = useRef("");     // last code auto-submitted — stops re-fire loop
   const [verifying, setVerifying] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
@@ -576,10 +578,12 @@ const ServiceBooking = () => {
   };
 
   const handleVerifyAndBook = async () => {
+    if (verifyingRef.current) return; // guard: auto-submit + button can't double-fire
     if (otp.length !== 6) {
       toast.error("Enter the 6-digit code");
       return;
     }
+    verifyingRef.current = true;
     setVerifying(true);
     try {
       const { data: otpResult } = await verifyOtp({ email, phone, otp });
@@ -620,9 +624,22 @@ const ServiceBooking = () => {
     } catch (err) {
       toast.error(err.response?.data?.message || "Booking failed");
     } finally {
+      verifyingRef.current = false;
       setVerifying(false);
     }
   };
+
+  // Principle #2: verify + book the moment all six digits land (typed or
+  // pasted) — no separate "Verify" click. autoTriedRef stops the same failed
+  // code re-firing; editing a digit re-arms it. Code kept on error so the user
+  // can correct it.
+  useEffect(() => {
+    if (step === "otp" && otp.length === 6 && autoTriedRef.current !== otp) {
+      autoTriedRef.current = otp;
+      handleVerifyAndBook();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otp, step]);
 
   // Task 7: Razorpay handler
   const handlePayment = async () => {

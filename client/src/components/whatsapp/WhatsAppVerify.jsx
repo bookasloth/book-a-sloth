@@ -24,6 +24,8 @@ const WhatsAppVerify = ({ initialPhone = '', initialCountry, onVerified, onPhone
   const [cooldown, setCooldown] = useState(0);
   const timerRef = useRef(null);
   const sendingRef = useRef(false);
+  const verifyingRef = useRef(false);   // in-flight guard (auto-submit + button)
+  const autoTriedRef = useRef('');       // last code auto-submitted — stops re-fire loop
 
   const fullPhone = `${country}${number.replace(/[^\d]/g, '')}`;
 
@@ -65,9 +67,10 @@ const WhatsAppVerify = ({ initialPhone = '', initialCountry, onVerified, onPhone
   };
 
   const handleVerify = async () => {
-    if (verified) return; // latch: never fire onVerified twice (double-navigate guard)
+    if (verified || verifyingRef.current) return; // latch + in-flight guard
     setError('');
     if (otp.trim().length !== 6) { setError('Enter the 6-digit code.'); return; }
+    verifyingRef.current = true;
     setLoading(true);
     try {
       const { data } = await whatsappVerifyOtp(fullPhone, otp.trim());
@@ -77,9 +80,22 @@ const WhatsAppVerify = ({ initialPhone = '', initialCountry, onVerified, onPhone
     } catch (e) {
       setError(e.response?.data?.message || 'Could not verify OTP.');
     } finally {
+      verifyingRef.current = false;
       setLoading(false);
     }
   };
+
+  // Principle #2: verify the moment all six digits land (typed or pasted) — no
+  // separate Verify click. autoTriedRef stops the same failed code re-firing;
+  // editing a digit produces a new code and re-arms it. The code is kept on
+  // error (existing behaviour) so the user can correct it.
+  useEffect(() => {
+    if (screen === 'otp' && otp.trim().length === 6 && !verified && autoTriedRef.current !== otp) {
+      autoTriedRef.current = otp;
+      handleVerify();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otp, screen, verified]);
 
   // Return to the number screen to fix a wrong number (OTP screen dead-end fix).
   const handleChangeNumber = () => {
