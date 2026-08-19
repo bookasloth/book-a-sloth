@@ -240,7 +240,5 @@ test('502 on an unmapped/raw error (network/SDK failure), never an unhandled 500
   await generateAiListing({ user: { id: 'h1' }, vendorPlan: 'professional', body: { title: 'X' } }, res);
   expect(res.status).toHaveBeenCalledWith(502);
   const payload = res.json.mock.calls[0][0];
-  // TEMP (fix/bolt-listing-debug-error): the 502 message intentionally surfaces
-  // the raw error for diagnosis. Restore `.not.toMatch(/ECONNRESET/)` on revert.
-  expect(payload.message).toMatch(/ECONNRESET/);
+  expect(payload.message).not.toMatch(/ECONNRESET/);
 });
