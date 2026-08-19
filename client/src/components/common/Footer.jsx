@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 const ROUTE_START = '/be-a-sloth';
 const EMAIL = 'bolt@bookasloth.in';
-const BOLT_URL = 'https://bolt958.xyz';
+const BOLT_URL = 'https://www.instagram.com/bookasloth';
 
 const COLUMNS = [
   { h: 'Product', links: [
