@@ -44,9 +44,11 @@ export default function HowItWorks() {
 
       <main className="how-it-works-page">
         <ProcessOverview />
-        <MainDemoVideo />
+        {/* Hidden until real videos ready — placeholder/dummy YouTube content. Do not delete. */}
+        {/* <MainDemoVideo /> */}
         <CustomerJourney />
-        <TutorialLibrary />
+        {/* Hidden until real videos ready — placeholder/dummy YouTube content. Do not delete. */}
+        {/* <TutorialLibrary /> */}
         <AutomationFlow />
         <BenefitsComparison />
         <FAQSection />
