@@ -10,7 +10,11 @@
 const MODELS = {
   generate: 'claude-haiku-4-5-20251001',
   regenerate: 'claude-haiku-4-5-20251001',
-  listing: 'claude-sonnet-5',
+  // Dated GA id, not the bare `claude-sonnet-5` alias: prod's key rejected the
+  // alias (SDK threw → 502 "AI writing failed"; zero listings logged since the
+  // #589 switch). Env override lets prod repoint without a redeploy if the org's
+  // Sonnet access differs. ponytail: one string + escape hatch, no model registry.
+  listing: process.env.BOLT_LISTING_MODEL || 'claude-sonnet-4-5-20250929',
 };
 
 let _client;
