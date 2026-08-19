@@ -5,16 +5,18 @@
 // generate/regenerate = the shared workhorse model, used by the Bolt support bot,
 // abuseGuard, pills, and escalationService as well as listing generation. Keep it
 // on Haiku (cheap, high volume) — do NOT bump it to move one feature, or every
-// bot call moves with it. "Write with Bolt" listing generation uses `listing`
-// (Sonnet 5) instead — set separately so the bot's cost/behaviour stays put.
+// bot call moves with it. `listing` is set separately so the bot's cost/behaviour
+// stays put if you ever move listing to a different model.
 const MODELS = {
   generate: 'claude-haiku-4-5-20251001',
   regenerate: 'claude-haiku-4-5-20251001',
-  // Dated GA id, not the bare `claude-sonnet-5` alias: prod's key rejected the
-  // alias (SDK threw → 502 "AI writing failed"; zero listings logged since the
-  // #589 switch). Env override lets prod repoint without a redeploy if the org's
-  // Sonnet access differs. ponytail: one string + escape hatch, no model registry.
-  listing: process.env.BOLT_LISTING_MODEL || 'claude-sonnet-4-5-20250929',
+  // Haiku 4.5 — the ONLY model prod's Anthropic key can actually reach. #589 moved
+  // listing to `claude-sonnet-5` and #634 to `claude-sonnet-4-5-20250929`; the key
+  // rejects BOTH Sonnet ids (SDK throws → 502 "AI writing failed"), so listings
+  // logged ZERO successes from 2026-07-20 (last Haiku success) until this revert.
+  // BOLT_LISTING_MODEL lets prod repoint to a Sonnet id WITHOUT a redeploy the day
+  // the org's key gains Sonnet access. ponytail: one string + escape hatch.
+  listing: process.env.BOLT_LISTING_MODEL || 'claude-haiku-4-5-20251001',
 };
 
 let _client;
