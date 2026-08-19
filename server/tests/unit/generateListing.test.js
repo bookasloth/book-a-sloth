@@ -41,7 +41,7 @@ test('regenerate uses the same listing model (variety comes from the tweak promp
     included_items: ['a'], excluded_items: ['b'], faqs: [{ question: 'q', answer: 'a' }],
   }));
   const out = await generateListing({ title: 'X', regenerate: true });
-  expect(out.model).toBe('listing-id');
+  expect(out.model).toBe('claude-sonnet-5');
 });
 
 test('retries once then throws AI_INVALID on no tool output', async () => {
