@@ -186,7 +186,10 @@ async function generateAiListing(req, res) {
       // Any other failure (SDK/network error etc.) is NOT ours to leak — log it
       // server-side and return a clean, generic 502 instead of an unhandled 500.
       console.error('generateAiListing: unmapped error from generateListing:', e);
-      return res.status(502).json({ message: 'AI writing failed. Please try again in a moment.' });
+      // TEMP DEBUG (fix/bolt-listing-debug-error) — surface the real Anthropic
+      // error to the host so we can diagnose the persistent 502. REVERT after.
+      const _dbg = `[${e?.status ?? '?'} ${e?.name || e?.constructor?.name || 'Error'}] ${String(e?.error?.error?.message || e?.message || e).slice(0, 300)}`;
+      return res.status(502).json({ message: `AI writing failed. DEBUG: ${_dbg}` });
     }
 
     // Only carry the caller's session_id forward when it was verified above as
