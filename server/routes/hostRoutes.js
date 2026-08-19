@@ -9,11 +9,11 @@ const { changeUsername } = require('../controllers/usernameController');
 const { protect, requireHost } = require('../middleware/authMiddleware');
 const { attachPlan, checkServiceLimit } = require('../middleware/planMiddleware');
 const { requireFeature } = require('../middleware/requireFeature');
-const { validate, serviceWriteRules } = require('../middleware/validate');
+const { validate, serviceWriteRules, updateProfileRules } = require('../middleware/validate');
 
 router.get('/search', searchVendors);              // Task 11 — must come before /:username
 router.get('/availability', protect, getAvailability); // GET current availability for dashboard
-router.put('/profile', protect, requireHost, updateProfile);
+router.put('/profile', protect, requireHost, ...updateProfileRules, validate, updateProfile);
 router.get('/categories', protect, getMyCategories);
 router.put('/categories', protect, requireHost, attachPlan, updateCategories);
 router.put('/username', protect, requireHost, changeUsername);  // gated, rate-limited username change

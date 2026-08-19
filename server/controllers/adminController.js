@@ -193,6 +193,10 @@ const updateUser = async (req, res) => {
     }
     if (is_verified !== undefined) updates.is_verified = is_verified;
     if (is_banned !== undefined) updates.is_banned = is_banned;
+    // Banning also revokes existing sessions: authMiddleware.accountGate blocks
+    // is_banned on every request, and this watermark invalidates already-issued
+    // tokens so a fresh refresh can't outrun the ban. (Only on ban, not unban.)
+    if (is_banned === true) updates.sessions_valid_after = new Date().toISOString();
     if (admin_notes !== undefined) updates.admin_notes = admin_notes;
     // Verifying/unverifying/banning a host changes who appears in the sitemap.
     const visibilityChanged = is_verified !== undefined || is_banned !== undefined;

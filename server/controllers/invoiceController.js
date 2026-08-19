@@ -55,10 +55,17 @@ async function listMyInvoices(req, res) {
     const bkIds = (bks || []).map((r) => r.id);
     const ids = [...subIds, ...bkIds];
     if (!ids.length) return res.json([]);
+    // Type-scope to the caller's OWN documents. A commission invoice shares its
+    // source_id with the guest's booking (buyer = the HOST), so filtering on
+    // source_id alone would leak the host's commission invoice — and its
+    // access_token, which unlocks the full PDF — into the guest's list. The
+    // buyer only ever owns 'booking' (as guest) and 'subscription' (as vendor).
     const { data: invs } = await supabaseAdmin
       .from('invoices')
       .select('id, invoice_number, total, issued_at, access_token, source_type')
-      .in('source_id', ids).order('issued_at', { ascending: false });
+      .in('source_id', ids)
+      .in('source_type', ['booking', 'subscription'])
+      .order('issued_at', { ascending: false });
     res.json(invs || []);
   } catch (e) {
     res.status(500).json({ message: 'Could not load invoices' });

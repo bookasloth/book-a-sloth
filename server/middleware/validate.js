@@ -126,6 +126,15 @@ const updateProfileRules = [
   body('location').optional().trim().isLength({ max: 100 }),
   // Offline-service venue link; sanitised (scheme-checked) in the controller.
   body('map_link').optional().trim().isLength({ max: 500 }),
+  // Image URLs are stored verbatim and rendered as <img src> on the public
+  // profile + fed to the OG-card pipeline — must be http(s) only and bounded
+  // (checkFalsy so '' / null clears the image without a 422).
+  body('profile_image').optional({ checkFalsy: true }).trim()
+    .isURL({ require_protocol: true, protocols: ['http', 'https'] }).withMessage('Invalid profile image URL')
+    .isLength({ max: 1000 }),
+  body('cover_image').optional({ checkFalsy: true }).trim()
+    .isURL({ require_protocol: true, protocols: ['http', 'https'] }).withMessage('Invalid cover image URL')
+    .isLength({ max: 1000 }),
 ];
 
 // ── Service validators ────────────────────────────────────────
