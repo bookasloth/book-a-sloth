@@ -26,9 +26,9 @@ export const USE_CASES_CONFIG = [
     href: '/for/business-consultant',
     icon: TrendingUp,
     category: 'coaching-consulting',
-    iconBg: 'bg-violet-50',
-    iconColor: 'text-violet-600',
-    color: '#7c3aed', // violet — ambition, growth
+    iconBg: 'bg-amber-50',
+    iconColor: 'text-amber-600',
+    color: '#d97706', // amber — matches /for/business-consultant page accent
   },
   {
     label: 'Doctors & Clinics',
@@ -36,9 +36,9 @@ export const USE_CASES_CONFIG = [
     href: '/for/doctors',
     icon: HeartPulse,
     category: 'health-wellness',
-    iconBg: 'bg-blue-50',
-    iconColor: 'text-blue-600',
-    color: '#2563eb', // blue — trust, medicine
+    iconBg: 'bg-emerald-50',
+    iconColor: 'text-emerald-500',
+    color: '#10b981', // emerald — matches /for/doctors page accent
   },
   {
     label: 'Salons & Spas',
@@ -67,9 +67,9 @@ export const USE_CASES_CONFIG = [
     href: '/for/tutors',
     icon: BookOpen,
     category: 'education',
-    iconBg: 'bg-amber-50',
-    iconColor: 'text-amber-500',
-    color: '#f59e0b', // amber — knowledge, curiosity
+    iconBg: 'bg-indigo-50',
+    iconColor: 'text-indigo-500',
+    color: '#6366f1', // indigo — matches /for/tutors page accent
   },
   {
     label: 'Photographers',
@@ -77,9 +77,9 @@ export const USE_CASES_CONFIG = [
     href: '/for/photographers',
     icon: Camera,
     category: 'photography',
-    iconBg: 'bg-slate-100',
-    iconColor: 'text-slate-600',
-    color: '#475569', // slate — film, artistry
+    iconBg: 'bg-fuchsia-50',
+    iconColor: 'text-fuchsia-500',
+    color: '#d946ef', // fuchsia — matches /for/photographers page accent
   },
   {
     label: 'Event Organisers',
@@ -88,8 +88,8 @@ export const USE_CASES_CONFIG = [
     icon: CalendarCheck,
     category: 'events',
     iconBg: 'bg-purple-50',
-    iconColor: 'text-purple-600',
-    color: '#9333ea', // purple — celebration, flair
+    iconColor: 'text-purple-500',
+    color: '#a855f7', // purple — matches /for/events page accent
   },
   {
     label: 'Lawyers & CAs',
@@ -97,9 +97,9 @@ export const USE_CASES_CONFIG = [
     href: '/for/lawyers',
     icon: Scale,
     category: 'legal-finance',
-    iconBg: 'bg-neutral-100',
-    iconColor: 'text-neutral-800',
-    color: '#1f2937', // near-black — authority, gravitas
+    iconBg: 'bg-amber-50',
+    iconColor: 'text-[#b7892f]',
+    color: '#b7892f', // legal gold — matches /for/lawyers page accent
   },
   {
     label: 'Freelancers',
@@ -108,8 +108,8 @@ export const USE_CASES_CONFIG = [
     icon: Laptop,
     category: 'freelance',
     iconBg: 'bg-teal-50',
-    iconColor: 'text-teal-600',
-    color: '#0d9488', // teal — digital, remote
+    iconColor: 'text-teal-500',
+    color: '#14b8a6', // teal — matches /for/freelancers page accent
   },
   {
     label: 'Agencies & Studios',
@@ -117,8 +117,8 @@ export const USE_CASES_CONFIG = [
     href: '/for/agencies',
     icon: Building2,
     category: 'agencies',
-    iconBg: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
-    color: '#059669', // emerald — growth, scale
+    iconBg: 'bg-cyan-50',
+    iconColor: 'text-cyan-500',
+    color: '#06b6d4', // cyan — matches /for/agencies page accent
   },
 ];
