@@ -53,6 +53,7 @@ jobs:
   blog-og:
     name: Generate blog OG cards (missing only)
     runs-on: ubuntu-latest
+    timeout-minutes: 12   # the Chromium apt step is flaky; never let it hang a runner
     if: github.repository == 'bookasloth/book-a-sloth'
     defaults:
       run:
@@ -105,8 +106,11 @@ jobs:
           SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
 
+  # Deploy runs independently of blog-og. OG-card generation is best-effort and
+  # must NEVER block a production deploy — its Chromium apt step is flaky and has
+  # hung the pipeline. Trade-off: a brand-new blog post may ship one deploy before
+  # its OG card is stamped in the DB; the next deploy backfills it.
   deploy:
-    needs: blog-og      # cards must exist in the DB before the remote prerender runs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
