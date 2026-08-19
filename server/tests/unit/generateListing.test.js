@@ -9,7 +9,7 @@ const toolReply = (input) => ({ content: [{ type: 'tool_use', name: 'emit_listin
 
 beforeEach(() => client.__create.mockReset());
 
-test('returns sanitized fields from tool output (generate → sonnet listing model)', async () => {
+test('returns sanitized fields from tool output (forced tool_choice, no thinking param)', async () => {
   client.__create.mockResolvedValueOnce(toolReply({
     title: 'SEO Consultancy', short_description: 'Grow organic traffic fast.',
     long_description: 'SEO consultancy is a service...', included_items: ['Audit'],
@@ -20,10 +20,10 @@ test('returns sanitized fields from tool output (generate → sonnet listing mod
   expect(out.fields.title).toBe('SEO Consultancy');
   expect(client.__create).toHaveBeenCalledWith(expect.objectContaining({
     model: 'listing-id', tool_choice: { type: 'tool', name: 'emit_listing' },
-    // thinking must stay disabled — sonnet-5 defaults thinking on, and a forced
-    // tool_choice 400s while thinking is on (regression: every regenerate failed).
-    thinking: { type: 'disabled' },
   }));
+  // No `thinking` param — Haiku 4.5 rejects {type:'disabled'} (400 → 502); thinking
+  // is off by default, which is what the forced tool_choice needs.
+  expect(client.__create.mock.calls[0][0].thinking).toBeUndefined();
 });
 
 test('regenerate uses the same listing model (variety comes from the tweak prompt)', async () => {

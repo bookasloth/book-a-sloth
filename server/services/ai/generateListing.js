@@ -34,18 +34,19 @@ function buildUserMessage({ title, category, price, duration, city, audience, tw
 
 async function callOnce(client, { model, system, user }) {
   // Listing runs on Haiku 4.5 (MODELS.listing — the only model prod's key can
-  // reach; see anthropicClient.js). thinking is kept explicitly disabled: forced
-  // tool_choice ({type:'tool'}) is rejected with an HTTP 400 when thinking is on,
-  // so disabling it keeps the forced tool call safe, gives the full max_tokens
-  // budget to the tool call, and keeps output deterministic for structured
-  // extraction. No temperature/top_p/top_k — defaults only.
+  // reach; see anthropicClient.js). Do NOT pass a `thinking` param: Haiku 4.5 is a
+  // pre-adaptive model where thinking is OFF by default, and `{type:'disabled'}`
+  // is only valid on the 4.6+ adaptive family — sending it to Haiku 4.5 is a 400
+  // (→ the unmapped 502 "AI writing failed"). Omitting it keeps thinking off, which
+  // is exactly what a forced tool_choice needs (the live Bolt bot forces
+  // tool_choice on Haiku with no thinking param and works). No temperature/top_p/
+  // top_k — defaults only.
   //
   // max_tokens 4096: the full listing (long_description + 4-6 included/excluded
   // bullets + 4-5 FAQs + note) overruns 1500, truncating the forced tool call
   // into invalid/partial JSON → AI_INVALID. 4096 leaves headroom.
   const resp = await client.messages.create({
     model, max_tokens: 4096, system,
-    thinking: { type: 'disabled' },
     tools: [LISTING_TOOL], tool_choice: { type: 'tool', name: 'emit_listing' },
     messages: [{ role: 'user', content: user }],
   });
