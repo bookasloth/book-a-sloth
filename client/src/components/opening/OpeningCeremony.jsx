@@ -5,7 +5,7 @@
  * Flow: intro (ribbon) → cut → confetti (6s: 3s steady, 3s taper) + reveal → at
  * the 3s mark the capture card opens (name + WhatsApp number) → see stone READY →
  * "Place it for life" sends a WhatsApp OTP (Booking OTP campaign) → enter code →
- * verify → stone placed (permanent, ✓ verified) → reward (register, 18% off yearly).
+ * verify → stone placed (permanent, ✓ verified) → reward (register — normal signup).
  *
  * `onExit(reason)` fires when the user finishes ('placed') or leaves ('skip') so
  * the takeover can set its one-per-device flag. `embedded` shows a close button.
@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles, MousePointerClick, Clock, User, Phone, ArrowRight, Gift,
-  Percent, ShieldCheck, Loader2, X, MessageCircle, CheckCircle2,
+  ShieldCheck, Loader2, X, MessageCircle, CheckCircle2,
 } from 'lucide-react';
 import Stone from './Stone';
 import RibbonCut from './RibbonCut';
@@ -249,15 +249,15 @@ export default function OpeningCeremony({ status: statusProp, embedded = false, 
         {phase === 'reward' && (
           <div className="op-pop mx-auto w-full max-w-lg rounded-[20px] border border-black/5 bg-white p-6 text-ink shadow-[0_22px_45px_-18px_rgba(26,26,26,.55)] sm:p-8">
             <LogoTile size={48} img={28} />
-            <p className="mt-4 inline-flex items-center gap-2 font-heading text-xs font-bold uppercase tracking-[.14em] text-primary"><Gift size={15} /> A gift for opening the doors</p>
+            <p className="mt-4 inline-flex items-center gap-2 font-heading text-xs font-bold uppercase tracking-[.14em] text-primary"><Gift size={15} /> Now it's your turn</p>
             <h2 className="mt-3 font-heading text-2xl font-extrabold sm:text-3xl">Open a business on it <span className="text-primary">too.</span></h2>
-            <p className="mx-auto mt-3 max-w-md text-muted">Register today and save <b className="text-ink">18% on any yearly plan.</b> Your booking page, live in minutes.</p>
+            <p className="mx-auto mt-3 max-w-md text-muted">Register today. Your booking page, live in minutes.</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Link to="/be-a-sloth" onClick={() => exit('placed')} className="inline-flex items-center gap-2 rounded-md bg-primary-cta px-6 py-3 font-heading font-bold text-white">Register &amp; save 18% <ArrowRight size={18} /></Link>
+              <Link to="/be-a-sloth" onClick={() => exit('placed')} className="inline-flex items-center gap-2 rounded-md bg-primary-cta px-6 py-3 font-heading font-bold text-white">Register <ArrowRight size={18} /></Link>
               <button onClick={() => exit('placed')} className="rounded-md border border-black/10 px-6 py-3 font-heading font-bold text-ink">Maybe later</button>
             </div>
             <div className="mt-6 flex flex-wrap justify-center gap-3 text-left">
-              {[[Percent, 'Save 18%', 'on yearly plans'], [Clock, 'Live in minutes', 'no setup headaches'], [ShieldCheck, 'Cancel anytime', 'no lock-ins']].map(([Ic, t, d]) => (
+              {[[Clock, 'Live in minutes', 'no setup headaches'], [ShieldCheck, 'Cancel anytime', 'no lock-ins']].map(([Ic, t, d]) => (
                 <div key={t} className="flex items-center gap-2.5 rounded-xl border border-black/5 bg-white px-4 py-2.5 shadow-[0_4px_14px_rgba(16,24,40,.08)]">
                   <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary"><Ic size={16} /></span>
                   <span><b className="block font-heading text-[13px] font-bold">{t}</b><small className="text-[11px] text-muted">{d}</small></span>
