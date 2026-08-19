@@ -10,13 +10,15 @@
 const MODELS = {
   generate: 'claude-haiku-4-5-20251001',
   regenerate: 'claude-haiku-4-5-20251001',
-  // Haiku 4.5 — the ONLY model prod's Anthropic key can actually reach. #589 moved
-  // listing to `claude-sonnet-5` and #634 to `claude-sonnet-4-5-20250929`; the key
-  // rejects BOTH Sonnet ids (SDK throws → 502 "AI writing failed"), so listings
-  // logged ZERO successes from 2026-07-20 (last Haiku success) until this revert.
-  // BOLT_LISTING_MODEL lets prod repoint to a Sonnet id WITHOUT a redeploy the day
-  // the org's key gains Sonnet access. ponytail: one string + escape hatch.
-  listing: process.env.BOLT_LISTING_MODEL || 'claude-haiku-4-5-20251001',
+  // Sonnet 5 for listing quality (per #589). NOTE: the real cause of the
+  // 2026-07→08 "AI writing failed" outage was an INVALID prod ANTHROPIC_API_KEY
+  // (Anthropic returned 401 "API key is invalid") — NOT the model. Every AI call
+  // (bot included) failed until the key was rotated; the model id was a red
+  // herring across #589/#634/#636/#637. BOLT_LISTING_MODEL overrides this without
+  // a redeploy — e.g. set it to `claude-haiku-4-5-20251001` if the key lacks
+  // Sonnet access. generateListing.thinkingParamFor() adapts the thinking param
+  // to whichever model this resolves to. ponytail: one string + escape hatch.
+  listing: process.env.BOLT_LISTING_MODEL || 'claude-sonnet-5',
 };
 
 let _client;

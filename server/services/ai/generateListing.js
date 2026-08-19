@@ -32,21 +32,28 @@ function buildUserMessage({ title, category, price, duration, city, audience, tw
   return ctx.join('\n');
 }
 
+// A forced tool_choice requires thinking OFF. How you express "off" depends on
+// the model family, and getting it wrong is a 400 → the unmapped 502:
+//   • adaptive family (Sonnet 5, Opus 4.6+, …): thinking is ON by default and
+//     the ONLY way to turn it off is `{type:'disabled'}`.
+//   • pre-adaptive (Haiku 4.5, Sonnet 4.5, Claude 3.x): thinking is OFF by
+//     default and `{type:'disabled'}` is NOT a valid type — you must OMIT it.
+// This lets MODELS.listing / BOLT_LISTING_MODEL point at either family safely.
+function thinkingParamFor(model) {
+  const preAdaptive = /haiku|sonnet-4-5|claude-3/.test(model || '');
+  return preAdaptive ? {} : { thinking: { type: 'disabled' } };
+}
+
 async function callOnce(client, { model, system, user }) {
-  // Listing runs on Haiku 4.5 (MODELS.listing — the only model prod's key can
-  // reach; see anthropicClient.js). Do NOT pass a `thinking` param: Haiku 4.5 is a
-  // pre-adaptive model where thinking is OFF by default, and `{type:'disabled'}`
-  // is only valid on the 4.6+ adaptive family — sending it to Haiku 4.5 is a 400
-  // (→ the unmapped 502 "AI writing failed"). Omitting it keeps thinking off, which
-  // is exactly what a forced tool_choice needs (the live Bolt bot forces
-  // tool_choice on Haiku with no thinking param and works). No temperature/top_p/
-  // top_k — defaults only.
+  // No temperature/top_p/top_k — defaults only (Sonnet 5 rejects non-default
+  // sampling params). thinking handled per-model by thinkingParamFor().
   //
   // max_tokens 4096: the full listing (long_description + 4-6 included/excluded
   // bullets + 4-5 FAQs + note) overruns 1500, truncating the forced tool call
   // into invalid/partial JSON → AI_INVALID. 4096 leaves headroom.
   const resp = await client.messages.create({
     model, max_tokens: 4096, system,
+    ...thinkingParamFor(model),
     tools: [LISTING_TOOL], tool_choice: { type: 'tool', name: 'emit_listing' },
     messages: [{ role: 'user', content: user }],
   });
@@ -58,7 +65,7 @@ async function generateListing(opts = {}) {
   const client = anthropicClient.getClient();
   if (!client) throw new Error('AI_UNAVAILABLE');
   const { allowedCategorySlugs = [] } = opts;
-  // Listing generation uses MODELS.listing (Haiku 4.5 by default; BOLT_LISTING_MODEL
+  // Listing generation uses MODELS.listing (Sonnet 5 by default; BOLT_LISTING_MODEL
   // can repoint it). generate vs regenerate no longer changes the model — variety comes from the
   // tweak text in the prompt (buildUserMessage), so opts.regenerate is unused here.
   const model = MODELS.listing;
@@ -78,4 +85,4 @@ async function generateListing(opts = {}) {
   return { fields, model };
 }
 
-module.exports = { generateListing, buildUserMessage, SYSTEM };
+module.exports = { generateListing, buildUserMessage, SYSTEM, thinkingParamFor };
