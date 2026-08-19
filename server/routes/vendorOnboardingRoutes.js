@@ -13,6 +13,7 @@ const {
 } = require('../controllers/vendorOnboardingController');
 const { protect } = require('../middleware/authMiddleware');
 const { slugLimiter } = require('../middleware/security');
+const { safeError } = require('../utils/httpError');
 
 // ── Protected: Slug Availability Check (authed, history-backed, self-aware) ──
 // POST /api/onboarding/slug-available
@@ -24,7 +25,7 @@ router.post('/slug-available', protect, slugLimiter, async (req, res) => {
     const { slug } = req.body;
     if (!slug) return res.status(400).json({ message: 'Slug is required' });
     res.json(await slugAvailableForUser(req.user.id, slug));
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { safeError(res, e); }
 });
 
 // ── Protected: Claim Slug (step 2) ────────────────────────────────────────
@@ -50,7 +51,7 @@ router.post('/update-step', protect, async (req, res) => {
     const profile = await updateOnboardingStep(vendorId, slug, step, data);
     res.json({ message: 'Step updated', step, profile });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 });
 
@@ -88,7 +89,7 @@ router.get('/status', protect, async (req, res) => {
     }
     res.json(status);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    safeError(res, error);
   }
 });
 

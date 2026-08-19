@@ -685,8 +685,12 @@ const suspendHost = async (req, res) => {
     const host = await loadHost(req, res);
     if (!host) return;
     const suspend = !!req.body?.suspend;
+    // Suspending revokes existing sessions too (see authMiddleware.accountGate):
+    // stamp the watermark on suspend so already-issued tokens stop working.
+    const patch = { is_banned: suspend, updated_at: new Date().toISOString() };
+    if (suspend) patch.sessions_valid_after = new Date().toISOString();
     const { data, error } = await supabaseAdmin.from('profiles')
-      .update({ is_banned: suspend, updated_at: new Date().toISOString() })
+      .update(patch)
       .eq('id', host.id).select('id, is_banned').single();
     if (error) return safeError(res, error);
     await audit(req, { action: 'user.suspend', resource_type: 'profile', resource_id: host.id,

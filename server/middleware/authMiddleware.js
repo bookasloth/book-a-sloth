@@ -1,26 +1,29 @@
 const jwt = require('jsonwebtoken');
 const { supabaseAdmin } = require('../config/supabase');
 
-// Global session-invalidation check (Google RISC / "sign out everywhere").
-// Returns true if this token must be rejected because it was issued BEFORE the
-// user's sessions_valid_after watermark (stamped on a Google account-compromise
-// event — see controllers/securityRiscController.js).
+// Global account gate — reads both revocation signals for this user in ONE
+// round-trip: the Google RISC / "sign out everywhere" watermark
+// (sessions_valid_after, stamped on a compromise event or on an admin ban) and
+// the admin ban flag (is_banned). Returns { revoked, banned }.
 //
-// FAIL-OPEN by design: this is a revocation add-on, not the primary auth gate
-// (getUser already validated the token). Any error here — column missing before
-// v3.79 is applied, transient DB blip, unparseable token — must NOT lock out a
-// legitimate host, so we return false (allow) and let the token live out its
-// short TTL. Inert for everyone whose watermark is null (the normal case).
-const isTokenRevoked = async (userId, token) => {
+// FAIL-OPEN on ERROR by design: this runs after getUser already validated the
+// token, so any error here — column missing before its migration, transient DB
+// blip, unparseable token — must NOT lock out a legitimate host; we return
+// false/false and let the short-TTL token live out. A POSITIVE is_banned=true
+// read is authoritative, though, and DOES block (fail-closed on the ban itself):
+// without this, an admin "ban/suspend" was cosmetic — the account kept full
+// authenticated API access until it chose to log out.
+const accountGate = async (userId, token) => {
   try {
     const iat = jwt.decode(token)?.iat; // seconds since epoch; no verify (getUser did)
-    if (!iat) return false;
     const { data, error } = await supabaseAdmin
-      .from('profiles').select('sessions_valid_after').eq('id', userId).maybeSingle();
-    if (error || !data?.sessions_valid_after) return false;
-    return iat * 1000 < new Date(data.sessions_valid_after).getTime();
+      .from('profiles').select('sessions_valid_after, is_banned').eq('id', userId).maybeSingle();
+    if (error || !data) return { revoked: false, banned: false };
+    const revoked = !!(iat && data.sessions_valid_after &&
+      iat * 1000 < new Date(data.sessions_valid_after).getTime());
+    return { revoked, banned: data.is_banned === true };
   } catch (_) {
-    return false; // fail-open — never block a valid user on a revocation-check error
+    return { revoked: false, banned: false }; // fail-open — never block on a gate error
   }
 };
 
@@ -50,8 +53,14 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: 'Not authorized, token failed' });
     }
 
-    // Global logout: reject tokens issued before a RISC-stamped watermark.
-    if (await isTokenRevoked(user.id, token)) {
+    // Admin ban + global-logout enforcement (one DB read). A banned account's
+    // access is revoked immediately for every request; a RISC/ban watermark
+    // rejects tokens minted before it.
+    const gate = await accountGate(user.id, token);
+    if (gate.banned) {
+      return res.status(403).json({ message: 'Account suspended', banned: true });
+    }
+    if (gate.revoked) {
       return res.status(401).json({ message: 'Session revoked, sign in again' });
     }
 
@@ -71,7 +80,12 @@ const optionalProtect = async (req, res, next) => {
   try {
     const token = authHeader.split(' ')[1];
     const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    if (!error && user) req.user = { id: user.id, email: user.email };
+    // A banned account must not act under its authenticated identity — drop to
+    // anonymous (mixed endpoints stay reachable for genuine OTP/anonymous guests)
+    // rather than attaching req.user.
+    if (!error && user && !(await accountGate(user.id, token)).banned) {
+      req.user = { id: user.id, email: user.email };
+    }
   } catch (_) {
     /* invalid token → treat as anonymous guest */
   }

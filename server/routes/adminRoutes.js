@@ -24,8 +24,13 @@ router.get('/revenue-trend',            requireAdmin('analytics.view'),      get
 router.get('/revenue-breakdown',        requireAdmin('analytics.view'),      getRevenueBreakdown);
 
 // ── TDS (194-O) / TCS (§52) filing exports — 26Q + GSTR-8 (v4) ──
+// Gated on commission.view (finance + operations), NOT analytics.view: this
+// report decrypts every host's PAN (a government ID) for filing, and
+// analytics.view is also held by the marketing role, which has no business
+// reading PAN. commission.view excludes marketing + support; the roles it keeps
+// already see PAN via kyc.view, so this is consistent, not a new grant.
 const withholding = require('../controllers/withholdingAdminController');
-router.get('/reports/withholding',      requireAdmin('analytics.view'),      withholding.getWithholdingReport);
+router.get('/reports/withholding',      requireAdmin('commission.view'),     withholding.getWithholdingReport);
 
 // ── Marketing / performance insights (owned KPI tiles, Postgres-first) ──
 const insights = require('../controllers/insightsAdminController');
@@ -94,15 +99,20 @@ router.get('/features',        requireAdmin('settings.manage'), features.getFlag
 router.post('/features',       requireAdmin('settings.manage'), features.createFlag);
 router.patch('/features/:key', requireAdmin('settings.manage'), features.toggleFlag);
 
-// ── Staff & roles (Super Admin only — staff.manage is super-exclusive) ──
+// ── Staff & roles (Super Admin only) ──
+// Enforced structurally with requireSuperAdmin (wildcard) rather than a
+// 'staff.manage' permission string. staff CRUD can mint a 'super' account and
+// reset admin passwords, so it must never become grantable to a non-super role
+// by a future admin_roles DB edit — a permission-string gate would silently
+// escalate that role. super still passes (it holds the wildcard).
 const staff = require('../controllers/staffAdminController');
-router.get('/roles',                       requireAdmin('staff.manage'), staff.listRoles);
-router.get('/staff',                       requireAdmin('staff.manage'), staff.listStaff);
-router.post('/staff',                      requireAdmin('staff.manage'), staff.createStaff);
-router.get('/staff/:id',                   requireAdmin('staff.manage'), staff.getStaff);
-router.put('/staff/:id',                   requireAdmin('staff.manage'), staff.updateStaff);
-router.patch('/staff/:id/status',          requireAdmin('staff.manage'), staff.setStaffActive);
-router.post('/staff/:id/reset-password',   requireAdmin('staff.manage'), staff.resetStaffPassword);
+router.get('/roles',                       requireSuperAdmin, staff.listRoles);
+router.get('/staff',                       requireSuperAdmin, staff.listStaff);
+router.post('/staff',                      requireSuperAdmin, staff.createStaff);
+router.get('/staff/:id',                   requireSuperAdmin, staff.getStaff);
+router.put('/staff/:id',                   requireSuperAdmin, staff.updateStaff);
+router.patch('/staff/:id/status',          requireSuperAdmin, staff.setStaffActive);
+router.post('/staff/:id/reset-password',   requireSuperAdmin, staff.resetStaffPassword);
 
 // ── Audit log viewer ───────────────────────────────────────────
 const auditCtrl = require('../controllers/auditAdminController');

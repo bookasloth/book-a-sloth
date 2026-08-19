@@ -19,8 +19,11 @@ const createReview = async (req, res) => {
     const direction = req.body.direction || "guest_to_host";
     if (!booking_id || !rating)
       return res.status(400).json({ message: "booking_id and rating are required" });
-    if (rating < 1 || rating > 5)
-      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+    // Strict integer 1–5. The old `rating < 1 || rating > 5` let a non-numeric
+    // value (NaN → both comparisons false) or a fractional one through, which
+    // then poisons the reduce()-computed host average.
+    if (!Number.isInteger(Number(rating)) || Number(rating) < 1 || Number(rating) > 5)
+      return res.status(400).json({ message: "Rating must be an integer between 1 and 5" });
     if (!DIRECTIONS.includes(direction))
       return res.status(400).json({ message: "Invalid review direction" });
 
@@ -101,8 +104,8 @@ const createReview = async (req, res) => {
 const updateReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
-    if (rating != null && (rating < 1 || rating > 5))
-      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+    if (rating != null && (!Number.isInteger(Number(rating)) || Number(rating) < 1 || Number(rating) > 5))
+      return res.status(400).json({ message: "Rating must be an integer between 1 and 5" });
 
     const { data: existing } = await supabaseAdmin
       .from("reviews")
