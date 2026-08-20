@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 const hpp = require('hpp');
 const { isLoadTestMode } = require('../config/loadTestMode');
+const { isOpenAccess } = require('../config/openAccessWindow');
 const { makeRateLimitStore } = require('./rateLimitStore');
 const { getClientIp } = require('../lib/clientIp');
 const ipBlocklist = require('../lib/ipBlocklist');
@@ -15,6 +16,12 @@ const ipBlocklist = require('../lib/ipBlocklist');
 // instantly. Off by default (isLoadTestMode() is false) → every limiter
 // behaves exactly as before. Never true in production (fail-safe).
 const skipWhenLoadTest = () => isLoadTestMode();
+
+// Master limiter bypass: skip during load test OR while the temporary open-access
+// window (OPEN_ACCESS_UNTIL) is active. Every limiter's `skip` points here, so one
+// env var lifts all per-IP / per-contact caps for a launch/event, then auto
+// re-gates. Read live per request so the env can be flipped without a restart.
+const skipWhenOpen = () => isLoadTestMode() || isOpenAccess();
 
 // ── Helmet — security headers ─────────────────────────────────
 const helmetMiddleware = helmet({
@@ -53,7 +60,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many auth attempts. Please try again in 15 minutes.' },
   skipSuccessfulRequests: false,
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // OTP endpoints: very strict — 5 sends per hour per IP
@@ -64,7 +71,7 @@ const otpLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many OTP requests. Please wait before requesting another.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // General API: 100 requests per minute per IP
@@ -75,7 +82,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests. Please slow down.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Admin endpoints: 30 per minute per IP
@@ -86,7 +93,7 @@ const adminLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many admin requests.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Payment endpoints: 20 per hour per IP (prevent order flooding)
@@ -97,7 +104,7 @@ const paymentLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many payment requests. Please try again later.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Username/slug availability check — prevent vendor-username enumeration.
@@ -108,7 +115,7 @@ const slugLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests. Please slow down.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Public availability lookup — each call can hit the Google Calendar FreeBusy
@@ -120,7 +127,7 @@ const slotsLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many availability checks. Please wait a moment.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Explore / discovery search — public, unauthenticated, and the search box invites
@@ -138,7 +145,7 @@ const searchLimiter = rateLimit({
   // of a hard 429 — the cap still blocks the live DB query, but a shared-IP user
   // never sees an error. Lazy-require avoids a controller↔security import cycle.
   handler: (req, res) => require('../controllers/exploreController').serveStaleOrEmpty(req, res),
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Booking creation — public + fires email/WhatsApp notifications; cap per IP.
@@ -149,7 +156,7 @@ const bookingLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many booking attempts. Please try again later.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Companion to bookingLimiter, keyed by the guest CONTACT (email, else phone).
@@ -169,7 +176,7 @@ const bookingContactLimiter = rateLimit({
     return phone ? `p:${phone}` : req.ip;
   },
   message: { message: 'Too many bookings for this contact. Please try again later.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Companion to otpLimiter, keyed by the target CONTACT (email, else phone), not
@@ -190,7 +197,7 @@ const otpContactLimiter = rateLimit({
     return phone ? `p:${phone}` : req.ip;
   },
   message: { message: 'Too many code requests for this contact. Please wait before trying again.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Free digital-product download — keyed by EMAIL (falling back to IP) so an
@@ -206,7 +213,7 @@ const freeDownloadLimiter = rateLimit({
     return email || req.ip;
   },
   message: { message: 'Too many download requests for this email. Please try again later.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Companion to freeDownloadLimiter, keyed by IP. The email-keyed limiter alone
@@ -220,7 +227,7 @@ const freeDownloadIpLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many download requests. Please try again later.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Signed product-download links (GET /products/download/:token). The token is a
@@ -235,7 +242,7 @@ const downloadTokenLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many download requests. Please try again later.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Newsletter signup — public write keyed by EMAIL (falling back to IP) so an
@@ -251,7 +258,7 @@ const newsletterEmailLimiter = rateLimit({
     return email || req.ip;
   },
   message: { message: 'Too many signups for this email. Please try again later.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Companion to newsletterEmailLimiter, keyed by IP. The email-keyed limiter alone
@@ -265,7 +272,7 @@ const newsletterIpLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many signups. Please try again later.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Support bot — every /bot/ask hits the Anthropic API (real cost), so cap it
@@ -282,7 +289,7 @@ const botLimiter = rateLimit({
   // matching the bot abuse/IP-block path so both see the same address.
   keyGenerator: (req) => getClientIp(req) || req.ip,
   message: { message: 'You’re sending messages too quickly. Please wait a moment and try again.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Global request cap for the bot — a SINGLE bucket across ALL IPs (constant key),
@@ -298,7 +305,7 @@ const botGlobalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Bolt is very busy right now. Please try again in a moment.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // File uploads — each call streams up to 2MB into Supabase Storage, so cap
@@ -314,7 +321,7 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => req.user?.id || req.ip,
   message: { message: 'Too many uploads. Please wait a few minutes and try again.' },
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Slow down abusive request floods — secondary to apiLimiter (100/min hard cap).
@@ -332,7 +339,7 @@ const speedLimiter = slowDown({
   delayMs: (used) => (used - 300) * 100,    // gentle ramp only past the threshold
   maxDelayMs: 2000,                         // never add more than 2s, ever
   validate: { delayMs: false },             // silence express-slow-down v2 notice
-  skip: skipWhenLoadTest,
+  skip: skipWhenOpen,
 });
 
 // Permissions-Policy — deny powerful features the app never uses.
@@ -409,6 +416,7 @@ const blockSuspiciousRequests = (req, res, next) => {
 module.exports = {
   helmetMiddleware,
   skipWhenLoadTest,
+  skipWhenOpen,
   authLimiter,
   otpLimiter,
   apiLimiter,

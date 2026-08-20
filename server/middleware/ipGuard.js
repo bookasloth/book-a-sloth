@@ -14,6 +14,7 @@
 
 const config = require('../config/ipBlockConfig');
 const { isLoadTestMode } = require('../config/loadTestMode');
+const { isOpenAccess } = require('../config/openAccessWindow');
 const { getClientIp } = require('../lib/clientIp');
 const ipBlocklist = require('../lib/ipBlocklist');
 
@@ -32,6 +33,7 @@ function ipGuard(req, res, next) {
   try {
     if (!config.enabled) return next();
     if (isLoadTestMode()) return next();
+    if (isOpenAccess()) return next();  // launch/event window — don't block any IP
     if (isExempt(req)) return next();
     if (ipBlocklist.isBlocked(getClientIp(req))) {
       return res.status(403).json({ message: 'Access denied.' });
@@ -45,7 +47,7 @@ function ipGuard(req, res, next) {
 }
 
 function offenseTracker(req, res, next) {
-  if (config.enabled && !isLoadTestMode()) {
+  if (config.enabled && !isLoadTestMode() && !isOpenAccess()) {
     res.on('finish', () => {
       // A 429 means a rate limiter rejected this request → count it toward an
       // auto-ban. Fire-and-forget; the recorder swallows its own errors.
