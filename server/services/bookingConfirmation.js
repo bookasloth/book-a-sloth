@@ -1,0 +1,149 @@
+'use strict';
+
+/**
+ * bookingConfirmation.js — the post-payment "booking confirmed" side-effects,
+ * in ONE place so every capture path fires them.
+ *
+ * Historically these lived only inside the client-facing verifyPayment endpoint:
+ * create the Google Calendar event (+ Meet link), send BOOKING_CONFIRMED to guest
+ * and host (email + WhatsApp), and fire any catch-up reminder. A booking whose
+ * payment was captured by the Razorpay WEBHOOK or the hourly reconciler instead
+ * (redirect/UPI flows, or the client tab dying before /verify) got flipped to paid
+ * but received NONE of this — no calendar, no Meet link, no confirmation message —
+ * only the completion cron notified it later. finalizeBookingCapture centralised
+ * the money+ledger logic for exactly this reason; this does the same for
+ * confirmation. Every capture caller now calls sendBookingConfirmation after it
+ * wins the unpaid→paid transition, so it runs exactly once.
+ *
+ * Idempotency: the caller only invokes this when IT won the transition (the
+ * finalizeBookingCapture winner), so no cross-path double-send. The calendar step
+ * additionally self-guards on an already-present meeting_link.
+ */
+
+const { supabaseAdmin } = require('../config/supabase');
+const NotificationEngine = require('./notificationEngine');
+const { createCalendarEvent } = require('../config/google');
+const { decrypt: decryptToken } = require('../utils/cryptoTokens');
+const profileSecrets = require('../utils/profileSecrets');
+const manageBookingToken = require('../utils/manageBookingToken');
+const { hostOf } = require('../utils/hostOf');
+
+/**
+ * @param {object} a
+ * @param {string} a.bookingId
+ * @param {{id:string, token:string}} [a.invoiceRef]  tokenised GST invoice link for the
+ *        confirmation email; falls back to the dashboard when absent (e.g. reconciler).
+ */
+async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
+  const { data: booking } = await supabaseAdmin
+    .from('bookings')
+    .select('*, services(*), profiles!bookings_host_id_fkey(*)')
+    .eq('id', bookingId)
+    .single();
+  if (!booking) return;
+
+  const svc  = booking.services || {};
+  const host = hostOf(booking);
+  const isOnline = svc.meeting_mode !== 'offline';
+
+  const { data: avail } = await supabaseAdmin
+    .from('availability').select('timezone').eq('host_id', booking.host_id).maybeSingle();
+  const tz = avail?.timezone || 'Asia/Kolkata';
+
+  // 1) Google Calendar event (+ Meet link) for online services — non-fatal, and
+  //    skipped if a link already exists (idempotent across a retry).
+  let meetingLink = booking.meeting_link || '';
+  if (isOnline && !meetingLink) {
+    try {
+      await profileSecrets.attachGoogleTokens(host);
+      if (host?.google_calendar_connected && host?.google_refresh_token) {
+        const startTime = new Date(booking.scheduled_at);
+        const endTime = new Date(startTime.getTime() + (svc.duration || 30) * 60000);
+        const event = await createCalendarEvent(
+          decryptToken(host.google_access_token),
+          decryptToken(host.google_refresh_token),
+          {
+            title: `${svc.title || 'Service'} — ${booking.guest_name || 'Guest'}`,
+            description: `Booked via Book A Sloth\n${booking.notes || ''}`,
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+            timezone: tz,
+            attendees: [
+              { email: host.email },
+              ...(booking.guest_email ? [{ email: booking.guest_email }] : []),
+            ],
+          },
+        );
+        meetingLink = event.meetLink || '';
+        if (meetingLink) {
+          let relink = await supabaseAdmin
+            .from('bookings')
+            .update({ meeting_link: meetingLink, google_event_id: event.eventId || null })
+            .eq('id', bookingId).select().single();
+          if (relink.error && /Could not find the|column.*does not exist/i.test(relink.error.message)) {
+            await supabaseAdmin.from('bookings').update({ meeting_link: meetingLink }).eq('id', bookingId);
+          }
+        }
+      }
+    } catch (calErr) {
+      console.error('Booking confirmation calendar event error (non-fatal):', calErr.message);
+    }
+  }
+
+  // 2) BOOKING_CONFIRMED to guest + host (email + WhatsApp).
+  const d = new Date(booking.scheduled_at);
+  const when = d.toLocaleString('en-IN', { timeZone: tz });
+  const emailData = {
+    service_name: svc.title || 'Service',
+    vendor_name: host.name || 'Host',
+    vendor_phone: host.phone || '',
+    user_name: booking.guest_name || 'Customer',
+    booking_id: booking.id,
+    manage_url: `${process.env.CLIENT_URL || 'https://bookasloth.com'}/manage-booking/${manageBookingToken.sign(booking.id)}`,
+    location: isOnline
+      ? (meetingLink ? 'Online (link in your dashboard)' : 'Online')
+      : (host.location || 'In person'),
+    ...(!isOnline && host.map_link
+      ? { action_link: host.map_link, action_label: 'Get directions' }
+      : {}),
+    booking_date: d.toLocaleDateString('en-IN', { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
+    booking_time: d.toLocaleTimeString('en-IN', { timeZone: tz, hour: '2-digit', minute: '2-digit' }),
+    booking_day: d.toLocaleDateString('en-IN', { timeZone: tz, day: '2-digit' }),
+    booking_month: d.toLocaleDateString('en-IN', { timeZone: tz, month: 'short' }).toUpperCase(),
+    booking_year: d.toLocaleDateString('en-IN', { timeZone: tz, year: 'numeric' }),
+    invoice_url: (invoiceRef && process.env.API_URL)
+      ? `${process.env.API_URL.replace(/\/$/, '')}/api/invoices/${invoiceRef.id}?token=${encodeURIComponent(invoiceRef.token)}`
+      : `${process.env.CLIENT_URL || 'https://bookasloth.com'}/user/my-bookings`,
+  };
+  const dashboard = `${process.env.CLIENT_URL || 'https://bookasloth.com'}/dashboard`;
+  const confirmLink = meetingLink || (isOnline ? '' : host.map_link) || dashboard;
+  const ctx = {
+    customer: [booking.guest_name || 'Customer', svc.title || 'Service', host.name || 'Host', when, confirmLink],
+    vendor:   [host.name || 'Host', booking.guest_name || 'Customer', svc.title || 'Service', when, confirmLink],
+  };
+  await NotificationEngine.send({
+    event: 'BOOKING_CONFIRMED_CUSTOMER',
+    data: {
+      email: booking.guest_email, phone: booking.guest_phone, name: booking.guest_name,
+      templateParams: ctx.customer,
+      emailData, emailUser: { name: booking.guest_name, email: booking.guest_email },
+      recipientUserId: booking.guest_id, bookingId: booking.id,
+    },
+  });
+  await NotificationEngine.send({
+    event: 'BOOKING_CONFIRMED_VENDOR',
+    data: {
+      email: host.email, phone: host.phone, name: host.name,
+      templateParams: ctx.vendor,
+      emailData, emailUser: { name: host.name, email: host.email, username: host.username },
+      recipientUserId: booking.host_id, bookingId: booking.id,
+    },
+  });
+
+  // 3) Last-minute booking (starts sooner than a reminder lead-time): fire the
+  //    catch-up reminder the cron band would miss. Lazy require avoids a cycle.
+  const { fireDueReminders } = require('../controllers/bookingController');
+  await fireDueReminders(booking, host);
+}
+
+module.exports = { sendBookingConfirmation };

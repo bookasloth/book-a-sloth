@@ -19,6 +19,7 @@ const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const profileSecrets = require("../utils/profileSecrets");
 const { verifySignature } = require("../utils/razorpaySignature");
 const { finalizeBookingCapture } = require("../services/bookingCapture");
+const { sendBookingConfirmation } = require("../services/bookingConfirmation");
 const routeTransferService = require("../services/routeTransferService");
 const routeAutoPayoutService = require("../services/routeAutoPayoutService");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
@@ -322,62 +323,9 @@ const verifyPayment = async (req, res) => {
     // v4: commission tax invoice to the host (best-effort; only when commission charged).
     try { await generateCommissionInvoice(updated); } catch (_) { /* non-fatal */ }
 
-    // Payment captured → now create the Google Calendar event (deferred from
-    // booking time for paid services). A calendar failure must NOT fail an
-    // already-charged payment — log and continue with an empty meeting link.
-    let meetingLink = booking.meeting_link || "";
-    try {
-      const svc = booking.services || {};
-      const isOnline = svc.meeting_mode !== "offline";
-      if (isOnline && !meetingLink) {
-        const { data: host } = await supabaseAdmin
-          .from("profiles")
-          .select("id, email, google_calendar_connected")
-          .eq("id", booking.host_id).single();
-        await profileSecrets.attachGoogleTokens(host);
-        const { data: avail } = await supabaseAdmin
-          .from("availability").select("timezone").eq("host_id", booking.host_id).maybeSingle();
-        if (host?.google_calendar_connected && host?.google_refresh_token) {
-          const startTime = new Date(booking.scheduled_at);
-          const endTime = new Date(startTime.getTime() + (svc.duration || 30) * 60000);
-          const event = await createCalendarEvent(
-            decryptToken(host.google_access_token),
-            decryptToken(host.google_refresh_token),
-            {
-              title: `${svc.title || "Service"} — ${booking.guest_name || "Guest"}`,
-              description: `Booked via Book A Sloth\n${booking.notes || ""}`,
-              startTime: startTime.toISOString(),
-              endTime: endTime.toISOString(),
-              timezone: avail?.timezone || "Asia/Kolkata",
-              attendees: [
-                { email: host.email },
-                ...(booking.guest_email ? [{ email: booking.guest_email }] : []),
-              ],
-            },
-          );
-          meetingLink = event.meetLink || "";
-          if (meetingLink) {
-            // Persist meeting link and google_event_id; fall back if v3.3 column is missing
-            let relinkResult = await supabaseAdmin
-              .from("bookings")
-              .update({ meeting_link: meetingLink, google_event_id: event.eventId || null })
-              .eq("id", booking_id).select().single();
-            if (
-              relinkResult.error &&
-              /Could not find the|column.*does not exist/i.test(relinkResult.error.message)
-            ) {
-              relinkResult = await supabaseAdmin
-                .from("bookings")
-                .update({ meeting_link: meetingLink })
-                .eq("id", booking_id).select().single();
-            }
-            if (relinkResult.data) updated = relinkResult.data;
-          }
-        }
-      }
-    } catch (calErr) {
-      console.error("Post-payment calendar event error (non-fatal):", calErr.message);
-    }
+    // Calendar event (+ Meet link) + BOOKING_CONFIRMED notifications + catch-up
+    // reminder now live in sendBookingConfirmation (fired below), so the webhook
+    // and reconciler capture paths get them too — not just this client verify.
 
     auditLog('PAYMENT_VERIFIED', null, { booking_id, razorpay_payment_id });
 
@@ -402,83 +350,11 @@ const verifyPayment = async (req, res) => {
         gaClientId: req.body?.ga_client_id,     // browser _ga id if client forwarded it
       }));
 
-    // BUG-12 fixed: send confirmation emails now that payment is verified
-    runInBackground("verifyPayment:confirmation-emails", async () => {
-      const { data: fullBooking } = await supabaseAdmin
-        .from("bookings")
-        .select("*, services(*), profiles!bookings_host_id_fkey(*)")
-        .eq("id", booking_id)
-        .single();
-      if (!fullBooking) return;
-      const svc  = fullBooking.services;
-      const host = hostOf(fullBooking);
-      const { data: avail } = await supabaseAdmin
-        .from("availability").select("timezone").eq("host_id", fullBooking.host_id).single();
-      const tz   = avail?.timezone || "Asia/Kolkata";
-      const when = new Date(fullBooking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
-
-      const d = new Date(fullBooking.scheduled_at);
-      const isOnline = svc?.meeting_mode !== "offline";
-      const emailData = {
-        service_name: svc?.title || "Service",
-        vendor_name: host.name || "Host",
-        vendor_phone: host.phone || "",
-        user_name: fullBooking.guest_name || "Customer",
-        booking_id: fullBooking.id,
-        // Session-less manage/cancel link for THIS booking (#516) — the email CTA.
-        manage_url: `${process.env.CLIENT_URL || "https://bookasloth.com"}/manage-booking/${manageBookingToken.sign(fullBooking.id)}`,
-        // Online → dashboard has the Meet link. Offline → show the host's city text
-        // and (below) a Get-directions CTA to the map link when one is set.
-        location: isOnline
-          ? (fullBooking.meeting_link ? "Online (link in your dashboard)" : "Online")
-          : (host.location || "In person"),
-        ...(!isOnline && host.map_link
-          ? { action_link: host.map_link, action_label: "Get directions" }
-          : {}),
-        booking_date: d.toLocaleDateString("en-IN", { timeZone: tz, weekday: "short", day: "numeric", month: "short", year: "numeric" }),
-        booking_time: d.toLocaleTimeString("en-IN", { timeZone: tz, hour: "2-digit", minute: "2-digit" }),
-        booking_day: d.toLocaleDateString("en-IN", { timeZone: tz, day: "2-digit" }),
-        booking_month: d.toLocaleDateString("en-IN", { timeZone: tz, month: "short" }).toUpperCase(),
-        booking_year: d.toLocaleDateString("en-IN", { timeZone: tz, year: "numeric" }),
-        // GST tax invoice: token-gated link the guest can open from the email
-        // without logging in (works for account-less guest checkout). Falls back to
-        // the dashboard when no invoice was minted (e.g. a free booking).
-        invoice_url: (invoiceRef && process.env.API_URL)
-          ? `${process.env.API_URL.replace(/\/$/, "")}/api/invoices/${invoiceRef.id}?token=${encodeURIComponent(invoiceRef.token)}`
-          : `${process.env.CLIENT_URL || "https://bookasloth.com"}/user/my-bookings`,
-      };
-      // WhatsApp confirmation carries a 5th "link" var: Meet link when online,
-      // the host's map link when offline (dashboard as a last resort).
-      const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.com"}/dashboard`;
-      const confirmLink = fullBooking.meeting_link || (isOnline ? "" : host.map_link) || dashboard;
-      const ctx = {
-        customer: [fullBooking.guest_name || "Customer", svc?.title || "Service", host.name || "Host", when, confirmLink],
-        vendor:   [host.name || "Host", fullBooking.guest_name || "Customer", svc?.title || "Service", when, confirmLink],
-      };
-      await NotificationEngine.send({
-        event: "BOOKING_CONFIRMED_CUSTOMER",
-        data: {
-          email: fullBooking.guest_email, phone: fullBooking.guest_phone, name: fullBooking.guest_name,
-          templateParams: ctx.customer,
-          emailData, emailUser: { name: fullBooking.guest_name, email: fullBooking.guest_email },
-          recipientUserId: fullBooking.guest_id, bookingId: fullBooking.id,
-        },
-      });
-      await NotificationEngine.send({
-        event: "BOOKING_CONFIRMED_VENDOR",
-        data: {
-          email: host.email, phone: host.phone, name: host.name,
-          templateParams: ctx.vendor,
-          emailData, emailUser: { name: host.name, email: host.email, username: host.username },
-          recipientUserId: fullBooking.host_id, bookingId: fullBooking.id,
-        },
-      });
-      // Last-minute paid booking (start sooner than a reminder lead-time): fire
-      // the catch-up reminder the 5-min cron's band would otherwise miss.
-      // Lazy require avoids a load-time cycle with bookingController.
-      const { fireDueReminders } = require("./bookingController");
-      await fireDueReminders(fullBooking, host);
-    });
+    // Calendar event + confirmation notifications (email + WhatsApp) + catch-up
+    // reminder. Shared with the webhook + reconciler capture paths so a booking
+    // paid via redirect/UPI (client tab dead before /verify) still gets confirmed.
+    runInBackground("verifyPayment:confirmation", () =>
+      sendBookingConfirmation({ bookingId: booking_id, invoiceRef }));
   } catch (error) {
     // Success response is sent at L302 before the best-effort background fan-out.
     // A throw after that point must not attempt a second send (ERR_HTTP_HEADERS_SENT).
@@ -1346,8 +1222,14 @@ const handleWebhook = async (req, res) => {
         });
         auditLog('WEBHOOK_BOOKING_PAID', null, { booking_id: notes.booking_id, payment_id: payment.id });
         if (paid) {
-          try { await generateBookingInvoice(paid); } catch (_) { /* non-fatal */ }
+          let invoiceRef = null;
+          try { const inv = await generateBookingInvoice(paid); if (inv) invoiceRef = { id: inv.id, token: inv.access_token }; } catch (_) { /* non-fatal */ }
           try { await generateCommissionInvoice(paid); } catch (_) { /* non-fatal */ }
+          // Confirmation side-effects (calendar/Meet + BOOKING_CONFIRMED + reminder)
+          // that the client verify path runs — now fired here too, so a webhook-only
+          // capture (redirect/UPI, dead client tab) isn't left un-confirmed.
+          sendBookingConfirmation({ bookingId: notes.booking_id, invoiceRef })
+            .catch((e) => console.error("webhook booking confirmation failed:", e.message));
           trackServer(resolveGuestId({ guestId: paid.guest_id, guestEmail: paid.guest_email }), "booking_paid", {
             booking_id: paid.id,
             service_title: paid.services?.title,
