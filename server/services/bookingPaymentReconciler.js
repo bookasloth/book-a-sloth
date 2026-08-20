@@ -19,6 +19,7 @@ const razorpayConfig = require('./razorpayConfig');
 const { trackServer } = require('../utils/trackServer');
 const { resolveGuestId } = require('../utils/posthog');
 const { finalizeBookingCapture } = require('./bookingCapture');
+const { sendBookingConfirmation } = require('./bookingConfirmation');
 
 // Only touch bookings whose order is old enough that the normal capture→webhook
 // path should already have completed — avoids racing a webhook that's in flight.
@@ -83,6 +84,10 @@ async function reconcile() {
       if (!paid) continue; // someone else won the transition
 
       healed++;
+      // Confirmation side-effects (calendar/Meet + BOOKING_CONFIRMED + reminder),
+      // shared with verify + webhook so a reconciler-healed booking is confirmed too.
+      sendBookingConfirmation({ bookingId: paid.id, invoiceRef: null })
+        .catch((e) => console.error('booking reconcile: confirmation error (non-fatal)', paid.id, e.message));
       // Mirror the webhook's analytics so booking_paid fires exactly once.
       try {
         trackServer(
