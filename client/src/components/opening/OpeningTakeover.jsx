@@ -1,13 +1,14 @@
 /**
- * OpeningTakeover.jsx — site-wide "The Opening" overlay.
+ * OpeningTakeover.jsx — "The Opening" overlay, homepage only.
  *
- * During the launch window, the ceremony appears full-screen over ANY public page,
- * once per device, for everyone. It stays out of auth / app / checkout flows, and
- * the "acted" flag is set only when the visitor places a stone or explicitly
- * closes it — a stray reload gives another chance.
+ * During the launch window the ceremony appears full-screen over the HOMEPAGE (/)
+ * for everyone. It keeps re-appearing on each visit/reload of the homepage until it
+ * has been shown MAX_SHOWS times on this device — regardless of whether a stone was
+ * placed. Every appearance that ends (placed OR closed) counts as one show, so a
+ * hesitant visitor gets nudged again instead of losing the moment after one dismissal.
  *
- * Mounted once at the app root. Server /status is the source of truth for the
- * window; the result is cached in sessionStorage so it's one cheap call per tab.
+ * Mounted once at the app root; it self-gates to the homepage. Server /status is the
+ * source of truth for the window; the result is cached in sessionStorage.
  */
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -15,22 +16,12 @@ import OpeningCeremony from './OpeningCeremony';
 import { getOpeningStatus } from '../../services/opening';
 import '../../styles/opening.css';
 
-const ACTED_KEY = 'opening_acted_v1';
+const SHOWS_KEY = 'opening_shows_v1';   // count of times shown-and-dismissed on this device
+const MAX_SHOWS = 10;                   // keep re-showing on the homepage until this many
 const CACHE_KEY = 'opening_status_v1';
 const CACHE_TTL = 5 * 60 * 1000;
 
-// Routes where the takeover must NOT appear (auth / app / checkout / the event's own pages).
-const SUPPRESS_PREFIXES = [
-  '/login', '/login-as-vendor', '/forgot-password', '/reset-password', '/signin', '/signup',
-  '/be-a-sloth', '/vendor-register', '/onboarding', '/auth', '/hello-sloth',
-  '/dashboard', '/admin', '/super-dashboard', '/user', '/manage-booking',
-  '/opening', '/inaugurators', '/og',
-];
-const isSuppressed = (path) => {
-  if (SUPPRESS_PREFIXES.some((p) => path === p || path.startsWith(p + '/'))) return true;
-  if (/^\/[^/]+\/booking\/[^/]+\/?$/.test(path)) return true; // guest booking checkout
-  return false;
-};
+const readInt = (k) => { try { return parseInt(localStorage.getItem(k), 10) || 0; } catch { return 0; } };
 
 async function fetchStatusCached() {
   try {
@@ -50,8 +41,8 @@ export default function OpeningTakeover() {
   const [status, setStatus] = useState(null);
   const [show, setShow] = useState(false);
 
-  const acted = (() => { try { return localStorage.getItem(ACTED_KEY) === '1'; } catch { return false; } })();
-  const eligible = !acted && !isSuppressed(pathname);
+  // Homepage only, until this device has seen it MAX_SHOWS times. Recomputed each render.
+  const eligible = pathname === '/' && readInt(SHOWS_KEY) < MAX_SHOWS;
 
   useEffect(() => {
     if (!eligible) return;
@@ -60,15 +51,14 @@ export default function OpeningTakeover() {
       .then((s) => { if (alive && s?.open) { setStatus(s); setShow(true); } })
       .catch(() => {});
     return () => { alive = false; };
-    // re-check when navigating to a newly-eligible page
+    // re-check when navigating back to the homepage
   }, [eligible, pathname]);
 
   if (!show || !status) return null;
 
-  const exit = (reason) => {
-    if (reason === 'placed' || reason === 'skip') {
-      try { localStorage.setItem(ACTED_KEY, '1'); } catch { /* ignore */ }
-    }
+  // Any dismissal — placing a stone or closing — consumes one of the MAX_SHOWS.
+  const exit = () => {
+    try { localStorage.setItem(SHOWS_KEY, String(readInt(SHOWS_KEY) + 1)); } catch { /* ignore */ }
     setShow(false);
   };
 
