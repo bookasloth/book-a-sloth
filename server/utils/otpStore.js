@@ -17,6 +17,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { supabaseAdmin } = require('../config/supabase');
 const { isLoadTestMode } = require('../config/loadTestMode');
+const { isOpenAccess } = require('../config/openAccessWindow');
 
 const TTL_MS         = 10 * 60 * 1000;  // 10 min expiry
 const MAX_ATTEMPTS   = 3;               // verify attempts per OTP
@@ -54,7 +55,11 @@ const set = async (email, otp, type = 'booking') => {
     .eq('type', type)
     .maybeSingle();
 
-  if (existing) {
+  // Open-access window (launch/event): skip the per-contact send cap + lockout so
+  // every user gets an OTP instantly. Still stores/replaces the code below; only the
+  // throttle is lifted. Auto re-gates when the window closes. Companion to the limiter
+  // + ipGuard bypass in security.js/ipGuard.js.
+  if (existing && !isOpenAccess()) {
     if (existing.locked_until && new Date(existing.locked_until).getTime() > now) {
       const mins = Math.ceil((new Date(existing.locked_until).getTime() - now) / 60000);
       return { ok: false, reason: `Too many requests. Try again in ${mins} minute(s).` };
