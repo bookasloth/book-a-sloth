@@ -197,6 +197,16 @@ const submitKyc = async (req, res) => {
       .from('kyc_submissions').upsert(payload, { onConflict: 'user_id' });
     if (error) throw error;
 
+    // Alert admins to review. Fire-and-forget; key per-user throttles rapid
+    // re-submits into one email. Never blocks the response.
+    const base = process.env.CLIENT_URL || 'https://bookasloth.com';
+    require('../utils/adminAlert').adminAlert({
+      key: `kyc_submit:${req.user.id}`,
+      subject: `KYC submitted: ${fullName || email}`,
+      lines: [`Name: ${fullName || '—'}`, `Email: ${email}`, `PAN: ${pan}`, `Bank: ${bankName}`],
+      link: `${base}/admin/kyc/pending`,
+    });
+
     res.status(201).json({ status: 'pending' });
   } catch (error) {
     safeError(res, error);

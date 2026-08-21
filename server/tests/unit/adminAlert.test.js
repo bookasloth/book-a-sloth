@@ -94,6 +94,27 @@ describe('adminAlert', () => {
     expect(html).not.toContain('<script>');
   });
 
+  test('sends one email per recipient for a comma-separated list', async () => {
+    const { adminAlert, sendEmail } = loadFresh({
+      ADMIN_ALERT_EMAIL: 'bolt@bookasloth.in, sndatarkar@gmail.com',
+    });
+    const r = await adminAlert({ key: 'multi', subject: 'New host' });
+
+    expect(r).toEqual({ sent: true });
+    expect(sendEmail).toHaveBeenCalledTimes(2);
+    expect(sendEmail.mock.calls.map((c) => c[0].to)).toEqual(
+      ['bolt@bookasloth.in', 'sndatarkar@gmail.com']);
+  });
+
+  test('renders a Review button when a link is passed', async () => {
+    const { adminAlert, sendEmail } = loadFresh({ ADMIN_ALERT_EMAIL: 'founder@example.com' });
+    await adminAlert({ key: 'lnk', subject: 'X', link: 'https://bookasloth.com/admin/kyc/pending' });
+
+    const html = sendEmail.mock.calls[0][0].html;
+    expect(html).toContain('href="https://bookasloth.com/admin/kyc/pending"');
+    expect(html).toContain('Review');
+  });
+
   test('returns no_subject when subject is missing', async () => {
     const { adminAlert, sendEmail } = loadFresh({ ADMIN_ALERT_EMAIL: 'founder@example.com' });
     const r = await adminAlert({ lines: ['orphan'] });
