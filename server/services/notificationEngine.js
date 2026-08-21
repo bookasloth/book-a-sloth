@@ -178,6 +178,24 @@ const send = async ({ event, data = {} }) => {
         response: r.response, error: r.error,
         payload: { campaignName: evt.campaign_name, userName: data.name, templateParams: data.templateParams || [], buttonParams: data.buttonParams || [] },
       });
+      if (!r.success) {
+        // Surface a silent WhatsApp breakage (template-param mismatch, out-of-credits,
+        // provider outage) instead of it only living in notification_logs — the
+        // "Booking Confirmed" template mismatch failed unnoticed for ~5 weeks.
+        // Fire-and-forget; adminAlert never throws and is throttled per key, so a
+        // burst of the same failure sends ONE alert, not one per send.
+        require('../utils/adminAlert').adminAlert({
+          key: `wa_fail:${event}`,
+          subject: `WhatsApp send failing: ${event}`,
+          lines: [
+            `Event: ${event}`,
+            `Campaign: ${evt.campaign_name || '(none)'}`,
+            `To: ${data.phone}`,
+            `Error: ${r.error || 'unknown'}`,
+            `Check the AiSensy template variable count vs the app templateParams, or the AiSensy conversation-credit balance.`,
+          ],
+        });
+      }
     }
   }
 
