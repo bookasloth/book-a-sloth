@@ -5,6 +5,7 @@
  */
 import { useNavigate } from 'react-router-dom';
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import OpeningCeremony from '../components/opening/OpeningCeremony';
 import '../styles/opening.css';
 
@@ -12,7 +13,7 @@ export default function Opening() {
   const navigate = useNavigate();
   return (
     <>
-      <Seo title="The Opening — Book A Sloth" description="Cut the ribbon. Open Book A Sloth. Put your name in stone, forever." />
+      <Seo title="The Opening — Book A Sloth" description="Cut the ribbon. Open Book A Sloth. Put your name in stone, forever." image={ogCard('opening', 'png')} />
       <OpeningCeremony onExit={(reason) => { if (reason === 'skip') navigate('/'); }} />
     </>
   );

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Sprout, Sparkles, Rocket, TrendingUp, Info } from "lucide-react";
 import Seo from "../components/common/Seo";
+import { ogCard } from "../config/ogImages";
 import { SITE_URL } from "../utils/seo";
 import { CALC_PLANS, monthlyForPlan, DEFAULT_GST_RATE } from "../lib/morPricing";
 
@@ -148,6 +149,7 @@ export default function EarningsCalculator() {
         title="Earnings Calculator | Book A Sloth"
         description="See exactly what you take home on Book A Sloth. Enter your price and monthly bookings to compare your net income across Starter, Host+, and Studio."
         canonical={canonical}
+        image={ogCard('earnings-calculator', 'png')}
       />
       <div className="app-container py-10 sm:py-14">
         <div className="mx-auto max-w-3xl">

@@ -13,4 +13,6 @@
 // if one 404s — run it after uploading, before deploy.
 const OG_BASE = 'https://company-assets.bookasloth.in/images/seo';
 
-export const ogCard = (name) => `${OG_BASE}/${name}-og-1200x630.jpg`;
+// ext defaults to 'jpg' (the convention for hand-made cards); pass 'png' for the
+// handful uploaded as PNG. Keep checkOgImages.mjs in sync with any png cards.
+export const ogCard = (name, ext = 'jpg') => `${OG_BASE}/${name}-og-1200x630.${ext}`;

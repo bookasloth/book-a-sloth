@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Gift } from 'lucide-react';
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import Stone from '../components/opening/Stone';
 import { getWall, getOpeningStatus } from '../services/opening';
 
@@ -48,7 +49,8 @@ export default function Inaugurators() {
   return (
     <main className="min-h-screen bg-sand">
       <Seo title="The Inaugurators — Book A Sloth"
-           description="The people who opened the doors. Every founder who cut the ribbon on launch day, in stone, forever." />
+           description="The people who opened the doors. Every founder who cut the ribbon on launch day, in stone, forever."
+           image={ogCard('inaugurators', 'png')} />
 
       <section className="mx-auto max-w-5xl px-4 py-14 text-center">
         <p className="inline-flex items-center gap-2 font-heading text-xs font-bold uppercase tracking-[.14em] text-primary">
