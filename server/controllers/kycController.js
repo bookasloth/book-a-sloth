@@ -137,7 +137,7 @@ const submitKyc = async (req, res) => {
     if (!['savings', 'current'].includes(accountType.toLowerCase())) errors.push('Account type must be savings or current.');
 
     // Registered address — REQUIRED for the Razorpay Route linked account
-    // (profile.addresses.registered). street2 is optional; country defaults IN.
+    // (profile.addresses.registered). Razorpay requires street2 too; country defaults IN.
     const addrStreet1 = String(b.addr_street1 || '').trim();
     const addrStreet2 = String(b.addr_street2 || '').trim();
     const addrCity = String(b.addr_city || '').trim();
@@ -146,6 +146,8 @@ const submitKyc = async (req, res) => {
     const addrCountry = String(b.addr_country || 'IN').trim().toUpperCase() || 'IN';
 
     if (!addrStreet1) errors.push('Address line 1 is required.');
+    // Razorpay Route rejects a linked account without street2, so require it here.
+    if (!addrStreet2) errors.push('Address line 2 is required.');
     if (!addrCity) errors.push('City is required.');
     if (!addrState) errors.push('State is required.');
     if (!/^[0-9]{6}$/.test(addrPostal)) errors.push('PIN code must be 6 digits.');

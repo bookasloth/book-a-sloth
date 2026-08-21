@@ -55,6 +55,7 @@ const validBody = () => ({
   branch: 'Indiranagar',
   account_type: 'savings',
   addr_street1: '1 MG Road',
+  addr_street2: 'Indiranagar',
   addr_city: 'Bengaluru',
   addr_state: 'Karnataka',
   addr_postal_code: '560001',

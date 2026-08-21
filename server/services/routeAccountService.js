@@ -65,7 +65,9 @@ function registeredAddress(kyc) {
   if (!street1 || !city || !state || !postal_code) return null;
   return {
     street1,
-    street2: (kyc.addr_street2 || '').trim() || undefined,
+    // Razorpay Route requires street2. Newer KYC rows enforce it at submit, but
+    // legacy rows (and any blank) fall back to street1 so onboarding never 400s.
+    street2: (kyc.addr_street2 || '').trim() || street1,
     city,
     state,
     postal_code,
