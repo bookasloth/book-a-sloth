@@ -41,6 +41,9 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
     .eq('id', bookingId)
     .single();
   if (!booking) return;
+  // Idempotency (P1-02): skip if a prior run already completed the confirmation.
+  // Tolerates a pre-v3.102 schema (confirmation_sent_at undefined → falsy → runs).
+  if (booking.confirmation_sent_at) return;
 
   const svc  = booking.services || {};
   const host = hostOf(booking);
@@ -144,6 +147,24 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
   //    catch-up reminder the cron band would miss. Lazy require avoids a cycle.
   const { fireDueReminders } = require('../controllers/bookingController');
   await fireDueReminders(booking, host);
+
+  // Mark the confirmation side-effects done so the confirmation reconciler
+  // (services/confirmationReconciler.js) won't re-fire them. Schema fallback: a
+  // pre-v3.102 DB has no such column — skip the stamp (the reconciler no-ops there
+  // too, so nothing loops). A rare stamp failure at worst causes ONE duplicate
+  // confirmation on a later reconcile — strictly better than the paid-but-never-
+  // confirmed miss this closes.
+  try {
+    const stamp = await supabaseAdmin
+      .from('bookings')
+      .update({ confirmation_sent_at: new Date().toISOString() })
+      .eq('id', bookingId);
+    if (stamp.error && !/Could not find the|column.*does not exist/i.test(stamp.error.message || '')) {
+      console.error('confirmation stamp error (non-fatal):', stamp.error.message);
+    }
+  } catch (e) {
+    console.error('confirmation stamp threw (non-fatal):', e.message);
+  }
 }
 
 module.exports = { sendBookingConfirmation };

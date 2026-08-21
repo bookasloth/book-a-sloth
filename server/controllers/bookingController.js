@@ -808,6 +808,30 @@ const cancelBookingRecord = async (booking, { cancelledBy, actorUserId = null } 
     console.error("Cancel notification error:", notifyError.message);
   }
 
+  // P1-03: a PAID booking cancelled here issues NO automated refund — refunds are
+  // manual (there is no Razorpay refund API call anywhere). The held Route payout
+  // is reversed above so the host isn't paid, but the GUEST's money stays captured
+  // with nobody prompted to return it. Alert an admin to make the refund decision
+  // so a paid cancel can't silently pocket the guest's money. Fire-and-forget +
+  // throttled per booking (adminAlert never throws).
+  if (booking.payment_status === "paid") {
+    adminAlert({
+      key: `paid_cancel:${booking.id}`,
+      subject: `Paid booking cancelled — refund decision needed (${booking.id})`,
+      lines: [
+        `Service: ${booking.services?.title || "—"}`,
+        `Guest: ${booking.guest_name || booking.guest_email || booking.guest_id || "—"}`,
+        `Amount charged: ₹${booking.customer_total ?? "—"}`,
+        `Cancelled by: ${cancelledBy || "unknown"}`,
+        `Payment id: ${booking.razorpay_payment_id || booking.payment_id || "—"}`,
+        booking.razorpay_transfer_id
+          ? `Held payout ${booking.razorpay_transfer_id}: reversal attempted (host not paid).`
+          : "No held payout for this booking.",
+        "Decide: refund the guest in the Razorpay dashboard if due.",
+      ],
+    });
+  }
+
   phCapture(actorUserId || booking.guest_id || booking.host_id, "booking_cancelled", {
     booking_id: booking.id,
     service_title: booking.services?.title,
@@ -1691,14 +1715,30 @@ const processReminders = async () => {
       const windows = await windowsFor(planService.resolveVendorPlan(host));
       if (!windows.includes(windowHours)) continue;
       try {
-        const tz = await tzFor(b.host_id);
-        await sendBookingReminder(b, host, tz);
-        await supabaseAdmin
+        // Claim this reminder BEFORE sending: a conditional flip false→true so an
+        // overlapping cron tick (or a second instance that lost the in-process
+        // guard) cannot also send it. 0 rows updated → someone else already
+        // claimed it; skip. This makes the flag the dedup key, not the send order.
+        const { data: claimed } = await supabaseAdmin
           .from("bookings")
           .update({ [sentFlag]: true, updated_at: new Date().toISOString() })
-          .eq("id", b.id);
-      } catch (emailErr) {
-        console.error(`Reminder error for booking ${b.id}:`, emailErr.message);
+          .eq("id", b.id)
+          .eq(sentFlag, false)
+          .select("id");
+        if (!claimed || !claimed.length) continue; // claimed by another tick/instance
+        try {
+          const tz = await tzFor(b.host_id);
+          await sendBookingReminder(b, host, tz);
+        } catch (emailErr) {
+          // Send threw — release the claim so a later tick retries rather than
+          // leaving a reminder marked "sent" that never went out.
+          try {
+            await supabaseAdmin.from("bookings").update({ [sentFlag]: false }).eq("id", b.id);
+          } catch (_) { /* best-effort release */ }
+          console.error(`Reminder error for booking ${b.id}:`, emailErr.message);
+        }
+      } catch (claimErr) {
+        console.error(`Reminder claim error for booking ${b.id}:`, claimErr.message);
       }
     }
   }

@@ -1295,10 +1295,15 @@ const handleWebhook = async (req, res) => {
       if (notes.kind === 'reschedule_fee') {
         securityLog('WEBHOOK_PAYMENT_FAILED', { reschedule_booking_id: notes.booking_id || null, payment_id: payment.id, error: payment.error_description });
       } else if (notes.booking_id) {
+        // We deliberately do NOT write payment_status='failed'. The CHECK
+        // constraint only permits unpaid/paid/refunded, so that write was silently
+        // REJECTED (supabase-js returns the error, it does not throw) — which meant
+        // `failedRow` was always null and this drop-off analytics NEVER fired. The
+        // booking correctly stays 'unpaid' and the stale-hold reaper cancels it;
+        // here we only READ the (still-unpaid) row to attribute the drop-off event.
         const { data: failedRow } = await supabaseAdmin.from("bookings")
-          .update({ payment_status: "failed", updated_at: new Date().toISOString() })
-          .eq("id", notes.booking_id).eq("payment_status", "unpaid")
-          .select("guest_id, guest_email").maybeSingle();
+          .select("guest_id, guest_email")
+          .eq("id", notes.booking_id).eq("payment_status", "unpaid").maybeSingle();
         securityLog('WEBHOOK_PAYMENT_FAILED', { booking_id: notes.booking_id, error: payment.error_description });
         // Drop-off signal: a booking payment failed. PostHog-only (not a conversion).
         if (failedRow) {

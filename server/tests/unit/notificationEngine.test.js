@@ -7,20 +7,31 @@ const mockTables = {
   notification_events: [],
   notification_providers: [],
   notification_logs: [],
+  contacts: [],
 };
 
 jest.mock('../../config/supabase', () => {
   const admin = {
     from(table) {
-      return {
-        select() {
-          return Promise.resolve({ data: mockTables[table] || [], error: null });
+      const rows = () => mockTables[table] || [];
+      const filters = [];
+      const builder = {
+        select() { return builder; },
+        eq(col, val) { filters.push([col, val]); return builder; },
+        maybeSingle() {
+          const match = rows().find((r) => filters.every(([c, v]) => r[c] === v));
+          return Promise.resolve({ data: match || null, error: null });
         },
         insert(row) {
           (mockTables.notification_logs ||= []).push(row);
           return Promise.resolve({ error: null });
         },
+        // Awaitable directly (loadConfig does `await from(t).select('*')`).
+        then(resolve, reject) {
+          return Promise.resolve({ data: rows(), error: null }).then(resolve, reject);
+        },
       };
+      return builder;
     },
   };
   return { supabaseAdmin: admin, supabase: admin };
@@ -33,6 +44,9 @@ jest.mock('../../services/email/communicationEngine', () => ({
 jest.mock('../../services/aisensyService', () => ({
   sendCampaign: jest.fn().mockResolvedValue({ success: true, response: { ok: true } }),
   testConnection: jest.fn(),
+  // Mirror the real module's public API (the engine uses this to match the
+  // AiSensy-normalized contacts.phone for the STOP opt-out check).
+  normalizePhone: (p) => (p ? String(p).replace(/[^\d]/g, '') : null),
 }));
 
 const communicationEngine = require('../../services/email/communicationEngine');
@@ -55,6 +69,7 @@ describe('NotificationEngine', () => {
     mockTables.notification_events = [CONFIRMED_EVENT];
     mockTables.notification_providers = [AISENSY_PROVIDER];
     mockTables.notification_logs = [];
+    mockTables.contacts = [];
     NotificationEngine.clearCache();
   });
 
@@ -142,6 +157,30 @@ describe('NotificationEngine', () => {
     const log = mockTables.notification_logs.find((l) => l.channel === 'whatsapp');
     expect(log.status).toBe('failed');
     expect(log.error).toBe('Template not found');
+  });
+
+  test('skips WhatsApp for a STOP-suppressed contact but still emails (P1-06)', async () => {
+    mockTables.contacts = [{ phone: '919876543210', whatsapp_suppressed: true }];
+    const result = await NotificationEngine.send({
+      event: 'BOOKING_CONFIRMED_CUSTOMER',
+      data: { phone: '919876543210', name: 'X', templateParams: ['a'], email: 'a@b.com' },
+    });
+    expect(aisensy.sendCampaign).not.toHaveBeenCalled();
+    expect(result.whatsapp.suppressed).toBe(true);
+    expect(result.email.success).toBe(true);
+    const waLog = mockTables.notification_logs.find((l) => l.channel === 'whatsapp');
+    expect(waLog.status).toBe('suppressed');
+  });
+
+  test('still sends OTP over WhatsApp for a suppressed contact (exempt event, P1-06)', async () => {
+    mockTables.notification_events = [{ ...CONFIRMED_EVENT, event_key: 'BOOKING_OTP', campaign_name: 'otp' }];
+    mockTables.contacts = [{ phone: '919876543210', whatsapp_suppressed: true }];
+    const result = await NotificationEngine.send({
+      event: 'BOOKING_OTP',
+      data: { phone: '919876543210', name: 'X', templateParams: ['123456'] },
+    });
+    expect(aisensy.sendCampaign).toHaveBeenCalled();
+    expect(result.whatsapp.success).toBe(true);
   });
 
   test('email failure from the engine is captured, not thrown', async () => {
