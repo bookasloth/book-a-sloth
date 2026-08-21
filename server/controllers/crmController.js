@@ -154,10 +154,15 @@ const createManualBooking = async (req, res) => {
 
     // Service must belong to this host (no cross-host manual bookings).
     const { data: svc } = await supabaseAdmin
-      .from('services').select('id').eq('id', service_id).eq('host_id', req.user.id).maybeSingle();
+      .from('services').select('id, duration, grace_period_minutes').eq('id', service_id).eq('host_id', req.user.id).maybeSingle();
     if (!svc) return res.status(404).json({ message: 'Service not found.' });
 
-    const when = date ? new Date(date).toISOString() : new Date().toISOString();
+    const startDt = date ? new Date(date) : new Date();
+    const when = startDt.toISOString();
+    // P3-12: end_at is NOT NULL (v3.42) and grace_minutes pads the no-overlap
+    // constraint — a walk-in insert without them would 23502 the moment this
+    // (currently parked) route is enabled.
+    const endAt = new Date(startDt.getTime() + (svc.duration || 30) * 60000).toISOString();
     const { data, error } = await supabaseAdmin.from('bookings').insert({
       host_id: req.user.id,
       service_id,
@@ -168,6 +173,8 @@ const createManualBooking = async (req, res) => {
       status: 'completed',
       payment_status: 'paid',
       scheduled_at: when,
+      end_at: endAt,
+      grace_minutes: svc.grace_period_minutes ?? 10,
       source: 'manual_cash',
     }).select('id, source').single();
     if (error) throw error;

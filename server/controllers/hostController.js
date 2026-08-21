@@ -764,7 +764,12 @@ const getServiceBySlug = async (req, res) => {
       bookingFee = Math.round(platformFee * (1 + gstRate) * 100) / 100;
     } catch (_) { bookingFee = 0; }
 
-    res.json({ host, service, availability, bookingFee, platformFee, gstRate });
+    // P3-7: return feeOnly so the booking page's step list matches reality (the
+    // client otherwise defaults it true, showing a "Pay" step for a free booking).
+    let feeOnly = true;
+    try { feeOnly = await require("../services/paidMode").feeOnlyForHost(host.id); } catch (_) { feeOnly = true; }
+
+    res.json({ host, service, availability, bookingFee, platformFee, gstRate, feeOnly });
   } catch (error) {
     safeError(res, error);
   }
