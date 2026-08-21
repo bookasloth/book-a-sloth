@@ -69,3 +69,18 @@ test('missing booking: no-op, no sends', async () => {
   await sendBookingConfirmation({ bookingId: 'nope' });
   expect(NotificationEngine.send).not.toHaveBeenCalled();
 });
+
+test('WhatsApp templateParams match the AiSensy 4-variable Booking Confirmed templates', async () => {
+  const { attachGoogleTokens } = require('../../utils/profileSecrets');
+  attachGoogleTokens.mockImplementation((host) => { host.google_refresh_token = 'r'; host.google_access_token = 'a'; });
+  mockDb(baseBooking());
+  await sendBookingConfirmation({ bookingId: 'b1' });
+  const [customerCall, vendorCall] = NotificationEngine.send.mock.calls.map((c) => c[0]);
+  // Exactly 4 body vars, no 5th link param — a 5th makes AiSensy reject with
+  // "Template params does not match the campaign".
+  expect(customerCall.data.templateParams).toHaveLength(4);
+  expect(vendorCall.data.templateParams).toHaveLength(4);
+  // Order must match the AiSensy templates.
+  expect(customerCall.data.templateParams.slice(0, 3)).toEqual(['Guest', 'Demo', 'Host']); // {{1}} guest, {{2}} service, {{3}} host
+  expect(vendorCall.data.templateParams.slice(0, 3)).toEqual(['Host', 'Guest', 'Demo']);   // {{1}} host, {{2}} guest, {{3}} service
+});

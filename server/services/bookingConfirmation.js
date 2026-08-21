@@ -119,11 +119,16 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
       ? `${process.env.API_URL.replace(/\/$/, '')}/api/invoices/${invoiceRef.id}?token=${encodeURIComponent(invoiceRef.token)}`
       : `${process.env.CLIENT_URL || 'https://bookasloth.com'}/user/my-bookings`,
   };
-  const dashboard = `${process.env.CLIENT_URL || 'https://bookasloth.com'}/dashboard`;
-  const confirmLink = meetingLink || (isOnline ? '' : host.map_link) || dashboard;
+  // AiSensy "Booking Confirmed" templates take exactly 4 body variables (no link):
+  //   Customer: {{1}} guest, {{2}} service, {{3}} host, {{4}} date/time
+  //   Vendor:   {{1}} host,  {{2}} guest,   {{3}} service, {{4}} date/time
+  // A 5th (meeting-link) param was removed from the AiSensy templates ~Jul 2026;
+  // still sending it made every confirmation fail with "Template params does not
+  // match the campaign". The Meet link still reaches people via email + the
+  // calendar invite. Keep this array length in sync with the AiSensy template.
   const ctx = {
-    customer: [booking.guest_name || 'Customer', svc.title || 'Service', host.name || 'Host', when, confirmLink],
-    vendor:   [host.name || 'Host', booking.guest_name || 'Customer', svc.title || 'Service', when, confirmLink],
+    customer: [booking.guest_name || 'Customer', svc.title || 'Service', host.name || 'Host', when],
+    vendor:   [host.name || 'Host', booking.guest_name || 'Customer', svc.title || 'Service', when],
   };
   await NotificationEngine.send({
     event: 'BOOKING_CONFIRMED_CUSTOMER',
