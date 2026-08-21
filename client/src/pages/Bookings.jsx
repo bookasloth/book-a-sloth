@@ -594,7 +594,7 @@ const Bookings = () => {
 
       <PageHeader
         title="Bookings"
-        subtitle={`${bookings.length} total bookings`}
+        subtitle={`${bookings.length} paid bookings`}
         actions={
           <SearchInput
             value={search}

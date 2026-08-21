@@ -18,7 +18,7 @@ const { cancelBookingRecord } = require('./bookingController');
 
 // Same join shape cancelBookingRecord expects (host profile + service title).
 const BOOKING_SELECT =
-  '*, services(title), profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link, google_calendar_connected)';
+  '*, services(title, meeting_mode), profiles!bookings_host_id_fkey(name, email, phone, username, location, map_link, google_calendar_connected)';
 
 // The subset a manage-link holder may see — exactly what they already received in
 // their confirmation, never extra host PII (no host email/phone).
@@ -29,7 +29,7 @@ const publicView = (b) => ({
   host_name: b.profiles?.name || null,
   scheduled_at: b.scheduled_at,
   end_at: b.end_at || null,
-  meeting_mode: b.meeting_mode || null,
+  meeting_mode: b.services?.meeting_mode || null, // P3-11: lives on services, not bookings
   meeting_link: b.meeting_link || null,
   location: b.profiles?.location || null,
   map_link: b.profiles?.map_link || null,

@@ -200,10 +200,18 @@ const getBookedSlots = async (req, res) => {
     const { host_id, date } = req.query;
     if (!host_id || !date)
       return res.status(400).json({ message: "host_id and date are required" });
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(date);
-    end.setHours(23, 59, 59, 999);
+    // P3-5: bound the query in the HOST's timezone, not the server's (Render = UTC).
+    // setHours ran in server-local time, shifting the "day" by the host's offset
+    // (±5.5h for IST) and returning the wrong day's bookings near midnight.
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(date));
+    if (!m) return res.status(400).json({ message: "date must be YYYY-MM-DD" });
+    const { wallClockToUTC } = require("../services/availabilityService");
+    const { data: bsAvail } = await supabaseAdmin
+      .from("availability").select("timezone").eq("host_id", host_id).maybeSingle();
+    const bsTz = bsAvail?.timezone || "Asia/Kolkata";
+    const y = Number(m[1]), mo = Number(m[2]) - 1, d = Number(m[3]);
+    const start = wallClockToUTC(y, mo, d, 0, 0, bsTz);
+    const end = wallClockToUTC(y, mo, d + 1, 0, 0, bsTz); // exclusive next host-local midnight
     const { data, error } = await selectBookingServiceRows((select) =>
       supabaseAdmin
         .from("bookings")
@@ -211,7 +219,7 @@ const getBookedSlots = async (req, res) => {
         .eq("host_id", host_id)
         .neq("status", "cancelled")
         .gte("scheduled_at", start.toISOString())
-        .lte("scheduled_at", end.toISOString()),
+        .lt("scheduled_at", end.toISOString()),
     );
     if (error) return safeError(res, error);
     res.json(data || []);
@@ -738,12 +746,14 @@ const getGuestBookings = async (req, res) => {
 //   actorUserId : the acting user id, or null for an anonymous manage-link guest.
 //                 The party that is NOT the actor gets the in-app notification.
 const cancelBookingRecord = async (booking, { cancelledBy, actorUserId = null } = {}) => {
-  const { data, error } = await supabaseAdmin
-    .from("bookings")
-    .update({ status: "cancelled", settlement_status: "cancelled", updated_at: new Date().toISOString() })
-    .eq("id", booking.id)
-    .select()
-    .single();
+  const cancelUpdate = { status: "cancelled", settlement_status: "cancelled", cancelled_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+  let { data, error } = await supabaseAdmin
+    .from("bookings").update(cancelUpdate).eq("id", booking.id).select().single();
+  // P3-2: cancelled_at is added by v3.104; on a DB without it yet, retry minimally.
+  if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+    const { cancelled_at: _ca, ...core } = cancelUpdate;
+    ({ data, error } = await supabaseAdmin.from("bookings").update(core).eq("id", booking.id).select().single());
+  }
   if (error) throw error;
 
   // Phase 2: a cancelled booking must not pay the host — reverse any held Route

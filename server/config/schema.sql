@@ -1,3 +1,13 @@
+-- ⚠️  NOT THE LIVE SCHEMA — DO NOT TRUST THIS FILE FOR CURRENT COLUMN/CONSTRAINT
+--     DEFINITIONS (P3-4). This is the original bootstrap script; the database has
+--     since evolved through server/migrations/v1.1 … v3.10x (the source of truth,
+--     applied on both prod + staging). This file's CHECK constraints, columns and
+--     defaults have DRIFTED from production — e.g. it predates several booking
+--     columns and status values. For the real schema, read server/migrations/*.sql
+--     (and staging_schema.sql), or introspect the live DB. The sibling
+--     migration_v2..v6.sql files here are likewise historical and NOT executed by
+--     scripts/migrate.js (which only runs server/migrations/).
+--
 -- Run this in the Supabase SQL Editor (Dashboard → SQL Editor → New Query)
 -- This creates all the tables for the Book A Sloth app.
 

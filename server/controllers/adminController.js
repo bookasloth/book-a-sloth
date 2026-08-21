@@ -93,6 +93,18 @@ const getStats = async (req, res) => {
     // Completed + paid bookings → denominator for ARPB.
     const completedPaidBookings = paid.filter((b) => b.status === 'completed').length;
 
+    // P3-1: 'disputed' was never a valid bookings.status value (the CHECK forbids
+    // it) — real disputes live in booking_disputes, so this KPI was always 0. Count
+    // OPEN disputes (unresolved). Falls back to 0 if the table is absent.
+    let disputedCount = 0;
+    try {
+      const { count, error: dErr } = await supabaseAdmin
+        .from('booking_disputes')
+        .select('id', { count: 'exact', head: true })
+        .is('resolved_at', null);
+      if (!dErr) disputedCount = count || 0;
+    } catch (_) { disputedCount = 0; } // non-critical KPI must not break the stats endpoint
+
     res.json({
       users: usersRes.count || 0,
       vendors: vendorsRes.count || 0,
@@ -110,9 +122,8 @@ const getStats = async (req, res) => {
       completedPaidBookings,
       confirmed: paid.length,
       cancelled: allBookings.filter(b => b.payment_status === 'refunded').length,
-      // Disputed = booking lifecycle status, independent of payment_status. Falls
-      // back to 0 on pre-dispute schemas (the `status` column simply reads null).
-      disputed: allBookings.filter(b => b.status === 'disputed').length,
+      // Disputed = count of OPEN (unresolved) rows in booking_disputes (P3-1).
+      disputed: disputedCount,
     });
   } catch (error) {
     safeError(res, error);
