@@ -381,6 +381,21 @@ setInterval(async () => {
   } catch (err) { console.error('Booking reconciler cron error:', err.message); }
 }, BOOKING_RECONCILE_MIN * 60 * 1000);
 
+// Confirmation reconciler (P1-02) — re-drives the post-payment confirmation
+// (calendar/Meet + BOOKING_CONFIRMED messages) for paid bookings whose one-shot
+// background send was lost, so a paid booking is never left silently unconfirmed.
+// Idempotent + single-flight; no-ops until migrations/v3.102 is applied.
+const confirmationReconciler = require('./services/confirmationReconciler');
+const CONFIRMATION_RECONCILE_MIN = Number(process.env.CONFIRMATION_RECONCILE_INTERVAL_MIN || 15);
+setInterval(async () => {
+  try {
+    await runLocked('confirmation-reconcile', async () => {
+      const r = await confirmationReconciler.reconcile();
+      if (r.healed > 0) console.log(`Confirmation reconciler: re-drove ${r.healed} unconfirmed bookings (of ${r.checked} checked)`);
+    }, { leaseMs: CONFIRMATION_RECONCILE_MIN * 2 * 60 * 1000 });
+  } catch (err) { console.error('Confirmation reconciler cron error:', err.message); }
+}, CONFIRMATION_RECONCILE_MIN * 60 * 1000);
+
 // Referral reward release (v3.76) — flips qualified referrals to rewarded once the
 // hold window passes and the referred host is still paying (clawing back churned/
 // refunded ones), crediting the referrer's withdrawable balance. Idempotent; hourly.

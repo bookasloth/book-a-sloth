@@ -61,19 +61,33 @@ async function acquire(name, leaseMs) {
   }
 }
 
+// In-process re-entrancy guard. The Postgres lease renews for the SAME holder on
+// every tick, so it does NOT stop a slow run of a job from overlapping the next
+// tick of that same job on THIS process (e.g. reminders/email-queue running every
+// 60s–5min while a run is still draining a backlog). Overlap double-sends. This
+// Set makes a job skip its own tick while a previous one is still in flight.
+const _inFlight = new Set();
+
 /**
- * Run `fn` only if this instance currently holds the lease for `name`; otherwise
- * skip this tick. `leaseMs` should comfortably exceed the job's interval (the
- * schedulers in server.js pass 2x the interval) so the holder always renews
- * before expiry. Returns fn()'s result, or undefined when the tick was skipped.
+ * Run `fn` only if this instance currently holds the lease for `name` AND no
+ * previous run of `name` is still executing in this process; otherwise skip this
+ * tick. `leaseMs` should comfortably exceed the job's interval (the schedulers in
+ * server.js pass 2x the interval) so the holder always renews before expiry.
+ * Returns fn()'s result, or undefined when the tick was skipped.
  * @param {string} name
  * @param {() => any} fn
  * @param {{ leaseMs?: number }} [opts]
  */
 async function runLocked(name, fn, { leaseMs } = {}) {
+  if (_inFlight.has(name)) return undefined; // previous tick still running here
   const got = await acquire(name, leaseMs || 60 * 1000);
   if (!got) return undefined;
-  return fn();
+  _inFlight.add(name);
+  try {
+    return await fn();
+  } finally {
+    _inFlight.delete(name);
+  }
 }
 
 module.exports = { runLocked, acquire, HOLDER };

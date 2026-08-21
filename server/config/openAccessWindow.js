@@ -14,9 +14,44 @@
  * point). It only relaxes abuse limits — it does NOT touch payment signature
  * checks or any correctness path.
  */
+// Hard ceiling on how far in the future the window may end. A launch window is
+// hours/days; a value beyond this is almost certainly a fat-finger or a
+// "permanently open" mistake, so we treat it as misconfigured and DON'T open the
+// gates (fail-safe: normal rate limits stay ENFORCED). Override via env if a
+// genuinely longer window is ever needed. (P1-01)
+const MAX_OPEN_ACCESS_MS =
+  Number(process.env.OPEN_ACCESS_MAX_MS) || 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// Throttle the (loud) status log to at most once an hour — this runs on every
+// request, so it must never log per-call.
+let _lastLogAt = 0;
+const _logOncePerHour = (msg) => {
+  const now = Date.now();
+  if (now - _lastLogAt > 60 * 60 * 1000) {
+    _lastLogAt = now;
+    console.warn(msg);
+  }
+};
+
 function isOpenAccess() {
   const until = Number(process.env.OPEN_ACCESS_UNTIL);
-  return Number.isFinite(until) && until > Date.now();
+  if (!Number.isFinite(until) || until <= Date.now()) return false;
+
+  if (until - Date.now() > MAX_OPEN_ACCESS_MS) {
+    _logOncePerHour(
+      `[openAccess] OPEN_ACCESS_UNTIL is >${Math.round(MAX_OPEN_ACCESS_MS / 3600000)}h ` +
+      `in the future (${new Date(until).toISOString()}); treating as misconfigured — ` +
+      `IGNORED, normal rate limits & IP bans ENFORCED. Set a shorter window or ` +
+      `raise OPEN_ACCESS_MAX_MS if this is intentional.`,
+    );
+    return false;
+  }
+
+  _logOncePerHour(
+    `[openAccess] OPEN ACCESS ACTIVE until ${new Date(until).toISOString()} — ` +
+    `ALL rate limits & IP bans are LIFTED platform-wide.`,
+  );
+  return true;
 }
 
-module.exports = { isOpenAccess };
+module.exports = { isOpenAccess, MAX_OPEN_ACCESS_MS };

@@ -60,6 +60,11 @@ const loadConfig = async () => {
 
 const clearCache = () => { _cache = { at: 0, events: null, providers: null }; };
 
+// Events the WhatsApp opt-out (STOP) does NOT suppress: user-requested, foreground
+// authentication codes. Blocking these would strand an opted-out guest who is
+// actively trying to book/verify right now, and they aren't business-initiated.
+const WHATSAPP_OPT_OUT_EXEMPT = new Set(['BOOKING_OTP', 'WHATSAPP_VERIFY_OTP']);
+
 // Vendor-recipient lifecycle events that don't carry a _VENDOR suffix.
 // (Hosts own profiles, plans, badges/metrics — these always reach a vendor.)
 const VENDOR_EVENTS = new Set([
@@ -133,22 +138,47 @@ const send = async ({ event, data = {} }) => {
   const provider = cfg.providers.get('aisensy');
   if (whatsappEnabled && provider && provider.is_active && data.phone) {
     results.whatsapp.attempted = true;
-    const params = {
-      apiKey: provider.api_key,
-      campaignName: evt.campaign_name,
-      destination: data.phone,
-      userName: data.name,
-      templateParams: data.templateParams || [],
-      buttonParams: data.buttonParams || [],   // copy-code button (auth/OTP templates)
-    };
-    const r = await aisensy.sendCampaign(params);
-    results.whatsapp = { attempted: true, ...r };
-    await logResult({
-      event, channel: 'whatsapp', destination: data.phone,
-      status: r.success ? 'sent' : 'failed',
-      response: r.response, error: r.error,
-      payload: { campaignName: evt.campaign_name, userName: data.name, templateParams: data.templateParams || [], buttonParams: data.buttonParams || [] },
-    });
+    // P1-06: honor the WhatsApp opt-out (inbound STOP → contacts.whatsapp_suppressed)
+    // for TRANSACTIONAL sends too — previously only the marketing path checked it.
+    // contacts.phone is stored AiSensy-normalized, so match on the same function.
+    // OTP/auth events are EXEMPT: the user just requested them in a foreground flow
+    // (they'd be stranded mid-booking otherwise), and they aren't business-initiated.
+    let suppressed = false;
+    if (!WHATSAPP_OPT_OUT_EXEMPT.has(event)) {
+      const normPhone = aisensy.normalizePhone(data.phone);
+      if (normPhone) {
+        try {
+          const { data: contact } = await supabaseAdmin
+            .from('contacts').select('whatsapp_suppressed').eq('phone', normPhone).maybeSingle();
+          suppressed = !!contact?.whatsapp_suppressed;
+        } catch (_) { /* contacts unavailable → don't block the send */ }
+      }
+    }
+    if (suppressed) {
+      results.whatsapp = { attempted: true, success: false, suppressed: true };
+      await logResult({
+        event, channel: 'whatsapp', destination: data.phone, status: 'suppressed',
+        response: {}, error: 'recipient opted out of WhatsApp (STOP)',
+        payload: { campaignName: evt.campaign_name },
+      });
+    } else {
+      const params = {
+        apiKey: provider.api_key,
+        campaignName: evt.campaign_name,
+        destination: data.phone,
+        userName: data.name,
+        templateParams: data.templateParams || [],
+        buttonParams: data.buttonParams || [],   // copy-code button (auth/OTP templates)
+      };
+      const r = await aisensy.sendCampaign(params);
+      results.whatsapp = { attempted: true, ...r };
+      await logResult({
+        event, channel: 'whatsapp', destination: data.phone,
+        status: r.success ? 'sent' : 'failed',
+        response: r.response, error: r.error,
+        payload: { campaignName: evt.campaign_name, userName: data.name, templateParams: data.templateParams || [], buttonParams: data.buttonParams || [] },
+      });
+    }
   }
 
   // ── Email via the Communication Engine (DB template + queue + log) ───
