@@ -23,6 +23,7 @@
 // Fail-open: any error simply continues to the SPA.
 
 import { RESERVED_FIRST_SEGMENTS } from './src/config/reservedSegments.js';
+import { VANITY_SLUGS, VANITY_TARGET } from './src/config/vanityRedirects.js';
 
 const API_ORIGIN = process.env.API_ORIGIN || 'https://book-a-sloth.onrender.com';
 
@@ -70,6 +71,17 @@ async function fetchPrerender(pathname) {
 export default async function middleware(request) {
   const url = new URL(request.url);
   const segments = url.pathname.split('/').filter(Boolean);
+
+  // ── Vanity easter-egg slugs → canonical profile ───────────────────────────
+  // A real edge redirect (humans + bots), BEFORE the resolver — otherwise these
+  // 404 like any unknown username and the SPA never boots. The in-app HostProfile
+  // redirect only covers client-side navigation; this covers direct hits/shares.
+  // 302 (not 301): the target is a config value that may change, so don't let
+  // browsers cache it permanently.
+  if (segments.length === 1 && VANITY_SLUGS.has(segments[0].toLowerCase())) {
+    url.pathname = `/${VANITY_TARGET}`;
+    return Response.redirect(url.toString(), 302);
+  }
 
   // ── Bot prerender for dynamic profile/service routes ──────────────────────
   // /:username (1 segment, not a reserved route)
