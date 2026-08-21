@@ -119,9 +119,19 @@ const HAZARD_EXTRA = ['anonymous', 'unknown', 'default'];
 // Current + future product brands (impersonation guard).
 const PRODUCTS = ['timewheel'];
 
+// Vanity easter-egg handles — reserved so no host can claim them; the client
+// redirects each to a single public profile (client/src/config/vanityRedirects).
+// Keep this list in sync with VANITY_SLUGS there. ('me'/'founder' are already
+// reserved via BRAND/CORP; the Set dedupes, listed here to keep the set whole.)
+const VANITY = [
+  '18', '21', '69', '420', '007', '0001', '1337', '999',
+  'adult', '18plus', 'nsfw', 'uncensored', 'private', 'secret',
+  'human', 'founder', 'boss', 'lore', 'me',
+];
+
 const CATEGORIES = {
   ROUTES, INFRA, FUTURE, ACCOUNT, BRAND, SHORT, HAZARD, STATUS,
-  CORP, ROLES, ACCOUNT_EXTRA, OPS, COMMS, PROTO, LEGAL, ENVS, HAZARD_EXTRA, PRODUCTS,
+  CORP, ROLES, ACCOUNT_EXTRA, OPS, COMMS, PROTO, LEGAL, ENVS, HAZARD_EXTRA, PRODUCTS, VANITY,
 };
 
 // Normalized set of every L1 reserved name.

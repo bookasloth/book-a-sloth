@@ -1,5 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
+import { isVanitySlug, VANITY_TARGET } from "../config/vanityRedirects";
 import { getHostProfile, getHostReviews, getHostProducts, getVendorBadges } from "../services/api";
 import { analytics, EVENTS } from "../services/analytics";
 import BrandPreloader from "../components/preloader/BrandPreloader";
@@ -300,6 +301,11 @@ const ProductCard = ({ product: p, profileSlug }) => {
 const HostProfile = () => {
   const { profileSlug } = useParams();
   const navigate = useNavigate();
+  // Vanity easter-egg slugs (/69, /founder, …) redirect to one public profile.
+  // Handled here (not as 19 real routes) so the reservedSegments drift-test stays
+  // untouched. The render-time redirect is below the hooks (rules-of-hooks); the
+  // fetch effect skips these slugs so no 404 lookup fires.
+  const isVanity = isVanitySlug(profileSlug);
   const pageRef         = useRef(null);
   const [host,        setHost]        = useState(null);
   const [services,    setServices]    = useState([]);
@@ -322,6 +328,7 @@ const HostProfile = () => {
   const cardBodyRef = useRef(null);
 
   useEffect(() => {
+    if (isVanity) return; // vanity slug → redirected in render; skip the 404 lookup
     const load = async () => {
       try {
         const { data } = await getHostProfile(profileSlug);
@@ -345,7 +352,7 @@ const HostProfile = () => {
       }
     };
     load();
-  }, [profileSlug]);
+  }, [profileSlug, isVanity]);
 
   // SEO (title/description/robots/canonical/OG/ProfilePage JSON-LD) is rendered
   // declaratively via <Seo> below from the admin-managed fields.
@@ -408,6 +415,9 @@ const HostProfile = () => {
       { name: host.name || 'Host', path: `/${host.username}` },
     ], siteUrl: SEO_SITE }),
   ] : null;
+
+  // All hooks have run — safe to short-circuit the render for a vanity slug.
+  if (isVanity) return <Navigate to={`/${VANITY_TARGET}`} replace />;
 
   return (
     <>
