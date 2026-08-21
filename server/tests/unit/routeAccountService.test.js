@@ -177,3 +177,15 @@ describe('createLinkedAccount failure handling', () => {
     expect(res).toMatchObject({ ok: true, accountId: 'acc_NEW' });
   });
 });
+
+describe('buildAccountPayload street2 fallback', () => {
+  test('blank street2 falls back to street1 so Razorpay never 400s', () => {
+    const p = svc.buildAccountPayload(approvedKyc({ addr_street2: '' }));
+    expect(p.profile.addresses.registered.street2).toBe('1 Test Street');
+  });
+
+  test('a real street2 is preserved', () => {
+    const p = svc.buildAccountPayload(approvedKyc());
+    expect(p.profile.addresses.registered.street2).toBe('Andheri East');
+  });
+});

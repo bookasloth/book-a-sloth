@@ -15,6 +15,8 @@ export default function KycAddress() {
     e.preventDefault();
     const pin = (address.addr_postal_code || '').replace(/\s/g, '');
     if (!address.addr_street1.trim()) return toast.error('Enter your address line 1');
+    // Razorpay Route requires street2 on the linked account — collect it, don't skip.
+    if (!address.addr_street2.trim()) return toast.error('Enter your address line 2');
     if (!address.addr_city.trim()) return toast.error('Enter your city');
     if (!address.addr_state.trim()) return toast.error('Enter your state');
     if (!/^[0-9]{6}$/.test(pin)) return toast.error('PIN code must be 6 digits');
@@ -37,8 +39,8 @@ export default function KycAddress() {
         <FormField label="Address line 1" htmlFor="a-street1" required className="mb-0">
           <Input id="a-street1" value={address.addr_street1} onChange={setAddr('addr_street1')} placeholder="House / street" />
         </FormField>
-        <FormField label="Address line 2" htmlFor="a-street2" className="mb-0">
-          <Input id="a-street2" value={address.addr_street2} onChange={setAddr('addr_street2')} placeholder="Area / landmark (optional)" />
+        <FormField label="Address line 2" htmlFor="a-street2" required className="mb-0">
+          <Input id="a-street2" value={address.addr_street2} onChange={setAddr('addr_street2')} placeholder="Area / landmark" />
         </FormField>
         <div className="grid gap-3 sm:grid-cols-2">
           <FormField label="City" htmlFor="a-city" required className="mb-0">
