@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import WhatsNewLink from '../components/auth/WhatsNewLink';
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import useFeeOnly from '../hooks/useFeeOnly';
 import { SITE_URL } from '../utils/seo';
 
@@ -101,6 +102,7 @@ const BeASloth = () => {
           ? "Start taking bookings in minutes. Create your Book A Sloth host page, publish services, and manage your schedule — sign up free with Google. Paid bookings launching soon."
           : "Start taking bookings in minutes. Create your Book A Sloth host page, publish services, and get paid — sign up free with Google."}
         canonical={`${SITE_URL}/be-a-sloth`}
+        image={ogCard('be-a-sloth', 'png')}
       />
       {/* ── LEFT · colourful brand panel (lg+ only) ──────────────────────────── */}
       <aside className="relative hidden overflow-hidden border-r border-black/5 bg-[#FFF8EE] px-10 py-12 lg:flex lg:flex-col lg:justify-center xl:px-16">

@@ -25,7 +25,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const SRC = join(__dirname, '..', 'src');
 
 const OG_BASE = 'https://company-assets.bookasloth.in/images/seo';
-const card = (name) => `${OG_BASE}/${name}-og-1200x630.jpg`;
+const card = (name, ext = 'jpg') => `${OG_BASE}/${name}-og-1200x630.${ext}`;
 
 // The static marketing pages, by the ogCard() name each one wires in. Kept here
 // as the source of truth for what must exist — if you wire a new page, add it.
@@ -36,6 +36,13 @@ const STATIC_NAMES = [
   'services', 'explore',
   'lp-calendly-alternative', 'lp-topmate-vs-bookasloth', 'lp-setmore-alternative',
   'lp-acuity-alternative', 'lp-simplybook-alternative', 'lp-zoho-bookings-alternative',
+];
+
+// Cards uploaded as PNG (the convention is JPG; these pages pass ext='png' to
+// ogCard). Keep in sync with the ogCard(..., 'png') call sites.
+const PNG_NAMES = [
+  'how-it-works', 'be-a-sloth', 'earnings-calculator', 'invite',
+  'inaugurators', 'opening',
 ];
 
 // /features/:slug — one card per feature. Read the slugs so this never drifts
@@ -53,8 +60,9 @@ function forUrls() {
 }
 
 const urls = [
-  ...STATIC_NAMES.map(card),
-  ...featureNames().map(card),
+  ...STATIC_NAMES.map((n) => card(n)),
+  ...PNG_NAMES.map((n) => card(n, 'png')),
+  ...featureNames().map((n) => card(n)),
   ...forUrls(),
 ];
 

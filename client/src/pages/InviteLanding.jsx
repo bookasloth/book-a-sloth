@@ -12,6 +12,7 @@ import { TESTIMONIALS } from '../data/testimonials';
 import HowItWorks from '../components/home/HowItWorks';
 import Reveal from '../components/home/Reveal';
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 
 // First-touch: bas_invite is the durable single source of truth. If it already
 // exists, change NOTHING (neither store) — mirrors the referral bas_ref rule so
@@ -62,7 +63,7 @@ export default function InviteLanding() {
 
   return (
     <div className="min-h-screen bg-white text-ink">
-      <Seo title="You're invited — Book A Sloth" description="Your personal invitation to Book A Sloth." robots="noindex" />
+      <Seo title="You're invited — Book A Sloth" description="Your personal invitation to Book A Sloth." image={ogCard('invite', 'png')} robots="noindex" />
 
       {/* Hero — dynamic greeting */}
       <section className="mx-auto max-w-3xl px-6 pt-20 pb-14 text-center">

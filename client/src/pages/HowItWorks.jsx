@@ -11,6 +11,7 @@
 // route-level page — distinct from the homepage section at
 // components/home/HowItWorks.jsx.
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import { SITE_URL, faqJsonLd } from '../utils/seo';
 import { faqs } from './howitworks-v2/data/howItWorksData';
 import './howitworks-v2/howitworks.scoped.css';
@@ -39,6 +40,7 @@ export default function HowItWorks() {
         title="How Book A Sloth Works | Online Appointment Booking"
         description="Learn how Book A Sloth helps businesses create a booking page, accept appointments, collect payments, send reminders, and manage customers."
         canonical={`${SITE_URL}/how-it-works`}
+        image={ogCard('how-it-works', 'png')}
         jsonLd={HOW_IT_WORKS_JSONLD}
       />
 

@@ -10,6 +10,7 @@
 // route is intentionally NOT in App.jsx's hideNavbar list) — so this file owns
 // only the page body + SEO.
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import { ENT_SEO, buildEnterpriseJsonLd } from './enterprise-v2/seo';
 import './enterprise-v2/enterprise.scoped.css';
 
@@ -37,6 +38,7 @@ export default function Enterprise() {
         keywords={ENT_SEO.keywords}
         ogTitle={ENT_SEO.ogTitle}
         ogDescription={ENT_SEO.ogDescription}
+        image={ogCard('enterprise')}
         jsonLd={buildEnterpriseJsonLd()}
       />
 

@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Briefcase, Clock, IndianRupee } from 'lucide-react';
 import Seo from '../components/common/Seo';
+import { ogCard } from '../config/ogImages';
 import { breadcrumbJsonLd } from '../utils/seo';
 import { getJobBySlug, company, HIRING_EMAIL } from '../components/careers/careersContent';
 
@@ -70,6 +71,7 @@ export default function JobDetail() {
         title={`${job.title} — Careers at Book A Sloth`}
         description={job.summary}
         canonical={`https://bookasloth.com/careers/${job.slug}`}
+        image={ogCard('careers')}
         jsonLd={[jsonLd, breadcrumbJsonLd({ items: [
           { name: 'Home', path: '/' },
           { name: 'Careers', path: '/careers' },
