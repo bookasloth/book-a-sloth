@@ -118,10 +118,11 @@ const updateProfileRules = [
   body('name').optional().trim().isLength({ min: 2, max: 100 }),
   body('bio').optional().trim().isLength({ max: 1000 }),
   body('tagline').optional().trim().isLength({ max: 200 }),
-  body('username')
-    .optional().trim()
-    .isLength({ min: 3, max: 30 }).withMessage('Username must be 3–30 characters')
-    .matches(/^[a-z0-9_-]+$/).withMessage('Username: lowercase letters, numbers, hyphens, underscores only'),
+  // NB: no `username` validator here on purpose. updateProfile ignores any
+  // username in the body (edits go through the gated PUT /host/username with
+  // its own validation). The client still sends the host's existing username in
+  // the payload, so validating it here 422'd every save for hosts whose stored
+  // username predates the current rule (null/empty, uppercase, or dots).
   body('profession').optional().trim().isLength({ max: 100 }),
   body('location').optional().trim().isLength({ max: 100 }),
   // Offline-service venue link; sanitised (scheme-checked) in the controller.
