@@ -2,10 +2,9 @@
  * OpeningTakeover.jsx — "The Opening" overlay, homepage only.
  *
  * During the launch window the ceremony appears full-screen over the HOMEPAGE (/)
- * for everyone. It keeps re-appearing on each visit/reload of the homepage until it
- * has been shown MAX_SHOWS times on this device — regardless of whether a stone was
- * placed. Every appearance that ends (placed OR closed) counts as one show, so a
- * hesitant visitor gets nudged again instead of losing the moment after one dismissal.
+ * for a device's FIRST homepage visit only. Once it has ended (stone placed OR
+ * closed) it never re-appears on that device — first-time visitors see the moment,
+ * returning visitors are not nagged.
  *
  * Mounted once at the app root; it self-gates to the homepage. Server /status is the
  * source of truth for the window; the result is cached in sessionStorage.
@@ -17,7 +16,7 @@ import { getOpeningStatus } from '../../services/opening';
 import '../../styles/opening.css';
 
 const SHOWS_KEY = 'opening_shows_v1';   // count of times shown-and-dismissed on this device
-const MAX_SHOWS = 10;                   // keep re-showing on the homepage until this many
+const MAX_SHOWS = 1;                    // first-time visitors only: show once, then never again
 const CACHE_KEY = 'opening_status_v1';
 const CACHE_TTL = 5 * 60 * 1000;
 
