@@ -74,3 +74,20 @@ test('watermark lookup errors (e.g. column missing) → FAIL OPEN, allows', asyn
   await protect(req(), res(), next);
   expect(next).toHaveBeenCalled();
 });
+
+test('a banned user stays blocked across a later gate error (ban-cache, P2-15)', async () => {
+  // 1st request: DB reports banned → 403, and the ban is remembered.
+  mockMaybeSingle.mockResolvedValueOnce({ data: { sessions_valid_after: null, is_banned: true }, error: null });
+  const r1 = res(); const next1 = jest.fn();
+  await protect(req(), r1, next1);
+  expect(r1.status).toHaveBeenCalledWith(403);
+  expect(next1).not.toHaveBeenCalled();
+
+  // 2nd request: gate read errors (transient DB blip) → must STILL block from the
+  // cache, not fail open to allowed (a blip must not become a ban bypass).
+  mockMaybeSingle.mockResolvedValueOnce({ data: null, error: { message: 'timeout' } });
+  const r2 = res(); const next2 = jest.fn();
+  await protect(req(), r2, next2);
+  expect(r2.status).toHaveBeenCalledWith(403);
+  expect(next2).not.toHaveBeenCalled();
+});

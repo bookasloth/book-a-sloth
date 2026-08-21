@@ -27,6 +27,7 @@ const { decrypt: decryptToken } = require('../utils/cryptoTokens');
 const profileSecrets = require('../utils/profileSecrets');
 const manageBookingToken = require('../utils/manageBookingToken');
 const { hostOf } = require('../utils/hostOf');
+const { inAppNotify } = require('../utils/inAppNotify');
 
 /**
  * @param {object} a
@@ -142,6 +143,18 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
       recipientUserId: booking.host_id, bookingId: booking.id,
     },
   });
+
+  // 2b) In-app confirmation for signed-in guests — mirrors the free-booking path
+  //     so paid guests (the higher-value ones) aren't the only bookings missing an
+  //     in-app note. The in-app feed has no provider dependency (P2-10).
+  if (booking.guest_id) {
+    inAppNotify({
+      userId: booking.guest_id, role: 'guest', type: 'BOOKING_CONFIRMED',
+      title: 'Booking confirmed',
+      body: `${svc.title || 'Your booking'} with ${host.name || 'your host'} is confirmed`,
+      link: '/user/my-bookings', data: { bookingId: booking.id },
+    });
+  }
 
   // 3) Last-minute booking (starts sooner than a reminder lead-time): fire the
   //    catch-up reminder the cron band would miss. Lazy require avoids a cycle.

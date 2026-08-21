@@ -346,7 +346,22 @@ const deleteService = async (req, res) => {
       .delete()
       .eq('id', req.params.id)
       .eq('host_id', req.user.id);
-    if (error) return safeError(res, error);
+    if (error) {
+      // P2-16: services→bookings is ON DELETE RESTRICT, so a service with bookings
+      // can't be hard-deleted (that would erase paid/completed booking history).
+      // Deactivate it instead — it drops off the public profile, records survive.
+      if (error.code === '23503' || /foreign key/i.test(error.message || '')) {
+        const { error: deErr } = await supabaseAdmin
+          .from('services')
+          .update({ is_active: false, updated_at: new Date().toISOString() })
+          .eq('id', req.params.id).eq('host_id', req.user.id);
+        if (deErr) return safeError(res, deErr);
+        bustSitemapCache();
+        bustPublicReadCaches();
+        return res.json({ deactivated: true, message: 'This service has existing bookings, so it was hidden instead of deleted (booking history is preserved).' });
+      }
+      return safeError(res, error);
+    }
     bustSitemapCache(); // removed service drops from the sitemap
     bustPublicReadCaches();
     res.json({ message: 'Service deleted' });
