@@ -48,9 +48,12 @@ jest.mock('../../services/aisensyService', () => ({
   // AiSensy-normalized contacts.phone for the STOP opt-out check).
   normalizePhone: (p) => (p ? String(p).replace(/[^\d]/g, '') : null),
 }));
+// Admin alert fired on a WhatsApp send failure (surfaces silent template/credit breakage).
+jest.mock('../../utils/adminAlert', () => ({ adminAlert: jest.fn() }));
 
 const communicationEngine = require('../../services/email/communicationEngine');
 const aisensy = require('../../services/aisensyService');
+const { adminAlert } = require('../../utils/adminAlert');
 const NotificationEngine = require('../../services/notificationEngine');
 
 const CONFIRMED_EVENT = {
@@ -84,6 +87,7 @@ describe('NotificationEngine', () => {
     });
     expect(result.whatsapp.success).toBe(true);
     expect(result.email.success).toBe(true);
+    expect(adminAlert).not.toHaveBeenCalled(); // no alert on a successful send
     // Engine, not caller, resolves the campaign name from config
     expect(aisensy.sendCampaign).toHaveBeenCalledWith(
       expect.objectContaining({ campaignName: 'booking_confirmation_user', apiKey: 'k-123' })
@@ -157,6 +161,10 @@ describe('NotificationEngine', () => {
     const log = mockTables.notification_logs.find((l) => l.channel === 'whatsapp');
     expect(log.status).toBe('failed');
     expect(log.error).toBe('Template not found');
+    // A failed WhatsApp send raises a throttled admin alert keyed by event.
+    expect(adminAlert).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'wa_fail:BOOKING_CONFIRMED_CUSTOMER' })
+    );
   });
 
   test('skips WhatsApp for a STOP-suppressed contact but still emails (P1-06)', async () => {
@@ -170,6 +178,7 @@ describe('NotificationEngine', () => {
     expect(result.email.success).toBe(true);
     const waLog = mockTables.notification_logs.find((l) => l.channel === 'whatsapp');
     expect(waLog.status).toBe('suppressed');
+    expect(adminAlert).not.toHaveBeenCalled(); // opt-out is not a failure
   });
 
   test('still sends OTP over WhatsApp for a suppressed contact (exempt event, P1-06)', async () => {
