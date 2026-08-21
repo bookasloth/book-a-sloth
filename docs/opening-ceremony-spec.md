@@ -112,7 +112,7 @@ Shown **after they place their stone OR skip** (never blocks the moment):
 - Zoom/scroll the field; **search** highlights your stone.
 - Stones render from a small SVG set × shade variants (deterministic shade per row, e.g. hash of number → palette index — stable across reloads).
 - Windowed render (could be thousands) — server paginates, client lazy-loads tiles.
-- After the window closes: read-only ("Doors sealed 21 Aug · N openers"). No new stones ever.
+- After the window closes: read-only ("Doors sealed 23 Aug · N openers"). No new stones ever.
 
 ## 5. Data model — `v3.100_opening_ceremony.sql`
 
@@ -150,8 +150,8 @@ counter row, so concurrent opens never collide or skip. Do NOT compute
 client only renders the countdown from a server value. Admin-adjustable so we
 can dry-run before the day and shift if needed.
 
-**Event window:** **20 Aug 2026 10:00 IST → 21 Aug 2026
-10:00 IST** ("morning to morning", ~24h). Exact minutes set in
+**Event window:** **20 Aug 2026 12:15 IST → 23 Aug 2026
+10:00 IST** (extended launch, ~70h). Exact minutes set in
 `platform_settings` and confirmed before the day. Standalone model ignores the
 window (always open at `/opening`) via a `preview` flag or admin bypass, so QA
 doesn't wait for Aug 15.
@@ -233,7 +233,7 @@ docs/opening-ceremony-spec.md  # this file
 
 Resolved by founder:
 1. **Reveal:** standalone model → brand splash; event day → site-wide takeover reveals the real site (§4.6).
-2. **Window:** 20 Aug 10:00 → 21 Aug 10:00 IST, in `platform_settings`, admin-adjustable (§5).
+2. **Window:** 20 Aug 12:15 → 23 Aug 10:00 IST, in `platform_settings`, admin-adjustable (§5).
 3. **No `/inaugurators` links, no visible numbers.** Wall = SVG stones, random shades, names only (§4.7).
 4. **Reward:** post-cut CTA — register today, 18% off yearly plan; skippable (§4.5).
 
@@ -241,5 +241,5 @@ Remaining to confirm before wiring:
 - **Q4 mechanics:** exact 18%-off-yearly mechanism in the current plan matrix —
   is it an existing coupon/flag or does it need one? Confirm against
   `subscription_plans` / pricing before building the CTA target.
-- **Exact window minutes** for 20–21 Aug (default 10:00 IST both ends).
+- **Exact window minutes** for 20–23 Aug (open 12:15 IST, close 10:00 IST).
 - **Stone palette + SVG set:** how many base stone shapes × how many brand shades.

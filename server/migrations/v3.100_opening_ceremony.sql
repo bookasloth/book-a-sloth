@@ -39,10 +39,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS openers_phone_uidx ON openers (phone) WHERE ph
 ALTER TABLE openers ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON openers FROM anon, authenticated;
 
--- Event window (admin-adjustable). Default: 20 Aug 2026 10:00 IST → 21 Aug 2026 10:00 IST
--- (04:30 → 04:30 UTC). JSONB string values, like every other platform_settings row.
+-- Event window (admin-adjustable). Default: 20 Aug 2026 12:15 IST → 23 Aug 2026 10:00 IST
+-- (06:45 → 04:30 UTC). JSONB string values, like every other platform_settings row.
 -- ON CONFLICT DO NOTHING so a later admin edit is never clobbered by re-running this.
 INSERT INTO platform_settings (key, value) VALUES
-  ('opening_opens_at',  '"2026-08-20T04:30:00Z"'),
-  ('opening_closes_at', '"2026-08-21T04:30:00Z"')
+  ('opening_opens_at',  '"2026-08-20T06:45:00Z"'),
+  ('opening_closes_at', '"2026-08-23T04:30:00Z"')
 ON CONFLICT (key) DO NOTHING;
