@@ -289,6 +289,24 @@ const enableHostingForProfile = async (profileId) => {
       .eq("id", profileId).select("*").single());
   }
   if (upErr || !updated) throw upErr || new Error("Could not enable hosting");
+
+  // New-host alert: fire once, only on the false→true transition (a returning
+  // host re-signing in already has is_host=true, so this stays quiet). Key is
+  // per-profile so distinct signups are never collapsed by the throttle.
+  if (!profile.is_host) {
+    const base = process.env.CLIENT_URL || 'https://bookasloth.com';
+    require('../utils/adminAlert').adminAlert({
+      key: `new_host:${profileId}`,
+      subject: `New host signup: ${updated.name || updated.username || updated.email || profileId}`,
+      lines: [
+        `Name: ${updated.name || '—'}`,
+        `Username: ${updated.username || '—'}`,
+        `Email: ${updated.email || '—'}`,
+        `Phone: ${updated.phone || '—'}`,
+      ],
+      link: `${base}/admin/host360/${profileId}`,
+    });
+  }
   return updated;
 };
 
