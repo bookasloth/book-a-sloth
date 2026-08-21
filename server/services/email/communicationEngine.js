@@ -201,9 +201,12 @@ async function send(opts) {
     return { ok: r.success, status: r.success ? 'sent' : 'queued', logId, error: r.error };
   }
 
-  // Everything else → queue for the worker
+  // Everything else → queue for the worker. The email_logs row IS the queue, so a
+  // failed insert (logId null) means nothing will ever be delivered — surface that
+  // as a failure instead of a false 'queued' success (P2-09).
   const logId = await insertLog({ ...baseLog, status: 'queued', attempts: 0,
     next_attempt_at: new Date().toISOString() });
+  if (!logId) return { ok: false, status: 'log_failed', reason: 'email_logs insert failed' };
   return { ok: true, status: 'queued', logId };
 }
 

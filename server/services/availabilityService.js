@@ -19,6 +19,33 @@
 const { supabaseAdmin } = require("../config/supabase");
 const { getFreeBusy } = require("../config/google");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
+const { inAppNotify } = require("../utils/inAppNotify");
+
+// P2-03: a connected host whose Google grant is revoked/unreadable silently stops
+// getting calendar events + Meet links on every booking, with no signal. On a
+// classified auth failure, flip google_calendar_connected off (idempotent — only
+// the first flip matches a row) and nudge the host in-app to reconnect. Best-effort,
+// fire-and-forget, never throws; subsequent polls short-circuit once the flag is off.
+const flagGoogleDisconnected = async (host) => {
+  try {
+    const { data } = await supabaseAdmin
+      .from("profiles")
+      .update({ google_calendar_connected: false })
+      .eq("id", host.id)
+      .eq("google_calendar_connected", true)
+      .select("id");
+    if (data && data.length) {
+      inAppNotify({
+        userId: host.id, role: "host", type: "GOOGLE_CALENDAR_DISCONNECTED",
+        title: "Reconnect Google Calendar",
+        body: "We couldn't access your Google Calendar. New bookings won't get a Meet link until you reconnect it in Settings.",
+        link: "/dashboard/settings", data: {},
+      });
+    }
+  } catch (e) {
+    console.error("flagGoogleDisconnected failed (non-fatal):", e.message);
+  }
+};
 
 const DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
@@ -176,6 +203,7 @@ const getGoogleBusy = async (host, windowStart, windowEnd, day, { useCache = tru
   const refreshTok = decryptToken(host.google_refresh_token);
   if (!refreshTok) {
     console.error(`google freebusy: host ${host.id} calendar token unreadable — host must reconnect Google (fail-open)`);
+    flagGoogleDisconnected(host); // surface it to the host (idempotent)
     const cached = day ? await readFreeBusyCache(host.id, day) : null;
     return { intervals: cached?.intervals || [], unverified: true };
   }
@@ -198,6 +226,7 @@ const getGoogleBusy = async (host, windowStart, windowEnd, day, { useCache = tru
       `google freebusy failed for host ${host.id} (${authFail ? "auth — host must reconnect Google" : "transient outage"}, fail-open):`,
       err.message,
     );
+    if (authFail) flagGoogleDisconnected(host); // only on a real auth failure, not a transient outage
     if (day) {
       const cached = await readFreeBusyCache(host.id, day);
       if (cached) return { intervals: cached.intervals, unverified: true };

@@ -13,17 +13,28 @@ const { supabaseAdmin } = require('../config/supabase');
 // read is authoritative, though, and DOES block (fail-closed on the ban itself):
 // without this, an admin "ban/suspend" was cosmetic — the account kept full
 // authenticated API access until it chose to log out.
+// Remembers user ids observed as banned so a transient gate error can't silently
+// flip a known-banned account back to allowed (P2-15). Bans are rare, so this set
+// stays tiny; it resets on deploy and a later successful read re-populates it.
+const _knownBanned = new Set();
+
 const accountGate = async (userId, token) => {
   try {
     const iat = jwt.decode(token)?.iat; // seconds since epoch; no verify (getUser did)
     const { data, error } = await supabaseAdmin
       .from('profiles').select('sessions_valid_after, is_banned').eq('id', userId).maybeSingle();
-    if (error || !data) return { revoked: false, banned: false };
+    if (error || !data) {
+      // Gate read failed — still block a user we've already seen banned (a DB blip
+      // must not become a ban bypass); otherwise fail-open as before.
+      return { revoked: false, banned: _knownBanned.has(userId) };
+    }
+    const banned = data.is_banned === true;
+    if (banned) _knownBanned.add(userId); else _knownBanned.delete(userId); // unbanned → forget
     const revoked = !!(iat && data.sessions_valid_after &&
       iat * 1000 < new Date(data.sessions_valid_after).getTime());
-    return { revoked, banned: data.is_banned === true };
+    return { revoked, banned };
   } catch (_) {
-    return { revoked: false, banned: false }; // fail-open — never block on a gate error
+    return { revoked: false, banned: _knownBanned.has(userId) }; // fail-open except known bans
   }
 };
 

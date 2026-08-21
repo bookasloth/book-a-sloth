@@ -181,8 +181,17 @@ const createOrder = async (req, res) => {
     if (booking.razorpay_order_id) {
       try {
         const existing = await razorpay.orders.fetch(booking.razorpay_order_id);
-        if (existing && existing.status === "created" && Number(existing.amount) === totalPaise) {
-          order = existing;
+        if (existing) {
+          // A payment already captured on this booking's order (webhook/reconciler
+          // will finalize shortly): do NOT mint a second order, or a guest paying in
+          // two tabs/devices could be charged twice for one booking (P2-11).
+          if (existing.status === "paid" || Number(existing.amount_paid) > 0) {
+            return res.status(409).json({ message: "Payment already received for this booking — finalizing. Please refresh in a moment." });
+          }
+          // Reuse the still-open order for a rapid re-click / re-opened checkout.
+          if (Number(existing.amount) === totalPaise && (existing.status === "created" || existing.status === "attempted")) {
+            order = existing;
+          }
         }
       } catch (_) {
         // Stale/unfetchable id — fall through and create a fresh order.

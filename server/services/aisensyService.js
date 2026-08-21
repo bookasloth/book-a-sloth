@@ -12,6 +12,10 @@
 const AISENSY_API_URL =
   process.env.AISENSY_API_URL || 'https://backend.aisensy.com/campaign/t1/api/v2';
 
+// Hard timeout on the AiSensy call (P2-01). Cancel/reschedule await this send
+// inside the request; without a bound a hung provider stalls the user's response.
+const AISENSY_TIMEOUT_MS = Number(process.env.AISENSY_TIMEOUT_MS) || 10000;
+
 /** Normalise an Indian/intl phone into AiSensy destination format (digits, country code). */
 const normalizePhone = (phone) => {
   if (!phone) return null;
@@ -56,11 +60,14 @@ const sendCampaign = async ({ apiKey, campaignName, destination, userName, templ
     }];
   }
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AISENSY_TIMEOUT_MS);
   try {
     const res = await fetch(AISENSY_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
     const text = await res.text();
     let parsed;
@@ -71,7 +78,10 @@ const sendCampaign = async ({ apiKey, campaignName, destination, userName, templ
     }
     return { success: true, response: parsed };
   } catch (err) {
-    return { success: false, error: err.message };
+    const msg = err.name === 'AbortError' ? `AiSensy timeout after ${AISENSY_TIMEOUT_MS}ms` : err.message;
+    return { success: false, error: msg };
+  } finally {
+    clearTimeout(timer);
   }
 };
 

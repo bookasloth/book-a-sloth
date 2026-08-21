@@ -182,7 +182,10 @@ const getServiceById = async (req, res) => {
       return res.status(404).json({ message: "Service not found" });
     const { data: host } = await supabaseAdmin
       .from("profiles")
-      .select("id, name, email, username, tagline, profile_image, location, map_link")
+      // P2-13: no host email on this public/unauthenticated endpoint — service
+      // UUIDs are public, and the booking UI doesn't need the host's email
+      // (dropping it stops targeted phishing/spam harvesting of hosts).
+      .select("id, name, username, tagline, profile_image, location, map_link")
       .eq("id", service.host_id)
       .single();
     res.json({ service, host });
@@ -525,6 +528,22 @@ const createBooking = async (req, res) => {
         .insert(payloadCore)
         .select()
         .single();
+    }
+
+    // P2-04: the free-path Google event is minted BEFORE this insert; if the insert
+    // failed (exclusion-constraint race or any error) delete the now-orphaned event
+    // so it doesn't linger on the host's calendar with no backing booking.
+    if (bookingResult.error && googleEventId && host.google_refresh_token) {
+      try {
+        await deleteCalendarEvent(
+          decryptToken(host.google_access_token),
+          decryptToken(host.google_refresh_token),
+          googleEventId,
+        );
+      } catch (delErr) {
+        console.error("Orphan calendar cleanup failed (non-fatal):", delErr.message);
+      }
+      googleEventId = null;
     }
 
     // Concurrency backstop: the v2.5 exclusion constraint rejects a racing
@@ -1216,6 +1235,13 @@ const rescheduleBooking = async (req, res) => {
       return res
         .status(400)
         .json({ message: "Cannot reschedule a cancelled booking" });
+    // P2-07: a closed (completed / no_show) booking is settled/revenue-recognized —
+    // don't let it be re-timed (it would move the calendar event and diverge the
+    // row from its ledger/settlement snapshot).
+    if (booking.status === "completed" || booking.status === "no_show")
+      return res
+        .status(409)
+        .json({ message: "This booking is already closed and can't be rescheduled." });
     if (
       req.user &&
       req.user.id !== booking.guest_id &&
@@ -1692,20 +1718,32 @@ const processReminders = async () => {
     if (!windowsCache.has(slug)) windowsCache.set(slug, await planService.reminderWindowsForPlan(slug));
     return windowsCache.get(slug);
   };
+  // P2-08: widen the lower (further-future) edge of each band by a catch-up margin
+  // so a cron gap (deploy/restart/DB blip) doesn't let a booking slide past its
+  // reminder window unsent forever. The lower edge is clamped to at least now+5min
+  // so a started session is never "reminded"; the worst case is a reminder sent up
+  // to CATCHUP_MIN late, which is harmless. Bands stay disjoint (24h vs 1h).
+  const CATCHUP_MIN = Number(process.env.REMINDER_CATCHUP_MIN) || 30;
   for (const windowHours of [24, 1]) {
-    const rangeStart = new Date(
-      now.getTime() + (windowHours * 60 - 10) * 60000,
-    );
-    const rangeEnd = new Date(now.getTime() + (windowHours * 60 + 10) * 60000);
+    const leadMin = windowHours * 60;
+    const lowerOffsetMin = Math.max(5, leadMin - 10 - CATCHUP_MIN);
+    const rangeStart = new Date(now.getTime() + lowerOffsetMin * 60000);
+    const rangeEnd = new Date(now.getTime() + (leadMin + 10) * 60000);
     const sentFlag = reminderFlagFor(windowHours);
 
-    const { data: bookings } = await supabaseAdmin
+    const { data: bookings, error: remErr } = await supabaseAdmin
       .from("bookings")
       .select("*, services(*), profiles!bookings_host_id_fkey(*)")
       .eq("status", "confirmed")
       .eq(sentFlag, false)
       .gte("scheduled_at", rangeStart.toISOString())
       .lte("scheduled_at", rangeEnd.toISOString());
+    // P2-06: don't swallow a query error — a transient DB failure was silently
+    // no-op'ing a whole reminder window with no trace.
+    if (remErr) {
+      console.error(`processReminders query error (${windowHours}h window):`, remErr.message);
+      continue;
+    }
 
     for (const b of bookings || []) {
       const host = hostOf(b);
@@ -1821,8 +1859,10 @@ const autoCompleteBookings = async () => {
 // The window must comfortably exceed a real checkout (incl. redirect-based UPI)
 // so a genuine in-flight payment is never reaped mid-flow; the booking-payment
 // reconciler also heals actually-paid bookings within minutes, well before this
-// fires. Default 30 min, override with PENDING_BOOKING_HOLD_MIN.
-const PENDING_HOLD_MS = (Number(process.env.PENDING_BOOKING_HOLD_MIN) || 30) * 60 * 1000;
+// fires. P2-12: default widened to 45 min so a slow redirect/UPI capture can't
+// land after the reap on an already-cancelled booking (money taken, no auto-refund).
+// Override with PENDING_BOOKING_HOLD_MIN.
+const PENDING_HOLD_MS = (Number(process.env.PENDING_BOOKING_HOLD_MIN) || 45) * 60 * 1000;
 const PENDING_REAP_BATCH = 200;
 
 const expireStalePendingBookings = async () => {
