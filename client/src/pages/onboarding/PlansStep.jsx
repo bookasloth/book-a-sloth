@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Check, ChevronDown, Rocket, Loader2 } from 'lucide-react';
@@ -43,15 +43,24 @@ const PlansStep = () => {
   // reuse the existing subscription instead of minting a second one.
   const subCacheRef = useRef({});
 
-  useEffect(() => {
+  // Extracted so the empty/error fallback can retry the fetch. Without this,
+  // a failed or empty getPublicPlans left every CTA null-guarded → the host saw
+  // the "one click from live" header with no button at all and was stranded on
+  // the last step.
+  const loadPlans = useCallback(() => {
+    setLoading(true);
     getPublicPlans()
       .then((r) => setPlans(r.data || []))
       .catch(() => toast.error('Failed to load plans'))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadPlans();
     getMe()
       .then((r) => setMe(r.data))
       .catch(() => {});
-  }, []);
+  }, [loadPlans]);
 
   const freePlan = plans.find((p) => !isPaidPlan(p)) || null;
   const paidPlans = plans.filter(isPaidPlan);
@@ -187,6 +196,37 @@ const PlansStep = () => {
 
           {loading ? (
             <p className="text-center text-sm text-gray-400 py-10">Loading plans…</p>
+          ) : plans.length === 0 ? (
+            /* Plans failed to load or came back empty — never strand the host on
+               the last step. Free activation doesn't need the plans list, so
+               offer it directly alongside a retry. */
+            <div className="rounded-2xl border-2 border-gray-200 bg-white p-6 sm:p-7 text-center">
+              <p className="text-sm text-gray-600 mb-4">
+                Couldn’t load the plans just now. You can retry, or go live free and upgrade later.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={loadPlans}
+                  disabled={busy !== null}
+                  className="btn border border-gray-300 text-gray-700 py-2.5 px-5 text-sm font-semibold hover:border-primary hover:text-primary disabled:opacity-50 transition"
+                >
+                  Retry
+                </button>
+                <button
+                  type="button"
+                  onClick={chooseFree}
+                  disabled={busy !== null}
+                  className="btn bg-primary text-white py-2.5 px-6 text-sm font-semibold hover:bg-primary-dark disabled:opacity-60 transition inline-flex items-center justify-center gap-2"
+                >
+                  {busy === 'free' ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} /> Publishing…</>
+                  ) : (
+                    <><Rocket className="w-4 h-4" strokeWidth={2.5} /> Go live free</>
+                  )}
+                </button>
+              </div>
+            </div>
           ) : (
             <>
               {/* Primary CTA card — Studio (top paid), sold annual */}
