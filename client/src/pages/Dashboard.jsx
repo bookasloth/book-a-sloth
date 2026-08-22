@@ -120,6 +120,29 @@ const Dashboard = () => {
     setBannerDismissed(true);
   };
 
+  // Earnings-triggered upgrade nudge (upgrade-on-success). Free-plan hosts pay 5%
+  // commission; paid plans are 0%. Show them what that has actually cost so far —
+  // real rupees, not a generic upsell. commission_applied is the per-booking
+  // snapshot (absent under schema-fallback → treated as 0).
+  const [upgradeDismissed, setUpgradeDismissed] = useState(
+    () => localStorage.getItem('upgradeNudgeDismissed') === '1'
+  );
+  const commissionPaid = useMemo(
+    () => bookings.reduce(
+      (sum, b) => sum + (b.payment_status === 'paid' ? Number(b.commission_applied) || 0 : 0), 0),
+    [bookings]
+  );
+  const hasRealEarning = useMemo(
+    () => bookings.some((b) => b.payment_status === 'paid' && Number(b.vendor_amount ?? b.amount ?? 0) > 0),
+    [bookings]
+  );
+  const isFreePlan = isHost && normalizePlan(user?.plan) === 'starter';
+  const showUpgradeNudge = isFreePlan && (commissionPaid > 0 || hasRealEarning) && !upgradeDismissed;
+  const dismissUpgrade = () => {
+    localStorage.setItem('upgradeNudgeDismissed', '1');
+    setUpgradeDismissed(true);
+  };
+
   // Google-calendar return toast
   useEffect(() => {
     const g = searchParams.get('google');
@@ -213,6 +236,32 @@ const Dashboard = () => {
         <div className="mb-5 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3">
           <p className="text-sm font-medium text-red-700">Couldn't load your dashboard. Check your connection and retry.</p>
           <button onClick={loadData} className="shrink-0 rounded bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700">Retry</button>
+        </div>
+      )}
+
+      {/* Earnings-triggered upgrade nudge — free plan pays 5%, paid plans 0% */}
+      {showUpgradeNudge && (
+        <div className="mb-5 flex items-start gap-3 rounded-md border border-primary/20 bg-primary/5 p-4">
+          <IndianRupee className="mt-0.5 h-5 w-5 shrink-0 text-primary" strokeWidth={2.25} />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-gray-900">
+              {commissionPaid > 0
+                ? `You've paid ${fmtMoney(commissionPaid)} in platform commission`
+                : "You're on the free plan — 5% commission applies as you earn"}
+            </p>
+            <p className="mt-0.5 text-xs text-gray-600">
+              Host+ and Studio charge <span className="font-semibold">0% commission</span>
+              {commissionPaid > 0 ? ' — upgrade and keep every rupee.' : ', plus reminders and custom branding.'}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link to="/dashboard/upgrade" className="whitespace-nowrap rounded bg-primary px-3 py-1.5 text-xs font-bold text-white transition-colors hover:opacity-90">
+              See plans
+            </Link>
+            <button onClick={dismissUpgrade} aria-label="Dismiss" className="p-1 text-primary/60 hover:text-primary">
+              <XCircle className="h-4 w-4" strokeWidth={2.25} />
+            </button>
+          </div>
         </div>
       )}
 
