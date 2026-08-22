@@ -1,278 +1,161 @@
-# Vendor Onboarding — Complete 10-Step Flow
+# Host Onboarding — Google-first flow
 
-## Overview
-The vendor onboarding is a continuous, stateful experience where:
-- Every step persists its state immediately
-- Vendors can resume from their last incomplete step
-- Account creation happens ONLY after OTP verification
-- Payment is verified via webhook before plan activation
-- Profile photo and bio are optional but encouraged early
+> Rewritten 2026-08-23. This file previously described a 10-step
+> OTP/email/password flow that **no longer exists**. Hosts sign in with Google
+> only (no OTP, no password, no email account-creation step). The reshape
+> (`docs/superpowers/plans/2026-06-23-onboarding-google-first-reshape.md`) and
+> the Aug-2026 "butter" pass are the current source of truth.
 
-## Database Changes
-**Migration: `v1.8_vendor_onboarding.sql`**
+## In one line
+A host signs in with Google, claims their URL, picks a profession, fills a few
+details, and lands on a **live, bookable** page where they publish their first
+service. Four screens; every step persists server-side so the host can resume.
 
-New tables:
-- `otp_sessions` — stores email + phone OTPs with expiry and attempt tracking (server-only RLS)
-- `razorpay_orders` — tracks plan purchase orders and payment verification status
-
-New `profiles` columns:
-- `onboarding_slug` — claimed username (unique)
-- `onboarding_step_completed` — integer 0–10 for resume logic
-- `vendor_type` — 'individual' or 'organisation'
-- `categories` — JSONB array of selected service categories
-- `booking_type` — 'online_only', 'offline_only', or 'both'
-- `calendar_connected` — true if Google Calendar linked
-- `calendar_skipped` — true if intentionally skipped
-- `onboarding_completed` — true when finished
-- `plan_activated_at` — when paid plan activated
-
-## Steps (10 Total)
-
-### Step 0: Claim Username (`/vendor-register`)
-- **Action:** Input slug (e.g., "yourname")
-- **Validation:** URL-safe, 3–60 chars, debounced availability check
-- **Save:** `sessionStorage.onboarding_slug = slug`
-- **Navigate:** → Step 1
-
-### Step 1: Verify Details (`/vendor-register/:slug/verify`)
-- **Action:** Submit name, email, phone
-- **API:** POST `/api/onboarding/send-otp` → sends OTP to email + WhatsApp (parallel)
-- **OTP UI:** Two input boxes side-by-side, 6-digit codes, 10-min expiry, max 3 attempts, 60s resend cooldown
-- **Verification:** Both email OTP required, phone OTP optional
-- **Save:** `otp_sessions` table with hashed OTPs, attempt counts, expiry timestamps
-- **Navigate:** → Step 2
-
-### Step 2: Password (`/vendor-register/:slug/password`) — **ACCOUNT CREATION POINT**
-- **Action:** Set password (min 8 chars, strength indicator)
-- **API:** POST `/api/onboarding/create-account`
-  - Checks OTP verification status
-  - Creates Supabase auth user
-  - Creates profile with role='host'
-  - Saves to localStorage as JWT session
-- **Navigate:** → Step 3
-
-### Step 3: Vendor Type (`/vendor-register/:slug/type`)
-- **UI:** Two large button cards (Individual / Organisation)
-- **Auto-save:** Selection immediately persists
-- **Navigate:** → Step 4
-
-### Step 4: Categories (`/vendor-register/:slug/category`)
-- **UI:** Multi-select tile grid (11 categories + Other)
-- **Validation:** At least one required
-- **Save:** `profiles.categories` array
-- **Navigate:** → Step 5
-
-### Step 5: Booking Type (`/vendor-register/:slug/booking-type`)
-- **UI:** Three toggle buttons (Online only / In-person only / Both)
-- **Auto-save:** Selection persists
-- **Skip condition:** If 'offline_only' selected, skip calendar step (step 6)
-- **Navigate:** → Step 6
-
-### Step 6: Calendar (`/vendor-register/:slug/calendar`)
-- **Skip logic:** If booking_type='offline_only', skip here automatically
-- **UI:** One primary CTA "Connect Google Calendar" + smaller "Skip for now" link
-- **Google OAuth:** Redirect to `/api/auth/google?onboarding=true` (re-uses existing oauth callback)
-- **Save:** `profiles.google_calendar_connected=true OR calendar_skipped=true`
-- **Navigate:** → Step 7
-
-### Step 7: Profile (`/vendor-register/:slug/profile`)
-- **UI:** Drag-drop profile photo (crop to square, max 5MB) + 160-char bio textarea
-- **Auto-upload:** Image immediately uploaded to Cloudinary
-- **Skip option:** "Skip for now" link at bottom
-- **Save:** `profiles.profile_image`, `profiles.bio`
-- **Navigate:** → Step 8
-
-### Step 8: First Service (`/vendor-register/:slug/first-service`)
-- **Fields:**
-  - Title (required, text input)
-  - Short description (required, max 140 chars)
-  - Type: Online / In-Person (select)
-  - Duration (required, minutes, number input)
-  - Price (required, numeric input in ₹)
-- **API:** POST `/api/host/services` → creates service with auto-slug
-- **Save:** `onboarding_step_completed=8` in profiles
-- **Navigate:** → Step 9
-
-### Step 9: Plans (`/vendor-register/:slug/plans`)
-- **UI:** Three plan cards in a grid (500–1000px width each)
-  - Explorer: ₹0 — free tier
-  - Creator: ₹999/year — 2px border accent + "Most Popular" badge (pre-selected)
-  - Professional: ₹3,650/year — premium tier
-- **Payment Flow (for paid plans):**
-  1. POST `/api/onboarding/create-order` → creates Razorpay order, stores in DB with status='pending'
-  2. Open Razorpay checkout (frontend-side)
-  3. On success, POST `/api/onboarding/verify-payment` with `razorpay_payment_id`, `order_id`, `plan`
-     - Verifies payment via Razorpay API
-     - Updates `razorpay_orders.status='completed'`, `payment_verified=true`
-     - Activates plan: `profiles.plan=plan`, `plan_expires_at=1yr`, `onboarding_completed=true`
-  4. On failure, return to this step with error banner
-- **Free plan:** Activates immediately without Razorpay
-- **Navigate:** → Step 10
-
-### Step 10: Explore (`/vendor-register/:slug/explore`)
-- **UI:** Welcome screen with Sloth emoji
-- **CTAs:**
-  - Primary: "📅 Book a demo with the BAS team" (links to demo booking flow)
-  - Secondary: "Go to my dashboard" →
-- **Action on either CTA:** POST `/api/onboarding/mark-complete` → `profiles.onboarding_completed=true`, `onboarding_step_completed=10`
-- **End:** Redirect to `/dashboard` or demo flow
-
-## Resume Logic
-
-When a vendor returns (logs in):
-1. ProtectedRoute calls GET `/api/onboarding/status` → returns `{ slug, stepCompleted, isComplete }`
-2. If `isComplete=true`: Allow dashboard access
-3. If `isComplete=false`: Redirect to **next incomplete step**
-   - Next step = steps[stepCompleted] (0-indexed)
-   - URL = nextStep.replace(':slug', savedSlug)
-
-**Example:** If stepCompleted=5 (booking-type), redirect to /vendor-register/:slug/calendar
-
-## API Endpoints
-
-### Public (no auth required)
+## The flow
 
 ```
-POST /api/onboarding/check-slug
-  Params: { slug }
-  Response: { available: boolean }
-
-POST /api/onboarding/send-otp
-  Params: { slug, email, phone, name }
-  Response: { message: "OTPs sent..." }
-
-POST /api/onboarding/verify-otp
-  Params: { slug, channel: 'email'|'phone', otp: string }
-  Response: { verified: true, message }
-
-POST /api/onboarding/create-account
-  Params: { slug, email, password, name }
-  Response: { id, token, refresh_token, slug }
-  Creates auth user + profile (ACCOUNT CREATION)
+GoogleStart (/vendor-register)
+      │  Google OAuth (identity + calendar consent)
+      ▼
+SlugClaim (/:slug/claim)              step 2  — claim booking URL
+      ▼
+PersonaStep (/:slug/category)         step 3  — pick profession
+      │        └─ escape hatch: CategoryStep (/:slug/category/all) — search all
+      ▼
+PreviewStep (/:slug/preview)          step 5  — booking type + tagline + (optional) WhatsApp
+      │        activates FREE plan  →  step 6
+      ▼
+ExploreWithBolt (/:slug/live)         "You're live!" — publish first service → /dashboard
 ```
 
-### Protected (require JWT auth)
+`PlansStep (/:slug/plan)` still exists but is **not a forced step** — it's the
+resume target for a host who left off at step 5, and a place paid plans can be
+chosen. The paywall is otherwise **deferred to the dashboard** (see below).
+`AboutYouStep` and `WhatsAppStep` were deleted — their content folded into
+`PreviewStep`.
+
+## State machine (`server/controllers/vendorOnboardingController.js`)
+
+`profiles.onboarding_step_completed` advances monotonically (a forward jump is
+rejected server-side):
+
+| step | meaning | writer |
+|------|---------|--------|
+| 1 | Google identity attached | `attachGoogleToProfile` (auth callback) |
+| 2 | slug claimed | `claimSlug` |
+| 3 | persona (primary_category) saved | `savePersona` |
+| 5 | details (booking_type, tagline, WhatsApp choice) saved | `saveDetails` |
+| 6 | advanced to /live (a plan is active) | `advanceToLive` / `activateFreePlan` |
+| — | `onboarding_completed = true` | `markComplete` **only** |
+
+Notes:
+- Step 4 is legacy (`updateOnboardingStep` step 4, still used by the
+  CategoryStep escape hatch); the guard rolls it forward to `preview`.
+- `advanceToLive` sets step 6 but **does not** complete onboarding — the `/live`
+  screen must remain reachable after plan choice. `markComplete` is the sole
+  writer of `onboarding_completed`, gated on an active plan **and** a
+  `primary_category`.
+- **Payment is NOT required to finish.** The free plan (`explorer`/`starter`)
+  counts as active, so `markComplete` succeeds with no payment.
+- **KYC is NOT required to list.** It gates payout only.
+
+## Screens
+
+### GoogleStart — `/vendor-register`
+Single "Continue with Google" action. One consent screen covers identity +
+Google Calendar scopes. The callback mints a session and attaches tokens
+(`attachGoogleToProfile`): OAuth tokens are written to the server-only
+`profile_private` table **first**, and `google_calendar_connected` is set only
+if that write succeeds — a failed token write leaves the flag false (reconnect
+path), never a "connected" profile with no tokens.
+
+### SlugClaim — `/:slug/claim` (step 2)
+Claim the booking URL. Debounced availability check; lowercase, 3–30 chars,
+alphanumeric + single hyphens (canonical bounds from `utils/slugFormat.js`,
+mirrored client-side). A network/500 blip is shown as "couldn't check, try
+again" — **not** as "taken". Claiming swaps the username atomically via
+`setOnboardingUsername` (no `changeUsername` gating — this is the first real
+name choice).
+
+### PersonaStep — `/:slug/category` (step 3)
+Pick one profession tile → `saveOnboardingPersona`. "See all" opens
+`CategoryStep` (`/:slug/category/all`), a searchable list that can suggest a new
+category; it saves via `updateOnboardingStep` (step 4) and returns to
+`/preview`.
+
+### PreviewStep — `/:slug/preview` (step 5)
+A single screen with a **live preview** of the future profile card:
+- **Booking type** (required): Online / In person / Both.
+- **Tagline** (optional, ≤120 chars).
+- **WhatsApp** (optional): verify via `/api/whatsapp/*`. Verifying only marks
+  verified — it does **not** auto-advance (that used to skip the tagline).
+- Continue → `saveOnboardingDetails({ booking_type, tagline, whatsapp_skipped })`,
+  then **activates the free plan** and goes straight to `/live`.
+
+Solo/Team (`vendor_type`) was removed — it was written but never read.
+
+### ExploreWithBolt — `/:slug/live` ("You're live!")
+The money moment. On mount: celebration + `markOnboardingComplete` (idempotent,
+so closing the tab still completes). Inline **first-service** mini-form —
+title, category (scoped to the profession), duration, price — publishing via
+`POST /api/host/services`:
+- Defaults to `meeting_mode: 'online'` so a new host never trips the in-person
+  venue **map-link** requirement mid-onboarding (they switch to in-person and
+  add the venue later from the dashboard).
+- Fires `service_published { source: 'onboarding' }` so the
+  `onboarding_completed → first-service` funnel is measurable.
+- "Skip for now" escape hatch → dashboard. Never traps the host.
+
+## Resume guard (`client/src/pages/onboarding/useOnboardingGuard.js`)
+On each step mount, `GET /api/onboarding/status` returns
+`{ slug, stepCompleted, isComplete }`:
+- `isComplete` → redirect to `/dashboard`.
+- otherwise resume to `RESUME[stepCompleted]` — `{1:claim, 2:category, 3:preview, 4:preview, 5:plan}`.
+- Forward order for the block-skip check: `['claim','category','preview','plan']`.
+  The guard allows revisiting earlier steps (Back works) and blocks only jumps
+  ahead of the resume target.
+
+The guard reads `window.location.pathname` directly (not React Router) — tests
+must set the URL accordingly.
+
+## Paywall (deferred)
+`PlansStep` is no longer on the critical path. Every host goes live on the free
+plan; upgrades live in the dashboard and are surfaced **after** first-booking
+value, not as a wall before it. `PlansStep` remains reachable (resume at step 5,
+or a direct upgrade) and has a retry + "go live free" fallback if
+`getPublicPlans` fails or returns empty.
+
+## API endpoints
+All under `/api/onboarding`, all **JWT-protected** (there are no public
+OTP/account-creation endpoints anymore):
 
 ```
-POST /api/onboarding/update-step
-  Params: { slug, step: number, data: object }
-  Response: { message, step, profile }
+POST /onboarding/slug-available   { slug }                → { available, reason? }
+POST /onboarding/claim-slug       { slug }                → advances to step 2
+POST /onboarding/save-persona     { primary_category }    → step 3
+POST /onboarding/update-step      { slug, step, data }    → legacy step writer (CategoryStep)
+POST /onboarding/save-details     { booking_type, tagline?, whatsapp_skipped? } → step 5
+GET  /onboarding/status                                   → { slug, stepCompleted, isComplete }
+POST /onboarding/activate-free                            → free plan + advance to /live (step 6)
+POST /onboarding/advance-to-live                          → step 6 (requires an active plan)
+POST /onboarding/mark-complete                            → onboarding_completed = true
 
-GET /api/onboarding/status
-  Response: { slug, stepCompleted, isComplete }
-
-POST /api/onboarding/create-order
-  Params: { plan: 'explorer'|'creator'|'professional' }
-  Response: { orderId, amount, currency, key } (for Razorpay)
-    OR { plan, amount: 0, skipPayment: true } (for free plan)
-
-POST /api/onboarding/verify-payment
-  Params: { paymentId, orderId, plan }
-  Response: { message, plan, onboarding_completed }
-
-POST /api/onboarding/mark-complete
-  Response: { message, onboarding_completed }
+POST /whatsapp/send-otp     { phone }                     → sends WhatsApp OTP (502 + throttled admin alert on failure)
+POST /whatsapp/verify-otp   { phone, otp }                → stores the NORMALIZED number, marks verified
 ```
 
-## OTP Lifecycle
+First-service creation reuses the normal service API: `POST /api/host/services`.
 
-### Storage: `otp_sessions` table
-- Email OTP + Phone OTP stored separately with timestamps
-- Max 3 verification attempts per channel
-- 60-second lockout after 3 failed attempts
-- 10-minute expiry from creation
+## Data model — `profiles` columns (migration `v1.8_vendor_onboarding.sql` + later)
+`onboarding_slug`, `onboarding_step_completed`, `primary_category`, `categories`,
+`booking_type`, `tagline`, `google_calendar_connected`, `calendar_skipped`,
+`whatsapp_number`, `whatsapp_verified`, `onboarding_completed`, `plan`,
+`plan_activated_at`, `map_link`. `vendor_type` still exists in the schema but is
+**no longer written** by onboarding (the Solo/Team picker was removed).
 
-### Attempt Tracking
-```
-email_attempts: 0
-email_locked_until: null | TIMESTAMPTZ
-
-phone_attempts: 0
-phone_locked_until: null | TIMESTAMPTZ
-```
-
-### Cleanup
-- OTPs auto-expire after 10 minutes
-- Cron job periodically purges expired entries
-
-## Razorpay Webhook (Future Enhancement)
-
-For production, add webhook handler:
-```
-POST /api/payment/webhook/onboarding
-```
-
-Receives: `payment.captured` event from Razorpay
-
-Action: Trigger `verifyRazorpayPayment` automatically instead of waiting for frontend redirect
-
-## Error Handling
-
-### Slug already taken
-- Status 409: "Slug already taken"
-
-### OTP expired
-- Status 400: "Email OTP expired" or "Phone OTP expired"
-
-### OTP invalid / attempts exceeded
-- Status 400: "Invalid OTP" or "Too many attempts. Try again in 60 seconds."
-
-### Account already exists for slug
-- Status 409: "Account already exists for this slug"
-
-### Email/phone not verified for account creation
-- Status 400: "Email and/or phone verification required"
-
-### Payment verification failed
-- Status 400: "Payment not captured" or "Order ID mismatch"
-
-## Security Considerations
-
-1. **OTP Storage:** In-memory + DB (survives restarts)
-2. **RLS:** otp_sessions and razorpay_orders have `DENY ALL` for authenticated users (server-only)
-3. **Webhook Verification:** Razorpay webhook payload verified via signature (if enabled)
-4. **Rate Limiting:** otpLimiter applies to /send-otp and /verify-otp (3 requests per minute per IP)
-5. **Password:** Only accepted after OTP verification (prevents account hijacking)
-6. **Session Isolation:** onboarding_slug used as request-scoped key to prevent cross-vendor interference
-
-## UX Principles
-
-1. **Progress visibility:** Progress bar at top shows step N of 10 + percentage
-2. **Smooth transitions:** CSS fade/slide between steps (no flash)
-3. **Mobile-first:** All steps responsive to 375px viewport
-4. **Minimize friction:** Auto-advances when possible (type selection, category select)
-5. **Skippable non-critical steps:** Profile photo, bio, calendar can be skipped
-6. **Single primary CTA per step:** One action focus
-7. **Form validation:** Real-time feedback, disabled button until valid
-
-## Testing Checklist
-
-- [ ] Slug availability check (debounced 400ms)
-- [ ] OTP sending to email (HTML email template renders)
-- [ ] OTP sending to WhatsApp (logs in dev mode)
-- [ ] OTP verification with attempt lockout after 3 failures
-- [ ] Account creation ONLY after OTP verification
-- [ ] Password strength meter updates in real-time
-- [ ] Each step saves immediately on completion
-- [ ] Resume logic redirects to last incomplete step on login
-- [ ] Offline vendor skips calendar step automatically
-- [ ] Profile photo upload & crop
-- [ ] First service creation with slug auto-generation
-- [ ] Plan selection and Razorpay checkout flow
-- [ ] Free plan activates without payment
-- [ ] Payment verification marks plan as activated
-- [ ] Onboarding completion redirects to dashboard
-- [ ] Dashboard access blocked until onboarding complete
-- [ ] Navigation between steps validates prerequisites
-- [ ] Mobile layout at 375px width
-- [ ] No console errors or broken routes
-
-## Future Enhancements
-
-1. Razorpay webhook auto-verification (payment.captured event)
-2. Email template customization per locale
-3. A/B testing on plan selection UX
-4. Vendor referral code generation on completion
-5. Integration with email deliverability monitoring
-6. Abandoned onboarding recovery emails
-7. Admin onboarding analytics dashboard
+## What was removed (do not reintroduce)
+- OTP/email/password account creation (`send-otp`, `verify-otp`,
+  `create-account`, `create-order`, `verify-payment` onboarding endpoints).
+- `AboutYouStep`, `WhatsAppStep` screens and their `/about` `/whatsapp` routes.
+- The Solo/Team (`vendor_type`) picker.
+- The forced plan-selection step before first value.

@@ -1,5 +1,12 @@
 # Vendor Onboarding Implementation Summary
 
+> ⚠️ **SUPERSEDED (2026-08-23).** This documents the original 10-step
+> OTP/email/password onboarding, which was replaced by the Google-first flow
+> (June 2026 reshape + Aug 2026 "butter" pass). Hosts now sign in with Google
+> only — no OTP, no password, no `create-account`/`create-order`/`verify-payment`
+> endpoints. Kept for history only. **Current source of truth:
+> [`vendor-onboarding.md`](vendor-onboarding.md).**
+
 ## Scope
 Complete implementation of a 10-step vendor onboarding flow with OTP verification, account creation, category selection, calendar integration, profile setup, first service creation, plan selection, and Razorpay payment integration.
 
