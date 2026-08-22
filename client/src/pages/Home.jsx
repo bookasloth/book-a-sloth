@@ -414,7 +414,7 @@ const FEATURES = [
    Line icons, per-card colour + subtle glow; hover reveals the description. */
 const MOREFEATURES = [
   // Features — payments, video and reminders are covered by their named integrations below.
-  { icon: Link2, title: "Short booking links", desc: "bookasloth.com/you — one calm link for everything you offer.", color: "#0ea5e9" },
+  { icon: Link2, title: "Short booking links", desc: "bookasloth.com/you — one link for everything you offer.", color: "#0ea5e9" },
   { icon: ShieldCheck, title: "Privacy first", desc: "Your data stays yours. Encrypted, access-controlled, never sold.", color: "#059669" },
   { icon: Code2, title: "Easy embeds", desc: "Drop your booking widget into any website in one line.", color: "#4f46e5" },
   { icon: Palette, title: "Simple customization", desc: "Brand your page — colours, logo and theme in a few clicks.", color: "#db2777" },
@@ -1849,7 +1849,7 @@ const Home = () => {
               <div className="text-center sm:text-left">
                 <h3 className="font-heading text-xl font-bold text-ink">Free Forever</h3>
                 <p className="mt-1 max-w-sm text-sm text-neutral-500">
-                  Everything you need to take your first calm booking. No card, no catch.
+                  Everything you need to get booked and paid. No card, no catch.
                 </p>
               </div>
               <div className="text-center">
