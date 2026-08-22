@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { User, Building2, Video, MapPin, Repeat, Loader2 } from 'lucide-react';
+import { Video, MapPin, Repeat, Loader2 } from 'lucide-react';
 import { saveOnboardingDetails, getOnboardingStatus, activateFreePlan } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import useOnboardingGuard from './useOnboardingGuard';
@@ -9,11 +9,6 @@ import ProgressBar from './ProgressBar';
 import WhatsAppVerify from '../../components/whatsapp/WhatsAppVerify';
 import LivePreviewCard from './LivePreviewCard';
 import { personaLabelForSlug } from './personas';
-
-const HOST_TYPES = [
-  { id: 'individual',   label: 'Solo',  Icon: User },
-  { id: 'organisation', label: 'Team',  Icon: Building2 },
-];
 
 const BOOKING_TYPES = [
   { id: 'online_only',  label: 'Online',      Icon: Video },
@@ -27,7 +22,6 @@ const PreviewStep = () => {
   const ready = useOnboardingGuard();
   const { user } = useAuth();
 
-  const [vendorType, setVendorType]   = useState(null);
   const [bookingType, setBookingType] = useState(null);
   const [tagline, setTagline]         = useState('');
   const [waPhoneUi, setWaPhoneUi]     = useState({ country: '', number: '' });
@@ -53,13 +47,12 @@ const PreviewStep = () => {
     [profileSnap?.primaryCategory],
   );
 
-  const canContinue = vendorType && bookingType && !saving;
+  const canContinue = bookingType && !saving;
 
   const persist = async ({ whatsappSkipped } = {}) => {
     setSaving(true);
     try {
       await saveOnboardingDetails({
-        vendor_type: vendorType,
         booking_type: bookingType,
         tagline: tagline.trim() || undefined,
         ...(whatsappSkipped ? { whatsapp_skipped: true } : {}),
@@ -76,15 +69,16 @@ const PreviewStep = () => {
     }
   };
 
-  const handleWaVerified = async () => {
+  const handleWaVerified = () => {
+    // Just mark verified — do NOT auto-advance. Auto-persisting here yanked the
+    // host to the next step mid-form (e.g. before they finished the tagline).
     setWaVerified(true);
     toast.success('WhatsApp verified.');
-    if (canContinue) await persist();
   };
 
   const handleContinue = () => {
-    if (!vendorType || !bookingType) {
-      toast.error('Pick your host type and how you meet clients.');
+    if (!bookingType) {
+      toast.error('Pick how you meet clients.');
       return;
     }
     persist({ whatsappSkipped: !waVerified });
@@ -140,29 +134,6 @@ const PreviewStep = () => {
                   maxLength={120}
                 />
                 <p className="mt-1 text-xs text-gray-400">{tagline.length}/120</p>
-              </div>
-
-              {/* Host type */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">Are you solo or a team?</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {HOST_TYPES.map(({ id, label, Icon }) => {
-                    const on = vendorType === id;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => setVendorType(id)}
-                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 transition text-sm font-medium ${
-                          on ? 'border-primary bg-primary-light text-primary' : 'border-gray-200 hover:border-primary/50 text-gray-700'
-                        }`}
-                      >
-                        <Icon className="w-4 h-4" strokeWidth={2} />
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
 
               {/* Booking type */}
@@ -228,7 +199,6 @@ const PreviewStep = () => {
                 displayName={displayName}
                 slug={slug}
                 personaLabel={personaLabel}
-                vendorType={vendorType}
                 bookingType={bookingType}
                 whatsappNumber={waVerified ? waNumber : ''}
                 tagline={tagline}

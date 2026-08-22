@@ -1,4 +1,4 @@
-import { Video, MapPin, Repeat, User, Building2, MessageCircle, Star } from 'lucide-react';
+import { Video, MapPin, Repeat, MessageCircle, Star } from 'lucide-react';
 
 // Live preview of the host's future profile card. Not an iframe of the real
 // public page — the real page needs services/photo/bio that don't exist yet.
@@ -14,7 +14,6 @@ const LivePreviewCard = ({
   displayName,
   slug,
   personaLabel,
-  vendorType,
   bookingType,
   whatsappNumber,
   tagline,
@@ -66,12 +65,6 @@ const LivePreviewCard = ({
 
         {/* Badges row */}
         <div className="mt-4 flex flex-wrap gap-2">
-          {vendorType === 'individual' && (
-            <Badge Icon={User} label="Solo host" />
-          )}
-          {vendorType === 'organisation' && (
-            <Badge Icon={Building2} label="Team" />
-          )}
           {booking && <Badge Icon={booking.Icon} label={booking.label} />}
           {whatsappNumber && (
             <Badge Icon={MessageCircle} label="WhatsApp updates" />

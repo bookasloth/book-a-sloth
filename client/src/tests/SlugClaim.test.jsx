@@ -114,6 +114,20 @@ describe('SlugClaim', () => {
     });
   });
 
+  test('a network/500 error is NOT reported as "taken"', async () => {
+    checkOnboardingSlug.mockRejectedValue(new Error('network down'));
+    renderSlugClaim();
+
+    await screen.findByText(/Claim your URL/i);
+    const input = screen.getByPlaceholderText('yourslug');
+    fireEvent.change(input, { target: { value: 'some-slug' } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/couldn.?t check that url/i)).toBeTruthy();
+    });
+    expect(screen.queryByText(/taken/i)).toBeNull();
+  });
+
   test('shows reserved message for a reserved slug (reason:reserved)', async () => {
     checkOnboardingSlug.mockResolvedValue({ data: { available: false, reason: 'reserved' } });
     renderSlugClaim();

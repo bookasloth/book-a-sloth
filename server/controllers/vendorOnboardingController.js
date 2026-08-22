@@ -5,11 +5,14 @@ const { isBlocked } = require("../utils/adultContentFilter");
 const usernameService = require("../services/usernameService");
 const planService = require("../services/planService");
 const { capture: phCapture } = require("../utils/posthog");
+const { MIN: SLUG_MIN, MAX: SLUG_MAX } = require("../utils/slugFormat");
 
 // ─── Slug validation & generation ───────────────────────────────────────
 const isValidSlug = (slug) => {
-  // URL-safe: lowercase, no spaces, alphanumeric + hyphens
-  return /^[a-z0-9-]+$/.test(slug) && slug.length >= 3 && slug.length <= 60;
+  // URL-safe: lowercase, no spaces, alphanumeric + hyphens. Length bounds come
+  // from the canonical slugFormat (3–30) so onboarding can't persist a slug that
+  // changeUsername would later reject — the old 60-char cap was that divergence.
+  return /^[a-z0-9-]+$/.test(slug) && slug.length >= SLUG_MIN && slug.length <= SLUG_MAX;
 };
 
 const checkSlugAvailable = async (slug) => {
@@ -81,7 +84,7 @@ const slugAvailableForUser = async (vendorId, slug) => {
 const claimSlug = async (vendorId, slug) => {
   const clean = (slug || "").toLowerCase().trim();
   if (!isValidSlug(clean)) {
-    throw new Error("Slug must be lowercase, 3-60 chars, alphanumeric with hyphens only");
+    throw new Error(`Slug must be lowercase, ${SLUG_MIN}-${SLUG_MAX} chars, alphanumeric with hyphens only`);
   }
   // Reuse the same reserved-word set that guards changeUsername
   if (isReserved(clean)) {
@@ -115,7 +118,10 @@ const claimSlug = async (vendorId, slug) => {
   const result = await usernameService.setOnboardingUsername(vendorId, clean);
   if (!result.ok) {
     if (result.reason === "taken") throw new Error("Slug already taken");
-    throw new Error(result.detail || "Failed to claim slug");
+    // Log the raw DB detail server-side; never leak it to the browser (the route
+    // returns e.message verbatim). Host sees a generic, actionable message.
+    if (result.detail) console.error("claimSlug setOnboardingUsername failed:", result.detail);
+    throw new Error("Couldn't claim this URL. Please try again.");
   }
 
   // Record onboarding_slug and advance step (username already updated by service).
