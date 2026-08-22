@@ -154,6 +154,10 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
   //     once per host and skips ₹0 bookings; never throws.
   await require('./kycEarningNudge').maybeSendFirstEarningKycNudge({ host, booking });
 
+  // 2a-ii) Activation funnel: emit host_first_booking (host-keyed) on the host's
+  //        first paid booking. Never throws.
+  await require('./hostActivation').maybeTrackFirstBooking({ host, booking });
+
   // 2b) In-app confirmation for signed-in guests — mirrors the free-booking path
   //     so paid guests (the higher-value ones) aren't the only bookings missing an
   //     in-app note. The in-app feed has no provider dependency (P2-10).
