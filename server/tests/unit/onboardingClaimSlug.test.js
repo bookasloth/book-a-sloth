@@ -62,16 +62,21 @@ describe('isValidSlug', () => {
     expect(isValidSlug('hi there')).toBe(false);
     expect(isValidSlug('no@sign')).toBe(false);
   });
+
+  it('rejects a slug longer than 30 chars (aligns with the username cap)', () => {
+    expect(isValidSlug('a'.repeat(30))).toBe(true);
+    expect(isValidSlug('a'.repeat(31))).toBe(false);
+  });
 });
 
 describe('claimSlug', () => {
   it('rejects a slug that fails isValidSlug (too short)', async () => {
-    await expect(claimSlug('vendor-1', 'ab')).rejects.toThrow(/3-60 chars/i);
+    await expect(claimSlug('vendor-1', 'ab')).rejects.toThrow(/3-30 chars/i);
     expect(usernameService.usernameExists).not.toHaveBeenCalled();
   });
 
   it('rejects a slug with special characters (after lowercasing)', async () => {
-    await expect(claimSlug('vendor-1', 'my slug!')).rejects.toThrow(/3-60 chars/i);
+    await expect(claimSlug('vendor-1', 'my slug!')).rejects.toThrow(/3-30 chars/i);
     expect(usernameService.usernameExists).not.toHaveBeenCalled();
   });
 
@@ -173,10 +178,16 @@ describe('claimSlug', () => {
     await expect(claimSlug('vendor-1', 'race-slug')).rejects.toThrow(/already taken/i);
   });
 
-  it('throws a generic error when the RPC returns ok:false with a non-taken reason', async () => {
+  it('throws a generic error and does NOT leak the raw DB detail on a non-taken failure', async () => {
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     usernameService.usernameExists.mockResolvedValue(false);
     usernameService.setOnboardingUsername.mockResolvedValue({ ok: false, reason: 'error', detail: 'connection reset' });
     wireProfileUpdate();
-    await expect(claimSlug('vendor-1', 'some-slug')).rejects.toThrow(/connection reset/i);
+    // Generic, safe message to the client…
+    await expect(claimSlug('vendor-1', 'some-slug')).rejects.toThrow(/couldn.?t claim/i);
+    // …and the raw detail is NOT in the thrown message, but IS logged server-side.
+    await expect(claimSlug('vendor-1', 'some-slug')).rejects.not.toThrow(/connection reset/i);
+    expect(errSpy).toHaveBeenCalledWith(expect.stringMatching(/claimSlug/), 'connection reset');
+    errSpy.mockRestore();
   });
 });

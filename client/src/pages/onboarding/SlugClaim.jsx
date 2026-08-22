@@ -74,8 +74,9 @@ const SlugClaim = () => {
       }
     } catch {
       if (seq === requestSeq.current) {
+        // A network/500 blip is NOT "taken" — don't block with a wrong reason.
         setAvailable(false);
-        setUnavailableReason('taken');
+        setUnavailableReason('error');
       }
     } finally {
       if (seq === requestSeq.current) setChecking(false);
@@ -91,7 +92,7 @@ const SlugClaim = () => {
   };
 
   const handleChange = (e) => {
-    const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 60);
+    const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 30);
     setSlug(value);
     triggerCheck(value);
   };
@@ -160,7 +161,7 @@ const SlugClaim = () => {
                   placeholder="yourslug"
                   value={slug}
                   onChange={handleChange}
-                  maxLength={60}
+                  maxLength={30}
                   autoFocus
                   aria-describedby="slug-hint"
                 />
@@ -196,6 +197,9 @@ const SlugClaim = () => {
               )}
               {slug && !tooShort && available === false && !checking && unavailableReason === 'blocked' && (
                 <p className="text-red-500 text-sm">This URL isn&apos;t available. Try another.</p>
+              )}
+              {slug && !tooShort && available === false && !checking && unavailableReason === 'error' && (
+                <p className="text-amber-600 text-sm">Couldn&apos;t check that URL right now. Check your connection and try again.</p>
               )}
               {slug && !tooShort && available === false && !checking && (!unavailableReason || unavailableReason === 'taken') && (
                 <p className="text-red-500 text-sm">This URL is taken. Try another.</p>

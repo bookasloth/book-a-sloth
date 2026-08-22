@@ -19,6 +19,18 @@ const sendOtp = async (req, res) => {
   }
   const sent = await notify.sendWhatsAppVerifyOtp({ phone: normalized, otp, name: req.user?.name });
   if (!sent) {
+    // Ops signal: a per-number failure is usually a bad number, but a systemic
+    // AiSensy outage stalls every host on this step at once. Throttled on a
+    // constant key so an outage sends ONE alert, not one per host. Best-effort.
+    require('../utils/adminAlert').adminAlert({
+      subject: 'WhatsApp OTP delivery failing',
+      lines: [
+        'A WhatsApp verification code failed to send during onboarding.',
+        `Number: ${normalized}`,
+        req.user?.id ? `Host: ${req.user.id}` : 'Sender: unauthenticated',
+      ],
+      key: 'wa_verify_send_fail',
+    }).catch(() => {});
     return res.status(502).json({
       success: false,
       message: 'We could not deliver the code on WhatsApp. Check the country code and make sure this number has WhatsApp.',
@@ -44,7 +56,10 @@ const verifyOtp = async (req, res) => {
   const { error } = await supabaseAdmin
     .from('profiles')
     .update({
-      whatsapp_number: phone,
+      // Store the NORMALIZED number (verified against `normalized`); the raw
+      // request `phone` could differ and break downstream sends that assume
+      // the stored value is canonical.
+      whatsapp_number: normalized,
       whatsapp_verified: true,
       whatsapp_verified_at: new Date().toISOString(),
     })

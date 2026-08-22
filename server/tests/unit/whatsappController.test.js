@@ -1,11 +1,13 @@
 jest.mock('../../utils/otpStore');
 jest.mock('../../utils/notify');
+jest.mock('../../utils/adminAlert', () => ({ adminAlert: jest.fn().mockResolvedValue({ sent: false }) }));
 jest.mock('../../config/supabase', () => ({
   supabaseAdmin: { from: jest.fn() },
 }));
 
 const otpStore = require('../../utils/otpStore');
 const notify = require('../../utils/notify');
+const { adminAlert } = require('../../utils/adminAlert');
 const { supabaseAdmin } = require('../../config/supabase');
 const { sendOtp, verifyOtp } = require('../../controllers/whatsappController');
 
@@ -47,6 +49,8 @@ describe('whatsappController.sendOtp', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ success: false, message: expect.stringContaining('country code') })
     );
+    // Ops gets a throttled alert so a systemic outage isn't invisible.
+    expect(adminAlert).toHaveBeenCalledWith(expect.objectContaining({ key: 'wa_verify_send_fail' }));
   });
 
   it('surfaces a rate-limit reason with 429', async () => {
@@ -87,7 +91,7 @@ describe('whatsappController.verifyOtp', () => {
     await verifyOtp({ user: { id: 'u1' }, body: { phone: '+919876543210', otp: '123456' } }, res);
     expect(supabaseAdmin.from).toHaveBeenCalledWith('profiles');
     expect(update).toHaveBeenCalledWith(expect.objectContaining({
-      whatsapp_number: '+919876543210',
+      whatsapp_number: '919876543210', // stored NORMALIZED, not the raw '+' input
       whatsapp_verified: true,
     }));
     expect(eq).toHaveBeenCalledWith('id', 'u1');
