@@ -150,6 +150,31 @@ const Dashboard = () => {
     setUpgradeDismissed(true);
   };
 
+  // Share moment — the onboarding climax. A host who is live (username + a
+  // service) but has ZERO bookings needs exactly one thing: to send their link
+  // to their own audience. That's the only demand channel, so it gets a hero,
+  // not a thin banner. Hides the moment a booking arrives, or on dismiss.
+  const [shareMomentDismissed, setShareMomentDismissed] = useState(
+    () => localStorage.getItem('shareMomentDismissed') === '1'
+  );
+  const profileUrl = user?.username ? `${window.location.origin}/${user.username}` : '';
+  const shareText = `Book a session with me on Book A Sloth: ${profileUrl}`;
+  const showShareMoment =
+    isHost && !!user?.username && services.length > 0 && bookings.length === 0 && !shareMomentDismissed;
+  const trackShare = (method) => analytics.track(EVENTS.PROFILE_LINK_SHARED, { method, source: 'share_moment' });
+  const shareNative = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Book A Sloth', text: 'Book a session with me:', url: profileUrl }); trackShare('native'); return; }
+      catch (e) { if (e?.name === 'AbortError') return; }
+    }
+    try { await navigator.clipboard.writeText(profileUrl); toast.success('Link copied!'); trackShare('copy'); }
+    catch { toast.error('Could not share link'); }
+  };
+  const dismissShareMoment = () => {
+    localStorage.setItem('shareMomentDismissed', '1');
+    setShareMomentDismissed(true);
+  };
+
   // Google-calendar return toast
   useEffect(() => {
     const g = searchParams.get('google');
@@ -245,6 +270,51 @@ const Dashboard = () => {
         <div className="mb-5 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3">
           <p className="text-sm font-medium text-red-700">Couldn't load your dashboard. Check your connection and retry.</p>
           <button onClick={loadData} className="shrink-0 rounded bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700">Retry</button>
+        </div>
+      )}
+
+      {/* Share moment — the onboarding climax: live host, no bookings yet → share your link */}
+      {showShareMoment && (
+        <div className="mb-5 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-base font-bold text-gray-900">You're live! 🎉 Now share your link to get your first booking</p>
+              <p className="mt-1 text-sm text-gray-600">
+                Bookings come from people who see your link. Send it to your followers, groups and DMs — this is the one thing that gets you booked.
+              </p>
+            </div>
+            <button onClick={dismissShareMoment} aria-label="Dismiss" className="p-1 text-primary/50 hover:text-primary">
+              <XCircle className="h-4 w-4" strokeWidth={2.25} />
+            </button>
+          </div>
+
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-white px-3 py-2">
+            <Link2 className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.25} />
+            <span className="truncate text-sm font-semibold text-gray-800">{profileUrl.replace(/^https?:\/\//, '')}</span>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+              target="_blank" rel="noreferrer"
+              onClick={() => trackShare('whatsapp')}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3.5 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 hover:no-underline"
+            >
+              <MessageCircle className="h-4 w-4" strokeWidth={2.25} /> Share on WhatsApp
+            </a>
+            <button
+              onClick={shareNative}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90"
+            >
+              <Share2 className="h-4 w-4" strokeWidth={2.25} /> Share
+            </button>
+            <button
+              onClick={() => { navigator.clipboard.writeText(profileUrl); toast.success('Link copied!'); trackShare('copy'); }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Copy className="h-4 w-4" strokeWidth={2.25} /> Copy link
+            </button>
+          </div>
         </div>
       )}
 
