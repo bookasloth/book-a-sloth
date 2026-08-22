@@ -39,17 +39,21 @@ result = await supabaseAdmin.from('table').insert(safePayload);
 - Never recalculate pricing from current settings — always read snapshots from booking row
 
 ### Plan Enforcement
-- Plans: `explorer` (free), `creator` (₹999/yr), `professional` (₹3,650/yr)
-- Limits enforced in `planMiddleware.js` and checked in `bookingController.js`
-- Explorer: 3 services, 20 bookings/month, 0 products
-- Creator: 15 services, unlimited bookings, 5 products
-- Professional: unlimited everything
-- Expired paid plan → falls back to explorer silently
+- DB slugs: `starter` (free), `creator`, `professional` — shown in the UI as the
+  final brand names **Starter / Host+ / Studio** (slugs kept unchanged on purpose, #194).
+- Pricing (source of truth = `subscription_plans`): Starter ₹0 · Host+ (`creator`)
+  ₹229/mo, ₹1,499/yr · Studio (`professional`) ₹555/mo, ₹3,650/yr. `supreme` is a
+  hidden god-tier (inactive).
+- Limits/features come from `subscription_plans.limits` — NEVER hardcode. Enforced in
+  `planMiddleware.js`, checked in `bookingController.js`.
+- Starter: 3 services, 300 bookings/yr, 1 digital product, 5% commission over ₹200.
+  Host+ / Studio: 0% commission; Studio is unlimited everything.
+- Expired paid plan → falls back to `starter` silently.
 
 ### Theme System
 - Each host has a `theme_color` hex (plan-gated palette)
 - Use `getContrastColor(hex)` from `themeUtils.js` for text-on-color
-- `getPlanBorderColor(plan)` for avatar border: grey=explorer, orange=creator, gold=professional
+- `getPlanBorderColor(plan)` for avatar border: grey=Starter, orange=Host+, gold=Studio
 - Never hardcode colors in booking flow — always derive from `host.theme_color`
 
 ### URL Structure

@@ -306,6 +306,19 @@ setInterval(async () => {
   catch (err) { console.error('OTP cleanup error:', err.message); }
 }, 60 * 60 * 1000);
 
+// ── Weekly host recap (retention loop). Ticks daily; the job self-gates on the
+// WEEKLY_RECAP_ENABLED flag and a 6-day platform marker, so this sends ~weekly and
+// only to active hosts. Leader-elected so it never double-sends across instances. ──
+const { sendWeeklyRecaps } = require('./services/weeklyHostRecap');
+setInterval(async () => {
+  try {
+    await runLocked('weekly-recap', async () => {
+      const r = await sendWeeklyRecaps();
+      if (r.sent) console.log(`Weekly recap: ${r.sent} sent, ${r.skipped} skipped`);
+    }, { leaseMs: 30 * 60 * 1000 });
+  } catch (err) { console.error('Weekly recap cron error:', err.message); }
+}, 24 * 60 * 60 * 1000);
+
 // Email queue worker — processes queued emails with retry backoff (every 60s)
 const communicationEngine = require('./services/email/communicationEngine');
 setInterval(async () => {

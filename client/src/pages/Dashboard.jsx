@@ -6,7 +6,7 @@ import {
   Check, ArrowRight, Copy, Link2, MessageCircle, Wallet, Share2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getHostBookings, getMyServices, getPayoutBalance } from '../services/api';
+import { getHostBookings, getMyServices, getPayoutBalance, getMyKyc } from '../services/api';
 import { normalizePlan } from '../utils/themeUtils';
 import toast from 'react-hot-toast';
 import Modal from '../components/booking/Modal';
@@ -99,6 +99,7 @@ const Dashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
   const [balance, setBalance] = useState(null);
+  const [kyc, setKyc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(
     () => localStorage.getItem('legacyPlanBannerDismissed') === '1'
@@ -119,6 +120,11 @@ const Dashboard = () => {
     localStorage.setItem('legacyPlanBannerDismissed', '1');
     setBannerDismissed(true);
   };
+
+  // Deferred KYC: host has earnings waiting but no payout-ready verification.
+  // We let hosts list + sell without KYC and only ask once money is on the line.
+  const pendingEarnings = Number(kyc?.pending_earnings) || 0;
+  const showKycNudge = isHost && pendingEarnings > 0 && !kyc?.payouts_ready;
 
   // Earnings-triggered upgrade nudge (upgrade-on-success). Free-plan hosts pay 5%
   // commission; paid plans are 0%. Show them what that has actually cost so far —
@@ -168,6 +174,8 @@ const Dashboard = () => {
     // Settlement balance — fetched independently so a payout-balance hiccup
     // never blanks the whole dashboard.
     getPayoutBalance().then(({ data }) => setBalance(data)).catch(() => {});
+    // Deferred-KYC nudge signal: pending_earnings + payouts_ready. Best-effort.
+    getMyKyc().then(({ data }) => setKyc(data)).catch(() => {});
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, [isHost]);
@@ -236,6 +244,24 @@ const Dashboard = () => {
         <div className="mb-5 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3">
           <p className="text-sm font-medium text-red-700">Couldn't load your dashboard. Check your connection and retry.</p>
           <button onClick={loadData} className="shrink-0 rounded bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700">Retry</button>
+        </div>
+      )}
+
+      {/* Deferred KYC — earnings waiting, payouts not set up yet (money to collect first) */}
+      {showKycNudge && (
+        <div className="mb-5 flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-4">
+          <Wallet className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" strokeWidth={2.25} />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-gray-900">
+              You've earned {fmtMoney(pendingEarnings)} — set up payouts to receive it
+            </p>
+            <p className="mt-0.5 text-xs text-gray-600">
+              Finish a quick one-time verification (PAN + bank). You only need to do this once.
+            </p>
+          </div>
+          <Link to="/dashboard/kyc" className="shrink-0 self-center whitespace-nowrap rounded bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-emerald-700">
+            Set up payouts
+          </Link>
         </div>
       )}
 
