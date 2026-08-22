@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getHostBookings, getMyServices, getPayoutBalance, getMyKyc } from '../services/api';
+import { analytics, EVENTS } from '../services/analytics';
 import { normalizePlan } from '../utils/themeUtils';
 import toast from 'react-hot-toast';
 import Modal from '../components/booking/Modal';
@@ -325,18 +326,27 @@ const Dashboard = () => {
               onClick={async () => {
                 const url = `${window.location.origin}/${user.username}`;
                 if (navigator.share) {
-                  try { await navigator.share({ title: 'Book A Sloth', text: 'Book a session with me:', url }); return; }
-                  catch (e) { if (e?.name === 'AbortError') return; /* user dismissed */ }
+                  try {
+                    await navigator.share({ title: 'Book A Sloth', text: 'Book a session with me:', url });
+                    analytics.track(EVENTS.PROFILE_LINK_SHARED, { method: 'native', source: 'dashboard' });
+                    return;
+                  } catch (e) { if (e?.name === 'AbortError') return; /* user dismissed */ }
                 }
-                try { await navigator.clipboard.writeText(url); toast.success('Link copied!'); }
-                catch { toast.error('Could not share link'); }
+                try {
+                  await navigator.clipboard.writeText(url); toast.success('Link copied!');
+                  analytics.track(EVENTS.PROFILE_LINK_SHARED, { method: 'copy', source: 'dashboard' });
+                } catch { toast.error('Could not share link'); }
               }}
               className="shrink-0 p-1 text-gray-400 transition-colors hover:text-primary" title="Share"
             >
               <Share2 className="h-3.5 w-3.5" strokeWidth={2.25} />
             </button>
             <button
-              onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/${user.username}`); toast.success('Link copied!'); }}
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/${user.username}`);
+                toast.success('Link copied!');
+                analytics.track(EVENTS.PROFILE_LINK_SHARED, { method: 'copy', source: 'dashboard' });
+              }}
               className="shrink-0 p-1 text-gray-400 transition-colors hover:text-gray-700" title="Copy link"
             >
               <Copy className="h-3.5 w-3.5" strokeWidth={2.25} />

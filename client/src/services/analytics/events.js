@@ -34,7 +34,12 @@ export const EVENTS = Object.freeze({
   ONBOARDING_STEP:    'onboarding_step_completed',
   ONBOARDING_COMPLETED:'onboarding_completed', // server-emitted (markComplete)
   SERVICE_PUBLISHED:  'service_published',    // server-emitted — activation (first live service)
+  PROFILE_LINK_SHARED:'profile_link_shared',  // host copied/shared their profile link (activation funnel)
   PLAN_VIEWED:        'plan_viewed',         // pricing/plans seen
+
+  // ── Host activation funnel (all keyed to the HOST distinct_id) ──
+  //   user_registered → service_published → profile_link_shared → host_first_booking
+  HOST_FIRST_BOOKING: 'host_first_booking',   // server-emitted — host received their first paid booking
 
   // ── Churn / drop-off (server-emitted, PostHog-only) ──
   PAYMENT_FAILED:        'payment_failed',        // booking/product payment failed at the gateway

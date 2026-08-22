@@ -7,6 +7,11 @@ vi.mock('../services/api', () => ({
   getMyServices: vi.fn(() => Promise.resolve({ data: [] })),
   getGuestBookings: vi.fn(() => Promise.resolve({ data: [] })),
   getPayoutBalance: vi.fn(() => Promise.resolve({ data: {} })),
+  getMyKyc: vi.fn(() => Promise.resolve({ data: { status: 'not_started', pending_earnings: 0, payouts_ready: false } })),
+}));
+vi.mock('../services/analytics', () => ({
+  analytics: { track: vi.fn() },
+  EVENTS: { PROFILE_LINK_SHARED: 'profile_link_shared' },
 }));
 vi.mock('react-hot-toast', () => ({ default: Object.assign(() => {}, { success: () => {}, error: () => {} }) }));
 

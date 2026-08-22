@@ -11,6 +11,12 @@ vi.mock('../services/api', () => ({
   getHostBookings:  vi.fn().mockResolvedValue({ data: [] }),
   getMyServices:    vi.fn().mockResolvedValue({ data: [] }),
   getPayoutBalance: vi.fn().mockResolvedValue({ data: {} }),
+  getMyKyc:         vi.fn().mockResolvedValue({ data: { status: 'not_started', pending_earnings: 0, payouts_ready: false } }),
+}));
+
+vi.mock('../services/analytics', () => ({
+  analytics: { track: vi.fn() },
+  EVENTS: { PROFILE_LINK_SHARED: 'profile_link_shared' },
 }));
 
 vi.mock('../context/AuthContext', () => ({
