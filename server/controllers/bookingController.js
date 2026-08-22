@@ -1473,22 +1473,31 @@ const rescheduleBooking = async (req, res) => {
         serviceTitle: s?.title, hostName: host.name, hostPhone: host.phone,
         guestName: booking.guest_name, scheduledAt: scheduled_at, tz: hostTimezone, bookingId: booking.id,
       });
-      if (rescheduleNotify && booking.guest_email) {
+      // WhatsApp + email both ride the engine. Guests are phone-identity (many have
+      // NO email), so gate on either channel — not email alone — or phone-only guests
+      // get no reschedule notice. templateParams match the 4-var AiSensy "Booking
+      // Rescheduled" templates: customer [guest, service, host, newTime]; vendor
+      // [host, guest, service, newTime] (same shape as customerParams/vendorParams,
+      // no actionLink → exactly 4). The ack/confirm link stays in email + in-app.
+      const rescheduleCtx = { guestName: booking.guest_name, serviceTitle: s?.title, hostName: host.name, when: newWhen };
+      if (rescheduleNotify && (booking.guest_email || booking.guest_phone)) {
         await NotificationEngine.send({
           event: "BOOKING_RESCHEDULED_CUSTOMER",
           data: {
-            email: booking.guest_email, name: booking.guest_name,
+            email: booking.guest_email, phone: booking.guest_phone, name: booking.guest_name,
+            templateParams: customerParams(rescheduleCtx),
             emailData: { ...rescheduleData, ack_url: isHostReschedule ? ackUrl : "" },
             emailUser: { name: booking.guest_name, email: booking.guest_email },
             recipientUserId: booking.guest_id, bookingId: booking.id,
           },
         });
       }
-      if (rescheduleNotify && host.email) {
+      if (rescheduleNotify && (host.email || host.phone)) {
         await NotificationEngine.send({
           event: "BOOKING_RESCHEDULED_VENDOR",
           data: {
-            email: host.email, name: host.name,
+            email: host.email, phone: host.phone, name: host.name,
+            templateParams: vendorParams(rescheduleCtx),
             emailData: rescheduleData,
             emailUser: { name: host.name, email: host.email, username: host.username },
             recipientUserId: booking.host_id, bookingId: booking.id,
@@ -1587,11 +1596,12 @@ const confirmReschedule = async (req, res) => {
     const when = new Date(booking.scheduled_at).toLocaleString("en-IN", { timeZone: tz });
 
     try {
-      if (rescheduleNotify && host.email) {
+      if (rescheduleNotify && (host.email || host.phone)) {
         await NotificationEngine.send({
           event: "BOOKING_RESCHEDULED_VENDOR",
           data: {
-            email: host.email, name: host.name,
+            email: host.email, phone: host.phone, name: host.name,
+            templateParams: vendorParams({ guestName: booking.guest_name, serviceTitle: s?.title, hostName: host.name, when }),
             emailData: bookingEmailData({
               serviceTitle: s?.title, hostName: host.name, hostPhone: host.phone,
               guestName: booking.guest_name, scheduledAt: booking.scheduled_at, tz, bookingId: booking.id,

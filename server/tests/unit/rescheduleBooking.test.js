@@ -4,6 +4,10 @@ jest.mock('../../config/google', () => ({
 }));
 jest.mock('../../services/featureFlags', () => ({ isFeatureEnabled: jest.fn() }));
 jest.mock('../../services/notificationEngine', () => ({ send: jest.fn().mockResolvedValue() }));
+jest.mock('../../services/planService', () => ({
+  rescheduleNotifyForPlan: jest.fn().mockResolvedValue(true),
+  resolveVendorPlan: jest.fn(() => 'studio'),
+}));
 jest.mock('../../utils/cryptoTokens', () => ({ decryptToken: (v) => v, decrypt: (v) => v }));
 
 const mockFrom = jest.fn();
@@ -11,6 +15,7 @@ jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: (...a) => moc
 
 const featureFlags = require('../../services/featureFlags');
 const { updateCalendarEvent } = require('../../config/google');
+const NotificationEngine = require('../../services/notificationEngine');
 const { rescheduleBooking } = require('../../controllers/bookingController');
 
 const res = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
@@ -53,4 +58,37 @@ test('guest reschedule patches the calendar event when flag on', async () => {
   const r = res();
   await rescheduleBooking({ params: { id: 'b1' }, user: { id: 'g1' }, body: { scheduled_at: futureISO } }, r);
   expect(updateCalendarEvent).toHaveBeenCalledWith('a', 'r', 'evt1', expect.objectContaining({ timezone: 'Asia/Kolkata' }));
+});
+
+// Regression guard: reschedule WhatsApp was silently unwired — the sends passed no
+// phone and no templateParams, so the engine skipped WhatsApp entirely. It must now
+// carry phone + EXACTLY 4 templateParams (matching the 4-var AiSensy template; a 5th
+// is what broke "Booking Confirmed" for weeks).
+test('reschedule sends carry phone + 4 whatsapp params to guest and host', async () => {
+  featureFlags.isFeatureEnabled.mockResolvedValue(true);
+  wire({
+    ...baseBooking,
+    guest_name: 'Asha', guest_email: 'asha@x.com', guest_phone: '9990001111',
+    'profiles!bookings_host_id_fkey': {
+      ...baseBooking['profiles!bookings_host_id_fkey'],
+      name: 'Nidhi', email: 'nidhi@x.com', phone: '8880002222', username: 'nidhi',
+    },
+  });
+  const r = res();
+  await rescheduleBooking({
+    params: { id: 'b1' }, user: { id: 'g1' }, body: { scheduled_at: futureISO },
+    protocol: 'https', get: () => 'api.test',
+  }, r);
+
+  const byEvent = (ev) => NotificationEngine.send.mock.calls.map((c) => c[0]).find((a) => a.event === ev);
+  const cust = byEvent('BOOKING_RESCHEDULED_CUSTOMER');
+  const vend = byEvent('BOOKING_RESCHEDULED_VENDOR');
+
+  expect(cust.data.phone).toBe('9990001111');
+  expect(cust.data.templateParams).toHaveLength(4);
+  expect(cust.data.templateParams[0]).toBe('Asha');   // [guest, service, host, newTime]
+
+  expect(vend.data.phone).toBe('8880002222');
+  expect(vend.data.templateParams).toHaveLength(4);
+  expect(vend.data.templateParams[0]).toBe('Nidhi');  // [host, guest, service, newTime]
 });
