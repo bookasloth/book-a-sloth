@@ -96,7 +96,7 @@ const HOME_JSONLD = [
     operatingSystem: "Web",
     url: SITE_URL,
     description:
-      "Book A Sloth helps professionals automate bookings, payments, reminders and scheduling with one professional booking page.",
+      "Book A Sloth gives India's creators and professionals one booking link — clients book, pay over UPI, and the money lands in their account.",
     offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
   },
   {
@@ -106,7 +106,7 @@ const HOME_JSONLD = [
     url: SITE_URL,
     logo: ORG_LOGO,
     description:
-      "Appointment scheduling and business automation software for professionals.",
+      "The booking link that gets India's creators and professionals paid — bookings, UPI payments and reminders in one link.",
     sameAs: [
       "https://www.linkedin.com/company/book-a-sloth/",
       "https://www.instagram.com/bookasloth",
@@ -119,7 +119,7 @@ const HOME_JSONLD = [
     "@type": "WebSite",
     name: "Book A Sloth",
     url: SITE_URL,
-    description: "Automate bookings, payments, reminders and scheduling.",
+    description: "Get booked and paid with one link — bookings, UPI payments and reminders.",
     potentialAction: {
       "@type": "SearchAction",
       target: `${SITE_URL}/search?q={search_term_string}`,
@@ -787,16 +787,16 @@ const Home = () => {
   return (
     <main id="top" className="overflow-x-clip bg-canvas text-ink">
       <Seo
-        title="Book A Sloth | Appointment Scheduling & Booking Software for Professionals"
-        description="Book A Sloth helps coaches, consultants, doctors, trainers, photographers and service professionals automate bookings, payments, reminders and scheduling. Spend less time managing appointments and more time growing your business."
-        keywords="appointment scheduling software, booking software, appointment booking, online booking, calendar scheduling, booking page, service business software, appointment management, coach booking software, consultant scheduling, doctor appointment software, fitness trainer booking, photographer booking, freelancer booking, India"
+        title="Book A Sloth — the booking link that gets you paid"
+        description="Share one link — clients book, pay over UPI, and the money lands in your account. Book A Sloth is the booking page for India's creators, coaches, tutors and studios. Instant UPI payouts, reminders and calendar sync — set up in about a minute."
+        keywords="booking link, get paid for bookings, UPI payments booking, appointment booking India, online booking page, creator booking, coach booking software, consultant scheduling, tutor booking, freelancer payments, instant payout, calendar scheduling, India"
         canonical={`${SITE_URL}/`}
         robots="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
         siteName="Book A Sloth"
         locale="en_IN"
         themeColor="#F5B700"
-        ogTitle="Book A Sloth | Appointment Scheduling & Booking Software"
-        ogDescription="Automate bookings, payments, reminders and scheduling with one professional booking page."
+        ogTitle="Book A Sloth — the booking link that gets you paid"
+        ogDescription="Share one link — clients book, pay over UPI, money lands in your account. For India's creators, coaches and studios."
         image={OG_IMAGE}
         jsonLd={HOME_JSONLD}
       />
@@ -812,15 +812,14 @@ const Home = () => {
           {/* LEFT */}
           <div>
             <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[3.4rem] sm:leading-[1.05] lg:text-[3.9rem]">
-              Create your
+              Your booking link that
               <br />
-              <span className="font-bold text-primary">Appointment Booking Page</span>{" "}
-              in 42 seconds.
+              <span className="font-bold text-primary">actually gets you paid</span>.
             </Reveal>
 
             <Reveal as="p" delay={0.12} className="mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg">
-              Book A Sloth gives India's freelancers, tutors, coaches and studios
-              one calm link — for bookings, payments and reminders.
+              Share one link — clients book, pay over UPI, and the money lands in
+              your account. For India's creators, coaches and studios. Set up in ~42 seconds.
             </Reveal>
 
             {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
@@ -859,7 +858,7 @@ const Home = () => {
                   <span className="ml-1 text-sm font-semibold text-ink">5/5</span>
                 </div>
                 <p className="text-xs text-neutral-500">
-                  Loved by India's first calm professionals.
+                  Loved by India's creators and coaches.
                 </p>
               </div>
             </Reveal>
@@ -917,15 +916,14 @@ const Home = () => {
               render in the DOM (CSS-hidden per breakpoint), so this one is an h2
               to keep a single H1 per page for crawlers. */}
           <Reveal as="h2" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
-            Create your
+            Your booking link that
             <br />
-            <span className="font-bold text-primary">Appointment Booking Page</span>{" "}
-            in 42 seconds.
+            <span className="font-bold text-primary">actually gets you paid</span>.
           </Reveal>
 
           <Reveal as="p" delay={0.12} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500">
-            Book A Sloth gives India's freelancers, tutors, coaches and studios
-            one calm link — for bookings, payments and reminders.
+            Share one link — clients book, pay over UPI, and the money lands in
+            your account. For India's creators, coaches and studios. Set up in ~42 seconds.
           </Reveal>
 
           {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
