@@ -160,13 +160,43 @@ async function send(opts) {
   const template = await getTemplate(event, audience);
   if (!template) {
     console.warn(`communicationEngine: no active template for ${event} (${audience})`);
+    // Observability (E4): a missing template silently sends nothing and left no
+    // trace before. Write a queryable no_template row + one throttled alert so a
+    // deactivated/absent template is visible instead of an invisible no-send.
+    // (email_logs.status has no CHECK; template_id is nullable — no migration.)
+    if (!isTest) {
+      await insertLog({ event_key: event, audience, recipient: to, status: 'no_template', attempts: 0 });
+      require('../../utils/adminAlert').adminAlert({
+        key: `email_no_template:${event}:${audience}`,
+        subject: `Email has no active template: ${event}`,
+        lines: [
+          `Event: ${event}`, `Audience: ${audience}`, `Recipient: ${to}`,
+          `No active email_templates row matched ${event}:${audience} or ${event}:all — this email was NOT sent.`,
+        ],
+      });
+    }
     return { ok: false, reason: 'no_template' };
   }
 
   // Signed unsubscribe token for the customer-footer link (recovered statelessly
   // on click). Harmless for shells without an unsubscribe link (vendor).
   const sendData = { ...data, unsubscribe_token: data.unsubscribe_token || makeToken(to) };
-  const { subject, html } = renderEmail(template, { data: sendData, user, settings, audience });
+  const { subject, html, missing } = renderEmail(template, { data: sendData, user, settings, audience });
+  // Observability (E1): an unresolved placeholder renders as '' — silent blank
+  // content. Globals are always present, so any 'missing' token is a real
+  // template/caller drift. Surface it (throttled per event+tokens) instead of
+  // shipping a blanked email nobody notices.
+  if (!isTest && missing && missing.length) {
+    console.warn(`communicationEngine: unresolved placeholders for ${event} (${audience}): ${missing.join(', ')}`);
+    require('../../utils/adminAlert').adminAlert({
+      key: `email_missing:${event}:${missing.join(',')}`,
+      subject: `Email placeholders unresolved: ${event}`,
+      lines: [
+        `Event: ${event}`, `Audience: ${audience}`, `Missing: ${missing.join(', ')}`,
+        `These tokens rendered blank. Add them to the caller data, or remove them from the template.`,
+      ],
+    });
+  }
 
   const baseLog = {
     event_key: event, template_id: template.id, audience: template.audience,
@@ -258,6 +288,19 @@ async function processQueue(limit = 25) {
         error: r.error || 'send failed (max retries)', updated_at: new Date().toISOString(),
       }).eq('id', row.id);
       failed++;
+      // Observability parity with WhatsApp (E2): a permanently-failed email
+      // (provider outage, bad address, exhausted retries) previously only lived in
+      // email_logs. Alert once per event (throttled) so it doesn't go unnoticed the
+      // way the WhatsApp confirmation break did for 5 weeks.
+      require('../../utils/adminAlert').adminAlert({
+        key: `email_fail:${row.event_key}`,
+        subject: `Email send failing: ${row.event_key}`,
+        lines: [
+          `Event: ${row.event_key}`, `To: ${row.recipient}`, `Attempts: ${attemptsMade}`,
+          `Error: ${r.error || 'unknown'}`,
+          `Exhausted retries (${BACKOFFS_MIN.join('/')} min). Check the email provider (Resend) status/credits or the recipient address.`,
+        ],
+      });
     }
   }
   return { processed: rows.length, sent, failed, retried };

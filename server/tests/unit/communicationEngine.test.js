@@ -70,9 +70,12 @@ jest.mock('../../services/email/providers', () => ({
   getProvider: () => ({ name: 'smtp', sendEmail: async () => (mockProviderState.success ? { success: true, id: 'm1' } : { success: false, error: 'smtp down' }) }),
 }));
 
-const engine = require('../../services/email/communicationEngine');
+jest.mock('../../utils/adminAlert', () => ({ adminAlert: jest.fn() }));
 
-beforeEach(() => { db.email_logs = []; db.email_unsubscribes = []; mockProviderState = { success: true }; engine.clearCache(); });
+const engine = require('../../services/email/communicationEngine');
+const { adminAlert } = require('../../utils/adminAlert');
+
+beforeEach(() => { db.email_logs = []; db.email_unsubscribes = []; mockProviderState = { success: true }; engine.clearCache(); adminAlert.mockClear(); });
 
 describe('communicationEngine.send', () => {
   test('queues a normal email (status queued, not yet sent)', async () => {
@@ -105,11 +108,30 @@ describe('communicationEngine.send', () => {
     expect(db.email_logs[0].status).toBe('test');
   });
 
-  test('unknown event → no template, nothing logged', async () => {
+  test('unknown event → no template, logs a no_template row + alerts (E4)', async () => {
     const r = await engine.send({ event: 'NOPE', to: 'a@x.test' });
     expect(r.ok).toBe(false);
     expect(r.reason).toBe('no_template');
-    expect(db.email_logs).toHaveLength(0);
+    // E4: was previously untraced — now a queryable row + one throttled alert.
+    expect(db.email_logs).toHaveLength(1);
+    expect(db.email_logs[0].status).toBe('no_template');
+    expect(adminAlert).toHaveBeenCalledTimes(1);
+    expect(adminAlert.mock.calls[0][0].key).toMatch(/^email_no_template:NOPE/);
+  });
+
+  test('unresolved placeholder → still queues but alerts (E1)', async () => {
+    // BOOKING_CONFIRMED_CUSTOMER template needs {{service_name}}; omit it.
+    const r = await engine.send({ event: 'BOOKING_CONFIRMED_CUSTOMER', to: 'a@x.test', data: {}, user: { name: 'Asha' } });
+    expect(r.status).toBe('queued');            // content still ships (blank token)
+    expect(adminAlert).toHaveBeenCalledTimes(1);
+    const call = adminAlert.mock.calls[0][0];
+    expect(call.key).toBe('email_missing:BOOKING_CONFIRMED_CUSTOMER:service_name');
+    expect(call.lines.join(' ')).toContain('service_name');
+  });
+
+  test('fully-resolved placeholders → no missing alert', async () => {
+    await engine.send({ event: 'BOOKING_CONFIRMED_CUSTOMER', to: 'a@x.test', data: { service_name: 'SEO' }, user: { name: 'Asha' } });
+    expect(adminAlert).not.toHaveBeenCalled();
   });
 });
 
@@ -183,7 +205,9 @@ describe('communicationEngine.processQueue — retry backoff', () => {
   });
 
   test('failures retry 3 times (5m/30m/2h) then fail permanently', async () => {
-    await engine.send({ event: 'BOOKING_CONFIRMED_CUSTOMER', to: 'a@x.test', data: {}, user: {} });
+    // Provide all tokens so the E1 "missing placeholder" alert doesn't fire —
+    // this test isolates the E2 permanent-failure alert.
+    await engine.send({ event: 'BOOKING_CONFIRMED_CUSTOMER', to: 'a@x.test', data: { service_name: 'X' }, user: { name: 'A' } });
     mockProviderState.success = false;
 
     // try #1 → attempts 1, requeued
@@ -202,10 +226,19 @@ describe('communicationEngine.processQueue — retry backoff', () => {
     expect(db.email_logs[0].attempts).toBe(3);
     expect(db.email_logs[0].status).toBe('queued');
 
-    // try #4 → exhausted, permanent fail
+    // try #4 → exhausted, permanent fail + admin alert (E2)
     r = await engine.processQueue();
     expect(r.failed).toBe(1);
     expect(db.email_logs[0].attempts).toBe(4);
     expect(db.email_logs[0].status).toBe('failed');
+    expect(adminAlert).toHaveBeenCalledTimes(1);
+    expect(adminAlert.mock.calls[0][0].key).toBe('email_fail:BOOKING_CONFIRMED_CUSTOMER');
+  });
+
+  test('a retry (not yet exhausted) does NOT alert (E2)', async () => {
+    await engine.send({ event: 'BOOKING_CONFIRMED_CUSTOMER', to: 'a@x.test', data: { service_name: 'X' }, user: {} });
+    mockProviderState.success = false;
+    await engine.processQueue();               // attempt 1 → requeued
+    expect(adminAlert).not.toHaveBeenCalled();
   });
 });
