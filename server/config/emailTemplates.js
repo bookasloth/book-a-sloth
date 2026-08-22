@@ -413,7 +413,7 @@ const TEMPLATES = [
     email_category: 'Payment Receipt',
     email_reason: 'You are receiving this email because you made a purchase on Book A Sloth.',
     html_content:
-      eyebrow(t.text, "You're in") + h("You're officially a {{plan_name}} host, {{first_name}} 🦥") +
+      eyebrow(t.text, "You're in") + h("You're officially a {{plan_name}} Sloth, {{first_name}} 🦥") +
       C.celebration(t, { title: '{{plan_name}} — unlocked' }) +
       lead("Some people spend weeks 'thinking about it.' You just did the thing. Your {{plan_name}} plan is live, and everything you need to get booked and get paid is switched on.") +
       C.banner(t, { title: "Here's what just went live for you", sub: 'Your booking link is ready to share · payments land straight in your account · every guest gets automatic reminders and confirmations' }) +

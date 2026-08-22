@@ -65,11 +65,21 @@ function amountRow(theme, label, value) {
   </tr></table>`;
 }
 
-/** Accent-bordered key/value detail card. rows: [[label, value], ...]. */
+/**
+ * Accent key/value detail card. rows: [[label, value], ...].
+ * Clean card (white, hairline border + left accent, rounded); label left, value
+ * right-aligned; hairline divider between rows, none after the last.
+ */
 function infoCard(theme, rows = []) {
-  const body = (rows || []).filter(Boolean).map(([k, v]) =>
-    `<tr><td style="padding:6px 0;font-size:13px;color:#6b7280;width:140px;font-family:${FONT};">${esc(k)}</td><td style="padding:6px 0;font-size:14px;color:#111827;font-weight:600;font-family:${FONT};">${esc(v)}</td></tr>`).join('');
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 4px;border-left:3px solid ${theme.accent};background:#f9fafb;"><tr><td style="padding:12px 16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${body}</table></td></tr></table>`;
+  const list = (rows || []).filter(Boolean);
+  const body = list.map(([k, v], i) => {
+    const bb = i === list.length - 1 ? '' : 'border-bottom:1px solid #eef1f5;';
+    return `<tr>` +
+      `<td style="padding:11px 0;${bb}font-size:13px;color:#6b7280;font-family:${FONT};vertical-align:top;">${esc(k)}</td>` +
+      `<td align="right" style="padding:11px 0;${bb}font-size:14px;color:#111827;font-weight:600;font-family:${FONT};vertical-align:top;">${esc(v)}</td>` +
+      `</tr>`;
+  }).join('');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:10px 0 4px;border:1px solid #edf0f2;border-left:3px solid ${theme.accent};border-radius:10px;background:#ffffff;"><tr><td style="padding:4px 18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${body}</table></td></tr></table>`;
 }
 
 /** "Your session starts / soon" tinted strip. */
