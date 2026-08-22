@@ -13,6 +13,9 @@
 
 const sendEmail = require('./sendEmail');
 const { logger } = require('./logger');
+const { renderLayout } = require('../services/email/emailLayout');
+const { themeForCategory } = require('../services/email/emailThemes');
+const { infoCard, FONT } = require('../services/email/emailComponents');
 
 // Comma-separated list supported (e.g. "bolt@bookasloth.in, ops@bookasloth.in").
 // Providers wrap `to` as [to], so a comma string can't be one recipient — split
@@ -37,10 +40,12 @@ const escapeHtml = (s) =>
  * @param {string[]} [opts.lines]  Body lines; each is HTML-escaped.
  * @param {string}   [opts.key]    Throttle key; defaults to `subject`. Same key
  *                                 within the cooldown window is suppressed.
- * @param {string}   [opts.link]   Optional review URL rendered as a button.
+ * @param {string}   [opts.link]     Optional review URL rendered as a branded CTA button.
+ * @param {string}   [opts.category] Optional email_category for header pill + accent
+ *                                   theme (e.g. 'Payment Receipt', 'Security Alert').
  * @returns {Promise<{sent:boolean, reason?:string}>}
  */
-async function adminAlert({ subject, lines = [], key, link } = {}) {
+async function adminAlert({ subject, lines = [], key, link, category = '' } = {}) {
   const to = recipients();
   if (!to.length) return { sent: false, reason: 'no_recipient' };
   if (!subject) return { sent: false, reason: 'no_subject' };
@@ -51,32 +56,47 @@ async function adminAlert({ subject, lines = [], key, link } = {}) {
   if (prev && now - prev < COOLDOWN_MS) return { sent: false, reason: 'throttled' };
   lastSentAt.set(throttleKey, now);
 
-  // Rendered as a plain, transactional 1:1 note (not a marketing layout): a
-  // single accent, no images, no unsubscribe link — the signals that keep Gmail
-  // from filing it under Promotions/Updates. A text/plain twin is sent alongside
-  // the HTML (see below) for the same reason.
-  const rows = (lines.length ? lines : [subject])
-    .map((l, i) => {
-      const t = escapeHtml(l);
-      // First line rendered a touch stronger (usually "who"); rest muted-normal.
-      return i === 0
-        ? `<div style="font-size:15px;color:#111;margin:0 0 4px">${t}</div>`
-        : `<div style="font-size:14px;color:#444;margin:2px 0">${t}</div>`;
-    })
-    .join('');
-  const button = link
-    ? `<div style="margin:20px 0 4px"><a href="${escapeHtml(link)}" ` +
-      `style="display:inline-block;padding:9px 18px;background:#111;color:#fff;` +
-      `text-decoration:none;border-radius:8px;font-size:14px;font-weight:600">Open in admin →</a></div>`
-    : '';
-  const html =
-    `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;` +
-    `max-width:480px;margin:0 auto;padding:4px 2px;line-height:1.5">` +
-    `<div style="font-size:16px;font-weight:700;color:#111;margin:0 0 12px">${escapeHtml(subject)}</div>` +
-    `${rows}${button}` +
-    `<div style="margin-top:20px;padding-top:12px;border-top:1px solid #eee;` +
-    `font-size:12px;color:#999">Book A Sloth · internal ops notification</div>` +
-    `</div>`;
+  // Render through the SAME branded shell the customer/host emails use
+  // (emailLayout 'vendor' variant: Book a Sloth logo header, accent bar, category
+  // pill, branded full-width CTA, minimal footer — no unsubscribe nav). This is
+  // what makes an ops ping look like a real product email an admin taps into.
+  // "K: value" lines become an accent infoCard; the rest render as text.
+  const html = (() => {
+    try {
+      const theme = themeForCategory(category);
+      const kv = [];
+      const plain = [];
+      for (const l of lines) {
+        const m = /^([^:]{1,40}):\s*(.+)$/.exec(l);
+        if (m) kv.push([m[1].trim(), m[2].trim()]);
+        else plain.push(l);
+      }
+      const parts = [];
+      if (plain.length) {
+        parts.push(`<p style="margin:0 0 4px;font-size:16px;font-weight:600;color:#202124;font-family:${FONT};">${escapeHtml(plain[0])}</p>`);
+      }
+      if (kv.length) parts.push(infoCard(theme, kv)); // infoCard HTML-escapes its own inputs
+      for (const p of plain.slice(1)) {
+        parts.push(`<p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#5f6368;font-family:${FONT};">${escapeHtml(p)}</p>`);
+      }
+      return renderLayout({
+        audience: 'vendor',
+        bodyHtml: parts.join(''),
+        previewText: escapeHtml(lines[0] || subject), // layout's esc() only handles quotes
+        ctaLabel: link ? 'Open in admin' : '',
+        ctaUrl: link || '',
+        emailCategory: category || '',
+        settings: {},
+        data: {},
+      });
+    } catch (err) {
+      // Layout must never break an alert — fall back to a plain body.
+      logger.error({ event: 'admin_alert_render_failed', subject, message: err.message });
+      const body = (lines.length ? lines : [subject]).map((l) => `<p>${escapeHtml(l)}</p>`).join('');
+      const btn = link ? `<p><a href="${escapeHtml(link)}">Open in admin</a></p>` : '';
+      return `<div style="font-family:sans-serif"><h3>${escapeHtml(subject)}</h3>${body}${btn}</div>`;
+    }
+  })();
 
   // text/plain twin — a strong "this is a personal/transactional message" signal
   // for inbox placement, and a graceful fallback for text-only clients.

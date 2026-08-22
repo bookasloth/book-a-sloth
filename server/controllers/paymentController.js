@@ -555,6 +555,7 @@ const verifySubscription = async (req, res) => {
       // alerted in subscriptionService.sendSubscriptionReceiptEmail instead.
       adminAlert({
         key: `sub_charge:${razorpay_payment_id || req.user.id}`,
+        category: 'Payment Receipt',
         subject: `New subscription: ${planRecord?.name || plan}`,
         lines: [
           `${profile.name || 'A host'} (${profile.email || 'no email'})`,
