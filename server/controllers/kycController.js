@@ -55,13 +55,14 @@ const getMyKyc = async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from('kyc_submissions').select('*').eq('user_id', req.user.id).maybeSingle();
     if (error) throw error;
-    if (!data) return res.json({ status: 'not_started' });
 
     // Phase 2 nudge: how much the host has earned but not yet been paid, and
     // whether their Route payout account is ready. Drives the "finish KYC to
-    // receive ₹X" banner. Best-effort — never fails the KYC read.
+    // receive ₹X" banner. Best-effort — never fails the KYC read. Computed even
+    // when there is NO submission yet (deferred KYC): a host who earned before
+    // starting KYC still needs the dashboard nudge.
     let pending_earnings = 0;
-    let payouts_ready = !!data.razorpay_account_id;
+    let payouts_ready = !!data?.razorpay_account_id;
     try {
       const { computeSettlementBalance } = require('../services/settlementService');
       const platformConfig = require('../services/platformConfig');
@@ -69,6 +70,9 @@ const getMyKyc = async (req, res) => {
       const bal = await computeSettlementBalance(req.user.id, clearingDays);
       pending_earnings = Math.round(((bal.available || 0) + (bal.clearing || 0) + (bal.pendingCompletion || 0)) * 100) / 100;
     } catch (_) { /* non-fatal */ }
+
+    // No submission row yet → not_started, but still carry the earnings signal.
+    if (!data) return res.json({ status: 'not_started', pending_earnings, payouts_ready });
 
     res.json({
       status: data.status,

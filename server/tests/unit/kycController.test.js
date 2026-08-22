@@ -172,11 +172,14 @@ test('getMyKyc masks PII and never returns raw values or storage keys', async ()
   expect(JSON.stringify(out)).not.toContain('selfie_1.jpg');
 });
 
-test('getMyKyc returns not_started when the host has no submission', async () => {
+test('getMyKyc returns not_started (with earnings signal) when the host has no submission', async () => {
   supabaseAdmin.from.mockReturnValue(tableChain(null));
   const res = mockRes();
   await ctrl.getMyKyc({ user: { id: USER } }, res);
-  expect(res.json).toHaveBeenCalledWith({ status: 'not_started' });
+  // Deferred KYC: not_started still carries pending_earnings + payouts_ready so a
+  // host who earned before starting KYC gets the dashboard nudge.
+  expect(res.json).toHaveBeenCalledWith(
+    expect.objectContaining({ status: 'not_started', payouts_ready: false }));
 });
 
 // ── uploadKycFile: magic-byte sniffing ──────────────────────────
