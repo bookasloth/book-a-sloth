@@ -51,21 +51,46 @@ async function adminAlert({ subject, lines = [], key, link } = {}) {
   if (prev && now - prev < COOLDOWN_MS) return { sent: false, reason: 'throttled' };
   lastSentAt.set(throttleKey, now);
 
-  const body = lines.length ? lines.map(escapeHtml).join('<br/>') : escapeHtml(subject);
+  // Rendered as a plain, transactional 1:1 note (not a marketing layout): a
+  // single accent, no images, no unsubscribe link — the signals that keep Gmail
+  // from filing it under Promotions/Updates. A text/plain twin is sent alongside
+  // the HTML (see below) for the same reason.
+  const rows = (lines.length ? lines : [subject])
+    .map((l, i) => {
+      const t = escapeHtml(l);
+      // First line rendered a touch stronger (usually "who"); rest muted-normal.
+      return i === 0
+        ? `<div style="font-size:15px;color:#111;margin:0 0 4px">${t}</div>`
+        : `<div style="font-size:14px;color:#444;margin:2px 0">${t}</div>`;
+    })
+    .join('');
   const button = link
-    ? `<p><a href="${escapeHtml(link)}" style="display:inline-block;padding:8px 16px;` +
-      `background:#111;color:#fff;text-decoration:none;border-radius:8px">Review →</a></p>`
+    ? `<div style="margin:20px 0 4px"><a href="${escapeHtml(link)}" ` +
+      `style="display:inline-block;padding:9px 18px;background:#111;color:#fff;` +
+      `text-decoration:none;border-radius:8px;font-size:14px;font-weight:600">Open in admin →</a></div>`
     : '';
   const html =
-    `<p>${body}</p>${button}` +
-    `<p style="color:#888;font-size:12px">Automated alert from Book A Sloth.</p>`;
+    `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;` +
+    `max-width:480px;margin:0 auto;padding:4px 2px;line-height:1.5">` +
+    `<div style="font-size:16px;font-weight:700;color:#111;margin:0 0 12px">${escapeHtml(subject)}</div>` +
+    `${rows}${button}` +
+    `<div style="margin-top:20px;padding-top:12px;border-top:1px solid #eee;` +
+    `font-size:12px;color:#999">Book A Sloth · internal ops notification</div>` +
+    `</div>`;
+
+  // text/plain twin — a strong "this is a personal/transactional message" signal
+  // for inbox placement, and a graceful fallback for text-only clients.
+  const text = [subject, '', ...(lines.length ? lines : []), link ? `\nOpen: ${link}` : '']
+    .filter((l) => l !== undefined)
+    .join('\n')
+    .trim();
 
   // One email per recipient (providers can't split a comma string). A single
   // failure doesn't abort the rest; we report sent if at least one went out.
   let sentAny = false;
   for (const addr of to) {
     try {
-      await sendEmail({ to: addr, subject: `[Book A Sloth] ${subject}`, html });
+      await sendEmail({ to: addr, subject: `[Book A Sloth] ${subject}`, html, text });
       sentAny = true;
     } catch (err) {
       logger.error({ event: 'admin_alert_failed', subject, to: addr, message: err.message });
