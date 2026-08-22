@@ -76,6 +76,12 @@ const PRERENDER_ROUTES = [
   '/host-fees',
   '/earnings-calculator',
   '/wall-of-love',
+  // Marketing/event pages with bespoke OG cards — prerender so social scrapers
+  // (which don't run JS) get the card + real title, not the default og:image.
+  '/how-it-works',
+  '/be-a-sloth',
+  '/opening',
+  '/inaugurators',
   // KEEP IN SYNC with careersContent.js `jobs` slugs (it imports lucide-react,
   // so this node script can't import it the way it does featureData/helpDocsList).
   // Without prerender, a job page's raw HTML has no JobPosting JSON-LD at all.
