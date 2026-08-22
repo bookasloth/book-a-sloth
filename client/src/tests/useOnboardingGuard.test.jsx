@@ -192,7 +192,7 @@ describe('useOnboardingGuard', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  test('on API error, sets ready=true so page can still render', async () => {
+  test('after repeated API errors, fails open (ready=true) so the host is never blocked', async () => {
     getOnboardingStatus.mockRejectedValue(new Error('network error'));
 
     Object.defineProperty(window, 'location', {
@@ -213,8 +213,43 @@ describe('useOnboardingGuard', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => {
-      expect(getByTestId('probe').getAttribute('data-ready')).toBe('true');
+    // 3 tries with backoff (~1.2s) before failing open — allow headroom.
+    await waitFor(
+      () => expect(getByTestId('probe').getAttribute('data-ready')).toBe('true'),
+      { timeout: 3000 },
+    );
+    expect(getOnboardingStatus.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('a transient error recovers on retry and still enforces the redirect (no fail-open onto a wrong screen)', async () => {
+    // First fetch fails, retry succeeds with a step-1 host — who must NOT be left
+    // on /plan (a forward jump). The guard should recover and redirect to /claim
+    // rather than failing open onto the wrong screen.
+    getOnboardingStatus
+      .mockRejectedValueOnce(new Error('blip'))
+      .mockResolvedValue({ data: { stepCompleted: 1, isComplete: false, slug: 'john' } });
+
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: { ...window.location, pathname: '/vendor-register/john/plan' },
     });
+
+    const ProbeComponent = () => {
+      useOnboardingGuard();
+      return <div data-testid="probe" />;
+    };
+
+    render(
+      <MemoryRouter initialEntries={['/vendor-register/john/plan']}>
+        <Routes>
+          <Route path="/vendor-register/:slug/plan" element={<ProbeComponent />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(
+      () => expect(mockNavigate).toHaveBeenCalledWith('/vendor-register/john/claim', { replace: true }),
+      { timeout: 3000 },
+    );
   });
 });

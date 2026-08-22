@@ -35,33 +35,53 @@ export default function useOnboardingGuard() {
 
   useEffect(() => {
     let alive = true;
-    getOnboardingStatus()
-      .then(({ data }) => {
-        if (!alive) return;
-        if (data?.isComplete) {
-          navigate('/dashboard', { replace: true });
+    // Retry the status fetch a few times before failing open. A single transient
+    // blip must NOT immediately render whatever step the host is on — that lets a
+    // forward-jumped or wrong screen through, whose save then throws a confusing
+    // precondition error. Only after repeated real failure do we fail open, so
+    // the host is never blocked on a spinner forever.
+    const MAX_TRIES = 3;
+
+    const evaluate = (data) => {
+      if (data?.isComplete) {
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+      const done = data?.stepCompleted || 1;
+      const target = done >= 6 ? null : RESUME[done];
+      // Escape hatch: /category/all is the fallback search UI; treat it as
+      // still "on category" so the guard doesn't bounce the host back out.
+      const path = window.location.pathname.replace(/\/$/, '');
+      let here = path.split('/').pop();
+      if (/\/category\/all$/.test(path)) here = 'category';
+      if (target) {
+        const ti = ORDER.indexOf(target);
+        const hi = ORDER.indexOf(here);
+        // Allow revisiting any earlier/equal step (Back works); redirect only
+        // when jumping ahead of `target`, or when on an unknown segment.
+        if (hi === -1 || hi > ti) {
+          navigate(`/vendor-register/${data.slug || slug}/${target}`, { replace: true });
           return;
         }
-        const done = data?.stepCompleted || 1;
-        const target = done >= 6 ? null : RESUME[done];
-        // Escape hatch: /category/all is the fallback search UI; treat it as
-        // still "on category" so the guard doesn't bounce the host back out.
-        const path = window.location.pathname.replace(/\/$/, '');
-        let here = path.split('/').pop();
-        if (/\/category\/all$/.test(path)) here = 'category';
-        if (target) {
-          const ti = ORDER.indexOf(target);
-          const hi = ORDER.indexOf(here);
-          // Allow revisiting any earlier/equal step (Back works); redirect only
-          // when jumping ahead of `target`, or when on an unknown segment.
-          if (hi === -1 || hi > ti) {
-            navigate(`/vendor-register/${data.slug || slug}/${target}`, { replace: true });
-            return;
-          }
+      }
+      setReady(true);
+    };
+
+    const run = async (attempt = 1) => {
+      try {
+        const { data } = await getOnboardingStatus();
+        if (!alive) return;
+        evaluate(data);
+      } catch {
+        if (!alive) return;
+        if (attempt < MAX_TRIES) {
+          setTimeout(() => { if (alive) run(attempt + 1); }, 400 * attempt);
+          return;
         }
-        setReady(true);
-      })
-      .catch(() => setReady(true)); // on error, let the page render
+        setReady(true); // last resort: never block the host forever
+      }
+    };
+    run();
     return () => { alive = false; };
   }, [navigate, slug]);
 
