@@ -127,12 +127,12 @@ const ProcessOverview = () => {
 
                     <h2 className="section-title process-main-title">
                         One booking link.{' '}
-                        <span>Everything handled.</span>
+                        <span>Get booked and paid.</span>
                     </h2>
 
                     <p className="section-desc">
-                        Six simple steps between you and a fully automated
-                        booking system.
+                        Six simple steps between you and getting booked — and
+                        paid over UPI, straight to your account.
                     </p>
                 </motion.div>
 

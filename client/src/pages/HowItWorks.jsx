@@ -37,8 +37,8 @@ export default function HowItWorks() {
   return (
     <div className="hiw-lp">
       <Seo
-        title="How Book A Sloth Works | Online Appointment Booking"
-        description="Learn how Book A Sloth helps businesses create a booking page, accept appointments, collect payments, send reminders, and manage customers."
+        title="How Book A Sloth works — get booked and paid with one link"
+        description="See how Book A Sloth gets India's creators and professionals booked and paid: share one link, clients book and pay over UPI, with reminders and calendar sync handled."
         canonical={`${SITE_URL}/how-it-works`}
         image={ogCard('how-it-works', 'png')}
         jsonLd={HOW_IT_WORKS_JSONLD}
