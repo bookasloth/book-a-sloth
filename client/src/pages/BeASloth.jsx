@@ -97,7 +97,7 @@ const BeASloth = () => {
   return (
     <div className="grid min-h-[calc(100vh-72px)] w-full lg:grid-cols-[1.05fr_1fr]">
       <Seo
-        title="Become a Host on Book A Sloth — Sign Up Free"
+        title="Get booked and paid — become a host on Book A Sloth"
         description={feeOnly
           ? "Start taking bookings in minutes. Create your Book A Sloth host page, publish services, and manage your schedule — sign up free with Google. Paid bookings launching soon."
           : "Start taking bookings in minutes. Create your Book A Sloth host page, publish services, and get paid — sign up free with Google."}
@@ -117,12 +117,12 @@ const BeASloth = () => {
           <h2 className="font-heading text-[2.1rem] font-extrabold leading-[1.12] tracking-tight text-ink xl:text-[2.7rem]">
             Whatever you’re great at,
             <br />
-            <span className="text-primary">get booked for it.</span>
+            <span className="text-primary">get booked &amp; paid for it.</span>
           </h2>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-gray-500 xl:text-[17px]">
             {feeOnly
               ? "Coaches, consultants, tutors and more run their entire booking page on Book A Sloth — scheduling, reminders and Google Meet built in."
-              : "Coaches, consultants, tutors and more run their entire booking business on Book A Sloth — at 0% commission."}
+              : "Coaches, consultants, tutors and more get booked and paid on Book A Sloth — one link, money over UPI, 0% commission."}
           </p>
 
           {/* persona grid — one accent hue each · 3 across, 2 rows */}

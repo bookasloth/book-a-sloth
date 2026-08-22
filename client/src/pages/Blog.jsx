@@ -156,13 +156,13 @@ const Blog = () => {
     <div className="app-container blog-page py-12 sm:py-16">
       <Seo
         title="Book A Sloth Blog — Booking & Business Growth Tips"
-        description="Guides on appointment scheduling, reducing no-shows, online payments, and growing your booking business. Practical tips from Book A Sloth."
+        description="Guides on getting booked and paid, reducing no-shows, online payments, and growing your booking business. Practical tips from Book A Sloth."
         image={ogCard('blog-index')}
         canonical={page === 1 ? `${SITE_URL}/blog` : `${SITE_URL}/blog?page=${page}`}
         jsonLd={[
           collectionPageJsonLd({
             name: 'Book A Sloth Blog — Booking & Business Growth Tips',
-            description: 'Guides on appointment scheduling, reducing no-shows, online payments, and growing your booking business. Practical tips from Book A Sloth.',
+            description: 'Guides on getting booked and paid, reducing no-shows, online payments, and growing your booking business. Practical tips from Book A Sloth.',
             url: '/blog',
             items: postItems,
           }),

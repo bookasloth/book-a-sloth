@@ -31,22 +31,22 @@ const HowItWorksHero = () => {
                                 fill="currentColor"
                                 aria-hidden="true"
                             />
-                            <span>Simple booking. Better business.</span>
+                            <span>Booked, paid, done.</span>
                         </div>
 
                         <h1 className="hero-title">
                             From shared link to{' '}
                             <span className="highlight">
-                                confirmed booking
+                                money in your account
                             </span>{' '}
                             — in just a few clicks.
                         </h1>
 
                         <p className="hero-desc">
-                            Book A Sloth gives your business one simple booking
-                            page where customers can choose a service, select an
-                            available time, pay securely, and receive automatic
-                            confirmations and reminders.
+                            Book A Sloth gives you one link where clients pick a
+                            service, book a time, and pay you over UPI — with
+                            automatic confirmations and reminders. You just share
+                            the link.
                         </p>
 
                         <div className="hero-actions">

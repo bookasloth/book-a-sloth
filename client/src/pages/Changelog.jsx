@@ -573,13 +573,13 @@ const Changelog = () => {
     <div className="relative">
       <Seo
         title="What's New — Book A Sloth Changelog"
-        description="Every feature, improvement, and fix shipped to Book A Sloth. Follow the latest updates to the appointment booking platform."
+        description="Every feature, improvement, and fix shipped to Book A Sloth. Follow the latest updates to Book A Sloth."
         image={ogCard('changelog')}
         canonical={`${SITE_URL}/changelog`}
         jsonLd={[
           collectionPageJsonLd({
             name: "What's New — Book A Sloth Changelog",
-            description: 'Every feature, improvement, and fix shipped to Book A Sloth. Follow the latest updates to the appointment booking platform.',
+            description: 'Every feature, improvement, and fix shipped to Book A Sloth. Follow the latest updates to Book A Sloth.',
             url: '/changelog',
           }),
           breadcrumbJsonLd({ items: [{ name: 'Home', path: '/' }, { name: 'Changelog', path: '/changelog' }] }),
