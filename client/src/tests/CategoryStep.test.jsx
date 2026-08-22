@@ -139,7 +139,7 @@ test('(c) no-exact-match shows Add row; tapping it calls suggestCategory and aut
   expect(screen.getByText(/pending review/i)).toBeTruthy();
 });
 
-test('(d) Continue calls updateOnboardingStep with primary_category then navigates to /whatsapp', async () => {
+test('(d) Continue calls updateOnboardingStep with primary_category then navigates to /preview', async () => {
   renderStep();
   await waitForCategories();
 
@@ -157,7 +157,7 @@ test('(d) Continue calls updateOnboardingStep with primary_category then navigat
   expect(payload.data.categories).toEqual(['ai-engineer']);
 
   await waitFor(() =>
-    expect(mockNavigate).toHaveBeenCalledWith('/vendor-register/jane/whatsapp')
+    expect(mockNavigate).toHaveBeenCalledWith('/vendor-register/jane/preview')
   );
 });
 

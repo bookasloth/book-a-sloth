@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { User, Building2, Video, MapPin, Repeat, Loader2 } from 'lucide-react';
-import { saveOnboardingDetails, getOnboardingStatus } from '../../services/api';
+import { saveOnboardingDetails, getOnboardingStatus, activateFreePlan } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
@@ -64,7 +64,12 @@ const PreviewStep = () => {
         tagline: tagline.trim() || undefined,
         ...(whatsappSkipped ? { whatsapp_skipped: true } : {}),
       });
-      navigate(`/vendor-register/${slug}/plan`);
+      // Paywall deferred: every host goes live on the free plan and adds their
+      // first service on the next screen. Upgrades live in the dashboard,
+      // surfaced after first-booking value — not as a wall before it. (The /plan
+      // screen still exists as a resume/upgrade entry, just not a forced step.)
+      await activateFreePlan();
+      navigate(`/vendor-register/${slug}/live`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not save — try again.');
       setSaving(false);
@@ -210,7 +215,7 @@ const PreviewStep = () => {
                     <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />
                     Saving…
                   </span>
-                ) : waVerified ? 'Continue to plan →' : 'Continue without WhatsApp →'}
+                ) : waVerified ? 'Continue →' : 'Continue without WhatsApp →'}
               </button>
             </div>
 

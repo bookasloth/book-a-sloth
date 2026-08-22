@@ -102,7 +102,7 @@ const CategoryStep = () => {
     setSaving(true);
     try {
       await updateOnboardingStep({ slug, step: 4, data: { primary_category: selected, categories: [selected] } });
-      navigate(`/vendor-register/${slug}/whatsapp`);
+      navigate(`/vendor-register/${slug}/preview`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not save category');
       setSaving(false);
@@ -140,7 +140,7 @@ const CategoryStep = () => {
           {/* ── Fixed header area ── */}
           <div className="shrink-0">
             <button
-              onClick={() => navigate(`/vendor-register/${slug}/about`)}
+              onClick={() => navigate(`/vendor-register/${slug}/category`)}
               className="text-sm text-gray-500 hover:text-gray-800 mb-3 inline-block"
             >
               ← Back
