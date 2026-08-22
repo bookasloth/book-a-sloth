@@ -359,6 +359,24 @@ async function sendSubscriptionReceiptEmail({ event, vendorId, plan, planSlug, c
         recipientUserId: vendorId,
       },
     }).catch((e) => console.error('subscription email error:', e.message));
+
+    // Founder alert on every subscription charge (purchase + renewal). Fire-and-
+    // forget; adminAlert never throws and is throttled per payment id so a resend
+    // within the cooldown window can't double-ping.
+    const isRenewal = event === 'SUBSCRIPTION_RENEWED';
+    require('../utils/adminAlert').adminAlert({
+      key: `sub_charge:${paymentId || vendorId}`,
+      subject: isRenewal
+        ? `Subscription renewed: ${plan?.name || planSlug}`
+        : `New subscription: ${plan?.name || planSlug}`,
+      lines: [
+        `${prof?.name || 'A host'} (${prof?.email || 'no email'})`,
+        `Plan: ${plan?.name || planSlug} (${cadence})`,
+        `Amount: ₹${Number(totalCharged).toLocaleString('en-IN')}`,
+        isRenewal ? 'Auto-renewal charge.' : 'New purchase / upgrade.',
+      ],
+      link: `${process.env.CLIENT_URL || 'https://bookasloth.com'}/admin/host360/${vendorId}`,
+    });
   } catch (_) { /* non-fatal */ }
 }
 
