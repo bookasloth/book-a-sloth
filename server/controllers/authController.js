@@ -451,20 +451,6 @@ const attachGoogleToProfile = async (profileId, tokens, googleUser) => {
   // profiles stores only the connected flag now — the OAuth tokens live solely
   // in the server-only profile_private table (profiles.google_* is dropped in
   // v3.24, and was never anon-readable). Encrypted at rest (AES-256-GCM).
-  const base = {
-    google_calendar_connected: true,
-    updated_at: new Date().toISOString(),
-  };
-  let { error } = await supabaseAdmin
-    .from("profiles")
-    .update({ ...base, google_id: googleUser.id || null })
-    .eq("id", profileId);
-  // Pre-v2.5 DB without google_id — retry without it (schema fallback pattern)
-  if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
-    ({ error } = await supabaseAdmin.from("profiles").update(base).eq("id", profileId));
-  }
-  if (error) throw error;
-
   // Retire the PREVIOUS refresh token before storing the new one.
   //
   // Hosts who consented before we narrowed scopes hold a grant that still
@@ -495,14 +481,38 @@ const attachGoogleToProfile = async (profileId, tokens, googleUser) => {
   }
 
   // Tokens are persisted ONLY to profile_private (RLS deny-all to anon/auth).
+  // Write them BEFORE flipping google_calendar_connected: if this fails we must
+  // NOT advertise the calendar as connected — no tokens means every later
+  // availability/booking calendar call silently fails with no reconnect signal
+  // for the host. Non-fatal so a transient failure never blocks the login.
+  let tokensStored = false;
   try {
     await profileSecrets.setGoogleTokens(profileId, {
       google_access_token: encAccess,
       google_refresh_token: encRefresh,
     });
+    tokensStored = true;
   } catch (e) {
     console.error("profile_private token write (non-fatal):", e.message);
   }
+
+  // Flag calendar connected ONLY when the tokens actually landed. google_id
+  // (identity mapping) is written either way. On a token-write failure the host
+  // stays google_calendar_connected=false → the existing reconnect path, not a
+  // silently-broken "connected" state.
+  const base = {
+    google_calendar_connected: tokensStored,
+    updated_at: new Date().toISOString(),
+  };
+  let { error } = await supabaseAdmin
+    .from("profiles")
+    .update({ ...base, google_id: googleUser.id || null })
+    .eq("id", profileId);
+  // Pre-v2.5 DB without google_id — retry without it (schema fallback pattern)
+  if (error && /Could not find the|column.*does not exist/i.test(error.message)) {
+    ({ error } = await supabaseAdmin.from("profiles").update(base).eq("id", profileId));
+  }
+  if (error) throw error;
 
   // Timezone: only seed if the vendor has no availability row yet (never
   // overwrite a timezone the vendor chose in the dashboard).
