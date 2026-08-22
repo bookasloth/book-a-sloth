@@ -149,6 +149,11 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
     },
   });
 
+  // 2a) Deferred KYC: first time this host actually earns and still has no
+  //     payout-ready KYC, nudge them (email + bell) to verify. Self-dedupes to
+  //     once per host and skips ₹0 bookings; never throws.
+  await require('./kycEarningNudge').maybeSendFirstEarningKycNudge({ host, booking });
+
   // 2b) In-app confirmation for signed-in guests — mirrors the free-booking path
   //     so paid guests (the higher-value ones) aren't the only bookings missing an
   //     in-app note. The in-app feed has no provider dependency (P2-10).
