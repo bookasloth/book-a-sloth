@@ -150,4 +150,73 @@ async function finalizeBookingCapture({ bookingId, paymentId, feePaise, taxPaise
   return { updated, vendorAmount, feeExclTax, tax };
 }
 
-module.exports = { finalizeBookingCapture };
+/**
+ * Deterministic uuid for a Razorpay refund id so the REFUND journal entry is
+ * idempotent on (source_type, source_id). journal_entries.source_id is a uuid
+ * column and Razorpay ids ("rfnd_...") are not uuids, so hash → uuid shape.
+ */
+function refundSourceId(refundId) {
+  const crypto = require('crypto');
+  const h = crypto.createHash('sha256').update(`refund:${refundId}`).digest('hex');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+}
+
+/**
+ * recordBookingRefund — post the REFUND journal entry for a refund issued in the
+ * Razorpay dashboard (the only refund path), and reverse the booking's held
+ * Route transfer so a refunded booking never also pays the host.
+ *
+ * LOOPHOLE FIX: without this, dashboard refund cash left the Razorpay balance
+ * with no ledger entry and left Vendor Payables orphaned-credited. Called from
+ * the `refund.processed` webhook. Idempotent on the Razorpay refund id.
+ *
+ * @returns {{ posted:boolean, transferReversed:boolean, reason?:string }}
+ */
+async function recordBookingRefund({ paymentId, refundAmountPaise, refundId, reason }) {
+  const { data: bk } = await supabaseAdmin
+    .from('bookings')
+    .select('id, host_id, vendor_amount, commission_taxable, commission_gst, platform_fee_amount, platform_fee_gst, tds_amount, tcs_amount, customer_total, services(price)')
+    .eq('razorpay_payment_id', paymentId)
+    .maybeSingle();
+  // Not a booking payment (e.g. a subscription/product refund) → needs a manual
+  // decision; caller alerts an admin. We never guess legs we can't map.
+  if (!bk) return { posted: false, transferReversed: false, reason: 'no_booking_for_payment' };
+
+  // Stop the host being paid for a refunded booking (idempotent; no-op if there
+  // is no held transfer). Mirrors the dispute path.
+  let transferReversed = false;
+  try {
+    const rev = await require('./routeAutoPayoutService').reverseByPaymentId(paymentId, reason || `refund ${refundId || ''}`.trim());
+    transferReversed = !!rev.ok;
+  } catch (e) {
+    console.error('recordBookingRefund: held-transfer reverse failed', bk.id, e.message);
+  }
+
+  const refundAmount = round2(Number(refundAmountPaise || 0) / 100);
+  if (!(refundAmount > 0)) return { posted: false, transferReversed, reason: 'zero_refund_amount' };
+
+  const { post } = require('./ledger/postingService');
+  const { refundEntry } = require('./ledger/journalTemplates');
+  await post({
+    sourceType: 'REFUND',
+    sourceId: refundId ? refundSourceId(refundId) : `${bk.id}`,
+    journalDate: new Date().toISOString().slice(0, 10),
+    template: refundEntry({
+      booking_id: bk.id,
+      host_id: bk.host_id,
+      refund_amount: refundAmount,
+      refund_id: refundId,
+      service_price: Number(bk.services?.price) || 0,
+      vendor_amount: Number(bk.vendor_amount) || 0,
+      commission_taxable: Number(bk.commission_taxable) || 0,
+      commission_gst: Number(bk.commission_gst) || 0,
+      platform_fee_amount: Number(bk.platform_fee_amount) || 0,
+      platform_fee_gst: Number(bk.platform_fee_gst) || 0,
+      tds_amount: Number(bk.tds_amount) || 0,
+      tcs_amount: Number(bk.tcs_amount) || 0,
+    }),
+  });
+  return { posted: true, transferReversed };
+}
+
+module.exports = { finalizeBookingCapture, recordBookingRefund, refundSourceId };

@@ -18,7 +18,7 @@ const { createCalendarEvent } = require("../config/google");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const profileSecrets = require("../utils/profileSecrets");
 const { verifySignature } = require("../utils/razorpaySignature");
-const { finalizeBookingCapture } = require("../services/bookingCapture");
+const { finalizeBookingCapture, recordBookingRefund } = require("../services/bookingCapture");
 const { sendBookingConfirmation } = require("../services/bookingConfirmation");
 const routeTransferService = require("../services/routeTransferService");
 const routeAutoPayoutService = require("../services/routeAutoPayoutService");
@@ -1218,6 +1218,59 @@ const handleWebhook = async (req, res) => {
       }
     } catch (err) {
       securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
+      return res.status(500).json({ error: 'processing_failed' });
+    }
+    return res.json({ received: true });
+  }
+
+  // ── Refund (LOOPHOLE FIX): refunds are issued MANUALLY in the Razorpay
+  // dashboard, so `refund.processed` is the only signal that guest cash actually
+  // left our balance. Previously ignored → the outflow never hit the ledger and
+  // Vendor Payables stayed orphaned-credited. Post the REFUND entry + reverse the
+  // held Route transfer so a refunded booking never also pays the host. Carries a
+  // refund entity (with payment_id); handled BEFORE the payment guard below. ──
+  if (typeof event.event === 'string' && event.event.startsWith('refund.')) {
+    const refund = event.payload?.refund?.entity;
+    try {
+      if (event.event === 'refund.processed' && refund?.payment_id) {
+        const r = await recordBookingRefund({
+          paymentId: refund.payment_id,
+          refundAmountPaise: refund.amount,
+          refundId: refund.id,
+          reason: `refund ${refund.id} (${event.event})`,
+        });
+        auditLog('WEBHOOK_REFUND', null, {
+          refund_id: refund.id, payment_id: refund.payment_id,
+          posted: r.posted, transfer_reversed: r.transferReversed, reason: r.reason,
+        });
+        // Refund we couldn't auto-record (no matching booking, e.g. a
+        // subscription/product refund) → the money still left; a human must book
+        // it. Alert rather than silently drop it.
+        if (!r.posted) {
+          adminAlert({
+            key: `refund_unposted:${refund.id}`,
+            subject: `Refund not auto-recorded (${refund.id})`,
+            lines: [
+              `Refund: ${refund.id} for payment ${refund.payment_id}`,
+              `Amount: ₹${(Number(refund.amount || 0) / 100).toFixed(2)}`,
+              `Reason: ${r.reason || 'unknown'}`,
+              `Money HAS left the Razorpay balance — record it manually in the ledger.`,
+            ],
+          });
+        }
+      }
+    } catch (err) {
+      securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
+      adminAlert({
+        key: `webhook_error:${event.event}`,
+        subject: `Razorpay webhook failed: ${event.event}`,
+        lines: [
+          `Event: ${event.event}`,
+          refund?.id ? `Refund: ${refund.id}` : null,
+          `Error: ${err.message}`,
+          `Razorpay will retry. If this persists the refund may be unrecorded — reconcile against the Razorpay dashboard.`,
+        ].filter(Boolean),
+      });
       return res.status(500).json({ error: 'processing_failed' });
     }
     return res.json({ received: true });

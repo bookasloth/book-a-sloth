@@ -11,7 +11,21 @@ import { PageHeader, Btn, Skeleton } from '../../components/admin/ui';
 
 const inr = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(n) || 0);
 const fmt = (d) => (d ? new Date(d).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—');
-const SOURCES = ['ORDER_PAYMENT', 'SUBSCRIPTION_PAYMENT', 'BANK_TRANSFER', 'ADJUSTMENT', 'REVERSAL', 'BACKFILL', 'BACKFILL_SETTLEMENT'];
+const SOURCES = ['ORDER_PAYMENT', 'SUBSCRIPTION_PAYMENT', 'PRODUCT_PAYMENT', 'REFUND', 'SETTLEMENT', 'BANK_TRANSFER', 'ADJUSTMENT', 'REVERSAL', 'BACKFILL', 'BACKFILL_SETTLEMENT'];
+
+// Whose money each ledger account holds — mirrors the legend in
+// server/services/ledger/journalTemplates.js and docs/ledger.md. Lets a reader
+// see, per line, who receives it (Host / Book A Sloth / Government / Razorpay)
+// without knowing the chart of accounts.
+const OWNER_BY_CODE = {
+  '1000': 'Book A Sloth', '1100': 'Book A Sloth',
+  '2000': 'Host', '2100': 'Government', '2200': 'Book A Sloth',
+  '2300': 'Government', '2400': 'Government',
+  '4000': 'Book A Sloth', '4100': 'Book A Sloth', '4200': 'Book A Sloth',
+  '5000': 'Razorpay', '5100': 'Razorpay', '5200': 'Razorpay',
+  '5300': 'Book A Sloth', '5400': 'Book A Sloth',
+};
+const ownerOf = (code) => OWNER_BY_CODE[code] || '—';
 
 const emptyLine = () => ({ account_code: '', debit: '', credit: '' });
 
@@ -175,17 +189,29 @@ const AdminJournal = () => {
                           <Skeleton className="h-8" />
                         ) : (
                           <table className="w-full text-[12px]">
+                            <thead>
+                              <tr className="text-left text-[10px] uppercase tracking-wide adm-t3">
+                                <th className="py-1 pr-3 font-semibold">Account</th>
+                                <th className="py-1 pr-3 font-semibold" />
+                                <th className="py-1 pr-3 font-semibold">Who gets it</th>
+                                <th className="py-1 pr-3 font-semibold text-right">Debit</th>
+                                <th className="py-1 font-semibold text-right">Credit</th>
+                              </tr>
+                            </thead>
                             <tbody>
                               {lineCache[j.id].map((l) => (
                                 <tr key={l.id}>
                                   <td className="py-1 pr-3 font-mono adm-t3">{l.chart_of_accounts?.code}</td>
                                   <td className="py-1 pr-3 adm-t2">{l.chart_of_accounts?.name}</td>
+                                  <td className="py-1 pr-3">
+                                    <span className="text-[11px] px-2 py-0.5 rounded adm-chip adm-t2">{ownerOf(l.chart_of_accounts?.code)}</span>
+                                  </td>
                                   <td className="py-1 pr-3 text-right tabular-nums">{Number(l.debit) > 0 ? inr(l.debit) : ''}</td>
                                   <td className="py-1 text-right tabular-nums adm-t3">{Number(l.credit) > 0 ? inr(l.credit) : ''}</td>
                                 </tr>
                               ))}
                               <tr className="border-t adm-border">
-                                <td colSpan={2} className="py-1 pr-3 adm-t3">Entry total</td>
+                                <td colSpan={3} className="py-1 pr-3 adm-t3">Entry total</td>
                                 <td className="py-1 pr-3 text-right tabular-nums font-semibold">{inr(entryAmount(j.id))}</td>
                                 <td className="py-1 text-right tabular-nums font-semibold adm-t3">{inr(entryAmount(j.id))}</td>
                               </tr>

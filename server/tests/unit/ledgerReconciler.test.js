@@ -8,6 +8,7 @@ jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }
 
 const { supabaseAdmin } = require('../../config/supabase');
 const { postSafe } = require('../../services/ledger/postingService');
+const { orderPaymentEntry } = require('../../services/ledger/journalTemplates');
 const reconciler = require('../../services/ledger/ledgerReconciler');
 
 // A chain whose terminal awaited value resolves to `result`. Every builder
@@ -102,4 +103,43 @@ test('reposts a subscription payment with no journal entry', async () => {
   expect(postSafe).toHaveBeenCalledTimes(1);
   expect(postSafe.mock.calls[0][0].sourceType).toBe('SUBSCRIPTION_PAYMENT');
   expect(result.reposted).toBe(1);
+});
+
+// LOOPHOLE REGRESSION: the heal used to drop v4 TDS/TCS/commission_taxable, so
+// the healed ORDER_PAYMENT came out unbalanced and the DB RPC rejected it — the
+// booking's money could NEVER reach the books. Assert the reconciler now passes
+// those fields into the template.
+test('order heal passes v4 TDS/TCS/commission_taxable into orderPaymentEntry', async () => {
+  const booking = {
+    id: 'b9', host_id: 'v1', paid_at: '2026-08-22T00:00:00Z',
+    customer_total: 1011.8, vendor_amount: 959.76, platform_fee_amount: 10, platform_fee_gst: 1.8,
+    commission_applied: 0, commission_gst: 0, commission_taxable: 0,
+    tds_amount: 10, tcs_amount: 10, razorpay_fee_actual: 20.24, razorpay_tax_actual: 0,
+    services: { price: 1000 },
+  };
+  supabaseAdmin.from.mockImplementation((table) => {
+    if (table === 'bookings') return makeChain({ data: [booking], error: null });
+    if (table === 'journal_entries') return makeChain({ data: [], error: null });
+    if (table === 'subscription_payments') return makeChain({ data: [], error: null });
+    return makeChain({ data: [], error: null });
+  });
+  postSafe.mockResolvedValue('e');
+  await reconciler.reconcile();
+  const snap = orderPaymentEntry.mock.calls[0][0];
+  expect(snap.tds_amount).toBe(10);
+  expect(snap.tcs_amount).toBe(10);
+  expect(snap.commission_taxable).toBe(0);
+  expect(snap.service_price).toBe(1000);
+});
+
+// The pure mapper builds a v4-complete snapshot.
+test('orderSnapshotFromBooking carries the fields the heal used to drop', () => {
+  const s = reconciler.orderSnapshotFromBooking({
+    id: 'b1', host_id: 'v1', commission_taxable: 42.37, tds_amount: 10, tcs_amount: 10,
+    services: { price: 1000 },
+  });
+  expect(s.tds_amount).toBe(10);
+  expect(s.tcs_amount).toBe(10);
+  expect(s.commission_taxable).toBe(42.37);
+  expect(s.service_price).toBe(1000);
 });
