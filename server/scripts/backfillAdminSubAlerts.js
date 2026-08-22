@@ -44,6 +44,7 @@ const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
     const res = await adminAlert({
       key: `sub_charge:${r.razorpay_payment_id || r.vendor_id}`,
+      category: 'Payment Receipt',
       subject: `New subscription: ${r.plan_type} (catch-up)`,
       lines: [
         `${prof?.name || 'A host'} (${prof?.email || 'no email'})`,

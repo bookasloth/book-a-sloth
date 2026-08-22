@@ -5,15 +5,19 @@
  */
 'use strict';
 
-async function sendEmail({ to, subject, html, fromName = 'Book A Sloth', fromEmail }) {
+async function sendEmail({ to, subject, html, text, fromName = 'Book A Sloth', fromEmail }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { success: false, error: 'RESEND_API_KEY not configured' };
   const from = `${fromName} <${fromEmail || process.env.RESEND_FROM || 'noreply@bookasloth.in'}>`;
   try {
+    // text (plain-text alternative) is sent alongside html when present — a
+    // multipart message reads as transactional and lands better in the inbox.
+    const payload = { from, to: [to], subject, html };
+    if (text) payload.text = text;
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to: [to], subject, html }),
+      body: JSON.stringify(payload),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) return { success: false, error: body?.message || `HTTP ${res.status}`, response: body };

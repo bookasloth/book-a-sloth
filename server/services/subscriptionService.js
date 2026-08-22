@@ -366,6 +366,7 @@ async function sendSubscriptionReceiptEmail({ event, vendorId, plan, planSlug, c
     const isRenewal = event === 'SUBSCRIPTION_RENEWED';
     require('../utils/adminAlert').adminAlert({
       key: `sub_charge:${paymentId || vendorId}`,
+      category: 'Payment Receipt',
       subject: isRenewal
         ? `Subscription renewed: ${plan?.name || planSlug}`
         : `New subscription: ${plan?.name || planSlug}`,
