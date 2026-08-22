@@ -21,10 +21,12 @@ jest.mock('../../services/razorpaySubscriptions', () => ({
 jest.mock('../../services/ledger/journalTemplates', () => ({ subscriptionPaymentEntry: jest.fn(() => ({ lines: [] })) }));
 jest.mock('../../services/ledger/postingService', () => ({ postSafe: jest.fn(() => Promise.resolve()) }));
 jest.mock('../../utils/posthog', () => ({ capture: jest.fn(), resolveGuestId: jest.fn() }));
+jest.mock('../../utils/adminAlert', () => ({ adminAlert: jest.fn(() => Promise.resolve({ sent: true })) }));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const { capture: phCapture } = require('../../utils/posthog');
 const { send: notifySend } = require('../../services/notificationEngine');
+const { adminAlert } = require('../../utils/adminAlert');
 const svc = require('../../services/subscriptionService');
 
 const RZP_SUB = {
@@ -111,6 +113,11 @@ describe('activateFromSubscription', () => {
     expect(email).toBeTruthy();
     expect(email[0].data.emailData.amount_charged).toBe('₹116.82');
     expect(email[0].data.emailData.invoice_url).toBeTruthy();
+
+    // founder alert fires on a new purchase
+    const alert = adminAlert.mock.calls.find((c) => /New subscription/.test(c[0].subject));
+    expect(alert).toBeTruthy();
+    expect(alert[0].key).toBe('sub_charge:pay_new');
   });
 
   test('subsequent charge records as renewal + captures subscription_renewed + sends renewal receipt', async () => {
@@ -125,6 +132,10 @@ describe('activateFromSubscription', () => {
     expect(email).toBeTruthy();
     expect(email[0].data.emailData.amount_charged).toBe('₹116.82');
     expect(email[0].data.emailData.invoice_url).toBeTruthy();
+
+    // founder alert fires on a renewal too (user opted into both)
+    const alert = adminAlert.mock.calls.find((c) => /Subscription renewed/.test(c[0].subject));
+    expect(alert).toBeTruthy();
   });
 
   test('UPI mandate-auth token charge (amount << plan price) grants access but books no charge', async () => {

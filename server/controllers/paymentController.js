@@ -551,6 +551,19 @@ const verifySubscription = async (req, res) => {
           recipientUserId: req.user.id,
         },
       }).catch((e) => console.error('subscription email error:', e.message));
+      // Founder alert (legacy one-time annual path). Auto-renew charges are
+      // alerted in subscriptionService.sendSubscriptionReceiptEmail instead.
+      adminAlert({
+        key: `sub_charge:${razorpay_payment_id || req.user.id}`,
+        subject: `New subscription: ${planRecord?.name || plan}`,
+        lines: [
+          `${profile.name || 'A host'} (${profile.email || 'no email'})`,
+          `Plan: ${planRecord?.name || plan} (annual)`,
+          `Amount: ₹${(Number(breakdown?.totalCharged) || 0).toLocaleString('en-IN')}`,
+          'New purchase / upgrade.',
+        ],
+        link: `${process.env.CLIENT_URL || 'https://bookasloth.com'}/admin/host360/${req.user.id}`,
+      });
     } catch (_) { /* non-fatal */ }
 
     res.json({ message: `Successfully upgraded to ${plan}!`, profile });
