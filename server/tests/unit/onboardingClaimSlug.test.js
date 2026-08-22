@@ -24,13 +24,21 @@ const { claimSlug, isValidSlug } = require('../../controllers/vendorOnboardingCo
 
 beforeEach(() => jest.clearAllMocks());
 
-// ─── Helper: wire the profiles.update().eq().select().single() chain ────────
-// This is the final step in claimSlug after the username service swap succeeds
-// (writes onboarding_slug + onboarding_step_completed=2).
-const wireProfileUpdate = ({ updateResult = null, updateError = null } = {}) => {
+// ─── Helper: wire the profiles reads/writes claimSlug performs at the end ────
+// claimSlug now (a) reads onboarding_step_completed, then (b) writes
+// onboarding_slug + step=max(current,2). `currentStep` seeds the read so tests
+// can assert the step is never regressed.
+const wireProfileUpdate = ({ updateResult = null, updateError = null, currentStep = 1 } = {}) => {
   const updates = [];
-  supabaseAdmin.from.mockImplementation((table) => {
+  supabaseAdmin.from.mockImplementation(() => {
     return {
+      // (a) current-step read: select().eq().maybeSingle()
+      select: () => ({
+        eq: () => ({
+          maybeSingle: () => Promise.resolve({ data: { onboarding_step_completed: currentStep } }),
+        }),
+      }),
+      // (b) the write: update().eq().select().single()
       update: (payload) => {
         updates.push(payload);
         return {
@@ -151,6 +159,15 @@ describe('claimSlug', () => {
     await claimSlug('vendor-1', 'cool-coach');
     expect(updates[0].onboarding_step_completed).toBe(2);
     expect(updates[0].onboarding_slug).toBe('cool-coach');
+  });
+
+  it('never regresses the step: re-claiming from a later step keeps that step', async () => {
+    // Host is at step 5 and navigates Back to /claim to re-claim their own slug.
+    usernameService.usernameExists.mockResolvedValue(false);
+    usernameService.setOnboardingUsername.mockResolvedValue({ ok: true, username: 'cool-coach' });
+    const { updates } = wireProfileUpdate({ currentStep: 5 });
+    await claimSlug('vendor-1', 'cool-coach');
+    expect(updates[0].onboarding_step_completed).toBe(5); // max(5, 2) — not regressed to 2
   });
 
   it('lowercases and trims incoming slug before processing', async () => {

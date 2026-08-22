@@ -125,11 +125,17 @@ const claimSlug = async (vendorId, slug) => {
   }
 
   // Record onboarding_slug and advance step (username already updated by service).
+  // Never move the step BACKWARD: a later-step host can navigate Back to /claim
+  // (the guard allows revisiting earlier steps) and re-claim their slug — a hard
+  // write of 2 would regress their progress and re-walk them through the flow.
+  const { data: cur } = await supabaseAdmin
+    .from("profiles").select("onboarding_step_completed").eq("id", vendorId).maybeSingle();
+  const nextStep = Math.max(cur?.onboarding_step_completed || 0, 2);
   const { data, error } = await supabaseAdmin
     .from("profiles")
     .update({
       onboarding_slug: clean,
-      onboarding_step_completed: 2,
+      onboarding_step_completed: nextStep,
       updated_at: new Date().toISOString(),
     })
     .eq("id", vendorId)
