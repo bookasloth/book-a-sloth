@@ -408,16 +408,19 @@ const TEMPLATES = [
 
   (() => { const t = themeForCategory('Payment Receipt'); return {
     event_key: 'SUBSCRIPTION_PURCHASED', audience: 'all', category: 'Subscription',
-    name: 'Premium Activated', subject: 'Your {{plan_name}} plan is active',
-    preview_text: 'Welcome to {{plan_name}} — your upgrades are live.',
+    name: 'Premium Activated', subject: "You're officially on {{plan_name}} 🎉",
+    preview_text: "{{plan_name}} is live — your booking link's ready to get you paid.",
     email_category: 'Payment Receipt',
     email_reason: 'You are receiving this email because you made a purchase on Book A Sloth.',
     html_content:
-      eyebrow(t.text, 'Subscription') + h('Welcome to {{plan_name}}!') +
-      lead('Your {{plan_name}} plan is now active. All features are unlocked on your dashboard.') +
+      eyebrow(t.text, "You're in") + h("You're officially a {{plan_name}} host, {{first_name}} 🦥") +
+      C.celebration(t, { title: '{{plan_name}} — unlocked' }) +
+      lead("Some people spend weeks 'thinking about it.' You just did the thing. Your {{plan_name}} plan is live, and everything you need to get booked and get paid is switched on.") +
+      C.banner(t, { title: "Here's what just went live for you", sub: 'Your booking link is ready to share · payments land straight in your account · every guest gets automatic reminders and confirmations' }) +
+      lead("Next move: get your page in front of people. One link in your bio beats a hundred “DM me to book” replies — and it works while you sleep.") +
       C.infoCard(t, [['Plan', '{{plan_name}}'], ['Amount paid', '{{amount_charged}}'], ['Renews', '{{expiry_date}}']]) +
-      lead('Your GST tax invoice is ready — <a href="{{invoice_url}}" style="color:#FE5100;font-weight:600;text-decoration:none">view or download the PDF</a>. It is also under Transactions in your dashboard.'),
-    cta_label: 'Explore features', cta_url: '{{dashboard_url}}',
+      note('GST tax invoice: <a href="{{invoice_url}}" style="color:#FE5100;font-weight:600;text-decoration:none">view or download the PDF</a> — also filed under Transactions in your dashboard.'),
+    cta_label: 'Set up your page', cta_url: '{{dashboard_url}}',
   }; })(),
 
   (() => { const t = themeForCategory('Account Update'); return {
