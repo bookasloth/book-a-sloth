@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
-import UseCasesMegaMenu from './UseCasesMegaMenu';
-import { USE_CASES_CONFIG } from './useCasesConfig';
+// UseCasesMegaMenu (Explore) intentionally not rendered in the nav for now; the
+// /explore route + page stay live. Re-import + render in PublicCenterNav to restore.
 import { isHost, routeRole } from '../../utils/roleRoutes';
 import { getNotifications, markAllNotificationsRead, markNotificationRead, getGuestBookings } from '../../services/api';
 import { getPlanBorderLabel, normalizePlan } from '../../utils/themeUtils';
@@ -14,7 +14,7 @@ import {
   Briefcase, Bell, X, Menu, ChevronDown, ChevronRight,
   Search, User, Settings, LogOut, TrendingUp,
   Clock, Wallet, LayoutDashboard, ExternalLink,
-  Gift, Star, Info, Compass, Cpu, HeartPulse,
+  Gift, Star, Info, Cpu, HeartPulse,
   GraduationCap, Sparkles, Mail, Award, Layers, Headset,
   BookOpen, Building2,
 } from 'lucide-react';
@@ -239,8 +239,9 @@ const PublicCenterNav = () => (
       Pricing
     </Link>
 
-    {/* Explore = browse creators by industry (mega-menu) */}
-    <UseCasesMegaMenu />
+    {/* Explore hidden from nav (marketplace demand not proven yet); /explore
+        route + page stay live and directly reachable. Restore <UseCasesMegaMenu/>
+        here to bring it back. */}
 
     <NavDropdown label="More">
       <div className="py-1">
@@ -669,27 +670,7 @@ const Navbar = () => {
                   <Tag size={16} className="flex-shrink-0 text-gray-400" /> Pricing
                 </Link>
 
-                {/* Explore (browse by industry) — collapsed by default */}
-                <details className="group rounded-lg">
-                  <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
-                    <Compass size={16} className="flex-shrink-0 text-gray-400" />
-                    <span className="flex-1">Explore</span>
-                    <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="space-y-0.5 pl-1 pt-0.5">
-                    {USE_CASES_CONFIG.map((u) => {
-                      const Icon = u.icon;
-                      return (
-                        <Link key={u.label} to={u.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-                          <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${u.iconBg} ${u.iconColor}`}>
-                            <Icon size={13} />
-                          </span>
-                          {u.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </details>
+                {/* Explore hidden from nav (see PublicCenterNav). /explore still live. */}
 
                 {/* More — collapsed by default */}
                 <details className="group rounded-lg">
