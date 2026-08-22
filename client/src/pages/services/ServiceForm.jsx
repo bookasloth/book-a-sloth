@@ -4,8 +4,8 @@
  */
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus } from 'lucide-react';
-import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCategories, hostSuggestServiceCategory, aiGenerateListing } from '../../services/api';
+import { ChevronLeft, Plus, MapPin, AlertTriangle } from 'lucide-react';
+import { svcCreate, svcUpdate, uploadImage, hostGetCategories, listServiceCategories, hostSuggestServiceCategory, aiGenerateListing, updateProfile } from '../../services/api';
 import toast from 'react-hot-toast';
 import FeatureGate from '../../components/common/FeatureGate';
 import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
@@ -401,7 +401,12 @@ const SuggestSubcategoryModal = ({ primary, onClose }) => {
 export default function ServiceForm({ initialData, serviceId }) {
   const navigate = useNavigate();
   const isEdit = !!serviceId;
-  const { user } = useAuth() || {};
+  const { user, updateUser } = useAuth() || {};
+  // Offline (in-person) services need a venue. map_link is a profile-level field
+  // (shared across all the host's offline services), so it's edited inline here
+  // and saved to the profile on submit — not stored on the service row.
+  const [mapLink, setMapLink]       = useState(user?.map_link || '');
+  const hadMapLink                  = Boolean((user?.map_link || '').trim());
   // Interim fee-only mode: paid listings are disabled (no Razorpay Route yet), so
   // hide the price field and force ₹0. Fail-safe true. Server enforces this too.
   const feeOnly = user?.fee_only_mode ?? true;
@@ -498,9 +503,21 @@ export default function ServiceForm({ initialData, serviceId }) {
     if (!feeOnly && !form.price && form.price !== 0) { toast.error('Price is required'); return; }
     if (!form.thumbnail_url) { toast.error('Thumbnail is required'); return; }
     if (!effectiveDuration || effectiveDuration < 1) { toast.error('Duration is required'); return; }
+    const isOffline = form.service_type === 'offline';
+    if (isOffline && !mapLink.trim()) {
+      toast.error('Add a venue map link — it’s required for in-person (offline) services.');
+      return;
+    }
 
     setSaving(true);
     try {
+      // Offline service needs a venue on the profile. Persist the map link first
+      // (server also hard-blocks the service write if it's still missing), then
+      // keep the auth session in sync so re-opening the form shows it prefilled.
+      if (isOffline && mapLink.trim() !== (user?.map_link || '')) {
+        await updateProfile({ map_link: mapLink.trim() });
+        updateUser?.({ map_link: mapLink.trim() });
+      }
       const payload = {
         title:             form.title.trim(),
         short_description: form.short_description.trim(),
@@ -610,6 +627,9 @@ export default function ServiceForm({ initialData, serviceId }) {
                     <option value="online">🌐 Online</option>
                     <option value="offline">📍 Offline</option>
                   </Select>
+                  {form.service_type === 'online' && (
+                    <p className="mt-1 text-[12px] text-gray-400">Meets over a video/phone link you share.</p>
+                  )}
                 </div>
               </FeatureGate>
 
@@ -628,6 +648,40 @@ export default function ServiceForm({ initialData, serviceId }) {
                 </div>
               )}
             </div>
+
+            {/* Offline venue — map link. Shown only when the service is in-person.
+                Required: an offline listing can't be saved without a venue. Saved
+                to the host's profile (shared by all their offline services). */}
+            {form.service_type === 'offline' && (
+              <div className="rounded-xl border-2 border-[#FE5100]/20 bg-[#FE5100]/[0.04] p-4">
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-[#FE5100]" />
+                  <label className="text-sm font-semibold text-gray-800">Venue map link <span className="text-red-500">*</span></label>
+                </div>
+                <p className="mb-2.5 text-[12px] leading-relaxed text-gray-500">
+                  In-person bookings show guests where to go — this link appears in their
+                  confirmation email, calendar invite and reminders. Paste a Google Maps
+                  link to your venue. Saved to your profile and reused by all your offline services.
+                </p>
+                <Input
+                  type="url"
+                  inputMode="url"
+                  value={mapLink}
+                  onChange={e => setMapLink(e.target.value)}
+                  placeholder="https://maps.app.goo.gl/…"
+                />
+                {!mapLink.trim() && (
+                  <div className="mt-2 flex items-start gap-1.5 text-[12px] font-medium text-[#FE5100]">
+                    <AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {hadMapLink
+                        ? 'Your profile map link was cleared — add one to keep this service in-person.'
+                        : 'You haven’t added a venue map link yet. It’s required to publish an in-person service.'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Price */}
             <div>

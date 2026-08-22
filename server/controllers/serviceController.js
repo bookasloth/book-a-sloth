@@ -59,6 +59,21 @@ const uniqueSlug = async (baseSlug, hostId, excludeId = null) => {
   }
 };
 
+// ─── Offline-venue guard ─────────────────────────────────────────────────────
+// An offline (in-person) service must have somewhere for the guest to go, so the
+// host's profile must carry a non-empty map_link before an offline listing can be
+// saved. Server-side backstop for the ServiceForm inline field — blocks any
+// direct-API create/update that sets meeting_mode='offline' with no venue on file.
+// ponytail: only fires when the payload SETS meeting_mode; an API edit that omits
+// meeting_mode on an already-offline service isn't retroactively trapped.
+const offlineNeedsVenue = async (hostId, meetingMode) => {
+  if (meetingMode !== 'offline') return null;
+  const { data } = await supabaseAdmin
+    .from('profiles').select('map_link').eq('id', hostId).single();
+  if (String(data?.map_link || '').trim()) return null;
+  return 'Add a venue map link to your profile before listing an in-person (offline) service, so guests know where to go.';
+};
+
 // ─── Field whitelist for v2 payload ─────────────────────────────────────────
 
 const buildPayload = (body) => {
@@ -224,6 +239,8 @@ const createService = async (req, res) => {
     const slug = await uniqueSlug(baseSlug, req.user.id);
 
     const p = buildPayload(req.body);
+    const venueErr = await offlineNeedsVenue(req.user.id, p.meeting_mode);
+    if (venueErr) return res.status(400).json({ message: venueErr, map_link_required: true });
     // Interim fee-only mode (no Razorpay Route yet): hosts cannot list a paid
     // service — force the price to ₹0. A paid-enabled host (pilot allow-list) is
     // exempt. Flip fee_only_mode off on full Route go-live.
@@ -296,6 +313,8 @@ const getServiceById = async (req, res) => {
 const updateService = async (req, res) => {
   try {
     const updates = buildPayload(req.body);
+    const venueErr = await offlineNeedsVenue(req.user.id, updates.meeting_mode);
+    if (venueErr) return res.status(400).json({ message: venueErr, map_link_required: true });
     // Interim fee-only mode: no paid listings — force ₹0 on every update
     // (a paid-enabled host on the pilot allow-list is exempt).
     const { feeOnlyForHost } = require('../services/paidMode');

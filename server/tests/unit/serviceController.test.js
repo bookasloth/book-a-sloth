@@ -127,6 +127,28 @@ describe('createService', () => {
   });
 });
 
+// ── offline venue guard ───────────────────────────────────────────────────────
+
+describe('offline services require a profile map_link', () => {
+  test('createService returns 400 when meeting_mode=offline and profile has no map_link', async () => {
+    mockFrom({ map_link: '' }); // profile lookup resolves to empty venue
+    const r = res();
+    await createService(req({}, { title: 'Salon visit', meeting_mode: 'offline' }), r);
+    expect(r.status).toHaveBeenCalledWith(400);
+    const payload = r.json.mock.calls[0][0];
+    expect(payload.map_link_required).toBe(true);
+    expect(payload.message).toMatch(/map link|venue/i);
+  });
+
+  test('updateService returns 400 when switching to offline with no map_link', async () => {
+    mockFrom({ map_link: '   ' }); // whitespace-only counts as empty
+    const r = res();
+    await updateService(req({ id: 'svc-1' }, { meeting_mode: 'offline' }), r);
+    expect(r.status).toHaveBeenCalledWith(400);
+    expect(r.json.mock.calls[0][0].map_link_required).toBe(true);
+  });
+});
+
 // ── updateService ─────────────────────────────────────────────────────────────
 
 describe('updateService', () => {

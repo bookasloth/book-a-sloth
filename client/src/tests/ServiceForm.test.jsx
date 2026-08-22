@@ -8,6 +8,7 @@ vi.mock('../services/api', () => ({
   uploadImage: vi.fn(),
   hostGetCategories: vi.fn(),
   listServiceCategories: vi.fn(),
+  updateProfile: vi.fn(),
 }));
 // FeatureGate → render children so the gated sections (Overview, FAQ, etc.) show.
 vi.mock('../components/common/FeatureGate', () => ({ default: ({ children }) => children }));
