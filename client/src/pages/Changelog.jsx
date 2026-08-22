@@ -19,6 +19,78 @@ const TAG_STYLES = {
 // misplaced entry can't show out of order (see SORTED_RELEASES).
 const RELEASES = [
   {
+    date: 'Aug 23, 2026',
+    title: 'A faster path from sign-up to your first booking',
+    tags: ['New', 'Improved'],
+    points: [
+      'Setting up is shorter and clearer — pick what you do, add a few details, and you’re live, with fewer questions along the way.',
+      'The “you’re live” moment now lets you add your first service right there, so your page can take bookings the instant you finish.',
+      'Start free and upgrade whenever you like — no plan wall before you’ve even gone live.',
+      'Listing an in-person service now always carries your venue, so guests get directions every time.',
+    ],
+  },
+  {
+    date: 'Aug 21, 2026',
+    title: 'Signing up is smoother than ever',
+    tags: ['Fixed'],
+    points: [
+      'Fixed a rare dead-end that could leave you stuck on the last step with nothing to tap — you can always get live now.',
+      '“See all categories” now saves your pick properly instead of erroring, and your progress is never lost if you step back.',
+      'The set-up flow shrugs off a flaky connection and keeps you on the right step, instead of showing the wrong one.',
+    ],
+  },
+  {
+    date: 'Aug 21, 2026',
+    title: 'A moment worth sharing',
+    tags: ['New'],
+    points: [
+      'Right after you publish, a share moment lets you send your booking link to WhatsApp, Messages or anywhere else in a single tap.',
+    ],
+  },
+  {
+    date: 'Aug 19, 2026',
+    title: 'Booking updates you can count on',
+    tags: ['Fixed'],
+    points: [
+      'Your booking confirmation now always arrives — however the payment cleared, on every path.',
+      'WhatsApp booking and reschedule messages reliably reach you and your guests; a template mismatch had been quietly dropping some.',
+      'Plus a batch of reliability fixes across booking and messaging — including profile saving for some older accounts.',
+    ],
+  },
+  {
+    date: 'Aug 17, 2026',
+    title: 'Your week, recapped',
+    tags: ['New'],
+    points: [
+      'A friendly weekly email rounds up your bookings, earnings and anything that needs attention — so you can see how things are going at a glance.',
+    ],
+  },
+  {
+    date: 'Aug 15, 2026',
+    title: 'Verify when you’re ready, not before',
+    tags: ['Improved'],
+    points: [
+      'Get set up and start sharing your page first — we now ask you to verify your identity only once you’ve made your first earning.',
+      'Less paperwork up front, and a gentle nudge at exactly the right time, so your payouts are ready when you are.',
+    ],
+  },
+  {
+    date: 'Aug 13, 2026',
+    title: 'Write with Bolt, back to full speed',
+    tags: ['Fixed'],
+    points: [
+      'Fixed an issue that could stop Write with Bolt from drafting your listing — it’s back to writing your description, inclusions and FAQs in seconds.',
+    ],
+  },
+  {
+    date: 'Aug 13, 2026',
+    title: 'Codes that submit themselves',
+    tags: ['Improved'],
+    points: [
+      'Type the last digit of a verification code and we submit it for you — one less tap when you sign in or confirm a booking.',
+    ],
+  },
+  {
     date: 'Aug 12, 2026',
     title: 'Pick your plan at signup, verify faster',
     tags: ['New', 'Improved'],
