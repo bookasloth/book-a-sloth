@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 vi.mock('../services/api', () => ({
   getCategories:       vi.fn(),
   suggestCategory:     vi.fn(),
-  updateOnboardingStep: vi.fn(() => Promise.resolve({ data: {} })),
+  saveOnboardingPersona: vi.fn(() => Promise.resolve({ data: {} })),
   // useOnboardingGuard needs this; stepCompleted=3 → target='category' → guard sets ready=true
   getOnboardingStatus: vi.fn(() =>
     Promise.resolve({ data: { stepCompleted: 3, isComplete: false, slug: 'jane' } })
@@ -29,7 +29,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 import {
   getCategories,
   suggestCategory,
-  updateOnboardingStep,
+  saveOnboardingPersona,
 } from '../services/api';
 import CategoryStep from '../pages/onboarding/CategoryStep';
 
@@ -42,7 +42,7 @@ const CATS = [
 beforeEach(() => {
   vi.clearAllMocks();
   getCategories.mockResolvedValue({ data: CATS });
-  updateOnboardingStep.mockResolvedValue({ data: {} });
+  saveOnboardingPersona.mockResolvedValue({ data: {} });
   suggestCategory.mockResolvedValue({
     data: { slug: 'voice-coaching', label: 'Voice Coaching', status: 'pending' },
   });
@@ -139,7 +139,7 @@ test('(c) no-exact-match shows Add row; tapping it calls suggestCategory and aut
   expect(screen.getByText(/pending review/i)).toBeTruthy();
 });
 
-test('(d) Continue calls updateOnboardingStep with primary_category then navigates to /preview', async () => {
+test('(d) Continue saves the persona (step-3 batch writer, not a step-4 jump) then navigates to /preview', async () => {
   renderStep();
   await waitForCategories();
 
@@ -149,12 +149,9 @@ test('(d) Continue calls updateOnboardingStep with primary_category then navigat
   // Click Continue
   fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 
-  await waitFor(() => expect(updateOnboardingStep).toHaveBeenCalled());
-
-  const payload = updateOnboardingStep.mock.calls[0][0];
-  expect(payload.step).toBe(4);
-  expect(payload.data.primary_category).toBe('ai-engineer');
-  expect(payload.data.categories).toEqual(['ai-engineer']);
+  // Uses saveOnboardingPersona(slug) — which advances step = max(current, 3) —
+  // so an escape-hatch host still at step 2 isn't rejected as an illegal jump.
+  await waitFor(() => expect(saveOnboardingPersona).toHaveBeenCalledWith('ai-engineer'));
 
   await waitFor(() =>
     expect(mockNavigate).toHaveBeenCalledWith('/vendor-register/jane/preview')
@@ -164,7 +161,7 @@ test('(d) Continue calls updateOnboardingStep with primary_category then navigat
 test('Continue is disabled while saving', async () => {
   // Make save hang so we can inspect the button mid-flight
   let resolveSave;
-  updateOnboardingStep.mockReturnValue(new Promise((r) => { resolveSave = r; }));
+  saveOnboardingPersona.mockReturnValue(new Promise((r) => { resolveSave = r; }));
 
   renderStep();
   await waitForCategories();
@@ -182,7 +179,7 @@ test('Continue is disabled while saving', async () => {
 });
 
 test('save error re-enables Continue button', async () => {
-  updateOnboardingStep.mockRejectedValue({ response: { data: { message: 'DB error' } } });
+  saveOnboardingPersona.mockRejectedValue({ response: { data: { message: 'DB error' } } });
 
   renderStep();
   await waitForCategories();
@@ -194,8 +191,8 @@ test('save error re-enables Continue button', async () => {
   await waitFor(() => expect(continueBtn.disabled).toBe(false));
 });
 
-// Legacy-compat: the save contract (step=4, single primary + array) still holds
-test('is single-select and saves primary_category + single-item array', async () => {
+// Single-select: replacing the pick sends only the final slug to the persona writer.
+test('is single-select and saves the final primary category', async () => {
   renderStep();
   await waitForCategories();
 
@@ -204,9 +201,6 @@ test('is single-select and saves primary_category + single-item array', async ()
 
   fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 
-  await waitFor(() => expect(updateOnboardingStep).toHaveBeenCalled());
-  const payload = updateOnboardingStep.mock.calls[0][0];
-  expect(payload.step).toBe(4);
-  expect(payload.data.primary_category).toBe('ai-engineer');
-  expect(payload.data.categories).toEqual(['ai-engineer']);
+  await waitFor(() => expect(saveOnboardingPersona).toHaveBeenCalledWith('ai-engineer'));
+  expect(saveOnboardingPersona).toHaveBeenCalledTimes(1);
 });
