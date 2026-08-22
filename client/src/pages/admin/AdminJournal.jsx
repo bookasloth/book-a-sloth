@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import {
   adminFinanceJournals, adminFinanceJournal, adminFinanceAccounts,
-  adminFinanceAdjustment, adminFinanceReversal, adminFinanceBankTransfer,
+  adminFinanceAdjustment, adminFinanceReversal, adminFinanceBankTransfer, adminFinanceRefund,
 } from '../../services/api';
 import toast from 'react-hot-toast';
 import { PageHeader, Btn, Skeleton } from '../../components/admin/ui';
@@ -42,6 +42,7 @@ const AdminJournal = () => {
   const [adjLines, setAdjLines] = useState([emptyLine(), emptyLine()]);
   const [adjDesc, setAdjDesc] = useState('');
   const [transfer, setTransfer] = useState({ amount: '', reference: '' });
+  const [refund, setRefund] = useState({ booking_id: '', amount: '', reference: '', reverse_payout: true });
   const [saving, setSaving] = useState(false);
   const limit = 25;
 
@@ -110,6 +111,22 @@ const AdminJournal = () => {
     finally { setSaving(false); }
   };
 
+  const submitRefund = async () => {
+    setSaving(true);
+    try {
+      const r = await adminFinanceRefund({
+        booking_id: refund.booking_id.trim(),
+        amount: Number(refund.amount),
+        reference: refund.reference.trim(),
+        reverse_payout: refund.reverse_payout,
+      });
+      toast.success(r.data?.transfer_reversed ? 'Refund recorded · host payout reversed' : 'Refund recorded');
+      setModal(null); setRefund({ booking_id: '', amount: '', reference: '', reverse_payout: true });
+      fetchJournals();
+    } catch (e) { toast.error(e.response?.data?.message || 'Refund failed'); }
+    finally { setSaving(false); }
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const entryAmount = (id) => {
     const lines = lineCache[id];
@@ -128,6 +145,7 @@ const AdminJournal = () => {
     <div>
       <PageHeader title="Journal" subtitle={`Append-only double-entry record. ${total} entr${total === 1 ? 'y' : 'ies'}.`}
         actions={<>
+          <Btn variant="outline" size="sm" onClick={() => setModal('refund')}>Record refund</Btn>
           <Btn variant="outline" size="sm" onClick={() => setModal('transfer')}>Record bank transfer</Btn>
           <Btn size="sm" onClick={() => setModal('adjustment')}>New adjustment</Btn>
         </>} />
@@ -240,7 +258,36 @@ const AdminJournal = () => {
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
           <div className="adm-card rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-auto">
-            {modal === 'transfer' ? (
+            {modal === 'refund' ? (
+              <>
+                <h2 className="font-bold adm-t1 mb-1">Record refund</h2>
+                <p className="text-[12px] adm-t3 mb-4">
+                  For a refund issued in the Razorpay dashboard. Posts the balanced REFUND entry
+                  from the booking snapshot (host price → Vendor Payables/TDS/TCS/commission,
+                  fee only on a full refund, non-recoverable gateway → Refund Losses).
+                </p>
+                <label className="block text-[11px] font-medium adm-t3 mb-1">Booking ID</label>
+                <input type="text" className="fb-input text-sm w-full mb-3 font-mono" value={refund.booking_id} placeholder="booking uuid"
+                  onChange={(e) => setRefund((r) => ({ ...r, booking_id: e.target.value }))} />
+                <label className="block text-[11px] font-medium adm-t3 mb-1">Refund amount (₹)</label>
+                <input type="number" min="0.01" step="0.01" className="fb-input text-sm w-full mb-3 tabular-nums" value={refund.amount}
+                  onChange={(e) => setRefund((r) => ({ ...r, amount: e.target.value }))} />
+                <label className="block text-[11px] font-medium adm-t3 mb-1">Razorpay refund id / reference <span className="adm-t3">(optional, dedupes)</span></label>
+                <input type="text" className="fb-input text-sm w-full mb-3" value={refund.reference} placeholder="rfnd_..."
+                  onChange={(e) => setRefund((r) => ({ ...r, reference: e.target.value }))} />
+                <label className="flex items-center gap-2 text-[12px] adm-t2 mb-5 cursor-pointer">
+                  <input type="checkbox" checked={refund.reverse_payout}
+                    onChange={(e) => setRefund((r) => ({ ...r, reverse_payout: e.target.checked }))} />
+                  Also reverse the held host payout (recommended)
+                </label>
+                <div className="flex justify-end gap-2">
+                  <Btn variant="ghost" size="sm" onClick={() => setModal(null)}>Cancel</Btn>
+                  <Btn size="sm" disabled={saving || !refund.booking_id.trim() || !(Number(refund.amount) > 0)} onClick={submitRefund}>
+                    {saving ? 'Recording…' : 'Record refund'}
+                  </Btn>
+                </div>
+              </>
+            ) : modal === 'transfer' ? (
               <>
                 <h2 className="font-bold adm-t1 mb-1">Record bank transfer</h2>
                 <p className="text-[12px] adm-t3 mb-4">Razorpay settlement received in the bank account. DR Bank / CR Razorpay Receivable.</p>

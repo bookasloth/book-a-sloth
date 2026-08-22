@@ -12,6 +12,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { audit } = require('../services/auditService');
 const { adjustmentEntry, reversalEntry, bankTransferEntry } = require('../services/ledger/journalTemplates');
 const { post } = require('../services/ledger/postingService');
+const { recordBookingRefund } = require('../services/bookingCapture');
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 const PAGE_LIMIT = 25;
@@ -246,6 +247,44 @@ const postBankTransfer = async (req, res) => {
   }
 };
 
+// ── POST /admin/finance/refund ────────────────────────────────
+// Manually record a refund that was issued in the Razorpay dashboard (or where
+// the refund.processed webhook was missed). Posts the balanced REFUND entry from
+// the booking's snapshot (same waterfall as the webhook) and, unless opted out,
+// reverses the held Route payout so a refunded booking never also pays the host.
+// Idempotent on `reference` (a Razorpay refund id, or any admin-chosen key).
+const postRefund = async (req, res) => {
+  try {
+    const bookingId = (req.body?.booking_id || '').trim();
+    const amount = Number(req.body?.amount);
+    const reference = (req.body?.reference || '').trim();
+    const reverseTransfer = req.body?.reverse_payout !== false; // default on
+    if (!bookingId) return res.status(400).json({ message: 'booking_id is required' });
+    if (!(amount > 0)) return res.status(400).json({ message: 'amount must be > 0' });
+
+    const r = await recordBookingRefund({
+      bookingId,
+      refundAmount: amount,
+      refundId: reference || crypto.randomUUID(),  // dedupe on a real refund id; else one-shot
+      reason: `manual admin refund${reference ? ` (${reference})` : ''}`,
+      reverseTransfer,
+    });
+    if (!r.posted) {
+      const msg = r.reason === 'booking_not_found' ? 'No booking with that id' : (r.reason || 'Could not record refund');
+      return res.status(r.reason === 'booking_not_found' ? 404 : 400).json({ message: msg });
+    }
+    await audit(req, {
+      action: 'FINANCE_REFUND_RECORDED',
+      resource_type: 'booking',
+      resource_id: bookingId,
+      after: { amount, reference: reference || null, transfer_reversed: r.transferReversed },
+    });
+    res.json({ ok: true, transfer_reversed: r.transferReversed });
+  } catch (e) {
+    safeError(res, e);
+  }
+};
+
 // ── POST /admin/finance/resend-subscription-receipt ───────────
 // Re-send a host's subscription receipt email (amount + GST invoice PDF link)
 // for one charge, by razorpay payment id. Mints the invoice first if missing.
@@ -270,6 +309,6 @@ const resendSubscriptionReceipt = async (req, res) => {
 
 module.exports = {
   getSummary, getAccounts, listJournals, getJournal, getLedger,
-  postAdjustment, postReversal, postBankTransfer,
+  postAdjustment, postReversal, postBankTransfer, postRefund,
   resendSubscriptionReceipt,
 };

@@ -8,10 +8,12 @@
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn(), rpc: jest.fn() } }));
 jest.mock('../../services/auditService', () => ({ audit: jest.fn() }));
 jest.mock('../../services/ledger/postingService', () => ({ post: jest.fn(() => Promise.resolve('entry-uuid')) }));
+jest.mock('../../services/bookingCapture', () => ({ recordBookingRefund: jest.fn() }));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const { post } = require('../../services/ledger/postingService');
 const { audit } = require('../../services/auditService');
+const { recordBookingRefund } = require('../../services/bookingCapture');
 const ctrl = require('../../controllers/financeAdminController');
 
 const mockRes = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
@@ -55,6 +57,34 @@ test('getSummary JS-reduces booking + subscription rows into collection metrics'
   const body = res.json.mock.calls[0][0];
   expect(body.metrics.gross_collections).toBe(649); // 100 + 50 + 499
   expect(body.metrics.razorpay_charges_orders).toBe(3.54); // (2+0.36)+(1+0.18)
+});
+
+test('postRefund records a booking refund and audits it', async () => {
+  recordBookingRefund.mockResolvedValue({ posted: true, transferReversed: true, bookingId: 'b1' });
+  const res = mockRes();
+  await ctrl.postRefund({ body: { booking_id: 'b1', amount: 1000, reference: 'rfnd_9', reverse_payout: true }, admin: { id: 'a1' } }, res);
+  expect(recordBookingRefund).toHaveBeenCalledWith(expect.objectContaining({
+    bookingId: 'b1', refundAmount: 1000, refundId: 'rfnd_9', reverseTransfer: true,
+  }));
+  expect(res.json.mock.calls[0][0]).toEqual({ ok: true, transfer_reversed: true });
+  expect(audit).toHaveBeenCalled();
+});
+
+test('postRefund requires a booking_id and a positive amount', async () => {
+  const r1 = mockRes();
+  await ctrl.postRefund({ body: { amount: 100 } }, r1);
+  expect(r1.status).toHaveBeenCalledWith(400);
+  const r2 = mockRes();
+  await ctrl.postRefund({ body: { booking_id: 'b1', amount: 0 } }, r2);
+  expect(r2.status).toHaveBeenCalledWith(400);
+  expect(recordBookingRefund).not.toHaveBeenCalled();
+});
+
+test('postRefund 404s when the booking is not found', async () => {
+  recordBookingRefund.mockResolvedValue({ posted: false, reason: 'booking_not_found' });
+  const res = mockRes();
+  await ctrl.postRefund({ body: { booking_id: 'nope', amount: 50 }, admin: { id: 'a1' } }, res);
+  expect(res.status).toHaveBeenCalledWith(404);
 });
 
 test('postAdjustment rejects unbalanced lines with 400', async () => {
