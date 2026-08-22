@@ -60,9 +60,11 @@ const button = (href, label) =>
 //   vendor:   [vendorName, customerName, serviceTitle, dateTime]
 // `actionLink` is OPTIONAL and APPEND-ONLY: it fills a 5th body variable =
 // join/directions link (Meet link when online, host map link when offline).
-// The CONFIRMED + REMINDER AiSensy templates carry this 5th var, so those
-// callers pass actionLink. The cancelled/rescheduled templates are still
-// 4-var, so their callers omit actionLink and keep the 4-param shape.
+// Only the REMINDER AiSensy template carries this 5th var, so only the reminder
+// caller passes actionLink. The CONFIRMED template is 4-var (its 5th link param
+// was removed ~Jul 2026 — #649; sending it fails "Template params does not
+// match"), and the cancelled/rescheduled templates are 4-var too, so those
+// callers omit actionLink and keep the 4-param shape.
 const customerParams = ({ guestName, serviceTitle, hostName, when, actionLink }) => {
   const p = [guestName || "Customer", serviceTitle || "Service", hostName || "Host", when];
   if (actionLink) p.push(actionLink);
@@ -596,11 +598,12 @@ const createBooking = async (req, res) => {
     if (pricing.customerTotal === 0) {
       runInBackground("createBooking:confirmation-emails", async () => {
         if (!(await featureFlags.isFeatureEnabled("confirmation_emails"))) return;
-        // WhatsApp confirmation carries a 5th "link" var: Meet link when online,
-        // the host's map link when offline (dashboard as a last resort).
-        const dashboard = `${process.env.CLIENT_URL || "https://bookasloth.com"}/dashboard`;
-        const confirmLink = meetingLink || host.map_link || dashboard;
-        const ctx = { guestName: guest_name, serviceTitle: service.title, hostName: host.name, when, actionLink: confirmLink };
+        // WhatsApp "Booking Confirmed" template is 4-var (no link) — the AiSensy
+        // template dropped its 5th link param ~Jul 2026, and sending it made every
+        // confirmation fail "Template params does not match" (#649). Keep this in
+        // sync with the paid path (services/bookingConfirmation.js). The Meet/map
+        // link still reaches people via email (below) + the calendar invite.
+        const ctx = { guestName: guest_name, serviceTitle: service.title, hostName: host.name, when };
         const emailData = bookingEmailData({
           serviceTitle: service.title, hostName: host.name, hostPhone: host.phone,
           guestName: guest_name, scheduledAt: scheduled_at, tz: hostTimezone,
