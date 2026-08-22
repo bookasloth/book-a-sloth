@@ -1,5 +1,5 @@
 const {
-  orderPaymentEntry, subscriptionPaymentEntry, productPaymentEntry, bankTransferEntry, reversalEntry,
+  orderPaymentEntry, subscriptionPaymentEntry, productPaymentEntry, bankTransferEntry, reversalEntry, refundEntry,
 } = require('../../services/ledger/journalTemplates');
 const { ACCOUNTS } = require('../../lib/ledgerAccounts');
 
@@ -144,6 +144,63 @@ describe('bankTransferEntry', () => {
     expect(lines).toHaveLength(2);
     expect(lineFor(lines, ACCOUNTS.BANK, 'debit').debit).toBe(5000);
     expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit').credit).toBe(5000);
+  });
+});
+
+describe('refundEntry (loophole fix — reverses the right legs, always balances)', () => {
+  // Paid-plan booking snapshot (0% commission): price 1000, fee 10 + GST 1.80,
+  // TDS 10, TCS 10, gateway 20.24 → vendor payout 959.76, guest paid 1011.80.
+  const paidSnap = {
+    booking_id: 'b1', host_id: 'v1', refund_id: 'rfnd_1', service_price: 1000,
+    vendor_amount: 959.76, commission_taxable: 0, commission_gst: 0,
+    platform_fee_amount: 10, platform_fee_gst: 1.8, tds_amount: 10, tcs_amount: 10,
+  };
+  // Starter booking snapshot (5% commission): payout 909.76, commission 50
+  // (taxable 42.37 + GST 7.63).
+  const starterSnap = {
+    booking_id: 'b2', host_id: 'v1', refund_id: 'rfnd_2', service_price: 1000,
+    vendor_amount: 909.76, commission_taxable: 42.37, commission_gst: 7.63,
+    platform_fee_amount: 10, platform_fee_gst: 1.8, tds_amount: 10, tcs_amount: 10,
+  };
+
+  test('full refund (host no-show, ₹1011.80): reverses every leg, MDR → Refund Losses; balances', () => {
+    const { lines } = refundEntry({ ...paidSnap, refund_amount: 1011.8 });
+    expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
+    expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit').credit).toBe(1011.8);
+    expect(lineFor(lines, ACCOUNTS.VENDOR_PAYABLES, 'debit').debit).toBe(959.76);
+    expect(lineFor(lines, ACCOUNTS.TDS_PAYABLE, 'debit').debit).toBe(10);
+    expect(lineFor(lines, ACCOUNTS.TCS_PAYABLE, 'debit').debit).toBe(10);
+    expect(lineFor(lines, ACCOUNTS.PLATFORM_FEE_REVENUE, 'debit').debit).toBe(10);
+    expect(lineFor(lines, ACCOUNTS.GST_PAYABLE, 'debit').debit).toBe(1.8); // fee GST
+    // Remainder = 1011.80 − 959.76 − 10 − 10 − 10 − 1.80 = 20.24 (the gateway MDR BAS eats).
+    expect(lineFor(lines, ACCOUNTS.REFUND_LOSSES, 'debit').debit).toBe(20.24);
+    expect(lines.every((l) => l.order_item_id === 'b1' && l.vendor_id === 'v1')).toBe(true);
+  });
+
+  test('guest-cancel refund (price only, ₹1000): fee retained; host-price legs reversed; balances', () => {
+    const { lines } = refundEntry({ ...paidSnap, refund_amount: 1000 });
+    expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
+    expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit').credit).toBe(1000);
+    expect(lineFor(lines, ACCOUNTS.VENDOR_PAYABLES, 'debit').debit).toBe(959.76);
+    expect(lineFor(lines, ACCOUNTS.TDS_PAYABLE, 'debit').debit).toBe(10);
+    expect(lineFor(lines, ACCOUNTS.TCS_PAYABLE, 'debit').debit).toBe(10);
+    // Fee + fee-GST NOT reversed (retained on guest cancel).
+    expect(lines.find((l) => l.account_code === ACCOUNTS.PLATFORM_FEE_REVENUE)).toBeUndefined();
+    // Remainder = 1000 − 959.76 − 10 − 10 = 20.24 (gateway BAS eats).
+    expect(lineFor(lines, ACCOUNTS.REFUND_LOSSES, 'debit').debit).toBe(20.24);
+  });
+
+  test('starter full refund also reverses commission + its GST; balances', () => {
+    const { lines } = refundEntry({ ...starterSnap, refund_amount: 1011.8 });
+    expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
+    expect(lineFor(lines, ACCOUNTS.COMMISSION_REVENUE, 'debit').debit).toBe(42.37);
+    // GST reversed = commission GST 7.63 + fee GST 1.80 = 9.43 (two 2100 debit lines).
+    expect(sum(lines.filter((l) => l.account_code === ACCOUNTS.GST_PAYABLE), 'debit')).toBe(9.43);
+    expect(lineFor(lines, ACCOUNTS.REFUND_LOSSES, 'debit').debit).toBe(20.24);
+  });
+
+  test('rejects a non-positive refund amount', () => {
+    expect(() => refundEntry({ ...paidSnap, refund_amount: 0 })).toThrow(/positive refund_amount/);
   });
 });
 

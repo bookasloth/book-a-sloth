@@ -12,6 +12,39 @@ const { postSafe } = require('./postingService');
 
 const SCAN_LIMIT = 200;
 
+/**
+ * Map a paid `bookings` row to the snapshot orderPaymentEntry() expects.
+ *
+ * LOOPHOLE FIX (v4): this heal previously dropped `tds_amount`, `tcs_amount`
+ * and `commission_taxable`. Without them orderPaymentEntry booked no TDS/TCS
+ * credit and booked commission at its GROSS (GST-inclusive) value, so the entry
+ * came out unbalanced by (tds + tcs) − commissionGst — e.g. ₹20.00 short on a
+ * 0%-commission paid-plan booking. post_journal_entry() rejects an unbalanced
+ * entry, so the repost threw and the booking's money NEVER reached the books:
+ * money moved (guest charged, host paid), the ledger stayed empty, and the
+ * reconciler could never heal it. Selecting and passing the three v4 columns
+ * makes the healed entry reproduce the capture-time entry exactly.
+ * Pure + exported so the balance is unit-tested without a DB.
+ */
+function orderSnapshotFromBooking(b) {
+  return {
+    booking_id: b.id,
+    host_id: b.host_id,
+    service_price: b.services?.price || 0,
+    platform_fee_amount: b.platform_fee_amount,
+    platform_fee_gst: b.platform_fee_gst,
+    commission_applied: b.commission_applied,
+    commission_gst: b.commission_gst,
+    commission_taxable: b.commission_taxable,   // v4: commission books at ex-GST value
+    tds_amount: b.tds_amount,                    // v4: 194-O withheld from host (govt's)
+    tcs_amount: b.tcs_amount,                    // v4: §52 collected from host (govt's)
+    razorpay_fee_actual: b.razorpay_fee_actual,
+    razorpay_tax_actual: b.razorpay_tax_actual,
+    vendor_amount: b.vendor_amount,
+    customer_total: b.customer_total,
+  };
+}
+
 async function missingSourceIds(sourceType, ids) {
   if (!ids.length) return new Set();
   const { data, error } = await supabaseAdmin
@@ -30,7 +63,7 @@ async function reconcile() {
   // ── Paid bookings without an ORDER_PAYMENT entry ──
   const { data: bookings, error: bErr } = await supabaseAdmin
     .from('bookings')
-    .select('id, host_id, paid_at, customer_total, vendor_amount, platform_fee_amount, platform_fee_gst, commission_applied, commission_gst, razorpay_fee_actual, razorpay_tax_actual, services(price)')
+    .select('id, host_id, paid_at, customer_total, vendor_amount, platform_fee_amount, platform_fee_gst, commission_applied, commission_gst, commission_taxable, tds_amount, tcs_amount, razorpay_fee_actual, razorpay_tax_actual, services(price)')
     .eq('payment_status', 'paid')
     .gt('customer_total', 0)
     .not('paid_at', 'is', null)
@@ -48,14 +81,7 @@ async function reconcile() {
         sourceType: 'ORDER_PAYMENT',
         sourceId: b.id,
         journalDate: (b.paid_at || '').slice(0, 10) || null,
-        template: orderPaymentEntry({
-          booking_id: b.id, host_id: b.host_id,
-          service_price: b.services?.price || 0,
-          platform_fee_amount: b.platform_fee_amount, platform_fee_gst: b.platform_fee_gst,
-          commission_applied: b.commission_applied, commission_gst: b.commission_gst,
-          razorpay_fee_actual: b.razorpay_fee_actual, razorpay_tax_actual: b.razorpay_tax_actual,
-          vendor_amount: b.vendor_amount, customer_total: b.customer_total,
-        }),
+        template: orderPaymentEntry(orderSnapshotFromBooking(b)),
       });
       if (id) reposted += 1;
     } catch (err) {
@@ -128,4 +154,4 @@ async function reconcile() {
   return { reposted };
 }
 
-module.exports = { reconcile };
+module.exports = { reconcile, orderSnapshotFromBooking };

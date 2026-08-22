@@ -262,6 +262,7 @@ export const adminFinanceLedger       = (accountId, params) => API.get(`/admin/f
 export const adminFinanceAdjustment   = (data)        => API.post('/admin/finance/adjustment', data);
 export const adminFinanceReversal     = (data)        => API.post('/admin/finance/reversal', data);
 export const adminFinanceBankTransfer = (data)        => API.post('/admin/finance/bank-transfer', data);
+export const adminFinanceRefund       = (data)        => API.post('/admin/finance/refund', data);
 
 // Admin — Payout approval
 export const adminGetPayouts     = (status)         => API.get('/admin/payouts', { params: status ? { status } : {} });

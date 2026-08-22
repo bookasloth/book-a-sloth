@@ -6,14 +6,25 @@
  * math is actually exercised; supabase + ledger are mocked.
  */
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
-jest.mock('../../services/ledger/journalTemplates', () => ({ orderPaymentEntry: jest.fn((a) => ({ description: 'ORDER_PAYMENT', lines: [], args: a })) }));
-jest.mock('../../services/ledger/postingService', () => ({ postSafe: jest.fn(() => Promise.resolve('je-1')) }));
+jest.mock('../../services/ledger/journalTemplates', () => ({
+  orderPaymentEntry: jest.fn((a) => ({ description: 'ORDER_PAYMENT', lines: [], args: a })),
+  refundEntry: jest.fn((a) => ({ description: 'REFUND', lines: [], args: a })),
+}));
+jest.mock('../../services/ledger/postingService', () => ({
+  postSafe: jest.fn(() => Promise.resolve('je-1')),
+  post: jest.fn(() => Promise.resolve('je-refund')),
+}));
+jest.mock('../../services/routeAutoPayoutService', () => ({
+  reverseByPaymentId: jest.fn(() => Promise.resolve({ ok: true })),
+  createHeldTransferForBooking: jest.fn(() => Promise.resolve()),
+}));
 
 const { supabaseAdmin } = require('../../config/supabase');
-const { orderPaymentEntry } = require('../../services/ledger/journalTemplates');
-const { postSafe } = require('../../services/ledger/postingService');
+const { orderPaymentEntry, refundEntry } = require('../../services/ledger/journalTemplates');
+const { postSafe, post } = require('../../services/ledger/postingService');
+const { reverseByPaymentId } = require('../../services/routeAutoPayoutService');
 const { calculateVendorPayout } = require('../../lib/pricingEngine');
-const { finalizeBookingCapture } = require('../../services/bookingCapture');
+const { finalizeBookingCapture, recordBookingRefund } = require('../../services/bookingCapture');
 
 // Update chain that captures the patch and resolves to `result` when awaited.
 const chainOf = (result) => {
@@ -108,4 +119,48 @@ test('skips the ledger for a row without a customer_total snapshot', async () =>
   });
 
   expect(postSafe).not.toHaveBeenCalled();
+});
+
+describe('recordBookingRefund', () => {
+  // maybeSingle chain returning one booking row.
+  const singleOf = (row) => {
+    const c = {};
+    c.select = jest.fn(() => c);
+    c.eq = jest.fn(() => c);
+    c.maybeSingle = jest.fn(() => Promise.resolve({ data: row, error: null }));
+    return c;
+  };
+  const BK = {
+    id: 'b1', host_id: 'h1', razorpay_payment_id: 'pay_1',
+    vendor_amount: 959.76, commission_taxable: 0, commission_gst: 0,
+    platform_fee_amount: 10, platform_fee_gst: 1.8, tds_amount: 10, tcs_amount: 10,
+    customer_total: 1011.8, services: { price: 1000 },
+  };
+
+  test('by bookingId: posts REFUND from the snapshot and reverses the held payout', async () => {
+    supabaseAdmin.from.mockReturnValue(singleOf(BK));
+    const r = await recordBookingRefund({ bookingId: 'b1', refundAmount: 1000, refundId: 'rfnd_1' });
+    expect(r.posted).toBe(true);
+    expect(post).toHaveBeenCalledWith(expect.objectContaining({ sourceType: 'REFUND' }));
+    expect(refundEntry).toHaveBeenCalledWith(expect.objectContaining({
+      booking_id: 'b1', refund_amount: 1000, service_price: 1000, vendor_amount: 959.76,
+    }));
+    expect(reverseByPaymentId).toHaveBeenCalledWith('pay_1', expect.any(String));
+    expect(r.transferReversed).toBe(true);
+  });
+
+  test('reverse_payout=false skips the transfer reversal', async () => {
+    supabaseAdmin.from.mockReturnValue(singleOf(BK));
+    await recordBookingRefund({ bookingId: 'b1', refundAmount: 500, reverseTransfer: false });
+    expect(reverseByPaymentId).not.toHaveBeenCalled();
+    expect(post).toHaveBeenCalled();
+  });
+
+  test('unknown booking → not posted, no ledger write', async () => {
+    supabaseAdmin.from.mockReturnValue(singleOf(null));
+    const r = await recordBookingRefund({ bookingId: 'nope', refundAmount: 100 });
+    expect(r.posted).toBe(false);
+    expect(r.reason).toBe('booking_not_found');
+    expect(post).not.toHaveBeenCalled();
+  });
 });
