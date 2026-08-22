@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Search, Check, X, Plus, Loader2 } from 'lucide-react';
-import { getCategories, suggestCategory, updateOnboardingStep } from '../../services/api';
+import { getCategories, suggestCategory, saveOnboardingPersona } from '../../services/api';
 import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
 
@@ -101,7 +101,11 @@ const CategoryStep = () => {
     if (!selected) { toast.error('Please pick your primary category'); return; }
     setSaving(true);
     try {
-      await updateOnboardingStep({ slug, step: 4, data: { primary_category: selected, categories: [selected] } });
+      // Use the persona batch writer (step = max(current, 3)) — NOT step 4.
+      // A host reaching here via the PersonaStep escape hatch never saved a
+      // persona, so they're still at step 2; a hard step-4 write was rejected
+      // server-side as an illegal jump ("complete the previous step first").
+      await saveOnboardingPersona(selected);
       navigate(`/vendor-register/${slug}/preview`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not save category');
