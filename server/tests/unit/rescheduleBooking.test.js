@@ -8,6 +8,11 @@ jest.mock('../../services/planService', () => ({
   rescheduleNotifyForPlan: jest.fn().mockResolvedValue(true),
   resolveVendorPlan: jest.fn(() => 'studio'),
 }));
+// The handler fires an un-awaited runInBackground(catchup-reminder). Left live, it
+// runs AFTER the test ends — logging post-teardown and, on Node 22 (CI), rejecting
+// into a fatal unhandled rejection that exits the worker 1 even though every test
+// passes. No-op it: these tests assert the synchronous send/calendar path only.
+jest.mock('../../utils/background', () => ({ runInBackground: jest.fn() }));
 jest.mock('../../utils/cryptoTokens', () => ({ decryptToken: (v) => v, decrypt: (v) => v }));
 
 const mockFrom = jest.fn();
