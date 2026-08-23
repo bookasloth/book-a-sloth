@@ -50,6 +50,7 @@ describe('earningsCalc', () => {
     expect(ceilingState(75)).toBe('near'); // 900/yr, within 840..1000
     expect(ceilingState(10)).toBe('none');
     expect(HOSTPLUS_ANNUAL_CAP).toBe(1000);
+    expect(pickWinner(resultsFor(1000, 90, 'annual'))).toBe('studio');
   });
 
   it('annual saving = monthly*12 - annual fee', () => {

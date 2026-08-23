@@ -109,7 +109,7 @@ function PlanCard({ result, winnerKey, cycle }) {
 
       <div className="mt-5">
         <p className="text-xs text-neutral-500">You keep, per year</p>
-        <p className="text-2xl font-extrabold" style={{ color: accent }}>{inr0(result.netAnnual)}<span className="text-xs font-semibold text-neutral-400">/year</span></p>
+        <p className="text-2xl font-extrabold" style={{ color: accent }}>{inr0(result.netAnnual)}</p>
         {plan.monthly > 0 && (
           <p className="text-[11px] text-neutral-400">
             {inr0(result.grossAnnual)} earned − {inr0(result.fee)} plan fee{cycle === "annual" ? " (yearly)" : " (monthly ×12)"}

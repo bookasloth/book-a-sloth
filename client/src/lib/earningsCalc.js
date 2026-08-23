@@ -47,9 +47,10 @@ export function resultsFor(earning, sessionsPerMonth, cycle = 'annual') {
 }
 
 export function pickWinner(results) {
-  const eligible = results.filter((r) => !r.capped);
-  const pool = eligible.length ? eligible : results;
-  return pool.reduce((a, b) => (b.netAnnual > a.netAnnual ? b : a)).plan.key;
+  const eligible = results.filter((r) => !r.capped && !r.outgrows);
+  const pool = eligible.length ? eligible : results.filter((r) => !r.capped);
+  const fallback = pool.length ? pool : results;
+  return fallback.reduce((a, b) => (b.netAnnual > a.netAnnual ? b : a)).plan.key;
 }
 
 export function annualSaving(planKey) {
