@@ -28,7 +28,7 @@ export default function SalesTemplates() {
   return (
     <div className="p-6 max-w-4xl">
       <PageHeader title="Message Templates" subtitle="Approved WhatsApp templates + reusable emails the team sends from."
-        actions={<Btn size="sm" onClick={() => setShowNew(true)}>+ New template</Btn>} />
+        actions={<div className="flex items-center gap-3"><a href="/admin/sales/sequences" className="text-[12px] adm-t2 hover:text-[#FE5100]">Sequences →</a><Btn size="sm" onClick={() => setShowNew(true)}>+ New template</Btn></div>} />
 
       {loading ? <p className="adm-t3">Loading…</p> : (
         <>
