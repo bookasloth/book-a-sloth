@@ -63,6 +63,29 @@ describe('brandPage hero image', () => {
   });
 });
 
+const errorHandler = require('../../middleware/errorMiddleware');
+
+// Minimal Express res/req doubles.
+const makeRes = () => {
+  const res = { statusCode: 404, headers: {}, body: '' };
+  res.status = (c) => { res.statusCode = c; return res; };
+  res.type = () => res;
+  res.send = (b) => { res.body = b; return res; };
+  res.json = (o) => { res.body = JSON.stringify(o); return res; };
+  return res;
+};
+const htmlReq = { originalUrl: '/nope', method: 'GET', path: '/nope', accepts: () => 'html' };
+
+describe('errorMiddleware 404 branding', () => {
+  it('renders a CDN image + vanishing-act copy on a browser 404', () => {
+    const res = makeRes();
+    errorHandler(Object.assign(new Error('x'), { expose: false }), htmlReq, res, () => {});
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toContain('assets.bookasloth.in/errors/');
+    expect(res.body).toContain('This page pulled a vanishing act');
+  });
+});
+
 describe('statusPage', () => {
   it('shows all-operational + Ready when the DB is reachable', () => {
     const html = statusPage({ db: true, uptimeSec: 3661 });
