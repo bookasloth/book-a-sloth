@@ -24,18 +24,13 @@
   .bas-error__card { animation: none; }
 }
 
-/* Illustration */
+/* Illustration — error pages are always white (no dark-mode variant), so the
+   line-art colour is fixed light-mode. See ErrorLayout for why. */
 .bas-error-art {
-  color: #1f2937; /* line colour (light mode) */
-}
-@media (prefers-color-scheme: dark) {
-  .bas-error-art { color: #e5e7eb; }
+  color: #1f2937;
 }
 
 .bas-error-art__halo {
   fill: var(--bas-error-accent);
   opacity: 0.06;
-}
-@media (prefers-color-scheme: dark) {
-  .bas-error-art__halo { opacity: 0.12; }
 }

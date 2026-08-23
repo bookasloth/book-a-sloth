@@ -48,7 +48,7 @@ export function renderProfile404Html(rawSlug) {
     `<link rel="preconnect" href="https://fonts.googleapis.com">` +
     `<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&family=Poppins:wght@400;500&display=swap" rel="stylesheet">` +
     `<style>` +
-    `:root{--orange:#FE5100;--ink:#141416;--muted:#5b5b62;--bg:#faf8f5;--card:#fff;--line:#ececec}` +
+    `:root{--orange:#FE5100;--ink:#141416;--muted:#5b5b62;--bg:#fff;--card:#fff;--line:#ececec}` +
     `*{box-sizing:border-box}html,body{margin:0;height:100%}` +
     `body{background:var(--bg);color:var(--ink);font-family:'Poppins',system-ui,sans-serif;display:grid;place-items:center;padding:24px}` +
     `.card{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:460px;width:100%;padding:40px 32px;text-align:center;box-shadow:0 10px 40px rgba(20,20,22,.06)}` +
@@ -56,7 +56,7 @@ export function renderProfile404Html(rawSlug) {
     `h1{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:24px;line-height:1.2;margin:0 0 12px}` +
     `p{color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 28px}` +
     `a.btn{display:inline-block;background:var(--orange);color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:12px}` +
-    `@media (prefers-color-scheme:dark){:root{--ink:#f5f5f7;--muted:#a1a1aa;--bg:#0e0e10;--card:#17171a;--line:#26262b}}` +
+    // Always white — the white-bg sloth art would box out on a dark card.
     `</style></head>` +
     `<body><main class="card">` +
     `<img class="hero" src="${img}" alt="" width="132" height="132">` +

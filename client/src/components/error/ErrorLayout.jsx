@@ -1,10 +1,17 @@
 // ErrorLayout — the single visual shell every branded error / offline page uses.
 //
 // No header, no footer (it calls useHideChrome to drop the global chrome), one
-// centred card, one primary CTA, calm fade-in, dark-mode aware, keyboard
-// accessible. SEO is locked to noindex/nofollow with no canonical. The page-
-// specific bits (eyebrow, title, copy, art, CTA) come in as props from the
-// catalog via ErrorPage, so adding a new error never touches this file.
+// centred card, one primary CTA, calm fade-in, keyboard accessible. SEO is
+// locked to noindex/nofollow with no canonical. The page-specific bits (eyebrow,
+// title, copy, art, CTA) come in as props from the catalog via ErrorPage, so
+// adding a new error never touches this file.
+//
+// Colour: error pages are ALWAYS white (no dark-mode variant) — the sloth
+// illustrations have a white background, so a dark card would frame them in an
+// ugly white box. Forced light regardless of OS theme.
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import Seo from '../common/Seo';
 import ErrorIllustration from './ErrorIllustration';
 import { useHideChrome } from '../../context/ChromeContext';
@@ -16,30 +23,41 @@ export default function ErrorLayout({
   message,
   art,
   image,
+  showSearch = false,
   primaryLabel,
   onPrimary,
   seoTitle,
   children,
 }) {
   useHideChrome();
+  const navigate = useNavigate();
+  const [q, setQ] = useState('');
+
+  // Works like the /search launcher: hand the query to Explore, which does the
+  // real search. Empty submit just opens Explore.
+  const onSearch = (e) => {
+    e.preventDefault();
+    const v = q.trim();
+    navigate(v ? `/explore?q=${encodeURIComponent(v)}` : '/explore');
+  };
 
   return (
-    <main className="bas-error min-h-screen flex items-center justify-center px-5 py-12 bg-[#faf9f6] text-[#1a1a1a] dark:bg-[#0f1115] dark:text-gray-100">
+    <main className="bas-error min-h-screen flex items-center justify-center px-5 py-12 bg-white text-[#1a1a1a]">
       {/* Error pages must never be indexed and carry no canonical. */}
       <Seo title={seoTitle} robots="noindex, nofollow, noarchive" />
 
-      <div className="bas-error__card w-full max-w-md text-center rounded-md bg-white dark:bg-[#171a21] border border-black/5 dark:border-white/10 shadow-[0_12px_44px_-16px_rgba(20,20,20,0.25)] px-7 py-10 sm:px-10 sm:py-12">
+      <div className="bas-error__card w-full max-w-md text-center rounded-md bg-white border border-black/5 shadow-[0_12px_44px_-16px_rgba(20,20,20,0.25)] px-7 py-10 sm:px-10 sm:py-12">
         {/* Brand mark — quiet, not a nav. */}
         <a
           href="/"
           aria-label="Book a Sloth — home"
-          className="inline-flex items-center gap-2 mb-7 text-[#1a1a1a] dark:text-gray-100"
+          className="inline-flex items-center gap-2 mb-7 text-[#1a1a1a]"
         >
           <img src="/favicon.svg" alt="" width="28" height="28" className="h-7 w-7" />
           <span className="font-heading font-semibold text-[15px] tracking-tight">Book a Sloth</span>
         </a>
 
-        <div className="flex justify-center mb-5 text-[#1a1a1a] dark:text-gray-100">
+        <div className="flex justify-center mb-5 text-[#1a1a1a]">
           <ErrorIllustration art={art} image={image} />
         </div>
 
@@ -49,35 +67,60 @@ export default function ErrorLayout({
           </p>
         )}
 
-        {/* Explicit colours: a global `h1 { color: var(--text) }` (base-fb.css)
-            isn't theme-aware and would force the title dark-on-dark. */}
-        <h1 className="font-heading text-2xl sm:text-[28px] font-semibold leading-snug mb-3 text-[#1a1a1a] dark:text-white">
+        {/* Explicit colour: a global `h1 { color: var(--text) }` (base-fb.css) is
+            not theme-aware and would force the title dark-on-dark. */}
+        <h1 className="font-heading text-2xl sm:text-[28px] font-semibold leading-snug mb-3 text-[#1a1a1a]">
           {title}
         </h1>
 
-        <p className="text-[15px] leading-relaxed text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">
+        <p className="text-[15px] leading-relaxed text-gray-500 mb-8 max-w-sm mx-auto">
           {message}
         </p>
 
         {/* Optional slot (e.g. offline live-status line). */}
         {children}
 
+        {/* Lost-page search — same behaviour as the /search launcher: submit hands
+            the query to Explore. Only on the pages where "find what you lost"
+            helps (404/410), gated by showSearch. */}
+        {showSearch && (
+          <form onSubmit={onSearch} className="mb-6">
+            <div className="flex items-center gap-2 rounded-full border border-black/10 bg-white py-1.5 pl-4 pr-1.5 shadow-[0_4px_18px_-8px_rgba(20,20,20,0.2)] focus-within:border-[#fe5100]/60 transition-colors">
+              <Search size={18} className="shrink-0 text-gray-400" aria-hidden="true" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search services by skill or topic…"
+                aria-label="Search Book a Sloth"
+                className="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-[15px] text-[#1a1a1a] outline-none placeholder:text-gray-400"
+              />
+              <button
+                type="submit"
+                aria-label="Search"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fe5100] text-white transition hover:bg-[#d94400] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fe5100] focus-visible:ring-offset-2"
+              >
+                <Search size={16} />
+              </button>
+            </div>
+          </form>
+        )}
+
         {primaryLabel && (
           <button
             type="button"
             onClick={onPrimary}
-            className="inline-flex items-center justify-center w-full sm:w-auto px-7 py-3 rounded-md bg-[#fe5100] hover:bg-[#d94400] active:bg-[#c23d00] text-white font-medium text-[15px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fe5100] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#171a21]"
+            className="inline-flex items-center justify-center w-full sm:w-auto px-7 py-3 rounded-md bg-[#fe5100] hover:bg-[#d94400] active:bg-[#c23d00] text-white font-medium text-[15px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fe5100] focus-visible:ring-offset-2"
           >
             {primaryLabel}
           </button>
         )}
 
         {/* Single quiet secondary link — support, not a competing CTA. */}
-        <p className="mt-6 text-[13px] text-gray-400 dark:text-gray-500">
+        <p className="mt-6 text-[13px] text-gray-400">
           Need a hand?{' '}
           <a
             href="/help"
-            className="text-gray-500 dark:text-gray-400 underline underline-offset-2 hover:text-[#fe5100] dark:hover:text-[#fe5100] focus:outline-none focus-visible:text-[#fe5100]"
+            className="text-gray-500 underline underline-offset-2 hover:text-[#fe5100] focus:outline-none focus-visible:text-[#fe5100]"
           >
             Contact support
           </a>

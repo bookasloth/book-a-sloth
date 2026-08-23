@@ -2,8 +2,8 @@
 // ErrorPage render, the unknown-code fallback, and the Offline page. Analytics is
 // mocked so the dynamic import in ErrorPage's effect can't pull the real adapters.
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, render as rtlRender } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { render, screen, fireEvent, render as rtlRender } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 
 vi.mock('../services/analytics', () => ({ analytics: { track: vi.fn() } }));
 vi.mock('../services/analytics/events', () => ({ EVENTS: { ERROR_PAGE_VIEWED: 'error_page_viewed' } }));
@@ -106,5 +106,35 @@ describe('ErrorIllustration image mode', () => {
     const { container } = rtlRender(<ErrorIllustration art="lost" />);
     expect(container.querySelector('img')).toBeNull();
     expect(container.querySelector('svg')).toBeTruthy();
+  });
+});
+
+describe('lost-page search box', () => {
+  const withLocation = (ui) => {
+    let loc;
+    const Probe = () => { loc = useLocation(); return null; };
+    render(<MemoryRouter>{ui}<Probe /></MemoryRouter>);
+    return () => loc;
+  };
+
+  it('shows a search box on 404 and routes to /explore with the query', () => {
+    const getLoc = withLocation(<ErrorPage code={404} />);
+    const input = screen.getByLabelText('Search Book a Sloth');
+    fireEvent.change(input, { target: { value: 'yoga coach' } });
+    fireEvent.submit(input.closest('form'));
+    expect(getLoc().pathname).toBe('/explore');
+    expect(getLoc().search).toBe(`?q=${encodeURIComponent('yoga coach')}`);
+  });
+
+  it('empty submit just opens /explore', () => {
+    const getLoc = withLocation(<ErrorPage code={404} />);
+    fireEvent.submit(screen.getByLabelText('Search Book a Sloth').closest('form'));
+    expect(getLoc().pathname).toBe('/explore');
+    expect(getLoc().search).toBe('');
+  });
+
+  it('does NOT show the search box on a non-lost page (500)', () => {
+    render(<MemoryRouter><ErrorPage code={500} /></MemoryRouter>);
+    expect(screen.queryByLabelText('Search Book a Sloth')).toBeNull();
   });
 });
