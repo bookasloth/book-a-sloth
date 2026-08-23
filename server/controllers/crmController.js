@@ -251,6 +251,100 @@ const exportCsv = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── Message templates (approved WhatsApp + reusable email) ────
+const listTemplates = async (req, res) => {
+  try {
+    let q = supabaseAdmin.from('crm_templates').select('*').eq('is_active', true);
+    if (req.query.channel) q = q.eq('channel', req.query.channel);
+    const { data, error } = await q.order('label', { ascending: true });
+    if (error) return safeError(res, error);
+    res.json(data || []);
+  } catch (e) { safeError(res, e); }
+};
+
+const createTemplate = async (req, res) => {
+  try {
+    const { channel, name, label, category, variables, subject, body } = req.body || {};
+    if (!['whatsapp', 'email'].includes(channel)) return res.status(400).json({ message: 'channel must be whatsapp|email' });
+    if (!name || !label) return res.status(400).json({ message: 'name and label required' });
+    const row = {
+      channel, name: String(name).trim(), label: String(label).trim(),
+      category: category || 'custom',
+      variables: Array.isArray(variables) ? variables : [],
+      subject: subject || null, body: body || null, created_by: actor(req),
+    };
+    const { data, error } = await supabaseAdmin.from('crm_templates').insert(row).select('*').single();
+    if (error) return res.status(error.code === '23505' ? 409 : 500).json({ message: error.code === '23505' ? 'A template with this name already exists' : 'Could not save' });
+    res.status(201).json(data);
+  } catch (e) { safeError(res, e); }
+};
+
+const updateTemplate = async (req, res) => {
+  try {
+    const allowed = ['name', 'label', 'category', 'variables', 'subject', 'body', 'is_active'];
+    const patch = {};
+    for (const k of allowed) if (k in (req.body || {})) patch[k] = req.body[k];
+    patch.updated_at = new Date().toISOString();
+    const { data, error } = await supabaseAdmin.from('crm_templates').update(patch).eq('id', req.params.id).select('*').single();
+    if (error) return safeError(res, error);
+    res.json(data);
+  } catch (e) { safeError(res, e); }
+};
+
+const deleteTemplate = async (req, res) => {
+  try {
+    // Soft-delete: keep the row (message history references names) but drop it
+    // from the picker.
+    await supabaseAdmin.from('crm_templates').update({ is_active: false, updated_at: new Date().toISOString() }).eq('id', req.params.id);
+    res.json({ ok: true });
+  } catch (e) { safeError(res, e); }
+};
+
+// ── Tag catalog (Notion-style coloured tags) ─────────────────
+const TAG_COLORS = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red', 'teal'];
+
+const listTags = async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin.from('crm_tags').select('*').order('name', { ascending: true });
+    if (error) return safeError(res, error);
+    res.json(data || []);
+  } catch (e) { safeError(res, e); }
+};
+
+const createTag = async (req, res) => {
+  try {
+    let { name, color } = req.body || {};
+    name = String(name || '').trim();
+    if (!name) return res.status(400).json({ message: 'name required' });
+    color = TAG_COLORS.includes(color) ? color : 'gray';
+    const { data, error } = await supabaseAdmin.from('crm_tags')
+      .insert({ name, color, created_by: actor(req) || '' }).select('*').single();
+    if (error) return res.status(error.code === '23505' ? 409 : 500).json({ message: error.code === '23505' ? 'Tag already exists' : 'Could not save' });
+    res.status(201).json(data);
+  } catch (e) { safeError(res, e); }
+};
+
+const updateTag = async (req, res) => {
+  try {
+    const patch = {};
+    if ('name' in (req.body || {})) patch.name = String(req.body.name).trim();
+    if ('color' in (req.body || {})) patch.color = TAG_COLORS.includes(req.body.color) ? req.body.color : 'gray';
+    if (!Object.keys(patch).length) return res.status(400).json({ message: 'nothing to update' });
+    patch.updated_at = new Date().toISOString();
+    const { data, error } = await supabaseAdmin.from('crm_tags').update(patch).eq('id', req.params.id).select('*').single();
+    if (error) return safeError(res, error);
+    res.json(data);
+  } catch (e) { safeError(res, e); }
+};
+
+const deleteTag = async (req, res) => {
+  try {
+    // Remove from the catalog only; leads keep the tag string (renders default colour).
+    await supabaseAdmin.from('crm_tags').delete().eq('id', req.params.id);
+    res.json({ ok: true });
+  } catch (e) { safeError(res, e); }
+};
+
 // Manual attribution refresh (link + revenue).
 const refreshAttribution = async (req, res) => {
   try { res.json(await attribution.run()); } catch (e) { safeError(res, e); }
@@ -264,4 +358,6 @@ module.exports = {
   listFollowUps, createFollowUp, completeFollowUp, cancelFollowUp,
   listSequences, createSequence, enroll,
   bulk, importPreview, importCommit, exportCsv, refreshAttribution,
+  listTemplates, createTemplate, updateTemplate, deleteTemplate,
+  listTags, createTag, updateTag, deleteTag,
 };

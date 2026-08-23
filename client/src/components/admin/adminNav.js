@@ -86,7 +86,7 @@ export const PATH_LABELS = {
   categories:'Categories', featured:'Featured',
   staff:'Staff & Roles', system:'System', audit:'Audit Logs', reserved:'Reserved Slugs',
   features:'Feature Status',
-  sales:'Sales', leads:'Leads', pipeline:'Pipeline', 'follow-ups':'Follow-ups',
+  sales:'Sales', leads:'Leads', pipeline:'Pipeline', 'follow-ups':'Follow-ups', templates:'Templates',
   security:'Security', 'blocked-ips':'Blocked IPs',
   dept:'Department', cxo:'CXO', marketing:'Marketing', operation:'Operation', engineering:'Engineering', 'sloth-house':'Sloth House',
 };
@@ -109,6 +109,7 @@ export const NAV = [
     { label:'Leads',      icon:'users2',    to:'/admin/sales/leads', perm:'leads.view' },
     { label:'Pipeline',   icon:'layout2',   to:'/admin/sales/pipeline', perm:'leads.view' },
     { label:'Follow-ups', icon:'clock',     to:'/admin/sales/follow-ups', perm:'leads.view' },
+    { label:'Templates',  icon:'msgSq',     to:'/admin/sales/templates', perm:'leads.view' },
   ]},
   // Org departments — placeholder shells served by AdminDepartment (/admin/dept/:dept).
   // Mirrors DEPARTMENTS map in pages/admin/AdminDepartment.jsx.

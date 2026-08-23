@@ -115,9 +115,12 @@ async function assignOwner(id, ownerAdminId, actorAdminId) {
 
 async function addTag(id, tag, actorAdminId) {
   const lead = await getLead(id);
-  const tags = Array.from(new Set([...(lead.tags || []), String(tag).trim()])).filter(Boolean);
+  const t = String(tag).trim();
+  const tags = Array.from(new Set([...(lead.tags || []), t])).filter(Boolean);
   await supabaseAdmin.from('leads').update({ tags, updated_at: new Date().toISOString() }).eq('id', id);
-  await logActivity(id, 'tag_added', { actorAdminId, title: `Tag +${tag}`, meta: { tag } });
+  // Keep the tag catalogue in sync (default colour); ignore duplicate.
+  if (t) { const { error } = await supabaseAdmin.from('crm_tags').insert({ name: t, color: 'gray' }); void error; }
+  await logActivity(id, 'tag_added', { actorAdminId, title: `Tag +${t}`, meta: { tag: t } });
   return getLead(id);
 }
 

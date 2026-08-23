@@ -1,11 +1,15 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, Btn, Badge } from '../../../components/admin/ui';
 import {
   crmGetLead, crmLeadTimeline, crmSetStatus, crmAddLeadNote, crmCreateFollowUp,
   crmAddTag, crmRemoveTag, crmSetDnc, crmLogCall, crmSendWhatsApp, crmSendEmail,
+  crmListTemplates, crmListTags, crmCreateTag,
 } from '../../../services/api';
 import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, rupees, relTime } from './salesConstants';
+import { colorMap } from './salesTagColors';
+import TagChip from './TagChip';
+import TagPicker from './TagPicker';
 import toast from 'react-hot-toast';
 
 export default function SalesLeadDetail() {
@@ -15,7 +19,10 @@ export default function SalesLeadDetail() {
   const [followUps, setFollowUps] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // 'note'|'followup'|'wa'|'email'|'call'|'tag'
+  const [modal, setModal] = useState(null); // 'note'|'followup'|'wa'|'email'|'call'
+  const [templates, setTemplates] = useState([]);
+  const [tagCatalog, setTagCatalog] = useState([]);
+  const [showTagPicker, setShowTagPicker] = useState(false);
 
   const load = useCallback(() => {
     Promise.all([
@@ -24,7 +31,19 @@ export default function SalesLeadDetail() {
     ]).catch(() => setLead(null)).finally(() => setLoading(false));
   }, [id]);
 
+  const loadTags = useCallback(() => crmListTags().then(({ data }) => setTagCatalog(Array.isArray(data) ? data : [])).catch(() => setTagCatalog([])), []);
+
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { crmListTemplates().then(({ data }) => setTemplates(Array.isArray(data) ? data : [])).catch(() => setTemplates([])); loadTags(); }, [loadTags]);
+
+  const pickTag = async (name) => {
+    try { await crmAddTag(id, name); setShowTagPicker(false); load(); } catch { toast.error('Failed'); }
+  };
+  const createTag = async (name, color) => {
+    try { await crmCreateTag({ name, color }); await crmAddTag(id, name); setShowTagPicker(false); loadTags(); load(); }
+    catch { toast.error('Could not create tag'); }
+  };
+  const tagColors = colorMap(tagCatalog);
 
   const setStatus = async (status) => {
     try { await crmSetStatus(id, status); toast.success(`Status → ${STATUS_LABEL[status]}`); load(); }
@@ -83,19 +102,25 @@ export default function SalesLeadDetail() {
           <Btn variant="outline" size="sm" onClick={() => setModal('call')}>Log Call</Btn>
           <Btn variant="outline" size="sm" onClick={() => setModal('note')}>Add Note</Btn>
           <Btn variant="outline" size="sm" onClick={() => setModal('followup')}>Add Follow-up</Btn>
-          <Btn variant="outline" size="sm" onClick={() => setModal('tag')}>Add Tag</Btn>
           <Btn variant="outline" size="sm" onClick={toggleDnc}>{lead.do_not_contact ? 'Clear DNC' : 'Do Not Contact'}</Btn>
         </div>
 
-        {lead.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {lead.tags.map((t) => (
-              <span key={t} className="text-[11px] px-2 py-0.5 rounded-full adm-chip flex items-center gap-1">
-                {t}<button onClick={() => removeTag(t)} className="adm-t3">×</button>
-              </span>
-            ))}
+        {/* Coloured tags + inline Notion-style picker */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-3">
+          {(lead.tags || []).map((t) => (
+            <TagChip key={t} name={t} color={tagColors[t]} onRemove={() => removeTag(t)} />
+          ))}
+          <div className="relative">
+            <button type="button" onClick={() => setShowTagPicker((v) => !v)}
+              className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">
+              + Tag
+            </button>
+            {showTagPicker && (
+              <TagPicker tags={tagCatalog} exclude={lead.tags || []}
+                onSelect={pickTag} onCreate={createTag} onClose={() => setShowTagPicker(false)} />
+            )}
           </div>
-        )}
+        </div>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -150,16 +175,87 @@ export default function SalesLeadDetail() {
         </div>
       </div>
 
-      {modal && <ActionModal type={modal} lead={lead} onClose={() => setModal(null)} onDone={() => { setModal(null); load(); }} />}
+      {modal && <ActionModal type={modal} lead={lead} templates={templates} onClose={() => setModal(null)} onDone={() => { setModal(null); load(); }} />}
     </div>
   );
 }
 
-function ActionModal({ type, lead, onClose, onDone }) {
+// Guess a lead's value for a template variable slot, so the composer prefills
+// the fields instead of the team retyping them. Unknown keys stay blank.
+function leadValueFor(key, lead) {
+  const first = (lead.name || '').trim().split(/\s+/)[0] || '';
+  const map = {
+    first_name: first, name: lead.name || '', business_name: lead.business_name || '',
+    profession: lead.profession || '', city: lead.city || '', email: lead.email || '', phone: lead.phone || '',
+  };
+  return map[key] ?? '';
+}
+
+// Small searchable dropdown. options: [{ value, label, hint }].
+function Combobox({ options, value, onChange, placeholder }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const selected = options.find((o) => o.value === value);
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter((o) => (o.label + ' ' + (o.hint || '')).toLowerCase().includes(q));
+  }, [options, query]);
+
+  return (
+    <div className="relative">
+      <button type="button" onClick={() => setOpen((o) => !o)}
+        className="fb-input text-sm w-full text-left flex items-center justify-between">
+        <span className={selected ? 'adm-t1' : 'adm-t3'}>{selected ? selected.label : (placeholder || 'Select…')}</span>
+        <span className="adm-t3">▾</span>
+      </button>
+      {open && (
+        <div className="absolute z-10 mt-1 w-full rounded-xl adm-card shadow-lg max-h-64 overflow-auto">
+          <div className="p-2 sticky top-0 adm-card">
+            <input autoFocus className="fb-input text-sm w-full" placeholder="Search templates…"
+              value={query} onChange={(e) => setQuery(e.target.value)} />
+          </div>
+          {filtered.length === 0 ? <p className="px-3 py-2 text-[12px] adm-t3">No templates. Add some in Templates.</p> :
+            filtered.map((o) => (
+              <button key={o.value} type="button"
+                onClick={() => { onChange(o.value); setOpen(false); setQuery(''); }}
+                className="w-full text-left px-3 py-2 adm-hoverable">
+                <p className="text-[13px] adm-t1">{o.label}</p>
+                {o.hint && <p className="text-[11px] adm-t3">{o.hint}</p>}
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActionModal({ type, lead, templates = [], onClose, onDone }) {
   const id = lead.id;
   const [busy, setBusy] = useState(false);
-  const [v, setV] = useState({ body: '', title: '', dueAt: '', templateKey: '', params: '', subject: '', html: '', outcome: '', durationMin: '', tag: '' });
+  const [v, setV] = useState({ body: '', title: '', dueAt: '', outcome: '', durationMin: '', tag: '', subject: '', html: '' });
   const set = (k) => (e) => setV({ ...v, [k]: e.target.value });
+
+  // Template state (wa + email pickers)
+  const waTemplates = useMemo(() => templates.filter((t) => t.channel === 'whatsapp'), [templates]);
+  const emailTemplates = useMemo(() => templates.filter((t) => t.channel === 'email'), [templates]);
+  const [tplId, setTplId] = useState('');
+  const [vars, setVars] = useState({}); // per-variable values (WhatsApp)
+  const tpl = (type === 'wa' ? waTemplates : emailTemplates).find((t) => t.id === tplId) || null;
+
+  // On template select: prefill variable inputs (WA) / subject+body (email).
+  const pickTemplate = (newId) => {
+    setTplId(newId);
+    const t = (type === 'wa' ? waTemplates : emailTemplates).find((x) => x.id === newId);
+    if (!t) return;
+    if (type === 'wa') {
+      const seed = {};
+      (t.variables || []).forEach((varDef) => { seed[varDef.key] = leadValueFor(varDef.key, lead); });
+      setVars(seed);
+    } else {
+      setV((s) => ({ ...s, subject: t.subject || '', html: t.body || '' }));
+    }
+  };
 
   const submit = async () => {
     setBusy(true);
@@ -168,8 +264,19 @@ function ActionModal({ type, lead, onClose, onDone }) {
       else if (type === 'tag') await crmAddTag(id, v.tag.trim());
       else if (type === 'call') await crmLogCall(id, { outcome: v.outcome, durationMin: Number(v.durationMin) || null, body: v.body });
       else if (type === 'followup') await crmCreateFollowUp(id, { title: v.title, dueAt: v.dueAt || new Date(Date.now() + 864e5).toISOString(), remind: true });
-      else if (type === 'wa') { const r = await crmSendWhatsApp(id, { templateKey: v.templateKey.trim(), params: v.params ? v.params.split('|').map((s) => s.trim()) : [] }); toast[r.data?.status === 'skipped' ? 'error' : 'success'](r.data?.status === 'skipped' ? `Skipped: ${r.data.error}` : 'WhatsApp queued'); onDone(); return; }
-      else if (type === 'email') { const r = await crmSendEmail(id, { subject: v.subject, html: v.html }); toast[r.data?.status === 'skipped' ? 'error' : 'success'](r.data?.status === 'skipped' ? `Skipped: ${r.data.error}` : 'Email queued'); onDone(); return; }
+      else if (type === 'wa') {
+        if (!tpl) { toast.error('Pick a template'); setBusy(false); return; }
+        const params = (tpl.variables || []).map((varDef) => vars[varDef.key] ?? '');
+        const r = await crmSendWhatsApp(id, { templateKey: tpl.name, params });
+        toast[r.data?.status === 'skipped' ? 'error' : 'success'](r.data?.status === 'skipped' ? `Skipped: ${r.data.error}` : 'WhatsApp queued');
+        onDone(); return;
+      }
+      else if (type === 'email') {
+        if (!v.subject || !v.html) { toast.error('Subject and body required'); setBusy(false); return; }
+        const r = await crmSendEmail(id, { subject: v.subject, html: v.html });
+        toast[r.data?.status === 'skipped' ? 'error' : 'success'](r.data?.status === 'skipped' ? `Skipped: ${r.data.error}` : 'Email queued');
+        onDone(); return;
+      }
       toast.success('Saved');
       onDone();
     } catch (e) { toast.error(e.response?.data?.message || 'Failed'); } finally { setBusy(false); }
@@ -198,12 +305,40 @@ function ActionModal({ type, lead, onClose, onDone }) {
               <input className="fb-input text-sm w-full" placeholder="What to do" value={v.title} onChange={set('title')} />
               <input type="datetime-local" className="fb-input text-sm w-full" value={v.dueAt} onChange={set('dueAt')} />
             </>}
-            {type === 'wa' && <>
-              <p className="text-[11px] adm-t3">Uses an approved AiSensy template name. Params separated by <code>|</code>. Sends are gated by the CRM kill-switch.</p>
-              <input className="fb-input text-sm w-full" placeholder="Approved template name" value={v.templateKey} onChange={set('templateKey')} />
-              <input className="fb-input text-sm w-full" placeholder="param1 | param2 | …" value={v.params} onChange={set('params')} />
-            </>}
+
+            {type === 'wa' && (waTemplates.length === 0 ? (
+              <p className="text-[13px] adm-t2">No approved WhatsApp templates yet. Add them in <a href="/admin/sales/templates" className="text-[#FE5100]">Templates</a> first.</p>
+            ) : <>
+              <div>
+                <label className="block text-[11px] font-medium adm-t2 mb-1">Template</label>
+                <Combobox placeholder="Pick a WhatsApp template" value={tplId} onChange={pickTemplate}
+                  options={waTemplates.map((t) => ({ value: t.id, label: t.label, hint: `${t.name} · ${(t.variables || []).length} var(s)` }))} />
+              </div>
+              {tpl && (tpl.variables || []).length > 0 && (
+                <div className="space-y-2 pt-1">
+                  <p className="text-[11px] adm-t3">Fill each slot (prefilled from the lead). Sent to AiSensy in order.</p>
+                  {tpl.variables.map((varDef, i) => (
+                    <div key={varDef.key || i}>
+                      <label className="block text-[11px] font-medium adm-t2 mb-0.5">{i + 1}. {varDef.label || varDef.key}</label>
+                      <input className="fb-input text-sm w-full" value={vars[varDef.key] ?? ''}
+                        placeholder={varDef.example || ''}
+                        onChange={(e) => setVars({ ...vars, [varDef.key]: e.target.value })} />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {tpl && (tpl.variables || []).length === 0 && <p className="text-[11px] adm-t3">This template has no variables.</p>}
+              <p className="text-[11px] adm-t3">Delivery is gated by the CRM kill-switch — off = recorded, not sent.</p>
+            </>)}
+
             {type === 'email' && <>
+              {emailTemplates.length > 0 && (
+                <div>
+                  <label className="block text-[11px] font-medium adm-t2 mb-1">Start from a template (optional)</label>
+                  <Combobox placeholder="Blank email" value={tplId} onChange={pickTemplate}
+                    options={emailTemplates.map((t) => ({ value: t.id, label: t.label, hint: t.subject || '' }))} />
+                </div>
+              )}
               <input className="fb-input text-sm w-full" placeholder="Subject" value={v.subject} onChange={set('subject')} />
               <textarea className="fb-input text-sm w-full" rows={6} placeholder="HTML body — {{first_name}}, {{business_name}} supported" value={v.html} onChange={set('html')} />
             </>}
