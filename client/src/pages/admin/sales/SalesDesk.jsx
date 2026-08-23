@@ -1,0 +1,136 @@
+import { useEffect, useState, useCallback } from 'react';
+import { PageHeader, Card, Skeleton } from '../../../components/admin/ui';
+import LeadDrawer from './LeadDrawer';
+import { crmGetDesk } from '../../../services/api';
+import { relTime } from './salesConstants';
+
+// The Sales Desk: five auto-populated queues the one-person team works top to
+// bottom. Read-only over GET /admin/crm/desk (deskService) — no searching for
+// who to contact. Click a lead → the shared LeadDrawer for the actual work.
+
+const QUEUES = [
+  { key: 'needs_attention', emoji: '🔥', title: 'Needs Attention', blurb: 'Start here — the most urgent.' },
+  { key: 'replies',         emoji: '🔵', title: 'Replies',         blurb: 'They answered. Answer back.' },
+  { key: 'followups',       emoji: '🟠', title: 'Follow-ups due',  blurb: 'Due today or overdue.' },
+  { key: 'high_intent',     emoji: '🟢', title: 'High Intent',     blurb: 'Strong buying signals, unclaimed.' },
+  { key: 'activation',      emoji: '🟣', title: 'Activation',      blurb: 'Signed up — help them go live.' },
+];
+
+const INTENT_TONE = {
+  high: 'bg-red-500/10 text-red-600', medium: 'bg-amber-500/10 text-amber-600',
+  low: 'bg-gray-400/10 adm-t3', activated: 'bg-emerald-500/10 text-emerald-600',
+};
+
+function ScoreBadge({ score, intent }) {
+  return (
+    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${INTENT_TONE[intent] || INTENT_TONE.low}`}>
+      {score ?? 0} · {intent || 'low'}
+    </span>
+  );
+}
+
+function DeskLeadRow({ lead, onOpen }) {
+  const lastTouch = lead.last_reply_at || lead.last_contacted_at;
+  return (
+    <button type="button" onClick={() => onOpen(lead.id)}
+      className="w-full text-left px-3 py-2.5 rounded-xl adm-hoverable border border-transparent hover:border-[#FE5100]/40 transition">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[13px] font-semibold adm-t1 truncate">{lead.business_name || lead.name || 'Unnamed lead'}</p>
+          {lead.business_name && lead.name && <p className="text-[11px] adm-t3 truncate">{lead.name}</p>}
+        </div>
+        <ScoreBadge score={lead.score} intent={lead.intent} />
+      </div>
+      {lead.reasons?.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          {lead.reasons.map((r, i) => (
+            <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#FE5100]/8 text-[#FE5100]">{r}</span>
+          ))}
+        </div>
+      )}
+      <div className="flex items-center justify-between mt-1.5 text-[11px] adm-t3">
+        <span className="truncate">{lead.next_action || 'Nurturing'}</span>
+        {lastTouch && <span className="shrink-0 ml-2">{relTime(lastTouch)}</span>}
+      </div>
+    </button>
+  );
+}
+
+function QueueSection({ q, data, onOpen }) {
+  const count = data?.count ?? 0;
+  const leads = data?.leads ?? [];
+  return (
+    <Card className="rounded-2xl p-4 flex flex-col">
+      <div className="flex items-center gap-2 mb-1">
+        <span>{q.emoji}</span>
+        <h2 className="font-bold adm-t1 text-sm">{q.title}</h2>
+        <span className="text-[11px] font-semibold adm-t3 ml-auto">{count}</span>
+      </div>
+      <p className="text-[11px] adm-t3 mb-3">{q.blurb}</p>
+      {leads.length === 0 ? (
+        <p className="text-[12px] adm-t3 py-6 text-center">Nothing here — you're on top of it. ✅</p>
+      ) : (
+        <div className="space-y-1.5">
+          {leads.map((l) => <DeskLeadRow key={`${q.key}-${l.id}`} lead={l} onOpen={onOpen} />)}
+          {count > leads.length && (
+            <p className="text-[11px] adm-t3 text-center pt-1">+{count - leads.length} more</p>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+export default function SalesDesk() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [drawerId, setDrawerId] = useState(null);
+
+  const load = useCallback(() => {
+    setLoading(true); setError(false);
+    crmGetDesk()
+      .then(({ data }) => setData(data))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  return (
+    <div>
+      <PageHeader
+        title="Sales Desk"
+        subtitle="Your queues, auto-populated. Work top to bottom — no searching."
+        actions={
+          <div className="flex gap-3 text-[12px]">
+            <a href="/admin/sales/leads" className="adm-t2 hover:text-[#FE5100]">All leads</a>
+            <a href="/admin/sales/pipeline" className="adm-t2 hover:text-[#FE5100]">Pipeline</a>
+            <a href="/admin/sales/follow-ups" className="adm-t2 hover:text-[#FE5100]">Follow-ups</a>
+          </div>
+        }
+      />
+
+      {error ? (
+        <Card className="rounded-2xl p-8 text-center">
+          <p className="adm-t1 font-semibold mb-2">Couldn't load the desk</p>
+          <button onClick={load} className="text-[13px] text-[#FE5100]">Retry</button>
+        </Card>
+      ) : loading ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {QUEUES.map((q) => <Skeleton key={q.key} className="h-48 rounded-2xl" />)}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {QUEUES.map((q) => (
+            <QueueSection key={q.key} q={q} data={data?.[q.key]} onOpen={setDrawerId} />
+          ))}
+        </div>
+      )}
+
+      {drawerId && (
+        <LeadDrawer leadId={drawerId} onClose={() => setDrawerId(null)} onChanged={load} />
+      )}
+    </div>
+  );
+}
