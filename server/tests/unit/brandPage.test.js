@@ -46,6 +46,55 @@ describe('brandPage', () => {
   });
 });
 
+const { pickErrorImage, ERROR_IMAGE_BASE } = require('../../utils/brandPage');
+
+describe('brandPage hero image', () => {
+  it('renders an <img> with the given absolute src when image is set', () => {
+    const html = brandPage({ code: 404, heading: 'h', body: 'b', image: 'https://assets.bookasloth.in/errors/sloth-glass.png' });
+    expect(html).toContain('<img');
+    expect(html).toContain('https://assets.bookasloth.in/errors/sloth-glass.png');
+  });
+  it('renders no <img> when image is absent', () => {
+    const html = brandPage({ code: 500, heading: 'h', body: 'b' });
+    expect(html).not.toContain('<img');
+  });
+  it('pickErrorImage returns a full CDN url', () => {
+    expect(pickErrorImage().startsWith(ERROR_IMAGE_BASE + '/')).toBe(true);
+  });
+});
+
+const errorHandler = require('../../middleware/errorMiddleware');
+
+// Minimal Express res/req doubles.
+const makeRes = () => {
+  const res = { statusCode: 404, headers: {}, body: '' };
+  res.status = (c) => { res.statusCode = c; return res; };
+  res.type = () => res;
+  res.send = (b) => { res.body = b; return res; };
+  res.json = (o) => { res.body = JSON.stringify(o); return res; };
+  return res;
+};
+const htmlReq = { originalUrl: '/nope', method: 'GET', path: '/nope', accepts: () => 'html' };
+
+describe('errorMiddleware 404 branding', () => {
+  it('renders a CDN image + vanishing-act copy on a browser 404', () => {
+    const res = makeRes();
+    errorHandler(Object.assign(new Error('x'), { expose: false }), htmlReq, res, () => {});
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toContain('assets.bookasloth.in/errors/');
+    expect(res.body).toContain('This page pulled a vanishing act');
+  });
+
+  it('gives 410 the same detective-sloth treatment as 404', () => {
+    const res = makeRes();
+    res.statusCode = 410;
+    errorHandler(Object.assign(new Error('x'), { expose: false }), htmlReq, res, () => {});
+    expect(res.statusCode).toBe(410);
+    expect(res.body).toContain('assets.bookasloth.in/errors/');
+    expect(res.body).toContain('This page pulled a vanishing act');
+  });
+});
+
 describe('statusPage', () => {
   it('shows all-operational + Ready when the DB is reachable', () => {
     const html = statusPage({ db: true, uptimeSec: 3661 });

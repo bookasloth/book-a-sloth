@@ -15,6 +15,7 @@ export default function ErrorLayout({
   title,
   message,
   art,
+  image,
   primaryLabel,
   onPrimary,
   seoTitle,
@@ -39,7 +40,7 @@ export default function ErrorLayout({
         </a>
 
         <div className="flex justify-center mb-5 text-[#1a1a1a] dark:text-gray-100">
-          <ErrorIllustration art={art} />
+          <ErrorIllustration art={art} image={image} />
         </div>
 
         {eyebrow && (

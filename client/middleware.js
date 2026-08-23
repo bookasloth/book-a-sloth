@@ -29,6 +29,44 @@ const API_ORIGIN = process.env.API_ORIGIN || 'https://book-a-sloth.onrender.com'
 
 const SKIP = new Set(RESERVED_FIRST_SEGMENTS);
 
+// Branded profile-404 card. Inlined here because the Vercel edge bundle can't
+// import server/utils/brandPage.js (different runtime) — keep this visually in
+// sync with brandPage.js by hand. Random detective-sloth variant per request.
+const EDGE_ERROR_IMAGES = [
+  'https://assets.bookasloth.in/errors/sloth-tracks.png',
+  'https://assets.bookasloth.in/errors/sloth-think.png',
+  'https://assets.bookasloth.in/errors/sloth-glass.png',
+];
+export function renderProfile404Html(rawSlug) {
+  const slug = String(rawSlug).replace(/[^a-z0-9._-]/g, '');
+  const img = EDGE_ERROR_IMAGES[Math.floor(Math.random() * EDGE_ERROR_IMAGES.length)];
+  return (
+    `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">` +
+    `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+    `<title>No host at this address · Book A Sloth</title>` +
+    `<meta name="robots" content="noindex">` +
+    `<link rel="preconnect" href="https://fonts.googleapis.com">` +
+    `<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&family=Poppins:wght@400;500&display=swap" rel="stylesheet">` +
+    `<style>` +
+    `:root{--orange:#FE5100;--ink:#141416;--muted:#5b5b62;--bg:#faf8f5;--card:#fff;--line:#ececec}` +
+    `*{box-sizing:border-box}html,body{margin:0;height:100%}` +
+    `body{background:var(--bg);color:var(--ink);font-family:'Poppins',system-ui,sans-serif;display:grid;place-items:center;padding:24px}` +
+    `.card{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:460px;width:100%;padding:40px 32px;text-align:center;box-shadow:0 10px 40px rgba(20,20,22,.06)}` +
+    `.hero{width:132px;height:132px;object-fit:contain;margin:0 auto 20px;display:block}` +
+    `h1{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:24px;line-height:1.2;margin:0 0 12px}` +
+    `p{color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 28px}` +
+    `a.btn{display:inline-block;background:var(--orange);color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:12px}` +
+    `@media (prefers-color-scheme:dark){:root{--ink:#f5f5f7;--muted:#a1a1aa;--bg:#0e0e10;--card:#17171a;--line:#26262b}}` +
+    `</style></head>` +
+    `<body><main class="card">` +
+    `<img class="hero" src="${img}" alt="" width="132" height="132">` +
+    `<h1>No host at this address</h1>` +
+    `<p>We couldn't track anyone down at <strong>/${slug}</strong>. The link may be mistyped, or the profile has moved on.</p>` +
+    `<a class="btn" href="https://bookasloth.com/explore">Explore hosts</a>` +
+    `</main></body></html>`
+  );
+}
+
 // Bot User-Agent patterns — social scrapers + major non-JS crawlers.
 // Intentionally does NOT include Googlebot (renders JS fine) to avoid
 // double-serving and cache-busting for the world's most important crawler.
@@ -117,17 +155,10 @@ export default async function middleware(request) {
       // Resolver is explicit: this username never existed. Real 404, noindex —
       // humans get a link out, crawlers drop the URL instead of indexing the
       // 200 homepage shell.
-      return new Response(
-        `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">` +
-        `<meta name="viewport" content="width=device-width,initial-scale=1">` +
-        `<title>Profile not found | Book A Sloth</title>` +
-        `<meta name="robots" content="noindex">` +
-        `</head><body style="font-family:sans-serif;display:grid;place-items:center;min-height:90vh;text-align:center">` +
-        `<div><h1>This profile doesn't exist</h1>` +
-        `<p>No host at <strong>/${slug.replace(/[^a-z0-9._-]/g, '')}</strong> — the link may be mistyped or the profile removed.</p>` +
-        `<p><a href="https://bookasloth.com/explore">Explore hosts on Book A Sloth</a></p></div></body></html>`,
-        { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } },
-      );
+      return new Response(renderProfile404Html(slug), {
+        status: 404,
+        headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
+      });
     }
     if (!res.ok) return;
     const data = await res.json();

@@ -25,6 +25,20 @@ export const ACTIONS = Object.freeze({
   RELOAD: 'reload',    // re-request the current URL
 });
 
+// Detective-sloth art for the `lost` mood (404/410). Hosted on the external CDN
+// (not in-repo); a missing file just renders an empty box. One random variant
+// per visit — see pickErrorImage.
+export const ERROR_IMAGE_BASE = 'https://assets.bookasloth.in/errors';
+export const ERROR_IMAGE_VARIANTS = Object.freeze([
+  'sloth-tracks.png',
+  'sloth-think.png',
+  'sloth-glass.png',
+]);
+export function pickErrorImage() {
+  const i = Math.floor(Math.random() * ERROR_IMAGE_VARIANTS.length);
+  return `${ERROR_IMAGE_BASE}/${ERROR_IMAGE_VARIANTS[i]}`;
+}
+
 export const ERROR_CATALOG = Object.freeze({
   400: {
     title: "That didn't quite land",
@@ -45,9 +59,10 @@ export const ERROR_CATALOG = Object.freeze({
     cta: { label: 'Go to Dashboard', action: ACTIONS.DASHBOARD },
   },
   404: {
-    title: 'This page wandered off',
-    message: 'The page you’re after doesn’t exist or has moved. Even sloths lose track sometimes.',
+    title: 'This page pulled a vanishing act',
+    message: "We searched high and low — magnifying glass and all — but this page isn't here. It may have moved, or it never existed.",
     art: 'lost',
+    image: true,
     cta: { label: 'Go Home', action: ACTIONS.HOME },
   },
   405: {
@@ -69,9 +84,10 @@ export const ERROR_CATALOG = Object.freeze({
     cta: { label: 'Refresh', action: ACTIONS.RELOAD },
   },
   410: {
-    title: 'Gone for good',
-    message: 'This page was permanently removed and isn’t coming back.',
+    title: "This one's gone for good",
+    message: 'We looked, but this page was permanently removed and isn’t coming back.',
     art: 'lost',
+    image: true,
     cta: { label: 'Go Home', action: ACTIONS.HOME },
   },
   413: {
