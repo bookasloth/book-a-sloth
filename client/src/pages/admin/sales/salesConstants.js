@@ -49,6 +49,8 @@ export function leadScore(lead) {
   if (['referral', 'website'].includes(lead.source)) s += 5;
   const last = lead.last_activity_at || lead.last_contacted_at;
   if (last) { const days = (Date.now() - new Date(last)) / 864e5; if (days < 3) s += 10; else if (days < 7) s += 5; else if (days > 30) s -= 10; }
+  // Behavioural signal from provider webhooks (email open/click, WA read/reply).
+  if (lead.last_engaged_at) { const d = (Date.now() - new Date(lead.last_engaged_at)) / 864e5; if (d < 3) s += 15; else if (d < 14) s += 8; }
   s = Math.max(0, Math.min(100, Math.round(s)));
   return { score: s, temp: s >= 70 ? 'hot' : s >= 40 ? 'warm' : 'cold' };
 }

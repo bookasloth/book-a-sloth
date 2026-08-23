@@ -17,6 +17,7 @@ const crypto = require('crypto');
 const { safeError } = require('../utils/httpError');
 const { supabaseAdmin } = require('../config/supabase');
 const aisensy = require('../services/aisensyService');
+const { recordDeliveryEvent } = require('../services/crm/webhookEvents');
 
 // Constant-time secret comparison with a length guard (timingSafeEqual throws
 // on unequal-length buffers).
@@ -61,8 +62,21 @@ const handleWebhook = async (req, res) => {
       return res.json({ ok: true, action: 'opted_out' });
     }
 
-    // Delivery/read status: acknowledged; funnel beyond sent/failed is v2.
-    return res.json({ ok: true, action: status ? 'status_ack' : 'ignored' });
+    // CRM delivery funnel: reflect delivered/read/reply on the matching
+    // crm_messages row (best-effort; never blocks the webhook ack).
+    const providerMessageId = body.messageId || body.submitted_message_id || body.msgId || body.id || null;
+    let event = null;
+    if (text) event = 'replied';                       // inbound (non-opt-out) reply
+    else {
+      const st = String(status).toLowerCase();
+      if (st.includes('read')) event = 'read';
+      else if (st.includes('deliver')) event = 'delivered';
+      else if (st.includes('sent')) event = 'sent';
+      else if (st.includes('fail') || st.includes('error') || st.includes('undeliver')) event = 'failed';
+    }
+    if (event) await recordDeliveryEvent({ channel: 'whatsapp', event, providerMessageId, phone: phoneRaw, payload: body });
+
+    return res.json({ ok: true, action: event || (status ? 'status_ack' : 'ignored') });
   } catch (e) { safeError(res, e); }
 };
 

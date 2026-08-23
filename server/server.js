@@ -63,6 +63,9 @@ app.use(offenseTracker);
 // so a malformed/oversized webhook body is rejected early (Razorpay payloads are
 // a few KB; 1mb is generous headroom).
 app.use('/api/payment/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
+// Raw body for the Resend email webhook — Svix signature is verified over the
+// exact bytes (see resendWebhookController). Must precede express.json.
+app.use('/api/webhooks/resend', express.raw({ type: 'application/json', limit: '1mb' }));
 
 // Explicit JSON body cap (defence-in-depth vs large-body DoS). This equals the
 // body-parser default but is stated so the bound is intentional and can't drift
@@ -160,6 +163,7 @@ app.use('/api/blogs',       require('./routes/blogRoutes'));
 app.use('/api/vendors',        require('./routes/badgePublicRoutes'));
 app.use('/api/feature-flags',  require('./routes/featureFlagRoutes'));
 app.use('/api/notifications', require('./routes/notificationWebhookRoutes')); // public AiSensy webhook (secret-gated)
+app.use('/api/webhooks',      require('./routes/webhookRoutes')); // public provider webhooks (Resend, Svix-signed)
 app.use('/api/notifications', require('./routes/notificationRoutes'));         // in-app feed (bell panel, auth-gated)
 app.use('/api/email',         require('./routes/emailRoutes')); // public unsubscribe (signed-token gated)
 app.use('/api/contact',       require('./routes/contactRoutes')); // public contact form → support email
