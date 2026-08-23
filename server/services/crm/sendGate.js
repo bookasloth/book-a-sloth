@@ -22,13 +22,48 @@ const { normalizePhone } = require('../aisensyService');
 
 const SEND_FLAG = 'crm_admin_sends';
 
+// Coordinated-conversation limits — apply to AUTOMATED sends only (sequences /
+// queue-drained), never to a human's ad-hoc composer send. A `defer:true` reason
+// means "not now, try later" (re-queue) rather than "never" (skip).
+const CAP_WINDOW_MS = 48 * 60 * 60 * 1000;   // ≤1 automated message per lead / 48h
+const QUIET_START_IST = 9;                   // send window [09:00, 20:00) Asia/Kolkata
+const QUIET_END_IST = 20;
+
 const validEmail = (e) => typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+
+// Current hour in Asia/Kolkata as 0–23. hourCycle:'h23' avoids the midnight "24"
+// quirk that hour12:false + 2-digit produces on some ICU builds.
+function istHour() {
+  return Number(new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata', hour: '2-digit', hourCycle: 'h23',
+  }).format(new Date()));
+}
+
+// Quiet-hours + frequency cap. Returns a defer result to block, or null to allow.
+// Fail-open on the count query (matches the opt-out lookups) — an outage must not
+// silently freeze every automated send.
+async function throttle(lead) {
+  const h = istHour();
+  if (h < QUIET_START_IST || h >= QUIET_END_IST) return { ok: false, reason: 'quiet_hours', defer: true };
+  try {
+    const since = new Date(Date.now() - CAP_WINDOW_MS).toISOString();
+    const { count } = await supabaseAdmin
+      .from('crm_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('lead_id', lead.id).eq('status', 'sent').gte('sent_at', since);
+    if ((count || 0) > 0) return { ok: false, reason: 'frequency_capped', defer: true };
+  } catch (_) { /* fail-open */ }
+  return null;
+}
 
 /**
  * @param {object} lead   a leads row (needs phone/whatsapp_phone/email, do_not_contact, status, contact_id)
  * @param {'whatsapp'|'email'} channel
+ * @param {object} [opts]
+ * @param {boolean} [opts.automated=false]  true for sequence/queue sends → subject to
+ *        quiet-hours + frequency cap. Human composer sends stay exempt.
  */
-async function canSend(lead, channel) {
+async function canSend(lead, channel, opts = {}) {
   if (!lead) return { ok: false, reason: 'no_lead' };
 
   // 1. Global kill-switch (fail-closed).
@@ -41,18 +76,21 @@ async function canSend(lead, channel) {
     const dest = normalizePhone(lead.whatsapp_phone || lead.phone);
     if (!dest) return { ok: false, reason: 'invalid_phone' };
     if (await isSuppressed(lead, 'whatsapp')) return { ok: false, reason: 'whatsapp_suppressed' };
-    return { ok: true };
-  }
-
-  if (channel === 'email') {
+  } else if (channel === 'email') {
     const email = (lead.email || '').trim().toLowerCase();
     if (!validEmail(email)) return { ok: false, reason: 'invalid_email' };
     if (await isEmailUnsubscribed(email)) return { ok: false, reason: 'email_unsubscribed' };
     if (await isSuppressed(lead, 'email')) return { ok: false, reason: 'email_suppressed' };
-    return { ok: true };
+  } else {
+    return { ok: false, reason: 'unknown_channel' };
   }
 
-  return { ok: false, reason: 'unknown_channel' };
+  // 3. Coordinated-conversation throttle (automated sends only).
+  if (opts.automated) {
+    const t = await throttle(lead);
+    if (t) return t;
+  }
+  return { ok: true };
 }
 
 // email_unsubscribes is the platform-wide HMAC opt-out list (v3.7). Fail OPEN on

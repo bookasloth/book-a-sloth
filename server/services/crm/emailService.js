@@ -18,9 +18,9 @@ const { canSend } = require('./sendGate');
  * @param {string} [p.text]
  * @returns {{success:boolean, skipped?:boolean, reason?:string, providerMessageId?:string, error?:string}}
  */
-async function send({ lead, subject, html, text }) {
-  const gate = await canSend(lead, 'email');
-  if (!gate.ok) return { success: false, skipped: true, reason: gate.reason };
+async function send({ lead, subject, html, text, automated = false }) {
+  const gate = await canSend(lead, 'email', { automated });
+  if (!gate.ok) return { success: false, skipped: true, reason: gate.reason, defer: gate.defer };
 
   if (!subject || !html) return { success: false, error: 'missing_subject_or_body' };
 

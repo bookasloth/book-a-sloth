@@ -5,6 +5,7 @@ import {
   crmGetLead, crmLeadTimeline, crmLeadMessages, crmSetStatus, crmAddLeadNote, crmCreateFollowUp,
   crmCompleteFollowUp, crmAddTag, crmRemoveTag, crmSetDnc, crmLogCall, crmSendWhatsApp, crmSendEmail,
   crmListTemplates, crmListTags, crmCreateTag, crmUpdateLead,
+  crmListSequences, crmEnroll,
 } from '../../../services/api';
 import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, rupees, relTime, leadScore } from './salesConstants';
 import { colorMap } from './salesTagColors';
@@ -14,6 +15,43 @@ import toast from 'react-hot-toast';
 
 const MSG_TONE = { sent: 'ok', delivered: 'ok', read: 'ok', queued: 'neutral', processing: 'neutral', failed: 'danger', bounced: 'danger', skipped: 'warn' };
 const TABS = [['activity', 'Activity'], ['messages', 'Messages'], ['notes', 'Notes'], ['followups', 'Follow-ups']];
+
+// Enrol this lead into an active drip sequence. Loads the list on first open;
+// enrolment is idempotent server-side (per sequence+lead). Sends stay gated by
+// the CRM kill-switch, so this only schedules — nothing goes out until that's on.
+function EnrollControl({ leadId, onDone }) {
+  const [open, setOpen] = useState(false);
+  const [seqs, setSeqs] = useState(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (open && seqs === null) {
+      crmListSequences()
+        .then(({ data }) => setSeqs((Array.isArray(data) ? data : []).filter((s) => s.is_active)))
+        .catch(() => setSeqs([]));
+    }
+  }, [open, seqs]);
+  const enroll = async (id) => {
+    setBusy(true);
+    try { await crmEnroll(leadId, id); toast.success('Enrolled in sequence'); setOpen(false); onDone?.(); }
+    catch (e) { toast.error(e.response?.data?.message || 'Could not enrol'); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="relative inline-block">
+      <Btn variant="outline" size="sm" onClick={() => setOpen((v) => !v)}>Enrol</Btn>
+      {open && (
+        <div className="absolute z-20 mt-1 w-60 rounded-xl adm-card shadow-lg max-h-60 overflow-auto">
+          {seqs === null ? <p className="px-3 py-2 text-[12px] adm-t3">Loading…</p>
+            : seqs.length === 0 ? <p className="px-3 py-2 text-[12px] adm-t3">No active sequences. <a href="/admin/sales/sequences" className="text-[#FE5100]">Create one</a>.</p>
+            : seqs.map((s) => (
+              <button key={s.id} type="button" disabled={busy} onClick={() => enroll(s.id)}
+                className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t1 disabled:opacity-50">{s.name}</button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Shared lead workspace — rendered both in the right-side drawer and on the
 // full-page /leads/:id route. `onChanged` lets the parent list refresh.
@@ -125,6 +163,7 @@ export default function LeadPanel({ leadId, onChanged, onClose }) {
         <Btn variant="outline" size="sm" onClick={() => setModal('call')}>Log Call</Btn>
         <Btn variant="outline" size="sm" onClick={() => setModal('note')}>Note</Btn>
         <Btn variant="outline" size="sm" onClick={() => setModal('followup')}>Follow-up</Btn>
+        <EnrollControl leadId={lead.id} onDone={refresh} />
         <Btn variant="outline" size="sm" onClick={toggleDnc}>{lead.do_not_contact ? 'Clear DNC' : 'DNC'}</Btn>
       </div>
 
