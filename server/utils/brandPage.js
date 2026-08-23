@@ -5,7 +5,7 @@
 // Poppins body, orange #FE5100 — matches bookasloth.com.
 const SITE = 'https://bookasloth.com';
 
-const ERROR_IMAGE_BASE = 'https://assets.bookasloth.in/errors';
+const ERROR_IMAGE_BASE = 'https://company-assets.bookasloth.in/images/error';
 const ERROR_IMAGE_VARIANTS = ['sloth-tracks.png', 'sloth-think.png', 'sloth-glass.png'];
 function pickErrorImage() {
   const i = Math.floor(Math.random() * ERROR_IMAGE_VARIANTS.length);
