@@ -9,7 +9,7 @@
  */
 const express = require('express');
 const { requireAdmin } = require('../middleware/adminMiddleware');
-const c = require('../controllers/crmController');
+const c = require('../controllers/adminCrmController');
 
 const router = express.Router();
 const view = requireAdmin('leads.view');
