@@ -12,7 +12,7 @@ function mockRes() {
   return res;
 }
 
-function load({ env = {}, blocklist = {} } = {}) {
+function load({ env = {}, blocklist = {}, jwtVerify } = {}) {
   jest.resetModules();
   process.env = { ...OLD_ENV, IP_BLOCK_ENABLED: 'true', ...env };
   const mock = {
@@ -20,6 +20,11 @@ function load({ env = {}, blocklist = {} } = {}) {
     recordRateLimitViolation: blocklist.recordRateLimitViolation || jest.fn(() => Promise.resolve()),
   };
   jest.doMock('../../lib/ipBlocklist', () => mock);
+  // Admin JWT verifier (used by the offense-tracker admin exemption). Default
+  // rejects — i.e. no valid admin token — so anonymous traffic is still tracked.
+  jest.doMock('../../services/adminAuthService', () => ({
+    jwtVerify: jwtVerify || jest.fn(() => { throw new Error('no token'); }),
+  }));
   // loadTestMode is real; default off. Allow override via env if a test needs it.
   const mod = require('../../middleware/ipGuard');
   return { mod, mock };
@@ -129,6 +134,54 @@ describe('offenseTracker', () => {
     res._finish();
 
     expect(recordRateLimitViolation).not.toHaveBeenCalled();
+  });
+
+  test('does NOT record a 429 from an authenticated admin (exempt from auto-ban)', () => {
+    const recordRateLimitViolation = jest.fn(() => Promise.resolve());
+    const { mod } = load({
+      blocklist: { recordRateLimitViolation },
+      jwtVerify: jest.fn(() => ({ type: 'admin', sub: 'a1' })), // valid admin token
+    });
+    const req = { ip: '9.8.7.6', path: '/api/admin/crm/leads', headers: { authorization: 'Bearer good' } };
+    const res = mockRes();
+
+    mod.offenseTracker(req, res, jest.fn());
+    res.statusCode = 429;
+    res._finish();
+
+    expect(recordRateLimitViolation).not.toHaveBeenCalled();
+  });
+
+  test('DOES record a 429 when the bearer token is not a valid admin token', () => {
+    const recordRateLimitViolation = jest.fn(() => Promise.resolve());
+    const { mod } = load({
+      blocklist: { recordRateLimitViolation },
+      jwtVerify: jest.fn(() => { throw new Error('bad signature'); }),
+    });
+    const req = { ip: '9.8.7.6', path: '/api/admin/crm/leads', headers: { authorization: 'Bearer forged' } };
+    const res = mockRes();
+
+    mod.offenseTracker(req, res, jest.fn());
+    res.statusCode = 429;
+    res._finish();
+
+    expect(recordRateLimitViolation).toHaveBeenCalledWith('9.8.7.6');
+  });
+
+  test('DOES record a 429 for a non-admin token type (e.g. a vendor token)', () => {
+    const recordRateLimitViolation = jest.fn(() => Promise.resolve());
+    const { mod } = load({
+      blocklist: { recordRateLimitViolation },
+      jwtVerify: jest.fn(() => ({ type: 'vendor' })),
+    });
+    const req = { ip: '9.8.7.6', path: '/api/host/services', headers: { authorization: 'Bearer vendor' } };
+    const res = mockRes();
+
+    mod.offenseTracker(req, res, jest.fn());
+    res.statusCode = 429;
+    res._finish();
+
+    expect(recordRateLimitViolation).toHaveBeenCalledWith('9.8.7.6');
   });
 });
 

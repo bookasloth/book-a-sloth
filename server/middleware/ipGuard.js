@@ -29,6 +29,25 @@ function isExempt(req) {
   return EXEMPT_PREFIXES.some((e) => p === e || p.startsWith(e + '/') || p.startsWith(e + '?') || p === e);
 }
 
+// A request carrying a VALID admin JWT is an already-authenticated admin. They
+// are still rate-limited (429s are returned), but must never be counted toward
+// an auto-ban: the admin panel fires several API calls per page load, so normal
+// use could otherwise trip the offense threshold and lock an admin out of their
+// own dashboard. Attackers can't forge a valid admin token, and failed logins
+// carry no token, so brute-force protection is unaffected. Lazy require so the
+// auth service (and its JWT secret) only loads when a 429 actually fires.
+function isAuthenticatedAdmin(req) {
+  const h = req && req.headers && req.headers.authorization;
+  if (!h || !h.startsWith('Bearer ')) return false;
+  try {
+    const { jwtVerify } = require('../services/adminAuthService');
+    const payload = jwtVerify(h.slice(7));
+    return !!payload && payload.type === 'admin';
+  } catch (_) {
+    return false;
+  }
+}
+
 function ipGuard(req, res, next) {
   try {
     if (!config.enabled) return next();
@@ -51,7 +70,8 @@ function offenseTracker(req, res, next) {
     res.on('finish', () => {
       // A 429 means a rate limiter rejected this request → count it toward an
       // auto-ban. Fire-and-forget; the recorder swallows its own errors.
-      if (res.statusCode === 429) {
+      // Authenticated admins are exempt (still rate-limited, never auto-banned).
+      if (res.statusCode === 429 && !isAuthenticatedAdmin(req)) {
         Promise.resolve(ipBlocklist.recordRateLimitViolation(getClientIp(req))).catch(() => {});
       }
     });
