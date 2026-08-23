@@ -627,6 +627,7 @@ export const crmCreateLead       = (data)        => API.post('/admin/crm/leads',
 export const crmGetLead          = (id)          => API.get(`/admin/crm/leads/${id}`);
 export const crmUpdateLead       = (id, data)    => API.patch(`/admin/crm/leads/${id}`, data);
 export const crmLeadTimeline     = (id)          => API.get(`/admin/crm/leads/${id}/timeline`);
+export const crmLeadMessages     = (id)          => API.get(`/admin/crm/leads/${id}/messages`);
 export const crmSetStatus        = (id, status)  => API.post(`/admin/crm/leads/${id}/status`, { status });
 export const crmSetOwner         = (id, ownerAdminId) => API.post(`/admin/crm/leads/${id}/owner`, { ownerAdminId });
 export const crmAddTag           = (id, tag)     => API.post(`/admin/crm/leads/${id}/tags`, { tag });

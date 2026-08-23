@@ -51,6 +51,7 @@ router.post('/leads', manage, c.createLead);
 router.get('/leads/:id', view, c.getLead);
 router.patch('/leads/:id', manage, c.updateLead);
 router.get('/leads/:id/timeline', view, c.getTimeline);
+router.get('/leads/:id/messages', view, c.leadMessages);
 
 // Lead actions
 router.post('/leads/:id/status', manage, c.setStatus);
