@@ -8,6 +8,9 @@
 // Adding art for a new category = add a case here + reference its key in the
 // catalog. No other wiring.
 
+import { useState } from 'react';
+import { pickErrorImage } from '../../config/errorCatalog';
+
 const SIZE = 132;
 
 function Frame({ children, label }) {
@@ -162,6 +165,20 @@ const ART = {
   ),
 };
 
-export default function ErrorIllustration({ art }) {
+export default function ErrorIllustration({ art, image = false }) {
+  // Stable within a mount, fresh per visit — never pick in render body.
+  const [src] = useState(() => (image ? pickErrorImage() : null));
+  if (image) {
+    return (
+      <img
+        src={src}
+        alt=""
+        width={SIZE}
+        height={SIZE}
+        loading="eager"
+        className="bas-error-art"
+      />
+    );
+  }
   return ART[art] || ART.confused;
 }

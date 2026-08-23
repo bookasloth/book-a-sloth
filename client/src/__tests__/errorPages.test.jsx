@@ -2,7 +2,7 @@
 // ErrorPage render, the unknown-code fallback, and the Offline page. Analytics is
 // mocked so the dynamic import in ErrorPage's effect can't pull the real adapters.
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, render as rtlRender } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('../services/analytics', () => ({ analytics: { track: vi.fn() } }));
@@ -10,6 +10,7 @@ vi.mock('../services/analytics/events', () => ({ EVENTS: { ERROR_PAGE_VIEWED: 'e
 
 import ErrorPage from '../pages/ErrorPage';
 import Offline from '../pages/Offline';
+import ErrorIllustration from '../components/error/ErrorIllustration';
 import { ERROR_CATALOG, ACTIONS, getErrorEntry, FALLBACK_CODE } from '../config/errorCatalog';
 import { ERROR_IMAGE_BASE, ERROR_IMAGE_VARIANTS, pickErrorImage } from '../config/errorCatalog';
 
@@ -83,5 +84,20 @@ describe('error image variants', () => {
   });
   it('uses the new detective copy for 404', () => {
     expect(ERROR_CATALOG[404].title).toBe('This page pulled a vanishing act');
+  });
+});
+
+describe('ErrorIllustration image mode', () => {
+  it('renders a CDN <img> when image is set', () => {
+    const { container } = rtlRender(<ErrorIllustration art="lost" image />);
+    const img = container.querySelector('img');
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('src').startsWith('https://assets.bookasloth.in/errors/')).toBe(true);
+    expect(img.getAttribute('alt')).toBe('');
+  });
+  it('renders the SVG (no img) when image is not set', () => {
+    const { container } = rtlRender(<ErrorIllustration art="lost" />);
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('svg')).toBeTruthy();
   });
 });
