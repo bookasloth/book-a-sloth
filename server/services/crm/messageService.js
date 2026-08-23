@@ -101,11 +101,18 @@ async function enqueue({
   return row;
 }
 
-/** Deliver one crm_messages row now; updates status + writes a timeline activity. */
-async function dispatch(row, leadArg) {
+/**
+ * Deliver one crm_messages row now; updates status + writes a timeline activity.
+ * @param {object} [opts]
+ * @param {boolean} [opts.automated=false]  true for queue/sequence sends → subject
+ *        to the sendGate quiet-hours + frequency cap. Human composer sends (the
+ *        immediate enqueue path) leave this false and are exempt.
+ */
+async function dispatch(row, leadArg, opts = {}) {
   const lead = leadArg || (await getLead(row.lead_id));
   if (!lead) return markFailed(row, 'lead_missing');
 
+  const automated = !!opts.automated;
   let result;
   if (row.channel === 'whatsapp') {
     result = await whatsapp.send({
@@ -113,11 +120,24 @@ async function dispatch(row, leadArg) {
       templateKey: row.template_key,
       templateParams: renderParams(row.variables?.params || row.variables?.templateParams, lead),
       userName: lead.name,
+      automated,
     });
   } else {
     const subject = renderVars(row.subject, lead);
     const html = renderVars(row.variables?.html || row.body_preview || '', lead);
-    result = await email.send({ lead, subject, html, text: renderVars(row.variables?.text, lead) });
+    result = await email.send({ lead, subject, html, text: renderVars(row.variables?.text, lead), automated });
+  }
+
+  // Quiet-hours / frequency-capped: re-queue for later WITHOUT consuming a retry
+  // attempt — this is "not now", not a failure.
+  if (result.defer) {
+    const delayMs = result.reason === 'quiet_hours' ? 60 * 60 * 1000 : 6 * 60 * 60 * 1000;
+    const next = new Date(Date.now() + delayMs).toISOString();
+    const now = new Date().toISOString();
+    await supabaseAdmin.from('crm_messages')
+      .update({ status: 'queued', next_attempt_at: next, error: result.reason, updated_at: now })
+      .eq('id', row.id);
+    return { ...row, status: 'queued', deferred: true, error: result.reason };
   }
 
   if (result.skipped) {
@@ -178,7 +198,7 @@ async function processQueue() {
       .from('crm_messages').update({ status: 'processing', updated_at: nowIso })
       .eq('id', row.id).eq('status', 'queued').select('id').maybeSingle();
     if (!claimed) continue;
-    const out = await dispatch({ ...row, status: 'processing' });
+    const out = await dispatch({ ...row, status: 'processing' }, null, { automated: true });
     if (out.status === 'sent') sent++;
     else if (out.status === 'skipped') skipped++;
     else if (out.status === 'failed') failed++;
