@@ -11,6 +11,7 @@ vi.mock('../services/analytics/events', () => ({ EVENTS: { ERROR_PAGE_VIEWED: 'e
 import ErrorPage from '../pages/ErrorPage';
 import Offline from '../pages/Offline';
 import { ERROR_CATALOG, ACTIONS, getErrorEntry, FALLBACK_CODE } from '../config/errorCatalog';
+import { ERROR_IMAGE_BASE, ERROR_IMAGE_VARIANTS, pickErrorImage } from '../config/errorCatalog';
 
 const renderAt = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
@@ -62,5 +63,25 @@ describe('Offline page', () => {
     renderAt(<Offline />);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe("You're offline");
     expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+});
+
+describe('error image variants', () => {
+  it('exposes the CDN base and three variants', () => {
+    expect(ERROR_IMAGE_BASE).toBe('https://assets.bookasloth.in/errors');
+    expect(ERROR_IMAGE_VARIANTS).toEqual(['sloth-tracks.png', 'sloth-think.png', 'sloth-glass.png']);
+  });
+  it('pickErrorImage returns a full URL from the variant set', () => {
+    const url = pickErrorImage();
+    expect(url.startsWith('https://assets.bookasloth.in/errors/')).toBe(true);
+    expect(ERROR_IMAGE_VARIANTS.some((v) => url.endsWith(v))).toBe(true);
+  });
+  it('marks 404 and 410 as image-driven', () => {
+    expect(ERROR_CATALOG[404].image).toBe(true);
+    expect(ERROR_CATALOG[410].image).toBe(true);
+    expect(ERROR_CATALOG[500].image).toBeUndefined();
+  });
+  it('uses the new detective copy for 404', () => {
+    expect(ERROR_CATALOG[404].title).toBe('This page pulled a vanishing act');
   });
 });
