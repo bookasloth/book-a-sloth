@@ -62,6 +62,8 @@ async function upsertLead(patch = {}, { source, createdBy = '' } = {}) {
   const { data, error } = await supabaseAdmin.from('leads').insert(row).select('*').single();
   if (error) throw error;
   await logActivity(data.id, 'lead_created', { title: `Lead created (${row.source})`, meta: { source: row.source } });
+  // Stitch any intent events that fired before this lead existed (best-effort).
+  require('./intentEvents').attachToLead(data).catch(() => {});
   return { lead: data, created: true };
 }
 
