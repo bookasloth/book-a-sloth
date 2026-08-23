@@ -14,8 +14,17 @@ const messageService = require('../services/crm/messageService');
 const followUpService = require('../services/crm/followUpService');
 const sequenceService = require('../services/crm/sequenceService');
 const attribution = require('../services/crm/attribution');
+const deskService = require('../services/crm/deskService');
 
 const actor = (req) => req.admin?.id || null;
+
+// GET /admin/crm/desk — the five auto-populated Sales Desk queues.
+const getDesk = async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 25, 100);
+    res.json(await deskService.getDesk(limit));
+  } catch (e) { safeError(res, e); }
+};
 
 // Fields an admin may edit directly on a lead (status/owner/tags/dnc have their own routes).
 const EDITABLE = ['name', 'phone', 'whatsapp_phone', 'email', 'business_name', 'website', 'instagram', 'linkedin', 'city', 'profession', 'lost_reason', 'expected_value_paise'];
@@ -379,7 +388,7 @@ const refreshAttribution = async (req, res) => {
 };
 
 module.exports = {
-  dashboard, pipeline,
+  dashboard, pipeline, getDesk,
   listLeads, createLead, getLead, updateLead, getTimeline, leadMessages,
   setStatus, setOwner, addTag, removeTag, setDnc, addNote, logCall,
   sendWhatsApp, sendEmail,

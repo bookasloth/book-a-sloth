@@ -35,7 +35,7 @@ const WA_MAP = {
   delivered: { status: 'delivered', stamp: 'delivered_at' },
   read: { status: 'read', stamp: 'read_at', activity: 'whatsapp_read', engaged: true },
   failed: { status: 'failed', stamp: 'failed_at' },
-  replied: { activity: 'whatsapp_reply', engaged: true },
+  replied: { activity: 'whatsapp_reply', engaged: true, reply: true },
 };
 
 async function findMessage({ providerMessageId, channel, phone, email }) {
@@ -79,7 +79,11 @@ async function recordDeliveryEvent({ channel, event, providerMessageId, payload 
         if (Object.keys(patch).length > 1) await supabaseAdmin.from('crm_messages').update(patch).eq('id', msg.id);
 
         if (map.engaged) {
-          await supabaseAdmin.from('leads').update({ last_engaged_at: now, last_activity_at: now, updated_at: now }).eq('id', msg.lead_id);
+          const leadPatch = { last_engaged_at: now, last_activity_at: now, updated_at: now };
+          // An actual inbound reply (not a passive open) — stamp last_reply_at so the
+          // Sales Desk "unanswered replies" queue is a cheap column compare.
+          if (map.reply) leadPatch.last_reply_at = now;
+          await supabaseAdmin.from('leads').update(leadPatch).eq('id', msg.lead_id);
         }
         if (map.activity) {
           await supabaseAdmin.from('lead_activities').insert({
