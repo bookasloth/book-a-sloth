@@ -356,6 +356,30 @@ const deleteTag = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── Saved views (shared team lenses over the leads database) ──
+const listViews = async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin.from('crm_views').select('*').order('created_at', { ascending: true });
+    if (error) return safeError(res, error);
+    res.json(data || []);
+  } catch (e) { safeError(res, e); }
+};
+const createView = async (req, res) => {
+  try {
+    const { name, definition } = req.body || {};
+    if (!name || !String(name).trim()) return res.status(400).json({ message: 'name required' });
+    const { data, error } = await supabaseAdmin.from('crm_views')
+      .insert({ name: String(name).trim(), definition: definition || {}, created_by: actor(req) || '' })
+      .select('*').single();
+    if (error) return res.status(error.code === '23505' ? 409 : 500).json({ message: error.code === '23505' ? 'A view with this name exists' : 'Could not save' });
+    res.status(201).json(data);
+  } catch (e) { safeError(res, e); }
+};
+const deleteView = async (req, res) => {
+  try { await supabaseAdmin.from('crm_views').delete().eq('id', req.params.id); res.json({ ok: true }); }
+  catch (e) { safeError(res, e); }
+};
+
 // Manual attribution refresh (link + revenue).
 const refreshAttribution = async (req, res) => {
   try { res.json(await attribution.run()); } catch (e) { safeError(res, e); }
@@ -371,4 +395,5 @@ module.exports = {
   bulk, importPreview, importCommit, exportCsv, refreshAttribution,
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
   listTags, createTag, updateTag, deleteTag,
+  listViews, createView, deleteView,
 };
