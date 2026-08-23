@@ -15,6 +15,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { verifyToken } = require('../services/email/unsubscribeToken');
 const communicationEngine = require('../services/email/communicationEngine');
+const leadService = require('../services/crm/leadService');
 
 const emailFromToken = (token) => verifyToken(token);
 
@@ -112,6 +113,13 @@ async function subscribe(req, res) {
 
     // Explicit opt-in overrides any prior marketing opt-out for this address.
     await supabaseAdmin.from('email_unsubscribes').delete().eq('email', email);
+
+    // Also land the subscriber in the CRM as a lead so sales can work them.
+    // Best-effort: upsertLead dedups by email (never a duplicate) and the
+    // subscription must succeed even if the CRM write hiccups.
+    try {
+      await leadService.upsertLead({ email }, { source: 'newsletter', createdBy: 'newsletter' });
+    } catch (_) { /* subscription already saved; lead capture is non-critical */ }
 
     // Welcome email — only on the first join, best-effort: a template/queue hiccup
     // must never fail the subscription itself. NEWSLETTER_WELCOME is transactional

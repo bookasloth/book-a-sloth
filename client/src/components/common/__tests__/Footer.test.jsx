@@ -18,10 +18,23 @@ describe('<Footer>', () => {
 
   test('renders representative links from each column', () => {
     renderFooter();
-    expect(screen.getByRole('link', { name: 'Be a Host' }).getAttribute('href')).toBe('/be-a-sloth');
+    expect(screen.getByRole('link', { name: 'Enterprise' }).getAttribute('href')).toBe('/enterprise');
     expect(screen.getByRole('link', { name: 'About' }).getAttribute('href')).toBe('/about');
     expect(screen.getByRole('link', { name: 'Help' }).getAttribute('href')).toBe('/help');
     expect(screen.getByRole('link', { name: 'Explore' }).getAttribute('href')).toBe('/explore');
+  });
+
+  test('drops redundant links that duplicate the CTA and the navbar', () => {
+    renderFooter();
+    expect(screen.queryByRole('link', { name: 'Be a Host' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Host log in' })).toBeNull();
+  });
+
+  test('newsletter signup form is present in the full variant', () => {
+    renderFooter();
+    expect(screen.getByText(/Stay in touch/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /join/i })).toBeTruthy();
+    expect(screen.getByLabelText('Email address').getAttribute('type')).toBe('email');
   });
 
   test('on-page section links are root-relative so they work from any page', () => {
@@ -55,16 +68,17 @@ describe('<Footer>', () => {
     });
   });
 
-  test('minimal variant keeps CTA + legal bar but drops link columns and socials', () => {
+  test('minimal variant keeps CTA + legal bar but drops columns, socials, newsletter', () => {
     render(<MemoryRouter><Footer variant="minimal" /></MemoryRouter>);
     // CTA band survives
     expect(screen.getByText(/Power up your/i)).toBeTruthy();
     expect(screen.getByRole('link', { name: "Let's Get Started" })).toBeTruthy();
-    // legal bar survives (Bolt attribution)
+    // legal bar survives (Bolt attribution + a legal link)
     expect(screen.getByRole('link', { name: 'Bolt the Sloth' })).toBeTruthy();
-    // link columns + socials are gone
-    expect(screen.queryByRole('link', { name: 'Be a Host' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Terms' }).getAttribute('href')).toBe('/terms');
+    // link columns + socials + newsletter are gone
     expect(screen.queryByRole('link', { name: 'About' })).toBeNull();
     expect(screen.queryByLabelText('Instagram')).toBeNull();
+    expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
   });
 });

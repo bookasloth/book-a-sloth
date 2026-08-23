@@ -619,7 +619,7 @@ function App() {
         </Routes>
       </Suspense>
       {footerMode === 'minimal'
-        ? !chromeHidden && <Footer variant="minimal" />
+        ? !chromeHidden && !location.pathname.startsWith('/admin') && <Footer variant="minimal" />
         : !hideFooter && <Footer variant={isBookingPage ? 'minimal' : 'full'} />}
       </RouteErrorBoundary>
       {!hideBot && <Suspense fallback={null}><BotWidget /></Suspense>}

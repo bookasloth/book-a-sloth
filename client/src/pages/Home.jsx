@@ -652,8 +652,8 @@ const Home = () => {
     try {
       await subscribeNewsletter(email);
     } catch {
-      // Backend route /email/subscribe is pending — capture the lead client-side
-      // so it is never lost (mirrors the /lp client-only lead pattern).
+      // Network hiccup — the subscribe route already records contact + lead
+      // server-side, so just stash the address client-side as a safety net.
       try {
         const leads = JSON.parse(localStorage.getItem("newsletterLeads") || "[]");
         localStorage.setItem("newsletterLeads", JSON.stringify([...leads, email].slice(-200)));

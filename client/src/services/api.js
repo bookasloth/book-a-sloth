@@ -135,9 +135,9 @@ export const becomeHost       = ()             => API.post('/auth/become-host');
 export const forgotPassword   = (data)         => API.post('/auth/forgot-password', data);
 export const resetPassword    = (data)         => API.post('/auth/reset-password', data);
 
-// ── Newsletter (public) — backend route /email/subscribe is PENDING.
-// Caller treats this best-effort: on failure it still captures the lead
-// client-side (mirrors the /lp client-only lead pattern).
+// ── Newsletter (public) — POST /email/subscribe records the address as a
+// campaign contact AND a CRM lead server-side. Callers stay best-effort: on a
+// network failure they still stash the address client-side so it is never lost.
 export const subscribeNewsletter = (email)     => API.post('/email/subscribe', { email });
 
 // ── Contact form (public) ─────────────────────────────────────
