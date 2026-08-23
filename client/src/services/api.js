@@ -648,6 +648,10 @@ export const crmImportPreview    = (rows)        => API.post('/admin/crm/import/
 export const crmImportCommit     = (rows)        => API.post('/admin/crm/import/commit', { rows });
 export const crmLeadsExportCsv   = (params)      => API.get('/admin/crm/leads/export.csv', { params, responseType: 'blob' });
 export const crmRefreshAttribution = ()          => API.post('/admin/crm/attribution/refresh');
+export const crmListTemplates    = (channel)     => API.get('/admin/crm/templates', { params: channel ? { channel } : {} });
+export const crmCreateTemplate   = (data)        => API.post('/admin/crm/templates', data);
+export const crmUpdateTemplate   = (id, data)    => API.patch(`/admin/crm/templates/${id}`, data);
+export const crmDeleteTemplate   = (id)          => API.delete(`/admin/crm/templates/${id}`);
 // ── Admin: Feedback ──────────────────────────────────────────
 export const adminListFeedback   = (params)   => API.get('/admin/feedback', { params });
 export const adminUpdateFeedback = (id, data) => API.patch(`/admin/feedback/${id}`, data);
