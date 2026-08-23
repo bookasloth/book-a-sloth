@@ -129,7 +129,8 @@ function PlanCard({ result, winnerKey, cycle }) {
       )}
       {result.outgrows && (
         <p className="mt-3 rounded-[6px] bg-amber-50 px-2.5 py-2 text-[11px] text-amber-700">
-          You'd outgrow this — {result.plan.name} stops at {result.bookingCap.toLocaleString("en-IN")} bookings/year.
+          Caps at {result.bookingCap.toLocaleString("en-IN")} bookings/year — {result.uncollectedBookings.toLocaleString("en-IN")} you couldn't take
+          {result.uncollectedValue > 0 ? `, ${inr0(result.uncollectedValue)} left uncollected` : ""}.
         </p>
       )}
     </div>

@@ -60,6 +60,29 @@ describe('earningsCalc', () => {
     expect(pickWinner(results)).toBe('hostplus');
   });
 
+  it('a plan only earns on bookings it can accept; overflow is uncollected', () => {
+    // 90 sessions/mo = 1080/yr. Host+ caps earnings at 1000; Studio (no cap) earns all 1080.
+    const results = resultsFor(1000, 90, 'annual');
+    const hp = results.find((x) => x.plan.key === 'hostplus');
+    const st = results.find((x) => x.plan.key === 'studio');
+    expect(hp.earnableBookings).toBe(1000);
+    expect(hp.uncollectedBookings).toBe(80);
+    expect(hp.grossAnnual).toBe(970.2 * 1000);
+    expect(hp.netAnnual).toBe(970.2 * 1000 - 1499);
+    expect(hp.uncollectedValue).toBe(970.2 * 80);
+    // Studio earns all 1080 → its capped-earnings net now exceeds Host+'s.
+    expect(st.earnableBookings).toBe(1080);
+    expect(st.uncollectedBookings).toBe(0);
+    expect(st.netAnnual).toBeGreaterThan(hp.netAnnual);
+  });
+
+  it('below cap, nothing is uncollected', () => {
+    const r = resultsFor(1000, 10, 'annual').find((x) => x.plan.key === 'hostplus');
+    expect(r.uncollectedBookings).toBe(0);
+    expect(r.uncollectedValue).toBe(0);
+    expect(r.earnableBookings).toBe(120);
+  });
+
   it('annual saving = monthly*12 - annual fee', () => {
     expect(annualSaving('hostplus')).toBe(229 * 12 - 1499); // 1249
     expect(annualSaving('studio')).toBe(555 * 12 - 3650);   // 3010
