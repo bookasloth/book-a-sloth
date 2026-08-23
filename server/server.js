@@ -169,6 +169,7 @@ app.use('/api/email',         require('./routes/emailRoutes')); // public unsubs
 app.use('/api/contact',       require('./routes/contactRoutes')); // public contact form → support email
 app.use('/api/bot',           require('./routes/botRoutes')); // public "Bolt 958" support bot (grounded on docs/)
 app.use('/api/enterprise-lead', require('./routes/enterpriseLeadRoutes')); // public /enterprise page lead form → support email
+app.use('/api/events',        require('./routes/eventsRoutes')); // public intent-event sink → lead_events
 app.use('/api/opening',       require('./routes/openingRoutes')); // public "The Opening" launch event (ribbon cut + Inaugurators Wall)
 app.use('/api/whatsapp',      require('./routes/whatsappRoutes'));
 app.use('/api/username',      require('./routes/usernameRoutes')); // public resolve (edge 301) + auth check
@@ -353,6 +354,7 @@ const crmMessageService = require('./services/crm/messageService');
 const crmSequenceService = require('./services/crm/sequenceService');
 const crmFollowUpService = require('./services/crm/followUpService');
 const crmAttribution = require('./services/crm/attribution');
+const crmLifecycleEngine = require('./services/crm/lifecycleEngine');
 
 // Drain queued CRM messages with retry backoff (every 60s).
 setInterval(async () => {
@@ -395,6 +397,20 @@ setInterval(async () => {
     }, { leaseMs: CRM_ATTRIBUTION_INTERVAL_MIN * 2 * 60 * 1000 });
   } catch (err) { console.error('CRM attribution error:', err.message); }
 }, CRM_ATTRIBUTION_INTERVAL_MIN * 60 * 1000);
+
+// Lifecycle engine: score + advance leads, set next action, enroll nurture /
+// open sales tasks (every 15 min). Writes lead state + enqueues only — actual
+// sends stay gated by crm_admin_sends. Set LIFECYCLE_ENGINE_DRYRUN=true to log
+// intended changes without writing.
+const CRM_LIFECYCLE_INTERVAL_MIN = Number(process.env.CRM_LIFECYCLE_INTERVAL_MIN) || 15;
+setInterval(async () => {
+  try {
+    await runLocked('crm-lifecycle-engine', async () => {
+      const r = await crmLifecycleEngine.run();
+      if (r.moved || r.enrolled || r.tasks) console.log(`CRM lifecycle: ${r.moved} moved, ${r.enrolled} enrolled, ${r.tasks} tasks (scanned ${r.scanned}${r.dryRun ? ', dryrun' : ''})`);
+    }, { leaseMs: CRM_LIFECYCLE_INTERVAL_MIN * 2 * 60 * 1000 });
+  } catch (err) { console.error('CRM lifecycle engine error:', err.message); }
+}, CRM_LIFECYCLE_INTERVAL_MIN * 60 * 1000);
 
 // Badge engine: scheduled full evaluation (interval configurable via env, default 60 min)
 const badgeEngine = require('./services/badgeEngine');

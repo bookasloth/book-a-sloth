@@ -121,6 +121,10 @@ async function subscribe(req, res) {
       await leadService.upsertLead({ email }, { source: 'newsletter', createdBy: 'newsletter' });
     } catch (_) { /* subscription already saved; lead capture is non-critical */ }
 
+    // Identified intent signal — feeds the lead score once matched.
+    require('../services/crm/intentEvents')
+      .record({ event: 'newsletter_signup', email, source: 'newsletter' }).catch(() => {});
+
     // Welcome email — only on the first join, best-effort: a template/queue hiccup
     // must never fail the subscription itself. NEWSLETTER_WELCOME is transactional
     // (a direct response to their action), so it always delivers the single welcome.

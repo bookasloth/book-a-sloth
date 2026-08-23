@@ -87,4 +87,66 @@ async function sync() {
   return { upserted: rows.length };
 }
 
-module.exports = { sync, norm };
+// ── Leads → contacts sync ────────────────────────────────────────────────────
+// The Sales CRM `leads` table is the source of truth for prospects; the
+// marketing engine only sends to `contacts`. This mirrors email-bearing leads
+// into contacts (tagged crm_lead, so segments can target them) and back-links
+// leads.contact_id, WITHOUT ever clobbering a contact's consent/opt-out. A lead
+// marked Do Not Contact is suppressed on both channels so no campaign reaches
+// them, matching the CRM send gate.
+
+/** Build the contacts upsert row for one lead, preserving an existing contact's consent. */
+function buildLeadContactRow(lead, prev = {}, now) {
+  const dnc = !!lead.do_not_contact || lead.status === 'do_not_contact';
+  const prevSource = prev.source || '';
+  return {
+    ...(prev.id ? { id: prev.id } : {}),
+    email: norm(lead.email),
+    name: lead.name || prev.name || '',
+    phone: lead.phone || prev.phone || '',
+    user_id: prev.user_id || null,
+    contact_type: rankType(prev.contact_type, 'guest'), // never demote a vendor/buyer
+    attributes: { ...(prev.attributes || {}), crm_lead: true, lead_status: lead.status || null },
+    source: prevSource ? (prevSource.includes('crm_lead') ? prevSource : `${prevSource},crm_lead`) : 'crm_lead',
+    email_opt_in:        prev.email_opt_in        ?? true,
+    whatsapp_opt_in:     prev.whatsapp_opt_in     ?? true,
+    // DNC lead → suppress marketing on both channels; otherwise preserve prior state.
+    email_suppressed:    dnc ? true : (prev.email_suppressed    ?? false),
+    whatsapp_suppressed: dnc ? true : (prev.whatsapp_suppressed ?? false),
+    last_synced_at: now, updated_at: now,
+  };
+}
+
+async function syncLeads() {
+  const { data: leads } = await supabaseAdmin.from('leads')
+    .select('id, email, name, phone, status, do_not_contact, contact_id')
+    .not('email', 'is', null);
+  const withEmail = (leads || []).filter((l) => norm(l.email));
+  if (!withEmail.length) return { upserted: 0, linked: 0 };
+
+  const existing = await loadExistingByEmail();
+  const now = new Date().toISOString();
+
+  // Dedup leads by email (one contact per address); first lead wins.
+  const byEmail = new Map();
+  for (const l of withEmail) { const k = norm(l.email); if (!byEmail.has(k)) byEmail.set(k, l); }
+
+  const rows = [...byEmail.values()].map((l) => buildLeadContactRow(l, existing.get(norm(l.email)) || {}, now));
+  const { data: upserted, error } = await supabaseAdmin
+    .from('contacts').upsert(rows, { onConflict: 'email' }).select('id, email');
+  if (error) return { upserted: 0, linked: 0, error: error.message };
+
+  // Back-link leads.contact_id for leads that don't have one yet.
+  const idByEmail = new Map((upserted || []).map((c) => [norm(c.email), c.id]));
+  let linked = 0;
+  for (const l of withEmail) {
+    if (l.contact_id) continue;
+    const cid = idByEmail.get(norm(l.email));
+    if (!cid) continue;
+    await supabaseAdmin.from('leads').update({ contact_id: cid, updated_at: now }).eq('id', l.id).is('contact_id', null);
+    linked++;
+  }
+  return { upserted: rows.length, linked };
+}
+
+module.exports = { sync, syncLeads, buildLeadContactRow, norm };

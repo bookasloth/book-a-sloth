@@ -615,6 +615,14 @@ const googleCallback = async (req, res) => {
         // the signup survives ad-blockers; fans out to GA4 (sign_up) + Meta
         // (CompleteRegistration). Fire-and-forget — never blocks the redirect.
         trackServer(profileId, "user_registered", { method: "google", role: "host" }, { email: googleEmail });
+
+        // Real-time CRM: brand-new host becomes a lead immediately (source
+        // host_signup), so Sales sees signups live instead of waiting on the
+        // manual backfill script. Never throws / never blocks the signup.
+        await require("../services/crm/leadService").safeUpsertLead(
+          { name: profile.name, email: googleEmail, profile_id: profileId },
+          { source: "host_signup", createdBy: "signup" }
+        );
       }
 
       // Re-attach Google tokens only when there's something to (re)store: a

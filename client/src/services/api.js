@@ -623,6 +623,8 @@ export const adminCreateFeature = (payload)      => API.post('/admin/features', 
 export const crmDashboard        = ()            => API.get('/admin/crm/dashboard');
 export const crmPipeline         = ()            => API.get('/admin/crm/pipeline');
 export const crmGetDesk          = (limit)       => API.get('/admin/crm/desk', { params: limit ? { limit } : {} });
+// Public intent-event sink — fire on identified buying-intent (has email/phone).
+export const trackIntent         = (data)        => API.post('/events/intent', data);
 export const crmListLeads        = (params)      => API.get('/admin/crm/leads', { params });
 export const crmCreateLead       = (data)        => API.post('/admin/crm/leads', data);
 export const crmGetLead          = (id)          => API.get(`/admin/crm/leads/${id}`);

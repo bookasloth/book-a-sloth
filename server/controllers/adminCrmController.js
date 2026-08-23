@@ -200,17 +200,34 @@ const enroll = async (req, res) => {
 // ── Bulk ──────────────────────────────────────────────────────
 const bulk = async (req, res) => {
   try {
-    const { ids = [], action, value } = req.body || {};
+    const { ids = [], action, value, payload = {} } = req.body || {};
     if (!Array.isArray(ids) || !ids.length || !action) return res.status(400).json({ message: 'ids[] and action required' });
+
+    // Validate send/enrol payloads once, up front, so a bad request fails fast
+    // instead of half-processing the batch.
+    if (action === 'whatsapp' && !payload.templateKey) return res.status(400).json({ message: 'payload.templateKey required' });
+    if (action === 'email' && (!payload.subject || !payload.html)) return res.status(400).json({ message: 'payload.subject and payload.html required' });
+    if (action === 'enroll' && !payload.sequenceId) return res.status(400).json({ message: 'payload.sequenceId required' });
+
+    const who = actor(req);
     let done = 0;
     for (const id of ids) {
       try {
-        if (action === 'status') await leadService.changeStatus(id, value, actor(req));
-        else if (action === 'owner') await leadService.assignOwner(id, value || null, actor(req));
-        else if (action === 'tag_add') await leadService.addTag(id, value, actor(req));
-        else if (action === 'tag_remove') await leadService.removeTag(id, value, actor(req));
-        else if (action === 'dnc') await leadService.setDnc(id, true, actor(req));
-        else return res.status(400).json({ message: `unknown action: ${action}` });
+        if (action === 'status') await leadService.changeStatus(id, value, who);
+        else if (action === 'owner') await leadService.assignOwner(id, value || null, who);
+        else if (action === 'tag_add') await leadService.addTag(id, value, who);
+        else if (action === 'tag_remove') await leadService.removeTag(id, value, who);
+        else if (action === 'dnc') await leadService.setDnc(id, true, who);
+        // Bulk sends are QUEUED (immediate:false) — the send worker drains them
+        // through the gate (kill-switch + DNC + opt-out + frequency cap), so a
+        // bulk blast can't bypass the coordinated-conversation limits.
+        else if (action === 'whatsapp') {
+          await messageService.enqueue({ leadId: id, channel: 'whatsapp', templateKey: payload.templateKey, variables: { params: payload.params || [] }, createdBy: who, immediate: false });
+        } else if (action === 'email') {
+          await messageService.enqueue({ leadId: id, channel: 'email', subject: payload.subject, variables: { html: payload.html }, createdBy: who, immediate: false });
+        } else if (action === 'enroll') {
+          await sequenceService.enroll(payload.sequenceId, id, who);
+        } else return res.status(400).json({ message: `unknown action: ${action}` });
         done++;
       } catch (_) { /* skip individual failures */ }
     }
