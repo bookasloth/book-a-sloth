@@ -4,7 +4,7 @@ import { Card, Btn, Badge } from '../../../components/admin/ui';
 import {
   crmGetLead, crmLeadTimeline, crmLeadMessages, crmSetStatus, crmAddLeadNote, crmCreateFollowUp,
   crmCompleteFollowUp, crmAddTag, crmRemoveTag, crmSetDnc, crmLogCall, crmSendWhatsApp, crmSendEmail,
-  crmListTemplates, crmListTags, crmCreateTag,
+  crmListTemplates, crmListTags, crmCreateTag, crmUpdateLead,
 } from '../../../services/api';
 import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, rupees, relTime, leadScore } from './salesConstants';
 import { colorMap } from './salesTagColors';
@@ -29,6 +29,8 @@ export default function LeadPanel({ leadId, onChanged, onClose }) {
   const [templates, setTemplates] = useState([]);
   const [tagCatalog, setTagCatalog] = useState([]);
   const [showTagPicker, setShowTagPicker] = useState(false);
+  const [editVal, setEditVal] = useState(false);
+  const [valInput, setValInput] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -51,6 +53,11 @@ export default function LeadPanel({ leadId, onChanged, onClose }) {
   const pickTag = async (name) => { try { await crmAddTag(leadId, name); setShowTagPicker(false); refresh(); } catch { toast.error('Failed'); } };
   const createTag = async (name, color) => { try { await crmCreateTag({ name, color }); await crmAddTag(leadId, name); setShowTagPicker(false); loadTags(); refresh(); } catch { toast.error('Could not create tag'); } };
   const completeFollowUp = async (fid) => { try { await crmCompleteFollowUp(fid); refresh(); } catch { toast.error('Failed'); } };
+  const saveValue = async () => {
+    const rupeesNum = Math.max(0, Math.round(Number(valInput) || 0));
+    try { await crmUpdateLead(leadId, { expected_value_paise: rupeesNum * 100 }); setEditVal(false); refresh(); }
+    catch { toast.error('Failed'); }
+  };
 
   if (loading && !lead) return <div className="p-6"><p className="adm-t3">Loading…</p></div>;
   if (!lead) return <div className="p-6"><p className="adm-t3">Lead not found. <Link to="/admin/sales/leads" className="text-[#FE5100]">Back</Link></p></div>;
@@ -81,7 +88,23 @@ export default function LeadPanel({ leadId, onChanged, onClose }) {
         <div className="text-right flex-shrink-0">
           <p className="text-[10px] adm-t3 uppercase">Revenue</p>
           <p className="text-base font-bold adm-t1">{rupees(lead.revenue_paise)}</p>
-          {lead.profile_id && <Link to={`/admin/host360/${lead.profile_id}`} className="text-[11px] text-[#FE5100]">Host 360 →</Link>}
+          <div className="mt-1">
+            <p className="text-[10px] adm-t3 uppercase">Deal value</p>
+            {editVal ? (
+              <div className="flex items-center gap-1 justify-end">
+                <span className="text-[12px] adm-t3">₹</span>
+                <input autoFocus type="number" className="fb-input text-sm w-24 py-0.5" value={valInput}
+                  onChange={(e) => setValInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveValue()} />
+                <button onClick={saveValue} className="text-[11px] text-[#FE5100]">save</button>
+              </div>
+            ) : (
+              <button onClick={() => { setValInput(String(Math.round((lead.expected_value_paise || 0) / 100))); setEditVal(true); }}
+                className="text-sm font-semibold adm-t2 hover:text-[#FE5100]">
+                {lead.expected_value_paise ? rupees(lead.expected_value_paise) : 'Set ✎'}
+              </button>
+            )}
+          </div>
+          {lead.profile_id && <Link to={`/admin/host360/${lead.profile_id}`} className="text-[11px] text-[#FE5100] block mt-1">Host 360 →</Link>}
         </div>
       </div>
 

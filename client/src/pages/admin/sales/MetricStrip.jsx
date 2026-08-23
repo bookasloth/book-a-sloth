@@ -11,7 +11,7 @@ export default function MetricStrip({ stats, active, onPick, loading }) {
     { key: 'qualified', label: 'Qualified', value: s.byStatus?.qualified ?? 0 },
     { key: 'won', label: 'Won', value: s.paidCustomers ?? 0, ok: true },
     { key: null, label: 'Conv. rate', value: `${s.conversionRate ?? 0}%` },
-    { key: 'value', label: 'Pipeline value', value: rupees(s.revenuePaise) },
+    { key: null, label: 'Pipeline value', value: rupees(s.pipelineValuePaise) },
   ];
 
   return (
