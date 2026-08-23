@@ -12,9 +12,13 @@ const syncRegistry = async () => {
   try {
     const { data: existing } = await supabaseAdmin.from('feature_flags').select('key');
     const have = new Set((existing || []).map((r) => r.key));
+    // New rows land enabled by default, EXCEPT entries that opt out with
+    // `enabled: false` (e.g. a send kill-switch that must ship OFF). Existing
+    // rows are never touched (admin choice wins) — this default only applies on
+    // first insert.
     const missing = REGISTRY.filter((f) => !have.has(f.key)).map((f) => ({
       key: f.key, label: f.label, description: f.description,
-      category: f.category, scope: f.scope, enabled: true,
+      category: f.category, scope: f.scope, enabled: f.enabled !== false,
     }));
     if (missing.length) await supabaseAdmin.from('feature_flags').insert(missing);
 

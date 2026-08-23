@@ -154,6 +154,7 @@ app.use('/api/services-directory', require('./routes/servicesDirectoryRoutes'));
 app.use('/api/admin/security', adminLimiter, require('./routes/adminSecurityRoutes')); // IP blocking mgmt (super-only)
 app.use('/api/security', require('./routes/securityRoutes')); // Google RISC (Cross-Account Protection) receiver — SET-signed, own text parser
 app.use('/api/admin/host360', adminLimiter, require('./routes/host360Routes')); // Host 360 command center (per-permission gated)
+app.use('/api/admin/crm', adminLimiter, require('./routes/adminCrmRoutes')); // Sales CRM command center (leads.* gated)
 app.use('/api/explore',     require('./routes/exploreRoutes'));
 app.use('/api/blogs',       require('./routes/blogRoutes'));
 app.use('/api/vendors',        require('./routes/badgePublicRoutes'));
@@ -340,6 +341,56 @@ setInterval(async () => {
     }, { leaseMs: 2 * 60 * 1000 });
   } catch (err) { console.error('Campaign worker error:', err.message); }
 }, 60 * 1000);
+
+// ── Sales CRM workers (leader-elected). All sends inside these are gated by the
+// `crm_admin_sends` kill-switch (default OFF), so with the switch off these
+// ticks are cheap no-ops that only advance bookkeeping. ──
+const crmMessageService = require('./services/crm/messageService');
+const crmSequenceService = require('./services/crm/sequenceService');
+const crmFollowUpService = require('./services/crm/followUpService');
+const crmAttribution = require('./services/crm/attribution');
+
+// Drain queued CRM messages with retry backoff (every 60s).
+setInterval(async () => {
+  try {
+    await runLocked('crm-send-worker', async () => {
+      const r = await crmMessageService.processQueue();
+      if (r.sent || r.failed) console.log(`CRM send worker: ${r.sent} sent, ${r.failed} failed, ${r.skipped} skipped`);
+    }, { leaseMs: 2 * 60 * 1000 });
+  } catch (err) { console.error('CRM send worker error:', err.message); }
+}, 60 * 1000);
+
+// Advance due sequence enrollments (every 60s).
+setInterval(async () => {
+  try {
+    await runLocked('crm-sequence-worker', async () => {
+      const r = await crmSequenceService.processDue();
+      if (r.sent || r.stopped || r.completed) console.log(`CRM sequences: ${r.sent} stepped, ${r.stopped} stopped, ${r.completed} completed`);
+    }, { leaseMs: 2 * 60 * 1000 });
+  } catch (err) { console.error('CRM sequence worker error:', err.message); }
+}, 60 * 1000);
+
+// Remind lead owners of due follow-ups (every 5 min).
+const CRM_FOLLOWUP_INTERVAL_MIN = Number(process.env.CRM_FOLLOWUP_INTERVAL_MIN) || 5;
+setInterval(async () => {
+  try {
+    await runLocked('crm-followup-reminder', async () => {
+      const r = await crmFollowUpService.processReminders();
+      if (r.reminded) console.log(`CRM follow-up reminders: ${r.reminded} sent`);
+    }, { leaseMs: CRM_FOLLOWUP_INTERVAL_MIN * 2 * 60 * 1000 });
+  } catch (err) { console.error('CRM follow-up reminder error:', err.message); }
+}, CRM_FOLLOWUP_INTERVAL_MIN * 60 * 1000);
+
+// Refresh lead↔account links + revenue attribution (every 60 min).
+const CRM_ATTRIBUTION_INTERVAL_MIN = Number(process.env.CRM_ATTRIBUTION_INTERVAL_MIN) || 60;
+setInterval(async () => {
+  try {
+    await runLocked('crm-attribution', async () => {
+      const r = await crmAttribution.run();
+      if (r.linked || r.updated) console.log(`CRM attribution: ${r.linked} linked, ${r.updated} refreshed`);
+    }, { leaseMs: CRM_ATTRIBUTION_INTERVAL_MIN * 2 * 60 * 1000 });
+  } catch (err) { console.error('CRM attribution error:', err.message); }
+}, CRM_ATTRIBUTION_INTERVAL_MIN * 60 * 1000);
 
 // Badge engine: scheduled full evaluation (interval configurable via env, default 60 min)
 const badgeEngine = require('./services/badgeEngine');

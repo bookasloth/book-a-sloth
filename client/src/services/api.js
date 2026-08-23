@@ -618,6 +618,36 @@ export const getFeatureFlags    = ()             => API.get('/feature-flags');
 export const adminGetFeatures   = ()             => API.get('/admin/features');
 export const adminToggleFeature = (key, enabled) => API.patch(`/admin/features/${key}`, { enabled });
 export const adminCreateFeature = (payload)      => API.post('/admin/features', payload);
+
+// ── Admin: Sales CRM (/admin/crm) ────────────────────────────
+export const crmDashboard        = ()            => API.get('/admin/crm/dashboard');
+export const crmPipeline         = ()            => API.get('/admin/crm/pipeline');
+export const crmListLeads        = (params)      => API.get('/admin/crm/leads', { params });
+export const crmCreateLead       = (data)        => API.post('/admin/crm/leads', data);
+export const crmGetLead          = (id)          => API.get(`/admin/crm/leads/${id}`);
+export const crmUpdateLead       = (id, data)    => API.patch(`/admin/crm/leads/${id}`, data);
+export const crmLeadTimeline     = (id)          => API.get(`/admin/crm/leads/${id}/timeline`);
+export const crmSetStatus        = (id, status)  => API.post(`/admin/crm/leads/${id}/status`, { status });
+export const crmSetOwner         = (id, ownerAdminId) => API.post(`/admin/crm/leads/${id}/owner`, { ownerAdminId });
+export const crmAddTag           = (id, tag)     => API.post(`/admin/crm/leads/${id}/tags`, { tag });
+export const crmRemoveTag        = (id, tag)     => API.delete(`/admin/crm/leads/${id}/tags/${encodeURIComponent(tag)}`);
+export const crmSetDnc           = (id, value)   => API.post(`/admin/crm/leads/${id}/dnc`, { value });
+export const crmAddLeadNote      = (id, body)    => API.post(`/admin/crm/leads/${id}/notes`, { body });
+export const crmLogCall          = (id, data)    => API.post(`/admin/crm/leads/${id}/call`, data);
+export const crmSendWhatsApp     = (id, data)    => API.post(`/admin/crm/leads/${id}/whatsapp`, data);
+export const crmSendEmail        = (id, data)    => API.post(`/admin/crm/leads/${id}/email`, data);
+export const crmListFollowUps    = (params)      => API.get('/admin/crm/follow-ups', { params });
+export const crmCreateFollowUp   = (id, data)    => API.post(`/admin/crm/leads/${id}/follow-ups`, data);
+export const crmCompleteFollowUp = (id)          => API.post(`/admin/crm/follow-ups/${id}/complete`);
+export const crmCancelFollowUp   = (id)          => API.post(`/admin/crm/follow-ups/${id}/cancel`);
+export const crmListSequences    = ()            => API.get('/admin/crm/sequences');
+export const crmCreateSequence   = (data)        => API.post('/admin/crm/sequences', data);
+export const crmEnroll           = (id, sequenceId) => API.post(`/admin/crm/leads/${id}/enroll`, { sequenceId });
+export const crmBulk             = (data)        => API.post('/admin/crm/leads/bulk', data);
+export const crmImportPreview    = (rows)        => API.post('/admin/crm/import/preview', { rows });
+export const crmImportCommit     = (rows)        => API.post('/admin/crm/import/commit', { rows });
+export const crmLeadsExportCsv   = (params)      => API.get('/admin/crm/leads/export.csv', { params, responseType: 'blob' });
+export const crmRefreshAttribution = ()          => API.post('/admin/crm/attribution/refresh');
 // ── Admin: Feedback ──────────────────────────────────────────
 export const adminListFeedback   = (params)   => API.get('/admin/feedback', { params });
 export const adminUpdateFeedback = (id, data) => API.patch(`/admin/feedback/${id}`, data);

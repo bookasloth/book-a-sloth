@@ -73,6 +73,12 @@ const REGISTRY = [
   // ── CUSTOMER · Notifications ─────────────────────────────────
   { key: 'booking_reminders',    label: 'Booking Reminder Emails', category: 'Notifications', scope: 'customer', description: '24h / 1h reminder emails. Off = reminders not sent.' },
   { key: 'confirmation_emails',  label: 'Confirmation Emails',  category: 'Notifications', scope: 'customer', description: 'Booking confirmation emails. Off = confirmations not sent.' },
+
+  // ── ADMIN · Sales CRM ────────────────────────────────────────
+  // Ships OFF (enabled:false) and is FAIL-CLOSED (services/featureFlags.js): no
+  // CRM WhatsApp/email leaves the platform until an admin explicitly flips this.
+  // The master switch for all outbound in the /admin/sales command center.
+  { key: 'crm_admin_sends',      label: 'CRM Outbound Sends',   category: 'Sales CRM', scope: 'both', enabled: false, description: 'Master switch for admin CRM WhatsApp/email + sequences. Ships OFF. Off = every CRM send is skipped (recorded, not delivered).' },
 ];
 
 const KEYS = REGISTRY.map((f) => f.key);
