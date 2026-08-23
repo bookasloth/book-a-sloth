@@ -43,8 +43,10 @@ const BRAND_CSS = `
   .row .val{margin-left:auto;font-weight:600;color:var(--ink)}
   .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
   .dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)}
-  @media (prefers-color-scheme:dark){:root{--ink:#f5f5f7;--muted:#a1a1aa;--bg:#0e0e10;--card:#17171a;--line:#26262b}.card{box-shadow:0 10px 40px rgba(0,0,0,.4)}}
 `;
+// Error/status pages are always white (light tokens above, no dark-mode block):
+// the detective-sloth 404 art has a white background, so a dark card would frame
+// it in a white box. Kept white regardless of OS theme.
 
 // Shared page shell: <head> + brand CSS + logo + footer. Callers supply `inner`.
 function shell({ title = 'Book A Sloth', inner = '' } = {}) {

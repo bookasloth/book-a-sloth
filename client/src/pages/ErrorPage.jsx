@@ -64,6 +64,7 @@ export default function ErrorPage({ code = 404 }) {
       message={entry.message}
       art={entry.art}
       image={entry.image}
+      showSearch={Boolean(entry.image)}
       primaryLabel={entry.cta.label}
       onPrimary={runAction}
       seoTitle={`${isNumeric ? `${code} — ` : ''}${entry.title} · Book a Sloth`}
