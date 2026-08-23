@@ -70,9 +70,9 @@ describe('adminNav', () => {
     expect(ROADMAP[0].items[0].children.length).toBeGreaterThanOrEqual(7);
   });
 
-  it('sidebar is slimmed to Important + Department (no Main Dashboard section)', () => {
+  it('sidebar is Important + Sales + Department (no Main Dashboard section)', () => {
     expect(NAV.find(s => s.id === 'dashboard')).toBeUndefined();
     const sections = NAV.map(s => s.section);
-    expect(sections).toEqual(['Important', 'DEPARTMENT']);
+    expect(sections).toEqual(['Important', 'SALES', 'DEPARTMENT']);
   });
 });
