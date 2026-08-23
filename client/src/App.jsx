@@ -220,6 +220,7 @@ const SalesLeads      = lazy(() => import('./pages/admin/sales/SalesLeads'));
 const SalesLeadDetail = lazy(() => import('./pages/admin/sales/SalesLeadDetail'));
 const SalesFollowUps  = lazy(() => import('./pages/admin/sales/SalesFollowUps'));
 const SalesPipeline   = lazy(() => import('./pages/admin/sales/SalesPipeline'));
+const SalesTemplates  = lazy(() => import('./pages/admin/sales/SalesTemplates'));
 
 // Admin — Finance (P1: double-entry ledger)
 const AdminFinanceDashboard = lazy(() => import('./pages/admin/AdminFinanceDashboard'));
@@ -527,6 +528,7 @@ function App() {
           <Route path="/admin/sales/leads/:id" element={<AdminWrapper><SalesLeadDetail /></AdminWrapper>} />
           <Route path="/admin/sales/follow-ups" element={<AdminWrapper><SalesFollowUps /></AdminWrapper>} />
           <Route path="/admin/sales/pipeline" element={<AdminWrapper><SalesPipeline /></AdminWrapper>} />
+          <Route path="/admin/sales/templates" element={<AdminWrapper><SalesTemplates /></AdminWrapper>} />
 
           {/* General settings */}
           <Route path="/admin/settings" element={<AdminWrapper><AdminSettings /></AdminWrapper>} />
