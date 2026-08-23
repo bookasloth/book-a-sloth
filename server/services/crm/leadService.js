@@ -209,6 +209,12 @@ async function dashboardStats() {
   const { data: conv } = await supabaseAdmin.from('leads').select('revenue_paise').not('converted_at', 'is', null);
   const revenuePaise = (conv || []).reduce((a, r) => a + (Number(r.revenue_paise) || 0), 0);
 
+  // Open pipeline value = expected value of leads not yet won/lost.
+  const { data: openVal } = await supabaseAdmin.from('leads')
+    .select('expected_value_paise').gt('expected_value_paise', 0)
+    .not('status', 'in', '(paid,lost,do_not_contact)');
+  const pipelineValuePaise = (openVal || []).reduce((a, r) => a + (Number(r.expected_value_paise) || 0), 0);
+
   const paidCustomers = (counts.paid || 0) + (counts.activated || 0);
   const conversionRate = total ? +(paidCustomers / total * 100).toFixed(1) : 0;
 
@@ -218,7 +224,7 @@ async function dashboardStats() {
     contactedToday: contactedToday || 0,
     followUpsDueToday: dueToday || 0,
     followUpsOverdue: overdue || 0,
-    paidCustomers, conversionRate, revenuePaise,
+    paidCustomers, conversionRate, revenuePaise, pipelineValuePaise,
   };
 }
 
