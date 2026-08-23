@@ -38,7 +38,7 @@ const EDGE_ERROR_IMAGES = [
   'https://assets.bookasloth.in/errors/sloth-glass.png',
 ];
 export function renderProfile404Html(rawSlug) {
-  const slug = String(rawSlug).replace(/[^a-z0-9._-]/gi, '');
+  const slug = String(rawSlug).replace(/[^a-z0-9._-]/g, '');
   const img = EDGE_ERROR_IMAGES[Math.floor(Math.random() * EDGE_ERROR_IMAGES.length)];
   return (
     `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">` +

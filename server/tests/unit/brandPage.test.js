@@ -84,6 +84,15 @@ describe('errorMiddleware 404 branding', () => {
     expect(res.body).toContain('assets.bookasloth.in/errors/');
     expect(res.body).toContain('This page pulled a vanishing act');
   });
+
+  it('gives 410 the same detective-sloth treatment as 404', () => {
+    const res = makeRes();
+    res.statusCode = 410;
+    errorHandler(Object.assign(new Error('x'), { expose: false }), htmlReq, res, () => {});
+    expect(res.statusCode).toBe(410);
+    expect(res.body).toContain('assets.bookasloth.in/errors/');
+    expect(res.body).toContain('This page pulled a vanishing act');
+  });
 });
 
 describe('statusPage', () => {
