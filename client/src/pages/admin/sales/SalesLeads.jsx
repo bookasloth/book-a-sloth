@@ -5,7 +5,9 @@ import {
   crmListLeads, crmCreateLead, crmBulk, crmLeadsExportCsv, crmImportPreview, crmImportCommit,
   crmListTags, crmCreateTag, crmUpdateTag, crmDeleteTag, crmDashboard, crmListFollowUps,
   crmUpdateLead, crmSetStatus, crmAddTag, crmRemoveTag, crmListTemplates, crmListSequences,
+  crmListViews, crmCreateView, crmDeleteView,
 } from '../../../services/api';
+import LeadsBoard from './LeadsBoard';
 import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, SOURCES, SMART_VIEWS, rupees, relTime } from './salesConstants';
 import { colorMap, TAG_PALETTE, swatchClass } from './salesTagColors';
 import TagChip from './TagChip';
@@ -219,6 +221,25 @@ export default function SalesLeads() {
     try { await crmSetStatus(id, status); loadStats(); } catch { toast.error('Save failed'); load(); }
   };
   const [tagEditId, setTagEditId] = useState(null);
+  const [viewType, setViewType] = useState('table'); // 'table' | 'board' | 'list'
+  const [savedViews, setSavedViews] = useState([]);
+  useEffect(() => { crmListViews().then(({ data }) => setSavedViews(Array.isArray(data) ? data : [])).catch(() => setSavedViews([])); }, []);
+
+  const applyView = (v) => {
+    const f = v.definition?.filters || {};
+    setView(f.smartView || 'all'); setStage(f.stage || ''); setSource(f.source || '');
+    setTag(f.tag || ''); setQ(f.q || ''); setDq(f.q || '');
+    setViewType(v.definition?.viewType || 'table'); setPage(1);
+  };
+  const saveView = async () => {
+    const name = prompt('Name this view:'); if (!name || !name.trim()) return;
+    try {
+      const { data } = await crmCreateView({ name: name.trim(), definition: { viewType, filters: { smartView: view, stage, source, tag, q: dq } } });
+      setSavedViews((vs) => [...vs, data]); toast.success(`Saved “${data.name}”`);
+    } catch (e) { toast.error(e.response?.data?.message || 'Could not save'); }
+  };
+  const deleteView = async (id) => { try { await crmDeleteView(id); setSavedViews((vs) => vs.filter((v) => v.id !== id)); } catch { toast.error('Failed'); } };
+
   const addTagInline = async (id, name) => {
     patchRow(id, { tags: Array.from(new Set([...(rows.find((r) => r.id === id)?.tags || []), name])) });
     setTagEditId(null);
@@ -287,6 +308,27 @@ export default function SalesLeads() {
       {/* Merged stat + smart-view filter bar */}
       <MetricStrip stats={stats} active={view} loading={statsLoading} onPick={pickView} />
 
+      {/* View toggle (table/board/list) + saved views */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+          {['table', 'board', 'list'].map((vt) => (
+            <button key={vt} type="button" onClick={() => setViewType(vt)}
+              className={`text-[12px] px-3 py-1 capitalize ${viewType === vt ? 'bg-[#FE5100] text-white' : 'adm-t2 hover:bg-black/[0.04]'}`}>
+              {vt}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 flex-1">
+          {savedViews.map((v) => (
+            <span key={v.id} className="group inline-flex items-center gap-1 text-[12px] px-2 py-1 rounded-full border border-gray-200 adm-t2 hover:border-[#FE5100]">
+              <button type="button" onClick={() => applyView(v)}>{v.name}</button>
+              <button type="button" onClick={() => deleteView(v.id)} className="opacity-0 group-hover:opacity-100 adm-t3 hover:text-red-500">×</button>
+            </span>
+          ))}
+          <button type="button" onClick={saveView} className="text-[12px] px-2 py-1 rounded-full border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">+ Save view</button>
+        </div>
+      </div>
+
       {/* Single compact filter toolbar: search + stage/source/tag + clear */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <input className="fb-input text-sm flex-1 min-w-[220px]" placeholder="Search name, business, phone, email…"
@@ -327,8 +369,10 @@ export default function SalesLeads() {
       {bulkMode && <BulkSendModal mode={bulkMode} count={sel.size} onClose={() => setBulkMode(null)}
         onSubmit={(action, payload) => { bulk(action, null, payload); setBulkMode(null); }} />}
 
-      {/* List (desktop table) */}
-      {error ? (
+      {/* Body: board / list / table */}
+      {viewType === 'board' ? (
+        <LeadsBoard filters={{ source: source || undefined, tag: tag || undefined, q: dq || undefined, followup: viewFilter.followup, hasValue: viewFilter.hasValue }} onOpen={(id) => setDrawerId(id)} />
+      ) : error ? (
         <Card className="rounded-2xl p-10 text-center">
           <p className="adm-t1 font-semibold mb-1">Couldn't load leads</p>
           <p className="adm-t3 text-sm mb-4">Something went wrong reaching the server.</p>
@@ -338,6 +382,20 @@ export default function SalesLeads() {
         <div className="space-y-2">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-xl" />)}</div>
       ) : rows.length === 0 ? (
         <Card className="rounded-2xl"><EmptyState filtered={filtersActive} onAdd={() => setShowNew(true)} onImport={() => setShowImport(true)} onClear={clearFilters} /></Card>
+      ) : viewType === 'list' ? (
+        <Card className="rounded-2xl divide-y divide-gray-100">
+          {rows.map((r) => {
+            const due = nextFollow(r); const overdue = due && new Date(due) < new Date();
+            return (
+              <div key={r.id} className="flex items-center gap-3 px-4 py-2.5 adm-hoverable cursor-pointer" onClick={() => setDrawerId(r.id)}>
+                <span className="font-medium adm-t1 truncate flex-1 min-w-0">{r.name || '—'}</span>
+                <Badge tone={STATUS_TONE[r.status] || 'neutral'}>{STATUS_LABEL[r.status] || r.status}</Badge>
+                <span className={`text-[11px] w-28 text-right ${overdue ? 'text-red-500' : 'adm-t3'}`}>{due ? `Follow up ${relTime(due)}` : relTime(r.last_activity_at || r.created_at)}</span>
+                <span className="text-[12px] adm-t2 w-20 text-right">{(r.expected_value_paise || r.revenue_paise) ? rupees(r.expected_value_paise || r.revenue_paise) : '—'}</span>
+              </div>
+            );
+          })}
+        </Card>
       ) : (
         <>
           <div className="hidden md:block">
@@ -370,7 +428,7 @@ export default function SalesLeads() {
         </>
       )}
 
-      {!loading && !error && rows.length > 0 && (
+      {viewType !== 'board' && !loading && !error && rows.length > 0 && (
         <div className="flex items-center justify-between mt-4">
           <span className="text-[12px] adm-t3">{total} leads · page {page} of {totalPages}</span>
           <div className="flex gap-2">

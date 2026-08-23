@@ -666,6 +666,9 @@ export const crmListTemplates    = (channel)     => API.get('/admin/crm/template
 export const crmCreateTemplate   = (data)        => API.post('/admin/crm/templates', data);
 export const crmUpdateTemplate   = (id, data)    => API.patch(`/admin/crm/templates/${id}`, data);
 export const crmDeleteTemplate   = (id)          => API.delete(`/admin/crm/templates/${id}`);
+export const crmListViews        = ()            => API.get('/admin/crm/views');
+export const crmCreateView       = (data)        => API.post('/admin/crm/views', data);
+export const crmDeleteView       = (id)          => API.delete(`/admin/crm/views/${id}`);
 export const crmListTags         = ()            => API.get('/admin/crm/tags');
 export const crmCreateTag        = (data)        => API.post('/admin/crm/tags', data);
 export const crmUpdateTag        = (id, data)    => API.patch(`/admin/crm/tags/${id}`, data);
