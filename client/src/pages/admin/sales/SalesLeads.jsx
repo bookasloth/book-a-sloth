@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { PageHeader, Card, Btn, Badge, Table, Skeleton } from '../../../components/admin/ui';
+import LeadDrawer from './LeadDrawer';
 import {
   crmListLeads, crmCreateLead, crmBulk, crmLeadsExportCsv, crmImportPreview, crmImportCommit,
   crmListTags, crmCreateTag, crmUpdateTag, crmDeleteTag, crmDashboard, crmListFollowUps,
@@ -35,7 +35,7 @@ function parseCsv(text) {
 const HEADER_MAP = { name: 'name', phone: 'phone', whatsapp: 'whatsapp', email: 'email', business: 'business', company: 'business', profession: 'profession', city: 'city', source: 'source', tags: 'tags' };
 
 export default function SalesLeads() {
-  const nav = useNavigate();
+  const [drawerId, setDrawerId] = useState(null);
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -223,7 +223,7 @@ export default function SalesLeads() {
         <>
           <div className="hidden md:block">
             <Table columns={columns} rows={rows} rowKey={(r) => r.id}
-              onRowClick={(r) => nav(`/admin/sales/leads/${r.id}`)}
+              onRowClick={(r) => setDrawerId(r.id)}
               empty={null} />
           </div>
           {/* Mobile cards */}
@@ -231,7 +231,7 @@ export default function SalesLeads() {
             {rows.map((r) => {
               const due = nextFollow(r); const overdue = due && new Date(due) < new Date();
               return (
-                <Card key={r.id} className="rounded-xl p-3 cursor-pointer adm-hoverable" onClick={() => nav(`/admin/sales/leads/${r.id}`)}>
+                <Card key={r.id} className="rounded-xl p-3 cursor-pointer adm-hoverable" onClick={() => setDrawerId(r.id)}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold adm-t1 truncate">{r.name || '—'}</p>
@@ -264,6 +264,7 @@ export default function SalesLeads() {
       {showNew && <NewLeadModal onClose={() => setShowNew(false)} onCreated={() => { setShowNew(false); load(); loadStats(); }} />}
       {showImport && <ImportModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); loadStats(); }} />}
       {showTags && <ManageTagsModal tags={tagCatalog} onClose={() => setShowTags(false)} onChanged={() => { loadTags(); load(); }} />}
+      <LeadDrawer leadId={drawerId} onClose={() => setDrawerId(null)} onChanged={() => { load(); loadStats(); loadFollowups(); }} />
     </div>
   );
 }
