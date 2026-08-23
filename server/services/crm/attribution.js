@@ -20,6 +20,44 @@ const contactsService = require('../contactsService');
 const toPaise = (rupees) => Math.round((Number(rupees) || 0) * 100);
 const PAGE = 200;
 
+// Non-paying base tiers. Anything else is a paid subscription plan.
+const FREE_PLANS = new Set(['free', 'starter', 'starter_legacy', 'explorer']);
+
+// WON = the host signed up AND paid for a subscription. Detected robustly: a
+// successful subscription payment, an active Razorpay mandate, OR a paid-tier
+// plan. The plan check is essential — most paying hosts here are legacy/annual
+// subscribers (v3.8 backfill) with NO subscription_payments row, so a
+// payment-row-only test would miss them. Guest-booking commission is revenue
+// but NOT a subscription, so it never wins a lead on its own.
+function isPaidSubscriber(profile, hasSubPayment) {
+  if (hasSubPayment) return true;
+  if (!profile) return false;
+  if (profile.razorpay_subscription_id) return true;
+  const plan = String(profile.plan || '').toLowerCase();
+  return !!plan && !FREE_PLANS.has(plan);
+}
+
+// Pure: the status/converted_at patch for a lead given the win signal + current
+// state. Promotes to 'paid' when won; demotes a lead wrongly marked 'paid' by
+// the old any-revenue rule back to 'activated' (an active host who never
+// subscribed). Never regresses lost / do_not_contact.
+function conversionPatch({ won, status, convertedAt, wonAt }) {
+  const patch = {};
+  if (won) {
+    if (!['paid', 'lost', 'do_not_contact'].includes(status)) {
+      patch.status = 'paid';                                   // promote to Won
+      if (!convertedAt && wonAt) patch.converted_at = wonAt;
+    } else if (status === 'paid' && !convertedAt && wonAt) {
+      patch.converted_at = wonAt;                              // backfill on an already-won lead
+    }
+    // lost / do_not_contact are deliberate dispositions — never auto-regress.
+  } else if (status === 'paid') {
+    patch.status = 'activated';                                // demote wrongly-won (booking-only)
+    patch.converted_at = null;
+  }
+  return patch;
+}
+
 // Pass 1 — stitch unlinked leads to profiles.
 async function linkLeadsToProfiles() {
   let linked = 0, from = 0;
@@ -60,21 +98,27 @@ async function refreshRevenue() {
     if (!leads?.length) break;
 
     for (const l of leads) {
-      const [{ data: subs }, { data: bks }] = await Promise.all([
+      const [{ data: subs }, { data: bks }, { data: profile }] = await Promise.all([
         supabaseAdmin.from('subscription_payments').select('total_charged, paid_at').eq('vendor_id', l.profile_id),
-        supabaseAdmin.from('bookings').select('platform_fee_amount, paid_at').eq('host_id', l.profile_id).eq('payment_status', 'paid'),
+        supabaseAdmin.from('bookings').select('platform_fee_amount').eq('host_id', l.profile_id).eq('payment_status', 'paid'),
+        supabaseAdmin.from('profiles').select('plan, razorpay_subscription_id, plan_activated_at').eq('id', l.profile_id).maybeSingle(),
       ]);
 
+      // Total attributed revenue (subscriptions + booking commission) — kept for
+      // pipeline value. The WIN, though, is gated on subscription only (below).
       let paise = 0;
-      const times = [];
-      for (const s of subs || []) { paise += toPaise(s.total_charged); if (s.paid_at) times.push(s.paid_at); }
-      for (const b of bks || []) { paise += toPaise(b.platform_fee_amount); if (b.paid_at) times.push(b.paid_at); }
+      const subTimes = [];
+      for (const s of subs || []) { paise += toPaise(s.total_charged); if (s.paid_at) subTimes.push(s.paid_at); }
+      for (const b of bks || []) { paise += toPaise(b.platform_fee_amount); }
 
-      const patch = { revenue_paise: paise, updated_at: new Date().toISOString() };
-      const firstPaid = times.sort()[0] || null;
-      if (paise > 0 && firstPaid && !l.converted_at) patch.converted_at = firstPaid;
-      // Advance to 'paid' once real money exists (don't regress lost/dnc).
-      if (paise > 0 && !['paid', 'lost', 'do_not_contact'].includes(l.status)) patch.status = 'paid';
+      const won = isPaidSubscriber(profile, subTimes.length > 0);
+      const wonAt = subTimes.sort()[0] || profile?.plan_activated_at || null;
+
+      const patch = {
+        revenue_paise: paise,
+        updated_at: new Date().toISOString(),
+        ...conversionPatch({ won, status: l.status, convertedAt: l.converted_at, wonAt }),
+      };
 
       await supabaseAdmin.from('leads').update(patch).eq('id', l.id);
       updated++;
@@ -96,4 +140,4 @@ async function run() {
   return { linked, updated, contactsUpserted: contacts.upserted, contactsLinked: contacts.linked };
 }
 
-module.exports = { run, linkLeadsToProfiles, refreshRevenue, toPaise };
+module.exports = { run, linkLeadsToProfiles, refreshRevenue, toPaise, isPaidSubscriber, conversionPatch };
