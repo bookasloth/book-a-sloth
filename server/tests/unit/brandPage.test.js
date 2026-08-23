@@ -46,6 +46,23 @@ describe('brandPage', () => {
   });
 });
 
+const { pickErrorImage, ERROR_IMAGE_BASE } = require('../../utils/brandPage');
+
+describe('brandPage hero image', () => {
+  it('renders an <img> with the given absolute src when image is set', () => {
+    const html = brandPage({ code: 404, heading: 'h', body: 'b', image: 'https://assets.bookasloth.in/errors/sloth-glass.png' });
+    expect(html).toContain('<img');
+    expect(html).toContain('https://assets.bookasloth.in/errors/sloth-glass.png');
+  });
+  it('renders no <img> when image is absent', () => {
+    const html = brandPage({ code: 500, heading: 'h', body: 'b' });
+    expect(html).not.toContain('<img');
+  });
+  it('pickErrorImage returns a full CDN url', () => {
+    expect(pickErrorImage().startsWith(ERROR_IMAGE_BASE + '/')).toBe(true);
+  });
+});
+
 describe('statusPage', () => {
   it('shows all-operational + Ready when the DB is reachable', () => {
     const html = statusPage({ db: true, uptimeSec: 3661 });

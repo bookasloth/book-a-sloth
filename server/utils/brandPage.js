@@ -5,6 +5,13 @@
 // Poppins body, orange #FE5100 — matches bookasloth.com.
 const SITE = 'https://bookasloth.com';
 
+const ERROR_IMAGE_BASE = 'https://assets.bookasloth.in/errors';
+const ERROR_IMAGE_VARIANTS = ['sloth-tracks.png', 'sloth-think.png', 'sloth-glass.png'];
+function pickErrorImage() {
+  const i = Math.floor(Math.random() * ERROR_IMAGE_VARIANTS.length);
+  return `${ERROR_IMAGE_BASE}/${ERROR_IMAGE_VARIANTS[i]}`;
+}
+
 // Minimal HTML-escape for any dynamic text dropped into the template (error
 // messages can contain user input). Prevents the branded page from becoming an
 // XSS vector when `expose` error messages are shown.
@@ -20,6 +27,7 @@ const BRAND_CSS = `
   body{background:var(--bg);color:var(--ink);font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:grid;place-items:center;padding:24px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:460px;width:100%;padding:40px 32px;text-align:center;box-shadow:0 10px 40px rgba(20,20,22,.06)}
   .logo{display:inline-flex;align-items:center;gap:10px;margin-bottom:24px}
+  .hero{width:132px;height:132px;object-fit:contain;margin:0 auto 20px;display:block}
   .bolt{width:40px;height:40px;border-radius:12px;background:var(--orange);display:grid;place-items:center}
   .bolt svg{width:22px;height:22px}
   .brand{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.01em}
@@ -66,8 +74,9 @@ function shell({ title = 'Book A Sloth', inner = '' } = {}) {
 }
 
 // Single-message page (root, 404, errors).
-function brandPage({ code = '', title = 'Book A Sloth', heading = '', body = '', ctaLabel = 'Go to Book A Sloth', ctaHref = SITE } = {}) {
+function brandPage({ code = '', title = 'Book A Sloth', heading = '', body = '', ctaLabel = 'Go to Book A Sloth', ctaHref = SITE, image = '' } = {}) {
   const inner =
+    `${image ? `<img class="hero" src="${esc(image)}" alt="" width="132" height="132">` : ''}` +
     `${code ? `<div class="code">${esc(code)}</div>` : ''}` +
     `<h1>${esc(heading)}</h1>` +
     `<p>${esc(body)}</p>` +
@@ -109,4 +118,4 @@ function wantsBrandedHtml(req) {
   return typeof req.accepts === 'function' && req.accepts(['json', 'html']) === 'html';
 }
 
-module.exports = { brandPage, statusPage, wantsBrandedHtml };
+module.exports = { brandPage, statusPage, wantsBrandedHtml, pickErrorImage, ERROR_IMAGE_BASE };
