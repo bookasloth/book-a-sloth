@@ -26,9 +26,11 @@ test('STOP message suppresses the contact for WhatsApp', async () => {
   expect(updated.val).toBe('919991112222');
 });
 
-test('a delivery status event is acknowledged (no suppression)', async () => {
+test('a delivery status event is recorded, not suppressed', async () => {
   const res = mkRes();
   await handleWebhook({ query: { secret: 's3cret' }, headers: {}, body: { destination: '919991112222', status: 'delivered' } }, res);
-  expect(res.body.action).toBe('status_ack');
-  expect(updated.changes).toBeUndefined();
+  // Since #705 the webhook maps delivery statuses to a CRM funnel event and
+  // echoes it back as the action (was 'status_ack' before delivery tracking).
+  expect(res.body.action).toBe('delivered');
+  expect(updated.changes).toBeUndefined(); // never touches the contact row
 });
