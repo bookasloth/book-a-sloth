@@ -158,6 +158,13 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
   //        first paid booking. Never throws.
   await require('./hostActivation').maybeTrackFirstBooking({ host, booking });
 
+  // 2a-iii) Real-time CRM: capture the guest as a lead (source guest_booking) on
+  //         every paid booking. Idempotent by phone/email; never throws.
+  await require('./crm/leadService').safeUpsertLead(
+    { name: booking.guest_name, phone: booking.guest_phone, email: booking.guest_email },
+    { source: 'guest_booking', createdBy: 'booking' }
+  );
+
   // 2b) In-app confirmation for signed-in guests — mirrors the free-booking path
   //     so paid guests (the higher-value ones) aren't the only bookings missing an
   //     in-app note. The in-app feed has no provider dependency (P2-10).
