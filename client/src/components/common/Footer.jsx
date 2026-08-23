@@ -1,16 +1,19 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { subscribeNewsletter } from '../../services/api';
 
 const ROUTE_START = '/be-a-sloth';
 const EMAIL = 'bolt@bookasloth.in';
 const BOLT_URL = 'https://www.instagram.com/bookasloth';
 
+// Link columns. Legal lives in the inline bottom bar (LEGAL), not here — it kept
+// the grid lopsided as a 4th column. "Be a Host" / "Host log in" dropped as dups
+// of the CTA button and the navbar.
 const COLUMNS = [
   { h: 'Product', links: [
     { t: 'How it works', href: '/#how-it-works' },
     { t: 'Pricing', href: '/pricing' },
     { t: 'Earnings calculator', href: '/earnings-calculator' },
-    { t: 'FAQ', href: '/#faq' },
-    { t: 'Be a Host', href: '/be-a-sloth' },
     { t: 'Explore', href: '/explore' },
     { t: 'Enterprise', href: '/enterprise' },
   ] },
@@ -19,20 +22,22 @@ const COLUMNS = [
     { t: 'Blog', href: '/blog' },
     { t: 'Careers', href: '/careers' },
     { t: 'Reviews', href: '/#collective' },
-    { t: 'Host log in', href: '/login-as-vendor' },
   ] },
   { h: 'Support', links: [
     { t: 'Help', href: '/help' },
     { t: 'Contact', href: '/contact' },
-    { t: 'Terms', href: '/terms' },
-    { t: 'Privacy', href: '/privacy' },
-    { t: 'Refund', href: '/refund' },
+    { t: 'FAQ', href: '/#faq' },
   ] },
-  { h: 'Legal', links: [
-    { t: 'Guest Booking Terms', href: '/guest-terms' },
-    { t: 'Host Agreement', href: '/host-agreement' },
-    { t: 'Host Fee Schedule', href: '/host-fees' },
-  ] },
+];
+
+// Inline legal bar (Zoho-style, wraps) — pulled out of the columns.
+const LEGAL = [
+  { t: 'Terms', href: '/terms' },
+  { t: 'Privacy', href: '/privacy' },
+  { t: 'Refund', href: '/refund' },
+  { t: 'Guest Booking Terms', href: '/guest-terms' },
+  { t: 'Host Agreement', href: '/host-agreement' },
+  { t: 'Host Fee Schedule', href: '/host-fees' },
 ];
 
 // Brand-icon paths (simple-icons, 24x24, fill=currentColor). Email uses a heroicons envelope glyph.
@@ -63,6 +68,72 @@ function FLink({ href, className, children }) {
   );
 }
 
+const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+// Newsletter signup — POST /email/subscribe adds the address to the campaign
+// contacts table (as a newsletter subscriber) AND upserts a CRM lead server-side.
+// Optimistic like the Home form: a network hiccup still shows success and stashes
+// the address locally so it is never lost.
+function NewsletterForm() {
+  const [email, setEmail] = useState('');
+  const [state, setState] = useState('idle'); // idle | loading | ok | err
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const v = email.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { setState('err'); return; }
+    setState('loading');
+    try {
+      await subscribeNewsletter(v);
+    } catch {
+      try {
+        const leads = JSON.parse(localStorage.getItem('newsletterLeads') || '[]');
+        localStorage.setItem('newsletterLeads', JSON.stringify([...leads, v].slice(-200)));
+      } catch { /* storage unavailable — ignore */ }
+    }
+    setState('ok');
+    setEmail('');
+  };
+
+  return (
+    <div>
+      <h3 className="font-heading text-sm font-semibold text-white">Stay in touch</h3>
+      <p className="mt-4 text-sm leading-relaxed text-white/55">
+        Tips, templates and the occasional truth bomb — weekly, quietly.
+      </p>
+      <form onSubmit={submit} noValidate className="mt-4 flex gap-2">
+        <label htmlFor="footer-newsletter" className="sr-only">Email address</label>
+        <input
+          id="footer-newsletter"
+          type="email"
+          autoComplete="email"
+          placeholder="your@email.com"
+          value={email}
+          onChange={(e) => { setEmail(e.target.value); if (state !== 'idle') setState('idle'); }}
+          aria-invalid={state === 'err'}
+          className="h-10 min-w-0 flex-1 rounded-[5px] border border-white/15 bg-white/5 px-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={state === 'loading'}
+          className="inline-flex items-center justify-center whitespace-nowrap rounded-[5px] bg-white px-4 text-sm font-semibold text-ink transition-colors hover:bg-white/90 disabled:opacity-60"
+        >
+          {state === 'loading' ? 'Joining…' : 'Join'}
+        </button>
+      </form>
+      <p role="status" aria-live="polite" className="mt-2 text-xs text-white/40">
+        {state === 'ok'
+          ? 'You’re in — welcome to the Collective.'
+          : state === 'err'
+          ? 'Please enter a valid email address.'
+          : <>Or email us at{' '}
+              <a href={`mailto:${EMAIL}`} className="text-white/60 underline underline-offset-2 transition-colors hover:text-white">{EMAIL}</a>
+            </>}
+      </p>
+    </div>
+  );
+}
+
 export default function Footer({ variant = 'full' }) {
   const year = new Date().getFullYear();
   const minimal = variant === 'minimal';
@@ -87,30 +158,10 @@ export default function Footer({ variant = 'full' }) {
           </div>
         </div>
 
-        {/* Brand column + link columns — dropped in minimal variant */}
+        {/* Brand column + link columns + newsletter — dropped in minimal variant */}
         {!minimal && (
-        <div className="grid gap-10 border-t border-white/10 py-12 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
-          {/* Brand: wordmark + blurb + socials */}
-          <div className="max-w-sm">
-            <a href="#top" className="font-heading text-lg font-extrabold text-white transition-colors hover:text-white hover:no-underline">Book A Sloth</a>
-            <p className="mt-3 text-sm leading-relaxed text-white/55">
-              Booking pages + payments for India's creators and professionals. 0% commission on paid plans.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              {SOCIALS.map((s) => {
-                const ext = s.href.startsWith('http');
-                return (
-                  <a key={s.name} href={s.href} aria-label={s.name} {...(ext ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    className="flex h-9 w-9 items-center justify-center rounded-[5px] border border-white/15 text-white/60 transition-colors hover:border-white/30 hover:text-white hover:no-underline">
-                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true">
-                      <path d={s.d} />
-                    </svg>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-
+        <>
+        <div className="grid gap-10 border-t border-white/10 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.4fr]">
           {/* Link columns */}
           <nav aria-label="Footer" className="contents">
             {COLUMNS.map((col) => (
@@ -128,13 +179,41 @@ export default function Footer({ variant = 'full' }) {
               </div>
             ))}
           </nav>
+
+          {/* Stay in touch: newsletter + email */}
+          <NewsletterForm />
         </div>
+
+        {/* Centered socials */}
+        <div className="flex flex-wrap items-center justify-center gap-3 border-t border-white/10 py-8">
+          {SOCIALS.map((s) => {
+            const ext = s.href.startsWith('http');
+            return (
+              <a key={s.name} href={s.href} aria-label={s.name} {...(ext ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                className="flex h-9 w-9 items-center justify-center rounded-[5px] border border-white/15 text-white/60 transition-colors hover:border-white/30 hover:text-white hover:no-underline">
+                <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true">
+                  <path d={s.d} />
+                </svg>
+              </a>
+            );
+          })}
+        </div>
+        </>
         )}
 
-        {/* Legal bar */}
-        <div className={`flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between ${minimal ? 'mt-14' : ''}`}>
+        {/* Inline legal bar */}
+        <nav aria-label="Legal" className={`flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-white/10 py-6 ${minimal ? 'mt-14' : ''}`}>
+          {LEGAL.map((l) => (
+            <FLink key={l.t} href={l.href} className="text-xs text-white/50 transition-colors hover:text-white hover:no-underline">
+              {l.t}
+            </FLink>
+          ))}
+        </nav>
+
+        {/* Copyright / operator */}
+        <div className="flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <a href="#top" className="font-heading text-sm font-extrabold text-white/80 transition-colors hover:text-white hover:no-underline">Book A Sloth</a>
+            <button type="button" onClick={scrollTop} className="font-heading text-sm font-extrabold text-white/80 transition-colors hover:text-white">Book A Sloth</button>
             <span>© {year} All rights reserved.</span>
             <span className="text-white/25">·</span>
             <span>
