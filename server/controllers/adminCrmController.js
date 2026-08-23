@@ -75,6 +75,16 @@ const getTimeline = async (req, res) => {
   try { res.json(await timeline.getTimeline(req.params.id)); } catch (e) { safeError(res, e); }
 };
 
+// Per-lead CRM message log (sends + their delivery status), newest first.
+const leadMessages = async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin.from('crm_messages')
+      .select('*').eq('lead_id', req.params.id).order('created_at', { ascending: false }).limit(100);
+    if (error) return safeError(res, error);
+    res.json(data || []);
+  } catch (e) { safeError(res, e); }
+};
+
 const setStatus = async (req, res) => {
   try { res.json(await leadService.changeStatus(req.params.id, req.body?.status, actor(req))); }
   catch (e) { res.status(400).json({ message: e.message }); }
@@ -353,7 +363,7 @@ const refreshAttribution = async (req, res) => {
 
 module.exports = {
   dashboard, pipeline,
-  listLeads, createLead, getLead, updateLead, getTimeline,
+  listLeads, createLead, getLead, updateLead, getTimeline, leadMessages,
   setStatus, setOwner, addTag, removeTag, setDnc, addNote, logCall,
   sendWhatsApp, sendEmail,
   listFollowUps, createFollowUp, completeFollowUp, cancelFollowUp,
