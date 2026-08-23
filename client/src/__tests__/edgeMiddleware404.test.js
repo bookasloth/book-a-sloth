@@ -6,7 +6,7 @@ describe('edge profile-404 HTML', () => {
     const html = renderProfile404Html('coolhost');
     expect(html).toContain('name="robots"');
     expect(html).toContain('noindex');
-    expect(html).toContain('assets.bookasloth.in/errors/');
+    expect(html).toContain('company-assets.bookasloth.in/images/error/');
     expect(html).toContain('No host at this address');
     expect(html).toContain('/coolhost');
     expect(html).toContain('/explore');

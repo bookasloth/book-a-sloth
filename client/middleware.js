@@ -33,9 +33,9 @@ const SKIP = new Set(RESERVED_FIRST_SEGMENTS);
 // import server/utils/brandPage.js (different runtime) — keep this visually in
 // sync with brandPage.js by hand. Random detective-sloth variant per request.
 const EDGE_ERROR_IMAGES = [
-  'https://assets.bookasloth.in/errors/sloth-tracks.png',
-  'https://assets.bookasloth.in/errors/sloth-think.png',
-  'https://assets.bookasloth.in/errors/sloth-glass.png',
+  'https://company-assets.bookasloth.in/images/error/sloth-tracks.png',
+  'https://company-assets.bookasloth.in/images/error/sloth-think.png',
+  'https://company-assets.bookasloth.in/images/error/sloth-glass.png',
 ];
 export function renderProfile404Html(rawSlug) {
   const slug = String(rawSlug).replace(/[^a-z0-9._-]/g, '');

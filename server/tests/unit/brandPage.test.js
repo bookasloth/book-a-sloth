@@ -50,9 +50,9 @@ const { pickErrorImage, ERROR_IMAGE_BASE } = require('../../utils/brandPage');
 
 describe('brandPage hero image', () => {
   it('renders an <img> with the given absolute src when image is set', () => {
-    const html = brandPage({ code: 404, heading: 'h', body: 'b', image: 'https://assets.bookasloth.in/errors/sloth-glass.png' });
+    const html = brandPage({ code: 404, heading: 'h', body: 'b', image: 'https://company-assets.bookasloth.in/images/error/sloth-glass.png' });
     expect(html).toContain('<img');
-    expect(html).toContain('https://assets.bookasloth.in/errors/sloth-glass.png');
+    expect(html).toContain('https://company-assets.bookasloth.in/images/error/sloth-glass.png');
   });
   it('renders no <img> when image is absent', () => {
     const html = brandPage({ code: 500, heading: 'h', body: 'b' });
@@ -81,7 +81,7 @@ describe('errorMiddleware 404 branding', () => {
     const res = makeRes();
     errorHandler(Object.assign(new Error('x'), { expose: false }), htmlReq, res, () => {});
     expect(res.statusCode).toBe(404);
-    expect(res.body).toContain('assets.bookasloth.in/errors/');
+    expect(res.body).toContain('company-assets.bookasloth.in/images/error/');
     expect(res.body).toContain('This page pulled a vanishing act');
   });
 
@@ -90,7 +90,7 @@ describe('errorMiddleware 404 branding', () => {
     res.statusCode = 410;
     errorHandler(Object.assign(new Error('x'), { expose: false }), htmlReq, res, () => {});
     expect(res.statusCode).toBe(410);
-    expect(res.body).toContain('assets.bookasloth.in/errors/');
+    expect(res.body).toContain('company-assets.bookasloth.in/images/error/');
     expect(res.body).toContain('This page pulled a vanishing act');
   });
 });

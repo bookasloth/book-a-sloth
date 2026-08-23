@@ -52,7 +52,7 @@ describe('ErrorPage renders from config', () => {
     const { container } = renderAt(<ErrorPage code={404} />);
     const img = container.querySelector('img.bas-error-art');
     expect(img).toBeTruthy();
-    expect(img.getAttribute('src').startsWith('https://assets.bookasloth.in/errors/')).toBe(true);
+    expect(img.getAttribute('src').startsWith('https://company-assets.bookasloth.in/images/error/')).toBe(true);
   });
 
   it('renders the 403 access-denied CTA', () => {
@@ -76,12 +76,12 @@ describe('Offline page', () => {
 
 describe('error image variants', () => {
   it('exposes the CDN base and three variants', () => {
-    expect(ERROR_IMAGE_BASE).toBe('https://assets.bookasloth.in/errors');
+    expect(ERROR_IMAGE_BASE).toBe('https://company-assets.bookasloth.in/images/error');
     expect(ERROR_IMAGE_VARIANTS).toEqual(['sloth-tracks.png', 'sloth-think.png', 'sloth-glass.png']);
   });
   it('pickErrorImage returns a full URL from the variant set', () => {
     const url = pickErrorImage();
-    expect(url.startsWith('https://assets.bookasloth.in/errors/')).toBe(true);
+    expect(url.startsWith('https://company-assets.bookasloth.in/images/error/')).toBe(true);
     expect(ERROR_IMAGE_VARIANTS.some((v) => url.endsWith(v))).toBe(true);
   });
   it('marks 404 and 410 as image-driven', () => {
@@ -99,7 +99,7 @@ describe('ErrorIllustration image mode', () => {
     const { container } = rtlRender(<ErrorIllustration art="lost" image />);
     const img = container.querySelector('img');
     expect(img).toBeTruthy();
-    expect(img.getAttribute('src').startsWith('https://assets.bookasloth.in/errors/')).toBe(true);
+    expect(img.getAttribute('src').startsWith('https://company-assets.bookasloth.in/images/error/')).toBe(true);
     expect(img.getAttribute('alt')).toBe('');
   });
   it('renders the SVG (no img) when image is not set', () => {

@@ -28,7 +28,7 @@ export const ACTIONS = Object.freeze({
 // Detective-sloth art for the `lost` mood (404/410). Hosted on the external CDN
 // (not in-repo); a missing file just renders an empty box. One random variant
 // per visit — see pickErrorImage.
-export const ERROR_IMAGE_BASE = 'https://assets.bookasloth.in/errors';
+export const ERROR_IMAGE_BASE = 'https://company-assets.bookasloth.in/images/error';
 export const ERROR_IMAGE_VARIANTS = Object.freeze([
   'sloth-tracks.png',
   'sloth-think.png',
