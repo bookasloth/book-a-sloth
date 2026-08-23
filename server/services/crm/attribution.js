@@ -15,6 +15,7 @@
  */
 const { supabaseAdmin } = require('../../config/supabase');
 const { normalizePhone } = require('../aisensyService');
+const contactsService = require('../contactsService');
 
 const toPaise = (rupees) => Math.round((Number(rupees) || 0) * 100);
 const PAGE = 200;
@@ -87,7 +88,12 @@ async function refreshRevenue() {
 async function run() {
   const linked = await linkLeadsToProfiles();
   const updated = await refreshRevenue();
-  return { linked, updated };
+  // Mirror email-bearing leads into the marketing contacts table so campaigns
+  // can reach them. Best-effort — never let it fail the attribution pass.
+  let contacts = { upserted: 0, linked: 0 };
+  try { contacts = await contactsService.syncLeads(); }
+  catch (e) { console.error('[crm] leads→contacts sync failed:', e.message); }
+  return { linked, updated, contactsUpserted: contacts.upserted, contactsLinked: contacts.linked };
 }
 
 module.exports = { run, linkLeadsToProfiles, refreshRevenue, toPaise };
