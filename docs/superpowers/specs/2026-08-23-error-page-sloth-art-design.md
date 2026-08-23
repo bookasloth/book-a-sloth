@@ -21,30 +21,30 @@ They say different things, use different logos, and #3 is unstyled. The goal is 
 - **Approach: C (hybrid).** Detective sloth on the `lost` mood (404 + 410) only. Every other error code keeps its existing line-art. A clean slot is left so more per-mood images can be dropped in later without a rebuild.
 - **All three images used as rotating variants.**
 - **Random each visit** — page picks one of three at load / per request.
-- **Images live in `client/public/errors/`.** Relative `/errors/*.png` for the client; absolute `https://bookasloth.com/errors/*.png` for server + edge (same files, one source of truth).
+- **Images hosted on external CDN**, not in-repo. Base: `https://assets.bookasloth.in/errors/`. User uploads the three PNGs there. All three surfaces use the **absolute** CDN URL (client included — no relative paths, no `client/public/errors/`).
 - **Copy rewritten** for the detective theme (below).
 - **Real 404 status + `noindex` preserved** on edge (#3) and server (#2) — crawlers must still see 404.
 
 ## Assets
 
-Three files → `client/public/errors/`:
+Three PNGs on external CDN (user uploads). Base `https://assets.bookasloth.in/errors/`:
 
-| Filename | Image |
+| Full URL | Image |
 |---|---|
-| `sloth-tracks.png` | Walking, following footprints |
-| `sloth-think.png` | Thinking, "?" above head |
-| `sloth-glass.png` | Standing, magnifying glass up |
+| `https://assets.bookasloth.in/errors/sloth-tracks.png` | Walking, following footprints |
+| `https://assets.bookasloth.in/errors/sloth-think.png` | Thinking, "?" above head |
+| `https://assets.bookasloth.in/errors/sloth-glass.png` | Standing, magnifying glass up |
 
-Backgrounds trimmed to transparent so they sit cleanly on the white/dark card. Keep them reasonably small (target < 60 KB each; downscale to ~264px display @2x = ~528px source if larger).
+Nothing added to the repo's `public/`. Uploader should trim backgrounds to transparent and keep each < 60 KB.
 
-A single shared list of the three basenames is the source of truth for "which variants exist," referenced by all three surfaces (each surface hardcodes the same three names — see Duplication note).
+Each surface hardcodes the same base + three filenames (three runtimes can't share one constant — see Duplication note). Code can ship and be tested before the images exist; a missing image just renders empty until upload.
 
 ## Surface 1 — Client (React)
 
 **Files:** `client/src/config/errorCatalog.js`, `client/src/components/error/ErrorIllustration.jsx`, `client/src/components/error/ErrorLayout.jsx` (pass-through only if needed).
 
-- `errorCatalog.js`: the 404 and 410 entries gain an `images` array field listing the three variant basenames (e.g. `images: ['sloth-tracks', 'sloth-think', 'sloth-glass']`). No other entry changes.
-- `ErrorIllustration.jsx`: if the rendered entry supplies `images`, render an `<img>` picking a **random** variant on mount (via `useState(() => pick)` so it stays stable within a mount but varies across visits); otherwise fall back to the existing `ART[art]` SVG. `<img>` uses `/errors/<name>.png`, `alt=""` (decorative — the copy carries meaning), explicit width/height to avoid CLS, `loading="eager"`.
+- Add a small `ERROR_IMAGE_BASE = 'https://assets.bookasloth.in/errors'` + variant filename list (in `errorCatalog.js` or a tiny sibling const). The 404 and 410 entries gain an `images: true` flag (or reference the shared variant list) marking them as image-driven. No other entry changes.
+- `ErrorIllustration.jsx`: if the rendered entry is image-driven, render an `<img>` picking a **random** variant on mount (via `useState(() => pick)` so it stays stable within a mount but varies across visits); otherwise fall back to the existing `ART[art]` SVG. `<img>` src is the absolute CDN URL, `alt=""` (decorative — the copy carries meaning), explicit width/height to avoid CLS, `loading="eager"`.
 - `ErrorPage.jsx` passes the entry's `images` through to the layout/illustration. Minimal wiring — the catalog entry already flows to `ErrorLayout` via props; add `images` alongside `art`.
 - Line-art path for every other code is untouched.
 
@@ -97,7 +97,7 @@ A single shared list of the three basenames is the source of truth for "which va
 
 ## Testing / validation
 
-- **Client:** extend `client/src/__tests__/errorPages.test.jsx` — assert the 404/410 entries render an `<img>` from `/errors/`, and a non-image code still renders the SVG. Run `npx vitest run`.
+- **Client:** extend `client/src/__tests__/errorPages.test.jsx` — assert the 404/410 entries render an `<img>` whose src starts with `https://assets.bookasloth.in/errors/`, and a non-image code still renders the SVG. Run `npx vitest run`.
 - **Client build:** `cd client && npm run build` must pass (Vercel gate).
 - **Server:** extend `server/tests/unit/brandPage.test.js` — `brandPage({ image })` includes the `<img>` and absolute URL; without `image` it does not. Run `cd server && npm test`.
 - **Edge:** the branch returns `status 404`, contains `noindex`, contains one of the three image URLs, and escapes `{slug}` (existing XSS guard preserved). Add an assertion to whichever suite covers middleware, or a small unit check.
@@ -107,5 +107,5 @@ A single shared list of the three basenames is the source of truth for "which va
 
 - `ErrorLayout` calls `useHideChrome()` (ChromeContext) — must not regress; don't move the illustration out of the no-chrome tree.
 - Random-on-mount must be stable within a single mount (no flicker/re-pick on re-render) — use lazy `useState` initializer, not a bare `Math.random()` in render.
-- Absolute image URLs on server/edge depend on `bookasloth.com` serving `client/public/errors/*` — verify the deployed path resolves before relying on it (the client build publishes `public/` at the domain root).
+- Image URLs point at the external CDN `assets.bookasloth.in` — the images won't exist until the user uploads them. Code + tests must not hard-depend on a 200 from the CDN (broken-image is a graceful empty box, acceptable pre-upload). Verify the CDN path resolves after upload.
 - Image background must be transparent or it shows a box on the card.
