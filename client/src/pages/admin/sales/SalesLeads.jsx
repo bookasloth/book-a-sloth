@@ -38,6 +38,11 @@ function parseCsv(text) {
 }
 const HEADER_MAP = { name: 'name', phone: 'phone', whatsapp: 'whatsapp', email: 'email', business: 'business', company: 'business', profession: 'profession', city: 'city', source: 'source', tags: 'tags' };
 
+// Status pill for the lead's funnel stage. Restored after #707 dropped the
+// definition while leaving a usage in the mobile card render (crashed the page
+// with "StageBadge is not defined" once any lead row rendered).
+const StageBadge = ({ s }) => <Badge tone={STATUS_TONE[s] || 'neutral'}>{STATUS_LABEL[s] || s}</Badge>;
+
 // Bulk WhatsApp / email / enrol for the selected leads. Sends are QUEUED through
 // the gated worker (kill-switch + DNC + opt-out + frequency cap), so a blast can
 // never bypass the coordinated-conversation limits. WhatsApp params are sent as
