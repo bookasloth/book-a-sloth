@@ -1,189 +1,267 @@
-// crmController.js — Studio Client CRM endpoints. Every handler is host-scoped:
-// hostId ALWAYS comes from req.user.id (the auth token), never the request body.
-// The Studio gate (requireCrm) runs as route middleware before any of these.
+'use strict';
+/**
+ * crmController.js — Admin Sales CRM API (/api/admin/crm).
+ *
+ * Thin HTTP layer over services/crm/*. View routes need `leads.view`,
+ * mutations + sends need `leads.manage` (enforced in the router). Every actor is
+ * req.admin.id (admin JWT), threaded into the services for the timeline.
+ */
 const { supabaseAdmin } = require('../config/supabase');
-const crmService = require('../services/crmService');
-const { customerKey } = require('../utils/customerKey');
+const { safeError } = require('../utils/httpError');
+const leadService = require('../services/crm/leadService');
+const timeline = require('../services/crm/timeline');
+const messageService = require('../services/crm/messageService');
+const followUpService = require('../services/crm/followUpService');
+const sequenceService = require('../services/crm/sequenceService');
+const attribution = require('../services/crm/attribution');
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const NOTE_MAX = 5000;
-const fail = (res, err, msg) => { console.error('crm:', msg, err?.message || err); return res.status(500).json({ message: msg }); };
+const actor = (req) => req.admin?.id || null;
 
-// GET /api/crm/customers?q=&page=&sort=&filter=
-const listCustomers = async (req, res) => {
+// Fields an admin may edit directly on a lead (status/owner/tags/dnc have their own routes).
+const EDITABLE = ['name', 'phone', 'whatsapp_phone', 'email', 'business_name', 'website', 'instagram', 'linkedin', 'city', 'profession', 'lost_reason'];
+
+// ── Dashboard ─────────────────────────────────────────────────
+const dashboard = async (req, res) => {
+  try { res.json(await leadService.dashboardStats()); } catch (e) { safeError(res, e); }
+};
+const pipeline = async (req, res) => {
+  try { res.json(await leadService.pipelineCounts()); } catch (e) { safeError(res, e); }
+};
+
+// ── Leads ─────────────────────────────────────────────────────
+const listLeads = async (req, res) => {
   try {
-    const { q = '', page = '1', sort = 'recent', filter = null } = req.query;
-    const out = await crmService.listClients(req.user.id, {
-      q: String(q), page: Math.max(1, parseInt(page, 10) || 1), sort, filter,
+    const { status, source, owner, tag, city, profession, q, page, pageSize } = req.query;
+    res.json(await leadService.listLeads({
+      status, source, owner, tag, city, profession, q,
+      page: Number(page) || 1, pageSize: Math.min(Number(pageSize) || 25, 100),
+    }));
+  } catch (e) { safeError(res, e); }
+};
+
+const createLead = async (req, res) => {
+  try {
+    const { lead, created } = await leadService.upsertLead(req.body || {}, { source: req.body?.source, createdBy: actor(req) });
+    res.status(created ? 201 : 200).json({ lead, created });
+  } catch (e) { safeError(res, e); }
+};
+
+const getLead = async (req, res) => {
+  try {
+    const lead = await leadService.getLead(req.params.id);
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
+    const [{ data: notes }, followUps] = await Promise.all([
+      supabaseAdmin.from('lead_notes').select('*').eq('lead_id', lead.id).order('created_at', { ascending: false }),
+      followUpService.listOpen({ leadId: lead.id }),
+    ]);
+    res.json({ lead, notes: notes || [], followUps });
+  } catch (e) { safeError(res, e); }
+};
+
+const updateLead = async (req, res) => {
+  try {
+    const patch = {};
+    for (const k of EDITABLE) if (k in (req.body || {})) patch[k] = req.body[k];
+    if (!Object.keys(patch).length) return res.status(400).json({ message: 'No editable fields' });
+    patch.updated_at = new Date().toISOString();
+    const { data, error } = await supabaseAdmin.from('leads').update(patch).eq('id', req.params.id).select('*').single();
+    if (error) return safeError(res, error);
+    res.json(data);
+  } catch (e) { safeError(res, e); }
+};
+
+const getTimeline = async (req, res) => {
+  try { res.json(await timeline.getTimeline(req.params.id)); } catch (e) { safeError(res, e); }
+};
+
+const setStatus = async (req, res) => {
+  try { res.json(await leadService.changeStatus(req.params.id, req.body?.status, actor(req))); }
+  catch (e) { res.status(400).json({ message: e.message }); }
+};
+const setOwner = async (req, res) => {
+  try { res.json(await leadService.assignOwner(req.params.id, req.body?.ownerAdminId || null, actor(req))); }
+  catch (e) { safeError(res, e); }
+};
+const addTag = async (req, res) => {
+  try { res.json(await leadService.addTag(req.params.id, req.body?.tag, actor(req))); } catch (e) { safeError(res, e); }
+};
+const removeTag = async (req, res) => {
+  try { res.json(await leadService.removeTag(req.params.id, req.params.tag, actor(req))); } catch (e) { safeError(res, e); }
+};
+const setDnc = async (req, res) => {
+  try { res.json(await leadService.setDnc(req.params.id, !!req.body?.value, actor(req))); } catch (e) { safeError(res, e); }
+};
+const addNote = async (req, res) => {
+  try { res.status(201).json(await leadService.addNote(req.params.id, req.body?.body, actor(req))); }
+  catch (e) { res.status(400).json({ message: e.message }); }
+};
+const logCall = async (req, res) => {
+  try { res.json(await leadService.logCall(req.params.id, req.body || {}, actor(req))); } catch (e) { safeError(res, e); }
+};
+
+// ── Sends (queued through the gated MessageService) ───────────
+const sendWhatsApp = async (req, res) => {
+  try {
+    const { templateKey, params = [] } = req.body || {};
+    if (!templateKey) return res.status(400).json({ message: 'templateKey required' });
+    const row = await messageService.enqueue({
+      leadId: req.params.id, channel: 'whatsapp', templateKey,
+      variables: { params }, createdBy: actor(req), immediate: true,
     });
-    return res.json(out);
-  } catch (err) { return fail(res, err, 'Could not load clients.'); }
+    res.status(202).json(row);
+  } catch (e) { safeError(res, e); }
 };
 
-// GET /api/crm/customers/:id
-const getCustomer = async (req, res) => {
+const sendEmail = async (req, res) => {
   try {
-    if (!UUID_RE.test(req.params.id)) return res.status(404).json({ message: 'Client not found.' });
-    const detail = await crmService.getClient(req.user.id, req.params.id);
-    if (!detail) return res.status(404).json({ message: 'Client not found.' });
-    return res.json(detail);
-  } catch (err) { return fail(res, err, 'Could not load client.'); }
+    const { subject, html, text } = req.body || {};
+    if (!subject || !html) return res.status(400).json({ message: 'subject and html required' });
+    const row = await messageService.enqueue({
+      leadId: req.params.id, channel: 'email', subject,
+      variables: { html, text }, createdBy: actor(req), immediate: true,
+    });
+    res.status(202).json(row);
+  } catch (e) { safeError(res, e); }
 };
 
-// GET /api/crm/customers.csv  — fulfils the "Data export" Studio row.
+// ── Follow-ups ────────────────────────────────────────────────
+const listFollowUps = async (req, res) => {
+  try { res.json(await followUpService.listOpen({ ownerAdminId: req.query.owner, before: req.query.before })); }
+  catch (e) { safeError(res, e); }
+};
+const createFollowUp = async (req, res) => {
+  try {
+    const { title, dueAt, remind, ownerAdminId } = req.body || {};
+    res.status(201).json(await followUpService.create({
+      leadId: req.params.id, ownerAdminId: ownerAdminId || actor(req), title, dueAt, remind, createdBy: actor(req),
+    }));
+  } catch (e) { res.status(400).json({ message: e.message }); }
+};
+const completeFollowUp = async (req, res) => {
+  try { res.json(await followUpService.complete(req.params.id, actor(req))); } catch (e) { safeError(res, e); }
+};
+const cancelFollowUp = async (req, res) => {
+  try { res.json(await followUpService.cancel(req.params.id)); } catch (e) { safeError(res, e); }
+};
+
+// ── Sequences ─────────────────────────────────────────────────
+const listSequences = async (req, res) => {
+  try {
+    const { data } = await supabaseAdmin.from('crm_sequences').select('*, crm_sequence_steps(*)').order('created_at', { ascending: false });
+    res.json(data || []);
+  } catch (e) { safeError(res, e); }
+};
+const createSequence = async (req, res) => {
+  try {
+    const { name, description, steps = [], stop_on_reply, stop_on_convert } = req.body || {};
+    if (!name) return res.status(400).json({ message: 'name required' });
+    const { data: seq, error } = await supabaseAdmin.from('crm_sequences')
+      .insert({ name, description: description || '', stop_on_reply: stop_on_reply !== false, stop_on_convert: stop_on_convert !== false, created_by: actor(req) })
+      .select('*').single();
+    if (error) return safeError(res, error);
+    if (steps.length) {
+      const rows = steps.map((s, i) => ({
+        sequence_id: seq.id, step_no: i + 1, delay_hours: Number(s.delay_hours) || 0,
+        channel: s.channel, template_key: s.template_key || null, subject: s.subject || null, body: s.body || null,
+      }));
+      await supabaseAdmin.from('crm_sequence_steps').insert(rows);
+    }
+    res.status(201).json(seq);
+  } catch (e) { safeError(res, e); }
+};
+const enroll = async (req, res) => {
+  try {
+    const { sequenceId } = req.body || {};
+    if (!sequenceId) return res.status(400).json({ message: 'sequenceId required' });
+    res.status(201).json(await sequenceService.enroll(sequenceId, req.params.id, actor(req)));
+  } catch (e) { res.status(400).json({ message: e.message }); }
+};
+
+// ── Bulk ──────────────────────────────────────────────────────
+const bulk = async (req, res) => {
+  try {
+    const { ids = [], action, value } = req.body || {};
+    if (!Array.isArray(ids) || !ids.length || !action) return res.status(400).json({ message: 'ids[] and action required' });
+    let done = 0;
+    for (const id of ids) {
+      try {
+        if (action === 'status') await leadService.changeStatus(id, value, actor(req));
+        else if (action === 'owner') await leadService.assignOwner(id, value || null, actor(req));
+        else if (action === 'tag_add') await leadService.addTag(id, value, actor(req));
+        else if (action === 'tag_remove') await leadService.removeTag(id, value, actor(req));
+        else if (action === 'dnc') await leadService.setDnc(id, true, actor(req));
+        else return res.status(400).json({ message: `unknown action: ${action}` });
+        done++;
+      } catch (_) { /* skip individual failures */ }
+    }
+    res.json({ done, total: ids.length });
+  } catch (e) { safeError(res, e); }
+};
+
+// ── Import / Export ───────────────────────────────────────────
+const validEmail = (e) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+const importPreview = async (req, res) => {
+  try {
+    const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+    const seen = new Set();
+    const preview = rows.map((r, i) => {
+      const phone = (r.phone || '').trim();
+      const email = (r.email || '').trim().toLowerCase();
+      const key = phone || email;
+      const errors = [];
+      if (!phone && !email) errors.push('no phone or email');
+      if (email && !validEmail(email)) errors.push('bad email');
+      const dupInBatch = key && seen.has(key);
+      if (key) seen.add(key);
+      return { row: i + 1, name: r.name || '', phone, email, business: r.business || '', errors, dupInBatch };
+    });
+    res.json({ total: rows.length, valid: preview.filter((p) => !p.errors.length).length, preview });
+  } catch (e) { safeError(res, e); }
+};
+
+const importCommit = async (req, res) => {
+  try {
+    const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+    let created = 0, merged = 0, skipped = 0;
+    for (const r of rows) {
+      if (!r.phone && !r.email) { skipped++; continue; }
+      try {
+        const { created: isNew } = await leadService.upsertLead({
+          name: r.name || '', phone: r.phone || '', whatsapp_phone: r.whatsapp || r.phone || '',
+          email: r.email || '', business_name: r.business || '', profession: r.profession || '',
+          city: r.city || '', tags: Array.isArray(r.tags) ? r.tags : (r.tags ? String(r.tags).split(',').map((t) => t.trim()) : []),
+        }, { source: r.source || 'import', createdBy: actor(req) });
+        if (isNew) created++; else merged++;
+      } catch (_) { skipped++; }
+    }
+    res.json({ created, merged, skipped });
+  } catch (e) { safeError(res, e); }
+};
+
 const exportCsv = async (req, res) => {
   try {
-    const { clients } = await crmService.listClients(req.user.id, { pageSize: 100000, sort: 'ltv' });
-    const esc = (v) => {
-      const s = v == null ? '' : String(v);
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-    const header = ['Name', 'Phone', 'Email', 'Bookings', 'Total Spent', 'First Booked', 'Last Booking', 'Recurring'];
-    const rows = clients.map((c) => [c.name, c.phone, c.email, c.bookings_count, c.total_spent,
-      c.first_booked_at, c.last_booking_at, c.is_recurring ? 'yes' : 'no'].map(esc).join(','));
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="clients.csv"');
-    return res.send([header.join(','), ...rows].join('\n'));
-  } catch (err) { return fail(res, err, 'Could not export clients.'); }
+    const { rows } = await leadService.listLeads({ ...req.query, page: 1, pageSize: 5000 });
+    const cols = ['id', 'name', 'phone', 'email', 'business_name', 'profession', 'city', 'source', 'status', 'revenue_paise', 'created_at'];
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const csv = [cols.join(',')].concat((rows || []).map((r) => cols.map((c) => esc(r[c])).join(','))).join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="leads.csv"');
+    res.send(csv);
+  } catch (e) { safeError(res, e); }
 };
 
-// POST /api/crm/customers/resolve { customer_key } → { id }
-// Derived-only clients have no persisted row (list returns id:null) until they
-// get a note/attribute. The client calls this to obtain a stable UUID handle
-// before opening the detail page. Host-scoped; key travels in the BODY (no PII
-// in URLs). ensureCustomer is idempotent.
-const resolveCustomer = async (req, res) => {
-  try {
-    const key = String(req.body?.customer_key || '').trim();
-    if (!/^[pe]:/.test(key)) return res.status(400).json({ message: 'Invalid client key.' });
-    const row = await crmService.ensureCustomer(req.user.id, key);
-    return res.json({ id: row.id });
-  } catch (err) { return fail(res, err, 'Could not open client.'); }
-};
-
-// Resolve the crm_customers handle in :id to a host-owned row (or null).
-const ownedCustomer = async (hostId, id) => {
-  if (!UUID_RE.test(id)) return null;
-  const { data } = await supabaseAdmin
-    .from('crm_customers').select('*').eq('id', id).eq('host_id', hostId).maybeSingle();
-  return data || null;
-};
-
-// POST /api/crm/customers/:id/notes  { body, booking_id? }
-const addNote = async (req, res) => {
-  try {
-    const cust = await ownedCustomer(req.user.id, req.params.id);
-    if (!cust) return res.status(404).json({ message: 'Client not found.' });
-    const body = String(req.body?.body || '').trim();
-    if (!body) return res.status(400).json({ message: 'Note cannot be empty.' });
-    if (body.length > NOTE_MAX) return res.status(400).json({ message: `Note too long (max ${NOTE_MAX}).` });
-
-    let booking_id = req.body?.booking_id || null;
-    if (booking_id) {
-      // A pinned note must reference a booking THIS host owns.
-      const { data: bk } = await supabaseAdmin
-        .from('bookings').select('id').eq('id', booking_id).eq('host_id', req.user.id).maybeSingle();
-      if (!bk) return res.status(404).json({ message: 'Booking not found.' });
-    }
-    const { data, error } = await supabaseAdmin
-      .from('crm_notes').insert({ customer_id: cust.id, host_id: req.user.id, body, booking_id })
-      .select('*').single();
-    if (error) throw error;
-    return res.status(201).json(data);
-  } catch (err) { return fail(res, err, 'Could not save note.'); }
-};
-
-// GET /api/crm/customers/:id/notes
-const listNotes = async (req, res) => {
-  try {
-    const cust = await ownedCustomer(req.user.id, req.params.id);
-    if (!cust) return res.status(404).json({ message: 'Client not found.' });
-    const { data, error } = await supabaseAdmin
-      .from('crm_notes').select('*').eq('customer_id', cust.id).eq('host_id', req.user.id)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return res.json({ notes: data || [] });
-  } catch (err) { return fail(res, err, 'Could not load notes.'); }
-};
-
-// DELETE /api/crm/customers/:id/notes/:noteId
-const deleteNote = async (req, res) => {
-  try {
-    const cust = await ownedCustomer(req.user.id, req.params.id);
-    if (!cust) return res.status(404).json({ message: 'Client not found.' });
-    const { data, error } = await supabaseAdmin
-      .from('crm_notes').delete().eq('id', req.params.noteId).eq('host_id', req.user.id)
-      .eq('customer_id', cust.id).select('id');
-    if (error) throw error;
-    if (!data || !data.length) return res.status(404).json({ message: 'Note not found.' });
-    return res.status(204).end();
-  } catch (err) { return fail(res, err, 'Could not delete note.'); }
-};
-
-// PATCH /api/crm/customers/:id/attributes  { tags?, ... } — shallow-merge into jsonb.
-const patchAttributes = async (req, res) => {
-  try {
-    const cust = await ownedCustomer(req.user.id, req.params.id);
-    if (!cust) return res.status(404).json({ message: 'Client not found.' });
-    const incoming = req.body && typeof req.body === 'object' ? req.body : {};
-    if (Array.isArray(incoming.tags)) {
-      incoming.tags = [...new Set(incoming.tags.map((t) => String(t).trim()).filter(Boolean))].slice(0, 50);
-    }
-    const merged = { ...(cust.attributes || {}), ...incoming };
-    const { data, error } = await supabaseAdmin
-      .from('crm_customers').update({ attributes: merged, updated_at: new Date().toISOString() })
-      .eq('id', cust.id).eq('host_id', req.user.id).select('*').single();
-    if (error) throw error;
-    return res.json(data);
-  } catch (err) { return fail(res, err, 'Could not update client.'); }
-};
-
-// POST /api/crm/manual-booking  { name, phone?, email?, service_id, amount, date }
-// Walk-in / cash record. source='manual_cash' → INCLUDED in host revenue+CRM,
-// EXCLUDED from all platform aggregations (enforced by the source filter elsewhere).
-// SILENT: no notify / reminder / calendar / invoice / Razorpay / review.
-const createManualBooking = async (req, res) => {
-  try {
-    const { name, phone, email, service_id, amount, date } = req.body || {};
-    if (!customerKey({ phone, email }))
-      return res.status(400).json({ message: 'A phone number or email is required to log a walk-in.' });
-    if (!service_id || !UUID_RE.test(String(service_id)))
-      return res.status(400).json({ message: 'Select a service.' });
-    const amt = Number(amount);
-    if (!(amt >= 0)) return res.status(400).json({ message: 'Enter a valid amount.' });
-
-    // Service must belong to this host (no cross-host manual bookings).
-    const { data: svc } = await supabaseAdmin
-      .from('services').select('id, duration, grace_period_minutes').eq('id', service_id).eq('host_id', req.user.id).maybeSingle();
-    if (!svc) return res.status(404).json({ message: 'Service not found.' });
-
-    const startDt = date ? new Date(date) : new Date();
-    const when = startDt.toISOString();
-    // P3-12: end_at is NOT NULL (v3.42) and grace_minutes pads the no-overlap
-    // constraint — a walk-in insert without them would 23502 the moment this
-    // (currently parked) route is enabled.
-    const endAt = new Date(startDt.getTime() + (svc.duration || 30) * 60000).toISOString();
-    const { data, error } = await supabaseAdmin.from('bookings').insert({
-      host_id: req.user.id,
-      service_id,
-      guest_name: name || null,
-      guest_phone: phone || null,
-      guest_email: email || null,
-      customer_total: amt,
-      status: 'completed',
-      payment_status: 'paid',
-      scheduled_at: when,
-      end_at: endAt,
-      grace_minutes: svc.grace_period_minutes ?? 10,
-      source: 'manual_cash',
-    }).select('id, source').single();
-    if (error) throw error;
-    return res.status(201).json({ booking: data });
-  } catch (err) { return fail(res, err, 'Could not log the walk-in.'); }
+// Manual attribution refresh (link + revenue).
+const refreshAttribution = async (req, res) => {
+  try { res.json(await attribution.run()); } catch (e) { safeError(res, e); }
 };
 
 module.exports = {
-  listCustomers, getCustomer, exportCsv, resolveCustomer,
-  addNote, listNotes, deleteNote, patchAttributes,
-  createManualBooking,
+  dashboard, pipeline,
+  listLeads, createLead, getLead, updateLead, getTimeline,
+  setStatus, setOwner, addTag, removeTag, setDnc, addNote, logCall,
+  sendWhatsApp, sendEmail,
+  listFollowUps, createFollowUp, completeFollowUp, cancelFollowUp,
+  listSequences, createSequence, enroll,
+  bulk, importPreview, importCommit, exportCsv, refreshAttribution,
 };

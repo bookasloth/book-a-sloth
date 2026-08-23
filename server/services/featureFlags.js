@@ -20,7 +20,10 @@ async function loadFlags() {
 // (the safe / more-restrictive state) rather than `true`. A boundary control
 // that fails open is not a control. `unified_login` gates the host/guest login
 // separation (authController) — if it can't be read, enforce the separation.
-const FAIL_CLOSED_KEYS = new Set(['unified_login']);
+// `crm_admin_sends` is the master gate for admin CRM outbound. It fails CLOSED
+// so a missing row or a DB read error means NO sends (an outbound control that
+// fails open is not a control). It also ships disabled (featureRegistry).
+const FAIL_CLOSED_KEYS = new Set(['unified_login', 'crm_admin_sends']);
 
 // Fail-open (default): unknown / errored feature flags default to enabled so a
 // missing migration never bricks a normal feature. Security keys override this

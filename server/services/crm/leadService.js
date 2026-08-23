@@ -1,0 +1,204 @@
+'use strict';
+/**
+ * leadService.js — lead CRUD, pipeline, search, notes, tags, conversion.
+ *
+ * The CRM system-of-record. Every mutation that belongs in the lead's history
+ * also writes a lead_activities row (via activity.logActivity) so the timeline
+ * is always complete.
+ *
+ * Dedup: phone is the primary key of identity in this product; upsertLead
+ * matches on normalized phone, then email, and MERGES (never overwrites a
+ * populated field with a blank) so re-running the backfill/import is safe.
+ */
+const { supabaseAdmin } = require('../../config/supabase');
+const { normalizePhone } = require('../aisensyService');
+const { logActivity } = require('./activity');
+
+const FUNNEL = ['new', 'contacted', 'replied', 'qualified', 'demo_scheduled', 'trial', 'activated', 'paid'];
+const STATUSES = [...FUNNEL, 'lost', 'do_not_contact'];
+const CONVERTED = new Set(['activated', 'paid']);
+
+const norm = (p) => normalizePhone(p) || null;
+const lc = (e) => (e ? String(e).trim().toLowerCase() : null);
+
+// ── Create / upsert ───────────────────────────────────────────
+/**
+ * Insert or merge a lead. Match order: normalized phone → email.
+ * `patch` may include any lead column; blanks never clobber existing values.
+ * @returns {{ lead, created }}
+ */
+async function upsertLead(patch = {}, { source, createdBy = '' } = {}) {
+  const phone = norm(patch.phone);
+  const email = lc(patch.email);
+
+  let existing = null;
+  if (phone) ({ data: existing } = await supabaseAdmin.from('leads').select('*').eq('phone', phone).maybeSingle());
+  if (!existing && email) ({ data: existing } = await supabaseAdmin.from('leads').select('*').eq('email', email).maybeSingle());
+
+  const clean = { ...patch };
+  if (phone) clean.phone = phone; else delete clean.phone;
+  if (email) clean.email = email; else delete clean.email;
+
+  if (existing) {
+    // Merge: only fill blanks / update explicitly provided non-empty values.
+    const merged = {};
+    for (const [k, v] of Object.entries(clean)) {
+      if (v === undefined || v === null || v === '') continue;
+      if (k === 'status' || k === 'owner_admin_id' || k === 'source') continue; // never regress pipeline on re-sync
+      if (existing[k] === null || existing[k] === '' || existing[k] === undefined) merged[k] = v;
+    }
+    if (Object.keys(merged).length) {
+      merged.updated_at = new Date().toISOString();
+      await supabaseAdmin.from('leads').update(merged).eq('id', existing.id);
+    }
+    return { lead: { ...existing, ...merged }, created: false };
+  }
+
+  const row = {
+    ...clean,
+    source: source || clean.source || 'manual',
+    created_by: createdBy,
+  };
+  const { data, error } = await supabaseAdmin.from('leads').insert(row).select('*').single();
+  if (error) throw error;
+  await logActivity(data.id, 'lead_created', { title: `Lead created (${row.source})`, meta: { source: row.source } });
+  return { lead: data, created: true };
+}
+
+async function getLead(id) {
+  const { data } = await supabaseAdmin.from('leads').select('*').eq('id', id).maybeSingle();
+  return data || null;
+}
+
+// ── List / search ─────────────────────────────────────────────
+async function listLeads({ status, source, owner, tag, city, profession, q, page = 1, pageSize = 25 } = {}) {
+  let query = supabaseAdmin.from('leads').select('*', { count: 'exact' });
+  if (status) query = query.eq('status', status);
+  if (source) query = query.eq('source', source);
+  if (owner) query = query.eq('owner_admin_id', owner);
+  if (city) query = query.ilike('city', `%${city}%`);
+  if (profession) query = query.ilike('profession', `%${profession}%`);
+  if (tag) query = query.contains('tags', [tag]);
+  if (q) {
+    const s = String(q).replace(/[%,()]/g, ' ').trim();
+    query = query.or(`name.ilike.%${s}%,business_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`);
+  }
+  const from = (Math.max(1, page) - 1) * pageSize;
+  query = query.order('last_activity_at', { ascending: false, nullsFirst: false })
+               .order('created_at', { ascending: false })
+               .range(from, from + pageSize - 1);
+  const { data, count, error } = await query;
+  if (error) throw error;
+  return { rows: data || [], total: count || 0, page, pageSize };
+}
+
+// ── Mutations (each writes an activity) ───────────────────────
+async function changeStatus(id, status, actorAdminId) {
+  if (!STATUSES.includes(status)) throw new Error(`invalid status: ${status}`);
+  const before = await getLead(id);
+  const patch = { status, updated_at: new Date().toISOString() };
+  if (status === 'do_not_contact') patch.do_not_contact = true;
+  if (CONVERTED.has(status) && before && !before.converted_at) patch.converted_at = new Date().toISOString();
+  await supabaseAdmin.from('leads').update(patch).eq('id', id);
+  await logActivity(id, 'status_changed', {
+    actorAdminId, title: `Status → ${status}`,
+    meta: { from: before?.status, to: status },
+  });
+  return getLead(id);
+}
+
+async function assignOwner(id, ownerAdminId, actorAdminId) {
+  await supabaseAdmin.from('leads').update({ owner_admin_id: ownerAdminId, updated_at: new Date().toISOString() }).eq('id', id);
+  await logActivity(id, 'owner_assigned', { actorAdminId, title: 'Owner assigned', meta: { owner_admin_id: ownerAdminId } });
+  return getLead(id);
+}
+
+async function addTag(id, tag, actorAdminId) {
+  const lead = await getLead(id);
+  const tags = Array.from(new Set([...(lead.tags || []), String(tag).trim()])).filter(Boolean);
+  await supabaseAdmin.from('leads').update({ tags, updated_at: new Date().toISOString() }).eq('id', id);
+  await logActivity(id, 'tag_added', { actorAdminId, title: `Tag +${tag}`, meta: { tag } });
+  return getLead(id);
+}
+
+async function removeTag(id, tag, actorAdminId) {
+  const lead = await getLead(id);
+  const tags = (lead.tags || []).filter((t) => t !== tag);
+  await supabaseAdmin.from('leads').update({ tags, updated_at: new Date().toISOString() }).eq('id', id);
+  await logActivity(id, 'tag_removed', { actorAdminId, title: `Tag -${tag}`, meta: { tag } });
+  return getLead(id);
+}
+
+async function setDnc(id, value, actorAdminId) {
+  const patch = { do_not_contact: !!value, updated_at: new Date().toISOString() };
+  if (value) patch.status = 'do_not_contact';
+  await supabaseAdmin.from('leads').update(patch).eq('id', id);
+  await logActivity(id, 'status_changed', { actorAdminId, title: value ? 'Marked Do Not Contact' : 'Cleared Do Not Contact', meta: { do_not_contact: !!value } });
+  return getLead(id);
+}
+
+async function addNote(id, body, authorAdminId) {
+  if (!body || !String(body).trim()) throw new Error('note body required');
+  const { data } = await supabaseAdmin.from('lead_notes')
+    .insert({ lead_id: id, author_admin_id: authorAdminId || null, body: String(body).trim() })
+    .select('*').single();
+  await logActivity(id, 'note_added', { actorAdminId: authorAdminId, title: 'Note added', body: String(body).trim(), meta: { note_id: data.id } });
+  return data;
+}
+
+async function logCall(id, { outcome, durationMin, body } = {}, actorAdminId) {
+  await logActivity(id, 'call_logged', {
+    actorAdminId, title: `Call logged${outcome ? ` — ${outcome}` : ''}`,
+    body: body || '', meta: { outcome: outcome || null, duration_min: durationMin || null },
+  });
+  return getLead(id);
+}
+
+// ── Dashboard / pipeline ──────────────────────────────────────
+async function pipelineCounts() {
+  const entries = await Promise.all(STATUSES.map(async (s) => {
+    const { count } = await supabaseAdmin.from('leads').select('id', { count: 'exact', head: true }).eq('status', s);
+    return [s, count || 0];
+  }));
+  return Object.fromEntries(entries);
+}
+
+async function dashboardStats() {
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 864e5).toISOString();
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+
+  const counts = await pipelineCounts();
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+  const [{ count: addedThisWeek }, { count: contactedToday }, { count: dueToday }, { count: overdue }] = await Promise.all([
+    supabaseAdmin.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
+    supabaseAdmin.from('leads').select('id', { count: 'exact', head: true }).gte('last_contacted_at', dayStart),
+    supabaseAdmin.from('lead_follow_ups').select('id', { count: 'exact', head: true }).eq('status', 'open').gte('due_at', dayStart).lt('due_at', dayEnd),
+    supabaseAdmin.from('lead_follow_ups').select('id', { count: 'exact', head: true }).eq('status', 'open').lt('due_at', now.toISOString()),
+  ]);
+
+  // Revenue from converted leads (few rows; sum in JS).
+  const { data: conv } = await supabaseAdmin.from('leads').select('revenue_paise').not('converted_at', 'is', null);
+  const revenuePaise = (conv || []).reduce((a, r) => a + (Number(r.revenue_paise) || 0), 0);
+
+  const paidCustomers = (counts.paid || 0) + (counts.activated || 0);
+  const conversionRate = total ? +(paidCustomers / total * 100).toFixed(1) : 0;
+
+  return {
+    total, byStatus: counts, funnel: FUNNEL.map((s) => ({ status: s, count: counts[s] || 0 })),
+    addedThisWeek: addedThisWeek || 0,
+    contactedToday: contactedToday || 0,
+    followUpsDueToday: dueToday || 0,
+    followUpsOverdue: overdue || 0,
+    paidCustomers, conversionRate, revenuePaise,
+  };
+}
+
+module.exports = {
+  FUNNEL, STATUSES,
+  upsertLead, getLead, listLeads,
+  changeStatus, assignOwner, addTag, removeTag, setDnc, addNote, logCall,
+  pipelineCounts, dashboardStats,
+};
