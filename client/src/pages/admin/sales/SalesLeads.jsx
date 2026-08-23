@@ -4,12 +4,16 @@ import LeadDrawer from './LeadDrawer';
 import {
   crmListLeads, crmCreateLead, crmBulk, crmLeadsExportCsv, crmImportPreview, crmImportCommit,
   crmListTags, crmCreateTag, crmUpdateTag, crmDeleteTag, crmDashboard, crmListFollowUps,
+  crmUpdateLead, crmSetStatus, crmAddTag, crmRemoveTag,
 } from '../../../services/api';
 import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, SOURCES, SMART_VIEWS, rupees, relTime } from './salesConstants';
 import { colorMap, TAG_PALETTE, swatchClass } from './salesTagColors';
 import TagChip from './TagChip';
+import TagPicker from './TagPicker';
 import MetricStrip from './MetricStrip';
 import EmptyState from './EmptyState';
+import { InlineText, InlineStatus } from './InlineCell';
+import CommandPalette from './CommandPalette';
 import toast from 'react-hot-toast';
 
 const PAGE_SIZE = 25;
@@ -124,24 +128,58 @@ export default function SalesLeads() {
 
   // Row helpers
   const nextFollow = (r) => followMap[r.id];
-  const StageBadge = ({ s }) => <Badge tone={STATUS_TONE[s] || 'neutral'}>{STATUS_LABEL[s] || s}</Badge>;
+
+  // Optimistic inline edits — patch the row in place (Notion-fast), no reload.
+  const patchRow = (id, patch) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  const saveField = async (id, field, value) => {
+    patchRow(id, { [field]: value });
+    try { await crmUpdateLead(id, { [field]: value }); } catch { toast.error('Save failed'); load(); }
+  };
+  const saveStage = async (id, status) => {
+    patchRow(id, { status });
+    try { await crmSetStatus(id, status); loadStats(); } catch { toast.error('Save failed'); load(); }
+  };
+  const [tagEditId, setTagEditId] = useState(null);
+  const addTagInline = async (id, name) => {
+    patchRow(id, { tags: Array.from(new Set([...(rows.find((r) => r.id === id)?.tags || []), name])) });
+    setTagEditId(null);
+    try { await crmAddTag(id, name); } catch { toast.error('Failed'); load(); }
+  };
+  const createTagInline = async (id, name, color) => {
+    try { await crmCreateTag({ name, color }); loadTags(); } catch { /* dup ok */ }
+    addTagInline(id, name);
+  };
+  const removeTagInline = async (id, name) => {
+    patchRow(id, { tags: (rows.find((r) => r.id === id)?.tags || []).filter((t) => t !== name) });
+    try { await crmRemoveTag(id, name); } catch { toast.error('Failed'); load(); }
+  };
 
   const columns = [
     { key: 'sel', label: <input type="checkbox" checked={allSelected} onChange={toggleAll} onClick={(e) => e.stopPropagation()} />,
       className: 'w-8', render: (r) => <input type="checkbox" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} onClick={(e) => e.stopPropagation()} /> },
     { key: 'name', label: 'Lead', render: (r) => (
       <div className="min-w-0">
-        <p className="font-semibold adm-t1 truncate">{r.name || '—'}</p>
-        <p className="text-[11px] adm-t3 truncate">{[r.phone, r.email].filter(Boolean).join(' · ') || '—'}</p>
+        <div className="font-semibold adm-t1"><InlineText value={r.name} onSave={(v) => saveField(r.id, 'name', v)} placeholder="Unnamed" /></div>
+        <p className="text-[11px] adm-t3 truncate px-1.5">{[r.phone, r.email].filter(Boolean).join(' · ') || '—'}</p>
       </div>
     )},
-    { key: 'business', label: 'Business', render: (r) => <span className="adm-t2">{r.business_name || r.profession || '—'}</span> },
+    { key: 'business', label: 'Business', render: (r) => (
+      <div className="adm-t2 min-w-0"><InlineText value={r.business_name} onSave={(v) => saveField(r.id, 'business_name', v)} placeholder={r.profession || '—'} /></div>
+    )},
     { key: 'source', label: 'Source', render: (r) => <span className="text-[11px] adm-t3">{r.source}</span> },
-    { key: 'stage', label: 'Stage', render: (r) => <StageBadge s={r.status} /> },
+    { key: 'stage', label: 'Stage', render: (r) => <InlineStatus value={r.status} onSave={(s) => saveStage(r.id, s)} /> },
     { key: 'tags', label: 'Tags', render: (r) => (
-      <div className="flex flex-wrap gap-1 max-w-[150px]">
-        {(r.tags || []).slice(0, 2).map((tg) => <TagChip key={tg} name={tg} color={tagColors[tg]} />)}
-        {(r.tags || []).length > 2 && <span className="text-[10px] adm-t3">+{r.tags.length - 2}</span>}
+      <div className="flex flex-wrap items-center gap-1 max-w-[190px]" onClick={(e) => e.stopPropagation()}>
+        {(r.tags || []).map((tg) => <TagChip key={tg} name={tg} color={tagColors[tg]} onRemove={() => removeTagInline(r.id, tg)} />)}
+        <div className="relative">
+          <button type="button" onClick={() => setTagEditId(tagEditId === r.id ? null : r.id)}
+            className="text-[11px] w-4 h-4 leading-none rounded border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">+</button>
+          {tagEditId === r.id && (
+            <TagPicker tags={tagCatalog} exclude={r.tags || []}
+              onSelect={(name) => addTagInline(r.id, name)} onCreate={(name, color) => createTagInline(r.id, name, color)}
+              onClose={() => setTagEditId(null)} />
+          )}
+        </div>
       </div>
     )},
     { key: 'next', label: 'Next action', render: (r) => {
@@ -157,6 +195,10 @@ export default function SalesLeads() {
     <div className="p-4 sm:p-6 max-w-7xl">
       <PageHeader title="Leads" subtitle="Manage prospects, follow-ups and conversations from one place."
         actions={<div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+            className="hidden sm:inline-flex items-center gap-1.5 text-[12px] adm-t3 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#FE5100]">
+            Search <kbd className="text-[10px] adm-card px-1 rounded border border-gray-200">⌘K</kbd>
+          </button>
           <Btn variant="outline" size="sm" onClick={() => setShowTags(true)}>Manage tags</Btn>
           <Btn variant="outline" size="sm" onClick={exportCsv}>Export</Btn>
           <Btn variant="outline" size="sm" onClick={() => setShowImport(true)}>Import</Btn>
@@ -265,6 +307,7 @@ export default function SalesLeads() {
       {showImport && <ImportModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); loadStats(); }} />}
       {showTags && <ManageTagsModal tags={tagCatalog} onClose={() => setShowTags(false)} onChanged={() => { loadTags(); load(); }} />}
       <LeadDrawer leadId={drawerId} onClose={() => setDrawerId(null)} onChanged={() => { load(); loadStats(); loadFollowups(); }} />
+      <CommandPalette onOpenLead={(id) => setDrawerId(id)} onNewLead={() => setShowNew(true)} />
     </div>
   );
 }
