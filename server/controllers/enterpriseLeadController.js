@@ -66,6 +66,12 @@ async function submitEnterpriseLead(req, res) {
     mailOk = true;
   } catch (e) { console.error('[enterprise-lead] email failed:', e.message); }
 
+  // Enterprise inquiry = strong buying intent. Record it (identified by email/
+  // phone) so it feeds the lead score and attributes once a lead exists.
+  require('../services/crm/intentEvents')
+    .record({ event: 'enterprise_inquiry', email: b.email, phone: b.phone, meta: { org: cap(b.orgName, 200) }, source: 'enterprise' })
+    .catch(() => {});
+
   if (!insertOk && !mailOk) {
     return res.status(500).json({ error: 'Could not submit your request. Please try again.' });
   }
