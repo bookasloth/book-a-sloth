@@ -70,6 +70,21 @@ async function getLead(id) {
   return data || null;
 }
 
+/**
+ * upsertLead that NEVER throws — for real-time hooks on the signup / booking /
+ * form paths where a CRM write must never break the primary flow. Callers await
+ * this (so there is no floating promise / unhandled rejection), and it swallows
+ * every error into a warn log. Returns the { lead, created } result or null.
+ */
+async function safeUpsertLead(patch = {}, opts = {}) {
+  try {
+    return await upsertLead(patch, opts);
+  } catch (e) {
+    console.warn('[crm] safeUpsertLead failed:', e?.message || e);
+    return null;
+  }
+}
+
 // Lead ids that have an open follow-up in a given window ('overdue'|'today'|'open').
 async function leadIdsWithFollowup(window) {
   let q = supabaseAdmin.from('lead_follow_ups').select('lead_id').eq('status', 'open');
@@ -230,7 +245,7 @@ async function dashboardStats() {
 
 module.exports = {
   FUNNEL, STATUSES,
-  upsertLead, getLead, listLeads,
+  upsertLead, safeUpsertLead, getLead, listLeads,
   changeStatus, assignOwner, addTag, removeTag, setDnc, addNote, logCall,
   pipelineCounts, dashboardStats,
 };
