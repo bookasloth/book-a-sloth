@@ -26,6 +26,12 @@ router.post('/follow-ups/:id/cancel', manage, c.cancelFollowUp);
 router.get('/sequences', view, c.listSequences);
 router.post('/sequences', manage, c.createSequence);
 
+// Tag catalog (coloured tags)
+router.get('/tags', view, c.listTags);
+router.post('/tags', manage, c.createTag);
+router.patch('/tags/:id', manage, c.updateTag);
+router.delete('/tags/:id', manage, c.deleteTag);
+
 // Message templates (approved WhatsApp + reusable email)
 router.get('/templates', view, c.listTemplates);
 router.post('/templates', manage, c.createTemplate);

@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader, Card, Btn, Badge, Table } from '../../../components/admin/ui';
 import {
   crmListLeads, crmCreateLead, crmBulk, crmLeadsExportCsv, crmImportPreview, crmImportCommit,
+  crmListTags, crmCreateTag, crmUpdateTag, crmDeleteTag,
 } from '../../../services/api';
 import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, SOURCES, rupees, relTime } from './salesConstants';
+import { colorMap, TAG_PALETTE, swatchClass } from './salesTagColors';
+import TagChip from './TagChip';
 import toast from 'react-hot-toast';
 
 const PAGE_SIZE = 25;
@@ -40,20 +43,27 @@ export default function SalesLeads() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [source, setSource] = useState('');
+  const [tag, setTag] = useState('');
   const [sel, setSel] = useState(new Set());
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showTags, setShowTags] = useState(false);
+  const [tagCatalog, setTagCatalog] = useState([]);
 
   const load = useCallback(() => {
     setLoading(true);
-    crmListLeads({ q: q || undefined, status: status || undefined, source: source || undefined, page, pageSize: PAGE_SIZE })
+    crmListLeads({ q: q || undefined, status: status || undefined, source: source || undefined, tag: tag || undefined, page, pageSize: PAGE_SIZE })
       .then(({ data }) => { setRows(data.rows || []); setTotal(data.total || 0); })
       .catch(() => { setRows([]); setTotal(0); })
       .finally(() => setLoading(false));
-  }, [q, status, source, page]);
+  }, [q, status, source, tag, page]);
+
+  const loadTags = useCallback(() => crmListTags().then(({ data }) => setTagCatalog(Array.isArray(data) ? data : [])).catch(() => setTagCatalog([])), []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadTags(); }, [loadTags]);
   useEffect(() => { setSel(new Set()); }, [rows]);
+  const tagColors = colorMap(tagCatalog);
 
   const toggleSel = (id) => setSel((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const allSelected = rows.length > 0 && rows.every((r) => sel.has(r.id));
@@ -67,7 +77,7 @@ export default function SalesLeads() {
 
   const exportCsv = async () => {
     try {
-      const { data } = await crmLeadsExportCsv({ q: q || undefined, status: status || undefined, source: source || undefined });
+      const { data } = await crmLeadsExportCsv({ q: q || undefined, status: status || undefined, source: source || undefined, tag: tag || undefined });
       const url = URL.createObjectURL(new Blob([data], { type: 'text/csv' }));
       const a = document.createElement('a'); a.href = url; a.download = 'leads.csv'; a.click(); URL.revokeObjectURL(url);
     } catch { toast.error('Export failed'); }
@@ -92,6 +102,12 @@ export default function SalesLeads() {
     )},
     { key: 'profession', label: 'Profession', render: (r) => <span className="adm-t2">{r.profession || '—'}{r.city ? ` · ${r.city}` : ''}</span> },
     { key: 'source', label: 'Source', render: (r) => <span className="text-[11px] adm-t3">{r.source}</span> },
+    { key: 'tags', label: 'Tags', render: (r) => (
+      <div className="flex flex-wrap gap-1 max-w-[180px]">
+        {(r.tags || []).slice(0, 3).map((t) => <TagChip key={t} name={t} color={tagColors[t]} />)}
+        {(r.tags || []).length > 3 && <span className="text-[10px] adm-t3">+{r.tags.length - 3}</span>}
+      </div>
+    )},
     { key: 'status', label: 'Status', render: (r) => <Badge tone={STATUS_TONE[r.status] || 'neutral'}>{STATUS_LABEL[r.status] || r.status}</Badge> },
     { key: 'revenue_paise', label: 'Revenue', render: (r) => <span className="adm-t2">{r.revenue_paise ? rupees(r.revenue_paise) : '—'}</span> },
     { key: 'last', label: 'Activity', render: (r) => <span className="text-[11px] adm-t3">{relTime(r.last_activity_at || r.created_at)}</span> },
@@ -101,6 +117,7 @@ export default function SalesLeads() {
     <div className="p-6 max-w-6xl">
       <PageHeader title="Leads" subtitle={`${total} total`}
         actions={<div className="flex gap-2">
+          <Btn variant="outline" size="sm" onClick={() => setShowTags(true)}>Manage tags</Btn>
           <Btn variant="outline" size="sm" onClick={exportCsv}>Export</Btn>
           <Btn variant="outline" size="sm" onClick={() => setShowImport(true)}>Import CSV</Btn>
           <Btn size="sm" onClick={() => setShowNew(true)}>+ New lead</Btn>
@@ -116,6 +133,10 @@ export default function SalesLeads() {
         <select className="fb-input text-sm" value={source} onChange={(e) => { setPage(1); setSource(e.target.value); }}>
           <option value="">All sources</option>
           {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select className="fb-input text-sm" value={tag} onChange={(e) => { setPage(1); setTag(e.target.value); }}>
+          <option value="">All tags</option>
+          {tagCatalog.map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
         </select>
       </div>
 
@@ -147,7 +168,54 @@ export default function SalesLeads() {
 
       {showNew && <NewLeadModal onClose={() => setShowNew(false)} onCreated={() => { setShowNew(false); load(); }} />}
       {showImport && <ImportModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); }} />}
+      {showTags && <ManageTagsModal tags={tagCatalog} onClose={() => setShowTags(false)} onChanged={() => { loadTags(); load(); }} />}
     </div>
+  );
+}
+
+function ManageTagsModal({ tags, onClose, onChanged }) {
+  const [newName, setNewName] = useState('');
+  const [newColor, setNewColor] = useState('gray');
+
+  const create = async () => {
+    if (!newName.trim()) return;
+    try { await crmCreateTag({ name: newName.trim(), color: newColor }); setNewName(''); setNewColor('gray'); onChanged(); }
+    catch (e) { toast.error(e.response?.data?.message || 'Could not create'); }
+  };
+  const recolor = async (t, color) => { try { await crmUpdateTag(t.id, { color }); onChanged(); } catch { toast.error('Failed'); } };
+  const rename = async (t) => { const n = prompt('Rename tag:', t.name); if (n && n.trim() && n !== t.name) { try { await crmUpdateTag(t.id, { name: n.trim() }); onChanged(); } catch { toast.error('Failed'); } } };
+  const del = async (t) => { if (confirm(`Delete tag "${t.name}" from the catalogue? (leads keep the label)`)) { try { await crmDeleteTag(t.id); onChanged(); } catch { toast.error('Failed'); } } };
+
+  return (
+    <Modal title="Manage tags" onClose={onClose}>
+      <div className="flex items-center gap-2 mb-4">
+        <input className="fb-input text-sm flex-1" placeholder="New tag name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+        <div className="flex gap-1">
+          {TAG_PALETTE.map((c) => (
+            <button key={c} type="button" title={c} onClick={() => setNewColor(c)}
+              className={`w-5 h-5 rounded-full ${swatchClass(c)} ${newColor === c ? 'ring-2 ring-offset-1 ring-gray-500' : ''}`} />
+          ))}
+        </div>
+        <Btn size="sm" onClick={create}>Add</Btn>
+      </div>
+      {tags.length === 0 ? <p className="adm-t3 text-sm">No tags yet.</p> : (
+        <div className="space-y-1 max-h-72 overflow-auto">
+          {tags.map((t) => (
+            <div key={t.id} className="flex items-center gap-2 px-1 py-1">
+              <TagChip name={t.name} color={t.color} />
+              <div className="flex gap-1 ml-auto">
+                {TAG_PALETTE.map((c) => (
+                  <button key={c} type="button" title={c} onClick={() => recolor(t, c)}
+                    className={`w-4 h-4 rounded-full ${swatchClass(c)} ${t.color === c ? 'ring-2 ring-gray-500' : 'opacity-60 hover:opacity-100'}`} />
+                ))}
+              </div>
+              <button onClick={() => rename(t)} className="text-[11px] adm-t3 hover:text-[#FE5100]">rename</button>
+              <button onClick={() => del(t)} className="text-[11px] text-red-500">delete</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
   );
 }
 

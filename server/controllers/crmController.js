@@ -300,6 +300,51 @@ const deleteTemplate = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── Tag catalog (Notion-style coloured tags) ─────────────────
+const TAG_COLORS = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red', 'teal'];
+
+const listTags = async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin.from('crm_tags').select('*').order('name', { ascending: true });
+    if (error) return safeError(res, error);
+    res.json(data || []);
+  } catch (e) { safeError(res, e); }
+};
+
+const createTag = async (req, res) => {
+  try {
+    let { name, color } = req.body || {};
+    name = String(name || '').trim();
+    if (!name) return res.status(400).json({ message: 'name required' });
+    color = TAG_COLORS.includes(color) ? color : 'gray';
+    const { data, error } = await supabaseAdmin.from('crm_tags')
+      .insert({ name, color, created_by: actor(req) || '' }).select('*').single();
+    if (error) return res.status(error.code === '23505' ? 409 : 500).json({ message: error.code === '23505' ? 'Tag already exists' : 'Could not save' });
+    res.status(201).json(data);
+  } catch (e) { safeError(res, e); }
+};
+
+const updateTag = async (req, res) => {
+  try {
+    const patch = {};
+    if ('name' in (req.body || {})) patch.name = String(req.body.name).trim();
+    if ('color' in (req.body || {})) patch.color = TAG_COLORS.includes(req.body.color) ? req.body.color : 'gray';
+    if (!Object.keys(patch).length) return res.status(400).json({ message: 'nothing to update' });
+    patch.updated_at = new Date().toISOString();
+    const { data, error } = await supabaseAdmin.from('crm_tags').update(patch).eq('id', req.params.id).select('*').single();
+    if (error) return safeError(res, error);
+    res.json(data);
+  } catch (e) { safeError(res, e); }
+};
+
+const deleteTag = async (req, res) => {
+  try {
+    // Remove from the catalog only; leads keep the tag string (renders default colour).
+    await supabaseAdmin.from('crm_tags').delete().eq('id', req.params.id);
+    res.json({ ok: true });
+  } catch (e) { safeError(res, e); }
+};
+
 // Manual attribution refresh (link + revenue).
 const refreshAttribution = async (req, res) => {
   try { res.json(await attribution.run()); } catch (e) { safeError(res, e); }
@@ -314,4 +359,5 @@ module.exports = {
   listSequences, createSequence, enroll,
   bulk, importPreview, importCommit, exportCsv, refreshAttribution,
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
+  listTags, createTag, updateTag, deleteTag,
 };

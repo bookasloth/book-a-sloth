@@ -4,9 +4,12 @@ import { Card, Btn, Badge } from '../../../components/admin/ui';
 import {
   crmGetLead, crmLeadTimeline, crmSetStatus, crmAddLeadNote, crmCreateFollowUp,
   crmAddTag, crmRemoveTag, crmSetDnc, crmLogCall, crmSendWhatsApp, crmSendEmail,
-  crmListTemplates,
+  crmListTemplates, crmListTags, crmCreateTag,
 } from '../../../services/api';
 import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, rupees, relTime } from './salesConstants';
+import { colorMap } from './salesTagColors';
+import TagChip from './TagChip';
+import TagPicker from './TagPicker';
 import toast from 'react-hot-toast';
 
 export default function SalesLeadDetail() {
@@ -16,8 +19,10 @@ export default function SalesLeadDetail() {
   const [followUps, setFollowUps] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // 'note'|'followup'|'wa'|'email'|'call'|'tag'
+  const [modal, setModal] = useState(null); // 'note'|'followup'|'wa'|'email'|'call'
   const [templates, setTemplates] = useState([]);
+  const [tagCatalog, setTagCatalog] = useState([]);
+  const [showTagPicker, setShowTagPicker] = useState(false);
 
   const load = useCallback(() => {
     Promise.all([
@@ -26,8 +31,19 @@ export default function SalesLeadDetail() {
     ]).catch(() => setLead(null)).finally(() => setLoading(false));
   }, [id]);
 
+  const loadTags = useCallback(() => crmListTags().then(({ data }) => setTagCatalog(Array.isArray(data) ? data : [])).catch(() => setTagCatalog([])), []);
+
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { crmListTemplates().then(({ data }) => setTemplates(Array.isArray(data) ? data : [])).catch(() => setTemplates([])); }, []);
+  useEffect(() => { crmListTemplates().then(({ data }) => setTemplates(Array.isArray(data) ? data : [])).catch(() => setTemplates([])); loadTags(); }, [loadTags]);
+
+  const pickTag = async (name) => {
+    try { await crmAddTag(id, name); setShowTagPicker(false); load(); } catch { toast.error('Failed'); }
+  };
+  const createTag = async (name, color) => {
+    try { await crmCreateTag({ name, color }); await crmAddTag(id, name); setShowTagPicker(false); loadTags(); load(); }
+    catch { toast.error('Could not create tag'); }
+  };
+  const tagColors = colorMap(tagCatalog);
 
   const setStatus = async (status) => {
     try { await crmSetStatus(id, status); toast.success(`Status → ${STATUS_LABEL[status]}`); load(); }
@@ -86,19 +102,25 @@ export default function SalesLeadDetail() {
           <Btn variant="outline" size="sm" onClick={() => setModal('call')}>Log Call</Btn>
           <Btn variant="outline" size="sm" onClick={() => setModal('note')}>Add Note</Btn>
           <Btn variant="outline" size="sm" onClick={() => setModal('followup')}>Add Follow-up</Btn>
-          <Btn variant="outline" size="sm" onClick={() => setModal('tag')}>Add Tag</Btn>
           <Btn variant="outline" size="sm" onClick={toggleDnc}>{lead.do_not_contact ? 'Clear DNC' : 'Do Not Contact'}</Btn>
         </div>
 
-        {lead.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {lead.tags.map((t) => (
-              <span key={t} className="text-[11px] px-2 py-0.5 rounded-full adm-chip flex items-center gap-1">
-                {t}<button onClick={() => removeTag(t)} className="adm-t3">×</button>
-              </span>
-            ))}
+        {/* Coloured tags + inline Notion-style picker */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-3">
+          {(lead.tags || []).map((t) => (
+            <TagChip key={t} name={t} color={tagColors[t]} onRemove={() => removeTag(t)} />
+          ))}
+          <div className="relative">
+            <button type="button" onClick={() => setShowTagPicker((v) => !v)}
+              className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">
+              + Tag
+            </button>
+            {showTagPicker && (
+              <TagPicker tags={tagCatalog} exclude={lead.tags || []}
+                onSelect={pickTag} onCreate={createTag} onClose={() => setShowTagPicker(false)} />
+            )}
           </div>
-        )}
+        </div>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
