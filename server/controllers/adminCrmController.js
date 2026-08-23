@@ -31,9 +31,10 @@ const pipeline = async (req, res) => {
 // ── Leads ─────────────────────────────────────────────────────
 const listLeads = async (req, res) => {
   try {
-    const { status, source, owner, tag, city, profession, q, page, pageSize } = req.query;
+    const { status, source, owner, tag, city, profession, q, followup, createdSince, hasValue, page, pageSize } = req.query;
     res.json(await leadService.listLeads({
       status, source, owner, tag, city, profession, q,
+      followup, createdSince, hasValue: hasValue === 'true' || hasValue === '1',
       page: Number(page) || 1, pageSize: Math.min(Number(pageSize) || 25, 100),
     }));
   } catch (e) { safeError(res, e); }

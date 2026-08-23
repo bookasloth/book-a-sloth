@@ -1,19 +1,20 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader, Card, Btn, Badge, Table } from '../../../components/admin/ui';
+import { PageHeader, Card, Btn, Badge, Table, Skeleton } from '../../../components/admin/ui';
 import {
   crmListLeads, crmCreateLead, crmBulk, crmLeadsExportCsv, crmImportPreview, crmImportCommit,
-  crmListTags, crmCreateTag, crmUpdateTag, crmDeleteTag,
+  crmListTags, crmCreateTag, crmUpdateTag, crmDeleteTag, crmDashboard, crmListFollowUps,
 } from '../../../services/api';
-import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, SOURCES, rupees, relTime } from './salesConstants';
+import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, SOURCES, SMART_VIEWS, rupees, relTime } from './salesConstants';
 import { colorMap, TAG_PALETTE, swatchClass } from './salesTagColors';
 import TagChip from './TagChip';
+import MetricStrip from './MetricStrip';
+import EmptyState from './EmptyState';
 import toast from 'react-hot-toast';
 
 const PAGE_SIZE = 25;
 
-// Minimal CSV parse (handles quoted fields + escaped quotes). ponytail: good
-// enough for pasted lead lists; swap for papaparse only if imports get gnarly.
+// Minimal CSV parse (handles quoted fields + escaped quotes).
 function parseCsv(text) {
   const rows = [];
   let row = [], field = '', q = false;
@@ -31,7 +32,6 @@ function parseCsv(text) {
   if (field !== '' || row.length) { row.push(field); rows.push(row); }
   return rows;
 }
-
 const HEADER_MAP = { name: 'name', phone: 'phone', whatsapp: 'whatsapp', email: 'email', business: 'business', company: 'business', profession: 'profession', city: 'city', source: 'source', tags: 'tags' };
 
 export default function SalesLeads() {
@@ -40,30 +40,69 @@ export default function SalesLeads() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  // Filters
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
+  const [dq, setDq] = useState('');          // debounced query
+  const [view, setView] = useState('all');   // smart-view key
+  const [stage, setStage] = useState('');     // explicit stage override
   const [source, setSource] = useState('');
   const [tag, setTag] = useState('');
+
   const [sel, setSel] = useState(new Set());
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [followMap, setFollowMap] = useState({}); // lead_id -> next due iso
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showTags, setShowTags] = useState(false);
   const [tagCatalog, setTagCatalog] = useState([]);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    crmListLeads({ q: q || undefined, status: status || undefined, source: source || undefined, tag: tag || undefined, page, pageSize: PAGE_SIZE })
-      .then(({ data }) => { setRows(data.rows || []); setTotal(data.total || 0); })
-      .catch(() => { setRows([]); setTotal(0); })
-      .finally(() => setLoading(false));
-  }, [q, status, source, tag, page]);
+  // Debounce the search box (300ms) so we don't hammer the API per keystroke.
+  const t = useRef();
+  useEffect(() => { clearTimeout(t.current); t.current = setTimeout(() => { setDq(q); setPage(1); }, 300); return () => clearTimeout(t.current); }, [q]);
 
+  const viewFilter = SMART_VIEWS.find((v) => v.key === view)?.filter || {};
+  const params = {
+    ...viewFilter,
+    status: stage || viewFilter.status || undefined,
+    source: source || undefined,
+    tag: tag || undefined,
+    q: dq || undefined,
+    hasValue: viewFilter.hasValue || undefined,
+  };
+
+  const load = useCallback(() => {
+    setLoading(true); setError(false);
+    crmListLeads({ ...params, page, pageSize: PAGE_SIZE })
+      .then(({ data }) => { setRows(data.rows || []); setTotal(data.total || 0); })
+      .catch(() => { setError(true); setRows([]); setTotal(0); })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, stage, source, tag, dq, page]);
+
+  const loadStats = useCallback(() => {
+    setStatsLoading(true);
+    crmDashboard().then(({ data }) => setStats(data)).catch(() => setStats(null)).finally(() => setStatsLoading(false));
+  }, []);
   const loadTags = useCallback(() => crmListTags().then(({ data }) => setTagCatalog(Array.isArray(data) ? data : [])).catch(() => setTagCatalog([])), []);
+  const loadFollowups = useCallback(() => crmListFollowUps({}).then(({ data }) => {
+    const m = {};
+    (Array.isArray(data) ? data : []).forEach((f) => { if (!m[f.lead_id] || f.due_at < m[f.lead_id]) m[f.lead_id] = f.due_at; });
+    setFollowMap(m);
+  }).catch(() => setFollowMap({})), []);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { loadTags(); }, [loadTags]);
+  useEffect(() => { loadStats(); loadTags(); loadFollowups(); }, [loadStats, loadTags, loadFollowups]);
   useEffect(() => { setSel(new Set()); }, [rows]);
+
   const tagColors = colorMap(tagCatalog);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const filtersActive = view !== 'all' || stage || source || tag || dq;
+
+  const pickView = (key) => { setView(key); setStage(''); setPage(1); };
+  const clearFilters = () => { setView('all'); setStage(''); setSource(''); setTag(''); setQ(''); setDq(''); setPage(1); };
 
   const toggleSel = (id) => setSel((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const allSelected = rows.length > 0 && rows.every((r) => sel.has(r.id));
@@ -71,19 +110,21 @@ export default function SalesLeads() {
 
   const bulk = async (action, value) => {
     if (!sel.size) return;
-    try { const { data } = await crmBulk({ ids: [...sel], action, value }); toast.success(`${data.done}/${data.total} updated`); load(); }
+    try { const { data } = await crmBulk({ ids: [...sel], action, value }); toast.success(`${data.done}/${data.total} updated`); load(); loadStats(); }
     catch { toast.error('Bulk action failed'); }
   };
 
   const exportCsv = async () => {
     try {
-      const { data } = await crmLeadsExportCsv({ q: q || undefined, status: status || undefined, source: source || undefined, tag: tag || undefined });
+      const { data } = await crmLeadsExportCsv(params);
       const url = URL.createObjectURL(new Blob([data], { type: 'text/csv' }));
       const a = document.createElement('a'); a.href = url; a.download = 'leads.csv'; a.click(); URL.revokeObjectURL(url);
     } catch { toast.error('Export failed'); }
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // Row helpers
+  const nextFollow = (r) => followMap[r.id];
+  const StageBadge = ({ s }) => <Badge tone={STATUS_TONE[s] || 'neutral'}>{STATUS_LABEL[s] || s}</Badge>;
 
   const columns = [
     { key: 'sel', label: <input type="checkbox" checked={allSelected} onChange={toggleAll} onClick={(e) => e.stopPropagation()} />,
@@ -91,131 +132,139 @@ export default function SalesLeads() {
     { key: 'name', label: 'Lead', render: (r) => (
       <div className="min-w-0">
         <p className="font-semibold adm-t1 truncate">{r.name || '—'}</p>
-        {r.business_name && <p className="text-[11px] adm-t3 truncate">{r.business_name}</p>}
+        <p className="text-[11px] adm-t3 truncate">{[r.phone, r.email].filter(Boolean).join(' · ') || '—'}</p>
       </div>
     )},
-    { key: 'contact', label: 'Contact', render: (r) => (
-      <div className="min-w-0">
-        {r.phone && <p className="text-[12px] adm-t2 truncate">{r.phone}</p>}
-        {r.email && <p className="text-[11px] adm-t3 truncate">{r.email}</p>}
-      </div>
-    )},
-    { key: 'profession', label: 'Profession', render: (r) => <span className="adm-t2">{r.profession || '—'}{r.city ? ` · ${r.city}` : ''}</span> },
+    { key: 'business', label: 'Business', render: (r) => <span className="adm-t2">{r.business_name || r.profession || '—'}</span> },
     { key: 'source', label: 'Source', render: (r) => <span className="text-[11px] adm-t3">{r.source}</span> },
+    { key: 'stage', label: 'Stage', render: (r) => <StageBadge s={r.status} /> },
     { key: 'tags', label: 'Tags', render: (r) => (
-      <div className="flex flex-wrap gap-1 max-w-[180px]">
-        {(r.tags || []).slice(0, 3).map((t) => <TagChip key={t} name={t} color={tagColors[t]} />)}
-        {(r.tags || []).length > 3 && <span className="text-[10px] adm-t3">+{r.tags.length - 3}</span>}
+      <div className="flex flex-wrap gap-1 max-w-[150px]">
+        {(r.tags || []).slice(0, 2).map((tg) => <TagChip key={tg} name={tg} color={tagColors[tg]} />)}
+        {(r.tags || []).length > 2 && <span className="text-[10px] adm-t3">+{r.tags.length - 2}</span>}
       </div>
     )},
-    { key: 'status', label: 'Status', render: (r) => <Badge tone={STATUS_TONE[r.status] || 'neutral'}>{STATUS_LABEL[r.status] || r.status}</Badge> },
-    { key: 'revenue_paise', label: 'Revenue', render: (r) => <span className="adm-t2">{r.revenue_paise ? rupees(r.revenue_paise) : '—'}</span> },
-    { key: 'last', label: 'Activity', render: (r) => <span className="text-[11px] adm-t3">{relTime(r.last_activity_at || r.created_at)}</span> },
+    { key: 'next', label: 'Next action', render: (r) => {
+      const due = nextFollow(r);
+      if (due) { const overdue = new Date(due) < new Date(); return <span className={`text-[12px] ${overdue ? 'text-red-500 font-medium' : 'adm-t2'}`}>Follow up {relTime(due)}</span>; }
+      return <span className="text-[11px] adm-t3">—</span>;
+    }},
+    { key: 'last', label: 'Last activity', render: (r) => <span className="text-[11px] adm-t3">{r.last_activity_at ? relTime(r.last_activity_at) : relTime(r.created_at)}</span> },
+    { key: 'revenue_paise', label: 'Value', render: (r) => <span className="adm-t2">{r.revenue_paise ? rupees(r.revenue_paise) : '—'}</span> },
   ];
 
   return (
-    <div className="p-6 max-w-6xl">
-      <PageHeader title="Leads" subtitle={`${total} total`}
-        actions={<div className="flex gap-2">
+    <div className="p-4 sm:p-6 max-w-7xl">
+      <PageHeader title="Leads" subtitle="Manage prospects, follow-ups and conversations from one place."
+        actions={<div className="flex flex-wrap gap-2">
           <Btn variant="outline" size="sm" onClick={() => setShowTags(true)}>Manage tags</Btn>
           <Btn variant="outline" size="sm" onClick={exportCsv}>Export</Btn>
-          <Btn variant="outline" size="sm" onClick={() => setShowImport(true)}>Import CSV</Btn>
-          <Btn size="sm" onClick={() => setShowNew(true)}>+ New lead</Btn>
+          <Btn variant="outline" size="sm" onClick={() => setShowImport(true)}>Import</Btn>
+          <Btn size="sm" onClick={() => setShowNew(true)}>+ Add Lead</Btn>
         </div>} />
 
+      <MetricStrip stats={stats} active={view} loading={statsLoading} onPick={pickView} />
+
+      {/* Smart views + filters + search */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <div className="flex flex-wrap gap-1.5">
+          {SMART_VIEWS.map((v) => (
+            <button key={v.key} type="button" onClick={() => pickView(v.key)}
+              className={`text-[12px] px-2.5 py-1 rounded-full border transition ${view === v.key && !stage ? 'bg-[#FE5100] text-white border-[#FE5100]' : 'adm-t2 border-gray-200 hover:border-[#FE5100]'}`}>
+              {v.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="flex flex-wrap gap-2 mb-4">
         <input className="fb-input text-sm flex-1 min-w-[200px]" placeholder="Search name, business, phone, email…"
-          value={q} onChange={(e) => { setPage(1); setQ(e.target.value); }} />
-        <select className="fb-input text-sm" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}>
-          <option value="">All statuses</option>
+          value={q} onChange={(e) => setQ(e.target.value)} />
+        <select className="fb-input text-sm" value={stage} onChange={(e) => { setStage(e.target.value); setPage(1); }}>
+          <option value="">Any stage</option>
           {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
         </select>
-        <select className="fb-input text-sm" value={source} onChange={(e) => { setPage(1); setSource(e.target.value); }}>
-          <option value="">All sources</option>
+        <select className="fb-input text-sm" value={source} onChange={(e) => { setSource(e.target.value); setPage(1); }}>
+          <option value="">Any source</option>
           {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select className="fb-input text-sm" value={tag} onChange={(e) => { setPage(1); setTag(e.target.value); }}>
-          <option value="">All tags</option>
-          {tagCatalog.map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
+        <select className="fb-input text-sm" value={tag} onChange={(e) => { setTag(e.target.value); setPage(1); }}>
+          <option value="">Any tag</option>
+          {tagCatalog.map((tg) => <option key={tg.id} value={tg.name}>{tg.name}</option>)}
         </select>
+        {filtersActive && <Btn variant="outline" size="sm" onClick={clearFilters}>Clear</Btn>}
       </div>
 
+      {/* Bulk bar */}
       {sel.size > 0 && (
         <Card className="mb-3 rounded-xl p-3 flex flex-wrap items-center gap-2">
           <span className="text-[13px] font-semibold adm-t1">{sel.size} selected</span>
           <select className="fb-input text-xs py-1" defaultValue="" onChange={(e) => { if (e.target.value) bulk('status', e.target.value); e.target.value = ''; }}>
-            <option value="">Set status…</option>
+            <option value="">Set stage…</option>
             {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
           </select>
-          <Btn variant="outline" size="sm" onClick={() => { const t = prompt('Tag to add:'); if (t) bulk('tag_add', t.trim()); }}>Add tag</Btn>
+          <Btn variant="outline" size="sm" onClick={() => { const tg = prompt('Tag to add:'); if (tg) bulk('tag_add', tg.trim()); }}>Add tag</Btn>
           <Btn variant="outline" size="sm" onClick={() => { if (confirm('Mark selected as Do Not Contact?')) bulk('dnc'); }}>Do Not Contact</Btn>
+          <button className="text-[12px] adm-t3 ml-auto" onClick={() => setSel(new Set())}>Clear selection</button>
         </Card>
       )}
 
-      {loading ? <p className="adm-t3">Loading…</p> : (
-        <Table columns={columns} rows={rows} rowKey={(r) => r.id}
-          onRowClick={(r) => nav(`/admin/sales/leads/${r.id}`)}
-          empty={<div className="p-10 text-center adm-t3">No leads match.</div>} />
+      {/* List (desktop table) */}
+      {error ? (
+        <Card className="rounded-2xl p-10 text-center">
+          <p className="adm-t1 font-semibold mb-1">Couldn't load leads</p>
+          <p className="adm-t3 text-sm mb-4">Something went wrong reaching the server.</p>
+          <Btn size="sm" onClick={load}>Retry</Btn>
+        </Card>
+      ) : loading ? (
+        <div className="space-y-2">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-xl" />)}</div>
+      ) : rows.length === 0 ? (
+        <Card className="rounded-2xl"><EmptyState filtered={filtersActive} onAdd={() => setShowNew(true)} onImport={() => setShowImport(true)} onClear={clearFilters} /></Card>
+      ) : (
+        <>
+          <div className="hidden md:block">
+            <Table columns={columns} rows={rows} rowKey={(r) => r.id}
+              onRowClick={(r) => nav(`/admin/sales/leads/${r.id}`)}
+              empty={null} />
+          </div>
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-2">
+            {rows.map((r) => {
+              const due = nextFollow(r); const overdue = due && new Date(due) < new Date();
+              return (
+                <Card key={r.id} className="rounded-xl p-3 cursor-pointer adm-hoverable" onClick={() => nav(`/admin/sales/leads/${r.id}`)}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold adm-t1 truncate">{r.name || '—'}</p>
+                      <p className="text-[11px] adm-t3 truncate">{[r.phone, r.email].filter(Boolean).join(' · ')}</p>
+                    </div>
+                    <StageBadge s={r.status} />
+                  </div>
+                  <div className="flex items-center justify-between mt-2 text-[11px]">
+                    <span className={overdue ? 'text-red-500 font-medium' : 'adm-t3'}>{due ? `Follow up ${relTime(due)}` : `Active ${relTime(r.last_activity_at || r.created_at)}`}</span>
+                    {r.revenue_paise > 0 && <span className="font-semibold text-emerald-600">{rupees(r.revenue_paise)}</span>}
+                  </div>
+                  {(r.tags || []).length > 0 && <div className="flex flex-wrap gap-1 mt-2">{r.tags.slice(0, 3).map((tg) => <TagChip key={tg} name={tg} color={tagColors[tg]} />)}</div>}
+                </Card>
+              );
+            })}
+          </div>
+        </>
       )}
 
-      <div className="flex items-center justify-between mt-4">
-        <span className="text-[12px] adm-t3">Page {page} of {totalPages}</span>
-        <div className="flex gap-2">
-          <Btn variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</Btn>
-          <Btn variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Btn>
+      {!loading && !error && rows.length > 0 && (
+        <div className="flex items-center justify-between mt-4">
+          <span className="text-[12px] adm-t3">{total} leads · page {page} of {totalPages}</span>
+          <div className="flex gap-2">
+            <Btn variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</Btn>
+            <Btn variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Btn>
+          </div>
         </div>
-      </div>
+      )}
 
-      {showNew && <NewLeadModal onClose={() => setShowNew(false)} onCreated={() => { setShowNew(false); load(); }} />}
-      {showImport && <ImportModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); }} />}
+      {showNew && <NewLeadModal onClose={() => setShowNew(false)} onCreated={() => { setShowNew(false); load(); loadStats(); }} />}
+      {showImport && <ImportModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); loadStats(); }} />}
       {showTags && <ManageTagsModal tags={tagCatalog} onClose={() => setShowTags(false)} onChanged={() => { loadTags(); load(); }} />}
     </div>
-  );
-}
-
-function ManageTagsModal({ tags, onClose, onChanged }) {
-  const [newName, setNewName] = useState('');
-  const [newColor, setNewColor] = useState('gray');
-
-  const create = async () => {
-    if (!newName.trim()) return;
-    try { await crmCreateTag({ name: newName.trim(), color: newColor }); setNewName(''); setNewColor('gray'); onChanged(); }
-    catch (e) { toast.error(e.response?.data?.message || 'Could not create'); }
-  };
-  const recolor = async (t, color) => { try { await crmUpdateTag(t.id, { color }); onChanged(); } catch { toast.error('Failed'); } };
-  const rename = async (t) => { const n = prompt('Rename tag:', t.name); if (n && n.trim() && n !== t.name) { try { await crmUpdateTag(t.id, { name: n.trim() }); onChanged(); } catch { toast.error('Failed'); } } };
-  const del = async (t) => { if (confirm(`Delete tag "${t.name}" from the catalogue? (leads keep the label)`)) { try { await crmDeleteTag(t.id); onChanged(); } catch { toast.error('Failed'); } } };
-
-  return (
-    <Modal title="Manage tags" onClose={onClose}>
-      <div className="flex items-center gap-2 mb-4">
-        <input className="fb-input text-sm flex-1" placeholder="New tag name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-        <div className="flex gap-1">
-          {TAG_PALETTE.map((c) => (
-            <button key={c} type="button" title={c} onClick={() => setNewColor(c)}
-              className={`w-5 h-5 rounded-full ${swatchClass(c)} ${newColor === c ? 'ring-2 ring-offset-1 ring-gray-500' : ''}`} />
-          ))}
-        </div>
-        <Btn size="sm" onClick={create}>Add</Btn>
-      </div>
-      {tags.length === 0 ? <p className="adm-t3 text-sm">No tags yet.</p> : (
-        <div className="space-y-1 max-h-72 overflow-auto">
-          {tags.map((t) => (
-            <div key={t.id} className="flex items-center gap-2 px-1 py-1">
-              <TagChip name={t.name} color={t.color} />
-              <div className="flex gap-1 ml-auto">
-                {TAG_PALETTE.map((c) => (
-                  <button key={c} type="button" title={c} onClick={() => recolor(t, c)}
-                    className={`w-4 h-4 rounded-full ${swatchClass(c)} ${t.color === c ? 'ring-2 ring-gray-500' : 'opacity-60 hover:opacity-100'}`} />
-                ))}
-              </div>
-              <button onClick={() => rename(t)} className="text-[11px] adm-t3 hover:text-[#FE5100]">rename</button>
-              <button onClick={() => del(t)} className="text-[11px] text-red-500">delete</button>
-            </div>
-          ))}
-        </div>
-      )}
-    </Modal>
   );
 }
 
@@ -266,16 +315,13 @@ function ImportModal({ onClose, onDone }) {
     const headers = grid[0].map((h) => HEADER_MAP[h.trim().toLowerCase()] || h.trim().toLowerCase());
     const parsed = grid.slice(1).map((cells) => Object.fromEntries(headers.map((h, i) => [h, (cells[i] || '').trim()])));
     setRows(parsed);
-    try { const { data } = await crmImportPreview(parsed); setPreview(data); }
-    catch { toast.error('Preview failed'); }
+    try { const { data } = await crmImportPreview(parsed); setPreview(data); } catch { toast.error('Preview failed'); }
   };
-
   const commit = async () => {
     setBusy(true);
     try { const { data } = await crmImportCommit(rows); toast.success(`Imported: ${data.created} new, ${data.merged} merged, ${data.skipped} skipped`); onDone(); }
     catch { toast.error('Import failed'); } finally { setBusy(false); }
   };
-
   return (
     <Modal title="Import leads (CSV)" onClose={onClose}>
       <p className="text-[12px] adm-t3 mb-3">Headers recognised: name, phone, whatsapp, email, business, profession, city, source, tags.</p>
@@ -289,8 +335,7 @@ function ImportModal({ onClose, onDone }) {
               <tbody>
                 {preview.preview.slice(0, 50).map((p) => (
                   <tr key={p.row} className={p.errors.length ? 'text-red-500' : ''}>
-                    <td className="px-2 py-1">{p.row}</td>
-                    <td className="px-2 py-1">{p.name || '—'}</td>
+                    <td className="px-2 py-1">{p.row}</td><td className="px-2 py-1">{p.name || '—'}</td>
                     <td className="px-2 py-1">{p.phone || p.email || '—'}</td>
                     <td className="px-2 py-1">{[...p.errors, p.dupInBatch ? 'dup in file' : ''].filter(Boolean).join(', ') || 'ok'}</td>
                   </tr>
@@ -308,10 +353,54 @@ function ImportModal({ onClose, onDone }) {
   );
 }
 
+function ManageTagsModal({ tags, onClose, onChanged }) {
+  const [newName, setNewName] = useState('');
+  const [newColor, setNewColor] = useState('gray');
+  const create = async () => {
+    if (!newName.trim()) return;
+    try { await crmCreateTag({ name: newName.trim(), color: newColor }); setNewName(''); setNewColor('gray'); onChanged(); }
+    catch (e) { toast.error(e.response?.data?.message || 'Could not create'); }
+  };
+  const recolor = async (t, color) => { try { await crmUpdateTag(t.id, { color }); onChanged(); } catch { toast.error('Failed'); } };
+  const rename = async (t) => { const n = prompt('Rename tag:', t.name); if (n && n.trim() && n !== t.name) { try { await crmUpdateTag(t.id, { name: n.trim() }); onChanged(); } catch { toast.error('Failed'); } } };
+  const del = async (t) => { if (confirm(`Delete tag "${t.name}" from the catalogue? (leads keep the label)`)) { try { await crmDeleteTag(t.id); onChanged(); } catch { toast.error('Failed'); } } };
+  return (
+    <Modal title="Manage tags" onClose={onClose}>
+      <div className="flex items-center gap-2 mb-4">
+        <input className="fb-input text-sm flex-1" placeholder="New tag name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+        <div className="flex gap-1">
+          {TAG_PALETTE.map((c) => (
+            <button key={c} type="button" title={c} onClick={() => setNewColor(c)}
+              className={`w-5 h-5 rounded-full ${swatchClass(c)} ${newColor === c ? 'ring-2 ring-offset-1 ring-gray-500' : ''}`} />
+          ))}
+        </div>
+        <Btn size="sm" onClick={create}>Add</Btn>
+      </div>
+      {tags.length === 0 ? <p className="adm-t3 text-sm">No tags yet.</p> : (
+        <div className="space-y-1 max-h-72 overflow-auto">
+          {tags.map((t) => (
+            <div key={t.id} className="flex items-center gap-2 px-1 py-1">
+              <TagChip name={t.name} color={t.color} />
+              <div className="flex gap-1 ml-auto">
+                {TAG_PALETTE.map((c) => (
+                  <button key={c} type="button" title={c} onClick={() => recolor(t, c)}
+                    className={`w-4 h-4 rounded-full ${swatchClass(c)} ${t.color === c ? 'ring-2 ring-gray-500' : 'opacity-60 hover:opacity-100'}`} />
+                ))}
+              </div>
+              <button onClick={() => rename(t)} className="text-[11px] adm-t3 hover:text-[#FE5100]">rename</button>
+              <button onClick={() => del(t)} className="text-[11px] text-red-500">delete</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <Card className="rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-auto" >
+      <Card className="rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-auto">
         <div onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold adm-t1">{title}</h2>

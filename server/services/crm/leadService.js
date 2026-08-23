@@ -70,8 +70,24 @@ async function getLead(id) {
   return data || null;
 }
 
+// Lead ids that have an open follow-up in a given window ('overdue'|'today'|'open').
+async function leadIdsWithFollowup(window) {
+  let q = supabaseAdmin.from('lead_follow_ups').select('lead_id').eq('status', 'open');
+  const now = new Date();
+  if (window === 'overdue') q = q.lt('due_at', now.toISOString());
+  else if (window === 'today') {
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+    q = q.lte('due_at', end);
+  }
+  const { data } = await q.limit(5000);
+  return Array.from(new Set((data || []).map((r) => r.lead_id)));
+}
+
 // ── List / search ─────────────────────────────────────────────
-async function listLeads({ status, source, owner, tag, city, profession, q, page = 1, pageSize = 25 } = {}) {
+// followup: 'overdue' | 'today' | 'open'  — restrict to leads with such a task.
+// createdSince: ISO — leads created on/after this instant (metric "New today").
+// hasValue: true — only leads with revenue_paise > 0.
+async function listLeads({ status, source, owner, tag, city, profession, q, followup, createdSince, hasValue, page = 1, pageSize = 25 } = {}) {
   let query = supabaseAdmin.from('leads').select('*', { count: 'exact' });
   if (status) query = query.eq('status', status);
   if (source) query = query.eq('source', source);
@@ -79,6 +95,13 @@ async function listLeads({ status, source, owner, tag, city, profession, q, page
   if (city) query = query.ilike('city', `%${city}%`);
   if (profession) query = query.ilike('profession', `%${profession}%`);
   if (tag) query = query.contains('tags', [tag]);
+  if (createdSince) query = query.gte('created_at', createdSince);
+  if (hasValue) query = query.gt('revenue_paise', 0);
+  if (followup) {
+    const ids = await leadIdsWithFollowup(followup);
+    if (!ids.length) return { rows: [], total: 0, page, pageSize };
+    query = query.in('id', ids);
+  }
   if (q) {
     const s = String(q).replace(/[%,()]/g, ' ').trim();
     query = query.or(`name.ilike.%${s}%,business_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`);
