@@ -53,6 +53,13 @@ describe('earningsCalc', () => {
     expect(pickWinner(resultsFor(1000, 90, 'annual'))).toBe('studio');
   });
 
+  it('Starter outgrows above its 300/yr booking cap; Host+ wins mid volume', () => {
+    const results = resultsFor(100, 30, 'annual'); // 360/yr
+    const starter = results.find((x) => x.plan.key === 'starter');
+    expect(starter.outgrows).toBe(true);
+    expect(pickWinner(results)).toBe('hostplus');
+  });
+
   it('annual saving = monthly*12 - annual fee', () => {
     expect(annualSaving('hostplus')).toBe(229 * 12 - 1499); // 1249
     expect(annualSaving('studio')).toBe(555 * 12 - 3650);   // 3010

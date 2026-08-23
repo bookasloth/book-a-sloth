@@ -11,6 +11,8 @@ const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
 export const HOSTPLUS_ANNUAL_CAP = 1000;
 
+const ANNUAL_BOOKING_CAP = { starter: 300, hostplus: HOSTPLUS_ANNUAL_CAP, studio: null };
+
 // Annual fees from the single pricing source. plans.js slugs: creator=Host+, professional=Studio.
 const yearlyBySlug = Object.fromEntries(PAID_PLANS.map((p) => [p.slug, p.yearly]));
 export const ANNUAL_FEE = {
@@ -31,17 +33,18 @@ export function resultsFor(earning, sessionsPerMonth, cycle = 'annual') {
     const fee = cycle === 'annual' ? ANNUAL_FEE[plan.key] : plan.monthly * 12;
     const netAnnual = round2(grossAnnual - fee);
     const capped = plan.maxServicePrice != null && Number(earning) > plan.maxServicePrice;
-    const outgrows = plan.key === 'hostplus' && yearly > HOSTPLUS_ANNUAL_CAP;
+    const cap = ANNUAL_BOOKING_CAP[plan.key];
+    const outgrows = cap != null && yearly > cap;
     return {
       plan,
       perBookingTakeHome,
       guestPays: b.guestTotal,
       fee,
-      feeCycleLabel: cycle === 'annual' ? '/year' : '/year (billed monthly)',
       grossAnnual,
       netAnnual,
       capped,
       outgrows,
+      bookingCap: cap,
     };
   });
 }

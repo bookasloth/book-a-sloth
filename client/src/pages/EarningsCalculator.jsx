@@ -129,7 +129,7 @@ function PlanCard({ result, winnerKey, cycle }) {
       )}
       {result.outgrows && (
         <p className="mt-3 rounded-[6px] bg-amber-50 px-2.5 py-2 text-[11px] text-amber-700">
-          You'd outgrow this — Host+ stops at {HOSTPLUS_ANNUAL_CAP.toLocaleString("en-IN")} bookings/year.
+          You'd outgrow this — {result.plan.name} stops at {result.bookingCap.toLocaleString("en-IN")} bookings/year.
         </p>
       )}
     </div>
