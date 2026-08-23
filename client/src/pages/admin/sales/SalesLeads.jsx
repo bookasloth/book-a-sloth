@@ -4,7 +4,7 @@ import LeadDrawer from './LeadDrawer';
 import {
   crmListLeads, crmCreateLead, crmBulk, crmLeadsExportCsv, crmImportPreview, crmImportCommit,
   crmListTags, crmCreateTag, crmUpdateTag, crmDeleteTag, crmDashboard, crmListFollowUps,
-  crmUpdateLead, crmSetStatus, crmAddTag, crmRemoveTag,
+  crmUpdateLead, crmSetStatus, crmAddTag, crmRemoveTag, crmListTemplates, crmListSequences,
 } from '../../../services/api';
 import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, SOURCES, SMART_VIEWS, rupees, relTime } from './salesConstants';
 import { colorMap, TAG_PALETTE, swatchClass } from './salesTagColors';
@@ -38,6 +38,74 @@ function parseCsv(text) {
 }
 const HEADER_MAP = { name: 'name', phone: 'phone', whatsapp: 'whatsapp', email: 'email', business: 'business', company: 'business', profession: 'profession', city: 'city', source: 'source', tags: 'tags' };
 
+// Bulk WhatsApp / email / enrol for the selected leads. Sends are QUEUED through
+// the gated worker (kill-switch + DNC + opt-out + frequency cap), so a blast can
+// never bypass the coordinated-conversation limits. WhatsApp params are sent as
+// {{token}} placeholders so each lead's message is personalised at send time.
+function BulkSendModal({ mode, count, onClose, onSubmit }) {
+  const [waTemplates, setWaTemplates] = useState([]);
+  const [sequences, setSequences] = useState([]);
+  const [tpl, setTpl] = useState('');
+  const [seqId, setSeqId] = useState('');
+  const [subject, setSubject] = useState('');
+  const [html, setHtml] = useState('');
+
+  useEffect(() => {
+    if (mode === 'wa') crmListTemplates('whatsapp').then(({ data }) => setWaTemplates(Array.isArray(data) ? data : [])).catch(() => {});
+    if (mode === 'enroll') crmListSequences().then(({ data }) => setSequences((Array.isArray(data) ? data : []).filter((s) => s.is_active))).catch(() => {});
+  }, [mode]);
+
+  const title = { wa: 'Bulk WhatsApp', email: 'Bulk email', enroll: 'Enrol in sequence' }[mode];
+
+  const submit = () => {
+    if (mode === 'wa') {
+      const t = waTemplates.find((x) => x.id === tpl);
+      if (!t) return toast.error('Pick a template');
+      onSubmit('whatsapp', { templateKey: t.name, params: (t.variables || []).map((v) => `{{${v.key}}}`) });
+    } else if (mode === 'email') {
+      if (!subject.trim() || !html.trim()) return toast.error('Subject and body required');
+      onSubmit('email', { subject, html });
+    } else {
+      if (!seqId) return toast.error('Pick a sequence');
+      onSubmit('enroll', { sequenceId: seqId });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <Card className="rounded-2xl p-5 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-bold adm-t1">{title} · {count} lead{count === 1 ? '' : 's'}</h2>
+          <button onClick={onClose} className="adm-t3 text-xl leading-none">×</button>
+        </div>
+        <div className="space-y-3">
+          {mode === 'wa' && (waTemplates.length === 0
+            ? <p className="text-[13px] adm-t2">No approved WhatsApp templates. Add them in <a href="/admin/sales/templates" className="text-[#FE5100]">Templates</a>.</p>
+            : <select className="fb-input text-sm w-full" value={tpl} onChange={(e) => setTpl(e.target.value)}>
+                <option value="">Pick a template…</option>
+                {waTemplates.map((t) => <option key={t.id} value={t.id}>{t.label} ({t.name})</option>)}
+              </select>)}
+          {mode === 'email' && <>
+            <input className="fb-input text-sm w-full" placeholder="Subject — {{first_name}} supported" value={subject} onChange={(e) => setSubject(e.target.value)} />
+            <textarea className="fb-input text-sm w-full" rows={6} placeholder="HTML body — {{first_name}}, {{business_name}}…" value={html} onChange={(e) => setHtml(e.target.value)} />
+          </>}
+          {mode === 'enroll' && (sequences.length === 0
+            ? <p className="text-[13px] adm-t2">No active sequences. <a href="/admin/sales/sequences" className="text-[#FE5100]">Create one</a>.</p>
+            : <select className="fb-input text-sm w-full" value={seqId} onChange={(e) => setSeqId(e.target.value)}>
+                <option value="">Pick a sequence…</option>
+                {sequences.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>)}
+          <p className="text-[11px] adm-t3">Queued through the send gate — nothing goes out while the CRM kill-switch is off, and per-lead frequency limits apply.</p>
+          <div className="flex justify-end gap-2">
+            <Btn variant="outline" size="sm" onClick={onClose}>Cancel</Btn>
+            <Btn size="sm" onClick={submit}>{mode === 'enroll' ? 'Enrol' : 'Queue send'}</Btn>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 export default function SalesLeads() {
   const [drawerId, setDrawerId] = useState(null);
   const [rows, setRows] = useState([]);
@@ -55,6 +123,7 @@ export default function SalesLeads() {
   const [tag, setTag] = useState('');
 
   const [sel, setSel] = useState(new Set());
+  const [bulkMode, setBulkMode] = useState(null); // 'wa' | 'email' | 'enroll'
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [followMap, setFollowMap] = useState({}); // lead_id -> next due iso
@@ -112,10 +181,15 @@ export default function SalesLeads() {
   const allSelected = rows.length > 0 && rows.every((r) => sel.has(r.id));
   const toggleAll = () => setSel(allSelected ? new Set() : new Set(rows.map((r) => r.id)));
 
-  const bulk = async (action, value) => {
+  const bulk = async (action, value, payload) => {
     if (!sel.size) return;
-    try { const { data } = await crmBulk({ ids: [...sel], action, value }); toast.success(`${data.done}/${data.total} updated`); load(); loadStats(); }
-    catch { toast.error('Bulk action failed'); }
+    try {
+      const { data } = await crmBulk({ ids: [...sel], action, value, payload });
+      const verb = ['whatsapp', 'email'].includes(action) ? 'queued' : action === 'enroll' ? 'enrolled' : 'updated';
+      toast.success(`${data.done}/${data.total} ${verb}`);
+      if (['whatsapp', 'email', 'enroll'].includes(action)) setSel(new Set());
+      load(); loadStats();
+    } catch { toast.error('Bulk action failed'); }
   };
 
   const exportCsv = async () => {
@@ -245,10 +319,17 @@ export default function SalesLeads() {
             {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
           </select>
           <Btn variant="outline" size="sm" onClick={() => { const tg = prompt('Tag to add:'); if (tg) bulk('tag_add', tg.trim()); }}>Add tag</Btn>
+          <span className="w-px h-5 bg-gray-200" />
+          <Btn size="sm" onClick={() => setBulkMode('wa')}>WhatsApp</Btn>
+          <Btn size="sm" onClick={() => setBulkMode('email')}>Email</Btn>
+          <Btn variant="outline" size="sm" onClick={() => setBulkMode('enroll')}>Enrol</Btn>
           <Btn variant="outline" size="sm" onClick={() => { if (confirm('Mark selected as Do Not Contact?')) bulk('dnc'); }}>Do Not Contact</Btn>
           <button className="text-[12px] adm-t3 ml-auto" onClick={() => setSel(new Set())}>Clear selection</button>
         </Card>
       )}
+
+      {bulkMode && <BulkSendModal mode={bulkMode} count={sel.size} onClose={() => setBulkMode(null)}
+        onSubmit={(action, payload) => { bulk(action, null, payload); setBulkMode(null); }} />}
 
       {/* List (desktop table) */}
       {error ? (
