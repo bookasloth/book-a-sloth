@@ -72,3 +72,55 @@ test('validEmail helper', () => {
   expect(validEmail('x@y')).toBe(false);
   expect(validEmail('')).toBe(false);
 });
+
+// ── Coordinated-conversation throttle (automated sends only) ────────────────
+// crm_messages count chain: from().select(id,{count}).eq().eq().gte() → { count }.
+const countChain = (count) => ({
+  select: () => ({ eq: () => ({ eq: () => ({ gte: () => Promise.resolve({ count }) }) }) }),
+});
+// Route crm_messages to a count chain (n prior sends in window); everything else
+// to the normal maybeSingle chain.
+const withRecentSends = (n) =>
+  supabaseAdmin.from.mockImplementation((t) => (t === 'crm_messages' ? countChain(n) : chain(t)));
+
+const IST_NOON = new Date('2025-01-15T06:30:00Z');  // 12:00 IST — inside window
+const IST_NIGHT = new Date('2025-01-15T17:00:00Z'); // 22:30 IST — outside window
+afterEach(() => jest.useRealTimers());
+
+test('automated send is frequency-capped when a message went out in the last 48h', async () => {
+  jest.useFakeTimers().setSystemTime(IST_NOON);
+  withRecentSends(1);
+  const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
+  expect(r).toEqual({ ok: false, reason: 'frequency_capped', defer: true });
+});
+
+test('automated send passes when no recent message and inside window', async () => {
+  jest.useFakeTimers().setSystemTime(IST_NOON);
+  withRecentSends(0);
+  const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
+  expect(r).toEqual({ ok: true });
+});
+
+test('automated send is deferred outside quiet hours (before the cap query)', async () => {
+  jest.useFakeTimers().setSystemTime(IST_NIGHT);
+  withRecentSends(0);
+  const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
+  expect(r).toEqual({ ok: false, reason: 'quiet_hours', defer: true });
+});
+
+test('human composer send is EXEMPT from cap + quiet hours', async () => {
+  jest.useFakeTimers().setSystemTime(IST_NIGHT); // night AND recent send present
+  withRecentSends(5);
+  const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp'); // automated omitted → false
+  expect(r).toEqual({ ok: true });
+});
+
+test('cap query failure fails OPEN (send proceeds)', async () => {
+  jest.useFakeTimers().setSystemTime(IST_NOON);
+  supabaseAdmin.from.mockImplementation((t) =>
+    t === 'crm_messages'
+      ? ({ select: () => ({ eq: () => ({ eq: () => ({ gte: () => { throw new Error('db down'); } }) }) }) })
+      : chain(t));
+  const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
+  expect(r).toEqual({ ok: true });
+});

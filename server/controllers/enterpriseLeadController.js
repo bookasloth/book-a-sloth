@@ -66,6 +66,28 @@ async function submitEnterpriseLead(req, res) {
     mailOk = true;
   } catch (e) { console.error('[enterprise-lead] email failed:', e.message); }
 
+  // Real-time CRM: mirror the enterprise inquiry into the CRM leads pipeline
+  // (source enterprise_page) so this high-intent inbound is worked alongside
+  // every other lead, not stranded in the enterprise_leads silo. Never throws.
+  await require('../services/crm/leadService').safeUpsertLead(
+    {
+      name: cap(b.orgName, 200), business_name: cap(b.orgName, 200),
+      email: cap(b.email, 200), phone: cap(b.phone, 40), website: cap(b.website, 300),
+      attributes: {
+        industry: cap(b.industry, 120), team_size: cap(b.teamSize, 60),
+        monthly_bookings: cap(b.monthlyBookings, 60), current_software: cap(b.currentSoftware, 200),
+        requirements: cap(b.requirements, 5000),
+      },
+    },
+    { source: 'enterprise_page', createdBy: 'enterprise_form' }
+  );
+
+  // Enterprise inquiry = strong buying intent. Record it (identified by email/
+  // phone) so it feeds the lead score; the lead created just above matches it.
+  require('../services/crm/intentEvents')
+    .record({ event: 'enterprise_inquiry', email: b.email, phone: b.phone, meta: { org: cap(b.orgName, 200) }, source: 'enterprise' })
+    .catch(() => {});
+
   if (!insertOk && !mailOk) {
     return res.status(500).json({ error: 'Could not submit your request. Please try again.' });
   }

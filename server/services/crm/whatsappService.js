@@ -42,9 +42,9 @@ async function getApiKey() {
  * @param {string} [p.userName]      recipient display name
  * @returns {{success:boolean, skipped?:boolean, reason?:string, providerMessageId?:string, error?:string, response?:object}}
  */
-async function send({ lead, templateKey, templateParams = [], userName }) {
-  const gate = await canSend(lead, 'whatsapp');
-  if (!gate.ok) return { success: false, skipped: true, reason: gate.reason };
+async function send({ lead, templateKey, templateParams = [], userName, automated = false }) {
+  const gate = await canSend(lead, 'whatsapp', { automated });
+  if (!gate.ok) return { success: false, skipped: true, reason: gate.reason, defer: gate.defer };
 
   if (!templateKey) return { success: false, error: 'missing_template' };
 
