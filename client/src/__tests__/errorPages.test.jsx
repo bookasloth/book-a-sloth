@@ -43,9 +43,16 @@ describe('errorCatalog integrity', () => {
 describe('ErrorPage renders from config', () => {
   it('renders the 404 title, eyebrow and CTA', () => {
     renderAt(<ErrorPage code={404} />);
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('This page wandered off');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('This page pulled a vanishing act');
     expect(screen.getByText('Error 404')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Go Home' })).toBeInTheDocument();
+  });
+
+  it('renders a CDN image for the 404 page', () => {
+    const { container } = renderAt(<ErrorPage code={404} />);
+    const img = container.querySelector('img.bas-error-art');
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('src').startsWith('https://assets.bookasloth.in/errors/')).toBe(true);
   });
 
   it('renders the 403 access-denied CTA', () => {
