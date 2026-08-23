@@ -46,6 +46,8 @@ const PERMISSIONS = [
   // Engagement
   'notifications.view', 'email.manage', 'whatsapp.manage',
   'campaigns.view', 'campaigns.manage',
+  // Sales CRM (leads pipeline, timeline, sends, sequences)
+  'leads.view', 'leads.manage',
   'badges.manage', 'announcements.manage',
   // Content
   'cms.manage', 'seo.manage',
@@ -96,6 +98,7 @@ const ROLES = {
       'coupons.view',
       'analytics.view',
       'notifications.view',
+      'leads.view', 'leads.manage',
       'badges.manage', 'announcements.manage',
       'support.view', 'support.assign', 'disputes.view', 'disputes.decide',
       'reviews.moderate',
@@ -156,6 +159,7 @@ const ROLES = {
       'analytics.view',
       'notifications.view', 'email.manage', 'whatsapp.manage',
       'campaigns.view', 'campaigns.manage',
+      'leads.view', 'leads.manage',
       'badges.manage', 'announcements.manage',
       'cms.manage', 'seo.manage',
       'branding.manage',
