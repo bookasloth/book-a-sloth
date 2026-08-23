@@ -29,11 +29,16 @@ export function resultsFor(earning, sessionsPerMonth, cycle = 'annual') {
   return CALC_PLANS.map((plan) => {
     const b = computeMorBreakdown({ targetEarning: earning, ...plan.charge, gstRate: DEFAULT_GST_RATE });
     const perBookingTakeHome = b.hostConsideration;
-    const grossAnnual = round2(perBookingTakeHome * yearly);
+    const cap = ANNUAL_BOOKING_CAP[plan.key];
+    // A plan only earns on the bookings it can actually accept — Host+ physically
+    // can't take booking #1,001, Starter can't take #301. Earning on all `yearly`
+    // bookings would overstate the cheaper plans and hide why Studio wins.
+    const earnableBookings = cap == null ? yearly : Math.min(yearly, cap);
+    const uncollectedBookings = yearly - earnableBookings;
+    const grossAnnual = round2(perBookingTakeHome * earnableBookings);
     const fee = cycle === 'annual' ? ANNUAL_FEE[plan.key] : plan.monthly * 12;
     const netAnnual = round2(grossAnnual - fee);
     const capped = plan.maxServicePrice != null && Number(earning) > plan.maxServicePrice;
-    const cap = ANNUAL_BOOKING_CAP[plan.key];
     const outgrows = cap != null && yearly > cap;
     return {
       plan,
@@ -45,6 +50,9 @@ export function resultsFor(earning, sessionsPerMonth, cycle = 'annual') {
       capped,
       outgrows,
       bookingCap: cap,
+      earnableBookings,
+      uncollectedBookings,
+      uncollectedValue: round2(perBookingTakeHome * uncollectedBookings),
     };
   });
 }
