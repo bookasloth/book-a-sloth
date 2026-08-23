@@ -3,9 +3,11 @@
 export const FUNNEL = ['new', 'contacted', 'replied', 'qualified', 'demo_scheduled', 'trial', 'activated', 'paid'];
 export const ALL_STATUSES = [...FUNNEL, 'lost', 'do_not_contact'];
 
+// Display labels — DB enum stays unchanged; we only relabel for the CRM UI
+// (replied→Responded, paid→Won) so the 203 live leads never need a migration.
 export const STATUS_LABEL = {
-  new: 'New', contacted: 'Contacted', replied: 'Replied', qualified: 'Qualified',
-  demo_scheduled: 'Demo', trial: 'Trial', activated: 'Activated', paid: 'Paid',
+  new: 'New', contacted: 'Contacted', replied: 'Responded', qualified: 'Qualified',
+  demo_scheduled: 'Demo', trial: 'Trial', activated: 'Activated', paid: 'Won',
   lost: 'Lost', do_not_contact: 'Do Not Contact',
 };
 
@@ -18,6 +20,18 @@ export const STATUS_TONE = {
 export const SOURCES = [
   'instagram', 'facebook', 'google', 'linkedin', 'website', 'referral',
   'whatsapp', 'cold_outreach', 'event', 'manual', 'import', 'host_signup', 'guest_booking',
+];
+
+// Smart views — one-click filter presets. `filter` merges into the list query.
+export const SMART_VIEWS = [
+  { key: 'all', label: 'All', filter: {} },
+  { key: 'new', label: 'New', filter: { status: 'new' } },
+  { key: 'needs_followup', label: 'Needs follow-up', filter: { followup: 'today' } },
+  { key: 'overdue', label: 'Overdue', filter: { followup: 'overdue' } },
+  { key: 'contacted', label: 'No response', filter: { status: 'contacted' } },
+  { key: 'qualified', label: 'Qualified', filter: { status: 'qualified' } },
+  { key: 'won', label: 'Won', filter: { status: 'paid' } },
+  { key: 'value', label: 'Has value', filter: { hasValue: true } },
 ];
 
 export const rupees = (paise) => `₹${((Number(paise) || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;

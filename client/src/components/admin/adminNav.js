@@ -105,7 +105,6 @@ export const NAV = [
   ]},
   // Sales CRM command center — leads pipeline + outbound (leads.* gated).
   { id:'sales', section:'SALES', items:[
-    { label:'Overview',   icon:'trendUp',   to:'/admin/sales', exact:true, perm:'leads.view' },
     { label:'Leads',      icon:'users2',    to:'/admin/sales/leads', perm:'leads.view' },
     { label:'Pipeline',   icon:'layout2',   to:'/admin/sales/pipeline', perm:'leads.view' },
     { label:'Follow-ups', icon:'clock',     to:'/admin/sales/follow-ups', perm:'leads.view' },
