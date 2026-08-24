@@ -214,7 +214,15 @@ const InvoicesSection = () => {
         {invoices.map((inv) => (
           <div key={inv.id} className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2">
             <div className="min-w-0">
-              <p className="truncate font-mono text-xs font-medium text-gray-800">{inv.invoice_number}</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate font-mono text-xs font-medium text-gray-800">{inv.invoice_number}</p>
+                <span className={cn(
+                  "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                  inv.source_type === "subscription" ? "bg-indigo-50 text-indigo-600" : "bg-emerald-50 text-emerald-600"
+                )}>
+                  {inv.source_type === "subscription" ? "Plan" : "Booking"}
+                </span>
+              </div>
               <p className="text-[11px] text-gray-400">{fmtDate(inv.issued_at)}</p>
             </div>
             <div className="flex shrink-0 items-center gap-3">
