@@ -284,31 +284,22 @@ export default function SalesLeads() {
           <Btn size="sm" onClick={() => setShowNew(true)}>+ Add Lead</Btn>
         </div>} />
 
+      {/* Merged stat + smart-view filter bar */}
       <MetricStrip stats={stats} active={view} loading={statsLoading} onPick={pickView} />
 
-      {/* Smart views + filters + search */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <div className="flex flex-wrap gap-1.5">
-          {SMART_VIEWS.map((v) => (
-            <button key={v.key} type="button" onClick={() => pickView(v.key)}
-              className={`text-[12px] px-2.5 py-1 rounded-full border transition ${view === v.key && !stage ? 'bg-[#FE5100] text-white border-[#FE5100]' : 'adm-t2 border-gray-200 hover:border-[#FE5100]'}`}>
-              {v.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-2 mb-4">
-        <input className="fb-input text-sm flex-1 min-w-[200px]" placeholder="Search name, business, phone, email…"
+      {/* Single compact filter toolbar: search + stage/source/tag + clear */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <input className="fb-input text-sm flex-1 min-w-[220px]" placeholder="Search name, business, phone, email…"
           value={q} onChange={(e) => setQ(e.target.value)} />
-        <select className="fb-input text-sm" value={stage} onChange={(e) => { setStage(e.target.value); setPage(1); }}>
+        <select className="fb-input text-sm w-auto min-w-[130px]" value={stage} onChange={(e) => { setStage(e.target.value); setPage(1); }}>
           <option value="">Any stage</option>
           {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
         </select>
-        <select className="fb-input text-sm" value={source} onChange={(e) => { setSource(e.target.value); setPage(1); }}>
+        <select className="fb-input text-sm w-auto min-w-[130px]" value={source} onChange={(e) => { setSource(e.target.value); setPage(1); }}>
           <option value="">Any source</option>
           {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select className="fb-input text-sm" value={tag} onChange={(e) => { setTag(e.target.value); setPage(1); }}>
+        <select className="fb-input text-sm w-auto min-w-[120px]" value={tag} onChange={(e) => { setTag(e.target.value); setPage(1); }}>
           <option value="">Any tag</option>
           {tagCatalog.map((tg) => <option key={tg.id} value={tg.name}>{tg.name}</option>)}
         </select>
