@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { getPublicPlans, createSubscription, syncSubscription, cancelSubscription } from "../services/api";
 import toast from "react-hot-toast";
 import BackButton from "../components/common/BackButton";
-import { PageHeader, Card, Button, cn, Modal, ConfirmSheet, Input, FormField } from "../components/dashboard/ui";
+import { PageHeader, Card, Button, cn, Modal, Sheet, ConfirmSheet, Input, FormField } from "../components/dashboard/ui";
 import { planLabel } from "../utils/themeUtils";
 import loadRazorpay from "../utils/loadRazorpay";
 
@@ -44,6 +44,7 @@ const UpgradePlan = () => {
   const [paying, setPaying] = useState(null);        // plan slug
   const [cancelling, setCancelling] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [showDetails, setShowDetails] = useState(false); // subscription details drawer
   const [pendingPlan, setPendingPlan] = useState(null); // plan awaiting billing details
   const [billing, setBilling] = useState({
     name: user?.billing_details?.name || user?.name || "",
@@ -165,11 +166,14 @@ const UpgradePlan = () => {
               <>Auto-renew is <strong className="text-emerald-600">on</strong> ({user?.billing_cadence}). Next charge {expiry ? expiry.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "—"}.</>
             )}
           </div>
-          {status === "active" && (
-            <Button variant="danger-outline" size="sm" onClick={() => setConfirmCancel(true)} disabled={cancelling}>
-              {cancelling ? "Cancelling…" : "Cancel auto-renew"}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setShowDetails(true)}>View details</Button>
+            {status === "active" && (
+              <Button variant="danger-outline" size="sm" onClick={() => setConfirmCancel(true)} disabled={cancelling}>
+                {cancelling ? "Cancelling…" : "Cancel auto-renew"}
+              </Button>
+            )}
+          </div>
         </Card>
       )}
 
@@ -298,6 +302,76 @@ const UpgradePlan = () => {
           </FormField>
         </div>
       </Modal>
+
+      {/* Subscription details drawer — consolidates status, renewal price, billing
+          period switch and upgrade path (the retention + upsell surface). All data
+          is already loaded; no extra fetch. */}
+      <Sheet open={showDetails} onClose={() => setShowDetails(false)} side="right" title="Subscription details">
+        {(() => {
+          const myPlan = plans.find((p) => p.slug === currentPlan);
+          const renewCadence = user?.billing_cadence || cadence;
+          const base = myPlan ? priceFor(myPlan, renewCadence) : 0;
+          const tax = Math.round(base * GST_RATE * 100) / 100;
+          const fmtDay = (d) => d.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+          const otherCadence = renewCadence === "monthly" ? "annual" : "monthly";
+          const canSwitch = myPlan && priceFor(myPlan, otherCadence) > 0;
+          return (
+            <div className="px-2 pb-4">
+              <p className="mb-1 text-lg font-semibold text-gray-900">{planLabel(currentPlan, currentPlan)}</p>
+
+              <div className={cn("mb-5 rounded-xl p-4 text-sm", status === "cancelled" ? "bg-amber-50" : "bg-emerald-50")}>
+                <p className="font-semibold text-gray-800">
+                  {status === "cancelled" ? "Auto-renew is off" : "Subscription renews automatically"}
+                </p>
+                <p className="mt-1 text-gray-600">
+                  {status === "cancelled"
+                    ? <>Access ends {expiry ? fmtDay(expiry) : "at period end"}.</>
+                    : <>Next charge is {inr(base)} + {inr(tax)} GST {expiry ? `on ${fmtDay(expiry)}` : ""}. Renews {renewCadence === "monthly" ? "monthly" : "for 12 months"}.</>}
+                </p>
+              </div>
+
+              <dl className="divide-y divide-gray-100 text-sm">
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-gray-500">Status</dt>
+                  <dd className={cn("font-semibold", daysLeft <= 0 ? "text-red-500" : status === "cancelled" ? "text-amber-600" : "text-emerald-600")}>
+                    {daysLeft <= 0 ? "Expired" : status === "cancelled" ? "Cancelled" : "Active"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-gray-500">Expiration date</dt>
+                  <dd className="font-medium text-gray-800">{expiry ? fmtDay(expiry) : "—"}</dd>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-gray-500">Renewal price</dt>
+                  <dd className="font-medium text-gray-800">{inr(base)}</dd>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-gray-500">Taxes &amp; fees</dt>
+                  <dd className="font-medium text-gray-800">{inr(tax)}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 py-3">
+                  <dt className="text-gray-500">Next billing period</dt>
+                  <dd className="flex items-center gap-2">
+                    <span className="font-medium text-gray-800">{renewCadence === "monthly" ? "Monthly" : "12 months"}</span>
+                    {canSwitch && (
+                      <Button variant="secondary" size="sm" onClick={() => { setCadence(otherCadence); setShowDetails(false); setPendingPlan(myPlan); }}>
+                        Change
+                      </Button>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+
+              <p className="mt-5 text-sm text-gray-500">
+                Need more resources?{" "}
+                <button type="button" className="font-semibold text-primary hover:opacity-80" onClick={() => setShowDetails(false)}>
+                  Upgrade to a higher plan.
+                </button>
+              </p>
+            </div>
+          );
+        })()}
+      </Sheet>
 
       <ConfirmSheet
         open={confirmCancel}
