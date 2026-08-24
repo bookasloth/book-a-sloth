@@ -9,6 +9,23 @@ import OnboardingStepper from './OnboardingStepper';
 import LivePreviewCard from './LivePreviewCard';
 import { PERSONAS } from './personas';
 
+// One hue per persona (multicolour picker). Static class strings so Tailwind's
+// JIT keeps them — do NOT build these class names dynamically.
+const COLOR = {
+  amber:   { chip: 'bg-amber-100 text-amber-600',     pill: 'bg-amber-50 text-amber-700 ring-amber-200/70' },
+  blue:    { chip: 'bg-blue-100 text-blue-600',       pill: 'bg-blue-50 text-blue-700 ring-blue-200/70' },
+  rose:    { chip: 'bg-rose-100 text-rose-600',       pill: 'bg-rose-50 text-rose-700 ring-rose-200/70' },
+  cyan:    { chip: 'bg-cyan-100 text-cyan-600',       pill: 'bg-cyan-50 text-cyan-700 ring-cyan-200/70' },
+  red:     { chip: 'bg-red-100 text-red-600',         pill: 'bg-red-50 text-red-700 ring-red-200/70' },
+  emerald: { chip: 'bg-emerald-100 text-emerald-600', pill: 'bg-emerald-50 text-emerald-700 ring-emerald-200/70' },
+  violet:  { chip: 'bg-violet-100 text-violet-600',   pill: 'bg-violet-50 text-violet-700 ring-violet-200/70' },
+  teal:    { chip: 'bg-teal-100 text-teal-600',       pill: 'bg-teal-50 text-teal-700 ring-teal-200/70' },
+  fuchsia: { chip: 'bg-fuchsia-100 text-fuchsia-600', pill: 'bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-200/70' },
+  indigo:  { chip: 'bg-indigo-100 text-indigo-600',   pill: 'bg-indigo-50 text-indigo-700 ring-indigo-200/70' },
+  sky:     { chip: 'bg-sky-100 text-sky-600',         pill: 'bg-sky-50 text-sky-700 ring-sky-200/70' },
+  lime:    { chip: 'bg-lime-100 text-lime-700',       pill: 'bg-lime-50 text-lime-700 ring-lime-200/70' },
+};
+
 const PersonaStep = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -78,8 +95,9 @@ const PersonaStep = () => {
               aria-label="Choose your persona"
               className="grid grid-cols-1 gap-3 sm:grid-cols-2"
             >
-              {PERSONAS.map(({ id, label, tag, desc, Icon }) => {
+              {PERSONAS.map(({ id, label, tag, desc, color, Icon }) => {
                 const isSel = selectedId === id;
+                const c = COLOR[color] || COLOR.amber;
                 return (
                   <button
                     key={id}
@@ -89,22 +107,18 @@ const PersonaStep = () => {
                     onClick={() => setSelectedId(id)}
                     className={`relative flex items-start gap-3 rounded-2xl border-2 p-4 text-left transition ${
                       isSel
-                        ? 'border-primary bg-primary-light/60 shadow-sm'
-                        : 'border-gray-200 bg-white hover:border-primary/40'
+                        ? 'border-primary bg-primary-light/25 shadow-sm ring-2 ring-primary-light'
+                        : 'border-gray-200 bg-white hover:border-primary/40 hover:shadow-sm'
                     }`}
                   >
-                    <span
-                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition ${
-                        isSel ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'
-                      }`}
-                    >
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${c.chip}`}>
                       <Icon className="h-5 w-5" strokeWidth={2} />
                     </span>
                     <span className="min-w-0">
-                      <span className={`block text-base font-bold leading-tight ${isSel ? 'text-primary-cta' : 'text-gray-900'}`}>
+                      <span className="block text-base font-bold leading-tight text-gray-900">
                         {label}
                       </span>
-                      <span className={`mt-0.5 block text-xs font-semibold ${isSel ? 'text-primary' : 'text-gray-400'}`}>
+                      <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${c.pill}`}>
                         {tag}
                       </span>
                       <span className="mt-1.5 block text-xs leading-snug text-gray-500">{desc}</span>
