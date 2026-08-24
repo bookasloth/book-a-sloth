@@ -1,6 +1,6 @@
 jest.mock('../config/supabase', () => ({ supabaseAdmin: { from: () => ({}) } }));
 
-const { cleanImageUrl } = require('../controllers/hostController');
+const { cleanImageUrl, imagesBucketPath } = require('../controllers/hostController');
 
 describe('cleanImageUrl (audit H1 — profile/cover URL allowlist)', () => {
   it('keeps empty / blank as empty string', () => {
@@ -39,5 +39,29 @@ describe('cleanImageUrl (audit H1 — profile/cover URL allowlist)', () => {
   it('rejects host-spoofing (allowlisted string as a subdomain of an attacker domain)', () => {
     expect(cleanImageUrl('https://googleusercontent.com.evil.com/a')).toBe('');
     expect(cleanImageUrl('https://supabase.co.evil.com/storage/v1/object/public/images/x')).toBe('');
+  });
+});
+
+describe('imagesBucketPath (audit M1 — orphan cleanup path extraction)', () => {
+  const P = 'https://ayjhlwyzszykqtnaktpb.supabase.co/storage/v1/object/public/images/';
+
+  it('extracts the in-bucket path for our own profile/cover objects', () => {
+    expect(imagesBucketPath(P + 'profiles/abc_1_x.jpg')).toBe('profiles/abc_1_x.jpg');
+    expect(imagesBucketPath(P + 'covers/def_2_y.webp')).toBe('covers/def_2_y.webp');
+  });
+
+  it('returns null for objects we must not delete', () => {
+    // Google avatars — never ours
+    expect(imagesBucketPath('https://lh3.googleusercontent.com/a/x')).toBeNull();
+    // empty / cleared
+    expect(imagesBucketPath('')).toBeNull();
+    expect(imagesBucketPath(null)).toBeNull();
+    // our bucket but a prefix we don't own here (services, host-og, blog-og, branding)
+    expect(imagesBucketPath(P + 'services/x.jpg')).toBeNull();
+    expect(imagesBucketPath(P + 'host-og/x.png')).toBeNull();
+    // external / spoofed host
+    expect(imagesBucketPath('https://supabase.co.evil.com/storage/v1/object/public/images/profiles/x')).toBeNull();
+    // non-public (signed/private) path
+    expect(imagesBucketPath(P.replace('/public/', '/sign/') + 'profiles/x')).toBeNull();
   });
 });

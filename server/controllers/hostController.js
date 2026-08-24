@@ -38,6 +38,42 @@ const cleanImageUrl = (v) => {
   return '';
 };
 
+// Orphan cleanup (audit M1): each upload gets a fresh random key and the old
+// object was never removed, so replacing a photo leaked the previous file
+// forever. Given a public images-bucket URL, return its in-bucket path (e.g.
+// 'profiles/abc_1_x.jpg') so we can delete it; returns null for anything that
+// isn't our images bucket (Google avatars, empty, external) — those we must
+// NOT touch. Only cleans the 'profiles'/'covers' prefixes we own here.
+const CLEANABLE_PREFIXES = ['profiles/', 'covers/'];
+const imagesBucketPath = (url) => {
+  const s = String(url ?? '').trim();
+  if (!s) return null;
+  let u;
+  try { u = new URL(s); } catch { return null; }
+  if (u.protocol !== 'https:' || !u.hostname.toLowerCase().endsWith('.supabase.co')) return null;
+  const marker = '/storage/v1/object/public/images/';
+  const i = u.pathname.indexOf(marker);
+  if (i === -1) return null;
+  const path = decodeURIComponent(u.pathname.slice(i + marker.length));
+  if (!CLEANABLE_PREFIXES.some((p) => path.startsWith(p))) return null;
+  return path;
+};
+
+// Best-effort delete of a replaced/removed image from the images bucket. Never
+// throws — a failed cleanup must not fail the profile save (the DB row already
+// points at the new value; a leftover file is cosmetic). Skips when the old
+// value is unchanged or isn't one of our own bucket objects.
+const cleanupReplacedImage = async (oldUrl, newUrl) => {
+  if (oldUrl === newUrl) return;
+  const path = imagesBucketPath(oldUrl);
+  if (!path) return;
+  try {
+    await supabaseAdmin.storage.from('images').remove([path]);
+  } catch (e) {
+    console.warn('cleanupReplacedImage failed (non-fatal):', path, e?.message);
+  }
+};
+
 // Clamp service money/time fields to safe bounds (audit P1-11). Mirrors
 // serviceController — the controller-level backstop so a negative/oversized
 // price or absurd duration can never be persisted, even via direct API.
@@ -313,7 +349,7 @@ const updateProfile = async (req, res) => {
     // `username` field in this body is ignored. Safety net: a legacy account with
     // no username gets an auto-generated one — an INITIAL assignment, not a change.
     const { data: existingProfile } = await supabaseAdmin
-      .from('profiles').select('username').eq('id', req.user.id).single();
+      .from('profiles').select('username, profile_image, cover_image').eq('id', req.user.id).single();
     let initialUsername;
     if (!existingProfile?.username) {
       initialUsername = await usernameService.createInitialUsername();
@@ -433,6 +469,16 @@ const updateProfile = async (req, res) => {
     // Record an auto-assigned initial username in history (no-op if already present).
     if (initialUsername) {
       await usernameService.recordInitialUsername(req.user.id, initialUsername);
+    }
+
+    // Best-effort: delete the previous image file(s) now that the row points at
+    // the new value. Runs only when the field was actually part of this update
+    // and only for our own bucket objects (never Google avatars). Non-fatal.
+    if ('profile_image' in updates) {
+      await cleanupReplacedImage(existingProfile?.profile_image, updates.profile_image);
+    }
+    if ('cover_image' in updates) {
+      await cleanupReplacedImage(existingProfile?.cover_image, updates.cover_image);
     }
 
     res.json(result.data);
@@ -903,5 +949,6 @@ module.exports = {
   validateWeeklySchedule, // exported for unit testing (P1-10)
   cleanBackgroundKey, // exported for unit testing
   cleanImageUrl, // exported for unit testing (audit H1)
+  imagesBucketPath, // exported for unit testing (audit M1)
   buildHostProfile, // used by prerenderController for bot-traffic meta shells
 };
