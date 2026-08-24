@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Btn, Badge } from '../../../components/admin/ui';
 import {
@@ -7,14 +7,64 @@ import {
   crmListTemplates, crmListTags, crmCreateTag, crmUpdateLead,
   crmListSequences, crmEnroll,
 } from '../../../services/api';
-import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, rupees, relTime, leadScore } from './salesConstants';
+import { FUNNEL, STATUS_LABEL, STATUS_TONE, rupees, relTime, leadScore } from './salesConstants';
 import { colorMap } from './salesTagColors';
 import TagChip from './TagChip';
 import TagPicker from './TagPicker';
+import {
+  Check, CheckCircle2, ChevronDown, Mail, Phone, MessageCircle, FileText,
+  CalendarClock, Clock, Plus, ArrowRight,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const MSG_TONE = { sent: 'ok', delivered: 'ok', read: 'ok', queued: 'neutral', processing: 'neutral', failed: 'danger', bounced: 'danger', skipped: 'warn' };
-const TABS = [['activity', 'Activity'], ['messages', 'Messages'], ['notes', 'Notes'], ['followups', 'Follow-ups']];
+const TABS = [['activity', 'Timeline'], ['messages', 'Messages'], ['notes', 'Notes'], ['followups', 'Follow-ups']];
+
+// Funnel stages shown as the visual stepper (everything up to "Activated").
+// "Won" (paid), "Lost" and DNC are terminal states, offered as buttons below.
+const STEP_STAGES = FUNNEL.filter((s) => s !== 'paid');
+
+const initialsOf = (name) => (name || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+const fmtDateTime = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—');
+
+// Map a timeline entry to an icon + tint from its source/title (no new data).
+function timelineIcon(item) {
+  const s = `${item.source || ''} ${item.title || ''}`.toLowerCase();
+  if (s.includes('whatsapp')) return { Icon: MessageCircle, cls: 'text-emerald-600 bg-emerald-50' };
+  if (s.includes('email') || s.includes('mail')) return { Icon: Mail, cls: 'text-blue-600 bg-blue-50' };
+  if (s.includes('call')) return { Icon: Phone, cls: 'text-slate-600 bg-slate-100' };
+  if (s.includes('note')) return { Icon: FileText, cls: 'text-violet-600 bg-violet-50' };
+  if (s.includes('status')) return { Icon: CheckCircle2, cls: 'text-emerald-600 bg-emerald-50' };
+  if (s.includes('follow')) return { Icon: CalendarClock, cls: 'text-amber-600 bg-amber-50' };
+  return { Icon: Clock, cls: 'text-slate-500 bg-slate-100' };
+}
+
+// Horizontal funnel stepper. Filled/checked up to the current stage; click any
+// step to jump the lead there.
+function Stepper({ status, onPick }) {
+  const cur = STEP_STAGES.indexOf(status);
+  return (
+    <div className="flex items-start">
+      {STEP_STAGES.map((s, i) => {
+        const done = cur >= 0 && i <= cur;
+        const isCur = i === cur;
+        return (
+          <Fragment key={s}>
+            <button type="button" onClick={() => onPick(s)} className="flex flex-col items-center gap-1 shrink-0 w-11 group" title={STATUS_LABEL[s]}>
+              <span className={`w-6 h-6 rounded-full grid place-items-center border-2 transition
+                ${done ? 'bg-[#FE5100] border-[#FE5100] text-white' : 'adm-card border-gray-300 group-hover:border-[#FE5100]'}
+                ${isCur ? 'ring-2 ring-[#FE5100]/30' : ''}`}>
+                {done ? <Check size={13} /> : <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />}
+              </span>
+              <span className={`text-[9px] leading-tight text-center ${isCur ? 'font-semibold text-[#FE5100]' : 'adm-t3'}`}>{STATUS_LABEL[s]}</span>
+            </button>
+            {i < STEP_STAGES.length - 1 && <span className={`h-0.5 flex-1 mt-3 ${i < cur ? 'bg-[#FE5100]' : 'bg-gray-200'}`} />}
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+}
 
 // Enrol this lead into an active drip sequence. Loads the list on first open;
 // enrolment is idempotent server-side (per sequence+lead). Sends stay gated by
@@ -103,110 +153,159 @@ export default function LeadPanel({ leadId, onChanged, onClose }) {
   const tagColors = colorMap(tagCatalog);
   const { score, temp } = leadScore(lead);
   const scoreTone = temp === 'hot' ? 'text-red-500' : temp === 'warm' ? 'text-amber-600' : 'adm-t3';
+  const nextFu = [...followUps].sort((a, b) => new Date(a.due_at) - new Date(b.due_at))[0];
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-lg font-bold adm-t1 truncate">{lead.name || 'Unnamed lead'}</h1>
-            <Badge tone={STATUS_TONE[lead.status] || 'neutral'}>{STATUS_LABEL[lead.status] || lead.status}</Badge>
-            {lead.do_not_contact && <Badge tone="danger">DNC</Badge>}
-            <span className={`text-[12px] font-bold ${scoreTone}`} title={`Lead score (${temp})`}>{temp === 'hot' ? '🔥' : ''}{score}</span>
-          </div>
-          {lead.business_name && <p className="text-[13px] adm-t2 mt-0.5 truncate">{lead.business_name}{lead.profession ? ` · ${lead.profession}` : ''}</p>}
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-[12px] adm-t2">
-            {lead.phone && <span>{lead.phone}</span>}
-            {lead.email && <span className="truncate">{lead.email}</span>}
-            {lead.city && <span>{lead.city}</span>}
-            <span className="adm-t3">Source: {lead.source}</span>
-          </div>
-        </div>
-        <div className="text-right flex-shrink-0">
-          <p className="text-[10px] adm-t3 uppercase">Revenue</p>
-          <p className="text-base font-bold adm-t1">{rupees(lead.revenue_paise)}</p>
-          <div className="mt-1">
-            <p className="text-[10px] adm-t3 uppercase">Deal value</p>
-            {editVal ? (
-              <div className="flex items-center gap-1 justify-end">
-                <span className="text-[12px] adm-t3">₹</span>
-                <input autoFocus type="number" className="fb-input text-sm w-24 py-0.5" value={valInput}
-                  onChange={(e) => setValInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveValue()} />
-                <button onClick={saveValue} className="text-[11px] text-[#FE5100]">save</button>
+      <div className="grid lg:grid-cols-[minmax(0,340px)_1fr] gap-6">
+        {/* ── LEFT: identity + stage + actions ── */}
+        <div className="space-y-5">
+          {/* Identity */}
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-full bg-[#FE5100]/10 text-[#FE5100] grid place-items-center font-bold text-base shrink-0">
+              {initialsOf(lead.name)}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg font-bold adm-t1 truncate">{lead.name || 'Unnamed lead'}</h1>
+                <Badge tone={STATUS_TONE[lead.status] || 'neutral'}>{STATUS_LABEL[lead.status] || lead.status}</Badge>
+                {lead.do_not_contact && <Badge tone="danger">DNC</Badge>}
+                <span className={`text-[12px] font-bold ${scoreTone}`} title={`Lead score (${temp})`}>{temp === 'hot' ? '🔥' : ''}{score}</span>
               </div>
-            ) : (
-              <button onClick={() => { setValInput(String(Math.round((lead.expected_value_paise || 0) / 100))); setEditVal(true); }}
-                className="text-sm font-semibold adm-t2 hover:text-[#FE5100]">
-                {lead.expected_value_paise ? rupees(lead.expected_value_paise) : 'Set ✎'}
-              </button>
-            )}
+              {lead.business_name && <p className="text-[13px] adm-t2 mt-0.5 truncate">{lead.business_name}{lead.profession ? ` · ${lead.profession}` : ''}</p>}
+              <div className="mt-1.5 space-y-0.5 text-[12px] adm-t2">
+                {lead.phone && <p className="flex items-center gap-1.5"><Phone size={12} className="adm-t3" />{lead.phone}</p>}
+                {lead.email && <p className="flex items-center gap-1.5 truncate"><Mail size={12} className="adm-t3" />{lead.email}</p>}
+                <p className="flex items-center gap-1.5 adm-t3"><Clock size={12} />Source: {lead.source}{lead.city ? ` · ${lead.city}` : ''}</p>
+              </div>
+              {lead.profile_id && <Link to={`/admin/host360/${lead.profile_id}`} className="inline-flex items-center gap-1 text-[11px] text-[#FE5100] mt-1">Host 360 <ArrowRight size={11} /></Link>}
+            </div>
           </div>
-          {lead.profile_id && <Link to={`/admin/host360/${lead.profile_id}`} className="text-[11px] text-[#FE5100] block mt-1">Host 360 →</Link>}
+
+          {/* Revenue + deal value */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl border border-gray-200 p-3">
+              <p className="text-[10px] adm-t3 uppercase tracking-wide">Revenue</p>
+              <p className="text-base font-bold adm-t1 mt-0.5">{rupees(lead.revenue_paise)}</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 p-3">
+              <p className="text-[10px] adm-t3 uppercase tracking-wide">Deal value</p>
+              {editVal ? (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-[12px] adm-t3">₹</span>
+                  <input autoFocus type="number" className="fb-input text-sm w-full py-0.5" value={valInput}
+                    onChange={(e) => setValInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveValue()} onBlur={saveValue} />
+                </div>
+              ) : (
+                <button onClick={() => { setValInput(String(Math.round((lead.expected_value_paise || 0) / 100))); setEditVal(true); }}
+                  className="text-base font-bold adm-t1 hover:text-[#FE5100] mt-0.5 block">
+                  {lead.expected_value_paise ? rupees(lead.expected_value_paise) : 'Set ✎'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Stage stepper + terminal states */}
+          <div>
+            <p className="text-[10px] adm-t3 uppercase tracking-wide font-semibold mb-2">Stage</p>
+            <Stepper status={lead.status} onPick={setStatus} />
+            <div className="flex flex-wrap gap-2 mt-3">
+              <button onClick={() => setStatus('paid')}
+                className={`text-[12px] px-3 py-1.5 rounded-lg border transition ${lead.status === 'paid' ? 'bg-emerald-600 text-white border-emerald-600' : 'adm-t2 border-gray-200 hover:border-emerald-500'}`}>Won</button>
+              <button onClick={() => setStatus('lost')}
+                className={`text-[12px] px-3 py-1.5 rounded-lg border transition ${lead.status === 'lost' ? 'bg-red-600 text-white border-red-600' : 'adm-t2 border-gray-200 hover:border-red-400'}`}>Lost</button>
+              <button onClick={toggleDnc}
+                className={`text-[12px] px-3 py-1.5 rounded-lg border transition ${lead.do_not_contact ? 'bg-red-600 text-white border-red-600' : 'adm-t2 border-gray-200 hover:border-red-400'}`}>{lead.do_not_contact ? 'Clear DNC' : 'Do Not Contact'}</button>
+            </div>
+          </div>
+
+          {/* Quick actions */}
+          <div>
+            <p className="text-[10px] adm-t3 uppercase tracking-wide font-semibold mb-2">Quick actions</p>
+            <div className="grid grid-cols-3 gap-2">
+              <QuickAction primary icon={MessageCircle} label="WhatsApp" onClick={() => setModal('wa')} />
+              <QuickAction icon={Mail} label="Email" onClick={() => setModal('email')} />
+              <QuickAction icon={Phone} label="Call" onClick={() => setModal('call')} />
+            </div>
+            <div className="flex gap-2 mt-2">
+              <AddActivityMenu onPick={setModal} />
+              <EnrollControl leadId={lead.id} onDone={refresh} />
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div>
+            <p className="text-[10px] adm-t3 uppercase tracking-wide font-semibold mb-2">Tags</p>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {(lead.tags || []).map((t) => <TagChip key={t} name={t} color={tagColors[t]} onRemove={() => removeTag(t)} />)}
+              <div className="relative">
+                <button type="button" onClick={() => setShowTagPicker((v) => !v)}
+                  className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">+ Tag</button>
+                {showTagPicker && <TagPicker tags={tagCatalog} exclude={lead.tags || []} onSelect={pickTag} onCreate={createTag} onClose={() => setShowTagPicker(false)} />}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Stage picker */}
-      <div className="flex flex-wrap gap-1.5 mt-3">
-        {ALL_STATUSES.map((s) => (
-          <button key={s} onClick={() => setStatus(s)}
-            className={`text-[11px] px-2.5 py-1 rounded-full border transition ${lead.status === s ? 'bg-[#FE5100] text-white border-[#FE5100]' : 'adm-t2 border-gray-200 hover:border-[#FE5100]'}`}>
-            {STATUS_LABEL[s]}
-          </button>
-        ))}
-      </div>
+        {/* ── RIGHT: next action + timeline ── */}
+        <div className="min-w-0">
+          {/* Next action banner */}
+          <div className="rounded-xl border border-gray-200 p-3.5 flex items-start gap-3">
+            <span className="w-9 h-9 rounded-lg bg-[#FE5100]/10 text-[#FE5100] grid place-items-center shrink-0"><CalendarClock size={18} /></span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] text-[#FE5100] uppercase tracking-wide font-semibold">Next action</p>
+              {nextFu ? (
+                <>
+                  <p className="text-[14px] font-semibold adm-t1 truncate">{nextFu.title || 'Follow up'}</p>
+                  <p className={`text-[12px] ${new Date(nextFu.due_at) < new Date() ? 'text-red-500' : 'adm-t3'}`}>{fmtDateTime(nextFu.due_at)}</p>
+                </>
+              ) : <p className="text-[13px] adm-t3 mt-0.5">Nothing scheduled.</p>}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+              <Btn variant="outline" size="sm" onClick={() => setModal('followup')}>{nextFu ? 'Edit' : 'Schedule'}</Btn>
+              {nextFu && <Btn size="sm" onClick={() => completeFollowUp(nextFu.id)}><Check size={14} /> Mark done</Btn>}
+            </div>
+          </div>
 
-      {/* Quick actions */}
-      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
-        <Btn size="sm" onClick={() => setModal('wa')}>WhatsApp</Btn>
-        <Btn size="sm" onClick={() => setModal('email')}>Email</Btn>
-        <Btn variant="outline" size="sm" onClick={() => setModal('call')}>Log Call</Btn>
-        <Btn variant="outline" size="sm" onClick={() => setModal('note')}>Note</Btn>
-        <Btn variant="outline" size="sm" onClick={() => setModal('followup')}>Follow-up</Btn>
-        <EnrollControl leadId={lead.id} onDone={refresh} />
-        <Btn variant="outline" size="sm" onClick={toggleDnc}>{lead.do_not_contact ? 'Clear DNC' : 'DNC'}</Btn>
-      </div>
+          {/* Tabs */}
+          <div className="flex gap-1 mt-4 border-b border-gray-100">
+            {TABS.map(([k, label]) => (
+              <button key={k} onClick={() => setTab(k)}
+                className={`text-[13px] px-3 py-2 -mb-px border-b-2 transition ${tab === k ? 'border-[#FE5100] text-[#FE5100] font-semibold' : 'border-transparent adm-t2 hover:adm-t1'}`}>
+                {label}{k === 'notes' && notes.length ? ` (${notes.length})` : ''}{k === 'followups' && followUps.length ? ` (${followUps.length})` : ''}
+              </button>
+            ))}
+          </div>
 
-      {/* Tags */}
-      <div className="flex flex-wrap items-center gap-1.5 mt-3">
-        {(lead.tags || []).map((t) => <TagChip key={t} name={t} color={tagColors[t]} onRemove={() => removeTag(t)} />)}
-        <div className="relative">
-          <button type="button" onClick={() => setShowTagPicker((v) => !v)}
-            className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">+ Tag</button>
-          {showTagPicker && <TagPicker tags={tagCatalog} exclude={lead.tags || []} onSelect={pickTag} onCreate={createTag} onClose={() => setShowTagPicker(false)} />}
-        </div>
-      </div>
+          <div className="pt-4">
+            {tab === 'activity' && (
+              timeline.length === 0 ? <p className="adm-t3 text-sm">No activity yet.</p> : (
+                <ol className="space-y-1">
+                  {timeline.map((t, i) => {
+                    const { Icon, cls } = timelineIcon(t);
+                    const last = i === timeline.length - 1;
+                    return (
+                      <li key={i} className="flex gap-3">
+                        <div className="flex flex-col items-center">
+                          <span className={`w-7 h-7 rounded-full grid place-items-center shrink-0 ${cls}`}><Icon size={14} /></span>
+                          {!last && <span className="w-px flex-1 bg-gray-200 my-1" />}
+                        </div>
+                        <div className="min-w-0 flex-1 pb-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-[13px] font-semibold adm-t1">{t.title}</p>
+                            <span className="text-[11px] adm-t3 flex-shrink-0 whitespace-nowrap">{relTime(t.at)}</span>
+                          </div>
+                          {t.body && <p className="text-[12px] adm-t2 mt-0.5">{t.body}</p>}
+                          {t.status && <span className="text-[10px] adm-t3">{t.source} · {t.status}</span>}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )
+            )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 mt-4 border-b border-gray-100">
-        {TABS.map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k)}
-            className={`text-[13px] px-3 py-2 -mb-px border-b-2 transition ${tab === k ? 'border-[#FE5100] text-[#FE5100] font-semibold' : 'border-transparent adm-t2 hover:adm-t1'}`}>
-            {label}{k === 'notes' && notes.length ? ` (${notes.length})` : ''}{k === 'followups' && followUps.length ? ` (${followUps.length})` : ''}
-          </button>
-        ))}
-      </div>
-
-      <div className="pt-4">
-        {tab === 'activity' && (
-          timeline.length === 0 ? <p className="adm-t3 text-sm">No activity yet.</p> : (
-            <ol className="relative border-l border-gray-200 ml-2 space-y-4">
-              {timeline.map((t, i) => (
-                <li key={i} className="ml-4">
-                  <span className="absolute -left-1.5 w-3 h-3 rounded-full bg-[#FE5100]" />
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-[13px] font-semibold adm-t1">{t.title}</p>
-                    <span className="text-[11px] adm-t3 flex-shrink-0">{relTime(t.at)}</span>
-                  </div>
-                  {t.body && <p className="text-[12px] adm-t2 mt-0.5">{t.body}</p>}
-                  {t.status && <span className="text-[10px] adm-t3">{t.source} · {t.status}</span>}
-                </li>
-              ))}
-            </ol>
-          )
-        )}
-
-        {tab === 'messages' && (
+            {tab === 'messages' && (
           messages.length === 0 ? <p className="adm-t3 text-sm">No messages sent yet.</p> : (
             <ul className="space-y-2">
               {messages.map((m) => (
@@ -248,10 +347,55 @@ export default function LeadPanel({ leadId, onChanged, onClose }) {
             </ul>
           )
         )}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer meta */}
+      <div className="mt-6 pt-3 border-t border-gray-100 flex flex-wrap gap-x-4 gap-y-1 text-[11px] adm-t3">
+        <span>Created {fmtDateTime(lead.created_at)}</span>
+        <span>Last updated {relTime(lead.last_activity_at || lead.updated_at || lead.created_at)}</span>
       </div>
 
       {modal && <ActionModal type={modal} lead={lead} templates={templates} onClose={() => setModal(null)} onDone={() => { setModal(null); refresh(); }} />}
     </div>
+  );
+}
+
+// Small dropdown for lower-frequency activities (note / follow-up) so the quick
+// actions row stays to the three primary channels.
+function AddActivityMenu({ onPick }) {
+  const [open, setOpen] = useState(false);
+  const pick = (t) => { setOpen(false); onPick(t); };
+  return (
+    <div className="relative flex-1">
+      <button type="button" onClick={() => setOpen((v) => !v)}
+        className="w-full inline-flex items-center justify-center gap-1.5 text-[12.5px] font-medium adm-card adm-t2 adm-hoverable rounded-lg px-3 py-1.5">
+        <Plus size={13} /> Add activity <ChevronDown size={13} className="adm-t3" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute z-20 mt-1 w-44 rounded-xl adm-card shadow-lg overflow-hidden">
+            <button type="button" onClick={() => pick('note')} className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t1 flex items-center gap-2"><FileText size={14} className="adm-t3" /> Add note</button>
+            <button type="button" onClick={() => pick('followup')} className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t1 flex items-center gap-2"><CalendarClock size={14} className="adm-t3" /> Schedule follow-up</button>
+            <button type="button" onClick={() => pick('call')} className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t1 flex items-center gap-2"><Phone size={14} className="adm-t3" /> Log call</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Prominent single-channel action tile used in the "Quick actions" grid.
+function QuickAction({ icon: Icon, label, onClick, primary }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={`flex flex-col items-center justify-center gap-1 rounded-xl border py-2.5 transition
+        ${primary ? 'bg-[#FE5100] text-white border-[#FE5100] hover:bg-[#e54900]' : 'adm-card adm-t2 border-gray-200 hover:border-[#FE5100]'}`}>
+      <Icon size={17} />
+      <span className="text-[11px] font-medium">{label}</span>
+    </button>
   );
 }
 
