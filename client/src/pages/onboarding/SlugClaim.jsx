@@ -1,10 +1,17 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Check } from 'lucide-react';
 import { checkOnboardingSlug, claimOnboardingSlug } from '../../services/api';
 import { analytics, EVENTS } from '../../services/analytics';
-import ProgressBar from './ProgressBar';
+import OnboardingStepper from './OnboardingStepper';
 import useOnboardingGuard from './useOnboardingGuard';
+
+const URL_TIPS = [
+  'Keep it short and easy to remember',
+  'Use your name or brand',
+  'Avoid numbers and special characters',
+];
 
 /**
  * SlugClaim — Step 1 of the Google-first onboarding flow.
@@ -122,8 +129,11 @@ const SlugClaim = () => {
   // Minimal loading state while guard runs server check
   if (!ready) {
     return (
-      <div className="app-container flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-gray-50">
+        <OnboardingStepper current={1} />
+        <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
       </div>
     );
   }
@@ -131,102 +141,122 @@ const SlugClaim = () => {
   const canContinue = available && !checking && !claiming;
 
   return (
-    <>
-      <ProgressBar current={1} total={4} />
-      <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center py-6 sm:py-10">
-        <div className="page-card w-full max-w-md p-5 sm:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Claim your URL</h1>
-          <p className="text-gray-500 text-sm mb-6">
-            This is where guests will book you. You can change it later.
-          </p>
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <OnboardingStepper current={1} />
 
-          <div className="mb-6">
-            <label htmlFor="slug-input" className="block text-sm font-medium mb-2">
-              Your URL
-            </label>
+      <div className="mx-auto w-full max-w-lg px-4 py-8 sm:py-12">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Claim your URL</h1>
+        <p className="mt-2 text-sm text-gray-500">
+          This is where guests will book you. You can change it later.
+        </p>
 
-            {/* Responsive flex row — no hardcoded px padding */}
-            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition">
-              <span
-                className="flex-shrink-0 px-3 py-2.5 bg-gray-50 border-r border-gray-300 text-sm text-gray-500 font-medium select-none whitespace-nowrap"
-                aria-hidden="true"
-              >
-                bookasloth.com/
-              </span>
-              <div className="relative flex-1 flex items-center">
-                <input
-                  id="slug-input"
-                  type="text"
-                  className="w-full px-3 py-2.5 text-sm bg-white focus:outline-none"
-                  placeholder="yourslug"
-                  value={slug}
-                  onChange={handleChange}
-                  maxLength={30}
-                  autoFocus
-                  aria-describedby="slug-hint"
-                />
-                {/* Availability indicator */}
-                <div className="absolute right-2 flex-shrink-0">
-                  {checking && (
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  )}
-                  {!checking && available === true && (
-                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" aria-label="Available">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                  {!checking && available === false && slug && (
-                    <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20" aria-label="Not available">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </div>
+        <div className="mt-7 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <label htmlFor="slug-input" className="block text-sm font-semibold text-gray-900">
+            Your URL
+          </label>
+
+          {/* Responsive flex row — no hardcoded px padding */}
+          <div className="mt-2 flex items-center overflow-hidden rounded-xl border-2 border-gray-200 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary-light">
+            <span
+              className="flex-shrink-0 select-none whitespace-nowrap border-r border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-500"
+              aria-hidden="true"
+            >
+              bookasloth.com/
+            </span>
+            <div className="relative flex flex-1 items-center">
+              <input
+                id="slug-input"
+                type="text"
+                className="w-full bg-white px-3 py-3 text-sm font-medium focus:outline-none"
+                placeholder="yourslug"
+                value={slug}
+                onChange={handleChange}
+                maxLength={30}
+                autoFocus
+                aria-describedby="slug-hint"
+              />
+              {/* Availability indicator */}
+              <div className="absolute right-3 flex-shrink-0">
+                {checking && (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                )}
+                {!checking && available === true && (
+                  <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" aria-label="Available">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                )}
+                {!checking && available === false && slug && (
+                  <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20" aria-label="Not available">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                )}
               </div>
-            </div>
-
-            {/* Feedback messages — only one shows at a time */}
-            <div id="slug-hint" className="mt-2 min-h-[1.25rem]">
-              {slug && tooShort && (
-                <p className="text-amber-600 text-sm">Minimum 3 characters.</p>
-              )}
-              {slug && !tooShort && available === false && !checking && unavailableReason === 'reserved' && (
-                <p className="text-red-500 text-sm">This URL is reserved and cannot be used.</p>
-              )}
-              {slug && !tooShort && available === false && !checking && unavailableReason === 'invalid' && (
-                <p className="text-red-500 text-sm">Only lowercase letters, numbers, and hyphens are allowed.</p>
-              )}
-              {slug && !tooShort && available === false && !checking && unavailableReason === 'blocked' && (
-                <p className="text-red-500 text-sm">This URL isn&apos;t available. Try another.</p>
-              )}
-              {slug && !tooShort && available === false && !checking && unavailableReason === 'error' && (
-                <p className="text-amber-600 text-sm">Couldn&apos;t check that URL right now. Check your connection and try again.</p>
-              )}
-              {slug && !tooShort && available === false && !checking && (!unavailableReason || unavailableReason === 'taken') && (
-                <p className="text-red-500 text-sm">This URL is taken. Try another.</p>
-              )}
-              {slug && available === true && (
-                <p className="text-green-600 text-sm">This URL is available.</p>
-              )}
             </div>
           </div>
 
-          <button
-            onClick={handleClaim}
-            disabled={!canContinue}
-            className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            {claiming ? 'Claiming…' : 'Continue'}
-          </button>
+          {/* Feedback messages — only one shows at a time */}
+          <div id="slug-hint" className="mt-2 min-h-[1.25rem]">
+            {slug && tooShort && (
+              <p className="text-sm text-amber-600">Minimum 3 characters.</p>
+            )}
+            {slug && !tooShort && available === false && !checking && unavailableReason === 'reserved' && (
+              <p className="text-sm text-red-500">This URL is reserved and cannot be used.</p>
+            )}
+            {slug && !tooShort && available === false && !checking && unavailableReason === 'invalid' && (
+              <p className="text-sm text-red-500">Only lowercase letters, numbers, and hyphens are allowed.</p>
+            )}
+            {slug && !tooShort && available === false && !checking && unavailableReason === 'blocked' && (
+              <p className="text-sm text-red-500">This URL isn&apos;t available. Try another.</p>
+            )}
+            {slug && !tooShort && available === false && !checking && unavailableReason === 'error' && (
+              <p className="text-sm text-amber-600">Couldn&apos;t check that URL right now. Check your connection and try again.</p>
+            )}
+            {slug && !tooShort && available === false && !checking && (!unavailableReason || unavailableReason === 'taken') && (
+              <p className="text-sm text-red-500">This URL is taken. Try another.</p>
+            )}
+            {slug && available === true && (
+              <p className="flex items-center gap-1.5 text-sm font-medium text-green-600">
+                <Check className="h-4 w-4" strokeWidth={3} /> This URL is available.
+              </p>
+            )}
+          </div>
+        </div>
 
+        {/* Tips card */}
+        <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-5">
+          <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <span aria-hidden="true">💡</span> Tips for a great URL
+          </p>
+          <ul className="mt-3 space-y-2">
+            {URL_TIPS.map((tip) => (
+              <li key={tip} className="flex items-start gap-2 text-sm text-gray-600">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={3} />
+                {tip}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Sticky action bar */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
           <button
             onClick={() => navigate('/vendor-register')}
-            className="mt-3 w-full text-sm text-gray-500 hover:text-gray-700 py-1.5 transition"
+            className="btn-secondary px-5 py-2.5 text-sm"
           >
             ← Back
           </button>
+          <button
+            onClick={handleClaim}
+            disabled={!canContinue}
+            className="btn-primary px-7 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {claiming ? 'Claiming…' : 'Continue →'}
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
