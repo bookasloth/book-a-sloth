@@ -17,6 +17,27 @@ const { canActivateMore, canAddFreeService } = require('../middleware/planMiddle
 const { isBackgroundKey } = require('../config/backgroundKeys');
 const cleanBackgroundKey = (v) => (isBackgroundKey(v) ? v : null);
 
+// SECURITY (audit H1): profile_image / cover_image were stored VERBATIM while
+// every sibling URL field (map_link, social_links) is scheme-checked. A host
+// could PUT a data:/javascript: URI (DB bloat / bad href) or an arbitrary
+// external URL (off-platform tracker, referer leak, and the OG generator later
+// fetches it). We only ever legitimately store: '' (cleared), a Google account
+// avatar, or our own public 'images' bucket URL — verified against all live
+// rows (googleusercontent.com, <project>.supabase.co, empty; nothing else).
+// Anything outside that allowlist is coerced to '' rather than 400'd, so a
+// malformed value degrades to the fallback avatar instead of blocking the save.
+const cleanImageUrl = (v) => {
+  const s = String(v ?? '').trim();
+  if (!s) return '';
+  let u;
+  try { u = new URL(s); } catch { return ''; }
+  if (u.protocol !== 'https:') return '';           // reject http:, data:, javascript:, blob:
+  const host = u.hostname.toLowerCase();
+  if (host === 'googleusercontent.com' || host.endsWith('.googleusercontent.com')) return s;
+  if (host.endsWith('.supabase.co') && u.pathname.includes('/storage/v1/object/public/images/')) return s;
+  return '';
+};
+
 // Clamp service money/time fields to safe bounds (audit P1-11). Mirrors
 // serviceController — the controller-level backstop so a negative/oversized
 // price or absurd duration can never be persisted, even via direct API.
@@ -303,8 +324,8 @@ const updateProfile = async (req, res) => {
     if (bio !== undefined) updates.bio = bio;
     if (tagline !== undefined) updates.tagline = tagline;
     if (initialUsername) updates.username = initialUsername;
-    if (profile_image !== undefined) updates.profile_image = profile_image;
-    if (cover_image !== undefined) updates.cover_image = cover_image;
+    if (profile_image !== undefined) updates.profile_image = cleanImageUrl(profile_image);
+    if (cover_image !== undefined) updates.cover_image = cleanImageUrl(cover_image);
     if (profession !== undefined) updates.profession = profession;
     if (location !== undefined) updates.location = location;
     if (map_link !== undefined) {
@@ -881,5 +902,6 @@ module.exports = {
   searchVendors,
   validateWeeklySchedule, // exported for unit testing (P1-10)
   cleanBackgroundKey, // exported for unit testing
+  cleanImageUrl, // exported for unit testing (audit H1)
   buildHostProfile, // used by prerenderController for bot-traffic meta shells
 };
