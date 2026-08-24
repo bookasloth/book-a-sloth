@@ -325,12 +325,14 @@ const ProfileSetup = () => {
             {/* Images */}
             {cropper === "profile" && (
               <ImageCropper aspect={1} folder="profiles" currentUrl={form.profile_image}
+                name={form.name} themeColor={tc}
                 onUploaded={(url) => { setForm(f => ({ ...f, profile_image: url })); setDirty(true); setCropper(null); }}
                 onClose={() => setCropper(null)} label="Profile Photo" />
             )}
             {/* Cover photo — cropped to 3:1 so it renders identically everywhere it's shown */}
             {cropper === "cover" && (
               <ImageCropper aspect={COVER_ASPECT} folder="covers" currentUrl={form.cover_image}
+                name={form.name} themeColor={tc} avatarUrl={form.profile_image}
                 onUploaded={(url) => { setForm(f => ({ ...f, cover_image: url })); setDirty(true); setCropper(null); }}
                 onClose={() => setCropper(null)} label="Cover Photo" />
             )}
