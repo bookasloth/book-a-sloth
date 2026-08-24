@@ -71,16 +71,24 @@ const ImageCropper = ({
   const imgW = natW * scale;
   const imgH = natH * scale;
 
-  // Frame follows the stage width so it fits every screen (responsive, premium).
+  // Frame follows the ACTUAL stage-panel width (measured via ResizeObserver, so
+  // it settles after flexbox lays out — a one-shot measure on mount saw the
+  // pre-flex width and made the frame too wide, overflowing the modal).
   useLayoutEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
     const measure = () => {
-      const stageW = stageRef.current?.clientWidth || 320;
-      const w = Math.max(200, Math.min(stageW - 32, isProfile ? 360 : 560));
+      const inner = el.clientWidth - 32; // minus p-4 padding
+      const w = Math.max(180, Math.min(inner, isProfile ? 360 : 560));
       setFrame({ w, h: isProfile ? w : Math.round(w / aspect) });
     };
     measure();
+    // ResizeObserver catches flex settling; window resize is the fallback for
+    // environments without it (older browsers / jsdom in tests).
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    ro?.observe(el);
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    return () => { ro?.disconnect(); window.removeEventListener('resize', measure); };
   }, [aspect, isProfile]);
 
   // Keep the frame CENTRE pinned while zooming (premium feel), then re-clamp so
@@ -207,7 +215,7 @@ const ImageCropper = ({
     <div className="fixed inset-0 z-[60] flex items-stretch justify-center bg-black/70 p-0 sm:items-center sm:p-4"
       onClick={onClose} role="dialog" aria-modal="true" aria-label={`Edit ${label}`}>
       <div
-        className="flex w-full flex-col bg-white shadow-2xl sm:max-w-3xl sm:rounded-2xl"
+        className="flex w-full flex-col overflow-hidden bg-white shadow-2xl sm:max-w-4xl sm:rounded-2xl"
         style={{ maxHeight: '100dvh' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -226,28 +234,51 @@ const ImageCropper = ({
         </div>
 
         {/* Body — scrolls if short screens; stage + live preview */}
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:flex-row sm:p-5">
-          {/* STAGE */}
-          <div ref={stageRef} className="flex flex-1 flex-col items-center justify-center">
-            {imgEl ? (
-              <>
+        <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4 sm:flex-row sm:p-5">
+          {/* STAGE — the dark panel CLIPS the mask's dim (overflow-hidden) so it
+              never bleeds onto the controls/preview. */}
+          <div className="flex min-w-0 flex-1 flex-col items-center gap-4">
+            <div ref={stageRef}
+              className="relative flex w-full items-center justify-center overflow-hidden rounded-xl bg-gray-900 p-4"
+              style={{ minHeight: frame.h + 32 }}>
+              {imgEl ? (
                 <div className="relative touch-none select-none" style={{ width: frame.w, height: frame.h }}
                   onPointerDown={onPointerDown} onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onWheel={onWheel}>
                   <canvas ref={canvasRef} width={frame.w} height={frame.h}
                     className="block cursor-grab active:cursor-grabbing bg-gray-900"
                     style={{ width: frame.w, height: frame.h, borderRadius: isProfile ? '9999px' : 12 }} />
-                  {/* Mask: dims everything outside the exact final shape (WYSIWYG). */}
+                  {/* Mask dims the panel AROUND the frame only (parent clips it). */}
                   <div className="pointer-events-none absolute inset-0"
                     style={{
                       borderRadius: isProfile ? '9999px' : 12,
-                      boxShadow: '0 0 0 9999px rgba(17,17,17,0.55)',
-                      outline: '2px solid rgba(255,255,255,0.9)',
+                      boxShadow: '0 0 0 9999px rgba(17,17,17,0.6)',
+                      outline: '2px solid rgba(255,255,255,0.95)',
                     }} />
                 </div>
+              ) : (
+                <button type="button" onClick={() => fileRef.current?.click()}
+                  className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-600 p-10 text-gray-400 transition-colors hover:border-primary hover:text-gray-200"
+                  style={{ minHeight: frame.h }}>
+                  {currentUrl ? (
+                    <img src={currentUrl} alt="Current"
+                      className={`mb-1 h-20 w-20 object-cover opacity-80 ${isProfile ? 'rounded-full' : 'rounded-lg'}`} />
+                  ) : (
+                    <svg className="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                  <span className="text-sm font-semibold">{currentUrl ? 'Click to replace your photo' : 'Click to choose a photo'}</span>
+                  <span className="text-xs opacity-70">JPG, PNG or WEBP · up to 2 MB</span>
+                </button>
+              )}
+            </div>
 
-                {/* Zoom control */}
-                <div className="mt-4 flex w-full max-w-sm items-center gap-3">
+            {/* Controls — OUTSIDE the dark panel, so never dimmed */}
+            {imgEl && (
+              <div className="w-full max-w-sm">
+                <div className="flex items-center gap-3">
                   <span aria-hidden="true" className="text-xs text-gray-400">–</span>
                   <input type="range" min="1" max={MAX_ZOOM} step="0.01" value={zoom}
                     aria-label="Zoom" onChange={(e) => setZoom(parseFloat(e.target.value))}
@@ -256,25 +287,24 @@ const ImageCropper = ({
                   <span className="w-10 text-right text-xs tabular-nums text-gray-500">{zoom.toFixed(1)}×</span>
                 </div>
                 <p className="mt-2 text-center text-[11px] text-gray-400">Drag to reposition · scroll or pinch to zoom</p>
-                <button type="button" onClick={() => fileRef.current?.click()}
-                  className="mt-3 text-xs font-medium text-gray-500 underline-offset-2 hover:text-primary hover:underline">
-                  Choose a different photo
-                </button>
-              </>
-            ) : (
-              <button type="button" onClick={() => fileRef.current?.click()}
-                className="flex w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-300 p-10 text-gray-400 transition-colors hover:border-primary hover:text-primary"
-                style={{ minHeight: 240 }}>
-                {currentUrl ? (
-                  <img src={currentUrl} alt="Current" className="mb-1 h-20 w-20 rounded-full object-cover opacity-70" />
-                ) : (
-                  <svg className="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                )}
-                <span className="text-sm font-semibold">Click to choose a photo</span>
-                <span className="text-xs opacity-70">JPG, PNG or WEBP · up to 2 MB</span>
+                <div className="mt-3 flex items-center justify-center gap-4">
+                  <button type="button" onClick={() => fileRef.current?.click()}
+                    className="text-xs font-medium text-gray-500 underline-offset-2 hover:text-primary hover:underline">
+                    Choose a different photo
+                  </button>
+                  {currentUrl && (
+                    <button type="button" onClick={() => { onUploaded(''); onClose(); }}
+                      className="text-xs font-medium text-gray-400 underline-offset-2 hover:text-red-600 hover:underline">
+                      Remove photo
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            {!imgEl && currentUrl && (
+              <button type="button" onClick={() => { onUploaded(''); onClose(); }}
+                className="text-xs font-medium text-gray-400 underline-offset-2 hover:text-red-600 hover:underline">
+                Remove photo
               </button>
             )}
             <input ref={fileRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -283,7 +313,7 @@ const ImageCropper = ({
 
           {/* LIVE PREVIEW */}
           {imgEl && (
-            <div className="flex flex-shrink-0 flex-col items-center gap-3 sm:w-56">
+            <div className="flex flex-shrink-0 flex-col items-center gap-3 sm:w-52">
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Preview</p>
               {isProfile ? (
                 <div className="flex items-center gap-4">
