@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { Search, Check, X, Plus, Loader2 } from 'lucide-react';
 import { getCategories, suggestCategory, saveOnboardingPersona } from '../../services/api';
 import useOnboardingGuard from './useOnboardingGuard';
-import ProgressBar from './ProgressBar';
+import OnboardingStepper from './OnboardingStepper';
 
 // Fallback if the API is unreachable — keeps onboarding usable offline.
 const FALLBACK = [
@@ -116,164 +116,147 @@ const CategoryStep = () => {
   // ── Loading guard ───────────────────────────────────────────────────────
   if (!ready) {
     return (
-      <>
-        <ProgressBar current={2} total={4} />
-        <div className="app-container flex min-h-[calc(100vh-72px)] items-center justify-center">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-gray-50">
+        <OnboardingStepper current={2} />
+        <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
-      </>
+      </div>
     );
   }
 
-  // ── Main layout: fixed viewport, no page scroll ─────────────────────────
-  // The outer wrapper is 100dvh minus the ProgressBar (≈56px). We use flex
-  // column so: header (title+search) is auto-height, list fills remaining
-  // space with overflow-y-auto, footer (Continue) is auto-height. This
-  // ensures the page never grows beyond the viewport.
   return (
-    <>
-      <ProgressBar current={2} total={4} />
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <OnboardingStepper current={2} />
 
-      {/* Full-viewport column; no page-level scroll */}
-      <div
-        className="app-container flex flex-col"
-        style={{ height: 'calc(100dvh - 72px)' }}
-      >
-        <div className="flex flex-col h-full max-w-md mx-auto w-full px-4 py-4 sm:py-6">
+      <div className="mx-auto w-full max-w-xl px-4 py-8 sm:py-10">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">What do you do?</h1>
+        <p className="mt-2 text-sm text-gray-500">
+          Pick the category that fits you. Add your own if it&apos;s not listed.
+        </p>
 
-          {/* ── Fixed header area ── */}
-          <div className="shrink-0">
-            <button
-              onClick={() => navigate(`/vendor-register/${slug}/category`)}
-              className="text-sm text-gray-500 hover:text-gray-800 mb-3 inline-block"
-            >
-              ← Back
-            </button>
+        {/* Search box */}
+        <div className="relative mt-6">
+          <Search
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            strokeWidth={2.5}
+          />
+          <input
+            ref={searchRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && showAddRow && !adding) handleAddCustom();
+            }}
+            placeholder="Search categories"
+            autoComplete="off"
+            className="fb-input w-full pl-10"
+          />
+        </div>
 
-            <h1 className="text-2xl font-bold mb-1">What do you do?</h1>
-            <p className="text-gray-500 text-sm mb-4">
-              Pick the category that fits you. Add your own if it's not listed.
-            </p>
-
-            {/* Search box */}
-            <div className="relative mb-3">
-              <Search
-                className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                strokeWidth={2.5}
-              />
-              <input
-                ref={searchRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && showAddRow && !adding) handleAddCustom();
-                }}
-                placeholder="Search categories"
-                autoComplete="off"
-                className="fb-input pl-9 w-full"
-              />
-            </div>
-
-            {/* Selected chip */}
-            {selected && (
-              <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 bg-primary-light border border-primary text-primary text-sm font-medium rounded-full px-3 py-1 leading-none">
-                  <Check className="w-3.5 h-3.5 shrink-0" strokeWidth={3} />
-                  {selectedLabel}
-                  {isPending && (
-                    <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-primary/60 bg-primary/10 rounded-full px-1.5 py-0.5 leading-none">
-                      pending review
-                    </span>
-                  )}
-                  <button
-                    onClick={clearSelection}
-                    aria-label={`Remove ${selectedLabel}`}
-                    className="ml-0.5 text-primary/70 hover:text-primary transition"
-                  >
-                    <X className="w-3.5 h-3.5" strokeWidth={2.5} />
-                  </button>
+        {/* Selected chip */}
+        {selected && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary-light px-3 py-1 text-sm font-medium leading-none text-primary-cta">
+              <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} />
+              {selectedLabel}
+              {isPending && (
+                <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none tracking-wide text-primary/70">
+                  pending review
                 </span>
-              </div>
-            )}
-          </div>
-
-          {/* ── Scrollable matches list ── */}
-          <div className="flex-1 overflow-y-auto min-h-0 rounded border border-gray-200 bg-white">
-            {fetching ? (
-              <div className="flex items-center justify-center py-10 text-gray-400">
-                <Loader2 className="w-5 h-5 animate-spin" strokeWidth={2.5} />
-              </div>
-            ) : (
-              <>
-                {/* Category rows */}
-                {filtered.map((cat) => (
-                  <button
-                    key={cat.slug}
-                    onClick={() => selectCategory(cat.slug, cat.label)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left border-b border-gray-100 last:border-b-0 transition ${
-                      selected === cat.slug
-                        ? 'bg-primary-light text-primary font-semibold'
-                        : 'hover:bg-gray-50 text-gray-700'
-                    }`}
-                  >
-                    {selected === cat.slug ? (
-                      <Check className="w-4 h-4 shrink-0 text-primary" strokeWidth={3} />
-                    ) : (
-                      <span className="w-4 h-4 shrink-0" />
-                    )}
-                    <span>{cat.label}</span>
-                  </button>
-                ))}
-
-                {/* "Add <query>" row — shown only when query has no exact match */}
-                {showAddRow && (
-                  <button
-                    onClick={!adding ? handleAddCustom : undefined}
-                    disabled={adding}
-                    data-testid="add-custom-row"
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left border-b border-gray-100 last:border-b-0 bg-amber-50 hover:bg-amber-100 text-amber-800 font-medium transition disabled:opacity-60"
-                  >
-                    {adding ? (
-                      <Loader2 className="w-4 h-4 shrink-0 animate-spin" strokeWidth={2.5} />
-                    ) : (
-                      <Plus className="w-4 h-4 shrink-0" strokeWidth={3} />
-                    )}
-                    <span>Add &ldquo;{query.trim()}&rdquo;</span>
-                  </button>
-                )}
-
-                {/* Empty state — no matches and not showing Add row */}
-                {filtered.length === 0 && !showAddRow && (
-                  <p className="text-sm text-gray-400 py-8 text-center px-4">
-                    No categories match your search.
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* ── Pinned footer ── */}
-          <div className="shrink-0 pt-3">
-            <button
-              onClick={handleNext}
-              disabled={saving || !selected}
-              className="btn w-full bg-primary text-white py-2.5 text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition"
-            >
-              {saving ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />
-                  Saving…
-                </span>
-              ) : (
-                'Continue'
               )}
-            </button>
+              <button
+                onClick={clearSelection}
+                aria-label={`Remove ${selectedLabel}`}
+                className="ml-0.5 text-primary/70 transition hover:text-primary"
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+            </span>
           </div>
+        )}
 
+        {/* Matches list */}
+        <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200 bg-white">
+          {fetching ? (
+            <div className="flex items-center justify-center py-10 text-gray-400">
+              <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
+            </div>
+          ) : (
+            <>
+              {filtered.map((cat) => (
+                <button
+                  key={cat.slug}
+                  onClick={() => selectCategory(cat.slug, cat.label)}
+                  className={`flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left text-sm transition last:border-b-0 ${
+                    selected === cat.slug
+                      ? 'bg-primary-light font-semibold text-primary-cta'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {selected === cat.slug ? (
+                    <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={3} />
+                  ) : (
+                    <span className="h-4 w-4 shrink-0" />
+                  )}
+                  <span>{cat.label}</span>
+                </button>
+              ))}
+
+              {/* "Add <query>" row — shown only when query has no exact match */}
+              {showAddRow && (
+                <button
+                  onClick={!adding ? handleAddCustom : undefined}
+                  disabled={adding}
+                  data-testid="add-custom-row"
+                  className="flex w-full items-center gap-3 border-b border-gray-100 bg-amber-50 px-4 py-3 text-left text-sm font-medium text-amber-800 transition last:border-b-0 hover:bg-amber-100 disabled:opacity-60"
+                >
+                  {adding ? (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" strokeWidth={2.5} />
+                  ) : (
+                    <Plus className="h-4 w-4 shrink-0" strokeWidth={3} />
+                  )}
+                  <span>Add &ldquo;{query.trim()}&rdquo;</span>
+                </button>
+              )}
+
+              {/* Empty state — no matches and not showing Add row */}
+              {filtered.length === 0 && !showAddRow && (
+                <p className="px-4 py-8 text-center text-sm text-gray-400">
+                  No categories match your search.
+                </p>
+              )}
+            </>
+          )}
         </div>
       </div>
-    </>
+
+      {/* Sticky action bar */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+        <div className="mx-auto flex max-w-xl items-center justify-between gap-3 px-4 py-3">
+          <button
+            onClick={() => navigate(`/vendor-register/${slug}/category`)}
+            className="btn-secondary px-5 py-2.5 text-sm"
+          >
+            ← Back
+          </button>
+          <button
+            onClick={handleNext}
+            disabled={saving || !selected}
+            className="btn-primary px-7 py-2.5 text-sm disabled:opacity-50"
+          >
+            {saving ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} /> Saving…
+              </span>
+            ) : (
+              'Continue →'
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
