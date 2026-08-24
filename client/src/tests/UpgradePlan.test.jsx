@@ -14,6 +14,10 @@ vi.mock('../services/api', () => ({
   createSubscription: vi.fn(),
   syncSubscription: vi.fn(),
   cancelSubscription: vi.fn(),
+  // Billing-history section (#740/#742) — page imports these on mount, so the
+  // mock must expose them or vitest throws "No export is defined on the mock".
+  getMyInvoices: vi.fn(() => Promise.resolve({ data: [] })),
+  invoiceUrl: vi.fn(() => '#'),
 }));
 
 vi.mock('../context/AuthContext', () => ({ useAuth: vi.fn() }));
