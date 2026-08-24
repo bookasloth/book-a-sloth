@@ -54,6 +54,7 @@ import { searchVendors, subscribeNewsletter } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import useLenis from "../hooks/useLenis";
+import { HostAvatar } from "../components/common/HostAvatar";
 import Reveal from "../components/home/Reveal";
 import HowItWorks from "../components/home/HowItWorks";
 import BrandPreloader from "../components/preloader/BrandPreloader";
@@ -1230,13 +1231,8 @@ const Home = () => {
                         to={`/${v.username}`}
                         className="flex items-center gap-3 rounded-2xl border border-black/5 bg-white p-3 transition-shadow hover:shadow-md hover:no-underline"
                       >
-                        {v.profile_image ? (
-                          <img src={v.profile_image} alt={v.name} className="h-10 w-10 flex-shrink-0 rounded-xl object-cover" />
-                        ) : (
-                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
-                            {v.name?.charAt(0)}
-                          </div>
-                        )}
+                        <HostAvatar src={v.profile_image} name={v.name} themeColor={v.theme_color}
+                                    size={40} shape="rounded" decorative />
                         <div className="min-w-0">
                           <div className="flex items-center gap-1">
                             <p className="truncate text-sm font-medium text-ink">{v.name}</p>
