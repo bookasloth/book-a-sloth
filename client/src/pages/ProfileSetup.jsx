@@ -349,9 +349,20 @@ const ProfileSetup = () => {
                       : <svg className="m-5 h-6 w-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
                   </div>
                   <div>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setCropper("profile")}>
-                      {form.profile_image ? "Change photo" : "Upload photo"}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setCropper("profile")}>
+                        {form.profile_image ? "Change photo" : "Upload photo"}
+                      </Button>
+                      {form.profile_image && (
+                        <button
+                          type="button"
+                          onClick={() => { if (window.confirm("Remove your profile photo? Your fallback avatar will show instead.")) { setForm(f => ({ ...f, profile_image: "" })); setDirty(true); } }}
+                          className="text-xs font-medium text-gray-400 hover:text-red-600"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                     <p className="mt-1 text-[10px] text-gray-400">Border colour reflects your plan tier</p>
                   </div>
                 </div>
@@ -367,7 +378,18 @@ const ProfileSetup = () => {
                       ? <img src={form.cover_image} alt="" className="h-full w-full object-cover" />
                       : <div className="flex h-full items-center justify-center text-xs text-gray-400">Click to upload cover photo</div>}
                   </div>
-                  <p className="mt-1 text-[10px] text-gray-400">JPG/PNG/WebP up to 2MB — crop to a 3:1 banner, shown the same everywhere</p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <p className="text-[10px] text-gray-400">JPG/PNG/WebP up to 2MB — crop to a 3:1 banner, shown the same everywhere</p>
+                    {form.cover_image && (
+                      <button
+                        type="button"
+                        onClick={() => { if (window.confirm("Remove your cover photo?")) { setForm(f => ({ ...f, cover_image: "" })); setDirty(true); } }}
+                        className="ml-2 flex-shrink-0 text-xs font-medium text-gray-400 hover:text-red-600"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 </div>
               </FeatureGate>
             </div>
