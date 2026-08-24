@@ -7,6 +7,7 @@ import {
   svcCreate,
   hostGetCategories,
   listServiceCategories,
+  getOnboardingStatus,
 } from '../../services/api';
 import { analytics } from '../../services/analytics';
 import { EVENTS } from '../../services/analytics/events';
@@ -14,6 +15,8 @@ import { useAuth } from '../../context/AuthContext';
 import { fireCelebration } from '../../utils/celebration';
 import useOnboardingGuard from './useOnboardingGuard';
 import OnboardingStepper from './OnboardingStepper';
+import LivePreviewCard from './LivePreviewCard';
+import { personaLabelForSlug, personaTagForSlug } from './personas';
 
 // First-service durations — the common set; host refines everything else in the
 // dashboard. Kept tiny on purpose: this screen exists to get ONE bookable
@@ -70,6 +73,21 @@ const ExploreWithBolt = () => {
       .catch(() => {});
     return () => { alive = false; };
   }, []);
+
+  // Hydrate name / photo / persona / booking-mode so the live preview reflects
+  // the page the host just built across the previous steps.
+  const [profileSnap, setProfileSnap] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    getOnboardingStatus().then(({ data }) => { if (alive) setProfileSnap(data); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const displayName  = profileSnap?.name || user?.name || '';
+  const photoUrl     = profileSnap?.profileImage || user?.profile_image || null;
+  const personaLabel = personaLabelForSlug(profileSnap?.primaryCategory);
+  const personaTag   = personaTagForSlug(profileSnap?.primaryCategory);
+  const bookingType  = profileSnap?.bookingType || profileSnap?.booking_type || null;
 
   const publicUrl = `${window.location.origin}/${slug}`;
 
@@ -143,7 +161,7 @@ const ExploreWithBolt = () => {
     <div className="min-h-screen bg-gray-50">
       <OnboardingStepper current={4} />
 
-      <div className="mx-auto w-full max-w-xl px-4 py-10 sm:py-14">
+      <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:py-14">
         {/* Celebration header */}
         <div className="text-center">
           <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-light ring-8 ring-primary-light/40">
@@ -157,8 +175,12 @@ const ExploreWithBolt = () => {
           </p>
         </div>
 
+        <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+
+          {/* ── Left: first-service form ── */}
+          <div>
         {/* First-service mini-form — the money moment */}
-        <div className="mt-6 rounded-2xl border-2 border-primary/20 bg-primary-light/30 p-5 text-left sm:p-6">
+        <div className="rounded-2xl border-2 border-primary/20 bg-primary-light/30 p-5 text-left sm:p-6">
           <div className="mb-4">
             <label className="mb-1.5 block text-sm font-semibold text-gray-800">
               Service title <span className="text-red-500">*</span>
@@ -261,6 +283,29 @@ const ExploreWithBolt = () => {
           {skipping ? 'Finishing…' : 'Skip for now — I’ll add a service later'}
           {!skipping && <ArrowRight className="h-4 w-4" strokeWidth={2} />}
         </button>
+          </div>
+
+          {/* ── Right: live preview of the finished page ── */}
+          <aside className="lg:sticky lg:top-24">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Live preview
+            </p>
+            <LivePreviewCard
+              displayName={displayName}
+              slug={slug}
+              personaLabel={personaLabel}
+              personaTag={personaTag}
+              bookingType={bookingType}
+              photoUrl={photoUrl}
+              serviceTitle={title.trim()}
+              serviceDuration={duration}
+            />
+            <p className="mt-3 text-center text-xs text-gray-400">
+              Publish to make this page bookable. You can edit everything later.
+            </p>
+          </aside>
+
+        </div>
       </div>
     </div>
   );
