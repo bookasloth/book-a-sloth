@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Menu, X, ExternalLink, LogOut, Headset, ChevronDown, Bell, LifeBuoy,
-  User, CreditCard, ShieldCheck, Check, Copy,
+  User, CreditCard, ShieldCheck, Check, Copy, BadgeCheck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
@@ -198,11 +198,12 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
   const category = humanizeCategory(user?.category || user?.primary_category);
   const close = () => setOpen(false);
 
-  // Verification state drives the header pill + the row's status. Canonical
-  // states are approved/verified; anything else that's set means "in progress".
+  // Verification tick by the name: orange (brand) when verified, grey otherwise.
   const kyc = (user?.kyc_status || '').toLowerCase();
-  const kycDone = ['approved', 'verified'].includes(kyc);
-  const kycPending = Boolean(kyc) && !kycDone;
+  const kycVerified = ['approved', 'verified'].includes(kyc);
+  const kycTitle = kycVerified
+    ? 'Verified host — view verification'
+    : 'Not verified — complete verification to get paid';
 
   // bookasloth.com is the canonical public domain (never .in).
   const publicUrl = user?.username ? `https://bookasloth.com/${user.username}` : null;
@@ -256,17 +257,27 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
         <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-4">
           <Avatar size="h-12 w-12 text-base" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-gray-900">{user?.name || 'Host'}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="truncate text-sm font-bold text-gray-900">{user?.name || 'Host'}</p>
+              <Link
+                to="/dashboard/kyc"
+                onClick={close}
+                title={kycTitle}
+                aria-label={kycVerified ? 'Verified host' : 'Not verified — complete verification'}
+                className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <BadgeCheck
+                  className="h-4 w-4"
+                  strokeWidth={2.2}
+                  style={{ color: kycVerified ? '#FE5100' : '#9ca3af' }}
+                />
+              </Link>
+            </div>
             <p className="truncate text-xs text-gray-500">{user?.username ? `@${user.username}` : category}</p>
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <div className="mt-1.5">
               <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', planStyle.bg, planStyle.text)}>
                 {planStyle.label}
               </span>
-              {kycPending && (
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                  Verify to get paid
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -284,13 +295,6 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
           <Link to="/dashboard/kyc" onClick={close} className={MENU_ROW}>
             <ShieldCheck className="h-4 w-4 shrink-0" strokeWidth={1.7} />
             <span className="flex-1">Verification</span>
-            {kycDone ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
-                <Check className="h-3.5 w-3.5" strokeWidth={2.4} />Verified
-              </span>
-            ) : kycPending ? (
-              <span className="text-[11px] font-semibold text-amber-600">Action needed</span>
-            ) : null}
           </Link>
         </div>
 
@@ -312,15 +316,11 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
           )}
         </div>
 
-        {/* Help */}
+        {/* Support — Help lives in the topbar; this is the human line. */}
         <div className="border-t border-gray-100 py-1.5">
-          <Link to="/help" onClick={close} className={MENU_ROW}>
-            <LifeBuoy className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-            <span className="flex-1">Help center</span>
-          </Link>
           <a href="/bolt958" target="_blank" rel="noreferrer" onClick={close} className={MENU_ROW}>
             <Headset className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-            <span className="flex-1">Talk to your account manager</span>
+            <span className="flex-1">Account manager</span>
             <ExternalLink className="h-3.5 w-3.5 shrink-0 text-gray-300" strokeWidth={1.8} />
           </a>
         </div>
