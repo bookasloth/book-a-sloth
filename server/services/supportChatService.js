@@ -14,12 +14,13 @@
 
 const crypto = require('crypto');
 const { supabaseAdmin } = require('../config/supabase');
+const adminAlert = require('../utils/adminAlert');
 
 // Human-friendly reference from a uuid, e.g. SUP-8F92AB.
 const refFrom = (id) => `SUP-${String(id).replace(/-/g, '').slice(0, 6).toUpperCase()}`;
 
-// Fire-and-forget broadcast to the thread's realtime channel. Never throws.
-async function broadcast(threadId, event, payload) {
+// Fire-and-forget broadcast to any realtime topic. Never throws.
+async function broadcastTopic(topic, event, payload) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return;
@@ -27,12 +28,17 @@ async function broadcast(threadId, event, payload) {
     await fetch(`${url}/realtime/v1/api/broadcast`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ messages: [{ topic: `support:thread:${threadId}`, event, payload }] }),
+      body: JSON.stringify({ messages: [{ topic, event, payload }] }),
     });
   } catch (e) {
-    console.error('support broadcast failed', threadId, e.message);
+    console.error('support broadcast failed', topic, e.message);
   }
 }
+
+// Per-thread channel — the guest/host/admin chat panels each subscribe to their
+// open thread. `support:admin` is a single station channel every admin console
+// subscribes to, used to ring on new escalations.
+const broadcast = (threadId, event, payload) => broadcastTopic(`support:thread:${threadId}`, event, payload);
 
 // The participant's current (non-resolved) thread, or a fresh one. One open thread
 // per host/guest keeps the UX a single continuous conversation.
@@ -114,7 +120,34 @@ async function setStatus(threadId, status, extra = {}) {
   return data;
 }
 
-const escalate = (threadId, aiSummary) => setStatus(threadId, 'waiting', aiSummary ? { ai_summary: aiSummary } : {});
+// Escalate to a human: flip to 'waiting', then (best-effort, never blocking) ring
+// every open admin console over the `support:admin` channel AND email the team.
+// Both callers — the manual "Talk to a human" button and Bolt's auto-handoff —
+// route through here, so the alert lives in one place.
+async function escalate(threadId, aiSummary) {
+  const updated = await setStatus(threadId, 'waiting', aiSummary ? { ai_summary: aiSummary } : {});
+  const t = updated || (await getThread(threadId));
+  if (t) {
+    const who = t.participant_type === 'host' ? 'Host' : 'Guest';
+    const contact = t.guest_phone ? ` · ${t.guest_phone}` : '';
+    // Ring: one event on the station channel; each admin dashboard plays the tone.
+    broadcastTopic('support:admin', 'escalation', {
+      thread_id: t.id, reference: t.reference, participant_type: t.participant_type, summary: aiSummary || null,
+    });
+    // Email: throttled per-thread so re-escalation of the same thread sends once.
+    adminAlert({
+      subject: `Support escalation — ${t.reference}`,
+      key: `support-escalation:${t.id}`,
+      lines: [
+        `${who}${contact} needs a human on support chat.`,
+        aiSummary ? `Reason: ${aiSummary}` : 'They tapped “Talk to a human”.',
+      ],
+      link: `${process.env.CLIENT_URL || 'https://bookasloth.com'}/admin/support/chat`,
+      category: 'Support Alert',
+    }).catch(() => {});
+  }
+  return t;
+}
 const assign   = (threadId, adminId) => setStatus(threadId, 'assigned', { assigned_admin: adminId || null });
 const resolve  = (threadId, rating) => setStatus(threadId, 'resolved', rating ? { rating } : {});
 
