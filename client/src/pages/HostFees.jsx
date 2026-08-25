@@ -98,6 +98,12 @@ const HostFees = () => (
         <strong>Free bookings.</strong> A Service priced at ₹0 attracts no booking fee, no commission, no payment
         processing charge, and no TDS or TCS.
       </p>
+      <p>
+        <strong>Minimum price.</strong> A paid Service must be priced at <strong>₹100 or more</strong> on the Starter,
+        Host+, and Studio Plans. Below that, the flat ₹10 booking fee would be too large a share of the price to be fair
+        to your Guest. Free (₹0) Services remain available on every Plan, and the <strong>Supreme</strong> Plan has no
+        minimum price.
+      </p>
     </Section>
 
     <Section title="2. Payment processing charge">

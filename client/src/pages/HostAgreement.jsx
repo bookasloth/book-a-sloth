@@ -183,6 +183,12 @@ const HostAgreement = () => (
         <strong>5.7 Plan limits.</strong> Your Plan may limit the maximum price of a Service, the number of Services,
         or other features. Current limits are published on the Platform and in the Fee Schedule.
       </p>
+      <p>
+        <strong>5.8 Minimum price.</strong> A paid Service must be priced at <strong>₹100 or more</strong> on the
+        Starter, Host+, and Studio Plans. Free (₹0) Services are permitted on every Plan, and the Supreme Plan is not
+        subject to this minimum. Book A Sloth may decline to publish, or may unpublish, a paid Service priced below the
+        applicable minimum.
+      </p>
     </Section>
 
     <Section title="6. Invoicing and GST">
