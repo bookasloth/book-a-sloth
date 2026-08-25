@@ -8,10 +8,19 @@ jest.mock('../../utils/posthog', () => ({ resolveGuestId: jest.fn(() => 'guest-1
 // Ledger is exercised by the shared finalizer; keep this test hermetic.
 jest.mock('../../services/ledger/journalTemplates', () => ({ orderPaymentEntry: jest.fn(() => ({ description: 'ORDER_PAYMENT', lines: [] })) }));
 jest.mock('../../services/ledger/postingService', () => ({ postSafe: jest.fn(() => Promise.resolve('je-1')) }));
+// Confirmation + invoice generators are exercised by their own suites; mock them
+// so this test stays hermetic and can assert the healed path mints an invoice.
+jest.mock('../../services/bookingConfirmation', () => ({ sendBookingConfirmation: jest.fn(() => Promise.resolve()) }));
+jest.mock('../../controllers/paymentController', () => ({
+  generateBookingInvoice: jest.fn(() => Promise.resolve({ id: 'inv_1', access_token: 'tok_1' })),
+  generateCommissionInvoice: jest.fn(() => Promise.resolve(null)),
+}));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const razorpayConfig = require('../../services/razorpayConfig');
 const { trackServer } = require('../../utils/trackServer');
+const { sendBookingConfirmation } = require('../../services/bookingConfirmation');
+const paymentController = require('../../controllers/paymentController');
 const reconciler = require('../../services/bookingPaymentReconciler');
 
 // A chain whose terminal awaited value resolves to `result`. Every builder
@@ -50,6 +59,26 @@ test('confirms a stuck booking whose order Razorpay reports as captured', async 
   expect(trackServer.mock.calls[0][1]).toBe('booking_paid');
   expect(trackServer.mock.calls[0][2].source).toBe('reconciler');
   expect(trackServer.mock.calls[0][2].razorpay_payment_id).toBe('pay_1');
+});
+
+test('mints the GST + commission invoices on the healed path and passes the invoiceRef to confirmation', async () => {
+  supabaseAdmin.from
+    .mockReturnValueOnce(makeChain({ data: [stuckBooking], error: null }))            // scan
+    .mockReturnValueOnce(makeChain({ data: [{ ...stuckBooking }], error: null }));    // update→paid
+
+  razorpayConfig.getClient.mockResolvedValue({
+    orders: { fetchPayments: jest.fn().mockResolvedValue({ items: [{ id: 'pay_1', status: 'captured' }] }) },
+  });
+
+  const r = await reconciler.reconcile();
+
+  expect(r).toEqual({ checked: 1, healed: 1 });
+  expect(paymentController.generateBookingInvoice).toHaveBeenCalledTimes(1);
+  expect(paymentController.generateCommissionInvoice).toHaveBeenCalledTimes(1);
+  // The tokenized ref (not null) reaches the confirmation email — the whole point of #643.
+  expect(sendBookingConfirmation).toHaveBeenCalledWith(
+    expect.objectContaining({ invoiceRef: { id: 'inv_1', token: 'tok_1' } }),
+  );
 });
 
 test('leaves a booking untouched when the order has no captured payment', async () => {
