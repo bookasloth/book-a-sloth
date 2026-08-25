@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Headset, ShieldQuestion } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSupabase } from '../../services/supabaseClient';
-import { getSupportThread, sendSupportMessage, escalateSupport, markSupportRead } from '../../services/api';
+import { getSupportThread, sendSupportMessage, escalateSupport, markSupportRead, getSupportHours } from '../../services/api';
 import { cn } from '../dashboard/ui/cn';
 import Markdown from '../common/Markdown';
 
@@ -32,7 +32,7 @@ const TypingBubble = () => (
 
 const BANNER = {
   bot:      { text: 'Bolt is here to help. Ask anything — tap "Talk to a human" if you need a person.', cls: 'border-violet-200 bg-violet-50 text-violet-800' },
-  waiting:  { text: 'Connecting you to the Book A Sloth team…', cls: 'border-amber-200 bg-amber-50 text-amber-800' },
+  waiting:  { text: 'You’re in the queue — the Book A Sloth team will reply right here.', cls: 'border-amber-200 bg-amber-50 text-amber-800' },
   assigned: { text: 'A support agent is with you.', cls: 'border-emerald-200 bg-emerald-50 text-emerald-800' },
   resolved: { text: 'This conversation was marked resolved. Send a message to reopen it.', cls: 'border-gray-200 bg-gray-50 text-gray-600' },
 };
@@ -73,6 +73,8 @@ export default function SupportChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [hours, setHours] = useState({ open: true, label: '' });
+  const [intake, setIntake] = useState(null); // null | { detail, busy } while collecting the problem
   const bottomRef = useRef(null);
   const scrollRef = useRef(null);
   const atBottomRef = useRef(true);
@@ -106,6 +108,13 @@ export default function SupportChat() {
         if (active) setLoading(false);
       }
     })();
+    return () => { active = false; };
+  }, []);
+
+  // Whether live support is open now — drives "Talk to a human" vs "Raise a ticket".
+  useEffect(() => {
+    let active = true;
+    getSupportHours().then(({ data }) => { if (active) setHours(data); }).catch(() => {});
     return () => { active = false; };
   }, []);
 
@@ -168,18 +177,31 @@ export default function SupportChat() {
     }
   };
 
-  const escalate = async () => {
-    if (!thread) return;
+  // Submit the intake: the user has described the problem in detail — hand off to a
+  // human (in hours) or log a ticket (off hours). The detail becomes the thread's
+  // summary so the team opens with context.
+  const submitIntake = async (e) => {
+    e?.preventDefault();
+    const detail = (intake?.detail || '').trim();
+    if (detail.length < 15 || !thread) return;
+    setIntake((s) => ({ ...s, busy: true }));
+    atBottomRef.current = true;
     try {
-      const { data } = await escalateSupport(thread.id);
+      const { data } = await escalateSupport(thread.id, { summary: detail });
       setThread((t) => ({ ...t, ...data.thread }));
+      setIntake(null);
     } catch {
       toast.error('Couldn’t reach the team — try again');
+      setIntake((s) => ({ ...s, busy: false }));
     }
   };
 
   const banner = thread ? BANNER[thread.status] : null;
   const isBotPhase = thread?.status === 'bot';
+  // Offer the human option only after Bolt has actually replied — nudges users to
+  // try the bot first instead of reflexively asking for a person.
+  const botHasReplied = messages.some((m) => m.sender === 'bot');
+  const canEscalate = isBotPhase && botHasReplied && !intake;
 
   return (
     <div className="flex h-[calc(100vh-9rem)] min-h-[440px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -190,12 +212,6 @@ export default function SupportChat() {
           <p className="font-heading text-sm font-bold text-gray-900">Book A Sloth support</p>
           <p className="text-[11.5px] text-gray-400">{isBotPhase ? 'Bolt assistant · replies instantly' : 'Our team is on it'}</p>
         </div>
-        {isBotPhase && (
-          <button type="button" onClick={escalate}
-            className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5">
-            <Headset className="h-3.5 w-3.5" /> Talk to a human
-          </button>
-        )}
       </div>
 
       {banner && <div className={cn('mx-3 mt-3 rounded-xl border px-3 py-2 text-[12.5px] font-medium', banner.cls)}>{banner.text}</div>}
@@ -216,20 +232,58 @@ export default function SupportChat() {
         )}
       </div>
 
-      {/* Composer */}
-      <form onSubmit={send} className="flex items-center gap-2 border-t border-gray-100 bg-white px-3 py-2.5">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Write a message…"
-          aria-label="Message"
-          className="flex-1 rounded-full border border-gray-200 bg-[#f7f5ef] px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-        />
-        <button type="submit" disabled={sending || !input.trim()} aria-label="Send"
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white transition-colors hover:bg-primary-dark disabled:opacity-40">
-          <Send className="h-[18px] w-[18px]" strokeWidth={2} />
-        </button>
-      </form>
+      {/* Human-handoff nudge — appears only after Bolt has replied. */}
+      {canEscalate && (
+        <div className="flex items-center justify-center border-t border-gray-100 bg-white px-3 py-2">
+          <button type="button" onClick={() => setIntake({ detail: '', busy: false })}
+            className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5">
+            <Headset className="h-3.5 w-3.5" /> {hours.open ? 'Talk to a human' : 'Raise a ticket'}
+          </button>
+        </div>
+      )}
+
+      {/* Intake — describe the problem in detail before a human is assigned. */}
+      {intake ? (
+        <form onSubmit={submitIntake} className="border-t border-gray-100 bg-white px-3 py-3">
+          <p className="mb-1.5 text-[12.5px] font-semibold text-gray-800">
+            {hours.open ? 'Tell us what you need help with' : 'Leave the team a detailed message'}
+          </p>
+          <p className="mb-2 text-[11.5px] text-gray-400">
+            {hours.open
+              ? 'Describe the problem in detail — include booking IDs, dates, or links so we can help fast.'
+              : `We're offline right now (${hours.label || 'off-hours'}). Add full detail and we'll reply here when we're back.`}
+          </p>
+          <textarea
+            value={intake.detail}
+            onChange={(e) => setIntake((s) => ({ ...s, detail: e.target.value }))}
+            rows={3} autoFocus
+            placeholder="What's going on? The more detail, the faster we can solve it."
+            aria-label="Describe your problem"
+            className="w-full resize-none rounded-xl border border-gray-200 bg-[#f7f5ef] px-3 py-2 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <button type="button" onClick={() => setIntake(null)} className="text-xs font-medium text-gray-400 hover:text-gray-600">Cancel</button>
+            <button type="submit" disabled={intake.busy || intake.detail.trim().length < 15}
+              className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-dark disabled:opacity-40">
+              {intake.busy ? 'Sending…' : hours.open ? 'Connect me to a human' : 'Submit ticket'}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={send} className="flex items-center gap-2 border-t border-gray-100 bg-white px-3 py-2.5">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Write a message…"
+            aria-label="Message"
+            className="flex-1 rounded-full border border-gray-200 bg-[#f7f5ef] px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+          <button type="submit" disabled={sending || !input.trim()} aria-label="Send"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white transition-colors hover:bg-primary-dark disabled:opacity-40">
+            <Send className="h-[18px] w-[18px]" strokeWidth={2} />
+          </button>
+        </form>
+      )}
     </div>
   );
 }

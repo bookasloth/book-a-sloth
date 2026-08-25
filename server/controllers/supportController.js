@@ -5,6 +5,7 @@
 // broadcast — this controller is plain REST (send + history), the app's usual shape.
 
 const { safeError } = require('../utils/httpError');
+const supportHours = require('../utils/supportHours');
 const chat = require('../services/supportChatService');
 const bot = require('../services/botService');
 
@@ -89,16 +90,28 @@ const sendMessage = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-// POST /api/support/thread/:id/escalate  { summary? } — "Talk to a human".
+// POST /api/support/thread/:id/escalate  { summary } — hand off to a human. The
+// client collects a detailed problem description first (best-in-class intake), so
+// the team opens the thread with context instead of a cold "user wants help".
 const escalateThread = async (req, res) => {
   try {
     const thread = await chat.getThread(req.params.id);
     if (!owns(thread, req.user)) return res.status(404).json({ message: 'Thread not found' });
-    await chat.postMessage({ threadId: thread.id, sender: 'system', body: 'Connecting you to the Book A Sloth team…' });
-    const updated = await chat.escalate(thread.id, (req.body?.summary || '').trim() || null);
-    res.json({ thread: updated });
+    const summary = (req.body?.summary || '').trim() || null;
+    const open = supportHours.isOpen();
+    // Honest expectation-setting: a live handoff in hours, a logged ticket after.
+    const note = open
+      ? 'Thanks — connecting you to the Book A Sloth team. Someone will reply here shortly.'
+      : `Thanks — our team is offline right now (${supportHours.LABEL}). Your ticket ${thread.reference} is logged and we'll reply here as soon as we're back. Bolt can still help meanwhile.`;
+    await chat.postMessage({ threadId: thread.id, sender: 'system', body: note });
+    const updated = await chat.escalate(thread.id, summary);
+    res.json({ thread: updated, open });
   } catch (e) { safeError(res, e); }
 };
+
+// GET /api/support/hours — is live support open now? Drives the client's
+// "Talk to a human" vs "Raise a ticket" copy. { open, label }.
+const hours = (req, res) => res.json({ open: supportHours.isOpen(), label: supportHours.LABEL });
 
 // GET /api/support/unread — the caller's unread reply count for a sidebar/tab
 // badge. Read-only: never creates a thread. { count, thread_id }.
@@ -119,4 +132,4 @@ const markRead = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { getMyThread, getMessages, sendMessage, escalateThread, markRead, unread, botAutoReply };
+module.exports = { getMyThread, getMessages, sendMessage, escalateThread, markRead, unread, hours, botAutoReply };
