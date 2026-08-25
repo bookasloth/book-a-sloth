@@ -148,15 +148,15 @@ describe('console sidebar — two-level nav', () => {
 
   it('marks the active item with aria-current and selects its parent section', () => {
     renderAt('/dashboard/bookings', { name: 'Host', plan: 'creator', role: 'host' });
-    // Community is the active section (rail glyph carries aria-current).
-    expect(screen.getByRole('button', { name: 'Community' })).toHaveAttribute('aria-current', 'true');
+    // Bookings is the active section (rail glyph carries aria-current).
+    expect(screen.getByRole('button', { name: 'Bookings' })).toHaveAttribute('aria-current', 'true');
     // Bookings item is the active page.
     expect(screen.getByRole('link', { name: 'Bookings' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('deep pages highlight their parent item (longest-prefix match)', () => {
     renderAt('/dashboard/services/42/edit', { name: 'Host', plan: 'supreme', role: 'host' });
-    expect(screen.getByRole('button', { name: 'Content' })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: 'Catalog' })).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('link', { name: 'Services' })).toHaveAttribute('aria-current', 'page');
   });
 
@@ -168,10 +168,10 @@ describe('console sidebar — two-level nav', () => {
     expect(products).toHaveAttribute('tabindex', '-1');
   });
 
-  it('shows a rose attention badge with an accessible count when KYC is pending', () => {
-    renderAt('/dashboard/kyc', { name: 'Host', plan: 'creator', role: 'host', kyc_status: 'pending' });
-    // Verification item's SR name carries the count + noun.
-    expect(screen.getByLabelText('Verification, 1 action needed')).toBeInTheDocument();
+  it('surfaces a KYC-pending attention badge on Payouts (KYC gates payouts)', () => {
+    renderAt('/dashboard/payments/payouts', { name: 'Host', plan: 'creator', role: 'host', kyc_status: 'pending' });
+    // Payouts item's SR name carries the count + noun.
+    expect(screen.getByLabelText('Payouts, 1 verify to get paid')).toBeInTheDocument();
   });
 });
 
