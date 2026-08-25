@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { HostAvatar } from '../../components/common/HostAvatar';
 import Button from '../../components/dashboard/ui/Button';
@@ -9,6 +10,7 @@ const fmtPrice = (p) => (p === 0 ? 'Free' : `₹${p.toLocaleString('en-IN')}`);
 const fmtTime = (t) => { const [h, m] = t.split(':').map(Number); const ap = h < 12 ? 'AM' : 'PM'; const hr = h % 12 || 12; return `${hr}:${String(m).padStart(2, '0')} ${ap}`; };
 
 export default function BookingDemo({ host, onConfirmed }) {
+  const reduce = useReducedMotion();
   const tc = host.accent_color || '#FE5100';
   const [step, setStep] = useState('service');
   const [service, setService] = useState(null);
@@ -27,7 +29,7 @@ export default function BookingDemo({ host, onConfirmed }) {
   const slots = date ? genSlots(date) : [];
 
   const reset = () => { setStep('service'); setService(null); setDate(null); setSlot(null); };
-  const confirm = () => { setStep('confirmed'); confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 }, colors: [tc, '#FFB703', '#FE5100'] }); onConfirmed?.(); };
+  const confirm = () => { setStep('confirmed'); if (!reduce) confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 }, colors: [tc, '#FFB703', '#FE5100'] }); onConfirmed?.(); };
 
   return (
     <div className="page-card p-5 sm:p-7" style={{ '--tc': tc }}>
