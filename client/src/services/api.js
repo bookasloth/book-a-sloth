@@ -682,6 +682,12 @@ export const adminBotAnalytics = ()         => API.get('/admin/bot/analytics');
 export const adminBotGraph     = ()         => API.get('/admin/bot/graph');
 export const adminListBotCache = ()         => API.get('/admin/bot/cache');
 export const adminDeleteBotCache = (id)     => API.delete(`/admin/bot/cache/${id}`);
+// Support chat inbox — live host/guest ↔ admin threads (filter: waiting|mine|all)
+export const adminSupportQueue     = (filter)     => API.get('/admin/support/queue', { params: { filter } });
+export const adminGetSupportThread = (id)         => API.get(`/admin/support/thread/${id}`);
+export const adminReplySupport     = (id, data)   => API.post(`/admin/support/thread/${id}/reply`, data);
+export const adminAssignSupport    = (id, data)   => API.post(`/admin/support/thread/${id}/assign`, data || {});
+export const adminResolveSupport   = (id)         => API.post(`/admin/support/thread/${id}/resolve`);
 // Escalations (human handoffs) — list, thread, reply, status
 export const adminListEscalations  = (params)   => API.get('/admin/bot/escalations', { params });
 export const adminGetEscalation    = (id)       => API.get(`/admin/bot/escalations/${id}`);
