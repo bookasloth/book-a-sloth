@@ -6,9 +6,11 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
 
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 jest.mock('../../utils/adminAlert', () => jest.fn(() => Promise.resolve({ sent: true })));
+jest.mock('../../utils/supportHours', () => ({ isOpen: jest.fn(() => true), LABEL: 'Mon–Fri, 10am–6pm IST' }));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const adminAlert = require('../../utils/adminAlert');
+const supportHours = require('../../utils/supportHours');
 const chat = require('../../services/supportChatService');
 
 // Chainable builder whose terminals (single/maybeSingle) and await (.then) resolve `result`.
@@ -81,6 +83,15 @@ test('escalate sets status waiting and broadcasts a status event', async () => {
   expect(adminMsg.payload.thread_id).toBe('t1');
   // …and emails the team, throttled per-thread.
   expect(adminAlert).toHaveBeenCalledWith(expect.objectContaining({ key: 'support-escalation:t1' }));
+});
+
+test('escalate outside support hours does NOT ring, but still emails', async () => {
+  supportHours.isOpen.mockReturnValueOnce(false);
+  supabaseAdmin.from.mockReturnValueOnce(makeChain({ data: { id: 't1', status: 'waiting', reference: 'SUP-1' } }));
+  await chat.escalate('t1', 'after hours');
+  const rang = global.fetch.mock.calls.some((c) => JSON.parse(c[1].body).messages[0].topic === 'support:admin');
+  expect(rang).toBe(false);            // no admin ring off-hours
+  expect(adminAlert).toHaveBeenCalled(); // email still fires
 });
 
 test('markRead zeroes the correct counter', async () => {

@@ -15,6 +15,7 @@
 const crypto = require('crypto');
 const { supabaseAdmin } = require('../config/supabase');
 const adminAlert = require('../utils/adminAlert');
+const supportHours = require('../utils/supportHours');
 
 // Human-friendly reference from a uuid, e.g. SUP-8F92AB.
 const refFrom = (id) => `SUP-${String(id).replace(/-/g, '').slice(0, 6).toUpperCase()}`;
@@ -144,18 +145,23 @@ async function escalate(threadId, aiSummary) {
   if (t) {
     const who = t.participant_type === 'host' ? 'Host' : 'Guest';
     const contact = t.guest_phone ? ` · ${t.guest_phone}` : '';
-    // Ring: one event on the station channel; each admin dashboard plays the tone.
-    broadcastTopic('support:admin', 'escalation', {
-      thread_id: t.id, reference: t.reference, participant_type: t.participant_type, summary: aiSummary || null,
-    });
+    const open = supportHours.isOpen();
+    // Ring ONLY during support hours — no point waking a dashboard nobody's watching
+    // at 3am. Off-hours it's a logged ticket; the email still goes out.
+    if (open) {
+      broadcastTopic('support:admin', 'escalation', {
+        thread_id: t.id, reference: t.reference, participant_type: t.participant_type, summary: aiSummary || null,
+      });
+    }
     // Email: throttled per-thread so re-escalation of the same thread sends once.
     adminAlert({
-      subject: `Support escalation — ${t.reference}`,
+      subject: `Support ${open ? 'escalation' : 'ticket (off-hours)'} — ${t.reference}`,
       key: `support-escalation:${t.id}`,
       lines: [
         `${who}${contact} needs a human on support chat.`,
-        aiSummary ? `Reason: ${aiSummary}` : 'They tapped “Talk to a human”.',
-      ],
+        aiSummary ? `Details: ${aiSummary}` : 'They asked to talk to a person.',
+        open ? '' : `Raised outside support hours (${supportHours.LABEL}).`,
+      ].filter(Boolean),
       link: `${process.env.CLIENT_URL || 'https://bookasloth.com'}/admin/support/chat`,
       category: 'Support Alert',
     }).catch(() => {});
