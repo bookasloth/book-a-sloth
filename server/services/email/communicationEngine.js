@@ -107,7 +107,7 @@ async function getTemplate(event, audience = 'all') {
  * `audience` selects the layout shell (vendor vs customer); it is the RECIPIENT
  * audience, not the template row tag. Defaults to 'all' → customer shell.
  */
-function renderEmail(template, { data = {}, user = {}, settings, audience = 'all', sender = null }) {
+function renderEmail(template, { data = {}, user = {}, settings, audience = 'all' }) {
   const globals = buildGlobals(settings, user);
   const r = resolveTemplate(template, data, globals);
   // Resolve the preheader too — otherwise raw {{tokens}} leak into the inbox preview.
@@ -117,7 +117,7 @@ function renderEmail(template, { data = {}, user = {}, settings, audience = 'all
     bodyHtml: r.html, previewText,
     ctaLabel: r.ctaLabel, ctaUrl: r.ctaUrl, settings,
     emailCategory: template.email_category || '',
-    data, sender,
+    data,
   });
   return { subject: r.subject, html, missing: r.missing };
 }
@@ -184,12 +184,11 @@ async function send(opts) {
 
   // Signed unsubscribe token for the customer-footer link (recovered statelessly
   // on click). Harmless for shells without an unsubscribe link (vendor).
-  // Resolve the FROM persona (Tithi/Durga/…) for this template first — it drives
-  // both the From header and the in-body signature. Falls back to the global
-  // settings sender when the template has no sender_key (schema-safe).
-  const sender = await senderRegistry.senderFor(template, settings);
   const sendData = { ...data, unsubscribe_token: data.unsubscribe_token || makeToken(to) };
-  const { subject, html, missing } = renderEmail(template, { data: sendData, user, settings, audience, sender });
+  const { subject, html, missing } = renderEmail(template, { data: sendData, user, settings, audience });
+  // Resolve the FROM persona (Tithi/Durga/…) for this template. Falls back to the
+  // global settings sender when the template has no sender_key (schema-safe).
+  const sender = await senderRegistry.senderFor(template, settings);
   // Observability (E1): an unresolved placeholder renders as '' — silent blank
   // content. Globals are always present, so any 'missing' token is a real
   // template/caller drift. Surface it (throttled per event+tokens) instead of
