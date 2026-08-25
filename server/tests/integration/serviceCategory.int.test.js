@@ -6,6 +6,7 @@ jest.mock('../../middleware/authMiddleware', () => ({
 jest.mock('../../middleware/planMiddleware', () => ({
   attachPlan:        (_r, _s, n) => n(),
   checkServiceLimit: (_r, _s, n) => n(),
+  enforceMinPrice:   (_r, _s, n) => n(),
   // Plan gates the controllers call directly — no-op so this suite isolates
   // category logic and doesn't consume the supabase `from` mock queue.
   canActivateMore:   async () => ({ ok: true }),
