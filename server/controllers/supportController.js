@@ -6,6 +6,25 @@
 
 const { safeError } = require('../utils/httpError');
 const chat = require('../services/supportChatService');
+const bot = require('../services/botService');
+
+// Bolt auto-reply. Fired after the user's message is stored, ONLY while the thread
+// is still bot-handled (status 'bot') — once a human takes over ('waiting'/'assigned')
+// Bolt stays silent. Fire-and-forget: the HTTP response already returned, and the
+// bot's answer reaches the client over the thread's realtime broadcast. Never throws.
+// ponytail: answers each message standalone (no thread history passed to askBot);
+// wire conversationId ↔ thread if follow-up context ever matters.
+async function botAutoReply(thread, question) {
+  try {
+    const out = await bot.askBot({ question, sessionRef: thread.reference });
+    if (!out || !String(out.answer || '').trim()) return;
+    await chat.postMessage({ threadId: thread.id, sender: 'bot', senderName: 'Bolt', body: out.answer });
+    // Bolt couldn't answer confidently → hand to a human (flips the banner to 'waiting').
+    if (out.escalate) await chat.escalate(thread.id, question);
+  } catch (e) {
+    console.error('bolt auto-reply failed', thread?.id, e.message);
+  }
+}
 
 // A participant owns a thread if the user_id matches, or (guest, no profile) the phone.
 const owns = (thread, user) =>
@@ -58,6 +77,8 @@ const sendMessage = async (req, res) => {
       body: req.body?.body,
     });
     res.status(201).json(msg);
+    // Async Bolt reply while the thread is still bot-handled — after the response.
+    if (thread.status === 'bot') botAutoReply(thread, msg.body);
   } catch (e) { safeError(res, e); }
 };
 
@@ -82,4 +103,4 @@ const markRead = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { getMyThread, getMessages, sendMessage, escalateThread, markRead };
+module.exports = { getMyThread, getMessages, sendMessage, escalateThread, markRead, botAutoReply };
