@@ -25,10 +25,14 @@ const OnboardingStepper = ({ current }) => {
   // would force them back into /vendor-register on every login). Server refuses
   // this once onboarding is complete, so a live host can never demote by mistake.
   const navigate = useNavigate();
-  const { cancelHosting } = useAuth();
+  // Tolerate a missing AuthProvider: the step-page unit tests render the stepper
+  // bare (no context), and this is presentational chrome — never crash the whole
+  // onboarding screen just because the exit door can't wire up. `?.` keeps the
+  // button inert in that case; in the real app the provider is always present.
+  const { cancelHosting } = useAuth() || {};
   const [leaving, setLeaving] = useState(false);
   const exitHosting = async () => {
-    if (leaving) return;
+    if (leaving || !cancelHosting) return;
     setLeaving(true);
     try {
       await cancelHosting();
