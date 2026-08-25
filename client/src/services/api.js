@@ -114,7 +114,6 @@ API.interceptors.response.use(
 );
 
 // ── Auth ──────────────────────────────────────────────────────
-export const registerVendor   = (data)         => API.post('/auth/register/vendor', data);
 export const registerUser     = (data)         => API.post('/auth/register/user', data);
 export const loginUser        = (data)         => API.post('/auth/login', data);
 // Unified login door (Phase B): { identifier (email|phone), password }, any role
@@ -341,7 +340,6 @@ export const updateProfile    = (data)           => API.put('/host/profile', dat
 // Permanent username (gated: WhatsApp-verified, max 2/365d, 6-month gap).
 export const changeUsername   = (username)       => API.put('/host/username', { username });
 export const checkUsername    = (slug)           => API.get(`/username/check/${encodeURIComponent(slug)}`);
-export const createService    = (data)           => API.post('/host/services', data);
 export const getMyServices    = ()               => API.get('/host/services');
 export const updateService    = (id, data)       => API.put(`/host/services/${id}`, data);
 export const deleteService    = (id)             => API.delete(`/host/services/${id}`);

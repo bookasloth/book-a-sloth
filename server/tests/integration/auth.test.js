@@ -69,50 +69,15 @@ const mockAuthSuccess = (profile = VENDOR_PROFILE) => {
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// VENDOR REGISTRATION
+// VENDOR REGISTRATION — retired (#534): hosts are Google-only.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-describe('POST /api/auth/register/vendor', () => {
-  test('400 — missing required fields', async () => {
-    const res = await request(app).post('/api/auth/register/vendor').send({});
-    expect(res.status).toBe(400);
-  });
-
-  test('409 — email already registered as guest', async () => {
-    supabaseAdmin.from.mockReturnValueOnce({
-      select: jest.fn().mockReturnThis(),
-      eq:     jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: { id: 'x', role: 'guest' } }),
-    });
-    const res = await request(app)
-      .post('/api/auth/register/vendor')
-      .send({ name: 'Jane', email: 'clash@test.com', password: 'pass123' });
-    expect(res.status).toBe(409);
-    expect(res.body.message).toMatch(/already exists/i);
-  });
-
-  test('201 — successful vendor registration returns full profile', async () => {
-    mockAuthSuccess(VENDOR_PROFILE);
+describe('POST /api/auth/register/vendor (retired)', () => {
+  test('410 — email/password host registration is gone; points to Google', async () => {
     const res = await request(app)
       .post('/api/auth/register/vendor')
       .send({ name: 'Jane Vendor', email: 'jane@vendor.com', password: 'pass123' });
-    expect(res.status).toBe(201);
-    expect(res.body.role).toBe('host');
-    expect(res.body.plan).toBe('explorer');
-    expect(res.body.token).toBe('tok');
-    // All required fields present
-    ['_id','name','email','role','plan','username','token','refresh_token'].forEach((f) =>
-      expect(res.body).toHaveProperty(f));
-  });
-
-  test('400 — Supabase auth creation failure', async () => {
-    supabaseAdmin.from.mockReturnValueOnce({
-      select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), maybeSingle: jest.fn().mockResolvedValue({ data: null }),
-    });
-    supabaseAdmin.auth.admin.createUser.mockResolvedValueOnce({ data: null, error: { message: 'User exists' } });
-    const res = await request(app)
-      .post('/api/auth/register/vendor')
-      .send({ name: 'J', email: 'j@j.com', password: 'p' });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(410);
+    expect(res.body.message).toMatch(/Google/i);
   });
 });
 

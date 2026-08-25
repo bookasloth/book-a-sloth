@@ -77,24 +77,5 @@ describe('POST /api/services — service category validation', () => {
   });
 });
 
-describe('POST /api/host/services — service category validation', () => {
-  test('201 — persists a category valid for the host profession', async () => {
-    supabaseAdmin.from
-      .mockReturnValueOnce(chain({ data: { primary_category: 'life-coach' }, error: null }))          // profiles load
-      .mockReturnValueOnce(list({ data: [{ slug: '1-1-coaching-session' }], error: null }))           // service_categories list
-      .mockReturnValueOnce(chain({ data: { id: 'svc-h', category: '1-1-coaching-session' }, error: null })); // insert
-    const res = await request(app).post('/api/host/services')
-      .send({ title: 'Life Session', category: '1-1-coaching-session', price: 0, duration: 45 });
-    expect(res.status).toBe(201);
-    expect(res.body.category).toBe('1-1-coaching-session');
-  });
-
-  test('400 — category not valid for the host profession', async () => {
-    supabaseAdmin.from
-      .mockReturnValueOnce(chain({ data: { primary_category: 'life-coach' }, error: null }))
-      .mockReturnValueOnce(list({ data: [{ slug: '1-1-coaching-session' }], error: null }));
-    const res = await request(app).post('/api/host/services')
-      .send({ title: 'Nope', category: 'dental-checkup', price: 0, duration: 45 });
-    expect(res.status).toBe(400);
-  });
-});
+// #534: POST /api/host/services is retired (410) — the live create path is
+// POST /api/services, whose category validation is covered by the block above.
