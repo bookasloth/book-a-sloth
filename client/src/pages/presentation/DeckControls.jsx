@@ -20,11 +20,11 @@ export default function DeckControls({ index, total, onPrev, onNext, onJump, onT
       )}
       <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3">
         <button onClick={onPrev} disabled={index === 0} className="btn btn--outline !p-2 disabled:opacity-30" aria-label="Previous slide">‹</button>
-        <div className="flex items-center gap-1.5" role="tablist" aria-label="Slides">
+        <div className="flex items-center gap-1.5" aria-label="Slides">
           {Array.from({ length: total }).map((_, i) => (
-            <button key={i} onClick={() => onJump(i)} aria-label={`Go to slide ${i + 1}`} aria-selected={i === index}
-              className="h-2 rounded-full transition-all"
-              style={{ width: i === index ? 22 : 8, background: i === index ? '#FE5100' : '#d7ccbe' }} />
+            <button key={i} onClick={() => onJump(i)} aria-label={`Go to slide ${i + 1}`} aria-current={i === index ? 'true' : undefined}
+              className={`h-2 rounded-full transition-all ${i === index ? 'bg-primary' : 'bg-ink/20'}`}
+              style={{ width: i === index ? 22 : 8 }} />
           ))}
         </div>
         <button onClick={onNext} disabled={index === total - 1} className="btn btn--outline !p-2 disabled:opacity-30" aria-label="Next slide">›</button>
