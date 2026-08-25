@@ -162,6 +162,36 @@ describe('console sidebar — two-level nav', () => {
   });
 });
 
+describe('console sidebar — tier-aware bottom slot', () => {
+  beforeEach(() => { mockAuth.current = {}; });
+
+  it('pitches Studio to Starter hosts', () => {
+    renderAt('/dashboard', { name: 'H', plan: 'starter', role: 'host' });
+    expect(screen.getByRole('link', { name: 'Upgrade to Studio. Go Studio' }))
+      .toHaveAttribute('href', '/dashboard/upgrade');
+  });
+
+  it('pitches Studio to Host+ hosts', () => {
+    renderAt('/dashboard', { name: 'H', plan: 'creator', role: 'host' });
+    expect(screen.getByRole('link', { name: 'Level up to Studio. Go Studio' }))
+      .toHaveAttribute('href', '/dashboard/upgrade');
+  });
+
+  it('shows Refer & Earn (no upsell) for Studio hosts', () => {
+    renderAt('/dashboard', { name: 'H', plan: 'professional', role: 'host' });
+    expect(screen.queryByRole('link', { name: /Upgrade to Studio/ })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Refer & Earn. Invite a host' }))
+      .toHaveAttribute('href', '/dashboard/referrals');
+  });
+
+  it('shows concierge (no upsell, never advertises Supreme) for Supreme hosts', () => {
+    renderAt('/dashboard', { name: 'H', plan: 'supreme', role: 'host' });
+    expect(screen.queryByRole('link', { name: /Upgrade|Studio/ })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Priority concierge. Talk to your manager' }))
+      .toHaveAttribute('href', '/bolt958');
+  });
+});
+
 describe('dashboard sidebar — no premium / manage-plan card', () => {
   beforeEach(() => { mockAuth.current = {}; });
 

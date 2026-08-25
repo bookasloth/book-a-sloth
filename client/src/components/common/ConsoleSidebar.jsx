@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, Clock, LayoutGrid, Package,
   LineChart, Banknote, Receipt, Gift, Sparkles, User, ShieldCheck,
-  Compass, Boxes, Wallet, Radio, Settings, X,
+  Compass, Boxes, Wallet, Radio, Settings, X, Headset, ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
@@ -308,25 +308,30 @@ const RailAndPanel = ({ sections, plan, badges, selectedId, activeSectionId, act
         ))}
       </nav>
 
-      {/* Item panel */}
+      {/* Item panel — scrollable items, plus a docked tier-aware slot at the base. */}
       <nav
         aria-label={selected ? `${selected.label} pages` : 'Pages'}
-        className="dash-noscrollbar flex flex-col overflow-y-auto border-r border-gray-200 bg-white py-3"
+        className="flex flex-col overflow-hidden border-r border-gray-200 bg-white"
         style={{ width: SB.panel }}
       >
-        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{selected?.label}</p>
-        <div className="space-y-0.5">
-          {selected?.items.map((item) => (
-            <PanelItem
-              key={item.to}
-              item={item}
-              sectionId={selected.id}
-              active={item.to === activeTo}
-              locked={isLocked(item, plan)}
-              count={item.badgeKey ? badges[item.badgeKey] || 0 : 0}
-              onNavigate={onNavigate}
-            />
-          ))}
+        <div className="dash-noscrollbar flex-1 overflow-y-auto py-3">
+          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{selected?.label}</p>
+          <div className="space-y-0.5">
+            {selected?.items.map((item) => (
+              <PanelItem
+                key={item.to}
+                item={item}
+                sectionId={selected.id}
+                active={item.to === activeTo}
+                locked={isLocked(item, plan)}
+                count={item.badgeKey ? badges[item.badgeKey] || 0 : 0}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="shrink-0 border-t border-gray-100 p-2.5">
+          <PanelSlot plan={plan} onNavigate={onNavigate} />
         </div>
       </nav>
     </div>
@@ -341,6 +346,52 @@ const computeBadges = (user) => {
   const kyc = (user?.kyc_status || '').toLowerCase();
   const needsVerification = kyc && !['approved', 'verified'].includes(kyc);
   return { verification: needsVerification ? 1 : 0 };
+};
+
+/* ------------------------------------------------------------------ *
+ *  Bottom slot — one docked card, tier-aware. The upgrade pitch shows
+ *  only to hosts who can actually upgrade (Starter/Host+ -> Studio);
+ *  Studio gets Refer & Earn (no dead-end upsell) and Supreme gets a
+ *  concierge line. Keyed by canonical plan slug. Never advertise Supreme.
+ * ------------------------------------------------------------------ */
+const SLOTS = {
+  starter:      { variant: 'upgrade',   to: '/dashboard/upgrade',   icon: Sparkles, cta: 'Go Studio',            title: 'Upgrade to Studio',   sub: 'Unlock the Customers CRM, digital Products & higher booking caps.' },
+  creator:      { variant: 'upgrade',   to: '/dashboard/upgrade',   icon: Sparkles, cta: 'Go Studio',            title: 'Level up to Studio',  sub: "You're one tier away — add the Customers CRM & Products." },
+  professional: { variant: 'refer',     to: '/dashboard/referrals', icon: Gift,     cta: 'Invite a host',        title: 'Refer & Earn',        sub: 'Invite a host — you both get paid when they go live.' },
+  supreme:      { variant: 'concierge', href: '/bolt958',           icon: Headset,  cta: 'Talk to your manager', title: 'Priority concierge',  sub: 'Your account manager is one message away.' },
+};
+
+// Reuses the app's plan-badge hues (amber = Studio, primary = brand, violet = Supreme).
+const SLOT_STYLE = {
+  upgrade:   { card: 'border-amber-200 bg-amber-50',    title: 'text-amber-700',  cta: 'bg-amber-600 hover:bg-amber-700' },
+  refer:     { card: 'border-primary/30 bg-primary/10', title: 'text-primary',    cta: 'bg-primary hover:bg-primary-dark' },
+  concierge: { card: 'border-violet-200 bg-violet-50',  title: 'text-violet-700', cta: 'bg-violet-600 hover:bg-violet-700' },
+};
+
+const PanelSlot = ({ plan, onNavigate }) => {
+  const s = SLOTS[plan] || SLOTS.starter;
+  const st = SLOT_STYLE[s.variant];
+  const Icon = s.icon;
+  const inner = (
+    <>
+      <span className={cn('flex items-center gap-1.5 font-heading text-[13px] font-bold', st.title)}>
+        <Icon className="h-[15px] w-[15px] shrink-0" strokeWidth={2} />
+        <span className="truncate">{s.title}</span>
+      </span>
+      <span className="mt-1 block text-[11.5px] leading-snug text-gray-500">{s.sub}</span>
+      <span className={cn('mt-2.5 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold text-white transition-colors', st.cta)}>
+        {s.cta}
+        <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.4} />
+      </span>
+    </>
+  );
+  const cardCls = cn('block rounded-xl border p-3', focusRing, st.card);
+  const label = `${s.title}. ${s.cta}`;
+  return s.href ? (
+    <a href={s.href} target="_blank" rel="noreferrer" onClick={onNavigate} className={cardCls} aria-label={label}>{inner}</a>
+  ) : (
+    <Link to={s.to} onClick={onNavigate} className={cardCls} aria-label={label}>{inner}</Link>
+  );
 };
 
 /* ------------------------------------------------------------------ *
