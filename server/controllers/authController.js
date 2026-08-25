@@ -1252,6 +1252,50 @@ const becomeHost = async (req, res) => {
   }
 };
 
+// POST /api/auth/cancel-hosting — the un-become-host door. Reverses an
+// in-progress hosting upgrade (the mirror of becomeHost) so a guest who opened
+// the hosting flow and backed out isn't trapped as a half-onboarded host,
+// forced into /vendor-register on every login. GUARD: only ever demotes a host
+// whose onboarding never completed — a live host (onboarding_completed = true)
+// is refused, so this can never strip a real host of their account.
+const cancelHosting = async (req, res) => {
+  try {
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, is_host, onboarding_completed")
+      .eq("id", req.user.id)
+      .single();
+    if (error || !profile) return res.status(404).json({ message: "Profile not found" });
+    // Nothing to reverse: already a guest, or a fully-onboarded (real) host.
+    if (!profile.is_host || profile.onboarding_completed) {
+      return res.status(409).json({ message: "Hosting can't be cancelled for this account" });
+    }
+
+    const patch = {
+      is_host: false,
+      onboarding_slug: null,
+      onboarding_step_completed: 0,
+      onboarding_completed: false,
+      updated_at: new Date().toISOString(),
+    };
+    let { data: updated, error: upErr } = await supabaseAdmin
+      .from("profiles").update(patch).eq("id", req.user.id).select("*").single();
+    // Schema fallback: pre-onboarding DBs lack the onboarding_* columns — retry
+    // with just the capability flip so the reversal still works. Mirrors
+    // enableHostingForProfile's fallback exactly.
+    if (upErr && /Could not find the|column.*does not exist/i.test(upErr.message || "")) {
+      ({ data: updated, error: upErr } = await supabaseAdmin
+        .from("profiles")
+        .update({ is_host: false, updated_at: new Date().toISOString() })
+        .eq("id", req.user.id).select("*").single());
+    }
+    if (upErr || !updated) throw upErr || new Error("Could not cancel hosting");
+    res.json(await serializeProfile(updated, null));
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 // ============================================
 // PASSWORD RESET (OTP-based, all user types)
 // ==========================================
@@ -1465,6 +1509,7 @@ module.exports = {
   getMe,
   updateMe,
   becomeHost,
+  cancelHosting,
   forgotPassword,
   resetPassword,
   maybeStampInvite,

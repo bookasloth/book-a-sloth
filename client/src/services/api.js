@@ -131,6 +131,7 @@ export const verifyOtpLogin   = (data)         => API.post('/auth/verify-otp-log
 export const setUserPassword  = (data)         => API.post('/auth/set-password', data);
 // Unified identity: add hosting capability to the current account.
 export const becomeHost       = ()             => API.post('/auth/become-host');
+export const cancelHosting    = ()             => API.post('/auth/cancel-hosting');
 export const forgotPassword   = (data)         => API.post('/auth/forgot-password', data);
 export const resetPassword    = (data)         => API.post('/auth/reset-password', data);
 

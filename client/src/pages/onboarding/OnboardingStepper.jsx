@@ -1,4 +1,8 @@
-import { Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 // Shared top stepper for the 4 host-onboarding screens. Named nodes on sm+,
 // a compact "Step N of 4" + segmented track on mobile. `current` is 1-indexed.
@@ -15,6 +19,25 @@ const HINT = { 1: 'Getting started', 2: 'Halfway there', 3: 'Almost there', 4: '
 const OnboardingStepper = ({ current }) => {
   const step = Math.min(Math.max(current, 1), STEPS.length);
   const percent = Math.round((step / STEPS.length) * 100);
+
+  // Exit door: reverses the in-progress hosting upgrade so a guest who opened
+  // onboarding and changed their mind isn't left stuck as a half-host (which
+  // would force them back into /vendor-register on every login). Server refuses
+  // this once onboarding is complete, so a live host can never demote by mistake.
+  const navigate = useNavigate();
+  const { cancelHosting } = useAuth();
+  const [leaving, setLeaving] = useState(false);
+  const exitHosting = async () => {
+    if (leaving) return;
+    setLeaving(true);
+    try {
+      await cancelHosting();
+      navigate('/user/my-bookings', { replace: true });
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Could not exit hosting');
+      setLeaving(false);
+    }
+  };
 
   return (
     <div className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur">
@@ -93,6 +116,19 @@ const OnboardingStepper = ({ current }) => {
             <span className="text-sm font-bold tabular-nums text-gray-900">{percent}%</span>
           </div>
         </div>
+
+        {/* Exit door — leave onboarding and go back to browsing as a guest.
+            Reverses the hosting upgrade so the account isn't trapped as a half-host. */}
+        <button
+          type="button"
+          onClick={exitHosting}
+          disabled={leaving}
+          title="Exit — keep browsing as a guest"
+          className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+        >
+          <X size={15} />
+          <span className="hidden sm:inline">{leaving ? 'Exiting…' : 'Exit'}</span>
+        </button>
       </div>
     </div>
   );
