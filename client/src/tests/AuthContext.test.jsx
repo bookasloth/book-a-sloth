@@ -9,7 +9,6 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 // Mock API module
 vi.mock('../services/api', () => ({
   loginUser:      vi.fn(),
-  registerVendor: vi.fn(),
   registerUser:   vi.fn(),
   getGoogleAuthUrl: vi.fn(),
   getMe:          vi.fn(),
@@ -27,7 +26,7 @@ vi.mock('../services/supabaseClient', () => ({
   }),
 }));
 
-import { loginUser, registerVendor, registerUser, getMe } from '../services/api';
+import { loginUser, registerUser, getMe } from '../services/api';
 
 // Consumer component that exposes auth state
 const Consumer = () => {
@@ -39,7 +38,6 @@ const Consumer = () => {
       <span data-testid="loading">{String(auth.loading)}</span>
       <button onClick={() => auth.login('a@b.com', 'pass').catch(() => {})}>login</button>
       <button onClick={() => auth.logout()}>logout</button>
-      <button onClick={() => auth.registerAsVendor('Jane', 'jane@v.com', 'p')}>regVendor</button>
       <button onClick={() => auth.registerAsUser('Bob', 'bob@u.com', 'p')}>regUser</button>
     </div>
   );
@@ -108,22 +106,6 @@ describe('login', () => {
     await expect(async () => {
       await act(async () => { screen.getByText('login').click(); });
     }).not.toThrow(); // component shouldn't crash; error propagates to caller
-  });
-});
-
-// ── registerAsVendor ──────────────────────────────────────────────────────────
-
-describe('registerAsVendor', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    getMe.mockResolvedValue({ data: {} });
-  });
-
-  test('sets role:host after registration', async () => {
-    registerVendor.mockResolvedValueOnce({ data: VENDOR });
-    renderWithAuth();
-    await act(async () => { screen.getByText('regVendor').click(); });
-    await waitFor(() => expect(screen.getByTestId('role').textContent).toBe('host'));
   });
 });
 

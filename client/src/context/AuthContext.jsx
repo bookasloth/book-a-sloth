@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { analytics } from '../services/analytics';
-import { registerVendor, registerUser, loginUser, loginUnified as apiLoginUnified, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost } from '../services/api';
+import { registerUser, loginUser, loginUnified as apiLoginUnified, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost } from '../services/api';
 import { getSupabase } from '../services/supabaseClient';
 
 const AuthContext = createContext();
@@ -136,13 +136,6 @@ export const AuthProvider = ({ children }) => {
     updateUser({ password_set: true });
   };
 
-  const registerAsVendor = async (name, email, password) => {
-    const { data } = await registerVendor({ name, email, password });
-    localStorage.setItem('user', JSON.stringify(data));
-    setUser(data);
-    return data;
-  };
-
   const registerAsUser = async (name, email, password) => {
     const { data } = await registerUser({ name, email, password });
     localStorage.setItem('user', JSON.stringify(data));
@@ -215,7 +208,7 @@ export const AuthProvider = ({ children }) => {
       user, loading, login, loginUnified,
       mode, setMode,
       loginWithPhone, loginWithOtp, setPassword,
-      registerAsVendor, registerAsUser,
+      registerAsUser,
       connectGoogleCalendar,
       startVendorGoogleAuth, adoptSession,
       becomeHost,

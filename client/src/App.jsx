@@ -38,7 +38,6 @@ const Home           = lazy(() => import('./pages/Home'));
 const Login          = lazy(() => import('./pages/Login'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword  = lazy(() => import('./pages/ResetPassword'));
-const VendorSignup   = lazy(() => import('./pages/VendorSignup'));
 const ErrorPage      = lazy(() => import('./pages/ErrorPage'));
 const Offline        = lazy(() => import('./pages/Offline'));
 const Help           = lazy(() => import('./pages/Help'));
@@ -386,7 +385,8 @@ function App() {
           {/* Customers never register — accounts are created automatically
               during booking (phone OTP). Old signup URL redirects home. */}
           <Route path="/signup" element={<Navigate to="/" replace />} />
-          <Route path="/vendor/signup" element={<VendorSignup />} />
+          {/* #534: email/password host signup retired — hosts use Google at /be-a-sloth. */}
+          <Route path="/vendor/signup" element={<Navigate to="/be-a-sloth" replace />} />
 
           {/* Vendor auth — Google-only */}
           <Route path="/be-a-sloth" element={<BeASloth />} />

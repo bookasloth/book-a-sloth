@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const {
-  registerVendor,
   registerUser,
   googleAuth,
   googleVendorAuth,
@@ -22,10 +21,12 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 const { otpLimiter, otpContactLimiter, authLimiter } = require('../middleware/security');
 const { requireFeature } = require('../middleware/requireFeature');
+const { gone } = require('../middleware/gone');
 
-// Separate registration
-router.post('/register/vendor', authLimiter, registerVendor);
-// guest_signup kill-switch — vendor registration intentionally NOT gated here.
+// #534: email/password host registration is retired — hosts sign in with Google
+// only. 410 so any stale caller fails loudly instead of minting a password account.
+router.post('/register/vendor', gone('Removed. Hosts sign in with Google at /be-a-sloth.'));
+// guest_signup kill-switch — guest registration stays.
 router.post('/register/user', authLimiter, requireFeature('guest_signup'), registerUser);
 
 // Google OAuth
