@@ -24,6 +24,7 @@ export default function Presentation() {
 
   return (
     <main className="fixed inset-0 overflow-hidden bg-canvas text-ink" style={{ fontFamily: "'Poppins', system-ui, sans-serif" }}>
+      <p className="sr-only" aria-live="polite">Slide {index + 1} of {SLIDES.length}: {SLIDES[index].title}</p>
       <Deck slides={SLIDES} index={index} direction={direction} hostCtx={ctx} onSwipe={(d) => (d > 0 ? next() : prev())} />
       <DeckControls index={index} total={SLIDES.length} onPrev={prev} onNext={next} onJump={go}
         onToggleOverview={() => setOverview(true)} source={hostCtx.source} />
