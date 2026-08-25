@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, Clock, LayoutGrid, Package,
   LineChart, Banknote, Receipt, Gift, Sparkles, User,
-  Compass, Boxes, Wallet, Settings, X, Headset, ArrowRight,
+  Compass, Boxes, Wallet, Settings, X, Headset, ArrowRight, MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
@@ -34,6 +34,7 @@ const ACCENT = {
   bookings: '#059669', // emerald
   catalog:  '#7c3aed', // violet
   earnings: '#d97706', // amber
+  chat:     '#0284c7', // sky
   settings: '#475569', // slate
 };
 const ROSE = '#e11d48';
@@ -76,6 +77,12 @@ export const NAV = [
       // KYC gates payouts, so a pending verification surfaces its attention here.
       { to: '/dashboard/payments/payouts', label: 'Payouts', icon: Banknote, matchPrefix: '/dashboard/payments/payouts', badgeKey: 'verification', badgeNoun: 'verify to get paid' },
       { to: '/dashboard/referrals', label: 'Refer & Earn', icon: Gift },
+    ],
+  },
+  {
+    id: 'chat', label: 'Chat', icon: MessageCircle,
+    items: [
+      { to: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
     ],
   },
   {

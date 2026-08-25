@@ -151,6 +151,13 @@ export const botEscalateSendOtp = (data) => API.post('/bot/escalate/send-otp', d
 export const botEscalateVerifyOtp = (data) => API.post('/bot/escalate/verify-otp', data);
 export const botEscalateRating = (data) => API.post('/bot/escalate/rating', data);
 
+// ── Support chat (host/guest ↔ Bolt → human) ──────────────────
+export const getSupportThread   = ()         => API.get('/support/thread');
+export const getSupportMessages = (id)       => API.get(`/support/thread/${id}/messages`);
+export const sendSupportMessage = (id, data) => API.post(`/support/thread/${id}/messages`, data);
+export const escalateSupport    = (id, data) => API.post(`/support/thread/${id}/escalate`, data || {});
+export const markSupportRead    = (id)       => API.post(`/support/thread/${id}/read`);
+
 // Streaming ask over SSE. Uses fetch (axios can't stream response bodies in the
 // browser). Calls onDelta(text) per chunk, onDone({escalate, cited_sources,
 // conversationId, messageId}) at the end, onError({message}) on failure. Returns a
