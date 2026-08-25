@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { adminGetBookings, adminUpdateBooking, adminDeleteBooking } from '../../services/api';
+import { adminGetBookings, adminUpdateBooking, adminDeleteBooking, adminExecuteRefund } from '../../services/api';
 import toast from 'react-hot-toast';
 import { PageHeader, Skeleton } from '../../components/admin/ui';
 
@@ -677,10 +677,10 @@ const MenuItem = ({ icon, label, onClick, href }) => {
 
 const DETAIL_TABS = ['Overview', 'Timeline', 'Meeting', 'Financials', 'Logs'];
 
-const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, onMarkComplete }) => {
+const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, onMarkComplete, onRefund }) => {
   const [tab, setTab] = useState('Overview');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [confirm, setConfirm] = useState(null); // 'cancel' | 'delete' | null
+  const [confirm, setConfirm] = useState(null); // 'cancel' | 'delete' | 'refund' | 'force-refund' | null
   const [delText, setDelText] = useState('');
   const panelRef = useRef(null);
 
@@ -719,6 +719,18 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
   }, [b.id, onClose, menuOpen, confirm]);
 
   useEffect(() => { setDelText(''); }, [confirm]);
+
+  // Confirmation-dialog copy per action. Refund modes map to the execute endpoint:
+  // 'refund' → tiered policy amount; 'force-refund' → full customer_total.
+  const payoutSettled = b.transfer_status === 'processed';
+  const CONFIRM_META = {
+    delete:         { icon: IC.trash,   title: 'Delete booking permanently?', body: 'This removes the booking and cannot be undone.', btn: 'Delete Forever' },
+    cancel:         { icon: IC.ban,     title: 'Cancel this booking?',        body: 'The booking will be marked cancelled. The customer and host are not auto-notified.', btn: 'Cancel Booking' },
+    refund:         { icon: IC.refresh, title: 'Issue a policy refund?',      body: 'Refunds the guest the eligible amount for the cancellation window (≥24h: full service price · 6–24h: 50% · under 6h: nothing). Platform fee & GST are non-refundable. The exact amount is computed on confirm.', btn: 'Issue Refund' },
+    'force-refund': { icon: IC.wallet,  title: 'Force a full refund?',        body: `Refunds the entire amount the guest paid${b.customer_total ? ` (₹${b.customer_total})` : ''}. Use only when we or the host are at fault.`, btn: 'Force Refund' },
+  };
+  const cm = confirm ? CONFIRM_META[confirm] : null;
+  const isRefund = confirm === 'refund' || confirm === 'force-refund';
 
   if (!b) return null;
 
@@ -954,8 +966,8 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
           {/* Right action panel */}
           <aside className="lg:w-[284px] lg:flex-shrink-0 lg:overflow-y-auto border-t lg:border-t-0 lg:border-l border-gray-100 p-4 space-y-5">
             <PanelGroup title="Financial">
-              <PanelBtn icon={IC.refresh} label="Issue Refund" onClick={() => notImplemented('Issue Refund')} />
-              <PanelBtn icon={IC.wallet} label="Force Refund" onClick={() => notImplemented('Force Refund')} />
+              <PanelBtn icon={IC.refresh} label="Issue Refund" onClick={() => setConfirm('refund')} />
+              <PanelBtn icon={IC.wallet} label="Force Refund" onClick={() => setConfirm('force-refund')} />
             </PanelGroup>
             <PanelGroup title="Meeting">
               <PanelBtn icon={IC.link} label="Regenerate Meeting Link" onClick={() => notImplemented('Regenerate Meeting Link')} />
@@ -978,14 +990,13 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
             <div className="absolute inset-0 bg-black/40" onClick={() => setConfirm(null)} />
             <div className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5 animate-[slideUp_.16s_ease-out]">
               <div className="flex items-start gap-3 mb-3">
-                <span className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Ic d={confirm === 'delete' ? IC.trash : IC.ban} size={17} className="text-rose-600" /></span>
+                <span className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Ic d={cm?.icon} size={17} className="text-rose-600" /></span>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-gray-900">{confirm === 'delete' ? 'Delete booking permanently?' : 'Cancel this booking?'}</h3>
-                  <p className="text-[12.5px] text-gray-500 mt-0.5">
-                    {confirm === 'delete'
-                      ? 'This removes the booking and cannot be undone.'
-                      : 'The booking will be marked cancelled. The customer and host are not auto-notified.'}
-                  </p>
+                  <h3 className="text-sm font-bold text-gray-900">{cm?.title}</h3>
+                  <p className="text-[12.5px] text-gray-500 mt-0.5">{cm?.body}</p>
+                  {isRefund && payoutSettled && (
+                    <p className="mt-2 text-[12px] font-medium text-amber-600">⚠ Host already paid out — this refund will be blocked; recover from the host first.</p>
+                  )}
                 </div>
               </div>
               {confirm === 'delete' && (
@@ -1000,9 +1011,15 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
                 <button onClick={() => setConfirm(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
                 <button
                   disabled={confirm === 'delete' && delText.trim().toUpperCase() !== requiredId}
-                  onClick={() => { const c = confirm; setConfirm(null); if (c === 'delete') onDelete(); else onCancel(); }}
+                  onClick={() => {
+                    const c = confirm; setConfirm(null);
+                    if (c === 'delete') onDelete();
+                    else if (c === 'cancel') onCancel();
+                    else if (c === 'refund') onRefund?.('tiered');
+                    else if (c === 'force-refund') onRefund?.('full');
+                  }}
                   className="btn px-4 py-2 text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                  {confirm === 'delete' ? 'Delete Forever' : 'Cancel Booking'}
+                  {cm?.btn}
                 </button>
               </div>
             </div>
@@ -1182,6 +1199,19 @@ const AdminBookings = () => {
     } catch { toast.error('Delete failed'); }
   };
 
+  // Execute a real Razorpay refund. mode 'tiered' = cancellation-window policy;
+  // 'full' = entire customer_total (our/host fault). Server computes the amount.
+  const handleRefund = async (id, mode) => {
+    try {
+      const { data } = await adminExecuteRefund({ booking_id: id, mode });
+      toast.success(`Refunded ₹${data.amount}${data.transfer_reversed ? ' · payout reversed' : ''}`);
+      if (data.payment_status) {
+        setRaw(rs => rs.map(r => (r.id === id ? { ...r, payment_status: data.payment_status } : r)));
+        setDetail(d => (d && d.id === id ? { ...d, payment_status: data.payment_status } : d));
+      }
+    } catch (e) { toast.error(e?.response?.data?.message || 'Refund failed'); }
+  };
+
   return (
     <div className="max-w-[1240px]">
       <style>{`@keyframes slideUp{from{transform:translateY(12px);opacity:.6}to{transform:translateY(0);opacity:1}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}`}</style>
@@ -1294,6 +1324,7 @@ const AdminBookings = () => {
           onEdit={(b) => { setEditing(b); }}
           onCancel={() => handleCancel(detail.id)}
           onDelete={() => handleDelete(detail.id)}
+          onRefund={(mode) => handleRefund(detail.id, mode)}
           onMarkComplete={() => handleSave(detail.id, { status: 'completed' })}
         />
       )}

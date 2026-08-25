@@ -262,6 +262,8 @@ export const adminFinanceAdjustment   = (data)        => API.post('/admin/financ
 export const adminFinanceReversal     = (data)        => API.post('/admin/finance/reversal', data);
 export const adminFinanceBankTransfer = (data)        => API.post('/admin/finance/bank-transfer', data);
 export const adminFinanceRefund       = (data)        => API.post('/admin/finance/refund', data);
+// Execute a real Razorpay refund from the booking view. mode: 'tiered' | 'full'.
+export const adminExecuteRefund       = (data)        => API.post('/admin/finance/refund/execute', data);
 
 // Admin — Payout approval
 export const adminGetPayouts     = (status)         => API.get('/admin/payouts', { params: status ? { status } : {} });

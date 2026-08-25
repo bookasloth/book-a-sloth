@@ -266,6 +266,7 @@ router.post('/finance/adjustment',        requireAdmin('finance.manage'), financ
 router.post('/finance/reversal',          requireAdmin('finance.manage'), finance.postReversal);
 router.post('/finance/bank-transfer',     requireAdmin('finance.manage'), finance.postBankTransfer);
 router.post('/finance/refund',            requireAdmin('finance.manage'), finance.postRefund);
+router.post('/finance/refund/execute',    requireAdmin('finance.manage'), finance.executeRefund);
 router.post('/finance/resend-subscription-receipt', requireAdmin('finance.manage'), finance.resendSubscriptionReceipt);
 
 
