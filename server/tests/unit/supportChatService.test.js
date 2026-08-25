@@ -5,8 +5,10 @@ process.env.SUPABASE_URL = 'http://sb.test';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
 
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
+jest.mock('../../utils/adminAlert', () => jest.fn(() => Promise.resolve({ sent: true })));
 
 const { supabaseAdmin } = require('../../config/supabase');
+const adminAlert = require('../../utils/adminAlert');
 const chat = require('../../services/supportChatService');
 
 // Chainable builder whose terminals (single/maybeSingle) and await (.then) resolve `result`.
@@ -71,6 +73,14 @@ test('escalate sets status waiting and broadcasts a status event', async () => {
   expect(out.status).toBe('waiting');
   const body = JSON.parse(global.fetch.mock.calls[0][1].body);
   expect(body.messages[0].event).toBe('status');
+  // Rings every admin console over the station channel…
+  const adminMsg = global.fetch.mock.calls
+    .map((c) => JSON.parse(c[1].body).messages[0])
+    .find((m) => m.topic === 'support:admin');
+  expect(adminMsg.event).toBe('escalation');
+  expect(adminMsg.payload.thread_id).toBe('t1');
+  // …and emails the team, throttled per-thread.
+  expect(adminAlert).toHaveBeenCalledWith(expect.objectContaining({ key: 'support-escalation:t1' }));
 });
 
 test('markRead zeroes the correct counter', async () => {

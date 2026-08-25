@@ -4,6 +4,7 @@ import Ic from '../admin/Ic';
 import { IC, NAV, PATH_LABELS, QUICK_ACTIONS, sessionCan } from '../admin/adminNav';
 import CommandPalette from '../admin/CommandPalette';
 import NotificationBell from '../admin/NotificationBell';
+import AdminEscalationRinger from '../admin/AdminEscalationRinger';
 import { useAdminTheme } from '../admin/useAdminTheme';
 
 // SECURITY: Admin session is completely isolated in 'bas_admin' localStorage key.
@@ -218,6 +219,7 @@ const AdminLayout = ({ children }) => {
 
   return (
     <div className={`admin-shell adm-canvas min-h-screen flex ${dark ? 'dark' : ''}`} style={{ fontFamily:"'Poppins',system-ui,sans-serif" }}>
+      <AdminEscalationRinger />
       <aside className={`hidden md:flex flex-col bg-[#17171A] border-r border-[#232327] fixed inset-y-0 left-0 z-30 transition-all duration-300 overflow-hidden ${collapsed ? 'w-[70px]' : 'w-[268px]'}`}>
         <SidebarBody />
       </aside>
