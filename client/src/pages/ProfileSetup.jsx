@@ -19,7 +19,7 @@ import {
   CREATOR_COLORS,
 } from "../utils/themeUtils";
 import {
-  PageHeader, Card, Button, FormField, Input, Select, Textarea, StickyActionBar, cn,
+  PageHeader, Card, Button, FormField, Input, Select, Textarea, StickyActionBar, Tabs, cn,
 } from "../components/dashboard/ui";
 
 // ─── Minimal plan label for display ─────────────────────────────────────────
@@ -278,21 +278,6 @@ const ProfileSetup = () => {
 
   const tc = isValidHex(form.theme_color) ? form.theme_color : DEFAULT_THEME_COLOR;
 
-  // ── Section tab helper ── (plain <button> so role="button" queries resolve)
-  const Tab = ({ id, label }) => (
-    <button
-      type="button"
-      onClick={() => setActiveSection(id)}
-      className={cn(
-        'relative whitespace-nowrap px-1 pb-3 text-sm font-medium transition-colors',
-        activeSection === id ? 'text-primary' : 'text-gray-500 hover:text-gray-800',
-      )}
-    >
-      {label}
-      {activeSection === id && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary" />}
-    </button>
-  );
-
   return (
     <div className="mx-auto max-w-5xl">
       <BackButton hasUnsavedChanges={dirty} />
@@ -301,22 +286,20 @@ const ProfileSetup = () => {
         subtitle={<>How guests discover and book you. Plan: <span className="font-semibold text-gray-700">{PLAN_LABEL[plan]}</span></>}
       />
 
-      {/* Section tabs */}
-      <div className="dash-noscrollbar mb-6 flex flex-wrap gap-5 overflow-x-auto border-b border-gray-200">
-        <Tab id="info"         label="Profile Info" />
-        <Tab id="categories"   label="Categories" />
-        <Tab id="social"       label="Social Links" />
-        <Tab id="appearance"   label="Appearance" />
-        <Tab id="integrations" label="Integrations" />
-        {/* Plan lives on its own page; this tab just links out. */}
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard/upgrade')}
-          className="relative whitespace-nowrap px-1 pb-3 text-sm font-medium text-gray-500 transition-colors hover:text-gray-800"
-        >
-          Plan
-        </button>
-      </div>
+      {/* Secondary rail — Plan now lives in the sidebar's Settings section, so it's
+          no longer a tab here. */}
+      <Tabs
+        className="mb-6"
+        value={activeSection}
+        onChange={setActiveSection}
+        tabs={[
+          { value: 'info', label: 'Profile Info' },
+          { value: 'categories', label: 'Categories' },
+          { value: 'social', label: 'Social Links' },
+          { value: 'appearance', label: 'Appearance' },
+          { value: 'integrations', label: 'Integrations' },
+        ]}
+      />
 
       <form onSubmit={handleSubmit}>
         {/* ── SECTION: Profile Info ── */}

@@ -53,11 +53,11 @@ const renderSetup = (plan = 'explorer') => {
 describe('ProfileSetup — tab navigation', () => {
   test('renders five tabs', () => {
     renderSetup();
-    expect(screen.getByRole('button', { name: /profile info/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /categories/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /social links/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /appearance/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /integrations/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /profile info/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /categories/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /social links/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /appearance/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /integrations/i })).toBeTruthy();
   });
 
   test('Profile Info tab is active by default', () => {
@@ -67,7 +67,7 @@ describe('ProfileSetup — tab navigation', () => {
 
   test('clicking Social Links tab shows social inputs', async () => {
     renderSetup();
-    await userEvent.click(screen.getByRole('button', { name: /social links/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /social links/i }));
     expect(screen.getByLabelText(/instagram/i)).toBeTruthy();
     expect(screen.getByLabelText(/youtube/i)).toBeTruthy();
     expect(screen.getByLabelText(/whatsapp/i)).toBeTruthy();
@@ -75,14 +75,14 @@ describe('ProfileSetup — tab navigation', () => {
 
   test('clicking Appearance tab shows theme color section', async () => {
     renderSetup();
-    await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /appearance/i }));
     expect(screen.getByText(/theme color/i)).toBeTruthy();
     expect(screen.getByText(/live preview/i)).toBeTruthy();
   });
 
   test('clicking Integrations tab shows Google Calendar section', async () => {
     renderSetup();
-    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /integrations/i }));
     // "Google Calendar" also appears in a help bullet ("...on your Google Calendar
     // automatically"), so scope to the section heading to stay unambiguous.
     expect(screen.getByRole('heading', { name: /google calendar/i })).toBeTruthy();
@@ -116,7 +116,7 @@ describe('ProfileSetup — Profile Info', () => {
 describe('ProfileSetup — Social Links', () => {
   test('shows all 9 social platforms', async () => {
     renderSetup();
-    await userEvent.click(screen.getByRole('button', { name: /social links/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /social links/i }));
     const PLATFORMS = ['Instagram', 'YouTube', 'LinkedIn', 'Facebook', 'X (Twitter)', 'WhatsApp', 'Website', 'GitHub', 'Public Email'];
     // Match the exact label strings. Names like 'X (Twitter)' contain regex
     // metacharacters, so new RegExp(p) would silently fail to match the literal text.
@@ -125,7 +125,7 @@ describe('ProfileSetup — Social Links', () => {
 
   test('pre-fills existing social links from user context', async () => {
     renderSetup();
-    await userEvent.click(screen.getByRole('button', { name: /social links/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /social links/i }));
     expect(screen.getByDisplayValue('https://instagram.com/jane')).toBeTruthy();
   });
 });
@@ -135,7 +135,7 @@ describe('ProfileSetup — Social Links', () => {
 describe('ProfileSetup — Appearance (explorer plan)', () => {
   test('shows single brand swatch for explorer', async () => {
     renderSetup('explorer');
-    await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /appearance/i }));
     // FREE_COLORS has 1 swatch (brand orange) — at least one titled swatch renders
     const swatches = document.querySelectorAll('button[title]');
     expect(swatches.length).toBeGreaterThanOrEqual(1);
@@ -143,13 +143,13 @@ describe('ProfileSetup — Appearance (explorer plan)', () => {
 
   test('shows upgrade hint for explorer', async () => {
     renderSetup('explorer');
-    await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /appearance/i }));
     expect(screen.getByText(/upgrade to host\+ for 16 colours/i)).toBeTruthy();
   });
 
   test('shows "Book a Session" CTA preview button', async () => {
     renderSetup('explorer');
-    await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /appearance/i }));
     // "Book a Session" appears twice in the Appearance tab (mini profile preview
     // card + the dedicated booking-button preview). Target the actual CTA button.
     expect(screen.getByRole('button', { name: /book a session/i })).toBeTruthy();
@@ -159,14 +159,14 @@ describe('ProfileSetup — Appearance (explorer plan)', () => {
 describe('ProfileSetup — Appearance (creator plan)', () => {
   test('shows 8 color swatches for creator', async () => {
     renderSetup('creator');
-    await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /appearance/i }));
     const swatches = document.querySelectorAll('button[title]');
     expect(swatches.length).toBeGreaterThanOrEqual(8);
   });
 
   test('hides custom hex input for creator (pro-only)', async () => {
     renderSetup('creator');
-    await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /appearance/i }));
     expect(screen.queryByPlaceholderText(/#4F46E5/i)).toBeNull();
   });
 });
@@ -174,7 +174,7 @@ describe('ProfileSetup — Appearance (creator plan)', () => {
 describe('ProfileSetup — Appearance (professional plan)', () => {
   test('shows custom hex input for pro', async () => {
     renderSetup('professional');
-    await userEvent.click(screen.getByRole('button', { name: /appearance/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /appearance/i }));
     expect(screen.getByPlaceholderText(/#4F46E5/i)).toBeTruthy();
   });
 });
@@ -184,7 +184,7 @@ describe('ProfileSetup — Appearance (professional plan)', () => {
 describe('ProfileSetup — Integrations', () => {
   test('shows Connect button when Google Calendar not connected', async () => {
     renderSetup();
-    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /integrations/i }));
     expect(screen.getByRole('button', { name: /^connect$/i })).toBeTruthy();
   });
 
@@ -197,13 +197,13 @@ describe('ProfileSetup — Integrations', () => {
       updateUser: vi.fn(),
     });
     render(<MemoryRouter><ProfileSetup /></MemoryRouter>);
-    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /integrations/i }));
     expect(screen.getByText(/connected ✓/i)).toBeTruthy();
   });
 
   test('lists coming-soon integrations (Zoom, Razorpay, Zapier)', async () => {
     renderSetup();
-    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /integrations/i }));
     expect(screen.getByText('Zoom')).toBeTruthy();
     expect(screen.getByText('Razorpay')).toBeTruthy();
     expect(screen.getByText('Zapier')).toBeTruthy();
@@ -241,13 +241,13 @@ describe('ProfileSetup — save', () => {
 describe('ProfileSetup — reschedule fee', () => {
   test('renders "Guest reschedule fee" select in Integrations tab', async () => {
     renderSetup();
-    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /integrations/i }));
     expect(screen.getByLabelText(/guest reschedule fee/i)).toBeTruthy();
   });
 
   test('defaults to 0 (Free) when profile has no reschedule_fee', async () => {
     renderSetup();
-    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /integrations/i }));
     const select = screen.getByLabelText(/guest reschedule fee/i);
     expect(Number(select.value)).toBe(0);
   });
@@ -258,7 +258,7 @@ describe('ProfileSetup — reschedule fee', () => {
       updateUser: vi.fn(),
     });
     render(<MemoryRouter><ProfileSetup /></MemoryRouter>);
-    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /integrations/i }));
     const select = screen.getByLabelText(/guest reschedule fee/i);
     expect(Number(select.value)).toBe(10);
   });
@@ -266,7 +266,7 @@ describe('ProfileSetup — reschedule fee', () => {
   test('changing to ₹10 and saving calls updateProfile with reschedule_fee: 10', async () => {
     updateProfile.mockResolvedValueOnce({ data: { ...VENDOR, reschedule_fee: 10 } });
     renderSetup();
-    await userEvent.click(screen.getByRole('button', { name: /integrations/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /integrations/i }));
     const select = screen.getByLabelText(/guest reschedule fee/i);
     await userEvent.selectOptions(select, '10');
     await userEvent.click(screen.getByRole('button', { name: /save profile/i }));
