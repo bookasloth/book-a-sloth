@@ -8,7 +8,7 @@ const {
 const { gone } = require('../middleware/gone');
 const { changeUsername } = require('../controllers/usernameController');
 const { protect, requireHost } = require('../middleware/authMiddleware');
-const { attachPlan } = require('../middleware/planMiddleware');
+const { attachPlan, enforceMinPrice } = require('../middleware/planMiddleware');
 const { requireFeature } = require('../middleware/requireFeature');
 const { validate, serviceWriteRules, updateProfileRules } = require('../middleware/validate');
 
@@ -22,7 +22,7 @@ router.put('/username', protect, requireHost, changeUsername);  // gated, rate-l
 // (serviceRoutes). Retired to 410 so nothing can create a service here.
 router.post('/services', gone('Removed. Create services via the dashboard (POST /api/services).'));
 router.get('/services', protect, getMyServices);
-router.put('/services/:id', protect, requireHost, requireFeature('services'), ...serviceWriteRules, validate, updateService);
+router.put('/services/:id', protect, requireHost, requireFeature('services'), ...serviceWriteRules, validate, attachPlan, enforceMinPrice, updateService);
 router.delete('/services/:id', protect, requireHost, deleteService);
 router.put('/availability', protect, requireHost, requireFeature('availability_editor'), setAvailability);
 router.get('/:username/:slug', getServiceBySlug);

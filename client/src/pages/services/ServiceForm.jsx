@@ -11,6 +11,11 @@ import FeatureGate from '../../components/common/FeatureGate';
 import { PageHeader, Card, Button, Input, Select, Textarea, cn } from '../../components/dashboard/ui';
 import { BOLT_ENABLED } from '../../config/aiListing';
 import { useAuth } from '../../context/AuthContext';
+import { normalizePlan } from '../../utils/themeUtils';
+
+// ₹ floor for paid services on the self-serve plans; Supreme is exempt, ₹0 free is
+// always allowed. Mirrors the server's planMiddleware.MIN_SERVICE_PRICE.
+const MIN_SERVICE_PRICE = 100;
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -501,6 +506,12 @@ export default function ServiceForm({ initialData, serviceId }) {
     if (!form.title.trim()) { toast.error('Title is required'); return; }
     if (!form.short_description.trim()) { toast.error('Short description is required'); return; }
     if (!feeOnly && !form.price && form.price !== 0) { toast.error('Price is required'); return; }
+    // Minimum paid-service price on non-Supreme plans (₹0 free is fine; Supreme exempt).
+    const priceNum = parseFloat(form.price) || 0;
+    if (!feeOnly && normalizePlan(user?.plan) !== 'supreme' && priceNum > 0 && priceNum < MIN_SERVICE_PRICE) {
+      toast.error(`Paid services must be at least ₹${MIN_SERVICE_PRICE}. Set a higher price, or make it free (₹0).`);
+      return;
+    }
     if (!form.thumbnail_url) { toast.error('Thumbnail is required'); return; }
     if (!effectiveDuration || effectiveDuration < 1) { toast.error('Duration is required'); return; }
     const isOffline = form.service_type === 'offline';

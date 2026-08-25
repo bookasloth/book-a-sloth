@@ -27,6 +27,27 @@ const attachPlan = async (req, res, next) => {
 const blockResponse = (res, { message, plan, limit }) =>
   res.status(403).json({ message, upgrade_required: true, current_plan: plan, limit });
 
+// Minimum listing price (₹) for PAID services on the self-serve plans. Below this
+// the flat ₹10 booking fee dwarfs the price (a ₹1 service makes the guest pay
+// ~₹12.80, ~92% fee), so we don't sell there. Supreme is exempt; free (₹0)
+// services stay allowed on every plan.
+const MIN_SERVICE_PRICE = 100;
+
+// Requires attachPlan to have set req.vendorPlan. Blocks a positive price under the
+// floor for non-Supreme plans; leaves ₹0 (free) and Supreme untouched. A body with
+// no price (e.g. a partial update) is skipped.
+const enforceMinPrice = (req, res, next) => {
+  const price = Number(req.body?.price);
+  const plan = req.vendorPlan || 'starter';
+  if (plan !== 'supreme' && Number.isFinite(price) && price > 0 && price < MIN_SERVICE_PRICE) {
+    return res.status(400).json({
+      message: `Paid services must be priced at least ₹${MIN_SERVICE_PRICE}. Set a higher price, or list it free (₹0).`,
+      min_price: MIN_SERVICE_PRICE,
+    });
+  }
+  return next();
+};
+
 // Block service creation beyond the plan's service limit
 const checkServiceLimit = async (req, res, next) => {
   try {
@@ -215,4 +236,4 @@ const requireCrm = async (req, res, next) => {
   }
 };
 
-module.exports = { attachPlan, checkServiceLimit, checkProductLimit, checkBookingReceiveLimit, canActivateMore, canAddFreeService, requireCrm };
+module.exports = { attachPlan, checkServiceLimit, checkProductLimit, checkBookingReceiveLimit, canActivateMore, canAddFreeService, requireCrm, enforceMinPrice, MIN_SERVICE_PRICE };

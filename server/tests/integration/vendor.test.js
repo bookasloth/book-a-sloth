@@ -11,6 +11,7 @@ jest.mock('../../middleware/authMiddleware', () => ({
 jest.mock('../../middleware/planMiddleware', () => ({
   attachPlan:        (_r, _s, n) => n(),
   checkServiceLimit: (_r, _s, n) => n(),
+  enforceMinPrice:   (_r, _s, n) => n(),
 }));
 // These tests validate normal-mode service CRUD (with real prices), so run with
 // fee-only mode OFF. Mocking getConfig also keeps it from consuming a queued
