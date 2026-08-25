@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, Clock, LayoutGrid, Package,
-  LineChart, Banknote, Receipt, Gift, Sparkles, User, ShieldCheck,
-  Compass, Boxes, Wallet, Radio, Settings, X, Headset, ArrowRight,
+  LineChart, Banknote, Receipt, Gift, Sparkles, User,
+  Compass, Boxes, Wallet, Settings, X, Headset, ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
@@ -30,12 +30,11 @@ const SB = {
 
 // Accent per section — all deliberately non-rose so the rose badge never clashes.
 const ACCENT = {
-  overview:   '#4f46e5', // indigo
-  community:  '#059669', // emerald
-  content:    '#7c3aed', // violet
-  revenue:    '#d97706', // amber
-  engagement: '#0284c7', // sky
-  system:     '#475569', // slate
+  overview: '#4f46e5', // indigo
+  bookings: '#059669', // emerald
+  catalog:  '#7c3aed', // violet
+  earnings: '#d97706', // amber
+  settings: '#475569', // slate
 };
 const ROSE = '#e11d48';
 
@@ -55,40 +54,35 @@ export const NAV = [
     ],
   },
   {
-    id: 'community', label: 'Community', icon: Users,
+    id: 'bookings', label: 'Bookings', icon: CalendarDays,
     items: [
       { to: '/dashboard/bookings', label: 'Bookings', icon: CalendarDays },
       { to: '/dashboard/clients', label: 'Customers', icon: Users, matchPrefix: '/dashboard/clients', locked: ['professional', 'supreme'] },
+      { to: '/dashboard/payments/transactions', label: 'Transactions', icon: Receipt, matchPrefix: '/dashboard/payments/transactions' },
       { to: '/dashboard/availability', label: 'Availability', icon: Clock },
     ],
   },
   {
-    id: 'content', label: 'Content', icon: Boxes,
+    id: 'catalog', label: 'Catalog', icon: Boxes,
     items: [
       { to: '/dashboard/services', label: 'Services', icon: LayoutGrid, matchPrefix: '/dashboard/service' },
       { to: '/dashboard/products', label: 'Products', icon: Package, locked: 'supreme' },
     ],
   },
   {
-    id: 'revenue', label: 'Revenue', icon: Wallet,
+    id: 'earnings', label: 'Earnings', icon: Wallet,
     items: [
       { to: '/dashboard/earnings', label: 'Earnings', icon: LineChart },
-      { to: '/dashboard/payments/payouts', label: 'Payouts', icon: Banknote, matchPrefix: '/dashboard/payments/payouts' },
-      { to: '/dashboard/payments/transactions', label: 'Transactions', icon: Receipt, matchPrefix: '/dashboard/payments/transactions' },
-    ],
-  },
-  {
-    id: 'engagement', label: 'Engagement', icon: Radio,
-    items: [
+      // KYC gates payouts, so a pending verification surfaces its attention here.
+      { to: '/dashboard/payments/payouts', label: 'Payouts', icon: Banknote, matchPrefix: '/dashboard/payments/payouts', badgeKey: 'verification', badgeNoun: 'verify to get paid' },
       { to: '/dashboard/referrals', label: 'Refer & Earn', icon: Gift },
-      { to: '/dashboard/upgrade', label: 'Membership', icon: Sparkles },
     ],
   },
   {
-    id: 'system', label: 'System', icon: Settings,
+    id: 'settings', label: 'Settings', icon: Settings,
     items: [
-      { to: '/dashboard/profile', label: 'Profile', icon: User },
-      { to: '/dashboard/kyc', label: 'Verification', icon: ShieldCheck, matchPrefix: '/dashboard/kyc', badgeKey: 'verification', badgeNoun: 'action needed' },
+      { to: '/dashboard/profile', label: 'Profile', icon: User, matchPrefix: '/dashboard/profile' },
+      { to: '/dashboard/upgrade', label: 'Plan', icon: Sparkles },
     ],
   },
 ];
