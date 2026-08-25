@@ -17,11 +17,11 @@ describe('earningsCalc', () => {
   });
 
   it('annual net = per-booking take-home x annual volume minus annual fee', () => {
-    // Host+ at E=1000: per-booking take-home = 970.20 (morPricing drift test)
+    // Host+ at E=1000: per-booking take-home = 959.76 (see morPricing drift test / host-fees §5)
     const r = resultsFor(1000, 10, 'annual').find((x) => x.plan.key === 'hostplus');
-    expect(r.perBookingTakeHome).toBe(970.2);
-    expect(r.grossAnnual).toBe(970.2 * 120);
-    expect(r.netAnnual).toBe(970.2 * 120 - 1499);
+    expect(r.perBookingTakeHome).toBe(959.76);
+    expect(r.grossAnnual).toBe(959.76 * 120);
+    expect(r.netAnnual).toBe(959.76 * 120 - 1499);
     expect(r.fee).toBe(1499);
   });
 
@@ -67,9 +67,9 @@ describe('earningsCalc', () => {
     const st = results.find((x) => x.plan.key === 'studio');
     expect(hp.earnableBookings).toBe(1000);
     expect(hp.uncollectedBookings).toBe(80);
-    expect(hp.grossAnnual).toBe(970.2 * 1000);
-    expect(hp.netAnnual).toBe(970.2 * 1000 - 1499);
-    expect(hp.uncollectedValue).toBe(970.2 * 80);
+    expect(hp.grossAnnual).toBe(959.76 * 1000);
+    expect(hp.netAnnual).toBe(959.76 * 1000 - 1499);
+    expect(hp.uncollectedValue).toBe(959.76 * 80);
     // Studio earns all 1080 → its capped-earnings net now exceeds Host+'s.
     expect(st.earnableBookings).toBe(1080);
     expect(st.uncollectedBookings).toBe(0);

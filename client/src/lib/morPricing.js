@@ -1,19 +1,20 @@
 /**
- * Client-side merchant-of-record pricing — a faithful mirror of the server's
- * computeMorBreakdown (server/lib/pricingEngine.js). Kept as a tiny duplicate
- * rather than a shared package because the formula is a few lines and the two
- * runtimes (CJS server, ESM client) don't share a module boundary.
+ * Client-side earnings math — a faithful mirror of the published /host-fees §4–5
+ * payout model (the source of truth for what a host keeps). Kept as a tiny
+ * duplicate rather than a shared package because the formula is a few lines and
+ * the two runtimes (CJS server, ESM client) don't share a module boundary.
  *
- * SOURCE OF TRUTH IS THE SERVER. If the server formula changes, change this too,
- * and the drift test (__tests__/morPricing.test.js) — which asserts the same
- * published /host-fees §4 numbers the server test does — will fail if they drift.
+ * SOURCE OF TRUTH IS /host-fees. Guest pays = price + ₹10 fee + 18% GST on the fee;
+ * host receives = price − commission − gateway(~2% of the whole charge) − TDS(1%)
+ * − TCS(1%). The drift test (__tests__/morPricing.test.js) asserts the exact
+ * /host-fees §5 numbers (₹1,000 → guest ₹1,011.80; Host+ ₹959.76; Starter ₹909.76).
  *
  * Used by the earnings calculator (pages/EarningsCalculator.jsx). Rates are
- * FRACTIONS (gstRate 0.18, commissionRate 0.05, pgRate 0.025).
+ * FRACTIONS (gstRate 0.18, commissionRate 0.05, pgRate 0.02 illustrative — the
+ * real gateway fee is method-dependent and only known at capture).
  *
- * NOTE: this is display/illustration only. Real pricing at booking time comes
- * from the server. Until the CA confirms per-category treatment, the calculator
- * assumes the standard 18% rate (most categories); exempt/RCM categories differ.
+ * NOTE: display/illustration only. Real pricing at booking time comes from the
+ * server. Assumes the standard 18% GST rate; exempt/RCM categories differ.
  */
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
@@ -39,19 +40,25 @@ export function computeMorBreakdown({
 }) {
   const E = Math.max(0, Number(targetEarning) || 0);
   if (E === 0) {
+    // A ₹0 service attracts no fee, GST, PG, TDS or TCS (/host-fees §1).
     return {
-      targetEarning: 0, bookingCharge: 0, commission: 0, pgCharge: 0,
+      targetEarning: 0, bookingCharge: 0, commission: 0, pgCharge: 0, tds: 0, tcs: 0,
       hostConsideration: 0, taxableValue: 0, gstAmount: 0, guestTotal: 0, platformMargin: 0,
     };
   }
-  const taxableValue = round2(E + bookingCharge);
-  const gstAmount    = round2(taxableValue * gstRate);
-  const guestTotal   = round2(taxableValue + gstAmount);
+  // Matches the published /host-fees §4–5 exactly:
+  //   Guest pays  = your price + ₹10 fee + 18% GST on the ₹10 fee (NOT on your price).
+  //   You receive = price − commission − gateway(on the whole charge) − TDS(1%) − TCS(1%).
+  const taxableValue = round2(bookingCharge);                 // GST base = the booking fee only
+  const gstAmount    = round2(taxableValue * gstRate);        // 18% of ₹10 = ₹1.80
+  const guestTotal   = round2(E + bookingCharge + gstAmount); // price + fee + GST-on-fee
   const commission   = round2(E * commissionRate);
-  const pgCharge     = absorbsPg ? 0 : round2(guestTotal * pgRate);
-  const hostConsideration = round2(E - commission - pgCharge);
-  const platformMargin    = round2(bookingCharge + commission + pgCharge);
-  return { targetEarning: round2(E), bookingCharge: round2(bookingCharge), commission, pgCharge, hostConsideration, taxableValue, gstAmount, guestTotal, platformMargin };
+  const pgCharge     = absorbsPg ? 0 : round2(guestTotal * pgRate); // gateway, borne by the host
+  const tds          = round2(E * 0.01);                      // 194-O, on your price (5% if no PAN — not modelled)
+  const tcs          = round2(E * 0.01);                      // §52, on your price
+  const hostConsideration = round2(E - commission - pgCharge - tds - tcs);
+  const platformMargin    = round2(bookingCharge + commission); // fee + commission (PG is the host's cost; TDS/TCS pass through to govt)
+  return { targetEarning: round2(E), bookingCharge: round2(bookingCharge), commission, pgCharge, tds, tcs, hostConsideration, taxableValue, gstAmount, guestTotal, platformMargin };
 }
 
 /**
@@ -63,19 +70,19 @@ export function computeMorBreakdown({
 export const CALC_PLANS = [
   {
     key: 'starter', name: 'Starter',
-    charge: { bookingCharge: 10, commissionRate: 0.05, pgRate: 0.025, absorbsPg: true },
+    charge: { bookingCharge: 10, commissionRate: 0.05, pgRate: 0.02, absorbsPg: false },
     monthly: 0, maxServicePrice: 5000,
     note: 'Free to start · 5% per booking',
   },
   {
     key: 'hostplus', name: 'Host+',
-    charge: { bookingCharge: 10, commissionRate: 0, pgRate: 0.025, absorbsPg: false },
+    charge: { bookingCharge: 10, commissionRate: 0, pgRate: 0.02, absorbsPg: false },
     monthly: 229, maxServicePrice: null,
     note: '0% commission · ₹229/mo',
   },
   {
     key: 'studio', name: 'Studio',
-    charge: { bookingCharge: 10, commissionRate: 0, pgRate: 0.025, absorbsPg: false },
+    charge: { bookingCharge: 10, commissionRate: 0, pgRate: 0.02, absorbsPg: false },
     monthly: 555, maxServicePrice: null,
     note: '0% commission · ₹555/mo',
   },
