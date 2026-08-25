@@ -108,4 +108,3 @@ client/scripts/.host-og-preview/
 
 # Vercel CLI local link state (project/org ids) — created by `vercel link`
 .vercel/
-docs/reports/*.pdf
