@@ -106,6 +106,7 @@ const Availability = lazy(() => import('./pages/Availability'));
 const Products    = lazy(() => import('./pages/Products'));
 const UpgradePlan = lazy(() => import('./pages/UpgradePlan'));
 const Payouts     = lazy(() => import('./pages/Payouts'));
+const ChatPage    = lazy(() => import('./pages/ChatPage'));
 const ReferEarn   = lazy(() => import('./pages/ReferEarn'));
 const Transactions = lazy(() => import('./pages/Transactions'));
 const Feedback     = lazy(() => import('./pages/Feedback'));
@@ -439,6 +440,7 @@ function App() {
           <Route path="/dashboard/referrals" element={<DashboardWrapper><ReferEarn /></DashboardWrapper>} />
           <Route path="/dashboard/payments/transactions" element={<DashboardWrapper><Transactions /></DashboardWrapper>} />
           <Route path="/dashboard/feedback" element={<DashboardWrapper><Feedback /></DashboardWrapper>} />
+          <Route path="/dashboard/chat" element={<DashboardWrapper><ChatPage /></DashboardWrapper>} />
 
           {/* Super Dashboard (main admin entry) */}
           <Route path="/super-dashboard" element={<AdminWrapper><SuperDashboard /></AdminWrapper>} />
