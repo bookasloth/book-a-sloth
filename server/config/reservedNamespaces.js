@@ -35,6 +35,8 @@ const INFRA = [
 // launch them later without being blocked by a user-claimed slug.
 const FUTURE = [
   'docs', 'doc', 'blog', 'blogs', 'pricing', 'plans', 'plan', 'features', 'feature',
+  'presentation', // full-screen product pitch deck — client /presentation route
+
   'changelog', 'roadmap', 'security', 'legal', 'cookies', 'careers', 'jobs', 'press',
   'newsroom', 'contact', 'faq', 'guides', 'guide', 'tutorials', 'tutorial', 'resources',
   'learn', 'academy', 'courses', 'partners', 'affiliates', 'developers', 'developer',

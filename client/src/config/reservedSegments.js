@@ -19,6 +19,7 @@ export const RESERVED_FIRST_SEGMENTS = [
   'og',
   'my-bookings', 'profile', 'reviews', 'loyalty', 'sitemap', 'robots', 'health',
   'search', 'wall-of-love', 'moments', 'opening', 'inaugurators',
+  'presentation', // full-screen product pitch deck (pages/presentation/)
   // Branded error pages (config/errorCatalog.js) + offline/maintenance. Each has
   // its own /<code> route, so the first segment must be reserved here too.
   '400', '401', '403', '404', '405', '408', '409', '410', '413', '415', '422', '429',
