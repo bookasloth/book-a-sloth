@@ -226,6 +226,7 @@ const SalesSequences  = lazy(() => import('./pages/admin/sales/SalesSequences'))
 const AdminFinanceDashboard = lazy(() => import('./pages/admin/AdminFinanceDashboard'));
 const AdminJournal = lazy(() => import('./pages/admin/AdminJournal'));
 const AdminLedger  = lazy(() => import('./pages/admin/AdminLedger'));
+const Presentation = lazy(() => import('./pages/presentation/Presentation'));
 
 // ── Fallback shown while a route chunk downloads ──────────────────────────────
 const PageLoader = () => (
@@ -556,6 +557,8 @@ function App() {
           <Route path="/get-in-touch" element={<Contact />} />
           <Route path="/enterprise" element={<Enterprise />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
+          {/* Full-screen shareable product pitch deck (pages/presentation/). */}
+          <Route path="/presentation" element={<Presentation />} />
 
           {/* Branded error pages — config-driven (see config/errorCatalog.js).
               One <ErrorPage> component renders all of them; adding a code = a
