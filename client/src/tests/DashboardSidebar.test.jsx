@@ -31,6 +31,15 @@ const renderLayout = (user) => {
   );
 };
 
+const renderAt = (initialPath, user) => {
+  mockAuth.current = user;
+  return render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <DashboardLayout><div>PAGE</div></DashboardLayout>
+    </MemoryRouter>,
+  );
+};
+
 const openProfile = () => fireEvent.click(screen.getByLabelText('Profile menu'));
 
 describe('dashboard topbar profile menu', () => {
@@ -56,26 +65,33 @@ describe('dashboard topbar profile menu', () => {
     expect(screen.getByText('S')).toBeInTheDocument();
   });
 
-  it('offers the membership CTA + host shortcuts', () => {
+  it('offers account actions (Hostinger-style sections)', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
     openProfile();
-    // Scope to the menu surface — some labels (e.g. Availability) also appear in
-    // the always-mounted sidebar nav.
     const menu = within(screen.getByRole('menu', { name: 'Account' }));
-    // Membership CTA carries the humanized plan label (creator -> Host+).
-    expect(menu.getByText(/Host\+ Member/)).toBeInTheDocument();
-    ['Upcoming Bookings', 'Availability', 'View Public Profile', 'Talk to Account Manager', 'Settings'].forEach((label) => {
-      expect(menu.getByText(label)).toBeInTheDocument();
-    });
+    // Plan chip in the header carries the humanized plan label (creator -> Host+).
+    expect(menu.getByText('Host+')).toBeInTheDocument();
+    ['Account information', 'Plan & billing', 'Verification', 'View public profile', 'Copy link', 'Help center', 'Talk to your account manager', 'Log out']
+      .forEach((label) => expect(menu.getByText(label)).toBeInTheDocument());
+    // The old nav shortcuts no longer live in the menu — they're in the sidebar.
+    expect(menu.queryByText('Upcoming Bookings')).toBeNull();
   });
 
-  it('holds View Public Profile + Logout (moved out of the sidebar)', () => {
+  it('holds View public profile + Log out (moved out of the sidebar)', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
     // Not present until the menu is opened — they no longer live in the sidebar.
-    expect(screen.queryByText('Logout')).toBeNull();
+    expect(screen.queryByText('Log out')).toBeNull();
     openProfile();
-    expect(screen.getByText('View Public Profile')).toBeInTheDocument();
-    expect(screen.getByText('Logout')).toBeInTheDocument();
+    expect(screen.getByText('View public profile')).toBeInTheDocument();
+    expect(screen.getByText('Log out')).toBeInTheDocument();
+  });
+
+  it('surfaces verification status: pending shows a pill + Action needed', () => {
+    renderLayout({ name: 'Host', plan: 'creator', role: 'host', kyc_status: 'pending' });
+    openProfile();
+    const menu = within(screen.getByRole('menu', { name: 'Account' }));
+    expect(menu.getByText('Verify to get paid')).toBeInTheDocument();  // header pill
+    expect(menu.getByText('Action needed')).toBeInTheDocument();       // row status
   });
 });
 
@@ -89,7 +105,7 @@ describe('dashboard topbar actions', () => {
   });
 });
 
-describe('mobile — popups open as bottom sheets', () => {
+describe('mobile — popups + nav drawer', () => {
   const setMobile = (matches) => {
     window.matchMedia = vi.fn().mockImplementation((q) => ({
       matches, media: q, onchange: null,
@@ -104,16 +120,82 @@ describe('mobile — popups open as bottom sheets', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
     fireEvent.click(screen.getByLabelText('Profile menu'));
     expect(screen.getByLabelText('Close')).toBeInTheDocument();     // sheet chrome
-    expect(screen.getByText('View Public Profile')).toBeInTheDocument();
-    expect(screen.getByText('Logout')).toBeInTheDocument();
+    expect(screen.getByText('View public profile')).toBeInTheDocument();
+    expect(screen.getByText('Log out')).toBeInTheDocument();
   });
 
-  it('the More sheet is nav-only (no duplicated account actions)', () => {
+  it('the nav hamburger opens the drawer and Esc closes it', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
-    fireEvent.click(screen.getByLabelText('More'));
-    expect(screen.getByLabelText('Close')).toBeInTheDocument();      // sheet is open
-    expect(screen.queryByText('Logout')).toBeNull();                 // moved to profile
-    expect(screen.queryByText('View public page')).toBeNull();
+    fireEvent.click(screen.getByLabelText('Open navigation'));
+    const drawer = screen.getByRole('dialog', { name: 'Navigation' });
+    expect(drawer).toBeInTheDocument();
+    expect(within(drawer).getByLabelText('Close navigation')).toBeInTheDocument();
+    // Section rail + item panel both live inside the drawer.
+    expect(within(drawer).getByLabelText('Sections')).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'Navigation' })).toBeNull();
+  });
+});
+
+describe('console sidebar — two-level nav', () => {
+  beforeEach(() => { mockAuth.current = {}; });
+
+  it('marks the active item with aria-current and selects its parent section', () => {
+    renderAt('/dashboard/bookings', { name: 'Host', plan: 'creator', role: 'host' });
+    // Community is the active section (rail glyph carries aria-current).
+    expect(screen.getByRole('button', { name: 'Community' })).toHaveAttribute('aria-current', 'true');
+    // Bookings item is the active page.
+    expect(screen.getByRole('link', { name: 'Bookings' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('deep pages highlight their parent item (longest-prefix match)', () => {
+    renderAt('/dashboard/services/42/edit', { name: 'Host', plan: 'supreme', role: 'host' });
+    expect(screen.getByRole('button', { name: 'Content' })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('link', { name: 'Services' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('plan-locked items render disabled with a locked accessible name', () => {
+    // Starter host: Products is Supreme-only -> shown but locked.
+    renderAt('/dashboard/products', { name: 'Host', plan: 'starter', role: 'host' });
+    const products = screen.getByLabelText('Products (locked)');
+    expect(products).toHaveAttribute('aria-disabled', 'true');
+    expect(products).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('shows a rose attention badge with an accessible count when KYC is pending', () => {
+    renderAt('/dashboard/kyc', { name: 'Host', plan: 'creator', role: 'host', kyc_status: 'pending' });
+    // Verification item's SR name carries the count + noun.
+    expect(screen.getByLabelText('Verification, 1 action needed')).toBeInTheDocument();
+  });
+});
+
+describe('console sidebar — tier-aware bottom slot', () => {
+  beforeEach(() => { mockAuth.current = {}; });
+
+  it('pitches Studio to Starter hosts', () => {
+    renderAt('/dashboard', { name: 'H', plan: 'starter', role: 'host' });
+    expect(screen.getByRole('link', { name: 'Upgrade to Studio. Go Studio' }))
+      .toHaveAttribute('href', '/dashboard/upgrade');
+  });
+
+  it('pitches Studio to Host+ hosts', () => {
+    renderAt('/dashboard', { name: 'H', plan: 'creator', role: 'host' });
+    expect(screen.getByRole('link', { name: 'Level up to Studio. Go Studio' }))
+      .toHaveAttribute('href', '/dashboard/upgrade');
+  });
+
+  it('shows Refer & Earn (no upsell) for Studio hosts', () => {
+    renderAt('/dashboard', { name: 'H', plan: 'professional', role: 'host' });
+    expect(screen.queryByRole('link', { name: /Upgrade to Studio/ })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Refer & Earn. Invite a host' }))
+      .toHaveAttribute('href', '/dashboard/referrals');
+  });
+
+  it('shows concierge (no upsell, never advertises Supreme) for Supreme hosts', () => {
+    renderAt('/dashboard', { name: 'H', plan: 'supreme', role: 'host' });
+    expect(screen.queryByRole('link', { name: /Upgrade|Studio/ })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Priority concierge. Talk to your manager' }))
+      .toHaveAttribute('href', '/bolt958');
   });
 });
 
