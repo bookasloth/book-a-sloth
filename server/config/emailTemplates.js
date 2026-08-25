@@ -277,7 +277,7 @@ const TEMPLATES = [
     html_content:
       eyebrow(t.text, 'Almost there') + h('One step from live, {{first_name}}') +
       lead("You claimed <strong>bookasloth.com/{{slug}}</strong> but haven't published yet. It's saved and waiting — the last step takes two minutes.") +
-      C.banner(t, { title: 'Finish &amp; publish', sub: 'Then your link works and people can book you.' }),
+      C.banner(t, { title: 'Finish & publish', sub: 'Then your link works and people can book you.' }),
     cta_label: 'Publish my page', cta_url: '{{dashboard_url}}',
   }; })(),
 
