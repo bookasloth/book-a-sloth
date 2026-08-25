@@ -259,7 +259,7 @@ const Dashboard = () => {
   const completion = Math.round((checklist.filter((c) => c.done).length / checklist.length) * 100);
   const allDone = completion === 100;
 
-  if (!isHost) return <Navigate to="/user/my-bookings" replace />;
+  if (!isHost) return <Navigate to="/user" replace />;
 
   return (
     <div className="mx-auto max-w-5xl">

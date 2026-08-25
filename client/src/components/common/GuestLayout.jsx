@@ -1,104 +1,131 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { CalendarDays, User, Star, Gift, Briefcase, MessageCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Outlet, useLocation, Link } from "react-router-dom";
+import { Menu, LogOut, LifeBuoy, ChevronDown, User } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { isHost } from "../../utils/roleRoutes";
-import useSupportUnread from "../../hooks/useSupportUnread";
-import toast from "react-hot-toast";
+import GuestSidebar from "./GuestSidebar";
 
-// Guest-space shell (/user/*). Gives the traveler side its own consistent home:
-// a persistent tab bar across Bookings / Profile / Reviews / Rewards, so the four
-// pages read as one app instead of four disconnected screens. Deliberately lighter
-// than the host DashboardLayout (no sidebar, airy container) — consumer feel.
-//
-// Quiet door: a single subtle "start hosting" link at the bottom, shown only to
-// pure guests. It mirrors the navbar's startHosting flow (becomeHost → onboarding),
-// keeping the host-acquisition path discoverable for motivated users without ever
-// shouting that a "host side" exists.
+// Guest-space shell (/user/*). A single-level console for the logged-in
+// customer: a labelled left rail (GuestSidebar) + a lean topbar. Deliberately
+// simpler than the host DashboardLayout — no plan chip, no KYC tick, no
+// public-profile link, and crucially NO hosting/mode switch. Guest chrome only.
 
-const TABS = [
-  { to: "/user/my-bookings", label: "Bookings", icon: CalendarDays },
-  { to: "/user/profile", label: "Profile", icon: User },
-  { to: "/user/reviews", label: "Reviews", icon: Star },
-  { to: "/user/loyalty", label: "Rewards", icon: Gift },
-  { to: "/user/chat", label: "Chat", icon: MessageCircle },
-];
+// Compact account menu — Profile + Log out. Guests have no plan/billing/KYC.
+const AccountMenu = () => {
+  const { user, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const initial = (user?.name || user?.email || "U").trim().charAt(0).toUpperCase();
 
-const GuestLayout = () => {
-  const { user, becomeHost } = useAuth();
-  const navigate = useNavigate();
-  const canHost = isHost(user);
-  const chatUnread = useSupportUnread();
-
-  // Add hosting to the CURRENT account, then enter the existing onboarding.
-  // Mirrors Navbar.startHosting so both doors behave identically.
-  const startHosting = async () => {
-    try {
-      const updated = await becomeHost();
-      const slug = updated?.onboarding_slug || updated?.username;
-      if (updated?.onboarding_completed || !slug) navigate("/dashboard");
-      else navigate(`/vendor-register/${slug}/claim`);
-    } catch (e) {
-      toast.error(e.response?.data?.message || "Could not start hosting");
-    }
-  };
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    const onPointer = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#f7f5ef" }}>
-      {/* Tab bar — sits under the global navbar, scrolls with the page. */}
-      <div className="border-b border-black/5 bg-[#f7f5ef]">
-        <div className="app-container max-w-2xl">
-          <nav className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Your account">
-            {TABS.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                role="tab"
-                className={({ isActive }) =>
-                  `relative flex items-center gap-1.5 whitespace-nowrap px-3.5 py-3 text-sm font-medium transition-colors ${
-                    isActive ? "text-[#FE5100]" : "text-gray-500 hover:text-gray-800"
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon size={16} />
-                    {label}
-                    {to === "/user/chat" && chatUnread > 0 && (
-                      <span className="ml-0.5 grid min-w-[18px] place-items-center rounded-full bg-[#FE5100] px-1 text-[10px] font-bold leading-[18px] text-white">
-                        {chatUnread > 9 ? "9+" : chatUnread}
-                      </span>
-                    )}
-                    {isActive && (
-                      <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[#FE5100]" />
-                    )}
-                  </>
-                )}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-      </div>
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 rounded-full p-0.5 transition-colors hover:bg-gray-100"
+        aria-label="Account menu"
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        {user?.profile_image ? (
+          <img src={user.profile_image} alt={user?.name || "You"} className="h-9 w-9 rounded-full object-cover" />
+        ) : (
+          <div className="grid h-9 w-9 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+            {initial}
+          </div>
+        )}
+        <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
 
-      {/* Active page */}
-      <main className="app-container max-w-2xl py-7 flex-1">
-        <Outlet />
-      </main>
-
-      {/* Quiet door — pure guests only. Subtle by design. */}
-      {!canHost && (
-        <div className="app-container max-w-2xl pb-10">
-          <div className="border-t border-black/5 pt-5">
+      {open && (
+        <div
+          className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+          role="menu"
+        >
+          <div className="border-b border-gray-100 px-4 py-3">
+            <p className="truncate text-sm font-bold text-gray-900">{user?.name || "You"}</p>
+            {user?.email && <p className="truncate text-xs text-gray-500">{user.email}</p>}
+          </div>
+          <div className="py-1.5">
+            <Link
+              to="/user/profile"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+              role="menuitem"
+            >
+              <User className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+              <span className="flex-1">Profile</span>
+            </Link>
+          </div>
+          <div className="border-t border-gray-100 py-1.5">
             <button
               type="button"
-              onClick={startHosting}
-              className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#FE5100] transition-colors"
+              onClick={() => { setOpen(false); logout?.(); }}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-red-50"
+              role="menuitem"
             >
-              <Briefcase size={13} />
-              Want to offer your own sessions? Start hosting →
+              <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+              <span className="flex-1">Log out</span>
             </button>
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const GuestLayout = () => {
+  const { pathname } = useLocation();
+  const [navOpen, setNavOpen] = useState(false);
+  const navTriggerRef = useRef(null);
+
+  // Route change closes the mobile drawer.
+  useEffect(() => { setNavOpen(false); }, [pathname]);
+
+  return (
+    <div className="flex min-h-screen overflow-x-hidden" style={{ background: "#f7f5ef" }}>
+      <GuestSidebar open={navOpen} onClose={() => setNavOpen(false)} triggerRef={navTriggerRef} />
+
+      {/* Main — offset by the fixed 224px (w-56) rail on lg+. */}
+      <main className="flex min-w-0 flex-1 flex-col lg:pl-56">
+        <header className="sticky top-0 z-30 flex min-h-14 shrink-0 items-center border-b border-gray-200/80 bg-white/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur sm:px-6">
+          <button
+            ref={navTriggerRef}
+            type="button"
+            onClick={() => setNavOpen(true)}
+            aria-label="Open navigation"
+            aria-haspopup="dialog"
+            className="mr-1 grid h-9 w-9 place-items-center rounded-full text-gray-500 transition-colors hover:bg-primary/5 hover:text-primary lg:hidden"
+          >
+            <Menu className="h-[19px] w-[19px]" strokeWidth={1.8} />
+          </button>
+          <div className="ml-auto flex items-center gap-1">
+            <Link
+              to="/help"
+              title="Support"
+              aria-label="Support"
+              className="grid h-9 w-9 place-items-center rounded-full text-gray-500 transition-colors hover:bg-primary/5 hover:text-primary"
+            >
+              <LifeBuoy className="h-[19px] w-[19px]" strokeWidth={1.7} />
+            </Link>
+            <AccountMenu />
+          </div>
+        </header>
+
+        <div className="app-container max-w-4xl py-7 flex-1">
+          <Outlet />
+        </div>
+      </main>
     </div>
   );
 };
