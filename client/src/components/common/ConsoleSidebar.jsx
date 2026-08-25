@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, Clock, LayoutGrid, Package,
   LineChart, Banknote, Receipt, Gift, Sparkles, User, ShieldCheck,
@@ -114,6 +114,11 @@ const visibleSections = (ctx) =>
     .map((s) => ({ ...s, items: s.items.filter((i) => isVisible(i, ctx)) }))
     .filter((s) => s.items.length > 0);
 
+// Where a rail click lands: the section's first page the host can actually open
+// (skip locked items), falling back to the first item.
+const firstItemTo = (section, plan) =>
+  (section.items.find((i) => !isLocked(i, plan)) || section.items[0])?.to;
+
 // Active item by route: exact match for the dashboard root, else longest-prefix
 // so deep pages (e.g. /dashboard/services/42/edit) still light their parent item.
 const resolveActive = (pathname, sections) => {
@@ -186,8 +191,8 @@ const BadgePill = ({ count }) => (
   </span>
 );
 
-/** Far-left rail: one glyph per section. Click swaps the panel; never navigates. */
-const RailButton = ({ section, selected, active, hasAttention, onSelect }) => {
+/** Far-left rail: one glyph per section. Click navigates to that section. */
+const RailButton = ({ section, active, hasAttention, onSelect }) => {
   const Icon = section.icon;
   const accent = ACCENT[section.id];
   return (
@@ -197,18 +202,22 @@ const RailButton = ({ section, selected, active, hasAttention, onSelect }) => {
         onClick={() => onSelect(section.id)}
         aria-current={active ? 'true' : undefined}
         aria-label={hasAttention ? `${section.label}, has attention` : section.label}
-        style={{ borderRadius: SB.radius, color: active ? accent : undefined }}
+        style={{
+          borderRadius: SB.radius,
+          color: active ? accent : undefined,
+          background: active ? `color-mix(in srgb, ${accent} 14%, transparent)` : undefined,
+        }}
         className={cn(
           'relative grid h-10 w-10 place-items-center transition-colors',
           focusRing,
-          selected ? 'bg-gray-200/70' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800',
+          active ? '' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800',
         )}
       >
-        {/* active-section accent bar (left edge) */}
+        {/* active-section accent bar — full-height on the rail's left edge */}
         {active && (
           <span
             aria-hidden="true"
-            className="absolute left-[-8px] top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full"
+            className="absolute left-[-8px] top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-full"
             style={{ backgroundColor: accent }}
           />
         )}
@@ -284,12 +293,14 @@ const PanelItem = ({ item, sectionId, active, locked, count, onNavigate }) => {
  * The reusable rail + panel unit. Rendered statically on desktop AND inside the
  * mobile drawer, so behavior is identical across both paths.
  */
-const RailAndPanel = ({ sections, plan, badges, selectedId, activeSectionId, activeTo, onSelectSection, onNavigate }) => {
-  const selected = sections.find((s) => s.id === selectedId) || sections[0];
+const RailAndPanel = ({ sections, plan, badges, activeSectionId, activeTo, onSelectSection, onNavigate }) => {
+  // Panel always shows the active (route) section — no separate "selected" state,
+  // so the rail highlight and the panel contents can never disagree.
+  const selected = sections.find((s) => s.id === activeSectionId) || sections[0];
   const sectionAttention = (s) => s.items.some((i) => (i.badgeKey ? badges[i.badgeKey] || 0 : 0) > 0);
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full min-h-0">
       {/* Rail */}
       <nav
         aria-label="Sections"
@@ -300,7 +311,6 @@ const RailAndPanel = ({ sections, plan, badges, selectedId, activeSectionId, act
           <RailButton
             key={s.id}
             section={s}
-            selected={s.id === selected?.id}
             active={s.id === activeSectionId}
             hasAttention={sectionAttention(s)}
             onSelect={onSelectSection}
@@ -311,11 +321,10 @@ const RailAndPanel = ({ sections, plan, badges, selectedId, activeSectionId, act
       {/* Item panel — scrollable items, plus a docked tier-aware slot at the base. */}
       <nav
         aria-label={selected ? `${selected.label} pages` : 'Pages'}
-        className="flex flex-col overflow-hidden border-r border-gray-200 bg-white"
+        className="flex min-h-0 flex-col overflow-hidden bg-white"
         style={{ width: SB.panel }}
       >
         <div className="dash-noscrollbar flex-1 overflow-y-auto py-3">
-          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{selected?.label}</p>
           <div className="space-y-0.5">
             {selected?.items.map((item) => (
               <PanelItem
@@ -394,12 +403,34 @@ const PanelSlot = ({ plan, onNavigate }) => {
   );
 };
 
+// Brand + active-section title, spanning rail + panel under one bottom border.
+// The logo cell shares the rail's ground (bg-gray-50) so there's no two-tone seam.
+const SidebarTopBar = ({ label, withLogoLink, trailing }) => {
+  const logo = <img src="/sloth.png" alt="Book A Sloth" className="h-8 w-8 object-contain" />;
+  return (
+    <div className="flex h-14 shrink-0 items-stretch border-b border-gray-200">
+      {withLogoLink ? (
+        <Link to="/dashboard" title="Book A Sloth" aria-label="Book A Sloth" className={cn('grid shrink-0 place-items-center border-r border-gray-200 bg-gray-50', focusRing)} style={{ width: SB.rail }}>
+          {logo}
+        </Link>
+      ) : (
+        <div className="grid shrink-0 place-items-center border-r border-gray-200 bg-gray-50" style={{ width: SB.rail }}>
+          {logo}
+        </div>
+      )}
+      <div className="flex flex-1 items-center truncate px-4 font-heading text-sm font-bold text-gray-900">{label}</div>
+      {trailing}
+    </div>
+  );
+};
+
 /* ------------------------------------------------------------------ *
  *  Public component
  * ------------------------------------------------------------------ */
 const ConsoleSidebar = ({ open = false, onClose, triggerRef }) => {
   const { user } = useAuth();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile('(max-width: 1023px)'); // below Tailwind `lg`
   const drawerRef = useRef(null);
 
@@ -408,10 +439,6 @@ const ConsoleSidebar = ({ open = false, onClose, triggerRef }) => {
   const sections = visibleSections(ctx);
   const badges = computeBadges(user);
   const active = resolveActive(pathname, sections);
-
-  const [selectedId, setSelectedId] = useState(active.sectionId);
-  // Route change re-syncs the panel to the active section (rail clicks override).
-  useEffect(() => { setSelectedId(active.sectionId); }, [active.sectionId]);
 
   // Esc closes the drawer; focus trap + restore handled by the hook.
   useEffect(() => {
@@ -422,26 +449,30 @@ const ConsoleSidebar = ({ open = false, onClose, triggerRef }) => {
   }, [open, onClose]);
   useFocusTrap(drawerRef, open && isMobile, triggerRef);
 
+  const activeSection = sections.find((s) => s.id === active.sectionId) || sections[0];
+  const activeSectionLabel = activeSection?.label || '';
+
+  // A rail click navigates to that section's first page (so the highlighted rail
+  // and the panel always agree). `afterNav` closes the drawer on the mobile path.
+  const selectSection = (afterNav) => (sid) => {
+    const to = firstItemTo(sections.find((s) => s.id === sid) || {}, plan);
+    if (to) navigate(to);
+    afterNav?.();
+  };
+
   const shared = {
     sections, plan, badges,
-    selectedId,
     activeSectionId: active.sectionId,
     activeTo: active.to,
-    onSelectSection: setSelectedId,
   };
 
   return (
     <>
-      {/* Desktop: static rail + panel, pinned full-height. */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex">
-        {/* Brand */}
-        <div className="absolute left-0 top-0 z-10 flex h-14 items-center border-b border-gray-200 bg-gray-50 px-3" style={{ width: SB.rail }}>
-          <Link to="/dashboard" title="Book A Sloth" aria-label="Book A Sloth" className={cn('grid h-8 w-8 place-items-center rounded-lg', focusRing)}>
-            <img src="/sloth.png" alt="Book A Sloth" className="h-8 w-8 object-contain" />
-          </Link>
-        </div>
-        <div className="pt-14">
-          <RailAndPanel {...shared} onNavigate={undefined} />
+      {/* Desktop: fixed rail + panel, full-height. */}
+      <aside className="hidden bg-white lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:flex-col">
+        <SidebarTopBar label={activeSectionLabel} withLogoLink />
+        <div className="min-h-0 flex-1">
+          <RailAndPanel {...shared} onSelectSection={selectSection()} onNavigate={undefined} />
         </div>
       </aside>
 
@@ -457,19 +488,21 @@ const ConsoleSidebar = ({ open = false, onClose, triggerRef }) => {
               aria-label="Navigation"
               className="fixed inset-y-0 left-0 z-[60] flex w-[calc(56px+220px)] max-w-[85vw] flex-col bg-white shadow-[0_12px_32px_-8px_rgba(16,24,40,0.35)]"
             >
-              <div className="flex h-14 shrink-0 items-center justify-between border-b border-gray-200 pl-3 pr-2">
-                <span className="text-sm font-extrabold tracking-tight text-gray-900">Book A Sloth</span>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Close navigation"
-                  className={cn('rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600', focusRing)}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+              <SidebarTopBar
+                label={activeSectionLabel}
+                trailing={(
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Close navigation"
+                    className={cn('grid w-12 shrink-0 place-items-center text-gray-400 hover:bg-gray-100 hover:text-gray-600', focusRing)}
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+              />
               <div className="min-h-0 flex-1">
-                <RailAndPanel {...shared} onNavigate={onClose} />
+                <RailAndPanel {...shared} onSelectSection={selectSection(onClose)} onNavigate={onClose} />
               </div>
             </div>
           </div>

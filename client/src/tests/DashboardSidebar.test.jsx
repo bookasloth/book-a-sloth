@@ -71,7 +71,7 @@ describe('dashboard topbar profile menu', () => {
     const menu = within(screen.getByRole('menu', { name: 'Account' }));
     // Plan chip in the header carries the humanized plan label (creator -> Host+).
     expect(menu.getByText('Host+')).toBeInTheDocument();
-    ['Account information', 'Plan & billing', 'Verification', 'View public profile', 'Copy link', 'Help center', 'Talk to your account manager', 'Log out']
+    ['Account information', 'Plan & billing', 'Verification', 'View public profile', 'Copy link', 'Account manager', 'Log out']
       .forEach((label) => expect(menu.getByText(label)).toBeInTheDocument());
     // The old nav shortcuts no longer live in the menu — they're in the sidebar.
     expect(menu.queryByText('Upcoming Bookings')).toBeNull();
@@ -86,12 +86,18 @@ describe('dashboard topbar profile menu', () => {
     expect(screen.getByText('Log out')).toBeInTheDocument();
   });
 
-  it('surfaces verification status: pending shows a pill + Action needed', () => {
+  it('shows a verified tick by the name that links to KYC', () => {
+    renderLayout({ name: 'Host', plan: 'creator', role: 'host', kyc_status: 'approved' });
+    openProfile();
+    expect(screen.getByRole('link', { name: 'Verified host' }))
+      .toHaveAttribute('href', '/dashboard/kyc');
+  });
+
+  it('shows a not-verified tick by the name when KYC is not done', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', kyc_status: 'pending' });
     openProfile();
-    const menu = within(screen.getByRole('menu', { name: 'Account' }));
-    expect(menu.getByText('Verify to get paid')).toBeInTheDocument();  // header pill
-    expect(menu.getByText('Action needed')).toBeInTheDocument();       // row status
+    expect(screen.getByRole('link', { name: /Not verified/ }))
+      .toHaveAttribute('href', '/dashboard/kyc');
   });
 });
 
