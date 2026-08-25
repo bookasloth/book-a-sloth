@@ -130,12 +130,18 @@ const updateProfileRules = [
   // Image URLs are stored verbatim and rendered as <img src> on the public
   // profile + fed to the OG-card pipeline — must be http(s) only and bounded
   // (checkFalsy so '' / null clears the image without a 422).
+  // Length cap is 2048 (not 1000): hosts sign in only via Google, and their
+  // Google avatar (lh3.googleusercontent.com/…=s96-c) is stored as profile_image.
+  // Those signed URLs routinely exceed 1000 chars (seen up to ~1126), so a 1000
+  // cap 422'd every "Save Profile" for such hosts — the client re-sends the
+  // stored image on each save. 2048 stays under validator.js's own URL ceiling
+  // (2083) while accepting real Google URLs; the http(s) scheme guard is unchanged.
   body('profile_image').optional({ checkFalsy: true }).trim()
     .isURL({ require_protocol: true, protocols: ['http', 'https'] }).withMessage('Invalid profile image URL')
-    .isLength({ max: 1000 }),
+    .isLength({ max: 2048 }).withMessage('Profile image URL too long'),
   body('cover_image').optional({ checkFalsy: true }).trim()
     .isURL({ require_protocol: true, protocols: ['http', 'https'] }).withMessage('Invalid cover image URL')
-    .isLength({ max: 1000 }),
+    .isLength({ max: 2048 }).withMessage('Cover image URL too long'),
 ];
 
 // ── Service validators ────────────────────────────────────────
