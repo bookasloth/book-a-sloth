@@ -20,6 +20,9 @@ const { trackServer } = require('../utils/trackServer');
 const { resolveGuestId } = require('../utils/posthog');
 const { finalizeBookingCapture } = require('./bookingCapture');
 const { sendBookingConfirmation } = require('./bookingConfirmation');
+// Same GST/commission invoice generators the verify + webhook paths use, so a
+// reconciler-healed booking mints a real invoice instead of the dashboard fallback.
+const { generateBookingInvoice, generateCommissionInvoice } = require('../controllers/paymentController');
 
 // Only touch bookings whose order is old enough that the normal capture→webhook
 // path should already have completed — avoids racing a webhook that's in flight.
@@ -34,7 +37,7 @@ async function reconcile() {
 
   const { data: stuck } = await supabaseAdmin
     .from('bookings')
-    .select('id, razorpay_order_id, host_id, guest_id, guest_email, customer_total, commission_applied, commission_gst, platform_fee_amount, platform_fee_gst, services(title, price)')
+    .select('id, razorpay_order_id, host_id, guest_id, guest_email, customer_total, commission_applied, commission_gst, platform_fee_amount, platform_fee_gst, billing_details, services(title, price)')
     .eq('payment_status', 'unpaid')
     .not('razorpay_order_id', 'is', null)
     .neq('status', 'cancelled')
@@ -84,9 +87,21 @@ async function reconcile() {
       if (!paid) continue; // someone else won the transition
 
       healed++;
+      // Mint the GST tax invoice (platform fee) + commission invoice, exactly like
+      // the verify + webhook paths — then hand the tokenized ref to the confirmation
+      // email so the healed booking links a real invoice instead of falling back to
+      // the dashboard. Best-effort + idempotent (generateBookingInvoice no-ops when
+      // the invoice already exists). billing_details carries the buyer's GST details.
+      let invoiceRef = null;
+      try {
+        const inv = await generateBookingInvoice({ ...paid, billing_details: b.billing_details });
+        if (inv) invoiceRef = { id: inv.id, token: inv.access_token };
+      } catch (e) { console.error('booking reconcile: invoice error (non-fatal)', paid.id, e.message); }
+      try { await generateCommissionInvoice(paid); } catch (e) { console.error('booking reconcile: commission invoice error (non-fatal)', paid.id, e.message); }
+
       // Confirmation side-effects (calendar/Meet + BOOKING_CONFIRMED + reminder),
       // shared with verify + webhook so a reconciler-healed booking is confirmed too.
-      sendBookingConfirmation({ bookingId: paid.id, invoiceRef: null })
+      sendBookingConfirmation({ bookingId: paid.id, invoiceRef })
         .catch((e) => console.error('booking reconcile: confirmation error (non-fatal)', paid.id, e.message));
       // Mirror the webhook's analytics so booking_paid fires exactly once.
       try {
