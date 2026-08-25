@@ -130,6 +130,7 @@ const EditService  = lazy(() => import('./pages/services/EditService'));
 
 // Customer (guest) pages
 const GuestOverview    = lazy(() => import('./pages/GuestOverview'));
+const GuestInvoices    = lazy(() => import('./pages/GuestInvoices'));
 const CustomerBookings = lazy(() => import('./pages/CustomerBookings'));
 const CustomerProfile  = lazy(() => import('./pages/CustomerProfile'));
 const CustomerReviews  = lazy(() => import('./pages/CustomerReviews'));
@@ -292,6 +293,10 @@ function App() {
   const hideNavbar =
     chromeHidden ||
     location.pathname.startsWith('/dashboard') ||
+    // Guest console (/user/*) ships its own sidebar shell + topbar (GuestLayout),
+    // so the global navbar must not also render — otherwise two headers stack and
+    // the guest sees two identity blocks (account name vs booking name).
+    location.pathname.startsWith('/user') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/super-dashboard') ||
     location.pathname.startsWith('/vendor-register') ||
@@ -606,6 +611,7 @@ function App() {
           <Route element={<GuestRoute><GuestLayout /></GuestRoute>}>
             <Route path="/user" element={<GuestOverview />} />
             <Route path="/user/my-bookings" element={<CustomerBookings />} />
+            <Route path="/user/invoices" element={<GuestInvoices />} />
             <Route path="/user/profile" element={<CustomerProfile />} />
             <Route path="/user/reviews" element={<CustomerReviews />} />
             <Route path="/user/loyalty" element={<Loyalty />} />
