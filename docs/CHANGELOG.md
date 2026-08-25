@@ -4,6 +4,26 @@ All significant changes are recorded here by sprint. Most recent first.
 
 ---
 
+## [Sprint 11] Support Chat — Bolt-to-Human, Admin Inbox & Live Escalation — 2026-08-25
+
+### Added
+- Support-chat backend — per-participant threads, messages, Supabase Realtime broadcast per thread, and admin queue/reply/assign/resolve ops (#762)
+- Host + guest chat panels — one reusable `SupportChat` component (server derives host vs guest from the token), realtime bubbles, status banner, sidebar Chat item and guest Chat tab (#765, #767)
+- Admin support-chat inbox at `/admin/support/chat` — waiting/mine/all queue → transcript → reply (auto-claims the thread) / mark resolved, live over the same broadcast (#769)
+- Bolt auto-reply — the existing support bot answers support-chat messages while the thread is bot-handled, escalating to a human when it can't answer confidently (#770)
+- Escalation alerts — a throttled email to the team on every handoff, plus a live ring on any open admin dashboard (`support:admin` broadcast → WebAudio tone, toast, tab-title flash) during support hours (#772)
+- Unread badge on the Chat nav (host sidebar + guest tab) driven by a read-only `/support/unread` endpoint and a realtime `useSupportUnread` hook (#773)
+- Support hours (Mon–Fri, 10am–6pm IST) — off-hours escalation becomes a logged ticket with honest expectation-setting and no admin ring; a required detailed-problem intake collects context before a human is assigned (#778)
+
+### Changed
+- Chat messages render Bolt's markdown (bold, links, lists, code) instead of raw text; the shared `<Markdown>` component gained *italic* and bare-URL autolinking (http/https only). Added a typing indicator and scroll preservation so incoming messages never yank the reader down (#776)
+- The "Talk to a human" option is no longer a standing button — it surfaces only after Bolt has replied, nudging users to try the bot first (#778)
+
+### Fixed
+- Resolved-thread black hole — messaging a resolved thread now reopens it to the bot phase instead of posting into a thread the admin queue hides (#776)
+
+---
+
 ## [Sprint 10] Host Onboarding Redesign, Invoicing & Payout Infrastructure — 2026-08-12
 
 ### Added

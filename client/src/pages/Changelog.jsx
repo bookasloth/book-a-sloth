@@ -19,6 +19,16 @@ const TAG_STYLES = {
 // misplaced entry can't show out of order (see SORTED_RELEASES).
 const RELEASES = [
   {
+    date: 'Aug 25, 2026',
+    title: 'Chat with us, right inside your dashboard',
+    tags: ['New', 'Improved'],
+    points: [
+      'A new Chat tab for hosts and guests — ask Bolt anything and get an instant answer, now written like a real message with bold text, lists and tappable links instead of raw symbols.',
+      'Need a person? During support hours (Mon–Fri, 10am–6pm IST) we connect you to our team; outside them you can leave a detailed note and we’ll reply right there when we’re back — Bolt stays on hand the whole time.',
+      'A typing indicator shows when a reply’s on the way, and a small badge on the Chat tab lets you know the moment we answer.',
+    ],
+  },
+  {
     date: 'Aug 23, 2026',
     title: 'A faster path from sign-up to your first booking',
     tags: ['New', 'Improved'],
