@@ -15,6 +15,7 @@ const {
   getMe,
   updateMe,
   becomeHost,
+  cancelHosting,
   forgotPassword,
   resetPassword,
 } = require('../controllers/authController');
@@ -58,5 +59,8 @@ router.get('/me', protect, getMe);
 router.put('/me', protect, updateMe);
 // Unified identity: add hosting capability to the current account.
 router.post('/become-host', protect, becomeHost);
+// Reverse an in-progress hosting upgrade (un-become-host) — frees a guest who
+// backed out of onboarding from being forced into /vendor-register on login.
+router.post('/cancel-hosting', protect, cancelHosting);
 
 module.exports = router;

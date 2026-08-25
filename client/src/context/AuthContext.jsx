@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { analytics } from '../services/analytics';
-import { registerUser, loginUser, loginUnified as apiLoginUnified, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost } from '../services/api';
+import { registerUser, loginUser, loginUnified as apiLoginUnified, loginWithPhone as apiLoginWithPhone, verifyOtpLogin as apiVerifyOtpLogin, setUserPassword, getGoogleAuthUrl, getVendorGoogleUrl, getMe, becomeHost as apiBecomeHost, cancelHosting as apiCancelHosting } from '../services/api';
 import { getSupabase } from '../services/supabaseClient';
 
 const AuthContext = createContext();
@@ -187,6 +187,17 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  // Reverse an in-progress hosting upgrade (the un-become-host door). Demotes
+  // the current account back to a pure guest and drops it into traveling mode,
+  // so a guest who backed out of onboarding is no longer forced into
+  // /vendor-register on every login. Server refuses this for a completed host.
+  const cancelHosting = async () => {
+    const { data } = await apiCancelHosting();
+    updateUser(data);
+    setMode('traveling');
+    return data;
+  };
+
   const logout = async () => {
     // Route by capability BEFORE clearing: a host always lands back on the
     // host login door (never the generic guest /login); everyone else → home.
@@ -211,7 +222,7 @@ export const AuthProvider = ({ children }) => {
       registerAsUser,
       connectGoogleCalendar,
       startVendorGoogleAuth, adoptSession,
-      becomeHost,
+      becomeHost, cancelHosting,
       logout, updateUser,
     }}>
       {children}
