@@ -108,6 +108,40 @@ function ctaButton(label, url, brand) {
   </table>`;
 }
 
+// Persona avatars live alongside the other email assets on the CDN, named by
+// sender_key (e.g. .../personas/durga.png). Upload the 4 photos there; a missing
+// file just renders the img alt text.
+const PERSONA_BASE = 'https://company-assets.bookasloth.in/images/email/personas';
+
+/**
+ * Persona sign-off: square photo + name + role, above the footer. Rendered ONLY
+ * for persona-tagged mail (sender.key present); global-sender mail shows nothing.
+ * Name/role are parsed from the sender's from_name ("Durga | Operations, Book A
+ * Sloth" → name "Durga", role "Operations"). Square avatar per the 1px radius rule.
+ */
+function signatureBlock(sender) {
+  if (!sender || !sender.key) return '';
+  const raw = String(sender.fromName || '');
+  const name = (raw.split('|')[0] || 'Book A Sloth').trim();
+  const right = raw.includes('|') ? raw.split('|').slice(1).join('|') : '';
+  const role = right.replace(/,?\s*Book A Sloth\s*$/i, '').replace(/^,\s*/, '').trim();
+  const roleLine = role ? `${esc(role)} &middot; Book A Sloth` : 'Book A Sloth';
+  const avatar = `${PERSONA_BASE}/${esc(sender.key)}.png`;
+  return `<tr>
+    <td style="padding:2px 28px 22px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid ${D.border};"><tr>
+        <td style="padding-top:18px;vertical-align:middle;width:56px;">
+          <img src="${avatar}" width="44" height="44" alt="${esc(name)}" style="display:block;border:1px solid ${D.border};border-radius:1px;width:44px;height:44px;">
+        </td>
+        <td style="padding:18px 0 0 12px;vertical-align:middle;">
+          <div style="font-size:14px;font-weight:700;color:${D.dark};font-family:${D.font};">${esc(name)}</div>
+          <div style="font-size:12px;color:${D.muted};font-family:${D.font};">${roleLine}</div>
+        </td>
+      </tr></table>
+    </td>
+  </tr>`;
+}
+
 /** Document shell + card open. Returns the HTML up to (and including) the accent bar. */
 function shellOpen({ previewText, fromName, brand }) {
   return `<!DOCTYPE html>
@@ -128,8 +162,8 @@ function shellOpen({ previewText, fromName, brand }) {
         ${accentBar(brand)}`;
 }
 
-/** Body cell + card/document close, with the supplied footer row injected. */
-function shellClose({ bodyHtml, cta, footerRow }) {
+/** Body cell + card/document close, with the persona signature + footer injected. */
+function shellClose({ bodyHtml, cta, signature = '', footerRow }) {
   return `
         <tr>
           <td style="padding:34px 28px 18px;">
@@ -137,6 +171,7 @@ function shellClose({ bodyHtml, cta, footerRow }) {
             ${cta}
           </td>
         </tr>
+        ${signature}
         ${footerRow}
       </table>
     </td></tr>
@@ -148,7 +183,7 @@ function shellClose({ bodyHtml, cta, footerRow }) {
 
 // ── Customer layout ──────────────────────────────────────────────────────────
 
-function renderCustomerLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCategory, settings, data }) {
+function renderCustomerLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCategory, settings, data, sender }) {
   const brand    = settings.brand_color   || '#FE5100';
   const website  = settings.website_url   || 'https://bookasloth.com';
   const support  = settings.support_email || 'support@bookasloth.in';
@@ -181,12 +216,12 @@ function renderCustomerLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCa
 
   return shellOpen({ previewText, fromName, brand })
     + header
-    + shellClose({ bodyHtml, cta: ctaButton(ctaLabel, ctaUrl, brand), footerRow });
+    + shellClose({ bodyHtml, cta: ctaButton(ctaLabel, ctaUrl, brand), signature: signatureBlock(sender), footerRow });
 }
 
 // ── Vendor layout ────────────────────────────────────────────────────────────
 
-function renderVendorLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCategory, settings, data }) {
+function renderVendorLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCategory, settings, data, sender }) {
   const brand     = settings.brand_color   || '#FE5100';
   const fromName  = settings.from_name     || 'Book A Sloth';
   const year      = new Date().getFullYear();
@@ -205,7 +240,7 @@ function renderVendorLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCate
 
   return shellOpen({ previewText, fromName, brand })
     + header
-    + shellClose({ bodyHtml, cta: ctaButton(ctaLabel, ctaUrl, brand), footerRow });
+    + shellClose({ bodyHtml, cta: ctaButton(ctaLabel, ctaUrl, brand), signature: signatureBlock(sender), footerRow });
 }
 
 // ── Dispatcher ───────────────────────────────────────────────────────────────
@@ -235,11 +270,12 @@ function renderLayout({
   headerChip    = '',
   settings      = {},
   data          = {},
+  sender        = null,
 } = {}) {
   const args = {
     bodyHtml, previewText, ctaLabel, ctaUrl,
     emailCategory,
-    settings, data: data || {},
+    settings, data: data || {}, sender,
   };
   return audience === 'vendor' ? renderVendorLayout(args) : renderCustomerLayout(args);
 }

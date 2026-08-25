@@ -46,9 +46,9 @@ async function senderFor(template, settings) {
   if (key) {
     const map = await loadSenders();
     const s = map.get(key);
-    if (s) return { fromName: s.from_name, fromEmail: s.from_email, replyTo: s.reply_to || null };
+    if (s) return { fromName: s.from_name, fromEmail: s.from_email, replyTo: s.reply_to || null, key: s.sender_key };
   }
-  return { fromName: settings.from_name, fromEmail: settings.from_email, replyTo: null };
+  return { fromName: settings.from_name, fromEmail: settings.from_email, replyTo: null, key: null };
 }
 
 module.exports = { loadSenders, senderFor, clearCache };
