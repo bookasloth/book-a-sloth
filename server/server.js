@@ -168,6 +168,7 @@ app.use('/api/notifications', require('./routes/notificationRoutes'));         /
 app.use('/api/email',         require('./routes/emailRoutes')); // public unsubscribe (signed-token gated)
 app.use('/api/contact',       require('./routes/contactRoutes')); // public contact form → support email
 app.use('/api/bot',           require('./routes/botRoutes')); // public "Bolt 958" support bot (grounded on docs/)
+app.use('/api/support',       require('./routes/supportRoutes')); // host/guest support chat (Bolt → human handoff)
 app.use('/api/enterprise-lead', require('./routes/enterpriseLeadRoutes')); // public /enterprise page lead form → support email
 app.use('/api/events',        require('./routes/eventsRoutes')); // public intent-event sink → lead_events
 app.use('/api/opening',       require('./routes/openingRoutes')); // public "The Opening" launch event (ribbon cut + Inaugurators Wall)

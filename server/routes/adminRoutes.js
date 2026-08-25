@@ -142,6 +142,13 @@ router.get('/feedback',         requireAdmin('feedback.view'),   feedbackAdmin.l
 router.patch('/feedback/:id',   requireAdmin('feedback.manage'), feedbackAdmin.updateFeedbackStatus);
 
 // ── Bolt support console (knowledge gaps + FAQ layer) ──────────
+const supportAdmin = require('../controllers/supportAdminController');
+router.get('/support/queue',              requireAdmin('support.view'),   supportAdmin.queue);
+router.get('/support/thread/:id',         requireAdmin('support.view'),   supportAdmin.getThread);
+router.post('/support/thread/:id/reply',  requireAdmin('support.assign'), supportAdmin.reply);
+router.post('/support/thread/:id/assign', requireAdmin('support.assign'), supportAdmin.assign);
+router.post('/support/thread/:id/resolve', requireAdmin('support.assign'), supportAdmin.resolve);
+
 const botAdmin = require('../controllers/botAdminController');
 router.get('/bot/gaps',         requireAdmin('support.view'),   botAdmin.listGaps);
 router.patch('/bot/gaps/:id',   requireAdmin('support.assign'), botAdmin.updateGap);
