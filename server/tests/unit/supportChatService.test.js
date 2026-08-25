@@ -96,3 +96,15 @@ test('getOrCreateOpenThread returns an existing open thread without inserting', 
   expect(t.id).toBe('t9');
   expect(supabaseAdmin.from).toHaveBeenCalledTimes(1); // no insert
 });
+
+test('getOpenThread returns the open thread, never inserting', async () => {
+  supabaseAdmin.from.mockReturnValueOnce(makeChain({ data: [{ id: 't5', user_unread: 3 }] }));
+  const t = await chat.getOpenThread({ userId: 'u1' });
+  expect(t).toMatchObject({ id: 't5', user_unread: 3 });
+  expect(supabaseAdmin.from).toHaveBeenCalledTimes(1); // read only
+});
+
+test('getOpenThread returns null when there is no open thread', async () => {
+  supabaseAdmin.from.mockReturnValueOnce(makeChain({ data: [] }));
+  expect(await chat.getOpenThread({ userId: 'u1' })).toBeNull();
+});

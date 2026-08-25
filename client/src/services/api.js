@@ -152,6 +152,7 @@ export const botEscalateVerifyOtp = (data) => API.post('/bot/escalate/verify-otp
 export const botEscalateRating = (data) => API.post('/bot/escalate/rating', data);
 
 // ── Support chat (host/guest ↔ Bolt → human) ──────────────────
+export const getSupportUnread   = ()         => API.get('/support/unread');
 export const getSupportThread   = ()         => API.get('/support/thread');
 export const getSupportMessages = (id)       => API.get(`/support/thread/${id}/messages`);
 export const sendSupportMessage = (id, data) => API.post(`/support/thread/${id}/messages`, data);

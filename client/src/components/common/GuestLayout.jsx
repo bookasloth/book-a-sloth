@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { CalendarDays, User, Star, Gift, Briefcase, MessageCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { isHost } from "../../utils/roleRoutes";
+import useSupportUnread from "../../hooks/useSupportUnread";
 import toast from "react-hot-toast";
 
 // Guest-space shell (/user/*). Gives the traveler side its own consistent home:
@@ -26,6 +27,7 @@ const GuestLayout = () => {
   const { user, becomeHost } = useAuth();
   const navigate = useNavigate();
   const canHost = isHost(user);
+  const chatUnread = useSupportUnread();
 
   // Add hosting to the CURRENT account, then enter the existing onboarding.
   // Mirrors Navbar.startHosting so both doors behave identically.
@@ -61,6 +63,11 @@ const GuestLayout = () => {
                   <>
                     <Icon size={16} />
                     {label}
+                    {to === "/user/chat" && chatUnread > 0 && (
+                      <span className="ml-0.5 grid min-w-[18px] place-items-center rounded-full bg-[#FE5100] px-1 text-[10px] font-bold leading-[18px] text-white">
+                        {chatUnread > 9 ? "9+" : chatUnread}
+                      </span>
+                    )}
                     {isActive && (
                       <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[#FE5100]" />
                     )}
