@@ -423,17 +423,17 @@ const TEMPLATES = [
     cta_label: 'Set up your page', cta_url: '{{dashboard_url}}',
   }; })(),
 
-  (() => { const t = themeForCategory('Account Update'); return {
-    event_key: 'SUBSCRIPTION_EXPIRING', audience: 'all', category: 'Subscription',
-    name: 'Premium Expiring', subject: 'Your {{plan_name}} plan expires soon',
-    preview_text: 'Renew before {{expiry_date}} to keep your features.',
-    email_category: 'Account Update',
-    email_reason: 'You are receiving this email because your subscription is due to expire soon.',
+  (() => { const t = themeForCategory('Renewal'); return {
+    event_key: 'SUBSCRIPTION_EXPIRING', audience: 'all', category: 'Subscription', sender_key: 'sujata',
+    name: 'Premium Expiring', subject: 'Your {{plan_name}} plan renews in {{days_left}} days',
+    preview_text: "Keep your 0% commission — don't slip back to 5%.",
+    email_category: 'Renewal',
+    email_reason: 'You are receiving this email because your Book A Sloth subscription is due to renew soon.',
     html_content:
-      eyebrow(t.text, 'Subscription') + h('Your plan expires soon') +
-      lead('Renew to keep your premium features without interruption.') +
-      C.banner(t, { title: 'Expires {{expiry_date}}', sub: '{{plan_name}} plan' }),
-    cta_label: 'Renew now', cta_url: '{{dashboard_url}}',
+      C.heroBand(t, { kick: 'Renews in {{days_left}} days', h2: 'Keep your 0%.', sub: "Don't slip back to 5% commission, {{first_name}}." }) +
+      lead('Your <strong>{{plan_name}}</strong> plan renews on <strong>{{expiry_date}}</strong>. Stay on it and every booking stays commission-free.') +
+      lead('If it lapses, you drop to Starter — 5% per booking comes back.'),
+    cta_label: 'Renew {{plan_name}}', cta_url: '{{renew_url}}',
   }; })(),
 
   (() => { const t = themeForCategory('Payment Receipt'); return {
@@ -524,6 +524,22 @@ const TEMPLATES = [
       lead('{{admin_response}}') +
       note('Have more to share? Open Feedback in your dashboard any time.'),
     cta_label: 'Open my feedback', cta_url: '{{dashboard_url}}',
+  }; })(),
+
+  // ── Booking — Abandoned recovery ──────────────────────────────────────────────
+
+  (() => { const t = themeForCategory('Held Slot'); return {
+    event_key: 'BOOKING_ABANDONED_CUSTOMER', audience: 'all', category: 'Booking', sender_key: 'tithi',
+    name: 'Abandoned Booking — Recover', subject: 'Your slot with {{vendor_name}} is still held',
+    preview_text: '{{service_name}} — finish in one tap.',
+    email_category: 'Held Slot',
+    email_reason: 'You are receiving this email because you started a booking on Book A Sloth.',
+    html_content:
+      eyebrow(t.text, 'Almost done') + h('Finish your booking, {{first_name}}') +
+      lead("You were almost done booking <strong>{{service_name}}</strong> with {{vendor_name}}. We're holding your slot — but not for long, it'll open back up to others soon.") +
+      C.heroDate(t, { day: '{{booking_day}}', mon: '{{booking_month}}', year: '{{booking_year}}', title: '{{service_name}}', time: '{{booking_time}}', sub: 'with {{vendor_name}}' }) +
+      C.countdown(t, { lead: 'Held for you', big: 'A few more minutes' }),
+    cta_label: 'Complete your booking', cta_url: '{{resume_url}}',
   }; })(),
 
   // ── Marketing ─────────────────────────────────────────────────────────────────
