@@ -1,0 +1,34 @@
+import { useState } from 'react';
+
+export default function DeckControls({ index, total, onPrev, onNext, onJump, onToggleOverview, source }) {
+  const [copied, setCopied] = useState(false);
+  const fullscreen = () => { const el = document.documentElement; if (!document.fullscreenElement) el.requestFullscreen?.(); else document.exitFullscreen?.(); };
+  const share = async () => {
+    const url = window.location.href;
+    try { if (navigator.share) { await navigator.share({ title: 'Book a Sloth', url }); return; } } catch { /* cancelled */ }
+    try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* ignore */ }
+  };
+  return (
+    <>
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        <button onClick={onToggleOverview} className="btn btn--outline !px-3 !py-2 text-sm" aria-label="Slide overview">☰</button>
+        <button onClick={share} className="btn btn--outline !px-3 !py-2 text-sm" aria-label="Share link">{copied ? 'Copied!' : 'Share'}</button>
+        <button onClick={fullscreen} className="btn btn--outline !px-3 !py-2 text-sm" aria-label="Toggle fullscreen">⤢</button>
+      </div>
+      {source === 'fallback' && (
+        <div className="absolute top-4 left-4 z-20 rounded-md bg-sand px-2 py-1 text-[11px] text-muted">sample data</div>
+      )}
+      <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3">
+        <button onClick={onPrev} disabled={index === 0} className="btn btn--outline !p-2 disabled:opacity-30" aria-label="Previous slide">‹</button>
+        <div className="flex items-center gap-1.5" role="tablist" aria-label="Slides">
+          {Array.from({ length: total }).map((_, i) => (
+            <button key={i} onClick={() => onJump(i)} aria-label={`Go to slide ${i + 1}`} aria-selected={i === index}
+              className="h-2 rounded-full transition-all"
+              style={{ width: i === index ? 22 : 8, background: i === index ? '#FE5100' : '#d7ccbe' }} />
+          ))}
+        </div>
+        <button onClick={onNext} disabled={index === total - 1} className="btn btn--outline !p-2 disabled:opacity-30" aria-label="Next slide">›</button>
+      </div>
+    </>
+  );
+}
