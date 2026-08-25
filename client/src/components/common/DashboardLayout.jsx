@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { NavLink, Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
-  CalendarDays, Clock, Menu, X,
-  ExternalLink, LogOut, Headset, ChevronDown, Sparkles, Settings,
-  Bell, LifeBuoy,
+  Menu, X, ExternalLink, LogOut, Headset, ChevronDown, Bell, LifeBuoy,
+  User, CreditCard, ShieldCheck, Check, Copy,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
@@ -193,9 +192,28 @@ const NotifBell = () => {
 /** Profile avatar — anchored menu on desktop, bottom sheet on mobile. */
 const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
   const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const ref = useRef(null);
   const isMobile = useIsMobile();
   const category = humanizeCategory(user?.category || user?.primary_category);
+  const close = () => setOpen(false);
+
+  // Verification state drives the header pill + the row's status. Canonical
+  // states are approved/verified; anything else that's set means "in progress".
+  const kyc = (user?.kyc_status || '').toLowerCase();
+  const kycDone = ['approved', 'verified'].includes(kyc);
+  const kycPending = Boolean(kyc) && !kycDone;
+
+  // bookasloth.com is the canonical public domain (never .in).
+  const publicUrl = user?.username ? `https://bookasloth.com/${user.username}` : null;
+  const copyLink = async () => {
+    if (!publicUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch { /* clipboard blocked — no-op */ }
+  };
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
@@ -233,75 +251,89 @@ const ProfileMenu = ({ user, plan, planStyle, initial, logout }) => {
         <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', open && 'rotate-180')} />
       </button>
 
-      <MenuSurface open={open} onClose={() => setOpen(false)} isMobile={isMobile} title="Account" width="w-72">
-        {/* Top block: photo + name + @username */}
+      <MenuSurface open={open} onClose={close} isMobile={isMobile} title="Account" width="w-72">
+        {/* Identity: photo + name + @username + plan chip (+ verify pill) */}
         <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-4">
           <Avatar size="h-12 w-12 text-base" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold text-gray-900">{user?.name || 'Host'}</p>
             <p className="truncate text-xs text-gray-500">{user?.username ? `@${user.username}` : category}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', planStyle.bg, planStyle.text)}>
+                {planStyle.label}
+              </span>
+              {kycPending && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                  Verify to get paid
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Membership button */}
-        <div className="px-4 py-3">
-          <Link
-            to="/dashboard/upgrade"
-            onClick={() => setOpen(false)}
-            className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-primary/10 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
-          >
-            <Sparkles className="h-4 w-4 shrink-0" strokeWidth={2} />
-            You are a {planStyle.label} Member
+        {/* Account */}
+        <div className="border-t border-gray-100 py-1.5">
+          <Link to="/dashboard/profile" onClick={close} className={MENU_ROW}>
+            <User className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+            <span className="flex-1">Account information</span>
+          </Link>
+          <Link to="/dashboard/upgrade" onClick={close} className={MENU_ROW}>
+            <CreditCard className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+            <span className="flex-1">Plan &amp; billing</span>
+          </Link>
+          <Link to="/dashboard/kyc" onClick={close} className={MENU_ROW}>
+            <ShieldCheck className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+            <span className="flex-1">Verification</span>
+            {kycDone ? (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                <Check className="h-3.5 w-3.5" strokeWidth={2.4} />Verified
+              </span>
+            ) : kycPending ? (
+              <span className="text-[11px] font-semibold text-amber-600">Action needed</span>
+            ) : null}
           </Link>
         </div>
 
-        {/* Host shortcuts */}
+        {/* Your page */}
         <div className="border-t border-gray-100 py-1.5">
-          <NavLink to="/dashboard/bookings" onClick={() => setOpen(false)} className={MENU_ROW}>
-            <CalendarDays className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-            <span className="flex-1">Upcoming Bookings</span>
-          </NavLink>
-          <NavLink to="/dashboard/availability" onClick={() => setOpen(false)} className={MENU_ROW}>
-            <Clock className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-            <span className="flex-1">Availability</span>
-          </NavLink>
           {user?.username && (
-            <a
-              href={`/${user.username}`}
-              target="_blank"
-              rel="noreferrer"
-              onClick={() => setOpen(false)}
-              className={MENU_ROW}
-            >
+            <a href={`/${user.username}`} target="_blank" rel="noreferrer" onClick={close} className={MENU_ROW}>
               <ExternalLink className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-              <span className="flex-1">View Public Profile</span>
+              <span className="flex-1">View public profile</span>
             </a>
           )}
-          <a
-            href="/bolt958"
-            target="_blank"
-            rel="noreferrer"
-            onClick={() => setOpen(false)}
-            className={MENU_ROW}
-          >
+          {publicUrl && (
+            <button type="button" onClick={copyLink} className={MENU_ROW}>
+              {copied
+                ? <Check className="h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.4} />
+                : <Copy className="h-4 w-4 shrink-0" strokeWidth={1.7} />}
+              <span className="flex-1">{copied ? 'Copied' : 'Copy link'}</span>
+            </button>
+          )}
+        </div>
+
+        {/* Help */}
+        <div className="border-t border-gray-100 py-1.5">
+          <Link to="/help" onClick={close} className={MENU_ROW}>
+            <LifeBuoy className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+            <span className="flex-1">Help center</span>
+          </Link>
+          <a href="/bolt958" target="_blank" rel="noreferrer" onClick={close} className={MENU_ROW}>
             <Headset className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-            <span className="flex-1">Talk to Account Manager</span>
+            <span className="flex-1">Talk to your account manager</span>
+            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-gray-300" strokeWidth={1.8} />
           </a>
-          <NavLink to="/dashboard/profile" onClick={() => setOpen(false)} className={MENU_ROW}>
-            <Settings className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-            <span className="flex-1">Settings</span>
-          </NavLink>
         </div>
 
         {/* Logout */}
         <div className="border-t border-gray-100 py-1.5">
           <button
             type="button"
-            onClick={() => { setOpen(false); logout?.(); }}
+            onClick={() => { close(); logout?.(); }}
             className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-red-50"
           >
             <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-            <span className="flex-1">Logout</span>
+            <span className="flex-1">Log out</span>
           </button>
         </div>
       </MenuSurface>

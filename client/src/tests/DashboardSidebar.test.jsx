@@ -65,26 +65,33 @@ describe('dashboard topbar profile menu', () => {
     expect(screen.getByText('S')).toBeInTheDocument();
   });
 
-  it('offers the membership CTA + host shortcuts', () => {
+  it('offers account actions (Hostinger-style sections)', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
     openProfile();
-    // Scope to the menu surface — some labels (e.g. Availability) also appear in
-    // the sidebar nav.
     const menu = within(screen.getByRole('menu', { name: 'Account' }));
-    // Membership CTA carries the humanized plan label (creator -> Host+).
-    expect(menu.getByText(/Host\+ Member/)).toBeInTheDocument();
-    ['Upcoming Bookings', 'Availability', 'View Public Profile', 'Talk to Account Manager', 'Settings'].forEach((label) => {
-      expect(menu.getByText(label)).toBeInTheDocument();
-    });
+    // Plan chip in the header carries the humanized plan label (creator -> Host+).
+    expect(menu.getByText('Host+')).toBeInTheDocument();
+    ['Account information', 'Plan & billing', 'Verification', 'View public profile', 'Copy link', 'Help center', 'Talk to your account manager', 'Log out']
+      .forEach((label) => expect(menu.getByText(label)).toBeInTheDocument());
+    // The old nav shortcuts no longer live in the menu — they're in the sidebar.
+    expect(menu.queryByText('Upcoming Bookings')).toBeNull();
   });
 
-  it('holds View Public Profile + Logout (moved out of the sidebar)', () => {
+  it('holds View public profile + Log out (moved out of the sidebar)', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
     // Not present until the menu is opened — they no longer live in the sidebar.
-    expect(screen.queryByText('Logout')).toBeNull();
+    expect(screen.queryByText('Log out')).toBeNull();
     openProfile();
-    expect(screen.getByText('View Public Profile')).toBeInTheDocument();
-    expect(screen.getByText('Logout')).toBeInTheDocument();
+    expect(screen.getByText('View public profile')).toBeInTheDocument();
+    expect(screen.getByText('Log out')).toBeInTheDocument();
+  });
+
+  it('surfaces verification status: pending shows a pill + Action needed', () => {
+    renderLayout({ name: 'Host', plan: 'creator', role: 'host', kyc_status: 'pending' });
+    openProfile();
+    const menu = within(screen.getByRole('menu', { name: 'Account' }));
+    expect(menu.getByText('Verify to get paid')).toBeInTheDocument();  // header pill
+    expect(menu.getByText('Action needed')).toBeInTheDocument();       // row status
   });
 });
 
@@ -113,8 +120,8 @@ describe('mobile — popups + nav drawer', () => {
     renderLayout({ name: 'Host', plan: 'creator', role: 'host', username: 'hosty' });
     fireEvent.click(screen.getByLabelText('Profile menu'));
     expect(screen.getByLabelText('Close')).toBeInTheDocument();     // sheet chrome
-    expect(screen.getByText('View Public Profile')).toBeInTheDocument();
-    expect(screen.getByText('Logout')).toBeInTheDocument();
+    expect(screen.getByText('View public profile')).toBeInTheDocument();
+    expect(screen.getByText('Log out')).toBeInTheDocument();
   });
 
   it('the nav hamburger opens the drawer and Esc closes it', () => {
