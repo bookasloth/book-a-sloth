@@ -1,33 +1,38 @@
 /**
- * Drift guard: the client MoR mirror must produce the same published /host-fees §4
- * numbers as the server (server/tests/unit/pricingEngineMor.test.js). If the two
- * formulas diverge, these paisa-level assertions fail.
+ * Drift guard: the calculator must reproduce the published /host-fees §5 numbers
+ * to the paisa. Guest = price + ₹10 + GST(₹10); host = price − commission −
+ * gateway(~2% of the whole charge) − TDS(1%) − TCS(1%). If it drifts from the
+ * page, these assertions fail.
  */
 import { describe, it, expect } from 'vitest';
 import { computeMorBreakdown, monthlyForPlan, CALC_PLANS } from '../morPricing';
 
-const HOSTPLUS = { bookingCharge: 10, commissionRate: 0, pgRate: 0.025, absorbsPg: false };
-const STARTER  = { bookingCharge: 10, commissionRate: 0.05, pgRate: 0.025, absorbsPg: true };
+const HOSTPLUS = { bookingCharge: 10, commissionRate: 0, pgRate: 0.02, absorbsPg: false };
+const STARTER  = { bookingCharge: 10, commissionRate: 0.05, pgRate: 0.02, absorbsPg: false };
 
-describe('computeMorBreakdown mirrors the server (E = ₹1,000, 18%)', () => {
-  it('Host+ / Studio: guest ₹1191.80, host keeps ₹970.20', () => {
+describe('computeMorBreakdown matches /host-fees §5 (E = ₹1,000, 18%)', () => {
+  it('Host+ / Studio: guest ₹1,011.80, host keeps ₹959.76', () => {
     const b = computeMorBreakdown({ targetEarning: 1000, ...HOSTPLUS });
-    expect(b.guestTotal).toBe(1191.8);
-    expect(b.pgCharge).toBe(29.8);
-    expect(b.hostConsideration).toBe(970.2);
+    expect(b.guestTotal).toBe(1011.8);
+    expect(b.gstAmount).toBe(1.8);       // GST on the ₹10 fee only
+    expect(b.pgCharge).toBe(20.24);      // ~2% of the whole charge
+    expect(b.tds).toBe(10);
+    expect(b.tcs).toBe(10);
+    expect(b.hostConsideration).toBe(959.76);
   });
 
-  it('Starter: same guest price, host keeps ₹950.00', () => {
+  it('Starter: same guest price, host keeps ₹909.76 (bears commission + PG)', () => {
     const b = computeMorBreakdown({ targetEarning: 1000, ...STARTER });
-    expect(b.guestTotal).toBe(1191.8);
+    expect(b.guestTotal).toBe(1011.8);
     expect(b.commission).toBe(50);
-    expect(b.pgCharge).toBe(0);
-    expect(b.hostConsideration).toBe(950);
+    expect(b.pgCharge).toBe(20.24);
+    expect(b.hostConsideration).toBe(909.76);
   });
 
   it('free service (E=0) → all zeros', () => {
     const b = computeMorBreakdown({ targetEarning: 0, ...HOSTPLUS });
     expect(b.guestTotal).toBe(0);
+    expect(b.tds).toBe(0);
     expect(b.hostConsideration).toBe(0);
   });
 });
@@ -36,16 +41,17 @@ describe('monthlyForPlan', () => {
   it('nets the subscription off gross monthly income', () => {
     const starter = monthlyForPlan(CALC_PLANS[0], 1000, 10);
     const hostplus = monthlyForPlan(CALC_PLANS[1], 1000, 10);
-    expect(starter.netMonthly).toBe(9500);        // 950 × 10 − 0
-    expect(hostplus.netMonthly).toBe(9473);        // 970.20 × 10 − 229
+    expect(starter.netMonthly).toBe(9097.6);       // 909.76 × 10 − 0
+    expect(hostplus.netMonthly).toBe(9368.6);      // 959.76 × 10 − 229
   });
 
   it('Host+ overtakes Starter once volume is high enough', () => {
-    // At 10 bookings Starter still wins; by 20 Host+ is ahead — the upgrade story.
-    const at10 = { s: monthlyForPlan(CALC_PLANS[0], 1000, 10).netMonthly, h: monthlyForPlan(CALC_PLANS[1], 1000, 10).netMonthly };
-    const at20 = { s: monthlyForPlan(CALC_PLANS[0], 1000, 20).netMonthly, h: monthlyForPlan(CALC_PLANS[1], 1000, 20).netMonthly };
-    expect(at10.s).toBeGreaterThan(at10.h);
-    expect(at20.h).toBeGreaterThan(at20.s);
+    // Host+ saves the 5% commission (₹50 on ₹1,000) per booking, so its ₹229/mo
+    // pays for itself around 5 bookings: Starter wins at 4, Host+ from 5 up.
+    const at4 = { s: monthlyForPlan(CALC_PLANS[0], 1000, 4).netMonthly, h: monthlyForPlan(CALC_PLANS[1], 1000, 4).netMonthly };
+    const at5 = { s: monthlyForPlan(CALC_PLANS[0], 1000, 5).netMonthly, h: monthlyForPlan(CALC_PLANS[1], 1000, 5).netMonthly };
+    expect(at4.s).toBeGreaterThan(at4.h);
+    expect(at5.h).toBeGreaterThan(at5.s);
   });
 
   it('flags a Starter earning above the ₹5,000 cap', () => {
