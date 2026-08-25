@@ -4,6 +4,26 @@ import toast from 'react-hot-toast';
 import { getSupabase } from '../../services/supabaseClient';
 import { getSupportThread, sendSupportMessage, escalateSupport, markSupportRead } from '../../services/api';
 import { cn } from '../dashboard/ui/cn';
+import Markdown from '../common/Markdown';
+
+// Tame the article-scale <Markdown> styles down to chat-bubble size: no giant
+// headings, tight paragraph/list spacing, no dangling last-child margin.
+const CHAT_MD = 'text-[13.5px] leading-relaxed [&>div]:text-[13.5px] [&>div]:text-gray-800 '
+  + '[&_p]:mb-1.5 [&_p:last-child]:mb-0 [&_ul]:my-1 [&_ul]:pl-4 [&_ol]:my-1 [&_ol]:pl-4 [&_li]:mb-0.5 '
+  + '[&_h1]:text-sm [&_h1]:mt-0 [&_h1]:mb-1 [&_h2]:text-sm [&_h2]:mt-2 [&_h2]:mb-1 [&_h3]:text-[13px] [&_h3]:mt-2 [&_h3]:mb-0.5';
+
+// Three-dot "Bolt is typing" bubble, shown while the async bot reply is in flight.
+const TypingBubble = () => (
+  <div className="flex max-w-[82%] gap-2" role="status" aria-label="Bolt is typing">
+    <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-violet-100 text-[11px]">🦥</div>
+    <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-violet-50 px-3 py-2.5">
+      {[0, 1, 2].map((i) => (
+        <span key={i} className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-400"
+          style={{ animationDelay: `${i * 150}ms` }} />
+      ))}
+    </div>
+  </div>
+);
 
 // One reusable support-chat panel. Host and guest both use it — the server derives
 // host vs guest from the auth token, so the client is identical. Live updates arrive
@@ -38,7 +58,9 @@ const Bubble = ({ m }) => {
       <div className={cn('rounded-2xl px-3 py-2 text-[13.5px] leading-relaxed',
         mine ? 'rounded-tr-sm bg-primary text-white' : isBot ? 'rounded-tl-sm bg-violet-50 text-gray-800' : 'rounded-tl-sm bg-[#f0ede6] text-gray-800')}>
         {!mine && !isBot && m.sender_name && <p className="mb-0.5 text-[11px] font-semibold text-primary">{m.sender_name}</p>}
-        <p className="whitespace-pre-wrap break-words">{m.body}</p>
+        {isBot
+          ? <div className={CHAT_MD}><Markdown source={m.body} /></div>
+          : <p className="whitespace-pre-wrap break-words">{m.body}</p>}
         <p className={cn('mt-1 text-[10px]', mine ? 'text-white/60' : 'text-gray-400')}>{fmtTime(m.created_at)}</p>
       </div>
     </div>
@@ -52,7 +74,16 @@ export default function SupportChat() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
+  const scrollRef = useRef(null);
+  const atBottomRef = useRef(true);
   const chanRef = useRef(null);
+
+  // Track whether the user is pinned to the bottom, so incoming messages don't
+  // yank them down mid-scroll while they read history.
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (el) atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  };
 
   const append = useCallback((m) => {
     setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
@@ -105,7 +136,19 @@ export default function SupportChat() {
     };
   }, [thread?.id, append]);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  // Auto-scroll to newest only when already at the bottom (or it's the user's own
+  // send — see below), never interrupting a scroll-up through history.
+  useEffect(() => {
+    if (atBottomRef.current) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Bot is "typing" while we're in the bot phase and the last message is the
+  // user's — i.e. the async Bolt reply is on its way.
+  const last = messages[messages.length - 1];
+  const botTyping = thread?.status === 'bot' && last?.sender === 'user';
+  useEffect(() => {
+    if (botTyping && atBottomRef.current) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [botTyping]);
 
   const send = async (e) => {
     e?.preventDefault();
@@ -113,6 +156,7 @@ export default function SupportChat() {
     if (!body || !thread) return;
     setInput('');
     setSending(true);
+    atBottomRef.current = true; // sending your own message always scrolls to it
     try {
       const { data: msg } = await sendSupportMessage(thread.id, { body });
       append(msg);
@@ -157,7 +201,7 @@ export default function SupportChat() {
       {banner && <div className={cn('mx-3 mt-3 rounded-xl border px-3 py-2 text-[12.5px] font-medium', banner.cls)}>{banner.text}</div>}
 
       {/* Messages */}
-      <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-3">
+      <div ref={scrollRef} onScroll={onScroll} className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-3">
         {loading ? (
           <div className="m-auto flex flex-col items-center gap-2 text-gray-400">
             <ShieldQuestion className="h-6 w-6 animate-pulse" />
@@ -166,6 +210,7 @@ export default function SupportChat() {
         ) : (
           <>
             {messages.map((m) => <Bubble key={m.id} m={m} />)}
+            {botTyping && <TypingBubble />}
             <div ref={bottomRef} />
           </>
         )}

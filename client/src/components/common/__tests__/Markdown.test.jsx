@@ -28,3 +28,30 @@ describe('Markdown externalLinks prop', () => {
     expect(c.textContent).toContain('x');
   });
 });
+
+describe('Markdown inline formatting', () => {
+  it('renders *italic* as <em>', () => {
+    const c = html(<Markdown source="this is *very* important" />);
+    expect(c.querySelector('em')?.textContent).toBe('very');
+  });
+  it('keeps **bold** as <strong>, not two italics', () => {
+    const c = html(<Markdown source="**payout** works" />);
+    expect(c.querySelector('strong')?.textContent).toBe('payout');
+    expect(c.querySelector('em')).toBeNull();
+  });
+  it('autolinks a bare http(s) URL', () => {
+    const c = html(<Markdown source="Docs at https://bookasloth.com/help now" />);
+    const a = c.querySelector('a[href="https://bookasloth.com/help"]');
+    expect(a).not.toBeNull();
+    expect(a.getAttribute('target')).toBe('_blank');
+  });
+  it('does not swallow the trailing period after a bare URL', () => {
+    const c = html(<Markdown source="See https://bookasloth.com." />);
+    expect(c.querySelector('a')?.getAttribute('href')).toBe('https://bookasloth.com');
+    expect(c.textContent).toContain('.');
+  });
+  it('never autolinks a javascript: URL', () => {
+    const c = html(<Markdown source="click javascript:alert(1) now" />);
+    expect(c.querySelector('a')).toBeNull();
+  });
+});

@@ -21,7 +21,7 @@ vi.mock('../services/api', () => ({
 }));
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }));
 
-import { sendSupportMessage, escalateSupport } from '../services/api';
+import { getSupportThread, sendSupportMessage, escalateSupport } from '../services/api';
 
 beforeAll(() => { window.HTMLElement.prototype.scrollIntoView = vi.fn(); });
 
@@ -49,5 +49,24 @@ describe('SupportChat', () => {
     await waitFor(() => expect(screen.getByText(/connecting you to the book a sloth team/i)).toBeInTheDocument());
     // Once waiting, the "talk to a human" button is gone.
     expect(screen.queryByRole('button', { name: /talk to a human/i })).toBeNull();
+  });
+
+  it('renders bot markdown as formatting, not raw asterisks/link syntax', async () => {
+    getSupportThread.mockResolvedValueOnce({ data: {
+      thread: { id: 't1', status: 'bot' },
+      messages: [{ id: 'm1', sender: 'bot', body: 'Your **payout** clears in 2 days. See [help](https://bookasloth.com/help).', created_at: '2026-08-25T10:00:00Z' }],
+    } });
+    const { container } = render(<SupportChat />);
+    await waitFor(() => expect(container.querySelector('strong')?.textContent).toBe('payout'));
+    expect(container.querySelector('a[href="https://bookasloth.com/help"]')).not.toBeNull();
+    expect(container.textContent).not.toContain('**');
+  });
+
+  it('shows a "Bolt is typing" indicator after the user sends, in the bot phase', async () => {
+    render(<SupportChat />);
+    await waitFor(() => expect(screen.getByText('Hi, I am Bolt')).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'help me' } });
+    fireEvent.click(screen.getByLabelText('Send'));
+    await waitFor(() => expect(screen.getByRole('status', { name: /bolt is typing/i })).toBeInTheDocument());
   });
 });
