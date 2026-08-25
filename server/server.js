@@ -307,6 +307,43 @@ setInterval(async () => {
   catch (err) { console.error('Pending-hold reaper cron error:', err.message); }
 }, PENDING_REAP_INTERVAL_MIN * 60 * 1000);
 
+// Abandoned-payment recovery: email guests who started a paid booking and didn't
+// finish, while their slot is still held (before the reaper cancels it). Every
+// 5 min; deduped per booking in the service.
+setInterval(async () => {
+  try {
+    const { processAbandonedRecovery } = require('./services/abandonedRecovery');
+    await runLocked('abandoned-recovery', () => processAbandonedRecovery(), { leaseMs: 10 * 60 * 1000 });
+  } catch (err) { console.error('Abandoned-recovery cron error:', err.message); }
+}, 5 * 60 * 1000);
+
+// Subscription renewal nudge: email paid hosts at T-7 / T-1 before their plan
+// lapses. Every 6h; fires on exact day-counts and dedupes per host in the service.
+setInterval(async () => {
+  try {
+    const { processSubscriptionExpiry } = require('./services/subscriptionExpiry');
+    await runLocked('subscription-expiry', () => processSubscriptionExpiry(), { leaseMs: 6 * 60 * 60 * 1000 });
+  } catch (err) { console.error('Subscription-expiry cron error:', err.message); }
+}, 6 * 60 * 60 * 1000);
+
+// Guest → host invite: email repeat guests (>= N completed bookings, not yet a
+// host) to start hosting. Daily; deduped per guest in the service.
+setInterval(async () => {
+  try {
+    const { processGuestHostInvites } = require('./services/guestHostInvite');
+    await runLocked('guest-host-invite', () => processGuestHostInvites(), { leaseMs: 24 * 60 * 60 * 1000 });
+  } catch (err) { console.error('Guest→host invite cron error:', err.message); }
+}, 24 * 60 * 60 * 1000);
+
+// Profile completion: pull stalled hosts (claimed URL, never published) back to
+// publish. Every 12h; capped/deduped per host in the service.
+setInterval(async () => {
+  try {
+    const { processProfileCompletion } = require('./services/profileCompletion');
+    await runLocked('profile-completion', () => processProfileCompletion(), { leaseMs: 12 * 60 * 60 * 1000 });
+  } catch (err) { console.error('Profile-completion cron error:', err.message); }
+}, 12 * 60 * 60 * 1000);
+
 setInterval(async () => {
   try { await runLocked('otp-cleanup', () => cleanupOtps(), { leaseMs: 2 * 60 * 60 * 1000 }); }
   catch (err) { console.error('OTP cleanup error:', err.message); }

@@ -32,6 +32,8 @@ const EMAIL_ONLY_EVENTS = [
   ['VENDOR_WELCOME', 'Host Welcome'],
   ['KYC_EARN_NUDGE', 'First Earning — Payout Nudge'],
   ['UPGRADE_COMMISSION_NUDGE', 'Upgrade — Keep Every Rupee'],
+  ['BOOKING_ABANDONED_CUSTOMER', 'Abandoned Booking — Recover'],
+  ['GUEST_TO_HOST_INVITE', 'Guest → Host Invite'],
   ['BIRTHDAY', 'Birthday'],
   ['ACCOUNT_ANNIVERSARY', 'Account Anniversary'],
   ['NEWSLETTER_WELCOME', 'Newsletter Welcome'],
