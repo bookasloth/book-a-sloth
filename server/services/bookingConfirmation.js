@@ -174,6 +174,10 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
     });
   }
 
+  // 2a-iv) Free host crossing the commission threshold → email upgrade nudge
+  //        (Sujata). Free-plan only, deduped, never throws.
+  await require('./upgradeNudge').maybeSendUpgradeNudge({ host, booking });
+
   // 2a-iii) Real-time CRM: capture the guest as a lead (source guest_booking) on
   //         every paid booking. Idempotent by phone/email; never throws.
   await require('./crm/leadService').safeUpsertLead(

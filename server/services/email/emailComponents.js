@@ -106,4 +106,55 @@ function celebration(theme, { iconUrl, title } = {}) {
   </td></tr></table>`;
 }
 
-module.exports = { statusTags, otpBox, heroDate, amountRow, infoCard, countdown, banner, celebration, TONES, FONT };
+// ── Marketing blocks (conversion-centered design; CDN icons, no emoji/SVG) ──
+// Icons live on the CDN, called by filename. Upload to /images/email/marketing/icons/.
+const MKT_ICONS = 'https://company-assets.bookasloth.in/images/email/marketing/icons';
+
+/** Full-width gradient hero band (the "encapsulation" + big-number pattern).
+ *  Pass `big` for a giant stat, or `h2` for a headline. Solid bgcolor fallback
+ *  behind the gradient for Outlook. */
+function heroBand(theme, { kick, big, sub, h2 } = {}) {
+  const accent = theme.accent;
+  const inner = big
+    ? `<div style="font-family:${FONT};font-size:46px;line-height:1;font-weight:800;letter-spacing:-.02em;">${esc(big)}</div>`
+    : (h2 ? `<div style="font-family:${FONT};font-size:28px;line-height:1.12;font-weight:800;">${esc(h2)}</div>` : '');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${accent}" style="margin:8px 0 16px;background:${accent};background:linear-gradient(135deg,${accent},#E04600 60%);border-radius:1px;"><tr><td align="center" style="padding:30px 24px;">
+    ${kick ? `<div style="font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#ffe0cf;font-family:${FONT};margin-bottom:10px;">${esc(kick)}</div>` : ''}
+    ${inner}
+    ${sub ? `<div style="font-size:15px;color:#ffe9dd;font-family:${FONT};margin-top:12px;">${esc(sub)}</div>` : ''}
+  </td></tr></table>`;
+}
+
+/** Two-column comparison (e.g. 5% vs 0%). Right column is the "win" (accent). */
+function compareRow(theme, { leftLabel, leftPct, leftCap, rightLabel, rightPct, rightCap } = {}) {
+  const cell = (label, pct, cap, win) => `<td width="50%" valign="top" style="padding:0 5px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${win ? theme.accent : '#edeaf5'};background:${win ? theme.tint : '#ffffff'};border-radius:1px;"><tr><td align="center" style="padding:15px 10px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${win ? theme.text : '#9aa0a6'};font-family:${FONT};">${esc(label)}</div>
+      <div style="font-family:${FONT};font-size:32px;font-weight:800;line-height:1;margin:7px 0 3px;color:${win ? theme.accent : '#9aa0a6'};">${esc(pct)}</div>
+      <div style="font-size:11px;color:${win ? theme.text : '#9aa0a6'};font-family:${FONT};">${esc(cap)}</div>
+    </td></tr></table>
+  </td>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 18px;"><tr>${cell(leftLabel, leftPct, leftCap, false)}${cell(rightLabel, rightPct, rightCap, true)}</tr></table>`;
+}
+
+/** 3-up benefit grid. items: [{ icon:'link.png', label:'Your link' }]. */
+function benefitGrid(items = []) {
+  const cells = (items || []).slice(0, 3).map((it) => `<td width="33%" valign="top" align="center" style="padding:0 5px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #edeaf5;border-radius:1px;"><tr><td align="center" style="padding:14px 10px;">
+      <img src="${MKT_ICONS}/${esc(it.icon)}" width="30" height="30" alt="" style="display:block;margin:0 auto;border:0;">
+      <div style="font-size:12.5px;font-weight:600;color:#202124;font-family:${FONT};margin-top:9px;line-height:1.35;">${esc(it.label)}</div>
+    </td></tr></table>
+  </td>`).join('');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:2px 0 18px;"><tr>${cells}</tr></table>`;
+}
+
+/** Star-rating social-proof row. */
+function stars({ rating = 5, text } = {}) {
+  const one = `<img src="${MKT_ICONS}/star.png" width="16" height="16" alt="" style="display:inline-block;margin:0 1px;vertical-align:middle;border:0;">`;
+  const row = one.repeat(Math.max(0, Math.min(5, Math.round(rating))));
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;"><tr><td align="center">
+    ${row}${text ? `<div style="font-size:12.5px;color:#5f6368;font-family:${FONT};margin-top:7px;">${esc(text)}</div>` : ''}
+  </td></tr></table>`;
+}
+
+module.exports = { statusTags, otpBox, heroDate, amountRow, infoCard, countdown, banner, celebration, heroBand, compareRow, benefitGrid, stars, TONES, FONT, MKT_ICONS };

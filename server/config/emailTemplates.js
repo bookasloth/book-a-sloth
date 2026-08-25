@@ -526,10 +526,26 @@ const TEMPLATES = [
     cta_label: 'Open my feedback', cta_url: '{{dashboard_url}}',
   }; })(),
 
+  // ── Marketing ─────────────────────────────────────────────────────────────────
+
+  (() => { const t = themeForCategory('Upgrade'); return {
+    event_key: 'UPGRADE_COMMISSION_NUDGE', audience: 'all', category: 'Marketing', sender_key: 'sujata',
+    name: 'Upgrade — Keep Every Rupee', subject: "You've given up {{commission_total}} in commission",
+    preview_text: 'On Host+ that number is zero.',
+    email_category: 'Upgrade',
+    email_reason: 'You are receiving this because you are a Book A Sloth host on the free plan.',
+    html_content:
+      C.heroBand(t, { kick: 'Commission given up', big: '{{commission_total}}', sub: "On Host+ that's ₹0, {{first_name}}." }) +
+      lead("You've earned well — but the free plan takes <strong>5%</strong> of every booking. You've handed back <strong>{{commission_total}}</strong> across {{bookings_count}} bookings.") +
+      C.compareRow(t, { leftLabel: 'Starter', leftPct: '5%', leftCap: 'per booking', rightLabel: 'Host+', rightPct: '0%', rightCap: 'you keep it all' }) +
+      C.stars({ rating: 5, text: 'Hosts who upgraded keep every rupee they earn.' }),
+    cta_label: 'Upgrade to 0% commission', cta_url: '{{upgrade_url}}',
+  }; })(),
+
   // ── Newsletter ────────────────────────────────────────────────────────────────
 
   (() => { const t = themeForCategory('Newsletter'); return {
-    event_key: 'NEWSLETTER_WELCOME', audience: 'all', category: 'Newsletter',
+    event_key: 'NEWSLETTER_WELCOME', audience: 'all', category: 'Newsletter', sender_key: 'sujata',
     name: 'Newsletter Welcome', subject: 'Welcome to the Collective 🦥',
     preview_text: 'Calm tips, templates and the occasional truth bomb — straight to your inbox.',
     email_category: 'Newsletter',

@@ -29,6 +29,7 @@ const MARKETING_EVENTS = new Set([
   'BIRTHDAY', 'ACCOUNT_ANNIVERSARY',
   'PROFILE_COMPLETION_REMINDER',
   'REBOOK_NUDGE_CUSTOMER',
+  'UPGRADE_COMMISSION_NUDGE',
 ]);
 
 const isMarketing = (event) => MARKETING_EVENTS.has(event) || String(event).startsWith('CAMPAIGN:');

@@ -31,6 +31,7 @@ const EMAIL_ONLY_EVENTS = [
   ['SUBSCRIPTION_RENEWED', 'Premium Renewed'],
   ['VENDOR_WELCOME', 'Host Welcome'],
   ['KYC_EARN_NUDGE', 'First Earning — Payout Nudge'],
+  ['UPGRADE_COMMISSION_NUDGE', 'Upgrade — Keep Every Rupee'],
   ['BIRTHDAY', 'Birthday'],
   ['ACCOUNT_ANNIVERSARY', 'Account Anniversary'],
   ['NEWSLETTER_WELCOME', 'Newsletter Welcome'],
