@@ -268,17 +268,17 @@ const TEMPLATES = [
 
   // ── Profile ─────────────────────────────────────────────────────────────────
 
-  (() => { const t = themeForCategory('Account Update'); return {
-    event_key: 'PROFILE_COMPLETION_REMINDER', audience: 'all', category: 'Profile',
-    name: 'Profile Completion Reminder', subject: 'Your profile is {{completion_percentage}}% complete',
-    preview_text: 'Finish your profile to start getting booked.',
-    email_category: 'Account Update',
+  (() => { const t = themeForCategory('Onboarding'); return {
+    event_key: 'PROFILE_COMPLETION_REMINDER', audience: 'all', category: 'Profile', sender_key: 'tithi',
+    name: 'Profile Completion Reminder', subject: 'Your page is one step from live',
+    preview_text: 'Your page is claimed — finish it and start taking bookings.',
+    email_category: 'Onboarding',
     email_reason: 'You are receiving this email because your Book A Sloth profile is incomplete.',
     html_content:
-      eyebrow(t.text, 'Almost there') + h('Complete your profile, {{first_name}}') +
-      lead('Finish your profile to start getting discovered and booked.') +
-      C.banner(t, { title: '{{completion_percentage}}% complete', sub: 'A few steps left to go live.' }),
-    cta_label: 'Complete profile', cta_url: '{{dashboard_url}}',
+      eyebrow(t.text, 'Almost there') + h('One step from live, {{first_name}}') +
+      lead("You claimed <strong>bookasloth.com/{{slug}}</strong> but haven't published yet. It's saved and waiting — the last step takes two minutes.") +
+      C.banner(t, { title: 'Finish &amp; publish', sub: 'Then your link works and people can book you.' }),
+    cta_label: 'Publish my page', cta_url: '{{dashboard_url}}',
   }; })(),
 
   (() => { const t = themeForCategory('Account Update'); return {
@@ -524,6 +524,20 @@ const TEMPLATES = [
       lead('{{admin_response}}') +
       note('Have more to share? Open Feedback in your dashboard any time.'),
     cta_label: 'Open my feedback', cta_url: '{{dashboard_url}}',
+  }; })(),
+
+  (() => { const t = themeForCategory('Invitation'); return {
+    event_key: 'GUEST_TO_HOST_INVITE', audience: 'all', category: 'Marketing', sender_key: 'sujata',
+    name: 'Guest → Host Invite', subject: "You've booked {{completed_count}} times — ever thought about the other side?",
+    preview_text: 'The people you booked earn on Book A Sloth. Your account is ready.',
+    email_category: 'Invitation',
+    email_reason: 'You are receiving this email because you are a Book A Sloth guest.',
+    html_content:
+      C.heroBand(t, { kick: "You've booked {{completed_count}} times, {{first_name}}", h2: 'Ever thought about the other side?', sub: 'The people you booked earn on Book A Sloth. So could you.' }) +
+      lead('You know how smooth booking is from this side. The hosts you paid use the exact same platform to <strong>get paid</strong> — a link they share, bookings that just show up.') +
+      C.benefitGrid([{ icon: 'link.png', label: 'Share your link' }, { icon: 'calendar.png', label: 'Take bookings' }, { icon: 'wallet.png', label: 'Get paid' }]) +
+      lead('Your account is <strong>already set up</strong> to host. No new signup — start free, no card.'),
+    cta_label: 'Start hosting free', cta_url: '{{become_host_url}}',
   }; })(),
 
   // ── Booking — Abandoned recovery ──────────────────────────────────────────────

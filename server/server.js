@@ -326,6 +326,24 @@ setInterval(async () => {
   } catch (err) { console.error('Subscription-expiry cron error:', err.message); }
 }, 6 * 60 * 60 * 1000);
 
+// Guest → host invite: email repeat guests (>= N completed bookings, not yet a
+// host) to start hosting. Daily; deduped per guest in the service.
+setInterval(async () => {
+  try {
+    const { processGuestHostInvites } = require('./services/guestHostInvite');
+    await runLocked('guest-host-invite', () => processGuestHostInvites(), { leaseMs: 24 * 60 * 60 * 1000 });
+  } catch (err) { console.error('Guest→host invite cron error:', err.message); }
+}, 24 * 60 * 60 * 1000);
+
+// Profile completion: pull stalled hosts (claimed URL, never published) back to
+// publish. Every 12h; capped/deduped per host in the service.
+setInterval(async () => {
+  try {
+    const { processProfileCompletion } = require('./services/profileCompletion');
+    await runLocked('profile-completion', () => processProfileCompletion(), { leaseMs: 12 * 60 * 60 * 1000 });
+  } catch (err) { console.error('Profile-completion cron error:', err.message); }
+}, 12 * 60 * 60 * 1000);
+
 setInterval(async () => {
   try { await runLocked('otp-cleanup', () => cleanupOtps(), { leaseMs: 2 * 60 * 60 * 1000 }); }
   catch (err) { console.error('OTP cleanup error:', err.message); }
