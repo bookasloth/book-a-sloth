@@ -24,7 +24,7 @@ const Login = () => {
   const [searchParams] = useSearchParams();
   // Honour ?redirect= only for internal single-slash paths (avoid open-redirects).
   const rawRedirect = searchParams.get("redirect") || "";
-  const redirectTo = /^\/(?!\/)/.test(rawRedirect) ? rawRedirect : "/user/my-bookings";
+  const redirectTo = /^\/(?!\/)/.test(rawRedirect) ? rawRedirect : "/user";
 
   const [step, setStep] = useState("phone"); // 'phone' | 'otp'
   const [phone, setPhone] = useState("");

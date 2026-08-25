@@ -123,14 +123,14 @@ describe('Dashboard — new vendor without username', () => {
 });
 
 // ── Guest (user) dashboard ────────────────────────────────────────────────────
-// Guests are now redirected to /user/my-bookings — the Dashboard renders nothing.
+// Guests are now redirected to /user — the Dashboard renders nothing.
 
 describe('Dashboard — User (role:guest)', () => {
   const GUEST = { _id: 'u1', name: 'Bob Guest', role: 'guest', plan: 'explorer', username: null };
 
   test('redirects guest: renders no visible content', () => {
     renderDashboard(GUEST);
-    // <Navigate replace to="/user/my-bookings" /> produces an empty div in MemoryRouter
+    // <Navigate replace to="/user" /> produces an empty div in MemoryRouter
     expect(screen.queryByText(/welcome back/i)).toBeNull();
   });
 

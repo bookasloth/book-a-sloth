@@ -129,6 +129,7 @@ const AddService   = lazy(() => import('./pages/services/AddService'));
 const EditService  = lazy(() => import('./pages/services/EditService'));
 
 // Customer (guest) pages
+const GuestOverview    = lazy(() => import('./pages/GuestOverview'));
 const CustomerBookings = lazy(() => import('./pages/CustomerBookings'));
 const CustomerProfile  = lazy(() => import('./pages/CustomerProfile'));
 const CustomerReviews  = lazy(() => import('./pages/CustomerReviews'));
@@ -601,8 +602,9 @@ function App() {
 
           {/* Guest (customer) space — /user/* . A host hitting these is bounced to
               /dashboard by GuestRoute; a guest hitting /dashboard/* is bounced here.
-              GuestLayout wraps them in the traveler shell (persistent tab bar). */}
+              GuestLayout wraps them in the single-level guest console shell. */}
           <Route element={<GuestRoute><GuestLayout /></GuestRoute>}>
+            <Route path="/user" element={<GuestOverview />} />
             <Route path="/user/my-bookings" element={<CustomerBookings />} />
             <Route path="/user/profile" element={<CustomerProfile />} />
             <Route path="/user/reviews" element={<CustomerReviews />} />
