@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { CalendarDays, User, Star, Gift, Briefcase } from "lucide-react";
+import { CalendarDays, User, Star, Gift, Briefcase, MessageCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { isHost } from "../../utils/roleRoutes";
 import toast from "react-hot-toast";
@@ -19,6 +19,7 @@ const TABS = [
   { to: "/user/profile", label: "Profile", icon: User },
   { to: "/user/reviews", label: "Reviews", icon: Star },
   { to: "/user/loyalty", label: "Rewards", icon: Gift },
+  { to: "/user/chat", label: "Chat", icon: MessageCircle },
 ];
 
 const GuestLayout = () => {

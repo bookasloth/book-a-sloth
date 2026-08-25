@@ -605,6 +605,7 @@ function App() {
             <Route path="/user/profile" element={<CustomerProfile />} />
             <Route path="/user/reviews" element={<CustomerReviews />} />
             <Route path="/user/loyalty" element={<Loyalty />} />
+            <Route path="/user/chat" element={<ChatPage />} />
           </Route>
 
           {/* Leave a review for one completed booking (booking-completed email CTA).
