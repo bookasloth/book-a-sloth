@@ -156,7 +156,23 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
 
   // 2a-ii) Activation funnel: emit host_first_booking (host-keyed) on the host's
   //        first paid booking. Never throws.
-  await require('./hostActivation').maybeTrackFirstBooking({ host, booking });
+  const firstBooking = await require('./hostActivation').maybeTrackFirstBooking({ host, booking });
+
+  // 2a-ii-b) Celebrate that first paid booking — the host's aha moment (email now;
+  //          WhatsApp later). Reuses the existing MILESTONE_FIRST_BOOKING template
+  //          (Durga). NotificationEngine never throws, so a celebration failure
+  //          can't affect the confirmation.
+  if (firstBooking && firstBooking.tracked) {
+    await NotificationEngine.send({
+      event: 'MILESTONE_FIRST_BOOKING',
+      data: {
+        email: host.email, phone: host.phone, name: host.name,
+        emailUser: { name: host.name, email: host.email, username: host.username },
+        emailData: { ...emailData, first_name: (host.name || '').split(' ')[0] || 'there' },
+        recipientUserId: booking.host_id, bookingId: booking.id,
+      },
+    });
+  }
 
   // 2a-iii) Real-time CRM: capture the guest as a lead (source guest_booking) on
   //         every paid booking. Idempotent by phone/email; never throws.

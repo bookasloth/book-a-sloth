@@ -353,7 +353,7 @@ const TEMPLATES = [
   // ── Milestones ───────────────────────────────────────────────────────────────
 
   (() => { const t = themeForCategory('Achievement Unlocked'); return {
-    event_key: 'MILESTONE_FIRST_BOOKING', audience: 'all', category: 'Badge',
+    event_key: 'MILESTONE_FIRST_BOOKING', audience: 'all', category: 'Badge', sender_key: 'durga',
     name: 'Milestone — First Booking', subject: 'Your first booking on Book A Sloth!',
     preview_text: 'You just landed your first booking.',
     email_category: 'Achievement Unlocked',
@@ -481,7 +481,7 @@ const TEMPLATES = [
   // ── Vendor welcome ────────────────────────────────────────────────────────────
 
   (() => { const t = themeForCategory('Welcome'); return {
-    event_key: 'VENDOR_WELCOME', audience: 'all', category: 'Profile',
+    event_key: 'VENDOR_WELCOME', audience: 'all', category: 'Profile', sender_key: 'tithi',
     name: 'Vendor Welcome', subject: 'Welcome to Book A Sloth, {{first_name}}',
     preview_text: "Let's get your booking page ready.",
     email_category: 'Welcome',
@@ -491,6 +491,22 @@ const TEMPLATES = [
       C.celebration(t, { title: "You're in" }) +
       lead('Your Book A Sloth account is ready. Set up your services and availability to start taking bookings.'),
     cta_label: 'Set up my page', cta_url: '{{dashboard_url}}',
+  }; })(),
+
+  // ── First earning → payouts (reframed: lead with the win, KYC as how-to-claim) ─
+
+  (() => { const t = themeForCategory('Payment Receipt'); return {
+    event_key: 'KYC_EARN_NUDGE', audience: 'all', category: 'Payments', sender_key: 'tithi',
+    name: 'First Earning — Set Up Payouts', subject: "You've earned {{earned_amount}} 🎉",
+    preview_text: "It's yours — here's how to get it into your account.",
+    email_category: 'Payment Receipt',
+    email_reason: 'You are receiving this email because you have earnings waiting on Book A Sloth.',
+    html_content:
+      eyebrow(t.text, 'Earnings') + h("You've earned {{earned_amount}}, {{first_name}}") +
+      lead('Real money, from a real booking. One quick step to receive it — add your PAN and bank details so we can pay you out. About 2 minutes, one time only.') +
+      C.amountRow(t, 'Ready to withdraw', '{{earned_amount}}') +
+      lead('After this, every rupee you earn lands in your account automatically.'),
+    cta_label: 'Set up payouts', cta_url: '{{kyc_url}}',
   }; })(),
 
   // ── Engagement ───────────────────────────────────────────────────────────────

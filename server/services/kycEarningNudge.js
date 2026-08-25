@@ -17,7 +17,7 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 const { inAppNotify } = require('../utils/inAppNotify');
-const sendEmail = require('../utils/sendEmail');
+const NotificationEngine = require('./notificationEngine');
 
 const NUDGE_TYPE = 'KYC_EARN_NUDGE';
 
@@ -26,20 +26,9 @@ const NUDGE_TYPE = 'KYC_EARN_NUDGE';
 const earnedSomething = (booking) =>
   Number(booking?.vendor_amount ?? booking?.amount ?? 0) > 0;
 
-function nudgeEmailHtml(host, base) {
-  const name = (host.name || '').split(' ')[0] || 'there';
-  return (
-    `<p>Hi ${name},</p>` +
-    `<p>🎉 You just earned from a booking on Book A Sloth. To receive your money, ` +
-    `finish a quick one-time verification — your PAN and bank details.</p>` +
-    `<p>It takes ~2 minutes and unlocks payouts for every booking, this one included.</p>` +
-    `<p><a href="${base}/dashboard/kyc" style="display:inline-block;padding:10px 18px;` +
-    `background:#FE5100;color:#fff;text-decoration:none;border-radius:10px;font-weight:600">` +
-    `Set up payouts</a></p>` +
-    `<p style="color:#888;font-size:12px">You're seeing this because you have earnings waiting. ` +
-    `You only need to do this once.</p>`
-  );
-}
+// Display amount for the "you earned ₹X" reframe (this booking's payout).
+const earnedAmount = (booking) =>
+  '₹' + Number(booking?.vendor_amount ?? booking?.amount ?? 0).toLocaleString('en-IN');
 
 /**
  * Nudge the host to complete KYC the first time they earn. Safe to call on every
@@ -84,10 +73,22 @@ async function maybeSendFirstEarningKycNudge({ host, booking }) {
       link: '/dashboard/kyc',
     });
 
-    await sendEmail({
-      to: host.email,
-      subject: 'You have earnings waiting — set up payouts on Book A Sloth 🎉',
-      html: nudgeEmailHtml(host, base),
+    // Reframed as a win ("you've earned ₹X"), routed through the branded template
+    // system (Tithi, Payment-Receipt theme) instead of raw inline HTML. Dedup above
+    // still guarantees one send per host. NotificationEngine never throws.
+    await NotificationEngine.send({
+      event: NUDGE_TYPE,
+      data: {
+        email: host.email,
+        name: host.name,
+        emailUser: { name: host.name, email: host.email },
+        emailData: {
+          first_name: (host.name || '').split(' ')[0] || 'there',
+          earned_amount: earnedAmount(booking),
+          kyc_url: `${base}/dashboard/kyc`,
+        },
+        recipientUserId: host.id,
+      },
     });
 
     return { sent: true };

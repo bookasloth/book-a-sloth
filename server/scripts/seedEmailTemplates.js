@@ -29,6 +29,8 @@ const EMAIL_ONLY_EVENTS = [
   ['SUBSCRIPTION_PURCHASED', 'Premium Activated'],
   ['SUBSCRIPTION_EXPIRING', 'Premium Expiring'],
   ['SUBSCRIPTION_RENEWED', 'Premium Renewed'],
+  ['VENDOR_WELCOME', 'Host Welcome'],
+  ['KYC_EARN_NUDGE', 'First Earning — Payout Nudge'],
   ['BIRTHDAY', 'Birthday'],
   ['ACCOUNT_ANNIVERSARY', 'Account Anniversary'],
   ['NEWSLETTER_WELCOME', 'Newsletter Welcome'],
@@ -56,6 +58,7 @@ async function upsertTemplate(t) {
     cta_url: t.cta_url || '',
     email_category: t.email_category || '',
     email_reason: t.email_reason || '',
+    sender_key: t.sender_key || null,
     status: 'active',
     updated_at: new Date().toISOString(),
   };

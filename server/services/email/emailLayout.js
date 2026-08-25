@@ -81,7 +81,7 @@ function headerBlock({ category, theme }) {
     : '';
   const pill = category
     ? `<td align="right" style="vertical-align:middle;white-space:nowrap;padding-left:12px;">
-         <span style="display:inline-block;padding:6px 12px;border-radius:999px;background:${theme.tint};color:${theme.text};font-size:12px;font-weight:600;font-family:${D.font};">${glyph}${esc(category)}</span>
+         <span style="display:inline-block;padding:6px 12px;border-radius:1px;background:${theme.tint};color:${theme.text};font-size:12px;font-weight:600;font-family:${D.font};">${glyph}${esc(category)}</span>
        </td>`
     : '';
   return `<tr>
@@ -102,8 +102,8 @@ function headerBlock({ category, theme }) {
 function ctaButton(label, url, brand) {
   if (!label || !url) return '';
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 4px;">
-    <tr><td style="border-radius:10px;background:${esc(brand)};">
-      <a href="${esc(url)}" style="display:block;text-align:center;padding:15px 24px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;font-family:${D.font};">${esc(label)}</a>
+    <tr><td style="border-radius:1px;background:${esc(brand)};">
+      <a href="${esc(url)}" style="display:block;text-align:center;padding:15px 24px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:1px;font-family:${D.font};">${esc(label)}</a>
     </td></tr>
   </table>`;
 }
@@ -124,7 +124,7 @@ function shellOpen({ previewText, fromName, brand }) {
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${D.bg};padding:32px 16px;">
     <tr><td align="center">
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:${D.white};border:1px solid ${D.border};border-radius:14px;overflow:hidden;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:${D.white};border:1px solid ${D.border};border-radius:1px;overflow:hidden;">
         ${accentBar(brand)}`;
 }
 

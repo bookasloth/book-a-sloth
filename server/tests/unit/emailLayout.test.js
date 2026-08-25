@@ -24,7 +24,7 @@ describe('renderLayout — header (logo left, accent pill right)', () => {
       expect(html).toContain('Booking Confirmed');                     // pill label
       expect(html).toContain('#e8fff1');                               // green tint (pill bg)
       expect(html).toContain('images/email/icons/calendar-check.png'); // glyph PNG
-      expect(html).toContain('border-radius:999px');                   // true pill (the one >8px exception)
+      expect(html).toContain('border-radius:1px');                     // squared pill (radius capped at 1px)
     });
   }
 
