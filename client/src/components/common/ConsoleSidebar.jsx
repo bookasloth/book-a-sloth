@@ -436,8 +436,8 @@ const ConsoleSidebar = ({ open = false, onClose, triggerRef }) => {
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex">
         {/* Brand */}
         <div className="absolute left-0 top-0 z-10 flex h-14 items-center border-b border-gray-200 bg-gray-50 px-3" style={{ width: SB.rail }}>
-          <Link to="/dashboard" title="Book A Sloth" aria-label="Book A Sloth" className={cn('grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-base font-black text-primary', focusRing)}>
-            B
+          <Link to="/dashboard" title="Book A Sloth" aria-label="Book A Sloth" className={cn('grid h-8 w-8 place-items-center rounded-lg', focusRing)}>
+            <img src="/sloth.png" alt="Book A Sloth" className="h-8 w-8 object-contain" />
           </Link>
         </div>
         <div className="pt-14">
