@@ -124,6 +124,29 @@ const PRERENDER_ROUTES = [
  * chasing, wearing a green tick. Locally it stays a warning: a dev without the API
  * running still wants a build.
  */
+// Fetch with a few retries + backoff. A single transient hiccup (a rate-limit
+// 429, a network blip, a cold API) at build time otherwise fails the WHOLE Vercel
+// deploy, because the blog/sitemap fetches are fatal on Vercel. Retrying turns a
+// blip into a self-heal; a genuinely-down API still throws after the last attempt.
+async function fetchWithRetry(url, { attempts = 3, timeoutMs = 15000 } = {}) {
+  let lastErr;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res;
+    } catch (err) {
+      lastErr = err;
+      if (i < attempts) {
+        const backoff = 1500 * i;
+        console.warn(`[prerender] ${url} failed (${err.message}); retry ${i}/${attempts - 1} in ${backoff}ms`);
+        await new Promise((r) => setTimeout(r, backoff));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 async function blogRoutes() {
   // This is a standalone node process, so Vite has not put .env into process.env
   // for us — loadEnv reads the .env files AND real env vars (how Vercel sets it).
@@ -135,8 +158,7 @@ async function blogRoutes() {
     return [];
   }
   try {
-    const res = await fetch(`${base}/blogs`, { signal: AbortSignal.timeout(15000) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetchWithRetry(`${base}/blogs`);
     const { posts } = await res.json();
     const routes = (posts || []).map((p) => p && p.slug).filter(Boolean).map((s) => `/blog/${s}`);
     console.log(`[prerender] ${routes.length} blog posts from ${base}`);
@@ -191,8 +213,7 @@ async function hostServiceRoutes() {
   const locs = (xml) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 
   try {
-    const indexRes = await fetch(`${origin}/sitemap.xml`, { signal: AbortSignal.timeout(15000) });
-    if (!indexRes.ok) throw new Error(`sitemap.xml HTTP ${indexRes.status}`);
+    const indexRes = await fetchWithRetry(`${origin}/sitemap.xml`);
     // Only the host + service sub-sitemaps; pages/professions/blog are handled
     // by PRERENDER_ROUTES + blogRoutes already. Fetch each by its OWN path off our
     // reachable origin (the <loc> carries the public SITE_URL domain, which may
@@ -203,8 +224,7 @@ async function hostServiceRoutes() {
 
     const routes = [];
     for (const sub of subPaths) {
-      const res = await fetch(`${origin}${sub}`, { signal: AbortSignal.timeout(15000) });
-      if (!res.ok) throw new Error(`${sub} HTTP ${res.status}`);
+      const res = await fetchWithRetry(`${origin}${sub}`);
       for (const u of locs(await res.text())) routes.push(new URL(u).pathname);
     }
     console.log(`[prerender] ${routes.length} host/service routes from ${subPaths.length} sub-sitemap(s)`);

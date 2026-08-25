@@ -83,6 +83,15 @@ describe('ipGuard enforcement', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  test('never blocks the public blog endpoint (prerender build fetch)', () => {
+    const { mod } = load({ blocklist: { isBlocked: jest.fn(() => true) } });
+    const res = mockRes();
+    const next = jest.fn();
+    mod.ipGuard({ ip: '1.2.3.4', path: '/api/blogs', headers: {} }, res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   test('disabled (IP_BLOCK_ENABLED=false) passes everything through', () => {
     const { mod } = load({ env: { IP_BLOCK_ENABLED: 'false' }, blocklist: { isBlocked: jest.fn(() => true) } });
     const req = { ip: '1.2.3.4', path: '/api/host/services', headers: {} };

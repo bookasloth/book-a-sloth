@@ -22,7 +22,12 @@ const ipBlocklist = require('../lib/ipBlocklist');
 //   - the Razorpay webhook is HMAC-verified; a 403 here would silently break
 //     payment reconciliation.
 //   - the health probe must stay reachable for Render/UptimeRobot.
-const EXEMPT_PREFIXES = ['/api/payment/webhook', '/health', '/prerender', '/sitemap'];
+//   - /sitemap and /api/blogs are public, read-only SEO content that the Vercel
+//     prerender fetches at build time; a banned build IP 403ing here fails the
+//     whole deploy ("[prerender] blog posts unresolvable (HTTP 403)"). They carry
+//     no private data, so exempting them from the IP ban is safe (the rate
+//     limiter still applies).
+const EXEMPT_PREFIXES = ['/api/payment/webhook', '/health', '/prerender', '/sitemap', '/api/blogs'];
 
 function isExempt(req) {
   const p = (req && (req.path || req.url)) || '';
