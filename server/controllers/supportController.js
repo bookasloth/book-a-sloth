@@ -71,6 +71,13 @@ const sendMessage = async (req, res) => {
   try {
     const thread = await chat.getThread(req.params.id);
     if (!owns(thread, req.user)) return res.status(404).json({ message: 'Thread not found' });
+    // Messaging a resolved thread reopens it to the bot phase — otherwise the
+    // message posts into a thread the admin queue hides, and it's lost. Reopening
+    // puts Bolt back on it and lets it re-escalate if needed.
+    if (thread.status === 'resolved') {
+      await chat.setStatus(thread.id, 'bot');
+      thread.status = 'bot';
+    }
     const msg = await chat.postMessage({
       threadId: thread.id, sender: 'user',
       senderId: req.user?.id, senderName: req.user?.name,

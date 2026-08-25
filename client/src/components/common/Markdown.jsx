@@ -13,7 +13,24 @@ import { Link } from 'react-router-dom';
  * swap this for a hardened library.
  */
 
-const INLINE_RE = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|`([^`]+)`/g;
+// Inline tokens, matched in priority order: [label](href) link · **bold** ·
+// `code` · *italic* · a bare http(s) URL (autolinked). Bold is listed before
+// italic so `**x**` never mis-parses as two italics. Only http(s) autolinks —
+// never javascript:/data:, so a pasted URL can't smuggle a script.
+const INLINE_RE = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|`([^`]+)`|\*([^*\n]+)\*|(https?:\/\/[^\s<]+)/g;
+
+// A bare URL often ends a sentence — don't swallow the trailing punctuation, and
+// keep a closing paren only if the URL actually opened one.
+function trimUrl(url) {
+  let u = url;
+  while (/[.,;:!?]$/.test(u)) u = u.slice(0, -1);
+  if (u.endsWith(')') && (u.match(/\(/g) || []).length < (u.match(/\)/g) || []).length) u = u.slice(0, -1);
+  return u;
+}
+
+function extLink(key, href, label) {
+  return <a key={key} href={href} target="_blank" rel="noreferrer" className="text-[#FE5100] hover:underline break-words">{label}</a>;
+}
 
 function renderInline(text, keyBase, externalLinks) {
   const nodes = [];
@@ -32,14 +49,21 @@ function renderInline(text, keyBase, externalLinks) {
           <Link key={key} to={href} className="text-[#FE5100] hover:underline">{label}</Link>
         ) : externalLinks === 'strip' ? (
           <span key={key}>{label}</span>
-        ) : (
-          <a key={key} href={href} target="_blank" rel="noreferrer" className="text-[#FE5100] hover:underline">{label}</a>
-        ),
+        ) : extLink(key, href, label),
       );
     } else if (m[3] !== undefined) {
       nodes.push(<strong key={key} className="font-semibold text-gray-900">{m[3]}</strong>);
     } else if (m[4] !== undefined) {
       nodes.push(<code key={key} className="px-1 py-0.5 rounded bg-gray-100 text-[0.85em] text-gray-800">{m[4]}</code>);
+    } else if (m[5] !== undefined) {
+      nodes.push(<em key={key} className="italic">{m[5]}</em>);
+    } else if (m[6] !== undefined) {
+      const url = trimUrl(m[6]);
+      // Push back any punctuation we trimmed so it still renders as text.
+      if (url.length < m[6].length) INLINE_RE.lastIndex -= (m[6].length - url.length);
+      nodes.push(externalLinks === 'strip' ? <span key={key}>{url}</span> : extLink(key, url, url));
+      last = INLINE_RE.lastIndex;
+      continue;
     }
     last = INLINE_RE.lastIndex;
   }
