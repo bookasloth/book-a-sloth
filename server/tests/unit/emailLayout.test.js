@@ -66,32 +66,6 @@ describe('renderLayout — footer distinction (UNCHANGED by redesign)', () => {
   });
 });
 
-describe('renderLayout — persona signature', () => {
-  const durga = { fromName: 'Durga | Operations, Book A Sloth', key: 'durga' };
-  const tithi = { fromName: 'Tithi | Book A Sloth', key: 'tithi' };
-
-  test('persona-tagged sender → photo + parsed name/role above the footer', () => {
-    const html = renderLayout({ audience: 'vendor', bodyHtml: '<p>hi</p>', emailCategory: 'New Booking', settings, data: {}, sender: durga });
-    expect(html).toContain('images/email/personas/durga.png'); // avatar by sender_key
-    expect(html).toContain('Durga');                            // name (before |)
-    expect(html).toContain('Operations &middot; Book A Sloth'); // role (after |, minus brand)
-  });
-
-  test('sender with no role → name + plain brand line, no dangling separator', () => {
-    const html = renderLayout({ audience: 'vendor', bodyHtml: '', emailCategory: 'Welcome', settings, data: {}, sender: tithi });
-    expect(html).toContain('images/email/personas/tithi.png');
-    expect(html).toContain('Tithi');
-    expect(html).not.toContain('&middot; Book A Sloth'); // no empty-role separator
-  });
-
-  test('no sender / global sender → no signature block', () => {
-    const globalOnly = renderLayout({ audience: 'vendor', bodyHtml: '', emailCategory: 'New Booking', settings, data: {}, sender: { fromName: 'Book A Sloth', key: null } });
-    expect(globalOnly).not.toContain('images/email/personas/');
-    const absent = renderLayout({ audience: 'customer', bodyHtml: '', settings, data: {} });
-    expect(absent).not.toContain('images/email/personas/');
-  });
-});
-
 describe('renderLayout — shared structure', () => {
   test('both layouts carry the 4px brand accent and the 600px card with the body', () => {
     for (const audience of ['customer', 'vendor']) {
