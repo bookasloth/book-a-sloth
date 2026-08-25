@@ -1,0 +1,62 @@
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
+import AdminSupportChat from '../pages/admin/AdminSupportChat';
+
+// Realtime client — no-op channel that chains .on().subscribe().
+vi.mock('../services/supabaseClient', () => ({
+  getSupabase: vi.fn(() => Promise.resolve({
+    channel: () => { const c = { on: () => c, subscribe: () => c }; return c; },
+    removeChannel: vi.fn(),
+  })),
+}));
+
+vi.mock('../services/api', () => ({
+  adminSupportQueue: vi.fn(() => Promise.resolve({ data: {
+    threads: [{ id: 't1', reference: 'SUP-ABC123', status: 'waiting', participant_type: 'host', admin_unread: 2, last_message_at: '2026-08-25T10:00:00Z', subject: 'Payout is late' }],
+  } })),
+  adminGetSupportThread: vi.fn(() => Promise.resolve({ data: {
+    thread: { id: 't1', reference: 'SUP-ABC123', status: 'waiting', participant_type: 'host' },
+    messages: [{ id: 'm1', sender: 'user', sender_name: 'Riya', body: 'My payout is late', created_at: '2026-08-25T10:00:00Z' }],
+  } })),
+  adminReplySupport: vi.fn((id, { body }) => Promise.resolve({ data: { id: 'm2', sender: 'admin', sender_name: 'Support', body, created_at: '2026-08-25T10:01:00Z' } })),
+  adminResolveSupport: vi.fn(() => Promise.resolve({ data: {} })),
+}));
+vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }));
+
+import { adminReplySupport, adminResolveSupport } from '../services/api';
+
+beforeAll(() => { window.HTMLElement.prototype.scrollIntoView = vi.fn(); });
+
+const openThread = async () => {
+  render(<AdminSupportChat />);
+  await waitFor(() => expect(screen.getByText('Payout is late')).toBeInTheDocument());
+  fireEvent.click(screen.getByText('Payout is late'));
+  await waitFor(() => expect(screen.getByText('My payout is late')).toBeInTheDocument());
+};
+
+describe('AdminSupportChat', () => {
+  it('lists queued threads with reference and unread badge', async () => {
+    render(<AdminSupportChat />);
+    await waitFor(() => expect(screen.getByText('SUP-ABC123')).toBeInTheDocument());
+    expect(screen.getByText('2 new')).toBeInTheDocument();
+  });
+
+  it('opens a thread and shows its transcript', async () => {
+    await openThread();
+    expect(screen.getByText('Riya')).toBeInTheDocument();
+  });
+
+  it('replies to the thread and appends the admin message', async () => {
+    await openThread();
+    fireEvent.change(screen.getByLabelText('Reply'), { target: { value: 'On it — checking now' } });
+    fireEvent.click(screen.getByRole('button', { name: /^send$/i }));
+    await waitFor(() => expect(adminReplySupport).toHaveBeenCalledWith('t1', { body: 'On it — checking now' }));
+    await waitFor(() => expect(screen.getByText('On it — checking now')).toBeInTheDocument());
+  });
+
+  it('marks the thread resolved', async () => {
+    await openThread();
+    fireEvent.click(screen.getByText('Mark resolved'));
+    await waitFor(() => expect(adminResolveSupport).toHaveBeenCalledWith('t1'));
+  });
+});
