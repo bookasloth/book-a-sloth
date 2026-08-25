@@ -24,7 +24,7 @@ describe('renderLayout — header (logo left, accent pill right)', () => {
       expect(html).toContain('Booking Confirmed');                     // pill label
       expect(html).toContain('#e8fff1');                               // green tint (pill bg)
       expect(html).toContain('images/email/icons/calendar-check.png'); // glyph PNG
-      expect(html).toContain('border-radius:999px');                   // true pill (the one >8px exception)
+      expect(html).toContain('border-radius:1px');                     // squared pill (radius capped at 1px)
     });
   }
 
@@ -63,6 +63,32 @@ describe('renderLayout — footer distinction (UNCHANGED by redesign)', () => {
     expect(html).toContain('https://x.test/help');
     expect(html).toContain('https://x.test/privacy');
     expect(html).toContain('https://x.test/unsubscribe?u=TOK123');
+  });
+});
+
+describe('renderLayout — persona signature', () => {
+  const durga = { fromName: 'Durga | Operations, Book A Sloth', key: 'durga' };
+  const tithi = { fromName: 'Tithi | Book A Sloth', key: 'tithi' };
+
+  test('persona-tagged sender → photo + parsed name/role above the footer', () => {
+    const html = renderLayout({ audience: 'vendor', bodyHtml: '<p>hi</p>', emailCategory: 'New Booking', settings, data: {}, sender: durga });
+    expect(html).toContain('images/email/personas/durga.png'); // avatar by sender_key
+    expect(html).toContain('Durga');                            // name (before |)
+    expect(html).toContain('Operations &middot; Book A Sloth'); // role (after |, minus brand)
+  });
+
+  test('sender with no role → name + plain brand line, no dangling separator', () => {
+    const html = renderLayout({ audience: 'vendor', bodyHtml: '', emailCategory: 'Welcome', settings, data: {}, sender: tithi });
+    expect(html).toContain('images/email/personas/tithi.png');
+    expect(html).toContain('Tithi');
+    expect(html).not.toContain('&middot; Book A Sloth'); // no empty-role separator
+  });
+
+  test('no sender / global sender → no signature block', () => {
+    const globalOnly = renderLayout({ audience: 'vendor', bodyHtml: '', emailCategory: 'New Booking', settings, data: {}, sender: { fromName: 'Book A Sloth', key: null } });
+    expect(globalOnly).not.toContain('images/email/personas/');
+    const absent = renderLayout({ audience: 'customer', bodyHtml: '', settings, data: {} });
+    expect(absent).not.toContain('images/email/personas/');
   });
 });
 

@@ -10,7 +10,7 @@
 // the request). 10s default, override with EMAIL_TIMEOUT_MS.
 const EMAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS) || 10000;
 
-async function sendEmail({ to, subject, html, text, fromName = 'Book A Sloth', fromEmail }) {
+async function sendEmail({ to, subject, html, text, fromName = 'Book A Sloth', fromEmail, replyTo }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { success: false, error: 'RESEND_API_KEY not configured' };
   const from = `${fromName} <${fromEmail || process.env.RESEND_FROM || 'noreply@bookasloth.in'}>`;
@@ -21,6 +21,9 @@ async function sendEmail({ to, subject, html, text, fromName = 'Book A Sloth', f
     // multipart message reads as transactional and lands better in the inbox.
     const payload = { from, to: [to], subject, html };
     if (text) payload.text = text;
+    // reply_to lets a persona sender (Tithi/Durga/…) route replies to a real,
+    // monitored mailbox even though the send goes through Resend.
+    if (replyTo) payload.reply_to = replyTo;
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },

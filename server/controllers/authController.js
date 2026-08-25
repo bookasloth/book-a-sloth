@@ -616,6 +616,20 @@ const googleCallback = async (req, res) => {
         // (CompleteRegistration). Fire-and-forget — never blocks the redirect.
         trackServer(profileId, "user_registered", { method: "google", role: "host" }, { email: googleEmail });
 
+        // Welcome the brand-new host — one email nudging them to finish setup +
+        // publish. Reuses the existing VENDOR_WELCOME template (Tithi);
+        // NotificationEngine never throws and routes to the vendor shell.
+        await require("../services/notificationEngine").send({
+          event: "VENDOR_WELCOME",
+          data: {
+            email: googleEmail,
+            name: profile.name,
+            emailUser: { name: profile.name, email: googleEmail, username: profile.username },
+            emailData: { first_name: profile.first_name || (profile.name || "").split(" ")[0] || "there" },
+            recipientUserId: profileId,
+          },
+        });
+
         // Real-time CRM: brand-new host becomes a lead immediately (source
         // host_signup), so Sales sees signups live instead of waiting on the
         // manual backfill script. Never throws / never blocks the signup.

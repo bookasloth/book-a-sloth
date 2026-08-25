@@ -17,6 +17,7 @@ const { buildGlobals, resolveTemplate, resolveString } = require('./placeholderR
 const { renderLayout } = require('./emailLayout');
 const { getProvider } = require('./providers');
 const { makeToken } = require('./unsubscribeToken');
+const senderRegistry = require('./senderRegistry');
 
 // Marketing / lifecycle events that honor the unsubscribe list. Everything NOT
 // listed here (OTP, auth, security, booking confirmations, payment receipts,
@@ -92,6 +93,7 @@ async function loadTemplates() {
 function clearCache() {
   _settingsCache = { at: 0, value: null };
   _templateCache = { at: 0, map: null };
+  senderRegistry.clearCache();
 }
 
 /** Active template for an event; prefers an exact audience, falls back to 'all'. */
@@ -105,7 +107,7 @@ async function getTemplate(event, audience = 'all') {
  * `audience` selects the layout shell (vendor vs customer); it is the RECIPIENT
  * audience, not the template row tag. Defaults to 'all' → customer shell.
  */
-function renderEmail(template, { data = {}, user = {}, settings, audience = 'all' }) {
+function renderEmail(template, { data = {}, user = {}, settings, audience = 'all', sender = null }) {
   const globals = buildGlobals(settings, user);
   const r = resolveTemplate(template, data, globals);
   // Resolve the preheader too — otherwise raw {{tokens}} leak into the inbox preview.
@@ -115,7 +117,7 @@ function renderEmail(template, { data = {}, user = {}, settings, audience = 'all
     bodyHtml: r.html, previewText,
     ctaLabel: r.ctaLabel, ctaUrl: r.ctaUrl, settings,
     emailCategory: template.email_category || '',
-    data,
+    data, sender,
   });
   return { subject: r.subject, html, missing: r.missing };
 }
@@ -126,11 +128,13 @@ async function insertLog(row) {
   return data?.id || null;
 }
 
-async function deliver({ settings, to, subject, html }) {
+async function deliver({ settings, to, subject, html, sender }) {
   const provider = getProvider(settings.provider);
   const res = await provider.sendEmail({
     to, subject, html,
-    fromName: settings.from_name, fromEmail: settings.from_email,
+    fromName: sender?.fromName ?? settings.from_name,
+    fromEmail: sender?.fromEmail ?? settings.from_email,
+    replyTo: sender?.replyTo || null,
   });
   return { provider: provider.name, ...res };
 }
@@ -180,8 +184,12 @@ async function send(opts) {
 
   // Signed unsubscribe token for the customer-footer link (recovered statelessly
   // on click). Harmless for shells without an unsubscribe link (vendor).
+  // Resolve the FROM persona (Tithi/Durga/…) for this template first — it drives
+  // both the From header and the in-body signature. Falls back to the global
+  // settings sender when the template has no sender_key (schema-safe).
+  const sender = await senderRegistry.senderFor(template, settings);
   const sendData = { ...data, unsubscribe_token: data.unsubscribe_token || makeToken(to) };
-  const { subject, html, missing } = renderEmail(template, { data: sendData, user, settings, audience });
+  const { subject, html, missing } = renderEmail(template, { data: sendData, user, settings, audience, sender });
   // Observability (E1): an unresolved placeholder renders as '' — silent blank
   // content. Globals are always present, so any 'missing' token is a real
   // template/caller drift. Surface it (throttled per event+tokens) instead of
@@ -213,7 +221,7 @@ async function send(opts) {
 
   // Test send → deliver now, mark TEST (kept out of the normal logs view)
   if (isTest) {
-    const r = await deliver({ settings, to, subject, html });
+    const r = await deliver({ settings, to, subject, html, sender });
     await insertLog({ ...baseLog, status: r.success ? 'test' : 'failed',
       provider: r.provider, provider_response: r.response || {}, error: r.error || null,
       attempts: 1, sent_at: new Date().toISOString() });
@@ -222,7 +230,7 @@ async function send(opts) {
 
   // OTP / critical → immediate send (PRD §17)
   if (immediate) {
-    const r = await deliver({ settings, to, subject, html });
+    const r = await deliver({ settings, to, subject, html, sender });
     const logId = await insertLog({ ...baseLog,
       status: r.success ? 'sent' : 'queued', provider: r.provider,
       provider_response: r.response || {}, error: r.error || null,
@@ -262,7 +270,12 @@ async function processQueue(limit = 25) {
   let sent = 0, failed = 0, retried = 0;
   for (const row of rows) {
     const attemptsMade = (row.attempts || 0) + 1;
-    const r = await deliver({ settings, to: row.recipient, subject: row.subject, html: row.html });
+    // Sender is a property of the template, resolved here at delivery time (the
+    // queued row stores rendered html/subject but not the persona). Missing
+    // template → null → global fallback.
+    const rowTemplate = await getTemplate(row.event_key, row.audience);
+    const rowSender = await senderRegistry.senderFor(rowTemplate, settings);
+    const r = await deliver({ settings, to: row.recipient, subject: row.subject, html: row.html, sender: rowSender });
 
     if (r.success) {
       await supabaseAdmin.from('email_logs').update({

@@ -23,10 +23,10 @@ const transporter = () => {
   return _transporter;
 };
 
-async function sendEmail({ to, subject, html, text, fromName = 'Book A Sloth', fromEmail }) {
+async function sendEmail({ to, subject, html, text, fromName = 'Book A Sloth', fromEmail, replyTo }) {
   try {
     const from = `"${fromName}" <${fromEmail || process.env.SMTP_USER}>`;
-    const info = await transporter().sendMail({ from, to, subject, html, ...(text ? { text } : {}) });
+    const info = await transporter().sendMail({ from, to, subject, html, ...(text ? { text } : {}), ...(replyTo ? { replyTo } : {}) });
     return { success: true, id: info.messageId, response: { accepted: info.accepted, response: info.response } };
   } catch (err) {
     return { success: false, error: err.message };
