@@ -67,6 +67,8 @@ export default function SupportChat() {
         if (!active) return;
         setThread(data.thread);
         setMessages(data.messages || []);
+        // Loading the thread marks it read server-side — clear the nav badge.
+        window.dispatchEvent(new Event('support:unread-changed'));
       } catch {
         toast.error('Couldn’t load your chat');
       } finally {
@@ -88,7 +90,10 @@ export default function SupportChat() {
         .channel(`support:thread:${thread.id}`)
         .on('broadcast', { event: 'message' }, ({ payload }) => {
           append(payload);
-          if (payload.sender !== 'user') markSupportRead(thread.id).catch(() => {});
+          if (payload.sender !== 'user') {
+            markSupportRead(thread.id).catch(() => {});
+            window.dispatchEvent(new Event('support:unread-changed'));
+          }
         })
         .on('broadcast', { event: 'status' }, ({ payload }) => setThread((t) => ({ ...t, ...payload })))
         .subscribe();

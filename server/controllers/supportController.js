@@ -93,6 +93,15 @@ const escalateThread = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// GET /api/support/unread — the caller's unread reply count for a sidebar/tab
+// badge. Read-only: never creates a thread. { count, thread_id }.
+const unread = async (req, res) => {
+  try {
+    const thread = await chat.getOpenThread({ userId: req.user?.id, guestPhone: req.user?.phone });
+    res.json({ count: thread?.user_unread || 0, thread_id: thread?.id || null });
+  } catch (e) { safeError(res, e); }
+};
+
 // POST /api/support/thread/:id/read
 const markRead = async (req, res) => {
   try {
@@ -103,4 +112,4 @@ const markRead = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { getMyThread, getMessages, sendMessage, escalateThread, markRead, botAutoReply };
+module.exports = { getMyThread, getMessages, sendMessage, escalateThread, markRead, unread, botAutoReply };

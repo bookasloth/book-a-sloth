@@ -71,6 +71,20 @@ const getThread = async (threadId) => {
   return data || null;
 };
 
+// The participant's open (non-resolved) thread, WITHOUT creating one. Used by the
+// unread-count poll so a badge check never spawns an empty thread.
+async function getOpenThread({ userId, guestPhone } = {}) {
+  let q = supabaseAdmin
+    .from('support_threads')
+    .select('*')
+    .neq('status', 'resolved')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  q = userId ? q.eq('user_id', userId) : q.eq('guest_phone', guestPhone || '');
+  const { data } = await q;
+  return (data && data[0]) || null;
+}
+
 const listMessages = async (threadId) => {
   const { data } = await supabaseAdmin
     .from('support_messages')
@@ -139,6 +153,6 @@ async function listQueue({ filter = 'waiting', adminId } = {}) {
 }
 
 module.exports = {
-  refFrom, broadcast, getOrCreateOpenThread, getThread, listMessages,
+  refFrom, broadcast, getOrCreateOpenThread, getOpenThread, getThread, listMessages,
   postMessage, setStatus, escalate, assign, resolve, markRead, listQueue,
 };

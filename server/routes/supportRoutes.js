@@ -5,6 +5,7 @@ const c = require('../controllers/supportController');
 
 // Host/guest support chat. A participant only ever reaches their own thread
 // (ownership is enforced in the controller).
+router.get('/unread',                 protect, c.unread);
 router.get('/thread',                 protect, c.getMyThread);
 router.get('/thread/:id/messages',    protect, c.getMessages);
 router.post('/thread/:id/messages',   protect, c.sendMessage);

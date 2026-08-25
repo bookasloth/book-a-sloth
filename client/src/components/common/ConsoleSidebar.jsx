@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
+import useSupportUnread from '../../hooks/useSupportUnread';
 import { normalizePlan } from '../../utils/themeUtils';
 import { cn } from '../dashboard/ui/cn';
 
@@ -82,7 +83,7 @@ export const NAV = [
   {
     id: 'chat', label: 'Chat', icon: MessageCircle,
     items: [
-      { to: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
+      { to: '/dashboard/chat', label: 'Chat', icon: MessageCircle, badgeKey: 'chatUnread', badgeNoun: 'new reply' },
     ],
   },
   {
@@ -438,7 +439,8 @@ const ConsoleSidebar = ({ open = false, onClose, triggerRef }) => {
   const plan = normalizePlan(user?.plan);
   const ctx = { user, plan };
   const sections = visibleSections(ctx);
-  const badges = computeBadges(user);
+  const chatUnread = useSupportUnread();
+  const badges = { ...computeBadges(user), chatUnread };
   const active = resolveActive(pathname, sections);
 
   // Esc closes the drawer; focus trap + restore handled by the hook.
