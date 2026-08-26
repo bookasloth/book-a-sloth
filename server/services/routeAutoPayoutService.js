@@ -147,6 +147,8 @@ async function finalizeReleasedTransfer(booking, createdBy = null) {
       body: 'Your earnings are on the way to your bank account.',
       link: '/dashboard/payments/payouts',
     });
+    // Email the host too (deduped once per booking; fire-and-forget).
+    require('./payoutEmails').sendPayoutSent(booking, amount).catch(() => {});
   }
 }
 
@@ -187,6 +189,8 @@ async function reverseHeldTransfer(booking, { reason = 'reversed' } = {}) {
     const razorpay = await razorpayConfig.getClient();
     await razorpay.transfers.reverse(booking.razorpay_transfer_id, {});
     await patchBooking(booking.id, { transfer_status: 'reversed', transfer_error: reason.slice(0, 500) });
+    // Tell the host their earning was reversed (deduped once per booking).
+    require('./payoutEmails').sendEarningReversed(booking).catch(() => {});
     return { ok: true, reversed: true };
   } catch (err) {
     const msg = err?.error?.description || err?.message || 'unknown error';

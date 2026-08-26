@@ -9,6 +9,10 @@ jest.mock('../../services/routeAutoPayoutService', () => ({
   finalizeReleasedTransfer: jest.fn(),
 }));
 jest.mock('../../services/routeAccountService', () => ({ createLinkedAccount: jest.fn() }));
+jest.mock('../../services/payoutEmails', () => ({
+  sendPayoutSent: jest.fn(() => Promise.resolve()), sendVerificationNeeded: jest.fn(() => Promise.resolve()),
+  sendPayoutFailed: jest.fn(() => Promise.resolve()), sendEarningReversed: jest.fn(() => Promise.resolve()),
+}));
 jest.mock('../../utils/adminAlert', () => ({ adminAlert: jest.fn(() => Promise.resolve({ sent: true })) }));
 jest.mock('../../utils/logger', () => ({ securityLog: jest.fn() }));
 

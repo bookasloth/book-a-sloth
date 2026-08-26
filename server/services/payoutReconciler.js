@@ -182,7 +182,12 @@ async function reconcile() {
     const amt = Number(b.vendor_amount) || 0;
     if (amt < MIN_TRANSFER_RUPEES) continue;                 // below Razorpay's ₹1 reversal floor
     if (SKIP_SETTLE.has(b.settlement_status)) continue;      // cancelled / not eligible
-    if ((Number(b.transfer_attempts) || 0) >= MAX_ATTEMPTS) { s.blocked++; continue; }
+    if ((Number(b.transfer_attempts) || 0) >= MAX_ATTEMPTS) {
+      s.blocked++;
+      // Payout failed repeatedly → email the host once to check their bank details.
+      require('./payoutEmails').sendPayoutFailed(b, amt).catch(() => {});
+      continue;
+    }
     if (!b.razorpay_payment_id) continue;                    // can't create a payment-linked transfer without it
     s.candidates++;
 
@@ -194,7 +199,11 @@ async function reconcile() {
       // Actionable-by-ops = an ONBOARDED host (has a linked account) stuck at Razorpay
       // activation. A host with no account/KYC simply hasn't onboarded — the KYC-earning
       // nudge prompts THEM, so it must never page ops (that was the hourly-email spam).
-      if (elig.accountId && elig.reasons.includes('not_activated')) s.owedBlockedActionable++;
+      if (elig.accountId && elig.reasons.includes('not_activated')) {
+        s.owedBlockedActionable++;
+        // Email the host once (deduped) that their verification needs finishing.
+        require('./payoutEmails').sendVerificationNeeded(b.host_id).catch(() => {});
+      }
       continue;
     }
 
