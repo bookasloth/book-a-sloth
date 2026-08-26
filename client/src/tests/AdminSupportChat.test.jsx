@@ -57,9 +57,10 @@ describe('AdminSupportChat', () => {
     await waitFor(() => expect(screen.getByText('On it — checking now')).toBeInTheDocument());
   });
 
-  it('marks the thread resolved', async () => {
+  it('marks the thread resolved after picking (or skipping) a reason', async () => {
     await openThread();
-    fireEvent.click(screen.getByText('Mark resolved'));
-    await waitFor(() => expect(adminResolveSupport).toHaveBeenCalledWith('t1'));
+    fireEvent.click(screen.getByText('Mark resolved')); // opens the reason picker
+    fireEvent.click(screen.getByText('Resolve'));         // confirm (reason optional)
+    await waitFor(() => expect(adminResolveSupport).toHaveBeenCalledWith('t1', {}));
   });
 });

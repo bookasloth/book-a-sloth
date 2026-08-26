@@ -696,7 +696,9 @@ export const adminGetSupportThread = (id)         => API.get(`/admin/support/thr
 export const adminSupportContext   = (id)         => API.get(`/admin/support/thread/${id}/context`);
 export const adminReplySupport     = (id, data)   => API.post(`/admin/support/thread/${id}/reply`, data);
 export const adminAssignSupport    = (id, data)   => API.post(`/admin/support/thread/${id}/assign`, data || {});
-export const adminResolveSupport   = (id)         => API.post(`/admin/support/thread/${id}/resolve`);
+export const adminResolveSupport   = (id, data)   => API.post(`/admin/support/thread/${id}/resolve`, data || {});
+export const adminSupportInsights  = (days)       => API.get('/admin/support/insights', { params: { days } });
+export const adminSupportReasons   = ()           => API.get('/admin/support/reasons');
 // Escalations (human handoffs) — list, thread, reply, status
 export const adminListEscalations  = (params)   => API.get('/admin/bot/escalations', { params });
 export const adminGetEscalation    = (id)       => API.get(`/admin/bot/escalations/${id}`);

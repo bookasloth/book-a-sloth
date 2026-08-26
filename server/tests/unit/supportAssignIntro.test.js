@@ -1,5 +1,6 @@
 // "Assign to me" — persona attribution + one-time warm intro. chat + context mocked.
 
+jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 jest.mock('../../services/supportChatService', () => ({
   getThread: jest.fn(), assign: jest.fn(), setAgentName: jest.fn(),
   hasAdminMessage: jest.fn(), postMessage: jest.fn(),

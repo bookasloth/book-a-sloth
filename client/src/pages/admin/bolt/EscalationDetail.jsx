@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { adminGetEscalation, adminReplyEscalation, adminUpdateEscalation } from '../../../services/api';
 import { Badge } from '../../../components/admin/ui';
+import { REASON_GROUPS } from '../../../utils/supportReasons';
 
 const STATUS_TONE = { open: 'warn', replied: 'ok', closed: 'neutral' };
 const RATING_EMOJI = { 1: '😠', 2: '😕', 3: '😐', 4: '🙂', 5: '🤩' };
@@ -13,6 +14,8 @@ const fmtDateTime = (s) => (s ? new Date(s).toLocaleString('en-IN', { day: 'nume
 export default function EscalationDetail({ id, onBack, onChanged }) {
   const [sel, setSel] = useState(null);
   const [reply, setReply] = useState({ channel: 'email', body: '', busy: false });
+  const [closeOpen, setCloseOpen] = useState(false);
+  const [reasonCode, setReasonCode] = useState('');
 
   const load = useCallback(async () => {
     try { const { data } = await adminGetEscalation(id); setSel(data); }
@@ -36,11 +39,12 @@ export default function EscalationDetail({ id, onBack, onChanged }) {
     }
   };
 
-  const setEscalationStatus = async (status) => {
+  const setEscalationStatus = async (status, reason) => {
     try {
-      await adminUpdateEscalation(id, { status });
+      await adminUpdateEscalation(id, reason ? { status, reason_code: reason } : { status });
       toast.success(`Marked ${status}`);
       setSel((s) => ({ ...s, escalation: { ...s.escalation, status } }));
+      setCloseOpen(false); setReasonCode('');
       onChanged?.();
     } catch { toast.error('Update failed'); }
   };
@@ -73,9 +77,24 @@ export default function EscalationDetail({ id, onBack, onChanged }) {
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="rounded-lg border adm-border px-2.5 py-1 text-xs font-medium text-[#25D366]">Reply on WhatsApp ↗</a>}
-            {e.status !== 'closed' && <button onClick={() => setEscalationStatus('closed')} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Mark closed</button>}
+            {e.status !== 'closed' && <button onClick={() => setCloseOpen((v) => !v)} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Mark closed</button>}
             {e.status === 'closed' && <button onClick={() => setEscalationStatus('open')} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Reopen</button>}
           </div>
+          {closeOpen && e.status !== 'closed' && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-[#faf9f7] px-3 py-2">
+              <span className="text-xs font-medium adm-t2">Why did they need us?</span>
+              <select value={reasonCode} onChange={(ev) => setReasonCode(ev.target.value)} className="rounded-lg border adm-border px-2 py-1 text-xs">
+                <option value="">Reason (optional)…</option>
+                {REASON_GROUPS.map((g) => (
+                  <optgroup key={g.category} label={g.category}>
+                    {g.items.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+              <button onClick={() => setEscalationStatus('closed', reasonCode)} className="rounded-lg bg-[#FE5100] px-2.5 py-1 text-xs font-medium text-white">Close</button>
+              <button onClick={() => { setCloseOpen(false); setReasonCode(''); }} className="text-xs adm-t3">Cancel</button>
+            </div>
+          )}
         </div>
 
         <div>

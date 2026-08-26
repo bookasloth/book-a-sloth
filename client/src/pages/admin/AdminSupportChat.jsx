@@ -12,6 +12,7 @@ import {
 import { PageHeader, Badge, Skeleton } from '../../components/admin/ui';
 import EscalationDetail from './bolt/EscalationDetail';
 import { priorityOf, waitMinutes, slaLevel, fmtWait, inboxSort, SLA_BREACH_MIN } from '../../utils/supportSla';
+import { REASON_GROUPS } from '../../utils/supportReasons';
 
 const FILTERS = [
   { id: 'waiting', label: 'Waiting' },
@@ -144,6 +145,8 @@ export default function AdminSupportChat() {
   const [context, setContext] = useState(null);
   const [assigning, setAssigning] = useState(false);
   const [now, setNow] = useState(() => Date.now()); // ticks the SLA clock
+  const [resolveOpen, setResolveOpen] = useState(false); // reason picker before resolve
+  const [reasonCode, setReasonCode] = useState('');
   const bottomRef = useRef(null);
   const chanRef = useRef(null);
 
@@ -238,12 +241,13 @@ export default function AdminSupportChat() {
     setReply({ body: '', busy: false });
   };
 
-  const resolve = async () => {
+  const doResolve = async () => {
     if (!sel) return;
     try {
-      await adminResolveSupport(sel.thread.id);
+      await adminResolveSupport(sel.thread.id, reasonCode ? { reason_code: reasonCode } : {});
       toast.success('Marked resolved');
       setSel((s) => (s ? { ...s, thread: { ...s.thread, status: 'resolved' } } : s));
+      setResolveOpen(false); setReasonCode('');
       loadQueue();
     } catch { toast.error('Could not resolve'); }
   };
@@ -273,10 +277,26 @@ export default function AdminSupportChat() {
               </button>
             )}
             {t.status !== 'resolved' && (
-              <button onClick={resolve} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Mark resolved</button>
+              <button onClick={() => setResolveOpen((v) => !v)} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Mark resolved</button>
             )}
           </div>
         </div>
+        {resolveOpen && t.status !== 'resolved' && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border adm-border bg-[#faf9f7] px-3 py-2">
+            <span className="text-xs font-medium adm-t2">Why did they need us?</span>
+            <select value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}
+              className="rounded-lg border adm-border px-2 py-1 text-xs">
+              <option value="">Reason (optional)…</option>
+              {REASON_GROUPS.map((g) => (
+                <optgroup key={g.category} label={g.category}>
+                  {g.items.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
+                </optgroup>
+              ))}
+            </select>
+            <button onClick={doResolve} className="rounded-lg bg-[#FE5100] px-2.5 py-1 text-xs font-medium text-white">Resolve</button>
+            <button onClick={() => { setResolveOpen(false); setReasonCode(''); }} className="text-xs adm-t3">Cancel</button>
+          </div>
+        )}
         {t.subject && <p className="mt-2 text-sm font-semibold adm-t1">{t.subject}</p>}
         {t.ai_summary && (
           <p className="mt-2 rounded-lg bg-violet-50 px-3 py-2 text-[12.5px] text-violet-900">

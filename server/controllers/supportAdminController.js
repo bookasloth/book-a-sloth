@@ -4,9 +4,11 @@
 // (support.view for reads, support.assign for writes) on the isolated admin token.
 
 const { safeError } = require('../utils/httpError');
+const { supabaseAdmin } = require('../config/supabase');
 const chat = require('../services/supportChatService');
 const context = require('../services/supportContextService');
 const { personaFor, introMessage } = require('../config/supportAgents');
+const { REASONS, BY_CODE, isValidReason, isProductCaused } = require('../config/supportReasons');
 
 // Real admin id — used for attribution, the 'mine' filter, and audit. Never shown
 // to the customer.
@@ -101,15 +103,65 @@ const assign = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-// POST /api/admin/support/thread/:id/resolve
+// POST /api/admin/support/thread/:id/resolve  { reason_code? }
 const resolve = async (req, res) => {
   try {
     const thread = await chat.getThread(req.params.id);
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
+    const rc = req.body?.reason_code;
+    if (rc && isValidReason(rc)) await chat.setReasonCode(thread.id, rc); // best-effort, never blocks resolve
     await chat.postMessage({ threadId: thread.id, sender: 'system', body: 'This conversation was marked resolved.' });
     const updated = await chat.resolve(thread.id);
     res.json({ thread: updated });
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { queue, getThread, threadContext, reply, assign, resolve };
+// GET /api/admin/support/insights?days=30 — support-as-product-intelligence.
+// Aggregates contact reasons across BOTH stores (threads + Bolt escalations) so
+// the team sees why people needed help and what share was product/UX-caused.
+const insights = async (req, res) => {
+  try {
+    const days = Math.min(Math.max(parseInt(req.query?.days, 10) || 30, 1), 365);
+    const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+
+    // Resolved/closed conversations in the window. reason_code may be absent
+    // pre-v3.117 → degrade to empty rather than 500.
+    const [tq, eq] = await Promise.all([
+      supabaseAdmin.from('support_threads').select('reason_code').eq('status', 'resolved').gte('updated_at', cutoff),
+      supabaseAdmin.from('bot_escalations').select('reason_code').eq('status', 'closed').gte('created_at', cutoff),
+    ]);
+    const rows = [...(tq.error ? [] : tq.data || []), ...(eq.error ? [] : eq.data || [])];
+
+    const total = rows.length;
+    const withReason = rows.filter((r) => r.reason_code && BY_CODE[r.reason_code]);
+    const counts = {};
+    withReason.forEach((r) => { counts[r.reason_code] = (counts[r.reason_code] || 0) + 1; });
+
+    const byReason = REASONS
+      .map((r) => ({ ...r, count: counts[r.code] || 0 }))
+      .filter((r) => r.count > 0)
+      .sort((a, b) => b.count - a.count);
+
+    const byCategory = {};
+    byReason.forEach((r) => { byCategory[r.category] = (byCategory[r.category] || 0) + r.count; });
+
+    const productCaused = withReason.filter((r) => isProductCaused(r.reason_code)).length;
+    const denom = withReason.length || 1;
+
+    res.json({
+      window_days: days,
+      total_resolved: total,
+      tagged: withReason.length,
+      coverage_rate: total ? +(withReason.length / total).toFixed(3) : 0,
+      product_caused_rate: +(productCaused / denom).toFixed(3),
+      by_reason: byReason,
+      by_category: Object.entries(byCategory).map(([category, count]) => ({ category, count })).sort((a, b) => b.count - a.count),
+      reasons: REASONS, // taxonomy for the picker
+    });
+  } catch (e) { safeError(res, e); }
+};
+
+// GET /api/admin/support/reasons — the taxonomy for the resolve/close picker.
+const reasons = (_req, res) => res.json({ reasons: REASONS });
+
+module.exports = { queue, getThread, threadContext, reply, assign, resolve, insights, reasons };
