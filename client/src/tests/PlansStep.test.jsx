@@ -39,6 +39,11 @@ const PLANS = [
   { slug: 'professional', name: 'Studio', monthly_price: 555, annual_price: 3650, limits: { services: -1, bookings_per_year: -1 }, commission_percentage: 0 },
 ];
 
+// GST billing details on the host (#805): choosePaid now requires a place-of-supply
+// state_code before creating the mandate, and passes a billing snapshot to
+// createSubscription. The host's saved billing_details satisfy the gate.
+const BILL = { state_code: 'MH', state: 'Maharashtra', name: 'Test Host' };
+
 // Render the plans step alongside a sentinel /live route so we can assert navigation.
 const renderStep = () => render(
   <MemoryRouter initialEntries={['/vendor-register/test/plans']}>
@@ -52,7 +57,7 @@ const renderStep = () => render(
 beforeEach(() => {
   vi.clearAllMocks();
   getPublicPlans.mockResolvedValue({ data: PLANS });
-  getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'creator' } });
+  getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'creator', billing_details: BILL } });
   // Use a function (not arrow) so `new window.Razorpay(opts)` works as a constructor.
   window.Razorpay = function () { return { open: vi.fn() }; };
   // Guard checks window.location.pathname for the current segment.
@@ -73,7 +78,7 @@ test('hero "go live" opens a Studio ANNUAL subscription', async () => {
   renderStep();
   await waitFor(() => screen.getByText('Studio'));
   fireEvent.click(screen.getByRole('button', { name: /go live/ }));
-  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'professional', cadence: 'annual' }));
+  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'professional', cadence: 'annual', billing: BILL }));
 });
 
 test('renders other plans + monthly/annual cadence toggle in the drawer', async () => {
@@ -91,7 +96,7 @@ test('drawer paid plan opens an auto-renew subscription with the selected cadenc
   fireEvent.click(screen.getByRole('button', { name: /See all plans/ }));
   await waitFor(() => screen.getByText('Host+'));
   fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
-  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'creator', cadence: 'annual' }));
+  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'creator', cadence: 'annual', billing: BILL }));
 });
 
 test('switching to monthly passes monthly cadence', async () => {
@@ -101,7 +106,7 @@ test('switching to monthly passes monthly cadence', async () => {
   await waitFor(() => screen.getByText('Host+'));
   fireEvent.click(screen.getByRole('button', { name: 'Monthly' }));
   fireEvent.click(screen.getByRole('button', { name: 'Choose Host+' }));
-  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'creator', cadence: 'monthly' }));
+  await waitFor(() => expect(createSubscription).toHaveBeenCalledWith({ plan: 'creator', cadence: 'monthly', billing: BILL }));
 });
 
 describe('free plan path', () => {
@@ -138,7 +143,7 @@ describe('paid plan success path', () => {
   test('handler calls syncSubscription → getMe → advanceToLive → navigate /live when plan is active', async () => {
     const getCapture = makeRazorpayCapture();
     // Both mount + handler getMe calls return a paid plan
-    getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'professional' } });
+    getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'professional', billing_details: BILL } });
 
     renderStep();
     await waitFor(() => screen.getByText('Studio'));
@@ -164,7 +169,7 @@ describe('paid plan success path', () => {
   test('handler does NOT navigate or call advanceToLive when getMe shows plan not yet active (webhook lag)', async () => {
     const getCapture = makeRazorpayCapture();
     // Both mount and handler getMe calls return no/free plan → webhook lag scenario
-    getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: null } });
+    getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: null, billing_details: BILL } });
 
     renderStep();
     await waitFor(() => screen.getByText('Studio'));
@@ -186,7 +191,7 @@ describe('paid plan success path', () => {
     const getCapture = makeRazorpayCapture();
     // Mount getMe resolves (so the page renders); the post-payment getMe rejects.
     getMe
-      .mockResolvedValueOnce({ data: { name: 'Test Host', email: 'host@example.com', plan: 'professional' } })
+      .mockResolvedValueOnce({ data: { name: 'Test Host', email: 'host@example.com', plan: 'professional', billing_details: BILL } })
       .mockRejectedValue(new Error('network'));
 
     renderStep();
@@ -219,7 +224,7 @@ describe('paid plan success path', () => {
 
   test('paid handler does NOT call markOnboardingComplete (only navigates to /live via advanceToLive)', async () => {
     const getCapture = makeRazorpayCapture();
-    getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'professional' } });
+    getMe.mockResolvedValue({ data: { name: 'Test Host', email: 'host@example.com', plan: 'professional', billing_details: BILL } });
 
     renderStep();
     await waitFor(() => screen.getByText('Studio'));
