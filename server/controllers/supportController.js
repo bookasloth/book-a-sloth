@@ -8,6 +8,7 @@ const { safeError } = require('../utils/httpError');
 const supportHours = require('../utils/supportHours');
 const chat = require('../services/supportChatService');
 const bot = require('../services/botService');
+const supportActions = require('../services/supportActions');
 const supportContext = require('../services/supportContextService');
 
 // Bolt auto-reply. Fired after the user's message is stored, ONLY while the thread
@@ -18,6 +19,27 @@ const supportContext = require('../services/supportContextService');
 // wire conversationId ↔ thread if follow-up context ever matters.
 async function botAutoReply(thread, question) {
   try {
+    // Self-service actions run BEFORE the FAQ bot: if the customer (whose identity
+    // we know on an authenticated thread) is asking to resend their confirmation /
+    // invoice / calendar invite, DO it rather than answer with words.
+    const action = supportActions.detectAction(question);
+    if (action && (thread.user_id || thread.guest_phone)) {
+      let msg;
+      try {
+        const r = await supportActions.runAction(action, {
+          userId: thread.user_id, guestPhone: thread.guest_phone, isHost: thread.participant_type === 'host',
+        });
+        msg = r.message;
+      } catch (e) {
+        console.error('support action failed', action, thread?.id, e.message);
+        msg = "I hit a snag doing that just now. Tap 'Talk to a human' and a teammate will sort it out.";
+      }
+      if (msg) {
+        await chat.postMessage({ threadId: thread.id, sender: 'bot', senderName: 'Bolt', body: msg });
+        return; // handled — skip the FAQ bot
+      }
+    }
+
     // AUTHENTICATED context: the thread is tied to a verified user_id / guest_phone,
     // so Bolt may answer this person's own booking/plan/KYC/payout questions from real
     // state. Best-effort — a lookup failure just means Bolt answers without it.

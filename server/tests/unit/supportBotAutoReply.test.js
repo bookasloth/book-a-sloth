@@ -4,6 +4,7 @@
 jest.mock('../../services/botService', () => ({ askBot: jest.fn() }));
 jest.mock('../../services/supportChatService', () => ({ postMessage: jest.fn(), escalate: jest.fn() }));
 jest.mock('../../services/supportContextService', () => ({ getSupportContext: jest.fn() }));
+jest.mock('../../services/supportActions', () => ({ detectAction: jest.fn(() => null), runAction: jest.fn() }));
 
 const bot = require('../../services/botService');
 const chat = require('../../services/supportChatService');
