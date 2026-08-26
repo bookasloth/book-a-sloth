@@ -20,6 +20,8 @@ vi.mock('../services/api', () => ({
   crmSetStatus: vi.fn(), crmAddTag: vi.fn(), crmRemoveTag: vi.fn(),
   crmListTemplates: vi.fn(() => Promise.resolve({ data: [] })),
   crmListSequences: vi.fn(() => Promise.resolve({ data: [] })),
+  crmListViews: vi.fn(() => Promise.resolve({ data: [] })),
+  crmCreateView: vi.fn(), crmDeleteView: vi.fn(),
 }));
 vi.mock('../pages/admin/sales/LeadDrawer', () => ({ default: () => null }));
 vi.mock('../pages/admin/sales/CommandPalette', () => ({ default: () => null }));
