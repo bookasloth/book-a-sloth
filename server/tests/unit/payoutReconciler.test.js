@@ -28,6 +28,8 @@ const makeChain = () => {
   const c = { _write: false };
   for (const m of ['select', 'eq', 'is', 'not', 'lt', 'limit']) c[m] = jest.fn(() => c);
   c.update = jest.fn(() => { c._write = true; return c; });
+  c.maybeSingle = () => Promise.resolve(readQueue.shift() || { data: null });
+  c.upsert = jest.fn(() => { c._write = true; return Promise.resolve({ data: null, error: null }); });
   c.then = (resolve) => resolve(c._write ? { data: null, error: null } : (readQueue.shift() || { data: [] }));
   return c;
 };
@@ -62,16 +64,26 @@ test('mode "off" is a no-op — no queries, no money, no alert', async () => {
   expect(adminAlert).not.toHaveBeenCalled();
 });
 
-test('observe: owed money to an INELIGIBLE host is counted + alerted, but NO transfer is created', async () => {
+test('observe: an ONBOARDED host stuck at activation is counted + alerted, no transfer created', async () => {
   platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'observe' });
-  isPayoutEligible.mockResolvedValue({ eligible: false, reasons: ['not_activated'] });
+  isPayoutEligible.mockResolvedValue({ eligible: false, reasons: ['not_activated'], accountId: 'acc_1' });
   setReads({ owed: [owedBooking()] });
   const r = await reconcile();
   expect(r.owedBlocked).toBe(1);
-  expect(r.owedBlockedSum).toBe(10);
+  expect(r.owedBlockedActionable).toBe(1);
   expect(r.created).toBe(0);
   expect(routeAuto.createHeldTransferForBooking).not.toHaveBeenCalled();
   expect(adminAlert).toHaveBeenCalledWith(expect.objectContaining({ key: 'payout_reconcile_blocked' }));
+});
+
+test('a host who has NOT onboarded (no account/KYC) is owed but does NOT trigger an ops alert', async () => {
+  platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'observe' });
+  isPayoutEligible.mockResolvedValue({ eligible: false, reasons: ['kyc_not_approved', 'no_linked_account', 'not_activated'], accountId: null });
+  setReads({ owed: [owedBooking()] });
+  const r = await reconcile();
+  expect(r.owedBlocked).toBe(1);
+  expect(r.owedBlockedActionable).toBe(0);
+  expect(adminAlert).not.toHaveBeenCalled();
 });
 
 test('live: owed money to an ELIGIBLE host creates the held transfer', async () => {

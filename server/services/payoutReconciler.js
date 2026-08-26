@@ -51,11 +51,27 @@ const MAX_ATTEMPTS = Number(process.env.PAYOUT_RECONCILE_MAX_ATTEMPTS || 5);
 const SCAN_LIMIT = Number(process.env.PAYOUT_RECONCILE_LIMIT || 300);
 const SKIP_SETTLE = new Set(['cancelled', 'not_eligible']);
 
-// The "payouts blocked" condition persists across runs (a stuck activation stays
-// stuck for days), and the cron fires every ~15 min — so throttle the alert to at
-// most once per window to avoid inboxing the founder every quarter hour.
+// The "payouts blocked" condition persists across runs, and the cron fires every
+// ~15 min — so throttle the alert to at most once per window. The timestamp is
+// PERSISTED (platform_settings) so it survives restarts; an in-memory throttle
+// reset on every Render cold-start and inboxed the founder ~hourly.
 const BLOCKED_ALERT_EVERY_MS = Number(process.env.PAYOUT_ALERT_EVERY_MS || 6 * 60 * 60 * 1000);
-let _lastBlockedAlertAt = 0;
+const ALERT_KEY = 'payout_alert_last_at';
+
+// Restart-proof throttle: returns true (and stamps 'now') at most once per window.
+// Fail-closed on error — better to skip an alert than risk a spam loop.
+async function claimAlertSlot(windowMs) {
+  try {
+    const { data } = await supabaseAdmin.from('platform_settings').select('value').eq('key', ALERT_KEY).maybeSingle();
+    const last = Number(data?.value) || 0;
+    if (Date.now() - last < windowMs) return false;
+    await supabaseAdmin.from('platform_settings').upsert({ key: ALERT_KEY, value: Date.now() }, { onConflict: 'key' });
+    return true;
+  } catch (e) {
+    securityLog('payout_alert_throttle_error', { reason: e.message });
+    return false;
+  }
+}
 
 const isMissingColumn = (err) => {
   const msg = (err?.message || err?.details || '').toLowerCase();
@@ -137,7 +153,7 @@ async function reconcile() {
 
   const s = {
     mode, refreshed: 0, activated: 0, accountsCreated: 0, created: 0, finalized: 0, failedAttempt: 0,
-    blocked: 0, owedBlocked: 0, owedBlockedSum: 0, candidates: 0, stuck: 0, clawbackNeeded: 0,
+    blocked: 0, owedBlocked: 0, owedBlockedActionable: 0, owedBlockedSum: 0, candidates: 0, stuck: 0, clawbackNeeded: 0,
   };
   const reasonCounts = {};
 
@@ -175,7 +191,11 @@ async function reconcile() {
     if (!elig.eligible) {
       s.owedBlocked++; s.owedBlockedSum += amt;
       for (const r of elig.reasons) reasonCounts[r] = (reasonCounts[r] || 0) + 1;
-      continue;                                              // can't pay — surfaced in the alert
+      // Actionable-by-ops = an ONBOARDED host (has a linked account) stuck at Razorpay
+      // activation. A host with no account/KYC simply hasn't onboarded — the KYC-earning
+      // nudge prompts THEM, so it must never page ops (that was the hourly-email spam).
+      if (elig.accountId && elig.reasons.includes('not_activated')) s.owedBlockedActionable++;
+      continue;
     }
 
     if (!live) continue;                                     // observe: count only, move nothing
@@ -227,20 +247,22 @@ async function reconcile() {
     }
   }
 
-  // ---- 3. Alert if money is owed that we cannot pay, or a clawback is needed ----
-  if ((s.owedBlocked > 0 || s.blocked > 0 || s.clawbackNeeded > 0) && Date.now() - _lastBlockedAlertAt >= BLOCKED_ALERT_EVERY_MS) {
-    _lastBlockedAlertAt = Date.now();
+  // ---- 3. Alert ONLY on actionable blocks: an onboarded host stuck at Razorpay
+  // activation, retry-capped failures, or a needed clawback. A host who simply
+  // hasn't onboarded (no account/KYC) is handled by the KYC-earning nudge, not an
+  // ops page — that was the hourly spam. Throttle persisted so restarts can't spam.
+  if ((s.owedBlockedActionable > 0 || s.blocked > 0 || s.clawbackNeeded > 0) && await claimAlertSlot(BLOCKED_ALERT_EVERY_MS)) {
     const reasonStr = Object.entries(reasonCounts).map(([k, v]) => `${k}=${v}`).join(', ') || 'n/a';
     adminAlert({
-      subject: `Payouts need attention — ₹${s.owedBlockedSum.toFixed(2)} owed can't be paid`,
+      subject: `Payouts need attention — ${s.owedBlockedActionable} stuck at activation, ${s.blocked} failed, ${s.clawbackNeeded} clawback`,
       lines: [
-        `The payout reconciler (${mode}) found host money it could not pay out.`,
-        `Blocked bookings: ${s.owedBlocked}`,
-        `Amount owed (blocked): ₹${s.owedBlockedSum.toFixed(2)}`,
-        `Reasons: ${reasonStr}`,
+        `The payout reconciler (${mode}) found host payouts that need attention.`,
+        `Onboarded hosts stuck at Razorpay activation: ${s.owedBlockedActionable}`,
         `Retry-capped bookings: ${s.blocked}`,
         `Clawbacks needed (paid on a cancelled booking): ${s.clawbackNeeded}`,
-        `Fix: resolve Razorpay Route activation (needs_clarification) for the affected linked accounts — this clears automatically once they are 'activated'.`,
+        `(Also owed but not yet onboarded — host action, not ops: ₹${s.owedBlockedSum.toFixed(2)} / ${s.owedBlocked} bookings.)`,
+        `Reasons: ${reasonStr}`,
+        `Fix: resolve Razorpay Route activation for the affected linked accounts — clears automatically once 'activated'.`,
       ],
       key: 'payout_reconcile_blocked',
       category: 'Payment Receipt',
@@ -251,7 +273,8 @@ async function reconcile() {
   return s;
 }
 
-// Test-only: reset the alert throttle so each case can assert on adminAlert.
-reconcile._resetAlertThrottle = () => { _lastBlockedAlertAt = 0; };
+// Test-only: throttle is now persisted (platform_settings), so tests control it via
+// the mocked supabase read. Kept as a no-op for backward-compatible test setup.
+reconcile._resetAlertThrottle = () => {};
 
 module.exports = { reconcile, refreshActivations };
