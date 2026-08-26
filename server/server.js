@@ -518,6 +518,23 @@ setInterval(async () => {
   } catch (err) { console.error('Confirmation reconciler cron error:', err.message); }
 }, CONFIRMATION_RECONCILE_MIN * 60 * 1000);
 
+// Payout reconciler (P2) — the safety net the host payout rail never had. Creates
+// missing/failed Route transfers for payout-eligible hosts, finalizes held transfers
+// whose transfer.processed webhook was missed, and alerts the founder when host money
+// can't be paid out (Route activation stuck, etc.). Mode-gated via
+// platform_settings.payout_reconciler_mode (off | observe | live); 'observe' by
+// default → scans + alerts but moves NO money. Idempotent + retry-capped. Default 15 min.
+const payoutReconciler = require('./services/payoutReconciler');
+const PAYOUT_RECONCILE_MIN = Number(process.env.PAYOUT_RECONCILE_INTERVAL_MIN || 15);
+setInterval(async () => {
+  try {
+    await runLocked('payout-reconcile', async () => {
+      const r = await payoutReconciler.reconcile();
+      if (r.created || r.finalized) console.log(`Payout reconciler (${r.mode}): created ${r.created || 0}, finalized ${r.finalized || 0}`);
+    }, { leaseMs: PAYOUT_RECONCILE_MIN * 2 * 60 * 1000 });
+  } catch (err) { console.error('Payout reconciler cron error:', err.message); }
+}, PAYOUT_RECONCILE_MIN * 60 * 1000);
+
 // Referral reward release (v3.76) — flips qualified referrals to rewarded once the
 // hold window passes and the referred host is still paying (clawing back churned/
 // refunded ones), crediting the referrer's withdrawable balance. Idempotent; hourly.
