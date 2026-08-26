@@ -22,6 +22,7 @@ vi.mock('../services/api', () => ({
   adminResolveSupport: vi.fn(() => Promise.resolve({ data: {} })),
   adminAssignSupport: vi.fn(() => Promise.resolve({ data: { thread: {} } })),
   adminSupportContext: vi.fn(() => Promise.resolve({ data: { context: { kind: 'guest', profile: {}, bookings: [], host: null } } })),
+  adminListEscalations: vi.fn(() => Promise.resolve({ data: { escalations: [] } })),
 }));
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }));
 

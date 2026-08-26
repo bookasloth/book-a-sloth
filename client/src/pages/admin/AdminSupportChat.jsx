@@ -7,9 +7,10 @@ import toast from 'react-hot-toast';
 import { getSupabase } from '../../services/supabaseClient';
 import {
   adminSupportQueue, adminGetSupportThread, adminReplySupport, adminResolveSupport,
-  adminAssignSupport, adminSupportContext,
+  adminAssignSupport, adminSupportContext, adminListEscalations,
 } from '../../services/api';
 import { PageHeader, Badge, Skeleton } from '../../components/admin/ui';
+import EscalationDetail from './bolt/EscalationDetail';
 
 const FILTERS = [
   { id: 'waiting', label: 'Waiting' },
@@ -17,6 +18,19 @@ const FILTERS = [
   { id: 'all', label: 'All open' },
 ];
 const STATUS_TONE = { bot: 'neutral', waiting: 'warn', assigned: 'ok', resolved: 'neutral' };
+const ESC_TONE = { open: 'warn', replied: 'ok', closed: 'neutral' };
+// Normalize both stores into one queue row. _kind routes the click + detail view.
+const normThread = (t) => ({
+  _kind: 'thread', id: t.id, reference: t.reference, status: t.status, tone: STATUS_TONE[t.status] || 'neutral',
+  whoLabel: t.participant_type === 'host' ? 'Host' : t.participant_type === 'guest' ? 'Guest' : t.participant_type || '—',
+  title: t.subject || `${t.participant_type || 'Support'} conversation`, unread: t.admin_unread || 0,
+  agent: t.status === 'assigned' ? t.agent_name : null, at: t.last_message_at || t.created_at,
+});
+const normEsc = (e) => ({
+  _kind: 'esc', id: e.id, reference: e.reference, status: e.status, tone: ESC_TONE[e.status] || 'neutral',
+  whoLabel: e.logged_in ? (e.is_host ? 'Host' : 'Guest') : 'Anon',
+  title: e.summary || 'Bolt escalation', unread: 0, agent: null, at: e.created_at,
+});
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '');
 const fmtTime = (s) => { try { return new Date(s).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }); } catch { return ''; } };
 const who = (t) => (t.participant_type === 'host' ? 'Host' : t.participant_type === 'guest' ? 'Guest' : t.participant_type || '—');
@@ -116,20 +130,32 @@ function Bubble({ m }) {
 
 export default function AdminSupportChat() {
   const [filter, setFilter] = useState('waiting');
-  const [threads, setThreads] = useState([]);
+  const [items, setItems] = useState([]);      // merged threads + Bolt escalations
   const [loading, setLoading] = useState(true);
   const [sel, setSel] = useState(null);        // { thread, messages }
+  const [selEsc, setSelEsc] = useState(null);  // escalation id when a Bolt row is open
   const [reply, setReply] = useState({ body: '', busy: false });
   const [context, setContext] = useState(null);
   const [assigning, setAssigning] = useState(false);
   const bottomRef = useRef(null);
   const chanRef = useRef(null);
 
+  // Unified queue: dashboard threads + Bolt escalations in one list. Escalations
+  // have no assignee, so the "Mine" filter shows threads only.
   const loadQueue = useCallback(async () => {
     setLoading(true);
-    try { const { data } = await adminSupportQueue(filter); setThreads(data.threads || []); }
-    catch { toast.error('Could not load the queue'); }
-    finally { setLoading(false); }
+    const wantEsc = filter !== 'mine';
+    const [tq, eq] = await Promise.allSettled([
+      adminSupportQueue(filter),
+      wantEsc ? adminListEscalations({ status: filter === 'waiting' ? 'open' : 'all' }) : Promise.resolve({ data: { escalations: [] } }),
+    ]);
+    if (tq.status === 'rejected' && eq.status === 'rejected') toast.error('Could not load the inbox');
+    const threads = (tq.value?.data?.threads || []).map(normThread);
+    let escs = (eq.value?.data?.escalations || []);
+    if (filter === 'all') escs = escs.filter((e) => e.status !== 'closed'); // "All" = open work only
+    const merged = [...threads, ...escs.map(normEsc)].sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+    setItems(merged);
+    setLoading(false);
   }, [filter]);
   useEffect(() => { loadQueue(); }, [loadQueue]);
 
@@ -210,7 +236,12 @@ export default function AdminSupportChat() {
     } catch { toast.error('Could not resolve'); }
   };
 
-  // Detail view.
+  // Bolt-escalation detail — shared component, opened from a 🦥 row in the queue.
+  if (selEsc) {
+    return <EscalationDetail id={selEsc} onBack={() => { setSelEsc(null); loadQueue(); }} onChanged={loadQueue} />;
+  }
+
+  // Thread detail view.
   if (sel) {
     const t = sel.thread;
     const unclaimed = t.status === 'bot' || t.status === 'waiting';
@@ -272,7 +303,7 @@ export default function AdminSupportChat() {
   // Queue view.
   return (
     <div>
-      <PageHeader title="Support Chat" subtitle="Live conversations Bolt handed to the team — reply, and mark resolved." />
+      <PageHeader title="Support Inbox" subtitle="Every conversation in one place — dashboard chats and Bolt widget escalations." />
       <div className="mb-3 flex gap-2">
         {FILTERS.map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
@@ -282,20 +313,23 @@ export default function AdminSupportChat() {
         ))}
       </div>
       {loading ? <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-16" />)}</div>
-        : threads.length === 0 ? <p className="text-sm adm-t3">{filter === 'waiting' ? 'Nothing waiting — Bolt is handling everything.' : 'No open threads here.'}</p>
+        : items.length === 0 ? <p className="text-sm adm-t3">{filter === 'waiting' ? 'Nothing waiting — Bolt is handling everything.' : 'Nothing open here.'}</p>
           : (
             <div className="space-y-2">
-              {threads.map((t) => (
-                <button key={t.id} onClick={() => open(t.id)} className="block w-full rounded-xl border adm-border p-3 text-left hover:border-[#FE5100]">
+              {items.map((it) => (
+                <button key={`${it._kind}:${it.id}`}
+                  onClick={() => (it._kind === 'thread' ? open(it.id) : setSelEsc(it.id))}
+                  className="block w-full rounded-xl border adm-border p-3 text-left hover:border-[#FE5100]">
                   <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-xs font-semibold text-[#1E1E1E]">{t.reference}</code>
-                    <Badge tone={STATUS_TONE[t.status] || 'neutral'}>{t.status}</Badge>
-                    <span className="text-xs adm-t3">{who(t)}</span>
-                    {t.agent_name && t.status === 'assigned' && <span className="text-xs adm-t3">· {t.agent_name}</span>}
-                    {t.admin_unread > 0 && <Badge tone="warn">{t.admin_unread} new</Badge>}
-                    <span className="ml-auto text-xs adm-t3">{fmtDate(t.last_message_at)}</span>
+                    <span className="text-xs" title={it._kind === 'thread' ? 'Dashboard chat' : 'Bolt widget escalation'}>{it._kind === 'thread' ? '💬' : '🦥'}</span>
+                    <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-xs font-semibold text-[#1E1E1E]">{it.reference}</code>
+                    <Badge tone={it.tone}>{it.status}</Badge>
+                    <span className="text-xs adm-t3">{it.whoLabel}</span>
+                    {it.agent && <span className="text-xs adm-t3">· {it.agent}</span>}
+                    {it.unread > 0 && <Badge tone="warn">{it.unread} new</Badge>}
+                    <span className="ml-auto text-xs adm-t3">{fmtDate(it.at)}</span>
                   </div>
-                  <p className="text-sm adm-t1">{t.subject || `${who(t)} conversation`}</p>
+                  <p className="text-sm adm-t1">{it.title}</p>
                 </button>
               ))}
             </div>
