@@ -205,6 +205,21 @@ export default function BotWidget() {
 
   const restart = () => { setMessages([]); setConversationId(null); setInput(''); setEscalation(null); lsDel(CONVO_KEY); };
 
+  // Let other surfaces open Bolt (e.g. the Help page's "Chat with Bolt" card).
+  useEffect(() => {
+    const openBolt = () => setOpen(true);
+    window.addEventListener('bolt:open', openBolt);
+    return () => window.removeEventListener('bolt:open', openBolt);
+  }, []);
+
+  // Manual "talk to a human" — routes into the same contact-capture flow the model
+  // triggers, instead of a dead link. Uses the last question for context.
+  const startHandoff = () => {
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    setEscalation({ step: 'choose', reason: 'manual', question: lastUser?.content || 'Manual support request', conversationId });
+    setOpen(true);
+  };
+
   // ---- Anonymous escalation contact flow --------------------------------
   const chooseChannel = (channel) => {
     if (channel === 'browsing') { setEscalation(null); return; } // "just browsing" → keep chatting, no escalation
@@ -364,10 +379,10 @@ export default function BotWidget() {
                                 className="font-medium text-[#FE5100] underline decoration-[#FE5100]/40 underline-offset-2 hover:text-[#FE5100]/80">
                                 {sourceLabel(top)}
                               </a>{' or '}</> : <>Still stuck? </>}
-                            <a href="/support" target="_blank" rel="noopener noreferrer"
+                            <button type="button" onClick={startHandoff}
                               className="font-medium text-[#FE5100] underline decoration-[#FE5100]/40 underline-offset-2 hover:text-[#FE5100]/80">
-                              raise a support ticket
-                            </a>.
+                              talk to a human
+                            </button>.
                           </div>
                         );
                       })()}
@@ -460,11 +475,11 @@ export default function BotWidget() {
                       </div>
                     ) : (
                       <div className="mt-3 border-t border-[#1E1E1E]/10 pt-2.5">
-                        <p className="mb-2 text-[12px] text-[#1E1E1E]/80">Thanks for the feedback! Want to track your request?</p>
-                        <a href="/support/tickets" target="_blank" rel="noopener noreferrer"
-                          className="inline-block rounded-lg bg-[#FE5100] px-3 py-1.5 text-[12px] font-semibold text-white">
-                          Track ticket status →
-                        </a>
+                        <p className="text-[12px] text-[#1E1E1E]/80">
+                          Thanks for the feedback! Our team will reply
+                          {escalation.channel === 'whatsapp' ? ' on WhatsApp' : escalation.channel === 'email' ? ' by email' : ' soon'}
+                          {escalation.reference ? <> — your reference is <span className="font-semibold">{escalation.reference}</span></> : ''}.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -550,7 +565,7 @@ export default function BotWidget() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
               disabled={locked}
-              placeholder={locked ? 'Chat paused — raise a ticket at /support' : 'Ask anything…'}
+              placeholder={locked ? 'Chat paused — email bolt@bookasloth.in' : 'Ask anything…'}
               aria-label="Type your question"
               className="h-10 min-h-10 max-h-24 flex-1 resize-none rounded-xl border-2 border-[#1E1E1E]/12 px-3 pt-[11px] pb-[5px] text-[13px] leading-tight outline-none focus:!border-[#FE5100] focus:!shadow-none focus:!ring-0 focus:!outline-none disabled:cursor-not-allowed disabled:bg-[#1E1E1E]/5"
             />
