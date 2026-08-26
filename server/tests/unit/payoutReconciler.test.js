@@ -8,6 +8,7 @@ jest.mock('../../services/routeAutoPayoutService', () => ({
   createHeldTransferForBooking: jest.fn(),
   finalizeReleasedTransfer: jest.fn(),
 }));
+jest.mock('../../services/routeAccountService', () => ({ createLinkedAccount: jest.fn() }));
 jest.mock('../../utils/adminAlert', () => ({ adminAlert: jest.fn(() => Promise.resolve({ sent: true })) }));
 jest.mock('../../utils/logger', () => ({ securityLog: jest.fn() }));
 
@@ -16,6 +17,7 @@ const razorpayConfig = require('../../services/razorpayConfig');
 const platformConfig = require('../../services/platformConfig');
 const { isPayoutEligible } = require('../../services/payoutEligibility');
 const routeAuto = require('../../services/routeAutoPayoutService');
+const routeAccountService = require('../../services/routeAccountService');
 const { adminAlert } = require('../../utils/adminAlert');
 const { reconcile } = require('../../services/payoutReconciler');
 
@@ -30,9 +32,10 @@ const makeChain = () => {
   return c;
 };
 
-// First read is always the activation refresh (kyc_submissions); default it to [].
-const setReads = ({ activations = [], owed = [], stuck = [] } = {}) => {
-  readQueue = [{ data: activations }, { data: owed }, { data: stuck }];
+// Reads in order: activation refresh, missing-account sweep, owed scan, stuck scan
+// (all kyc_submissions/bookings). Default each to [].
+const setReads = ({ activations = [], needAccounts = [], owed = [], stuck = [] } = {}) => {
+  readQueue = [{ data: activations }, { data: needAccounts }, { data: owed }, { data: stuck }];
 };
 
 beforeEach(() => {
@@ -41,6 +44,7 @@ beforeEach(() => {
   reconcile._resetAlertThrottle();
   supabaseAdmin.from.mockImplementation(() => makeChain());
   razorpayConfig.getClient.mockResolvedValue({ transfers: { fetch: jest.fn() }, products: { fetch: jest.fn() } });
+  routeAccountService.createLinkedAccount.mockResolvedValue({ ok: false });
 });
 
 const owedBooking = (o = {}) => ({
@@ -134,6 +138,15 @@ test('observe does NOT finalize stuck transfers (no money movement)', async () =
   const r = await reconcile();
   expect(r.stuck).toBe(1);
   expect(routeAuto.finalizeReleasedTransfer).not.toHaveBeenCalled();
+});
+
+test('creates missing linked accounts for approved KYC hosts with no account', async () => {
+  platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'observe' });
+  routeAccountService.createLinkedAccount.mockResolvedValue({ ok: true, accountId: 'acc_new' });
+  setReads({ needAccounts: [{ id: 'k1', user_id: 'h1', status: 'approved' }] });
+  const r = await reconcile();
+  expect(routeAccountService.createLinkedAccount).toHaveBeenCalledTimes(1);
+  expect(r.accountsCreated).toBe(1);
 });
 
 test('activation refresh flips a needs_clarification account to activated from Razorpay', async () => {

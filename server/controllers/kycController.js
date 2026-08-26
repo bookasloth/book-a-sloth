@@ -166,6 +166,12 @@ const submitKyc = async (req, res) => {
 
     if (errors.length) return res.status(400).json({ message: errors[0], errors });
 
+    // Autopilot: auto-approve on submit and let Razorpay Route activation be the
+    // verifier (see kycOnboarding). Off by default → the manual admin-review path.
+    const { isAutopilot, onKycApproved } = require('../services/kycOnboarding');
+    const autopilot = await isAutopilot();
+    const AUTO_NOTE = 'Auto-approved (autopilot): identity + bank verification delegated to Razorpay Route activation.';
+
     const payload = {
       user_id: req.user.id,
       full_name: fullName,
@@ -188,10 +194,10 @@ const submitKyc = async (req, res) => {
       selfie_url: b.selfie_url || null,
       pan_doc_url: b.pan_doc_url || null,
       aadhaar_doc_url: b.aadhaar_doc_url || null,
-      status: 'pending',
-      review_note: null,
+      status: autopilot ? 'approved' : 'pending',
+      review_note: autopilot ? AUTO_NOTE : null,
       reviewed_by: null,
-      reviewed_at: null,
+      reviewed_at: autopilot ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
     };
 
@@ -201,9 +207,23 @@ const submitKyc = async (req, res) => {
       .from('kyc_submissions').upsert(payload, { onConflict: 'user_id' });
     if (error) throw error;
 
-    // Alert admins to review. Fire-and-forget; key per-user throttles rapid
-    // re-submits into one email. Never blocks the response.
     const base = process.env.CLIENT_URL || 'https://bookasloth.com';
+    if (autopilot) {
+      // No human review needed — notify the host + kick off Route onboarding now.
+      // A failed create is retried by the payout reconciler's account sweep.
+      onKycApproved({ userId: req.user.id, email, fullName, reviewNote: AUTO_NOTE });
+      // Informational ping to admins (not an action item); throttled per-user.
+      require('../utils/adminAlert').adminAlert({
+        key: `kyc_autopilot:${req.user.id}`,
+        subject: `KYC auto-approved (autopilot): ${fullName || email}`,
+        lines: [`Name: ${fullName || '—'}`, `Email: ${email}`, `Bank: ${bankName}`, 'Onboarding to Razorpay Route; escalations alert separately.'],
+        link: `${base}/admin/kyc/approved`,
+      });
+      return res.status(201).json({ status: 'approved' });
+    }
+
+    // Manual mode: alert admins to review. Fire-and-forget; key per-user throttles
+    // rapid re-submits into one email. Never blocks the response.
     require('../utils/adminAlert').adminAlert({
       key: `kyc_submit:${req.user.id}`,
       subject: `KYC submitted: ${fullName || email}`,

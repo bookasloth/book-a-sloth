@@ -1,0 +1,71 @@
+/**
+ * kycOnboarding.js — shared side-effects of an APPROVED host KYC, and the autopilot
+ * switch.
+ *
+ * "Approved" happens two ways:
+ *   • a human admin decides it (kycAdminController.decideKyc), or
+ *   • autopilot auto-approves on submit (kycController.submitKyc) because Razorpay's
+ *     Route linked-account activation IS the identity/bank verification, so the manual
+ *     gate is duplicate work. Payout eligibility still gates on
+ *     route_activation_status='activated' (payoutEligibility) — autopilot only removes
+ *     the human bottleneck BEFORE Razorpay, not the verification itself.
+ *
+ * Both paths must do the same two things: notify the host, and create the Route linked
+ * account. This centralises them so they can never drift.
+ */
+'use strict';
+
+const { supabaseAdmin } = require('../config/supabase');
+const NotificationEngine = require('./notificationEngine');
+const { inAppNotify } = require('../utils/inAppNotify');
+const routeAccountService = require('./routeAccountService');
+const platformConfig = require('./platformConfig');
+
+/** Is KYC autopilot on? (auto-approve on submit; escalate-only humans.) Fail-safe off. */
+async function isAutopilot() {
+  try { return (await platformConfig.getConfig()).routeAutopilot === true; }
+  catch { return false; }
+}
+
+/**
+ * Fire the side-effects of an approved KYC: notify the host + create the Razorpay
+ * Route linked account. Fire-and-forget; never throws into the caller.
+ * @param {object} a  { userId, email, fullName, reviewNote }
+ */
+function onKycApproved({ userId, email, fullName, reviewNote } = {}) {
+  if (!userId) return;
+
+  NotificationEngine.send({
+    event: 'KYC_APPROVED',
+    data: {
+      email,
+      name: fullName,
+      emailData: {
+        first_name: (fullName || '').split(' ')[0],
+        review_note: reviewNote || 'Please review the requirements and resubmit.',
+        support_email: 'bookasloth@gmail.com',
+      },
+      emailUser: { name: fullName, email },
+      recipientUserId: userId,
+    },
+  }).catch((e) => console.error('KYC approved notify failed:', e.message));
+
+  inAppNotify({
+    userId,
+    role: 'host',
+    type: 'KYC_APPROVED',
+    title: 'KYC approved',
+    body: 'Your identity verification was approved. Payouts are unlocked.',
+    link: '/dashboard/payments/payouts',
+  });
+
+  // Create the Route linked account (needs the full encrypted row for PAN/bank/address).
+  // Self-gating + idempotent (routeAccountService no-ops in fee-only mode / when already
+  // onboarded). A failure is retried by the payout reconciler's account-creation sweep.
+  supabaseAdmin
+    .from('kyc_submissions').select('*').eq('user_id', userId).maybeSingle()
+    .then(({ data: full }) => (full ? routeAccountService.createLinkedAccount(full) : null))
+    .catch((e) => console.error('Route linked-account onboarding failed:', e.message));
+}
+
+module.exports = { isAutopilot, onKycApproved };

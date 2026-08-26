@@ -14,10 +14,16 @@ jest.mock('../../config/supabase', () => ({
 jest.mock('../../utils/httpError', () => ({
   safeError: (res, e, code = 500, msg) => res.status(code).json({ message: msg || e.message }),
 }));
+// Autopilot off by default → existing tests exercise the manual 'pending' path.
+jest.mock('../../services/kycOnboarding', () => ({
+  isAutopilot: jest.fn(() => Promise.resolve(false)),
+  onKycApproved: jest.fn(),
+}));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const { encrypt, decrypt } = require('../../utils/kycCrypto');
 const ctrl = require('../../controllers/kycController');
+const { isAutopilot, onKycApproved } = require('../../services/kycOnboarding');
 
 const mockRes = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
 const USER = 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa';
@@ -93,6 +99,22 @@ test('submitKyc upserts on user_id so re-submission returns to pending', async (
   supabaseAdmin.from.mockReturnValue(chain);
   await ctrl.submitKyc({ user: { id: USER }, body: validBody() }, mockRes());
   expect(chain.upsert.mock.calls[0][1]).toEqual({ onConflict: 'user_id' });
+});
+
+test('autopilot: submitKyc auto-approves + kicks off onboarding, returns approved', async () => {
+  const chain = tableChain(null);
+  supabaseAdmin.from.mockReturnValue(chain);
+  isAutopilot.mockResolvedValueOnce(true);
+  const res = mockRes();
+
+  await ctrl.submitKyc({ user: { id: USER }, body: validBody() }, res);
+
+  expect(res.status).toHaveBeenCalledWith(201);
+  expect(res.json.mock.calls[0][0]).toEqual({ status: 'approved' });
+  const [payload] = chain.upsert.mock.calls[0];
+  expect(payload.status).toBe('approved');
+  expect(payload.reviewed_at).toBeTruthy();
+  expect(onKycApproved).toHaveBeenCalledWith(expect.objectContaining({ userId: USER }));
 });
 
 // ── submitKyc: validation ───────────────────────────────────────

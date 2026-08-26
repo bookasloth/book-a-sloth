@@ -42,6 +42,7 @@ const razorpayConfig = require('./razorpayConfig');
 const platformConfig = require('./platformConfig');
 const { isPayoutEligible } = require('./payoutEligibility');
 const { createHeldTransferForBooking, finalizeReleasedTransfer } = require('./routeAutoPayoutService');
+const routeAccountService = require('./routeAccountService');
 const { adminAlert } = require('../utils/adminAlert');
 const { securityLog } = require('../utils/logger');
 
@@ -106,6 +107,27 @@ async function refreshActivations(rz) {
 }
 
 /**
+ * Retry Route linked-account creation for hosts whose KYC is approved but who have no
+ * account yet — the safety net for the fire-and-forget onboarding (a create skipped or
+ * failed at approval/submit would otherwise strand the host 'approved' with no way to be
+ * paid; critical once autopilot removes the human who'd notice). Idempotent
+ * (routeAccountService no-ops when already onboarded / in fee-only mode). Creates a
+ * Razorpay linked account (KYC config) — it moves NO money, so it runs in observe too.
+ */
+async function createMissingAccounts() {
+  const { data: rows, error } = await supabaseAdmin
+    .from('kyc_submissions').select('*')
+    .eq('status', 'approved').is('razorpay_account_id', null).limit(50);
+  if (error) { if (!isMissingColumn(error)) securityLog('payout_reconcile_account_query', { reason: error.message }); return 0; }
+  let created = 0;
+  for (const k of rows || []) {
+    try { const r = await routeAccountService.createLinkedAccount(k); if (r?.ok && r.accountId) created++; }
+    catch (e) { securityLog('payout_reconcile_account_error', { kycId: k.id, reason: e.message }); }
+  }
+  return created;
+}
+
+/**
  * @returns {Promise<object>} run summary
  */
 async function reconcile() {
@@ -114,7 +136,7 @@ async function reconcile() {
   const live = mode === 'live';
 
   const s = {
-    mode, refreshed: 0, activated: 0, created: 0, finalized: 0, failedAttempt: 0,
+    mode, refreshed: 0, activated: 0, accountsCreated: 0, created: 0, finalized: 0, failedAttempt: 0,
     blocked: 0, owedBlocked: 0, owedBlockedSum: 0, candidates: 0, stuck: 0, clawbackNeeded: 0,
   };
   const reasonCounts = {};
@@ -126,6 +148,9 @@ async function reconcile() {
   // ---- 0. Refresh Route activation so eligibility unblocks itself ----
   const act = await refreshActivations(rz);
   s.refreshed = act.refreshed; s.activated = act.activated;
+
+  // ---- 0b. Create missing linked accounts (approved KYC, no account yet) ----
+  s.accountsCreated = await createMissingAccounts();
 
   // ---- 1. Bookings owed money with no transfer yet (never attempted OR failed) ----
   const { data: owed, error: owedErr } = await supabaseAdmin
