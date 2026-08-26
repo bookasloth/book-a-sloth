@@ -12,6 +12,7 @@ import {
 import { PageHeader, Badge, Skeleton } from '../../components/admin/ui';
 import EscalationDetail from './bolt/EscalationDetail';
 import { priorityOf, waitMinutes, slaLevel, fmtWait, inboxSort, SLA_BREACH_MIN } from '../../utils/supportSla';
+import { teamForText, TEAM_LABEL, TEAM_FILTERS } from '../../utils/supportTeams';
 import { REASON_GROUPS } from '../../utils/supportReasons';
 
 const FILTERS = [
@@ -29,14 +30,14 @@ const normThread = (t) => ({
   agent: t.status === 'assigned' ? t.agent_name : null, at: t.last_message_at || t.created_at,
   // Waiting on us: escalated & unclaimed, or a customer replied on a claimed thread.
   waitingOnUs: t.status === 'waiting' || (t.status === 'assigned' && (t.admin_unread || 0) > 0),
-  waitingSince: t.last_message_at, priority: priorityOf(t.subject),
+  waitingSince: t.last_message_at, priority: priorityOf(t.subject), team: teamForText(t.subject),
 });
 const normEsc = (e) => ({
   _kind: 'esc', id: e.id, reference: e.reference, status: e.status, tone: ESC_TONE[e.status] || 'neutral',
   whoLabel: e.logged_in ? (e.is_host ? 'Host' : 'Guest') : 'Anon',
   title: e.summary || 'Bolt escalation', unread: 0, agent: null, at: e.created_at,
   waitingOnUs: e.status === 'open', waitingSince: e.created_at,
-  priority: priorityOf(`${e.summary || ''} ${e.reason || ''}`),
+  priority: priorityOf(`${e.summary || ''} ${e.reason || ''}`), team: teamForText(`${e.summary || ''} ${e.reason || ''}`),
 });
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '');
 const fmtTime = (s) => { try { return new Date(s).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }); } catch { return ''; } };
@@ -137,6 +138,7 @@ function Bubble({ m }) {
 
 export default function AdminSupportChat() {
   const [filter, setFilter] = useState('waiting');
+  const [teamFilter, setTeamFilter] = useState('all');
   const [items, setItems] = useState([]);      // merged threads + Bolt escalations
   const [loading, setLoading] = useState(true);
   const [sel, setSel] = useState(null);        // { thread, messages }
@@ -333,15 +335,24 @@ export default function AdminSupportChat() {
   }
 
   // Queue view — sorted live (waiting-on-us longest-first), SLA + priority surfaced.
-  const sorted = [...items].sort((a, b) => inboxSort(a, b, now));
+  const sorted = [...items]
+    .filter((it) => teamFilter === 'all' || it.team === teamFilter)
+    .sort((a, b) => inboxSort(a, b, now));
   const breaches = sorted.reduce((n, it) => n + (slaLevel(waitMinutes(it, now)) === 'breach' ? 1 : 0), 0);
   return (
     <div>
       <PageHeader title="Support Inbox" subtitle="Every conversation in one place — dashboard chats and Bolt widget escalations." />
-      <div className="mb-3 flex gap-2">
+      <div className="mb-3 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
             className={'rounded-lg px-3 py-1.5 text-sm font-medium ' + (filter === f.id ? 'bg-[#FE5100] text-white' : 'border adm-border adm-t2')}>
+            {f.label}
+          </button>
+        ))}
+        <span className="mx-1 self-center text-adm-t3">·</span>
+        {TEAM_FILTERS.map((f) => (
+          <button key={f.id} onClick={() => setTeamFilter(f.id)} title="Route: CXO handles money & bugs, Support the rest"
+            className={'rounded-lg px-3 py-1.5 text-sm font-medium ' + (teamFilter === f.id ? 'bg-[#1E1E1E] text-white' : 'border adm-border adm-t2')}>
             {f.label}
           </button>
         ))}
@@ -367,6 +378,7 @@ export default function AdminSupportChat() {
                       <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-xs font-semibold text-[#1E1E1E]">{it.reference}</code>
                       <Badge tone={it.tone}>{it.status}</Badge>
                       {it.priority === 'high' && <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">High</span>}
+                      <span className={'rounded px-1.5 py-0.5 text-[10px] font-semibold ' + (it.team === 'cxo' ? 'bg-violet-100 text-violet-700' : 'bg-sky-50 text-sky-700')}>{TEAM_LABEL[it.team]}</span>
                       {mins != null && (
                         <span className={'rounded px-1.5 py-0.5 text-[10px] font-medium ' + (lvl === 'breach' ? 'bg-rose-100 text-rose-700' : lvl === 'warn' ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-500')}>
                           ⏱ {fmtWait(mins)}
