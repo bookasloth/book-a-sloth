@@ -38,6 +38,7 @@ export const POST_TAGS = {
   'the-arithmetic-of-commission': ['commission', 'pricing', 'earnings'],
   'what-a-booking-page-needs-in-india': ['commission', 'booking', 'pricing'],
   'where-your-money-sits': ['money', 'payments', 'earnings', 'commission'],
+  'money-follows-my-brotha': ['money', 'pricing', 'booking'],
   'razorpay-is-the-source-of-truth': ['payments', 'money', 'invoices'],
   'going-live': ['building-in-public', 'milestones', 'origins'],
   'hello-world': ['building-in-public', 'milestones', 'origins'],
