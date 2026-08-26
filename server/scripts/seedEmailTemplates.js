@@ -31,6 +31,8 @@ const EMAIL_ONLY_EVENTS = [
   ['SUBSCRIPTION_RENEWED', 'Premium Renewed'],
   ['VENDOR_WELCOME', 'Host Welcome'],
   ['KYC_EARN_NUDGE', 'First Earning — Payout Nudge'],
+  ['PAYOUT_SENT', 'Payout — On The Way'],
+  ['PAYOUT_VERIFICATION_NEEDED', 'Payout — Verification Needed'],
   ['UPGRADE_COMMISSION_NUDGE', 'Upgrade — Keep Every Rupee'],
   ['BOOKING_ABANDONED_CUSTOMER', 'Abandoned Booking — Recover'],
   ['GUEST_TO_HOST_INVITE', 'Guest → Host Invite'],

@@ -194,7 +194,11 @@ async function reconcile() {
       // Actionable-by-ops = an ONBOARDED host (has a linked account) stuck at Razorpay
       // activation. A host with no account/KYC simply hasn't onboarded — the KYC-earning
       // nudge prompts THEM, so it must never page ops (that was the hourly-email spam).
-      if (elig.accountId && elig.reasons.includes('not_activated')) s.owedBlockedActionable++;
+      if (elig.accountId && elig.reasons.includes('not_activated')) {
+        s.owedBlockedActionable++;
+        // Email the host once (deduped) that their verification needs finishing.
+        require('./payoutEmails').sendVerificationNeeded(b.host_id).catch(() => {});
+      }
       continue;
     }
 

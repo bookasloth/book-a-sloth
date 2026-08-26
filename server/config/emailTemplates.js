@@ -509,6 +509,34 @@ const TEMPLATES = [
     cta_label: 'Set up payouts', cta_url: '{{kyc_url}}',
   }; })(),
 
+  // ── Payout / settlement lifecycle (host-facing) ──────────────────────────
+  (() => { const t = themeForCategory('Payment Receipt'); return {
+    event_key: 'PAYOUT_SENT', audience: 'all', category: 'Payments', sender_key: 'tithi',
+    name: 'Payout — On The Way', subject: '{{payout_amount}} is on its way to your bank 💸',
+    preview_text: 'Your earnings have been released and are settling to your account.',
+    email_category: 'Payment Receipt',
+    email_reason: 'You are receiving this email because you received a payout on Book A Sloth.',
+    html_content:
+      eyebrow(t.text, 'Payout') + h('{{payout_amount}} is on its way, {{first_name}}') +
+      lead('Nice work. Your earnings from a completed booking have been released and are settling to your bank account now. Depending on your bank it usually lands within 1–2 working days (a little longer over holidays).') +
+      C.amountRow(t, 'Paid to you', '{{payout_amount}}') +
+      lead('You can see every payout and its status in your dashboard.'),
+    cta_label: 'View payouts', cta_url: '{{dashboard_url}}',
+  }; })(),
+
+  (() => { const t = themeForCategory('Account Update'); return {
+    event_key: 'PAYOUT_VERIFICATION_NEEDED', audience: 'all', category: 'Payments', sender_key: 'tithi',
+    name: 'Payout — Verification Needed', subject: 'One more step to unlock your payouts',
+    preview_text: 'Your payment partner needs a little more to verify your account.',
+    email_category: 'Account Update',
+    email_reason: 'You are receiving this email because your payout account needs verification on Book A Sloth.',
+    html_content:
+      eyebrow(t.text, 'Action needed') + h('Almost there, {{first_name}}') +
+      lead('You have money waiting, but our payments partner needs a little more information to finish verifying your payout account before we can release it. It only takes a few minutes.') +
+      lead('Open your dashboard to see exactly what is needed and complete it.'),
+    cta_label: 'Complete verification', cta_url: '{{dashboard_url}}',
+  }; })(),
+
   // ── Engagement ───────────────────────────────────────────────────────────────
 
   (() => { const t = themeForCategory('Product Feedback'); return {

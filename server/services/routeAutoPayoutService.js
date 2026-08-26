@@ -147,6 +147,8 @@ async function finalizeReleasedTransfer(booking, createdBy = null) {
       body: 'Your earnings are on the way to your bank account.',
       link: '/dashboard/payments/payouts',
     });
+    // Email the host too (deduped once per booking; fire-and-forget).
+    require('./payoutEmails').sendPayoutSent(booking, amount).catch(() => {});
   }
 }
 
