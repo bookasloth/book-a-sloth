@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { getSupabase } from '../../services/supabaseClient';
 import {
   adminSupportQueue, adminGetSupportThread, adminReplySupport, adminResolveSupport,
+  adminAssignSupport, adminSupportContext,
 } from '../../services/api';
 import { PageHeader, Badge, Skeleton } from '../../components/admin/ui';
 
@@ -19,6 +20,73 @@ const STATUS_TONE = { bot: 'neutral', waiting: 'warn', assigned: 'ok', resolved:
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '');
 const fmtTime = (s) => { try { return new Date(s).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }); } catch { return ''; } };
 const who = (t) => (t.participant_type === 'host' ? 'Host' : t.participant_type === 'guest' ? 'Guest' : t.participant_type || '—');
+
+// Small status pill tones for booking/payment/kyc state on the context rail.
+const PILL = {
+  paid: 'bg-green-50 text-green-700', unpaid: 'bg-amber-50 text-amber-700', refunded: 'bg-gray-100 text-gray-600',
+  confirmed: 'bg-green-50 text-green-700', completed: 'bg-blue-50 text-blue-700', pending: 'bg-amber-50 text-amber-700',
+  cancelled: 'bg-rose-50 text-rose-700', no_show: 'bg-rose-50 text-rose-700',
+  approved: 'bg-green-50 text-green-700', rejected: 'bg-rose-50 text-rose-700', none: 'bg-gray-100 text-gray-500',
+};
+const Pill = ({ v }) => (v ? <span className={'rounded px-1.5 py-0.5 text-[10.5px] font-medium ' + (PILL[v] || 'bg-gray-100 text-gray-600')}>{String(v).replace('_', ' ')}</span> : null);
+const fmtDay = (s) => { try { return s ? new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'; } catch { return '—'; } };
+const Row = ({ k, children }) => (
+  <div className="flex items-center justify-between gap-2 py-1 text-[12px]"><span className="adm-t3">{k}</span><span className="text-right font-medium adm-t1">{children}</span></div>
+);
+
+// The context rail — "give support eyes". Customer's live record beside the chat.
+function ContextRail({ ctx, thread }) {
+  if (!ctx) return <div className="rounded-xl border adm-border p-3 text-[12px] adm-t3">Loading customer context…</div>;
+  const p = ctx.profile || {};
+  const isHost = ctx.kind === 'host';
+  return (
+    <aside className="flex flex-col gap-3">
+      <div className="rounded-xl border adm-border p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3">{isHost ? 'Host' : 'Guest'}</p>
+          {isHost && thread.user_id && (
+            <a href={`/admin/host360/${thread.user_id}`} target="_blank" rel="noreferrer" className="text-[11px] font-medium text-[#FE5100] hover:underline">Open Host360 ↗</a>
+          )}
+        </div>
+        <p className="text-sm font-semibold adm-t1">{p.name || '—'}</p>
+        {p.phone && <p className="text-[12px] adm-t3">{p.phone}</p>}
+        {isHost && (
+          <div className="mt-2 border-t adm-border pt-2">
+            <Row k="Plan">{p.plan || '—'}{p.planExpiresAt ? ` · exp ${fmtDay(p.planExpiresAt)}` : ''}</Row>
+            <Row k="Onboarding">{p.onboardingCompleted ? '✓ done' : '⚠ incomplete'}</Row>
+            {ctx.host && (
+              <>
+                <Row k="Listing live"><Pill v={ctx.host.listingActive ? 'confirmed' : 'cancelled'} /></Row>
+                <Row k="KYC"><Pill v={ctx.host.kyc?.status || 'none'} /></Row>
+                <Row k="Payout">{ctx.host.payoutLinked ? '✓ linked' : '⚠ not linked'}</Row>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border adm-border p-3">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide adm-t3">Recent bookings</p>
+        {(!ctx.bookings || ctx.bookings.length === 0)
+          ? <p className="text-[12px] adm-t3">None found.</p>
+          : (
+            <div className="flex flex-col gap-2">
+              {ctx.bookings.map((b, i) => (
+                <div key={i} className="rounded-lg bg-[#faf9f7] p-2 text-[12px]">
+                  <div className="flex items-center justify-between">
+                    <code className="text-[11px] font-semibold adm-t2">{b.ref}</code>
+                    <span className="adm-t3">{fmtDay(b.when)}</span>
+                  </div>
+                  <p className="truncate adm-t1">{b.service || (isHost ? (b.guest || 'Booking') : 'Booking')}</p>
+                  <div className="mt-1 flex gap-1"><Pill v={b.status} /><Pill v={b.payment_status} /></div>
+                </div>
+              ))}
+            </div>
+          )}
+      </div>
+    </aside>
+  );
+}
 
 // One transcript line. Admin replies sit right, everyone else left (bot violet,
 // system as a centered pill), matching the guest/host panel's visual language.
@@ -52,6 +120,8 @@ export default function AdminSupportChat() {
   const [loading, setLoading] = useState(true);
   const [sel, setSel] = useState(null);        // { thread, messages }
   const [reply, setReply] = useState({ body: '', busy: false });
+  const [context, setContext] = useState(null);
+  const [assigning, setAssigning] = useState(false);
   const bottomRef = useRef(null);
   const chanRef = useRef(null);
 
@@ -69,8 +139,24 @@ export default function AdminSupportChat() {
 
   const open = async (id) => {
     setReply({ body: '', busy: false });
+    setContext(null);
     try { const { data } = await adminGetSupportThread(id); setSel(data); }
-    catch { toast.error('Could not open thread'); }
+    catch { toast.error('Could not open thread'); return; }
+    // Context rail loads independently — the transcript never waits on it.
+    adminSupportContext(id).then(({ data }) => setContext(data.context)).catch(() => {});
+  };
+
+  // "Assign to me": claim the thread; the server posts the one-time warm intro.
+  const assignToMe = async () => {
+    if (!sel || assigning) return;
+    setAssigning(true);
+    try {
+      await adminAssignSupport(sel.thread.id);
+      const { data } = await adminGetSupportThread(sel.thread.id); // pick up intro + status
+      setSel(data);
+      loadQueue();
+    } catch { toast.error('Could not assign'); }
+    finally { setAssigning(false); }
   };
 
   // Live updates for the open thread only.
@@ -127,6 +213,7 @@ export default function AdminSupportChat() {
   // Detail view.
   if (sel) {
     const t = sel.thread;
+    const unclaimed = t.status === 'bot' || t.status === 'waiting';
     return (
       <div>
         <button onClick={() => setSel(null)} className="mb-3 text-sm font-medium text-[#FE5100]">← Back to queue</button>
@@ -134,30 +221,50 @@ export default function AdminSupportChat() {
           <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-sm font-semibold text-[#1E1E1E]">{t.reference}</code>
           <Badge tone={STATUS_TONE[t.status] || 'neutral'}>{t.status}</Badge>
           <span className="text-xs adm-t3">{who(t)}{t.guest_phone ? ` · ${t.guest_phone}` : ''}</span>
-          {t.status !== 'resolved' && (
-            <button onClick={resolve} className="ml-auto rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Mark resolved</button>
-          )}
+          {t.agent_name && !unclaimed && <span className="text-xs adm-t3">· {t.agent_name} on it</span>}
+          <div className="ml-auto flex gap-2">
+            {unclaimed && (
+              <button onClick={assignToMe} disabled={assigning}
+                className="rounded-lg bg-[#FE5100] px-2.5 py-1 text-xs font-medium text-white disabled:opacity-40">
+                {assigning ? 'Assigning…' : 'Assign to me'}
+              </button>
+            )}
+            {t.status !== 'resolved' && (
+              <button onClick={resolve} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Mark resolved</button>
+            )}
+          </div>
         </div>
         {t.subject && <p className="mt-2 text-sm font-semibold adm-t1">{t.subject}</p>}
+        {t.ai_summary && (
+          <p className="mt-2 rounded-lg bg-violet-50 px-3 py-2 text-[12.5px] text-violet-900">
+            <span className="font-semibold">🦥 Bolt summary:</span> {t.ai_summary}
+          </p>
+        )}
 
-        <div className="mt-3 flex flex-col gap-2.5 rounded-xl border adm-border p-3" style={{ minHeight: 320 }}>
-          {sel.messages.length === 0
-            ? <p className="m-auto text-sm adm-t3">No messages yet.</p>
-            : sel.messages.map((m) => <Bubble key={m.id} m={m} />)}
-          <div ref={bottomRef} />
+        <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_280px]">
+          <div className="min-w-0">
+            <div className="flex flex-col gap-2.5 rounded-xl border adm-border p-3" style={{ minHeight: 320 }}>
+              {sel.messages.length === 0
+                ? <p className="m-auto text-sm adm-t3">No messages yet.</p>
+                : sel.messages.map((m) => <Bubble key={m.id} m={m} />)}
+              <div ref={bottomRef} />
+            </div>
+
+            <form onSubmit={send} className="mt-3 flex items-end gap-2">
+              <textarea
+                value={reply.body} onChange={(ev) => setReply((r) => ({ ...r, body: ev.target.value }))}
+                onKeyDown={(ev) => { if (ev.key === 'Enter' && !ev.shiftKey) send(ev); }}
+                rows={2} placeholder="Reply to the customer…" aria-label="Reply"
+                className="flex-1 rounded-lg border adm-border px-3 py-2 text-sm" />
+              <button type="submit" disabled={reply.busy || !reply.body.trim()}
+                className="rounded-lg bg-[#FE5100] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-40">
+                {reply.busy ? 'Sending…' : 'Send'}
+              </button>
+            </form>
+          </div>
+
+          <ContextRail ctx={context} thread={t} />
         </div>
-
-        <form onSubmit={send} className="mt-3 flex items-end gap-2">
-          <textarea
-            value={reply.body} onChange={(ev) => setReply((r) => ({ ...r, body: ev.target.value }))}
-            onKeyDown={(ev) => { if (ev.key === 'Enter' && !ev.shiftKey) send(ev); }}
-            rows={2} placeholder="Reply to the customer…" aria-label="Reply"
-            className="flex-1 rounded-lg border adm-border px-3 py-2 text-sm" />
-          <button type="submit" disabled={reply.busy || !reply.body.trim()}
-            className="rounded-lg bg-[#FE5100] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-40">
-            {reply.busy ? 'Sending…' : 'Send'}
-          </button>
-        </form>
       </div>
     );
   }
@@ -184,6 +291,7 @@ export default function AdminSupportChat() {
                     <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-xs font-semibold text-[#1E1E1E]">{t.reference}</code>
                     <Badge tone={STATUS_TONE[t.status] || 'neutral'}>{t.status}</Badge>
                     <span className="text-xs adm-t3">{who(t)}</span>
+                    {t.agent_name && t.status === 'assigned' && <span className="text-xs adm-t3">· {t.agent_name}</span>}
                     {t.admin_unread > 0 && <Badge tone="warn">{t.admin_unread} new</Badge>}
                     <span className="ml-auto text-xs adm-t3">{fmtDate(t.last_message_at)}</span>
                   </div>
