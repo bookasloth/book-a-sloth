@@ -16,6 +16,9 @@ const seller = {
   email:     env.SELLER_EMAIL      || 'team@timewheel.co.in',
   phone:     env.SELLER_PHONE      || '+91 8637758344',
   website:   env.SELLER_WEBSITE    || 'timewheel.co.in',
+  // Short display name for the invoice header (legalName stays the full registered
+  // name used in the From block + legalese).
+  shortName: env.SELLER_SHORT_NAME || 'Timewheel Internet Pvt. Ltd.',
   brandName: 'Book A Sloth',
   brandSubline: 'by Timewheel Internet (P) Ltd',
   logoUrl:   'https://company-assets.bookasloth.in/images/email/footer-logo.png',

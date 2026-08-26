@@ -23,9 +23,11 @@ describe('buildTaxInvoiceHTML', () => {
   });
   test('intra-state invoice shows CGST + SGST, not IGST', () => {
     const h = buildTaxInvoiceHTML({ ...base, cgst: 0.9, sgst: 0.9, igst: 0, buyer_state_code: '21', place_of_supply: '21' });
-    expect(h).toContain('CGST');
-    expect(h).toContain('SGST');
-    expect(h).not.toMatch(/>IGST/);
+    expect(h).toContain('CGST @');
+    expect(h).toContain('SGST @');
+    // The tax-summary column header "IGST" (with a ₹0.00 cell) is fine; there must
+    // be no IGST *tax line* in the totals for an intra-state supply.
+    expect(h).not.toContain('IGST @');
   });
   test('escapes buyer name (no HTML injection)', () => {
     const h = buildTaxInvoiceHTML({ ...base, buyer_name: '<script>x</script>' });
