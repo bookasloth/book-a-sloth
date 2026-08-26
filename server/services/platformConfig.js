@@ -21,7 +21,24 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { securityLog } = require('../utils/logger');
 
-const DEFAULTS = { platformFee: 10, gstRate: 0.18, clearingDays: 7, feeOnlyMode: true };
+const DEFAULTS = { platformFee: 10, gstRate: 0.18, clearingDays: 7, feeOnlyMode: true, payoutReconcilerMode: 'observe' };
+
+// Reconciler mode tri-state (see payoutReconciler.js). Unwraps JSON-stringified
+// values like toBool/toNumber; anything not a known mode resolves to the fallback.
+const RECONCILER_MODES = ['off', 'observe', 'live'];
+const toMode = (raw, fallback) => {
+  if (raw == null) return fallback;
+  let v = raw;
+  for (let i = 0; i < 8 && typeof v === 'string'; i++) {
+    const s = v.trim();
+    let parsed;
+    try { parsed = JSON.parse(s); } catch { break; }
+    if (parsed === v) break;
+    v = parsed;
+  }
+  const s = String(v).trim().toLowerCase();
+  return RECONCILER_MODES.includes(s) ? s : fallback;
+};
 
 // Coerce a platform_settings value into a boolean. Stored as raw bool, 'true'/'false',
 // 1/0, or JSON-stringified. Anything not clearly false resolves to the fallback.
@@ -72,16 +89,18 @@ const getConfig = async () => {
   let gstRate = DEFAULTS.gstRate;
   let clearingDays = DEFAULTS.clearingDays;
   let feeOnlyMode = DEFAULTS.feeOnlyMode;
+  let payoutReconcilerMode = DEFAULTS.payoutReconcilerMode;
   try {
     const { data } = await supabaseAdmin
       .from('platform_settings')
       .select('key, value')
-      .in('key', ['platform_fee', 'platform_fee_gst_rate', 'settlement_clearing_days', 'fee_only_mode']);
+      .in('key', ['platform_fee', 'platform_fee_gst_rate', 'settlement_clearing_days', 'fee_only_mode', 'payout_reconciler_mode']);
     for (const row of data || []) {
       if (row.key === 'platform_fee') platformFee = toNumber(row.value, DEFAULTS.platformFee);
       if (row.key === 'platform_fee_gst_rate') gstRate = toNumber(row.value, DEFAULTS.gstRate);
       if (row.key === 'settlement_clearing_days') clearingDays = toNumber(row.value, DEFAULTS.clearingDays);
       if (row.key === 'fee_only_mode') feeOnlyMode = toBool(row.value, DEFAULTS.feeOnlyMode);
+      if (row.key === 'payout_reconciler_mode') payoutReconcilerMode = toMode(row.value, DEFAULTS.payoutReconcilerMode);
     }
   } catch (err) {
     // A DB blip silently reverts platform_fee / gstRate to hardcoded defaults
@@ -96,7 +115,7 @@ const getConfig = async () => {
   if (!Number.isFinite(clearingDays) || clearingDays < 0) clearingDays = DEFAULTS.clearingDays;
   clearingDays = Math.floor(clearingDays);
 
-  _cache = { at: now, value: { platformFee, gstRate, clearingDays, feeOnlyMode } };
+  _cache = { at: now, value: { platformFee, gstRate, clearingDays, feeOnlyMode, payoutReconcilerMode } };
   return _cache.value;
 };
 
