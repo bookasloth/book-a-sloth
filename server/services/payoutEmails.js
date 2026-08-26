@@ -18,6 +18,10 @@ const NotificationEngine = require('./notificationEngine');
 const BASE = process.env.CLIENT_URL || 'https://bookasloth.com';
 const firstName = (name) => (String(name || '').trim().split(' ')[0] || 'there');
 const rupees = (n) => `₹${(Number(n) || 0).toFixed(2)}`;
+const fmtDate = (ymd) => {
+  try { return new Date(`${ymd}T00:00:00Z`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }); }
+  catch { return ymd; }
+};
 
 async function hostContact(hostId) {
   if (!hostId) return null;
@@ -85,4 +89,19 @@ async function sendEarningReversed(booking) {
     { payout_amount: rupees(booking.vendor_amount), dashboard_url: `${BASE}/dashboard/payments/transactions` }, booking.id);
 }
 
-module.exports = { sendPayoutSent, sendVerificationNeeded, sendPayoutFailed, sendEarningReversed };
+// "Heads up — a bank holiday may delay your payout" — once per booking.
+async function sendHolidayDelay(booking, holiday, expectedYmd) {
+  if (!booking?.id || !booking.host_id) return;
+  if (!(await claim('bookings', 'id', booking.id, 'holiday_notice_sent_at'))) return;
+  const host = await hostContact(booking.host_id);
+  if (!host) return;
+  await emit('PAYOUT_DELAY_HOLIDAY', host, booking.host_id, {
+    payout_amount: rupees(booking.vendor_amount),
+    holiday: (holiday && holiday.name) || 'a bank holiday',
+    holiday_date: fmtDate(holiday && holiday.date),
+    expected_date: fmtDate(expectedYmd),
+    dashboard_url: `${BASE}/dashboard/payments/payouts`,
+  }, booking.id);
+}
+
+module.exports = { sendPayoutSent, sendVerificationNeeded, sendPayoutFailed, sendEarningReversed, sendHolidayDelay };

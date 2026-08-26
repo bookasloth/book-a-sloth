@@ -35,6 +35,7 @@ const EMAIL_ONLY_EVENTS = [
   ['PAYOUT_VERIFICATION_NEEDED', 'Payout — Verification Needed'],
   ['PAYOUT_FAILED', 'Payout — Could Not Complete'],
   ['EARNING_REVERSED', 'Earning Reversed'],
+  ['PAYOUT_DELAY_HOLIDAY', 'Payout — Bank Holiday Delay'],
   ['UPGRADE_COMMISSION_NUDGE', 'Upgrade — Keep Every Rupee'],
   ['BOOKING_ABANDONED_CUSTOMER', 'Abandoned Booking — Recover'],
   ['GUEST_TO_HOST_INVITE', 'Guest → Host Invite'],

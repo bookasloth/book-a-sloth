@@ -548,6 +548,20 @@ setInterval(async () => {
   } catch (err) { console.error('Payout reconciler cron error:', err.message); }
 }, PAYOUT_RECONCILE_MIN * 60 * 1000);
 
+// Bank-holiday payout-delay notice — a weekly (Friday, IST) heads-up to hosts with a
+// recently-released payout when an upcoming RBI bank holiday will push its bank
+// settlement out a working day. Self-gating (no-ops except on a Friday before a
+// weekday holiday); emails only, moves no money. Runs daily; the service gates to Friday.
+const payoutHolidayNotice = require('./services/payoutHolidayNotice');
+setInterval(async () => {
+  try {
+    await runLocked('payout-holiday-notice', async () => {
+      const r = await payoutHolidayNotice.run();
+      if (r.notified) console.log(`Payout holiday notice: ${r.notified} host(s) for ${r.holiday}`);
+    }, { leaseMs: 60 * 60 * 1000 });
+  } catch (err) { console.error('Payout holiday notice cron error:', err.message); }
+}, 24 * 60 * 60 * 1000);
+
 // Referral reward release (v3.76) — flips qualified referrals to rewarded once the
 // hold window passes and the referred host is still paying (clawing back churned/
 // refunded ones), crediting the referrer's withdrawable balance. Idempotent; hourly.
