@@ -537,6 +537,34 @@ const TEMPLATES = [
     cta_label: 'Complete verification', cta_url: '{{dashboard_url}}',
   }; })(),
 
+  (() => { const t = themeForCategory('Account Update'); return {
+    event_key: 'PAYOUT_FAILED', audience: 'all', category: 'Payments', sender_key: 'tithi',
+    name: 'Payout — Could Not Complete', subject: "We couldn't send your payout — quick fix inside",
+    preview_text: "Your payout didn't go through. A quick check of your bank details fixes it.",
+    email_category: 'Account Update',
+    email_reason: 'You are receiving this email because a payout to you could not be completed on Book A Sloth.',
+    html_content:
+      eyebrow(t.text, 'Action needed') + h("Your payout didn't go through, {{first_name}}") +
+      lead("We tried to send {{payout_amount}} to your bank but it didn't complete — usually a bank or account detail needs updating. Your money is safe and waiting; confirm your payout details and we'll retry automatically.") +
+      C.amountRow(t, 'Waiting to be paid', '{{payout_amount}}') +
+      lead('Update your details and the next payout run picks it up.'),
+    cta_label: 'Check payout details', cta_url: '{{dashboard_url}}',
+  }; })(),
+
+  (() => { const t = themeForCategory('Payment Receipt'); return {
+    event_key: 'EARNING_REVERSED', audience: 'all', category: 'Payments', sender_key: 'durga',
+    name: 'Earning Reversed', subject: 'A booking was refunded — earning reversed',
+    preview_text: 'A booking you earned on was refunded, so that payout was reversed.',
+    email_category: 'Payment Receipt',
+    email_reason: 'You are receiving this email because a booking you earned on was refunded on Book A Sloth.',
+    html_content:
+      eyebrow(t.text, 'Update') + h('A booking was refunded, {{first_name}}') +
+      lead("One of your bookings was cancelled or refunded, so the {{payout_amount}} earning for it has been reversed and won't be paid out. Everything else you've earned is unaffected.") +
+      C.amountRow(t, 'Reversed', '{{payout_amount}}') +
+      lead('You can see the details in your transactions.'),
+    cta_label: 'View transactions', cta_url: '{{dashboard_url}}',
+  }; })(),
+
   // ── Engagement ───────────────────────────────────────────────────────────────
 
   (() => { const t = themeForCategory('Product Feedback'); return {

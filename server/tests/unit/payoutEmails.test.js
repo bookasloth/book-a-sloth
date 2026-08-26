@@ -58,6 +58,22 @@ test('sendVerificationNeeded: claims + emails PAYOUT_VERIFICATION_NEEDED when it
   expect(NotificationEngine.send).toHaveBeenCalledWith(expect.objectContaining({ event: 'PAYOUT_VERIFICATION_NEEDED' }));
 });
 
+test('sendPayoutFailed: claims + emails PAYOUT_FAILED when it wins', async () => {
+  supabaseAdmin.from
+    .mockReturnValueOnce(chain({ data: { id: 'bk1' }, error: null }))
+    .mockReturnValueOnce(chain({ data: { name: 'Asha', email: 'a@b.com' }, error: null }));
+  await payoutEmails.sendPayoutFailed({ id: 'bk1', host_id: 'h1', vendor_amount: 300 }, 300);
+  expect(NotificationEngine.send).toHaveBeenCalledWith(expect.objectContaining({ event: 'PAYOUT_FAILED' }));
+});
+
+test('sendEarningReversed: claims + emails EARNING_REVERSED when it wins', async () => {
+  supabaseAdmin.from
+    .mockReturnValueOnce(chain({ data: { id: 'bk1' }, error: null }))
+    .mockReturnValueOnce(chain({ data: { name: 'Asha', email: 'a@b.com' }, error: null }));
+  await payoutEmails.sendEarningReversed({ id: 'bk1', host_id: 'h1', vendor_amount: 300 });
+  expect(NotificationEngine.send).toHaveBeenCalledWith(expect.objectContaining({ event: 'EARNING_REVERSED' }));
+});
+
 test('a claim error (e.g. missing column) → no email, no throw', async () => {
   supabaseAdmin.from.mockReturnValueOnce(chain({ data: null, error: { code: '42703' } }));
   await expect(payoutEmails.sendPayoutSent({ id: 'bk1', host_id: 'h1' }, 500)).resolves.toBeUndefined();

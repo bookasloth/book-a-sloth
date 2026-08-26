@@ -33,6 +33,8 @@ const EMAIL_ONLY_EVENTS = [
   ['KYC_EARN_NUDGE', 'First Earning — Payout Nudge'],
   ['PAYOUT_SENT', 'Payout — On The Way'],
   ['PAYOUT_VERIFICATION_NEEDED', 'Payout — Verification Needed'],
+  ['PAYOUT_FAILED', 'Payout — Could Not Complete'],
+  ['EARNING_REVERSED', 'Earning Reversed'],
   ['UPGRADE_COMMISSION_NUDGE', 'Upgrade — Keep Every Rupee'],
   ['BOOKING_ABANDONED_CUSTOMER', 'Abandoned Booking — Recover'],
   ['GUEST_TO_HOST_INVITE', 'Guest → Host Invite'],

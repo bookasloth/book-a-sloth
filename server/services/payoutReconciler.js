@@ -182,7 +182,12 @@ async function reconcile() {
     const amt = Number(b.vendor_amount) || 0;
     if (amt < MIN_TRANSFER_RUPEES) continue;                 // below Razorpay's ₹1 reversal floor
     if (SKIP_SETTLE.has(b.settlement_status)) continue;      // cancelled / not eligible
-    if ((Number(b.transfer_attempts) || 0) >= MAX_ATTEMPTS) { s.blocked++; continue; }
+    if ((Number(b.transfer_attempts) || 0) >= MAX_ATTEMPTS) {
+      s.blocked++;
+      // Payout failed repeatedly → email the host once to check their bank details.
+      require('./payoutEmails').sendPayoutFailed(b, amt).catch(() => {});
+      continue;
+    }
     if (!b.razorpay_payment_id) continue;                    // can't create a payment-linked transfer without it
     s.candidates++;
 

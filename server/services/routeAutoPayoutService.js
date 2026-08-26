@@ -189,6 +189,8 @@ async function reverseHeldTransfer(booking, { reason = 'reversed' } = {}) {
     const razorpay = await razorpayConfig.getClient();
     await razorpay.transfers.reverse(booking.razorpay_transfer_id, {});
     await patchBooking(booking.id, { transfer_status: 'reversed', transfer_error: reason.slice(0, 500) });
+    // Tell the host their earning was reversed (deduped once per booking).
+    require('./payoutEmails').sendEarningReversed(booking).catch(() => {});
     return { ok: true, reversed: true };
   } catch (err) {
     const msg = err?.error?.description || err?.message || 'unknown error';
