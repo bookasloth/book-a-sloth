@@ -28,7 +28,7 @@ test('200 HTML when token matches', async () => {
   mockSingle.mockResolvedValue({ data: {
     id: 'i1', access_token: 'good', invoice_number: 'BAS-SUB/26/00001', source_type: 'subscription',
     buyer_name: 'X', taxable_value: 1499, igst: 269.82, cgst: 0, sgst: 0, total: 1768.82,
-    issued_at: '2026-06-02T00:00:00Z', sac_code: '998315', place_of_supply: '27', seller_snapshot: {},
+    issued_at: '2026-06-02T00:00:00Z', sac_code: '998314', place_of_supply: '27', seller_snapshot: {},
   }, error: null });
   const res = mkRes();
   await getInvoice({ params: { id: 'i1' }, query: { token: 'good' } }, res);

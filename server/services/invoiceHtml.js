@@ -1,6 +1,7 @@
 'use strict';
 const { seller } = require('../config/sellerIdentity');
 const { fiscalYearLabel } = require('./invoiceService');
+const stateService = require('./stateService');
 
 const esc = (s) => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -14,10 +15,24 @@ function buildTaxInvoiceHTML(inv = {}) {
     : inv.source_type === 'commission' ? 'Book A Sloth — platform commission'
     : 'Booking convenience / platform fee';
   const intra = Number(inv.igst) === 0 && (Number(inv.cgst) > 0 || Number(inv.sgst) > 0);
+  // Effective GST rate: prefer the stored rate, else derive it from the charged
+  // amounts (robust for historical rows minted before gst_rate was persisted, and
+  // correct if the rate ever differs from 18% — the old hardcoded 9%/18% labels
+  // would then have lied on the legal document).
+  const taxable = Number(inv.taxable_value) || 0;
+  const totalGst = Number(inv.cgst || 0) + Number(inv.sgst || 0) + Number(inv.igst || 0);
+  const ratePct = inv.gst_rate != null && Number(inv.gst_rate) > 0
+    ? Math.round(Number(inv.gst_rate) * 10000) / 100
+    : taxable > 0 ? Math.round((totalGst / taxable) * 10000) / 100 : 0;
+  const halfPct = Math.round((ratePct / 2) * 100) / 100;
+  const fmtPct = (p) => `${Number.isInteger(p) ? p : Number(p.toFixed(2))}%`;
   const taxRows = intra
-    ? `<div class="row"><span class="mut">CGST @ 9%</span><span>${inr(inv.cgst)}</span></div>
-       <div class="row"><span class="mut">SGST @ 9%</span><span>${inr(inv.sgst)}</span></div>`
-    : `<div class="row"><span class="mut">IGST @ 18%</span><span>${inr(inv.igst)}</span></div>`;
+    ? `<div class="row"><span class="mut">CGST @ ${fmtPct(halfPct)}</span><span>${inr(inv.cgst)}</span></div>
+       <div class="row"><span class="mut">SGST @ ${fmtPct(halfPct)}</span><span>${inr(inv.sgst)}</span></div>`
+    : `<div class="row"><span class="mut">IGST @ ${fmtPct(ratePct)}</span><span>${inr(inv.igst)}</span></div>`;
+  // Place of supply as a human name + code (stored value is the bare code).
+  const posState = stateService.normalizeState(inv.place_of_supply);
+  const posLabel = posState ? `${posState.name} (${posState.code})` : (inv.place_of_supply || '—');
   const bookingNote = isSub ? ''
     : inv.source_type === 'commission'
       ? `<div class="note">This invoice covers Book A Sloth's platform commission for facilitating the host's booking.</div>`
@@ -66,7 +81,7 @@ function buildTaxInvoiceHTML(inv = {}) {
      <div class="meta">
        <div class="k">Invoice #</div><div class="v">${esc(inv.invoice_number)}</div>
        <div class="k">Date</div><div class="v">${esc(fmtDate(inv.issued_at))}</div>
-       <div class="k">${esc(fiscalYearLabel(inv.issued_at))}</div><div class="v">Place: ${esc(inv.place_of_supply)}</div>
+       <div class="k">${esc(fiscalYearLabel(inv.issued_at))}</div><div class="v">Place: ${esc(posLabel)}</div>
        <div class="k">Reverse charge</div><div class="v">No</div>
      </div></div>
  </div>
@@ -87,7 +102,7 @@ function buildTaxInvoiceHTML(inv = {}) {
  <div class="amt">${inr(inv.total)}<span class="pill">PAID</span></div>
  <div class="paymeta">Paid ${esc(fmtDate(inv.issued_at))} · Razorpay${inv.payment_id ? ` · ${esc(inv.payment_id)}` : ''}</div>
  <table><thead><tr><th class="l">Description</th><th>SAC</th><th>Qty</th><th>Unit price</th><th>Tax</th><th>Amount</th></tr></thead>
-   <tbody><tr><td class="l desc">${esc(itemDesc)}</td><td>${esc(inv.sac_code)}</td><td>1</td><td>${inr(inv.taxable_value)}</td><td>18%</td><td>${inr(inv.taxable_value)}</td></tr></tbody></table>
+   <tbody><tr><td class="l desc">${esc(itemDesc)}</td><td>${esc(inv.sac_code)}</td><td>1</td><td>${inr(inv.taxable_value)}</td><td>${fmtPct(ratePct)}</td><td>${inr(inv.taxable_value)}</td></tr></tbody></table>
  <div class="totals">
    <div class="row"><span class="mut">Subtotal (taxable value)</span><span>${inr(inv.taxable_value)}</span></div>
    ${taxRows}

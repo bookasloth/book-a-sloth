@@ -6,7 +6,7 @@ const base = {
   source_type: 'subscription', buyer_name: 'Mehta Wellness LLP',
   buyer_address: 'Mumbai', buyer_gstin: '27ABCDE1234F1Z5', buyer_state_code: '27',
   taxable_value: 1499, cgst: 0, sgst: 0, igst: 269.82, total: 1768.82,
-  place_of_supply: '27', sac_code: '998315', payment_id: 'pay_1',
+  place_of_supply: '27', sac_code: '998314', payment_id: 'pay_1',
   seller_snapshot: { legalName: 'Timewheel Internet Private Limited', gstin: '21AAMCT8270C1ZF' },
 };
 

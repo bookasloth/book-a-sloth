@@ -134,6 +134,57 @@ function resolvePlaceOfSupply({ gstin, state, stateCode } = {}) {
   return { code: chosen.code, name: chosen.name, source, mismatch };
 }
 
+/**
+ * Validate + canonicalize a raw billing_details object from a checkout request.
+ * The backend is authoritative: it never trusts the frontend's tax/POS — it
+ * re-derives the place of supply here and rewrites `state`/`state_code` to the
+ * canonical pair. A valid GSTIN's state wins over any typed state (the registered
+ * recipient's POS is their registration state).
+ *
+ * @param {object} raw  { name, address, state, state_code, gstin, pan }
+ * @param {object} [opts]
+ * @param {boolean} [opts.requireState=false]  reject when no state is resolvable
+ * @returns {{ ok:true, billing:object|null } | { ok:false, error:string }}
+ */
+function normalizeBilling(raw = {}, { requireState = false } = {}) {
+  const b = raw && typeof raw === 'object' ? raw : {};
+  const gstin = b.gstin ? String(b.gstin).trim().toUpperCase() : null;
+  if (gstin && !isValidGstin(gstin)) {
+    return { ok: false, error: 'Invalid GSTIN. Check the 15-character number and try again.' };
+  }
+  const pos = resolvePlaceOfSupply({ gstin, state: b.state, stateCode: b.state_code });
+  if (!pos) {
+    if (requireState) {
+      return { ok: false, error: 'A valid billing state is required to issue your GST tax invoice.' };
+    }
+    // Nothing resolvable and not required — keep any identity fields the buyer gave
+    // (name/address/gstin/pan) so the invoice still names them; POS will fall back
+    // to the seller's state at mint time (the lawful supplier-location default).
+    const any = b.name || b.address || gstin || b.pan;
+    return {
+      ok: true,
+      billing: any ? {
+        name: b.name ? String(b.name).trim() : null,
+        address: b.address ? String(b.address).trim() : null,
+        state: null, state_code: null,
+        gstin: gstin || null,
+        pan: b.pan ? String(b.pan).trim().toUpperCase() : null,
+      } : null,
+    };
+  }
+  return {
+    ok: true,
+    billing: {
+      name: b.name ? String(b.name).trim() : null,
+      address: b.address ? String(b.address).trim() : null,
+      state: pos.name,        // canonical name — overrides whatever was typed
+      state_code: pos.code,   // canonical GST code (drives CGST/SGST vs IGST)
+      gstin: gstin || null,
+      pan: b.pan ? String(b.pan).trim().toUpperCase() : null,
+    },
+  };
+}
+
 // Flat list for the client billing dropdown — active 36 only, display order.
 const STATES_FOR_CLIENT = Object.freeze(STATES.map((s) => ({ code: s.code, name: s.name })));
 
@@ -146,5 +197,6 @@ module.exports = {
   isValidGstin,
   stateCodeFromGstin,
   resolvePlaceOfSupply,
+  normalizeBilling,
   GSTIN_RE,
 };

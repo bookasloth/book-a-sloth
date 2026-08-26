@@ -73,11 +73,15 @@ const mockRes = () => {
   return r;
 };
 
-const makeReq = ({ plan = 'creator', cadence = 'annual', userId = 'vendor-1' } = {}) => ({
+const makeReq = ({ plan = 'creator', cadence = 'annual', userId = 'vendor-1', billing } = {}) => ({
   user: { id: userId },
-  body: { plan, cadence },
+  body: { plan, cadence, ...(billing ? { billing } : {}) },
   ip: '127.0.0.1',
 });
+
+// A valid billing snapshot for the create/switch paths (GST state now required
+// before a mandate is created). The idempotent re-click test omits it on purpose.
+const BILLING = { name: 'Acme LLP', state_code: '27', state: 'Maharashtra' };
 
 /**
  * Wire supabaseAdmin.from('profiles') so the initial state read returns `prof`.
@@ -180,7 +184,7 @@ describe('createVendorSubscription — pending re-click idempotency (double-char
     });
 
     const res = mockRes();
-    await ctrl.createVendorSubscription(makeReq({ plan: 'creator', cadence: 'monthly' }), res);
+    await ctrl.createVendorSubscription(makeReq({ plan: 'creator', cadence: 'monthly', billing: BILLING }), res);
 
     // Different cadence → not idempotent → old mandate cancelled, new one created.
     expect(razorpaySubscriptions.cancelSubscription).toHaveBeenCalledWith('sub_EXISTING', false);
@@ -201,7 +205,7 @@ describe('createVendorSubscription — pending re-click idempotency (double-char
     wireProfiles(prof);
 
     const res = mockRes();
-    await ctrl.createVendorSubscription(makeReq({ plan: 'creator', cadence: 'annual' }), res);
+    await ctrl.createVendorSubscription(makeReq({ plan: 'creator', cadence: 'annual', billing: BILLING }), res);
 
     expect(razorpaySubscriptions.fetchSubscription).not.toHaveBeenCalled();
     expect(razorpaySubscriptions.cancelSubscription).not.toHaveBeenCalled();

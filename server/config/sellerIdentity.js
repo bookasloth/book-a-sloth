@@ -25,9 +25,12 @@ const seller = {
 // both series until told otherwise; env-overridable per series if they ever diverge.
 const SAC_SUBSCRIPTION = env.SAC_SUBSCRIPTION || '998314';
 const SAC_BOOKING      = env.SAC_BOOKING      || '998314';
-// Commission = platform's service TO the host. 998311 = "services of commission
-// agents / brokerage". CA to confirm (docs/payment-model.md §7); env-overridable.
-const SAC_COMMISSION   = env.SAC_COMMISSION   || '998311';
+// Commission = platform's facilitation service TO the host. Classified under the
+// same platform IT code (998314) for consistency; all platform revenue is 18%.
+// NOTE: 998311's official text is "management consulting" and does NOT describe a
+// commission — do not use it. Override to 996211 (retail-trade commission-agent
+// code) via env if the CA prefers the literal commission-agent character.
+const SAC_COMMISSION   = env.SAC_COMMISSION   || '998314';
 
 const SERIES = {
   subscription: { code: 'SUB', prefix: 'BAS-SUB' },
