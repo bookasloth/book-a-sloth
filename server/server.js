@@ -363,6 +363,19 @@ setInterval(async () => {
   } catch (err) { console.error('Weekly recap cron error:', err.message); }
 }, 24 * 60 * 60 * 1000);
 
+// ── Weekly support→product digest. Emails the founder/product WHY people
+// contacted support (top reasons, product-caused rate, CSAT). Same daily-tick /
+// 7-day-marker pattern; OFF unless SUPPORT_DIGEST_ENABLED === 'true'. Leader-elected. ──
+const { sendWeeklyInsightsDigest } = require('./services/supportInsightsDigest');
+setInterval(async () => {
+  try {
+    await runLocked('support-insights-digest', async () => {
+      const r = await sendWeeklyInsightsDigest();
+      if (r.sent) console.log(`Support digest: sent to ${r.recipients} recipient(s)`);
+    }, { leaseMs: 30 * 60 * 1000 });
+  } catch (err) { console.error('Support digest cron error:', err.message); }
+}, 24 * 60 * 60 * 1000);
+
 // Email queue worker — processes queued emails with retry backoff (every 60s)
 const communicationEngine = require('./services/email/communicationEngine');
 setInterval(async () => {

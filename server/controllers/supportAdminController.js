@@ -4,11 +4,11 @@
 // (support.view for reads, support.assign for writes) on the isolated admin token.
 
 const { safeError } = require('../utils/httpError');
-const { supabaseAdmin } = require('../config/supabase');
 const chat = require('../services/supportChatService');
 const context = require('../services/supportContextService');
 const { personaFor, introMessage } = require('../config/supportAgents');
-const { REASONS, BY_CODE, isValidReason, isProductCaused } = require('../config/supportReasons');
+const { REASONS, isValidReason } = require('../config/supportReasons');
+const { computeInsights } = require('../services/supportInsightsService');
 
 // Real admin id — used for attribution, the 'mine' filter, and audit. Never shown
 // to the customer.
@@ -117,52 +117,10 @@ const resolve = async (req, res) => {
 };
 
 // GET /api/admin/support/insights?days=30 — support-as-product-intelligence.
-// Aggregates contact reasons across BOTH stores (threads + Bolt escalations) so
-// the team sees why people needed help and what share was product/UX-caused.
+// Aggregation lives in supportInsightsService (shared with the weekly digest).
 const insights = async (req, res) => {
   try {
-    const days = Math.min(Math.max(parseInt(req.query?.days, 10) || 30, 1), 365);
-    const cutoff = new Date(Date.now() - days * 86400000).toISOString();
-
-    // Resolved/closed conversations in the window. reason_code may be absent
-    // pre-v3.117 → degrade to empty rather than 500.
-    const [tq, eq] = await Promise.all([
-      supabaseAdmin.from('support_threads').select('reason_code, rating').eq('status', 'resolved').gte('updated_at', cutoff),
-      supabaseAdmin.from('bot_escalations').select('reason_code, rating').eq('status', 'closed').gte('created_at', cutoff),
-    ]);
-    const rows = [...(tq.error ? [] : tq.data || []), ...(eq.error ? [] : eq.data || [])];
-
-    const total = rows.length;
-    const withReason = rows.filter((r) => r.reason_code && BY_CODE[r.reason_code]);
-    const counts = {};
-    withReason.forEach((r) => { counts[r.reason_code] = (counts[r.reason_code] || 0) + 1; });
-
-    const byReason = REASONS
-      .map((r) => ({ ...r, count: counts[r.code] || 0 }))
-      .filter((r) => r.count > 0)
-      .sort((a, b) => b.count - a.count);
-
-    const byCategory = {};
-    byReason.forEach((r) => { byCategory[r.category] = (byCategory[r.category] || 0) + r.count; });
-
-    const productCaused = withReason.filter((r) => isProductCaused(r.reason_code)).length;
-    const denom = withReason.length || 1;
-
-    // CSAT — 1..5 ratings from resolved threads + closed escalations.
-    const rated = rows.filter((r) => r.rating >= 1 && r.rating <= 5);
-    const csat = rated.length ? +(rated.reduce((s, r) => s + r.rating, 0) / rated.length).toFixed(2) : null;
-
-    res.json({
-      window_days: days,
-      total_resolved: total,
-      tagged: withReason.length,
-      coverage_rate: total ? +(withReason.length / total).toFixed(3) : 0,
-      product_caused_rate: +(productCaused / denom).toFixed(3),
-      csat, csat_responses: rated.length,
-      by_reason: byReason,
-      by_category: Object.entries(byCategory).map(([category, count]) => ({ category, count })).sort((a, b) => b.count - a.count),
-      reasons: REASONS, // taxonomy for the picker
-    });
+    res.json(await computeInsights(req.query?.days));
   } catch (e) { safeError(res, e); }
 };
 
