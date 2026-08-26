@@ -9,7 +9,6 @@ const { safeError } = require('../utils/httpError');
 const { maskPan, maskAadhaar, maskAccount, maskPhone } = require('../utils/kycCrypto');
 const NotificationEngine = require('../services/notificationEngine');
 const { inAppNotify } = require('../utils/inAppNotify');
-const routeAccountService = require('../services/routeAccountService');
 
 const KYC_BUCKET = 'kyc';
 
@@ -149,46 +148,35 @@ const decideKyc = async (req, res) => {
 
     // Notify the host — email (NotificationEngine) + in-app bell. Fire-and-forget:
     // a notification failure must never fail the admin's decision.
-    const event = status === 'approved' ? 'KYC_APPROVED' : 'KYC_REJECTED';
-    NotificationEngine.send({
-      event,
-      data: {
-        email: data.email,
-        name: data.full_name,
-        emailData: {
-          first_name: (data.full_name || '').split(' ')[0],
-          review_note: data.review_note || 'Please review the requirements and resubmit.',
-          support_email: 'bookasloth@gmail.com',
-        },
-        emailUser: { name: data.full_name, email: data.email },
-        recipientUserId: data.user_id,
-      },
-    }).catch((e) => console.error('KYC notify email failed:', e.message));
-    inAppNotify({
-      userId: data.user_id,
-      role: 'host',
-      type: event,
-      title: status === 'approved' ? 'KYC approved' : 'KYC needs attention',
-      body: status === 'approved'
-        ? 'Your identity verification was approved. Payouts are unlocked.'
-        : (data.review_note || 'Your KYC could not be approved. Please review and resubmit.'),
-      link: status === 'approved' ? '/dashboard/payments/payouts' : '/dashboard/kyc',
-    });
-
-    // Route Phase 0 bridge: on approval, create the host's Razorpay Route linked
-    // account so a later payout phase can transfer to it. Fire-and-forget and
-    // self-gating — it no-ops while fee_only_mode is true (the current default),
-    // so no host-money infra is touched until payout go-live. Fetch the full row
-    // (the update above returns a slim projection) since the payload needs
-    // phone / holder_name / pan_number. A failure here must never fail approval.
     if (status === 'approved') {
-      supabaseAdmin
-        .from('kyc_submissions')
-        .select('*')
-        .eq('id', data.id)
-        .maybeSingle()
-        .then(({ data: full }) => (full ? routeAccountService.createLinkedAccount(full) : null))
-        .catch((e) => console.error('Route linked-account bridge failed:', e.message));
+      // Notify the host + create the Route linked account. Shared with autopilot
+      // (kycOnboarding.onKycApproved) so the manual and auto paths never drift.
+      require('../services/kycOnboarding').onKycApproved({
+        userId: data.user_id, email: data.email, fullName: data.full_name, reviewNote: data.review_note,
+      });
+    } else {
+      NotificationEngine.send({
+        event: 'KYC_REJECTED',
+        data: {
+          email: data.email,
+          name: data.full_name,
+          emailData: {
+            first_name: (data.full_name || '').split(' ')[0],
+            review_note: data.review_note || 'Please review the requirements and resubmit.',
+            support_email: 'bookasloth@gmail.com',
+          },
+          emailUser: { name: data.full_name, email: data.email },
+          recipientUserId: data.user_id,
+        },
+      }).catch((e) => console.error('KYC reject notify failed:', e.message));
+      inAppNotify({
+        userId: data.user_id,
+        role: 'host',
+        type: 'KYC_REJECTED',
+        title: 'KYC needs attention',
+        body: data.review_note || 'Your KYC could not be approved. Please review and resubmit.',
+        link: '/dashboard/kyc',
+      });
     }
 
     res.json({ id: data.id, status: data.status });
