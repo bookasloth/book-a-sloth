@@ -179,6 +179,7 @@ const AdminReviews   = lazy(() => import('./pages/admin/AdminReviews'));
 const AdminFeedback  = lazy(() => import('./pages/admin/AdminFeedback'));
 const AdminBotSupport = lazy(() => import('./pages/admin/AdminBotSupport'));
 const AdminSupportChat = lazy(() => import('./pages/admin/AdminSupportChat'));
+const SupportInsights = lazy(() => import('./pages/admin/SupportInsights'));
 
 // Admin — Platform
 const AdminAppearance    = lazy(() => import('./pages/admin/AdminAppearance'));
@@ -494,6 +495,7 @@ function App() {
 
           {/* Support */}
           <Route path="/admin/support/chat" element={<AdminWrapper><AdminSupportChat /></AdminWrapper>} />
+          <Route path="/admin/support/insights" element={<AdminWrapper><SupportInsights /></AdminWrapper>} />
           <Route path="/admin/support/tickets" element={<AdminWrapper><AdminTickets /></AdminWrapper>} />
           <Route path="/admin/support/disputes" element={<AdminWrapper><AdminDisputes /></AdminWrapper>} />
           <Route path="/admin/support/reviews" element={<AdminWrapper><AdminReviews /></AdminWrapper>} />

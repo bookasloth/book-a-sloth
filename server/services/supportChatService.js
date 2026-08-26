@@ -139,6 +139,13 @@ async function setAgentName(threadId, agentName) {
   await supabaseAdmin.from('support_threads').update({ agent_name: agentName }).eq('id', threadId);
 }
 
+// Best-effort contact-reason stamp (analytics). Isolated from resolve() so a
+// missing reason_code column (pre-v3.117) never blocks resolving a thread.
+async function setReasonCode(threadId, reasonCode) {
+  if (!reasonCode) return;
+  await supabaseAdmin.from('support_threads').update({ reason_code: reasonCode }).eq('id', threadId);
+}
+
 /**
  * Persist a message, advance the thread (last_message_at + the OTHER side's unread),
  * then broadcast it. sender ∈ user|bot|admin|system.
@@ -231,6 +238,6 @@ async function listQueue({ filter = 'waiting', adminId } = {}) {
 
 module.exports = {
   refFrom, broadcast, createThread, getOrCreateOpenThread, getOpenThread, getThread, listThreads, listMessages,
-  hasAdminMessage, setAgentName,
+  hasAdminMessage, setAgentName, setReasonCode,
   postMessage, setStatus, escalate, assign, resolve, markRead, listQueue,
 };

@@ -8,6 +8,7 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
+const { isValidReason } = require('../config/supportReasons');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_PATTERN = 200;
@@ -367,6 +368,13 @@ const updateEscalation = async (req, res) => {
     if (!['open', 'replied', 'closed'].includes(status)) return res.status(400).json({ message: 'Invalid status.' });
     const { error } = await supabaseAdmin.from('bot_escalations').update({ status }).eq('id', id);
     if (error) return safeError(res, error);
+    // Best-effort contact-reason stamp (analytics). Separate write so a missing
+    // reason_code column (pre-v3.117) can't fail the status change.
+    const rc = req.body?.reason_code;
+    if (rc && isValidReason(rc)) {
+      const { error: rErr } = await supabaseAdmin.from('bot_escalations').update({ reason_code: rc }).eq('id', id);
+      if (rErr) console.warn('[escalation] reason_code not stored:', rErr.message);
+    }
     res.json({ ok: true });
   } catch (error) {
     safeError(res, error);
