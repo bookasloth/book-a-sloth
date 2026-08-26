@@ -127,8 +127,8 @@ const insights = async (req, res) => {
     // Resolved/closed conversations in the window. reason_code may be absent
     // pre-v3.117 → degrade to empty rather than 500.
     const [tq, eq] = await Promise.all([
-      supabaseAdmin.from('support_threads').select('reason_code').eq('status', 'resolved').gte('updated_at', cutoff),
-      supabaseAdmin.from('bot_escalations').select('reason_code').eq('status', 'closed').gte('created_at', cutoff),
+      supabaseAdmin.from('support_threads').select('reason_code, rating').eq('status', 'resolved').gte('updated_at', cutoff),
+      supabaseAdmin.from('bot_escalations').select('reason_code, rating').eq('status', 'closed').gte('created_at', cutoff),
     ]);
     const rows = [...(tq.error ? [] : tq.data || []), ...(eq.error ? [] : eq.data || [])];
 
@@ -148,12 +148,17 @@ const insights = async (req, res) => {
     const productCaused = withReason.filter((r) => isProductCaused(r.reason_code)).length;
     const denom = withReason.length || 1;
 
+    // CSAT — 1..5 ratings from resolved threads + closed escalations.
+    const rated = rows.filter((r) => r.rating >= 1 && r.rating <= 5);
+    const csat = rated.length ? +(rated.reduce((s, r) => s + r.rating, 0) / rated.length).toFixed(2) : null;
+
     res.json({
       window_days: days,
       total_resolved: total,
       tagged: withReason.length,
       coverage_rate: total ? +(withReason.length / total).toFixed(3) : 0,
       product_caused_rate: +(productCaused / denom).toFixed(3),
+      csat, csat_responses: rated.length,
       by_reason: byReason,
       by_category: Object.entries(byCategory).map(([category, count]) => ({ category, count })).sort((a, b) => b.count - a.count),
       reasons: REASONS, // taxonomy for the picker

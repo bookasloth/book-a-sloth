@@ -51,10 +51,13 @@ export default function SupportInsights() {
         : !data ? <p className="text-sm adm-t3">No data.</p>
           : (
             <>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Tile label="Resolved" value={data.total_resolved} sub={`in the last ${data.window_days} days`} />
                 <Tile label="Product-caused" value={pct(data.product_caused_rate)} tone={data.product_caused_rate > 0.4 ? 'bad' : undefined}
                   sub="share we could have prevented (product/UX)" />
+                <Tile label="CSAT" value={data.csat != null ? `${data.csat}/5` : '—'}
+                  tone={data.csat != null ? (data.csat >= 4 ? 'good' : data.csat < 3 ? 'bad' : undefined) : undefined}
+                  sub={data.csat_responses ? `${data.csat_responses} rating${data.csat_responses > 1 ? 's' : ''}` : 'no ratings yet'} />
                 <Tile label="Tagged" value={pct(data.coverage_rate)} sub={`${data.tagged} of ${data.total_resolved} given a reason`} />
               </div>
 

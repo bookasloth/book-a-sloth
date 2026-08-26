@@ -4,8 +4,10 @@ import toast from 'react-hot-toast';
 import { getSupabase } from '../../services/supabaseClient';
 import {
   getSupportThread, getSupportThreads, getSupportMessages, startSupportTopic,
-  sendSupportMessage, escalateSupport, markSupportRead, getSupportHours,
+  sendSupportMessage, escalateSupport, rateSupportThread, markSupportRead, getSupportHours,
 } from '../../services/api';
+
+const CSAT_EMOJI = { 1: '😠', 2: '😕', 3: '😐', 4: '🙂', 5: '🤩' };
 import { cn } from '../dashboard/ui/cn';
 import Markdown from '../common/Markdown';
 
@@ -81,6 +83,7 @@ export default function SupportChat() {
   const [threads, setThreads] = useState([]); // topic switcher
   const [showTopics, setShowTopics] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [rated, setRated] = useState(false); // local flag after CSAT submit
   const bottomRef = useRef(null);
   const scrollRef = useRef(null);
   const atBottomRef = useRef(true);
@@ -237,7 +240,17 @@ export default function SupportChat() {
     }
   };
 
+  const rate = async (n) => {
+    if (!thread) return;
+    setRated(true); // optimistic
+    try {
+      const { data } = await rateSupportThread(thread.id, { rating: n });
+      setThread((t) => ({ ...t, ...data.thread }));
+    } catch { toast.error('Couldn’t save your rating'); setRated(false); }
+  };
+
   const banner = thread ? BANNER[thread.status] : null;
+  const showCsat = thread?.status === 'resolved' && !thread?.rating && !rated;
   const isBotPhase = thread?.status === 'bot';
   // Offer the human option only after Bolt has actually replied — nudges users to
   // try the bot first instead of reflexively asking for a person.
@@ -284,6 +297,21 @@ export default function SupportChat() {
       </div>
 
       {banner && <div className={cn('mx-3 mt-3 rounded-xl border px-3 py-2 text-[12.5px] font-medium', banner.cls)}>{banner.text}</div>}
+
+      {showCsat && (
+        <div className="mx-3 mt-2 rounded-xl border border-gray-100 bg-white px-3 py-2 text-center">
+          <p className="mb-1 text-[12px] text-gray-500">How did we do?</p>
+          <div className="flex justify-center gap-1.5">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button key={n} type="button" onClick={() => rate(n)} aria-label={`Rate ${n} of 5`}
+                className="text-xl transition-transform hover:scale-125">{CSAT_EMOJI[n]}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      {thread?.status === 'resolved' && (thread?.rating || rated) && (
+        <p className="mx-3 mt-2 text-center text-[12px] text-gray-400">Thanks for the feedback 🙏</p>
+      )}
 
       {/* Messages */}
       <div ref={scrollRef} onScroll={onScroll} className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-3">
