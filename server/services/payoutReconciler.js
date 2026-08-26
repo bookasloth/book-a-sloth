@@ -152,7 +152,7 @@ async function reconcile() {
   const live = mode === 'live';
 
   const s = {
-    mode, refreshed: 0, activated: 0, accountsCreated: 0, created: 0, finalized: 0, failedAttempt: 0,
+    mode, refreshed: 0, activated: 0, accountsCreated: 0, created: 0, finalized: 0, released: 0, failedAttempt: 0,
     blocked: 0, owedBlocked: 0, owedBlockedActionable: 0, owedBlockedSum: 0, candidates: 0, stuck: 0, clawbackNeeded: 0,
   };
   const reasonCounts = {};
@@ -210,39 +210,60 @@ async function reconcile() {
     }
   }
 
-  // ---- 2. Held transfers past their hold whose completion webhook was missed ----
-  const { data: stuck, error: stuckErr } = await supabaseAdmin
+  // ---- 2. Release matured holds + finalize (and heal transfers we mis-marked
+  // 'processed' while Razorpay still held them). Razorpay reports status='processed'
+  // at execution even while on_hold, so a held transfer never auto-settles to the
+  // host's bank until the hold is LIFTED — a transfer.processed webhook alone marked
+  // our DB 'processed' while the money sat held. We therefore scan BOTH 'pending' and
+  // 'processed', and for matured non-cancelled transfers still on_hold at Razorpay we
+  // lift the hold so it settles. Money-safe: only owed, matured (past on_hold_until),
+  // non-cancelled payouts, and only in 'live'.
+  // ponytail: re-fetches every matured transfer each run — fine at current volume;
+  // add a 'settled' flag / recent-window filter if this list ever grows large.
+  const { data: matured, error: mErr } = await supabaseAdmin
     .from('bookings')
     .select('id, host_id, vendor_amount, razorpay_transfer_id, transfer_status, transfer_hold_until, settlement_status')
-    .eq('transfer_status', 'pending')
     .not('razorpay_transfer_id', 'is', null)
+    .in('transfer_status', ['pending', 'processed'])
     .lt('transfer_hold_until', new Date().toISOString())
     .limit(SCAN_LIMIT);
-  if (stuckErr && !isMissingColumn(stuckErr)) throw new Error(`payoutReconciler: stuck query failed: ${stuckErr.message}`);
-  s.stuck = (stuck || []).length;
+  if (mErr && !isMissingColumn(mErr)) throw new Error(`payoutReconciler: matured query failed: ${mErr.message}`);
+  s.stuck = (matured || []).filter((b) => b.transfer_status === 'pending').length;
 
-  if (live && rz && stuck && stuck.length) {
-    for (const b of stuck) {
+  if (live && rz && matured && matured.length) {
+    for (const b of matured) {
       try {
-        const t = await rz.transfers.fetch(b.razorpay_transfer_id);   // read-only
         const cancelled = SKIP_SETTLE.has(b.settlement_status);
-        if (t?.status === 'processed') {
-          if (cancelled) {
-            // The transfer released (Razorpay auto-release) on a CANCELLED booking —
-            // the host was paid money they shouldn't keep. Never post a SETTLEMENT for
-            // it; flag for manual clawback (reversal window is likely closed).
+        const t = await rz.transfers.fetch(b.razorpay_transfer_id);   // read
+        if (t?.status === 'failed' || t?.status === 'reversed') {
+          if (b.transfer_status !== t.status) {
+            await supabaseAdmin.from('bookings')
+              .update({ transfer_status: t.status, transfer_error: t.error?.description || t.status, updated_at: new Date().toISOString() })
+              .eq('id', b.id);
+          }
+          continue;
+        }
+        if (cancelled) {
+          // Released on a CANCELLED booking → host holds money they shouldn't. Never
+          // release/finalize; flag for manual clawback (sub-₹1 can't be auto-reversed).
+          if (t?.on_hold === false) {
             s.clawbackNeeded++;
             securityLog('payout_reconcile_clawback_needed', { bookingId: b.id, transferId: b.razorpay_transfer_id });
-          } else {
-            await finalizeReleasedTransfer(b, null); s.finalized++;
           }
-        } else if (t?.status === 'failed' || t?.status === 'reversed') {
-          await supabaseAdmin.from('bookings')
-            .update({ transfer_status: t.status, transfer_error: t.error?.description || t.status, updated_at: new Date().toISOString() })
-            .eq('id', b.id);
+          continue;
+        }
+        // Non-cancelled, matured, still held at Razorpay → LIFT the hold so it settles.
+        if (t?.on_hold === true) {
+          await rz.transfers.edit(b.razorpay_transfer_id, { on_hold: false });
+          s.released++;
+        }
+        // Finalize once (idempotent): post SETTLEMENT + mark processed. No-op if already done.
+        if (b.transfer_status !== 'processed') {
+          await finalizeReleasedTransfer(b, null);
+          s.finalized++;
         }
       } catch (e) {
-        securityLog('payout_reconcile_stuck_error', { bookingId: b.id, reason: e.message });
+        securityLog('payout_reconcile_release_error', { bookingId: b.id, reason: e.message });
       }
     }
   }
