@@ -22,6 +22,7 @@ const abuseGuard = require('./bot/abuseGuard'); // pre-ladder abuse/roast gate (
 const pills = require('./bot/pills'); // context quick-reply pills (flag-gated)
 const { classify: classifyIntent } = require('./bot/intent'); // zero-cost pre-retrieval intent (flag-gated)
 const intentHandlers = require('./bot/intentHandlers'); // deterministic per-topic answers + cards
+const { contextAnswer, contextNote } = require('./bot/contextAnswer'); // data-aware answers (authenticated only)
 
 // Pull a generous top-N so the authoritative chunk survives noisier docs; the
 // model still answers only from what's relevant and escalates when none cover it.
@@ -484,8 +485,11 @@ function buildUserMessage(question, chunks) {
 }
 
 // Structured (non-streaming) model call — used by askBot / /ask.
-async function callModel(question, chunks, history = []) {
+async function callModel(question, chunks, history = [], note = '') {
   const client = anthropicClient.getClient();
+  // `note` is a compact, PII-light account-context line (authenticated chat only);
+  // prepended so the model can answer accurately, and deliberately not cached.
+  const userMsg = note ? `${note}\n\n${question}` : question;
   const resp = await client.messages.create({
     model: anthropicClient.MODELS.generate,
     max_tokens: 1024,
@@ -494,7 +498,7 @@ async function callModel(question, chunks, history = []) {
     tool_choice: { type: 'tool', name: 'emit_answer' },
     messages: [
       ...toModelHistory(history),
-      { role: 'user', content: buildUserMessage(question, chunks) },
+      { role: 'user', content: buildUserMessage(userMsg, chunks) },
     ],
   });
   return (resp.content || []).find((b) => b.type === 'tool_use' && b.name === 'emit_answer')?.input || null;
@@ -660,7 +664,7 @@ async function tryIntentLayer({ q, conversationId, sessionRef, onDelta }) {
  * clean reply. Returns { answer, cited_sources, escalate, conversationId, messageId, source }.
  * `source` names the layer that answered: 'smalltalk'|'faq'|'model'|'escalation'.
  */
-async function askBot({ question, conversationId = null, sessionRef = null, ip = null } = {}) {
+async function askBot({ question, conversationId = null, sessionRef = null, ip = null, context = null } = {}) {
   const q = String(question || '').trim();
   const qSafe = q ? redactPii(q) : q; // PII-redacted copy for third parties (Voyage embed, Claude, cache)
 
@@ -704,6 +708,20 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
     return { answer: small, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'smalltalk' };
   }
 
+  // Data-aware answer — AUTHENTICATED support thread only (context is passed solely
+  // by botAutoReply, never by the public widget). Runs before the sensitive gate so
+  // "where's my refund / why isn't my listing live" resolve from real state; genuine
+  // disputes are excluded inside contextAnswer and still fall through to escalation.
+  if (context && q) {
+    const ctxHit = contextAnswer(q, context);
+    if (ctxHit) {
+      const { conversationId: convId, messageId } = await persist({
+        conversationId, sessionRef, question: q, answer: ctxHit.answer, cited_sources: [], escalate: false, source: 'context',
+      });
+      return { answer: ctxHit.answer, cited_sources: [], escalate: false, conversationId: convId, messageId, source: 'context' };
+    }
+  }
+
   const price = q && !sensitive && pricingReply(q);
   if (price) {
     const { conversationId: convId, messageId } = await persist({
@@ -732,7 +750,9 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
 
   // Semantic cache: a near-identical past question reuses its answer, no model call.
   // Never for sensitive topics — those must escalate, never serve a cached answer.
-  if (queryEmbedding && !sensitive) {
+  // Never when authenticated context is in play — that answer is user-specific and
+  // must not be served to (or stored for) anyone else.
+  if (queryEmbedding && !sensitive && !context) {
     const cached = await semanticCacheLookup(queryEmbedding);
     if (cached) {
       const { conversationId: convId, messageId } = await persist({
@@ -770,7 +790,7 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
       cited_sources = [];
     } else {
       try {
-        const out = await callModel(qSafe, chunks, history);
+        const out = await callModel(qSafe, chunks, history, context ? contextNote(context) : '');
         if (out && !out.escalate && String(out.answer || '').trim()) {
           escalate = false;
           source = 'model';
@@ -788,7 +808,8 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
           } else {
             answer = clean.text;
             // Cache this grounded answer for near-identical future questions (best-effort).
-            semanticCacheStore(qSafe, queryEmbedding, answer, cited_sources);
+            // Never cache a context-influenced answer — it's specific to this user.
+            if (!context) semanticCacheStore(qSafe, queryEmbedding, answer, cited_sources);
           }
         }
       } catch (e) {

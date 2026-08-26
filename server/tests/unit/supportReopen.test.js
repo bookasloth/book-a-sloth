@@ -2,6 +2,7 @@
 // the admin queue hides. botService + supportChatService are mocked.
 
 jest.mock('../../services/botService', () => ({ askBot: jest.fn(() => Promise.resolve({ answer: '', escalate: false })) }));
+jest.mock('../../services/supportContextService', () => ({ getSupportContext: jest.fn() }));
 jest.mock('../../services/supportChatService', () => ({
   getThread: jest.fn(),
   setStatus: jest.fn(() => Promise.resolve({})),
