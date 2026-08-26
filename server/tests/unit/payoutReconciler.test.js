@@ -19,8 +19,8 @@ const routeAuto = require('../../services/routeAutoPayoutService');
 const { adminAlert } = require('../../utils/adminAlert');
 const { reconcile } = require('../../services/payoutReconciler');
 
-// Read terminals resolve from readQueue in order (owed list, then stuck list);
-// any chain that calls .update() resolves as a write ({error:null}).
+// Read terminals resolve from readQueue in order (activation list, owed list, stuck
+// list); any chain that calls .update() resolves as a write ({error:null}).
 let readQueue = [];
 const makeChain = () => {
   const c = { _write: false };
@@ -30,13 +30,16 @@ const makeChain = () => {
   return c;
 };
 
-const setReads = (...results) => { readQueue = results.map((data) => ({ data })); };
+// First read is always the activation refresh (kyc_submissions); default it to [].
+const setReads = ({ activations = [], owed = [], stuck = [] } = {}) => {
+  readQueue = [{ data: activations }, { data: owed }, { data: stuck }];
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
   readQueue = [];
   supabaseAdmin.from.mockImplementation(() => makeChain());
-  razorpayConfig.getClient.mockResolvedValue({ transfers: { fetch: jest.fn() } });
+  razorpayConfig.getClient.mockResolvedValue({ transfers: { fetch: jest.fn() }, products: { fetch: jest.fn() } });
 });
 
 const owedBooking = (o = {}) => ({
@@ -57,7 +60,7 @@ test('mode "off" is a no-op — no queries, no money, no alert', async () => {
 test('observe: owed money to an INELIGIBLE host is counted + alerted, but NO transfer is created', async () => {
   platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'observe' });
   isPayoutEligible.mockResolvedValue({ eligible: false, reasons: ['not_activated'] });
-  setReads([owedBooking()], []); // owed, stuck
+  setReads({ owed: [owedBooking()] });
   const r = await reconcile();
   expect(r.owedBlocked).toBe(1);
   expect(r.owedBlockedSum).toBe(10);
@@ -70,7 +73,7 @@ test('live: owed money to an ELIGIBLE host creates the held transfer', async () 
   platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'live' });
   isPayoutEligible.mockResolvedValue({ eligible: true, reasons: [] });
   routeAuto.createHeldTransferForBooking.mockResolvedValue({ ok: true, transferId: 'trf_new' });
-  setReads([owedBooking()], []);
+  setReads({ owed: [owedBooking()] });
   const r = await reconcile();
   expect(r.created).toBe(1);
   expect(routeAuto.createHeldTransferForBooking).toHaveBeenCalledTimes(1);
@@ -79,7 +82,7 @@ test('live: owed money to an ELIGIBLE host creates the held transfer', async () 
 
 test('a payout below the ₹1 floor is skipped entirely (no eligibility check, no attempt)', async () => {
   platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'live' });
-  setReads([owedBooking({ vendor_amount: 0.5 })], []);
+  setReads({ owed: [owedBooking({ vendor_amount: 0.5 })] });
   const r = await reconcile();
   expect(r.candidates).toBe(0);
   expect(isPayoutEligible).not.toHaveBeenCalled();
@@ -87,7 +90,7 @@ test('a payout below the ₹1 floor is skipped entirely (no eligibility check, n
 
 test('cancelled / not_eligible bookings are skipped', async () => {
   platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'live' });
-  setReads([owedBooking({ settlement_status: 'cancelled' })], []);
+  setReads({ owed: [owedBooking({ settlement_status: 'cancelled' })] });
   const r = await reconcile();
   expect(r.candidates).toBe(0);
   expect(isPayoutEligible).not.toHaveBeenCalled();
@@ -95,7 +98,7 @@ test('cancelled / not_eligible bookings are skipped', async () => {
 
 test('a retry-capped booking is blocked (not attempted) and alerts', async () => {
   platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'live' });
-  setReads([owedBooking({ transfer_attempts: 5 })], []);
+  setReads({ owed: [owedBooking({ transfer_attempts: 5 })] });
   const r = await reconcile();
   expect(r.blocked).toBe(1);
   expect(routeAuto.createHeldTransferForBooking).not.toHaveBeenCalled();
@@ -106,7 +109,7 @@ test('eligibility is checked once per host, not once per booking', async () => {
   platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'live' });
   isPayoutEligible.mockResolvedValue({ eligible: true, reasons: [] });
   routeAuto.createHeldTransferForBooking.mockResolvedValue({ ok: true, transferId: 'trf' });
-  setReads([owedBooking({ id: 'bk1' }), owedBooking({ id: 'bk2' })], []); // two bookings, same host h1
+  setReads({ owed: [owedBooking({ id: 'bk1' }), owedBooking({ id: 'bk2' })] }); // two bookings, same host h1
   const r = await reconcile();
   expect(r.created).toBe(2);
   expect(isPayoutEligible).toHaveBeenCalledTimes(1);
@@ -117,7 +120,7 @@ test('live: a stuck held transfer whose webhook was missed is finalized from Raz
   const fetch = jest.fn().mockResolvedValue({ status: 'processed' });
   razorpayConfig.getClient.mockResolvedValue({ transfers: { fetch } });
   routeAuto.finalizeReleasedTransfer.mockResolvedValue();
-  setReads([], [{ id: 'bk9', host_id: 'h1', vendor_amount: 10, razorpay_transfer_id: 'trf_9', transfer_status: 'pending', transfer_hold_until: '2000-01-01' }]);
+  setReads({ stuck: [{ id: 'bk9', host_id: 'h1', vendor_amount: 10, razorpay_transfer_id: 'trf_9', transfer_status: 'pending', transfer_hold_until: '2000-01-01', settlement_status: 'eligible_for_settlement' }] });
   const r = await reconcile();
   expect(fetch).toHaveBeenCalledWith('trf_9');
   expect(routeAuto.finalizeReleasedTransfer).toHaveBeenCalledTimes(1);
@@ -126,8 +129,31 @@ test('live: a stuck held transfer whose webhook was missed is finalized from Raz
 
 test('observe does NOT finalize stuck transfers (no money movement)', async () => {
   platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'observe' });
-  setReads([], [{ id: 'bk9', razorpay_transfer_id: 'trf_9', transfer_status: 'pending', transfer_hold_until: '2000-01-01' }]);
+  setReads({ stuck: [{ id: 'bk9', razorpay_transfer_id: 'trf_9', transfer_status: 'pending', transfer_hold_until: '2000-01-01', settlement_status: 'eligible_for_settlement' }] });
   const r = await reconcile();
   expect(r.stuck).toBe(1);
   expect(routeAuto.finalizeReleasedTransfer).not.toHaveBeenCalled();
+});
+
+test('activation refresh flips a needs_clarification account to activated from Razorpay', async () => {
+  platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'observe' });
+  const productFetch = jest.fn().mockResolvedValue({ activation_status: 'activated' });
+  razorpayConfig.getClient.mockResolvedValue({ transfers: { fetch: jest.fn() }, products: { fetch: productFetch } });
+  setReads({ activations: [{ id: 'k1', razorpay_account_id: 'acc_1', razorpay_product_id: 'prod_1', route_activation_status: 'needs_clarification' }] });
+  const r = await reconcile();
+  expect(productFetch).toHaveBeenCalledWith('acc_1', 'prod_1');
+  expect(r.refreshed).toBe(1);
+  expect(r.activated).toBe(1);
+});
+
+test('live: a stuck transfer that released on a CANCELLED booking is flagged for clawback, not finalized', async () => {
+  platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'live' });
+  const fetch = jest.fn().mockResolvedValue({ status: 'processed' });
+  razorpayConfig.getClient.mockResolvedValue({ transfers: { fetch }, products: { fetch: jest.fn() } });
+  setReads({ stuck: [{ id: 'bkc', razorpay_transfer_id: 'trf_c', transfer_status: 'pending', transfer_hold_until: '2000-01-01', settlement_status: 'cancelled' }] });
+  const r = await reconcile();
+  expect(r.clawbackNeeded).toBe(1);
+  expect(r.finalized).toBe(0);
+  expect(routeAuto.finalizeReleasedTransfer).not.toHaveBeenCalled();
+  expect(adminAlert).toHaveBeenCalled();
 });

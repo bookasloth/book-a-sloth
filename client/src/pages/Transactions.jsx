@@ -3,13 +3,41 @@ import { Receipt, User, CalendarDays, IndianRupee, CreditCard, Copy, FileText } 
 import { getTransactions, getMyInvoices, invoiceUrl } from "../services/api";
 import toast from "react-hot-toast";
 import {
-  PageHeader, DataTable, StatusBadge, Modal,
+  PageHeader, DataTable, Modal,
   SearchInput, Select, EmptyState, ErrorState, SkeletonCard,
   useInfiniteScroll, fmtMoney, cn,
 } from "../components/dashboard/ui";
 
 const fmtDate = (iso) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+// PAYOUT status — the truth the host actually cares about: has THEIR money moved?
+// A green "Paid" from the guest's payment_status said nothing about the host being
+// paid, so we show the Route transfer state instead. `null` transfer_status on a
+// paid booking that owes money = owed but not yet sent ("Payout pending").
+const PAYOUT_STATE = {
+  processed: { label: "Paid out", cls: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+  pending:   { label: "In transit", cls: "border-blue-200 bg-blue-50 text-blue-700" },
+  reversed:  { label: "Reversed", cls: "border-gray-200 bg-gray-100 text-gray-600" },
+  failed:    { label: "Payout failed", cls: "border-red-200 bg-red-50 text-red-700" },
+  owed:      { label: "Payout pending", cls: "border-amber-200 bg-amber-50 text-amber-700" },
+};
+const payoutStateKey = (tx) => {
+  if (tx.services?.price === 0 || !(Number(tx.vendor_amount) > 0)) return null; // free / nothing owed
+  const ts = tx.transfer_status;
+  if (ts === "processed" || ts === "pending" || ts === "reversed" || ts === "failed") return ts;
+  return "owed"; // paid by guest, transfer not created/sent yet
+};
+const PayoutChip = ({ tx }) => {
+  const key = payoutStateKey(tx);
+  if (!key) return null;
+  const s = PAYOUT_STATE[key];
+  return (
+    <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold", s.cls)}>
+      {s.label}
+    </span>
+  );
+};
 
 // Day-grouping for the mobile statement feed (Today / Yesterday / date).
 const txDate = (tx) => new Date(tx.scheduled_at || tx.created_at);
@@ -47,7 +75,7 @@ const TxCard = ({ tx, onOpen }) => {
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-gray-900">{tx.guest_name || "Guest"}</p>
         <p className="truncate text-xs text-gray-500">{tx.services?.title || "—"}</p>
-        <div className="mt-1.5"><StatusBadge status={tx.payment_status} /></div>
+        <div className="mt-1.5"><PayoutChip tx={tx} /></div>
       </div>
       <div className="shrink-0 text-right">
         <p className="text-base font-bold text-primary">{fmtMoney(tx.vendor_amount, { decimals: true })}</p>
@@ -123,7 +151,7 @@ const Detail = ({ tx }) => {
           </button>
         </div>
         <div className="shrink-0 text-right">
-          <StatusBadge status={tx.payment_status} />
+          <PayoutChip tx={tx} />
           <p className="mt-1.5 text-[11px] text-gray-400">{fmtDate(tx.scheduled_at || tx.created_at)}</p>
         </div>
       </div>
@@ -166,6 +194,15 @@ const Detail = ({ tx }) => {
                 <span className="text-xs font-semibold text-gray-700">Net payout</span>
                 <span className="text-xs font-bold text-primary">{fmtMoney(tx.vendor_amount, { decimals: true })}</span>
               </div>
+              {payoutStateKey(tx) && (
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-600">Payout status</span>
+                  <PayoutChip tx={tx} />
+                </div>
+              )}
+              {tx.transfer_status === "failed" && tx.transfer_error && (
+                <p className="text-[10px] leading-snug text-red-500">Reason: {tx.transfer_error}</p>
+              )}
             </>
           )}
           <p className="mt-2 text-[10px] leading-snug text-gray-400">
@@ -260,7 +297,7 @@ const COLUMNS = [
   { key: "date", header: "Date", render: (tx) => <span className="text-gray-500">{fmtDate(tx.scheduled_at || tx.created_at)}</span> },
   { key: "total", header: "Total", render: (tx) => <span className="font-semibold text-gray-800">{tx.services?.price === 0 ? "Free" : fmtMoney(tx.services?.price, { decimals: true })}</span> },
   { key: "earned", header: "Earned", render: (tx) => <span className="font-semibold text-primary">{fmtMoney(tx.vendor_amount, { decimals: true })}</span> },
-  { key: "status", header: "Status", render: (tx) => <StatusBadge status={tx.payment_status} /> },
+  { key: "status", header: "Payout", render: (tx) => <PayoutChip tx={tx} /> },
 ];
 
 const Transactions = () => {
