@@ -565,6 +565,20 @@ const TEMPLATES = [
     cta_label: 'View transactions', cta_url: '{{dashboard_url}}',
   }; })(),
 
+  (() => { const t = themeForCategory('Payment Receipt'); return {
+    event_key: 'PAYOUT_DELAY_HOLIDAY', audience: 'all', category: 'Payments', sender_key: 'tithi',
+    name: 'Payout — Bank Holiday Delay', subject: 'Heads up — {{holiday}} may add a day to your payout',
+    preview_text: 'Banks are closed for the holiday, so your payout lands a working day later.',
+    email_category: 'Payment Receipt',
+    email_reason: 'You are receiving this email because you have a payout settling around a bank holiday on Book A Sloth.',
+    html_content:
+      eyebrow(t.text, 'Heads up') + h('Your payout may take an extra day, {{first_name}}') +
+      lead("Banks are closed for {{holiday}} on {{holiday_date}}, so payouts don't settle that day. Your recent payout of {{payout_amount}} should reach your account by {{expected_date}} instead — nothing's wrong, it's just the bank holiday.") +
+      C.amountRow(t, 'On the way', '{{payout_amount}}') +
+      lead('We follow the bank settlement schedule, so this catches up automatically.'),
+    cta_label: 'View payouts', cta_url: '{{dashboard_url}}',
+  }; })(),
+
   // ── Engagement ───────────────────────────────────────────────────────────────
 
   (() => { const t = themeForCategory('Product Feedback'); return {
