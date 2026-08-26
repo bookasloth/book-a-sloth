@@ -10,16 +10,38 @@
  * Dates are YYYY-MM-DD in IST. Sundays are always non-settlement (handled in code).
  */
 
-// date (YYYY-MM-DD, IST) -> display name
+// date (YYYY-MM-DD, IST) -> display name. RBI/national + major statewide bank
+// holidays (Razorpay non-settlement days). 2026 is the full list; TODO(yearly):
+// refresh movable festival dates for 2027+ from the RBI calendar.
 const BANK_HOLIDAYS = {
+  // 2026
+  '2026-01-15': 'Makar Sankranti',
+  '2026-01-26': 'Republic Day',
+  '2026-02-15': 'Mahashivratri',
+  '2026-03-03': 'Holi (Dhuleti)',
+  '2026-03-04': 'Holi',
+  '2026-03-19': 'Ugadi',
+  '2026-03-20': 'Eid-ul-Fitr (Ramzan)',
+  '2026-03-27': 'Ram Navami',
+  '2026-04-01': 'Annual Bank Closing',
+  '2026-04-03': 'Good Friday',
+  '2026-04-14': 'Dr B. R. Ambedkar Jayanti',
+  '2026-05-01': 'May Day',
+  '2026-05-27': 'Bakri Eid (Eid-ul-Adha)',
+  '2026-06-25': 'Muharram',
+  '2026-08-15': 'Independence Day',
+  '2026-08-25': 'Eid-e-Milad',
+  '2026-09-04': 'Janmashtami',
+  '2026-09-14': 'Ganesh Chaturthi',
   '2026-10-02': 'Gandhi Jayanti',
+  '2026-10-20': 'Dussehra (Vijaya Dashami)',
+  '2026-11-08': 'Diwali',
   '2026-12-25': 'Christmas',
+  // 2027 — fixed national only; add movable dates next year
   '2027-01-26': 'Republic Day',
   '2027-08-15': 'Independence Day',
   '2027-10-02': 'Gandhi Jayanti',
   '2027-12-25': 'Christmas',
-  // TODO(yearly): add movable festival bank holidays from the RBI calendar
-  // (Holi, Eid-ul-Fitr, Eid-ul-Adha, Dussehra, Diwali, Guru Nanak Jayanti, etc.).
 };
 
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
