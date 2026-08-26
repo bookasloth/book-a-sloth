@@ -13,6 +13,7 @@ router.post('/thread/new',            protect, c.startTopic);
 router.get('/thread/:id/messages',    protect, c.getMessages);
 router.post('/thread/:id/messages',   protect, c.sendMessage);
 router.post('/thread/:id/escalate',   protect, c.escalateThread);
+router.post('/thread/:id/rating',     protect, c.rateThread);
 router.post('/thread/:id/read',       protect, c.markRead);
 
 module.exports = router;

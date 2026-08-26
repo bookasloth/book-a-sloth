@@ -146,6 +146,14 @@ async function setReasonCode(threadId, reasonCode) {
   await supabaseAdmin.from('support_threads').update({ reason_code: reasonCode }).eq('id', threadId);
 }
 
+// Post-resolution CSAT (1–5). Column exists since v3.115.
+async function setRating(threadId, rating) {
+  const r = Math.round(Number(rating));
+  if (!(r >= 1 && r <= 5)) return null;
+  const { data } = await supabaseAdmin.from('support_threads').update({ rating: r }).eq('id', threadId).select('*').single();
+  return data || null;
+}
+
 /**
  * Persist a message, advance the thread (last_message_at + the OTHER side's unread),
  * then broadcast it. sender ∈ user|bot|admin|system.
@@ -238,6 +246,6 @@ async function listQueue({ filter = 'waiting', adminId } = {}) {
 
 module.exports = {
   refFrom, broadcast, createThread, getOrCreateOpenThread, getOpenThread, getThread, listThreads, listMessages,
-  hasAdminMessage, setAgentName, setReasonCode,
+  hasAdminMessage, setAgentName, setReasonCode, setRating,
   postMessage, setStatus, escalate, assign, resolve, markRead, listQueue,
 };

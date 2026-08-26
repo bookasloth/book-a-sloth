@@ -22,6 +22,7 @@ vi.mock('../services/api', () => ({
   getSupportThreads: vi.fn(() => Promise.resolve({ data: { threads: [] } })),
   getSupportMessages: vi.fn(() => Promise.resolve({ data: { thread: { id: 't1', status: 'bot' }, messages: [] } })),
   startSupportTopic: vi.fn(() => Promise.resolve({ data: { thread: { id: 't-new', status: 'bot' }, messages: [] } })),
+  rateSupportThread: vi.fn(() => Promise.resolve({ data: { thread: { id: 't1', status: 'resolved', rating: 5 } } })),
 }));
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }));
 

@@ -161,6 +161,17 @@ const unread = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// POST /api/support/thread/:id/rating  { rating: 1..5 } — post-resolution CSAT.
+const rateThread = async (req, res) => {
+  try {
+    const thread = await chat.getThread(req.params.id);
+    if (!owns(thread, req.user)) return res.status(404).json({ message: 'Thread not found' });
+    const updated = await chat.setRating(thread.id, req.body?.rating);
+    if (!updated) return res.status(400).json({ message: 'Rating must be 1–5.' });
+    res.json({ thread: updated });
+  } catch (e) { safeError(res, e); }
+};
+
 // POST /api/support/thread/:id/read
 const markRead = async (req, res) => {
   try {
@@ -171,4 +182,4 @@ const markRead = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { getMyThread, listThreads, startTopic, getMessages, sendMessage, escalateThread, markRead, unread, hours, botAutoReply };
+module.exports = { getMyThread, listThreads, startTopic, getMessages, sendMessage, escalateThread, rateThread, markRead, unread, hours, botAutoReply };

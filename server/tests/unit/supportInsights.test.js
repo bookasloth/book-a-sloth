@@ -17,8 +17,8 @@ const mkRes = () => { const r = {}; r.json = jest.fn(() => r); r.status = jest.f
 
 test('aggregates reasons across threads + escalations and computes product-caused rate', async () => {
   const queue = {
-    support_threads: [{ data: [{ reason_code: 'pay_refund' }, { reason_code: 'host_listing_live' }, { reason_code: null }], error: null }],
-    bot_escalations: [{ data: [{ reason_code: 'product_bug' }, { reason_code: 'host_listing_live' }], error: null }],
+    support_threads: [{ data: [{ reason_code: 'pay_refund', rating: 5 }, { reason_code: 'host_listing_live', rating: 3 }, { reason_code: null, rating: null }], error: null }],
+    bot_escalations: [{ data: [{ reason_code: 'product_bug', rating: 4 }, { reason_code: 'host_listing_live', rating: null }], error: null }],
   };
   supabaseAdmin.from.mockImplementation((t) => qb(queue[t].shift()));
 
@@ -30,6 +30,9 @@ test('aggregates reasons across threads + escalations and computes product-cause
   expect(out.tagged).toBe(4); // one null dropped
   // product/ux: host_listing_live x2 (ux) + product_bug (product) = 3 of 4
   expect(out.product_caused_rate).toBeCloseTo(0.75, 2);
+  // CSAT: ratings 5,3,4 → avg 4.0 over 3 responses
+  expect(out.csat).toBeCloseTo(4.0, 2);
+  expect(out.csat_responses).toBe(3);
   const top = out.by_reason.find((r) => r.code === 'host_listing_live');
   expect(top.count).toBe(2);
   expect(out.by_category.find((c) => c.category === 'host').count).toBe(2);

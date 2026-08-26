@@ -161,6 +161,7 @@ export const startSupportTopic  = ()         => API.post('/support/thread/new');
 export const getSupportMessages = (id)       => API.get(`/support/thread/${id}/messages`);
 export const sendSupportMessage = (id, data) => API.post(`/support/thread/${id}/messages`, data);
 export const escalateSupport    = (id, data) => API.post(`/support/thread/${id}/escalate`, data || {});
+export const rateSupportThread  = (id, data) => API.post(`/support/thread/${id}/rating`, data);
 export const markSupportRead    = (id)       => API.post(`/support/thread/${id}/read`);
 
 // Streaming ask over SSE. Uses fetch (axios can't stream response bodies in the
