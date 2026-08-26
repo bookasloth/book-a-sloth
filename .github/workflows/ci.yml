@@ -12,10 +12,13 @@ name: CI
 #     the server does not ship. Render is where the server actually deploys, which
 #     is the only place a server test can gate a server release.
 #
-# The old client job here duplicated the Vercel build exactly and was removed:
-# it burned Actions minutes to assert something the deploy already asserts. This
-# job stays because Render only builds on push to main/staging — it is the one
-# place server tests run BEFORE a merge.
+# The `client` job runs `vitest run` (unit tests ONLY — no build/prerender, which
+# is Vercel's job and needs Sensitive env it can't read in CI). Re-added 2026-08
+# after two outages where a STALE CLIENT TEST merged with green CI and then failed
+# the Vercel deploy gate (vercel-build runs the full vitest): the Vercel PR preview
+# builds the client but is NOT a required status check, so a red preview never
+# blocked the merge. This cheap job IS a PR check, so a broken client test is
+# caught BEFORE merge instead of blocking every deploy afterwards.
 #
 # Remote builds (whether via deploy-vercel.yml or a PR preview) run inside Vercel
 # and can read env vars marked Sensitive, which a CI-side `vercel build --prebuilt`
@@ -66,3 +69,24 @@ jobs:
           GOOGLE_TOKEN_KEY: ci-test-32-byte-key-000000000000
           CLIENT_URL: http://localhost:5173
           AISENSY_WEBHOOK_SECRET: ci-test-secret-not-real
+
+  client:
+    name: Client (unit tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      # The SAME `vitest run` the Vercel deploy gate runs (vercel-build =
+      # vitest && build && prerender). Running it here catches a stale/broken
+      # client test on the PR, so it can't silently block production deploys.
+      # Build + prerender are intentionally NOT here — those are Vercel's job and
+      # need Sensitive env CI can't read (the 2026-07-08 white-screen lesson).
+      - run: npx vitest run
