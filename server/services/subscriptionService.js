@@ -12,11 +12,16 @@ const platformConfig = require('./platformConfig');
 const NotificationEngine = require('./notificationEngine');
 const { capture: phCapture } = require('../utils/posthog');
 const { trackServer } = require('../utils/trackServer');
-const { computeSubscriptionBreakdown } = require('../lib/pricingEngine');
+const { computeSubscriptionBreakdown, round2 } = require('../lib/pricingEngine');
 const { normCadence } = require('../lib/subscriptionPricing');
 
 const unixToIso = (sec) => (sec ? new Date(Number(sec) * 1000).toISOString() : null);
 const ACTIVE_STATES = ['active', 'authenticated'];
+// UPI-AutoPay mandate-registration "auth" captures are a fixed nominal debit
+// (₹1–5). An absolute ceiling separates them from any real plan charge without
+// depending on the (mutable) plan list price. Kept comfortably above the ₹1–5
+// auth debit and far below the cheapest paid plan.
+const AUTH_TOKEN_MAX_RUPEES = 10;
 
 /**
  * Activate or renew a vendor's plan from a Razorpay subscription (+ optional
@@ -153,19 +158,38 @@ async function recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, p
 
   const plan = await planService.getPlan(planSlug);
   const { gstRate } = await platformConfig.getConfig();
-  const planPrice = cadence === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0;
-  const breakdown = computeSubscriptionBreakdown({ planPrice, gstRate });
+  const expectedPlanPrice = cadence === 'monthly' ? Number(plan.monthly_price) || 0 : Number(plan.annual_price) || 0;
+  const expected = computeSubscriptionBreakdown({ planPrice: expectedPlanPrice, gstRate });
 
   // Guard against UPI-AutoPay mandate-authorization token charges. When a UPI
-  // AutoPay mandate is registered Razorpay captures a ₹1-2 "auth" transaction to
-  // validate it — it is status=paid but is NOT a plan payment. Recording it stamps
-  // the full plan_price against a ₹1 capture, inflating collected revenue (this is
-  // exactly what put a never-paying admin-granted host into "Subscriptions
-  // Collected"). A genuine plan charge always captures at least the plan list price;
-  // an auth token captures a few rupees. Skip anything well below the plan price.
-  const capturedRupees = payment?.amount != null ? Number(payment.amount) / 100 : null;
-  if (capturedRupees != null && planPrice > 0 && capturedRupees + 0.01 < planPrice) {
-    return { recorded: false, reason: `auth/token txn ₹${capturedRupees} < plan ₹${planPrice}` };
+  // AutoPay mandate is registered Razorpay captures a ₹1–5 "auth" transaction to
+  // validate it — status=paid but NOT a plan payment; recording it would stamp a
+  // full plan price against a ₹1 capture (this is what once put a never-paying
+  // admin-granted host into "Subscriptions Collected"). Skip only genuinely nominal
+  // captures, measured against an ABSOLUTE ceiling — never the current plan price.
+  // The old `captured < planPrice` test SILENTLY DISCARDED a genuine renewal on an
+  // old-price mandate whenever the plan's list price was later raised above the
+  // mandate's fixed gross amount. The plan-price side is kept only as a secondary
+  // lower bound so a hypothetically sub-₹10 plan's real charge isn't mistaken for a token.
+  const capturedRupees = payment?.amount != null ? round2(Number(payment.amount) / 100) : null;
+  if (capturedRupees != null && capturedRupees <= AUTH_TOKEN_MAX_RUPEES &&
+      (expectedPlanPrice <= 0 || capturedRupees + 0.01 < expectedPlanPrice)) {
+    return { recorded: false, reason: `auth/token txn ₹${capturedRupees}` };
+  }
+
+  // Amount source of truth = what Razorpay ACTUALLY captured (a fixed, GST-inclusive
+  // mandate amount), NOT the current DB plan price — which may have changed since the
+  // mandate was created. GST is charged ON TOP for subscriptions, so back it out of
+  // the captured gross to split taxable value + GST. This keeps invoice total ==
+  // gateway amount even after a plan-price or GST-rate change. When the capture amount
+  // is unknown (a webhook entity without an amount) we fall back to the expected breakdown.
+  let planPrice, gstAmount, totalCharged;
+  if (capturedRupees != null && capturedRupees > 0) {
+    totalCharged = capturedRupees;
+    planPrice = round2(totalCharged / (1 + gstRate));
+    gstAmount = round2(totalCharged - planPrice);
+  } else {
+    ({ planPrice, gstAmount, totalCharged } = expected);
   }
 
   const periodStartIso = unixToIso(rzpSub?.current_start) || new Date().toISOString();
@@ -190,7 +214,7 @@ async function recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, p
   const { data: subPayment, error: subErr } = await supabaseAdmin
     .from('subscription_payments').insert({
       vendor_id: vendorId, plan_type: planSlug,
-      plan_price: breakdown.planPrice, gst_amount: breakdown.gstAmount, total_charged: breakdown.totalCharged,
+      plan_price: planPrice, gst_amount: gstAmount, total_charged: totalCharged,
       razorpay_fee: feeExcl, razorpay_tax: tax,
       razorpay_payment_id: paymentId, razorpay_order_id: payment?.order_id || null,
       razorpay_subscription_id: rzpSub.id, billing_cadence: cadence, kind,
@@ -223,8 +247,8 @@ async function recordSubscriptionCharge({ vendorId, planSlug, cadence, rzpSub, p
   await ensureSubscriptionInvoice({
     id: subPayment.id,
     vendor_id: vendorId,
-    plan_price: breakdown.planPrice,
-    gst_amount: breakdown.gstAmount,
+    plan_price: planPrice,
+    gst_amount: gstAmount,
     paid_at: paidIso,
     razorpay_payment_id: paymentId,
   });

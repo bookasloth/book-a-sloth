@@ -26,6 +26,7 @@ import {
 } from "../utils/themeUtils";
 import { downloadReceipt } from "../utils/receipt";
 import loadRazorpay from "../utils/loadRazorpay";
+import { INDIAN_STATES } from "../lib/indianStates";
 
 const MONTHS = [
   "January",
@@ -223,7 +224,14 @@ const ServiceBooking = () => {
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [wantGst, setWantGst] = useState(false);
-  const [billing, setBilling] = useState({ name: "", address: "", state: "", state_code: "", gstin: "", pan: "" });
+  const [billing, setBilling] = useState({
+    name: user?.billing_details?.name || "",
+    address: user?.billing_details?.address || "",
+    state: user?.billing_details?.state || "",
+    state_code: user?.billing_details?.state_code || "",
+    gstin: user?.billing_details?.gstin || "",
+    pan: user?.billing_details?.pan || "",
+  });
   const [invoiceRef, setInvoiceRef] = useState(null); // {id, token}
 
   const [otp, setOtp] = useState("");
@@ -516,8 +524,11 @@ const ServiceBooking = () => {
       .padStart(2, "0")}:${(tot % 60).toString().padStart(2, "0")}`;
   };
 
-  // Buyer billing snapshot for the GST invoice (null unless the guest opted in).
-  const billingDetails = () => wantGst ? billing : null;
+  // Buyer billing snapshot for the GST invoice. A paid booking always carries the
+  // billing STATE (required — it is the invoice's place of supply); the GSTIN /
+  // business-name / address / PAN fields ride along only when the guest opts in.
+  // A free booking owes no BAS tax invoice, so no billing is sent.
+  const billingDetails = () => (isPaid ? billing : null);
 
   // BUG-16 fix: logged-in users skip OTP — book directly with their session
   const bookDirectly = async () => {
@@ -1256,8 +1267,30 @@ const ServiceBooking = () => {
                 <input type="text" placeholder="Any specific requirements..." className="fb-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
               </div>
 
-              {/* Optional GST invoice details */}
+              {/* Billing state (required for paid bookings — GST place of supply) + optional GST invoice */}
               <div className="mt-3 border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50/60">
+                {isPaid && (
+                  <div className="mb-3">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Billing state <span style={{ color: "#e42527" }}>*</span>
+                    </label>
+                    <select
+                      className="fb-input fb-input--sm w-full"
+                      value={billing.state_code}
+                      onChange={(e) => {
+                        const code = e.target.value;
+                        const name = INDIAN_STATES.find((s) => s.code === code)?.name || "";
+                        setBilling((b) => ({ ...b, state_code: code, state: name }));
+                      }}
+                    >
+                      <option value="">Select your state…</option>
+                      {INDIAN_STATES.map((s) => (
+                        <option key={s.code} value={s.code}>{s.name}</option>
+                      ))}
+                    </select>
+                    <span className="block text-[11px] text-gray-400 mt-1">Determines your GST place of supply on the tax invoice</span>
+                  </div>
+                )}
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1279,9 +1312,7 @@ const ServiceBooking = () => {
                       value={billing.gstin} onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
                     <input className="fb-input fb-input--sm sm:col-span-2" placeholder="Billing address"
                       value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} />
-                    <input className="fb-input fb-input--sm" placeholder="State (e.g. Maharashtra)"
-                      value={billing.state} onChange={(e) => setBilling((b) => ({ ...b, state: e.target.value }))} />
-                    <input className="fb-input fb-input--sm" placeholder="PAN (optional)"
+                    <input className="fb-input fb-input--sm sm:col-span-2" placeholder="PAN (optional)"
                       value={billing.pan} onChange={(e) => setBilling((b) => ({ ...b, pan: e.target.value.toUpperCase() }))} />
                   </div>
                 )}
@@ -1290,7 +1321,7 @@ const ServiceBooking = () => {
               {/* Full-width Continue */}
               <button
                 onClick={handleSendOtp}
-                disabled={otpSending || verifying || !firstName || !email || (!user && !isPhoneValid)}
+                disabled={otpSending || verifying || !firstName || !email || (!user && !isPhoneValid) || (isPaid && !billing.state_code)}
                 className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
                 style={{ background: tc, color: textOnTheme }}
               >

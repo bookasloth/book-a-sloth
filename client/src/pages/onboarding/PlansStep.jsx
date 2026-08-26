@@ -8,6 +8,7 @@ import { fireCelebration } from '../../utils/celebration';
 import useOnboardingGuard from './useOnboardingGuard';
 import ProgressBar from './ProgressBar';
 import loadRazorpay from '../../utils/loadRazorpay';
+import { INDIAN_STATES } from '../../lib/indianStates';
 
 const GST_RATE = 0.18; // display only — server is authoritative
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -39,6 +40,8 @@ const PlansStep = () => {
   const [busy, setBusy] = useState(null);            // plan slug | 'free' | null
   const [me, setMe] = useState(null);
   const [showPaid, setShowPaid] = useState(false);   // drawer for paid plans
+  const [billing, setBilling] = useState({ state_code: '', state: '' }); // GST place of supply
+  const [pendingPaid, setPendingPaid] = useState(null); // {plan, payCadence} awaiting billing state
   // Cache created subscriptions per plan+cadence. On a retry (webhook lag),
   // reuse the existing subscription instead of minting a second one.
   const subCacheRef = useRef({});
@@ -58,7 +61,11 @@ const PlansStep = () => {
   useEffect(() => {
     loadPlans();
     getMe()
-      .then((r) => setMe(r.data))
+      .then((r) => {
+        setMe(r.data);
+        const bd = r.data?.billing_details;
+        if (bd?.state_code) setBilling({ state_code: bd.state_code, state: bd.state || '' });
+      })
       .catch(() => {});
   }, [loadPlans]);
 
@@ -97,6 +104,15 @@ const PlansStep = () => {
   const choosePaid = async (plan, payCadence = cadence) => {
     const price = priceFor(plan, payCadence);
     if (!(price > 0)) { toast.error(`No ${payCadence} price for this plan.`); return; }
+    // GST place of supply must be captured before the mandate is created (the
+    // backend enforces it). If we don't have a state yet, prompt for it and resume.
+    const stateCode = billing.state_code || me?.billing_details?.state_code || '';
+    if (!stateCode) { setPendingPaid({ plan, payCadence }); return; }
+    const billingSnap = {
+      state_code: stateCode,
+      state: billing.state || me?.billing_details?.state || '',
+      name: me?.billing_details?.name || me?.name || '',
+    };
     const loaded = await loadRazorpay();
     if (!loaded) return toast.error('Payment gateway failed to load');
 
@@ -107,7 +123,7 @@ const PlansStep = () => {
       const cacheKey = `${plan.slug}:${payCadence}`;
       let sub = subCacheRef.current[cacheKey];
       if (!sub) {
-        ({ data: sub } = await createSubscription({ plan: plan.slug, cadence: payCadence }));
+        ({ data: sub } = await createSubscription({ plan: plan.slug, cadence: payCadence, billing: billingSnap }));
         subCacheRef.current[cacheKey] = sub;
       }
       const prefillData = me
@@ -379,6 +395,38 @@ const PlansStep = () => {
           )}
         </div>
       </div>
+
+      {pendingPaid && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+             onClick={() => setPendingPaid(null)}>
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-gray-900">Billing state</h3>
+            <p className="mt-1 text-sm text-gray-500">Required for your GST tax invoice — it sets your place of supply.</p>
+            <select
+              className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              value={billing.state_code}
+              onChange={(e) => {
+                const code = e.target.value;
+                const name = INDIAN_STATES.find((s) => s.code === code)?.name || '';
+                setBilling({ state_code: code, state: name });
+              }}
+            >
+              <option value="">Select your state…</option>
+              {INDIAN_STATES.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
+            </select>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="rounded-lg px-3 py-2 text-sm text-gray-500"
+                      onClick={() => setPendingPaid(null)}>Cancel</button>
+              <button type="button"
+                className="btn rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                disabled={!billing.state_code}
+                onClick={() => { const p = pendingPaid; setPendingPaid(null); choosePaid(p.plan, p.payCadence); }}>
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

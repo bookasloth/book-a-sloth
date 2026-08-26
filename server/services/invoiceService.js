@@ -1,6 +1,7 @@
 'use strict';
 const { round2 } = require('../lib/pricingEngine');
 const { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SAC_COMMISSION, SERIES } = require('../config/sellerIdentity');
+const stateService = require('./stateService');
 
 // Indian FY (Apr–Mar). 2-digit START year for the invoice serial (Jun 2026 -> '26').
 function fiscalYearFor(date = new Date()) {
@@ -14,13 +15,19 @@ function fiscalYearLabel(date = new Date()) {
   return `FY ${start}-${String((start + 1) % 100).padStart(2, '0')}`;
 }
 
-const GSTIN_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
-function isValidGstin(g) { return typeof g === 'string' && GSTIN_RE.test(g.trim().toUpperCase()); }
-function stateCodeFromGstin(g) { return isValidGstin(g) ? g.trim().slice(0, 2) : null; }
+// GSTIN + state helpers now live in the single-source stateService; re-exported
+// here so existing callers/tests keep their import path.
+const { isValidGstin, stateCodeFromGstin, GSTIN_RE } = stateService;
 
-// Place of supply state code: buyer GSTIN wins, else selected state, else seller.
-function placeOfSupply({ gstin, stateCode } = {}) {
-  return stateCodeFromGstin(gstin) || (stateCode ? String(stateCode) : seller.stateCode);
+// Place of supply state code. Precedence (stateService.resolvePlaceOfSupply):
+//   valid GSTIN's state → explicit stateCode → typed state NAME → seller (Odisha).
+// Routing through stateService is what lets a customer who typed "Maharashtra"
+// (name only, no code — the booking-flow gap) resolve to POS 27 instead of
+// silently defaulting to the seller state. When NOTHING is on record we fall
+// back to the seller state — the lawful supplier-location default (Sec 12(2)(b)(ii)).
+function placeOfSupply({ gstin, stateCode, state, stateName } = {}) {
+  const resolved = stateService.resolvePlaceOfSupply({ gstin, stateCode, state: state || stateName });
+  return resolved ? resolved.code : seller.stateCode;
 }
 
 // Split the ALREADY-CHARGED gst amount (never recompute from a rate). Intra-state
@@ -47,9 +54,13 @@ async function generateInvoice({ sourceType, sourceId, paymentId = null, issuedA
     const when = issuedAt ? new Date(issuedAt) : new Date();
     const pos = placeOfSupply(buyer || {});
     const { cgst, sgst, igst } = computeTaxSplit(gstAmount, pos);
-    const total = round2(round2(taxableValue) + round2(gstAmount));
+    const taxableV = round2(taxableValue);
+    const total = round2(taxableV + round2(gstAmount));
+    // Effective GST rate persisted on the row (v3.118) so the rendered document
+    // never has to reverse-engineer it. Derived from the already-charged amounts.
+    const gstRate = taxableV > 0 ? Math.round((round2(gstAmount) / taxableV) * 10000) / 10000 : null;
 
-    const { data, error } = await supabaseAdmin.rpc('create_invoice', {
+    const baseParams = {
       p_series: series.code,
       p_number_prefix: series.prefix,
       p_fiscal_year: fiscalYearFor(when),
@@ -63,11 +74,18 @@ async function generateInvoice({ sourceType, sourceId, paymentId = null, issuedA
       p_buyer_gstin: buyer?.gstin || null,
       p_buyer_pan: buyer?.pan || null,
       p_seller_snapshot: seller,
-      p_taxable_value: round2(taxableValue),
+      p_taxable_value: taxableV,
       p_cgst: cgst, p_sgst: sgst, p_igst: igst, p_total: total,
       p_place_of_supply: pos,
       p_sac_code: SAC_FOR[sourceType],
-    });
+    };
+    let { data, error } = await supabaseAdmin.rpc('create_invoice', { ...baseParams, p_gst_rate: gstRate });
+    // Schema fallback: a DB still on the pre-v3.118 create_invoice (no p_gst_rate)
+    // rejects the extra arg — retry without it so invoice minting never breaks
+    // during a rolling deploy (mirrors the money-column fallbacks elsewhere).
+    if (error && /p_gst_rate|create_invoice|function|schema cache|does not exist/i.test(error.message || '')) {
+      ({ data, error } = await supabaseAdmin.rpc('create_invoice', baseParams));
+    }
     if (error) { console.error('generateInvoice RPC error (non-fatal):', error.message); return null; }
     return data;
   } catch (e) {

@@ -10,6 +10,7 @@ const NotificationEngine = require("../services/notificationEngine");
 const { computeBreakdown, calculateVendorPayout, calculatePlatformFee, computeSubscriptionBreakdown, round2 } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
 const platformConfig = require("../services/platformConfig");
+const stateService = require("../services/stateService");
 const razorpaySubscriptions = require("../services/razorpaySubscriptions");
 const subscriptionService = require("../services/subscriptionService");
 const razorpayConfig = require("../services/razorpayConfig");
@@ -56,24 +57,34 @@ async function generateBookingInvoice(bk) {
 
 // Mint the commission tax invoice — BAS's platform service TO the host (v4).
 // Only when commission was charged (free-plan bookings). Best-effort, idempotent
-// (one COM row per booking id). buyer = the host; POS falls back to the seller
-// state until host GSTIN/state is captured.
-// ponytail: no host GSTIN column yet → host ITC + IGST split are a follow-up.
+// (one COM row per booking id). buyer = the host; POS is the host's billing state
+// (from profiles.billing_details) so a registered host's GSTIN drives their ITC
+// and the CGST/SGST-vs-IGST split, falling back to the seller state only when the
+// host has no billing state on record.
 async function generateCommissionInvoice(bk) {
   const taxable = Number(bk.commission_taxable) || 0;
   if (taxable <= 0) return null; // paid plans have no commission → nothing to invoice
   let hostName = 'Host';
+  let hostBilling = {};
   try {
     const { data: h } = await supabaseAdmin
       .from('profiles').select('*').eq('id', bk.host_id).single();
     hostName = h?.business_name || h?.name || h?.full_name || 'Host';
-  } catch (_) { /* non-fatal — fall back to 'Host' */ }
+    hostBilling = h?.billing_details || {};
+  } catch (_) { /* non-fatal — fall back to 'Host' + seller-state POS */ }
   return generateInvoice({
     sourceType: 'commission',
     sourceId: bk.id,
     paymentId: bk.razorpay_payment_id || bk.payment_id || null,
     issuedAt: bk.paid_at || new Date().toISOString(),
-    buyer: { name: hostName },
+    buyer: {
+      name: hostName,
+      address: hostBilling.address || null,
+      stateCode: hostBilling.state_code || null,
+      stateName: hostBilling.state || null,
+      gstin: hostBilling.gstin || null,
+      pan: hostBilling.pan || null,
+    },
     taxableValue: taxable,
     gstAmount: Number(bk.commission_gst) || 0,
   });
@@ -170,6 +181,30 @@ const createOrder = async (req, res) => {
     // Nothing payable (a genuinely free booking, fee-only mode off) → no order.
     // In fee-only mode even a ₹0 service owes the booking fee, so customerTotal > 0.
     if (customerTotal <= 0) return res.status(400).json({ message: "Cannot create order for a free booking" });
+
+    // GST gate: a paid booking issues a platform-fee tax invoice, so a valid
+    // billing STATE must be captured before money moves — otherwise the invoice's
+    // place of supply silently defaults to the seller state. Prefer the billing
+    // snapshotted on the booking; allow the pay request to supply/complete it
+    // (older pending rows, or a pay-time billing step). Backend re-validates —
+    // a frontend-supplied state is never trusted for the tax determination.
+    if (platformFee > 0) {
+      let billing = booking.billing_details;
+      if (req.body.billing_details) {
+        const n = stateService.normalizeBilling(req.body.billing_details, { requireState: false });
+        if (!n.ok) return res.status(400).json({ message: n.error, field: 'billing_details' });
+        if (n.billing) {
+          billing = n.billing;
+          await supabaseAdmin.from("bookings")
+            .update({ billing_details: billing, updated_at: new Date().toISOString() })
+            .eq("id", booking_id);
+        }
+      }
+      const billingCheck = stateService.normalizeBilling(billing || {}, { requireState: true });
+      if (!billingCheck.ok) {
+        return res.status(400).json({ message: billingCheck.error, field: 'billing_details', code: 'BILLING_STATE_REQUIRED' });
+      }
+    }
 
     const totalPaise = Math.round(customerTotal * 100);
     const razorpay = await razorpayConfig.getClient();
@@ -601,14 +636,23 @@ const createVendorSubscription = async (req, res) => {
     // Legacy one-time annual vendors (no razorpay_subscription_id) are migrated
     // by the SAME path: their remaining paid days seed the credit.
     const { data: prof } = await supabaseAdmin.from("profiles")
-      .select("plan, subscription_status, current_period_end, plan_expires_at, plan_activated_at, razorpay_subscription_id, billing_cadence")
+      .select("plan, subscription_status, current_period_end, plan_expires_at, plan_activated_at, razorpay_subscription_id, billing_cadence, billing_details")
       .eq("id", req.user.id).single();
 
     const nowIso = new Date().toISOString();
+    // Canonicalize + persist any billing sent with this checkout. Backend is
+    // authoritative: the typed state is rewritten to its GST code and a malformed
+    // GSTIN is rejected. Reflect it onto `prof` so the require-state gate below
+    // sees this request's billing without a re-read.
     if (req.body.billing && typeof req.body.billing === 'object') {
-      await supabaseAdmin.from('profiles')
-        .update({ billing_details: req.body.billing, updated_at: nowIso })
-        .eq('id', req.user.id);
+      const nb = stateService.normalizeBilling(req.body.billing, { requireState: false });
+      if (!nb.ok) return res.status(400).json({ message: nb.error, field: 'billing' });
+      if (nb.billing) {
+        await supabaseAdmin.from('profiles')
+          .update({ billing_details: nb.billing, updated_at: nowIso })
+          .eq('id', req.user.id);
+        if (prof) prof.billing_details = nb.billing;
+      }
     }
     const nowMs = Date.now();
     const periodEndMs = prof?.current_period_end ? new Date(prof.current_period_end).getTime()
@@ -662,6 +706,16 @@ const createVendorSubscription = async (req, res) => {
         // safe; the only cost is recreating a mandate we couldn't verify.
         console.warn(`pending-subscription idempotency fetch failed for vendor ${req.user.id} (sub ${prof.razorpay_subscription_id}):`, fetchErr.message);
       }
+    }
+
+    // GST gate: creating/replacing a mandate leads to a charge → BAS issues a
+    // subscription tax invoice. Require a valid billing state (from this request or
+    // already on the profile) before the mandate exists, so the invoice POS can't
+    // default to the seller state. The idempotent re-click above returns earlier —
+    // its billing was validated on the first click.
+    const billingState = stateService.normalizeBilling(prof?.billing_details || {}, { requireState: true });
+    if (!billingState.ok) {
+      return res.status(400).json({ message: billingState.error, field: 'billing', code: 'BILLING_STATE_REQUIRED' });
     }
 
     let switchInfo = null, startAt;

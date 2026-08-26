@@ -3,9 +3,10 @@ import { useAuth } from "../context/AuthContext";
 import { getPublicPlans, createSubscription, syncSubscription, cancelSubscription, getMyInvoices, invoiceUrl } from "../services/api";
 import toast from "react-hot-toast";
 import BackButton from "../components/common/BackButton";
-import { PageHeader, Card, Button, cn, Modal, Sheet, ConfirmSheet, Input, FormField } from "../components/dashboard/ui";
+import { PageHeader, Card, Button, cn, Modal, Sheet, ConfirmSheet, Input, Select, FormField } from "../components/dashboard/ui";
 import { planLabel } from "../utils/themeUtils";
 import loadRazorpay from "../utils/loadRazorpay";
+import { INDIAN_STATES } from "../lib/indianStates";
 
 const GST_RATE = 0.18; // display only — server is authoritative
 const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
@@ -315,7 +316,9 @@ const UpgradePlan = () => {
           <>
             <Button variant="secondary" onClick={() => setPendingPlan(null)}>Cancel</Button>
             <Button
+              disabled={!billing.state_code}
               onClick={() => {
+                if (!billing.state_code) { toast.error("Please select your billing state."); return; }
                 const plan = pendingPlan;
                 setPendingPlan(null);
                 handleUpgrade(plan);
@@ -333,14 +336,21 @@ const UpgradePlan = () => {
         <FormField label="Billing address" required>
           <Input value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} />
         </FormField>
-        <div className="grid grid-cols-2 gap-3">
-          <FormField label="State" required>
-            <Input value={billing.state} onChange={(e) => setBilling((b) => ({ ...b, state: e.target.value }))} />
-          </FormField>
-          <FormField label="State code" hint="GST state code, e.g. 27">
-            <Input value={billing.state_code} onChange={(e) => setBilling((b) => ({ ...b, state_code: e.target.value }))} />
-          </FormField>
-        </div>
+        <FormField label="Billing state" required hint="Determines your GST place of supply">
+          <Select
+            value={billing.state_code}
+            onChange={(e) => {
+              const code = e.target.value;
+              const name = INDIAN_STATES.find((s) => s.code === code)?.name || "";
+              setBilling((b) => ({ ...b, state_code: code, state: name }));
+            }}
+          >
+            <option value="">Select your state…</option>
+            {INDIAN_STATES.map((s) => (
+              <option key={s.code} value={s.code}>{s.name}</option>
+            ))}
+          </Select>
+        </FormField>
         <div className="grid grid-cols-2 gap-3">
           <FormField label="GSTIN" hint="Optional">
             <Input value={billing.gstin} onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />

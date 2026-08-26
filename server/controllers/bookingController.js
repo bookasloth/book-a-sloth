@@ -13,6 +13,7 @@ const { computeBreakdown } = require("../lib/pricingEngine");
 const planService = require("../services/planService");
 const { redactBookingContact } = require("../lib/contactVisibility");
 const platformConfig = require("../services/platformConfig");
+const stateService = require("../services/stateService");
 const availabilityService = require("../services/availabilityService");
 const { decrypt: decryptToken } = require("../utils/cryptoTokens");
 const { capture: phCapture, resolveGuestId } = require("../utils/posthog");
@@ -414,6 +415,19 @@ const createBooking = async (req, res) => {
     const commission   = pricing.commission;
     const vendorPayout = pricing.vendorPayout;
 
+    // Canonicalize the buyer's billing snapshot so the invoice's place of supply
+    // is exact (typed "Maharashtra" → GST code 27). Backend is authoritative — a
+    // frontend-supplied state/tax is never trusted. State is NOT required at
+    // creation (a free booking owes no BAS tax invoice, and a paid booking's state
+    // is ENFORCED before money moves in createOrder); a malformed GSTIN is rejected
+    // here so a bad tax number never reaches an invoice.
+    let normalizedBilling = null;
+    if (req.body.billing_details) {
+      const billingResult = stateService.normalizeBilling(req.body.billing_details, { requireState: false });
+      if (!billingResult.ok) return res.status(400).json({ message: billingResult.error, field: 'billing_details' });
+      normalizedBilling = billingResult.billing;
+    }
+
     // Google Calendar — created at booking time ONLY for FREE services.
     // PAID services defer event creation to paymentController.verifyPayment so a
     // pending/unpaid booking does not place a placeholder event that would then
@@ -468,7 +482,7 @@ const createBooking = async (req, res) => {
       end_at: newEnd.toISOString(),  // backs the v2.5 no-overlap exclusion constraint
       grace_minutes: service.grace_period_minutes ?? 10, // v3.70: snapshot pads the exclusion constraint by this booking's own grace (gap enforced = graceA+graceB)
       notes,
-      billing_details: req.body.billing_details || null,  // v3.67 GST-invoice buyer snapshot
+      billing_details: normalizedBilling,  // v3.67 GST-invoice buyer snapshot (canonicalized)
       meeting_link: meetingLink,
       google_event_id: googleEventId,
       vendor_amount:       vendorPayout,

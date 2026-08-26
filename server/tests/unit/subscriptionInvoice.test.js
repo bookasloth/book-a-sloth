@@ -69,7 +69,7 @@ describe('recordSubscriptionCharge → invoice generation', () => {
 
     const r = await svc.recordSubscriptionCharge({
       vendorId: 'vendor-1', planSlug: 'creator', cadence: 'monthly', rzpSub: RZP_SUB,
-      payment: { id: 'pay_new', order_id: 'order_1', amount: 9900, fee: 2360, tax: 360 },
+      payment: { id: 'pay_new', order_id: 'order_1', amount: 11682, fee: 2360, tax: 360 },
     });
 
     expect(r.recorded).toBe(true);
@@ -89,7 +89,7 @@ describe('recordSubscriptionCharge → invoice generation', () => {
 
     await svc.recordSubscriptionCharge({
       vendorId: 'vendor-1', planSlug: 'creator', cadence: 'monthly', rzpSub: RZP_SUB,
-      payment: { id: 'pay_new2', amount: 9900, fee: 2360, tax: 360 },
+      payment: { id: 'pay_new2', amount: 11682, fee: 2360, tax: 360 },
     });
 
     const buyer = generateInvoice.mock.calls[0][0].buyer;
@@ -115,7 +115,7 @@ describe('recordSubscriptionCharge → invoice generation', () => {
 
     const r = await svc.recordSubscriptionCharge({
       vendorId: 'vendor-1', planSlug: 'creator', cadence: 'monthly', rzpSub: RZP_SUB,
-      payment: { id: 'pay_dup', amount: 9900 },
+      payment: { id: 'pay_dup', amount: 11682 },
     });
 
     expect(r.recorded).toBe(false);
