@@ -54,9 +54,13 @@ async function generateInvoice({ sourceType, sourceId, paymentId = null, issuedA
     const when = issuedAt ? new Date(issuedAt) : new Date();
     const pos = placeOfSupply(buyer || {});
     const { cgst, sgst, igst } = computeTaxSplit(gstAmount, pos);
-    const total = round2(round2(taxableValue) + round2(gstAmount));
+    const taxableV = round2(taxableValue);
+    const total = round2(taxableV + round2(gstAmount));
+    // Effective GST rate persisted on the row (v3.118) so the rendered document
+    // never has to reverse-engineer it. Derived from the already-charged amounts.
+    const gstRate = taxableV > 0 ? Math.round((round2(gstAmount) / taxableV) * 10000) / 10000 : null;
 
-    const { data, error } = await supabaseAdmin.rpc('create_invoice', {
+    const baseParams = {
       p_series: series.code,
       p_number_prefix: series.prefix,
       p_fiscal_year: fiscalYearFor(when),
@@ -70,11 +74,18 @@ async function generateInvoice({ sourceType, sourceId, paymentId = null, issuedA
       p_buyer_gstin: buyer?.gstin || null,
       p_buyer_pan: buyer?.pan || null,
       p_seller_snapshot: seller,
-      p_taxable_value: round2(taxableValue),
+      p_taxable_value: taxableV,
       p_cgst: cgst, p_sgst: sgst, p_igst: igst, p_total: total,
       p_place_of_supply: pos,
       p_sac_code: SAC_FOR[sourceType],
-    });
+    };
+    let { data, error } = await supabaseAdmin.rpc('create_invoice', { ...baseParams, p_gst_rate: gstRate });
+    // Schema fallback: a DB still on the pre-v3.118 create_invoice (no p_gst_rate)
+    // rejects the extra arg — retry without it so invoice minting never breaks
+    // during a rolling deploy (mirrors the money-column fallbacks elsewhere).
+    if (error && /p_gst_rate|create_invoice|function|schema cache|does not exist/i.test(error.message || '')) {
+      ({ data, error } = await supabaseAdmin.rpc('create_invoice', baseParams));
+    }
     if (error) { console.error('generateInvoice RPC error (non-fatal):', error.message); return null; }
     return data;
   } catch (e) {
