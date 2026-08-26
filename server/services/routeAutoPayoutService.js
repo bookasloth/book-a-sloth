@@ -137,6 +137,17 @@ async function finalizeReleasedTransfer(booking, createdBy = null) {
   await patchBooking(booking.id, {
     transfer_status: 'processed', transfer_released_at: new Date().toISOString(), transfer_error: null,
   });
+  // Tell the host their money actually moved — the real settlement event was
+  // previously silent (the loud "Payout paid" was the unverified manual one), so a
+  // paid host had no confirmation. Fire-and-forget; never breaks finalisation.
+  if (amount > 0 && booking.host_id) {
+    require('../utils/inAppNotify').inAppNotify({
+      userId: booking.host_id, role: 'host', type: 'PAYOUT_UPDATE',
+      title: `Payout sent: ₹${amount.toFixed(2)}`,
+      body: 'Your earnings are on the way to your bank account.',
+      link: '/dashboard/payments/payouts',
+    });
+  }
 }
 
 /**

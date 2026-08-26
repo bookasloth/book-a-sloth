@@ -50,6 +50,12 @@ const MAX_ATTEMPTS = Number(process.env.PAYOUT_RECONCILE_MAX_ATTEMPTS || 5);
 const SCAN_LIMIT = Number(process.env.PAYOUT_RECONCILE_LIMIT || 300);
 const SKIP_SETTLE = new Set(['cancelled', 'not_eligible']);
 
+// The "payouts blocked" condition persists across runs (a stuck activation stays
+// stuck for days), and the cron fires every ~15 min — so throttle the alert to at
+// most once per window to avoid inboxing the founder every quarter hour.
+const BLOCKED_ALERT_EVERY_MS = Number(process.env.PAYOUT_ALERT_EVERY_MS || 6 * 60 * 60 * 1000);
+let _lastBlockedAlertAt = 0;
+
 const isMissingColumn = (err) => {
   const msg = (err?.message || err?.details || '').toLowerCase();
   return err?.code === '42703' || /column .* does not exist|could not find the .* column/.test(msg);
@@ -197,7 +203,8 @@ async function reconcile() {
   }
 
   // ---- 3. Alert if money is owed that we cannot pay, or a clawback is needed ----
-  if (s.owedBlocked > 0 || s.blocked > 0 || s.clawbackNeeded > 0) {
+  if ((s.owedBlocked > 0 || s.blocked > 0 || s.clawbackNeeded > 0) && Date.now() - _lastBlockedAlertAt >= BLOCKED_ALERT_EVERY_MS) {
+    _lastBlockedAlertAt = Date.now();
     const reasonStr = Object.entries(reasonCounts).map(([k, v]) => `${k}=${v}`).join(', ') || 'n/a';
     adminAlert({
       subject: `Payouts need attention — ₹${s.owedBlockedSum.toFixed(2)} owed can't be paid`,
@@ -218,5 +225,8 @@ async function reconcile() {
 
   return s;
 }
+
+// Test-only: reset the alert throttle so each case can assert on adminAlert.
+reconcile._resetAlertThrottle = () => { _lastBlockedAlertAt = 0; };
 
 module.exports = { reconcile, refreshActivations };

@@ -18,6 +18,9 @@ jest.mock('../../services/platformConfig', () => ({ getConfig: jest.fn() }));
 jest.mock('../../services/ledger/postingService', () => ({ post: jest.fn(() => Promise.resolve()) }));
 jest.mock('../../services/ledger/journalTemplates', () => ({ payoutEntry: jest.fn(() => ({ lines: [] })) }));
 jest.mock('../../utils/logger', () => ({ securityLog: jest.fn() }));
+// finalizeReleasedTransfer now fires a fire-and-forget host notification; keep it
+// out of this unit's supabase/background surface.
+jest.mock('../../utils/inAppNotify', () => ({ inAppNotify: jest.fn() }));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const razorpayConfig = require('../../services/razorpayConfig');
