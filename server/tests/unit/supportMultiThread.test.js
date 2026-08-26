@@ -5,6 +5,7 @@ jest.mock('../../services/supportChatService', () => ({
   listMessages: jest.fn(), listThreads: jest.fn(),
 }));
 jest.mock('../../services/botService', () => ({ askBot: jest.fn() }));
+jest.mock('../../services/supportContextService', () => ({ getSupportContext: jest.fn() }));
 
 const chat = require('../../services/supportChatService');
 const { startTopic, listThreads } = require('../../controllers/supportController');

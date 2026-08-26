@@ -8,6 +8,7 @@ const { safeError } = require('../utils/httpError');
 const supportHours = require('../utils/supportHours');
 const chat = require('../services/supportChatService');
 const bot = require('../services/botService');
+const supportContext = require('../services/supportContextService');
 
 // Bolt auto-reply. Fired after the user's message is stored, ONLY while the thread
 // is still bot-handled (status 'bot') — once a human takes over ('waiting'/'assigned')
@@ -17,7 +18,19 @@ const bot = require('../services/botService');
 // wire conversationId ↔ thread if follow-up context ever matters.
 async function botAutoReply(thread, question) {
   try {
-    const out = await bot.askBot({ question, sessionRef: thread.reference });
+    // AUTHENTICATED context: the thread is tied to a verified user_id / guest_phone,
+    // so Bolt may answer this person's own booking/plan/KYC/payout questions from real
+    // state. Best-effort — a lookup failure just means Bolt answers without it.
+    let ctx = null;
+    try {
+      ctx = await supportContext.getSupportContext({
+        userId: thread.user_id || null,
+        phone: thread.guest_phone || null,
+        isHost: thread.participant_type === 'host',
+      });
+    } catch (e) { console.error('support context lookup failed', thread?.id, e.message); }
+
+    const out = await bot.askBot({ question, sessionRef: thread.reference, context: ctx });
     if (!out || !String(out.answer || '').trim()) return;
     await chat.postMessage({ threadId: thread.id, sender: 'bot', senderName: 'Bolt', body: out.answer });
     // Bolt couldn't answer confidently → hand to a human (flips the banner to 'waiting').
