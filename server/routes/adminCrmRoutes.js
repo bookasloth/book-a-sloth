@@ -27,6 +27,11 @@ router.post('/follow-ups/:id/cancel', manage, c.cancelFollowUp);
 router.get('/sequences', view, c.listSequences);
 router.post('/sequences', manage, c.createSequence);
 
+// Saved views (shared team lenses)
+router.get('/views', view, c.listViews);
+router.post('/views', manage, c.createView);
+router.delete('/views/:id', manage, c.deleteView);
+
 // Tag catalog (coloured tags)
 router.get('/tags', view, c.listTags);
 router.post('/tags', manage, c.createTag);
