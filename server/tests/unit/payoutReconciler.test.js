@@ -38,6 +38,7 @@ const setReads = ({ activations = [], owed = [], stuck = [] } = {}) => {
 beforeEach(() => {
   jest.clearAllMocks();
   readQueue = [];
+  reconcile._resetAlertThrottle();
   supabaseAdmin.from.mockImplementation(() => makeChain());
   razorpayConfig.getClient.mockResolvedValue({ transfers: { fetch: jest.fn() }, products: { fetch: jest.fn() } });
 });
