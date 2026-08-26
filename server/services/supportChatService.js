@@ -101,6 +101,26 @@ const listMessages = async (threadId) => {
   return data || [];
 };
 
+// Has a human agent already replied on this thread? Guards the one-time auto-intro
+// so re-assigning / reopening never re-greets the customer.
+async function hasAdminMessage(threadId) {
+  const { data } = await supabaseAdmin
+    .from('support_messages')
+    .select('id')
+    .eq('thread_id', threadId)
+    .eq('sender', 'admin')
+    .limit(1);
+  return !!(data && data[0]);
+}
+
+// Best-effort persona snapshot on the thread (display-only). Isolated from the
+// status write so that on a DB where agent_name doesn't exist yet (pre-v3.116)
+// a failed update no-ops here and never blocks assign.
+async function setAgentName(threadId, agentName) {
+  if (!agentName) return;
+  await supabaseAdmin.from('support_threads').update({ agent_name: agentName }).eq('id', threadId);
+}
+
 /**
  * Persist a message, advance the thread (last_message_at + the OTHER side's unread),
  * then broadcast it. sender ∈ user|bot|admin|system.
@@ -193,5 +213,6 @@ async function listQueue({ filter = 'waiting', adminId } = {}) {
 
 module.exports = {
   refFrom, broadcast, getOrCreateOpenThread, getOpenThread, getThread, listMessages,
+  hasAdminMessage, setAgentName,
   postMessage, setStatus, escalate, assign, resolve, markRead, listQueue,
 };

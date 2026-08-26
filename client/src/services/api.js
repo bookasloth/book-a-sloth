@@ -691,6 +691,7 @@ export const adminDeleteBotCache = (id)     => API.delete(`/admin/bot/cache/${id
 // Support chat inbox — live host/guest ↔ admin threads (filter: waiting|mine|all)
 export const adminSupportQueue     = (filter)     => API.get('/admin/support/queue', { params: { filter } });
 export const adminGetSupportThread = (id)         => API.get(`/admin/support/thread/${id}`);
+export const adminSupportContext   = (id)         => API.get(`/admin/support/thread/${id}/context`);
 export const adminReplySupport     = (id, data)   => API.post(`/admin/support/thread/${id}/reply`, data);
 export const adminAssignSupport    = (id, data)   => API.post(`/admin/support/thread/${id}/assign`, data || {});
 export const adminResolveSupport   = (id)         => API.post(`/admin/support/thread/${id}/resolve`);

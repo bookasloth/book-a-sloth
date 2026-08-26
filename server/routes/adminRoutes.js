@@ -145,6 +145,7 @@ router.patch('/feedback/:id',   requireAdmin('feedback.manage'), feedbackAdmin.u
 const supportAdmin = require('../controllers/supportAdminController');
 router.get('/support/queue',              requireAdmin('support.view'),   supportAdmin.queue);
 router.get('/support/thread/:id',         requireAdmin('support.view'),   supportAdmin.getThread);
+router.get('/support/thread/:id/context', requireAdmin('support.view'),   supportAdmin.threadContext);
 router.post('/support/thread/:id/reply',  requireAdmin('support.assign'), supportAdmin.reply);
 router.post('/support/thread/:id/assign', requireAdmin('support.assign'), supportAdmin.assign);
 router.post('/support/thread/:id/resolve', requireAdmin('support.assign'), supportAdmin.resolve);

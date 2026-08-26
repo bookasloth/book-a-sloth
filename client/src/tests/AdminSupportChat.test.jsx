@@ -20,6 +20,8 @@ vi.mock('../services/api', () => ({
   } })),
   adminReplySupport: vi.fn((id, { body }) => Promise.resolve({ data: { id: 'm2', sender: 'admin', sender_name: 'Support', body, created_at: '2026-08-25T10:01:00Z' } })),
   adminResolveSupport: vi.fn(() => Promise.resolve({ data: {} })),
+  adminAssignSupport: vi.fn(() => Promise.resolve({ data: { thread: {} } })),
+  adminSupportContext: vi.fn(() => Promise.resolve({ data: { context: { kind: 'guest', profile: {}, bookings: [], host: null } } })),
 }));
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }));
 
