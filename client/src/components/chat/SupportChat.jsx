@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Headset, ShieldQuestion } from 'lucide-react';
+import { Send, Headset, ShieldQuestion, Plus, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSupabase } from '../../services/supabaseClient';
-import { getSupportThread, sendSupportMessage, escalateSupport, markSupportRead, getSupportHours } from '../../services/api';
+import {
+  getSupportThread, getSupportThreads, getSupportMessages, startSupportTopic,
+  sendSupportMessage, escalateSupport, markSupportRead, getSupportHours,
+} from '../../services/api';
 import { cn } from '../dashboard/ui/cn';
 import Markdown from '../common/Markdown';
 
@@ -75,6 +78,9 @@ export default function SupportChat() {
   const [sending, setSending] = useState(false);
   const [hours, setHours] = useState({ open: true, label: '' });
   const [intake, setIntake] = useState(null); // null | { detail, busy } while collecting the problem
+  const [threads, setThreads] = useState([]); // topic switcher
+  const [showTopics, setShowTopics] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const bottomRef = useRef(null);
   const scrollRef = useRef(null);
   const atBottomRef = useRef(true);
@@ -117,6 +123,41 @@ export default function SupportChat() {
     getSupportHours().then(({ data }) => { if (active) setHours(data); }).catch(() => {});
     return () => { active = false; };
   }, []);
+
+  // The user's topics, for the switcher. Best-effort — a failure just hides the list.
+  const refreshThreads = useCallback(() => {
+    getSupportThreads().then(({ data }) => setThreads(data.threads || [])).catch(() => {});
+  }, []);
+  useEffect(() => { refreshThreads(); }, [refreshThreads]);
+
+  // Switch the panel to another existing topic.
+  const switchTo = async (id) => {
+    setShowTopics(false);
+    if (!id || id === thread?.id || switching) return;
+    setSwitching(true);
+    try {
+      const { data } = await getSupportMessages(id);
+      setThread(data.thread);
+      setMessages(data.messages || []);
+      window.dispatchEvent(new Event('support:unread-changed'));
+    } catch { toast.error('Couldn’t open that topic'); }
+    finally { setSwitching(false); }
+  };
+
+  // Start a fresh topic — a clean panel, old history untouched and still reachable.
+  const newTopic = async () => {
+    setShowTopics(false);
+    if (switching) return;
+    setSwitching(true);
+    try {
+      const { data } = await startSupportTopic();
+      setThread(data.thread);
+      setMessages(data.messages || []);
+      setIntake(null);
+      refreshThreads();
+    } catch { toast.error('Couldn’t start a new topic'); }
+    finally { setSwitching(false); }
+  };
 
   // Realtime: subscribe to this thread's broadcast channel. Anon client is fine —
   // broadcast needs no RLS, and the channel name is the unguessable thread uuid.
@@ -212,6 +253,34 @@ export default function SupportChat() {
           <p className="font-heading text-sm font-bold text-gray-900">Book A Sloth support</p>
           <p className="text-[11.5px] text-gray-400">{isBotPhase ? 'Bolt assistant · replies instantly' : 'Our team is on it'}</p>
         </div>
+
+        {/* Topic switcher — only meaningful once there's more than one topic. */}
+        {threads.length > 1 && (
+          <div className="relative">
+            <button type="button" onClick={() => setShowTopics((v) => !v)}
+              aria-haspopup="listbox" aria-expanded={showTopics}
+              className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1.5 text-[11.5px] font-medium text-gray-600 hover:bg-gray-50">
+              Topics <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+            {showTopics && (
+              <div role="listbox" className="absolute right-0 z-10 mt-1 max-h-64 w-60 overflow-y-auto rounded-xl border border-gray-200 bg-white p-1 shadow-lg">
+                {threads.map((t) => (
+                  <button key={t.id} type="button" role="option" aria-selected={t.id === thread?.id} onClick={() => switchTo(t.id)}
+                    className={cn('flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[12.5px] hover:bg-gray-50',
+                      t.id === thread?.id && 'bg-primary/5')}>
+                    <span className="min-w-0 flex-1 truncate text-gray-800">{t.subject || t.reference}</span>
+                    {t.user_unread > 0 && <span className="shrink-0 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-white">{t.user_unread}</span>}
+                    <span className="shrink-0 text-[10px] uppercase text-gray-400">{t.status}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        <button type="button" onClick={newTopic} disabled={switching} title="Start a new topic"
+          className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-white px-2.5 py-1.5 text-[11.5px] font-semibold text-primary hover:bg-primary/5 disabled:opacity-40">
+          <Plus className="h-3.5 w-3.5" /> New topic
+        </button>
       </div>
 
       {banner && <div className={cn('mx-3 mt-3 rounded-xl border px-3 py-2 text-[12.5px] font-medium', banner.cls)}>{banner.text}</div>}

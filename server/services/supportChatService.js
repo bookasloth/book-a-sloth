@@ -41,19 +41,10 @@ async function broadcastTopic(topic, event, payload) {
 // subscribes to, used to ring on new escalations.
 const broadcast = (threadId, event, payload) => broadcastTopic(`support:thread:${threadId}`, event, payload);
 
-// The participant's current (non-resolved) thread, or a fresh one. One open thread
-// per host/guest keeps the UX a single continuous conversation.
-async function getOrCreateOpenThread({ participantType, userId, guestPhone, subject }) {
-  let q = supabaseAdmin
-    .from('support_threads')
-    .select('*')
-    .neq('status', 'resolved')
-    .order('created_at', { ascending: false })
-    .limit(1);
-  q = userId ? q.eq('user_id', userId) : q.eq('guest_phone', guestPhone || '');
-  const { data: existing } = await q;
-  if (existing && existing[0]) return existing[0];
-
+// Create a brand-new thread — used both as the fallback in getOrCreateOpenThread
+// and by "Start new topic", which deliberately opens a fresh conversation even
+// when an open one already exists.
+async function createThread({ participantType, userId, guestPhone, subject }) {
   const id = crypto.randomUUID();
   const { data, error } = await supabaseAdmin
     .from('support_threads')
@@ -71,6 +62,33 @@ async function getOrCreateOpenThread({ participantType, userId, guestPhone, subj
     .single();
   if (error) throw error;
   return data;
+}
+
+// The participant's most-recent non-resolved thread, or a fresh one. This is the
+// default panel target; multiple topics are reachable via listThreads.
+async function getOrCreateOpenThread({ participantType, userId, guestPhone, subject }) {
+  let q = supabaseAdmin
+    .from('support_threads')
+    .select('*')
+    .neq('status', 'resolved')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  q = userId ? q.eq('user_id', userId) : q.eq('guest_phone', guestPhone || '');
+  const { data: existing } = await q;
+  if (existing && existing[0]) return existing[0];
+  return createThread({ participantType, userId, guestPhone, subject });
+}
+
+// All of a participant's threads, newest activity first — powers the topic switcher.
+async function listThreads({ userId, guestPhone } = {}) {
+  let q = supabaseAdmin
+    .from('support_threads')
+    .select('id, reference, subject, status, last_message_at, user_unread')
+    .order('last_message_at', { ascending: false, nullsFirst: false })
+    .limit(50);
+  q = userId ? q.eq('user_id', userId) : q.eq('guest_phone', guestPhone || '');
+  const { data } = await q;
+  return data || [];
 }
 
 const getThread = async (threadId) => {
@@ -212,7 +230,7 @@ async function listQueue({ filter = 'waiting', adminId } = {}) {
 }
 
 module.exports = {
-  refFrom, broadcast, getOrCreateOpenThread, getOpenThread, getThread, listMessages,
+  refFrom, broadcast, createThread, getOrCreateOpenThread, getOpenThread, getThread, listThreads, listMessages,
   hasAdminMessage, setAgentName,
   postMessage, setStatus, escalate, assign, resolve, markRead, listQueue,
 };
