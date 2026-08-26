@@ -108,7 +108,8 @@ describe('BotWidget', () => {
     const rate5 = await screen.findByRole('button', { name: /rate 5 of 5/i });
     fireEvent.click(rate5);
     await waitFor(() => expect(botEscalateRating).toHaveBeenCalledWith({ escalationId: 'e-9', rating: 5 }));
-    // then the track-ticket prompt replaces the scale
-    expect(await screen.findByRole('link', { name: /track ticket status/i })).toBeInTheDocument();
+    // then a reference/reply reassurance replaces the scale (no dead ticket link)
+    expect(await screen.findByText(/our team will reply/i)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /track ticket status/i })).toBeNull();
   });
 });

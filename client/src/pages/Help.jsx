@@ -41,7 +41,7 @@ const FAQ = [
   },
 ];
 
-const ChannelCard = ({ icon: Icon, title, desc, action, disabled, badge }) => {
+const ChannelCard = ({ icon: Icon, title, desc, action, onClick, disabled, badge }) => {
   const body = (
     <div className={`relative bg-white border rounded-2xl p-5 h-full transition-shadow ${disabled ? "opacity-60" : "hover:shadow-md"}`}>
       {badge && (
@@ -56,6 +56,9 @@ const ChannelCard = ({ icon: Icon, title, desc, action, disabled, badge }) => {
       <p className="text-sm text-gray-500 mt-1">{desc}</p>
     </div>
   );
+  if (!disabled && onClick) {
+    return <button type="button" onClick={onClick} className="block w-full text-left hover:no-underline">{body}</button>;
+  }
   if (disabled || !action) return body;
   // mailto:/tel: must open in the same context — target="_blank" leaves a dead blank tab.
   const newTab = /^https?:/i.test(action);
@@ -133,9 +136,8 @@ const Help = () => (
         <ChannelCard
           icon={Sparkles}
           title="Chat with Bolt"
-          desc="Our assistant can answer most questions instantly."
-          badge="Coming soon"
-          disabled
+          desc="Our assistant answers most questions instantly — tap to start."
+          onClick={() => window.dispatchEvent(new Event('bolt:open'))}
         />
         <ChannelCard
           icon={MessageCircle}
