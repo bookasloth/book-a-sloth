@@ -18,12 +18,12 @@ const { isLoadTestMode } = require('../config/loadTestMode');
 const { loadSettings } = require('../services/email/communicationEngine');
 const { getProvider } = require('../services/email/providers');
 
-const sendEmail = async ({ to, subject, html, text }) => {
+const sendEmail = async ({ to, subject, html, text, attachments }) => {
   if (isLoadTestMode()) return; // no email egress in load mode
   const settings = await loadSettings();
   const provider = getProvider(settings.provider);
   const res = await provider.sendEmail({
-    to, subject, html, text,
+    to, subject, html, text, attachments,
     fromName: settings.from_name,
     fromEmail: settings.from_email,
   });

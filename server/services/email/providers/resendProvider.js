@@ -10,7 +10,7 @@
 // the request). 10s default, override with EMAIL_TIMEOUT_MS.
 const EMAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS) || 10000;
 
-async function sendEmail({ to, subject, html, text, fromName = 'Book A Sloth', fromEmail, replyTo }) {
+async function sendEmail({ to, subject, html, text, fromName = 'Book A Sloth', fromEmail, replyTo, attachments }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { success: false, error: 'RESEND_API_KEY not configured' };
   const from = `${fromName} <${fromEmail || process.env.RESEND_FROM || 'noreply@bookasloth.in'}>`;
@@ -24,6 +24,9 @@ async function sendEmail({ to, subject, html, text, fromName = 'Book A Sloth', f
     // reply_to lets a persona sender (Tithi/Durga/…) route replies to a real,
     // monitored mailbox even though the send goes through Resend.
     if (replyTo) payload.reply_to = replyTo;
+    // Optional attachments (e.g. an .ics calendar invite). Resend expects
+    // { filename, content: <base64> }. No-op for callers that don't pass any.
+    if (Array.isArray(attachments) && attachments.length) payload.attachments = attachments;
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
