@@ -11,6 +11,7 @@ import {
 } from '../../services/api';
 import { PageHeader, Badge, Skeleton } from '../../components/admin/ui';
 import EscalationDetail from './bolt/EscalationDetail';
+import { priorityOf, waitMinutes, slaLevel, fmtWait, inboxSort, SLA_BREACH_MIN } from '../../utils/supportSla';
 
 const FILTERS = [
   { id: 'waiting', label: 'Waiting' },
@@ -25,11 +26,16 @@ const normThread = (t) => ({
   whoLabel: t.participant_type === 'host' ? 'Host' : t.participant_type === 'guest' ? 'Guest' : t.participant_type || '—',
   title: t.subject || `${t.participant_type || 'Support'} conversation`, unread: t.admin_unread || 0,
   agent: t.status === 'assigned' ? t.agent_name : null, at: t.last_message_at || t.created_at,
+  // Waiting on us: escalated & unclaimed, or a customer replied on a claimed thread.
+  waitingOnUs: t.status === 'waiting' || (t.status === 'assigned' && (t.admin_unread || 0) > 0),
+  waitingSince: t.last_message_at, priority: priorityOf(t.subject),
 });
 const normEsc = (e) => ({
   _kind: 'esc', id: e.id, reference: e.reference, status: e.status, tone: ESC_TONE[e.status] || 'neutral',
   whoLabel: e.logged_in ? (e.is_host ? 'Host' : 'Guest') : 'Anon',
   title: e.summary || 'Bolt escalation', unread: 0, agent: null, at: e.created_at,
+  waitingOnUs: e.status === 'open', waitingSince: e.created_at,
+  priority: priorityOf(`${e.summary || ''} ${e.reason || ''}`),
 });
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '');
 const fmtTime = (s) => { try { return new Date(s).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }); } catch { return ''; } };
@@ -137,8 +143,15 @@ export default function AdminSupportChat() {
   const [reply, setReply] = useState({ body: '', busy: false });
   const [context, setContext] = useState(null);
   const [assigning, setAssigning] = useState(false);
+  const [now, setNow] = useState(() => Date.now()); // ticks the SLA clock
   const bottomRef = useRef(null);
   const chanRef = useRef(null);
+
+  // Re-render each minute so waiting timers + breach badges stay live.
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   // Unified queue: dashboard threads + Bolt escalations in one list. Escalations
   // have no assignee, so the "Mine" filter shows threads only.
@@ -153,8 +166,7 @@ export default function AdminSupportChat() {
     const threads = (tq.value?.data?.threads || []).map(normThread);
     let escs = (eq.value?.data?.escalations || []);
     if (filter === 'all') escs = escs.filter((e) => e.status !== 'closed'); // "All" = open work only
-    const merged = [...threads, ...escs.map(normEsc)].sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
-    setItems(merged);
+    setItems([...threads, ...escs.map(normEsc)]); // sorted at render with the live clock
     setLoading(false);
   }, [filter]);
   useEffect(() => { loadQueue(); }, [loadQueue]);
@@ -300,7 +312,9 @@ export default function AdminSupportChat() {
     );
   }
 
-  // Queue view.
+  // Queue view — sorted live (waiting-on-us longest-first), SLA + priority surfaced.
+  const sorted = [...items].sort((a, b) => inboxSort(a, b, now));
+  const breaches = sorted.reduce((n, it) => n + (slaLevel(waitMinutes(it, now)) === 'breach' ? 1 : 0), 0);
   return (
     <div>
       <PageHeader title="Support Inbox" subtitle="Every conversation in one place — dashboard chats and Bolt widget escalations." />
@@ -312,26 +326,41 @@ export default function AdminSupportChat() {
           </button>
         ))}
       </div>
+      {breaches > 0 && (
+        <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+          ⏱ {breaches} conversation{breaches > 1 ? 's' : ''} breaching SLA — waiting {Math.floor(SLA_BREACH_MIN / 60)}h+ for a reply.
+        </div>
+      )}
       {loading ? <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-16" />)}</div>
-        : items.length === 0 ? <p className="text-sm adm-t3">{filter === 'waiting' ? 'Nothing waiting — Bolt is handling everything.' : 'Nothing open here.'}</p>
+        : sorted.length === 0 ? <p className="text-sm adm-t3">{filter === 'waiting' ? 'Nothing waiting — Bolt is handling everything.' : 'Nothing open here.'}</p>
           : (
             <div className="space-y-2">
-              {items.map((it) => (
-                <button key={`${it._kind}:${it.id}`}
-                  onClick={() => (it._kind === 'thread' ? open(it.id) : setSelEsc(it.id))}
-                  className="block w-full rounded-xl border adm-border p-3 text-left hover:border-[#FE5100]">
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <span className="text-xs" title={it._kind === 'thread' ? 'Dashboard chat' : 'Bolt widget escalation'}>{it._kind === 'thread' ? '💬' : '🦥'}</span>
-                    <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-xs font-semibold text-[#1E1E1E]">{it.reference}</code>
-                    <Badge tone={it.tone}>{it.status}</Badge>
-                    <span className="text-xs adm-t3">{it.whoLabel}</span>
-                    {it.agent && <span className="text-xs adm-t3">· {it.agent}</span>}
-                    {it.unread > 0 && <Badge tone="warn">{it.unread} new</Badge>}
-                    <span className="ml-auto text-xs adm-t3">{fmtDate(it.at)}</span>
-                  </div>
-                  <p className="text-sm adm-t1">{it.title}</p>
-                </button>
-              ))}
+              {sorted.map((it) => {
+                const mins = waitMinutes(it, now);
+                const lvl = slaLevel(mins);
+                return (
+                  <button key={`${it._kind}:${it.id}`}
+                    onClick={() => (it._kind === 'thread' ? open(it.id) : setSelEsc(it.id))}
+                    className="block w-full rounded-xl border adm-border p-3 text-left hover:border-[#FE5100]">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <span className="text-xs" title={it._kind === 'thread' ? 'Dashboard chat' : 'Bolt widget escalation'}>{it._kind === 'thread' ? '💬' : '🦥'}</span>
+                      <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-xs font-semibold text-[#1E1E1E]">{it.reference}</code>
+                      <Badge tone={it.tone}>{it.status}</Badge>
+                      {it.priority === 'high' && <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">High</span>}
+                      {mins != null && (
+                        <span className={'rounded px-1.5 py-0.5 text-[10px] font-medium ' + (lvl === 'breach' ? 'bg-rose-100 text-rose-700' : lvl === 'warn' ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-500')}>
+                          ⏱ {fmtWait(mins)}
+                        </span>
+                      )}
+                      <span className="text-xs adm-t3">{it.whoLabel}</span>
+                      {it.agent && <span className="text-xs adm-t3">· {it.agent}</span>}
+                      {it.unread > 0 && <Badge tone="warn">{it.unread} new</Badge>}
+                      <span className="ml-auto text-xs adm-t3">{fmtDate(it.at)}</span>
+                    </div>
+                    <p className="text-sm adm-t1">{it.title}</p>
+                  </button>
+                );
+              })}
             </div>
           )}
     </div>
