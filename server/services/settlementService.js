@@ -28,11 +28,11 @@ async function computeSettlementBalance(hostId, clearingDays, nowMs = Date.now()
 
   const { data: bookings, error: bErr } = await supabaseAdmin
     .from('bookings')
-    .select('vendor_amount, settlement_status, completed_at, payment_status')
+    .select('vendor_amount, settlement_status, completed_at, payment_status, transfer_status')
     .eq('host_id', hostId);
   if (bErr) throw new Error(`settlementService: bookings query failed: ${bErr.message}`);
 
-  let matured = 0, clearing = 0, pendingCompletion = 0;
+  let matured = 0, clearing = 0, pendingCompletion = 0, autoPaidOut = 0, autoInTransit = 0;
   for (const b of bookings || []) {
     // Clamp to ≥0: vendor_amount is a payout share and must never be negative.
     // A negative value (only reachable via a corrupted booking row) would silently
@@ -40,6 +40,14 @@ async function computeSettlementBalance(hostId, clearingDays, nowMs = Date.now()
     const amt = Math.max(0, Number(b.vendor_amount) || 0);
     const ss = b.settlement_status;
     if (ss === 'cancelled' || ss === 'not_eligible') continue;
+    // v3.99 auto Route rail: a booking already paid (processed) or in-flight (held,
+    // pending) via its own per-booking transfer is NOT withdrawable through the
+    // manual rail — counting it here too would let a host withdraw money they have
+    // already been paid (double pay). null / 'failed' / 'reversed' = not paid, so it
+    // falls through to the normal maturation buckets and stays owed.
+    const ts = b.transfer_status;
+    if (ts === 'processed') { autoPaidOut += amt; continue; }
+    if (ts === 'pending') { autoInTransit += amt; continue; }
     if (ss === 'eligible_for_settlement') {
       const completedMs = b.completed_at ? new Date(b.completed_at).getTime() : NaN;
       if (Number.isFinite(completedMs) && completedMs <= cutoff) matured += amt;
@@ -78,13 +86,16 @@ async function computeSettlementBalance(hostId, clearingDays, nowMs = Date.now()
   }
 
   const available = Math.max(0, matured - claimed);
+  // Held auto-transfers read as "in transit"; processed ones as "paid out" — on top
+  // of the manual-rail figures so the host sees both rails in one truthful total.
+  const clearingTotal = clearing + autoInTransit;
   return {
     available: round2(available),
-    clearing: round2(clearing),
+    clearing: round2(clearingTotal),
     pendingCompletion: round2(pendingCompletion),
     inflight: round2(inflight),
-    paidOut: round2(paidOut),
-    lifetimeEarned: round2(matured + clearing + pendingCompletion),
+    paidOut: round2(paidOut + autoPaidOut),
+    lifetimeEarned: round2(matured + clearingTotal + pendingCompletion + autoPaidOut),
   };
 }
 
@@ -105,7 +116,7 @@ async function computeAllSettlementBalances(clearingDays, nowMs = Date.now()) {
 
   const { data: bookings, error: bErr } = await supabaseAdmin
     .from('bookings')
-    .select('host_id, vendor_amount, settlement_status, completed_at, payment_status')
+    .select('host_id, vendor_amount, settlement_status, completed_at, payment_status, transfer_status')
     .not('host_id', 'is', null);
   if (bErr) throw new Error(`settlementService: bookings query failed: ${bErr.message}`);
 
@@ -125,10 +136,10 @@ async function computeAllSettlementBalances(clearingDays, nowMs = Date.now()) {
   if (rErr) console.error('settlementService: referrals read skipped:', rErr.message);
 
   // matured / clearing / pendingCompletion per host (mirrors single-host logic).
-  const acc = new Map(); // host_id -> { matured, clearing, pendingCompletion, claimed, inflight, paidOut }
+  const acc = new Map(); // host_id -> { matured, clearing, pendingCompletion, claimed, inflight, paidOut, autoPaidOut, autoInTransit }
   const bucket = (id) => {
     let b = acc.get(id);
-    if (!b) { b = { matured: 0, clearing: 0, pendingCompletion: 0, claimed: 0, inflight: 0, paidOut: 0 }; acc.set(id, b); }
+    if (!b) { b = { matured: 0, clearing: 0, pendingCompletion: 0, claimed: 0, inflight: 0, paidOut: 0, autoPaidOut: 0, autoInTransit: 0 }; acc.set(id, b); }
     return b;
   };
 
@@ -137,6 +148,11 @@ async function computeAllSettlementBalances(clearingDays, nowMs = Date.now()) {
     const amt = Math.max(0, Number(bk.vendor_amount) || 0);
     const ss = bk.settlement_status;
     if (ss === 'cancelled' || ss === 'not_eligible') continue;
+    // Auto Route rail (see computeSettlementBalance): already-paid / held bookings are
+    // not withdrawable via the manual rail. null / 'failed' / 'reversed' stay owed.
+    const ts = bk.transfer_status;
+    if (ts === 'processed') { b.autoPaidOut += amt; continue; }
+    if (ts === 'pending') { b.autoInTransit += amt; continue; }
     if (ss === 'eligible_for_settlement') {
       const completedMs = bk.completed_at ? new Date(bk.completed_at).getTime() : NaN;
       if (Number.isFinite(completedMs) && completedMs <= cutoff) b.matured += amt;
@@ -159,13 +175,14 @@ async function computeAllSettlementBalances(clearingDays, nowMs = Date.now()) {
 
   const out = new Map();
   for (const [id, b] of acc) {
+    const clearingTotal = b.clearing + b.autoInTransit;
     out.set(id, {
       available: round2(Math.max(0, b.matured - b.claimed)),
-      clearing: round2(b.clearing),
+      clearing: round2(clearingTotal),
       pendingCompletion: round2(b.pendingCompletion),
       inflight: round2(b.inflight),
-      paidOut: round2(b.paidOut),
-      lifetimeEarned: round2(b.matured + b.clearing + b.pendingCompletion),
+      paidOut: round2(b.paidOut + b.autoPaidOut),
+      lifetimeEarned: round2(b.matured + clearingTotal + b.pendingCompletion + b.autoPaidOut),
     });
   }
   return out;
