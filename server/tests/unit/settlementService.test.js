@@ -155,3 +155,52 @@ test('eligible booking with null completed_at goes to clearing, not dropped', as
   expect(b.available).toBe(0);
   expect(b.clearing).toBe(150);
 });
+
+// --- auto Route rail (v3.99 transfer_status) double-pay guard ---
+
+test('a matured booking already PAID via auto transfer (processed) is paidOut, NOT available', async () => {
+  mockData(
+    [{ vendor_amount: 500, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid', transfer_status: 'processed' }],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(0);       // cannot be withdrawn again
+  expect(b.paidOut).toBe(500);       // reflected as already paid
+  expect(b.clearing).toBe(0);
+});
+
+test('a HELD booking (pending transfer) reads as in-transit (clearing), NOT available', async () => {
+  mockData(
+    [{ vendor_amount: 400, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid', transfer_status: 'pending' }],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(0);
+  expect(b.clearing).toBe(400);
+});
+
+test('a FAILED / REVERSED transfer means the host was not paid — money stays owed', async () => {
+  mockData(
+    [
+      { vendor_amount: 300, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid', transfer_status: 'failed' },
+      { vendor_amount: 200, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid', transfer_status: 'reversed' },
+    ],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(500);     // both fall through to the manual rail
+  expect(b.paidOut).toBe(0);
+});
+
+test('lifetimeEarned still counts auto-paid money (matured moved to paidOut, not lost)', async () => {
+  mockData(
+    [
+      { vendor_amount: 500, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid', transfer_status: 'processed' },
+      { vendor_amount: 100, settlement_status: 'eligible_for_settlement', completed_at: daysAgo(10), payment_status: 'paid' },
+    ],
+    []
+  );
+  const b = await computeSettlementBalance('h1', 7, NOW);
+  expect(b.available).toBe(100);
+  expect(b.lifetimeEarned).toBe(600);
+});
