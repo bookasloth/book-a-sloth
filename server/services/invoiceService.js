@@ -1,6 +1,7 @@
 'use strict';
 const { round2 } = require('../lib/pricingEngine');
 const { seller, SAC_SUBSCRIPTION, SAC_BOOKING, SAC_COMMISSION, SERIES } = require('../config/sellerIdentity');
+const stateService = require('./stateService');
 
 // Indian FY (Apr–Mar). 2-digit START year for the invoice serial (Jun 2026 -> '26').
 function fiscalYearFor(date = new Date()) {
@@ -14,13 +15,19 @@ function fiscalYearLabel(date = new Date()) {
   return `FY ${start}-${String((start + 1) % 100).padStart(2, '0')}`;
 }
 
-const GSTIN_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
-function isValidGstin(g) { return typeof g === 'string' && GSTIN_RE.test(g.trim().toUpperCase()); }
-function stateCodeFromGstin(g) { return isValidGstin(g) ? g.trim().slice(0, 2) : null; }
+// GSTIN + state helpers now live in the single-source stateService; re-exported
+// here so existing callers/tests keep their import path.
+const { isValidGstin, stateCodeFromGstin, GSTIN_RE } = stateService;
 
-// Place of supply state code: buyer GSTIN wins, else selected state, else seller.
-function placeOfSupply({ gstin, stateCode } = {}) {
-  return stateCodeFromGstin(gstin) || (stateCode ? String(stateCode) : seller.stateCode);
+// Place of supply state code. Precedence (stateService.resolvePlaceOfSupply):
+//   valid GSTIN's state → explicit stateCode → typed state NAME → seller (Odisha).
+// Routing through stateService is what lets a customer who typed "Maharashtra"
+// (name only, no code — the booking-flow gap) resolve to POS 27 instead of
+// silently defaulting to the seller state. When NOTHING is on record we fall
+// back to the seller state — the lawful supplier-location default (Sec 12(2)(b)(ii)).
+function placeOfSupply({ gstin, stateCode, state, stateName } = {}) {
+  const resolved = stateService.resolvePlaceOfSupply({ gstin, stateCode, state: state || stateName });
+  return resolved ? resolved.code : seller.stateCode;
 }
 
 // Split the ALREADY-CHARGED gst amount (never recompute from a rate). Intra-state
