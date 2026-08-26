@@ -156,6 +156,8 @@ export const botEscalateRating = (data) => API.post('/bot/escalate/rating', data
 export const getSupportUnread   = ()         => API.get('/support/unread');
 export const getSupportHours    = ()         => API.get('/support/hours');
 export const getSupportThread   = ()         => API.get('/support/thread');
+export const getSupportThreads  = ()         => API.get('/support/threads');
+export const startSupportTopic  = ()         => API.post('/support/thread/new');
 export const getSupportMessages = (id)       => API.get(`/support/thread/${id}/messages`);
 export const sendSupportMessage = (id, data) => API.post(`/support/thread/${id}/messages`, data);
 export const escalateSupport    = (id, data) => API.post(`/support/thread/${id}/escalate`, data || {});

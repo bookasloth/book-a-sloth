@@ -57,6 +57,32 @@ const getMyThread = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// GET /api/support/threads — all of the caller's topics for the switcher (never
+// creates one). Newest activity first.
+const listThreads = async (req, res) => {
+  try {
+    const threads = await chat.listThreads({ userId: req.user?.id, guestPhone: req.user?.phone });
+    res.json({ threads });
+  } catch (e) { safeError(res, e); }
+};
+
+// POST /api/support/thread/new — "Start new topic": open a fresh thread even when
+// one is already open, so a new question isn't buried in old history.
+const startTopic = async (req, res) => {
+  try {
+    const participantType = req.user?.is_host ? 'host' : 'guest';
+    const thread = await chat.createThread({
+      participantType, userId: req.user?.id, guestPhone: req.user?.phone,
+    });
+    await chat.postMessage({
+      threadId: thread.id, sender: 'system',
+      body: "New topic started. Ask away — Bolt replies instantly, and our team can jump in when you need a person.",
+    });
+    await chat.markRead(thread.id, 'user');
+    res.status(201).json({ thread, messages: await chat.listMessages(thread.id) });
+  } catch (e) { safeError(res, e); }
+};
+
 // GET /api/support/thread/:id/messages
 const getMessages = async (req, res) => {
   try {
@@ -132,4 +158,4 @@ const markRead = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { getMyThread, getMessages, sendMessage, escalateThread, markRead, unread, hours, botAutoReply };
+module.exports = { getMyThread, listThreads, startTopic, getMessages, sendMessage, escalateThread, markRead, unread, hours, botAutoReply };

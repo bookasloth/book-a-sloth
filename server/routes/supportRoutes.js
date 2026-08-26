@@ -8,6 +8,8 @@ const c = require('../controllers/supportController');
 router.get('/hours',                  protect, c.hours);
 router.get('/unread',                 protect, c.unread);
 router.get('/thread',                 protect, c.getMyThread);
+router.get('/threads',                protect, c.listThreads);
+router.post('/thread/new',            protect, c.startTopic);
 router.get('/thread/:id/messages',    protect, c.getMessages);
 router.post('/thread/:id/messages',   protect, c.sendMessage);
 router.post('/thread/:id/escalate',   protect, c.escalateThread);
