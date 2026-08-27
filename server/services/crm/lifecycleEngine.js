@@ -8,6 +8,13 @@
  * a high-intent lead. No AI: `decide()` is a pure function of the lead + its
  * linked account state, unit-tested in isolation.
  *
+ * BEHAVIOURAL (Phase 6): for a linked host who hasn't finished onboarding, the
+ * engine doesn't nag on a timer — it nudges the FIRST unfilled step on the
+ * go-live path (photo → service → availability), and when the host fills one and
+ * advances, stopStaleGaps() halts the previous gap's sequence. A host who lands
+ * their first paid booking gets the celebration sequence instead of the generic
+ * activation nudge. Signals come from the linked profile in loadAccountCtx().
+ *
  * SAFE WITH SENDS OFF: it only writes lead state and enqueues/enrolls. Actual
  * delivery still passes the `crm_admin_sends` kill-switch (default OFF) in
  * messageService/sendGate, so nothing leaves the building until that flip (P0-5).
@@ -33,10 +40,17 @@ const INACTIVE_DAYS = 30;      // no activity this long, never converted → win
 // a name is absent/inactive so the engine never hard-depends on seeded content).
 const SEQ = {
   NEW_LEAD: 'New Lead nurture',
+  NO_PHOTO: 'Onboarding: add photo',
+  NO_SERVICE: 'Onboarding: add service',
+  NO_AVAILABILITY: 'Onboarding: set availability',
   NOT_ACTIVATED: 'Signed-up-not-activated',
   NO_BOOKING: 'Activated-no-booking',
+  FIRST_BOOKING: 'First booking celebration',
   WINBACK: 'Win-back',
 };
+// The onboarding go-live path. The host is enrolled in the first unfilled one;
+// filling it and advancing stops the previous one (stopStaleGaps).
+const GAP_SEQS = new Set([SEQ.NO_PHOTO, SEQ.NO_SERVICE, SEQ.NO_AVAILABILITY, SEQ.NOT_ACTIVATED]);
 
 let scoringColumns = true; // flipped false on first "column missing" error
 
@@ -47,9 +61,10 @@ const engagedSinceContact = (lead) =>
 
 /**
  * PURE decision for one lead. No I/O.
- * @param {object} lead                 a leads row
- * @param {object} ctx                  { onboardingComplete, hasBooking } from the linked profile (all false if unlinked)
- * @param {number} now                  epoch ms
+ * @param {object} lead   a leads row
+ * @param {object} ctx    linked-profile signals: { onboardingComplete, hasPhoto,
+ *                        hasService, hasAvailability, hasBooking } (all false if unlinked)
+ * @param {number} now    epoch ms
  * @returns {{ score, intent, status, changed, nextAction, enroll }}
  *   status  = desired status (may equal current); changed = did it move
  *   enroll  = a SEQ.* name to enroll into, or null
@@ -59,12 +74,15 @@ function decide(lead, ctx = {}, now = Date.now()) {
   const { score } = leadScore.compute(lead, now);
   const intent = leadScore.intentOf(lead, score);
   const cur = lead.status;
-  const { onboardingComplete = false, hasBooking = false } = ctx;
+  const {
+    onboardingComplete = false, hasBooking = false,
+    hasPhoto = false, hasService = false, hasAvailability = false,
+  } = ctx;
 
   let status = cur;
-  // 1. Lifecycle handoff: a linked host who finished onboarding but has no paid
-  //    booking is out of acquisition and into activation.
-  if (onboardingComplete && !hasBooking && !['activated', 'paid'].includes(cur)) status = 'activated';
+  // 1. Lifecycle handoff: a linked host who finished onboarding is out of
+  //    acquisition and into activation.
+  if (onboardingComplete && !['activated', 'paid'].includes(cur)) status = 'activated';
   // 2. High intent → qualify for a human.
   else if (intent === 'high' && ['new', 'contacted', 'replied'].includes(cur)) status = 'qualified';
   // 3. Engaged since we last reached out → they responded.
@@ -77,12 +95,17 @@ function decide(lead, ctx = {}, now = Date.now()) {
   let nextAction = 'Nurturing';
   let enroll = null;
   if (status === 'activated') {
-    if (!hasBooking) { nextAction = 'Enroll: Activated-no-booking'; enroll = SEQ.NO_BOOKING; }
+    // Behaviour, not calendar: celebrate a first booking; otherwise help land one.
+    if (hasBooking) { nextAction = 'Celebrate first booking'; enroll = SEQ.FIRST_BOOKING; }
+    else { nextAction = 'Enroll: Activated-no-booking'; enroll = SEQ.NO_BOOKING; }
   } else if (status === 'qualified' || status === 'replied' || intent === 'high') {
     nextAction = 'Human contact';
   } else if (lead.profile_id && !onboardingComplete && daysSince(lead.created_at, now) >= STALE_SIGNUP_DAYS) {
-    nextAction = 'Enroll: Signed-up-not-activated';
-    enroll = SEQ.NOT_ACTIVATED;
+    // Onboarding stalled → nudge the FIRST unfilled step on the go-live path.
+    if (!hasPhoto) { nextAction = 'Enroll: add photo'; enroll = SEQ.NO_PHOTO; }
+    else if (!hasService) { nextAction = 'Enroll: add service'; enroll = SEQ.NO_SERVICE; }
+    else if (!hasAvailability) { nextAction = 'Enroll: set availability'; enroll = SEQ.NO_AVAILABILITY; }
+    else { nextAction = 'Enroll: Signed-up-not-activated'; enroll = SEQ.NOT_ACTIVATED; }
   } else if (cur === 'new' && !lead.last_contacted_at) {
     nextAction = 'Enroll: New Lead nurture';
     enroll = SEQ.NEW_LEAD;
@@ -103,18 +126,29 @@ async function loadOpenLeads() {
   return data || [];
 }
 
-// One batched read of linked-account state: onboarding_completed + has-any-paid-booking.
+// One batched read of linked-account state: onboarding + the three go-live gap
+// signals (photo / service / availability) + has-any-paid-booking.
 async function loadAccountCtx(leads) {
   const ids = [...new Set(leads.map((l) => l.profile_id).filter(Boolean))];
   const ctx = new Map();
   if (!ids.length) return ctx;
-  const { data: profiles } = await supabaseAdmin.from('profiles')
-    .select('id, onboarding_completed').in('id', ids);
-  const { data: booked } = await supabaseAdmin.from('bookings')
-    .select('host_id').eq('payment_status', 'paid').in('host_id', ids);
-  const hasBooking = new Set((booked || []).map((b) => b.host_id));
-  for (const p of profiles || []) {
-    ctx.set(p.id, { onboardingComplete: !!p.onboarding_completed, hasBooking: hasBooking.has(p.id) });
+  const [profilesRes, servicesRes, availRes, bookedRes] = await Promise.all([
+    supabaseAdmin.from('profiles').select('id, onboarding_completed, profile_image').in('id', ids),
+    supabaseAdmin.from('services').select('host_id').in('host_id', ids),
+    supabaseAdmin.from('availability').select('host_id').in('host_id', ids),
+    supabaseAdmin.from('bookings').select('host_id').eq('payment_status', 'paid').in('host_id', ids),
+  ]);
+  const hasService = new Set((servicesRes.data || []).map((s) => s.host_id));
+  const hasAvail = new Set((availRes.data || []).map((a) => a.host_id));
+  const hasBooking = new Set((bookedRes.data || []).map((b) => b.host_id));
+  for (const p of profilesRes.data || []) {
+    ctx.set(p.id, {
+      onboardingComplete: !!p.onboarding_completed,
+      hasPhoto: !!p.profile_image,
+      hasService: hasService.has(p.id),
+      hasAvailability: hasAvail.has(p.id),
+      hasBooking: hasBooking.has(p.id),
+    });
   }
   return ctx;
 }
@@ -131,6 +165,26 @@ function seqResolver() {
     cache.set(name, id);
     return id;
   };
+}
+
+// The lead's enrollment status for a sequence (null if never enrolled). Used to
+// keep every nurture ONCE per lead — a completed sequence must not resurrect and
+// re-send on the next tick.
+async function enrollmentStatus(seqId, leadId) {
+  const { data } = await supabaseAdmin.from('crm_sequence_enrollments')
+    .select('status').eq('sequence_id', seqId).eq('lead_id', leadId).maybeSingle();
+  return data?.status || null;
+}
+
+// Host filled a gap and advanced → stop the previous gap's still-active
+// enrollment so its remaining emails don't fire. Best-effort.
+async function stopStaleGaps(leadId, keepSeqId, resolveSeq) {
+  const ids = (await Promise.all([...GAP_SEQS].map((n) => resolveSeq(n)))).filter(Boolean);
+  const stale = ids.filter((id) => id !== keepSeqId);
+  if (!stale.length) return;
+  const { data } = await supabaseAdmin.from('crm_sequence_enrollments')
+    .select('id').eq('lead_id', leadId).eq('status', 'active').in('sequence_id', stale);
+  for (const e of data || []) { try { await sequenceService.stop(e.id, 'gap_filled'); } catch (_) { /* best-effort */ } }
 }
 
 // One open lifecycle-created sales task per lead — never pile them up.
@@ -183,10 +237,13 @@ async function run() {
         tasks++;
       }
 
-      // Best-effort enroll — no-op if the named sequence is absent/inactive/empty.
+      // Best-effort enroll, ONCE per lead per sequence. A prior enrollment (in any
+      // state) means we've already run this nurture — don't resurrect it.
       if (d.enroll) {
         const seqId = await resolveSeq(d.enroll);
-        if (seqId) {
+        if (seqId && !(await enrollmentStatus(seqId, lead.id))) {
+          // Advancing to a new onboarding gap → stop the previous gap's sequence.
+          if (GAP_SEQS.has(d.enroll)) await stopStaleGaps(lead.id, seqId, resolveSeq);
           try { await sequenceService.enroll(seqId, lead.id, 'lifecycle'); enrolled++; }
           catch (e) { /* e.g. sequence has no steps — skip */ }
         }
