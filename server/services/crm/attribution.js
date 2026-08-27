@@ -23,6 +23,47 @@ const PAGE = 200;
 // Non-paying base tiers. Anything else is a paid subscription plan.
 const FREE_PLANS = new Set(['free', 'starter', 'starter_legacy', 'explorer']);
 
+// Subscription-payment statuses that represent money actually kept. A row with
+// any OTHER explicit status (e.g. a future 'refunded'/'failed') is excluded. A
+// NULL status is treated as success — legacy/backfill rows carry no status.
+const SUB_SUCCESS = new Set(['paid', 'captured', 'success', 'active', 'authenticated']);
+// Booking dispositions whose platform fee is NOT earned revenue — a cancelled or
+// no-show booking keeps payment_status='paid' but the fee is refunded/voided.
+const DEAD_BOOKING = new Set(['cancelled', 'no_show', 'refunded']);
+
+/**
+ * Pure: attributable revenue in paise + the subscription payment timestamps.
+ * Refund-aware — drops non-success subscription rows and dead-disposition
+ * bookings so a cancelled/no-show/refunded charge never inflates lead revenue.
+ * @param {{subs?:Array, bookings?:Array}}
+ * @returns {{ paise:number, subTimes:string[] }}
+ */
+function computeRevenuePaise({ subs = [], bookings = [] } = {}) {
+  let paise = 0;
+  const subTimes = [];
+  for (const s of subs) {
+    if (s.status && !SUB_SUCCESS.has(String(s.status).toLowerCase())) continue;
+    paise += toPaise(s.total_charged);
+    if (s.paid_at) subTimes.push(s.paid_at);
+  }
+  for (const b of bookings) {
+    if (b.status && DEAD_BOOKING.has(String(b.status).toLowerCase())) continue;
+    paise += toPaise(b.platform_fee_amount);
+  }
+  return { paise, subTimes };
+}
+
+/**
+ * Pure: pick the profile whose normalized phone matches `last10` EXACTLY.
+ * The DB pre-filter is a loose `%last10%` substring (index-friendly, tolerant of
+ * +91 prefixes); this refinement rejects the substring collisions that filter
+ * lets through (a 10-digit run embedded in a longer, different number).
+ */
+function matchByPhone(candidates = [], last10) {
+  if (!last10) return null;
+  return candidates.find((p) => (normalizePhone(p.phone) || '').slice(-10) === last10) || null;
+}
+
 // WON = the host signed up AND paid for a subscription. Detected robustly: a
 // successful subscription payment, an active Razorpay mandate, OR a paid-tier
 // plan. The plan check is essential — most paying hosts here are legacy/annual
@@ -72,7 +113,10 @@ async function linkLeadsToProfiles() {
       const phone = normalizePhone(l.phone);
       if (phone) {
         const last10 = phone.slice(-10);
-        ({ data: profile } = await supabaseAdmin.from('profiles').select('id, created_at').ilike('phone', `%${last10}%`).limit(1).maybeSingle());
+        // Loose substring pre-filter, then exact last-10 match in JS to avoid
+        // linking a lead to a profile that merely contains the digits.
+        const { data: cands } = await supabaseAdmin.from('profiles').select('id, phone, created_at').ilike('phone', `%${last10}%`).limit(10);
+        profile = matchByPhone(cands || [], last10);
       }
       if (!profile && l.email) {
         ({ data: profile } = await supabaseAdmin.from('profiles').select('id, created_at').eq('email', l.email).limit(1).maybeSingle());
@@ -99,17 +143,15 @@ async function refreshRevenue() {
 
     for (const l of leads) {
       const [{ data: subs }, { data: bks }, { data: profile }] = await Promise.all([
-        supabaseAdmin.from('subscription_payments').select('total_charged, paid_at').eq('vendor_id', l.profile_id),
-        supabaseAdmin.from('bookings').select('platform_fee_amount').eq('host_id', l.profile_id).eq('payment_status', 'paid'),
+        supabaseAdmin.from('subscription_payments').select('total_charged, paid_at, status').eq('vendor_id', l.profile_id),
+        supabaseAdmin.from('bookings').select('platform_fee_amount, status').eq('host_id', l.profile_id).eq('payment_status', 'paid'),
         supabaseAdmin.from('profiles').select('plan, razorpay_subscription_id, plan_activated_at').eq('id', l.profile_id).maybeSingle(),
       ]);
 
       // Total attributed revenue (subscriptions + booking commission) — kept for
-      // pipeline value. The WIN, though, is gated on subscription only (below).
-      let paise = 0;
-      const subTimes = [];
-      for (const s of subs || []) { paise += toPaise(s.total_charged); if (s.paid_at) subTimes.push(s.paid_at); }
-      for (const b of bks || []) { paise += toPaise(b.platform_fee_amount); }
+      // pipeline value. Refund-aware: cancelled/no-show/refunded charges dropped.
+      // The WIN, though, is gated on subscription only (below).
+      const { paise, subTimes } = computeRevenuePaise({ subs, bookings: bks });
 
       const won = isPaidSubscriber(profile, subTimes.length > 0);
       const wonAt = subTimes.sort()[0] || profile?.plan_activated_at || null;
@@ -140,4 +182,4 @@ async function run() {
   return { linked, updated, contactsUpserted: contacts.upserted, contactsLinked: contacts.linked };
 }
 
-module.exports = { run, linkLeadsToProfiles, refreshRevenue, toPaise, isPaidSubscriber, conversionPatch };
+module.exports = { run, linkLeadsToProfiles, refreshRevenue, toPaise, isPaidSubscriber, conversionPatch, computeRevenuePaise, matchByPhone };
