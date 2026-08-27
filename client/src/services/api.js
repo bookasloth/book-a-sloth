@@ -288,6 +288,7 @@ export const adminRejectPayout   = (id, reason)     => API.post(`/admin/payouts/
 export const adminMarkPayoutPaid = (id, reference)  => API.post(`/admin/payouts/${id}/pay`, { payment_reference: reference });
 export const adminReleasePayoutRoute = (id)         => API.post(`/admin/payouts/${id}/pay-route`);
 export const adminGetPayoutClearing = ()            => API.get('/admin/payouts/clearing');
+export const adminRunPayoutReconcile = ()           => API.post('/admin/payouts/reconcile');
 export const adminGetDisputes       = (status)      => API.get('/admin/disputes', { params: status ? { status } : {} });
 export const adminResolveDispute    = (id, resolution) => API.post(`/admin/disputes/${id}/resolve`, { resolution });
 export const adminReverseBookingPayout = (id, reason)  => API.post(`/admin/bookings/${id}/reverse-payout`, { reason });
