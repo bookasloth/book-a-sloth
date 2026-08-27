@@ -136,6 +136,7 @@ async function dispatch(row, leadArg, opts = {}) {
     const sender = await senderRegistry.byKey(row.sender_key);
     result = await email.send({
       lead, subject, html, text: renderVars(row.variables?.text, lead),
+      category: row.sender_key === 'sujata' ? 'Offer' : '',   // header pill
       fromName: sender?.fromName, fromEmail: sender?.fromEmail, automated,
     });
   }
