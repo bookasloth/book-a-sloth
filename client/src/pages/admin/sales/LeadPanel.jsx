@@ -13,7 +13,7 @@ import TagChip from './TagChip';
 import TagPicker from './TagPicker';
 import {
   Check, CheckCircle2, ChevronDown, Mail, Phone, MessageCircle, FileText,
-  CalendarClock, Clock, Plus, ArrowRight,
+  CalendarClock, Clock, Plus, ArrowRight, ArrowLeft,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -437,23 +437,63 @@ function Combobox({ options, value, onChange, placeholder }) {
   );
 }
 
+// note / call / follow-up keep the simple form. WhatsApp + Email now share ONE
+// "Send message" flow: a template card grid (green = WhatsApp, blue = Email, told
+// by the icon + colour) → click a card → a live preview with the lead's details
+// already filled in → one Send. The send routes by the picked template's OWN
+// channel, so the two entry points open the same unified picker.
 function ActionModal({ type, lead, templates = [], onClose, onDone }) {
   const id = lead.id;
+  const isMsg = type === 'wa' || type === 'email';
   const [busy, setBusy] = useState(false);
   const [v, setV] = useState({ body: '', title: '', dueAt: '', outcome: '', durationMin: '', subject: '', html: '' });
   const set = (k) => (e) => setV({ ...v, [k]: e.target.value });
-  const waTemplates = useMemo(() => templates.filter((t) => t.channel === 'whatsapp'), [templates]);
-  const emailTemplates = useMemo(() => templates.filter((t) => t.channel === 'email'), [templates]);
+
+  // message-mode state
+  const [mView, setMView] = useState('grid');                                  // 'grid' | 'compose'
+  const [chFilter, setChFilter] = useState(type === 'email' ? 'email' : 'wa'); // 'all' | 'wa' | 'email'
+  const [q, setQ] = useState('');
   const [tplId, setTplId] = useState('');
   const [vars, setVars] = useState({});
-  const tpl = (type === 'wa' ? waTemplates : emailTemplates).find((t) => t.id === tplId) || null;
+  const tpl = templates.find((t) => t.id === tplId) || null;
 
-  const pickTemplate = (newId) => {
-    setTplId(newId);
-    const t = (type === 'wa' ? waTemplates : emailTemplates).find((x) => x.id === newId);
-    if (!t) return;
-    if (type === 'wa') { const seed = {}; (t.variables || []).forEach((d) => { seed[d.key] = leadValueFor(d.key, lead); }); setVars(seed); }
+  const gridTemplates = useMemo(() => {
+    const ql = q.trim().toLowerCase();
+    return templates.filter((t) => {
+      const okCh = chFilter === 'all' || t.channel === (chFilter === 'wa' ? 'whatsapp' : 'email');
+      const okQ = !ql || `${t.label || ''} ${t.name || ''} ${t.subject || ''}`.toLowerCase().includes(ql);
+      return okCh && okQ;
+    });
+  }, [templates, chFilter, q]);
+
+  const openTpl = (t) => {
+    setTplId(t.id);
+    if (t.channel === 'whatsapp') { const seed = {}; (t.variables || []).forEach((d) => { seed[d.key] = leadValueFor(d.key, lead); }); setVars(seed); }
     else setV((s) => ({ ...s, subject: t.subject || '', html: t.body || '' }));
+    setMView('compose');
+  };
+
+  // WhatsApp body preview with {{token}} filled from the (editable) vars.
+  const waPreview = useMemo(() => {
+    if (!tpl || tpl.channel !== 'whatsapp') return '';
+    return String(tpl.body || tpl.label || '').replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] || `{{${k}}}`);
+  }, [tpl, vars]);
+
+  const sendMessage = async () => {
+    if (!tpl) return;
+    setBusy(true);
+    try {
+      if (tpl.channel === 'whatsapp') {
+        const params = (tpl.variables || []).map((d) => vars[d.key] ?? '');
+        const r = await crmSendWhatsApp(id, { templateKey: tpl.name, params });
+        toast[r.data?.status === 'skipped' ? 'error' : 'success'](r.data?.status === 'skipped' ? `Skipped: ${r.data.error}` : 'WhatsApp queued');
+      } else {
+        if (!v.subject || !v.html) { toast.error('Subject and body required'); setBusy(false); return; }
+        const r = await crmSendEmail(id, { subject: v.subject, html: v.html });
+        toast[r.data?.status === 'skipped' ? 'error' : 'success'](r.data?.status === 'skipped' ? `Skipped: ${r.data.error}` : 'Email queued');
+      }
+      onDone();
+    } catch (e) { toast.error(e.response?.data?.message || 'Failed'); } finally { setBusy(false); }
   };
 
   const submit = async () => {
@@ -462,23 +502,137 @@ function ActionModal({ type, lead, templates = [], onClose, onDone }) {
       if (type === 'note') await crmAddLeadNote(id, v.body);
       else if (type === 'call') await crmLogCall(id, { outcome: v.outcome, durationMin: Number(v.durationMin) || null, body: v.body });
       else if (type === 'followup') await crmCreateFollowUp(id, { title: v.title, dueAt: v.dueAt || new Date(Date.now() + 864e5).toISOString(), remind: true });
-      else if (type === 'wa') {
-        if (!tpl) { toast.error('Pick a template'); setBusy(false); return; }
-        const params = (tpl.variables || []).map((d) => vars[d.key] ?? '');
-        const r = await crmSendWhatsApp(id, { templateKey: tpl.name, params });
-        toast[r.data?.status === 'skipped' ? 'error' : 'success'](r.data?.status === 'skipped' ? `Skipped: ${r.data.error}` : 'WhatsApp queued');
-        onDone(); return;
-      } else if (type === 'email') {
-        if (!v.subject || !v.html) { toast.error('Subject and body required'); setBusy(false); return; }
-        const r = await crmSendEmail(id, { subject: v.subject, html: v.html });
-        toast[r.data?.status === 'skipped' ? 'error' : 'success'](r.data?.status === 'skipped' ? `Skipped: ${r.data.error}` : 'Email queued');
-        onDone(); return;
-      }
       toast.success('Saved'); onDone();
     } catch (e) { toast.error(e.response?.data?.message || 'Failed'); } finally { setBusy(false); }
   };
 
-  const T = { note: 'Add note', call: 'Log call', followup: 'Add follow-up', wa: 'Send WhatsApp', email: 'Send email' }[type];
+  // ── WhatsApp + Email: unified template grid → preview → send ──
+  if (isMsg) {
+    const CH = [{ id: 'all', label: 'All' }, { id: 'wa', label: 'WhatsApp' }, { id: 'email', label: 'Email' }];
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+        <Card className="rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          {mView === 'grid' ? (
+            <>
+              <div className="flex items-center gap-3 px-5 pt-5 pb-3 border-b border-gray-100">
+                <div className="min-w-0">
+                  <h2 className="font-bold adm-t1 text-[17px]">Send message</h2>
+                  <p className="text-[12px] adm-t3 truncate">to <span className="adm-t2 font-medium">{lead.name || 'lead'}</span>{lead.phone ? ` · ${lead.phone}` : ''}{lead.email ? ` · ${lead.email}` : ''}</p>
+                </div>
+                <button onClick={onClose} className="ml-auto adm-t3 text-xl leading-none">×</button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 px-5 py-3">
+                <div className="inline-flex bg-gray-50 border border-gray-200 rounded-lg p-0.5 gap-0.5">
+                  {CH.map((c) => (
+                    <button key={c.id} onClick={() => setChFilter(c.id)}
+                      className={`text-[12px] font-medium px-3 py-1.5 rounded-md inline-flex items-center gap-1.5 ${chFilter === c.id ? 'bg-white shadow-sm adm-t1' : 'adm-t2'}`}>
+                      {c.id !== 'all' && <span className={`w-2 h-2 rounded-full ${c.id === 'wa' ? 'bg-emerald-500' : 'bg-blue-500'}`} />}{c.label}
+                    </button>
+                  ))}
+                </div>
+                <input className="fb-input text-sm flex-1 min-w-[160px]" placeholder="Search templates…" value={q} onChange={(e) => setQ(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-5 pb-5 overflow-auto">
+                {gridTemplates.length === 0 ? (
+                  <p className="col-span-full text-[13px] adm-t2 py-6 text-center">No templates{q ? ' match' : ''}. Add them in <a href="/admin/sales/templates" className="text-[#FE5100]">Templates</a>.</p>
+                ) : gridTemplates.map((t) => {
+                  const wa = t.channel === 'whatsapp';
+                  const Icon = wa ? MessageCircle : Mail;
+                  const nVar = (t.variables || []).length;
+                  return (
+                    <button key={t.id} type="button" onClick={() => openTpl(t)}
+                      className="text-left rounded-xl border border-gray-200 bg-white p-3 transition hover:shadow-md hover:-translate-y-0.5">
+                      <div className="flex items-center gap-2.5">
+                        <span className={`w-8 h-8 min-h-0 shrink-0 rounded-lg grid place-items-center ${wa ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}><Icon size={16} /></span>
+                        <h3 className="text-[13.5px] font-bold adm-t1 leading-tight">{t.label || t.name}</h3>
+                      </div>
+                      <p className="mt-2 text-[11.5px] adm-t3 line-clamp-2">{wa ? (t.body || t.name || '') : (t.subject || t.body || '')}</p>
+                      <div className="mt-2.5 flex items-center gap-2">
+                        <span className="text-[10px] adm-t3 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5">{wa ? `${nVar} var${nVar === 1 ? '' : 's'}` : 'Email'}</span>
+                        <span className={`ml-auto inline-flex items-center gap-1 text-white text-[12px] font-bold px-3 py-1.5 rounded-lg ${wa ? 'bg-emerald-600' : 'bg-blue-600'}`}>
+                          Send <ArrowRight size={13} strokeWidth={2.5} />
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 px-5 pt-5 pb-3 border-b border-gray-100">
+                <button onClick={() => setMView('grid')} className="w-8 h-8 min-h-0 rounded-lg border border-gray-200 bg-gray-50 grid place-items-center adm-t2"><ArrowLeft size={16} /></button>
+                <div className="min-w-0">
+                  <h2 className="font-bold adm-t1 text-[16px] truncate">{tpl?.label || tpl?.name}</h2>
+                  <p className="text-[12px] adm-t3">Preview exactly what the lead receives</p>
+                </div>
+                <button onClick={onClose} className="ml-auto adm-t3 text-xl leading-none">×</button>
+              </div>
+              <div className="px-5 py-4 overflow-auto space-y-4">
+                {tpl && (() => {
+                  const wa = tpl.channel === 'whatsapp';
+                  return (
+                    <>
+                      <div className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 ${wa ? 'bg-emerald-50 border border-emerald-100' : 'bg-blue-50 border border-blue-100'}`}>
+                        <span className={`w-8 h-8 rounded-lg grid place-items-center text-white ${wa ? 'bg-emerald-600' : 'bg-blue-600'}`}>{wa ? <MessageCircle size={16} /> : <Mail size={16} />}</span>
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-bold adm-t1">{wa ? 'WhatsApp' : 'Email'}</p>
+                          <p className="text-[11px] adm-t3 truncate">to {wa ? (lead.phone || '—') : (lead.email || '—')}</p>
+                        </div>
+                      </div>
+
+                      {wa ? (
+                        <>
+                          <div>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide adm-t3 mb-1.5">Message preview</p>
+                            <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-3.5 py-3 text-[13.5px] adm-t1 whitespace-pre-wrap leading-relaxed">{waPreview}</div>
+                          </div>
+                          {(tpl.variables || []).length > 0 && (
+                            <div>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide adm-t3 mb-1.5">Filled from the lead — edit if needed</p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {tpl.variables.map((d, i) => (
+                                  <div key={d.key || i}>
+                                    <label className="block text-[11px] font-medium adm-t2 mb-0.5">{d.label || d.key}</label>
+                                    <input className="fb-input text-sm w-full" value={vars[d.key] ?? ''} placeholder={d.example || ''} onChange={(e) => setVars({ ...vars, [d.key]: e.target.value })} />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide adm-t3 mb-1.5">Subject</p>
+                            <input className="fb-input text-sm w-full" placeholder="Subject" value={v.subject} onChange={set('subject')} />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide adm-t3 mb-1.5">Message</p>
+                            <textarea className="fb-input text-sm w-full" rows={6} placeholder="Body — {{first_name}}, {{business_name}} supported" value={v.html} onChange={set('html')} />
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+              <div className="flex items-center gap-3 px-5 py-3.5 border-t border-gray-100">
+                <p className="text-[11.5px] adm-t3">Queued through the send gate — off = recorded, not sent.</p>
+                <button onClick={sendMessage} disabled={busy}
+                  className={`ml-auto inline-flex items-center gap-2 text-white text-[13.5px] font-bold px-5 py-2.5 rounded-xl disabled:opacity-50 ${tpl?.channel === 'whatsapp' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                  {busy ? 'Sending…' : <>Send {tpl?.channel === 'whatsapp' ? 'WhatsApp' : 'email'} <ArrowRight size={15} strokeWidth={2.5} /></>}
+                </button>
+              </div>
+            </>
+          )}
+        </Card>
+      </div>
+    );
+  }
+
+  // ── note / call / follow-up (unchanged) ──
+  const T = { note: 'Add note', call: 'Log call', followup: 'Add follow-up' }[type];
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <Card className="rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-auto">
@@ -494,35 +648,6 @@ function ActionModal({ type, lead, templates = [], onClose, onDone }) {
             {type === 'followup' && <>
               <input className="fb-input text-sm w-full" placeholder="What to do" value={v.title} onChange={set('title')} />
               <input type="datetime-local" className="fb-input text-sm w-full" value={v.dueAt} onChange={set('dueAt')} />
-            </>}
-            {type === 'wa' && (waTemplates.length === 0 ? (
-              <p className="text-[13px] adm-t2">No approved WhatsApp templates yet. Add them in <a href="/admin/sales/templates" className="text-[#FE5100]">Templates</a> first.</p>
-            ) : <>
-              <div><label className="block text-[11px] font-medium adm-t2 mb-1">Template</label>
-                <Combobox placeholder="Pick a WhatsApp template" value={tplId} onChange={pickTemplate}
-                  options={waTemplates.map((t) => ({ value: t.id, label: t.label, hint: `${t.name} · ${(t.variables || []).length} var(s)` }))} />
-              </div>
-              {tpl && (tpl.variables || []).length > 0 && (
-                <div className="space-y-2 pt-1">
-                  <p className="text-[11px] adm-t3">Fill each slot (prefilled from the lead). Sent to AiSensy in order.</p>
-                  {tpl.variables.map((d, i) => (
-                    <div key={d.key || i}>
-                      <label className="block text-[11px] font-medium adm-t2 mb-0.5">{i + 1}. {d.label || d.key}</label>
-                      <input className="fb-input text-sm w-full" value={vars[d.key] ?? ''} placeholder={d.example || ''} onChange={(e) => setVars({ ...vars, [d.key]: e.target.value })} />
-                    </div>
-                  ))}
-                </div>
-              )}
-              <p className="text-[11px] adm-t3">Delivery is gated by the CRM kill-switch — off = recorded, not sent.</p>
-            </>)}
-            {type === 'email' && <>
-              {emailTemplates.length > 0 && (
-                <div><label className="block text-[11px] font-medium adm-t2 mb-1">Start from a template (optional)</label>
-                  <Combobox placeholder="Blank email" value={tplId} onChange={pickTemplate} options={emailTemplates.map((t) => ({ value: t.id, label: t.label, hint: t.subject || '' }))} />
-                </div>
-              )}
-              <input className="fb-input text-sm w-full" placeholder="Subject" value={v.subject} onChange={set('subject')} />
-              <textarea className="fb-input text-sm w-full" rows={6} placeholder="HTML body — {{first_name}}, {{business_name}} supported" value={v.html} onChange={set('html')} />
             </>}
           </div>
           <div className="flex justify-end gap-2 mt-4">
