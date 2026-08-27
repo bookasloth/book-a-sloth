@@ -31,6 +31,14 @@ name: Deploy to Vercel (production)
 on:
   push:
     branches: [main]
+    # Only the CLIENT ships to Vercel. Server-only / docs-only / workflow-only
+    # merges (the server deploys separately to Render) skip this ~13-min build
+    # entirely — the single biggest Actions-minute saver. A merge that touches
+    # both client and server still deploys (client path matched). Manual
+    # workflow_dispatch has no path filter, so a forced re-deploy always runs.
+    paths:
+      - 'client/**'
+      - '.github/workflows/deploy-vercel.yml'
   workflow_dispatch: {}
 
 concurrency:

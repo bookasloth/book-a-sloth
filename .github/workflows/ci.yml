@@ -37,8 +37,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Detect which half of the repo a push/PR touched, so we only run the suite
+  # that could have broken. A docs-only change runs neither. (A skipped required
+  # check counts as passed for branch protection, so gating never blocks a merge.)
+  changes:
+    runs-on: ubuntu-latest
+    # dorny/paths-filter reads the PR's changed-file list via the API, which needs
+    # pull-requests:read (the repo's default GITHUB_TOKEN is otherwise restricted).
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      server: ${{ steps.filter.outputs.server }}
+      client: ${{ steps.filter.outputs.client }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            server:
+              - 'server/**'
+            client:
+              - 'client/**'
+
   server:
     name: Server (unit tests)
+    needs: changes
+    # Fail-safe: run unless the server half is EXPLICITLY unchanged. If change
+    # detection breaks (empty output), tests still run — never silently skip.
+    if: ${{ !cancelled() && needs.changes.outputs.server != 'false' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -72,6 +100,8 @@ jobs:
 
   client:
     name: Client (unit tests)
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.client != 'false' }}
     runs-on: ubuntu-latest
     defaults:
       run:

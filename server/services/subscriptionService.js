@@ -131,6 +131,26 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
     });
   }
 
+  // CRM: real-time timeline event + immediate paid promotion (don't wait up to an
+  // hour for the attribution batch). isInitial = became a customer; else a renewal.
+  // Runs once per charge — the idempotency guard above already returned on replay.
+  try {
+    const leadService = require('./crm/leadService');
+    if (isInitial) {
+      await leadService.recordAccountEvent({
+        profileId: vendorId, type: 'subscription_started',
+        title: `Subscribed — ${planSlug} (${cadence})`,
+        meta: { plan: planSlug, cadence, payment_id: paymentId }, promoteToPaid: true, wonAt: nowIso,
+      });
+    } else if (paymentId) {
+      await leadService.recordAccountEvent({
+        profileId: vendorId, type: 'subscription_renewed',
+        title: `Renewed — ${planSlug} (${cadence})`,
+        meta: { plan: planSlug, cadence, payment_id: paymentId }, promoteToPaid: true,
+      });
+    }
+  } catch (e) { console.error('[crm] subscription event hook failed (non-fatal):', e.message); }
+
   return { activated: true };
 }
 
@@ -473,12 +493,27 @@ async function backfillMissingInvoices(limit = 200) {
   return { minted, scanned: charges.length };
 }
 
+// Emit a CRM lifecycle event for the host owning a subscription. Looks the host
+// up by mandate id (rzpSub carries no vendor_id on cancel/halt webhooks).
+async function crmSubEvent(rzpSubId, type, title, meta = {}) {
+  try {
+    if (!rzpSubId) return;
+    const { data: prof } = await supabaseAdmin.from('profiles')
+      .select('id').eq('razorpay_subscription_id', rzpSubId).maybeSingle();
+    if (!prof?.id) return;
+    // Churn/halt are NOT status regressions — they stay a paid customer until the
+    // paid term lapses (resolveVendorPlan downgrades then). Record the event only.
+    await require('./crm/leadService').recordAccountEvent({ profileId: prof.id, type, title, meta });
+  } catch (e) { console.error('[crm] subscription lifecycle hook failed (non-fatal):', e.message); }
+}
+
 /** subscription.halted — repeated charge failure. Keep plan flag, mark halted. */
 async function markHalted(rzpSub) {
   if (!rzpSub?.id) return;
   await supabaseAdmin.from('profiles')
     .update({ subscription_status: 'halted', updated_at: new Date().toISOString() })
     .eq('razorpay_subscription_id', rzpSub.id);
+  await crmSubEvent(rzpSub.id, 'subscription_payment_failed', 'Subscription halted — payment failing');
 }
 
 /**
@@ -490,6 +525,7 @@ async function markCancelled(rzpSub) {
   await supabaseAdmin.from('profiles')
     .update({ subscription_status: 'cancelled', updated_at: new Date().toISOString() })
     .eq('razorpay_subscription_id', rzpSub.id);
+  await crmSubEvent(rzpSub.id, 'subscription_cancelled', 'Subscription cancelled (churn)');
 }
 
 module.exports = { activateFromSubscription, recordSubscriptionCharge, ensureSubscriptionInvoice, sendSubscriptionReceiptEmail, resendReceiptForPayment, backfillSubscriptionPayments, backfillMissingInvoices, markHalted, markCancelled, ACTIVE_STATES };
