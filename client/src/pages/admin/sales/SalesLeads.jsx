@@ -550,7 +550,7 @@ function ManageTagsModal({ tags, onClose, onChanged }) {
         <div className="flex gap-1">
           {TAG_PALETTE.map((c) => (
             <button key={c} type="button" title={c} onClick={() => setNewColor(c)}
-              className={`w-5 h-5 rounded-full ${swatchClass(c)} ${newColor === c ? 'ring-2 ring-offset-1 ring-gray-500' : ''}`} />
+              className={`w-5 h-5 min-h-0 shrink-0 rounded-full ${swatchClass(c)} ${newColor === c ? 'ring-2 ring-offset-1 ring-gray-500' : ''}`} />
           ))}
         </div>
         <Btn size="sm" onClick={create}>Add</Btn>
@@ -563,7 +563,7 @@ function ManageTagsModal({ tags, onClose, onChanged }) {
               <div className="flex gap-1 ml-auto">
                 {TAG_PALETTE.map((c) => (
                   <button key={c} type="button" title={c} onClick={() => recolor(t, c)}
-                    className={`w-4 h-4 rounded-full ${swatchClass(c)} ${t.color === c ? 'ring-2 ring-gray-500' : 'opacity-60 hover:opacity-100'}`} />
+                    className={`w-4 h-4 min-h-0 shrink-0 rounded-full ${swatchClass(c)} ${t.color === c ? 'ring-2 ring-gray-500' : 'opacity-60 hover:opacity-100'}`} />
                 ))}
               </div>
               <button onClick={() => rename(t)} className="text-[11px] adm-t3 hover:text-[#FE5100]">rename</button>
