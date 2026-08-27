@@ -178,7 +178,10 @@ export default function LeadPanel({ leadId, onChanged, onClose }) {
                 {lead.email && <p className="flex items-center gap-1.5 truncate"><Mail size={12} className="adm-t3" />{lead.email}</p>}
                 <p className="flex items-center gap-1.5 adm-t3"><Clock size={12} />Source: {lead.source}{lead.city ? ` · ${lead.city}` : ''}</p>
               </div>
-              {lead.profile_id && <Link to={`/admin/host360/${lead.profile_id}`} className="inline-flex items-center gap-1 text-[11px] text-[#FE5100] mt-1">Host 360 <ArrowRight size={11} /></Link>}
+              <div className="flex items-center gap-3 mt-1">
+                <Link to={`/admin/customer/${lead.id}`} className="inline-flex items-center gap-1 text-[11px] text-[#FE5100] font-medium">Customer 360 <ArrowRight size={11} /></Link>
+                {lead.profile_id && <Link to={`/admin/host360/${lead.profile_id}`} className="inline-flex items-center gap-1 text-[11px] adm-t3">Host 360 <ArrowRight size={11} /></Link>}
+              </div>
             </div>
           </div>
 
