@@ -50,6 +50,7 @@ const D = {
 const COMPANY    = 'Timewheel Internet (P) Ltd';
 const ADDRESS    = '2nd Floor, Eureka Coworking, Mate Square, Nagpur 440030';
 const TAGLINE    = 'Booking Made Easy';
+const HEADER_LOGO = 'https://company-assets.bookasloth.in/images/email/header-logo.png';
 const FOOTER_LOGO = 'https://company-assets.bookasloth.in/images/email/footer-logo.png';
 
 /** Blend a #rrggbb color toward white. ratio 0 = original, 1 = white. */
@@ -71,8 +72,8 @@ function accentBar(brand) {
 
 /**
  * Header: constant Book a Sloth logo (left) + accent category pill (right).
- * The logo is the same FOOTER_LOGO asset for every email and every audience
- * (per redesign decision #4). The pill is the one true capsule (999px) — its
+ * Header uses HEADER_LOGO; the footer uses FOOTER_LOGO (two distinct CDN assets).
+ * The pill is the one true capsule (999px) — its
  * accent/tint/text + glyph come from the category theme.
  */
 function headerBlock({ category, theme }) {
@@ -89,7 +90,7 @@ function headerBlock({ category, theme }) {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td align="left" style="vertical-align:middle;">
-            <img src="${esc(FOOTER_LOGO)}" alt="Book a Sloth" height="26" style="display:block;border:0;height:26px;">
+            <img src="${esc(HEADER_LOGO)}" alt="Book a Sloth" height="26" style="display:block;border:0;height:26px;">
           </td>
           ${pill}
         </tr>
