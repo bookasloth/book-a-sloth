@@ -36,8 +36,9 @@ const SIGN_SUJATA = p(`— Sujata, Book A Sloth`);
 // WhatsApp placeholder campaigns (create + approve these in AiSensy, then they fire).
 const WA = { onboarding: 'onboarding_nudge_wa', firstBooking: 'first_booking_wa', winback: 'winback_offer_wa' };
 
-// The two win-back offers — kept in one place so email + WhatsApp stay in sync.
-const OFFER_LINE = `Two ways back, your pick: <b>1 month of Studio free</b> (our top plan, on us) — or <b>2 extra months added to your current plan</b>.`;
+// The win-back offer — one place so email + WhatsApp stay in sync. Conditional on
+// renewal: the host renews (monthly or yearly), then an admin adds 2 bonus months.
+const OFFER_LINE = `Renew any plan — monthly or yearly — and we'll add <b>2 extra months free</b> on top.`;
 
 const SEQUENCES = [
   {
@@ -96,14 +97,15 @@ const SEQUENCES = [
       { step_no: 1, delay_hours: 0, channel: 'email', sender_key: 'tithi',
         subject: 'Sorry to see you go, {{first_name}}',
         body: p(`You cancelled — totally fair. Before you leave for good, is there anything we can fix?`) + p(`Just reply and tell me what wasn't working.`) + SIGN_TITHI },
-      // The OFFER — from Sujata (marketing voice). Manual claim.
+      // The OFFER — from Sujata (marketing voice). Conditional on renewal; admin
+      // adds the 2 bonus months in Host360 once the host has renewed.
       { step_no: 2, delay_hours: 48, channel: 'email', sender_key: 'sujata',
-        subject: 'A little something to come back, {{first_name}}',
-        body: p(`We'd love to have you back. ${OFFER_LINE}`) + p(`Reply <b>CLAIM</b> and we'll set it up for you — no card needed.`) + SIGN_SUJATA },
+        subject: 'Renew and get 2 months free, {{first_name}}',
+        body: p(`We'd love to have you back, {{first_name}}. ${OFFER_LINE}`) + p(`<a href="${BL}/dashboard">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add the 2 months.`) + SIGN_SUJATA },
       // WhatsApp carrying the same offer (placeholder AiSensy template).
       { step_no: 3, delay_hours: 24, channel: 'whatsapp', sender_key: 'sujata', template_key: WA.winback,
         variables: ['{{first_name}}'],
-        subject: null, body: `{{first_name}}, come back to Book A Sloth: 1 month of Studio free, or 2 months added to your plan. Reply CLAIM 💛` },
+        subject: null, body: `{{first_name}}, renew your Book A Sloth plan and we'll add 2 months free on top. Reply RENEW 💛` },
       { step_no: 4, delay_hours: 96, channel: 'email', sender_key: 'tithi',
         subject: 'Not the price? Let\'s talk',
         body: p(`If price wasn't the issue, a quick 15 minutes might be. Reply and we'll find a time.`) + SIGN_TITHI },
@@ -129,12 +131,9 @@ const SEQUENCES = [
 // The two offers, also stored in the crm_templates library so they can be sent
 // manually from a lead (the "Offers" surface). category='offer', from Sujata.
 const OFFER_TEMPLATES = [
-  { channel: 'email', name: 'offer_studio_month_free', label: 'Offer · 1 month Studio free', category: 'offer',
-    subject: 'Your Studio month, on us — {{first_name}}',
-    body: p(`Here's a month of <b>Studio</b> (our top plan) free, {{first_name}} — every feature unlocked, nothing to pay.`) + p(`Reply <b>CLAIM</b> and we'll switch it on.`) + SIGN_SUJATA },
-  { channel: 'email', name: 'offer_two_months_added', label: 'Offer · 2 months added to plan', category: 'offer',
-    subject: '2 months on us, {{first_name}}',
-    body: p(`We've set aside <b>2 extra months</b> on your current plan, {{first_name}} — free.`) + p(`Reply <b>CLAIM</b> to add them.`) + SIGN_SUJATA },
+  { channel: 'email', name: 'offer_two_months_on_renewal', label: 'Offer · 2 months free on renewal', category: 'offer',
+    subject: 'Renew and get 2 months free, {{first_name}}',
+    body: p(`Renew any plan — monthly or yearly — and we'll add <b>2 extra months</b> on us, {{first_name}}.`) + p(`<a href="{{booking_link}}/dashboard">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add them.`) + SIGN_SUJATA },
 ];
 
 async function upsertSequence(seq) {
