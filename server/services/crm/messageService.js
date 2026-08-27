@@ -44,10 +44,11 @@ function renderVars(str, lead, extra = {}) {
   return String(str).replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => (k in map ? map[k] : ''));
 }
 
-/** Ordered WhatsApp template params rendered from a variables array of tokens/strings. */
-function renderParams(variables, lead) {
+/** Ordered WhatsApp template params rendered from a variables array of tokens/strings.
+ *  `extra` supplies profile-derived tokens the lead lacks (username, account_name). */
+function renderParams(variables, lead, extra = {}) {
   if (!Array.isArray(variables)) return [];
-  return variables.map((v) => renderVars(String(v), lead));
+  return variables.map((v) => renderVars(String(v), lead, extra));
 }
 
 async function getLead(leadId) {
@@ -121,22 +122,31 @@ async function dispatch(row, leadArg, opts = {}) {
 
   const automated = !!opts.automated;
   let result;
+  // Profile-derived tokens the lead lacks — {{username}} (public profile URL) and
+  // {{account_name}}. Fetched once and used by BOTH WhatsApp params and email copy.
+  let extra = {};
+  if (lead.profile_id) {
+    const { data: prof } = await supabaseAdmin.from('profiles').select('username, name').eq('id', lead.profile_id).maybeSingle();
+    if (prof) extra = { username: prof.username || '', account_name: prof.name || lead.name || '' };
+  }
+
   if (row.channel === 'whatsapp') {
     result = await whatsapp.send({
       lead,
       templateKey: row.template_key,
-      templateParams: renderParams(row.variables?.params || row.variables?.templateParams, lead),
-      userName: lead.name,
+      templateParams: renderParams(row.variables?.params || row.variables?.templateParams, lead, extra),
+      userName: extra.account_name || lead.name,
       automated,
     });
   } else {
-    const subject = renderVars(row.subject, lead);
-    const html = renderVars(row.variables?.html || row.body_preview || '', lead);
+    const subject = renderVars(row.subject, lead, extra);
+    const html = renderVars(row.variables?.html || row.body_preview || '', lead, extra);
     // Send FROM the message's persona (Tithi lifecycle / Sujata offers); null → global default.
     const sender = await senderRegistry.byKey(row.sender_key);
     result = await email.send({
-      lead, subject, html, text: renderVars(row.variables?.text, lead),
+      lead, subject, html, text: renderVars(row.variables?.text, lead, extra),
       category: row.sender_key === 'sujata' ? 'Offer' : '',   // header pill
+      previewText: row.variables?.preview ? renderVars(row.variables.preview, lead, extra) : '',
       fromName: sender?.fromName, fromEmail: sender?.fromEmail, replyTo: sender?.replyTo, automated,
     });
   }

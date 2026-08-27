@@ -105,8 +105,13 @@ async function processDue() {
       await messageService.enqueue({
         leadId: en.lead_id, channel: next.channel, templateKey: next.template_key,
         subject: next.subject, body: next.body,
-        // WhatsApp steps carry ordered template params in step.variables (jsonb array).
-        variables: { html: next.body, params: Array.isArray(next.variables) ? next.variables : (next.variables?.params || []) },
+        // WhatsApp steps carry ordered template params in step.variables (jsonb array);
+        // email steps carry a { preview } object for the inbox preheader.
+        variables: {
+          html: next.body,
+          params: Array.isArray(next.variables) ? next.variables : (next.variables?.params || []),
+          preview: Array.isArray(next.variables) ? undefined : (next.variables?.preview || undefined),
+        },
         // Step persona overrides the sequence persona; null → global default.
         senderKey: next.sender_key || seq.sender_key || null,
         sequenceId: en.sequence_id, enrollmentId: en.id,

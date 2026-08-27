@@ -46,7 +46,7 @@ function styleBody(html) {
  * @param {string} [p.fromName] [p.fromEmail] persona override
  * @returns {{success:boolean, skipped?:boolean, reason?:string, providerMessageId?:string, error?:string}}
  */
-async function send({ lead, subject, html, text, category, fromName, fromEmail, replyTo, automated = false }) {
+async function send({ lead, subject, html, text, category, previewText, fromName, fromEmail, replyTo, automated = false }) {
   const gate = await canSend(lead, 'email', { automated });
   if (!gate.ok) return { success: false, skipped: true, reason: gate.reason, defer: gate.defer };
 
@@ -59,7 +59,8 @@ async function send({ lead, subject, html, text, category, fromName, fromEmail, 
     finalHtml = renderLayout({
       audience: 'customer',
       bodyHtml: styleBody(html),
-      previewText: subject,
+      // Distinct inbox preheader when the step supplies one; else fall back to subject.
+      previewText: previewText || subject,
       emailCategory: category || '',
       settings,
       data: { unsubscribe_token: makeToken(lead.email) },

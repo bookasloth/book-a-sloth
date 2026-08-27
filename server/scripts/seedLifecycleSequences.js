@@ -16,29 +16,25 @@
  *  - tithi  = the automated lifecycle voice (onboarding, first-booking, nudges).
  *  - sujata = the offers/marketing voice (anything with a discount or deadline).
  *
- * WHATSAPP: steps with channel 'whatsapp' reference an APPROVED AiSensy campaign
- * name in template_key. Those names are placeholders until the templates are
- * created + approved in AiSensy — the step stays queued (and the kill-switch is
- * OFF anyway), so nothing sends prematurely. WA params come from step.variables.
+ * EMAIL steps carry a `preview` (distinct inbox preheader) stored in variables.
+ * {{username}} / {{account_name}} resolve from the linked profile at send time
+ * (messageService). WHATSAPP steps reference an approved AiSensy Campaign Name in
+ * template_key with ordered params in `variables`.
  *
- * Nothing here sends anything — sequences only fire through messageService,
- * still gated by the crm_admin_sends kill-switch (default OFF).
+ * Nothing here sends anything — sequences fire through messageService, gated by
+ * the crm_admin_sends kill-switch (default OFF).
  */
 require('dotenv').config();
 const { supabaseAdmin } = require('../config/supabase');
 
-// {{first_name}} {{name}} {{business_name}} {{profession}} {{city}} {{booking_link}}
+// {{first_name}} {{name}} {{profession}} {{city}} {{booking_link}} {{username}} {{account_name}}
 const BL = '{{booking_link}}';
 const p = (html) => `<p>${html}</p>`;
-const SIGN_TITHI = p(`— Tithi, Book A Sloth`);
-const SIGN_SUJATA = p(`— Sujata, Book A Sloth`);
+const SIGN_TITHI = p(`— Tithi`);
+const SIGN_SUJATA = p(`— Sujata`);
 
-// WhatsApp placeholder campaigns (create + approve these in AiSensy, then they fire).
-const WA = { onboarding: 'onboarding_nudge_wa', firstBooking: 'first_booking_wa', winback: 'winback_offer_wa' };
-
-// The win-back offer — one place so email + WhatsApp stay in sync. Conditional on
-// renewal: the host renews (monthly or yearly), then an admin adds 2 bonus months.
-const OFFER_LINE = `Renew any plan — monthly or yearly — and we'll add <b>2 extra months free</b> on top.`;
+// Approved AiSensy Campaign Names (the human name sendCampaign uses).
+const WA = { onboarding: 'Onboarding Nudge', firstBooking: 'Get First Booking', winback: 'Winback Offer - Additional Month' };
 
 const SEQUENCES = [
   {
@@ -46,17 +42,26 @@ const SEQUENCES = [
     description: 'Host signed up but has not finished onboarding — nudge to live.',
     is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
-      { step_no: 1, delay_hours: 0,  channel: 'email', subject: 'Welcome to Book A Sloth, {{first_name}} 🦥',
-        body: p(`You're in. Your booking page is almost ready — finish setup and start taking bookings.`) + p(`<a href="${BL}/dashboard">Finish setup →</a>`) },
-      { step_no: 2, delay_hours: 24, channel: 'email', subject: 'Finish your profile (2 minutes)',
-        body: p(`A complete profile books more. Add your photo and a line about what you do.`) + p(`<a href="${BL}/dashboard">Complete profile →</a>`) },
-      // WhatsApp nudge at ~48h quiet — highest-open channel for a stalled setup.
-      { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.onboarding, variables: ['{{first_name}}'],
+      { step_no: 1, delay_hours: 0,  channel: 'email',
+        subject: 'Welcome to Book A Sloth, {{first_name}} 🦥',
+        preview: `Your page is almost ready — let's get you live today.`,
+        body: p(`You're in. Your page is almost ready — let's get you live today.`) + p(`<a href="${BL}/dashboard">Finish setup →</a>`) + SIGN_TITHI },
+      { step_no: 2, delay_hours: 24, channel: 'email',
+        subject: 'Make your page look ready to book',
+        preview: `Add your photo and the details clients trust.`,
+        body: p(`Add your photo and a line about what you do — it's what makes clients trust you enough to book.`) + p(`<a href="${BL}/dashboard">Complete profile →</a>`) + SIGN_TITHI },
+      // WhatsApp nudge at ~48h quiet — Onboarding Nudge: {{1}} name, {{2}} account name, {{3}} link.
+      { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.onboarding,
+        variables: ['{{first_name}}', '{{account_name}}', '{{booking_link}}'],
         subject: null, body: `Hi {{first_name}} 👋 Your Book A Sloth page is one service away from live. Want a hand finishing it?` },
-      { step_no: 4, delay_hours: 24, channel: 'email', subject: 'Add your first service',
-        body: p(`Bookings need something to book. Add one service and you're live.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) },
-      { step_no: 5, delay_hours: 72, channel: 'email', subject: 'Need a hand getting live?',
-        body: p(`Reply and tell me where you're stuck — I read every one.`) + SIGN_TITHI },
+      { step_no: 4, delay_hours: 24, channel: 'email',
+        subject: 'Add your first service',
+        preview: `Add one service, set the price, you're ready to share.`,
+        body: p(`Give your clients something to book. Add one service, set the price, and your page can start taking bookings.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) + SIGN_TITHI },
+      { step_no: 5, delay_hours: 72, channel: 'email',
+        subject: 'Need a hand getting live?',
+        preview: `Reply with a screenshot of where you're stuck.`,
+        body: p(`Not sure what to fill in? Reply to this email with a screenshot of where you're stuck — I'll take a look.`) + SIGN_TITHI },
     ],
   },
   {
@@ -64,14 +69,24 @@ const SEQUENCES = [
     description: 'Host is live but has zero paid bookings — help land the first.',
     is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
-      { step_no: 1, delay_hours: 0,  channel: 'email', subject: "Your page is ready — now let's get the first booking",
-        body: p(`You're live. Most first bookings come from sharing your link just once.`) + p(`<a href="${BL}/dashboard">Share your page →</a>`) },
-      { step_no: 2, delay_hours: 72, channel: 'email', subject: '3 ways hosts get their first booking',
-        body: p(`A link in your bio, one WhatsApp broadcast, one Instagram story. That's usually all it takes.`) },
-      // WhatsApp nudge when the first booking still hasn't happened.
-      { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.firstBooking, variables: ['{{first_name}}'],
+      { step_no: 1, delay_hours: 0,  channel: 'email',
+        subject: "Your page is ready — now let's get the first booking",
+        preview: `Get your link in front of someone who already knows you.`,
+        body: p(`You're live. Now let's get your link in front of someone who already knows you.`) + p(`<a href="${BL}/dashboard">Share your page →</a>`) + SIGN_TITHI },
+      { step_no: 2, delay_hours: 72, channel: 'email',
+        subject: '3 ways hosts get their first booking',
+        preview: `Copy-paste scripts for WhatsApp, bio and story.`,
+        body: p(`Pick one — don't overthink it.`)
+          + p(`<b>1. WhatsApp</b> — "I'm now taking bookings online. Pick a time here: ${BL}/{{username}}"`)
+          + p(`<b>2. Instagram</b> — add your link to your bio.`)
+          + p(`<b>3. Story</b> — "Bookings are now open 👇" + your link.`) + SIGN_TITHI },
+      // WhatsApp nudge — Get First Booking: {{1}} name, {{2}} public profile URL.
+      { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.firstBooking,
+        variables: ['{{first_name}}', '{{booking_link}}/{{username}}'],
         subject: null, body: `{{first_name}}, share your booking link once today — most first bookings come from a single share 🚀` },
-      { step_no: 4, delay_hours: 48, channel: 'email', subject: "Still quiet? Let's fix that together",
+      { step_no: 4, delay_hours: 48, channel: 'email',
+        subject: "Still quiet? Let's fix that together",
+        preview: `Send me your link — I'll tell you what I'd change.`,
         body: p(`Reply with your link and I'll tell you what I'd change.`) + SIGN_TITHI },
     ],
   },
@@ -80,35 +95,43 @@ const SEQUENCES = [
     description: 'Inactive 30+ days, never converted — re-engage (nudge only; these leads never paid).',
     is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
-      { step_no: 1, delay_hours: 0,   channel: 'email', subject: 'Still thinking about it, {{first_name}}?',
-        body: p(`Your Book A Sloth page is still here. Picking up where you left off takes about two minutes.`) + p(`<a href="${BL}/dashboard">Pick up where you left off →</a>`) },
-      { step_no: 2, delay_hours: 120, channel: 'email', subject: "What's new since you last looked",
-        body: p(`Faster payouts, WhatsApp booking reminders, and a cleaner booking page. Worth another look.`) + p(`<a href="${BL}/dashboard">See what's new →</a>`) + SIGN_TITHI },
+      { step_no: 1, delay_hours: 0,   channel: 'email',
+        subject: 'Your booking page is still waiting for you',
+        preview: `Pick up where you left off whenever you're ready.`,
+        body: p(`Your Book A Sloth page is still here. Pick up where you left off — about two minutes.`) + p(`<a href="${BL}/dashboard">Pick up where you left off →</a>`) + SIGN_TITHI },
+      { step_no: 2, delay_hours: 120, channel: 'email',
+        subject: 'A few things got better',
+        preview: `Faster payouts, WhatsApp reminders, a cleaner page.`,
+        body: p(`A few things got better since you last looked: payouts are faster, your clients get WhatsApp booking reminders, and your booking page is cleaner and quicker to book on.`) + p(`<a href="${BL}/dashboard">See what's new →</a>`) + SIGN_TITHI },
     ],
   },
   {
     // NEW — enrolled by subscriptionService.markCancelled for hosts who CANCELLED a
     // paid plan. Carries the win-back OFFER (from Sujata). Redemption is manual:
-    // the host replies / taps and an admin grants it via Host360 (no coupon engine).
+    // the host renews and an admin adds the 2 bonus months via Host360.
     name: 'Churn-winback', sender_key: 'tithi',
     description: 'Host cancelled a paid subscription — win them back with an offer (Sujata).',
     is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
       { step_no: 1, delay_hours: 0, channel: 'email', sender_key: 'tithi',
         subject: 'Sorry to see you go, {{first_name}}',
-        body: p(`You cancelled — totally fair. Before you leave for good, is there anything we can fix?`) + p(`Just reply and tell me what wasn't working.`) + SIGN_TITHI },
-      // The OFFER — from Sujata (marketing voice). Conditional on renewal; admin
-      // adds the 2 bonus months in Host360 once the host has renewed.
+        preview: `Tell me what got in the way — 30 seconds.`,
+        body: p(`You cancelled your plan, and I'd genuinely like to know why.`)
+          + p(`What was the biggest reason? — Too expensive · Didn't get enough bookings · Something was missing · Something wasn't working · Other.`)
+          + p(`Just hit reply, or:`) + p(`<a href="${BL}/feedback">Share your feedback →</a>`) + SIGN_TITHI },
+      // The OFFER — from Sujata. Conditional on renewal; admin adds the 2 bonus months.
       { step_no: 2, delay_hours: 48, channel: 'email', sender_key: 'sujata',
-        subject: 'Renew and get 2 months free, {{first_name}}',
-        body: p(`We'd love to have you back, {{first_name}}. ${OFFER_LINE}`) + p(`<a href="${BL}/dashboard">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add the 2 months.`) + SIGN_SUJATA },
-      // WhatsApp carrying the same offer (placeholder AiSensy template).
+        subject: `Come back. We'll give you 2 months free.`,
+        preview: `Pick monthly or yearly — we add 2 extra months.`,
+        body: p(`We'd love to have you back, {{first_name}}. Come back and we'll give you <b>2 months free</b> — pick monthly or yearly, we add 2 months on top.`) + p(`<a href="${BL}/dashboard">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add the 2 months.`) + SIGN_SUJATA },
+      // WhatsApp offer — Winback Offer: {{1}} name, {{2}} product, {{3}} offer, {{4}} renewal link.
       { step_no: 3, delay_hours: 24, channel: 'whatsapp', sender_key: 'sujata', template_key: WA.winback,
-        variables: ['{{first_name}}'],
+        variables: ['{{first_name}}', 'Book A Sloth', '2 Month Addition', '{{booking_link}}/dashboard/renewal'],
         subject: null, body: `{{first_name}}, renew your Book A Sloth plan and we'll add 2 months free on top. Reply RENEW 💛` },
       { step_no: 4, delay_hours: 96, channel: 'email', sender_key: 'tithi',
-        subject: 'Not the price? Let\'s talk',
-        body: p(`If price wasn't the issue, a quick 15 minutes might be. Reply and we'll find a time.`) + SIGN_TITHI },
+        subject: 'What stopped Book A Sloth from working for you?',
+        preview: `Tell me what got in the way — I'll look into it.`,
+        body: p(`If it wasn't price, tell me what didn't work. Reply to this email — I'll look into it personally.`) + SIGN_TITHI },
     ],
   },
   {
@@ -116,24 +139,31 @@ const SEQUENCES = [
     description: 'Cold lead (event/import/website). SEEDED INACTIVE — real channel is WhatsApp (needs approved AiSensy templates). Email draft kept ready.',
     is_active: false, stop_on_reply: true, stop_on_convert: true,
     steps: [
-      { step_no: 1, delay_hours: 0,   channel: 'email', subject: 'A booking link that gets you paid, {{first_name}}',
-        body: p(`Book A Sloth turns your link into bookings and payments — no back-and-forth.`) + p(`<a href="${BL}">See how it works →</a>`) },
-      { step_no: 2, delay_hours: 48,  channel: 'email', subject: 'Why creators switch to Book A Sloth',
-        body: p(`One link for your services, calendar, and payments. Your clients book and pay in a couple of taps.`) },
-      { step_no: 3, delay_hours: 72,  channel: 'email', subject: 'How {{profession}}s use it',
-        body: p(`People like you use Book A Sloth to take bookings without the DMs and the "what times work?" loop.`) },
-      { step_no: 4, delay_hours: 120, channel: 'email', subject: 'Want me to set it up with you?',
-        body: p(`Reply and I'll help you get your page live — takes a few minutes.`) + SIGN_TITHI },
+      { step_no: 1, delay_hours: 0,   channel: 'email',
+        subject: 'A booking link that gets you paid, {{first_name}}',
+        preview: `Give clients one link to book, pay and pick a time.`,
+        body: p(`Send one link. Your client picks a service, chooses a time, and pays.`) + p(`No "what time are you free?" messages. No payment chasing.`) + p(`<a href="${BL}">See how it works →</a>`) + SIGN_TITHI },
+      { step_no: 2, delay_hours: 48,  channel: 'email',
+        subject: 'One link. Less WhatsApp. More bookings.',
+        preview: `Services, availability and payments, all in one place.`,
+        body: p(`One link for your services, calendar and payments. Your clients book and pay in a couple of taps.`) + SIGN_TITHI },
+      { step_no: 3, delay_hours: 72,  channel: 'email',
+        subject: 'How {{profession}}s turn enquiries into bookings',
+        preview: `From "How much?" to a paid booking — no back-and-forth.`,
+        body: p(`Someone asks to book you. Instead of explaining your availability, sending your UPI details and confirming everything by hand — send them your Book A Sloth link.`) + p(`They choose → book → pay. That's it.`) + SIGN_TITHI },
+      { step_no: 4, delay_hours: 120, channel: 'email',
+        subject: 'Want me to set it up with you?',
+        preview: `Reply "HELP" and I'll get your page live with you.`,
+        body: p(`Reply to this email with <b>HELP</b> and I'll help you get your page live. We can do it together — it won't take long.`) + SIGN_TITHI },
     ],
   },
 ];
 
-// The two offers, also stored in the crm_templates library so they can be sent
-// manually from a lead (the "Offers" surface). category='offer', from Sujata.
+// The offer, also stored in the crm_templates library for manual sends (Sujata).
 const OFFER_TEMPLATES = [
   { channel: 'email', name: 'offer_two_months_on_renewal', label: 'Offer · 2 months free on renewal', category: 'offer',
-    subject: 'Renew and get 2 months free, {{first_name}}',
-    body: p(`Renew any plan — monthly or yearly — and we'll add <b>2 extra months</b> on us, {{first_name}}.`) + p(`<a href="{{booking_link}}/dashboard">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add them.`) + SIGN_SUJATA },
+    subject: `Come back — 2 months free, {{first_name}}`,
+    body: p(`Come back to Book A Sloth and we'll give you <b>2 months free</b>, {{first_name}} — pick monthly or yearly, we add 2 months on top.`) + p(`<a href="{{booking_link}}/dashboard">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add them.`) + SIGN_SUJATA },
 ];
 
 async function upsertSequence(seq) {
@@ -163,7 +193,8 @@ async function upsertSequence(seq) {
     channel: s.channel || 'email', template_key: s.template_key || null,
     sender_key: s.sender_key || null,          // step override; else sequence sender applies
     subject: s.subject || null, body: s.body || null,
-    variables: s.variables || null,            // WhatsApp ordered params
+    // WhatsApp: ordered param array. Email: { preview } for the inbox preheader.
+    variables: s.channel === 'whatsapp' ? (s.variables || null) : (s.preview ? { preview: s.preview } : null),
   }));
   const { error: stepErr } = await supabaseAdmin.from('crm_sequence_steps').insert(steps);
   if (stepErr) throw stepErr;
