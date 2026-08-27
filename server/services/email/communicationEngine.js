@@ -67,7 +67,7 @@ async function loadSettings() {
   if (_settingsCache.value && now - _settingsCache.at < CACHE_TTL_MS) return _settingsCache.value;
   let value = {
     provider: 'smtp', from_name: 'Book A Sloth', from_email: '',
-    support_email: 'support@bookasloth.in', website_url: 'https://bookasloth.com',
+    support_email: 'bolt@bookasloth.in', website_url: 'https://bookasloth.com',
     logo_url: '', brand_color: '#FE5100', footer_html: '',
   };
   try {
