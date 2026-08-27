@@ -18,7 +18,7 @@ const { isLoadTestMode } = require('../config/loadTestMode');
 const { loadSettings } = require('../services/email/communicationEngine');
 const { getProvider } = require('../services/email/providers');
 
-const sendEmail = async ({ to, subject, html, text, attachments, fromName, fromEmail }) => {
+const sendEmail = async ({ to, subject, html, text, attachments, fromName, fromEmail, replyTo }) => {
   if (isLoadTestMode()) return; // no email egress in load mode
   const settings = await loadSettings();
   const provider = getProvider(settings.provider);
@@ -27,6 +27,8 @@ const sendEmail = async ({ to, subject, html, text, attachments, fromName, fromE
     // Optional per-send persona override (CRM Tithi/Sujata); else the global default.
     fromName: fromName || settings.from_name,
     fromEmail: fromEmail || settings.from_email,
+    // Replies route to the only monitored inbox (bolt@) even when From is a persona.
+    replyTo: replyTo || settings.support_email || 'bolt@bookasloth.in',
   });
   // Preserve the old raw-SMTP behaviour: a failed send throws so inline callers
   // (contactController etc.) still return their 5xx; fire-and-forget callers

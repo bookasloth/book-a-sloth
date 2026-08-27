@@ -137,7 +137,7 @@ async function dispatch(row, leadArg, opts = {}) {
     result = await email.send({
       lead, subject, html, text: renderVars(row.variables?.text, lead),
       category: row.sender_key === 'sujata' ? 'Offer' : '',   // header pill
-      fromName: sender?.fromName, fromEmail: sender?.fromEmail, automated,
+      fromName: sender?.fromName, fromEmail: sender?.fromEmail, replyTo: sender?.replyTo, automated,
     });
   }
 

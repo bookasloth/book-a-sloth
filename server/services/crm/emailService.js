@@ -46,7 +46,7 @@ function styleBody(html) {
  * @param {string} [p.fromName] [p.fromEmail] persona override
  * @returns {{success:boolean, skipped?:boolean, reason?:string, providerMessageId?:string, error?:string}}
  */
-async function send({ lead, subject, html, text, category, fromName, fromEmail, automated = false }) {
+async function send({ lead, subject, html, text, category, fromName, fromEmail, replyTo, automated = false }) {
   const gate = await canSend(lead, 'email', { automated });
   if (!gate.ok) return { success: false, skipped: true, reason: gate.reason, defer: gate.defer };
 
@@ -67,7 +67,7 @@ async function send({ lead, subject, html, text, category, fromName, fromEmail, 
   } catch (_) { /* fail open: send the raw body rather than nothing */ }
 
   try {
-    const res = await sendEmail({ to: lead.email, subject, html: finalHtml, text, fromName, fromEmail });
+    const res = await sendEmail({ to: lead.email, subject, html: finalHtml, text, fromName, fromEmail, replyTo });
     // Resend provider returns { success, id }; SMTP returns { success, messageId }.
     const providerMessageId = res?.id || res?.messageId || null;
     return { success: true, providerMessageId };

@@ -151,7 +151,7 @@ function shellClose({ bodyHtml, cta, footerRow }) {
 function renderCustomerLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCategory, settings, data }) {
   const brand    = settings.brand_color   || '#FE5100';
   const website  = settings.website_url   || 'https://bookasloth.com';
-  const support  = settings.support_email || 'support@bookasloth.in';
+  const support  = settings.support_email || 'bolt@bookasloth.in';
   const fromName = settings.from_name     || 'Book A Sloth';
   const year     = new Date().getFullYear();
   const unsubToken = data.unsubscribe_token || '';
