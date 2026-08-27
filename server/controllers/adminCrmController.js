@@ -15,6 +15,7 @@ const followUpService = require('../services/crm/followUpService');
 const sequenceService = require('../services/crm/sequenceService');
 const attribution = require('../services/crm/attribution');
 const deskService = require('../services/crm/deskService');
+const reportService = require('../services/crm/reportService');
 
 const actor = (req) => req.admin?.id || null;
 
@@ -35,6 +36,10 @@ const dashboard = async (req, res) => {
 };
 const pipeline = async (req, res) => {
   try { res.json(await leadService.pipelineCounts()); } catch (e) { safeError(res, e); }
+};
+// GET /admin/crm/reports — attribution (source→paying→revenue), funnel, timing.
+const reports = async (req, res) => {
+  try { res.json(await reportService.getReport()); } catch (e) { safeError(res, e); }
 };
 
 // ── Leads ─────────────────────────────────────────────────────
@@ -412,7 +417,7 @@ const refreshAttribution = async (req, res) => {
 };
 
 module.exports = {
-  dashboard, pipeline, getDesk,
+  dashboard, pipeline, reports, getDesk,
   listLeads, createLead, getLead, updateLead, getTimeline, leadMessages,
   setStatus, setOwner, addTag, removeTag, setDnc, addNote, logCall,
   sendWhatsApp, sendEmail,

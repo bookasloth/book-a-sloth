@@ -18,6 +18,7 @@ const manage = requireAdmin('leads.manage');
 // Dashboard
 router.get('/dashboard', view, c.dashboard);
 router.get('/pipeline', view, c.pipeline);
+router.get('/reports', view, c.reports); // attribution + funnel + timing analytics
 router.get('/desk', view, c.getDesk); // Sales Desk: five auto-populated queues
 
 // Follow-ups (collection-level) + sequences list
