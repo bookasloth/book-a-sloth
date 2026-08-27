@@ -1,92 +1,140 @@
 'use strict';
 /**
  * seedLifecycleSequences.js — create the nurture sequences the CRM lifecycle
- * engine (services/crm/lifecycleEngine.js) enrols leads into.
+ * engine (services/crm/lifecycleEngine.js) enrols leads into, plus the churn
+ * win-back sequence that markCancelled enrols cancelled hosts into.
  *
- * The engine enrols BY EXACT NAME, so these names must match its SEQ constants
- * exactly. Run on BOTH DBs (staging Tokyo → prod Mumbai), per project convention:
+ * The engine enrols BY EXACT NAME, so names must match its SEQ constants exactly.
+ * Run on BOTH DBs (staging Tokyo → prod Mumbai), per project convention:
  *
  *     node server/scripts/seedLifecycleSequences.js
  *
  * Idempotent: each sequence is matched by name; on re-run its steps are deleted
  * and reinserted so copy edits re-apply cleanly and no duplicates accumulate.
  *
- * Channel decision (see docs/nurture-sequence-content-spec):
- *  - The three host-facing sequences are EMAIL — hosts always have an email and
- *    renderVars personalises {{first_name}} etc. with no template approval.
- *  - "New Lead nurture" is seeded INACTIVE: cold leads are often phone-only and
- *    the real channel is WhatsApp, which needs approved AiSensy templates + a
- *    param-wiring change. Flip it active once that lands.
+ * SENDERS (v3.122): every email carries a sender_key → it sends FROM that persona.
+ *  - tithi  = the automated lifecycle voice (onboarding, first-booking, nudges).
+ *  - sujata = the offers/marketing voice (anything with a discount or deadline).
+ *
+ * WHATSAPP: steps with channel 'whatsapp' reference an APPROVED AiSensy campaign
+ * name in template_key. Those names are placeholders until the templates are
+ * created + approved in AiSensy — the step stays queued (and the kill-switch is
+ * OFF anyway), so nothing sends prematurely. WA params come from step.variables.
  *
  * Nothing here sends anything — sequences only fire through messageService,
- * which is still gated by the crm_admin_sends kill-switch (default OFF).
+ * still gated by the crm_admin_sends kill-switch (default OFF).
  */
 require('dotenv').config();
 const { supabaseAdmin } = require('../config/supabase');
 
 // {{first_name}} {{name}} {{business_name}} {{profession}} {{city}} {{booking_link}}
-// are the tokens renderVars fills. Links use {{booking_link}}/dashboard — never
-// {{username}} (leads carry no username; it would collapse to empty).
 const BL = '{{booking_link}}';
 const p = (html) => `<p>${html}</p>`;
+const SIGN_TITHI = p(`— Tithi, Book A Sloth`);
+const SIGN_SUJATA = p(`— Sujata, Book A Sloth`);
+
+// WhatsApp placeholder campaigns (create + approve these in AiSensy, then they fire).
+const WA = { onboarding: 'onboarding_nudge_wa', firstBooking: 'first_booking_wa', winback: 'winback_offer_wa' };
+
+// The two win-back offers — kept in one place so email + WhatsApp stay in sync.
+const OFFER_LINE = `Two ways back, your pick: <b>1 month of Studio free</b> (our top plan, on us) — or <b>2 extra months added to your current plan</b>.`;
 
 const SEQUENCES = [
   {
-    name: 'Signed-up-not-activated',
+    name: 'Signed-up-not-activated', sender_key: 'tithi',
     description: 'Host signed up but has not finished onboarding — nudge to live.',
     is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
-      { step_no: 1, delay_hours: 0,  subject: 'Welcome to Book A Sloth, {{first_name}} 🦥',
+      { step_no: 1, delay_hours: 0,  channel: 'email', subject: 'Welcome to Book A Sloth, {{first_name}} 🦥',
         body: p(`You're in. Your booking page is almost ready — finish setup and start taking bookings.`) + p(`<a href="${BL}/dashboard">Finish setup →</a>`) },
-      { step_no: 2, delay_hours: 24, subject: 'Finish your profile (2 minutes)',
+      { step_no: 2, delay_hours: 24, channel: 'email', subject: 'Finish your profile (2 minutes)',
         body: p(`A complete profile books more. Add your photo and a line about what you do.`) + p(`<a href="${BL}/dashboard">Complete profile →</a>`) },
-      { step_no: 3, delay_hours: 48, subject: 'Add your first service',
+      // WhatsApp nudge at ~48h quiet — highest-open channel for a stalled setup.
+      { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.onboarding, variables: ['{{first_name}}'],
+        subject: null, body: `Hi {{first_name}} 👋 Your Book A Sloth page is one service away from live. Want a hand finishing it?` },
+      { step_no: 4, delay_hours: 24, channel: 'email', subject: 'Add your first service',
         body: p(`Bookings need something to book. Add one service and you're live.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) },
-      { step_no: 4, delay_hours: 48, subject: 'Your booking link is your storefront',
-        body: p(`Share your link anywhere — bio, WhatsApp, DMs. That's where bookings come from.`) + p(`<a href="${BL}/dashboard">Get your link →</a>`) },
-      { step_no: 5, delay_hours: 48, subject: 'Need a hand getting live?',
-        body: p(`Reply and tell me where you're stuck — I read every one.`) + p(`— Shubham, Book A Sloth`) },
+      { step_no: 5, delay_hours: 72, channel: 'email', subject: 'Need a hand getting live?',
+        body: p(`Reply and tell me where you're stuck — I read every one.`) + SIGN_TITHI },
     ],
   },
   {
-    name: 'Activated-no-booking',
+    name: 'Activated-no-booking', sender_key: 'tithi',
     description: 'Host is live but has zero paid bookings — help land the first.',
     is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
-      { step_no: 1, delay_hours: 0,  subject: "Your page is ready — now let's get the first booking",
+      { step_no: 1, delay_hours: 0,  channel: 'email', subject: "Your page is ready — now let's get the first booking",
         body: p(`You're live. Most first bookings come from sharing your link just once.`) + p(`<a href="${BL}/dashboard">Share your page →</a>`) },
-      { step_no: 2, delay_hours: 72, subject: '3 ways hosts get their first booking',
+      { step_no: 2, delay_hours: 72, channel: 'email', subject: '3 ways hosts get their first booking',
         body: p(`A link in your bio, one WhatsApp broadcast, one Instagram story. That's usually all it takes.`) },
-      { step_no: 3, delay_hours: 96, subject: "Still quiet? Let's fix that together",
-        body: p(`Reply with your link and I'll tell you what I'd change.`) + p(`— Shubham, Book A Sloth`) },
+      // WhatsApp nudge when the first booking still hasn't happened.
+      { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.firstBooking, variables: ['{{first_name}}'],
+        subject: null, body: `{{first_name}}, share your booking link once today — most first bookings come from a single share 🚀` },
+      { step_no: 4, delay_hours: 48, channel: 'email', subject: "Still quiet? Let's fix that together",
+        body: p(`Reply with your link and I'll tell you what I'd change.`) + SIGN_TITHI },
     ],
   },
   {
-    name: 'Win-back',
-    description: 'Inactive 30+ days, never converted — re-engage.',
+    name: 'Win-back', sender_key: 'tithi',
+    description: 'Inactive 30+ days, never converted — re-engage (nudge only; these leads never paid).',
     is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
-      { step_no: 1, delay_hours: 0,   subject: 'Still thinking about it, {{first_name}}?',
+      { step_no: 1, delay_hours: 0,   channel: 'email', subject: 'Still thinking about it, {{first_name}}?',
         body: p(`Your Book A Sloth page is still here. Picking up where you left off takes about two minutes.`) + p(`<a href="${BL}/dashboard">Pick up where you left off →</a>`) },
-      { step_no: 2, delay_hours: 120, subject: "What's new since you last looked",
-        body: p(`Faster payouts, WhatsApp booking reminders, and a cleaner booking page. Worth another look.`) + p(`<a href="${BL}/dashboard">See what's new →</a>`) },
+      { step_no: 2, delay_hours: 120, channel: 'email', subject: "What's new since you last looked",
+        body: p(`Faster payouts, WhatsApp booking reminders, and a cleaner booking page. Worth another look.`) + p(`<a href="${BL}/dashboard">See what's new →</a>`) + SIGN_TITHI },
     ],
   },
   {
-    name: 'New Lead nurture',
-    description: 'Cold lead (event/import/website). SEEDED INACTIVE — real channel is WhatsApp (needs approved AiSensy templates + param wiring). Email draft kept ready.',
-    is_active: false, stop_on_reply: true, stop_on_convert: true,
+    // NEW — enrolled by subscriptionService.markCancelled for hosts who CANCELLED a
+    // paid plan. Carries the win-back OFFER (from Sujata). Redemption is manual:
+    // the host replies / taps and an admin grants it via Host360 (no coupon engine).
+    name: 'Churn-winback', sender_key: 'tithi',
+    description: 'Host cancelled a paid subscription — win them back with an offer (Sujata).',
+    is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
-      { step_no: 1, delay_hours: 0,   subject: 'A booking link that gets you paid, {{first_name}}',
-        body: p(`Book A Sloth turns your link into bookings and payments — no back-and-forth.`) + p(`<a href="${BL}">See how it works →</a>`) },
-      { step_no: 2, delay_hours: 48,  subject: 'Why creators switch to Book A Sloth',
-        body: p(`One link for your services, calendar, and payments. Your clients book and pay in a couple of taps.`) },
-      { step_no: 3, delay_hours: 72,  subject: 'How {{profession}}s use it',
-        body: p(`People like you use Book A Sloth to take bookings without the DMs and the "what times work?" loop.`) },
-      { step_no: 4, delay_hours: 120, subject: 'Want me to set it up with you?',
-        body: p(`Reply and I'll help you get your page live — takes a few minutes.`) + p(`— Shubham, Book A Sloth`) },
+      { step_no: 1, delay_hours: 0, channel: 'email', sender_key: 'tithi',
+        subject: 'Sorry to see you go, {{first_name}}',
+        body: p(`You cancelled — totally fair. Before you leave for good, is there anything we can fix?`) + p(`Just reply and tell me what wasn't working.`) + SIGN_TITHI },
+      // The OFFER — from Sujata (marketing voice). Manual claim.
+      { step_no: 2, delay_hours: 48, channel: 'email', sender_key: 'sujata',
+        subject: 'A little something to come back, {{first_name}}',
+        body: p(`We'd love to have you back. ${OFFER_LINE}`) + p(`Reply <b>CLAIM</b> and we'll set it up for you — no card needed.`) + SIGN_SUJATA },
+      // WhatsApp carrying the same offer (placeholder AiSensy template).
+      { step_no: 3, delay_hours: 24, channel: 'whatsapp', sender_key: 'sujata', template_key: WA.winback,
+        variables: ['{{first_name}}'],
+        subject: null, body: `{{first_name}}, come back to Book A Sloth: 1 month of Studio free, or 2 months added to your plan. Reply CLAIM 💛` },
+      { step_no: 4, delay_hours: 96, channel: 'email', sender_key: 'tithi',
+        subject: 'Not the price? Let\'s talk',
+        body: p(`If price wasn't the issue, a quick 15 minutes might be. Reply and we'll find a time.`) + SIGN_TITHI },
     ],
   },
+  {
+    name: 'New Lead nurture', sender_key: 'tithi',
+    description: 'Cold lead (event/import/website). SEEDED INACTIVE — real channel is WhatsApp (needs approved AiSensy templates). Email draft kept ready.',
+    is_active: false, stop_on_reply: true, stop_on_convert: true,
+    steps: [
+      { step_no: 1, delay_hours: 0,   channel: 'email', subject: 'A booking link that gets you paid, {{first_name}}',
+        body: p(`Book A Sloth turns your link into bookings and payments — no back-and-forth.`) + p(`<a href="${BL}">See how it works →</a>`) },
+      { step_no: 2, delay_hours: 48,  channel: 'email', subject: 'Why creators switch to Book A Sloth',
+        body: p(`One link for your services, calendar, and payments. Your clients book and pay in a couple of taps.`) },
+      { step_no: 3, delay_hours: 72,  channel: 'email', subject: 'How {{profession}}s use it',
+        body: p(`People like you use Book A Sloth to take bookings without the DMs and the "what times work?" loop.`) },
+      { step_no: 4, delay_hours: 120, channel: 'email', subject: 'Want me to set it up with you?',
+        body: p(`Reply and I'll help you get your page live — takes a few minutes.`) + SIGN_TITHI },
+    ],
+  },
+];
+
+// The two offers, also stored in the crm_templates library so they can be sent
+// manually from a lead (the "Offers" surface). category='offer', from Sujata.
+const OFFER_TEMPLATES = [
+  { channel: 'email', name: 'offer_studio_month_free', label: 'Offer · 1 month Studio free', category: 'offer',
+    subject: 'Your Studio month, on us — {{first_name}}',
+    body: p(`Here's a month of <b>Studio</b> (our top plan) free, {{first_name}} — every feature unlocked, nothing to pay.`) + p(`Reply <b>CLAIM</b> and we'll switch it on.`) + SIGN_SUJATA },
+  { channel: 'email', name: 'offer_two_months_added', label: 'Offer · 2 months added to plan', category: 'offer',
+    subject: '2 months on us, {{first_name}}',
+    body: p(`We've set aside <b>2 extra months</b> on your current plan, {{first_name}} — free.`) + p(`Reply <b>CLAIM</b> to add them.`) + SIGN_SUJATA },
 ];
 
 async function upsertSequence(seq) {
@@ -96,6 +144,7 @@ async function upsertSequence(seq) {
   const row = {
     name: seq.name, description: seq.description, is_active: seq.is_active,
     stop_on_reply: seq.stop_on_reply, stop_on_convert: seq.stop_on_convert,
+    sender_key: seq.sender_key || null,
     created_by: 'seed', updated_at: new Date().toISOString(),
   };
 
@@ -103,7 +152,6 @@ async function upsertSequence(seq) {
   if (existing) {
     await supabaseAdmin.from('crm_sequences').update(row).eq('id', existing.id);
     seqId = existing.id;
-    // Replace steps so copy edits re-apply and counts never drift on re-run.
     await supabaseAdmin.from('crm_sequence_steps').delete().eq('sequence_id', seqId);
   } else {
     const { data, error } = await supabaseAdmin.from('crm_sequences').insert(row).select('id').single();
@@ -113,7 +161,10 @@ async function upsertSequence(seq) {
 
   const steps = seq.steps.map((s) => ({
     sequence_id: seqId, step_no: s.step_no, delay_hours: s.delay_hours,
-    channel: 'email', template_key: null, subject: s.subject, body: s.body,
+    channel: s.channel || 'email', template_key: s.template_key || null,
+    sender_key: s.sender_key || null,          // step override; else sequence sender applies
+    subject: s.subject || null, body: s.body || null,
+    variables: s.variables || null,            // WhatsApp ordered params
   }));
   const { error: stepErr } = await supabaseAdmin.from('crm_sequence_steps').insert(steps);
   if (stepErr) throw stepErr;
@@ -121,12 +172,24 @@ async function upsertSequence(seq) {
   return { name: seq.name, seqId, steps: steps.length, active: seq.is_active, created: !existing };
 }
 
+async function upsertOfferTemplate(t) {
+  const { data: existing } = await supabaseAdmin.from('crm_templates').select('id').eq('name', t.name).maybeSingle();
+  const row = { ...t, is_active: true, created_by: 'seed', updated_at: new Date().toISOString() };
+  if (existing) await supabaseAdmin.from('crm_templates').update(row).eq('id', existing.id);
+  else { const { error } = await supabaseAdmin.from('crm_templates').insert(row); if (error) throw error; }
+  return { name: t.name, created: !existing };
+}
+
 async function main() {
   for (const seq of SEQUENCES) {
     const r = await upsertSequence(seq);
     console.log(`${r.created ? 'created' : 'updated'}: "${r.name}" — ${r.steps} steps, active=${r.active}`);
   }
-  console.log('Done. Sequences match lifecycleEngine SEQ names; run on BOTH DBs.');
+  for (const t of OFFER_TEMPLATES) {
+    const r = await upsertOfferTemplate(t);
+    console.log(`${r.created ? 'created' : 'updated'} offer template: "${r.name}"`);
+  }
+  console.log('Done. Sequences match lifecycleEngine SEQ names + Churn-winback (markCancelled). Run on BOTH DBs.');
 }
 
 main().then(() => process.exit(0)).catch((e) => { console.error(e.message); process.exit(1); });

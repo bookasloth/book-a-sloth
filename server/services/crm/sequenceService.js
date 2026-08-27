@@ -45,6 +45,20 @@ async function enroll(sequenceId, leadId, enrolledBy = '') {
   return enrollment;
 }
 
+/** Enroll a lead into the active sequence with this exact name. Best-effort:
+ *  returns null if no such active sequence exists (e.g. seed not run yet). */
+async function enrollByName(name, leadId, enrolledBy = '') {
+  try {
+    const { data: seq } = await supabaseAdmin.from('crm_sequences')
+      .select('id, is_active').eq('name', name).maybeSingle();
+    if (!seq?.id || !seq.is_active) return null;
+    return await enroll(seq.id, leadId, enrolledBy);
+  } catch (e) {
+    console.warn('[crm] enrollByName failed:', e?.message || e);
+    return null;
+  }
+}
+
 async function stop(enrollmentId, reason) {
   const { data } = await supabaseAdmin.from('crm_sequence_enrollments')
     .update({ status: 'stopped', stopped_reason: reason, updated_at: new Date().toISOString() })
@@ -91,7 +105,10 @@ async function processDue() {
       await messageService.enqueue({
         leadId: en.lead_id, channel: next.channel, templateKey: next.template_key,
         subject: next.subject, body: next.body,
-        variables: { html: next.body, params: [] },
+        // WhatsApp steps carry ordered template params in step.variables (jsonb array).
+        variables: { html: next.body, params: Array.isArray(next.variables) ? next.variables : (next.variables?.params || []) },
+        // Step persona overrides the sequence persona; null → global default.
+        senderKey: next.sender_key || seq.sender_key || null,
         sequenceId: en.sequence_id, enrollmentId: en.id,
         idempotencyKey: `seq:${en.id}:${next.step_no}`, createdBy: 'sequence', immediate: false,
       });
@@ -110,4 +127,4 @@ async function processDue() {
   return { sent, stopped, completed };
 }
 
-module.exports = { enroll, stop, processDue, stopReason };
+module.exports = { enroll, enrollByName, stop, processDue, stopReason };

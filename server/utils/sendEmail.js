@@ -18,14 +18,15 @@ const { isLoadTestMode } = require('../config/loadTestMode');
 const { loadSettings } = require('../services/email/communicationEngine');
 const { getProvider } = require('../services/email/providers');
 
-const sendEmail = async ({ to, subject, html, text, attachments }) => {
+const sendEmail = async ({ to, subject, html, text, attachments, fromName, fromEmail }) => {
   if (isLoadTestMode()) return; // no email egress in load mode
   const settings = await loadSettings();
   const provider = getProvider(settings.provider);
   const res = await provider.sendEmail({
     to, subject, html, text, attachments,
-    fromName: settings.from_name,
-    fromEmail: settings.from_email,
+    // Optional per-send persona override (CRM Tithi/Sujata); else the global default.
+    fromName: fromName || settings.from_name,
+    fromEmail: fromEmail || settings.from_email,
   });
   // Preserve the old raw-SMTP behaviour: a failed send throws so inline callers
   // (contactController etc.) still return their 5xx; fire-and-forget callers
