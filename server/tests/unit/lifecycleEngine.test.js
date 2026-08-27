@@ -47,15 +47,21 @@ test('linked host finished onboarding but no booking → activated + no-booking 
   expect(d.enroll).toBe(SEQ.NO_BOOKING);
 });
 
-test('linked host onboarded WITH a booking → no no-booking enroll', () => {
+test('linked host onboarded WITH a booking → first-booking celebration', () => {
   const d = decide({ status: 'activated', profile_id: 'p1' }, { onboardingComplete: true, hasBooking: true }, NOW);
-  expect(d.enroll).toBeNull();
-  expect(d.nextAction).toBe('Nurturing');
+  expect(d.enroll).toBe(SEQ.FIRST_BOOKING);
+  expect(d.nextAction).toBe('Celebrate first booking');
 });
 
-test('signed up but onboarding stale → signed-up-not-activated sequence', () => {
+test('signed up but onboarding stale → first unfilled gap (no photo)', () => {
   const d = decide({ status: 'new', profile_id: 'p1', created_at: daysAgo(5) }, { onboardingComplete: false, hasBooking: false }, NOW);
   expect(d.status).toBe('new');
+  expect(d.enroll).toBe(SEQ.NO_PHOTO);
+});
+
+test('onboarding stale, all gaps filled but flag unset → generic finish nudge', () => {
+  const d = decide({ status: 'new', profile_id: 'p1', created_at: daysAgo(5) },
+    { onboardingComplete: false, hasPhoto: true, hasService: true, hasAvailability: true }, NOW);
   expect(d.enroll).toBe(SEQ.NOT_ACTIVATED);
 });
 

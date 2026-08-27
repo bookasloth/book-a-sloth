@@ -32,6 +32,7 @@ const BL = '{{booking_link}}';
 const p = (html) => `<p>${html}</p>`;
 const SIGN_TITHI = p(`— Tithi`);
 const SIGN_SUJATA = p(`— Sujata`);
+const SIGN_DURGA = p(`— Durga`);
 
 // Approved AiSensy Campaign Names (the human name sendCampaign uses).
 const WA = { onboarding: 'Onboarding Nudge', firstBooking: 'Get First Booking', winback: 'Winback Offer - Additional Month' };
@@ -52,7 +53,7 @@ const SEQUENCES = [
         body: p(`Add your photo and a line about what you do — it's what makes clients trust you enough to book.`) + p(`<a href="${BL}/dashboard">Complete profile →</a>`) + SIGN_TITHI },
       // WhatsApp nudge at ~48h quiet — Onboarding Nudge: {{1}} name, {{2}} account name, {{3}} link.
       { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.onboarding,
-        variables: ['{{first_name}}', '{{account_name}}', '{{booking_link}}'],
+        variables: ['{{first_name}}', '{{account_name}}', '{{booking_link}}/dashboard/'],
         subject: null, body: `Hi {{first_name}} 👋 Your Book A Sloth page is one service away from live. Want a hand finishing it?` },
       { step_no: 4, delay_hours: 24, channel: 'email',
         subject: 'Add your first service',
@@ -123,15 +124,79 @@ const SEQUENCES = [
       { step_no: 2, delay_hours: 48, channel: 'email', sender_key: 'sujata',
         subject: `Come back. We'll give you 2 months free.`,
         preview: `Pick monthly or yearly — we add 2 extra months.`,
-        body: p(`We'd love to have you back, {{first_name}}. Come back and we'll give you <b>2 months free</b> — pick monthly or yearly, we add 2 months on top.`) + p(`<a href="${BL}/dashboard">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add the 2 months.`) + SIGN_SUJATA },
+        body: p(`We'd love to have you back, {{first_name}}. Come back and we'll give you <b>2 months free</b> — pick monthly or yearly, we add 2 months on top.`) + p(`<a href="${BL}/dashboard/upgrade">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add the 2 months.`) + SIGN_SUJATA },
       // WhatsApp offer — Winback Offer: {{1}} name, {{2}} product, {{3}} offer, {{4}} renewal link.
       { step_no: 3, delay_hours: 24, channel: 'whatsapp', sender_key: 'sujata', template_key: WA.winback,
-        variables: ['{{first_name}}', 'Book A Sloth', '2 Month Addition', '{{booking_link}}/dashboard/renewal'],
+        variables: ['{{first_name}}', 'Book A Sloth', '2 Month Addition', '{{booking_link}}/dashboard/upgrade'],
         subject: null, body: `{{first_name}}, renew your Book A Sloth plan and we'll add 2 months free on top. Reply RENEW 💛` },
       { step_no: 4, delay_hours: 96, channel: 'email', sender_key: 'tithi',
         subject: 'What stopped Book A Sloth from working for you?',
         preview: `Tell me what got in the way — I'll look into it.`,
         body: p(`If it wasn't price, tell me what didn't work. Reply to this email — I'll look into it personally.`) + SIGN_TITHI },
+    ],
+  },
+  // ── Behavioural onboarding (Phase 6) — the engine enrols the FIRST unfilled gap
+  //    on the go-live path and stops the previous gap's sequence as each is filled.
+  {
+    name: 'Onboarding: add photo', sender_key: 'tithi',
+    description: 'Signed up, no profile photo yet — the #1 trust signal.',
+    is_active: true, stop_on_reply: true, stop_on_convert: true,
+    steps: [
+      { step_no: 1, delay_hours: 0,  channel: 'email',
+        subject: 'One thing left, {{first_name}} — add your photo',
+        preview: `Clients book faster when they can see who they're booking.`,
+        body: p(`Your page is almost there. Add your photo so clients know who they're booking with — it's the first thing they look for.`) + p(`<a href="${BL}/dashboard">Add your photo →</a>`) + SIGN_TITHI },
+      { step_no: 2, delay_hours: 48, channel: 'email',
+        subject: 'A page with a face gets booked',
+        preview: `30 seconds to add your photo.`,
+        body: p(`People book people. Add a photo and your page instantly feels more trustworthy — takes about 30 seconds.`) + p(`<a href="${BL}/dashboard">Add your photo →</a>`) + SIGN_TITHI },
+    ],
+  },
+  {
+    name: 'Onboarding: add service', sender_key: 'tithi',
+    description: 'Has photo but no service — nothing to book yet.',
+    is_active: true, stop_on_reply: true, stop_on_convert: true,
+    steps: [
+      { step_no: 1, delay_hours: 0,  channel: 'email',
+        subject: 'What should clients book, {{first_name}}?',
+        preview: `Add one service and your page can take bookings.`,
+        body: p(`Your page needs something to book. Add one service, set the price — and clients can start booking you.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) + SIGN_TITHI },
+      { step_no: 2, delay_hours: 48, channel: 'email',
+        subject: 'One service is all it takes',
+        preview: `Add it, set a price, share your link.`,
+        body: p(`You don't need to list everything — just one service to go live. You can always add more later.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) + SIGN_TITHI },
+    ],
+  },
+  {
+    name: 'Onboarding: set availability', sender_key: 'tithi',
+    description: "Has a service but no availability — clients can't pick a time.",
+    is_active: true, stop_on_reply: true, stop_on_convert: true,
+    steps: [
+      { step_no: 1, delay_hours: 0,  channel: 'email',
+        subject: 'Your service is ready. Is your calendar?',
+        preview: `Set your hours so clients can pick a time.`,
+        body: p(`You've added a service — nice. Now set your availability so clients can pick a time that works for you both.`) + p(`<a href="${BL}/dashboard/availability">Set availability →</a>`) + SIGN_TITHI },
+      { step_no: 2, delay_hours: 48, channel: 'email',
+        subject: 'Almost live — just add your hours',
+        preview: `Set availability and your page is ready to share.`,
+        body: p(`One step from live: add the hours you're free to take bookings, and your page is ready to share.`) + p(`<a href="${BL}/dashboard/availability">Set availability →</a>`) + SIGN_TITHI },
+    ],
+  },
+  {
+    // Celebration — Durga. stop_on_convert=false so it isn't cut off the moment the
+    // host counts as 'activated' (having a booking is exactly why they're here).
+    name: 'First booking celebration', sender_key: 'durga',
+    description: 'Host just landed their first paid booking — celebrate + teach booking #2.',
+    is_active: true, stop_on_reply: false, stop_on_convert: false,
+    steps: [
+      { step_no: 1, delay_hours: 0,  channel: 'email', sender_key: 'durga',
+        subject: '🎉 Your first booking, {{first_name}}!',
+        preview: `The hard part's done — now let's get booking #2.`,
+        body: p(`Your first booking is in — congratulations! 🎉 That's the hard part done.`) + p(`Now let's get booking #2: share your link with a few more people who'd book you.`) + p(`<a href="${BL}/dashboard">Share your page →</a>`) + SIGN_DURGA },
+      { step_no: 2, delay_hours: 72, channel: 'email', sender_key: 'durga',
+        subject: 'How to get booking #2',
+        preview: `One WhatsApp, one story, one ask this week.`,
+        body: p(`The hosts who grow keep doing one thing: they keep sharing. This week — one WhatsApp broadcast, one Instagram story, one direct ask.`) + SIGN_DURGA },
     ],
   },
   {
@@ -163,7 +228,7 @@ const SEQUENCES = [
 const OFFER_TEMPLATES = [
   { channel: 'email', name: 'offer_two_months_on_renewal', label: 'Offer · 2 months free on renewal', category: 'offer',
     subject: `Come back — 2 months free, {{first_name}}`,
-    body: p(`Come back to Book A Sloth and we'll give you <b>2 months free</b>, {{first_name}} — pick monthly or yearly, we add 2 months on top.`) + p(`<a href="{{booking_link}}/dashboard">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add them.`) + SIGN_SUJATA },
+    body: p(`Come back to Book A Sloth and we'll give you <b>2 months free</b>, {{first_name}} — pick monthly or yearly, we add 2 months on top.`) + p(`<a href="{{booking_link}}/dashboard/upgrade">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add them.`) + SIGN_SUJATA },
 ];
 
 async function upsertSequence(seq) {
