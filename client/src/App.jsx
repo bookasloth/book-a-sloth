@@ -17,6 +17,7 @@ import RouteErrorBoundary from './components/common/RouteErrorBoundary';
 import { useAuth } from './context/AuthContext';
 import { KycProvider } from './context/KycContext';
 import { captureReferral } from './services/api';
+import { captureAttribution } from './utils/attribution';
 import lazyWithRetry from './utils/lazyWithRetry';
 
 // lazyWithRetry wraps React.lazy: it retries transient chunk-fetch failures and,
@@ -281,6 +282,10 @@ function BlogsRedirect() {
 function App() {
   const location = useLocation();
   const { user } = useAuth();
+
+  // Snapshot marketing attribution (UTM/referrer/landing) on first arrival, once,
+  // before any signup/newsletter/enterprise call reads it (CRM Phase 2b).
+  useEffect(() => { captureAttribution(); }, []);
 
   // Full-bleed pages (error / offline) flip this on via ChromeContext so the
   // global Navbar + Footer drop — even the catch-all 404, whose URL is unknown

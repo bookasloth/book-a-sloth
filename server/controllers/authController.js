@@ -385,8 +385,11 @@ const googleVendorAuth = (req, res) => {
   const invite = req.query.invite
     ? String(req.query.invite).trim().toLowerCase().slice(0, 40)
     : undefined;
+  // Marketing attribution — carried through the signed OAuth state so the
+  // callback can stamp UTM/source on the brand-new host lead (CRM Phase 2b).
+  const att = require("../services/crm/attributionInput").cleanAttribution(req.query || {});
   const state = jwt.sign(
-    { flow: "vendor_auth", intent, ...(invite ? { invite } : {}) },
+    { flow: "vendor_auth", intent, ...(invite ? { invite } : {}), ...(att ? { att } : {}) },
     OAUTH_STATE_SECRET,
     { expiresIn: "15m" },
   );
@@ -635,7 +638,7 @@ const googleCallback = async (req, res) => {
         // manual backfill script. Never throws / never blocks the signup.
         await require("../services/crm/leadService").safeUpsertLead(
           { name: profile.name, email: googleEmail, profile_id: profileId },
-          { source: "host_signup", createdBy: "signup" }
+          { source: "host_signup", createdBy: "signup", attribution: statePayload?.att }
         );
       }
 
