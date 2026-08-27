@@ -39,7 +39,7 @@ export default function TagPicker({ tags = [], exclude = [], onSelect, onCreate,
             {TAG_PALETTE.map((c) => (
               <button key={c} type="button" title={c}
                 onClick={() => { onCreate(query, c); onClose?.(); }}
-                className={`w-5 h-5 rounded-full ${swatchClass(c)} ring-offset-1 hover:ring-2 ring-gray-300`} />
+                className={`w-5 h-5 min-h-0 shrink-0 rounded-full ${swatchClass(c)} ring-offset-1 hover:ring-2 ring-gray-300`} />
             ))}
           </div>
         </div>
