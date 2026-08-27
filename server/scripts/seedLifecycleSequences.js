@@ -48,9 +48,9 @@ const SEQUENCES = [
     is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
       { step_no: 1, delay_hours: 0,  channel: 'email', subject: 'Welcome to Book A Sloth, {{first_name}} 🦥',
-        body: p(`You're in. Your booking page is almost ready — finish setup and start taking bookings.`) + p(`<a href="${BL}/dashboard">Finish setup →</a>`) },
+        body: p(`You're in. Your booking page is almost ready — finish setup and start taking bookings.`) + p(`<a href="${BL}/dashboard">Finish setup →</a>`) + SIGN_TITHI },
       { step_no: 2, delay_hours: 24, channel: 'email', subject: 'Finish your profile (2 minutes)',
-        body: p(`A complete profile books more. Add your photo and a line about what you do.`) + p(`<a href="${BL}/dashboard">Complete profile →</a>`) },
+        body: p(`A complete profile books more. Add your photo and a line about what you do.`) + p(`<a href="${BL}/dashboard">Complete profile →</a>`) + SIGN_TITHI },
       // WhatsApp nudge at ~48h quiet — highest-open channel for a stalled setup.
       // Onboarding Nudge template params: {{1}} name, {{2}} account name (profile
       // name), {{3}} link. account_name/username come from the linked profile.
@@ -58,7 +58,7 @@ const SEQUENCES = [
         variables: ['{{first_name}}', '{{account_name}}', '{{booking_link}}'],
         subject: null, body: `Hi {{first_name}} 👋 Your Book A Sloth page is one service away from live. Want a hand finishing it?` },
       { step_no: 4, delay_hours: 24, channel: 'email', subject: 'Add your first service',
-        body: p(`Bookings need something to book. Add one service and you're live.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) },
+        body: p(`Bookings need something to book. Add one service and you're live.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) + SIGN_TITHI },
       { step_no: 5, delay_hours: 72, channel: 'email', subject: 'Need a hand getting live?',
         body: p(`Reply and tell me where you're stuck — I read every one.`) + SIGN_TITHI },
     ],
@@ -69,9 +69,9 @@ const SEQUENCES = [
     is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
       { step_no: 1, delay_hours: 0,  channel: 'email', subject: "Your page is ready — now let's get the first booking",
-        body: p(`You're live. Most first bookings come from sharing your link just once.`) + p(`<a href="${BL}/dashboard">Share your page →</a>`) },
+        body: p(`You're live. Most first bookings come from sharing your link just once.`) + p(`<a href="${BL}/dashboard">Share your page →</a>`) + SIGN_TITHI },
       { step_no: 2, delay_hours: 72, channel: 'email', subject: '3 ways hosts get their first booking',
-        body: p(`A link in your bio, one WhatsApp broadcast, one Instagram story. That's usually all it takes.`) },
+        body: p(`A link in your bio, one WhatsApp broadcast, one Instagram story. That's usually all it takes.`) + SIGN_TITHI },
       // WhatsApp nudge when the first booking still hasn't happened.
       // Get First Booking template params: {{1}} name, {{2}} PUBLIC profile URL
       // (every host has a username → bookasloth.com/<username>).
@@ -88,7 +88,7 @@ const SEQUENCES = [
     is_active: true, stop_on_reply: true, stop_on_convert: true,
     steps: [
       { step_no: 1, delay_hours: 0,   channel: 'email', subject: 'Still thinking about it, {{first_name}}?',
-        body: p(`Your Book A Sloth page is still here. Picking up where you left off takes about two minutes.`) + p(`<a href="${BL}/dashboard">Pick up where you left off →</a>`) },
+        body: p(`Your Book A Sloth page is still here. Picking up where you left off takes about two minutes.`) + p(`<a href="${BL}/dashboard">Pick up where you left off →</a>`) + SIGN_TITHI },
       { step_no: 2, delay_hours: 120, channel: 'email', subject: "What's new since you last looked",
         body: p(`Faster payouts, WhatsApp booking reminders, and a cleaner booking page. Worth another look.`) + p(`<a href="${BL}/dashboard">See what's new →</a>`) + SIGN_TITHI },
     ],
@@ -103,7 +103,7 @@ const SEQUENCES = [
     steps: [
       { step_no: 1, delay_hours: 0, channel: 'email', sender_key: 'tithi',
         subject: 'Sorry to see you go, {{first_name}}',
-        body: p(`You cancelled — totally fair. Before you leave for good, is there anything we can fix?`) + p(`Just reply and tell me what wasn't working.`) + SIGN_TITHI },
+        body: p(`You cancelled — totally fair. Before you leave for good, tell us what wasn't working — 30 seconds, and it genuinely helps us fix it.`) + p(`<a href="${BL}/feedback">Share your feedback →</a>`) + SIGN_TITHI },
       // The OFFER — from Sujata (marketing voice). Conditional on renewal; admin
       // adds the 2 bonus months in Host360 once the host has renewed.
       { step_no: 2, delay_hours: 48, channel: 'email', sender_key: 'sujata',
@@ -125,11 +125,11 @@ const SEQUENCES = [
     is_active: false, stop_on_reply: true, stop_on_convert: true,
     steps: [
       { step_no: 1, delay_hours: 0,   channel: 'email', subject: 'A booking link that gets you paid, {{first_name}}',
-        body: p(`Book A Sloth turns your link into bookings and payments — no back-and-forth.`) + p(`<a href="${BL}">See how it works →</a>`) },
+        body: p(`Book A Sloth turns your link into bookings and payments — no back-and-forth.`) + p(`<a href="${BL}">See how it works →</a>`) + SIGN_TITHI },
       { step_no: 2, delay_hours: 48,  channel: 'email', subject: 'Why creators switch to Book A Sloth',
-        body: p(`One link for your services, calendar, and payments. Your clients book and pay in a couple of taps.`) },
+        body: p(`One link for your services, calendar, and payments. Your clients book and pay in a couple of taps.`) + SIGN_TITHI },
       { step_no: 3, delay_hours: 72,  channel: 'email', subject: 'How {{profession}}s use it',
-        body: p(`People like you use Book A Sloth to take bookings without the DMs and the "what times work?" loop.`) },
+        body: p(`People like you use Book A Sloth to take bookings without the DMs and the "what times work?" loop.`) + SIGN_TITHI },
       { step_no: 4, delay_hours: 120, channel: 'email', subject: 'Want me to set it up with you?',
         body: p(`Reply and I'll help you get your page live — takes a few minutes.`) + SIGN_TITHI },
     ],
