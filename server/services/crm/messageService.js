@@ -16,6 +16,10 @@ const { supabaseAdmin } = require('../../config/supabase');
 const whatsapp = require('./whatsappService');
 const email = require('./emailService');
 const { logActivity } = require('./activity');
+const senderRegistry = require('../email/senderRegistry');
+
+const isMissingColumn = (e) => e?.code === '42703' || e?.code === 'PGRST204'
+  || /column .* does not exist|could not find the '.*' column/i.test(e?.message || '');
 
 const RETRY_BACKOFF_MIN = [5, 30, 120]; // matches the email queue
 const MAX_ATTEMPTS = RETRY_BACKOFF_MIN.length;
@@ -57,7 +61,7 @@ async function getLead(leadId) {
  */
 async function enqueue({
   leadId, channel, templateKey, subject, body, variables = {},
-  campaignId = null, sequenceId = null, enrollmentId = null,
+  campaignId = null, sequenceId = null, enrollmentId = null, senderKey = null,
   idempotencyKey = null, createdBy = '', immediate = false,
 }) {
   const now = new Date().toISOString();
@@ -74,27 +78,30 @@ async function enqueue({
     ? (subject ? renderVars(subject, lead || {}) : '')
     : renderVars(templateKey || '', lead || {});
 
-  const { data: row, error } = await supabaseAdmin
-    .from('crm_messages')
-    .insert({
-      lead_id: leadId,
-      contact_id: lead?.contact_id || null,
-      channel,
-      template_key: templateKey || null,
-      subject: subject || null,
-      body_preview: bodyPreview || null,
-      variables,
-      provider: channel === 'whatsapp' ? 'aisensy' : 'resend',
-      status: 'queued',
-      next_attempt_at: now,
-      campaign_id: campaignId,
-      sequence_id: sequenceId,
-      enrollment_id: enrollmentId,
-      idempotency_key: idempotencyKey,
-      created_by: createdBy,
-    })
-    .select('*')
-    .single();
+  const insertRow = {
+    lead_id: leadId,
+    contact_id: lead?.contact_id || null,
+    channel,
+    template_key: templateKey || null,
+    subject: subject || null,
+    body_preview: bodyPreview || null,
+    variables,
+    provider: channel === 'whatsapp' ? 'aisensy' : 'resend',
+    status: 'queued',
+    next_attempt_at: now,
+    campaign_id: campaignId,
+    sequence_id: sequenceId,
+    enrollment_id: enrollmentId,
+    sender_key: senderKey || null,
+    idempotency_key: idempotencyKey,
+    created_by: createdBy,
+  };
+  let { data: row, error } = await supabaseAdmin.from('crm_messages').insert(insertRow).select('*').single();
+  // Schema fallback: sender_key column not present yet (v3.122 unapplied) → retry without it.
+  if (error && isMissingColumn(error)) {
+    const { sender_key, ...rest } = insertRow;
+    ({ data: row, error } = await supabaseAdmin.from('crm_messages').insert(rest).select('*').single());
+  }
   if (error) throw error;
 
   if (immediate) return dispatch(row, lead);
@@ -125,7 +132,12 @@ async function dispatch(row, leadArg, opts = {}) {
   } else {
     const subject = renderVars(row.subject, lead);
     const html = renderVars(row.variables?.html || row.body_preview || '', lead);
-    result = await email.send({ lead, subject, html, text: renderVars(row.variables?.text, lead), automated });
+    // Send FROM the message's persona (Tithi lifecycle / Sujata offers); null → global default.
+    const sender = await senderRegistry.byKey(row.sender_key);
+    result = await email.send({
+      lead, subject, html, text: renderVars(row.variables?.text, lead),
+      fromName: sender?.fromName, fromEmail: sender?.fromEmail, automated,
+    });
   }
 
   // Quiet-hours / frequency-capped: re-queue for later WITHOUT consuming a retry

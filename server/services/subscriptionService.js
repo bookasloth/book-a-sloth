@@ -495,7 +495,7 @@ async function backfillMissingInvoices(limit = 200) {
 
 // Emit a CRM lifecycle event for the host owning a subscription. Looks the host
 // up by mandate id (rzpSub carries no vendor_id on cancel/halt webhooks).
-async function crmSubEvent(rzpSubId, type, title, meta = {}, followUp = null) {
+async function crmSubEvent(rzpSubId, type, title, meta = {}, opts = {}) {
   try {
     if (!rzpSubId) return;
     const { data: prof } = await supabaseAdmin.from('profiles')
@@ -504,10 +504,18 @@ async function crmSubEvent(rzpSubId, type, title, meta = {}, followUp = null) {
     // Churn/halt are NOT status regressions — they stay a paid customer until the
     // paid term lapses (resolveVendorPlan downgrades then). Record the event only.
     const leadId = await require('./crm/leadService').recordAccountEvent({ profileId: prof.id, type, title, meta });
-    // Phase 4: turn the money event into actionable sales work — a deduped
-    // follow-up task in the owner's queue. Creates a task, sends nothing.
-    if (leadId && followUp) {
-      await require('./crm/followUpService').openAuto({ leadId, ...followUp });
+    if (!leadId) return;
+    // Phase 4: a deduped follow-up task in the owner's queue. Creates work, sends nothing.
+    if (opts.followUp) await require('./crm/followUpService').openAuto({ leadId, ...opts.followUp });
+    // Sends redesign: enrol into an offer/win-back sequence (gated by the kill-switch),
+    // and/or fire an urgent WhatsApp. Both best-effort — never break the webhook.
+    if (opts.enroll) await require('./crm/sequenceService').enrollByName(opts.enroll, leadId, `event:${type}`);
+    if (opts.whatsapp) {
+      await require('./crm/messageService').enqueue({
+        leadId, channel: 'whatsapp', templateKey: opts.whatsapp.template,
+        variables: { params: opts.whatsapp.params || [] }, senderKey: opts.whatsapp.senderKey || 'tithi',
+        idempotencyKey: `evt:${type}:${leadId}`, createdBy: `event:${type}`, immediate: false,
+      });
     }
   } catch (e) { console.error('[crm] subscription lifecycle hook failed (non-fatal):', e.message); }
 }
@@ -518,8 +526,11 @@ async function markHalted(rzpSub) {
   await supabaseAdmin.from('profiles')
     .update({ subscription_status: 'halted', updated_at: new Date().toISOString() })
     .eq('razorpay_subscription_id', rzpSub.id);
-  await crmSubEvent(rzpSub.id, 'subscription_payment_failed', 'Subscription halted — payment failing',
-    {}, { key: 'auto:payment_failed', title: 'Payment failing — reach out to retain', dueInDays: 0 });
+  await crmSubEvent(rzpSub.id, 'subscription_payment_failed', 'Subscription halted — payment failing', {}, {
+    followUp: { key: 'auto:payment_failed', title: 'Payment failing — reach out to retain', dueInDays: 0 },
+    // Same-day urgent WhatsApp (placeholder AiSensy template until created + approved).
+    whatsapp: { template: 'payment_failed_wa', params: ['{{first_name}}'], senderKey: 'tithi' },
+  });
 }
 
 /**
@@ -531,8 +542,11 @@ async function markCancelled(rzpSub) {
   await supabaseAdmin.from('profiles')
     .update({ subscription_status: 'cancelled', updated_at: new Date().toISOString() })
     .eq('razorpay_subscription_id', rzpSub.id);
-  await crmSubEvent(rzpSub.id, 'subscription_cancelled', 'Subscription cancelled (churn)',
-    {}, { key: 'auto:churn', title: 'Win back — subscription cancelled', dueInDays: 1 });
+  await crmSubEvent(rzpSub.id, 'subscription_cancelled', 'Subscription cancelled (churn)', {}, {
+    followUp: { key: 'auto:churn', title: 'Win back — subscription cancelled', dueInDays: 1 },
+    // Enrol into the win-back OFFER sequence (Tithi nudge → Sujata offer → WA → call).
+    enroll: 'Churn-winback',
+  });
 }
 
 module.exports = { activateFromSubscription, recordSubscriptionCharge, ensureSubscriptionInvoice, sendSubscriptionReceiptEmail, resendReceiptForPayment, backfillSubscriptionPayments, backfillMissingInvoices, markHalted, markCancelled, ACTIVE_STATES };

@@ -51,4 +51,12 @@ async function senderFor(template, settings) {
   return { fromName: settings.from_name, fromEmail: settings.from_email, replyTo: null };
 }
 
-module.exports = { loadSenders, senderFor, clearCache };
+/** Resolve a sender_key directly → { fromName, fromEmail, replyTo } or null when
+ *  the key is empty/unknown/inactive (caller then uses the global default). */
+async function byKey(senderKey) {
+  if (!senderKey) return null;
+  const s = (await loadSenders()).get(senderKey);
+  return s ? { fromName: s.from_name, fromEmail: s.from_email, replyTo: s.reply_to || null } : null;
+}
+
+module.exports = { loadSenders, senderFor, byKey, clearCache };
