@@ -42,7 +42,11 @@ if (sha) {
   }
 }
 
-execSync('vitest run && npm run build', { stdio: 'inherit', shell: true });
+// Client unit tests are the CI `client` job's responsibility now (runs `vitest
+// run` on every PR that touches client/** — see .github/workflows/ci.yml), so we
+// no longer re-run them here. The deploy just builds + prerenders. Merges to main
+// come from PRs that already passed that gate, so this doesn't ship untested code.
+execSync('npm run build', { stdio: 'inherit', shell: true });
 
 if (sha) {
   mkdirSync(DIST, { recursive: true });
