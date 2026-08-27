@@ -94,17 +94,30 @@ async function highIntent(limit) {
 }
 
 async function followupsDue(limit) {
-  const { data: fus } = await supabaseAdmin.from('lead_follow_ups')
-    .select('lead_id, due_at, title').eq('status', 'open')
-    .lte('due_at', endOfTodayIso()).order('due_at', { ascending: true }).limit(CANDIDATE_CAP);
-  const seen = new Map();
-  for (const f of fus || []) if (!seen.has(f.lead_id)) seen.set(f.lead_id, f);
-  const ids = [...seen.keys()];
-  if (!ids.length) return { count: 0, leads: [] };
-  const { data: leads } = await openBase().in('id', ids);
-  const byId = new Map((leads || []).map((l) => [l.id, l]));
-  const ordered = ids.map((id) => byId.get(id)).filter(Boolean); // preserve due order, drop non-open
-  return pack(ordered, limit, (l) => [`Follow-up due: ${(seen.get(l.id)?.title || '').trim()}`.trim()]);
+  const end = endOfTodayIso();
+  // Union both mechanisms: explicit follow-up tasks AND the automation's
+  // next_action_at (which carries the real signal — the task table is near-empty).
+  const [{ data: fus }, { data: naLeads }] = await Promise.all([
+    supabaseAdmin.from('lead_follow_ups')
+      .select('lead_id, due_at, title').eq('status', 'open')
+      .lte('due_at', end).order('due_at', { ascending: true }).limit(CANDIDATE_CAP),
+    openBase().not('next_action_at', 'is', null)
+      .lte('next_action_at', end).order('next_action_at', { ascending: true }).limit(CANDIDATE_CAP),
+  ]);
+  const title = new Map(); const taskIds = [];
+  for (const f of fus || []) if (!title.has(f.lead_id)) { title.set(f.lead_id, f.title); taskIds.push(f.lead_id); }
+  let taskLeads = [];
+  if (taskIds.length) {
+    const { data } = await openBase().in('id', taskIds);        // drop non-open leads
+    const byId = new Map((data || []).map((l) => [l.id, l]));
+    taskLeads = taskIds.map((id) => byId.get(id)).filter(Boolean);
+  }
+  // Tasks first (they carry an explicit title), then next_action leads; dedup.
+  const entries = [
+    ...taskLeads.map((l) => ({ lead: l, reason: `Follow-up due: ${(title.get(l.id) || '').trim()}`.trim() })),
+    ...(naLeads || []).map((l) => ({ lead: l, reason: `Next: ${(l.next_action || 'follow up').trim()}` })),
+  ];
+  return pack(mergeById(entries), limit);
 }
 
 // Linked-account state for a set of leads: onboarding + has-paid-booking.
@@ -140,15 +153,18 @@ async function needsAttention(limit) {
     .not('last_reply_at', 'is', null).order('last_reply_at', { ascending: true }).limit(CANDIDATE_CAP);
   const replyRows = (repCand || []).filter(isUnansweredReply).map((l) => ({ lead: l, reason: 'Replied — unanswered' }));
 
-  // 2. overdue follow-ups
-  const { data: ovf } = await supabaseAdmin.from('lead_follow_ups')
-    .select('lead_id').eq('status', 'open').lt('due_at', nowIso).limit(CANDIDATE_CAP);
-  const ovIds = [...new Set((ovf || []).map((f) => f.lead_id))];
-  let overdueRows = [];
-  if (ovIds.length) {
-    const { data: ovLeads } = await openBase().in('id', ovIds);
-    overdueRows = (ovLeads || []).map((l) => ({ lead: l, reason: 'Follow-up overdue' }));
+  // 2. overdue follow-ups — union tasks with a past next_action_at.
+  const [{ data: ovf }, { data: ovNa }] = await Promise.all([
+    supabaseAdmin.from('lead_follow_ups').select('lead_id').eq('status', 'open').lt('due_at', nowIso).limit(CANDIDATE_CAP),
+    openBase().not('next_action_at', 'is', null).lt('next_action_at', nowIso).limit(CANDIDATE_CAP),
+  ]);
+  const ovTaskIds = [...new Set((ovf || []).map((f) => f.lead_id))];
+  const overdueRows = [];
+  if (ovTaskIds.length) {
+    const { data: ovLeads } = await openBase().in('id', ovTaskIds);
+    for (const l of ovLeads || []) overdueRows.push({ lead: l, reason: 'Follow-up overdue' });
   }
+  for (const l of ovNa || []) overdueRows.push({ lead: l, reason: 'Follow-up overdue' });
 
   // 3. high-value, gone quiet 7+ days
   const { data: hv } = await openBase()
