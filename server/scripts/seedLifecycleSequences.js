@@ -33,8 +33,9 @@ const p = (html) => `<p>${html}</p>`;
 const SIGN_TITHI = p(`— Tithi, Book A Sloth`);
 const SIGN_SUJATA = p(`— Sujata, Book A Sloth`);
 
-// WhatsApp placeholder campaigns (create + approve these in AiSensy, then they fire).
-const WA = { onboarding: 'onboarding_nudge_wa', firstBooking: 'first_booking_wa', winback: 'winback_offer_wa' };
+// AiSensy Campaign Names (approved). These are the campaignName sendCampaign uses —
+// the human name with spaces, NOT the template slug (matches notification_events).
+const WA = { onboarding: 'Onboarding Nudge', firstBooking: 'Get First Booking', winback: 'Winback Offer - Additional Month' };
 
 // The win-back offer — one place so email + WhatsApp stay in sync. Conditional on
 // renewal: the host renews (monthly or yearly), then an admin adds 2 bonus months.

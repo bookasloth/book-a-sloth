@@ -528,8 +528,8 @@ async function markHalted(rzpSub) {
     .eq('razorpay_subscription_id', rzpSub.id);
   await crmSubEvent(rzpSub.id, 'subscription_payment_failed', 'Subscription halted — payment failing', {}, {
     followUp: { key: 'auto:payment_failed', title: 'Payment failing — reach out to retain', dueInDays: 0 },
-    // Same-day urgent WhatsApp (placeholder AiSensy template until created + approved).
-    whatsapp: { template: 'payment_failed_wa', params: ['{{first_name}}'], senderKey: 'tithi' },
+    // Same-day urgent WhatsApp — AiSensy Campaign Name (approved).
+    whatsapp: { template: 'Subscription Payment Failed', params: ['{{first_name}}'], senderKey: 'tithi' },
   });
 }
 
