@@ -87,6 +87,54 @@ async function safeUpsertLead(patch = {}, opts = {}) {
   }
 }
 
+/**
+ * Record a real-time account/money event on the lead timeline and (optionally)
+ * promote the lead to 'paid' the instant it happens — instead of waiting up to an
+ * hour for the attribution batch. Stitches/creates the lead from the profile's
+ * identity so a host who was never cold-outreached still gets a lead + timeline.
+ *
+ * Never throws — a CRM write must not break a payment/webhook flow. Promotion
+ * respects the no-regress rule (never touches lost / do_not_contact / already-paid).
+ *
+ * @param {object} p
+ * @param {string} p.profileId    profiles.id of the host
+ * @param {string} p.type         activity type (e.g. 'subscription_started')
+ * @param {string} p.title        human-facing timeline title
+ * @param {object} [p.meta]       activity meta (plan, cadence, payment_id, amount…)
+ * @param {boolean} [p.promoteToPaid] set status→paid + converted_at if not already won
+ * @param {string} [p.wonAt]      ISO timestamp to stamp converted_at with
+ * @returns {Promise<string|null>} the lead id, or null on failure
+ */
+async function recordAccountEvent({ profileId, type, title, meta = {}, promoteToPaid = false, wonAt = null } = {}) {
+  if (!profileId || !type) return null;
+  try {
+    const { data: p } = await supabaseAdmin.from('profiles')
+      .select('name, email, phone').eq('id', profileId).maybeSingle();
+    // Stitch by phone/email, ensure the profile link (blanks never clobber).
+    const res = await safeUpsertLead(
+      { name: p?.name, email: p?.email, phone: p?.phone, profile_id: profileId },
+      { source: 'host_signup' },
+    );
+    const lead = res?.lead;
+    if (!lead) return null;
+
+    await logActivity(lead.id, type, { title, meta });
+
+    if (promoteToPaid && !['paid', 'lost', 'do_not_contact'].includes(lead.status)) {
+      const patch = { status: 'paid', updated_at: new Date().toISOString() };
+      if (!lead.converted_at) patch.converted_at = wonAt || new Date().toISOString();
+      await supabaseAdmin.from('leads').update(patch).eq('id', lead.id);
+      await logActivity(lead.id, 'status_changed', {
+        title: 'Status → paid', meta: { from: lead.status, to: 'paid', via: type },
+      });
+    }
+    return lead.id;
+  } catch (e) {
+    console.warn('[crm] recordAccountEvent failed:', e?.message || e);
+    return null;
+  }
+}
+
 // Lead ids that have an open follow-up in a given window ('overdue'|'today'|'open').
 async function leadIdsWithFollowup(window) {
   let q = supabaseAdmin.from('lead_follow_ups').select('lead_id').eq('status', 'open');
@@ -249,5 +297,5 @@ module.exports = {
   FUNNEL, STATUSES,
   upsertLead, safeUpsertLead, getLead, listLeads,
   changeStatus, assignOwner, addTag, removeTag, setDnc, addNote, logCall,
-  pipelineCounts, dashboardStats,
+  pipelineCounts, dashboardStats, recordAccountEvent,
 };
