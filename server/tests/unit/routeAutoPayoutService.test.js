@@ -36,6 +36,7 @@ const wireSupabase = () => {
     c.select = jest.fn(() => c);
     c.update = jest.fn((patch) => { state.updates.push(patch); return c; });
     c.eq = jest.fn(() => c);
+    c.is = jest.fn(() => c);
     c.maybeSingle = jest.fn(() => {
       if (table === 'kyc_submissions') return Promise.resolve({ data: { razorpay_account_id: state.linkedAccountId }, error: null });
       if (table === 'services') return Promise.resolve({ data: { duration: 30 }, error: null });
@@ -206,5 +207,60 @@ describe('handleBookingTransferWebhook', () => {
     state.bookingRow = null;
     const res = await svc.handleBookingTransferWebhook({ id: 'trf_x', status: 'processed' });
     expect(res).toEqual({ handled: false, reason: 'not_a_booking_transfer' });
+  });
+});
+
+const { inAppNotify } = require('../../utils/inAppNotify');
+
+describe('applyTransferSettlement (v3.124 bank-settlement leg)', () => {
+  test('settled → records status, stamps settled_at once, notifies host', async () => {
+    state.bookingRow = { id: 'bk-1', host_id: 'host-1', vendor_amount: 9.28 };
+    const res = await svc.applyTransferSettlement({ id: 'trf_1', settlement_status: 'settled', recipient_settlement_id: 'setl_1' });
+    expect(res).toMatchObject({ settled: true, firstSettle: true });
+    expect(merged()).toMatchObject({ transfer_settlement_status: 'settled', recipient_settlement_id: 'setl_1' });
+    expect(merged().transfer_settled_at).toBeTruthy();
+    expect(inAppNotify).toHaveBeenCalledWith(expect.objectContaining({ userId: 'host-1', type: 'PAYOUT_UPDATE' }));
+  });
+
+  test('pending → records status only, no settled_at, no notify', async () => {
+    const res = await svc.applyTransferSettlement({ id: 'trf_1', settlement_status: 'pending' });
+    expect(res).toMatchObject({ settled: false, status: 'pending' });
+    expect(merged()).toMatchObject({ transfer_settlement_status: 'pending' });
+    expect(merged().transfer_settled_at).toBeUndefined();
+    expect(inAppNotify).not.toHaveBeenCalled();
+  });
+
+  test('settled but already stamped (atomic claim returns no row) → no duplicate notify', async () => {
+    state.bookingRow = null;   // the is-null claim matched nothing → already settled earlier
+    const res = await svc.applyTransferSettlement({ id: 'trf_1', settlement_status: 'settled' });
+    expect(res).toMatchObject({ settled: true, firstSettle: false });
+    expect(inAppNotify).not.toHaveBeenCalled();
+  });
+
+  test('schema fallback — v3.124 columns missing → skipped, never throws', async () => {
+    state.updateError = { code: '42703', message: 'column "transfer_settlement_status" does not exist' };
+    const res = await svc.applyTransferSettlement({ id: 'trf_1', settlement_status: 'settled' });
+    expect(res).toEqual({ skipped: 'schema' });
+  });
+});
+
+describe('handleSettlementWebhook (settlement.processed)', () => {
+  test('fetches transfers for the recipient settlement and settles each booking', async () => {
+    state.bookingRow = { id: 'bk-1', host_id: 'host-1', vendor_amount: 9.28 };
+    const all = jest.fn(() => Promise.resolve({ items: [{ id: 'trf_1', settlement_status: 'settled', recipient_settlement_id: 'setl_1' }] }));
+    razorpayConfig.getClient.mockResolvedValue({ transfers: { all } });
+    const res = await svc.handleSettlementWebhook({ id: 'setl_1' });
+    expect(all).toHaveBeenCalledWith(expect.objectContaining({ recipient_settlement_id: 'setl_1' }));
+    expect(res).toMatchObject({ handled: true, transfers: 1, settled: 1 });
+  });
+
+  test('settlement with no Route transfers (e.g. parent merchant) → harmless no-op', async () => {
+    razorpayConfig.getClient.mockResolvedValue({ transfers: { all: jest.fn(() => Promise.resolve({ items: [] })) } });
+    const res = await svc.handleSettlementWebhook({ id: 'setl_merchant' });
+    expect(res).toEqual({ handled: true, reason: 'no_route_transfers' });
+  });
+
+  test('missing settlement id → not handled', async () => {
+    expect(await svc.handleSettlementWebhook({})).toEqual({ handled: false, reason: 'no_settlement_id' });
   });
 });

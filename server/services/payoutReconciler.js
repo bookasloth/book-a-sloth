@@ -41,7 +41,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const razorpayConfig = require('./razorpayConfig');
 const platformConfig = require('./platformConfig');
 const { isPayoutEligible } = require('./payoutEligibility');
-const { createHeldTransferForBooking, finalizeReleasedTransfer } = require('./routeAutoPayoutService');
+const { createHeldTransferForBooking, finalizeReleasedTransfer, applyTransferSettlement } = require('./routeAutoPayoutService');
 const routeAccountService = require('./routeAccountService');
 const { adminAlert } = require('../utils/adminAlert');
 const { securityLog } = require('../utils/logger');
@@ -244,6 +244,9 @@ async function reconcile() {
       try {
         const cancelled = SKIP_SETTLE.has(b.settlement_status);
         const t = await rz.transfers.fetch(b.razorpay_transfer_id);   // read
+        // Catch-up for a missed settlement.processed webhook: record the bank-settlement
+        // leg (pending/on_hold/settled) from the fetched transfer. Idempotent, status-only.
+        await applyTransferSettlement(t).catch((e) => securityLog('payout_reconcile_settlement_error', { bookingId: b.id, reason: e.message }));
         if (t?.status === 'failed' || t?.status === 'reversed') {
           if (b.transfer_status !== t.status) {
             await supabaseAdmin.from('bookings')

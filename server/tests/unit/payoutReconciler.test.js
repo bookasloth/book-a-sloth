@@ -7,6 +7,7 @@ jest.mock('../../services/payoutEligibility', () => ({ isPayoutEligible: jest.fn
 jest.mock('../../services/routeAutoPayoutService', () => ({
   createHeldTransferForBooking: jest.fn(),
   finalizeReleasedTransfer: jest.fn(),
+  applyTransferSettlement: jest.fn(() => Promise.resolve({ settled: false })),
 }));
 jest.mock('../../services/routeAccountService', () => ({ createLinkedAccount: jest.fn() }));
 jest.mock('../../services/payoutEmails', () => ({

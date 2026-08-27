@@ -1256,6 +1256,35 @@ const handleWebhook = async (req, res) => {
     return res.json({ received: true });
   }
 
+  // ── Route settlement (v3.124): the LAST payout hop — a processed transfer's
+  // linked-account balance settled to the host's actual bank. Carries a settlement
+  // entity (setl_...), no payment entity — handled BEFORE the payment guard below.
+  // The handler self-filters: a settlement with no matching Route transfers (e.g. the
+  // parent merchant's own settlement) is a harmless no-op, so we accept them all. ──
+  if (typeof event.event === 'string' && event.event.startsWith('settlement.')) {
+    const settlement = event.payload?.settlement?.entity;
+    try {
+      if (event.event === 'settlement.processed' && settlement?.id) {
+        const r = await routeAutoPayoutService.handleSettlementWebhook(settlement);
+        auditLog('WEBHOOK_ROUTE_SETTLEMENT', null, { settlement_id: settlement.id, event: event.event, handled: r.handled, transfers: r.transfers, settled: r.settled, reason: r.reason });
+      }
+    } catch (err) {
+      securityLog('WEBHOOK_PROCESSING_ERROR', { event: event.event, error: err.message });
+      adminAlert({
+        key: `webhook_error:${event.event}`,
+        subject: `Razorpay webhook failed: ${event.event}`,
+        lines: [
+          `Event: ${event.event}`,
+          settlement?.id ? `Settlement: ${settlement.id}` : null,
+          `Error: ${err.message}`,
+          `Razorpay will retry. If this persists, host bank-settlement status may be stale — the payout reconciler backfills it on its next run.`,
+        ].filter(Boolean),
+      });
+      return res.status(500).json({ error: 'processing_failed' });
+    }
+    return res.json({ received: true });
+  }
+
   // ── Payment dispute (Phase 2): a disputed booking must not pay the host.
   // Reverse the held Route transfer so the money stays with the platform while
   // the dispute is resolved. Carries a dispute entity (with a payment_id).

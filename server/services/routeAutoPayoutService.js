@@ -210,6 +210,77 @@ async function reverseByPaymentId(paymentId, reason) {
   return reverseHeldTransfer(booking, { reason });
 }
 
+// In-app "money reached your bank" — the settlement leg was previously silent.
+// sendPayoutSent (release) said "on its way"; this is the actual arrival.
+function notifySettled(booking) {
+  const amt = Number(booking.vendor_amount) || 0;
+  require('../utils/inAppNotify').inAppNotify({
+    userId: booking.host_id, role: 'host', type: 'PAYOUT_UPDATE',
+    title: amt > 0 ? `Settled to your bank: ₹${amt.toFixed(2)}` : 'Payout settled to your bank',
+    body: 'Your earnings have reached your bank account.',
+    link: '/dashboard/payments/payouts',
+  });
+}
+
+/**
+ * Record a Razorpay transfer's SETTLEMENT (linked-account balance -> host's bank) onto
+ * its booking. Idempotent; stamps transfer_settled_at exactly once (atomic first-writer)
+ * on the 'settled' transition and notifies the host then. Schema-fallback (v3.124).
+ * @param {object} t  a Razorpay transfer entity (id, settlement_status, recipient_settlement_id)
+ * ponytail: no new "settled" email — the release email already told the host it was
+ * on its way; the in-app confirmation + UI badge close the loop without a new template.
+ */
+async function applyTransferSettlement(t) {
+  if (!t?.id) return { skipped: 'no_id' };
+  const status = t.settlement_status || null;   // 'pending' | 'on_hold' | 'settled'
+  const { error } = await supabaseAdmin.from('bookings').update({
+    transfer_settlement_status: status,
+    recipient_settlement_id: t.recipient_settlement_id || null,
+    updated_at: new Date().toISOString(),
+  }).eq('razorpay_transfer_id', t.id);
+  if (error) { if (isMissingColumn(error)) return { skipped: 'schema' }; throw error; }
+
+  if (status === 'settled') {
+    const { data } = await supabaseAdmin.from('bookings')
+      .update({ transfer_settled_at: new Date().toISOString() })
+      .eq('razorpay_transfer_id', t.id).is('transfer_settled_at', null)
+      .select('id, host_id, vendor_amount').maybeSingle();
+    if (data) notifySettled(data);
+    return { settled: true, firstSettle: !!data };
+  }
+  return { settled: false, status };
+}
+
+/**
+ * Apply a Route settlement.processed webhook. The settlement entity references a
+ * recipient settlement (setl_...); every transfer it settled carries that id in
+ * recipient_settlement_id. We fetch those transfers (parent-scoped read) and mark
+ * their bookings settled-to-bank. Self-filtering: a settlement that isn't a Route
+ * linked-account one (e.g. the parent merchant's own) has no matching transfers, so
+ * this no-ops — safe to receive every settlement.processed event.
+ * @returns {Promise<{ handled: boolean, transfers?: number, settled?: number, reason?: string }>}
+ */
+async function handleSettlementWebhook(settlement) {
+  const settlementId = settlement?.id;
+  if (!settlementId) return { handled: false, reason: 'no_settlement_id' };
+  let items = [];
+  try {
+    const razorpay = await razorpayConfig.getClient();
+    const resp = await razorpay.transfers.all({ recipient_settlement_id: settlementId, count: 100 });
+    items = resp?.items || [];
+  } catch (err) {
+    securityLog('route_settlement_fetch_error', { settlementId, reason: err?.error?.description || err?.message });
+    return { handled: false, reason: 'fetch_failed' };
+  }
+  if (!items.length) return { handled: true, reason: 'no_route_transfers' };
+  let settled = 0;
+  for (const t of items) {
+    try { const r = await applyTransferSettlement(t); if (r.firstSettle) settled++; }
+    catch (err) { securityLog('route_settlement_apply_error', { transferId: t?.id, reason: err?.message }); }
+  }
+  return { handled: true, transfers: items.length, settled };
+}
+
 /**
  * Apply a Route transfer.* webhook that belongs to a BOOKING held transfer.
  * transfer.processed (released — either via releaseHeldTransfer or Razorpay's
@@ -225,6 +296,9 @@ async function handleBookingTransferWebhook(transfer) {
 
   const status = transfer.status;
   if (status === 'processed') {
+    // Seed the settlement leg from the transfer entity (usually 'pending' at processed);
+    // settlement.processed later flips it to 'settled'. Best-effort, never blocks finalise.
+    await applyTransferSettlement(transfer).catch(() => {});
     if (booking.transfer_status === 'processed') return { handled: true, reason: 'already' };
     await finalizeReleasedTransfer(booking, null);
     return { handled: true };
@@ -242,4 +316,5 @@ async function handleBookingTransferWebhook(transfer) {
 module.exports = {
   createHeldTransferForBooking, releaseHeldTransfer, reverseHeldTransfer, reverseByPaymentId,
   handleBookingTransferWebhook, finalizeReleasedTransfer, computeHoldUntil, toPaise,
+  handleSettlementWebhook, applyTransferSettlement,
 };
