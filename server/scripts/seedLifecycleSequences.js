@@ -52,7 +52,9 @@ const SEQUENCES = [
       { step_no: 2, delay_hours: 24, channel: 'email', subject: 'Finish your profile (2 minutes)',
         body: p(`A complete profile books more. Add your photo and a line about what you do.`) + p(`<a href="${BL}/dashboard">Complete profile →</a>`) },
       // WhatsApp nudge at ~48h quiet — highest-open channel for a stalled setup.
-      { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.onboarding, variables: ['{{first_name}}'],
+      // Onboarding Nudge template params: {{1}} name, {{2}} account name, {{3}} link.
+      { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.onboarding,
+        variables: ['{{first_name}}', '{{business_name}}', '{{booking_link}}'],
         subject: null, body: `Hi {{first_name}} 👋 Your Book A Sloth page is one service away from live. Want a hand finishing it?` },
       { step_no: 4, delay_hours: 24, channel: 'email', subject: 'Add your first service',
         body: p(`Bookings need something to book. Add one service and you're live.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) },
@@ -70,7 +72,9 @@ const SEQUENCES = [
       { step_no: 2, delay_hours: 72, channel: 'email', subject: '3 ways hosts get their first booking',
         body: p(`A link in your bio, one WhatsApp broadcast, one Instagram story. That's usually all it takes.`) },
       // WhatsApp nudge when the first booking still hasn't happened.
-      { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.firstBooking, variables: ['{{first_name}}'],
+      // Get First Booking template params: {{1}} name, {{2}} profile link.
+      { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.firstBooking,
+        variables: ['{{first_name}}', '{{booking_link}}/dashboard'],
         subject: null, body: `{{first_name}}, share your booking link once today — most first bookings come from a single share 🚀` },
       { step_no: 4, delay_hours: 48, channel: 'email', subject: "Still quiet? Let's fix that together",
         body: p(`Reply with your link and I'll tell you what I'd change.`) + SIGN_TITHI },
@@ -104,8 +108,9 @@ const SEQUENCES = [
         subject: 'Renew and get 2 months free, {{first_name}}',
         body: p(`We'd love to have you back, {{first_name}}. ${OFFER_LINE}`) + p(`<a href="${BL}/dashboard">Renew now →</a>`) + p(`Reply <b>DONE</b> once you have and we'll add the 2 months.`) + SIGN_SUJATA },
       // WhatsApp carrying the same offer (placeholder AiSensy template).
+      // Winback Offer params: {{1}} name, {{2}} product, {{3}} offer text, {{4}} renewal link.
       { step_no: 3, delay_hours: 24, channel: 'whatsapp', sender_key: 'sujata', template_key: WA.winback,
-        variables: ['{{first_name}}'],
+        variables: ['{{first_name}}', 'Book A Sloth', '2 Month Addition', '{{booking_link}}/dashboard/renewal'],
         subject: null, body: `{{first_name}}, renew your Book A Sloth plan and we'll add 2 months free on top. Reply RENEW 💛` },
       { step_no: 4, delay_hours: 96, channel: 'email', sender_key: 'tithi',
         subject: 'Not the price? Let\'s talk',
