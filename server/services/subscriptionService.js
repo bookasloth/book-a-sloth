@@ -495,7 +495,7 @@ async function backfillMissingInvoices(limit = 200) {
 
 // Emit a CRM lifecycle event for the host owning a subscription. Looks the host
 // up by mandate id (rzpSub carries no vendor_id on cancel/halt webhooks).
-async function crmSubEvent(rzpSubId, type, title, meta = {}) {
+async function crmSubEvent(rzpSubId, type, title, meta = {}, followUp = null) {
   try {
     if (!rzpSubId) return;
     const { data: prof } = await supabaseAdmin.from('profiles')
@@ -503,7 +503,12 @@ async function crmSubEvent(rzpSubId, type, title, meta = {}) {
     if (!prof?.id) return;
     // Churn/halt are NOT status regressions — they stay a paid customer until the
     // paid term lapses (resolveVendorPlan downgrades then). Record the event only.
-    await require('./crm/leadService').recordAccountEvent({ profileId: prof.id, type, title, meta });
+    const leadId = await require('./crm/leadService').recordAccountEvent({ profileId: prof.id, type, title, meta });
+    // Phase 4: turn the money event into actionable sales work — a deduped
+    // follow-up task in the owner's queue. Creates a task, sends nothing.
+    if (leadId && followUp) {
+      await require('./crm/followUpService').openAuto({ leadId, ...followUp });
+    }
   } catch (e) { console.error('[crm] subscription lifecycle hook failed (non-fatal):', e.message); }
 }
 
@@ -513,7 +518,8 @@ async function markHalted(rzpSub) {
   await supabaseAdmin.from('profiles')
     .update({ subscription_status: 'halted', updated_at: new Date().toISOString() })
     .eq('razorpay_subscription_id', rzpSub.id);
-  await crmSubEvent(rzpSub.id, 'subscription_payment_failed', 'Subscription halted — payment failing');
+  await crmSubEvent(rzpSub.id, 'subscription_payment_failed', 'Subscription halted — payment failing',
+    {}, { key: 'auto:payment_failed', title: 'Payment failing — reach out to retain', dueInDays: 0 });
 }
 
 /**
@@ -525,7 +531,8 @@ async function markCancelled(rzpSub) {
   await supabaseAdmin.from('profiles')
     .update({ subscription_status: 'cancelled', updated_at: new Date().toISOString() })
     .eq('razorpay_subscription_id', rzpSub.id);
-  await crmSubEvent(rzpSub.id, 'subscription_cancelled', 'Subscription cancelled (churn)');
+  await crmSubEvent(rzpSub.id, 'subscription_cancelled', 'Subscription cancelled (churn)',
+    {}, { key: 'auto:churn', title: 'Win back — subscription cancelled', dueInDays: 1 });
 }
 
 module.exports = { activateFromSubscription, recordSubscriptionCharge, ensureSubscriptionInvoice, sendSubscriptionReceiptEmail, resendReceiptForPayment, backfillSubscriptionPayments, backfillMissingInvoices, markHalted, markCancelled, ACTIVE_STATES };

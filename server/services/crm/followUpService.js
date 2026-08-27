@@ -21,6 +21,36 @@ async function create({ leadId, ownerAdminId, title, dueAt, remind = true, creat
   return data;
 }
 
+/**
+ * Idempotently open an AUTOMATION follow-up task (audit Phase 4). Skips if an
+ * open task with the same `key` marker already exists for the lead, so repeated
+ * webhook deliveries or re-fired lifecycle events never pile up duplicate tasks.
+ * Inherits the lead's owner so the task lands in their queue. Never throws — a
+ * CRM automation must not break the webhook/payment flow it hangs off.
+ *
+ * @param {object} p
+ * @param {string} p.leadId
+ * @param {string} p.key         dedup + created_by marker (e.g. 'auto:churn')
+ * @param {string} p.title       task title shown in the queue
+ * @param {number} [p.dueInDays] days from now the task is due (0 = today)
+ * @returns {Promise<object|null>} the task row (new or existing), or null
+ */
+async function openAuto({ leadId, key, title, dueInDays = 1 } = {}) {
+  if (!leadId || !key || !title) return null;
+  try {
+    const { data: existing } = await supabaseAdmin.from('lead_follow_ups')
+      .select('id').eq('lead_id', leadId).eq('status', 'open').eq('created_by', key).limit(1).maybeSingle();
+    if (existing) return existing;
+    const { data: lead } = await supabaseAdmin.from('leads')
+      .select('owner_admin_id').eq('id', leadId).maybeSingle();
+    const dueAt = new Date(Date.now() + Math.max(0, dueInDays) * 864e5).toISOString();
+    return await create({ leadId, ownerAdminId: lead?.owner_admin_id || null, title, dueAt, remind: true, createdBy: key });
+  } catch (e) {
+    console.warn('[crm] openAuto follow-up failed:', e?.message || e);
+    return null;
+  }
+}
+
 async function complete(id, actorAdminId) {
   const now = new Date().toISOString();
   const { data } = await supabaseAdmin.from('lead_follow_ups')
@@ -81,4 +111,4 @@ async function processReminders() {
   return { reminded };
 }
 
-module.exports = { create, complete, cancel, listOpen, processReminders };
+module.exports = { create, openAuto, complete, cancel, listOpen, processReminders };
