@@ -122,15 +122,15 @@ async function dispatch(row, leadArg, opts = {}) {
 
   const automated = !!opts.automated;
   let result;
+  // Profile-derived tokens the lead lacks — {{username}} (public profile URL) and
+  // {{account_name}}. Fetched once and used by BOTH WhatsApp params and email copy.
+  let extra = {};
+  if (lead.profile_id) {
+    const { data: prof } = await supabaseAdmin.from('profiles').select('username, name').eq('id', lead.profile_id).maybeSingle();
+    if (prof) extra = { username: prof.username || '', account_name: prof.name || lead.name || '' };
+  }
+
   if (row.channel === 'whatsapp') {
-    // WhatsApp templates reference the host's PROFILE (username → public profile
-    // URL, name → account name) — the lead doesn't carry these, so pull them from
-    // the linked profile and expose {{username}} / {{account_name}} to the params.
-    let extra = {};
-    if (lead.profile_id) {
-      const { data: prof } = await supabaseAdmin.from('profiles').select('username, name').eq('id', lead.profile_id).maybeSingle();
-      if (prof) extra = { username: prof.username || '', account_name: prof.name || lead.name || '' };
-    }
     result = await whatsapp.send({
       lead,
       templateKey: row.template_key,
@@ -139,13 +139,14 @@ async function dispatch(row, leadArg, opts = {}) {
       automated,
     });
   } else {
-    const subject = renderVars(row.subject, lead);
-    const html = renderVars(row.variables?.html || row.body_preview || '', lead);
+    const subject = renderVars(row.subject, lead, extra);
+    const html = renderVars(row.variables?.html || row.body_preview || '', lead, extra);
     // Send FROM the message's persona (Tithi lifecycle / Sujata offers); null → global default.
     const sender = await senderRegistry.byKey(row.sender_key);
     result = await email.send({
-      lead, subject, html, text: renderVars(row.variables?.text, lead),
+      lead, subject, html, text: renderVars(row.variables?.text, lead, extra),
       category: row.sender_key === 'sujata' ? 'Offer' : '',   // header pill
+      previewText: row.variables?.preview ? renderVars(row.variables.preview, lead, extra) : '',
       fromName: sender?.fromName, fromEmail: sender?.fromEmail, replyTo: sender?.replyTo, automated,
     });
   }
