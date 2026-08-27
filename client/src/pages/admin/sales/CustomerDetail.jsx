@@ -91,7 +91,8 @@ function Account({ host, billing, profileId }) {
             {payments.map((p) => (
               <div key={p.id} className="flex items-center justify-between py-1.5 text-[12px]">
                 <span className="adm-t2">{p.type} · {fmtDate(p.at)}</span>
-                <span className="adm-t1 tabular-nums font-medium">{rupees((Number(p.amount) || 0) * 100)}</span>
+                {/* host360 billing: Subscription amount is rupees, Plan amount is paise (raw). */}
+                <span className="adm-t1 tabular-nums font-medium">{rupees(p.type === 'Plan' ? (Number(p.amount) || 0) : (Number(p.amount) || 0) * 100)}</span>
               </div>
             ))}
           </div>
@@ -112,14 +113,16 @@ export default function CustomerDetail() {
   useEffect(() => {
     let alive = true;
     setLoading(true);
+    // crmGetLead returns { lead, notes, followUps } — the lead is nested.
     crmGetLead(leadId).then(async ({ data }) => {
       if (!alive) return;
-      setLead(data);
+      const l = data?.lead || null;
+      setLead(l);
       crmLeadTimeline(leadId).then(({ data: t }) => alive && setTimeline(Array.isArray(t) ? t : [])).catch(() => {});
       // Account side — best-effort, only when linked; permission errors are silent.
-      if (data?.profile_id) {
-        adminHost360Get(data.profile_id).then(({ data: h }) => alive && setHost(h)).catch(() => {});
-        adminHost360Billing(data.profile_id).then(({ data: b }) => alive && setBilling(b)).catch(() => {});
+      if (l?.profile_id) {
+        adminHost360Get(l.profile_id).then(({ data: h }) => alive && setHost(h)).catch(() => {});
+        adminHost360Billing(l.profile_id).then(({ data: b }) => alive && setBilling(b)).catch(() => {});
       }
     }).catch(() => setLead(null)).finally(() => alive && setLoading(false));
     return () => { alive = false; };
