@@ -135,17 +135,34 @@ async function recordAccountEvent({ profileId, type, title, meta = {}, promoteTo
   }
 }
 
-// Lead ids that have an open follow-up in a given window ('overdue'|'today'|'open').
+// A lead is "due" from EITHER mechanism: an open lead_follow_ups task, or the
+// leads.next_action_at the lifecycle automation writes. The task table is nearly
+// empty in practice while next_action_at carries the real signal, so the work
+// queue must union both or it reads as dead. Pure window bounds so it's testable.
+function followupWindow(window, now = new Date()) {
+  const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+  if (window === 'overdue') return { to: now.toISOString(), inclusive: false };
+  if (window === 'today') return { to: dayEnd, inclusive: true };
+  return {}; // 'open' — no date bound
+}
+
+// Lead ids that are due in a given window ('overdue'|'today'|'open'), unioned
+// across open follow-up tasks and open leads' next_action_at.
 async function leadIdsWithFollowup(window) {
-  let q = supabaseAdmin.from('lead_follow_ups').select('lead_id').eq('status', 'open');
-  const now = new Date();
-  if (window === 'overdue') q = q.lt('due_at', now.toISOString());
-  else if (window === 'today') {
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
-    q = q.lte('due_at', end);
+  const { to, inclusive } = followupWindow(window);
+
+  let taskQ = supabaseAdmin.from('lead_follow_ups').select('lead_id').eq('status', 'open');
+  let naQ = supabaseAdmin.from('leads').select('id')
+    .not('next_action_at', 'is', null).not('status', 'in', '(paid,lost,do_not_contact)');
+  if (to) {
+    taskQ = inclusive ? taskQ.lte('due_at', to) : taskQ.lt('due_at', to);
+    naQ = inclusive ? naQ.lte('next_action_at', to) : naQ.lt('next_action_at', to);
   }
-  const { data } = await q.limit(5000);
-  return Array.from(new Set((data || []).map((r) => r.lead_id)));
+  const [{ data: tasks }, { data: nas }] = await Promise.all([taskQ.limit(5000), naQ.limit(5000)]);
+  return Array.from(new Set([
+    ...(tasks || []).map((r) => r.lead_id),
+    ...(nas || []).map((r) => r.id),
+  ]));
 }
 
 // ── List / search ─────────────────────────────────────────────
@@ -254,42 +271,53 @@ async function pipelineCounts() {
   return Object.fromEntries(entries);
 }
 
+// Pure: honest conversion summary. A "paid customer" is a lead at `paid` status
+// (revenue-backed / paying subscriber) — NOT `activated`, which is a free host
+// who is merely active. Counting activated as paid overstated conversion ~4×.
+function conversionSummary(counts = {}, total = 0) {
+  const paidCustomers = counts.paid || 0;
+  const activeFree = counts.activated || 0;
+  const conversionRate = total ? +((paidCustomers / total) * 100).toFixed(1) : 0;
+  return { paidCustomers, activeFree, conversionRate };
+}
+
 async function dashboardStats() {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 864e5).toISOString();
   const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
 
   const counts = await pipelineCounts();
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
-  const [{ count: addedThisWeek }, { count: contactedToday }, { count: dueToday }, { count: overdue }] = await Promise.all([
+  // Due-today = due in today's window but not yet overdue; overdue = past. Both
+  // union follow-up tasks with the automation's next_action_at (see above).
+  const [{ count: addedThisWeek }, { count: contactedToday }, todayIds, overdueIds, openVal] = await Promise.all([
     supabaseAdmin.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
     supabaseAdmin.from('leads').select('id', { count: 'exact', head: true }).gte('last_contacted_at', dayStart),
-    supabaseAdmin.from('lead_follow_ups').select('id', { count: 'exact', head: true }).eq('status', 'open').gte('due_at', dayStart).lt('due_at', dayEnd),
-    supabaseAdmin.from('lead_follow_ups').select('id', { count: 'exact', head: true }).eq('status', 'open').lt('due_at', now.toISOString()),
+    leadIdsWithFollowup('today'),
+    leadIdsWithFollowup('overdue'),
+    // Open pipeline value = expected value of leads not yet won/lost.
+    supabaseAdmin.from('leads').select('expected_value_paise').gt('expected_value_paise', 0)
+      .not('status', 'in', '(paid,lost,do_not_contact)'),
   ]);
+  const overdueSet = new Set(overdueIds);
+  const dueTodayOnly = todayIds.filter((id) => !overdueSet.has(id)).length;
 
-  // Revenue from converted leads (few rows; sum in JS).
+  // Revenue from converted leads (few rows; sum in JS). revenue_paise is now
+  // refund-aware (see attribution.computeRevenuePaise).
   const { data: conv } = await supabaseAdmin.from('leads').select('revenue_paise').not('converted_at', 'is', null);
   const revenuePaise = (conv || []).reduce((a, r) => a + (Number(r.revenue_paise) || 0), 0);
+  const pipelineValuePaise = (openVal.data || []).reduce((a, r) => a + (Number(r.expected_value_paise) || 0), 0);
 
-  // Open pipeline value = expected value of leads not yet won/lost.
-  const { data: openVal } = await supabaseAdmin.from('leads')
-    .select('expected_value_paise').gt('expected_value_paise', 0)
-    .not('status', 'in', '(paid,lost,do_not_contact)');
-  const pipelineValuePaise = (openVal || []).reduce((a, r) => a + (Number(r.expected_value_paise) || 0), 0);
-
-  const paidCustomers = (counts.paid || 0) + (counts.activated || 0);
-  const conversionRate = total ? +(paidCustomers / total * 100).toFixed(1) : 0;
+  const { paidCustomers, activeFree, conversionRate } = conversionSummary(counts, total);
 
   return {
     total, byStatus: counts, funnel: FUNNEL.map((s) => ({ status: s, count: counts[s] || 0 })),
     addedThisWeek: addedThisWeek || 0,
     contactedToday: contactedToday || 0,
-    followUpsDueToday: dueToday || 0,
-    followUpsOverdue: overdue || 0,
-    paidCustomers, conversionRate, revenuePaise, pipelineValuePaise,
+    followUpsDueToday: dueTodayOnly,
+    followUpsOverdue: overdueSet.size,
+    paidCustomers, activeFree, conversionRate, revenuePaise, pipelineValuePaise,
   };
 }
 
@@ -298,4 +326,5 @@ module.exports = {
   upsertLead, safeUpsertLead, getLead, listLeads,
   changeStatus, assignOwner, addTag, removeTag, setDnc, addNote, logCall,
   pipelineCounts, dashboardStats, recordAccountEvent,
+  conversionSummary, followupWindow, leadIdsWithFollowup,
 };
