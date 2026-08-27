@@ -7,6 +7,7 @@ jest.mock('../../services/payoutEligibility', () => ({ isPayoutEligible: jest.fn
 jest.mock('../../services/routeAutoPayoutService', () => ({
   createHeldTransferForBooking: jest.fn(),
   finalizeReleasedTransfer: jest.fn(),
+  applyTransferSettlement: jest.fn(() => Promise.resolve({ settled: false })),
 }));
 jest.mock('../../services/routeAccountService', () => ({ createLinkedAccount: jest.fn() }));
 jest.mock('../../services/payoutEmails', () => ({
@@ -66,6 +67,22 @@ test('mode "off" is a no-op — no queries, no money, no alert', async () => {
   expect(supabaseAdmin.from).not.toHaveBeenCalled();
   expect(routeAuto.createHeldTransferForBooking).not.toHaveBeenCalled();
   expect(adminAlert).not.toHaveBeenCalled();
+});
+
+test('observe: settlement leg is synced from Razorpay, but no money moves (free-Render backfill path)', async () => {
+  platformConfig.getConfig.mockResolvedValue({ payoutReconcilerMode: 'observe' });
+  const fetch = jest.fn(() => Promise.resolve({ id: 'trf_1', status: 'processed', on_hold: false, settlement_status: 'settled', recipient_settlement_id: 'setl_1' }));
+  const edit = jest.fn();
+  razorpayConfig.getClient.mockResolvedValue({ transfers: { fetch, edit }, products: { fetch: jest.fn() } });
+  setReads({ stuck: [{ id: 'bk9', host_id: 'h1', vendor_amount: 10, razorpay_transfer_id: 'trf_1', transfer_status: 'processed', transfer_hold_until: '2000-01-01', settlement_status: 'eligible_for_settlement' }] });
+
+  const r = await reconcile();
+  expect(fetch).toHaveBeenCalledWith('trf_1');                                     // read
+  expect(routeAuto.applyTransferSettlement).toHaveBeenCalledWith(expect.objectContaining({ id: 'trf_1', settlement_status: 'settled' }));
+  expect(edit).not.toHaveBeenCalled();                                            // no hold lifted
+  expect(routeAuto.finalizeReleasedTransfer).not.toHaveBeenCalled();              // no ledger / money
+  expect(r.released).toBe(0);
+  expect(r.finalized).toBe(0);
 });
 
 test('observe: an ONBOARDED host stuck at activation is counted + alerted, no transfer created', async () => {
