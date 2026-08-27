@@ -32,6 +32,7 @@ const BL = '{{booking_link}}';
 const p = (html) => `<p>${html}</p>`;
 const SIGN_TITHI = p(`— Tithi`);
 const SIGN_SUJATA = p(`— Sujata`);
+const SIGN_DURGA = p(`— Durga`);
 
 // Approved AiSensy Campaign Names (the human name sendCampaign uses).
 const WA = { onboarding: 'Onboarding Nudge', firstBooking: 'Get First Booking', winback: 'Winback Offer - Additional Month' };
@@ -132,6 +133,70 @@ const SEQUENCES = [
         subject: 'What stopped Book A Sloth from working for you?',
         preview: `Tell me what got in the way — I'll look into it.`,
         body: p(`If it wasn't price, tell me what didn't work. Reply to this email — I'll look into it personally.`) + SIGN_TITHI },
+    ],
+  },
+  // ── Behavioural onboarding (Phase 6) — the engine enrols the FIRST unfilled gap
+  //    on the go-live path and stops the previous gap's sequence as each is filled.
+  {
+    name: 'Onboarding: add photo', sender_key: 'tithi',
+    description: 'Signed up, no profile photo yet — the #1 trust signal.',
+    is_active: true, stop_on_reply: true, stop_on_convert: true,
+    steps: [
+      { step_no: 1, delay_hours: 0,  channel: 'email',
+        subject: 'One thing left, {{first_name}} — add your photo',
+        preview: `Clients book faster when they can see who they're booking.`,
+        body: p(`Your page is almost there. Add your photo so clients know who they're booking with — it's the first thing they look for.`) + p(`<a href="${BL}/dashboard">Add your photo →</a>`) + SIGN_TITHI },
+      { step_no: 2, delay_hours: 48, channel: 'email',
+        subject: 'A page with a face gets booked',
+        preview: `30 seconds to add your photo.`,
+        body: p(`People book people. Add a photo and your page instantly feels more trustworthy — takes about 30 seconds.`) + p(`<a href="${BL}/dashboard">Add your photo →</a>`) + SIGN_TITHI },
+    ],
+  },
+  {
+    name: 'Onboarding: add service', sender_key: 'tithi',
+    description: 'Has photo but no service — nothing to book yet.',
+    is_active: true, stop_on_reply: true, stop_on_convert: true,
+    steps: [
+      { step_no: 1, delay_hours: 0,  channel: 'email',
+        subject: 'What should clients book, {{first_name}}?',
+        preview: `Add one service and your page can take bookings.`,
+        body: p(`Your page needs something to book. Add one service, set the price — and clients can start booking you.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) + SIGN_TITHI },
+      { step_no: 2, delay_hours: 48, channel: 'email',
+        subject: 'One service is all it takes',
+        preview: `Add it, set a price, share your link.`,
+        body: p(`You don't need to list everything — just one service to go live. You can always add more later.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) + SIGN_TITHI },
+    ],
+  },
+  {
+    name: 'Onboarding: set availability', sender_key: 'tithi',
+    description: "Has a service but no availability — clients can't pick a time.",
+    is_active: true, stop_on_reply: true, stop_on_convert: true,
+    steps: [
+      { step_no: 1, delay_hours: 0,  channel: 'email',
+        subject: 'Your service is ready. Is your calendar?',
+        preview: `Set your hours so clients can pick a time.`,
+        body: p(`You've added a service — nice. Now set your availability so clients can pick a time that works for you both.`) + p(`<a href="${BL}/dashboard/availability">Set availability →</a>`) + SIGN_TITHI },
+      { step_no: 2, delay_hours: 48, channel: 'email',
+        subject: 'Almost live — just add your hours',
+        preview: `Set availability and your page is ready to share.`,
+        body: p(`One step from live: add the hours you're free to take bookings, and your page is ready to share.`) + p(`<a href="${BL}/dashboard/availability">Set availability →</a>`) + SIGN_TITHI },
+    ],
+  },
+  {
+    // Celebration — Durga. stop_on_convert=false so it isn't cut off the moment the
+    // host counts as 'activated' (having a booking is exactly why they're here).
+    name: 'First booking celebration', sender_key: 'durga',
+    description: 'Host just landed their first paid booking — celebrate + teach booking #2.',
+    is_active: true, stop_on_reply: false, stop_on_convert: false,
+    steps: [
+      { step_no: 1, delay_hours: 0,  channel: 'email', sender_key: 'durga',
+        subject: '🎉 Your first booking, {{first_name}}!',
+        preview: `The hard part's done — now let's get booking #2.`,
+        body: p(`Your first booking is in — congratulations! 🎉 That's the hard part done.`) + p(`Now let's get booking #2: share your link with a few more people who'd book you.`) + p(`<a href="${BL}/dashboard">Share your page →</a>`) + SIGN_DURGA },
+      { step_no: 2, delay_hours: 72, channel: 'email', sender_key: 'durga',
+        subject: 'How to get booking #2',
+        preview: `One WhatsApp, one story, one ask this week.`,
+        body: p(`The hosts who grow keep doing one thing: they keep sharing. This week — one WhatsApp broadcast, one Instagram story, one direct ask.`) + SIGN_DURGA },
     ],
   },
   {
