@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAttribution } from '../utils/attribution';
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
@@ -121,8 +122,10 @@ export const loginUnified     = (data)         => API.post('/auth/login-unified'
 export const getMe            = ()             => API.get('/auth/me');
 export const updateMe         = (data)         => API.put('/auth/me', data);
 export const getGoogleAuthUrl = ()             => API.get('/auth/google');
-// Vendor Google auth (public): one consent screen = identity + calendar scopes
-export const getVendorGoogleUrl = (intent = 'login', invite) => API.get('/auth/google/vendor', { params: { intent, ...(invite ? { invite } : {}) } });
+// Vendor Google auth (public): one consent screen = identity + calendar scopes.
+// Attribution rides along as query params so a host who arrived from an ad/campaign
+// is stamped with their acquisition source (CRM Phase 2b).
+export const getVendorGoogleUrl = (intent = 'login', invite) => API.get('/auth/google/vendor', { params: { intent, ...(invite ? { invite } : {}), ...(getAttribution() || {}) } });
 export const sendOtp          = (data)         => API.post('/auth/send-otp', data);
 export const verifyOtp        = (data)         => API.post('/auth/verify-otp', data);
 // Phone-primary user login
@@ -138,11 +141,11 @@ export const resetPassword    = (data)         => API.post('/auth/reset-password
 // ── Newsletter (public) — POST /email/subscribe records the address as a
 // campaign contact AND a CRM lead server-side. Callers stay best-effort: on a
 // network failure they still stash the address client-side so it is never lost.
-export const subscribeNewsletter = (email)     => API.post('/email/subscribe', { email });
+export const subscribeNewsletter = (email)     => API.post('/email/subscribe', { email, attribution: getAttribution() });
 
 // ── Contact form (public) ─────────────────────────────────────
 export const sendContactMessage = (data) => API.post('/contact', data);
-export const submitEnterpriseLead = (data) => API.post('/enterprise-lead', data);
+export const submitEnterpriseLead = (data) => API.post('/enterprise-lead', { ...data, attribution: getAttribution() });
 
 // ── Bolt support bot (public) ─────────────────────────────────
 export const askBot = (data) => API.post('/bot/ask', data);

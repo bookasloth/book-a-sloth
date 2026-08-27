@@ -13,6 +13,7 @@
 const { supabaseAdmin } = require('../../config/supabase');
 const { normalizePhone } = require('../aisensyService');
 const { logActivity } = require('./activity');
+const { cleanAttribution, touchSnapshot, stripAttributionColumns, isMissingColumnError } = require('./attributionInput');
 
 const FUNNEL = ['new', 'contacted', 'replied', 'qualified', 'demo_scheduled', 'trial', 'activated', 'paid'];
 const STATUSES = [...FUNNEL, 'lost', 'do_not_contact'];
@@ -27,9 +28,10 @@ const lc = (e) => (e ? String(e).trim().toLowerCase() : null);
  * `patch` may include any lead column; blanks never clobber existing values.
  * @returns {{ lead, created }}
  */
-async function upsertLead(patch = {}, { source, createdBy = '' } = {}) {
+async function upsertLead(patch = {}, { source, createdBy = '', attribution } = {}) {
   const phone = norm(patch.phone);
   const email = lc(patch.email);
+  const att = cleanAttribution(attribution || {});   // null when no usable UTM/referrer
 
   let existing = null;
   if (phone) ({ data: existing } = await supabaseAdmin.from('leads').select('*').eq('phone', phone).maybeSingle());
@@ -38,6 +40,9 @@ async function upsertLead(patch = {}, { source, createdBy = '' } = {}) {
   const clean = { ...patch };
   if (phone) clean.phone = phone; else delete clean.phone;
   if (email) clean.email = email; else delete clean.email;
+  // Flat utm_* columns join the patch so the blank-merge below preserves the
+  // FIRST-touch source (never clobbered), while last_touch is refreshed each time.
+  if (att) Object.assign(clean, att);
 
   if (existing) {
     // Merge: only fill blanks / update explicitly provided non-empty values.
@@ -47,9 +52,13 @@ async function upsertLead(patch = {}, { source, createdBy = '' } = {}) {
       if (k === 'status' || k === 'owner_admin_id' || k === 'source') continue; // never regress pipeline on re-sync
       if (existing[k] === null || existing[k] === '' || existing[k] === undefined) merged[k] = v;
     }
+    if (att) {
+      merged.last_touch = touchSnapshot(att);                 // last-touch always refreshes
+      if (!existing.first_touch) merged.first_touch = touchSnapshot(att);
+    }
     if (Object.keys(merged).length) {
       merged.updated_at = new Date().toISOString();
-      await supabaseAdmin.from('leads').update(merged).eq('id', existing.id);
+      await updateLeadTolerant(existing.id, merged);
     }
     return { lead: { ...existing, ...merged }, created: false };
   }
@@ -59,12 +68,31 @@ async function upsertLead(patch = {}, { source, createdBy = '' } = {}) {
     source: source || clean.source || 'manual',
     created_by: createdBy,
   };
-  const { data, error } = await supabaseAdmin.from('leads').insert(row).select('*').single();
-  if (error) throw error;
+  if (att) { const snap = touchSnapshot(att); row.first_touch = snap; row.last_touch = snap; }
+  const data = await insertLeadTolerant(row);
   await logActivity(data.id, 'lead_created', { title: `Lead created (${row.source})`, meta: { source: row.source } });
   // Stitch any intent events that fired before this lead existed (best-effort).
   require('./intentEvents').attachToLead(data).catch(() => {});
   return { lead: data, created: true };
+}
+
+// Insert a lead; if the attribution columns don't exist yet (migration v3.120
+// not applied on this DB), strip them and retry so lead capture never breaks.
+async function insertLeadTolerant(row) {
+  let { data, error } = await supabaseAdmin.from('leads').insert(row).select('*').single();
+  if (error && isMissingColumnError(error)) {
+    ({ data, error } = await supabaseAdmin.from('leads').insert(stripAttributionColumns(row)).select('*').single());
+  }
+  if (error) throw error;
+  return data;
+}
+
+async function updateLeadTolerant(id, patch) {
+  let { error } = await supabaseAdmin.from('leads').update(patch).eq('id', id);
+  if (error && isMissingColumnError(error)) {
+    ({ error } = await supabaseAdmin.from('leads').update(stripAttributionColumns(patch)).eq('id', id));
+  }
+  if (error) throw error;
 }
 
 async function getLead(id) {

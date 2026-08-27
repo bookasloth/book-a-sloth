@@ -79,7 +79,7 @@ async function submitEnterpriseLead(req, res) {
         requirements: cap(b.requirements, 5000),
       },
     },
-    { source: 'enterprise_page', createdBy: 'enterprise_form' }
+    { source: 'enterprise_page', createdBy: 'enterprise_form', attribution: b.attribution }
   );
 
   // Enterprise inquiry = strong buying intent. Record it (identified by email/

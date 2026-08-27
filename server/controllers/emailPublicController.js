@@ -118,7 +118,7 @@ async function subscribe(req, res) {
     // Best-effort: upsertLead dedups by email (never a duplicate) and the
     // subscription must succeed even if the CRM write hiccups.
     try {
-      await leadService.upsertLead({ email }, { source: 'newsletter', createdBy: 'newsletter' });
+      await leadService.upsertLead({ email }, { source: 'newsletter', createdBy: 'newsletter', attribution: req.body?.attribution });
     } catch (_) { /* subscription already saved; lead capture is non-critical */ }
 
     // Identified intent signal — feeds the lead score once matched.
