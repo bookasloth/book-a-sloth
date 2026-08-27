@@ -44,10 +44,11 @@ function renderVars(str, lead, extra = {}) {
   return String(str).replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => (k in map ? map[k] : ''));
 }
 
-/** Ordered WhatsApp template params rendered from a variables array of tokens/strings. */
-function renderParams(variables, lead) {
+/** Ordered WhatsApp template params rendered from a variables array of tokens/strings.
+ *  `extra` supplies profile-derived tokens the lead lacks (username, account_name). */
+function renderParams(variables, lead, extra = {}) {
   if (!Array.isArray(variables)) return [];
-  return variables.map((v) => renderVars(String(v), lead));
+  return variables.map((v) => renderVars(String(v), lead, extra));
 }
 
 async function getLead(leadId) {
@@ -122,11 +123,19 @@ async function dispatch(row, leadArg, opts = {}) {
   const automated = !!opts.automated;
   let result;
   if (row.channel === 'whatsapp') {
+    // WhatsApp templates reference the host's PROFILE (username → public profile
+    // URL, name → account name) — the lead doesn't carry these, so pull them from
+    // the linked profile and expose {{username}} / {{account_name}} to the params.
+    let extra = {};
+    if (lead.profile_id) {
+      const { data: prof } = await supabaseAdmin.from('profiles').select('username, name').eq('id', lead.profile_id).maybeSingle();
+      if (prof) extra = { username: prof.username || '', account_name: prof.name || lead.name || '' };
+    }
     result = await whatsapp.send({
       lead,
       templateKey: row.template_key,
-      templateParams: renderParams(row.variables?.params || row.variables?.templateParams, lead),
-      userName: lead.name,
+      templateParams: renderParams(row.variables?.params || row.variables?.templateParams, lead, extra),
+      userName: extra.account_name || lead.name,
       automated,
     });
   } else {

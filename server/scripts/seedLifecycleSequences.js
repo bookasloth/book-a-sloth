@@ -52,9 +52,10 @@ const SEQUENCES = [
       { step_no: 2, delay_hours: 24, channel: 'email', subject: 'Finish your profile (2 minutes)',
         body: p(`A complete profile books more. Add your photo and a line about what you do.`) + p(`<a href="${BL}/dashboard">Complete profile →</a>`) },
       // WhatsApp nudge at ~48h quiet — highest-open channel for a stalled setup.
-      // Onboarding Nudge template params: {{1}} name, {{2}} account name, {{3}} link.
+      // Onboarding Nudge template params: {{1}} name, {{2}} account name (profile
+      // name), {{3}} link. account_name/username come from the linked profile.
       { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.onboarding,
-        variables: ['{{first_name}}', '{{business_name}}', '{{booking_link}}'],
+        variables: ['{{first_name}}', '{{account_name}}', '{{booking_link}}'],
         subject: null, body: `Hi {{first_name}} 👋 Your Book A Sloth page is one service away from live. Want a hand finishing it?` },
       { step_no: 4, delay_hours: 24, channel: 'email', subject: 'Add your first service',
         body: p(`Bookings need something to book. Add one service and you're live.`) + p(`<a href="${BL}/dashboard/services">Add a service →</a>`) },
@@ -72,9 +73,10 @@ const SEQUENCES = [
       { step_no: 2, delay_hours: 72, channel: 'email', subject: '3 ways hosts get their first booking',
         body: p(`A link in your bio, one WhatsApp broadcast, one Instagram story. That's usually all it takes.`) },
       // WhatsApp nudge when the first booking still hasn't happened.
-      // Get First Booking template params: {{1}} name, {{2}} profile link.
+      // Get First Booking template params: {{1}} name, {{2}} PUBLIC profile URL
+      // (every host has a username → bookasloth.com/<username>).
       { step_no: 3, delay_hours: 48, channel: 'whatsapp', template_key: WA.firstBooking,
-        variables: ['{{first_name}}', '{{booking_link}}/dashboard'],
+        variables: ['{{first_name}}', '{{booking_link}}/{{username}}'],
         subject: null, body: `{{first_name}}, share your booking link once today — most first bookings come from a single share 🚀` },
       { step_no: 4, delay_hours: 48, channel: 'email', subject: "Still quiet? Let's fix that together",
         body: p(`Reply with your link and I'll tell you what I'd change.`) + SIGN_TITHI },
