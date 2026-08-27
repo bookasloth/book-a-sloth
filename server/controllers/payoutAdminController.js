@@ -16,6 +16,7 @@ const { inAppNotify } = require('../utils/inAppNotify');
 const { computeAllSettlementBalances } = require('../services/settlementService');
 const platformConfig = require('../services/platformConfig');
 const routeTransferService = require('../services/routeTransferService');
+const payoutReconciler = require('../services/payoutReconciler');
 
 const now = () => new Date().toISOString();
 
@@ -198,4 +199,18 @@ const listClearing = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { listPayouts, approvePayout, rejectPayout, markPayoutPaid, releasePayoutViaRoute, listClearing };
+// POST /admin/payouts/reconcile — run the payout reconciler on demand. Free-tier
+// Render sleeps its crons (setInterval is frozen while the service is idle), so the
+// 15-min payout cron can lag; this forces a run so an admin never has to wait. Honors
+// platform_settings.payout_reconciler_mode: 'off' no-ops, 'observe' scans + syncs the
+// bank-settlement leg (no money), 'live' also creates/finalizes transfers. Returns the
+// run summary. Gated on payouts.release (it can move money in 'live').
+const runReconcile = async (req, res) => {
+  try {
+    const summary = await payoutReconciler.reconcile();
+    await audit(req, { action: 'payout.reconcile_run', resource_type: 'payout_reconcile', resource_id: null, after: summary });
+    res.json(summary);
+  } catch (e) { safeError(res, e); }
+};
+
+module.exports = { listPayouts, approvePayout, rejectPayout, markPayoutPaid, releasePayoutViaRoute, listClearing, runReconcile };

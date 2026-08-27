@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { adminGetPayouts, adminApprovePayout, adminRejectPayout, adminMarkPayoutPaid, adminReleasePayoutRoute, adminGetPayoutClearing } from '../../services/api';
+import { adminGetPayouts, adminApprovePayout, adminRejectPayout, adminMarkPayoutPaid, adminReleasePayoutRoute, adminGetPayoutClearing, adminRunPayoutReconcile } from '../../services/api';
 import toast from 'react-hot-toast';
 import { PageHeader, Card, Btn, Badge, Skeleton } from '../../components/admin/ui';
 
@@ -47,6 +47,7 @@ const AdminPayouts = () => {
   const [clearing, setClearing] = useState({ threshold: 100, hosts: [] });
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null); // { kind: 'reject'|'pay', id }
+  const [reconciling, setReconciling] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,11 +71,24 @@ const AdminPayouts = () => {
     catch (e) { toast.error(e?.response?.data?.message || 'Action failed'); }
   };
 
+  // Force a payout-reconciler run now — the cron is every 15 min and pauses when
+  // free-tier Render sleeps, so this lets an admin sync/settle without waiting.
+  const runReconcile = async () => {
+    setReconciling(true);
+    try {
+      const { data } = await adminRunPayoutReconcile();
+      if (data?.skipped === 'off') toast('Reconciler is off (set mode to observe/live).');
+      else toast.success(`Reconcile (${data.mode}): created ${data.created || 0}, finalized ${data.finalized || 0}, released ${data.released || 0}`);
+      load();
+    } catch (e) { toast.error(e?.response?.data?.message || 'Reconcile failed'); }
+    finally { setReconciling(false); }
+  };
+
   return (
     <div className="max-w-[1100px]">
       <PageHeader title="Payouts" subtitle="Approve, reject, and mark host payout requests as paid." />
 
-      <div className="flex gap-1.5 mb-5">
+      <div className="flex items-center gap-1.5 mb-5">
         {TABS.map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-3 py-1.5 rounded-full text-[12.5px] font-medium capitalize transition-colors
@@ -82,6 +96,10 @@ const AdminPayouts = () => {
             {t}
           </button>
         ))}
+        <Btn variant="outline" size="sm" className="ml-auto" disabled={reconciling} onClick={runReconcile}
+          title="Run the payout reconciler now (create/finalize transfers, sync bank-settlement status)">
+          {reconciling ? 'Running…' : 'Run reconcile'}
+        </Btn>
       </div>
 
       {loading ? (

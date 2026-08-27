@@ -205,6 +205,7 @@ const disputes = require('../controllers/disputeAdminController');
 router.get('/disputes',                    requireAdmin('payouts.view'),    disputes.listDisputes);
 router.post('/disputes/:id/resolve',       requireAdmin('payouts.release'), disputes.resolveDispute);
 router.post('/bookings/:id/reverse-payout',requireAdmin('payouts.release'), disputes.reverseBookingPayout);
+router.post('/payouts/reconcile',   requireAdmin('payouts.release'), payouts.runReconcile);
 router.get('/payouts',              requireAdmin('payouts.view'),    payouts.listPayouts);
 router.post('/payouts/:id/approve', requireAdmin('payouts.approve'), payouts.approvePayout);
 router.post('/payouts/:id/reject',  requireAdmin('payouts.approve'), payouts.rejectPayout);
