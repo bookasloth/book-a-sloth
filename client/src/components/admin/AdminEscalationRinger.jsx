@@ -1,36 +1,37 @@
 // Mounted once in AdminLayout — so ANY open admin dashboard reacts. Subscribes to
-// the `support:admin` station channel and, on a new escalation, rings a phone-like
-// tone, pops a persistent "Open" toast, and flashes the tab title. The ring is
-// synthesized with the WebAudio API (no audio asset to ship or host) and only
-// plays once the browser has unlocked audio on a user gesture — otherwise the
-// visual toast + title flash still fire, never a silent miss.
+// the `support:admin` station channel and, on a new escalation, loops a ringtone
+// (tring_tring.mp3), pops a persistent "Open" toast, and flashes the tab title.
+// The ring keeps going until an admin clicks Open (or another escalation resets
+// it) — no auto-stop. Audio only plays once the browser has unlocked it on a user
+// gesture; otherwise the visual toast + title flash still fire, never a silent miss.
 import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { getSupabase } from '../../services/supabaseClient';
 
-const RING_EVERY_MS = 3000;
-const RING_CAP_MS = 30000; // never ring longer than this for one escalation
+const RING_SRC = '/sounds/tring_tring.mp3';
 
 export default function AdminEscalationRinger() {
   const navigate = useNavigate();
-  const ctxRef = useRef(null);
-  const ringTimer = useRef(null);
+  const audioRef = useRef(null);
   const titleTimer = useRef(null);
-  const capTimer = useRef(null);
   const origTitle = useRef(null);
 
-  // Autoplay policy: an AudioContext can only make sound after a user gesture.
-  // Create/resume it on the first interaction so it's unlocked by the time an
-  // escalation arrives (an admin using the console has already clicked).
+  // Autoplay policy: audio can only play after a user gesture. Prime the element
+  // on the first interaction (play→pause) so it's unlocked by the time an
+  // escalation arrives — an admin using the console has already clicked.
   useEffect(() => {
+    const a = new Audio(RING_SRC);
+    a.loop = true;
+    a.preload = 'auto';
+    audioRef.current = a;
+    let unlocked = false;
     const unlock = () => {
+      if (unlocked) return;
+      unlocked = true;
       try {
-        if (!ctxRef.current) {
-          const AC = window.AudioContext || window.webkitAudioContext;
-          if (AC) ctxRef.current = new AC();
-        }
-        ctxRef.current?.resume?.();
+        const p = a.play();
+        if (p?.then) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => { /* stays locked */ });
       } catch { /* audio unavailable — visual only */ }
     };
     window.addEventListener('pointerdown', unlock);
@@ -38,40 +39,24 @@ export default function AdminEscalationRinger() {
     return () => {
       window.removeEventListener('pointerdown', unlock);
       window.removeEventListener('keydown', unlock);
+      a.pause();
     };
   }, []);
 
-  const beep = (ctx, at, freq) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.0001, at);
-    gain.gain.exponentialRampToValueAtTime(0.3, at + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.4);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(at);
-    osc.stop(at + 0.42);
-  };
-
-  // One two-tone warble (like a desk phone). No-op if audio is still locked.
-  const playRing = () => {
-    const ctx = ctxRef.current;
-    if (!ctx || ctx.state !== 'running') return;
-    const t = ctx.currentTime;
-    beep(ctx, t, 480);
-    beep(ctx, t + 0.5, 620);
-  };
-
   const stopRing = () => {
-    [ringTimer, titleTimer, capTimer].forEach((r) => { if (r.current) { clearInterval(r.current); clearTimeout(r.current); r.current = null; } });
+    const a = audioRef.current;
+    if (a) { a.pause(); a.currentTime = 0; }
+    if (titleTimer.current) { clearInterval(titleTimer.current); titleTimer.current = null; }
     if (origTitle.current != null) { document.title = origTitle.current; origTitle.current = null; }
   };
 
   const startRing = () => {
     stopRing();
-    playRing();
-    ringTimer.current = setInterval(playRing, RING_EVERY_MS);
+    const a = audioRef.current;
+    if (a) {
+      try { a.currentTime = 0; const p = a.play(); if (p?.catch) p.catch(() => { /* locked */ }); }
+      catch { /* audio unavailable — visual only */ }
+    }
     // Flash the tab title so a backgrounded console still gets noticed.
     origTitle.current = document.title;
     let on = false;
@@ -79,7 +64,6 @@ export default function AdminEscalationRinger() {
       on = !on;
       document.title = on ? '🔴 Support needed' : (origTitle.current || 'Book A Sloth');
     }, 1000);
-    capTimer.current = setTimeout(stopRing, RING_CAP_MS);
   };
 
   useEffect(() => {
@@ -103,7 +87,7 @@ export default function AdminEscalationRinger() {
                 Open
               </button>
             </span>
-          ), { duration: RING_CAP_MS, id: `esc-${payload?.thread_id || ref}` });
+          ), { duration: Infinity, id: `esc-${payload?.thread_id || ref}` });
         })
         .subscribe();
     })();
