@@ -252,11 +252,41 @@ async function writeScoring(lead, d) {
   }
 }
 
+// Churn-on-lapse sweep: money-state leads whose paid term has lapsed → Churned +
+// win-back. Money states are excluded from loadOpenLeads, so they get their own pass.
+// `plan_expires_at` in the past = the paid term ended (the same signal
+// resolveVendorPlan uses to downgrade to free) — we do NOT churn on the cancel
+// webhook, so a cancelled host keeps their paid status until the term actually runs
+// out. A system move, so it bypasses the manual reason guard.
+async function churnLapsedLeads(now = Date.now()) {
+  const { data: leads } = await supabaseAdmin.from('leads')
+    .select('id, status, profile_id')
+    .in('status', [...rules.MONEY]).not('profile_id', 'is', null)
+    .order('updated_at', { ascending: true }).limit(BATCH);
+  if (!leads?.length) return { churned: 0 };
+  const ids = [...new Set(leads.map((l) => l.profile_id))];
+  const { data: profs } = await supabaseAdmin.from('profiles').select('id, plan_expires_at').in('id', ids);
+  const expiresAt = new Map((profs || []).map((p) => [p.id, p.plan_expires_at]));
+  let churned = 0;
+  for (const lead of leads) {
+    const exp = expiresAt.get(lead.profile_id);
+    if (!exp || new Date(exp).getTime() >= now) continue;   // paid term still active → skip
+    try {
+      await leadService.changeStatus(lead.id, 'churned', null, { via: 'term_lapsed' });
+      await sequenceService.enrollByName('Churn-winback', lead.id, 'event:term_lapsed').catch(() => {});
+      churned++;
+    } catch (err) { console.error(`[crm] churn-lapse: lead ${lead.id} failed:`, err.message); }
+  }
+  return { churned };
+}
+
 /** Cron tick. Leader-elected by the caller. */
 async function run() {
   const now = Date.now();
+  // Churn lapsed money-state leads first — they are not part of the "open" scan below.
+  const churn = DRYRUN ? { churned: 0 } : await churnLapsedLeads(now);
   const leads = await loadOpenLeads();
-  if (!leads.length) return { scanned: 0, moved: 0, enrolled: 0, tasks: 0, dryRun: DRYRUN };
+  if (!leads.length) return { scanned: 0, moved: 0, enrolled: 0, tasks: 0, churned: churn.churned, dryRun: DRYRUN };
   const ctxMap = await loadAccountCtx(leads);
   const resolveSeq = seqResolver();
 
@@ -299,7 +329,7 @@ async function run() {
       console.error(`[crm] lifecycle: lead ${lead.id} failed:`, err.message);
     }
   }
-  return { scanned: leads.length, moved, enrolled, tasks, dryRun: DRYRUN };
+  return { scanned: leads.length, moved, enrolled, tasks, churned: churn.churned, dryRun: DRYRUN };
 }
 
-module.exports = { run, decide, SEQ };
+module.exports = { run, decide, SEQ, churnLapsedLeads };

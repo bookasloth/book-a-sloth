@@ -459,7 +459,7 @@ setInterval(async () => {
   try {
     await runLocked('crm-lifecycle-engine', async () => {
       const r = await crmLifecycleEngine.run();
-      if (r.moved || r.enrolled || r.tasks) console.log(`CRM lifecycle: ${r.moved} moved, ${r.enrolled} enrolled, ${r.tasks} tasks (scanned ${r.scanned}${r.dryRun ? ', dryrun' : ''})`);
+      if (r.moved || r.enrolled || r.tasks || r.churned) console.log(`CRM lifecycle: ${r.moved} moved, ${r.enrolled} enrolled, ${r.tasks} tasks, ${r.churned || 0} churned (scanned ${r.scanned}${r.dryRun ? ', dryrun' : ''})`);
     }, { leaseMs: CRM_LIFECYCLE_INTERVAL_MIN * 2 * 60 * 1000 });
   } catch (err) { console.error('CRM lifecycle engine error:', err.message); }
 }, CRM_LIFECYCLE_INTERVAL_MIN * 60 * 1000);
