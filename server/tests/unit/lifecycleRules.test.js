@@ -83,12 +83,14 @@ describe('resolveAccountStatus — Marketing gated behind Sloth (strict funnel)'
   test('sloth + 1 referral → ambassador', () => {
     expect(R.resolveAccountStatus('sloth', { ...slothFacts, referralsQualified: 1 })).toBe('ambassador');
   });
-  test('sloth + 3 referrals → champion (apex outranks the rest)', () => {
-    const ctx = { ...slothFacts, referralsQualified: 3, renewals: 5, isEnterprise: true };
-    expect(R.resolveAccountStatus('sloth', ctx)).toBe('champion');
+  test('Champion + Enterprised are MANUAL-only — never auto-set, even at high referrals/enterprise', () => {
+    const ctx = { ...slothFacts, referralsQualified: 5, renewals: 5, isEnterprise: true };
+    // Highest AUTO status is Ambassador (≥1 referral); Champion/Enterprised are manual designations.
+    expect(R.resolveAccountStatus('sloth', ctx)).toBe('ambassador');
+    expect(R.resolveAccountStatus('sloth', { ...slothFacts, isEnterprise: true })).toBe('sloth');
   });
-  test('sloth + enterprise (no referrals) → enterprised', () => {
-    expect(R.resolveAccountStatus('sloth', { ...slothFacts, isEnterprise: true })).toBe('enterprised');
+  test('long-tenure paying host (no 2nd charge row) → retained', () => {
+    expect(R.resolveAccountStatus('sloth', { ...slothFacts, renewals: 0, longTenure: true })).toBe('retained');
   });
 });
 
@@ -110,9 +112,14 @@ describe('resolveAccountStatus — invariants', () => {
 });
 
 describe('manualTransition — override guard', () => {
-  test('forward move needs no reason', () => {
+  test('forward move within Presale needs no reason', () => {
     expect(R.manualTransition('new', 'qualified')).toEqual({ allowed: true, needsReason: false });
-    expect(R.manualTransition('qualified', 'paid')).toEqual({ allowed: true, needsReason: false });
+    expect(R.manualTransition('contacted', 'demo')).toEqual({ allowed: true, needsReason: false });
+  });
+  test('manually ENTERING a money state needs a reason (asserts an unverified payment)', () => {
+    expect(R.manualTransition('qualified', 'paid').needsReason).toBe(true);   // → Subscribed
+    expect(R.manualTransition('demo', 'won').needsReason).toBe(true);         // → Won
+    expect(R.manualTransition('paid', 'won').needsReason).toBe(false);        // already in the money tier, forward
   });
   test('backward move needs a reason', () => {
     expect(R.manualTransition('paid', 'demo').needsReason).toBe(true);

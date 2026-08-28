@@ -114,4 +114,10 @@ const resolveVendorPlan = (profile) => {
 const FREE_SLUGS = new Set(['starter', 'explorer', 'free', 'starter_legacy']);
 const isFreeSlug = (slug) => FREE_SLUGS.has(String(slug || '').toLowerCase().trim());
 
-module.exports = { loadPlans, getPlan, getLimit, reminderWindowsForPlan, rescheduleNotifyForPlan, resolveVendorPlan, normalizeSlug, isFreeSlug, clearCache, FALLBACK_PLANS, REMINDER_WINDOWS };
+// Comped / internal tiers — real accounts but NOT paying customers (the Supreme
+// god-tier, staff/test comps). Excluded from the paid CRM pipeline (they never
+// enter Customer Relations). Distinct from free: they hold a non-free plan.
+const COMPED_SLUGS = new Set(['supreme']);
+const isCompedSlug = (slug) => COMPED_SLUGS.has(String(slug || '').toLowerCase().trim());
+
+module.exports = { loadPlans, getPlan, getLimit, reminderWindowsForPlan, rescheduleNotifyForPlan, resolveVendorPlan, normalizeSlug, isFreeSlug, isCompedSlug, clearCache, FALLBACK_PLANS, REMINDER_WINDOWS };

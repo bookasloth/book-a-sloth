@@ -41,7 +41,10 @@ export const TERMINAL = new Set(EXIT);
 // guard (lifecycleRules.manualTransition). The board opens the reason modal for these.
 export function needsReason(from, to) {
   if (!from || from === to) return false;
-  return (RANK[to] ?? 0) < (RANK[from] ?? 0) || TERMINAL.has(to) || to === 'do_not_contact';
+  // Manually ENTERING a money state (Subscribed/Won/…) asserts a payment the system
+  // never verified — prompt for a reason there too, not just backward/exit moves.
+  const entersMoney = MONEY.has(to) && !MONEY.has(from);
+  return (RANK[to] ?? 0) < (RANK[from] ?? 0) || TERMINAL.has(to) || to === 'do_not_contact' || entersMoney;
 }
 
 // The four boards for the pipeline switcher. A column can DISPLAY more than one
