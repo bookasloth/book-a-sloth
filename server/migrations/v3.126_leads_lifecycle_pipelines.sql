@@ -38,7 +38,12 @@ UPDATE leads l SET status = 'qualified', updated_at = now()
    AND COALESCE(NULLIF(p.razorpay_subscription_id, ''), NULL) IS NULL
    AND LOWER(COALESCE(p.plan, 'starter')) IN ('free', 'starter', 'starter_legacy', 'explorer');
 
--- 2. Widen the status CHECK to the full board set.
+-- 2. Widen the status CHECK to the full board set. EXPAND-PHASE: the two retired
+--    values `demo_scheduled` and `trial` remain ALLOWED here (no rows use them —
+--    step 1 migrated them off) so the still-deployed old admin UI, which can still
+--    drag a lead to the old Demo/Trial columns, does not hit a CHECK violation
+--    before this PR ships. A follow-up CONTRACT migration drops them once the new
+--    board UI (P2) is live everywhere.
 ALTER TABLE leads DROP CONSTRAINT IF EXISTS leads_status_check;
 ALTER TABLE leads ADD CONSTRAINT leads_status_check CHECK (status IN (
   -- Presale
@@ -50,7 +55,9 @@ ALTER TABLE leads ADD CONSTRAINT leads_status_check CHECK (status IN (
   -- Exit
   'not_reachable', 'not_interested', 'disqualified', 'lost', 'churned',
   -- Orthogonal send-gate
-  'do_not_contact'
+  'do_not_contact',
+  -- Retired, transitional-only (drop in the contract migration): keep old-UI writes legal.
+  'demo_scheduled', 'trial'
 ));
 
 -- 3. lead_type — guests are tracked as bookings, not host pipeline leads.
