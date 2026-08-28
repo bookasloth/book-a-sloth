@@ -79,6 +79,7 @@ const FUNNEL = ['new', 'contacted', 'replied', 'qualified', 'demo', 'paid', 'act
 
 const rankOf = (s) => (RANK[s] == null ? -1 : RANK[s]);
 const higher = (a, b) => (rankOf(a) >= rankOf(b) ? a : b);
+const pipelineOf = (status) => PIPELINE_OF[status] || 'exit';
 
 /**
  * The Sloth ROI gate: the host has earned, on-platform, at least 2× what their
@@ -154,5 +155,5 @@ module.exports = {
   PRESALE, RELATIONS, MARKETING, EXIT, DNC,
   STATUSES, PIPELINE_OF, BOARD_COLUMNS, RANK, FUNNEL,
   MONEY, CONVERTED, TERMINAL, NO_AUTO, CLOSED, CLOSED_SQL,
-  rankOf, meetsSlothGate, resolveAccountStatus, manualTransition,
+  rankOf, pipelineOf, meetsSlothGate, resolveAccountStatus, manualTransition,
 };

@@ -159,8 +159,16 @@ async function recordAccountEvent({ profileId, type, title, meta = {}, promoteTo
       if (MONEY.has(target) && !lead.converted_at) patch.converted_at = wonAt || new Date().toISOString();
       await supabaseAdmin.from('leads').update(patch).eq('id', lead.id);
       await logActivity(lead.id, 'status_changed', {
-        title: `Status → ${target}`, meta: { from: lead.status, to: target, via: type, change_type: 'auto' },
+        title: `Status → ${target}`,
+        meta: {
+          from: lead.status, to: target, via: type, change_type: 'auto',
+          pipeline_from: rules.pipelineOf(lead.status), pipeline_to: rules.pipelineOf(target),
+        },
       });
+      // Cross-board handoff on the money promotion (e.g. Presale → Relations on first pay).
+      if (rules.pipelineOf(lead.status) !== rules.pipelineOf(target)) {
+        await require('./handoffService').onCrossBoard({ leadId: lead.id, from: lead.status, to: target, actorAdminId: null });
+      }
     }
     return lead.id;
   } catch (e) {
@@ -329,11 +337,16 @@ async function changeStatus(id, status, actorAdminId, opts = {}) {
     actorAdminId, title: `Status → ${status}`,
     meta: {
       from: before?.status, to: status,
+      pipeline_from: before ? rules.pipelineOf(before.status) : null, pipeline_to: rules.pipelineOf(status),
       change_type: actorAdminId ? 'manual' : 'auto',
       ...(reason ? { reason } : {}),
       ...(opts.via ? { via: opts.via } : {}),
     },
   });
+  // Cross-board team handoff (reassign + SLA + audit). Best-effort; never throws.
+  if (before && rules.pipelineOf(before.status) !== rules.pipelineOf(status)) {
+    await require('./handoffService').onCrossBoard({ leadId: id, from: before.status, to: status, actorAdminId });
+  }
   return getLead(id);
 }
 
