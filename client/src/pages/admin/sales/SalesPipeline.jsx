@@ -1,13 +1,33 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Phone, Mail, MessageCircle } from 'lucide-react';
 import { PageHeader, Card } from '../../../components/admin/ui';
-import { crmListLeads, crmSetStatus, crmSetOwner, crmListFollowUps, adminListStaff } from '../../../services/api';
-import { BOARDS, STATUS_LABEL, needsReason, rupees, relTime } from './salesConstants';
+import { crmListLeads, crmSetStatus, crmListFollowUps, adminListStaff } from '../../../services/api';
+import { BOARDS, STATUS_LABEL, needsReason, relTime } from './salesConstants';
 import ReasonModal from './ReasonModal';
 import toast from 'react-hot-toast';
 
 const PER_COL = 50;
-const initials = (name) => (name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+
+// Where the card's Email / WhatsApp actions point — the team's shared inboxes,
+// not a per-lead deep link (leads are worked from these two consoles).
+const GMAIL_URL = 'https://mail.google.com/mail/u/1/#inbox';
+const AISENSY_URL = 'https://www.app.aisensy.com/projects/6a1a56d8d44ba264bf5109a2/contacts';
+
+const copyPhone = async (phone) => {
+  if (!phone) return toast.error('No number on this lead');
+  try { await navigator.clipboard.writeText(phone); toast.success(`Copied ${phone}`); }
+  catch { toast.error('Copy failed'); }
+};
+
+// Compact action row on each lead card — Call (copies number) / Email / WhatsApp.
+const ActionBtn = ({ icon: Icon, label, title, onClick, className = '' }) => (
+  <button type="button" title={title} onClick={onClick}
+    className={`flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium adm-t2 hover:adm-t1 hover:bg-black/[0.04] transition ${className}`}>
+    <Icon size={13} strokeWidth={2} className="adm-t3" />
+    {label}
+  </button>
+);
 
 // The pipeline — four team-owned boards over one lead record. Switch boards with
 // the tabs; drag a card between the active board's stages to move it. Guests are
@@ -94,17 +114,6 @@ export default function SalesPipeline() {
   };
   const cancelReason = () => { setReason(null); load(); };   // revert the optimistic move
 
-  const assignOwner = async (id, ownerId) => {
-    try {
-      await crmSetOwner(id, ownerId || null);
-      setCols((c) => {
-        const next = { ...c };
-        for (const s of Object.keys(next)) next[s] = { ...next[s], rows: next[s].rows.map((r) => r.id === id ? { ...r, owner_admin_id: ownerId || null } : r) };
-        return next;
-      });
-    } catch { toast.error('Could not assign owner'); }
-  };
-
   return (
     <div className="p-4 sm:p-6">
       <PageHeader title="Pipeline" subtitle={`${board.label} · owned by ${board.owner}. Drag a lead between stages to move it; a backward or exit move asks for a reason.`} />
@@ -128,11 +137,14 @@ export default function SalesPipeline() {
 
       {loading ? <p className="adm-t3">Loading…</p> : (
         <div className="flex gap-3 overflow-x-auto pb-4">
+          {/* Columns stretch (flex-1) to fill the width so 4–5 boards fit a wide
+              screen with no horizontal scroll; the min-width only bites (and
+              re-enables scroll) on narrow viewports. */}
           {board.columns.map((c) => {
             const col = cols[c.key] || { rows: [], total: 0 };
             const isOver = dragOver === c.key;
             return (
-              <div key={c.key} className={`flex-shrink-0 w-64 rounded-xl p-1 transition ${isOver ? 'ring-1' : ''}`}
+              <div key={c.key} className={`flex-1 min-w-[220px] max-w-[270px] rounded-xl p-1 transition ${isOver ? 'ring-1' : ''}`}
                 style={isOver ? { background: `${board.accent}14`, boxShadow: `inset 0 0 0 1px ${board.accent}66` } : undefined}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(c.key); }}
                 onDragLeave={() => setDragOver((d) => (d === c.key ? null : d))}
@@ -147,41 +159,33 @@ export default function SalesPipeline() {
                   {col.rows.length === 0 && <p className="text-[11px] adm-t3 px-2">—</p>}
                   {col.rows.map((r) => {
                     const due = followMap[r.id]; const overdue = due && new Date(due) < new Date();
-                    const val = r.expected_value_paise || r.revenue_paise;
                     const owner = r.owner_admin_id ? staffById[r.owner_admin_id] : null;
                     return (
-                      <Card key={r.id} className="rounded-xl p-3 cursor-grab active:cursor-grabbing adm-hoverable"
+                      <Card key={r.id} className="rounded p-1.5 overflow-hidden cursor-grab active:cursor-grabbing adm-hoverable"
                         draggable
                         onDragStart={() => { window.__crmDrag = { id: r.id, from: r.status, fromCol: c.key }; }}
                         onClick={() => nav(`/admin/sales/leads/${r.id}`)}>
-                        <div className="flex items-start gap-1.5">
-                          <p className="text-[13px] font-semibold adm-t1 truncate flex-1">{r.name || 'Unnamed'}</p>
-                          {r.status !== c.key && (
-                            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0" style={{ background: `${board.accent}1a`, color: board.accent }}>{STATUS_LABEL[r.status]}</span>
-                          )}
-                          {r.verified_at && (
-                            <span title="KYC verified" className="text-[10px] font-semibold text-emerald-600 shrink-0">✓ Verified</span>
-                          )}
+                        {/* Name (primary) + recency */}
+                        <div className="flex items-baseline gap-2">
+                          <p className="text-[13px] font-semibold adm-t1 truncate flex-1 leading-tight">{r.name || 'Unnamed'}</p>
+                          <span className="text-[10px] adm-t3 shrink-0">{relTime(r.last_activity_at || r.created_at)}</span>
                         </div>
-                        {r.business_name && <p className="text-[11px] adm-t3 truncate">{r.business_name}</p>}
-                        <div className="flex items-center justify-between mt-1.5">
-                          <span className={`text-[10px] ${overdue ? 'text-red-500 font-medium' : 'adm-t3'}`}>
-                            {due ? `Follow up ${relTime(due)}` : relTime(r.last_activity_at || r.created_at)}
+                        {/* Status (secondary) — only when the card sits outside its own stage */}
+                        {r.status !== c.key && (
+                          <span className="inline-block mt-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${board.accent}1a`, color: board.accent }}>{STATUS_LABEL[r.status]}</span>
+                        )}
+                        {/* Last activity + owner — quiet, scannable */}
+                        <div className="flex items-center justify-between gap-2 mt-1">
+                          <span className={`text-[10px] truncate ${overdue ? 'text-red-500 font-medium' : 'adm-t3'}`}>
+                            {due ? `Follow-up ${relTime(due)}` : `Last activity · ${relTime(r.last_activity_at || r.created_at)}`}
                           </span>
-                          {val > 0 && <span className="text-[10px] font-semibold text-emerald-600">{rupees(val)}</span>}
+                          {owner && <span title={owner.name} className="text-[10px] adm-t3 shrink-0 truncate max-w-[84px]">{(owner.name || '').split(' ')[0]}</span>}
                         </div>
-                        {/* Owner assignment — stop the click from opening the lead */}
-                        <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          {owner
-                            ? <span title={owner.name} className="shrink-0 w-5 h-5 rounded-full bg-[#FE5100]/15 text-[#FE5100] text-[9px] font-bold flex items-center justify-center">{initials(owner.name)}</span>
-                            : <span className="shrink-0 w-5 h-5 rounded-full border border-dashed border-[var(--adm-line,#cbd5e1)] adm-t3 text-[9px] flex items-center justify-center">?</span>}
-                          <select
-                            value={r.owner_admin_id || ''}
-                            onChange={(e) => assignOwner(r.id, e.target.value)}
-                            className="text-[10px] bg-transparent adm-t3 rounded px-1 py-0.5 max-w-[160px] focus:outline-none focus:ring-1 focus:ring-[#FE5100]/40 hover:adm-t2 cursor-pointer">
-                            <option value="">Unassigned</option>
-                            {staff.map((st) => <option key={st.id} value={st.id}>{st.name || st.email}</option>)}
-                          </select>
+                        {/* Actions — flush to the card edges */}
+                        <div className="mt-1.5 -mx-1.5 -mb-1.5 grid grid-cols-3 border-t border-[var(--adm-line,#eef0f3)]" onClick={(e) => e.stopPropagation()}>
+                          <ActionBtn icon={Phone} label="Call" title="Copy number" onClick={() => copyPhone(r.phone)} />
+                          <ActionBtn icon={Mail} label="Email" title="Open Gmail" className="border-x border-[var(--adm-line,#eef0f3)]" onClick={() => window.open(GMAIL_URL, '_blank', 'noopener,noreferrer')} />
+                          <ActionBtn icon={MessageCircle} label="WhatsApp" title="Open AiSensy" onClick={() => window.open(AISENSY_URL, '_blank', 'noopener,noreferrer')} />
                         </div>
                       </Card>
                     );
