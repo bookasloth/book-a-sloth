@@ -32,6 +32,8 @@ test('onKycApproved notifies the host and creates the linked account', async () 
   const chain = {
     select: jest.fn(() => chain),
     eq: jest.fn(() => chain),
+    update: jest.fn(() => chain),                              // leads.verified_at stamp
+    is: jest.fn(() => Promise.resolve({ error: null })),       // …resolves the update
     maybeSingle: jest.fn(() => Promise.resolve({ data: { id: 'k1', user_id: 'h1' } })),
   };
   supabaseAdmin.from.mockReturnValue(chain);

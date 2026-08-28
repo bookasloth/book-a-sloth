@@ -16,6 +16,7 @@
 const { supabaseAdmin } = require('../../config/supabase');
 const { normalizePhone } = require('../aisensyService');
 const contactsService = require('../contactsService');
+const rules = require('./lifecycleRules');
 
 const toPaise = (rupees) => Math.round((Number(rupees) || 0) * 100);
 const PAGE = 200;
@@ -78,24 +79,15 @@ function isPaidSubscriber(profile, hasSubPayment) {
   return !!plan && !FREE_PLANS.has(plan);
 }
 
-// Pure: the status/converted_at patch for a lead given the win signal + current
-// state. Promotes to 'paid' when won; demotes a lead wrongly marked 'paid' by
-// the old any-revenue rule back to 'activated' (an active host who never
-// subscribed). Never regresses lost / do_not_contact.
+// Pure: converted_at backfill only. Lead STATUS is owned by the lifecycle engine
+// + real-time resolver (services/crm/lifecycleRules.resolveAccountStatus) and the
+// churn hook — a single writer. Attribution used to promote/demote status too,
+// which would now regress the new downstream money states (won/sloth/…) back to
+// 'paid' every hour. It no longer touches status: it only stamps converted_at on a
+// won lead that reached a money state without one.
 function conversionPatch({ won, status, convertedAt, wonAt }) {
   const patch = {};
-  if (won) {
-    if (!['paid', 'lost', 'do_not_contact'].includes(status)) {
-      patch.status = 'paid';                                   // promote to Won
-      if (!convertedAt && wonAt) patch.converted_at = wonAt;
-    } else if (status === 'paid' && !convertedAt && wonAt) {
-      patch.converted_at = wonAt;                              // backfill on an already-won lead
-    }
-    // lost / do_not_contact are deliberate dispositions — never auto-regress.
-  } else if (status === 'paid') {
-    patch.status = 'activated';                                // demote wrongly-won (booking-only)
-    patch.converted_at = null;
-  }
+  if (won && rules.MONEY.has(status) && !convertedAt && wonAt) patch.converted_at = wonAt;
   return patch;
 }
 

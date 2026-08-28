@@ -29,6 +29,7 @@ const leadScore = require('./leadScore');
 const leadService = require('./leadService');
 const sequenceService = require('./sequenceService');
 const followUpService = require('./followUpService');
+const rules = require('./lifecycleRules');
 
 const BATCH = Number(process.env.LIFECYCLE_ENGINE_BATCH) || 500;
 const DRYRUN = process.env.LIFECYCLE_ENGINE_DRYRUN === 'true';
@@ -74,30 +75,37 @@ function decide(lead, ctx = {}, now = Date.now()) {
   const { score } = leadScore.compute(lead, now);
   const intent = leadScore.intentOf(lead, score);
   const cur = lead.status;
+  // hasBooking/isPaid/earnings… are consumed by rules.resolveAccountStatus(ctx);
+  // decide() itself only needs the onboarding-gap signals below.
   const {
-    onboardingComplete = false, hasBooking = false,
+    onboardingComplete = false,
     hasPhoto = false, hasService = false, hasAvailability = false,
   } = ctx;
 
-  let status = cur;
-  // 1. Lifecycle handoff: a linked host who finished onboarding is out of
-  //    acquisition and into activation.
-  if (onboardingComplete && !['activated', 'paid'].includes(cur)) status = 'activated';
-  // 2. High intent → qualify for a human.
-  else if (intent === 'high' && ['new', 'contacted', 'replied'].includes(cur)) status = 'qualified';
-  // 3. Engaged since we last reached out → they responded.
-  else if (engagedSinceContact(lead) && ['new', 'contacted'].includes(cur)) status = 'replied';
-  // 4. We've contacted a brand-new lead → mark contacted.
-  else if (cur === 'new' && lead.last_contacted_at) status = 'contacted';
+  // 1. Account-derived promotion (paid hosts): Subscribed → Onboarded → Won → Sloth
+  //    → Marketing, via the shared pure resolver (same one the real-time hooks use).
+  //    An unpaid host gets `cur` back and falls through to the acquisition rules
+  //    below, so a free onboarded host stays in Presale (O-1).
+  let status = rules.resolveAccountStatus(cur, ctx);
+  if (status === cur) {
+    // 2. High intent → qualify for a human.
+    if (intent === 'high' && ['new', 'contacted', 'replied'].includes(cur)) status = 'qualified';
+    // 3. Engaged since we last reached out → they responded.
+    else if (engagedSinceContact(lead) && ['new', 'contacted'].includes(cur)) status = 'replied';
+    // 4. We've contacted a brand-new lead → mark contacted.
+    else if (cur === 'new' && lead.last_contacted_at) status = 'contacted';
+  }
 
   // Next action + which sequence (if any) to enroll. Order matters: the
   // lifecycle/activation handoff outranks the acquisition "human contact" cue.
   let nextAction = 'Nurturing';
   let enroll = null;
-  if (status === 'activated') {
-    // Behaviour, not calendar: celebrate a first booking; otherwise help land one.
-    if (hasBooking) { nextAction = 'Celebrate first booking'; enroll = SEQ.FIRST_BOOKING; }
-    else { nextAction = 'Enroll: Activated-no-booking'; enroll = SEQ.NO_BOOKING; }
+  if (status === 'won') {
+    // First paid booking landed → celebrate + teach booking #2.
+    nextAction = 'Celebrate first booking'; enroll = SEQ.FIRST_BOOKING;
+  } else if (status === 'activated') {
+    // Onboarded (paid) but no booking yet → help land the first.
+    nextAction = 'Enroll: Activated-no-booking'; enroll = SEQ.NO_BOOKING;
   } else if (status === 'qualified' || status === 'replied' || intent === 'high') {
     nextAction = 'Human contact';
   } else if (lead.profile_id && !onboardingComplete && daysSince(lead.created_at, now) >= STALE_SIGNUP_DAYS) {
@@ -126,28 +134,69 @@ async function loadOpenLeads() {
   return data || [];
 }
 
-// One batched read of linked-account state: onboarding + the three go-live gap
-// signals (photo / service / availability) + has-any-paid-booking.
+// One batched read of linked-account state: the three go-live gap signals
+// (photo / service / availability) + the facts the resolver needs to promote paid
+// hosts through Relations → Marketing (paid?, earnings, last-30d bookings, plan
+// price, renewals, qualified referrals, enterprise).
 async function loadAccountCtx(leads) {
+  const planService = require('../planService');
   const ids = [...new Set(leads.map((l) => l.profile_id).filter(Boolean))];
   const ctx = new Map();
   if (!ids.length) return ctx;
-  const [profilesRes, servicesRes, availRes, bookedRes] = await Promise.all([
-    supabaseAdmin.from('profiles').select('id, onboarding_completed, profile_image').in('id', ids),
+  const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
+  const DEAD = new Set(['cancelled', 'no_show', 'refunded']);
+  const [profilesRes, servicesRes, availRes, bookedRes, subsRes, refsRes] = await Promise.all([
+    supabaseAdmin.from('profiles').select('id, onboarding_completed, profile_image, plan, razorpay_subscription_id, subscription_status').in('id', ids),
     supabaseAdmin.from('services').select('host_id').in('host_id', ids),
     supabaseAdmin.from('availability').select('host_id').in('host_id', ids),
-    supabaseAdmin.from('bookings').select('host_id').eq('payment_status', 'paid').in('host_id', ids),
+    supabaseAdmin.from('bookings').select('host_id, platform_fee_amount, status, created_at').eq('payment_status', 'paid').in('host_id', ids),
+    supabaseAdmin.from('subscription_payments').select('vendor_id').eq('status', 'paid').in('vendor_id', ids),
+    supabaseAdmin.from('referrals').select('referrer_id').in('status', ['qualified', 'rewarded']).in('referrer_id', ids),
   ]);
   const hasService = new Set((servicesRes.data || []).map((s) => s.host_id));
   const hasAvail = new Set((availRes.data || []).map((a) => a.host_id));
-  const hasBooking = new Set((bookedRes.data || []).map((b) => b.host_id));
+
+  // Per-host booking aggregates (refund-aware earnings + counts + last-30d recency).
+  const earnings = new Map(); const bookingCount = new Map(); const last30 = new Map();
+  for (const b of bookedRes.data || []) {
+    if (b.status && DEAD.has(String(b.status).toLowerCase())) continue;
+    const hid = b.host_id;
+    bookingCount.set(hid, (bookingCount.get(hid) || 0) + 1);
+    earnings.set(hid, (earnings.get(hid) || 0) + Math.round((Number(b.platform_fee_amount) || 0) * 100));
+    if (b.created_at && b.created_at >= since30) last30.set(hid, (last30.get(hid) || 0) + 1);
+  }
+  const subCount = new Map();
+  for (const s of subsRes.data || []) subCount.set(s.vendor_id, (subCount.get(s.vendor_id) || 0) + 1);
+  const refCount = new Map();
+  for (const r of refsRes.data || []) refCount.set(r.referrer_id, (refCount.get(r.referrer_id) || 0) + 1);
+
+  // Plan prices for the distinct plans present (cached — a handful of slugs).
+  const planCache = new Map();
+  const priceOf = async (slug) => {
+    if (!slug) return 0;
+    if (planCache.has(slug)) return planCache.get(slug);
+    let paise = 0;
+    try { const p = await planService.getPlan(slug); paise = Math.round((Number(p?.annual_price) || Number(p?.monthly_price) || 0) * 100); } catch (_) { /* best-effort */ }
+    planCache.set(slug, paise); return paise;
+  };
+
   for (const p of profilesRes.data || []) {
+    const slug = planService.resolveVendorPlan ? planService.resolveVendorPlan(p) : p.plan;
+    const isFree = planService.isFreeSlug ? planService.isFreeSlug(slug) : false;
+    const isPaid = (!!p.razorpay_subscription_id || (!!slug && !isFree)) && p.subscription_status !== 'cancelled';
     ctx.set(p.id, {
       onboardingComplete: !!p.onboarding_completed,
       hasPhoto: !!p.profile_image,
       hasService: hasService.has(p.id),
       hasAvailability: hasAvail.has(p.id),
-      hasBooking: hasBooking.has(p.id),
+      hasBooking: (bookingCount.get(p.id) || 0) > 0,
+      isPaid,
+      bookingsLast30d: last30.get(p.id) || 0,
+      earningsPaise: earnings.get(p.id) || 0,
+      planPricePaise: await priceOf(slug),
+      renewals: Math.max(0, (subCount.get(p.id) || 0) - 1),
+      referralsQualified: refCount.get(p.id) || 0,
+      isEnterprise: String(slug || '').toLowerCase().includes('enterprise'),
     });
   }
   return ctx;

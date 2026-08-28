@@ -5,14 +5,14 @@ jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: () => ({}) } 
 const { conversionSummary, followupWindow } = require('../../services/crm/leadService');
 
 describe('conversionSummary', () => {
-  test('paid customers = paid status ONLY; activated is active-free, not paid', () => {
-    // Live prod shape at audit time: 17 paid, 59 activated, 209 total.
-    expect(conversionSummary({ paid: 17, activated: 59 }, 209))
-      .toEqual({ paidCustomers: 17, activeFree: 59, conversionRate: 8.1 });
+  test('paid customers = every MONEY state (Relations is subscription-only)', () => {
+    // paid(Subscribed) + activated(Onboarded) + won all count; Presale statuses do not.
+    expect(conversionSummary({ paid: 10, activated: 5, won: 2, qualified: 30, new: 100 }, 200))
+      .toEqual({ paidCustomers: 17, activeFree: 0, conversionRate: 8.5 });
   });
-  test('does NOT count activated as paid (the ~4× inflation bug)', () => {
-    const { paidCustomers } = conversionSummary({ paid: 3, activated: 40 }, 100);
-    expect(paidCustomers).toBe(3);            // not 43
+  test('does NOT count Presale statuses (new / contacted / qualified) as paid', () => {
+    const { paidCustomers } = conversionSummary({ qualified: 40, contacted: 20, new: 40 }, 100);
+    expect(paidCustomers).toBe(0);
   });
   test('zero total → 0% (no divide-by-zero)', () => {
     expect(conversionSummary({}, 0)).toEqual({ paidCustomers: 0, activeFree: 0, conversionRate: 0 });
