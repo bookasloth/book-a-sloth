@@ -15,7 +15,7 @@ import TagPicker from './TagPicker';
 import MetricStrip from './MetricStrip';
 import EmptyState from './EmptyState';
 import { InlineText, InlineStatus } from './InlineCell';
-import CommandPalette from './CommandPalette';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const PAGE_SIZE = 25;
@@ -136,6 +136,17 @@ export default function SalesLeads() {
   const [followMap, setFollowMap] = useState({}); // lead_id -> next due iso
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
+
+  // The command palette's "New lead" opens this page with ?new=1 — honour it once,
+  // then strip the param so a refresh doesn't reopen the modal.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setShowNew(true);
+      searchParams.delete('new');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const [showTags, setShowTags] = useState(false);
   const [tagCatalog, setTagCatalog] = useState([]);
 
@@ -442,7 +453,6 @@ export default function SalesLeads() {
       {showImport && <ImportModal onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); load(); loadStats(); }} />}
       {showTags && <ManageTagsModal tags={tagCatalog} onClose={() => setShowTags(false)} onChanged={() => { loadTags(); load(); }} />}
       <LeadDrawer leadId={drawerId} onClose={() => setDrawerId(null)} onChanged={() => { load(); loadStats(); loadFollowups(); }} />
-      <CommandPalette onOpenLead={(id) => setDrawerId(id)} onNewLead={() => setShowNew(true)} />
     </div>
   );
 }

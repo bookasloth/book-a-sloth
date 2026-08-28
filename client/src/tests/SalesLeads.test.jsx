@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, test, expect, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 
 // Regression: #707 dropped the StageBadge definition but left a usage in the
 // mobile card render, so the Leads page threw "StageBadge is not defined" the
@@ -24,12 +25,11 @@ vi.mock('../services/api', () => ({
   crmCreateView: vi.fn(), crmDeleteView: vi.fn(),
 }));
 vi.mock('../pages/admin/sales/LeadDrawer', () => ({ default: () => null }));
-vi.mock('../pages/admin/sales/CommandPalette', () => ({ default: () => null }));
 
 import SalesLeads from '../pages/admin/sales/SalesLeads';
 
 test('renders a lead row without crashing (StageBadge defined)', async () => {
-  render(<SalesLeads />);
+  render(<MemoryRouter><SalesLeads /></MemoryRouter>);
   // The row renders in both the desktop table and the mobile card; the card is
   // the one that references StageBadge, so reaching here means it resolved.
   const cells = await screen.findAllByText('Ada Lovelace');
