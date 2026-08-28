@@ -143,61 +143,59 @@ async function loadAccountCtx(leads) {
   const ids = [...new Set(leads.map((l) => l.profile_id).filter(Boolean))];
   const ctx = new Map();
   if (!ids.length) return ctx;
-  const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
+  const now = Date.now();
+  const since30 = new Date(now - 30 * 864e5).toISOString();
   const DEAD = new Set(['cancelled', 'no_show', 'refunded']);
   const [profilesRes, servicesRes, availRes, bookedRes, subsRes, refsRes] = await Promise.all([
-    supabaseAdmin.from('profiles').select('id, onboarding_completed, profile_image, plan, razorpay_subscription_id, subscription_status').in('id', ids),
+    supabaseAdmin.from('profiles').select('id, onboarding_completed, profile_image, plan, billing_cadence, plan_activated_at, razorpay_subscription_id, subscription_status').in('id', ids),
     supabaseAdmin.from('services').select('host_id').in('host_id', ids),
     supabaseAdmin.from('availability').select('host_id').in('host_id', ids),
-    supabaseAdmin.from('bookings').select('host_id, platform_fee_amount, status, created_at').eq('payment_status', 'paid').in('host_id', ids),
+    supabaseAdmin.from('bookings').select('host_id, customer_total, status, created_at').eq('payment_status', 'paid').in('host_id', ids),
     supabaseAdmin.from('subscription_payments').select('vendor_id').eq('status', 'paid').in('vendor_id', ids),
     supabaseAdmin.from('referrals').select('referrer_id').in('status', ['qualified', 'rewarded']).in('referrer_id', ids),
   ]);
   const hasService = new Set((servicesRes.data || []).map((s) => s.host_id));
   const hasAvail = new Set((availRes.data || []).map((a) => a.host_id));
 
-  // Per-host booking aggregates (refund-aware earnings + counts + last-30d recency).
-  const earnings = new Map(); const bookingCount = new Map(); const last30 = new Map();
+  // Per-host booking rows + last-30d recency (dead dispositions dropped from recency).
+  const bookingsByHost = new Map(); const last30 = new Map();
   for (const b of bookedRes.data || []) {
-    if (b.status && DEAD.has(String(b.status).toLowerCase())) continue;
-    const hid = b.host_id;
-    bookingCount.set(hid, (bookingCount.get(hid) || 0) + 1);
-    earnings.set(hid, (earnings.get(hid) || 0) + Math.round((Number(b.platform_fee_amount) || 0) * 100));
-    if (b.created_at && b.created_at >= since30) last30.set(hid, (last30.get(hid) || 0) + 1);
+    if (!bookingsByHost.has(b.host_id)) bookingsByHost.set(b.host_id, []);
+    bookingsByHost.get(b.host_id).push(b);
+    if (b.created_at && b.created_at >= since30 && !(b.status && DEAD.has(String(b.status).toLowerCase()))) {
+      last30.set(b.host_id, (last30.get(b.host_id) || 0) + 1);
+    }
   }
   const subCount = new Map();
   for (const s of subsRes.data || []) subCount.set(s.vendor_id, (subCount.get(s.vendor_id) || 0) + 1);
   const refCount = new Map();
   for (const r of refsRes.data || []) refCount.set(r.referrer_id, (refCount.get(r.referrer_id) || 0) + 1);
 
-  // Plan prices for the distinct plans present (cached — a handful of slugs).
+  // Plan rows for the distinct plans present (cached — a handful of slugs).
   const planCache = new Map();
-  const priceOf = async (slug) => {
-    if (!slug) return 0;
+  const planOf = async (slug) => {
+    if (!slug) return null;
     if (planCache.has(slug)) return planCache.get(slug);
-    let paise = 0;
-    try { const p = await planService.getPlan(slug); paise = Math.round((Number(p?.annual_price) || Number(p?.monthly_price) || 0) * 100); } catch (_) { /* best-effort */ }
-    planCache.set(slug, paise); return paise;
+    let plan = null;
+    try { plan = await planService.getPlan(slug); } catch (_) { /* best-effort */ }
+    planCache.set(slug, plan); return plan;
   };
 
+  // Derive the resolver ctx via the shared pure helper so batch + single-lead agree,
+  // then merge the go-live gap signals (service / availability).
   for (const p of profilesRes.data || []) {
     const slug = planService.resolveVendorPlan ? planService.resolveVendorPlan(p) : p.plan;
-    const isFree = planService.isFreeSlug ? planService.isFreeSlug(slug) : false;
-    const isPaid = (!!p.razorpay_subscription_id || (!!slug && !isFree)) && p.subscription_status !== 'cancelled';
-    ctx.set(p.id, {
-      onboardingComplete: !!p.onboarding_completed,
-      hasPhoto: !!p.profile_image,
-      hasService: hasService.has(p.id),
-      hasAvailability: hasAvail.has(p.id),
-      hasBooking: (bookingCount.get(p.id) || 0) > 0,
-      isPaid,
+    const bookings = bookingsByHost.get(p.id) || [];
+    const facts = leadService.computeAccountFacts({
+      profile: p, plan: await planOf(slug),
+      earningsPaise: leadService.grossEarningsPaise(bookings),
+      hasBooking: bookings.some((b) => !(b.status && DEAD.has(String(b.status).toLowerCase()))),
       bookingsLast30d: last30.get(p.id) || 0,
-      earningsPaise: earnings.get(p.id) || 0,
-      planPricePaise: await priceOf(slug),
-      renewals: Math.max(0, (subCount.get(p.id) || 0) - 1),
+      subsCount: subCount.get(p.id) || 0,
       referralsQualified: refCount.get(p.id) || 0,
-      isEnterprise: String(slug || '').toLowerCase().includes('enterprise'),
+      now,
     });
+    ctx.set(p.id, { ...facts, hasService: hasService.has(p.id), hasAvailability: hasAvail.has(p.id) });
   }
   return ctx;
 }

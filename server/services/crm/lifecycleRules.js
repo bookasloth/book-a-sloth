@@ -109,9 +109,10 @@ function meetsSlothGate(ctx = {}) {
  *   @param {number}  ctx.earningsPaise       on-platform earnings since plan start
  *   @param {number}  ctx.planPricePaise      the host's plan price (tenure cost)
  *   @param {number}  ctx.renewals            subscription renewals (≥1 ⇒ Retained-eligible)
- *   @param {number}  ctx.referralsQualified  qualified/rewarded referrals made
- *   @param {boolean} ctx.isEnterprise        on an Enterprise plan
- * @returns {string} the resolved status (may equal `current`)
+ *   @param {boolean} ctx.longTenure          paying past one full billing cycle (⇒ Retained-eligible)
+ *   @param {number}  ctx.referralsQualified  qualified/rewarded referrals made (≥1 ⇒ Ambassador)
+ * @returns {string} the resolved status (may equal `current`). Champion + Enterprised are
+ *   manual-only and never returned here.
  */
 function resolveAccountStatus(current, ctx = {}) {
   if (NO_AUTO.has(current)) return current;                 // never resurrect a terminal / dnc lead
@@ -123,10 +124,12 @@ function resolveAccountStatus(current, ctx = {}) {
 
   if (meetsSlothGate(ctx)) {
     target = 'sloth';                                        // Marketing gated behind the Sloth milestone
-    if (Number(ctx.renewals) >= 1) target = higher(target, 'retained');
+    // Retained: a renewal, OR a paying host past one full billing cycle (long tenure —
+    // covers legacy annual subscribers with no second charge row).
+    if (Number(ctx.renewals) >= 1 || ctx.longTenure) target = higher(target, 'retained');
+    // Ambassador: ≥1 converted referral. Champion (featured / case-study advocate) and
+    // Enterprised (negotiated enterprise deal) are MANUAL designations — never auto-set.
     if (Number(ctx.referralsQualified) >= 1) target = higher(target, 'ambassador');
-    if (Number(ctx.referralsQualified) >= 3) target = higher(target, 'champion');
-    if (ctx.isEnterprise) target = higher(target, 'enterprised');
   }
 
   // Most-advanced-wins: never auto-regress a money state below where it already is.
@@ -148,7 +151,10 @@ function manualTransition(from, to) {
   if (from === to) return { allowed: true, needsReason: false };
   const backward = rankOf(to) < rankOf(from);
   const isExit = TERMINAL.has(to) || to === DNC;
-  return { allowed: true, needsReason: backward || isExit };
+  // Manually ENTERING a money state (Subscribed/Won/…) asserts a payment/booking the
+  // system never verified — require a reason for that too, not just backward/exit moves.
+  const entersMoney = MONEY.has(to) && !MONEY.has(from);
+  return { allowed: true, needsReason: backward || isExit || entersMoney };
 }
 
 module.exports = {

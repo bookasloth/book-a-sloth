@@ -204,47 +204,83 @@ async function recomputeFromAccount(profileId) {
   }
 }
 
-// Load the account facts the resolver needs for one host. Refund-aware earnings +
-// last-30d activity + plan tenure cost + renewals + qualified referrals + enterprise.
-async function loadAccountFacts(profileId) {
+// Booking dispositions whose revenue is NOT earned (cancelled / no-show / refunded).
+const DEAD_BOOKING = new Set(['cancelled', 'no_show', 'refunded']);
+
+// Host GROSS booking revenue (customer_total) on non-dead paid bookings, in paise —
+// what the host took payment for. This is the number the Sloth ROI gate compares to
+// 2× their plan price (NOT the platform fee, which is our cut).
+function grossEarningsPaise(bookings = []) {
+  return (bookings || [])
+    .filter((b) => !(b.status && DEAD_BOOKING.has(String(b.status).toLowerCase())))
+    .reduce((a, b) => a + Math.round((Number(b.customer_total) || 0) * 100), 0);
+}
+
+// PURE: derive the resolver ctx from a profile + its plan row + booking/sub/referral
+// aggregates. Both the single-lead recompute and the engine batch call this, so the
+// paid / plan-price / long-tenure logic can never diverge. Unit-tested.
+function computeAccountFacts({ profile = {}, plan = null, earningsPaise = 0, hasBooking = false,
+  bookingsLast30d = 0, subsCount = 0, referralsQualified = 0, now = Date.now() } = {}) {
   const planService = require('../planService');
-  const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
-  const [profileRes, svcRes, availRes, bookedRes, recentRes, subsRes, refsRes] = await Promise.all([
-    supabaseAdmin.from('profiles').select('onboarding_completed, profile_image, plan, razorpay_subscription_id, subscription_status').eq('id', profileId).maybeSingle(),
-    supabaseAdmin.from('services').select('id', { count: 'exact', head: true }).eq('host_id', profileId),
-    supabaseAdmin.from('availability').select('host_id', { count: 'exact', head: true }).eq('host_id', profileId),
-    supabaseAdmin.from('bookings').select('platform_fee_amount, status').eq('host_id', profileId).eq('payment_status', 'paid'),
-    supabaseAdmin.from('bookings').select('id', { count: 'exact', head: true }).eq('host_id', profileId).eq('payment_status', 'paid').gte('created_at', since30),
-    supabaseAdmin.from('subscription_payments').select('total_charged, status').eq('vendor_id', profileId).eq('status', 'paid'),
-    supabaseAdmin.from('referrals').select('id', { count: 'exact', head: true }).eq('referrer_id', profileId).in('status', ['qualified', 'rewarded']),
-  ]);
-  const profile = profileRes.data || {};
-  const planSlug = planService.resolveVendorPlan ? planService.resolveVendorPlan(profile) : profile.plan;
-  const isFree = planService.isFreeSlug ? planService.isFreeSlug(planSlug) : false;
-  const isPaid = (!!profile.razorpay_subscription_id || (!!planSlug && !isFree)) && profile.subscription_status !== 'cancelled';
-  // On-platform earnings = platform fee on non-dead paid bookings (refund-aware).
-  const DEAD = new Set(['cancelled', 'no_show', 'refunded']);
-  const earningsPaise = (bookedRes.data || [])
-    .filter((b) => !(b.status && DEAD.has(String(b.status).toLowerCase())))
-    .reduce((a, b) => a + Math.round((Number(b.platform_fee_amount) || 0) * 100), 0);
-  const subs = subsRes.data || [];
-  let planPricePaise = 0;
-  try {
-    const plan = planService.getPlan ? await planService.getPlan(planSlug) : null;
-    planPricePaise = Math.round((Number(plan?.annual_price) || Number(plan?.monthly_price) || 0) * 100);
-  } catch (_) { /* plan lookup best-effort */ }
+  const slug = planService.resolveVendorPlan ? planService.resolveVendorPlan(profile) : profile.plan;
+  const isFree = planService.isFreeSlug ? planService.isFreeSlug(slug) : false;
+  const isComped = planService.isCompedSlug ? planService.isCompedSlug(slug) : false;
+  // Paid = a real paid plan (not free, not comped/Supreme) WITH activation evidence —
+  // a Razorpay subscription, a real charge, or plan_activated_at (covers legacy annual
+  // subs) — and not cancelled.
+  const hasActivation = !!profile.razorpay_subscription_id || subsCount > 0 || !!profile.plan_activated_at;
+  const isPaid = !isFree && !isComped && hasActivation && profile.subscription_status !== 'cancelled';
+
+  // Plan price for the cadence they actually bought (monthly → monthly, else annual).
+  const monthly = String(profile.billing_cadence || '').toLowerCase().startsWith('month');
+  const priceRupees = monthly ? Number(plan?.monthly_price) : (Number(plan?.annual_price) || Number(plan?.monthly_price));
+  const planPricePaise = Math.round((Number(priceRupees) || 0) * 100);
+
+  // Long tenure = a paying host past one full billing cycle → Retained-eligible even
+  // without a second charge row (legacy annual subscribers).
+  const cycleDays = monthly ? 31 : 365;
+  const tenureDays = profile.plan_activated_at ? (now - new Date(profile.plan_activated_at).getTime()) / 864e5 : 0;
+  const longTenure = isPaid && tenureDays > cycleDays;
+
   return {
     isPaid,
     onboardingComplete: !!profile.onboarding_completed,
     hasPhoto: !!profile.profile_image,
-    hasBooking: (bookedRes.data || []).length > 0,
-    bookingsLast30d: recentRes.count || 0,
+    hasBooking,
+    bookingsLast30d,
     earningsPaise,
     planPricePaise,
-    renewals: Math.max(0, subs.length - 1),          // charges beyond the first = renewals
-    referralsQualified: refsRes.count || 0,
-    isEnterprise: String(planSlug || '').toLowerCase().includes('enterprise'),
+    renewals: Math.max(0, subsCount - 1),   // charges beyond the first = explicit renewals
+    longTenure,
+    referralsQualified,
   };
+}
+
+// Load the account facts the resolver needs for one host (single-lead recompute path).
+async function loadAccountFacts(profileId) {
+  const planService = require('../planService');
+  const now = Date.now();
+  const since30 = new Date(now - 30 * 864e5).toISOString();
+  const [profileRes, bookedRes, recentRes, subsRes, refsRes] = await Promise.all([
+    supabaseAdmin.from('profiles').select('onboarding_completed, profile_image, plan, billing_cadence, plan_activated_at, razorpay_subscription_id, subscription_status').eq('id', profileId).maybeSingle(),
+    supabaseAdmin.from('bookings').select('customer_total, status').eq('host_id', profileId).eq('payment_status', 'paid'),
+    supabaseAdmin.from('bookings').select('id', { count: 'exact', head: true }).eq('host_id', profileId).eq('payment_status', 'paid').gte('created_at', since30),
+    supabaseAdmin.from('subscription_payments').select('id', { count: 'exact', head: true }).eq('vendor_id', profileId).eq('status', 'paid'),
+    supabaseAdmin.from('referrals').select('id', { count: 'exact', head: true }).eq('referrer_id', profileId).in('status', ['qualified', 'rewarded']),
+  ]);
+  const profile = profileRes.data || {};
+  const slug = planService.resolveVendorPlan ? planService.resolveVendorPlan(profile) : profile.plan;
+  let plan = null;
+  try { plan = planService.getPlan ? await planService.getPlan(slug) : null; } catch (_) { /* best-effort */ }
+  return computeAccountFacts({
+    profile, plan,
+    earningsPaise: grossEarningsPaise(bookedRes.data || []),
+    hasBooking: (bookedRes.data || []).length > 0,
+    bookingsLast30d: recentRes.count || 0,
+    subsCount: subsRes.count || 0,
+    referralsQualified: refsRes.count || 0,
+    now,
+  });
 }
 
 // A lead is "due" from EITHER mechanism: an open lead_follow_ups task, or the
@@ -468,6 +504,6 @@ module.exports = {
   upsertLead, safeUpsertLead, getLead, listLeads,
   changeStatus, assignOwner, addTag, removeTag, setDnc, addNote, logCall,
   pipelineCounts, dashboardStats, recordAccountEvent,
-  recomputeFromAccount, loadAccountFacts,
+  recomputeFromAccount, loadAccountFacts, computeAccountFacts, grossEarningsPaise,
   conversionSummary, followupWindow, leadIdsWithFollowup,
 };
