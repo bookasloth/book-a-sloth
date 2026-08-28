@@ -31,9 +31,14 @@ export default function SalesPipeline() {
   const load = () => {
     setLoading(true);
     Promise.all([
-      Promise.all(board.columns.map((s) =>
-        crmListLeads({ status: s, leadType: 'host', pageSize: PER_COL })
-          .then(({ data }) => [s, data]).catch(() => [s, { rows: [], total: 0 }]))),
+      // Each column may gather more than one status (e.g. Contacted also holds
+      // Responded/replied) — fetch them all and merge into the column's bucket.
+      Promise.all(board.columns.map(async (c) => {
+        const parts = await Promise.all(c.statuses.map((s) =>
+          crmListLeads({ status: s, leadType: 'host', pageSize: PER_COL })
+            .then(({ data }) => data).catch(() => ({ rows: [], total: 0 }))));
+        return [c.key, { rows: parts.flatMap((p) => p.rows || []), total: parts.reduce((a, p) => a + (p.total || 0), 0) }];
+      })),
       crmListFollowUps({}).then(({ data }) => data).catch(() => []),
     ]).then(([pairs, fu]) => {
       setCols(Object.fromEntries(pairs));
@@ -66,17 +71,17 @@ export default function SalesPipeline() {
     catch (e) { toast.error(e?.response?.data?.message || 'Move failed'); load(); }
   };
 
-  const onDrop = async (toStatus) => {
+  const onDrop = async (toKey) => {
     setDragOver(null);
     const raw = window.__crmDrag; window.__crmDrag = null;
-    if (!raw || raw.from === toStatus) return;
-    const { id, from } = raw;
-    const lead = applyMove(id, from, toStatus);
+    if (!raw || raw.fromCol === toKey) return;            // dropped on its own column
+    const { id, from, fromCol } = raw;                    // from = the lead's real status; fromCol = the column it sat in
+    const lead = applyMove(id, fromCol, toKey);
     if (!lead) return;
-    if (needsReason(from, toStatus)) {
-      setReason({ id, from, to: toStatus, name: lead.name, _lead: lead });   // hold for the modal
+    if (needsReason(from, toKey)) {
+      setReason({ id, from, to: toKey, name: lead.name, _lead: lead });   // hold for the modal
     } else {
-      commitMove(id, toStatus, lead);
+      commitMove(id, toKey, lead);
     }
   };
 
@@ -123,17 +128,19 @@ export default function SalesPipeline() {
 
       {loading ? <p className="adm-t3">Loading…</p> : (
         <div className="flex gap-3 overflow-x-auto pb-4">
-          {board.columns.map((s) => {
-            const col = cols[s] || { rows: [], total: 0 };
-            const isOver = dragOver === s;
+          {board.columns.map((c) => {
+            const col = cols[c.key] || { rows: [], total: 0 };
+            const isOver = dragOver === c.key;
             return (
-              <div key={s} className={`flex-shrink-0 w-64 rounded-xl p-1 transition ${isOver ? 'ring-1' : ''}`}
+              <div key={c.key} className={`flex-shrink-0 w-64 rounded-xl p-1 transition ${isOver ? 'ring-1' : ''}`}
                 style={isOver ? { background: `${board.accent}14`, boxShadow: `inset 0 0 0 1px ${board.accent}66` } : undefined}
-                onDragOver={(e) => { e.preventDefault(); setDragOver(s); }}
-                onDragLeave={() => setDragOver((d) => (d === s ? null : d))}
-                onDrop={() => onDrop(s)}>
+                onDragOver={(e) => { e.preventDefault(); setDragOver(c.key); }}
+                onDragLeave={() => setDragOver((d) => (d === c.key ? null : d))}
+                onDrop={() => onDrop(c.key)}>
                 <div className="flex items-center justify-between mb-2 px-2 pt-1">
-                  <h3 className="text-[12px] font-bold adm-t1 uppercase tracking-wide">{STATUS_LABEL[s]}</h3>
+                  <h3 className="text-[12px] font-bold adm-t1 uppercase tracking-wide flex items-center gap-1">
+                    {c.label}{c.handoff && <span title="Shared handoff column" className="adm-t3 font-normal">↗</span>}
+                  </h3>
                   <span className="text-[11px] adm-t3">{col.total}</span>
                 </div>
                 <div className="space-y-2 min-h-[40px]">
@@ -145,10 +152,13 @@ export default function SalesPipeline() {
                     return (
                       <Card key={r.id} className="rounded-xl p-3 cursor-grab active:cursor-grabbing adm-hoverable"
                         draggable
-                        onDragStart={() => { window.__crmDrag = { id: r.id, from: s }; }}
+                        onDragStart={() => { window.__crmDrag = { id: r.id, from: r.status, fromCol: c.key }; }}
                         onClick={() => nav(`/admin/sales/leads/${r.id}`)}>
                         <div className="flex items-start gap-1.5">
                           <p className="text-[13px] font-semibold adm-t1 truncate flex-1">{r.name || 'Unnamed'}</p>
+                          {r.status !== c.key && (
+                            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0" style={{ background: `${board.accent}1a`, color: board.accent }}>{STATUS_LABEL[r.status]}</span>
+                          )}
                           {r.verified_at && (
                             <span title="KYC verified" className="text-[10px] font-semibold text-emerald-600 shrink-0">✓ Verified</span>
                           )}

@@ -44,12 +44,29 @@ export function needsReason(from, to) {
   return (RANK[to] ?? 0) < (RANK[from] ?? 0) || TERMINAL.has(to) || to === 'do_not_contact';
 }
 
-// The four boards for the pipeline switcher. `columns` = statuses each renders.
+// The four boards for the pipeline switcher. A column can DISPLAY more than one
+// status: `key` is the drop target + label, `statuses` is what it gathers. This is
+// how Presale's Contacted absorbs `replied` (a "Responded" signal, not its own
+// column) and how the shared handoff columns (`paid` = Subscribed, `sloth` = The
+// Sloth) appear as the tail of one board and the head of the next.
+//   Presale:   New · Contacted(+Responded) · Qualified · Demo · Subscribed↗
+//   Relations: ↗Subscribed · Onboarded · Won · The Sloth↗
+//   Marketing: ↗The Sloth · Retained · Ambassador · Enterprised · Champion
+//   Exit:      Not Reachable · Not Interested · Disqualified · Lost · Churned
+const col = (key, statuses = [key], handoff = false) => ({ key, label: STATUS_LABEL[key], statuses, handoff });
 export const BOARDS = [
-  { key: 'presale',   label: 'Presale',   owner: 'Sales',     accent: '#3B5BDB', columns: PRESALE },
-  { key: 'relations', label: 'Relations', owner: 'Relations', accent: '#0C9E70', columns: RELATIONS },
-  { key: 'marketing', label: 'Marketing', owner: 'Marketing', accent: '#7048E8', columns: MARKETING },
-  { key: 'exit',      label: 'Exit',      owner: 'Any',       accent: '#D6303A', columns: EXIT },
+  { key: 'presale',   label: 'Presale',   owner: 'Sales',     accent: '#3B5BDB', columns: [
+    col('new'), col('contacted', ['contacted', 'replied']), col('qualified'), col('demo'), col('paid', ['paid'], true),
+  ] },
+  { key: 'relations', label: 'Relations', owner: 'Relations', accent: '#0C9E70', columns: [
+    col('paid', ['paid'], true), col('activated'), col('won'), col('sloth', ['sloth'], true),
+  ] },
+  { key: 'marketing', label: 'Marketing', owner: 'Marketing', accent: '#7048E8', columns: [
+    col('sloth', ['sloth'], true), col('retained'), col('ambassador'), col('enterprised'), col('champion'),
+  ] },
+  { key: 'exit',      label: 'Exit',      owner: 'Any',       accent: '#D6303A', columns: [
+    col('not_reachable'), col('not_interested'), col('disqualified'), col('lost'), col('churned'),
+  ] },
 ];
 
 export const pipelineOf = (status) => {
