@@ -10,18 +10,12 @@ import { useAuth } from "../context/AuthContext";
 import useFeatureFlags from "../hooks/useFeatureFlags";
 import RescheduleModal from "../components/booking/RescheduleModal";
 import ReviewModal from "../components/booking/ReviewModal";
+import StatusChip from "../components/common/StatusChip";
 import toast from "react-hot-toast";
 
 // Customer-facing "My Bookings" — list of bookings a guest has made, with a
 // status filter, per-row Booking ID + Amount Paid, and a details drawer that
 // includes an invoice download.
-
-const STATUS_STYLE = {
-  confirmed: "bg-green-50 text-green-700 border-green-200",
-  pending:   "bg-amber-50 text-amber-700 border-amber-200",
-  completed: "bg-blue-50 text-blue-700 border-blue-200",
-  cancelled: "bg-gray-100 text-gray-500 border-gray-200",
-};
 
 const FILTERS = [
   { key: "all",       label: "All bookings" },
@@ -49,12 +43,15 @@ const relWhen = (iso) => {
 
 const shortId = (id) => (id ? `#${String(id).replace(/-/g, "").slice(0, 8).toUpperCase()}` : "—");
 
+// Uses the actual charged total (customer_total = service price + platform fee +
+// GST), falling back to list price for legacy rows that predate the column.
 const amountPaid = (b) => {
-  const price = Number(b.services?.price || 0);
-  if (price === 0) return "Free";
-  if (b.payment_status === "paid") return `₹${price.toLocaleString("en-IN")}`;
-  if (b.payment_status === "refunded") return `₹${price.toLocaleString("en-IN")} (refunded)`;
-  return "Unpaid";
+  const total = Number(b.customer_total ?? b.services?.price ?? 0);
+  if (total === 0) return "Free";
+  const amt = `₹${total.toLocaleString("en-IN")}`;
+  if (b.payment_status === "refunded") return `${amt} (refunded)`;
+  if (b.payment_status === "paid") return amt;
+  return `${amt} · Unpaid`;
 };
 
 // Invoice download. Prefers the real GST tax invoice via the OWNER-GATED endpoint
@@ -246,9 +243,7 @@ const CustomerBookings = () => {
               <span className="inline-flex items-center gap-1">{amountPaid(b)}</span>
             </div>
           </div>
-          <span className={`text-xs font-medium px-2.5 py-1 rounded-full border whitespace-nowrap ${STATUS_STYLE[b.status] || STATUS_STYLE.pending}`}>
-            {b.status}
-          </span>
+          <StatusChip status={b.status} />
         </div>
 
         <div className="mt-3 pt-3 border-t flex items-center gap-2">
@@ -402,7 +397,7 @@ const DetailsModal = ({ b, host, review, onClose, canReschedule, canReview, canC
             <Line icon={Calendar} label="Date & time" value={fmtWhen(b.scheduled_at)} />
             {svc.duration ? <Line icon={Clock} label="Duration" value={`${svc.duration} min`} /> : null}
             <Line icon={IndianRupee} label="Amount" value={amountPaid(b)} />
-            <Line icon={Eye} label="Status" value={b.status} />
+            <Line icon={Eye} label="Status" value={<StatusChip status={b.status} />} />
           </div>
 
           {b.meeting_link && (
