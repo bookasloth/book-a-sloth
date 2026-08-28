@@ -11,7 +11,7 @@ import { PageHeader, Btn, Badge, Skeleton } from '../../components/admin/ui';
 // activates/deactivates, resets passwords. One-time temp passwords are shown
 // in a copyable banner after create/reset — never re-retrievable.
 
-const EMPTY_FORM = { email: '', username: '', name: '', role_key: 'operations', password: '' };
+const EMPTY_FORM = { email: '', username: '', name: '', role_key: 'operations', crm_team: '', password: '' };
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
 
@@ -44,7 +44,7 @@ const AdminStaff = () => {
   const openCreate = () => { setEditing(null); setForm(EMPTY_FORM); setShow(true); };
   const openEdit = (row) => {
     setEditing(row);
-    setForm({ email: row.email, username: row.username, name: row.name, role_key: row.role_key, password: '' });
+    setForm({ email: row.email, username: row.username, name: row.name, role_key: row.role_key, crm_team: row.crm_team || '', password: '' });
     setShow(true);
   };
 
@@ -53,7 +53,7 @@ const AdminStaff = () => {
     setSaving(true);
     try {
       if (editing) {
-        await adminUpdateStaff(editing.id, { name: form.name, role_key: form.role_key });
+        await adminUpdateStaff(editing.id, { name: form.name, role_key: form.role_key, crm_team: form.crm_team || null });
         toast.success('Staff updated');
       } else {
         const { data } = await adminCreateStaff(form);
@@ -189,6 +189,16 @@ const AdminStaff = () => {
                   {roles.map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
                 </select>
                 <p className="text-[11px] adm-t3 mt-1">{roles.find((r) => r.key === form.role_key)?.description}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium adm-t3 mb-1">CRM team <span className="adm-t3">(pipeline handoffs)</span></label>
+                <select className="fb-input" value={form.crm_team || ''} onChange={(e) => setForm({ ...form, crm_team: e.target.value })}>
+                  <option value="">— None —</option>
+                  <option value="sales">Sales (Presale)</option>
+                  <option value="relations">Relations (Customer Relations)</option>
+                  <option value="marketing">Marketing</option>
+                </select>
+                <p className="text-[11px] adm-t3 mt-1">Leads handed to this team auto-assign to its least-loaded member.</p>
               </div>
               {!editing && (
                 <div>

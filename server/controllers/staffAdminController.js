@@ -15,7 +15,10 @@ const { isValidRole } = require('../lib/adminPermissions');
 const { audit } = require('../services/auditService');
 
 const PUBLIC_COLUMNS =
-  'id, email, username, name, role_key, is_active, must_set_password, last_login_at, created_at, updated_at';
+  'id, email, username, name, role_key, crm_team, is_active, must_set_password, last_login_at, created_at, updated_at';
+
+// CRM pipeline team (P3 handoffs). null = not on a CRM team.
+const CRM_TEAMS = ['sales', 'relations', 'marketing'];
 
 const cleanUsername = (u) => (u || '').toLowerCase().trim().replace(/[^a-z0-9._-]/g, '');
 const cleanEmail    = (e) => (e || '').toLowerCase().trim();
@@ -143,6 +146,11 @@ const updateStaff = async (req, res) => {
           return res.status(400).json({ message: 'Cannot demote the last active Super Admin.' });
       }
       updates.role_key = req.body.role_key;
+    }
+    if (req.body.crm_team !== undefined) {
+      const t = req.body.crm_team === null || req.body.crm_team === '' ? null : String(req.body.crm_team).trim();
+      if (t !== null && !CRM_TEAMS.includes(t)) return res.status(400).json({ message: `Unknown CRM team: ${t}` });
+      updates.crm_team = t;
     }
 
     const { data, error } = await supabaseAdmin
