@@ -74,14 +74,17 @@ test('validEmail helper', () => {
 });
 
 // ── Coordinated-conversation throttle (automated sends only) ────────────────
-// crm_messages count chain: from().select(id,{count}).eq().eq().gte() → { count }.
+// crm_messages count chain: from().select(id,{count}).eq().in(status,[…]).gte() → { count }.
+// Captures the status list passed to .in() so we can assert delivered/read count too.
+let capturedStatuses = null;
 const countChain = (count) => ({
-  select: () => ({ eq: () => ({ eq: () => ({ gte: () => Promise.resolve({ count }) }) }) }),
+  select: () => ({ eq: () => ({ in: (_col, vals) => { capturedStatuses = vals; return { gte: () => Promise.resolve({ count }) }; } }) }),
 });
 // Route crm_messages to a count chain (n prior sends in window); everything else
 // to the normal maybeSingle chain.
 const withRecentSends = (n) =>
   supabaseAdmin.from.mockImplementation((t) => (t === 'crm_messages' ? countChain(n) : chain(t)));
+beforeEach(() => { capturedStatuses = null; });
 
 const IST_NOON = new Date('2025-01-15T06:30:00Z');  // 12:00 IST — inside window
 const IST_NIGHT = new Date('2025-01-15T17:00:00Z'); // 22:30 IST — outside window
@@ -92,6 +95,13 @@ test('automated send is frequency-capped when a message went out in the last 48h
   withRecentSends(1);
   const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
   expect(r).toEqual({ ok: false, reason: 'frequency_capped', defer: true });
+});
+
+test('the cap counts delivered/read too, not only sent (webhook-advanced messages still count)', async () => {
+  jest.useFakeTimers().setSystemTime(IST_NOON);
+  withRecentSends(1);
+  await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
+  expect(capturedStatuses).toEqual(expect.arrayContaining(['sent', 'delivered', 'read']));
 });
 
 test('automated send passes when no recent message and inside window', async () => {
@@ -119,7 +129,7 @@ test('cap query failure fails OPEN (send proceeds)', async () => {
   jest.useFakeTimers().setSystemTime(IST_NOON);
   supabaseAdmin.from.mockImplementation((t) =>
     t === 'crm_messages'
-      ? ({ select: () => ({ eq: () => ({ eq: () => ({ gte: () => { throw new Error('db down'); } }) }) }) })
+      ? ({ select: () => ({ eq: () => ({ in: () => ({ gte: () => { throw new Error('db down'); } }) }) }) })
       : chain(t));
   const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
   expect(r).toEqual({ ok: true });

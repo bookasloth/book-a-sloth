@@ -47,10 +47,14 @@ async function throttle(lead) {
   if (h < QUIET_START_IST || h >= QUIET_END_IST) return { ok: false, reason: 'quiet_hours', defer: true };
   try {
     const since = new Date(Date.now() - CAP_WINDOW_MS).toISOString();
+    // Count every message that actually went out in the window — not just those
+    // still at 'sent'. A provider webhook advances a message to 'delivered'/'read'
+    // seconds later; counting only 'sent' let a delivered message slip past the
+    // cap, so a second automated send could go out inside the 48h window.
     const { count } = await supabaseAdmin
       .from('crm_messages')
       .select('id', { count: 'exact', head: true })
-      .eq('lead_id', lead.id).eq('status', 'sent').gte('sent_at', since);
+      .eq('lead_id', lead.id).in('status', ['sent', 'delivered', 'read']).gte('sent_at', since);
     if ((count || 0) > 0) return { ok: false, reason: 'frequency_capped', defer: true };
   } catch (_) { /* fail-open */ }
   return null;
