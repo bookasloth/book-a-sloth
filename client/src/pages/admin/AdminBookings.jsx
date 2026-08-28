@@ -186,7 +186,12 @@ const StatusIcon = ({ status }) => {
   );
 };
 
-const PaymentPill = ({ status }) => {
+const PaymentPill = ({ status, bookingStatus }) => {
+  // A cancelled + unpaid booking will never be paid, so a "Pending" pill there
+  // reads as "awaiting payment" for a dead row. Show a neutral dash instead.
+  // (cancelled + paid/refunded still show Received/Refunded — money did move.)
+  if (bookingStatus === 'cancelled' && status === 'unpaid')
+    return <span className="text-gray-300 text-[11px]" title="No payment — booking cancelled">—</span>;
   const p = PAYMENT[status] || PAYMENT.unpaid;
   return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${p.badge}`}>{p.label}</span>;
 };
@@ -224,7 +229,7 @@ const BookingCard = ({ b, status, onView, onEdit, onDelete }) => {
       <div className="flex items-center gap-2 mb-2">
         <StatusIcon status={status} />
         <code className="text-[12px] font-bold adm-t1 font-mono">{shortId(b.id)}</code>
-        <PaymentPill status={b.payment_status} />
+        <PaymentPill status={b.payment_status} bookingStatus={b.status} />
         {Number(b.reschedule_count) >= RESCHEDULE_ALERT_THRESHOLD && (
           <span title={`${b.reschedule_count} reschedules`}
             className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
@@ -304,7 +309,7 @@ const BookingRow = ({ b, status, onView, onEdit, onDelete }) => {
         <span className="text-[13px] font-bold adm-t1 tabular-nums">{inr(amount)}</span>
       </td>
       {/* 8 Payment */}
-      <td className="px-4 py-3 align-middle"><PaymentPill status={b.payment_status} /></td>
+      <td className="px-4 py-3 align-middle"><PaymentPill status={b.payment_status} bookingStatus={b.status} /></td>
       {/* 9 Revenue (platform take) */}
       <td className="px-4 py-3 align-middle text-right whitespace-nowrap">
         <span className="text-[12.5px] font-semibold text-emerald-600 tabular-nums">{rev == null ? '—' : inr(rev)}</span>
@@ -913,7 +918,7 @@ const BookingDetailModal = ({ b, status, onClose, onEdit, onCancel, onDelete, on
                       <Field label="Payment Method" value={b.payment_id ? 'Razorpay' : '—'} />
                       <div className="flex items-center justify-between gap-4 py-[5px]">
                         <span className="text-[12px] text-gray-400">Customer Payment</span>
-                        <PaymentPill status={b.payment_status} />
+                        <PaymentPill status={b.payment_status} bookingStatus={b.status} />
                       </div>
                     </Card>
                     <Card title="Revenue Split" icon={IC.zap}>
