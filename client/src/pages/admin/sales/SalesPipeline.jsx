@@ -9,12 +9,20 @@ import toast from 'react-hot-toast';
 
 const PER_COL = 50;
 
-// Compact action row on each lead card — Call / Email / WhatsApp.
-// ponytail: presentational only. Wire tel:/mailto:/wa.me once lead phone+email
-// fields are confirmed on the board row payload; kept as buttons so the card
-// redesign ships without touching behaviour.
-const ActionBtn = ({ icon: Icon, label, className = '' }) => (
-  <button type="button"
+// Where the card's Email / WhatsApp actions point — the team's shared inboxes,
+// not a per-lead deep link (leads are worked from these two consoles).
+const GMAIL_URL = 'https://mail.google.com/mail/u/1/#inbox';
+const AISENSY_URL = 'https://www.app.aisensy.com/projects/6a1a56d8d44ba264bf5109a2/contacts';
+
+const copyPhone = async (phone) => {
+  if (!phone) return toast.error('No number on this lead');
+  try { await navigator.clipboard.writeText(phone); toast.success(`Copied ${phone}`); }
+  catch { toast.error('Copy failed'); }
+};
+
+// Compact action row on each lead card — Call (copies number) / Email / WhatsApp.
+const ActionBtn = ({ icon: Icon, label, title, onClick, className = '' }) => (
+  <button type="button" title={title} onClick={onClick}
     className={`flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium adm-t2 hover:adm-t1 hover:bg-black/[0.04] transition ${className}`}>
     <Icon size={13} strokeWidth={2} className="adm-t3" />
     {label}
@@ -175,9 +183,9 @@ export default function SalesPipeline() {
                         </div>
                         {/* Actions — flush to the card edges */}
                         <div className="mt-1.5 -mx-1.5 -mb-1.5 grid grid-cols-3 border-t border-[var(--adm-line,#eef0f3)]" onClick={(e) => e.stopPropagation()}>
-                          <ActionBtn icon={Phone} label="Call" />
-                          <ActionBtn icon={Mail} label="Email" className="border-x border-[var(--adm-line,#eef0f3)]" />
-                          <ActionBtn icon={MessageCircle} label="WhatsApp" />
+                          <ActionBtn icon={Phone} label="Call" title="Copy number" onClick={() => copyPhone(r.phone)} />
+                          <ActionBtn icon={Mail} label="Email" title="Open Gmail" className="border-x border-[var(--adm-line,#eef0f3)]" onClick={() => window.open(GMAIL_URL, '_blank', 'noopener,noreferrer')} />
+                          <ActionBtn icon={MessageCircle} label="WhatsApp" title="Open AiSensy" onClick={() => window.open(AISENSY_URL, '_blank', 'noopener,noreferrer')} />
                         </div>
                       </Card>
                     );
