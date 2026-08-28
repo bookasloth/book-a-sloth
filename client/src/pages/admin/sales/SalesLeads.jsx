@@ -4,11 +4,12 @@ import LeadDrawer from './LeadDrawer';
 import {
   crmListLeads, crmCreateLead, crmBulk, crmLeadsExportCsv, crmImportPreview, crmImportCommit,
   crmListTags, crmCreateTag, crmUpdateTag, crmDeleteTag, crmDashboard, crmListFollowUps,
-  crmUpdateLead, crmSetStatus, crmAddTag, crmRemoveTag, crmListTemplates, crmListSequences,
+  crmUpdateLead, crmAddTag, crmRemoveTag, crmListTemplates, crmListSequences,
   crmListViews, crmCreateView, crmDeleteView,
 } from '../../../services/api';
 import LeadsBoard from './LeadsBoard';
 import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, SOURCES, SMART_VIEWS, rupees, relTime } from './salesConstants';
+import { guardedSetStatus } from './statusMove';
 import { colorMap, TAG_PALETTE, swatchClass } from './salesTagColors';
 import TagChip from './TagChip';
 import TagPicker from './TagPicker';
@@ -227,9 +228,12 @@ export default function SalesLeads() {
     patchRow(id, { [field]: value });
     try { await crmUpdateLead(id, { [field]: value }); } catch { toast.error('Save failed'); load(); }
   };
-  const saveStage = async (id, status) => {
-    patchRow(id, { status });
-    try { await crmSetStatus(id, status); loadStats(); } catch { toast.error('Save failed'); load(); }
+  const saveStage = async (id, from, to) => {
+    patchRow(id, { status: to });
+    try {
+      const ok = await guardedSetStatus(id, from, to);   // prompts for a reason on backward/exit moves
+      if (ok) loadStats(); else load();                  // cancelled → revert
+    } catch { toast.error('Save failed'); load(); }
   };
   const [tagEditId, setTagEditId] = useState(null);
   const [viewType, setViewType] = useState('table'); // 'table' | 'board' | 'list'
@@ -278,7 +282,7 @@ export default function SalesLeads() {
       <div className="adm-t2 min-w-0"><InlineText value={r.business_name} onSave={(v) => saveField(r.id, 'business_name', v)} placeholder={r.profession || '—'} /></div>
     )},
     { key: 'source', label: 'Source', render: (r) => <span className="text-[11px] adm-t3">{r.source}</span> },
-    { key: 'stage', label: 'Stage', render: (r) => <InlineStatus value={r.status} onSave={(s) => saveStage(r.id, s)} /> },
+    { key: 'stage', label: 'Stage', render: (r) => <InlineStatus value={r.status} onSave={(s) => saveStage(r.id, r.status, s)} /> },
     { key: 'tags', label: 'Tags', render: (r) => (
       <div className="flex flex-wrap items-center gap-1 max-w-[190px]" onClick={(e) => e.stopPropagation()}>
         {(r.tags || []).map((tg) => <TagChip key={tg} name={tg} color={tagColors[tg]} onRemove={() => removeTagInline(r.id, tg)} />)}
