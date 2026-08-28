@@ -28,7 +28,7 @@ const getDesk = async (req, res) => {
 };
 
 // Fields an admin may edit directly on a lead (status/owner/tags/dnc have their own routes).
-const EDITABLE = ['name', 'phone', 'whatsapp_phone', 'email', 'business_name', 'website', 'instagram', 'linkedin', 'city', 'profession', 'lost_reason', 'expected_value_paise'];
+const EDITABLE = ['name', 'phone', 'whatsapp_phone', 'email', 'business_name', 'website', 'instagram', 'linkedin', 'city', 'profession', 'lost_reason', 'expected_value_paise', 'plan_interest'];
 
 // ── Dashboard ─────────────────────────────────────────────────
 const dashboard = async (req, res) => {
@@ -65,6 +65,13 @@ const getLead = async (req, res) => {
   try {
     const lead = await leadService.getLead(req.params.id);
     if (!lead) return res.status(404).json({ message: 'Lead not found' });
+    // Resolve the owning admin's display name for the panel (non-fatal).
+    if (lead.owner_admin_id) {
+      try {
+        const { data: owner } = await supabaseAdmin.from('admin_users').select('name, email').eq('id', lead.owner_admin_id).maybeSingle();
+        lead.owner_name = owner?.name || owner?.email || null;
+      } catch { /* leave owner_name undefined */ }
+    }
     const [{ data: notes }, followUps] = await Promise.all([
       supabaseAdmin.from('lead_notes').select('*').eq('lead_id', lead.id).order('created_at', { ascending: false }),
       followUpService.listOpen({ leadId: lead.id }),
@@ -79,7 +86,12 @@ const updateLead = async (req, res) => {
     for (const k of EDITABLE) if (k in (req.body || {})) patch[k] = req.body[k];
     if (!Object.keys(patch).length) return res.status(400).json({ message: 'No editable fields' });
     patch.updated_at = new Date().toISOString();
-    const { data, error } = await supabaseAdmin.from('leads').update(patch).eq('id', req.params.id).select('*').single();
+    let { data, error } = await supabaseAdmin.from('leads').update(patch).eq('id', req.params.id).select('*').single();
+    // Schema fallback: plan_interest column (v3.125) may not be applied yet.
+    if (error && 'plan_interest' in patch && /plan_interest/.test(error.message || '')) {
+      const { plan_interest, ...rest } = patch;
+      ({ data, error } = await supabaseAdmin.from('leads').update(rest).eq('id', req.params.id).select('*').single());
+    }
     if (error) return safeError(res, error);
     res.json(data);
   } catch (e) { safeError(res, e); }

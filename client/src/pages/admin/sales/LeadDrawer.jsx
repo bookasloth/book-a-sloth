@@ -20,7 +20,7 @@ export default function LeadDrawer({ leadId, onClose, onChanged }) {
           <button onClick={onClose} className="adm-t3 text-2xl leading-none px-1">×</button>
         </div>
         <div className="p-4">
-          <LeadPanel leadId={leadId} onChanged={onChanged} onClose={onClose} />
+          <LeadPanel leadId={leadId} onChanged={onChanged} onClose={onClose} variant="drawer" />
         </div>
       </div>
     </div>
