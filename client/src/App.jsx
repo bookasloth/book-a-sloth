@@ -212,10 +212,6 @@ const AdminReferrals = lazy(() => import('./pages/admin/AdminReferrals'));
 const AdminInviteLinks = lazy(() => import('./pages/admin/AdminInviteLinks'));
 const AdminBlockedIps = lazy(() => import('./pages/admin/AdminBlockedIps'));
 
-// Admin — Departments (org placeholder shells)
-const AdminDepartments = lazy(() => import('./pages/admin/AdminDepartments'));
-const AdminDepartment = lazy(() => import('./pages/admin/AdminDepartment'));
-
 // Admin — Platform Control
 const AdminFeatureStatus = lazy(() => import('./pages/admin/AdminFeatureStatus'));
 
@@ -536,9 +532,10 @@ function App() {
           {/* Marketing & performance insights — now a SuperDashboard tab; keep old path as redirect */}
           <Route path="/admin/insights" element={<Navigate to="/super-dashboard/insights" replace />} />
 
-          {/* Departments — index grid + per-department hub pages */}
-          <Route path="/admin/dept" element={<AdminWrapper><AdminDepartments /></AdminWrapper>} />
-          <Route path="/admin/dept/:dept" element={<AdminWrapper><AdminDepartment /></AdminWrapper>} />
+          {/* Departments retired — the two-level nav rail replaces the hub grids.
+              Redirect old bookmarks to the dashboard. */}
+          <Route path="/admin/dept" element={<Navigate to="/super-dashboard" replace />} />
+          <Route path="/admin/dept/:dept" element={<Navigate to="/super-dashboard" replace />} />
 
           {/* Platform Control */}
           <Route path="/admin/features" element={<AdminWrapper><AdminFeatureStatus /></AdminWrapper>} />

@@ -1,20 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, Navigate, useNavigate, Link } from 'react-router-dom';
 import Ic from '../admin/Ic';
-import { IC, NAV, PATH_LABELS, QUICK_ACTIONS, sessionCan } from '../admin/adminNav';
+import { IC, NAV, PATH_LABELS, QUICK_ACTIONS } from '../admin/adminNav';
+import { visibleSections, activeSection } from '../admin/navHelpers';
+import PrimaryRail from '../admin/PrimaryRail';
+import SecondarySidebar, { ItemList } from '../admin/SecondarySidebar';
 import CommandPalette from '../admin/CommandPalette';
 import NotificationBell from '../admin/NotificationBell';
 import AdminEscalationRinger from '../admin/AdminEscalationRinger';
 import { useAdminTheme } from '../admin/useAdminTheme';
+import { adminOpsSummary } from '../../services/api';
 
 // SECURITY: Admin session is completely isolated in 'bas_admin' localStorage key.
-// Guard checks type === 'super_admin' — a vendor/user session cannot pass this check.
+// Guard checks type === 'admin' — a vendor/user session cannot pass this check.
 const getAdminSession = () => {
   try { return JSON.parse(localStorage.getItem('bas_admin') || 'null'); } catch { return null; }
 };
 
 const isValidAdminSession = (s) => s && s.type === 'admin' && s.token;
-
 
 const AdminLayout = ({ children }) => {
   const session  = getAdminSession();
@@ -22,42 +25,47 @@ const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
 
   // ── SECURITY GUARD ────────────────────────────────────────────
-  // Reject anything that isn't a valid super_admin session.
-  // A vendor/user session stored in 'user' key cannot pass this.
+  // Reject anything that isn't a valid admin session.
   if (!isValidAdminSession(session)) {
     return <Navigate to="/hello-sloth" replace />;
   }
 
-  const [collapsed,      setCollapsed]      = useState(() => localStorage.getItem('adm_sb_col') === '1');
-  const [expandedGroups, setExpandedGroups] = useState({});
-  const [mobileOpen,     setMobileOpen]     = useState(false);
+  const [mobileOpen,  setMobileOpen]  = useState(false);
   const [theme, toggleTheme] = useAdminTheme();
   const dark = theme === 'dark';
-  const [showQuick,      setShowQuick]      = useState(false);
-  const [showProfile,    setShowProfile]    = useState(false);
-  const [paletteOpen,    setPaletteOpen]    = useState(false);
+  const [showQuick,   setShowQuick]   = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [counts,      setCounts]      = useState({}); // { opsSummaryKey: count }
   const quickRef   = useRef(null);
   const profileRef = useRef(null);
 
-  const toggleSidebar = () => setCollapsed(c => {
-    const next = !c;
-    localStorage.setItem('adm_sb_col', next ? '1' : '0');
-    return next;
-  });
+  // Two-level nav, computed from the config + this session's permissions.
+  const sections = visibleSections(NAV, session);
+  const active   = activeSection(location.pathname, NAV) || sections[0] || null;
+  // The visible copy of the active section (permission-filtered items).
+  const activeVisible = sections.find(s => s.key === active?.key) || sections[0] || null;
+
+  // Live attention counts feed the rail dots + sidebar pills. Same endpoint the
+  // NotificationBell uses; each sub-count is server-side try/caught with a 0
+  // fallback, so this never throws the shell.
+  useEffect(() => {
+    let alive = true;
+    adminOpsSummary()
+      .then(({ data }) => {
+        if (!alive) return;
+        const map = {};
+        (data?.attention || []).forEach(a => { map[a.key] = a.count; });
+        setCounts(map);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('bas_admin');
     navigate('/hello-sloth');
   };
-
-  useEffect(() => {
-    const auto = {};
-    NAV.forEach(sec => sec.items.forEach(item => {
-      if (item.children && item.children.some(ch => location.pathname === ch.to || location.pathname.startsWith(ch.to + '/')))
-        auto[item.groupId] = true;
-    }));
-    setExpandedGroups(prev => ({ ...prev, ...auto }));
-  }, [location.pathname]);
 
   useEffect(() => {
     const h = e => {
@@ -94,154 +102,51 @@ const AdminLayout = ({ children }) => {
     return result;
   })();
 
-  const SidebarItem = ({ item }) => {
-    if (item.comingSoon) {
-      const open = expandedGroups[item.groupId] || false;
-      return (
-        <div>
-          <button onClick={() => !collapsed && setExpandedGroups(prev => ({ ...prev, [item.groupId]: !prev[item.groupId] }))}
-            title={collapsed ? item.label : undefined}
-            className={`w-full flex items-center gap-2.5 rounded-lg text-[14px] text-gray-500 transition-all duration-150
-              ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2.5'} hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100]/50`}>
-            <Ic d={IC[item.icon]} size={16} className="opacity-50" />
-            {!collapsed && <>
-              <span className="flex-1 text-left">{item.label}</span>
-              <span className="flex items-center gap-0.5 text-[9px] font-bold text-gray-700 bg-gray-800/80 px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
-                <Ic d={IC.lock} size={8} />soon
-              </span>
-              <Ic d={IC.chevD} size={12} className={`ml-1 text-gray-700 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-            </>}
-          </button>
-          {!collapsed && open && (
-            <div className="ml-6 pl-3 border-l border-gray-800/80 mt-0.5 mb-1 space-y-0.5">
-              {item.children.map(ch => (
-                <span key={ch.label} className="block px-3 py-1.5 rounded-md text-[12px] text-gray-600 opacity-50 cursor-not-allowed select-none">
-                  {ch.label}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
-    if (item.children) {
-      const open = expandedGroups[item.groupId] || false;
-      const anyActive = item.children.some(ch => location.pathname === ch.to || location.pathname.startsWith(ch.to + '/'));
-      return (
-        <div>
-          <button onClick={() => !collapsed && setExpandedGroups(prev => ({ ...prev, [item.groupId]: !prev[item.groupId] }))}
-            title={collapsed ? item.label : undefined}
-            className={`w-full flex items-center gap-2.5 rounded-lg text-[14px] transition-all duration-150
-              ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2.5'}
-              ${anyActive ? 'text-[#FF7433] bg-[#FE5100]/[0.14]' : 'text-gray-300 hover:text-gray-200 hover:bg-white/[0.04]'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100]/50`}>
-            <Ic d={IC[item.icon]} size={16} />
-            {!collapsed && <><span className="flex-1 text-left font-medium">{item.label}</span>
-              <Ic d={IC.chevD} size={12} className={`text-gray-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} /></>}
-          </button>
-          {!collapsed && open && (
-            <div className="ml-6 pl-3 border-l border-gray-800/80 mt-0.5 mb-1 space-y-0.5">
-              {item.children.map(ch => {
-                const a = location.pathname === ch.to;
-                return <Link key={ch.to} to={ch.to} onClick={() => setMobileOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-[13px] transition-colors
-                    ${a ? 'text-[#FF7433] font-semibold' : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100]/50`}>
-                  {ch.label}
-                </Link>;
-              })}
-            </div>
-          )}
-        </div>
-      );
-    }
-    if (item.disabled) {
-      return (
-        <div title={item.label} className={`flex items-center gap-2.5 rounded-lg opacity-30 cursor-not-allowed select-none text-gray-500 ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2.5'}`}>
-          <Ic d={IC[item.icon]} size={16} />
-          {!collapsed && <><span className="flex-1 text-[14px]">{item.label}</span>
-            <span className="flex items-center gap-0.5 text-[9px] font-bold text-gray-700 bg-gray-800/80 px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
-              <Ic d={IC.lock} size={8} />soon
-            </span></>}
-        </div>
-      );
-    }
-    const active = item.exact ? location.pathname === item.to : (location.pathname === item.to || location.pathname.startsWith(item.to + '/'));
-    return (
-      <Link to={item.to} onClick={() => setMobileOpen(false)} title={collapsed ? item.label : undefined}
-        className={`flex items-center gap-2.5 rounded-lg text-[14px] transition-all duration-150
-          ${collapsed ? 'justify-center p-2.5' : 'px-3 py-2.5'}
-          ${active ? 'text-[#FF7433] bg-[#FE5100]/[0.14] font-semibold' : 'text-gray-300 hover:text-gray-200 hover:bg-white/[0.04]'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FE5100]/50`}>
-        <Ic d={IC[item.icon]} size={16} />
-        {!collapsed && <span>{item.label}</span>}
-      </Link>
-    );
-  };
-
-  const SidebarBody = ({ mobile = false }) => (
-    <div className="flex flex-col h-full">
-      <div className={`flex items-center gap-3 border-b border-[#1a1a1a] flex-shrink-0 ${(!collapsed || mobile) ? 'px-5 py-4' : 'justify-center px-3 py-4'}`}>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background:'#FE5100' }}>
-          <Ic d={IC.zap} size={14} className="text-white" strokeWidth={2.5} />
-        </div>
-        {(!collapsed || mobile) && <div className="min-w-0">
-          <p className="text-white font-bold text-sm leading-none tracking-tight">Book A Sloth</p>
-          <p className="text-[10px] text-gray-600 mt-0.5 uppercase tracking-wider">Super Admin</p>
-        </div>}
-      </div>
-      <nav className="flex-1 overflow-y-auto py-3 space-y-4" style={{ scrollbarWidth:'none' }}>
-        {NAV.map(sec => {
-          // Permission-aware: show an item if it's an inert "soon" teaser, or the
-          // session grants its permission. Hide the whole section if nothing shows.
-          const items = sec.items.filter(item => item.disabled || item.comingSoon || sessionCan(session, item.perm));
-          if (items.length === 0) return null;
-          return (
-            <div key={sec.id}>
-              {(!collapsed || mobile)
-                ? <p className="px-4 mb-1.5 text-[11px] font-bold text-gray-500 tracking-[0.14em] uppercase select-none">{sec.section}</p>
-                : <div className="w-5 h-px bg-gray-800/80 mx-auto my-2" />}
-              <div className={`space-y-0.5 ${(!collapsed || mobile) ? 'px-2' : 'px-1.5'}`}>
-                {items.map((item, i) => <SidebarItem key={i} item={item} />)}
-              </div>
-            </div>
-          );
-        })}
-        <div className="h-4" />
-      </nav>
-      <div className={`border-t border-[#1a1a1a] flex-shrink-0 space-y-0.5 ${(!collapsed || mobile) ? 'p-3' : 'p-1.5'}`}>
-        <Link to="/dashboard" className={`flex items-center gap-2.5 rounded-lg text-gray-600 hover:text-gray-300 hover:bg-white/[0.04] transition-colors text-[12px] ${(!collapsed || mobile) ? 'px-2.5 py-2' : 'justify-center p-2.5'}`} title={(!collapsed || mobile) ? undefined : 'Host Dashboard'}>
-          <Ic d={IC.external} size={14} />{(!collapsed || mobile) && <span>Host Dashboard</span>}
-        </Link>
-        <button onClick={handleLogout} className={`w-full flex items-center gap-2.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/[0.05] transition-colors text-[12px] ${(!collapsed || mobile) ? 'px-2.5 py-2' : 'justify-center p-2.5'}`} title={(!collapsed || mobile) ? undefined : 'Sign out'}>
-          <Ic d={IC.logout} size={14} />{(!collapsed || mobile) && <span>Sign out</span>}
-        </button>
-      </div>
-    </div>
-  );
-
   return (
-    <div className={`admin-shell adm-canvas min-h-screen flex ${dark ? 'dark' : ''}`} style={{ fontFamily:"'Poppins',system-ui,sans-serif" }}>
+    <div className={`admin-shell adm-canvas min-h-screen ${dark ? 'dark' : ''}`} style={{ fontFamily:"'Poppins',system-ui,sans-serif" }}>
       <AdminEscalationRinger />
-      <aside className={`hidden md:flex flex-col bg-[#17171A] border-r border-[#232327] fixed inset-y-0 left-0 z-30 transition-all duration-300 overflow-hidden ${collapsed ? 'w-[70px]' : 'w-[268px]'}`}>
-        <SidebarBody />
-      </aside>
 
-      {mobileOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setMobileOpen(false)} />}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-[268px] flex flex-col bg-[#17171A] transition-transform duration-300 md:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#1a1a1a]">
+      {/* Desktop two-level nav (lg+) */}
+      <PrimaryRail sections={sections} activeKey={activeVisible?.key} counts={counts} />
+      <SecondarySidebar section={activeVisible} pathname={location.pathname} counts={counts} />
+
+      {/* Mobile drawer — every visible section stacked (rail + sidebar collapse into one) */}
+      {mobileOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setMobileOpen(false)} />}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-[272px] flex flex-col bg-[#17171A] transition-transform duration-300 lg:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex items-center justify-between px-4 h-[60px] border-b border-[#1a1a1a] flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background:'#FE5100' }}>
               <Ic d={IC.zap} size={12} className="text-white" strokeWidth={2.5} />
             </div>
             <span className="text-white font-bold text-sm">Book A Sloth</span>
           </div>
-          <button onClick={() => setMobileOpen(false)} className="text-gray-500 hover:text-white p-1 rounded"><Ic d={IC.x} size={16} /></button>
+          <button onClick={() => setMobileOpen(false)} aria-label="Close menu" className="text-gray-500 hover:text-white p-1 rounded"><Ic d={IC.x} size={16} /></button>
         </div>
-        <div className="flex-1 overflow-hidden"><SidebarBody mobile /></div>
+        <nav className="flex-1 overflow-y-auto py-3 space-y-4" style={{ scrollbarWidth:'none' }}>
+          {sections.map(sec => (
+            <div key={sec.key}>
+              <p className="px-4 mb-1 text-[11px] font-bold text-gray-500 tracking-[0.14em] uppercase select-none">{sec.label}</p>
+              <div className="px-2 space-y-0.5">
+                <ItemList section={sec} pathname={location.pathname} counts={counts} onNavigate={() => setMobileOpen(false)} />
+              </div>
+            </div>
+          ))}
+          <div className="h-4" />
+        </nav>
+        <div className="border-t border-[#1a1a1a] flex-shrink-0 p-3 space-y-0.5">
+          <Link to="/dashboard" className="flex items-center gap-2.5 rounded-lg text-gray-600 hover:text-gray-300 hover:bg-white/[0.04] transition-colors text-[12px] px-2.5 py-2">
+            <Ic d={IC.external} size={14} /><span>Host Dashboard</span>
+          </Link>
+          <button onClick={handleLogout} className="w-full flex items-center gap-2.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/[0.05] transition-colors text-[12px] px-2.5 py-2">
+            <Ic d={IC.logout} size={14} /><span>Sign out</span>
+          </button>
+        </div>
       </aside>
 
-      <div className={`flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'md:ml-[70px]' : 'md:ml-[268px]'}`}>
+      <div className="min-w-0 flex flex-col min-h-screen lg:ml-[276px]">
         <header className="adm-header sticky top-0 z-20 backdrop-blur h-[60px] flex items-center gap-3 px-4 md:px-5 flex-shrink-0">
-          <button onClick={() => { if (window.innerWidth < 768) setMobileOpen(o => !o); else toggleSidebar(); }}
-            className="p-1.5 rounded-lg adm-t3 adm-hoverable transition-colors flex-shrink-0">
+          <button onClick={() => setMobileOpen(o => !o)} aria-label="Open menu"
+            className="p-1.5 rounded-lg adm-t3 adm-hoverable transition-colors flex-shrink-0 lg:hidden">
             <Ic d={IC.hamb} size={17} />
           </button>
 

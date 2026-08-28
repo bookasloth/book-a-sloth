@@ -1,7 +1,11 @@
 // client/src/components/admin/adminNav.js
 // Pure nav data + helpers for the admin shell. No JSX, no React — unit-testable.
-
-import { DEPT_LINKS, DEPT_META } from './deptRegistry';
+//
+// SINGLE SOURCE OF TRUTH for admin navigation. The primary rail, secondary
+// sidebar, breadcrumbs, and command palette ALL read `NAV` — never hardcode a
+// link in a component. Each section is one primary-rail icon; its `items` are
+// the secondary-sidebar list. Ordered by operator priority (frequency × urgency),
+// not alphabetically. See docs/admin-nav-plan.md.
 
 export const IC = {
   grid:      'M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z',
@@ -73,13 +77,15 @@ export const PATH_LABELS = {
   'super-dashboard':'Dashboard', revenue:'Revenue', pending:'Pending Actions',
   admin:null, bookings:'Bookings', users:'Users', services:'Services',
   settings:'General Settings', payment:'Payment Settings', plans:'Subscription Plans', addons:'Addons',
-  providers:'Hosts', active:'Active', suspended:'Suspended',
+  providers:'Hosts', active:'Active', suspended:'Suspended', host360:'Host 360°',
+  referrals:'Refer & Earn', 'invite-links':'Invite Links',
   professions:'Professions', explore:'Explore Page', insights:'Marketing Insights',
   kyc:'KYC', approved:'Approved', rejected:'Rejected',
   finance:'Finance', journal:'Journal', ledger:'Ledger', transactions:'Transactions', payouts:'Payouts', earnings:'Host Earnings', refunds:'Refunds',
   content:'Content', pages:'Pages', blogs:'Blogs', newsletter:'Newsletter',
   faq:'FAQ', testimonials:'Testimonials',
   support:'Support', tickets:'Tickets', disputes:'Disputes', reviews:'Reviews', feedback:'Host Feedback',
+  chat:'Support Inbox', bolt:'Bolt Support',
   platform:'Platform', appearance:'Appearance', menu:'Menu Builder',
   footer:'Footer Builder', communication:'Communication', campaigns:'Campaigns', notifications:'Notification Settings', badges:'Badges',
   confirmed:'Confirmed', completed:'Completed', cancelled:'Cancelled', disputed:'Disputed',
@@ -87,106 +93,95 @@ export const PATH_LABELS = {
   staff:'Staff & Roles', system:'System', audit:'Audit Logs', reserved:'Reserved Slugs',
   features:'Feature Status',
   sales:'Sales', leads:'Leads', pipeline:'Pipeline', 'follow-ups':'Follow-ups', reports:'Reports', templates:'Templates',
+  desk:'Desk', sequences:'Sequences',
   security:'Security', 'blocked-ips':'Blocked IPs',
   dept:'Department', cxo:'CXO', marketing:'Marketing', operation:'Operation', engineering:'Engineering', 'sloth-house':'Sloth House',
 };
 
+// ── SECTIONS ──────────────────────────────────────────────────────────────
+// key    — stable id, used for active-rail state + last-visited memory.
+// label  — secondary-sidebar header + rail tooltip.
+// icon   — IC key for the primary rail (distinct silhouette per section).
+// color  — accent hex (from the c-* token palette, tailwind.config.js). Used as
+//          a seasoning only: glyph tint + 2px active bar, never a full fill.
+//          Rose/danger (#DC2626) is reserved for badge dots and is NOT used here.
+// items  — secondary-sidebar list, priority-ordered within the section.
+//          badge — an ops-summary key (opsAdminController.js) whose live count
+//                  renders as a pill; the section dot sums its items' badges.
+//          exact — highlight only on an exact path match (for index routes that
+//                  are a prefix of their siblings).
 export const NAV = [
-  // Main Dashboard section removed from the sidebar (2026-07-03). Operations
-  // Center / Revenue / Marketing Insights / Pending Actions now live only as
-  // inactive "parked" cards on the Sloth House hub (see deptRegistry.js).
-  // Routes still exist; nothing here links to them anymore.
-  { id:'operations', section:'Important', items:[
-    { label:'Bookings', icon:'calCheck', to:'/admin/bookings', perm:'bookings.view' },
-    { label:'Services', icon:'layers', to:'/admin/services', perm:'services.view' },
-    { label:'Hosts',    icon:'userCheck', to:'/admin/providers', perm:'professionals.view' },
-    { label:'Professions',        icon:'layers',  to:'/admin/professions', perm:'settings.manage' },
-    // Subscription Plans moved out — now reachable via Finance & Marketing dept cards.
+  { key:'overview', label:'Overview', icon:'grid', color:'#2563eb', items:[
+    { label:'Dashboard',          icon:'grid',      to:'/super-dashboard', exact:true, perm:'ops.view' },
+    { label:'Revenue',            icon:'trendUp',   to:'/super-dashboard/revenue', perm:'analytics.view' },
+    { label:'Pending Actions',    icon:'clock',     to:'/super-dashboard/pending', perm:'ops.view' },
+    { label:'Marketing Insights', icon:'bars',      to:'/super-dashboard/insights', perm:'analytics.view' },
+    { label:'Feature Status',     icon:'zap',       to:'/admin/features', perm:'settings.manage' },
   ]},
-  // Sales CRM command center — leads pipeline + outbound (leads.* gated).
-  { id:'sales', section:'SALES', items:[
-    { label:'Leads',      icon:'users2',    to:'/admin/sales/leads', perm:'leads.view' },
-    { label:'Pipeline',   icon:'layout2',   to:'/admin/sales/pipeline', perm:'leads.view' },
-    { label:'Follow-ups', icon:'clock',     to:'/admin/sales/follow-ups', perm:'leads.view' },
-    { label:'Reports',    icon:'layout2',   to:'/admin/sales/reports', perm:'leads.view' },
-    { label:'Templates',  icon:'msgSq',     to:'/admin/sales/templates', perm:'leads.view' },
+  { key:'operations', label:'Operations', icon:'calCheck', color:'#0891b2', items:[
+    { label:'Bookings',           icon:'calCheck',  to:'/admin/bookings', perm:'bookings.view', badge:'stale_unpaid_bookings' },
+    { label:'Services',           icon:'layers',    to:'/admin/services', perm:'services.view' },
+    { label:'Service Categories', icon:'layers',    to:'/admin/services/categories', perm:'services.view' },
+    { label:'Professions',        icon:'layers',    to:'/admin/professions', perm:'settings.manage' },
+    { label:'Explore Page',       icon:'search',    to:'/admin/explore', perm:'settings.manage' },
+    { label:'Addons',             icon:'package',   to:'/admin/addons', perm:'plans.manage' },
   ]},
-  // Org departments — placeholder shells served by AdminDepartment (/admin/dept/:dept).
-  // Mirrors DEPARTMENTS map in pages/admin/AdminDepartment.jsx.
-  { id:'department', section:'DEPARTMENT', items:[
-    { label:'CXO',         icon:'badgeCheck', to:'/admin/dept/cxo' },
-    { label:'Support',     icon:'help',       to:'/admin/dept/support' },
-    { label:'Marketing',   icon:'bars',       to:'/admin/dept/marketing' },
-    { label:'Finance',     icon:'rupee',      to:'/admin/dept/finance' },
-    { label:'Operation',   icon:'grid',       to:'/admin/dept/operation' },
-    { label:'Engineering', icon:'gear',       to:'/admin/dept/engineering' },
-    { label:'Sloth House', icon:'building',   to:'/admin/dept/sloth-house' },
+  { key:'people', label:'People', icon:'userCheck', color:'#059669', items:[
+    { label:'Hosts',              icon:'userCheck', to:'/admin/providers', perm:'professionals.view', badge:'pending_verifications' },
+    { label:'KYC',                icon:'shieldOk',  to:'/admin/kyc', perm:'kyc.view' },
+    { label:'Host 360°',          icon:'badgeCheck',to:'/admin/host360', perm:'professionals.view' },
+    { label:'Staff & Roles',      icon:'users2',    to:'/admin/staff', perm:'staff.manage' },
   ]},
-  /* ── HIDDEN FROM SIDEBAR (2026-07-03) ───────────────────────────────────────
-     Every destination below now lives on its relevant department hub page
-     (see deptRegistry.js), so these sections are commented out to keep the
-     sidebar to Main Dashboard + Important + Departments. Routes still work;
-     uncomment any section to restore it to the sidebar.
-  { id:'people', section:'PEOPLE', items:[
-    { label:'Staff & Roles', icon:'users2', to:'/admin/staff', perm:'staff.manage' },
+  { key:'support', label:'Support & Moderation', icon:'chat', color:'#db2777', items:[
+    { label:'Support Inbox',      icon:'msgSq',     to:'/admin/support/chat', perm:'support.view' },
+    { label:'Tickets',            icon:'chat',      to:'/admin/support/tickets', perm:'support.view' },
+    { label:'Disputes',           icon:'alert',     to:'/admin/support/disputes', perm:'disputes.view' },
+    { label:'Reviews',            icon:'msgSq',     to:'/admin/support/reviews', perm:'reviews.moderate', badge:'pending_reviews' },
+    { label:'Host Feedback',      icon:'msgSq',     to:'/admin/feedback', perm:'feedback.view' },
+    { label:'Bolt Support',       icon:'chat',      to:'/admin/support/bolt', perm:'support.view' },
+    { label:'Support Insights',   icon:'bars',      to:'/admin/support/insights', perm:'support.view' },
   ]},
-  { id:'finance', section:'FINANCE', items:[
-    { label:'Dashboard',         icon:'trendUp', to:'/admin/finance', exact:true, perm:'finance.view' },
-    { label:'Journal',   icon:'file',    to:'/admin/finance/journal', perm:'finance.view' },
-    { label:'Ledger',    icon:'layers',  to:'/admin/finance/ledger',  perm:'finance.view' },
-    { label:'Transactions',      icon:'dollar',  to:'/admin/finance/transactions', perm:'finance.view' },
-    { label:'Payouts',           icon:'wallet',  to:'/admin/finance/payouts', perm:'payouts.view' },
-    { label:'Refunds',           icon:'refresh', to:'/admin/finance/refunds', perm:'finance.refund' },
-    { label:'Coupons',           icon:'tag',     disabled:true },
+  { key:'sales', label:'Sales / CRM', icon:'affiliate', color:'#f59e0b', items:[
+    { label:'Leads',              icon:'users2',    to:'/admin/sales/leads', perm:'leads.view' },
+    { label:'Pipeline',           icon:'layout2',   to:'/admin/sales/pipeline', perm:'leads.view' },
+    { label:'Follow-ups',         icon:'clock',     to:'/admin/sales/follow-ups', perm:'leads.view' },
+    { label:'Desk',               icon:'grid',      to:'/admin/sales/desk', perm:'leads.view' },
+    { label:'Sequences',          icon:'send',      to:'/admin/sales/sequences', perm:'leads.view' },
+    { label:'Templates',          icon:'msgSq',     to:'/admin/sales/templates', perm:'leads.view' },
+    { label:'Reports',            icon:'layout2',   to:'/admin/sales/reports', perm:'leads.view' },
   ]},
-  { id:'content', section:'CONTENT', items:[
-    { label:'Media Library', icon:'photo',  disabled:true },
+  { key:'revenue', label:'Revenue', icon:'rupee', color:'#7c3aed', items:[
+    { label:'Payouts',            icon:'wallet',    to:'/admin/finance/payouts', perm:'payouts.view', badge:'pending_payouts' },
+    { label:'Refunds',            icon:'refresh',   to:'/admin/finance/refunds', perm:'finance.refund' },
+    { label:'Transactions',       icon:'dollar',    to:'/admin/finance/transactions', perm:'finance.view' },
+    { label:'Finance Dashboard',  icon:'trendUp',   to:'/admin/finance', exact:true, perm:'finance.view' },
+    { label:'Ledger',             icon:'layers',    to:'/admin/finance/ledger', perm:'finance.view' },
+    { label:'Journal',            icon:'file',      to:'/admin/finance/journal', perm:'finance.view' },
+    { label:'Subscription Plans', icon:'card',      to:'/admin/plans', perm:'plans.view' },
+    { label:'Refer & Earn',       icon:'affiliate', to:'/admin/referrals', perm:'referrals.view' },
+    { label:'Invite Links',       icon:'link2',     to:'/admin/invite-links', perm:'referrals.view' },
   ]},
-  { id:'support', section:'SUPPORT', items:[
-    { label:'Reviews Moderation', icon:'msgSq', to:'/admin/support/reviews', perm:'reviews.moderate' },
-    { label:'Host Feedback',    icon:'msgSq', to:'/admin/feedback', perm:'feedback.view' },
-    { label:'Bolt Support',     icon:'chat',  to:'/admin/support/bolt', perm:'support.view' },
+  { key:'growth', label:'Growth', icon:'bars', color:'#FE5100', items:[
+    { label:'Campaigns',          icon:'mail',      to:'/admin/campaigns', perm:'campaigns.view' },
+    { label:'Communication',      icon:'mail',      to:'/admin/platform/communication', perm:'email.manage', badge:'failed_emails' },
+    { label:'Notifications',      icon:'bell',      to:'/admin/notifications', perm:'notifications.view', badge:'failed_notifications' },
+    { label:'Badges',             icon:'star',      to:'/admin/badges', perm:'badges.manage' },
+    { label:'Appearance',         icon:'palette',   to:'/admin/platform/appearance', perm:'branding.manage' },
+    { label:'Pages',              icon:'file',      to:'/admin/content/pages', perm:'cms.manage' },
+    { label:'Blogs',              icon:'news',      to:'/admin/content/blogs', perm:'cms.manage' },
+    { label:'Newsletter',         icon:'mail',      to:'/admin/content/newsletter', perm:'cms.manage' },
+    { label:'FAQ',                icon:'help',      to:'/admin/content/faq', perm:'cms.manage' },
+    { label:'Testimonials',       icon:'star',      to:'/admin/content/testimonials', perm:'cms.manage' },
+    { label:'Menu Builder',       icon:'menu3',     to:'/admin/platform/menu', perm:'cms.manage' },
+    { label:'Footer Builder',     icon:'layout2',   to:'/admin/platform/footer', perm:'cms.manage' },
   ]},
-  { id:'platform', section:'PLATFORM', items:[
-    { label:'Appearance',       icon:'palette', to:'/admin/platform/appearance', perm:'branding.manage' },
-    { label:'Communication',    icon:'mail',    to:'/admin/platform/communication', perm:'email.manage' },
-    { label:'Campaigns',        icon:'mail',    to:'/admin/campaigns', perm:'campaigns.view' },
-    { label:'Notification Settings', icon:'bell', to:'/admin/notifications', perm:'notifications.view' },
-    { label:'Payment Settings', icon:'card',    to:'/admin/settings/payment', perm:'settings.manage' },
-    { label:'General Settings', icon:'gear',    to:'/admin/settings', perm:'settings.manage' },
+  { key:'system', label:'System', icon:'gear', color:'#6b7280', items:[
+    { label:'General Settings',   icon:'gear',      to:'/admin/settings', exact:true, perm:'settings.manage' },
+    { label:'Payment Settings',   icon:'card',      to:'/admin/settings/payment', perm:'settings.manage' },
+    { label:'Audit Logs',         icon:'activity',  to:'/admin/system/audit', perm:'audit.view' },
+    { label:'Blocked IPs',        icon:'ban',       to:'/admin/security/blocked-ips', perm:'settings.manage' },
+    { label:'Reserved Slugs',     icon:'lock',      to:'/admin/system/reserved', perm:'settings.manage' },
   ]},
-  { id:'system', section:'SYSTEM', items:[
-    { label:'Audit Logs',     icon:'activity', to:'/admin/system/audit', perm:'audit.view' },
-    { label:'Reserved Slugs', icon:'lock',     to:'/admin/system/reserved', perm:'settings.manage' },
-    { label:'Blocked IPs',    icon:'ban',      to:'/admin/security/blocked-ips', perm:'settings.manage' },
-    { label:'Feature Status', icon:'zap',      to:'/admin/features', perm:'settings.manage' },
-    { label:'API Keys',       icon:'key',      disabled:true },
-  ]},
-  // Holding bucket for links pulled out of the sections above during cleanup.
-  // When asked to "take link to others", move the item's object here so the
-  // sidebar shrinks and re-arrangement stays organised. Empty = section hidden
-  // (SidebarBody drops sections whose visible item count is 0).
-  { id:'other', section:'OTHER', items:[
-    { label:'Addons',             icon:'package', to:'/admin/addons', perm:'plans.manage' },
-    { label:'Badges',             icon:'star',    to:'/admin/badges', perm:'badges.manage' },
-    { label:'Explore Page',       icon:'search',  to:'/admin/explore', perm:'settings.manage' },
-    { label:'KYC',    icon:'shieldOk', groupId:'ppl-kyc', perm:'kyc.view', children:[
-      { label:'Overview', to:'/admin/kyc' },
-      { label:'Pending',  to:'/admin/kyc/pending' },
-      { label:'Verified', to:'/admin/kyc/approved' },
-      { label:'Rejected', to:'/admin/kyc/rejected' },
-    ]},
-    { label:'Pages',              icon:'file',    to:'/admin/content/pages', perm:'cms.manage' },
-    { label:'Blogs',              icon:'news',    to:'/admin/content/blogs', perm:'cms.manage' },
-    { label:'Newsletter',         icon:'mail',    to:'/admin/content/newsletter', perm:'cms.manage' },
-    { label:'FAQ',                icon:'help',    to:'/admin/content/faq', perm:'cms.manage' },
-    { label:'Testimonials',       icon:'star',    to:'/admin/content/testimonials', perm:'cms.manage' },
-    { label:'Tickets',            icon:'chat',    to:'/admin/support/tickets', perm:'support.view' },
-    { label:'Disputes',           icon:'alert',   to:'/admin/support/disputes', perm:'disputes.view' },
-    { label:'Menu Builder',       icon:'menu3',   to:'/admin/platform/menu', perm:'cms.manage' },
-    { label:'Footer Builder',     icon:'layout2', to:'/admin/platform/footer', perm:'cms.manage' },
-  ]},
-  ─────────────────────────────────────────────────────────────────────────── */
 ];
 
 export const QUICK_ACTIONS = [
@@ -195,18 +190,6 @@ export const QUICK_ACTIONS = [
   { label:'Create Page',     icon:'file',      to:'/admin/content/pages' },
   { label:'Send Newsletter', icon:'mail',      to:'/admin/content/newsletter' },
   { label:'View Bookings',   icon:'calCheck',  to:'/admin/bookings' },
-];
-
-// Replaces the old flat `FUTURE MODULES` section. Coming-soon parents (comingSoon: true)
-// that expand to inert children — pure roadmap teasers, nothing navigates.
-export const ROADMAP = [
-  { id: 'roadmap', section: 'ROADMAP', items: [
-    { comingSoon: true, groupId: 'cs-roadmap', label: 'Coming Soon', icon: 'zap', children: [
-      { label: 'CRM' }, { label: 'Marketing Automation' }, { label: 'Affiliates' },
-      { label: 'Revenue Analytics' }, { label: 'Integrations' }, { label: 'AI Assistant' },
-      { label: 'Mobile App' },
-    ]},
-  ]},
 ];
 
 // Permission check against the session's embedded permission array.
@@ -218,44 +201,20 @@ export const sessionCan = (session, perm) => {
 };
 
 // Flatten NAV into a list of navigable destinations for the command palette.
-// Excludes disabled leaves and coming-soon groups; honours permissions.
+// Honours permissions and dedupes by path. NAV is now the single source of
+// truth for every admin page, so this covers the whole console on its own.
 export const flattenDestinations = (nav, session) => {
-  const out = [];
+  const byPath = new Map();
   nav.forEach(sec => {
     sec.items.forEach(item => {
-      if (item.disabled || item.comingSoon) return;
+      if (!item.to) return;
       if (!sessionCan(session, item.perm)) return;
-      if (item.children) {
-        item.children.forEach(ch => {
-          if (ch.to) out.push({ label: `${item.label} · ${ch.label}`, to: ch.to, section: sec.section });
-        });
-      } else if (item.to) {
-        out.push({ label: item.label, to: item.to, section: sec.section });
-      }
+      if (!byPath.has(item.to)) byPath.set(item.to, { label: item.label, to: item.to, section: sec.label });
     });
   });
-  return out;
-};
-
-// Full destination list for the command palette. The sidebar (NAV) was slimmed
-// to Important + Departments on 2026-07-03, which stripped ~40 pages out of
-// flattenDestinations(). The palette must still find every page by title, so we
-// merge the visible NAV destinations with every navigable card in DEPT_LINKS
-// (the single source of truth behind the department hubs). Deduped by path.
-export const flattenAllDestinations = (nav, session) => {
-  const byPath = new Map();
-  const add = (dest) => { if (dest?.to && !byPath.has(dest.to)) byPath.set(dest.to, dest); };
-
-  // Visible sidebar destinations first (keeps Important + department hub pages).
-  flattenDestinations(nav, session).forEach(add);
-
-  // Every real page tagged into a department hub. DEPT_LINKS has no perm field —
-  // route guards enforce access on navigation, same as the hub pages themselves.
-  DEPT_LINKS.forEach(link => {
-    if (!link.to) return; // skip inactive / coming-soon cards
-    const dept = link.depts?.[0];
-    add({ label: link.label, to: link.to, section: (DEPT_META[dept]?.label || 'Pages').toUpperCase() });
-  });
-
   return Array.from(byPath.values());
 };
+
+// Back-compat alias: NAV holds every page now, so "all destinations" == the
+// permission-filtered flatten. Kept so CommandPalette's import is stable.
+export const flattenAllDestinations = flattenDestinations;
