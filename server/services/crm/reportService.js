@@ -14,8 +14,11 @@
  */
 const { supabaseAdmin } = require('../../config/supabase');
 const { FUNNEL } = require('./leadService');
+const { MONEY } = require('./lifecycleRules');
 
-const PAID = 'paid';
+// A "paying customer" is a lead in ANY money state (Subscribed → Champion), not
+// only the literal 'paid' — a host who progressed to won/sloth is still paying.
+const isPaying = (status) => MONEY.has(status);
 const PAGE = 1000;
 const MAX_ROWS = 20000; // safety bound; leads are ~hundreds today
 
@@ -63,7 +66,7 @@ function summarizeBy(rows, key) {
     const k = (r[key] == null || r[key] === '') ? '(unknown)' : String(r[key]);
     const g = m.get(k) || { key: k, leads: 0, paying: 0, revenue_paise: 0 };
     g.leads += 1;
-    if (r.status === PAID) g.paying += 1;
+    if (isPaying(r.status)) g.paying += 1;
     g.revenue_paise += num(r.revenue_paise);
     m.set(k, g);
   }
@@ -86,7 +89,7 @@ function funnelStages(counts = {}) {
 /** Top-level aggregation over the full lead snapshot. Pure. */
 function buildReport(rows = []) {
   const total = rows.length;
-  const paying = rows.filter((r) => r.status === PAID).length;
+  const paying = rows.filter((r) => isPaying(r.status)).length;
   const revenue_paise = rows.reduce((a, r) => a + num(r.revenue_paise), 0);
   const conversion_rate = total ? +((paying / total) * 100).toFixed(1) : 0;
 

@@ -14,10 +14,12 @@ const { supabaseAdmin } = require('../../config/supabase');
 const { normalizePhone } = require('../aisensyService');
 const { logActivity } = require('./activity');
 const { cleanAttribution, touchSnapshot, stripAttributionColumns, isMissingColumnError } = require('./attributionInput');
+const rules = require('./lifecycleRules');
 
-const FUNNEL = ['new', 'contacted', 'replied', 'qualified', 'demo_scheduled', 'trial', 'activated', 'paid'];
-const STATUSES = [...FUNNEL, 'lost', 'do_not_contact'];
-const CONVERTED = new Set(['activated', 'paid']);
+// The lifecycle state model lives in lifecycleRules (pure, unit-tested). Re-exported
+// here so existing importers of leadService.FUNNEL / STATUSES keep working.
+const { FUNNEL, STATUSES, CONVERTED, MONEY, TERMINAL, RANK } = rules;
+const rankOf = rules.rankOf;
 
 const norm = (p) => normalizePhone(p) || null;
 const lc = (e) => (e ? String(e).trim().toLowerCase() : null);
@@ -133,7 +135,7 @@ async function safeUpsertLead(patch = {}, opts = {}) {
  * @param {string} [p.wonAt]      ISO timestamp to stamp converted_at with
  * @returns {Promise<string|null>} the lead id, or null on failure
  */
-async function recordAccountEvent({ profileId, type, title, meta = {}, promoteToPaid = false, wonAt = null } = {}) {
+async function recordAccountEvent({ profileId, type, title, meta = {}, promoteToPaid = false, promoteTo = null, wonAt = null } = {}) {
   if (!profileId || !type) return null;
   try {
     const { data: p } = await supabaseAdmin.from('profiles')
@@ -148,12 +150,16 @@ async function recordAccountEvent({ profileId, type, title, meta = {}, promoteTo
 
     await logActivity(lead.id, type, { title, meta });
 
-    if (promoteToPaid && !['paid', 'lost', 'do_not_contact'].includes(lead.status)) {
-      const patch = { status: 'paid', updated_at: new Date().toISOString() };
-      if (!lead.converted_at) patch.converted_at = wonAt || new Date().toISOString();
+    // Immediate forward promotion (money fast-path). promoteToPaid is the legacy
+    // boolean → 'paid' (Subscribed); promoteTo names any target. Never regresses a
+    // higher money state and never resurrects a terminal/dnc lead (rank + NO_AUTO).
+    const target = promoteTo || (promoteToPaid ? 'paid' : null);
+    if (target && !rules.NO_AUTO.has(lead.status) && rankOf(target) > rankOf(lead.status)) {
+      const patch = { status: target, updated_at: new Date().toISOString() };
+      if (MONEY.has(target) && !lead.converted_at) patch.converted_at = wonAt || new Date().toISOString();
       await supabaseAdmin.from('leads').update(patch).eq('id', lead.id);
       await logActivity(lead.id, 'status_changed', {
-        title: 'Status → paid', meta: { from: lead.status, to: 'paid', via: type },
+        title: `Status → ${target}`, meta: { from: lead.status, to: target, via: type, change_type: 'auto' },
       });
     }
     return lead.id;
@@ -161,6 +167,76 @@ async function recordAccountEvent({ profileId, type, title, meta = {}, promoteTo
     console.warn('[crm] recordAccountEvent failed:', e?.message || e);
     return null;
   }
+}
+
+/**
+ * Real-time backstop: resolve a linked host's lead to the most-advanced status its
+ * account has earned (Subscribed → Onboarded → Won → Sloth → Marketing) and apply
+ * it. Runs the SAME pure resolver the 15-min engine uses, so a hook and the cron
+ * can never disagree. Never throws — a CRM write must not break a payment/booking.
+ *
+ * @param {string} profileId  profiles.id of the host
+ * @returns {Promise<string|null>} the resolved status, or null on no-op/failure
+ */
+async function recomputeFromAccount(profileId) {
+  if (!profileId) return null;
+  try {
+    const { data: lead } = await supabaseAdmin.from('leads')
+      .select('id, status, converted_at').eq('profile_id', profileId)
+      .order('created_at', { ascending: true }).limit(1).maybeSingle();
+    if (!lead) return null;
+    const ctx = await loadAccountFacts(profileId);
+    const next = rules.resolveAccountStatus(lead.status, ctx);
+    if (next === lead.status) return lead.status;
+    await changeStatus(lead.id, next, null, { via: 'account_recompute' });
+    return next;
+  } catch (e) {
+    console.warn('[crm] recomputeFromAccount failed:', e?.message || e);
+    return null;
+  }
+}
+
+// Load the account facts the resolver needs for one host. Refund-aware earnings +
+// last-30d activity + plan tenure cost + renewals + qualified referrals + enterprise.
+async function loadAccountFacts(profileId) {
+  const planService = require('../planService');
+  const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
+  const [profileRes, svcRes, availRes, bookedRes, recentRes, subsRes, refsRes] = await Promise.all([
+    supabaseAdmin.from('profiles').select('onboarding_completed, profile_image, plan, razorpay_subscription_id, subscription_status').eq('id', profileId).maybeSingle(),
+    supabaseAdmin.from('services').select('id', { count: 'exact', head: true }).eq('host_id', profileId),
+    supabaseAdmin.from('availability').select('host_id', { count: 'exact', head: true }).eq('host_id', profileId),
+    supabaseAdmin.from('bookings').select('platform_fee_amount, status').eq('host_id', profileId).eq('payment_status', 'paid'),
+    supabaseAdmin.from('bookings').select('id', { count: 'exact', head: true }).eq('host_id', profileId).eq('payment_status', 'paid').gte('created_at', since30),
+    supabaseAdmin.from('subscription_payments').select('total_charged, status').eq('vendor_id', profileId).eq('status', 'paid'),
+    supabaseAdmin.from('referrals').select('id', { count: 'exact', head: true }).eq('referrer_id', profileId).in('status', ['qualified', 'rewarded']),
+  ]);
+  const profile = profileRes.data || {};
+  const planSlug = planService.resolveVendorPlan ? planService.resolveVendorPlan(profile) : profile.plan;
+  const isFree = planService.isFreeSlug ? planService.isFreeSlug(planSlug) : false;
+  const isPaid = (!!profile.razorpay_subscription_id || (!!planSlug && !isFree)) && profile.subscription_status !== 'cancelled';
+  // On-platform earnings = platform fee on non-dead paid bookings (refund-aware).
+  const DEAD = new Set(['cancelled', 'no_show', 'refunded']);
+  const earningsPaise = (bookedRes.data || [])
+    .filter((b) => !(b.status && DEAD.has(String(b.status).toLowerCase())))
+    .reduce((a, b) => a + Math.round((Number(b.platform_fee_amount) || 0) * 100), 0);
+  const subs = subsRes.data || [];
+  let planPricePaise = 0;
+  try {
+    const plan = planService.getPlan ? await planService.getPlan(planSlug) : null;
+    planPricePaise = Math.round((Number(plan?.annual_price) || Number(plan?.monthly_price) || 0) * 100);
+  } catch (_) { /* plan lookup best-effort */ }
+  return {
+    isPaid,
+    onboardingComplete: !!profile.onboarding_completed,
+    hasPhoto: !!profile.profile_image,
+    hasBooking: (bookedRes.data || []).length > 0,
+    bookingsLast30d: recentRes.count || 0,
+    earningsPaise,
+    planPricePaise,
+    renewals: Math.max(0, subs.length - 1),          // charges beyond the first = renewals
+    referralsQualified: refsRes.count || 0,
+    isEnterprise: String(planSlug || '').toLowerCase().includes('enterprise'),
+  };
 }
 
 // A lead is "due" from EITHER mechanism: an open lead_follow_ups task, or the
@@ -181,7 +257,7 @@ async function leadIdsWithFollowup(window) {
 
   let taskQ = supabaseAdmin.from('lead_follow_ups').select('lead_id').eq('status', 'open');
   let naQ = supabaseAdmin.from('leads').select('id')
-    .not('next_action_at', 'is', null).not('status', 'in', '(paid,lost,do_not_contact)');
+    .not('next_action_at', 'is', null).not('status', 'in', rules.CLOSED_SQL);
   if (to) {
     taskQ = inclusive ? taskQ.lte('due_at', to) : taskQ.lt('due_at', to);
     naQ = inclusive ? naQ.lte('next_action_at', to) : naQ.lt('next_action_at', to);
@@ -226,16 +302,36 @@ async function listLeads({ status, source, owner, tag, city, profession, q, foll
 }
 
 // ── Mutations (each writes an activity) ───────────────────────
-async function changeStatus(id, status, actorAdminId) {
+async function changeStatus(id, status, actorAdminId, opts = {}) {
   if (!STATUSES.includes(status)) throw new Error(`invalid status: ${status}`);
   const before = await getLead(id);
+  const reason = (opts.reason || '').trim();
+
+  // Manual moves (a human actor) are guarded: backward moves and exits must carry
+  // a reason so the timeline records *why* a lead was pulled back or dropped.
+  // System/auto moves (actorAdminId null) bypass the guard — the resolver only ever
+  // moves forward and to legitimate auto-exits (e.g. churn).
+  if (actorAdminId && before) {
+    const t = rules.manualTransition(before.status, status);
+    if (t.needsReason && !reason) {
+      throw new Error(`reason required to move ${before.status} → ${status}`);
+    }
+  }
+
   const patch = { status, updated_at: new Date().toISOString() };
   if (status === 'do_not_contact') patch.do_not_contact = true;
   if (CONVERTED.has(status) && before && !before.converted_at) patch.converted_at = new Date().toISOString();
+  // An exit move with a reason records it on the lead (mirrors do_not_contact's flag).
+  if (TERMINAL.has(status) && reason) patch.lost_reason = reason;
   await supabaseAdmin.from('leads').update(patch).eq('id', id);
   await logActivity(id, 'status_changed', {
     actorAdminId, title: `Status → ${status}`,
-    meta: { from: before?.status, to: status },
+    meta: {
+      from: before?.status, to: status,
+      change_type: actorAdminId ? 'manual' : 'auto',
+      ...(reason ? { reason } : {}),
+      ...(opts.via ? { via: opts.via } : {}),
+    },
   });
   return getLead(id);
 }
@@ -303,8 +399,12 @@ async function pipelineCounts() {
 // (revenue-backed / paying subscriber) — NOT `activated`, which is a free host
 // who is merely active. Counting activated as paid overstated conversion ~4×.
 function conversionSummary(counts = {}, total = 0) {
-  const paidCustomers = counts.paid || 0;
-  const activeFree = counts.activated || 0;
+  // A paying customer is a lead in any MONEY state — Subscribed(paid) through
+  // Champion. Relations is subscription-only, so there is no "active free" tier in
+  // the pipeline any more (free hosts stay in Presale); activeFree kept at 0 for
+  // response-shape stability.
+  const paidCustomers = [...MONEY].reduce((a, s) => a + (counts[s] || 0), 0);
+  const activeFree = 0;
   const conversionRate = total ? +((paidCustomers / total) * 100).toFixed(1) : 0;
   return { paidCustomers, activeFree, conversionRate };
 }
@@ -326,7 +426,7 @@ async function dashboardStats() {
     leadIdsWithFollowup('overdue'),
     // Open pipeline value = expected value of leads not yet won/lost.
     supabaseAdmin.from('leads').select('expected_value_paise').gt('expected_value_paise', 0)
-      .not('status', 'in', '(paid,lost,do_not_contact)'),
+      .not('status', 'in', rules.CLOSED_SQL),
   ]);
   const overdueSet = new Set(overdueIds);
   const dueTodayOnly = todayIds.filter((id) => !overdueSet.has(id)).length;
@@ -354,5 +454,6 @@ module.exports = {
   upsertLead, safeUpsertLead, getLead, listLeads,
   changeStatus, assignOwner, addTag, removeTag, setDnc, addNote, logCall,
   pipelineCounts, dashboardStats, recordAccountEvent,
+  recomputeFromAccount, loadAccountFacts,
   conversionSummary, followupWindow, leadIdsWithFollowup,
 };

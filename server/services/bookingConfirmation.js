@@ -178,12 +178,10 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
   //        (Sujata). Free-plan only, deduped, never throws.
   await require('./upgradeNudge').maybeSendUpgradeNudge({ host, booking });
 
-  // 2a-iii) Real-time CRM: capture the guest as a lead (source guest_booking) on
-  //         every paid booking. Idempotent by phone/email; never throws.
-  await require('./crm/leadService').safeUpsertLead(
-    { name: booking.guest_name, phone: booking.guest_phone, email: booking.guest_email },
-    { source: 'guest_booking', createdBy: 'booking' }
-  );
+  // 2a-iii) Real-time CRM: a paid booking is the HOST's Won signal — resolve the
+  //         host's lead now (a paid host → Won; an unpaid host stays in Presale per
+  //         O-1). Guests are NOT captured as leads (excluded from the host pipeline).
+  await require('./crm/leadService').recomputeFromAccount(booking.host_id);
 
   // 2b) In-app confirmation for signed-in guests — mirrors the free-booking path
   //     so paid guests (the higher-value ones) aren't the only bookings missing an

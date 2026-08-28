@@ -28,14 +28,15 @@ describe('onboarding gap branching (incomplete onboarding)', () => {
   });
 });
 
-describe('activated branch (onboarding complete)', () => {
+describe('activated branch (paid host, onboarding complete)', () => {
   test('no booking → share nudge', () => {
-    const d = decide({ ...staleLead(), status: 'contacted' }, { onboardingComplete: true, hasBooking: false }, NOW);
+    const d = decide({ ...staleLead(), status: 'paid' }, { isPaid: true, onboardingComplete: true, hasBooking: false }, NOW);
     expect(d.status).toBe('activated');
     expect(d.enroll).toBe(SEQ.NO_BOOKING);
   });
   test('first booking → celebration', () => {
-    const d = decide({ ...staleLead(), status: 'contacted' }, { onboardingComplete: true, hasBooking: true }, NOW);
+    const d = decide({ ...staleLead(), status: 'paid' }, { isPaid: true, onboardingComplete: true, hasBooking: true }, NOW);
+    expect(d.status).toBe('won');
     expect(d.enroll).toBe(SEQ.FIRST_BOOKING);
     expect(d.nextAction).toMatch(/Celebrate/);
   });

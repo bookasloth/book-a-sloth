@@ -112,7 +112,7 @@ const leadMessages = async (req, res) => {
 };
 
 const setStatus = async (req, res) => {
-  try { res.json(await leadService.changeStatus(req.params.id, req.body?.status, actor(req))); }
+  try { res.json(await leadService.changeStatus(req.params.id, req.body?.status, actor(req), { reason: req.body?.reason })); }
   catch (e) { res.status(400).json({ message: e.message }); }
 };
 const setOwner = async (req, res) => {

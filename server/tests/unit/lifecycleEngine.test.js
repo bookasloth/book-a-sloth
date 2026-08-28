@@ -41,16 +41,23 @@ test('high intent (score ≥70) → qualified + human contact', () => {
   expect(d.nextAction).toBe('Human contact');
 });
 
-test('linked host finished onboarding but no booking → activated + no-booking sequence', () => {
-  const d = decide({ status: 'trial', profile_id: 'p1' }, { onboardingComplete: true, hasBooking: false }, NOW);
+test('PAID host finished onboarding but no booking → activated + no-booking sequence', () => {
+  // Relations is subscription-only: onboarding promotes to activated only for a paid host.
+  const d = decide({ status: 'paid', profile_id: 'p1' }, { isPaid: true, onboardingComplete: true, hasBooking: false }, NOW);
   expect(d.status).toBe('activated');
   expect(d.enroll).toBe(SEQ.NO_BOOKING);
 });
 
-test('linked host onboarded WITH a booking → first-booking celebration', () => {
-  const d = decide({ status: 'activated', profile_id: 'p1' }, { onboardingComplete: true, hasBooking: true }, NOW);
+test('PAID host onboarded WITH a booking → won + first-booking celebration', () => {
+  const d = decide({ status: 'activated', profile_id: 'p1' }, { isPaid: true, onboardingComplete: true, hasBooking: true }, NOW);
+  expect(d.status).toBe('won');
   expect(d.enroll).toBe(SEQ.FIRST_BOOKING);
   expect(d.nextAction).toBe('Celebrate first booking');
+});
+
+test('UNPAID onboarded host stays in Presale (O-1) — no activation', () => {
+  const d = decide({ status: 'qualified', profile_id: 'p1' }, { isPaid: false, onboardingComplete: true, hasBooking: true }, NOW);
+  expect(d.status).toBe('qualified');
 });
 
 test('signed up but onboarding stale → first unfilled gap (no photo)', () => {

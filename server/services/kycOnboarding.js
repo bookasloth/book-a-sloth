@@ -66,6 +66,14 @@ function onKycApproved({ userId, email, fullName, reviewNote } = {}) {
     .from('kyc_submissions').select('*').eq('user_id', userId).maybeSingle()
     .then(({ data: full }) => (full ? routeAccountService.createLinkedAccount(full) : null))
     .catch((e) => console.error('Route linked-account onboarding failed:', e.message));
+
+  // CRM: stamp the Verified badge on the host's lead (KYC-approved ⇒ payout-eligible).
+  // Best-effort + schema-fallback safe (leads.verified_at ships in migration v3.126).
+  supabaseAdmin
+    .from('leads').update({ verified_at: new Date().toISOString() })
+    .eq('profile_id', userId).is('verified_at', null)
+    .then(() => {})
+    .catch((e) => console.error('[crm] verified badge stamp failed (non-fatal):', e.message));
 }
 
 module.exports = { isAutopilot, onKycApproved };

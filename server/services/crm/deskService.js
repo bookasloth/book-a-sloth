@@ -11,8 +11,11 @@
  * Reads the state the lifecycle engine (P0-4) writes; it never recomputes.
  */
 const { supabaseAdmin } = require('../../config/supabase');
+const { CLOSED } = require('./lifecycleRules');
 
-const OPEN_EXCLUDE = ['lost', 'do_not_contact', 'paid'];
+// Leads no longer needing sales/relations action: converted-past-Won + exits.
+// (Onboarded/`activated` stays in — the activation queue works those toward Won.)
+const OPEN_EXCLUDE = CLOSED;
 const CANDIDATE_CAP = 200;   // upper bound scanned per queue; count is "N" or "N+" at the cap
 const DEFAULT_LIMIT = 25;
 

@@ -52,9 +52,9 @@ describe('buildReport', () => {
     { source: 'google', status: 'activated', revenue_paise: 0, created_at: '2026-01-01', converted_at: '2026-01-02' },
     { source: 'organic', status: 'new', revenue_paise: 0, created_at: '2026-01-01' },
   ];
-  test('totals count only paid as paying (activated is not a customer)', () => {
+  test('totals count every MONEY state as paying (Relations is subscription-only; activated=Onboarded=paid)', () => {
     const r = buildReport(rows);
-    expect(r.totals).toEqual({ total: 3, paying: 1, revenue_paise: 1000, conversion_rate: 33.3 });
+    expect(r.totals).toEqual({ total: 3, paying: 2, revenue_paise: 1000, conversion_rate: 66.7 });
   });
   test('has_utm false + empty utm breakdowns when column absent', () => {
     const r = buildReport(rows);
