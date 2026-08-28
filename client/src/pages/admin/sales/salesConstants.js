@@ -34,6 +34,17 @@ export const SMART_VIEWS = [
   { key: 'value', label: 'Has value', filter: { hasValue: true } },
 ];
 
+// Plan the lead is interested in — admin-set on the lead panel (leads.plan_interest,
+// v3.125). NULL/unset shows as "—". Keys match the DB CHECK constraint.
+export const PLAN_INTEREST = [
+  { value: 'hostplus_monthly', label: 'Host+ Monthly' },
+  { value: 'hostplus_yearly', label: 'Host+ Yearly' },
+  { value: 'studio_monthly', label: 'Studio Monthly' },
+  { value: 'studio_yearly', label: 'Studio Yearly' },
+  { value: 'enterprise', label: 'Enterprise' },
+];
+export const PLAN_INTEREST_LABEL = Object.fromEntries(PLAN_INTEREST.map((p) => [p.value, p.label]));
+
 export const rupees = (paise) => `₹${((Number(paise) || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
 // Rule-based lead score (0–100) from the signals we actually have — no fake

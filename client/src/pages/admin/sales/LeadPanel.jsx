@@ -7,13 +7,13 @@ import {
   crmListTemplates, crmListTags, crmCreateTag, crmUpdateLead,
   crmListSequences, crmEnroll,
 } from '../../../services/api';
-import { FUNNEL, STATUS_LABEL, STATUS_TONE, rupees, relTime, leadScore } from './salesConstants';
+import { FUNNEL, STATUS_LABEL, STATUS_TONE, PLAN_INTEREST, PLAN_INTEREST_LABEL, rupees, relTime, leadScore } from './salesConstants';
 import { colorMap } from './salesTagColors';
 import TagChip from './TagChip';
 import TagPicker from './TagPicker';
 import {
   Check, CheckCircle2, ChevronDown, Mail, Phone, MessageCircle, FileText,
-  CalendarClock, Clock, Plus, ArrowRight, ArrowLeft,
+  CalendarClock, Clock, Plus, ArrowRight, ArrowLeft, IndianRupee, Tag, Activity, StickyNote,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -40,14 +40,16 @@ function timelineIcon(item) {
 }
 
 // Horizontal funnel stepper. Filled/checked up to the current stage; click any
-// step to jump the lead there.
+// step to jump the lead there. When the lead is Won (paid — a terminal state that
+// isn't one of the steps) the whole rail reads as complete instead of blank.
 function Stepper({ status, onPick }) {
-  const cur = STEP_STAGES.indexOf(status);
+  const isWon = status === 'paid';
+  const cur = isWon ? STEP_STAGES.length - 1 : STEP_STAGES.indexOf(status);
   return (
     <div className="flex items-start">
       {STEP_STAGES.map((s, i) => {
         const done = cur >= 0 && i <= cur;
-        const isCur = i === cur;
+        const isCur = !isWon && i === cur;
         return (
           <Fragment key={s}>
             <button type="button" onClick={() => onPick(s)} className="flex flex-col items-center gap-1 shrink-0 w-11 group" title={STATUS_LABEL[s]}>
@@ -103,9 +105,50 @@ function EnrollControl({ leadId, onDone }) {
   );
 }
 
-// Shared lead workspace — rendered both in the right-side drawer and on the
-// full-page /leads/:id route. `onChanged` lets the parent list refresh.
-export default function LeadPanel({ leadId, onChanged, onClose }) {
+// Stat tile with a coloured icon chip (Revenue / Deal value / Stage).
+function StatCard({ icon: Icon, iconCls, label, children }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 p-3.5 flex items-start gap-3">
+      <span className={`w-10 h-10 rounded-xl grid place-items-center shrink-0 ${iconCls}`}><Icon size={18} /></span>
+      <div className="min-w-0">
+        <p className="text-[10px] adm-t3 uppercase tracking-wide font-semibold">{label}</p>
+        <div className="mt-0.5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// Click-to-set plan the lead is interested in. null = "—" (unset).
+function PlanInterestPicker({ value, onPick }) {
+  const [open, setOpen] = useState(false);
+  const label = PLAN_INTEREST_LABEL[value] || '—';
+  return (
+    <div className="relative inline-block">
+      <button type="button" onClick={() => setOpen((v) => !v)}
+        className="text-[13px] font-semibold adm-t1 hover:text-[#FE5100] inline-flex items-center gap-1">
+        {label} <ChevronDown size={13} className="adm-t3" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute z-20 mt-1 w-44 rounded-xl adm-card shadow-lg overflow-hidden">
+            <button type="button" onClick={() => { onPick(null); setOpen(false); }} className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t3">— (none)</button>
+            {PLAN_INTEREST.map((p) => (
+              <button key={p.value} type="button" onClick={() => { onPick(p.value); setOpen(false); }}
+                className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t1">{p.label}</button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Shared lead workspace — rendered both in the right-side drawer (variant="drawer",
+// compact, no tabs) and on the full-page /leads/:id route (variant="page", rich:
+// stepper, About card, tabbed activity). `onChanged` lets the parent list refresh.
+export default function LeadPanel({ leadId, onChanged, onClose, variant = 'page' }) {
+  const isDrawer = variant === 'drawer';
   const [lead, setLead] = useState(null);
   const [notes, setNotes] = useState([]);
   const [followUps, setFollowUps] = useState([]);
@@ -141,11 +184,24 @@ export default function LeadPanel({ leadId, onChanged, onClose }) {
   const pickTag = async (name) => { try { await crmAddTag(leadId, name); setShowTagPicker(false); refresh(); } catch { toast.error('Failed'); } };
   const createTag = async (name, color) => { try { await crmCreateTag({ name, color }); await crmAddTag(leadId, name); setShowTagPicker(false); loadTags(); refresh(); } catch { toast.error('Could not create tag'); } };
   const completeFollowUp = async (fid) => { try { await crmCompleteFollowUp(fid); refresh(); } catch { toast.error('Failed'); } };
+  const setPlanInterest = async (v) => { try { await crmUpdateLead(leadId, { plan_interest: v }); refresh(); } catch { toast.error('Failed'); } };
   const saveValue = async () => {
     const rupeesNum = Math.max(0, Math.round(Number(valInput) || 0));
     try { await crmUpdateLead(leadId, { expected_value_paise: rupeesNum * 100 }); setEditVal(false); refresh(); }
     catch { toast.error('Failed'); }
   };
+
+  // Collapse runs of identical consecutive timeline rows (e.g. six "Status →
+  // activated" re-syncs) into one row with a count, so the log stays readable.
+  const dedupedTimeline = useMemo(() => {
+    const out = [];
+    for (const t of timeline) {
+      const prev = out[out.length - 1];
+      if (prev && prev.title === t.title && (prev.body || '') === (t.body || '')) prev._count = (prev._count || 1) + 1;
+      else out.push({ ...t });
+    }
+    return out;
+  }, [timeline]);
 
   if (loading && !lead) return <div className="p-6"><p className="adm-t3">Loading…</p></div>;
   if (!lead) return <div className="p-6"><p className="adm-t3">Lead not found. <Link to="/admin/sales/leads" className="text-[#FE5100]">Back</Link></p></div>;
@@ -154,61 +210,165 @@ export default function LeadPanel({ leadId, onChanged, onClose }) {
   const { score, temp } = leadScore(lead);
   const scoreTone = temp === 'hot' ? 'text-red-500' : temp === 'warm' ? 'text-amber-600' : 'adm-t3';
   const nextFu = [...followUps].sort((a, b) => new Date(a.due_at) - new Date(b.due_at))[0];
+  const detailLink = lead.profile_id ? `/admin/host360/${lead.profile_id}` : `/admin/customer/${lead.id}`;
 
-  return (
+  // ── Reusable blocks (shared between variants) ──
+  const DealValue = editVal ? (
+    <div className="flex items-center gap-1">
+      <span className="text-[13px] adm-t3">₹</span>
+      <input autoFocus type="number" className="fb-input text-sm w-24 py-0.5" value={valInput}
+        onChange={(e) => setValInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveValue()} onBlur={saveValue} />
+    </div>
+  ) : (
+    <button onClick={() => { setValInput(String(Math.round((lead.expected_value_paise || 0) / 100))); setEditVal(true); }}
+      className="text-lg font-bold adm-t1 hover:text-[#FE5100] block">
+      {lead.expected_value_paise ? rupees(lead.expected_value_paise) : 'Set ✎'}
+    </button>
+  );
+
+  const QuickActions = (
     <div>
-      <div className="grid lg:grid-cols-[minmax(0,340px)_1fr] gap-6">
-        {/* ── LEFT: identity + stage + actions ── */}
+      <p className="text-[10px] adm-t3 uppercase tracking-wide font-semibold mb-2">Quick actions</p>
+      <div className="grid grid-cols-3 gap-2">
+        <QuickAction color="wa" icon={MessageCircle} label="WhatsApp" size={isDrawer ? 'sm' : 'lg'} onClick={() => setModal('wa')} />
+        <QuickAction color="email" icon={Mail} label="Email" size={isDrawer ? 'sm' : 'lg'} onClick={() => setModal('email')} />
+        <QuickAction color="call" icon={Phone} label="Call" size={isDrawer ? 'sm' : 'lg'} onClick={() => setModal('call')} />
+      </div>
+      <div className="flex gap-2 mt-2">
+        <AddActivityMenu onPick={setModal} />
+        <EnrollControl leadId={lead.id} onDone={refresh} />
+      </div>
+    </div>
+  );
+
+  const Identity = (
+    <div className="flex items-start gap-3">
+      <div className="w-14 h-14 rounded-full bg-[#FE5100]/10 text-[#FE5100] grid place-items-center font-bold text-lg shrink-0">
+        {initialsOf(lead.name)}
+      </div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h1 className="text-xl font-bold adm-t1 truncate">{lead.name || 'Unnamed lead'}</h1>
+          <Badge tone={STATUS_TONE[lead.status] || 'neutral'}>{STATUS_LABEL[lead.status] || lead.status}</Badge>
+          {lead.do_not_contact && <Badge tone="danger">DNC</Badge>}
+          <span className={`text-[13px] font-bold ${scoreTone}`} title={`Lead score (${temp})`}>{temp === 'hot' ? '🔥' : ''}{score}</span>
+        </div>
+        {lead.business_name && <p className="text-[13px] adm-t2 mt-0.5 truncate">{lead.business_name}{lead.profession ? ` · ${lead.profession}` : ''}</p>}
+        <div className="mt-1.5 space-y-0.5 text-[12px] adm-t2">
+          {lead.email && <p className="flex items-center gap-1.5 truncate"><Mail size={12} className="adm-t3" />{lead.email}</p>}
+          {lead.phone && <p className="flex items-center gap-1.5"><Phone size={12} className="adm-t3" />{lead.phone}</p>}
+          <p className="flex items-center gap-1.5 adm-t3"><Clock size={12} />Source: {lead.source}{lead.city ? ` · ${lead.city}` : ''}</p>
+        </div>
+        <div className="flex items-center gap-3 mt-1.5">
+          <Link to={`/admin/customer/${lead.id}`} className="inline-flex items-center gap-1 text-[12px] text-[#FE5100] font-semibold">Customer 360 <ArrowRight size={12} /></Link>
+          {lead.profile_id && <Link to={`/admin/host360/${lead.profile_id}`} className="inline-flex items-center gap-1 text-[12px] adm-t3">Host 360 <ArrowRight size={12} /></Link>}
+        </div>
+      </div>
+    </div>
+  );
+
+  const NextAction = (
+    <div className="rounded-2xl border border-gray-200 p-3.5 flex items-start gap-3">
+      <span className="w-9 h-9 rounded-lg bg-[#FE5100]/10 text-[#FE5100] grid place-items-center shrink-0"><CalendarClock size={18} /></span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] text-[#FE5100] uppercase tracking-wide font-semibold">Next action</p>
+        {nextFu ? (
+          <>
+            <p className="text-[14px] font-semibold adm-t1 truncate">{nextFu.title || 'Follow up'}</p>
+            <p className={`text-[12px] ${new Date(nextFu.due_at) < new Date() ? 'text-red-500' : 'adm-t3'}`}>{fmtDateTime(nextFu.due_at)}</p>
+          </>
+        ) : <p className="text-[13px] adm-t3 mt-0.5">Nothing scheduled.</p>}
+      </div>
+      <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+        <Btn variant="outline" size="sm" onClick={() => setModal('followup')}>{nextFu ? 'Edit' : 'Schedule'}</Btn>
+        {nextFu && <Btn size="sm" onClick={() => completeFollowUp(nextFu.id)}><Check size={14} /> Mark done</Btn>}
+      </div>
+    </div>
+  );
+
+  const Tags = (
+    <div>
+      <p className="text-[10px] adm-t3 uppercase tracking-wide font-semibold mb-2">Tags</p>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {(lead.tags || []).map((t) => <TagChip key={t} name={t} color={tagColors[t]} onRemove={() => removeTag(t)} />)}
+        <div className="relative">
+          <button type="button" onClick={() => setShowTagPicker((v) => !v)}
+            className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">+ Tag</button>
+          {showTagPicker && <TagPicker tags={tagCatalog} exclude={lead.tags || []} onSelect={pickTag} onCreate={createTag} onClose={() => setShowTagPicker(false)} />}
+        </div>
+      </div>
+    </div>
+  );
+
+  const NotesCard = (
+    <div className="rounded-2xl border border-gray-200 p-4">
+      <div className="flex items-center gap-2.5 mb-2">
+        <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 grid place-items-center shrink-0"><StickyNote size={16} /></span>
+        <p className="text-[11px] adm-t3 uppercase tracking-wide font-semibold flex-1">Notes</p>
+        <Btn variant="outline" size="sm" onClick={() => setModal('note')}>Add note</Btn>
+      </div>
+      {notes.length === 0 ? <p className="text-[13px] adm-t3">No notes added yet.</p> : (
+        <ul className="space-y-2.5">
+          {notes.map((n) => (
+            <li key={n.id} className="text-[13px] adm-t2"><p>{n.body}</p><p className="text-[11px] adm-t3 mt-0.5">{relTime(n.created_at)}</p></li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
+  const modalEl = modal && <ActionModal type={modal} lead={lead} templates={templates} onClose={() => setModal(null)} onDone={() => { setModal(null); refresh(); }} />;
+  const Footer = (
+    <div className="pt-3 border-t border-gray-100 flex flex-wrap gap-x-4 gap-y-1 text-[11px] adm-t3">
+      <span>Created {fmtDateTime(lead.created_at)}</span>
+      <span>Last updated {relTime(lead.last_activity_at || lead.updated_at || lead.created_at)}</span>
+    </div>
+  );
+
+  // ── DRAWER: compact, no tabs, notes card ──
+  if (isDrawer) {
+    return (
+      <div className="space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          {Identity}
+          {NextAction}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <StatCard icon={IndianRupee} iconCls="bg-emerald-50 text-emerald-600" label="Revenue">
+            <p className="text-lg font-bold adm-t1">{rupees(lead.revenue_paise)}</p>
+          </StatCard>
+          <StatCard icon={Tag} iconCls="bg-violet-50 text-violet-600" label="Deal value">{DealValue}</StatCard>
+          <StatCard icon={Activity} iconCls="bg-blue-50 text-blue-600" label="Stage">
+            <Badge tone={STATUS_TONE[lead.status] || 'neutral'}>{STATUS_LABEL[lead.status] || lead.status}</Badge>
+          </StatCard>
+        </div>
+        {QuickActions}
+        {Tags}
+        {NotesCard}
+        {Footer}
+        {modalEl}
+      </div>
+    );
+  }
+
+  // ── PAGE: rich — stepper, About card, tabbed activity ──
+  return (
+    <div className="space-y-5">
+      <div className="grid md:grid-cols-2 gap-4">
+        {Identity}
+        {NextAction}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <StatCard icon={IndianRupee} iconCls="bg-emerald-50 text-emerald-600" label="Revenue">
+          <p className="text-lg font-bold adm-t1">{rupees(lead.revenue_paise)}</p>
+        </StatCard>
+        <StatCard icon={Tag} iconCls="bg-violet-50 text-violet-600" label="Deal value">{DealValue}</StatCard>
+      </div>
+
+      <div className="grid lg:grid-cols-[1fr_320px] gap-6">
+        {/* LEFT: stage + actions */}
         <div className="space-y-5">
-          {/* Identity */}
-          <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-full bg-[#FE5100]/10 text-[#FE5100] grid place-items-center font-bold text-base shrink-0">
-              {initialsOf(lead.name)}
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg font-bold adm-t1 truncate">{lead.name || 'Unnamed lead'}</h1>
-                <Badge tone={STATUS_TONE[lead.status] || 'neutral'}>{STATUS_LABEL[lead.status] || lead.status}</Badge>
-                {lead.do_not_contact && <Badge tone="danger">DNC</Badge>}
-                <span className={`text-[12px] font-bold ${scoreTone}`} title={`Lead score (${temp})`}>{temp === 'hot' ? '🔥' : ''}{score}</span>
-              </div>
-              {lead.business_name && <p className="text-[13px] adm-t2 mt-0.5 truncate">{lead.business_name}{lead.profession ? ` · ${lead.profession}` : ''}</p>}
-              <div className="mt-1.5 space-y-0.5 text-[12px] adm-t2">
-                {lead.phone && <p className="flex items-center gap-1.5"><Phone size={12} className="adm-t3" />{lead.phone}</p>}
-                {lead.email && <p className="flex items-center gap-1.5 truncate"><Mail size={12} className="adm-t3" />{lead.email}</p>}
-                <p className="flex items-center gap-1.5 adm-t3"><Clock size={12} />Source: {lead.source}{lead.city ? ` · ${lead.city}` : ''}</p>
-              </div>
-              <div className="flex items-center gap-3 mt-1">
-                <Link to={`/admin/customer/${lead.id}`} className="inline-flex items-center gap-1 text-[11px] text-[#FE5100] font-medium">Customer 360 <ArrowRight size={11} /></Link>
-                {lead.profile_id && <Link to={`/admin/host360/${lead.profile_id}`} className="inline-flex items-center gap-1 text-[11px] adm-t3">Host 360 <ArrowRight size={11} /></Link>}
-              </div>
-            </div>
-          </div>
-
-          {/* Revenue + deal value */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-xl border border-gray-200 p-3">
-              <p className="text-[10px] adm-t3 uppercase tracking-wide">Revenue</p>
-              <p className="text-base font-bold adm-t1 mt-0.5">{rupees(lead.revenue_paise)}</p>
-            </div>
-            <div className="rounded-xl border border-gray-200 p-3">
-              <p className="text-[10px] adm-t3 uppercase tracking-wide">Deal value</p>
-              {editVal ? (
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-[12px] adm-t3">₹</span>
-                  <input autoFocus type="number" className="fb-input text-sm w-full py-0.5" value={valInput}
-                    onChange={(e) => setValInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveValue()} onBlur={saveValue} />
-                </div>
-              ) : (
-                <button onClick={() => { setValInput(String(Math.round((lead.expected_value_paise || 0) / 100))); setEditVal(true); }}
-                  className="text-base font-bold adm-t1 hover:text-[#FE5100] mt-0.5 block">
-                  {lead.expected_value_paise ? rupees(lead.expected_value_paise) : 'Set ✎'}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Stage stepper + terminal states */}
           <div>
             <p className="text-[10px] adm-t3 uppercase tracking-wide font-semibold mb-2">Stage</p>
             <Stepper status={lead.status} onPick={setStatus} />
@@ -221,146 +381,119 @@ export default function LeadPanel({ leadId, onChanged, onClose }) {
                 className={`text-[12px] px-3 py-1.5 rounded-lg border transition ${lead.do_not_contact ? 'bg-red-600 text-white border-red-600' : 'adm-t2 border-gray-200 hover:border-red-400'}`}>{lead.do_not_contact ? 'Clear DNC' : 'Do Not Contact'}</button>
             </div>
           </div>
-
-          {/* Quick actions */}
-          <div>
-            <p className="text-[10px] adm-t3 uppercase tracking-wide font-semibold mb-2">Quick actions</p>
-            <div className="grid grid-cols-3 gap-2">
-              <QuickAction primary icon={MessageCircle} label="WhatsApp" onClick={() => setModal('wa')} />
-              <QuickAction icon={Mail} label="Email" onClick={() => setModal('email')} />
-              <QuickAction icon={Phone} label="Call" onClick={() => setModal('call')} />
-            </div>
-            <div className="flex gap-2 mt-2">
-              <AddActivityMenu onPick={setModal} />
-              <EnrollControl leadId={lead.id} onDone={refresh} />
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div>
-            <p className="text-[10px] adm-t3 uppercase tracking-wide font-semibold mb-2">Tags</p>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {(lead.tags || []).map((t) => <TagChip key={t} name={t} color={tagColors[t]} onRemove={() => removeTag(t)} />)}
-              <div className="relative">
-                <button type="button" onClick={() => setShowTagPicker((v) => !v)}
-                  className="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">+ Tag</button>
-                {showTagPicker && <TagPicker tags={tagCatalog} exclude={lead.tags || []} onSelect={pickTag} onCreate={createTag} onClose={() => setShowTagPicker(false)} />}
-              </div>
-            </div>
-          </div>
+          {QuickActions}
+          {Tags}
         </div>
 
-        {/* ── RIGHT: next action + timeline ── */}
-        <div className="min-w-0">
-          {/* Next action banner */}
-          <div className="rounded-xl border border-gray-200 p-3.5 flex items-start gap-3">
-            <span className="w-9 h-9 rounded-lg bg-[#FE5100]/10 text-[#FE5100] grid place-items-center shrink-0"><CalendarClock size={18} /></span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-[#FE5100] uppercase tracking-wide font-semibold">Next action</p>
-              {nextFu ? (
-                <>
-                  <p className="text-[14px] font-semibold adm-t1 truncate">{nextFu.title || 'Follow up'}</p>
-                  <p className={`text-[12px] ${new Date(nextFu.due_at) < new Date() ? 'text-red-500' : 'adm-t3'}`}>{fmtDateTime(nextFu.due_at)}</p>
-                </>
-              ) : <p className="text-[13px] adm-t3 mt-0.5">Nothing scheduled.</p>}
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-              <Btn variant="outline" size="sm" onClick={() => setModal('followup')}>{nextFu ? 'Edit' : 'Schedule'}</Btn>
-              {nextFu && <Btn size="sm" onClick={() => completeFollowUp(nextFu.id)}><Check size={14} /> Mark done</Btn>}
-            </div>
+        {/* RIGHT: about this lead */}
+        <div className="rounded-2xl border border-gray-200 p-4 space-y-3 self-start">
+          <p className="text-[10px] adm-t3 uppercase tracking-wide font-semibold">About this lead</p>
+          <AboutRow label="Lead Source" value={lead.source || '—'} />
+          <AboutRow label="Lead Score" value={<span className={`font-semibold ${scoreTone}`}>{temp === 'hot' ? '🔥 ' : ''}{score} ({temp})</span>} />
+          <AboutRow label="Owner" value={lead.owner_name || '—'} />
+          <div>
+            <p className="text-[11px] adm-t3 mb-0.5">Primary Plan Interest</p>
+            <PlanInterestPicker value={lead.plan_interest} onPick={setPlanInterest} />
           </div>
+          <Link to={detailLink} className="inline-flex items-center gap-1 text-[12px] text-[#FE5100] font-semibold pt-1">View full details <ArrowRight size={12} /></Link>
+        </div>
+      </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 mt-4 border-b border-gray-100">
-            {TABS.map(([k, label]) => (
-              <button key={k} onClick={() => setTab(k)}
-                className={`text-[13px] px-3 py-2 -mb-px border-b-2 transition ${tab === k ? 'border-[#FE5100] text-[#FE5100] font-semibold' : 'border-transparent adm-t2 hover:adm-t1'}`}>
-                {label}{k === 'notes' && notes.length ? ` (${notes.length})` : ''}{k === 'followups' && followUps.length ? ` (${followUps.length})` : ''}
-              </button>
-            ))}
-          </div>
+      {/* Tabs */}
+      <div>
+        <div className="flex gap-1 border-b border-gray-100">
+          {TABS.map(([k, label]) => (
+            <button key={k} onClick={() => setTab(k)}
+              className={`text-[13px] px-3 py-2 -mb-px border-b-2 transition ${tab === k ? 'border-[#FE5100] text-[#FE5100] font-semibold' : 'border-transparent adm-t2 hover:adm-t1'}`}>
+              {label}{k === 'notes' && notes.length ? ` (${notes.length})` : ''}{k === 'followups' && followUps.length ? ` (${followUps.length})` : ''}
+            </button>
+          ))}
+        </div>
 
-          <div className="pt-4">
-            {tab === 'activity' && (
-              timeline.length === 0 ? <p className="adm-t3 text-sm">No activity yet.</p> : (
-                <ol className="space-y-1">
-                  {timeline.map((t, i) => {
-                    const { Icon, cls } = timelineIcon(t);
-                    const last = i === timeline.length - 1;
-                    return (
-                      <li key={i} className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <span className={`w-7 h-7 rounded-full grid place-items-center shrink-0 ${cls}`}><Icon size={14} /></span>
-                          {!last && <span className="w-px flex-1 bg-gray-200 my-1" />}
+        <div className="pt-4">
+          {tab === 'activity' && (
+            dedupedTimeline.length === 0 ? <p className="adm-t3 text-sm">No activity yet.</p> : (
+              <ol className="space-y-1">
+                {dedupedTimeline.map((t, i) => {
+                  const { Icon, cls } = timelineIcon(t);
+                  const last = i === dedupedTimeline.length - 1;
+                  return (
+                    <li key={i} className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <span className={`w-7 h-7 rounded-full grid place-items-center shrink-0 ${cls}`}><Icon size={14} /></span>
+                        {!last && <span className="w-px flex-1 bg-gray-200 my-1" />}
+                      </div>
+                      <div className="min-w-0 flex-1 pb-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-[13px] font-semibold adm-t1">{t.title}{t._count > 1 && <span className="ml-1.5 text-[11px] font-normal adm-t3">×{t._count}</span>}</p>
+                          <span className="text-[11px] adm-t3 flex-shrink-0 whitespace-nowrap">{relTime(t.at)}</span>
                         </div>
-                        <div className="min-w-0 flex-1 pb-4">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-[13px] font-semibold adm-t1">{t.title}</p>
-                            <span className="text-[11px] adm-t3 flex-shrink-0 whitespace-nowrap">{relTime(t.at)}</span>
-                          </div>
-                          {t.body && <p className="text-[12px] adm-t2 mt-0.5">{t.body}</p>}
-                          {t.status && <span className="text-[10px] adm-t3">{t.source} · {t.status}</span>}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
-              )
-            )}
+                        {t.body && <p className="text-[12px] adm-t2 mt-0.5">{t.body}</p>}
+                        {t.status && <span className="text-[10px] adm-t3">{t.source} · {t.status}</span>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            )
+          )}
 
-            {tab === 'messages' && (
-          messages.length === 0 ? <p className="adm-t3 text-sm">No messages sent yet.</p> : (
-            <ul className="space-y-2">
-              {messages.map((m) => (
-                <li key={m.id} className="flex items-start justify-between gap-2 py-2 border-b border-gray-50">
-                  <div className="min-w-0">
-                    <p className="text-[13px] adm-t1"><span className="uppercase text-[10px] adm-t3 mr-1">{m.channel}</span>{m.subject || m.template_key || m.body_preview || '—'}</p>
-                    {m.error && <p className="text-[11px] text-red-500">{m.error}</p>}
-                    <p className="text-[11px] adm-t3">{relTime(m.created_at)}</p>
-                  </div>
-                  <Badge tone={MSG_TONE[m.status] || 'neutral'}>{m.status}</Badge>
-                </li>
-              ))}
-            </ul>
-          )
-        )}
-
-        {tab === 'notes' && (
-          notes.length === 0 ? <p className="adm-t3 text-sm">No notes.</p> : (
-            <ul className="space-y-3">
-              {notes.map((n) => (
-                <li key={n.id} className="text-[13px] adm-t2"><p>{n.body}</p><p className="text-[11px] adm-t3 mt-0.5">{relTime(n.created_at)}</p></li>
-              ))}
-            </ul>
-          )
-        )}
-
-        {tab === 'followups' && (
-          followUps.length === 0 ? <p className="adm-t3 text-sm">None open.</p> : (
-            <ul className="space-y-2">
-              {followUps.map((f) => {
-                const overdue = new Date(f.due_at) < new Date();
-                return (
-                  <li key={f.id} className="flex items-center justify-between gap-2">
-                    <div className="min-w-0"><p className="text-[13px] adm-t2 truncate">{f.title}</p><p className={`text-[11px] ${overdue ? 'text-red-500' : 'adm-t3'}`}>{relTime(f.due_at)}</p></div>
-                    <Btn variant="outline" size="sm" onClick={() => completeFollowUp(f.id)}>Done</Btn>
+          {tab === 'messages' && (
+            messages.length === 0 ? <p className="adm-t3 text-sm">No messages sent yet.</p> : (
+              <ul className="space-y-2">
+                {messages.map((m) => (
+                  <li key={m.id} className="flex items-start justify-between gap-2 py-2 border-b border-gray-50">
+                    <div className="min-w-0">
+                      <p className="text-[13px] adm-t1"><span className="uppercase text-[10px] adm-t3 mr-1">{m.channel}</span>{m.subject || m.template_key || m.body_preview || '—'}</p>
+                      {m.error && <p className="text-[11px] text-red-500">{m.error}</p>}
+                      <p className="text-[11px] adm-t3">{relTime(m.created_at)}</p>
+                    </div>
+                    <Badge tone={MSG_TONE[m.status] || 'neutral'}>{m.status}</Badge>
                   </li>
-                );
-              })}
-            </ul>
-          )
-        )}
-          </div>
+                ))}
+              </ul>
+            )
+          )}
+
+          {tab === 'notes' && (
+            notes.length === 0 ? <p className="adm-t3 text-sm">No notes.</p> : (
+              <ul className="space-y-3">
+                {notes.map((n) => (
+                  <li key={n.id} className="text-[13px] adm-t2"><p>{n.body}</p><p className="text-[11px] adm-t3 mt-0.5">{relTime(n.created_at)}</p></li>
+                ))}
+              </ul>
+            )
+          )}
+
+          {tab === 'followups' && (
+            followUps.length === 0 ? <p className="adm-t3 text-sm">None open.</p> : (
+              <ul className="space-y-2">
+                {followUps.map((f) => {
+                  const overdue = new Date(f.due_at) < new Date();
+                  return (
+                    <li key={f.id} className="flex items-center justify-between gap-2">
+                      <div className="min-w-0"><p className="text-[13px] adm-t2 truncate">{f.title}</p><p className={`text-[11px] ${overdue ? 'text-red-500' : 'adm-t3'}`}>{relTime(f.due_at)}</p></div>
+                      <Btn variant="outline" size="sm" onClick={() => completeFollowUp(f.id)}>Done</Btn>
+                    </li>
+                  );
+                })}
+              </ul>
+            )
+          )}
         </div>
       </div>
 
-      {/* Footer meta */}
-      <div className="mt-6 pt-3 border-t border-gray-100 flex flex-wrap gap-x-4 gap-y-1 text-[11px] adm-t3">
-        <span>Created {fmtDateTime(lead.created_at)}</span>
-        <span>Last updated {relTime(lead.last_activity_at || lead.updated_at || lead.created_at)}</span>
-      </div>
+      {Footer}
+      {modalEl}
+    </div>
+  );
+}
 
-      {modal && <ActionModal type={modal} lead={lead} templates={templates} onClose={() => setModal(null)} onDone={() => { setModal(null); refresh(); }} />}
+function AboutRow({ label, value }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span className="text-[11px] adm-t3">{label}</span>
+      <span className="text-[13px] adm-t1 text-right truncate">{value}</span>
     </div>
   );
 }
@@ -391,13 +524,20 @@ function AddActivityMenu({ onPick }) {
 }
 
 // Prominent single-channel action tile used in the "Quick actions" grid.
-function QuickAction({ icon: Icon, label, onClick, primary }) {
+// color: wa/email/call = filled brand colour; size: sm (drawer) | lg (page).
+function QuickAction({ icon: Icon, label, onClick, color = 'card', size = 'lg' }) {
+  const palettes = {
+    wa: 'bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600',
+    email: 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600',
+    call: 'bg-violet-500 text-white border-violet-500 hover:bg-violet-600',
+    card: 'adm-card adm-t2 border-gray-200 hover:border-[#FE5100]',
+  };
+  const pad = size === 'sm' ? 'py-2 gap-1.5 text-[12px]' : 'py-3 gap-2 text-[13px]';
   return (
     <button type="button" onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-1 rounded-xl border py-2.5 transition
-        ${primary ? 'bg-[#FE5100] text-white border-[#FE5100] hover:bg-[#e54900]' : 'adm-card adm-t2 border-gray-200 hover:border-[#FE5100]'}`}>
-      <Icon size={17} />
-      <span className="text-[11px] font-medium">{label}</span>
+      className={`flex items-center justify-center rounded-xl border font-semibold transition ${palettes[color] || palettes.card} ${pad}`}>
+      <Icon size={size === 'sm' ? 15 : 18} />
+      <span>{label}</span>
     </button>
   );
 }
