@@ -273,11 +273,12 @@ async function leadIdsWithFollowup(window) {
 // followup: 'overdue' | 'today' | 'open'  — restrict to leads with such a task.
 // createdSince: ISO — leads created on/after this instant (metric "New today").
 // hasValue: true — only leads with revenue_paise > 0.
-async function listLeads({ status, source, owner, tag, city, profession, q, followup, createdSince, hasValue, page = 1, pageSize = 25 } = {}) {
+async function listLeads({ status, source, owner, tag, city, profession, q, followup, createdSince, hasValue, leadType, page = 1, pageSize = 25 } = {}) {
   let query = supabaseAdmin.from('leads').select('*', { count: 'exact' });
   if (status) query = query.eq('status', status);
   if (source) query = query.eq('source', source);
   if (owner) query = query.eq('owner_admin_id', owner);
+  if (leadType) query = query.eq('lead_type', leadType);   // 'host' | 'guest' | 'enterprise' — boards pass 'host' to hide guests
   if (city) query = query.ilike('city', `%${city}%`);
   if (profession) query = query.ilike('profession', `%${profession}%`);
   if (tag) query = query.contains('tags', [tag]);

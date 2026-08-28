@@ -2,12 +2,13 @@ import { useEffect, useState, useCallback, useMemo, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Btn, Badge } from '../../../components/admin/ui';
 import {
-  crmGetLead, crmLeadTimeline, crmLeadMessages, crmSetStatus, crmAddLeadNote, crmCreateFollowUp,
+  crmGetLead, crmLeadTimeline, crmLeadMessages, crmAddLeadNote, crmCreateFollowUp,
   crmCompleteFollowUp, crmAddTag, crmRemoveTag, crmSetDnc, crmLogCall, crmSendWhatsApp, crmSendEmail,
   crmListTemplates, crmListTags, crmCreateTag, crmUpdateLead,
   crmListSequences, crmEnroll,
 } from '../../../services/api';
 import { FUNNEL, STATUS_LABEL, STATUS_TONE, PLAN_INTEREST, PLAN_INTEREST_LABEL, rupees, relTime, leadScore } from './salesConstants';
+import { guardedSetStatus } from './statusMove';
 import { colorMap } from './salesTagColors';
 import TagChip from './TagChip';
 import TagPicker from './TagPicker';
@@ -178,7 +179,12 @@ export default function LeadPanel({ leadId, onChanged, onClose, variant = 'page'
   useEffect(() => { load(); }, [load]);
   useEffect(() => { crmListTemplates().then(({ data }) => setTemplates(Array.isArray(data) ? data : [])).catch(() => setTemplates([])); loadTags(); }, [loadTags]);
 
-  const setStatus = async (s) => { try { await crmSetStatus(leadId, s); toast.success(`Stage → ${STATUS_LABEL[s]}`); refresh(); } catch { toast.error('Failed'); } };
+  const setStatus = async (s) => {
+    try {
+      const ok = await guardedSetStatus(leadId, lead?.status, s);   // reason prompt on backward/exit
+      if (ok) { toast.success(`Stage → ${STATUS_LABEL[s]}`); refresh(); }
+    } catch { toast.error('Failed'); }
+  };
   const toggleDnc = async () => { try { await crmSetDnc(leadId, !lead.do_not_contact); refresh(); } catch { toast.error('Failed'); } };
   const removeTag = async (t) => { try { await crmRemoveTag(leadId, t); refresh(); } catch { toast.error('Failed'); } };
   const pickTag = async (name) => { try { await crmAddTag(leadId, name); setShowTagPicker(false); refresh(); } catch { toast.error('Failed'); } };
@@ -374,7 +380,7 @@ export default function LeadPanel({ leadId, onChanged, onClose, variant = 'page'
             <Stepper status={lead.status} onPick={setStatus} />
             <div className="flex flex-wrap gap-2 mt-3">
               <button onClick={() => setStatus('paid')}
-                className={`text-[12px] px-3 py-1.5 rounded-lg border transition ${lead.status === 'paid' ? 'bg-emerald-600 text-white border-emerald-600' : 'adm-t2 border-gray-200 hover:border-emerald-500'}`}>Won</button>
+                className={`text-[12px] px-3 py-1.5 rounded-lg border transition ${lead.status === 'paid' ? 'bg-emerald-600 text-white border-emerald-600' : 'adm-t2 border-gray-200 hover:border-emerald-500'}`}>Subscribed</button>
               <button onClick={() => setStatus('lost')}
                 className={`text-[12px] px-3 py-1.5 rounded-lg border transition ${lead.status === 'lost' ? 'bg-red-600 text-white border-red-600' : 'adm-t2 border-gray-200 hover:border-red-400'}`}>Lost</button>
               <button onClick={toggleDnc}

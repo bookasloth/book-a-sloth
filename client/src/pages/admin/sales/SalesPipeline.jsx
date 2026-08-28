@@ -1,23 +1,39 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, Card } from '../../../components/admin/ui';
-import { crmListLeads, crmSetStatus, crmListFollowUps } from '../../../services/api';
-import { FUNNEL, STATUS_LABEL, rupees, relTime } from './salesConstants';
+import { crmListLeads, crmSetStatus, crmSetOwner, crmListFollowUps, adminListStaff } from '../../../services/api';
+import { BOARDS, STATUS_LABEL, needsReason, rupees, relTime } from './salesConstants';
+import ReasonModal from './ReasonModal';
 import toast from 'react-hot-toast';
 
 const PER_COL = 50;
+const initials = (name) => (name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
+// The pipeline — four team-owned boards over one lead record. Switch boards with
+// the tabs; drag a card between the active board's stages to move it. Guests are
+// excluded (lead_type=host). A backward or exit drag opens the reason modal.
 export default function SalesPipeline() {
   const nav = useNavigate();
-  const [cols, setCols] = useState({});      // status -> { rows, total }
+  const [sp, setSp] = useSearchParams();
+  const boardKey = BOARDS.some((b) => b.key === sp.get('board')) ? sp.get('board') : 'presale';
+  const board = BOARDS.find((b) => b.key === boardKey);
+
+  const [cols, setCols] = useState({});          // status -> { rows, total }
   const [followMap, setFollowMap] = useState({});
+  const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dragOver, setDragOver] = useState(null);
+  const [reason, setReason] = useState(null);    // { id, from, to, name } | null
+  const [reasonBusy, setReasonBusy] = useState(false);
+
+  const staffById = useMemo(() => Object.fromEntries(staff.map((s) => [s.id, s])), [staff]);
 
   const load = () => {
     setLoading(true);
     Promise.all([
-      Promise.all(FUNNEL.map((s) => crmListLeads({ status: s, pageSize: PER_COL }).then(({ data }) => [s, data]).catch(() => [s, { rows: [], total: 0 }]))),
+      Promise.all(board.columns.map((s) =>
+        crmListLeads({ status: s, leadType: 'host', pageSize: PER_COL })
+          .then(({ data }) => [s, data]).catch(() => [s, { rows: [], total: 0 }]))),
       crmListFollowUps({}).then(({ data }) => data).catch(() => []),
     ]).then(([pairs, fu]) => {
       setCols(Object.fromEntries(pairs));
@@ -25,37 +41,94 @@ export default function SalesPipeline() {
       setFollowMap(m);
     }).finally(() => setLoading(false));
   };
-  useEffect(() => { load(); }, []);
+  // Reload whenever the active board changes.
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [boardKey]);
+  // Staff list once, for owner display + assignment.
+  useEffect(() => {
+    adminListStaff().then(({ data }) => setStaff((Array.isArray(data) ? data : data?.staff || []).filter((s) => s.is_active !== false)))
+      .catch(() => setStaff([]));
+  }, []);
 
-  // Drag-drop: move a lead card to another stage → crmSetStatus (optimistic).
+  // Optimistically move a card between columns, then persist. Returns a revert fn.
+  const applyMove = (id, from, to) => {
+    const lead = (cols[from]?.rows || []).find((r) => r.id === id);
+    if (!lead) return null;
+    setCols((c) => ({
+      ...c,
+      [from]: { rows: c[from].rows.filter((r) => r.id !== id), total: Math.max(0, (c[from].total || 1) - 1) },
+      [to]: { rows: [{ ...lead, status: to }, ...(c[to]?.rows || [])], total: (c[to]?.total || 0) + 1 },
+    }));
+    return lead;
+  };
+
+  const commitMove = async (id, to, lead, moveReason) => {
+    try { await crmSetStatus(id, to, moveReason); toast.success(`${lead.name || 'Lead'} → ${STATUS_LABEL[to]}`); }
+    catch (e) { toast.error(e?.response?.data?.message || 'Move failed'); load(); }
+  };
+
   const onDrop = async (toStatus) => {
     setDragOver(null);
     const raw = window.__crmDrag; window.__crmDrag = null;
     if (!raw || raw.from === toStatus) return;
     const { id, from } = raw;
-    const lead = (cols[from]?.rows || []).find((r) => r.id === id);
+    const lead = applyMove(id, from, toStatus);
     if (!lead) return;
-    // optimistic move
-    setCols((c) => ({
-      ...c,
-      [from]: { rows: c[from].rows.filter((r) => r.id !== id), total: Math.max(0, (c[from].total || 1) - 1) },
-      [toStatus]: { rows: [{ ...lead, status: toStatus }, ...(c[toStatus]?.rows || [])], total: (c[toStatus]?.total || 0) + 1 },
-    }));
-    try { await crmSetStatus(id, toStatus); toast.success(`${lead.name || 'Lead'} → ${STATUS_LABEL[toStatus]}`); }
-    catch { toast.error('Move failed'); load(); }
+    if (needsReason(from, toStatus)) {
+      setReason({ id, from, to: toStatus, name: lead.name, _lead: lead });   // hold for the modal
+    } else {
+      commitMove(id, toStatus, lead);
+    }
+  };
+
+  const confirmReason = async (text) => {
+    if (!reason) return;
+    setReasonBusy(true);
+    await commitMove(reason.id, reason.to, reason._lead, text);
+    setReasonBusy(false);
+    setReason(null);
+  };
+  const cancelReason = () => { setReason(null); load(); };   // revert the optimistic move
+
+  const assignOwner = async (id, ownerId) => {
+    try {
+      await crmSetOwner(id, ownerId || null);
+      setCols((c) => {
+        const next = { ...c };
+        for (const s of Object.keys(next)) next[s] = { ...next[s], rows: next[s].rows.map((r) => r.id === id ? { ...r, owner_admin_id: ownerId || null } : r) };
+        return next;
+      });
+    } catch { toast.error('Could not assign owner'); }
   };
 
   return (
     <div className="p-4 sm:p-6">
-      <PageHeader title="Pipeline" subtitle="Drag a lead between stages to update it. New → Contacted → Responded → Qualified → Demo → Trial → Won." />
-      <p className="text-[11px] adm-t3 mb-3 md:hidden">On mobile, tap a card and change the stage from the lead panel (drag-drop needs a mouse).</p>
+      <PageHeader title="Pipeline" subtitle={`${board.label} · owned by ${board.owner}. Drag a lead between stages to move it; a backward or exit move asks for a reason.`} />
+
+      {/* Board switcher */}
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {BOARDS.map((b) => {
+          const active = b.key === boardKey;
+          return (
+            <button key={b.key} type="button"
+              onClick={() => setSp({ board: b.key }, { replace: true })}
+              className={`px-3 py-1.5 rounded-full text-[12px] font-semibold border transition ${active ? 'text-white border-transparent' : 'adm-t2 border-[var(--adm-line,#e5e7eb)] hover:bg-black/5'}`}
+              style={active ? { background: b.accent } : { borderLeft: `3px solid ${b.accent}` }}>
+              {b.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="text-[11px] adm-t3 mb-3 md:hidden">On mobile, open a lead to change its stage (drag-drop needs a mouse).</p>
+
       {loading ? <p className="adm-t3">Loading…</p> : (
         <div className="flex gap-3 overflow-x-auto pb-4">
-          {FUNNEL.map((s) => {
+          {board.columns.map((s) => {
             const col = cols[s] || { rows: [], total: 0 };
             const isOver = dragOver === s;
             return (
-              <div key={s} className={`flex-shrink-0 w-64 rounded-xl p-1 transition ${isOver ? 'bg-[#FE5100]/10 ring-1 ring-[#FE5100]/40' : ''}`}
+              <div key={s} className={`flex-shrink-0 w-64 rounded-xl p-1 transition ${isOver ? 'ring-1' : ''}`}
+                style={isOver ? { background: `${board.accent}14`, boxShadow: `inset 0 0 0 1px ${board.accent}66` } : undefined}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(s); }}
                 onDragLeave={() => setDragOver((d) => (d === s ? null : d))}
                 onDrop={() => onDrop(s)}>
@@ -68,16 +141,37 @@ export default function SalesPipeline() {
                   {col.rows.map((r) => {
                     const due = followMap[r.id]; const overdue = due && new Date(due) < new Date();
                     const val = r.expected_value_paise || r.revenue_paise;
+                    const owner = r.owner_admin_id ? staffById[r.owner_admin_id] : null;
                     return (
                       <Card key={r.id} className="rounded-xl p-3 cursor-grab active:cursor-grabbing adm-hoverable"
                         draggable
                         onDragStart={() => { window.__crmDrag = { id: r.id, from: s }; }}
                         onClick={() => nav(`/admin/sales/leads/${r.id}`)}>
-                        <p className="text-[13px] font-semibold adm-t1 truncate">{r.name || 'Unnamed'}</p>
+                        <div className="flex items-start gap-1.5">
+                          <p className="text-[13px] font-semibold adm-t1 truncate flex-1">{r.name || 'Unnamed'}</p>
+                          {r.verified_at && (
+                            <span title="KYC verified" className="text-[10px] font-semibold text-emerald-600 shrink-0">✓ Verified</span>
+                          )}
+                        </div>
                         {r.business_name && <p className="text-[11px] adm-t3 truncate">{r.business_name}</p>}
                         <div className="flex items-center justify-between mt-1.5">
-                          <span className={`text-[10px] ${overdue ? 'text-red-500 font-medium' : 'adm-t3'}`}>{due ? `Follow up ${relTime(due)}` : relTime(r.last_activity_at || r.created_at)}</span>
+                          <span className={`text-[10px] ${overdue ? 'text-red-500 font-medium' : 'adm-t3'}`}>
+                            {due ? `Follow up ${relTime(due)}` : relTime(r.last_activity_at || r.created_at)}
+                          </span>
                           {val > 0 && <span className="text-[10px] font-semibold text-emerald-600">{rupees(val)}</span>}
+                        </div>
+                        {/* Owner assignment — stop the click from opening the lead */}
+                        <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          {owner
+                            ? <span title={owner.name} className="shrink-0 w-5 h-5 rounded-full bg-[#FE5100]/15 text-[#FE5100] text-[9px] font-bold flex items-center justify-center">{initials(owner.name)}</span>
+                            : <span className="shrink-0 w-5 h-5 rounded-full border border-dashed border-[var(--adm-line,#cbd5e1)] adm-t3 text-[9px] flex items-center justify-center">?</span>}
+                          <select
+                            value={r.owner_admin_id || ''}
+                            onChange={(e) => assignOwner(r.id, e.target.value)}
+                            className="text-[10px] bg-transparent adm-t3 rounded px-1 py-0.5 max-w-[160px] focus:outline-none focus:ring-1 focus:ring-[#FE5100]/40 hover:adm-t2 cursor-pointer">
+                            <option value="">Unassigned</option>
+                            {staff.map((st) => <option key={st.id} value={st.id}>{st.name || st.email}</option>)}
+                          </select>
                         </div>
                       </Card>
                     );
@@ -88,6 +182,8 @@ export default function SalesPipeline() {
           })}
         </div>
       )}
+
+      <ReasonModal open={reason} onConfirm={confirmReason} onCancel={cancelReason} busy={reasonBusy} />
     </div>
   );
 }

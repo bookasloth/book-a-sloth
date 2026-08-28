@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Card } from '../../../components/admin/ui';
-import { crmListLeads, crmSetStatus } from '../../../services/api';
+import { crmListLeads } from '../../../services/api';
 import { FUNNEL, STATUS_LABEL, rupees, relTime } from './salesConstants';
+import { guardedSetStatus } from './statusMove';
 import toast from 'react-hot-toast';
 
 const PER_COL = 40;
@@ -16,7 +17,7 @@ export default function LeadsBoard({ filters = {}, onOpen }) {
   const load = useCallback(() => {
     setLoading(true);
     Promise.all(FUNNEL.map((s) =>
-      crmListLeads({ ...filters, status: s, pageSize: PER_COL }).then(({ data }) => [s, data]).catch(() => [s, { rows: [], total: 0 }])
+      crmListLeads({ leadType: 'host', ...filters, status: s, pageSize: PER_COL }).then(({ data }) => [s, data]).catch(() => [s, { rows: [], total: 0 }])
     )).then((pairs) => setCols(Object.fromEntries(pairs))).finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(filters)]);
@@ -34,8 +35,11 @@ export default function LeadsBoard({ filters = {}, onOpen }) {
       [d.from]: { rows: c[d.from].rows.filter((r) => r.id !== d.id), total: Math.max(0, (c[d.from].total || 1) - 1) },
       [to]: { rows: [{ ...lead, status: to }, ...(c[to]?.rows || [])], total: (c[to]?.total || 0) + 1 },
     }));
-    try { await crmSetStatus(d.id, to); toast.success(`${lead.name || 'Lead'} → ${STATUS_LABEL[to]}`); }
-    catch { toast.error('Move failed'); load(); }
+    try {
+      const ok = await guardedSetStatus(d.id, d.from, to);   // reason prompt on backward/exit
+      if (ok) toast.success(`${lead.name || 'Lead'} → ${STATUS_LABEL[to]}`);
+      else load();                                            // cancelled → revert
+    } catch { toast.error('Move failed'); load(); }
   };
 
   if (loading) return <p className="adm-t3">Loading…</p>;

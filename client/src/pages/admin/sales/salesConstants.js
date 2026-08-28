@@ -1,20 +1,62 @@
-// Shared labels/tones for the Sales CRM screens. One source so the pipeline,
-// table, and detail badges never drift.
-export const FUNNEL = ['new', 'contacted', 'replied', 'qualified', 'demo_scheduled', 'trial', 'activated', 'paid'];
-export const ALL_STATUSES = [...FUNNEL, 'lost', 'do_not_contact'];
+// Shared labels/tones/boards for the Sales CRM screens. ONE source so the boards,
+// table, and detail badges never drift. Mirrors the server's pure state model in
+// server/services/crm/lifecycleRules.js — keep the two in lockstep.
 
-// Display labels — DB enum stays unchanged; we only relabel for the CRM UI
-// (replied→Responded, paid→Won) so the 203 live leads never need a migration.
+// ── Boards (column order = array order) ───────────────────────────────────────
+export const PRESALE   = ['new', 'contacted', 'replied', 'qualified', 'demo'];
+export const RELATIONS = ['paid', 'activated', 'won', 'sloth'];                  // Subscribed · Onboarded · Won · The Sloth
+export const MARKETING = ['sloth', 'retained', 'ambassador', 'enterprised', 'champion']; // sloth = shared handoff
+export const EXIT      = ['not_reachable', 'not_interested', 'disqualified', 'lost', 'churned'];
+
+// The acquisition→success spine (reporting funnel). Kept as FUNNEL for importers.
+export const FUNNEL = ['new', 'contacted', 'replied', 'qualified', 'demo', 'paid', 'activated', 'won', 'sloth'];
+export const ALL_STATUSES = [...new Set([...PRESALE, ...RELATIONS, ...MARKETING, ...EXIT, 'do_not_contact'])];
+
+// Display labels. DB keys are kept; we only relabel for the UI — paid→"Subscribed",
+// activated→"Onboarded", replied→"Responded" — so the live leads never need a rename.
 export const STATUS_LABEL = {
-  new: 'New', contacted: 'Contacted', replied: 'Responded', qualified: 'Qualified',
-  demo_scheduled: 'Demo', trial: 'Trial', activated: 'Activated', paid: 'Won',
-  lost: 'Lost', do_not_contact: 'Do Not Contact',
+  new: 'New', contacted: 'Contacted', replied: 'Responded', qualified: 'Qualified', demo: 'Demo',
+  paid: 'Subscribed', activated: 'Onboarded', won: 'Won', sloth: 'The Sloth',
+  retained: 'Retained', ambassador: 'Ambassador', enterprised: 'Enterprised', champion: 'Champion',
+  not_reachable: 'Not Reachable', not_interested: 'Not Interested', disqualified: 'Disqualified',
+  lost: 'Lost', churned: 'Churned', do_not_contact: 'Do Not Contact',
 };
 
 export const STATUS_TONE = {
-  new: 'neutral', contacted: 'info', replied: 'info', qualified: 'warn',
-  demo_scheduled: 'warn', trial: 'warn', activated: 'ok', paid: 'ok',
-  lost: 'danger', do_not_contact: 'danger',
+  new: 'neutral', contacted: 'info', replied: 'info', qualified: 'warn', demo: 'warn',
+  paid: 'ok', activated: 'ok', won: 'ok', sloth: 'ok',
+  retained: 'ok', ambassador: 'ok', enterprised: 'ok', champion: 'ok',
+  not_reachable: 'danger', not_interested: 'danger', disqualified: 'danger', lost: 'danger', churned: 'danger',
+  do_not_contact: 'danger',
+};
+
+// Advancement order (parity with server RANK). Terminals + dnc = 0.
+export const RANK = { new: 1, contacted: 2, replied: 3, qualified: 4, demo: 5, paid: 6, activated: 7, won: 8, sloth: 9, retained: 10, ambassador: 11, enterprised: 12, champion: 13 };
+[...EXIT, 'do_not_contact'].forEach((s) => { RANK[s] = 0; });
+
+export const MONEY = new Set(['paid', 'activated', 'won', 'sloth', 'retained', 'ambassador', 'enterprised', 'champion']);
+export const TERMINAL = new Set(EXIT);
+
+// A manual move needs a reason when it's backward or an exit — mirrors the server
+// guard (lifecycleRules.manualTransition). The board opens the reason modal for these.
+export function needsReason(from, to) {
+  if (!from || from === to) return false;
+  return (RANK[to] ?? 0) < (RANK[from] ?? 0) || TERMINAL.has(to) || to === 'do_not_contact';
+}
+
+// The four boards for the pipeline switcher. `columns` = statuses each renders.
+export const BOARDS = [
+  { key: 'presale',   label: 'Presale',   owner: 'Sales',     accent: '#3B5BDB', columns: PRESALE },
+  { key: 'relations', label: 'Relations', owner: 'Relations', accent: '#0C9E70', columns: RELATIONS },
+  { key: 'marketing', label: 'Marketing', owner: 'Marketing', accent: '#7048E8', columns: MARKETING },
+  { key: 'exit',      label: 'Exit',      owner: 'Any',       accent: '#D6303A', columns: EXIT },
+];
+
+export const pipelineOf = (status) => {
+  if (PRESALE.includes(status)) return 'presale';
+  if (['paid', 'activated', 'won'].includes(status)) return 'relations';
+  if (['sloth', 'retained', 'ambassador', 'enterprised', 'champion'].includes(status)) return 'marketing';
+  return 'exit';
 };
 
 export const SOURCES = [
@@ -30,7 +72,7 @@ export const SMART_VIEWS = [
   { key: 'overdue', label: 'Overdue', filter: { followup: 'overdue' } },
   { key: 'contacted', label: 'No response', filter: { status: 'contacted' } },
   { key: 'qualified', label: 'Qualified', filter: { status: 'qualified' } },
-  { key: 'won', label: 'Won', filter: { status: 'paid' } },
+  { key: 'subscribed', label: 'Subscribed', filter: { status: 'paid' } },
   { key: 'value', label: 'Has value', filter: { hasValue: true } },
 ];
 
@@ -52,7 +94,11 @@ export const rupees = (paise) => `₹${((Number(paise) || 0) / 100).toLocaleStri
 // webhooks land (Phase 4).
 export function leadScore(lead) {
   if (!lead) return { score: 0, temp: 'cold' };
-  const STAGE = { new: 5, contacted: 20, replied: 45, qualified: 60, demo_scheduled: 70, trial: 78, activated: 88, paid: 95, lost: 0, do_not_contact: 0 };
+  const STAGE = {
+    new: 5, contacted: 20, replied: 45, qualified: 60, demo: 70,
+    paid: 90, activated: 92, won: 95, sloth: 98, retained: 98, ambassador: 99, enterprised: 99, champion: 100,
+    lost: 0, churned: 0, not_reachable: 0, not_interested: 0, disqualified: 0, do_not_contact: 0,
+  };
   let s = STAGE[lead.status] ?? 10;
   if (lead.phone) s += 8;
   if (lead.email) s += 4;
