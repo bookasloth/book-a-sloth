@@ -189,6 +189,14 @@ const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
   );
 };
 
+// Country dial codes offered on the phone field (India default).
+const DIAL_CODES = [
+  { code: "+91", label: "IN +91" },
+  { code: "+1", label: "US +1" },
+  { code: "+44", label: "UK +44" },
+  { code: "+971", label: "AE +971" },
+];
+
 // Floating-label text input: label rests centered inside an empty field and
 // animates up onto the top border on focus / when filled. Uses the CSS `peer`
 // pattern — no extra JS. Focus color comes from the --tc var set on the step.
@@ -248,8 +256,10 @@ const ServiceBooking = () => {
   );
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState("");
+  const [dialCode, setDialCode] = useState("+91"); // India default; USA/UK/UAE also offered
+  // Full E.164-ish number actually sent (India: backend still normalizes to last-10).
+  const fullPhone = `${dialCode}${phone.replace(/\D/g, "")}`;
   const [notes, setNotes] = useState("");
-  const [notesOpen, setNotesOpen] = useState(false); // collapsible Notes accordion
   const [billing, setBilling] = useState({
     name: user?.billing_details?.name || "",
     address: user?.billing_details?.address || "",
@@ -604,7 +614,7 @@ const ServiceBooking = () => {
         guest_id: user._id || user.id || null,
         guest_name: `${firstName} ${lastName}`.trim(),
         guest_email: email,
-        guest_phone: phone,
+        guest_phone: fullPhone,
         scheduled_at: scheduledAt,
         notes,
         billing_details: billingDetails(),
@@ -638,7 +648,7 @@ const ServiceBooking = () => {
     }
     setOtpSending(true);
     try {
-      await sendOtp({ email, phone, name: `${firstName} ${lastName}`.trim() });
+      await sendOtp({ email, phone: fullPhone, name: `${firstName} ${lastName}`.trim() });
       toast.success("Verification code sent to your WhatsApp!");
       setStep("otp");
     } catch (err) {
@@ -657,7 +667,7 @@ const ServiceBooking = () => {
     verifyingRef.current = true;
     setVerifying(true);
     try {
-      const { data: otpResult } = await verifyOtp({ email, phone, otp });
+      const { data: otpResult } = await verifyOtp({ email, phone: fullPhone, otp });
       if (!otpResult.verified) {
         toast.error("Verification failed");
         return;
@@ -675,7 +685,7 @@ const ServiceBooking = () => {
         guest_id: otpResult.user?._id || null,
         guest_name: `${firstName} ${lastName}`.trim(),
         guest_email: email,
-        guest_phone: phone,
+        guest_phone: fullPhone,
         scheduled_at: scheduledAt,
         notes,
         billing_details: billingDetails(),
@@ -778,7 +788,7 @@ const ServiceBooking = () => {
         prefill: {
           name: `${firstName} ${lastName}`.trim(),
           email,
-          contact: phone,
+          contact: fullPhone,
         },
         theme: { color: tc },
         // Guest closed the Razorpay modal without paying. Re-enable the Pay button
@@ -1254,7 +1264,7 @@ const ServiceBooking = () => {
               <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-5">
                 {/* LEFT: Booking Summary — icon-chip card */}
                 <div className="order-2 lg:order-1">
-                  <div className="rounded overflow-hidden border" style={{ background: `${tc}0a`, borderColor: `${tc}1f` }}>
+                  <div className="rounded border" style={{ background: `${tc}0a`, borderColor: `${tc}1f` }}>
                     <div className="p-4 space-y-0.5">
                       {/* Service */}
                       <div className="flex items-center gap-3 py-2">
@@ -1307,7 +1317,7 @@ const ServiceBooking = () => {
                       )}
                     </div>
                     {/* Total band */}
-                    <div className="flex items-center justify-between px-4 py-3" style={{ background: `${tc}17` }}>
+                    <div className="flex items-center justify-between px-4 py-3 rounded-b" style={{ background: `${tc}17` }}>
                       <span className="font-bold text-[16px]">Total Amount</span>
                       <span className="font-bold text-[20px]" style={{ color: tc }}>
                         {isPaid ? `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}` : "Free"}
@@ -1324,13 +1334,20 @@ const ServiceBooking = () => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <FloatingInput id="bk-email" label="Email Address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-                    {/* Mobile keeps a static floated label — the +91 prefix occupies the inline space an animated label would use. */}
+                    {/* Mobile: country dial-code select + national number; sent as fullPhone. */}
                     <div className="relative">
-                      {/* ponytail: India-only +91 prefix (cosmetic); backend normalizes phone to last-10 */}
                       <div className="flex items-stretch rounded border-2 overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
-                        <span className="flex items-center px-3 bg-gray-50 text-sm font-medium text-gray-700 border-r-2 select-none" style={{ borderColor: "var(--color-line)" }}>
-                          +91
-                        </span>
+                        <select
+                          aria-label="Country code"
+                          className="bg-gray-50 text-sm font-medium text-gray-700 border-r-2 pl-3 pr-1 outline-none cursor-pointer"
+                          style={{ borderColor: "var(--color-line)" }}
+                          value={dialCode}
+                          onChange={(e) => setDialCode(e.target.value)}
+                        >
+                          {DIAL_CODES.map((c) => (
+                            <option key={c.code} value={c.code}>{c.label}</option>
+                          ))}
+                        </select>
                         <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-[0.8rem] bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
                       </div>
                       <label htmlFor="bk-phone" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
@@ -1340,24 +1357,29 @@ const ServiceBooking = () => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <FloatingInput id="bk-address" label="Address" value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
-                    {/* Select can't use placeholder-shown — label stays floated. */}
+                    {/* Searchable state — native datalist gives type-to-filter. */}
                     <div className="relative">
-                      <select
+                      <input
                         id="bk-state"
-                        className="peer fb-input !rounded"
-                        value={billing.state_code}
+                        list="in-states"
+                        placeholder="State"
+                        autoComplete="off"
+                        className="peer fb-input !rounded placeholder-transparent"
+                        value={billing.state}
                         onChange={(e) => {
-                          const code = e.target.value;
-                          const name = INDIAN_STATES.find((s) => s.code === code)?.name || "";
-                          setBilling((b) => ({ ...b, state_code: code, state: name }));
+                          const name = e.target.value;
+                          const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
+                          setBilling((b) => ({ ...b, state: name, state_code: code }));
                         }}
-                      >
-                        <option value="">Select…</option>
+                      />
+                      <datalist id="in-states">
                         {INDIAN_STATES.map((s) => (
-                          <option key={s.code} value={s.code}>{s.name}</option>
+                          <option key={s.code} value={s.name} />
                         ))}
-                      </select>
-                      <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
+                      </datalist>
+                      <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+                        peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+                        peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
                         State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
                       </label>
                     </div>
@@ -1366,23 +1388,14 @@ const ServiceBooking = () => {
                   <FloatingInput id="bk-gstin" label="GSTIN (optional)" value={billing.gstin}
                     onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
 
-                  {/* Notes — collapsible accordion, full width */}
-                  <div className="border border-gray-200 rounded overflow-hidden">
-                    <button type="button" onClick={() => setNotesOpen((o) => !o)} className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors">
-                      <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
-                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                      </span>
-                      <span className="flex-1">
-                        <span className="block text-sm font-semibold text-gray-800">Notes <span className="font-normal text-gray-400">(Optional)</span></span>
-                        <span className="block text-xs text-gray-400">Add any notes or requests for this booking.</span>
-                      </span>
-                      <svg className={`w-5 h-5 text-gray-400 shrink-0 transition-transform ${notesOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    {notesOpen && (
-                      <div className="px-4 pb-4">
-                        <textarea rows={3} placeholder="Any specific requirements..." className="fb-input !rounded resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} />
-                      </div>
-                    )}
+                  {/* Notes — plain optional box, full width */}
+                  <div className="relative">
+                    <textarea id="bk-notes" rows={3} placeholder="Add any notes or requests for this booking."
+                      className="peer fb-input !rounded resize-none"
+                      value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
+                      Notes <span className="font-normal text-gray-400">(Optional)</span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -1441,7 +1454,7 @@ const ServiceBooking = () => {
               </div>
               <h2 className="text-xl font-bold mb-2">Check your messages</h2>
               <p className="text-sm text-gray-500 mb-6">
-                We sent a 6-digit code to <strong>{phone}</strong> on WhatsApp.
+                We sent a 6-digit code to <strong>{fullPhone}</strong> on WhatsApp.
               </p>
               <input
                 type="text"
@@ -1592,7 +1605,7 @@ const ServiceBooking = () => {
               hostName: host.name,
               guestName: `${firstName} ${lastName}`.trim(),
               guestEmail: email,
-              customerPhone: phone,
+              customerPhone: fullPhone,
               status: confirmation.status,
               paymentStatus: confirmation.payment_status,
               paymentId: confirmation.payment_id,
