@@ -145,7 +145,7 @@ const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+    <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
       <div className="max-w-md mx-auto text-center py-2">
         <div className="w-10 h-10 mx-auto mb-4 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: tc }} />
         <h2 className="text-xl font-bold mb-1">Wrapping things up…</h2>
@@ -882,7 +882,7 @@ const ServiceBooking = () => {
 
         {/* ── LEFT: Permanent Profile Sidebar (content collapsible, column stays put) ── */}
         <div className="lg:w-[300px] flex-shrink-0">
-          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
+          <div className="bg-white border border-gray-100 rounded overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
             {/* Header toggle */}
             <button
               onClick={() => setProfileOpen((o) => !o)}
@@ -1013,7 +1013,7 @@ const ServiceBooking = () => {
 
           {/* Payment verify failed after the instant move — smart by failure type */}
           {!finalizing && payError && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-md mx-auto text-center">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                   style={{ background: payError.type === "server" ? "#FEE2E2" : "#FEF3C7" }}>
@@ -1418,7 +1418,7 @@ const ServiceBooking = () => {
 
           {/* STEP: otp */}
           {!finalizing && step === "otp" && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <button
                 onClick={() => setStep("details")}
                 className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-6"
@@ -1495,7 +1495,7 @@ const ServiceBooking = () => {
               ? Number(confirmation.customer_total)
               : Math.round((service.price + _fee + _gst) * 100) / 100;
             return (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-md mx-auto text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                 style={{ background: `${tc}18` }}>
@@ -1627,7 +1627,7 @@ const ServiceBooking = () => {
             const docIcon = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6" strokeLinejoin="round"/></svg>;
             const mailIcon = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6" strokeLinecap="round" strokeLinejoin="round"/></svg>;
             return (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-3xl mx-auto">
                 {/* Top: two columns — success message | booking details. Stacks on mobile. */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center">
@@ -1640,13 +1640,13 @@ const ServiceBooking = () => {
                     <p className="text-sm text-gray-500 mb-5 bas-fade">
                       See you {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
                     </p>
-                    <div className="flex items-center gap-3 border border-gray-100 rounded-xl p-3 bg-gray-50/40 text-left">
+                    <div className="flex items-center gap-3 border border-gray-100 rounded p-3 bg-gray-50/40 text-left">
                       <span style={{ color: tc }}>{mailIcon}</span>
                       <span className="text-xs text-gray-500 leading-snug">Confirmation email sent to<br /><span className="text-gray-700 font-medium break-all">{email}</span></span>
                     </div>
                   </div>
                   {/* RIGHT: booking details */}
-                  <div className="border border-gray-100 rounded-xl px-4 py-1.5 text-sm text-left divide-y divide-gray-100 bg-gray-50/40">
+                  <div className="border border-gray-100 rounded px-4 py-1.5 text-sm text-left divide-y divide-gray-100 bg-gray-50/40">
                     <Row icon={calIcon} label="Service">{service.title}</Row>
                     <Row icon={calIcon} label="Date">{selectedDate?.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</Row>
                     <Row icon={clockIcon} label="Time">{formatTime(selectedTime)} ({tzAbbr})</Row>
