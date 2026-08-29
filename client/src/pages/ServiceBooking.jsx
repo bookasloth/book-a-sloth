@@ -101,8 +101,8 @@ const BAS_KEYFRAMES = `
 // Skeleton placeholder shown while the slot list is being fetched, so the panel
 // doesn't flash empty / jump when times arrive.
 const SlotSkeleton = () => (
-  <div className="grid grid-cols-2 gap-2" aria-hidden="true">
-    {Array.from({ length: 8 }).map((_, i) => (
+  <div className="grid grid-cols-3 gap-2" aria-hidden="true">
+    {Array.from({ length: 9 }).map((_, i) => (
       <div key={i} className="h-[42px] rounded-lg bg-gray-200/70 animate-pulse" />
     ))}
   </div>
@@ -424,11 +424,45 @@ const ServiceBooking = () => {
       setCalYear((y) => y + 1);
     } else setCalMonth((m) => m + 1);
   };
+  // autoModeRef: while true we're still auto-navigating to the first day with
+  // open times. Any manual pick (a day or a slot) turns it off for good.
+  const autoModeRef = useRef(true);
   const selectDate = (day) => {
     if (!isDateSelectable(day)) return;
+    autoModeRef.current = false;
     setSelectedDate(new Date(calYear, calMonth, day));
     setSelectedTime("");
   };
+
+  // Auto-pick the first schedule-selectable day (today onward) once the service
+  // loads, so the guest lands on open times without clicking. Current real month
+  // only; if none this month, leave unselected (guest browses forward).
+  const autoPickedRef = useRef(false);
+  useEffect(() => {
+    if (autoPickedRef.current || !host || selectedDate) return;
+    const now = new Date();
+    if (calMonth !== now.getMonth() || calYear !== now.getFullYear()) return;
+    autoPickedRef.current = true;
+    for (let day = now.getDate(); day <= getDaysInMonth(calMonth, calYear); day++) {
+      if (isDateSelectable(day)) { setSelectedDate(new Date(calYear, calMonth, day)); return; }
+    }
+  }, [host, availability, selectedDate, calMonth, calYear]);
+
+  // A schedule-selectable day can still have zero open times (today's slots all
+  // passed, or a fully-booked day). While auto-navigating, skip forward to the
+  // next day that actually has slots; if the month runs out, clear the selection.
+  useEffect(() => {
+    if (!autoModeRef.current || slotsLoading || !selectedDate) return;
+    const slots = serverSlots ?? getTimeSlots();
+    if (slots.length > 0) return; // landed on a day with open times
+    const d = selectedDate;
+    if (d.getMonth() !== calMonth || d.getFullYear() !== calYear) return;
+    for (let day = d.getDate() + 1; day <= getDaysInMonth(calMonth, calYear); day++) {
+      if (isDateSelectable(day)) { setSelectedDate(new Date(calYear, calMonth, day)); return; }
+    }
+    autoModeRef.current = false;
+    setSelectedDate(null); // no open day left this month → show the empty state
+  }, [slotsLoading, serverSlots, selectedDate, calMonth, calYear]);
 
   // Task 4: host timezone label
   const hostTz = availability?.timezone || "Asia/Kolkata";
@@ -1154,7 +1188,7 @@ const ServiceBooking = () => {
                               <p className="text-xs text-gray-400 mt-1">Try another date — there's bound to be a good one.</p>
                             </div>
                           ) : (
-                            <div className="grid grid-cols-2 gap-2 max-h-[276px] overflow-y-auto pr-1 bas-fade">
+                            <div className="grid grid-cols-3 gap-2 max-h-[276px] overflow-y-auto pr-1 bas-fade">
                               {timeSlots.map((t) => (
                                 <button
                                   key={t}

@@ -14,6 +14,7 @@ vi.mock('../services/api', () => ({
   verifyOtp:          vi.fn(),
   createBooking:      vi.fn(),
   getBookedSlots:     vi.fn().mockResolvedValue({ data: [] }),
+  getAvailableSlots:  vi.fn().mockResolvedValue({ data: { slots: [] } }),
   createPaymentOrder: vi.fn(),
   verifyPayment:      vi.fn(),
 }));
