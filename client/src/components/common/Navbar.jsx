@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useAppearance from '../../hooks/useAppearance';
+import useLiveNotifications from '../../hooks/useLiveNotifications';
 // UseCasesMegaMenu (Explore) intentionally not rendered in the nav for now; the
 // /explore route + page stay live. Re-import + render in PublicCenterNav to restore.
 import { isHost, routeRole } from '../../utils/roleRoutes';
@@ -297,6 +298,8 @@ const Navbar = () => {
   useEffect(() => { loadNotifs(); }, [loadNotifs]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (notifOpen) loadNotifs(); }, [notifOpen]);
+  // Live updates — refetch when the server broadcasts a new notification.
+  useLiveNotifications(user?.id, loadNotifs);
 
   // Guest greeting name — sourced from the guest's most recent booking (guests
   // often have no profile name). Falls back to the account name. Hosts skip this.

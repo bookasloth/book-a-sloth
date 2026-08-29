@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useIsMobile from '../../hooks/useIsMobile';
+import useLiveNotifications from '../../hooks/useLiveNotifications';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../services/api';
 import { normalizePlan } from '../../utils/themeUtils';
 import { cn } from '../dashboard/ui/cn';
@@ -104,17 +105,25 @@ const NotifBell = () => {
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [unread, setUnread] = useState(0);
+  const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
   const ref = useRef(null);
   const isMobile = useIsMobile();
+  const { user } = useAuth();
 
-  const load = () => {
+  const load = useCallback(() => {
     getNotifications('host')
-      .then(({ data }) => { setNotifs(data.notifications || []); setUnread(data.unreadCount || 0); })
-      .catch(() => {});
-  };
-  useEffect(() => { load(); }, []);
+      .then(({ data }) => {
+        setNotifs(data.notifications || []);
+        setUnread(data.unreadCount || 0);
+        setStatus('ready');
+      })
+      .catch(() => setStatus((s) => (s === 'loading' ? 'error' : s))); // keep a good list on a later blip
+  }, []);
+  useEffect(() => { load(); }, [load]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (open) load(); }, [open]);
+  // Live updates — refetch when the server broadcasts a new notification.
+  useLiveNotifications(user?.id, load);
 
   // ESC closes on any size; outside-click only matters for the desktop dropdown
   // (the mobile sheet is portaled and closes via its backdrop / close button).
@@ -160,7 +169,24 @@ const NotifBell = () => {
             Mark all read
           </button>
         </div>
-        {notifs.length === 0 ? (
+        {status === 'loading' && notifs.length === 0 ? (
+          <ul className="max-h-80 overflow-y-auto" aria-busy="true">
+            {[0, 1, 2].map((i) => (
+              <li key={i} className="flex flex-col gap-2 border-b border-gray-50 px-4 py-3.5">
+                <span className="h-3 w-2/5 animate-pulse rounded bg-gray-100" />
+                <span className="h-2.5 w-3/4 animate-pulse rounded bg-gray-100" />
+              </li>
+            ))}
+          </ul>
+        ) : status === 'error' && notifs.length === 0 ? (
+          <div className="py-10 text-center">
+            <Bell className="mx-auto mb-2 h-7 w-7 text-gray-200" />
+            <p className="text-sm text-gray-400">Couldn't load notifications</p>
+            <button type="button" onClick={load} className="mt-2 text-xs font-medium text-primary hover:underline">
+              Try again
+            </button>
+          </div>
+        ) : notifs.length === 0 ? (
           <div className="py-10 text-center">
             <Bell className="mx-auto mb-2 h-7 w-7 text-gray-200" />
             <p className="text-sm text-gray-400">No new notifications</p>
