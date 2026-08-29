@@ -52,11 +52,11 @@ const getSummary = async (req, res) => {
       // "Reviews to moderate" = reviews an admin has flagged (v3.64 reviews.status).
       // 'flagged' is the only actionable state; visible/hidden are resolved.
       countWhere('reviews',         q => q.eq('status', 'flagged')),
-      // Pending hosts = unverified, non-banned hosts — the SAME definition the
-      // Pending Hosts list uses (AdminProviders STATUS_FILTER.pending → is_verified
-      // false + not banned). Previously counted a non-existent `verification_status`
-      // column, so the card was always 0 while the list showed real rows.
-      countWhere('profiles',        q => q.eq('role', 'host').eq('is_verified', false).eq('is_banned', false)),
+      // Pending hosts = unverified, non-banned hosts who FINISHED onboarding — i.e.
+      // real profiles awaiting the admin's is_verified toggle to go live in Explore +
+      // the sitemap. Scoped to onboarding_completed so abandoned/incomplete signups
+      // (empty profiles that will never be verified) don't inflate the attention badge.
+      countWhere('profiles',        q => q.eq('role', 'host').eq('is_verified', false).eq('is_banned', false).eq('onboarding_completed', true)),
       countWhere('profiles',        q => q.eq('role', 'guest')),
       countWhere('profiles',        q => q.eq('role', 'host')),
       countWhere('bookings',        null),
