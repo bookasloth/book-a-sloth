@@ -1294,8 +1294,8 @@ const ServiceBooking = () => {
                     <div className="relative">
                       {/* ponytail: India-only +91 prefix (cosmetic); backend normalizes phone to last-10 */}
                       <div className="flex items-stretch rounded border-2 overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
-                        <span className="flex items-center gap-1.5 px-3 bg-gray-50 text-sm font-medium text-gray-700 border-r-2 select-none" style={{ borderColor: "var(--color-line)" }}>
-                          <span aria-hidden="true">🇮🇳</span> +91
+                        <span className="flex items-center px-3 bg-gray-50 text-sm font-medium text-gray-700 border-r-2 select-none" style={{ borderColor: "var(--color-line)" }}>
+                          +91
                         </span>
                         <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-[0.8rem] bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
                       </div>
