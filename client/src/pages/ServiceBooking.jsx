@@ -268,7 +268,7 @@ const ServiceBooking = () => {
   const [confirmation, setConfirmation] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const utm = useUtm(); // first-touch ad attribution → carried into the paid conversion event
-  const [profileOpen, setProfileOpen] = useState(false); // Section 1: collapsed by default
+  const [profileOpen, setProfileOpen] = useState(true); // permanent sidebar, expanded by default
   const [slotsLoading, setSlotsLoading] = useState(false); // skeleton while slots fetch
   const [finalizing, setFinalizing] = useState(false);     // labour-illusion screen
   const [finalizeMsg, setFinalizeMsg] = useState("");
@@ -839,10 +839,10 @@ const ServiceBooking = () => {
           ⚠️ This creator is pending admin verification. Bookings may be subject to confirmation.
         </div>
       )}
-      <div className={`app-container py-6 sm:py-8 flex flex-col gap-6 ${profileOpen ? "lg:flex-row lg:items-start" : ""}`}>
+      <div className="app-container py-4 sm:py-5 flex flex-col lg:flex-row gap-4 lg:items-start">
 
-        {/* ── LEFT: Collapsible Profile Card ── (sidebar when open, slim top bar when collapsed → booking widens) */}
-        <div className={profileOpen ? "lg:w-[300px] flex-shrink-0" : "w-full"}>
+        {/* ── LEFT: Permanent Profile Sidebar (content collapsible, column stays put) ── */}
+        <div className="lg:w-[300px] flex-shrink-0">
           <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
             {/* Header toggle */}
             <button
@@ -935,17 +935,17 @@ const ServiceBooking = () => {
         </div>
 
         {/* ── RIGHT: Booking Engine ── */}
-        <div className="flex-1 min-w-0 flex flex-col" style={{ minHeight: '560px' }}>
+        <div className="flex-1 min-w-0 flex flex-col">
           {/* Progress bar — full width, icon per step */}
-          <div className="mb-6 flex items-start w-full">
+          <div className="mb-4 flex items-start w-full">
             {STEPS.map((s, i) => {
               const idx = STEPS.indexOf(step);
               const active = i <= idx;
               const done = i < idx;
               return (
                 <div key={s} className={`flex items-start ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
-                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
                       style={{ background: active ? tc : '#e5e7eb', color: active ? textOnTheme : '#9ca3af' }}>
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2}
                         strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -959,7 +959,7 @@ const ServiceBooking = () => {
                   </div>
                   {i < STEPS.length - 1 && (
                     <div className="flex-1 h-0.5 mx-2 transition-colors"
-                      style={{ marginTop: 17, background: done ? tc : '#e5e7eb' }} />
+                      style={{ marginTop: 15, background: done ? tc : '#e5e7eb' }} />
                   )}
                 </div>
               );
@@ -1019,8 +1019,8 @@ const ServiceBooking = () => {
 
           {/* STEP: time */}
           {!finalizing && step === "time" && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
-              <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-5 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+              <div className="flex items-center justify-between gap-3 mb-4">
                 <Link
                   to={`/${profileSlug}`}
                   className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-shrink-0"
@@ -1037,10 +1037,10 @@ const ServiceBooking = () => {
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex flex-col md:flex-row gap-5">
                 {/* Calendar */}
                 <div className="flex-1">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3">
                     <button
                       onClick={prevMonth}
                       className="min-h-10 p-2 hover:bg-gray-100 rounded-full"
@@ -1099,7 +1099,7 @@ const ServiceBooking = () => {
                           key={day}
                           onClick={() => selectDate(day)}
                           disabled={!ok}
-                          className={`aspect-square min-h-10 rounded text-sm transition-colors ${ok && !sel ? "hover:bg-gray-100 cursor-pointer" : ""} ${!ok ? "text-gray-300 cursor-default" : ""}`}
+                          className={`h-9 rounded text-sm transition-colors ${ok && !sel ? "hover:bg-gray-100 cursor-pointer" : ""} ${!ok ? "text-gray-300 cursor-default" : ""}`}
                           style={sel
                             ? { background: tc, color: textOnTheme, fontWeight: 700 }
                             : td && !sel
@@ -1154,7 +1154,7 @@ const ServiceBooking = () => {
                               <p className="text-xs text-gray-400 mt-1">Try another date — there's bound to be a good one.</p>
                             </div>
                           ) : (
-                            <div className="grid grid-cols-2 gap-2 max-h-[320px] overflow-y-auto pr-1 bas-fade">
+                            <div className="grid grid-cols-2 gap-2 max-h-[276px] overflow-y-auto pr-1 bas-fade">
                               {timeSlots.map((t) => (
                                 <button
                                   key={t}
@@ -1200,8 +1200,8 @@ const ServiceBooking = () => {
 
           {/* STEP: details */}
           {!finalizing && step === "details" && (
-            <div className="bg-white border border-gray-100 rounded p-5 sm:p-8 shadow-[0_4px_24px_rgba(30,30,30,0.06)]" style={{ "--tc": tc }}>
-              <div className="flex items-start justify-between gap-4 mb-7">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]" style={{ "--tc": tc }}>
+              <div className="flex items-start justify-between gap-4 mb-4">
                 <button
                   onClick={() => setStep("time")}
                   className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 flex-shrink-0 mt-1 font-medium"
@@ -1212,33 +1212,33 @@ const ServiceBooking = () => {
                   Back
                 </button>
                 <div className="text-right">
-                  <h2 className="text-2xl sm:text-3xl font-bold leading-tight">Tell us who's coming</h2>
-                  <p className="text-sm text-gray-400 mt-1">We just need a few quick details to confirm your booking.</p>
+                  <h2 className="text-xl sm:text-2xl font-bold leading-tight">Tell us who's coming</h2>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-0.5">We just need a few quick details to confirm your booking.</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-5">
                 {/* LEFT: Booking Summary — icon-chip card */}
                 <div className="order-2 lg:order-1">
                   <div className="rounded overflow-hidden border" style={{ background: `${tc}0a`, borderColor: `${tc}1f` }}>
-                    <div className="p-5 space-y-1">
+                    <div className="p-4 space-y-0.5">
                       {/* Service */}
-                      <div className="flex items-center gap-3.5 py-2.5">
-                        <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                      <div className="flex items-center gap-3 py-2">
+                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
                         <span className="font-semibold text-[15px] leading-snug">{service.title}</span>
                       </div>
                       {/* Date */}
-                      <div className="flex items-center gap-3.5 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
-                        <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                      <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
+                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
                         <span className="font-medium text-[15px]">{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
                       </div>
                       {/* Time */}
-                      <div className="flex items-center gap-3.5 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
-                        <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                      <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
+                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </span>
                         <span className="font-medium text-[15px]">
@@ -1248,8 +1248,8 @@ const ServiceBooking = () => {
                       </div>
                       {/* Platform fee */}
                       {isPaid && (
-                        <div className="flex items-center gap-3.5 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
-                          <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                        <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
+                          <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                           </span>
                           <span className="flex-1 flex items-center justify-between gap-2">
@@ -1273,9 +1273,9 @@ const ServiceBooking = () => {
                       )}
                     </div>
                     {/* Total band */}
-                    <div className="flex items-center justify-between px-5 py-4" style={{ background: `${tc}17` }}>
-                      <span className="font-bold text-[17px]">Total Amount</span>
-                      <span className="font-bold text-[22px]" style={{ color: tc }}>
+                    <div className="flex items-center justify-between px-4 py-3" style={{ background: `${tc}17` }}>
+                      <span className="font-bold text-[16px]">Total Amount</span>
+                      <span className="font-bold text-[20px]" style={{ color: tc }}>
                         {isPaid ? `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}` : "Free"}
                       </span>
                     </div>
@@ -1283,12 +1283,12 @@ const ServiceBooking = () => {
                 </div>
 
                 {/* RIGHT: Customer Information — floating-label fields */}
-                <div className="order-1 lg:order-2 space-y-5 pt-1">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="order-1 lg:order-2 space-y-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <FloatingInput id="bk-first" label="First Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name" />
                     <FloatingInput id="bk-last" label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <FloatingInput id="bk-email" label="Email Address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
                     {/* Mobile keeps a static floated label — the +91 prefix occupies the inline space an animated label would use. */}
                     <div className="relative">
@@ -1304,7 +1304,7 @@ const ServiceBooking = () => {
                       </label>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <FloatingInput id="bk-address" label="Address" value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
                     {/* Select can't use placeholder-shown — label stays floated. */}
                     <div className="relative">
@@ -1357,7 +1357,7 @@ const ServiceBooking = () => {
               <button
                 onClick={handleSendOtp}
                 disabled={otpSending || verifying || !firstName || !email || (!user && !isPhoneValid) || (isPaid && !billing.state_code)}
-                className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn mt-4 w-full py-2.5 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {otpSending || verifying
@@ -1368,7 +1368,7 @@ const ServiceBooking = () => {
                     : "Confirm Booking"
                   : "Send my code"}
               </button>
-              <p className="mt-3 text-center text-xs text-gray-400">
+              <p className="mt-2 text-center text-xs text-gray-400">
                 Free to cancel · We'll never spam you
               </p>
             </div>
