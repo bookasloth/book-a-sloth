@@ -35,9 +35,27 @@ async function upsertLead(patch = {}, { source, createdBy = '', attribution } = 
   const email = lc(patch.email);
   const att = cleanAttribution(attribution || {});   // null when no usable UTM/referrer
 
-  let existing = null;
-  if (phone) ({ data: existing } = await supabaseAdmin.from('leads').select('*').eq('phone', phone).maybeSingle());
-  if (!existing && email) ({ data: existing } = await supabaseAdmin.from('leads').select('*').eq('email', email).maybeSingle());
+  // Match by phone AND email. When they resolve to two DIFFERENT existing rows, the same
+  // person got split (a phone-only row + an email-only row created at separate touchpoints
+  // that never stitched) — merge them now, oldest survives, so fragmentation can't accrue
+  // (the case v3.129 backfilled). merge_lead_rows (v3.130) does it atomically server-side.
+  let byPhone = null, byEmail = null;
+  if (phone) ({ data: byPhone } = await supabaseAdmin.from('leads').select('*').eq('phone', phone).maybeSingle());
+  if (email) ({ data: byEmail } = await supabaseAdmin.from('leads').select('*').eq('email', email).maybeSingle());
+  let existing = byPhone || byEmail;
+  if (byPhone && byEmail && byPhone.id !== byEmail.id) {
+    const [survivor, loser] = byPhone.created_at <= byEmail.created_at ? [byPhone, byEmail] : [byEmail, byPhone];
+    existing = survivor;  // fall back to the older row even if the merge can't run
+    // Best-effort stitch: never let a merge failure break lead capture (fn may be absent
+    // until v3.130 is applied). On success, re-read the folded survivor.
+    const { error: mergeErr } = await supabaseAdmin.rpc('merge_lead_rows', { p_survivor: survivor.id, p_loser: loser.id });
+    if (!mergeErr) {
+      const { data: reread } = await supabaseAdmin.from('leads').select('*').eq('id', survivor.id).maybeSingle();
+      if (reread) existing = reread;
+    } else {
+      console.warn('[crm] merge_lead_rows skipped:', mergeErr.message);
+    }
+  }
 
   const clean = { ...patch };
   if (phone) clean.phone = phone; else delete clean.phone;
