@@ -223,6 +223,7 @@ const ServiceBooking = () => {
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [notesOpen, setNotesOpen] = useState(false); // collapsible Notes accordion
   const [wantGst, setWantGst] = useState(false);
   const [billing, setBilling] = useState({
     name: user?.billing_details?.name || "",
@@ -1174,62 +1175,82 @@ const ServiceBooking = () => {
 
           {/* STEP: details */}
           {!finalizing && step === "details" && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
-              <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-8 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+              <div className="flex items-start justify-between gap-4 mb-7">
                 <button
                   onClick={() => setStep("time")}
-                  className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-shrink-0"
+                  className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 flex-shrink-0 mt-1 font-medium"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                   Back
                 </button>
-                <h2 className="text-xl font-bold truncate">Tell us who's coming</h2>
+                <div className="text-right">
+                  <h2 className="text-2xl sm:text-3xl font-bold leading-tight">Tell us who's coming</h2>
+                  <p className="text-sm text-gray-400 mt-1">We just need a few quick details to confirm your booking.</p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* LEFT: Booking Summary */}
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-6">
+                {/* LEFT: Booking Summary — icon-chip card */}
                 <div className="order-2 lg:order-1">
-                  <h3 className="font-semibold mb-3 text-sm text-gray-700">Here's your booking</h3>
-                  <div className="border rounded p-4 text-sm space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Service</span>
-                      <span className="font-medium text-right">{service.title}</span>
-                    </div>
-                    <div className="flex justify-between border-t pt-3">
-                      <span className="text-gray-500">Date</span>
-                      <span>{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
-                    </div>
-                    <div className="flex justify-between border-t pt-3">
-                      <span className="text-gray-500">Time</span>
-                      <span>
-                        {formatTime(selectedTime)} – {formatTime(getEndTime(selectedTime))}{" "}
-                        <span className="text-gray-400 text-xs">({tzAbbr})</span>
-                      </span>
-                    </div>
-                    {isPaid && (
-                      <div className="flex justify-between border-t pt-3">
-                        <span className="text-gray-500 flex items-center gap-1">
-                          Platform Fee (₹{fees.platformFee} + GST)
-                          <span className="relative group inline-flex">
-                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[10px] font-bold leading-none cursor-help"
-                              style={{ background: tc }}>i</span>
-                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 rounded-2xl bg-gray-950 text-white text-xs p-4 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-10 shadow-2xl shadow-black/40 border border-white/10 backdrop-blur-sm">
-                              <span className="flex items-start gap-2.5">
-                                <svg className="w-3.5 h-3.5 mt-px shrink-0 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1a9 9 0 100 18A9 9 0 0010 1zm.75 13.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V5.5h1.5V11.5z"/></svg>
-                                <span className="leading-relaxed text-white/85 tracking-wide">This fee secures your slot, handles payments, sends reminders, and adds the session to your calendar.</span>
-                              </span>
-                              <span className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-gray-950"></span>
-                            </span>
-                          </span>
+                  <div className="rounded-2xl overflow-hidden border" style={{ background: `${tc}0a`, borderColor: `${tc}1f` }}>
+                    <div className="p-5 space-y-1">
+                      {/* Service */}
+                      <div className="flex items-center gap-3.5 py-2.5">
+                        <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
-                        <span>₹{fees.bookingFee}</span>
+                        <span className="font-semibold text-[15px] leading-snug">{service.title}</span>
                       </div>
-                    )}
-                    <div className="flex justify-between border-t pt-3 font-semibold text-base">
-                      <span>Total Amount</span>
-                      <span style={{ color: tc }}>
+                      {/* Date */}
+                      <div className="flex items-center gap-3.5 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
+                        <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </span>
+                        <span className="font-medium text-[15px]">{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
+                      </div>
+                      {/* Time */}
+                      <div className="flex items-center gap-3.5 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
+                        <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </span>
+                        <span className="font-medium text-[15px]">
+                          {formatTime(selectedTime)} – {formatTime(getEndTime(selectedTime))}{" "}
+                          <span className="text-gray-400 text-xs font-normal">({tzAbbr})</span>
+                        </span>
+                      </div>
+                      {/* Platform fee */}
+                      {isPaid && (
+                        <div className="flex items-center gap-3.5 py-2.5 border-t" style={{ borderColor: `${tc}14` }}>
+                          <span className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                          </span>
+                          <span className="flex-1 flex items-center justify-between gap-2">
+                            <span className="text-[15px] text-gray-600 flex items-center gap-1.5">
+                              Platform Fee (₹{fees.platformFee} + GST)
+                              <span className="relative group inline-flex">
+                                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[10px] font-bold leading-none cursor-help"
+                                  style={{ background: tc }}>i</span>
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 rounded-2xl bg-gray-950 text-white text-xs p-4 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-10 shadow-2xl shadow-black/40 border border-white/10 backdrop-blur-sm">
+                                  <span className="flex items-start gap-2.5">
+                                    <svg className="w-3.5 h-3.5 mt-px shrink-0 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1a9 9 0 100 18A9 9 0 0010 1zm.75 13.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V5.5h1.5V11.5z"/></svg>
+                                    <span className="leading-relaxed text-white/85 tracking-wide">This fee secures your slot, handles payments, sends reminders, and adds the session to your calendar.</span>
+                                  </span>
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-gray-950"></span>
+                                </span>
+                              </span>
+                            </span>
+                            <span className="font-semibold text-[15px]">₹{fees.bookingFee}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Total band */}
+                    <div className="flex items-center justify-between px-5 py-4" style={{ background: `${tc}17` }}>
+                      <span className="font-bold text-[17px]">Total Amount</span>
+                      <span className="font-bold text-[22px]" style={{ color: tc }}>
                         {isPaid ? `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}` : "Free"}
                       </span>
                     </div>
@@ -1237,60 +1258,86 @@ const ServiceBooking = () => {
                 </div>
 
                 {/* RIGHT: Customer Information */}
-                <div className="order-1 lg:order-2 space-y-4">
-                  <h3 className="font-semibold mb-3 text-sm text-gray-700">Your details</h3>
+                <div className="order-1 lg:order-2 space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-1">First Name</label>
-                      <input type="text" required className="fb-input fb-input--sm" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                      <label className="block text-sm font-medium text-gray-600 mb-1.5">First Name</label>
+                      <input type="text" required className="fb-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Last Name</label>
-                      <input type="text" className="fb-input fb-input--sm" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                      <label className="block text-sm font-medium text-gray-600 mb-1.5">Last Name</label>
+                      <input type="text" className="fb-input" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Email Address</label>
-                    <input type="email" required className="fb-input fb-input--sm" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1.5">Email Address</label>
+                      <input type="email" required className="fb-input" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1.5">Mobile Number</label>
+                      {/* ponytail: India-only +91 prefix (cosmetic); backend normalizes phone to last-10 */}
+                      <div className="flex items-stretch rounded-[var(--radius-md)] border-2 overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
+                        <span className="flex items-center gap-1.5 px-3 bg-gray-50 text-sm font-medium text-gray-700 border-r-2 select-none" style={{ borderColor: "var(--color-line)" }}>
+                          <span aria-hidden="true">🇮🇳</span> +91
+                        </span>
+                        <input type="tel" required placeholder="98765 43210" className="flex-1 min-w-0 px-3 py-[0.8rem] bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Mobile Number</label>
-                    <input type="tel" required placeholder="+91 98765 43210" className="fb-input fb-input--sm" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                    <p className="text-xs text-gray-400 mt-1">Code sent via WhatsApp.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1.5">Address</label>
+                      <input type="text" className="fb-input" placeholder="House, street, area" value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1.5">
+                        State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
+                      </label>
+                      <select
+                        className="fb-input"
+                        value={billing.state_code}
+                        onChange={(e) => {
+                          const code = e.target.value;
+                          const name = INDIAN_STATES.find((s) => s.code === code)?.name || "";
+                          setBilling((b) => ({ ...b, state_code: code, state: name }));
+                        }}
+                      >
+                        <option value="">Select…</option>
+                        {INDIAN_STATES.map((s) => (
+                          <option key={s.code} value={s.code}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+                  <p className="flex items-center gap-1.5 text-xs text-gray-400">
+                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+                    Code sent via WhatsApp.
+                  </p>
                 </div>
               </div>
 
-              {/* Notes — full width, single line */}
-              <div className="mt-6">
-                <label className="block text-sm font-medium mb-1">Notes</label>
-                <input type="text" placeholder="Any specific requirements..." className="fb-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
-              </div>
-
-              {/* Billing state (required for paid bookings — GST place of supply) + optional GST invoice */}
-              <div className="mt-3 border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50/60">
-                {isPaid && (
-                  <div className="mb-3">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Billing state <span style={{ color: "#e42527" }}>*</span>
-                    </label>
-                    <select
-                      className="fb-input fb-input--sm w-full"
-                      value={billing.state_code}
-                      onChange={(e) => {
-                        const code = e.target.value;
-                        const name = INDIAN_STATES.find((s) => s.code === code)?.name || "";
-                        setBilling((b) => ({ ...b, state_code: code, state: name }));
-                      }}
-                    >
-                      <option value="">Select your state…</option>
-                      {INDIAN_STATES.map((s) => (
-                        <option key={s.code} value={s.code}>{s.name}</option>
-                      ))}
-                    </select>
-                    <span className="block text-[11px] text-gray-400 mt-1">Determines your GST place of supply on the tax invoice</span>
+              {/* Notes — collapsible accordion */}
+              <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
+                <button type="button" onClick={() => setNotesOpen((o) => !o)} className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors">
+                  <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold text-gray-800">Notes <span className="font-normal text-gray-400">(Optional)</span></span>
+                    <span className="block text-xs text-gray-400">Add any notes or requests for this booking.</span>
+                  </span>
+                  <svg className={`w-5 h-5 text-gray-400 shrink-0 transition-transform ${notesOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                {notesOpen && (
+                  <div className="px-4 pb-4">
+                    <textarea rows={3} placeholder="Any specific requirements..." className="fb-input resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} />
                   </div>
                 )}
+              </div>
+
+              {/* Optional GST invoice (billing state now lives in the form above) */}
+              <div className="mt-3 border border-gray-200 rounded-xl px-4 py-3 bg-gray-50/60">
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1310,8 +1357,6 @@ const ServiceBooking = () => {
                       value={billing.name} onChange={(e) => setBilling((b) => ({ ...b, name: e.target.value }))} />
                     <input className="fb-input fb-input--sm" placeholder="GSTIN (optional)"
                       value={billing.gstin} onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
-                    <input className="fb-input fb-input--sm sm:col-span-2" placeholder="Billing address"
-                      value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} />
                     <input className="fb-input fb-input--sm sm:col-span-2" placeholder="PAN (optional)"
                       value={billing.pan} onChange={(e) => setBilling((b) => ({ ...b, pan: e.target.value.toUpperCase() }))} />
                   </div>
