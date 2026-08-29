@@ -38,8 +38,8 @@ const flagGoogleDisconnected = async (host) => {
       inAppNotify({
         userId: host.id, role: "host", type: "GOOGLE_CALENDAR_DISCONNECTED",
         title: "Reconnect Google Calendar",
-        body: "We couldn't access your Google Calendar. New bookings won't get a Meet link until you reconnect it in Settings.",
-        link: "/dashboard/settings", data: {},
+        body: "We couldn't access your Google Calendar. New bookings won't get a Meet link until you reconnect it in your profile.",
+        link: "/dashboard/profile", data: {},
       });
     }
   } catch (e) {
