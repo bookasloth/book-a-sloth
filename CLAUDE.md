@@ -97,6 +97,21 @@ Items previously listed here as pending are now live:
 - **v3.90** (`v3.90_bot_escalation_rating.sql`) — applied 2026-07-20 on BOTH DBs. Adds
   `bot_escalations.rating` (1–5 post-handoff satisfaction). Additive, schema-fallback safe.
 
+- **Host notification system** (audit "Host Signal", PRs #855–#859) — applied 2026-08-29 on
+  BOTH DBs via Supabase MCP and verified identical (prod `ayjhlwyzszykqtnaktpb` + staging
+  `xwvciqkayammbvsidqig`). All additive + schema-fallback safe in `utils/inAppNotify.js`:
+  - **`v3.130_notification_in_app_channel.sql`** — `notification_events.in_app_enabled`
+    (in-app becomes a NotificationEngine channel) + seeds `SUBSCRIPTION_HALTED` and
+    `REFERRAL_REWARD_RELEASED` event rows. **Filename note:** number collides with
+    `v3.130_merge_lead_rows_fn.sql` (CRM) — cosmetic only, both applied, Supabase names
+    migrations independently. Also seeded 2 matching `email_templates` rows (audience
+    `vendor`) via `scripts/seedEmailTemplates.js` shape.
+  - **`v3.131_in_app_notifications_dedupe.sql`** — `in_app_notifications.dedupe_key` +
+    partial unique index `(user_id, dedupe_key)` (stops reconciler/cron double-inserts).
+  - **`v3.132_in_app_notifications_resolution.sql`** — `in_app_notifications.resolved_at`
+    (a notice self-clears once the host fixes the problem; `resolveInApp` wires KYC-approved
+    → clears `KYC_REJECTED`, subscription charge → clears `SUBSCRIPTION_HALTED`).
+
 No migration is currently outstanding. Workflow for any NEW migration: run it on BOTH DBs, and keep the
 code-side schema fallback (SELECT/INSERT destructure) until it is confirmed applied everywhere.
 
