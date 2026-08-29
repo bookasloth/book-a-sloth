@@ -316,7 +316,9 @@ function followupWindow(window, now = new Date()) {
 }
 
 // Lead ids that are due in a given window ('overdue'|'today'|'open'), unioned
-// across open follow-up tasks and open leads' next_action_at.
+// across open follow-up tasks and open leads' next_action_at. Used by the
+// dashboard COUNTS only (small sets, no URL round-trip). listLeads does NOT use
+// this — see buildFollowupOr + leadFollowupTaskIds for why.
 async function leadIdsWithFollowup(window) {
   const { to, inclusive } = followupWindow(window);
 
@@ -332,6 +334,35 @@ async function leadIdsWithFollowup(window) {
     ...(tasks || []).map((r) => r.lead_id),
     ...(nas || []).map((r) => r.id),
   ]));
+}
+
+// Open follow-up TASK lead-ids due in the window (lead_follow_ups only). The
+// next_action_at signal is handled as a SQL predicate on the main query instead
+// (buildFollowupOr) so listLeads never round-trips thousands of lead ids through
+// the request URL (a `.in('id', [...])` of up to 10k UUIDs → ~370KB URL → Kong
+// rejects it → "Couldn't load leads" on the Board / follow-up views).
+// ponytail: the task table is near-empty in practice; if open rows ever grow past
+// a few hundred, push this arm into SQL too instead of widening the inline list.
+async function leadFollowupTaskIds(window) {
+  const { to, inclusive } = followupWindow(window);
+  let q = supabaseAdmin.from('lead_follow_ups').select('lead_id').eq('status', 'open');
+  if (to) q = inclusive ? q.lte('due_at', to) : q.lt('due_at', to);
+  const { data } = await q.limit(5000);
+  return Array.from(new Set((data || []).map((r) => r.lead_id))).filter(Boolean);
+}
+
+// PURE: build the PostgREST `.or()` filter selecting "due" leads for listLeads.
+// The next_action_at signal becomes a SQL predicate (no id round-trip); only the
+// small follow-up-task id set is passed inline. Preserves the original semantics:
+// the next_action_at arm excludes CLOSED statuses; the task arm matches regardless
+// of status (a task can be due on an already-closed lead). Unit-tested.
+function buildFollowupOr({ to, inclusive, taskIds = [], closedSql }) {
+  const naArm = to
+    ? `and(next_action_at.${inclusive ? 'lte' : 'lt'}.${to},status.not.in.${closedSql})`
+    : `and(next_action_at.not.is.null,status.not.in.${closedSql})`;
+  const arms = [naArm];
+  if (taskIds.length) arms.push(`id.in.(${taskIds.join(',')})`);
+  return arms.join(',');
 }
 
 // ── List / search ─────────────────────────────────────────────
@@ -350,9 +381,11 @@ async function listLeads({ status, source, owner, tag, city, profession, q, foll
   if (createdSince) query = query.gte('created_at', createdSince);
   if (hasValue) query = query.gt('revenue_paise', 0);
   if (followup) {
-    const ids = await leadIdsWithFollowup(followup);
-    if (!ids.length) return { rows: [], total: 0, page, pageSize };
-    query = query.in('id', ids);
+    // Never `.in('id', [huge list])` — see buildFollowupOr. next_action_at is a SQL
+    // predicate; only the small task-id set is inlined.
+    const { to, inclusive } = followupWindow(followup);
+    const taskIds = await leadFollowupTaskIds(followup);
+    query = query.or(buildFollowupOr({ to, inclusive, taskIds, closedSql: rules.CLOSED_SQL }));
   }
   if (q) {
     const s = String(q).replace(/[%,()]/g, ' ').trim();
@@ -526,5 +559,5 @@ module.exports = {
   changeStatus, assignOwner, addTag, removeTag, setDnc, addNote, logCall,
   pipelineCounts, dashboardStats, recordAccountEvent,
   recomputeFromAccount, loadAccountFacts, computeAccountFacts, grossEarningsPaise,
-  conversionSummary, followupWindow, leadIdsWithFollowup,
+  conversionSummary, followupWindow, leadIdsWithFollowup, leadFollowupTaskIds, buildFollowupOr,
 };
