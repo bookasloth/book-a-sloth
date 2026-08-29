@@ -85,13 +85,37 @@ const apiLimiter = rateLimit({
   skip: skipWhenOpen,
 });
 
-// Admin endpoints: 30 per minute per IP
+// Admin data endpoints: a DoS/enumeration backstop, NOT a throttle on the working
+// admin. The old cap (30/min, keyed on raw req.ip) tripped during normal console
+// use: one page mount fires ~5 admin reads and every tab/paginate/drawer fires more,
+// so an active admin blew 30/min in seconds → a spurious "Couldn't load leads" (the
+// client can't retry the resulting 429). Worse, raw req.ip lumped every admin behind
+// a shared edge IP (Cloudflare) into ONE bucket. Fix: key per authenticated admin
+// (own lane, never shared) and lift the ceiling so only a runaway script hits it.
+// The sensitive credential paths (/api/admin-auth login, 2fa, password) carry their
+// own strict authLimiter, so brute-force defense is unchanged by the higher cap here.
+// Per-admin rate-limit key from the verified bearer token → each admin gets their own
+// bucket (never shared with other staff or a shared edge IP). Unauthenticated/invalid
+// requests fall back to the resolved client IP (honours CLIENT_IP_HEADER). Lazy-require
+// the verifier to avoid any middleware↔service load-order cycle.
+const adminRateKey = (req) => {
+  const h = req.headers.authorization;
+  if (h && h.startsWith('Bearer ')) {
+    try {
+      const p = require('../services/adminAuthService').jwtVerify(h.slice(7));
+      if (p && p.type === 'admin' && p.sub) return `admin:${p.sub}`;
+    } catch (_) { /* not a valid admin token — fall through to IP */ }
+  }
+  return `ip:${getClientIp(req) || req.ip}`;
+};
+
 const adminLimiter = rateLimit({
   store: makeRateLimitStore('admin'),
   windowMs: 60 * 1000,
-  max: 30,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: adminRateKey,
   message: { message: 'Too many admin requests.' },
   skip: skipWhenOpen,
 });
@@ -421,6 +445,7 @@ module.exports = {
   otpLimiter,
   apiLimiter,
   adminLimiter,
+  adminRateKey,
   paymentLimiter,
   bookingLimiter,
   bookingContactLimiter,
