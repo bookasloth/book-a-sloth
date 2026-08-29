@@ -63,6 +63,7 @@ router.get('/leads/:id/messages', view, c.leadMessages);
 // Lead actions
 router.post('/leads/:id/status', manage, c.setStatus);
 router.post('/leads/:id/owner', manage, c.setOwner);
+router.post('/leads/:id/merge', manage, c.mergeLead);
 router.post('/leads/:id/tags', manage, c.addTag);
 router.delete('/leads/:id/tags/:tag', manage, c.removeTag);
 router.post('/leads/:id/dnc', manage, c.setDnc);

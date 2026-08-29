@@ -651,6 +651,8 @@ export const crmLeadTimeline     = (id)          => API.get(`/admin/crm/leads/${
 export const crmLeadMessages     = (id)          => API.get(`/admin/crm/leads/${id}/messages`);
 export const crmSetStatus        = (id, status, reason)  => API.post(`/admin/crm/leads/${id}/status`, { status, reason });
 export const crmSetOwner         = (id, ownerAdminId) => API.post(`/admin/crm/leads/${id}/owner`, { ownerAdminId });
+// Merge this lead (id, the duplicate) into `into` (the lead kept). Deletes id.
+export const crmMergeLead        = (id, into)    => API.post(`/admin/crm/leads/${id}/merge`, { into });
 export const crmAddTag           = (id, tag)     => API.post(`/admin/crm/leads/${id}/tags`, { tag });
 export const crmRemoveTag        = (id, tag)     => API.delete(`/admin/crm/leads/${id}/tags/${encodeURIComponent(tag)}`);
 export const crmSetDnc           = (id, value)   => API.post(`/admin/crm/leads/${id}/dnc`, { value });
