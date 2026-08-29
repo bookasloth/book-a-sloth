@@ -27,6 +27,11 @@ const countWhere = async (table, apply) => {
 const getSummary = async (req, res) => {
   try {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    // Failed-delivery logs are historical: a failed email/WhatsApp from weeks ago
+    // isn't actionable (you can't meaningfully retry an old booking confirmation),
+    // but counting them all-time pinned the "needs attention" badge on forever with
+    // no way to clear it. Only surface RECENT failures — the actionable window.
+    const failWindow = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
     const [
       pendingPayouts,
@@ -41,8 +46,8 @@ const getSummary = async (req, res) => {
       totalServices,
     ] = await Promise.all([
       countWhere('payout_requests', q => q.eq('status', 'pending')),
-      countWhere('email_logs',      q => q.eq('status', 'failed')),
-      countWhere('notification_logs', q => q.eq('status', 'failed')),
+      countWhere('email_logs',      q => q.eq('status', 'failed').gt('created_at', failWindow)),
+      countWhere('notification_logs', q => q.eq('status', 'failed').gt('created_at', failWindow)),
       countWhere('bookings',        q => q.eq('status', 'pending').eq('payment_status', 'unpaid').lt('created_at', oneHourAgo)),
       // "Reviews to moderate" = reviews an admin has flagged (v3.64 reviews.status).
       // 'flagged' is the only actionable state; visible/hidden are resolved.
