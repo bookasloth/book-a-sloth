@@ -605,7 +605,7 @@ const ServiceBooking = () => {
     setOtpSending(true);
     try {
       await sendOtp({ email, phone, name: `${firstName} ${lastName}`.trim() });
-      toast.success("Verification code sent to your WhatsApp & email!");
+      toast.success("Verification code sent to your WhatsApp!");
       setStep("otp");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to send code");
@@ -1328,36 +1328,29 @@ const ServiceBooking = () => {
                       </label>
                     </div>
                   </div>
-                  <p className="flex items-center gap-1.5 text-xs text-gray-400">
-                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
-                    Code sent via WhatsApp.
-                  </p>
-                </div>
-              </div>
+                  {/* Optional GSTIN — full width, under Address/State */}
+                  <FloatingInput id="bk-gstin" label="GSTIN (optional)" value={billing.gstin}
+                    onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
 
-              {/* Notes — collapsible accordion */}
-              <div className="mt-6 border border-gray-200 rounded overflow-hidden">
-                <button type="button" onClick={() => setNotesOpen((o) => !o)} className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors">
-                  <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
-                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                  </span>
-                  <span className="flex-1">
-                    <span className="block text-sm font-semibold text-gray-800">Notes <span className="font-normal text-gray-400">(Optional)</span></span>
-                    <span className="block text-xs text-gray-400">Add any notes or requests for this booking.</span>
-                  </span>
-                  <svg className={`w-5 h-5 text-gray-400 shrink-0 transition-transform ${notesOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                {notesOpen && (
-                  <div className="px-4 pb-4">
-                    <textarea rows={3} placeholder="Any specific requirements..." className="fb-input !rounded resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                  {/* Notes — collapsible accordion, full width */}
+                  <div className="border border-gray-200 rounded overflow-hidden">
+                    <button type="button" onClick={() => setNotesOpen((o) => !o)} className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors">
+                      <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      </span>
+                      <span className="flex-1">
+                        <span className="block text-sm font-semibold text-gray-800">Notes <span className="font-normal text-gray-400">(Optional)</span></span>
+                        <span className="block text-xs text-gray-400">Add any notes or requests for this booking.</span>
+                      </span>
+                      <svg className={`w-5 h-5 text-gray-400 shrink-0 transition-transform ${notesOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    {notesOpen && (
+                      <div className="px-4 pb-4">
+                        <textarea rows={3} placeholder="Any specific requirements..." className="fb-input !rounded resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-
-              {/* Optional GSTIN — for businesses that want it on the invoice */}
-              <div className="mt-4">
-                <FloatingInput id="bk-gstin" label="GSTIN (optional)" value={billing.gstin}
-                  onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
+                </div>
               </div>
 
               {/* Full-width Continue */}
