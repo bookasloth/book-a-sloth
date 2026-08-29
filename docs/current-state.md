@@ -1,5 +1,5 @@
 # Current State — Book A Sloth
-_Last updated: 2026-07-16 (KYC section only — the rest of this file was last reviewed 2026-06-13)_
+_Last updated: 2026-08-29 (host notification system + admin ops badge + AiSensy fix; KYC section 2026-07-16; rest last reviewed 2026-06-13)_
 
 ## ✅ Working Features
 
@@ -61,6 +61,18 @@ _Last updated: 2026-07-16 (KYC section only — the rest of this file was last r
 - 24h and 1h booking reminder emails
 - Cron runs every 5 minutes
 
+### Host Notification System (overhauled 2026-08-29, v3.130–v3.132)
+- **In-app is a channel of `NotificationEngine`.** One `NotificationEngine.send({event, data:{inApp:{title,body,link}}})` fans out to email + WhatsApp + in-app, gated per event by `notification_events.in_app_enabled` (mirrors `whatsapp_enabled`). New events use this path; the ~10 legacy `inAppNotify` call-sites still work and migrate opportunistically.
+- **Real-time bell** — `inAppNotify` broadcasts to an HMAC-derived per-user topic (`utils/notifChannel.js`); both bells subscribe via `useLiveNotifications` (client fetches its topic from `GET /api/notifications/channel`). No more poll-only.
+- **De-duplication** — `in_app_notifications.dedupe_key` + partial unique index; repeated emits (reconciler / cron) don't stack rows.
+- **Resolution** — `in_app_notifications.resolved_at`; `resolveInApp()` clears a notice once fixed (KYC approved → `KYC_REJECTED`; subscription charge → `SUBSCRIPTION_HALTED`).
+- **Previously-silent host events now fire** — `SUBSCRIPTION_HALTED`, `REFERRAL_REWARD_RELEASED` (email + in-app), plus `ONBOARDING_COMPLETE` / `KYC_SUBMITTED` acks.
+- Deep-links fixed (bell navigates; review → `/dashboard/clients`; calendar → `/dashboard/profile`); host now gets a `BOOKING_NEW` bell entry.
+- **Not yet built:** notification grouping/filter, a standalone `/dashboard/notifications` page, a banner system, host notification-preferences UI, payout-failed resolution.
+
+### Admin Operations badge (`/api/admin/ops/summary`)
+- The admin bell's red dot is a **work-queue** (`totalAttention`), not read/unread: pending payouts, failed emails/notifs (windowed to 14 days), abandoned bookings, flagged reviews, and onboarding-complete unverified hosts. There is deliberately no "dismiss" — it clears when items are resolved or age out.
+
 ### Financial Ledger (P1)
 - Double-entry accounting: `chart_of_accounts` (12 accounts) + `journal_entries`/`journal_lines`/`ledger_entries`/`account_balances`, written atomically via `post_journal_entry(jsonb)` RPC (balanced + idempotent on source_type+source_id)
 - Posts on triggers: ORDER_PAYMENT (verifyPayment), SUBSCRIPTION_PAYMENT (verifySubscription), with completeBooking stamping revenue recognition + settlement status
@@ -82,6 +94,7 @@ _Last updated: 2026-07-16 (KYC section only — the rest of this file was last r
 - `notify.js` routes WhatsApp sends through `notificationEngine.js` to AiSensy (`aisensyService.js`), not Twilio — no Twilio code exists in this repo
 - Enabled per event/provider from DB (`notification_events.whatsapp_enabled` + `notification_providers.is_active`), admin-configurable
 - OTP and appointment notifications send over both email and WhatsApp where the channel is enabled
+- **"Booking Confirmed" WhatsApp = FIXED + verified 2026-08-29.** The approved AiSensy template takes exactly **4** body vars; a stale deploy still appended the Meet link as a 5th for online bookings (`"Template params does not match the campaign"`). Fixed on `main` + redeployed; proven with a live 4-param send (HTTP 200). Regression test (`bookingConfirmedParams.test.js`) locks it. `notification_providers.api_key` is a plaintext JWT.
 
 ### Features Not Yet Built
 - Guest booking history dashboard (guests redirected to `/my-bookings` but shows host dashboard)

@@ -208,3 +208,16 @@
 - **Styling landmine:** `.blog-link` in `index.css` draws the body-link hover underline as a **background-image**, not an `::after` — prose links wrap, and an absolute `::after` only covers the first line box
 - **Tests:** `client/src/pages/__tests__/Blog.test.jsx` (paging, clamp, pager, byline)
 - **Related:** SEO + Sitemap, Admin Panel
+
+---
+
+## 19. Notification System (email + WhatsApp + in-app) — overhauled 2026-08-29 (v3.130–v3.132)
+**Purpose:** One engine dispatches every lifecycle event to email, WhatsApp, and the in-app bell; admins toggle channels per event.
+- **Engine (server):** `services/notificationEngine.js` — `send({event, data})` fans out to email (`services/email/communicationEngine.js`), WhatsApp (`services/aisensyService.js`), and in-app (`utils/inAppNotify.js`), each gated by `notification_events.{email,whatsapp,in_app}_enabled`. Never throws; 60s config cache; schema-fallback safe.
+- **In-app writer/reader:** `utils/inAppNotify.js` (`inAppNotify` insert w/ `dedupe_key`; `resolveInApp` clears on fix) → `in_app_notifications` table. Feed API `routes/notificationRoutes.js` → `controllers/notificationController.js` (`GET /`, `POST /read-all`, `PATCH /:id/read`, `GET /channel`).
+- **Real-time:** `utils/realtimeBroadcast.js` broadcasts to an HMAC topic (`utils/notifChannel.js`); client `hooks/useLiveNotifications.js` subscribes both bells (`components/common/DashboardLayout.jsx` NotifBell, `Navbar.jsx`).
+- **Templates/config:** `config/emailTemplates.js` + `scripts/seedEmailTemplates.js` (seed BOTH DBs); WhatsApp campaigns keyed by `notification_events.campaign_name`. **AiSensy "Booking Confirmed" = 4 body params exactly** (confirmed) / 5 (reminder) — see `bookingController.js` `customerParams`/`vendorParams` and `services/bookingConfirmation.js`; guard `tests/unit/bookingConfirmedParams.test.js`.
+- **Admin console:** `client/src/pages/admin/AdminNotifications.jsx` + `NotificationBell.jsx` (the bell dot = ops work-queue from `controllers/opsAdminController.js`, NOT unread).
+- **DB Tables:** `in_app_notifications` (v3.39; `dedupe_key` v3.131; `resolved_at` v3.132), `notification_events` (`in_app_enabled` v3.130), `notification_logs`, `email_logs`.
+- **Migrations:** `v3.130_notification_in_app_channel`, `v3.131_in_app_notifications_dedupe`, `v3.132_in_app_notifications_resolution` (all applied BOTH DBs 2026-08-29).
+- **Related:** Booking Reminders, Payments, KYC, Subscriptions, Admin Panel
