@@ -1,6 +1,7 @@
 const { supabaseAdmin } = require("../config/supabase");
 const { runInBackground } = require("./background");
 const { broadcastTopic } = require("./realtimeBroadcast");
+const { notifChannelTopic } = require("./notifChannel");
 
 // Fire-and-forget in-app notification. Never throws into the request path —
 // a feed write must not break a booking/review/payout mutation.
@@ -46,7 +47,7 @@ function inAppNotify({ userId, role = "guest", type, title, body = null, link = 
         return;
       }
     }
-    broadcastTopic(`notif:user:${userId}`, "notification", { role, type });
+    broadcastTopic(notifChannelTopic(userId), "notification", { role, type });
   });
 }
 

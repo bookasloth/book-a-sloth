@@ -349,6 +349,14 @@ const markComplete = async (vendorId) => {
   // Activation milestone: onboarding finished (sole writer of onboarding_completed).
   // PostHog-only — the acquisition conversion already fired at user_registered.
   phCapture(vendorId, "onboarding_completed", { plan });
+  // Celebrate the activation moment in the bell — you're discoverable now. Once
+  // per host (dedupeKey); in-app only, fire-and-forget, never blocks the response.
+  require("../utils/inAppNotify").inAppNotify({
+    userId: vendorId, role: "host", type: "ONBOARDING_COMPLETE",
+    title: "You're live 🎉",
+    body: "Your profile is discoverable and ready for bookings. Share your page to get your first one.",
+    link: "/dashboard", dedupeKey: `onboarding_complete:${vendorId}`,
+  });
   return data;
 };
 

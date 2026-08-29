@@ -717,6 +717,7 @@ export const createRescheduleFeeOrder = (bookingId) => API.post('/payment/resche
 
 // ── In-app Notifications ──────────────────────────────────────
 export const getNotifications         = (role) => API.get('/notifications', { params: { role } });
+export const getNotificationChannel   = ()     => API.get('/notifications/channel');
 export const markAllNotificationsRead = (role) => API.post('/notifications/read-all', null, { params: { role } });
 export const markNotificationRead     = (id)   => API.patch(`/notifications/${id}/read`);
 

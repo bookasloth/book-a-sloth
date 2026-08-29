@@ -272,6 +272,7 @@ const Navbar = () => {
   const [signInOpen,  setSignInOpen]  = useState(false);
   const [notifs,      setNotifs]      = useState([]);
   const [unread,      setUnread]      = useState(0);
+  const [notifStatus, setNotifStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
   const [guestName,   setGuestName]   = useState('');
 
   const dropdownRef = useRef(null);
@@ -292,8 +293,12 @@ const Navbar = () => {
   const loadNotifs = useCallback(() => {
     if (!user) return;
     getNotifications(notifRole)
-      .then(({ data }) => { setNotifs(data.notifications || []); setUnread(data.unreadCount || 0); })
-      .catch(() => {});
+      .then(({ data }) => {
+        setNotifs(data.notifications || []);
+        setUnread(data.unreadCount || 0);
+        setNotifStatus('ready');
+      })
+      .catch(() => setNotifStatus((s) => (s === 'loading' ? 'error' : s)));
   }, [user, notifRole]);
   useEffect(() => { loadNotifs(); }, [loadNotifs]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -483,7 +488,28 @@ const Navbar = () => {
                           Mark all read
                         </button>
                       </div>
-                      {notifs.length === 0 ? (
+                      {notifStatus === 'loading' && notifs.length === 0 ? (
+                        <ul className="max-h-96 overflow-y-auto divide-y divide-gray-50" aria-busy="true">
+                          {[0, 1, 2].map((i) => (
+                            <li key={i} className="flex flex-col gap-2 px-4 py-3.5">
+                              <span className="h-3 w-2/5 animate-pulse rounded bg-gray-100" />
+                              <span className="h-2.5 w-3/4 animate-pulse rounded bg-gray-100" />
+                            </li>
+                          ))}
+                        </ul>
+                      ) : notifStatus === 'error' && notifs.length === 0 ? (
+                        <div className="py-10 text-center">
+                          <Bell size={28} className="mx-auto text-gray-200 mb-2" />
+                          <p className="text-sm text-gray-400">Couldn't load notifications</p>
+                          <button
+                            type="button"
+                            onClick={loadNotifs}
+                            className="mt-2 text-[11px] font-medium text-[#FE5100] hover:underline focus:outline-none"
+                          >
+                            Try again
+                          </button>
+                        </div>
+                      ) : notifs.length === 0 ? (
                         <div className="py-10 text-center">
                           <Bell size={28} className="mx-auto text-gray-200 mb-2" />
                           <p className="text-sm text-gray-400">No new notifications</p>
