@@ -93,6 +93,8 @@ const BAS_KEYFRAMES = `
 @keyframes basPop {0%{transform:scale(.5);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
 @keyframes basBob {0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @keyframes basFade {from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes otpPop {0%{transform:scale(.82)}55%{transform:scale(1.12)}100%{transform:scale(1)}}
+.otp-pop{animation:otpPop .18s ease}
 .bas-pop{animation:basPop .5s cubic-bezier(.2,.8,.2,1) both}
 .bas-bob{animation:basBob 2.4s ease-in-out infinite}
 .bas-fade{animation:basFade .5s ease both}
@@ -217,6 +219,65 @@ const FloatingInput = ({ id, label, type = "text", value, onChange, required, au
     </label>
   </div>
 );
+
+// 6-box OTP entry. Keeps the parent's joined string in sync (so verify +
+// auto-submit are unchanged); auto-advances focus and pops each box on entry.
+const OTP_LEN = 6;
+const OtpBoxes = ({ value, onChange, tc }) => {
+  const refs = useRef([]);
+  const [pop, setPop] = useState(-1);
+  const focus = (i) => refs.current[Math.max(0, Math.min(OTP_LEN - 1, i))]?.focus();
+
+  const handleChange = (i, e) => {
+    const digits = e.target.value.replace(/\D/g, "");
+    if (!digits) return;
+    if (digits.length === 1) {
+      onChange((value.slice(0, i) + digits + value.slice(i + 1)).slice(0, OTP_LEN));
+      setPop(i);
+      window.setTimeout(() => setPop((p) => (p === i ? -1 : p)), 180);
+      if (i < OTP_LEN - 1) focus(i + 1);
+    } else {
+      const next = (value.slice(0, i) + digits).slice(0, OTP_LEN);
+      onChange(next);
+      focus(next.length);
+    }
+  };
+  const handleKeyDown = (i, e) => {
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      if (value[i]) onChange(value.slice(0, i) + value.slice(i + 1));
+      else if (i > 0) { onChange(value.slice(0, i - 1) + value.slice(i)); focus(i - 1); }
+    } else if (e.key === "ArrowLeft") focus(i - 1);
+    else if (e.key === "ArrowRight") focus(i + 1);
+  };
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const digits = (e.clipboardData.getData("text") || "").replace(/\D/g, "").slice(0, OTP_LEN);
+    if (digits) { onChange(digits); focus(digits.length); }
+  };
+
+  return (
+    <div className="flex justify-center gap-2 sm:gap-2.5" onPaste={handlePaste}>
+      {Array.from({ length: OTP_LEN }).map((_, i) => (
+        <input
+          key={i}
+          ref={(el) => (refs.current[i] = el)}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          autoComplete={i === 0 ? "one-time-code" : "off"}
+          value={value[i] || ""}
+          onChange={(e) => handleChange(i, e)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          onFocus={(e) => e.target.select()}
+          autoFocus={i === 0}
+          className={`w-11 h-14 sm:w-12 text-center text-2xl font-bold rounded border-2 outline-none transition-colors ${pop === i ? "otp-pop" : ""}`}
+          style={{ borderColor: value[i] ? tc : "var(--color-line)", color: "#111827" }}
+        />
+      ))}
+    </div>
+  );
+};
 
 const ServiceBooking = () => {
   const { profileSlug, serviceSlug } = useParams();
@@ -1451,16 +1512,7 @@ const ServiceBooking = () => {
               <p className="text-sm text-gray-500 mb-6">
                 We sent a 6-digit code to <strong>{fullPhone}</strong> on WhatsApp.
               </p>
-              <input
-                type="text"
-                maxLength={6}
-                placeholder="000000"
-                className="fb-input text-center text-2xl font-bold tracking-widest py-4"
-                style={{ letterSpacing: '0.4em', maxWidth: '280px', margin: '0 auto' }}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                autoFocus
-              />
+              <OtpBoxes value={otp} onChange={setOtp} tc={tc} />
               <button
                 onClick={handleVerifyAndBook}
                 disabled={verifying || otp.length !== 6}
