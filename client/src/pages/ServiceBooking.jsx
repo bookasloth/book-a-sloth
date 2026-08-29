@@ -839,10 +839,10 @@ const ServiceBooking = () => {
           ⚠️ This creator is pending admin verification. Bookings may be subject to confirmation.
         </div>
       )}
-      <div className="app-container py-6 sm:py-8 flex flex-col lg:flex-row gap-6 lg:items-start">
+      <div className={`app-container py-6 sm:py-8 flex flex-col gap-6 ${profileOpen ? "lg:flex-row lg:items-start" : ""}`}>
 
-        {/* ── LEFT: Collapsible Profile Card ── */}
-        <div className="lg:w-[300px] flex-shrink-0">
+        {/* ── LEFT: Collapsible Profile Card ── (sidebar when open, slim top bar when collapsed → booking widens) */}
+        <div className={profileOpen ? "lg:w-[300px] flex-shrink-0" : "w-full"}>
           <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
             {/* Header toggle */}
             <button
