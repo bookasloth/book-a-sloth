@@ -14,6 +14,7 @@ vi.mock('../services/api', () => ({
   verifyOtp:          vi.fn(),
   createBooking:      vi.fn(),
   getBookedSlots:     vi.fn().mockResolvedValue({ data: [] }),
+  getAvailableSlots:  vi.fn().mockResolvedValue({ data: { slots: [] } }),
   createPaymentOrder: vi.fn(),
   verifyPayment:      vi.fn(),
 }));
@@ -84,11 +85,10 @@ describe('ServiceBooking — profile card', () => {
     });
   });
 
-  // Section 1 redesign: vendor/service/pricing details now live in a
-  // "Profile Information" panel that is collapsed by default — expand it first.
+  // Section 1 redesign: vendor/service/pricing details live in a permanent
+  // "Profile Information" sidebar, expanded by default — just wait for it.
   const openProfile = async () => {
     await waitFor(() => screen.getByText('Profile Information'));
-    fireEvent.click(screen.getByText('Profile Information'));
   };
 
   test('shows vendor name in left panel', async () => {

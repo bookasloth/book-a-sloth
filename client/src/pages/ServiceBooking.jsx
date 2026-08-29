@@ -93,6 +93,8 @@ const BAS_KEYFRAMES = `
 @keyframes basPop {0%{transform:scale(.5);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
 @keyframes basBob {0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @keyframes basFade {from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes otpPop {0%{transform:scale(.82)}55%{transform:scale(1.12)}100%{transform:scale(1)}}
+.otp-pop{animation:otpPop .18s ease}
 .bas-pop{animation:basPop .5s cubic-bezier(.2,.8,.2,1) both}
 .bas-bob{animation:basBob 2.4s ease-in-out infinite}
 .bas-fade{animation:basFade .5s ease both}
@@ -101,8 +103,8 @@ const BAS_KEYFRAMES = `
 // Skeleton placeholder shown while the slot list is being fetched, so the panel
 // doesn't flash empty / jump when times arrive.
 const SlotSkeleton = () => (
-  <div className="grid grid-cols-2 gap-2" aria-hidden="true">
-    {Array.from({ length: 8 }).map((_, i) => (
+  <div className="grid grid-cols-3 gap-2" aria-hidden="true">
+    {Array.from({ length: 9 }).map((_, i) => (
       <div key={i} className="h-[42px] rounded-lg bg-gray-200/70 animate-pulse" />
     ))}
   </div>
@@ -145,7 +147,7 @@ const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+    <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
       <div className="max-w-md mx-auto text-center py-2">
         <div className="w-10 h-10 mx-auto mb-4 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: tc }} />
         <h2 className="text-xl font-bold mb-1">Wrapping things up…</h2>
@@ -189,6 +191,94 @@ const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
   );
 };
 
+// Country dial codes offered on the phone field (India default).
+const DIAL_CODES = ["+91", "+1", "+44", "+971"];
+
+// Floating-label text input: label rests centered inside an empty field and
+// animates up onto the top border on focus / when filled. Uses the CSS `peer`
+// pattern — no extra JS. Focus color comes from the --tc var set on the step.
+const FloatingInput = ({ id, label, type = "text", value, onChange, required, autoComplete }) => (
+  <div className="relative">
+    <input
+      id={id}
+      type={type}
+      required={required}
+      autoComplete={autoComplete}
+      placeholder={label}
+      value={value}
+      onChange={onChange}
+      className="peer fb-input fb-input--sm !rounded placeholder-transparent"
+    />
+    <label
+      htmlFor={id}
+      className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+        peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+        peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]"
+    >
+      {label}{required && <span style={{ color: "#e42527" }}> *</span>}
+    </label>
+  </div>
+);
+
+// 6-box OTP entry. Keeps the parent's joined string in sync (so verify +
+// auto-submit are unchanged); auto-advances focus and pops each box on entry.
+const OTP_LEN = 6;
+const OtpBoxes = ({ value, onChange, tc }) => {
+  const refs = useRef([]);
+  const [pop, setPop] = useState(-1);
+  const focus = (i) => refs.current[Math.max(0, Math.min(OTP_LEN - 1, i))]?.focus();
+
+  const handleChange = (i, e) => {
+    const digits = e.target.value.replace(/\D/g, "");
+    if (!digits) return;
+    if (digits.length === 1) {
+      onChange((value.slice(0, i) + digits + value.slice(i + 1)).slice(0, OTP_LEN));
+      setPop(i);
+      window.setTimeout(() => setPop((p) => (p === i ? -1 : p)), 180);
+      if (i < OTP_LEN - 1) focus(i + 1);
+    } else {
+      const next = (value.slice(0, i) + digits).slice(0, OTP_LEN);
+      onChange(next);
+      focus(next.length);
+    }
+  };
+  const handleKeyDown = (i, e) => {
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      if (value[i]) onChange(value.slice(0, i) + value.slice(i + 1));
+      else if (i > 0) { onChange(value.slice(0, i - 1) + value.slice(i)); focus(i - 1); }
+    } else if (e.key === "ArrowLeft") focus(i - 1);
+    else if (e.key === "ArrowRight") focus(i + 1);
+  };
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const digits = (e.clipboardData.getData("text") || "").replace(/\D/g, "").slice(0, OTP_LEN);
+    if (digits) { onChange(digits); focus(digits.length); }
+  };
+
+  return (
+    <div className="flex justify-center gap-2 sm:gap-2.5" onPaste={handlePaste}>
+      {Array.from({ length: OTP_LEN }).map((_, i) => (
+        <input
+          key={i}
+          ref={(el) => (refs.current[i] = el)}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          autoComplete={i === 0 ? "one-time-code" : "off"}
+          value={value[i] || ""}
+          onChange={(e) => handleChange(i, e)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          onFocus={(e) => e.target.select()}
+          autoFocus={i === 0}
+          className={`w-11 h-14 sm:w-12 text-center text-2xl font-bold rounded border-2 outline-none transition-colors ${pop === i ? "otp-pop" : ""}`}
+          style={{ borderColor: value[i] ? tc : "var(--color-line)", color: "#111827" }}
+        />
+      ))}
+    </div>
+  );
+};
+
 const ServiceBooking = () => {
   const { profileSlug, serviceSlug } = useParams();
   const { user } = useAuth();
@@ -222,8 +312,10 @@ const ServiceBooking = () => {
   );
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState("");
+  const [dialCode, setDialCode] = useState("+91"); // India default; USA/UK/UAE also offered
+  // Full E.164-ish number actually sent (India: backend still normalizes to last-10).
+  const fullPhone = `${dialCode}${phone.replace(/\D/g, "")}`;
   const [notes, setNotes] = useState("");
-  const [wantGst, setWantGst] = useState(false);
   const [billing, setBilling] = useState({
     name: user?.billing_details?.name || "",
     address: user?.billing_details?.address || "",
@@ -242,7 +334,7 @@ const ServiceBooking = () => {
   const [confirmation, setConfirmation] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const utm = useUtm(); // first-touch ad attribution → carried into the paid conversion event
-  const [profileOpen, setProfileOpen] = useState(false); // Section 1: collapsed by default
+  const [profileOpen, setProfileOpen] = useState(true); // permanent sidebar, expanded by default
   const [slotsLoading, setSlotsLoading] = useState(false); // skeleton while slots fetch
   const [finalizing, setFinalizing] = useState(false);     // labour-illusion screen
   const [finalizeMsg, setFinalizeMsg] = useState("");
@@ -398,11 +490,45 @@ const ServiceBooking = () => {
       setCalYear((y) => y + 1);
     } else setCalMonth((m) => m + 1);
   };
+  // autoModeRef: while true we're still auto-navigating to the first day with
+  // open times. Any manual pick (a day or a slot) turns it off for good.
+  const autoModeRef = useRef(true);
   const selectDate = (day) => {
     if (!isDateSelectable(day)) return;
+    autoModeRef.current = false;
     setSelectedDate(new Date(calYear, calMonth, day));
     setSelectedTime("");
   };
+
+  // Auto-pick the first schedule-selectable day (today onward) once the service
+  // loads, so the guest lands on open times without clicking. Current real month
+  // only; if none this month, leave unselected (guest browses forward).
+  const autoPickedRef = useRef(false);
+  useEffect(() => {
+    if (autoPickedRef.current || !host || selectedDate) return;
+    const now = new Date();
+    if (calMonth !== now.getMonth() || calYear !== now.getFullYear()) return;
+    autoPickedRef.current = true;
+    for (let day = now.getDate(); day <= getDaysInMonth(calMonth, calYear); day++) {
+      if (isDateSelectable(day)) { setSelectedDate(new Date(calYear, calMonth, day)); return; }
+    }
+  }, [host, availability, selectedDate, calMonth, calYear]);
+
+  // A schedule-selectable day can still have zero open times (today's slots all
+  // passed, or a fully-booked day). While auto-navigating, skip forward to the
+  // next day that actually has slots; if the month runs out, clear the selection.
+  useEffect(() => {
+    if (!autoModeRef.current || slotsLoading || !selectedDate) return;
+    const slots = serverSlots ?? getTimeSlots();
+    if (slots.length > 0) return; // landed on a day with open times
+    const d = selectedDate;
+    if (d.getMonth() !== calMonth || d.getFullYear() !== calYear) return;
+    for (let day = d.getDate() + 1; day <= getDaysInMonth(calMonth, calYear); day++) {
+      if (isDateSelectable(day)) { setSelectedDate(new Date(calYear, calMonth, day)); return; }
+    }
+    autoModeRef.current = false;
+    setSelectedDate(null); // no open day left this month → show the empty state
+  }, [slotsLoading, serverSlots, selectedDate, calMonth, calYear]);
 
   // Task 4: host timezone label
   const hostTz = availability?.timezone || "Asia/Kolkata";
@@ -544,7 +670,7 @@ const ServiceBooking = () => {
         guest_id: user._id || user.id || null,
         guest_name: `${firstName} ${lastName}`.trim(),
         guest_email: email,
-        guest_phone: phone,
+        guest_phone: fullPhone,
         scheduled_at: scheduledAt,
         notes,
         billing_details: billingDetails(),
@@ -578,8 +704,8 @@ const ServiceBooking = () => {
     }
     setOtpSending(true);
     try {
-      await sendOtp({ email, phone, name: `${firstName} ${lastName}`.trim() });
-      toast.success("Verification code sent to your WhatsApp & email!");
+      await sendOtp({ email, phone: fullPhone, name: `${firstName} ${lastName}`.trim() });
+      toast.success("Verification code sent to your WhatsApp!");
       setStep("otp");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to send code");
@@ -597,7 +723,7 @@ const ServiceBooking = () => {
     verifyingRef.current = true;
     setVerifying(true);
     try {
-      const { data: otpResult } = await verifyOtp({ email, phone, otp });
+      const { data: otpResult } = await verifyOtp({ email, phone: fullPhone, otp });
       if (!otpResult.verified) {
         toast.error("Verification failed");
         return;
@@ -615,7 +741,7 @@ const ServiceBooking = () => {
         guest_id: otpResult.user?._id || null,
         guest_name: `${firstName} ${lastName}`.trim(),
         guest_email: email,
-        guest_phone: phone,
+        guest_phone: fullPhone,
         scheduled_at: scheduledAt,
         notes,
         billing_details: billingDetails(),
@@ -718,7 +844,7 @@ const ServiceBooking = () => {
         prefill: {
           name: `${firstName} ${lastName}`.trim(),
           email,
-          contact: phone,
+          contact: fullPhone,
         },
         theme: { color: tc },
         // Guest closed the Razorpay modal without paying. Re-enable the Pay button
@@ -813,11 +939,11 @@ const ServiceBooking = () => {
           ⚠️ This creator is pending admin verification. Bookings may be subject to confirmation.
         </div>
       )}
-      <div className="app-container py-6 sm:py-8 flex flex-col lg:flex-row gap-6 lg:items-start">
+      <div className="app-container py-4 sm:py-5 flex flex-col lg:flex-row gap-4 lg:items-start">
 
-        {/* ── LEFT: Collapsible Profile Card ── */}
+        {/* ── LEFT: Permanent Profile Sidebar (content collapsible, column stays put) ── */}
         <div className="lg:w-[300px] flex-shrink-0">
-          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
+          <div className="bg-white border border-gray-100 rounded overflow-hidden shadow-[0_4px_24px_rgba(30,30,30,0.06)] lg:sticky lg:top-24">
             {/* Header toggle */}
             <button
               onClick={() => setProfileOpen((o) => !o)}
@@ -909,31 +1035,31 @@ const ServiceBooking = () => {
         </div>
 
         {/* ── RIGHT: Booking Engine ── */}
-        <div className="flex-1 min-w-0 flex flex-col" style={{ minHeight: '560px' }}>
-          {/* Progress bar — full width, icon per step */}
-          <div className="mb-6 flex items-start w-full">
+        <div className="flex-1 min-w-0 flex flex-col">
+          {/* Progress bar — icons only; solid brand + border when active, grey linear when not */}
+          <div className="mb-4 flex items-center w-full">
             {STEPS.map((s, i) => {
               const idx = STEPS.indexOf(step);
               const active = i <= idx;
               const done = i < idx;
               return (
-                <div key={s} className={`flex items-start ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
-                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-                      style={{ background: active ? tc : '#e5e7eb', color: active ? textOnTheme : '#9ca3af' }}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2}
-                        strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                        {STEP_ICONS[s]}
-                      </svg>
-                    </div>
-                    <span className="text-[11px] whitespace-nowrap transition-colors"
-                      style={{ color: active ? tc : '#9ca3af', fontWeight: active ? 600 : 400 }}>
-                      {LABELS[s]}
-                    </span>
+                <div key={s} className={`flex items-center ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-colors"
+                    style={active
+                      ? { background: tc, color: textOnTheme, borderColor: tc }
+                      : { background: '#fff', color: '#9ca3af', borderColor: '#d1d5db' }}
+                    title={LABELS[s]}
+                    aria-label={LABELS[s]}
+                  >
+                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor"
+                      strokeWidth={active ? 2.4 : 1.8}
+                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      {STEP_ICONS[s]}
+                    </svg>
                   </div>
                   {i < STEPS.length - 1 && (
                     <div className="flex-1 h-0.5 mx-2 transition-colors"
-                      style={{ marginTop: 17, background: done ? tc : '#e5e7eb' }} />
+                      style={{ background: done ? tc : '#e5e7eb' }} />
                   )}
                 </div>
               );
@@ -948,7 +1074,7 @@ const ServiceBooking = () => {
 
           {/* Payment verify failed after the instant move — smart by failure type */}
           {!finalizing && payError && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-md mx-auto text-center">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                   style={{ background: payError.type === "server" ? "#FEE2E2" : "#FEF3C7" }}>
@@ -993,8 +1119,8 @@ const ServiceBooking = () => {
 
           {/* STEP: time */}
           {!finalizing && step === "time" && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
-              <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-5 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+              <div className="flex items-center justify-between gap-3 mb-4">
                 <Link
                   to={`/${profileSlug}`}
                   className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-shrink-0"
@@ -1011,10 +1137,10 @@ const ServiceBooking = () => {
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex flex-col md:flex-row gap-5">
                 {/* Calendar */}
                 <div className="flex-1">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3">
                     <button
                       onClick={prevMonth}
                       className="min-h-10 p-2 hover:bg-gray-100 rounded-full"
@@ -1073,7 +1199,7 @@ const ServiceBooking = () => {
                           key={day}
                           onClick={() => selectDate(day)}
                           disabled={!ok}
-                          className={`aspect-square min-h-10 rounded text-sm transition-colors ${ok && !sel ? "hover:bg-gray-100 cursor-pointer" : ""} ${!ok ? "text-gray-300 cursor-default" : ""}`}
+                          className={`h-9 rounded text-sm transition-colors ${ok && !sel ? "hover:bg-gray-100 cursor-pointer" : ""} ${!ok ? "text-gray-300 cursor-default" : ""}`}
                           style={sel
                             ? { background: tc, color: textOnTheme, fontWeight: 700 }
                             : td && !sel
@@ -1128,7 +1254,7 @@ const ServiceBooking = () => {
                               <p className="text-xs text-gray-400 mt-1">Try another date — there's bound to be a good one.</p>
                             </div>
                           ) : (
-                            <div className="grid grid-cols-2 gap-2 max-h-[320px] overflow-y-auto pr-1 bas-fade">
+                            <div className="grid grid-cols-3 gap-2 max-h-[276px] overflow-y-auto pr-1 bas-fade">
                               {timeSlots.map((t) => (
                                 <button
                                   key={t}
@@ -1174,155 +1300,167 @@ const ServiceBooking = () => {
 
           {/* STEP: details */}
           {!finalizing && step === "details" && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
-              <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]" style={{ "--tc": tc }}>
+              <div className="flex items-start justify-between gap-4 mb-4">
                 <button
                   onClick={() => setStep("time")}
-                  className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-shrink-0"
+                  className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 flex-shrink-0 mt-1 font-medium"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                   Back
                 </button>
-                <h2 className="text-xl font-bold truncate">Tell us who's coming</h2>
+                <div className="text-right">
+                  <h2 className="text-xl sm:text-2xl font-bold leading-tight">Tell us who's coming</h2>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-0.5">We just need a few quick details to confirm your booking.</p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* LEFT: Booking Summary */}
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-5">
+                {/* LEFT: Booking Summary — icon-chip card */}
                 <div className="order-2 lg:order-1">
-                  <h3 className="font-semibold mb-3 text-sm text-gray-700">Here's your booking</h3>
-                  <div className="border rounded p-4 text-sm space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Service</span>
-                      <span className="font-medium text-right">{service.title}</span>
-                    </div>
-                    <div className="flex justify-between border-t pt-3">
-                      <span className="text-gray-500">Date</span>
-                      <span>{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
-                    </div>
-                    <div className="flex justify-between border-t pt-3">
-                      <span className="text-gray-500">Time</span>
-                      <span>
-                        {formatTime(selectedTime)} – {formatTime(getEndTime(selectedTime))}{" "}
-                        <span className="text-gray-400 text-xs">({tzAbbr})</span>
-                      </span>
-                    </div>
-                    {isPaid && (
-                      <div className="flex justify-between border-t pt-3">
-                        <span className="text-gray-500 flex items-center gap-1">
-                          Platform Fee (₹{fees.platformFee} + GST)
-                          <span className="relative group inline-flex">
-                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[10px] font-bold leading-none cursor-help"
-                              style={{ background: tc }}>i</span>
-                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 rounded-2xl bg-gray-950 text-white text-xs p-4 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-10 shadow-2xl shadow-black/40 border border-white/10 backdrop-blur-sm">
-                              <span className="flex items-start gap-2.5">
-                                <svg className="w-3.5 h-3.5 mt-px shrink-0 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1a9 9 0 100 18A9 9 0 0010 1zm.75 13.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V5.5h1.5V11.5z"/></svg>
-                                <span className="leading-relaxed text-white/85 tracking-wide">This fee secures your slot, handles payments, sends reminders, and adds the session to your calendar.</span>
-                              </span>
-                              <span className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-gray-950"></span>
-                            </span>
-                          </span>
+                  <div className="rounded border border-gray-200 bg-white">
+                    <div className="p-4 space-y-0.5">
+                      {/* Service */}
+                      <div className="flex items-center gap-3 py-2">
+                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
-                        <span>₹{fees.bookingFee}</span>
+                        <span className="font-semibold text-[15px] leading-snug">{service.title}</span>
                       </div>
-                    )}
-                    <div className="flex justify-between border-t pt-3 font-semibold text-base">
-                      <span>Total Amount</span>
-                      <span style={{ color: tc }}>
+                      {/* Date */}
+                      <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
+                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </span>
+                        <span className="font-medium text-[15px]">{selectedDate?.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
+                      </div>
+                      {/* Time */}
+                      <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
+                        <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </span>
+                        <span className="font-medium text-[15px]">
+                          {formatTime(selectedTime)} – {formatTime(getEndTime(selectedTime))}{" "}
+                          <span className="text-gray-400 text-xs font-normal">({tzAbbr})</span>
+                        </span>
+                      </div>
+                      {/* Platform fee */}
+                      {isPaid && (
+                        <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: `${tc}14` }}>
+                          <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                          </span>
+                          <span className="flex-1 flex items-center justify-between gap-2">
+                            <span className="text-[15px] text-gray-600 flex items-center gap-1.5">
+                              Platform Fee (₹{fees.platformFee} + GST)
+                              <span className="relative group inline-flex">
+                                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[10px] font-bold leading-none cursor-help"
+                                  style={{ background: tc }}>i</span>
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 rounded-2xl bg-gray-950 text-white text-xs p-4 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-10 shadow-2xl shadow-black/40 border border-white/10 backdrop-blur-sm">
+                                  <span className="flex items-start gap-2.5">
+                                    <svg className="w-3.5 h-3.5 mt-px shrink-0 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1a9 9 0 100 18A9 9 0 0010 1zm.75 13.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V5.5h1.5V11.5z"/></svg>
+                                    <span className="leading-relaxed text-white/85 tracking-wide">This fee secures your slot, handles payments, sends reminders, and adds the session to your calendar.</span>
+                                  </span>
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-gray-950"></span>
+                                </span>
+                              </span>
+                            </span>
+                            <span className="font-semibold text-[15px]">₹{fees.bookingFee}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Total band */}
+                    <div className="flex items-center justify-between px-4 py-3 rounded-b" style={{ background: `${tc}17` }}>
+                      <span className="font-bold text-[16px]">Total Amount</span>
+                      <span className="font-bold text-[20px]" style={{ color: tc }}>
                         {isPaid ? `₹${Math.round((service.price + fees.bookingFee) * 100) / 100}` : "Free"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* RIGHT: Customer Information */}
-                <div className="order-1 lg:order-2 space-y-4">
-                  <h3 className="font-semibold mb-3 text-sm text-gray-700">Your details</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">First Name</label>
-                      <input type="text" required className="fb-input fb-input--sm" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Last Name</label>
-                      <input type="text" className="fb-input fb-input--sm" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                {/* RIGHT: Customer Information — floating-label fields */}
+                <div className="order-1 lg:order-2 space-y-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <FloatingInput id="bk-first" label="First Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name" />
+                    <FloatingInput id="bk-last" label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <FloatingInput id="bk-email" label="Email Address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+                    {/* Mobile: country dial-code select + national number; sent as fullPhone. */}
+                    <div className="relative">
+                      <div className="flex items-stretch rounded border-2 overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
+                        <select
+                          aria-label="Country code"
+                          className="w-[64px] shrink-0 bg-gray-50 text-sm font-medium text-gray-700 border-r-2 pl-2 pr-0.5 outline-none cursor-pointer"
+                          style={{ borderColor: "var(--color-line)" }}
+                          value={dialCode}
+                          onChange={(e) => setDialCode(e.target.value)}
+                        >
+                          {DIAL_CODES.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                        <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-2 bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                      </div>
+                      <label htmlFor="bk-phone" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
+                        Mobile Number<span style={{ color: "#e42527" }}> *</span>
+                      </label>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Email Address</label>
-                    <input type="email" required className="fb-input fb-input--sm" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <FloatingInput id="bk-address" label="Address" value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
+                    {/* Searchable state — native datalist gives type-to-filter. */}
+                    <div className="relative">
+                      <input
+                        id="bk-state"
+                        list="in-states"
+                        placeholder="State"
+                        autoComplete="off"
+                        className="peer fb-input fb-input--sm !rounded placeholder-transparent"
+                        value={billing.state}
+                        onChange={(e) => {
+                          const name = e.target.value;
+                          const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
+                          setBilling((b) => ({ ...b, state: name, state_code: code }));
+                        }}
+                      />
+                      <datalist id="in-states">
+                        {INDIAN_STATES.map((s) => (
+                          <option key={s.code} value={s.name} />
+                        ))}
+                      </datalist>
+                      <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+                        peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+                        peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
+                        State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
+                      </label>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Mobile Number</label>
-                    <input type="tel" required placeholder="+91 98765 43210" className="fb-input fb-input--sm" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                    <p className="text-xs text-gray-400 mt-1">Code sent via WhatsApp.</p>
+                  {/* Optional GSTIN — full width, under Address/State */}
+                  <FloatingInput id="bk-gstin" label="GSTIN (optional)" value={billing.gstin}
+                    onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
+
+                  {/* Notes — plain optional box, full width */}
+                  <div className="relative">
+                    <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
+                      className="peer fb-input fb-input--sm !rounded resize-none !min-h-0 !h-[88px]"
+                      value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
+                      Notes <span className="font-normal text-gray-400">(Optional)</span>
+                    </label>
                   </div>
                 </div>
-              </div>
-
-              {/* Notes — full width, single line */}
-              <div className="mt-6">
-                <label className="block text-sm font-medium mb-1">Notes</label>
-                <input type="text" placeholder="Any specific requirements..." className="fb-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
-              </div>
-
-              {/* Billing state (required for paid bookings — GST place of supply) + optional GST invoice */}
-              <div className="mt-3 border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50/60">
-                {isPaid && (
-                  <div className="mb-3">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Billing state <span style={{ color: "#e42527" }}>*</span>
-                    </label>
-                    <select
-                      className="fb-input fb-input--sm w-full"
-                      value={billing.state_code}
-                      onChange={(e) => {
-                        const code = e.target.value;
-                        const name = INDIAN_STATES.find((s) => s.code === code)?.name || "";
-                        setBilling((b) => ({ ...b, state_code: code, state: name }));
-                      }}
-                    >
-                      <option value="">Select your state…</option>
-                      {INDIAN_STATES.map((s) => (
-                        <option key={s.code} value={s.code}>{s.name}</option>
-                      ))}
-                    </select>
-                    <span className="block text-[11px] text-gray-400 mt-1">Determines your GST place of supply on the tax invoice</span>
-                  </div>
-                )}
-                <label className="flex items-start gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={wantGst}
-                    onChange={(e) => setWantGst(e.target.checked)}
-                    className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-gray-300 accent-current cursor-pointer"
-                    style={{ accentColor: tc }}
-                  />
-                  <span className="leading-tight">
-                    <span className="block text-xs font-medium text-gray-700">Need a GST invoice?</span>
-                    <span className="block text-[11px] text-gray-400">For businesses claiming input tax credit</span>
-                  </span>
-                </label>
-                {wantGst && (
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <input className="fb-input fb-input--sm" placeholder="Business / legal name"
-                      value={billing.name} onChange={(e) => setBilling((b) => ({ ...b, name: e.target.value }))} />
-                    <input className="fb-input fb-input--sm" placeholder="GSTIN (optional)"
-                      value={billing.gstin} onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
-                    <input className="fb-input fb-input--sm sm:col-span-2" placeholder="Billing address"
-                      value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} />
-                    <input className="fb-input fb-input--sm sm:col-span-2" placeholder="PAN (optional)"
-                      value={billing.pan} onChange={(e) => setBilling((b) => ({ ...b, pan: e.target.value.toUpperCase() }))} />
-                  </div>
-                )}
               </div>
 
               {/* Full-width Continue */}
               <button
                 onClick={handleSendOtp}
                 disabled={otpSending || verifying || !firstName || !email || (!user && !isPhoneValid) || (isPaid && !billing.state_code)}
-                className="btn mt-6 w-full py-3 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="btn mt-4 w-full py-2.5 font-bold text-sm transition-opacity hover:opacity-85 disabled:opacity-50"
                 style={{ background: tc, color: textOnTheme }}
               >
                 {otpSending || verifying
@@ -1333,15 +1471,15 @@ const ServiceBooking = () => {
                     : "Confirm Booking"
                   : "Send my code"}
               </button>
-              <p className="mt-3 text-center text-xs text-gray-400">
-                🔒 Free to cancel · We'll never spam you
+              <p className="mt-2 text-center text-xs text-gray-400">
+                Free to cancel · We'll never spam you
               </p>
             </div>
           )}
 
           {/* STEP: otp */}
           {!finalizing && step === "otp" && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <button
                 onClick={() => setStep("details")}
                 className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-6"
@@ -1372,18 +1510,9 @@ const ServiceBooking = () => {
               </div>
               <h2 className="text-xl font-bold mb-2">Check your messages</h2>
               <p className="text-sm text-gray-500 mb-6">
-                We sent a 6-digit code to <strong>{phone}</strong> on WhatsApp.
+                We sent a 6-digit code to <strong>{fullPhone}</strong> on WhatsApp.
               </p>
-              <input
-                type="text"
-                maxLength={6}
-                placeholder="000000"
-                className="fb-input text-center text-2xl font-bold tracking-widest py-4"
-                style={{ letterSpacing: '0.4em', maxWidth: '280px', margin: '0 auto' }}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                autoFocus
-              />
+              <OtpBoxes value={otp} onChange={setOtp} tc={tc} />
               <button
                 onClick={handleVerifyAndBook}
                 disabled={verifying || otp.length !== 6}
@@ -1418,7 +1547,7 @@ const ServiceBooking = () => {
               ? Number(confirmation.customer_total)
               : Math.round((service.price + _fee + _gst) * 100) / 100;
             return (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-md mx-auto text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                 style={{ background: `${tc}18` }}>
@@ -1523,7 +1652,7 @@ const ServiceBooking = () => {
               hostName: host.name,
               guestName: `${firstName} ${lastName}`.trim(),
               guestEmail: email,
-              customerPhone: phone,
+              customerPhone: fullPhone,
               status: confirmation.status,
               paymentStatus: confirmation.payment_status,
               paymentId: confirmation.payment_id,
@@ -1550,7 +1679,7 @@ const ServiceBooking = () => {
             const docIcon = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6" strokeLinejoin="round"/></svg>;
             const mailIcon = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6" strokeLinecap="round" strokeLinejoin="round"/></svg>;
             return (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-7 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded p-4 sm:p-6 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
               <div className="max-w-3xl mx-auto">
                 {/* Top: two columns — success message | booking details. Stacks on mobile. */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center">
@@ -1563,13 +1692,13 @@ const ServiceBooking = () => {
                     <p className="text-sm text-gray-500 mb-5 bas-fade">
                       See you {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
                     </p>
-                    <div className="flex items-center gap-3 border border-gray-100 rounded-xl p-3 bg-gray-50/40 text-left">
+                    <div className="flex items-center gap-3 border border-gray-100 rounded p-3 bg-gray-50/40 text-left">
                       <span style={{ color: tc }}>{mailIcon}</span>
                       <span className="text-xs text-gray-500 leading-snug">Confirmation email sent to<br /><span className="text-gray-700 font-medium break-all">{email}</span></span>
                     </div>
                   </div>
                   {/* RIGHT: booking details */}
-                  <div className="border border-gray-100 rounded-xl px-4 py-1.5 text-sm text-left divide-y divide-gray-100 bg-gray-50/40">
+                  <div className="border border-gray-100 rounded px-4 py-1.5 text-sm text-left divide-y divide-gray-100 bg-gray-50/40">
                     <Row icon={calIcon} label="Service">{service.title}</Row>
                     <Row icon={calIcon} label="Date">{selectedDate?.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</Row>
                     <Row icon={clockIcon} label="Time">{formatTime(selectedTime)} ({tzAbbr})</Row>
