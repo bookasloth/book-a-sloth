@@ -277,6 +277,16 @@ function BlogsRedirect() {
   return <Navigate to={slug ? `/blog/${slug}` : '/blog'} replace />;
 }
 
+// A logged-in host landing on "/" wants their dashboard, not the marketing
+// homepage. Guests still get Home (they book from it). Prerender/crawlers have
+// no session → user is null → Home renders normally, so SEO is untouched.
+function HomeGate() {
+  const { user } = useAuth();
+  const isHost = user?.is_host === true || user?.role === 'host' || user?.role === 'superadmin';
+  if (isHost) return <Navigate to="/dashboard" replace />;
+  return <Home />;
+}
+
 function App() {
   const location = useLocation();
   const { user } = useAuth();
@@ -351,7 +361,7 @@ function App() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public */}
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HomeGate />} />
           {/* Paid-traffic landing pages — own header/footer, nav hidden */}
           <Route path="/lp/topmate-vs-bookasloth" element={<TopmateVsBookASloth />} />
           <Route path="/lp/calendly-alternative" element={<CalendlyAlternative />} />

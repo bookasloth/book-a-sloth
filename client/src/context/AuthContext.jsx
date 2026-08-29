@@ -78,17 +78,49 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
 
-    // Cross-tab SIGNED_OUT sync. Supabase is dynamic-imported, so register the
-    // listener once the client resolves (after first paint). `cancelled` guards
-    // against the effect cleanup running before the import settles.
+    // Session lifecycle. Supabase is dynamic-imported, so this runs once the
+    // client resolves (after first paint). `cancelled` guards against the effect
+    // cleanup running before the import settles.
     let subscription = null;
     let cancelled = false;
     getSupabase().then((sb) => {
       if (cancelled) return;
-      subscription = sb.auth.onAuthStateChange((event) => {
+
+      // Hand our stored tokens to supabase so IT owns the refresh loop: the
+      // access token now refreshes silently in the background (~55min) and
+      // across tabs, instead of only reactively on a 401. If the access token
+      // is already expired but the refresh token is still valid, setSession
+      // refreshes immediately and emits TOKEN_REFRESHED below — recovering the
+      // "reopened the tab after idling past an hour" case with no logout.
+      if (parsed?.token && parsed?.refresh_token) {
+        sb.auth.setSession({
+          access_token: parsed.token,
+          refresh_token: parsed.refresh_token,
+        }).catch(() => { /* invalid/expired refresh token — 401 interceptor handles logout */ });
+      }
+
+      subscription = sb.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT') {
           localStorage.removeItem('user');
           setUser(null);
+          return;
+        }
+        // Background/cross-tab refresh landed — mirror the fresh tokens into
+        // localStorage.user (the shape api.js reads for the Bearer header) and
+        // into React state. Merge onto the LATEST stored profile, not the stale
+        // boot-time closure, so a concurrent getMe() write isn't clobbered.
+        if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && session) {
+          try {
+            const current = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!current) return; // logged out meanwhile — don't resurrect
+            const merged = {
+              ...current,
+              token: session.access_token,
+              refresh_token: session.refresh_token,
+            };
+            localStorage.setItem('user', JSON.stringify(merged));
+            setUser(merged);
+          } catch { /* non-fatal */ }
         }
       }).data.subscription;
     });

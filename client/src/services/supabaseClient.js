@@ -15,6 +15,24 @@ export function getSupabase() {
       createClient(
         import.meta.env.VITE_SUPABASE_URL,
         import.meta.env.VITE_SUPABASE_ANON_KEY,
+        {
+          auth: {
+            // Own the session so the access token refreshes in the BACKGROUND
+            // (~55min) instead of only reactively on a 401 — hosts stop getting
+            // logged out every hour. persistSession + the dedicated storageKey
+            // let supabase-js coordinate refresh ACROSS TABS via its internal
+            // lock, so two tabs can't both rotate the same refresh token and
+            // trip reuse-detection (which used to revoke the whole token family
+            // → hard logout). AuthContext seeds this via setSession() on boot
+            // and mirrors refreshed tokens back into localStorage.user.
+            autoRefreshToken: true,
+            persistSession: true,
+            storageKey: 'bas_sb_session',
+            // We adopt tokens from the OAuth callback FRAGMENT ourselves
+            // (GoogleAuthDone), so supabase must not race us parsing the URL.
+            detectSessionInUrl: false,
+          },
+        },
       ),
     );
   }

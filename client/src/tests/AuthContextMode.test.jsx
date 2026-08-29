@@ -15,6 +15,7 @@ vi.mock('../services/supabaseClient', () => ({
   getSupabase: () => Promise.resolve({
     auth: {
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      setSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
       signOut: vi.fn(),
     },
   }),
