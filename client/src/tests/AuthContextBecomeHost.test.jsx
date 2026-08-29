@@ -17,7 +17,7 @@ vi.mock('../services/api', () => ({
   becomeHost: becomeHostMock,
 }));
 vi.mock('../services/supabaseClient', () => ({
-  getSupabase: () => Promise.resolve({ auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }), signOut: vi.fn() } }),
+  getSupabase: () => Promise.resolve({ auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }), setSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }), signOut: vi.fn() } }),
 }));
 
 import { AuthProvider, useAuth } from '../context/AuthContext';
