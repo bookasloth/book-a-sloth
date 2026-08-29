@@ -190,12 +190,7 @@ const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
 };
 
 // Country dial codes offered on the phone field (India default).
-const DIAL_CODES = [
-  { code: "+91", label: "IN +91" },
-  { code: "+1", label: "US +1" },
-  { code: "+44", label: "UK +44" },
-  { code: "+971", label: "AE +971" },
-];
+const DIAL_CODES = ["+91", "+1", "+44", "+971"];
 
 // Floating-label text input: label rests centered inside an empty field and
 // animates up onto the top border on focus / when filled. Uses the CSS `peer`
@@ -1339,13 +1334,13 @@ const ServiceBooking = () => {
                       <div className="flex items-stretch rounded border-2 overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
                         <select
                           aria-label="Country code"
-                          className="bg-gray-50 text-sm font-medium text-gray-700 border-r-2 pl-3 pr-1 outline-none cursor-pointer"
+                          className="w-[64px] shrink-0 bg-gray-50 text-sm font-medium text-gray-700 border-r-2 pl-2 pr-0.5 outline-none cursor-pointer"
                           style={{ borderColor: "var(--color-line)" }}
                           value={dialCode}
                           onChange={(e) => setDialCode(e.target.value)}
                         >
                           {DIAL_CODES.map((c) => (
-                            <option key={c.code} value={c.code}>{c.label}</option>
+                            <option key={c} value={c}>{c}</option>
                           ))}
                         </select>
                         <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-[0.8rem] bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
