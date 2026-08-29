@@ -450,6 +450,33 @@ const TEMPLATES = [
     cta_label: 'View dashboard', cta_url: '{{dashboard_url}}',
   }; })(),
 
+  (() => { const t = themeForCategory('Renewal'); return {
+    event_key: 'SUBSCRIPTION_HALTED', audience: 'vendor', category: 'Subscription', sender_key: 'tithi',
+    name: 'Subscription Payment Failed', subject: "Your renewal didn't go through",
+    preview_text: 'Update your payment to keep your plan and 0% commission.',
+    email_category: 'Renewal',
+    email_reason: 'You are receiving this email because an automatic renewal charge for your Book A Sloth subscription could not be completed.',
+    html_content:
+      eyebrow(t.text, 'Action needed') + h("Your renewal didn't go through, {{first_name}}") +
+      lead("We tried to charge your {{plan_name}} renewal a few times and it didn't go through. Your plan is paused — update your payment method to keep it (and your 0% commission).") +
+      note('If you meant to cancel, no action is needed — your plan simply ends at the current period.'),
+    cta_label: 'Update payment', cta_url: '{{dashboard_url}}',
+  }; })(),
+
+  (() => { const t = themeForCategory('Payment Receipt'); return {
+    event_key: 'REFERRAL_REWARD_RELEASED', audience: 'vendor', category: 'Payments',
+    name: 'Referral Reward Released', subject: 'You earned a referral reward 🎉',
+    preview_text: 'Your referral reward is now in your withdrawable balance.',
+    email_category: 'Payment Receipt',
+    email_reason: 'You are receiving this email because a referral reward was credited to your Book A Sloth account.',
+    html_content:
+      eyebrow(t.text, 'Referral') + h('Nice — you earned {{reward_amount}}, {{first_name}}') +
+      lead('Someone you referred stuck around, so your referral reward has been released to your withdrawable balance.') +
+      C.infoCard(t, [['Reward', '{{reward_amount}}'], ['Status', 'Added to withdrawable balance']]) +
+      lead('Refer more hosts and keep earning.'),
+    cta_label: 'View referrals', cta_url: '{{dashboard_url}}',
+  }; })(),
+
   // ── Celebrations ─────────────────────────────────────────────────────────────
 
   (() => { const t = themeForCategory('Community Update'); return {
