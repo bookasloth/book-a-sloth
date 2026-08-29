@@ -17,7 +17,7 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 const NotificationEngine = require('./notificationEngine');
-const { inAppNotify } = require('../utils/inAppNotify');
+const { inAppNotify, resolveInApp } = require('../utils/inAppNotify');
 const routeAccountService = require('./routeAccountService');
 const platformConfig = require('./platformConfig');
 
@@ -58,6 +58,10 @@ function onKycApproved({ userId, email, fullName, reviewNote } = {}) {
     body: 'Your identity verification was approved. Payouts are unlocked.',
     link: '/dashboard/payments/payouts',
   });
+
+  // A prior "KYC rejected" bell no longer applies now that it's approved — resolve
+  // it so it stops nagging (clears from unread + stamps resolved_at).
+  resolveInApp({ userId, type: 'KYC_REJECTED' });
 
   // Create the Route linked account (needs the full encrypted row for PAN/bank/address).
   // Self-gating + idempotent (routeAccountService no-ops in fee-only mode / when already
