@@ -250,7 +250,6 @@ const ServiceBooking = () => {
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [notesOpen, setNotesOpen] = useState(false); // collapsible Notes accordion
-  const [wantGst, setWantGst] = useState(false);
   const [billing, setBilling] = useState({
     name: user?.billing_details?.name || "",
     address: user?.billing_details?.address || "",
@@ -1355,31 +1354,10 @@ const ServiceBooking = () => {
                 )}
               </div>
 
-              {/* Optional GST invoice (billing state now lives in the form above) */}
-              <div className="mt-3 border border-gray-200 rounded px-4 py-3 bg-gray-50/60">
-                <label className="flex items-start gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={wantGst}
-                    onChange={(e) => setWantGst(e.target.checked)}
-                    className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-gray-300 accent-current cursor-pointer"
-                    style={{ accentColor: tc }}
-                  />
-                  <span className="leading-tight">
-                    <span className="block text-xs font-medium text-gray-700">Need a GST invoice?</span>
-                    <span className="block text-[11px] text-gray-400">For businesses claiming input tax credit</span>
-                  </span>
-                </label>
-                {wantGst && (
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <input className="fb-input fb-input--sm !rounded" placeholder="Business / legal name"
-                      value={billing.name} onChange={(e) => setBilling((b) => ({ ...b, name: e.target.value }))} />
-                    <input className="fb-input fb-input--sm !rounded" placeholder="GSTIN (optional)"
-                      value={billing.gstin} onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
-                    <input className="fb-input fb-input--sm !rounded sm:col-span-2" placeholder="PAN (optional)"
-                      value={billing.pan} onChange={(e) => setBilling((b) => ({ ...b, pan: e.target.value.toUpperCase() }))} />
-                  </div>
-                )}
+              {/* Optional GSTIN — for businesses that want it on the invoice */}
+              <div className="mt-4">
+                <FloatingInput id="bk-gstin" label="GSTIN (optional)" value={billing.gstin}
+                  onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
               </div>
 
               {/* Full-width Continue */}
