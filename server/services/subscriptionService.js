@@ -526,9 +526,31 @@ async function crmSubEvent(rzpSubId, type, title, meta = {}, opts = {}) {
 /** subscription.halted — repeated charge failure. Keep plan flag, mark halted. */
 async function markHalted(rzpSub) {
   if (!rzpSub?.id) return;
-  await supabaseAdmin.from('profiles')
+  const { data: hosts } = await supabaseAdmin.from('profiles')
     .update({ subscription_status: 'halted', updated_at: new Date().toISOString() })
-    .eq('razorpay_subscription_id', rzpSub.id);
+    .eq('razorpay_subscription_id', rzpSub.id)
+    .select('id, name, email, plan');
+  // Transactional notice to the host: a failed renewal silently paused their plan.
+  // (The CRM WhatsApp nudge below is gated by the crm_admin_sends kill-switch —
+  // this is the un-gated email + in-app the host always gets.) Never throws.
+  const host = hosts && hosts[0];
+  if (host) {
+    const firstName = (host.name || '').split(' ')[0] || 'there';
+    await NotificationEngine.send({
+      event: 'SUBSCRIPTION_HALTED',
+      data: {
+        email: host.email, name: host.name,
+        recipientUserId: host.id,
+        emailUser: { name: host.name, email: host.email },
+        emailData: { first_name: firstName, plan_name: host.plan || 'your plan' },
+        inApp: {
+          title: 'Renewal payment failed',
+          body: 'Your plan is paused — update your payment method to keep it.',
+          link: '/dashboard/upgrade',
+        },
+      },
+    });
+  }
   await crmSubEvent(rzpSub.id, 'subscription_payment_failed', 'Subscription halted — payment failing', {}, {
     followUp: { key: 'auto:payment_failed', title: 'Payment failing — reach out to retain', dueInDays: 0 },
     // Same-day urgent WhatsApp — AiSensy Campaign Name (approved).

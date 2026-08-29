@@ -29,6 +29,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const aisensy = require('./aisensyService');
 const communicationEngine = require('./email/communicationEngine');
+const { inAppNotify } = require('../utils/inAppNotify');
 const { isLoadTestMode } = require('../config/loadTestMode');
 
 const CACHE_TTL_MS = 60 * 1000;
@@ -74,7 +75,8 @@ const VENDOR_EVENTS = new Set([
   'PAYOUT_SENT', 'PAYOUT_VERIFICATION_NEEDED', 'PAYOUT_FAILED', 'EARNING_REVERSED', 'PAYOUT_DELAY_HOLIDAY',
   'BADGE_UNLOCKED',
   'MILESTONE_FIRST_BOOKING', 'MILESTONE_10_BOOKINGS', 'MILESTONE_50_BOOKINGS', 'MILESTONE_100_BOOKINGS',
-  'SUBSCRIPTION_PURCHASED', 'SUBSCRIPTION_EXPIRING', 'SUBSCRIPTION_RENEWED',
+  'SUBSCRIPTION_PURCHASED', 'SUBSCRIPTION_EXPIRING', 'SUBSCRIPTION_RENEWED', 'SUBSCRIPTION_HALTED',
+  'REFERRAL_REWARD_RELEASED',
 ]);
 
 /**
@@ -120,7 +122,7 @@ const send = async ({ event, data = {} }) => {
       email: { attempted: false, success: true, stub: true },
     };
   }
-  const results = { event, whatsapp: { attempted: false }, email: { attempted: false } };
+  const results = { event, whatsapp: { attempted: false }, email: { attempted: false }, inApp: { attempted: false } };
   if (!event) return results;
 
   let cfg;
@@ -131,9 +133,13 @@ const send = async ({ event, data = {} }) => {
   }
 
   const evt = cfg.events.get(event);
-  // Defaults when event row missing / schema missing: email on, whatsapp off
+  // Defaults when event row missing / schema missing: email on, whatsapp off.
+  // In-app defaults ON (a caller only reaches it by explicitly passing data.inApp),
+  // so new in-app notes work before v3.130 is applied; once the row exists the
+  // admin-set in_app_enabled flag wins.
   const emailEnabled    = evt ? !!evt.email_enabled && !!evt.is_active : true;
   const whatsappEnabled = evt ? !!evt.whatsapp_enabled && !!evt.is_active : false;
+  const inAppEnabled    = evt ? !!evt.in_app_enabled && !!evt.is_active : true;
 
   // ── WhatsApp via AiSensy ─────────────────────────────────────
   const provider = cfg.providers.get('aisensy');
@@ -223,6 +229,25 @@ const send = async ({ event, data = {} }) => {
       status: r.status === 'sent' ? 'sent' : (r.status === 'queued' ? 'pending' : 'failed'),
       error: r.error || r.reason || null,
       payload: { via: 'communicationEngine', logId: r.logId || null },
+    });
+  }
+
+  // ── In-app feed (bell) ───────────────────────────────────────
+  // Fires when the caller supplies data.inApp {title, body?, link?} and the event
+  // permits it — the same one-call fan-out as email/WhatsApp, so a lifecycle event
+  // no longer needs a separate hand-written inAppNotify at the call-site. inAppNotify
+  // itself is fire-and-forget and never throws into this path.
+  if (inAppEnabled && data.recipientUserId && data.inApp && data.inApp.title) {
+    const role = inferAudience(event, data.audience) === 'vendor' ? 'host' : 'guest';
+    inAppNotify({
+      userId: data.recipientUserId, role, type: event,
+      title: data.inApp.title, body: data.inApp.body || null,
+      link: data.inApp.link || null, data: data.inApp.data || {},
+    });
+    results.inApp = { attempted: true, success: true };
+    await logResult({
+      event, channel: 'in_app', destination: String(data.recipientUserId),
+      status: 'sent', payload: { title: data.inApp.title, link: data.inApp.link || null },
     });
   }
 

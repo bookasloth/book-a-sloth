@@ -190,6 +190,34 @@ async function releaseDue(nowMs = Date.now()) {
       .update({ status: 'rewarded', rewarded_at: ts, updated_at: ts })
       .eq('id', r.id).eq('status', 'qualified');
     released++;
+
+    // Tell the referrer they earned — the whole loop's payoff was invisible before.
+    // Cash rewards only (account_credit isn't spendable yet). Best-effort; a notify
+    // failure must not leave the row un-rewarded, so it's after the status flip.
+    if (r.reward_type === 'cash_inr' && Number(r.reward_value) > 0) {
+      try {
+        const { data: referrer } = await supabaseAdmin
+          .from('profiles').select('id, name, email').eq('id', r.referrer_id).maybeSingle();
+        if (referrer) {
+          const firstName = (referrer.name || '').split(' ')[0] || 'there';
+          const amount = `₹${Number(r.reward_value).toLocaleString('en-IN')}`;
+          await require('./notificationEngine').send({
+            event: 'REFERRAL_REWARD_RELEASED',
+            data: {
+              email: referrer.email, name: referrer.name,
+              recipientUserId: referrer.id,
+              emailUser: { name: referrer.name, email: referrer.email },
+              emailData: { first_name: firstName, reward_amount: amount },
+              inApp: {
+                title: 'Referral reward released',
+                body: `You earned ${amount} — it's in your withdrawable balance.`,
+                link: '/dashboard/referrals',
+              },
+            },
+          });
+        }
+      } catch (e) { console.error(`referral reward notify failed (${r.id}):`, e.message); }
+    }
   }
   return { released, clawed };
 }
