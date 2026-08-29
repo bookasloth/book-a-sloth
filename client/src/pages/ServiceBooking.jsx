@@ -936,30 +936,30 @@ const ServiceBooking = () => {
 
         {/* ── RIGHT: Booking Engine ── */}
         <div className="flex-1 min-w-0 flex flex-col">
-          {/* Progress bar — full width, icon per step */}
-          <div className="mb-4 flex items-start w-full">
+          {/* Progress bar — icons only; solid brand + border when active, grey linear when not */}
+          <div className="mb-4 flex items-center w-full">
             {STEPS.map((s, i) => {
               const idx = STEPS.indexOf(step);
               const active = i <= idx;
               const done = i < idx;
               return (
-                <div key={s} className={`flex items-start ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
-                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                      style={{ background: active ? tc : '#e5e7eb', color: active ? textOnTheme : '#9ca3af' }}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2}
-                        strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                        {STEP_ICONS[s]}
-                      </svg>
-                    </div>
-                    <span className="text-[11px] whitespace-nowrap transition-colors"
-                      style={{ color: active ? tc : '#9ca3af', fontWeight: active ? 600 : 400 }}>
-                      {LABELS[s]}
-                    </span>
+                <div key={s} className={`flex items-center ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-colors"
+                    style={active
+                      ? { background: tc, color: textOnTheme, borderColor: tc }
+                      : { background: '#fff', color: '#9ca3af', borderColor: '#d1d5db' }}
+                    title={LABELS[s]}
+                    aria-label={LABELS[s]}
+                  >
+                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor"
+                      strokeWidth={active ? 2.4 : 1.8}
+                      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      {STEP_ICONS[s]}
+                    </svg>
                   </div>
                   {i < STEPS.length - 1 && (
                     <div className="flex-1 h-0.5 mx-2 transition-colors"
-                      style={{ marginTop: 15, background: done ? tc : '#e5e7eb' }} />
+                      style={{ background: done ? tc : '#e5e7eb' }} />
                   )}
                 </div>
               );
