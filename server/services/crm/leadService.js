@@ -225,10 +225,13 @@ function computeAccountFacts({ profile = {}, plan = null, earningsPaise = 0, has
   const slug = planService.resolveVendorPlan ? planService.resolveVendorPlan(profile) : profile.plan;
   const isFree = planService.isFreeSlug ? planService.isFreeSlug(slug) : false;
   const isComped = planService.isCompedSlug ? planService.isCompedSlug(slug) : false;
-  // Paid = a real paid plan (not free, not comped/Supreme) WITH activation evidence —
-  // a Razorpay subscription, a real charge, or plan_activated_at (covers legacy annual
-  // subs) — and not cancelled.
-  const hasActivation = !!profile.razorpay_subscription_id || subsCount > 0 || !!profile.plan_activated_at;
+  // Paid = a real paid plan (not free, not comped/Supreme) WITH *money* evidence —
+  // a Razorpay subscription id or an actual paid charge — and not cancelled. Real
+  // annual subscribers (legacy included) always carry a razorpay_subscription_id, so
+  // this covers them. `plan_activated_at` is NOT accepted: it is stamped by onboarding /
+  // admin without any payment, which silently flooded Customer Relations with unpaid
+  // hosts (see fix/crm-phantom-paid-relations).
+  const hasActivation = !!profile.razorpay_subscription_id || subsCount > 0;
   const isPaid = !isFree && !isComped && hasActivation && profile.subscription_status !== 'cancelled';
 
   // Plan price for the cadence they actually bought (monthly → monthly, else annual).

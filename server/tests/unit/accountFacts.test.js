@@ -32,8 +32,10 @@ describe('computeAccountFacts — isPaid (#7)', () => {
   test('paid plan + only a charge (no sub id) → paid (legacy monthly)', () => {
     expect(computeAccountFacts({ profile: { plan: 'creator', subscription_status: 'active' }, plan: planPro, subsCount: 1 }).isPaid).toBe(true);
   });
-  test('paid plan + only plan_activated_at → paid (backfilled legacy annual)', () => {
-    expect(computeAccountFacts({ profile: { plan: 'professional', plan_activated_at: '2025-01-01' }, plan: planPro }).isPaid).toBe(true);
+  test('paid plan + only plan_activated_at (no Razorpay evidence) → NOT paid', () => {
+    // plan_activated_at is stamped by onboarding/admin without any charge, so it is
+    // no longer accepted as money evidence — real annual subs carry a sub id.
+    expect(computeAccountFacts({ profile: { plan: 'professional', plan_activated_at: '2025-01-01' }, plan: planPro }).isPaid).toBe(false);
   });
   test('free plan → NOT paid', () => {
     expect(computeAccountFacts({ profile: { plan: 'starter', plan_activated_at: '2025-01-01' }, plan: planPro }).isPaid).toBe(false);
