@@ -205,7 +205,7 @@ const FloatingInput = ({ id, label, type = "text", value, onChange, required, au
       placeholder={label}
       value={value}
       onChange={onChange}
-      className="peer fb-input !rounded placeholder-transparent"
+      className="peer fb-input fb-input--sm !rounded placeholder-transparent"
     />
     <label
       htmlFor={id}
@@ -1343,7 +1343,7 @@ const ServiceBooking = () => {
                             <option key={c} value={c}>{c}</option>
                           ))}
                         </select>
-                        <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-[0.8rem] bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                        <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-2 bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
                       </div>
                       <label htmlFor="bk-phone" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
                         Mobile Number<span style={{ color: "#e42527" }}> *</span>
@@ -1359,7 +1359,7 @@ const ServiceBooking = () => {
                         list="in-states"
                         placeholder="State"
                         autoComplete="off"
-                        className="peer fb-input !rounded placeholder-transparent"
+                        className="peer fb-input fb-input--sm !rounded placeholder-transparent"
                         value={billing.state}
                         onChange={(e) => {
                           const name = e.target.value;
@@ -1385,8 +1385,8 @@ const ServiceBooking = () => {
 
                   {/* Notes — plain optional box, full width */}
                   <div className="relative">
-                    <textarea id="bk-notes" rows={3} placeholder="Add any notes or requests for this booking."
-                      className="peer fb-input !rounded resize-none"
+                    <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
+                      className="peer fb-input fb-input--sm !rounded resize-none !min-h-0 !h-[88px]"
                       value={notes} onChange={(e) => setNotes(e.target.value)} />
                     <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
                       Notes <span className="font-normal text-gray-400">(Optional)</span>
