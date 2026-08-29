@@ -189,6 +189,32 @@ const FinalizingScreen = ({ tc, textOnTheme, isPaid, task, onDone }) => {
   );
 };
 
+// Floating-label text input: label rests centered inside an empty field and
+// animates up onto the top border on focus / when filled. Uses the CSS `peer`
+// pattern — no extra JS. Focus color comes from the --tc var set on the step.
+const FloatingInput = ({ id, label, type = "text", value, onChange, required, autoComplete }) => (
+  <div className="relative">
+    <input
+      id={id}
+      type={type}
+      required={required}
+      autoComplete={autoComplete}
+      placeholder={label}
+      value={value}
+      onChange={onChange}
+      className="peer fb-input !rounded placeholder-transparent"
+    />
+    <label
+      htmlFor={id}
+      className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
+        peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
+        peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]"
+    >
+      {label}{required && <span style={{ color: "#e42527" }}> *</span>}
+    </label>
+  </div>
+);
+
 const ServiceBooking = () => {
   const { profileSlug, serviceSlug } = useParams();
   const { user } = useAuth();
@@ -1175,7 +1201,7 @@ const ServiceBooking = () => {
 
           {/* STEP: details */}
           {!finalizing && step === "details" && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-8 shadow-[0_4px_24px_rgba(30,30,30,0.06)]">
+            <div className="bg-white border border-gray-100 rounded p-5 sm:p-8 shadow-[0_4px_24px_rgba(30,30,30,0.06)]" style={{ "--tc": tc }}>
               <div className="flex items-start justify-between gap-4 mb-7">
                 <button
                   onClick={() => setStep("time")}
@@ -1195,7 +1221,7 @@ const ServiceBooking = () => {
               <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-6">
                 {/* LEFT: Booking Summary — icon-chip card */}
                 <div className="order-2 lg:order-1">
-                  <div className="rounded-2xl overflow-hidden border" style={{ background: `${tc}0a`, borderColor: `${tc}1f` }}>
+                  <div className="rounded overflow-hidden border" style={{ background: `${tc}0a`, borderColor: `${tc}1f` }}>
                     <div className="p-5 space-y-1">
                       {/* Service */}
                       <div className="flex items-center gap-3.5 py-2.5">
@@ -1257,45 +1283,35 @@ const ServiceBooking = () => {
                   </div>
                 </div>
 
-                {/* RIGHT: Customer Information */}
-                <div className="order-1 lg:order-2 space-y-5">
+                {/* RIGHT: Customer Information — floating-label fields */}
+                <div className="order-1 lg:order-2 space-y-5 pt-1">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1.5">First Name</label>
-                      <input type="text" required className="fb-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1.5">Last Name</label>
-                      <input type="text" className="fb-input" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                    </div>
+                    <FloatingInput id="bk-first" label="First Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name" />
+                    <FloatingInput id="bk-last" label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1.5">Email Address</label>
-                      <input type="email" required className="fb-input" value={email} onChange={(e) => setEmail(e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1.5">Mobile Number</label>
+                    <FloatingInput id="bk-email" label="Email Address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+                    {/* Mobile keeps a static floated label — the +91 prefix occupies the inline space an animated label would use. */}
+                    <div className="relative">
                       {/* ponytail: India-only +91 prefix (cosmetic); backend normalizes phone to last-10 */}
-                      <div className="flex items-stretch rounded-[var(--radius-md)] border-2 overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
+                      <div className="flex items-stretch rounded border-2 overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
                         <span className="flex items-center gap-1.5 px-3 bg-gray-50 text-sm font-medium text-gray-700 border-r-2 select-none" style={{ borderColor: "var(--color-line)" }}>
                           <span aria-hidden="true">🇮🇳</span> +91
                         </span>
-                        <input type="tel" required placeholder="98765 43210" className="flex-1 min-w-0 px-3 py-[0.8rem] bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                        <input id="bk-phone" type="tel" required placeholder="98765 43210" className="peer flex-1 min-w-0 px-3 py-[0.8rem] bg-transparent outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} />
                       </div>
+                      <label htmlFor="bk-phone" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
+                        Mobile Number<span style={{ color: "#e42527" }}> *</span>
+                      </label>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1.5">Address</label>
-                      <input type="text" className="fb-input" placeholder="House, street, area" value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1.5">
-                        State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
-                      </label>
+                    <FloatingInput id="bk-address" label="Address" value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
+                    {/* Select can't use placeholder-shown — label stays floated. */}
+                    <div className="relative">
                       <select
-                        className="fb-input"
+                        id="bk-state"
+                        className="peer fb-input !rounded"
                         value={billing.state_code}
                         onChange={(e) => {
                           const code = e.target.value;
@@ -1308,6 +1324,9 @@ const ServiceBooking = () => {
                           <option key={s.code} value={s.code}>{s.name}</option>
                         ))}
                       </select>
+                      <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
+                        State{isPaid && <span style={{ color: "#e42527" }}> *</span>}
+                      </label>
                     </div>
                   </div>
                   <p className="flex items-center gap-1.5 text-xs text-gray-400">
@@ -1318,7 +1337,7 @@ const ServiceBooking = () => {
               </div>
 
               {/* Notes — collapsible accordion */}
-              <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
+              <div className="mt-6 border border-gray-200 rounded overflow-hidden">
                 <button type="button" onClick={() => setNotesOpen((o) => !o)} className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors">
                   <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${tc}1f`, color: tc }}>
                     <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -1331,13 +1350,13 @@ const ServiceBooking = () => {
                 </button>
                 {notesOpen && (
                   <div className="px-4 pb-4">
-                    <textarea rows={3} placeholder="Any specific requirements..." className="fb-input resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    <textarea rows={3} placeholder="Any specific requirements..." className="fb-input !rounded resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} />
                   </div>
                 )}
               </div>
 
               {/* Optional GST invoice (billing state now lives in the form above) */}
-              <div className="mt-3 border border-gray-200 rounded-xl px-4 py-3 bg-gray-50/60">
+              <div className="mt-3 border border-gray-200 rounded px-4 py-3 bg-gray-50/60">
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1353,11 +1372,11 @@ const ServiceBooking = () => {
                 </label>
                 {wantGst && (
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <input className="fb-input fb-input--sm" placeholder="Business / legal name"
+                    <input className="fb-input fb-input--sm !rounded" placeholder="Business / legal name"
                       value={billing.name} onChange={(e) => setBilling((b) => ({ ...b, name: e.target.value }))} />
-                    <input className="fb-input fb-input--sm" placeholder="GSTIN (optional)"
+                    <input className="fb-input fb-input--sm !rounded" placeholder="GSTIN (optional)"
                       value={billing.gstin} onChange={(e) => setBilling((b) => ({ ...b, gstin: e.target.value.toUpperCase() }))} />
-                    <input className="fb-input fb-input--sm sm:col-span-2" placeholder="PAN (optional)"
+                    <input className="fb-input fb-input--sm !rounded sm:col-span-2" placeholder="PAN (optional)"
                       value={billing.pan} onChange={(e) => setBilling((b) => ({ ...b, pan: e.target.value.toUpperCase() }))} />
                   </div>
                 )}
