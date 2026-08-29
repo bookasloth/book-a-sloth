@@ -119,6 +119,11 @@ const setOwner = async (req, res) => {
   try { res.json(await leadService.assignOwner(req.params.id, req.body?.ownerAdminId || null, actor(req))); }
   catch (e) { safeError(res, e); }
 };
+// Merge THIS lead (:id, the duplicate) into the one the admin chose to keep (body.into).
+const mergeLead = async (req, res) => {
+  try { res.json(await leadService.mergeLead(req.body?.into, req.params.id, actor(req))); }
+  catch (e) { res.status(400).json({ message: e.message }); }
+};
 const addTag = async (req, res) => {
   try { res.json(await leadService.addTag(req.params.id, req.body?.tag, actor(req))); } catch (e) { safeError(res, e); }
 };
@@ -431,7 +436,7 @@ const refreshAttribution = async (req, res) => {
 module.exports = {
   dashboard, pipeline, reports, getDesk,
   listLeads, createLead, getLead, updateLead, getTimeline, leadMessages,
-  setStatus, setOwner, addTag, removeTag, setDnc, addNote, logCall,
+  setStatus, setOwner, mergeLead, addTag, removeTag, setDnc, addNote, logCall,
   sendWhatsApp, sendEmail,
   listFollowUps, createFollowUp, completeFollowUp, cancelFollowUp,
   listSequences, createSequence, enroll,

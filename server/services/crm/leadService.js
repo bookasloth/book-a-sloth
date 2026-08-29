@@ -407,6 +407,25 @@ async function changeStatus(id, status, actorAdminId, opts = {}) {
   return getLead(id);
 }
 
+// Manually merge two distinct leads (same person, different accounts/emails that auto-stitch
+// can't catch — no shared phone/email). Folds `loser` into `survivor` via merge_lead_rows
+// (reparents children, keeps survivor's identity, most-advanced status; deletes loser).
+async function mergeLead(survivorId, loserId, actorAdminId) {
+  if (!survivorId || !loserId) throw new Error('survivor and loser lead ids required');
+  if (survivorId === loserId) throw new Error('cannot merge a lead into itself');
+  const [survivor, loser] = await Promise.all([getLead(survivorId), getLead(loserId)]);
+  if (!survivor) throw new Error('survivor lead not found');
+  if (!loser) throw new Error('lead to merge not found');
+  const { error } = await supabaseAdmin.rpc('merge_lead_rows', { p_survivor: survivorId, p_loser: loserId });
+  if (error) throw error;
+  await logActivity(survivorId, 'lead_merged', {
+    actorAdminId,
+    title: `Merged in: ${loser.name || loser.email || loser.phone || loserId}`,
+    meta: { merged_lead_id: loserId, merged_name: loser.name, merged_email: loser.email, merged_phone: loser.phone },
+  });
+  return getLead(survivorId);
+}
+
 async function assignOwner(id, ownerAdminId, actorAdminId) {
   await supabaseAdmin.from('leads').update({ owner_admin_id: ownerAdminId, updated_at: new Date().toISOString() }).eq('id', id);
   await logActivity(id, 'owner_assigned', { actorAdminId, title: 'Owner assigned', meta: { owner_admin_id: ownerAdminId } });
@@ -523,7 +542,7 @@ async function dashboardStats() {
 module.exports = {
   FUNNEL, STATUSES,
   upsertLead, safeUpsertLead, getLead, listLeads,
-  changeStatus, assignOwner, addTag, removeTag, setDnc, addNote, logCall,
+  changeStatus, mergeLead, assignOwner, addTag, removeTag, setDnc, addNote, logCall,
   pipelineCounts, dashboardStats, recordAccountEvent,
   recomputeFromAccount, loadAccountFacts, computeAccountFacts, grossEarningsPaise,
   conversionSummary, followupWindow, leadIdsWithFollowup,

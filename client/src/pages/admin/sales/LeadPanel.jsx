@@ -5,7 +5,7 @@ import {
   crmGetLead, crmLeadTimeline, crmLeadMessages, crmAddLeadNote, crmCreateFollowUp,
   crmCompleteFollowUp, crmAddTag, crmRemoveTag, crmSetDnc, crmLogCall, crmSendWhatsApp, crmSendEmail,
   crmListTemplates, crmListTags, crmCreateTag, crmUpdateLead,
-  crmListSequences, crmEnroll,
+  crmListSequences, crmEnroll, crmListLeads, crmMergeLead,
 } from '../../../services/api';
 import { FUNNEL, STATUS_LABEL, STATUS_TONE, PLAN_INTEREST, PLAN_INTEREST_LABEL, rupees, relTime, leadScore } from './salesConstants';
 import { guardedSetStatus } from './statusMove';
@@ -14,7 +14,7 @@ import TagChip from './TagChip';
 import TagPicker from './TagPicker';
 import {
   Check, CheckCircle2, ChevronDown, Mail, Phone, MessageCircle, FileText,
-  CalendarClock, Clock, Plus, ArrowRight, ArrowLeft, IndianRupee, Tag, Activity, StickyNote,
+  CalendarClock, Clock, Plus, ArrowRight, ArrowLeft, IndianRupee, Tag, Activity, StickyNote, GitMerge, Search,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -323,7 +323,9 @@ export default function LeadPanel({ leadId, onChanged, onClose, variant = 'page'
     </div>
   );
 
-  const modalEl = modal && <ActionModal type={modal} lead={lead} templates={templates} onClose={() => setModal(null)} onDone={() => { setModal(null); refresh(); }} />;
+  const modalEl = modal === 'merge'
+    ? <MergeModal lead={lead} onClose={() => setModal(null)} onDone={() => { setModal(null); refresh(); }} />
+    : modal && <ActionModal type={modal} lead={lead} templates={templates} onClose={() => setModal(null)} onDone={() => { setModal(null); refresh(); }} />;
   const Footer = (
     <div className="pt-3 border-t border-gray-100 flex flex-wrap gap-x-4 gap-y-1 text-[11px] adm-t3">
       <span>Created {fmtDateTime(lead.created_at)}</span>
@@ -506,6 +508,74 @@ function AboutRow({ label, value }) {
 
 // Small dropdown for lower-frequency activities (note / follow-up) so the quick
 // actions row stays to the three primary channels.
+// Merge a duplicate lead INTO the currently-open one. The open lead (survivor) is kept;
+// the picked duplicate is folded in and removed server-side via merge_lead_rows.
+function MergeModal({ lead, onClose, onDone }) {
+  const [q, setQ] = useState('');
+  const [rows, setRows] = useState([]);
+  const [picked, setPicked] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const s = q.trim();
+    if (s.length < 2) { setRows([]); return; }
+    let live = true;
+    setSearching(true);
+    const t = setTimeout(() => {
+      crmListLeads({ q: s, pageSize: 8 })
+        .then(({ data }) => { if (live) setRows((data?.rows || []).filter((r) => r.id !== lead.id)); })
+        .catch(() => { if (live) setRows([]); })
+        .finally(() => { if (live) setSearching(false); });
+    }, 250);
+    return () => { live = false; clearTimeout(t); };
+  }, [q, lead.id]);
+
+  const doMerge = async () => {
+    if (!picked) return;
+    setBusy(true);
+    try {
+      await crmMergeLead(picked.id, lead.id);   // picked = loser, current lead = survivor (kept)
+      toast.success('Duplicate merged in');
+      onDone();
+    } catch (e) { toast.error(e?.response?.data?.message || 'Merge failed'); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl adm-card p-5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2 mb-1"><GitMerge size={18} className="text-[#FE5100]" /><h3 className="text-base font-bold adm-t1">Merge duplicate</h3></div>
+        <p className="text-[12.5px] adm-t2 mb-3">
+          Find the duplicate lead. It gets folded into <span className="font-semibold adm-t1">{lead.name || lead.email || 'this lead'}</span> (kept) and removed. Its notes, tags, timeline and messages move over.
+        </p>
+        <div className="relative mb-2">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 adm-t3" />
+          <input autoFocus className="fb-input text-sm w-full pl-8" placeholder="Search name, email or phone…" value={q} onChange={(e) => { setQ(e.target.value); setPicked(null); }} />
+        </div>
+        <div className="max-h-56 overflow-auto rounded-xl border border-gray-100">
+          {searching && <p className="px-3 py-2 text-[12px] adm-t3">Searching…</p>}
+          {!searching && q.trim().length >= 2 && rows.length === 0 && <p className="px-3 py-2 text-[12px] adm-t3">No other leads match.</p>}
+          {rows.map((r) => (
+            <button key={r.id} type="button" onClick={() => setPicked(r)}
+              className={`w-full text-left px-3 py-2 flex items-center justify-between gap-2 ${picked?.id === r.id ? 'bg-[#FE5100]/10' : 'adm-hoverable'}`}>
+              <span className="min-w-0">
+                <span className="block text-[13px] adm-t1 truncate">{r.name || 'Unnamed'}</span>
+                <span className="block text-[11px] adm-t3 truncate">{r.email || r.phone || '—'} · {STATUS_LABEL[r.status] || r.status}</span>
+              </span>
+              {picked?.id === r.id && <Check size={15} className="text-[#FE5100] shrink-0" />}
+            </button>
+          ))}
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <Btn variant="outline" size="sm" onClick={onClose}>Cancel</Btn>
+          <Btn size="sm" disabled={!picked || busy} onClick={doMerge}>{busy ? 'Merging…' : 'Merge in'}</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AddActivityMenu({ onPick }) {
   const [open, setOpen] = useState(false);
   const pick = (t) => { setOpen(false); onPick(t); };
@@ -522,6 +592,7 @@ function AddActivityMenu({ onPick }) {
             <button type="button" onClick={() => pick('note')} className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t1 flex items-center gap-2"><FileText size={14} className="adm-t3" /> Add note</button>
             <button type="button" onClick={() => pick('followup')} className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t1 flex items-center gap-2"><CalendarClock size={14} className="adm-t3" /> Schedule follow-up</button>
             <button type="button" onClick={() => pick('call')} className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t1 flex items-center gap-2"><Phone size={14} className="adm-t3" /> Log call</button>
+            <button type="button" onClick={() => pick('merge')} className="w-full text-left px-3 py-2 adm-hoverable text-[13px] adm-t1 flex items-center gap-2"><GitMerge size={14} className="adm-t3" /> Merge duplicate</button>
           </div>
         </>
       )}
