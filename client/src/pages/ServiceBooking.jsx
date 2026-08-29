@@ -1379,7 +1379,7 @@ const ServiceBooking = () => {
                   : "Send my code"}
               </button>
               <p className="mt-3 text-center text-xs text-gray-400">
-                🔒 Free to cancel · We'll never spam you
+                Free to cancel · We'll never spam you
               </p>
             </div>
           )}
