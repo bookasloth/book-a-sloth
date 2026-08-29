@@ -1,7 +1,7 @@
 'use strict';
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 jest.mock('../../services/notificationEngine', () => ({ send: jest.fn(() => Promise.resolve()) }));
-jest.mock('../../utils/inAppNotify', () => ({ inAppNotify: jest.fn() }));
+jest.mock('../../utils/inAppNotify', () => ({ inAppNotify: jest.fn(), resolveInApp: jest.fn() }));
 jest.mock('../../services/routeAccountService', () => ({ createLinkedAccount: jest.fn(() => Promise.resolve({ ok: true })) }));
 jest.mock('../../services/platformConfig', () => ({ getConfig: jest.fn() }));
 

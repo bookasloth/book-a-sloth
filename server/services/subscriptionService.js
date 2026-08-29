@@ -154,6 +154,10 @@ async function activateFromSubscription({ rzpSub, rzpPayment = null }) {
     await leadService.recomputeFromAccount(vendorId);
   } catch (e) { console.error('[crm] subscription event hook failed (non-fatal):', e.message); }
 
+  // A successful charge clears any earlier "renewal payment failed" bell — the
+  // plan is active again, so resolve the SUBSCRIPTION_HALTED notice.
+  require('../utils/inAppNotify').resolveInApp({ userId: vendorId, type: 'SUBSCRIPTION_HALTED' });
+
   return { activated: true };
 }
 
