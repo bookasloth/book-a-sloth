@@ -169,17 +169,22 @@ const NotifBell = () => {
           <ul className="max-h-80 overflow-y-auto md:max-h-80">
             {notifs.map((n) => (
               <li key={n.id}>
-                <button
-                  type="button"
-                  onClick={() => { markNotificationRead(n.id).then(load).catch(() => {}); }}
+                <Link
+                  to={n.link || '#'}
+                  onClick={() => {
+                    markNotificationRead(n.id).catch(() => {});
+                    setNotifs((list) => list.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x)));
+                    setUnread((u) => (n.read_at ? u : Math.max(0, u - 1)));
+                    setOpen(false);
+                  }}
                   className={cn(
-                    'flex w-full flex-col items-start gap-0.5 border-b border-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-50',
+                    'flex w-full flex-col items-start gap-0.5 border-b border-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-50 hover:no-underline',
                     !n.read_at && 'bg-primary/5',
                   )}
                 >
-                  <span className="text-sm font-medium text-gray-800">{n.title || n.message}</span>
-                  {n.title && n.message && <span className="text-xs text-gray-500">{n.message}</span>}
-                </button>
+                  <span className="text-sm font-medium text-gray-800">{n.title}</span>
+                  {n.body && <span className="text-xs text-gray-500">{n.body}</span>}
+                </Link>
               </li>
             ))}
           </ul>

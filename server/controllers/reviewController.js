@@ -85,13 +85,15 @@ const createReview = async (req, res) => {
     }
 
     // In-app: notify the review subject.
+    const subjectIsHost = direction === "guest_to_host";
     inAppNotify({
       userId: subjectId,
-      role: direction === "guest_to_host" ? "host" : "guest",
+      role: subjectIsHost ? "host" : "guest",
       type: "REVIEW_RECEIVED",
       title: "New review received",
       body: `${rating}★`,
-      link: "/user/reviews",
+      // Host has no reviews page; land them on Clients. Guest keeps /user/reviews.
+      link: subjectIsHost ? "/dashboard/clients" : "/user/reviews",
     });
 
     res.status(201).json(review);

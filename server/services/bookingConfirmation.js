@@ -195,6 +195,16 @@ async function sendBookingConfirmation({ bookingId, invoiceRef = null }) {
     });
   }
 
+  // 2b-ii) In-app note for the HOST — a new booking is their headline moment, but
+  //        the bell only ever got the guest's copy above. Email/WhatsApp already
+  //        fire (BOOKING_CONFIRMED_VENDOR); this closes the in-app gap.
+  inAppNotify({
+    userId: booking.host_id, role: 'host', type: 'BOOKING_NEW',
+    title: 'New booking',
+    body: `${booking.guest_name || 'A guest'} booked ${svc.title || 'your service'} for ${when}`,
+    link: '/dashboard/bookings', data: { bookingId: booking.id },
+  });
+
   // 3) Last-minute booking (starts sooner than a reminder lead-time): fire the
   //    catch-up reminder the cron band would miss. Lazy require avoids a cycle.
   const { fireDueReminders } = require('../controllers/bookingController');
