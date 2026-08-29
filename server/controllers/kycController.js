@@ -231,6 +231,15 @@ const submitKyc = async (req, res) => {
       link: `${base}/admin/kyc/pending`,
     });
 
+    // Acknowledge to the host that their documents landed — the submit used to be
+    // silent (only admins were pinged), so hosts re-uploaded out of anxiety.
+    require('../utils/inAppNotify').inAppNotify({
+      userId: req.user.id, role: 'host', type: 'KYC_SUBMITTED',
+      title: 'Documents received',
+      body: "We're reviewing your verification — usually within 48 hours.",
+      link: '/dashboard/kyc',
+    });
+
     res.status(201).json({ status: 'pending' });
   } catch (error) {
     safeError(res, error);

@@ -1,5 +1,12 @@
 const { supabaseAdmin } = require("../config/supabase");
 const { safeError } = require("../utils/httpError");
+const { notifChannelTopic } = require("../utils/notifChannel");
+
+// GET /api/notifications/channel — the caller's own realtime topic for the bell.
+// HMAC-derived (not the raw user id), so it can't be guessed from a user id.
+const channel = (req, res) => {
+  res.json({ topic: notifChannelTopic(req.user.id) });
+};
 
 // GET /api/notifications?role=guest|host — current user's feed for a role.
 const list = async (req, res) => {
@@ -42,4 +49,4 @@ const markRead = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { list, markAllRead, markRead };
+module.exports = { list, markAllRead, markRead, channel };
