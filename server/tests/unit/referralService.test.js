@@ -7,9 +7,11 @@
  */
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 jest.mock('../../services/ledger/postingService', () => ({ post: jest.fn().mockResolvedValue('j1') }));
+jest.mock('../../services/notificationEngine', () => ({ send: jest.fn(() => Promise.resolve()) }));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const { post } = require('../../services/ledger/postingService');
+const { send: notifySend } = require('../../services/notificationEngine');
 const referralService = require('../../services/referralService');
 
 let queues, updates, inserts;
@@ -78,6 +80,23 @@ test('release: hold passed + referred still paying → rewarded + ledger posted'
   expect(r).toEqual({ released: 1, clawed: 0 });
   expect(post).toHaveBeenCalledTimes(1);
   expect(updates.find((u) => u.table === 'referrals').payload.status).toBe('rewarded');
+});
+
+test('release: rewarded referrer is notified (email + in-app REFERRAL_REWARD_RELEASED)', async () => {
+  queues.referrals = [{ data: [qualified()] }];
+  queues.profiles = [
+    { data: { plan: 'creator', plan_expires_at: '2027-01-01T00:00:00Z', subscription_status: 'active' } }, // referred: still paying
+    { data: { id: 'A', name: 'Referrer Rao', email: 'ref@x.com' } },                                        // referrer lookup for the notice
+  ];
+  const r = await referralService.releaseDue(NOW);
+  expect(r.released).toBe(1);
+
+  const call = notifySend.mock.calls.find((c) => c[0].event === 'REFERRAL_REWARD_RELEASED');
+  expect(call).toBeTruthy();
+  expect(call[0].data.recipientUserId).toBe('A');
+  expect(call[0].data.email).toBe('ref@x.com');
+  expect(call[0].data.inApp.link).toBe('/dashboard/referrals');
+  expect(call[0].data.emailData.reward_amount).toMatch(/₹/);
 });
 
 test('clawback: referred churned to free tier → rejected, no ledger', async () => {
