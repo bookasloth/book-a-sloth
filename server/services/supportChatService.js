@@ -158,13 +158,16 @@ async function setRating(threadId, rating) {
  * Persist a message, advance the thread (last_message_at + the OTHER side's unread),
  * then broadcast it. sender ∈ user|bot|admin|system.
  */
-async function postMessage({ threadId, sender, senderId, senderName, body }) {
+async function postMessage({ threadId, sender, senderId, senderName, body, attachmentUrl }) {
   const text = (body || '').trim();
-  if (!text) throw new Error('empty message');
+  // A message must carry text OR an image — an empty one is meaningless.
+  if (!text && !attachmentUrl) throw new Error('empty message');
 
+  const row = { thread_id: threadId, sender, sender_id: senderId || null, sender_name: senderName || null, body: text };
+  if (attachmentUrl) row.attachment_url = attachmentUrl;
   const { data: msg, error } = await supabaseAdmin
     .from('support_messages')
-    .insert({ thread_id: threadId, sender, sender_id: senderId || null, sender_name: senderName || null, body: text })
+    .insert(row)
     .select('*')
     .single();
   if (error) throw error;

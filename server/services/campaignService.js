@@ -42,8 +42,14 @@ async function launch(campaignId) {
   if (channel === 'email' && !campaign.template_id && !campaign.html_content) return { error: 'no_content' };
   if (!['draft', 'scheduled'].includes(campaign.status)) return { error: `cannot_launch_from_${campaign.status}` };
 
-  const { data: segment } = await supabaseAdmin.from('segments').select('*').eq('id', campaign.segment_id).single();
-  const recipients = await segmentService.resolve(segment ? segment.definition : {}, channel);
+  // Manual / single audience → snapshot the explicit pick; else resolve the segment.
+  let recipients;
+  if (['manual', 'single'].includes(campaign.audience_type)) {
+    recipients = await segmentService.resolveRefs(campaign.audience_ref || {}, channel);
+  } else {
+    const { data: segment } = await supabaseAdmin.from('segments').select('*').eq('id', campaign.segment_id).single();
+    recipients = await segmentService.resolve(segment ? segment.definition : {}, channel);
+  }
 
   if (recipients.length) {
     const rows = recipients.map((c) => ({

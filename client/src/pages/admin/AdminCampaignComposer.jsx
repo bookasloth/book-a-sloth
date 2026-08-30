@@ -10,7 +10,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { adminCampSegments, adminCampSegPreview, adminCampPreview, adminCampCreate, adminUploadImage } from '../../services/api';
+import { adminCampSegments, adminCampSegPreview, adminCampPreview, adminCampCreate, adminUploadImage, adminCampContacts, adminCampResolveAudience } from '../../services/api';
 import { Card, Btn } from '../../components/admin/ui';
 
 // Palette: block type → factory for a fresh block.
@@ -95,9 +95,17 @@ const AdminCampaignComposer = ({ onClose }) => {
   const [subject, setSubject] = useState('');
   const [previewText, setPreviewText] = useState('');
   const [audience, setAudience] = useState('customer'); // shell: customer|vendor
+  const [audMode, setAudMode] = useState('segment'); // segment | people
   const [segmentId, setSegmentId] = useState('');
   const [segments, setSegments] = useState([]);
   const [count, setCount] = useState(null);
+  // Manual/single picker
+  const [peopleQuery, setPeopleQuery] = useState('');
+  const [peopleResults, setPeopleResults] = useState([]);
+  const [selected, setSelected] = useState([]); // [{id,name,email}]
+  // View-recipients modal
+  const [viewing, setViewing] = useState(false);
+  const [recips, setRecips] = useState(null); // {count,recipients,truncated}
   const [blocks, setBlocks] = useState([NEW_BLOCK.heading(), NEW_BLOCK.text()]);
   const [device, setDevice] = useState('desktop');
   const [html, setHtml] = useState('');
@@ -110,6 +118,31 @@ const AdminCampaignComposer = ({ onClose }) => {
     const seg = segments.find((s) => s.id === segId);
     if (!seg) return setCount(null);
     try { const r = await adminCampSegPreview(seg.definition, 'email'); setCount(r.data.count); } catch { setCount(null); }
+  };
+
+  // Manual/single audience → audience_type + audience_ref, or a segment.
+  const audiencePayload = () => {
+    if (audMode === 'people') {
+      return { audience_type: selected.length === 1 ? 'single' : 'manual', audience_ref: { contact_ids: selected.map((p) => p.id) } };
+    }
+    return { audience_type: 'segment', definition: segments.find((s) => s.id === segmentId)?.definition || {} };
+  };
+
+  const searchPeople = async (q) => {
+    setPeopleQuery(q);
+    if (q.trim().length < 2) return setPeopleResults([]);
+    try { const r = await adminCampContacts({ search: q, limit: 20 }); setPeopleResults(r.data || []); } catch { setPeopleResults([]); }
+  };
+  const addPerson = (c) => setSelected((s) => (s.find((p) => p.id === c.id) ? s : [...s, { id: c.id, name: c.name, email: c.email }]));
+  const removePerson = (id) => setSelected((s) => s.filter((p) => p.id !== id));
+
+  const viewRecipients = async () => {
+    setViewing(true); setRecips(null);
+    try {
+      const p = audiencePayload();
+      const r = await adminCampResolveAudience({ ...p, channel: 'email' });
+      setRecips(r.data);
+    } catch { setRecips({ count: 0, recipients: [] }); }
   };
 
   // Debounced live preview: server compiles the exact block model we'll send.
@@ -144,8 +177,11 @@ const AdminCampaignComposer = ({ onClose }) => {
     if (!blocks.length) return toast.error('Add at least one content block');
     setSaving(true);
     try {
+      const aud = audMode === 'people'
+        ? { audience_type: selected.length === 1 ? 'single' : 'manual', audience_ref: { contact_ids: selected.map((p) => p.id) }, segment_id: null }
+        : { audience_type: 'segment', segment_id: segmentId || null };
       await adminCampCreate({
-        name, channel: 'email', segment_id: segmentId || null, audience_type: 'segment',
+        name, channel: 'email', ...aud,
         subject, preview_text: previewText, sender_key: 'shubham',
         design_json: { blocks }, throttle_per_min: 120,
       });
@@ -175,21 +211,63 @@ const AdminCampaignComposer = ({ onClose }) => {
             <Field label="Campaign name (internal)"><input className="fb-input text-sm" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. August host update" /></Field>
             <Field label="Subject"><input className="fb-input text-sm" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Inbox subject line" /></Field>
             <Field label="Preview text (inbox preheader)"><input className="fb-input text-sm" value={previewText} onChange={(e) => setPreviewText(e.target.value)} placeholder="Shown after the subject in most inboxes" /></Field>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="Layout">
-                <select className="fb-input text-sm" value={audience} onChange={(e) => setAudience(e.target.value)}>
-                  <option value="customer">Guest (branded footer)</option>
-                  <option value="vendor">Host (minimal footer)</option>
-                </select>
-              </Field>
-              <Field label="Audience (segment)">
+            <Field label="Layout">
+              <select className="fb-input text-sm" value={audience} onChange={(e) => setAudience(e.target.value)}>
+                <option value="customer">Guest (branded footer)</option>
+                <option value="vendor">Host (minimal footer)</option>
+              </select>
+            </Field>
+          </Card>
+
+          <Card className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold adm-t1">Recipients</p>
+              <div className="flex gap-1">
+                {[['segment', 'Segment'], ['people', 'Pick people']].map(([m, label]) => (
+                  <button key={m} onClick={() => setAudMode(m)}
+                    className={`text-[11px] px-2.5 py-1 rounded border ${audMode === m ? 'bg-indigo-600 text-white border-indigo-600' : 'adm-border adm-t2 adm-hoverable'}`}>{label}</button>
+                ))}
+              </div>
+            </div>
+
+            {audMode === 'segment' ? (
+              <>
                 <select className="fb-input text-sm" value={segmentId} onChange={(e) => { setSegmentId(e.target.value); previewCount(e.target.value); }}>
-                  <option value="">Select later…</option>
+                  <option value="">Select a segment…</option>
                   {segments.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
-              </Field>
-            </div>
-            {count !== null && <p className="text-[11px] adm-t2">≈ {count} consented email recipients</p>}
+                {count !== null && <p className="text-[11px] adm-t2">≈ {count} consented email recipients</p>}
+              </>
+            ) : (
+              <>
+                <input className="fb-input text-sm" value={peopleQuery} onChange={(e) => searchPeople(e.target.value)} placeholder="Search name, email, or phone…" />
+                {peopleResults.length > 0 && (
+                  <div className="border adm-border rounded-lg max-h-40 overflow-auto divide-y adm-border">
+                    {peopleResults.map((c) => (
+                      <button key={c.id} onClick={() => addPerson(c)} className="block w-full text-left px-3 py-1.5 text-xs adm-hoverable">
+                        <span className="font-medium adm-t1">{c.name || '—'}</span> <span className="adm-t3">{c.email || c.phone}</span>
+                        <span className="adm-t3 ml-1">· {c.contact_type}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {selected.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selected.map((p) => (
+                      <span key={p.id} className="inline-flex items-center gap-1 text-[11px] bg-indigo-50 text-indigo-700 rounded-full px-2 py-0.5">
+                        {p.name || p.email}
+                        <button onClick={() => removePerson(p.id)} className="font-bold">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[11px] adm-t2">{selected.length} selected · opted-out contacts are dropped at send</p>
+              </>
+            )}
+
+            <button onClick={viewRecipients}
+              disabled={audMode === 'segment' ? !segmentId : selected.length === 0}
+              className="text-xs text-indigo-600 font-semibold hover:underline disabled:opacity-40 disabled:no-underline">View recipients</button>
           </Card>
 
           <Card className="space-y-2">
@@ -238,6 +316,37 @@ const AdminCampaignComposer = ({ onClose }) => {
           <p className="text-[11px] adm-t3 mt-2">Approximate — real inboxes (Gmail, Outlook, Apple Mail) vary slightly. Send a test before launching.</p>
         </div>
       </div>
+
+      {viewing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setViewing(false)}>
+          <div className="adm-card rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b adm-border">
+              <p className="text-sm font-semibold adm-t1">Recipients{recips ? ` · ${recips.count}` : ''}</p>
+              <button onClick={() => setViewing(false)} className="adm-t3 text-lg leading-none">×</button>
+            </div>
+            <div className="overflow-auto">
+              {!recips ? <p className="text-xs adm-t3 p-4">Loading…</p> : (
+                <table className="w-full text-xs">
+                  <thead><tr className="text-left uppercase tracking-wide adm-t3 border-b adm-border">
+                    <th className="px-4 py-2">Name</th><th className="px-4 py-2">Email</th><th className="px-4 py-2">Type</th>
+                  </tr></thead>
+                  <tbody>
+                    {recips.recipients.map((r) => (
+                      <tr key={r.id} className="border-b adm-border last:border-0">
+                        <td className="px-4 py-1.5 adm-t1">{r.name || '—'}</td>
+                        <td className="px-4 py-1.5 adm-t2">{r.email}</td>
+                        <td className="px-4 py-1.5 adm-t3 capitalize">{r.contact_type}</td>
+                      </tr>
+                    ))}
+                    {recips.recipients.length === 0 && <tr><td colSpan="3" className="px-4 py-6 text-center adm-t3">No consented recipients.</td></tr>}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            {recips?.truncated && <p className="text-[11px] adm-t3 px-4 py-2 border-t adm-border">Showing first 1000.</p>}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -20,7 +20,8 @@ const listContacts = async (req, res) => {
     let q = supabaseAdmin.from('contacts').select('*').order('updated_at', { ascending: false }).limit(Math.min(parseInt(limit) || 100, 500));
     if (type) q = q.eq('contact_type', type);
     const safeSearch = sanitizeLikeTerm(search);
-    if (safeSearch) q = q.ilike('email', `%${safeSearch}%`);
+    // Manual/single audience picker searches by name, email, or phone.
+    if (safeSearch) q = q.or(`email.ilike.%${safeSearch}%,name.ilike.%${safeSearch}%,phone.ilike.%${safeSearch}%`);
     const { data, error } = await q;
     if (error) return safeError(res, error);
     res.json(data || []);
@@ -50,6 +51,22 @@ const listSegments = async (_req, res) => {
 const previewSegment = async (req, res) => {
   try { const n = await segmentService.count(req.body?.definition || {}, req.body?.channel || 'email'); res.json({ count: n }); }
   catch (e) { safeError(res, e); }
+};
+
+/**
+ * Resolve an audience to the actual recipient list (name/email/type) so the
+ * admin can SEE who receives before launching. Segment (definition) or an
+ * explicit pick (audience_ref). Consent/suppression already applied.
+ */
+const resolveAudience = async (req, res) => {
+  try {
+    const { audience_type = 'segment', definition, audience_ref, channel = 'email' } = req.body || {};
+    const rows = ['manual', 'single'].includes(audience_type)
+      ? await segmentService.resolveRefs(audience_ref || {}, channel)
+      : await segmentService.resolve(definition || {}, channel);
+    const recipients = rows.slice(0, 1000).map((c) => ({ id: c.id, name: c.name || '', email: c.email || '', contact_type: c.contact_type || '' }));
+    res.json({ count: rows.length, recipients, truncated: rows.length > recipients.length });
+  } catch (e) { safeError(res, e); }
 };
 
 // ── Campaigns ──
@@ -157,7 +174,7 @@ const updateWaTemplate = async (req, res) => {
 
 module.exports = {
   listContacts, syncContacts, suppressContact,
-  listSegments, previewSegment,
+  listSegments, previewSegment, resolveAudience,
   listCampaigns, createCampaign, previewCampaign, getCampaign, updateCampaign, launchCampaign,
   listWaTemplates, createWaTemplate, updateWaTemplate,
 };
