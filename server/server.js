@@ -351,6 +351,16 @@ setInterval(async () => {
   catch (err) { console.error('OTP cleanup error:', err.message); }
 }, 60 * 60 * 1000);
 
+// Birthday greetings: email hosts & guests whose saved DOB is today (v3.138). Every
+// 12h; the service greets once per calendar year (birthday_greeted_at) and is gated
+// by the `birthday_greetings` feature flag.
+setInterval(async () => {
+  try {
+    const { processBirthdays } = require('./services/birthdayGreetings');
+    await runLocked('birthday', () => processBirthdays(), { leaseMs: 60 * 60 * 1000 });
+  } catch (err) { console.error('Birthday cron error:', err.message); }
+}, 12 * 60 * 60 * 1000);
+
 // ── Weekly host recap (retention loop). Ticks daily; the job self-gates on the
 // WEEKLY_RECAP_ENABLED flag and a 6-day platform marker, so this sends ~weekly and
 // only to active hosts. Leader-elected so it never double-sends across instances. ──

@@ -560,6 +560,7 @@ export const adminCampSuppress     = (id, data) => API.patch(`/admin/campaigns/c
 export const adminCampSegments     = ()         => API.get('/admin/campaigns/segments');
 export const adminCampSegPreview   = (definition, channel = 'email') => API.post('/admin/campaigns/segments/preview', { definition, channel });
 export const adminCampResolveAudience = (data)  => API.post('/admin/campaigns/audience/resolve', data);
+export const adminCampTest          = (data)     => API.post('/admin/campaigns/test', data);
 export const adminCampaigns        = ()         => API.get('/admin/campaigns');
 export const adminCampPreview      = (data)     => API.post('/admin/campaigns/preview', data);
 export const adminCampCreate       = (data)     => API.post('/admin/campaigns', data);

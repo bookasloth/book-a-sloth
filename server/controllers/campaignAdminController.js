@@ -60,12 +60,40 @@ const previewSegment = async (req, res) => {
  */
 const resolveAudience = async (req, res) => {
   try {
-    const { audience_type = 'segment', definition, audience_ref, channel = 'email' } = req.body || {};
-    const rows = ['manual', 'single'].includes(audience_type)
-      ? await segmentService.resolveRefs(audience_ref || {}, channel)
-      : await segmentService.resolve(definition || {}, channel);
+    const { audience_type = 'segment', definition, segment_id, audience_ref, channel = 'email' } = req.body || {};
+    let rows;
+    if (['manual', 'single'].includes(audience_type)) {
+      rows = await segmentService.resolveRefs(audience_ref || {}, channel);
+    } else {
+      // Prefer an inline definition (composer); fall back to a saved segment id
+      // (the campaign list only stores segment_id).
+      let def = definition;
+      if (!def && segment_id) {
+        const { data: seg } = await supabaseAdmin.from('segments').select('definition').eq('id', segment_id).single();
+        def = seg?.definition || {};
+      }
+      rows = await segmentService.resolve(def || {}, channel);
+    }
     const recipients = rows.slice(0, 1000).map((c) => ({ id: c.id, name: c.name || '', email: c.email || '', contact_type: c.contact_type || '' }));
     res.json({ count: rows.length, recipients, truncated: rows.length > recipients.length });
+  } catch (e) { safeError(res, e); }
+};
+
+/**
+ * Send the composer draft to one address NOW (default: the admin's own email).
+ * Same compile→shell path as production, so the test mirrors the real send.
+ */
+const testCampaign = async (req, res) => {
+  try {
+    const { design_json, blocks, subject, preview_text, audience, to } = req.body || {};
+    const dest = String(to || req.admin?.email || 'shubham@bookasloth.in').trim();
+    const { bodyHtml } = campaignCompiler.compile(design_json || { blocks: blocks || [] });
+    const r = await communicationEngine.sendComposedTest({
+      bodyHtml, subject, previewText: preview_text,
+      audience: audience === 'vendor' ? 'vendor' : 'customer', senderKey: 'shubham', to: dest,
+    });
+    if (!r.ok) return res.status(502).json({ message: r.error || 'Test send failed' });
+    res.json({ ok: true, to: dest });
   } catch (e) { safeError(res, e); }
 };
 
@@ -211,7 +239,7 @@ const updateWaTemplate = async (req, res) => {
 
 module.exports = {
   listContacts, syncContacts, suppressContact,
-  listSegments, previewSegment, resolveAudience,
+  listSegments, previewSegment, resolveAudience, testCampaign,
   listCampaigns, createCampaign, previewCampaign, getCampaign, campaignRecipients, updateCampaign, launchCampaign,
   listWaTemplates, createWaTemplate, updateWaTemplate,
 };

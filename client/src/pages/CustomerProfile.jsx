@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, Mail, Phone, User, Lock } from "lucide-react";
+import { Camera, Loader2, Mail, Phone, User, Lock, Cake } from "lucide-react";
 import { getMe, updateMe, uploadImage } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -15,7 +15,7 @@ const CustomerProfile = () => {
   const { user, updateUser } = useAuth();
   const fileRef = useRef(null);
 
-  const [form, setForm] = useState({ name: "", phone: "", email: "", profile_image: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", profile_image: "", date_of_birth: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -28,6 +28,7 @@ const CustomerProfile = () => {
         phone: data.phone || "",
         email: data.email || "",
         profile_image: data.profile_image || "",
+        date_of_birth: data.date_of_birth || "",
       }))
       .catch(() => {
         // Fall back to cached auth user if the refresh fails
@@ -63,6 +64,7 @@ const CustomerProfile = () => {
         name: form.name.trim(),
         phone: form.phone.trim(),
         profile_image: form.profile_image,
+        date_of_birth: form.date_of_birth || null,
       });
       updateUser({ name: data.name, phone: data.phone, profile_image: data.profile_image });
       toast.success("Profile updated");
@@ -140,6 +142,11 @@ const CustomerProfile = () => {
               </Field>
               <Field icon={Mail} label="Email" hint="can't be changed">
                 <input className={inputCls} disabled value={form.email} />
+              </Field>
+              <Field icon={Cake} label="Date of birth" hint="private — for your birthday wish">
+                <input type="date" className={inputCls} disabled={!editing} value={form.date_of_birth}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setForm((f) => ({ ...f, date_of_birth: e.target.value }))} />
               </Field>
             </div>
 

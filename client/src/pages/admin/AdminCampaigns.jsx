@@ -3,10 +3,12 @@ import toast from 'react-hot-toast';
 import {
   adminCampaigns, adminCampCreate, adminCampLaunch,
   adminCampSegments, adminCampSegPreview, adminCampSyncContacts,
-  adminEmailTemplates, adminCampWaTemplates, adminCampWaCreate, adminCampRecipients,
+  adminEmailTemplates, adminCampWaTemplates, adminCampWaCreate, adminCampRecipients, adminCampResolveAudience,
 } from '../../services/api';
 import { PageHeader, Card, Btn, Badge } from '../../components/admin/ui';
 import AdminCampaignComposer from './AdminCampaignComposer';
+
+const LARGE_AUDIENCE = 50; // above this, require typing the exact count to confirm
 
 const STATUS_TONE = { draft: 'neutral', scheduled: 'info',
   sending: 'warn', sent: 'ok',
@@ -30,6 +32,11 @@ const AdminCampaigns = () => {
   // Campaign detail / history
   const [detailTarget, setDetailTarget] = useState(null);
   const [detail, setDetail] = useState(null); // {summary, recipients, truncated}
+  // Launch confirmation
+  const [launchTarget, setLaunchTarget] = useState(null); // campaign row
+  const [launchCount, setLaunchCount] = useState(null);   // resolved recipient count
+  const [launchTyped, setLaunchTyped] = useState('');
+  const [launching, setLaunching] = useState(false);
   // WhatsApp template registry
   const [waManage, setWaManage] = useState(false);
   const [waForm, setWaForm] = useState({ name: '', aisensy_campaign_name: '', fields: '' });
@@ -60,11 +67,26 @@ const AdminCampaigns = () => {
     } catch (e) { toast.error(e?.response?.data?.message || 'Save failed'); }
   };
 
-  const launch = async (c) => {
-    if (!window.confirm(`Launch "${c.name}"? This sends to all consented recipients in the segment.`)) return;
-    try { const r = await adminCampLaunch(c.id); toast.success(r.data.message); load(); }
-    catch (e) { toast.error(e?.response?.data?.message || 'Launch failed'); }
+  const openLaunch = async (c) => {
+    setLaunchTarget(c); setLaunchCount(null); setLaunchTyped('');
+    try {
+      const r = await adminCampResolveAudience({
+        audience_type: c.audience_type || 'segment', segment_id: c.segment_id || null,
+        audience_ref: c.audience_ref || null, channel: c.channel || 'email',
+      });
+      setLaunchCount(r.data.count);
+    } catch { setLaunchCount(-1); } // -1 = count unavailable (still allow, with a warning)
   };
+  const closeLaunch = () => { setLaunchTarget(null); setLaunchCount(null); setLaunchTyped(''); };
+  const doLaunch = async () => {
+    if (!launchTarget) return;
+    setLaunching(true);
+    try { const r = await adminCampLaunch(launchTarget.id); toast.success(r.data.message); closeLaunch(); load(); }
+    catch (e) { toast.error(e?.response?.data?.message || 'Launch failed'); }
+    finally { setLaunching(false); }
+  };
+  const needsTyped = launchCount > LARGE_AUDIENCE;
+  const canLaunch = launchCount !== 0 && (!needsTyped || launchTyped.trim() === String(launchCount));
 
   const openDetail = async (c) => {
     setDetailTarget(c); setDetail(null);
@@ -189,7 +211,7 @@ const AdminCampaigns = () => {
                 <td className="px-4 py-2.5 text-xs adm-t3">{c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN') : '—'}</td>
                 <td className="px-4 py-2.5 text-xs">
                   {['draft', 'scheduled'].includes(c.status)
-                    ? <button onClick={() => launch(c)} className="text-indigo-600 font-semibold hover:underline">Launch</button>
+                    ? <button onClick={() => openLaunch(c)} className="text-indigo-600 font-semibold hover:underline">Launch</button>
                     : <span className="adm-t3">—</span>}
                 </td>
               </tr>
@@ -245,6 +267,38 @@ const AdminCampaigns = () => {
                 {detail.truncated && <p className="text-[11px] adm-t3 px-4 py-2 border-t adm-border">Showing first 1000.</p>}
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Launch confirmation + typed-count guardrail */}
+      {launchTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeLaunch}>
+          <div className="adm-card rounded-xl w-full max-w-md p-5" onClick={(e) => e.stopPropagation()}>
+            <p className="text-sm font-semibold adm-t1 mb-1">Send “{launchTarget.name}”?</p>
+            {launchCount === null ? (
+              <p className="text-xs adm-t3 py-3">Counting recipients…</p>
+            ) : launchCount === -1 ? (
+              <p className="text-xs text-amber-600 py-2">Couldn’t resolve the recipient count. You can still send, but double-check the audience first.</p>
+            ) : (
+              <p className="text-sm adm-t2 my-2">
+                This sends to <span className="font-bold adm-t1">{launchCount}</span> consented recipient{launchCount === 1 ? '' : 's'}
+                {launchTarget.channel !== 'whatsapp' && <> as <span className="font-medium">Shubham &lt;shubham@bookasloth.in&gt;</span></>}.
+                {launchCount === 0 && <span className="block text-amber-600 mt-1">No consented recipients — nothing to send.</span>}
+              </p>
+            )}
+            {needsTyped && (
+              <div className="my-3">
+                <label className="block text-xs font-semibold adm-t3 mb-1">Large audience — type <span className="font-mono adm-t1">{launchCount}</span> to confirm</label>
+                <input className="fb-input text-sm" value={launchTyped} onChange={(e) => setLaunchTyped(e.target.value)} placeholder={String(launchCount)} />
+              </div>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Btn variant="outline" size="sm" onClick={closeLaunch}>Cancel</Btn>
+              <Btn size="sm" onClick={doLaunch} disabled={launching || launchCount === null || !canLaunch}>
+                {launching ? 'Sending…' : `Send${launchCount > 0 ? ` to ${launchCount}` : ''}`}
+              </Btn>
+            </div>
           </div>
         </div>
       )}

@@ -342,6 +342,7 @@ const updateProfile = async (req, res) => {
       theme_color,
       background_key,
       reschedule_fee,
+      date_of_birth,
     } = req.body;
 
     // Username is NOT editable here. Changes go through the gated, rate-limited
@@ -357,6 +358,13 @@ const updateProfile = async (req, res) => {
 
     const updates = { updated_at: new Date().toISOString() }; // BUG-05 fixed: removed forced role:"host"
     if (name) updates.name = name;
+    if (date_of_birth !== undefined) {
+      // Private — only ever used for the birthday greeting, never shown publicly (v3.138).
+      const { parseDob } = require('../lib/dobValidator');
+      const dob = parseDob(date_of_birth);
+      if (!dob.ok) return res.status(400).json({ message: dob.error });
+      updates.date_of_birth = dob.value;
+    }
     if (bio !== undefined) updates.bio = bio;
     if (tagline !== undefined) updates.tagline = tagline;
     if (initialUsername) updates.username = initialUsername;

@@ -412,7 +412,32 @@ async function recordEmailLogDelivery({ providerMessageId, event }) {
   }
 }
 
+/**
+ * Deliver a composer draft to one address NOW (test send). Uses the exact same
+ * compile→shell path as a real campaign, so the test mirrors production. Bypasses
+ * the queue and suppression (it goes only to the admin's chosen address); subject
+ * is prefixed [TEST] and the row is logged is_test.
+ */
+async function sendComposedTest({ bodyHtml, subject: composedSubject, previewText, audience = 'customer', senderKey = 'shubham', to }) {
+  if (!to || !bodyHtml) return { ok: false, reason: 'to and bodyHtml required' };
+  const settings = await loadSettings();
+  const template = {
+    subject: composedSubject || '', html_content: bodyHtml, preview_text: previewText || '',
+    cta_label: '', cta_url: '', email_category: '', audience,
+  };
+  const sendData = { unsubscribe_token: makeToken(to), first_name: 'there', name: 'there' };
+  const { subject, html } = renderEmail(template, { data: sendData, user: {}, settings, audience });
+  const sender = (await senderRegistry.byKey(senderKey)) || { fromName: settings.from_name, fromEmail: settings.from_email, replyTo: null };
+  const r = await deliver({ settings, to, subject: `[TEST] ${subject}`, html, sender });
+  await insertLog({
+    event_key: 'CAMPAIGN:test', audience, recipient: to, subject, html,
+    status: r.success ? 'test' : 'failed', provider: r.provider, provider_response: r.response || {},
+    error: r.error || null, attempts: 1, is_test: true, sent_at: new Date().toISOString(),
+  });
+  return { ok: r.success, error: r.error };
+}
+
 module.exports = {
   send, processQueue, renderEmail, getTemplate, loadSettings, loadTemplates,
-  clearCache, BACKOFFS_MIN, enqueueCampaignEmail, recordEmailLogDelivery, isMarketing, isUnsubscribed,
+  clearCache, BACKOFFS_MIN, enqueueCampaignEmail, sendComposedTest, recordEmailLogDelivery, isMarketing, isUnsubscribed,
 };
