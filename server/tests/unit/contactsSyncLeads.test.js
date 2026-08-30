@@ -14,7 +14,10 @@ test('new lead → contactable crm_lead contact, opted in, not suppressed', () =
   expect(r.source).toBe('crm_lead');
   expect(r.email_opt_in).toBe(true);
   expect(r.email_suppressed).toBe(false);
-  expect(r.id).toBeUndefined();                // insert, not update
+  // New contact carries a generated uuid: a mixed insert/update batch fails the
+  // NOT NULL id if some rows omit it (PostgREST fills explicit NULL, beating the
+  // default), so we always set one.
+  expect(r.id).toMatch(/^[0-9a-f-]{36}$/);
 });
 
 test('DNC lead → suppressed on both channels', () => {
