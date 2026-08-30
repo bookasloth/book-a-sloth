@@ -48,9 +48,17 @@ test('suppresses a reason acted/dismissed within the cooldown window', async () 
 });
 
 test('re-emits a reason whose last action is older than the cooldown', async () => {
-  const { svc } = load({ existing: [{ dedupe_key: 'lead:L1:cooling', status: 'done', updated_at: daysAgo(30) }] });
+  const { svc } = load({ existing: [{ dedupe_key: 'lead:L1:cooling', status: 'done', reason: 'cooling', updated_at: daysAgo(30) }] });
   const r = await svc.upsertOpen([rec('lead:L1:cooling')], NOW);
   expect(r.inserted).toBe(1);
+});
+
+test('once-ever reasons (anniversary/milestone) never re-surface after being handled', async () => {
+  const annRec = { lead_id: 'L1', reason: 'anniversary', touch_type: 'founder_note', priority: 'medium', dedupe_key: 'lead:L1:anniversary:1y' };
+  // acted a whole year ago — a normal reason would re-emit, but a once-ever one must not.
+  const { svc } = load({ existing: [{ dedupe_key: 'lead:L1:anniversary:1y', status: 'done', reason: 'anniversary', updated_at: daysAgo(365) }] });
+  const r = await svc.upsertOpen([annRec], NOW);
+  expect(r.inserted).toBe(0);
 });
 
 test('missing table (pre-v3.136) → no-op, never throws, and stays off', async () => {

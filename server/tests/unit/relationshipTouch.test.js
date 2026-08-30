@@ -2,7 +2,7 @@
 // PR-3: relationshipTouch maps a lead's health + account signals to the single most
 // relevant relationship touch (who/why/channel/mode). Pure — one rec (or none) per lead.
 
-const { recommendationsFor } = require('../../services/crm/relationshipTouch');
+const { recommendationsFor, milestoneRecommendationsFor } = require('../../services/crm/relationshipTouch');
 
 const NOW = new Date('2026-06-01T12:00:00Z').getTime();
 const daysAgo = (n) => new Date(NOW - n * 864e5).toISOString();
@@ -60,4 +60,32 @@ test('healthy (thriving/steady) leads and null leads produce no touch', () => {
   expect(recommendationsFor({ id: 'L8', status: 'contacted' }, H('steady'), {}, NOW)).toEqual([]);
   expect(recommendationsFor(null, H('at_risk'), {}, NOW)).toEqual([]);
   expect(recommendationsFor({ id: 'L9' }, null, {}, NOW)).toEqual([]);
+});
+
+// ── milestone / anniversary touches (PR-6) ──
+const daysBefore = (n) => new Date(NOW - n * 864e5).toISOString();
+
+test('a 1-year anniversary → a human founder note, keyed once per year', () => {
+  const recs = milestoneRecommendationsFor({ id: 'L1', created_at: daysBefore(400) }, {}, NOW);
+  const ann = recs.find((r) => r.reason === 'anniversary');
+  expect(ann).toMatchObject({ touch_type: 'founder_note', mode: 'human', suggested_sender: 'founder', dedupe_key: 'lead:L1:anniversary:1y' });
+});
+
+test('the one-month mark → a light recommend check-in', () => {
+  const recs = milestoneRecommendationsFor({ id: 'L2', created_at: daysBefore(35) }, {}, NOW);
+  expect(recs.find((r) => r.reason === 'anniversary')).toMatchObject({ dedupe_key: 'lead:L2:anniversary:30d', mode: 'recommend', priority: 'low' });
+});
+
+test('lifetime booking milestone fires the highest threshold reached, once', () => {
+  const recs = milestoneRecommendationsFor({ id: 'L3', created_at: daysBefore(5) }, { bookingsTotal: 55 }, NOW);
+  expect(recs.find((r) => r.reason === 'milestone')).toMatchObject({ dedupe_key: 'lead:L3:milestone:bookings:50', touch_type: 'appreciation' });
+  // brand-new, no bookings, no tenure → nothing
+  expect(milestoneRecommendationsFor({ id: 'L4', created_at: daysBefore(2) }, { bookingsTotal: 0 }, NOW)).toEqual([]);
+});
+
+test('anniversary and a booking milestone can both surface for one lead', () => {
+  const recs = milestoneRecommendationsFor({ id: 'L5', created_at: daysBefore(800) }, { bookingsTotal: 120 }, NOW);
+  expect(recs.map((r) => r.reason).sort()).toEqual(['anniversary', 'milestone']);
+  expect(recs.find((r) => r.reason === 'anniversary').dedupe_key).toBe('lead:L5:anniversary:2y');
+  expect(recs.find((r) => r.reason === 'milestone').dedupe_key).toBe('lead:L5:milestone:bookings:100');
 });
