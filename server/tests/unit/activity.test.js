@@ -88,6 +88,13 @@ test('schema fallback: pre-v3.133 DB (missing column) still writes the timeline 
   expect(state.updatePatch.last_activity_at).toMatch(NOW_RE);
 });
 
+test('a touch_reason (v3.137) is recorded on the activity row when provided', async () => {
+  const { logActivity, state } = load();
+  await logActivity('lead1', 'whatsapp_sent', { actorAdminId: 'admin7', touchReason: 'cooling' });
+  expect(state.insertRow.touch_reason).toBe('cooling');
+  expect(state.insertRow.is_meaningful).toBe(true); // still a meaningful human contact
+});
+
 test('bad args are a no-op', async () => {
   const { logActivity } = load();
   expect(await logActivity(null, 'whatsapp_sent')).toBeNull();

@@ -55,9 +55,14 @@ async function logActivity(leadId, type, opts = {}) {
       meta: opts.meta || {},
       occurred_at: opts.occurredAt || now,
     };
+    // is_meaningful (v3.133) + touch_reason (v3.137) are the newer activity columns;
+    // both ride the same schema-fallback flag, so an un-migrated DB drops both on retry.
+    const newCols = meaningfulColumns
+      ? { is_meaningful: meaningful, ...(opts.touchReason ? { touch_reason: opts.touchReason } : {}) }
+      : {};
     let ins = await supabaseAdmin
       .from('lead_activities')
-      .insert(meaningfulColumns ? { ...baseRow, is_meaningful: meaningful } : baseRow)
+      .insert({ ...baseRow, ...newCols })
       .select('id')
       .single();
     if (ins.error && isMissingColumn(ins.error) && meaningfulColumns) {
