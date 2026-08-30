@@ -129,13 +129,7 @@ function Bubble({ m }) {
             {isBot ? '🦥 Bolt' : m.sender_name}
           </p>
         )}
-        {m.attachment_url && (
-          <a href={m.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
-            <img src={m.attachment_url} alt="attachment"
-              className={'max-h-56 max-w-full rounded-lg object-contain ' + (m.body ? 'mb-1.5' : '')} />
-          </a>
-        )}
-        {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
+        <p className="whitespace-pre-wrap break-words">{m.body}</p>
         <p className={'mt-1 text-[10px] ' + (mine ? 'text-white/60' : 'text-gray-400')}>{fmtTime(m.created_at)}</p>
       </div>
     </div>

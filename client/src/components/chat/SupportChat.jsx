@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Headset, ShieldQuestion, Plus, ChevronDown, Paperclip, X } from 'lucide-react';
+import { Send, Headset, ShieldQuestion, Plus, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSupabase } from '../../services/supabaseClient';
 import {
   getSupportThread, getSupportThreads, getSupportMessages, startSupportTopic,
-  sendSupportMessage, uploadSupportAttachment, escalateSupport, rateSupportThread,
-  markSupportRead, getSupportHours,
+  sendSupportMessage, escalateSupport, rateSupportThread, markSupportRead, getSupportHours,
 } from '../../services/api';
 
 const CSAT_EMOJI = { 1: '😠', 2: '😕', 3: '😐', 4: '🙂', 5: '🤩' };
@@ -47,11 +46,6 @@ const fmtTime = (iso) => {
   try { return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }); } catch { return ''; }
 };
 
-// Short date for the topic switcher rows, e.g. "12 Aug".
-const fmtDay = (iso) => {
-  try { return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); } catch { return ''; }
-};
-
 const Bubble = ({ m }) => {
   if (m.sender === 'system') {
     return <div className="mx-auto rounded-full border border-gray-100 bg-white px-3 py-1 text-center text-[11.5px] text-gray-400">{m.body}</div>;
@@ -69,15 +63,9 @@ const Bubble = ({ m }) => {
       <div className={cn('rounded-2xl px-3 py-2 text-[13.5px] leading-relaxed',
         mine ? 'rounded-tr-sm bg-primary text-white' : isBot ? 'rounded-tl-sm bg-violet-50 text-gray-800' : 'rounded-tl-sm bg-[#f0ede6] text-gray-800')}>
         {!mine && !isBot && m.sender_name && <p className="mb-0.5 text-[11px] font-semibold text-primary">{m.sender_name}</p>}
-        {m.attachment_url && (
-          <a href={m.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
-            <img src={m.attachment_url} alt="attachment"
-              className={cn('max-h-56 max-w-full rounded-lg object-contain', m.body && 'mb-1.5')} />
-          </a>
-        )}
-        {m.body && (isBot
+        {isBot
           ? <div className={CHAT_MD}><Markdown source={m.body} /></div>
-          : <p className="whitespace-pre-wrap break-words">{m.body}</p>)}
+          : <p className="whitespace-pre-wrap break-words">{m.body}</p>}
         <p className={cn('mt-1 text-[10px]', mine ? 'text-white/60' : 'text-gray-400')}>{fmtTime(m.created_at)}</p>
       </div>
     </div>
@@ -96,8 +84,6 @@ export default function SupportChat() {
   const [showTopics, setShowTopics] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [rated, setRated] = useState(false); // local flag after CSAT submit
-  const [attach, setAttach] = useState(null); // { file, preview } staged image, pre-send
-  const fileRef = useRef(null);
   const bottomRef = useRef(null);
   const scrollRef = useRef(null);
   const atBottomRef = useRef(true);
@@ -217,39 +203,19 @@ export default function SupportChat() {
     if (botTyping && atBottomRef.current) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [botTyping]);
 
-  // Stage an image the user picked — validate size/type client-side, show a
-  // preview, upload only on send. Revokes the old preview URL to avoid a leak.
-  const pickFile = (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-picking the same file
-    if (!file) return;
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return toast.error('Only JPG, PNG, or WEBP images');
-    if (file.size > 2 * 1024 * 1024) return toast.error('Image must be under 2MB');
-    setAttach((prev) => { if (prev?.preview) URL.revokeObjectURL(prev.preview); return { file, preview: URL.createObjectURL(file) }; });
-  };
-  const clearAttach = () => setAttach((prev) => { if (prev?.preview) URL.revokeObjectURL(prev.preview); return null; });
-
   const send = async (e) => {
     e?.preventDefault();
     const body = input.trim();
-    if ((!body && !attach) || !thread || sending) return;
-    const staged = attach;
+    if (!body || !thread) return;
     setInput('');
-    clearAttach();
     setSending(true);
     atBottomRef.current = true; // sending your own message always scrolls to it
     try {
-      let attachment_url;
-      if (staged) {
-        const { data } = await uploadSupportAttachment(thread.id, staged.file);
-        attachment_url = data.url;
-      }
-      const { data: msg } = await sendSupportMessage(thread.id, { body, attachment_url });
+      const { data: msg } = await sendSupportMessage(thread.id, { body });
       append(msg);
     } catch {
       toast.error('Message failed to send');
       setInput(body);
-      if (staged) setAttach(staged); // restore so the user can retry
     } finally {
       setSending(false);
     }
@@ -298,37 +264,26 @@ export default function SupportChat() {
         <div className="grid h-9 w-9 place-items-center rounded-full bg-violet-100 text-lg">🦥</div>
         <div className="min-w-0 flex-1">
           <p className="font-heading text-sm font-bold text-gray-900">Book A Sloth support</p>
-          <p className="truncate text-[11.5px] text-gray-400">
-            {isBotPhase ? 'Bolt assistant · replies instantly' : 'Our team is on it'}
-            {thread?.reference && <span className="text-gray-300"> · {thread.reference}</span>}
-          </p>
+          <p className="text-[11.5px] text-gray-400">{isBotPhase ? 'Bolt assistant · replies instantly' : 'Our team is on it'}</p>
         </div>
 
-        {/* Topic switcher — the user's past & current chats. Shown as soon as one
-            exists so history is always reachable, not only after a second topic. */}
-        {threads.length >= 1 && (
+        {/* Topic switcher — only meaningful once there's more than one topic. */}
+        {threads.length > 1 && (
           <div className="relative">
             <button type="button" onClick={() => setShowTopics((v) => !v)}
               aria-haspopup="listbox" aria-expanded={showTopics}
               className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1.5 text-[11.5px] font-medium text-gray-600 hover:bg-gray-50">
-              Chats <ChevronDown className="h-3.5 w-3.5" />
+              Topics <ChevronDown className="h-3.5 w-3.5" />
             </button>
             {showTopics && (
-              <div role="listbox" className="absolute right-0 z-10 mt-1 max-h-64 w-64 overflow-y-auto rounded-xl border border-gray-200 bg-white p-1 shadow-lg">
+              <div role="listbox" className="absolute right-0 z-10 mt-1 max-h-64 w-60 overflow-y-auto rounded-xl border border-gray-200 bg-white p-1 shadow-lg">
                 {threads.map((t) => (
                   <button key={t.id} type="button" role="option" aria-selected={t.id === thread?.id} onClick={() => switchTo(t.id)}
-                    className={cn('flex w-full flex-col gap-0.5 rounded-lg px-2.5 py-2 text-left hover:bg-gray-50',
+                    className={cn('flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[12.5px] hover:bg-gray-50',
                       t.id === thread?.id && 'bg-primary/5')}>
-                    <span className="flex items-center gap-2">
-                      <span className="min-w-0 flex-1 truncate text-[12.5px] text-gray-800">{t.subject || t.reference}</span>
-                      {t.user_unread > 0 && <span className="shrink-0 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-white">{t.user_unread}</span>}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                      <span className="font-mono">{t.reference}</span>
-                      <span>·</span>
-                      <span className="uppercase">{t.status}</span>
-                      {t.last_message_at && <><span>·</span><span>{fmtDay(t.last_message_at)}</span></>}
-                    </span>
+                    <span className="min-w-0 flex-1 truncate text-gray-800">{t.subject || t.reference}</span>
+                    {t.user_unread > 0 && <span className="shrink-0 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-white">{t.user_unread}</span>}
+                    <span className="shrink-0 text-[10px] uppercase text-gray-400">{t.status}</span>
                   </button>
                 ))}
               </div>
@@ -412,37 +367,18 @@ export default function SupportChat() {
           </div>
         </form>
       ) : (
-        <form onSubmit={send} className="border-t border-gray-100 bg-white px-3 py-2.5">
-          {attach && (
-            <div className="mb-2 flex items-center gap-2">
-              <div className="relative">
-                <img src={attach.preview} alt="attachment preview" className="h-14 w-14 rounded-lg border border-gray-200 object-cover" />
-                <button type="button" onClick={clearAttach} aria-label="Remove image"
-                  className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-gray-700 text-white hover:bg-gray-900">
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-              <span className="text-[11.5px] text-gray-400">Image ready — add a note or send</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={pickFile} className="hidden" />
-            <button type="button" onClick={() => fileRef.current?.click()} disabled={sending} aria-label="Attach image"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-40">
-              <Paperclip className="h-[18px] w-[18px]" strokeWidth={2} />
-            </button>
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Write a message…"
-              aria-label="Message"
-              className="flex-1 rounded-full border border-gray-200 bg-[#f7f5ef] px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-            <button type="submit" disabled={sending || (!input.trim() && !attach)} aria-label="Send"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white transition-colors hover:bg-primary-dark disabled:opacity-40">
-              <Send className="h-[18px] w-[18px]" strokeWidth={2} />
-            </button>
-          </div>
+        <form onSubmit={send} className="flex items-center gap-2 border-t border-gray-100 bg-white px-3 py-2.5">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Write a message…"
+            aria-label="Message"
+            className="flex-1 rounded-full border border-gray-200 bg-[#f7f5ef] px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+          <button type="submit" disabled={sending || !input.trim()} aria-label="Send"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white transition-colors hover:bg-primary-dark disabled:opacity-40">
+            <Send className="h-[18px] w-[18px]" strokeWidth={2} />
+          </button>
         </form>
       )}
     </div>

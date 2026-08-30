@@ -163,11 +163,6 @@ export const getSupportThreads  = ()         => API.get('/support/threads');
 export const startSupportTopic  = ()         => API.post('/support/thread/new');
 export const getSupportMessages = (id)       => API.get(`/support/thread/${id}/messages`);
 export const sendSupportMessage = (id, data) => API.post(`/support/thread/${id}/messages`, data);
-export const uploadSupportAttachment = (id, file) => {
-  const fd = new FormData();
-  fd.append('image', file);
-  return API.post(`/support/thread/${id}/attachment`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-};
 export const escalateSupport    = (id, data) => API.post(`/support/thread/${id}/escalate`, data || {});
 export const rateSupportThread  = (id, data) => API.post(`/support/thread/${id}/rating`, data);
 export const markSupportRead    = (id)       => API.post(`/support/thread/${id}/read`);
