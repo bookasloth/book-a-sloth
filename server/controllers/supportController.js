@@ -10,8 +10,11 @@ const chat = require('../services/supportChatService');
 const bot = require('../services/botService');
 const supportActions = require('../services/supportActions');
 const supportContext = require('../services/supportContextService');
-const { supabaseAdmin } = require('../config/supabase');
-const { sniffImage } = require('./uploadController');
+// NOTE: config/supabase + uploadController are required LAZILY inside
+// uploadAttachment (below), not at module top. config/supabase throws on load
+// when SUPABASE_SERVICE_ROLE_KEY is absent (the unit-test env), which would take
+// down every support suite that requires this controller. The attachment handler
+// is the only place they're needed, so pay that cost only when it actually runs.
 
 // Bolt auto-reply. Fired after the user's message is stored, ONLY while the thread
 // is still bot-handled (status 'bot') — once a human takes over ('waiting'/'assigned')
@@ -160,6 +163,9 @@ const sendMessage = async (req, res) => {
 // Content is sniffed by magic bytes; only JPG/PNG/WEBP pass. Returns { url }.
 const uploadAttachment = async (req, res) => {
   try {
+    // Lazy require: keep config/supabase off the module-load path (see note up top).
+    const { supabaseAdmin } = require('../config/supabase');
+    const { sniffImage } = require('./uploadController');
     const thread = await chat.getThread(req.params.id);
     if (!owns(thread, req.user)) return res.status(404).json({ message: 'Thread not found' });
     if (!req.file) return res.status(400).json({ message: 'No file provided' });
