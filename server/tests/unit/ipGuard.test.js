@@ -92,6 +92,35 @@ describe('ipGuard enforcement', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  // Regression: the real sitemap routes are `/sitemap.xml`, `/sitemap-hosts.xml`,
+  // `/sitemap-services-2.xml`, … — the '.'/'-' after the prefix. The old matcher
+  // only accepted '/' or '?', so a banned build IP still 403'd every sitemap file
+  // and killed the deploy. All of these must be exempt (never 403).
+  test.each([
+    '/sitemap.xml',
+    '/sitemap-pages.xml',
+    '/sitemap-hosts.xml',
+    '/sitemap-hosts-2.xml',
+    '/sitemap-services.xml',
+    '/sitemap-blog.xml',
+  ])('never blocks the prerender sitemap file %s even when the IP is banned', (path) => {
+    const { mod } = load({ blocklist: { isBlocked: jest.fn(() => true) } });
+    const res = mockRes();
+    const next = jest.fn();
+    mod.ipGuard({ ip: '1.2.3.4', path, headers: {} }, res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  test('a bare non-exempt lookalike (/sitemapper-evil) is NOT exempt', () => {
+    const isBlocked = jest.fn(() => true);
+    const { mod } = load({ blocklist: { isBlocked } });
+    const res = mockRes();
+    mod.ipGuard({ ip: '1.2.3.4', path: '/sitemapper-evil', headers: {} }, res, jest.fn());
+    // 'r' after '/sitemap' is not a boundary char → not exempt → blocked.
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
   test('disabled (IP_BLOCK_ENABLED=false) passes everything through', () => {
     const { mod } = load({ env: { IP_BLOCK_ENABLED: 'false' }, blocklist: { isBlocked: jest.fn(() => true) } });
     const req = { ip: '1.2.3.4', path: '/api/host/services', headers: {} };
@@ -130,6 +159,19 @@ describe('offenseTracker', () => {
     res._finish(); // simulate response finishing
 
     expect(recordRateLimitViolation).toHaveBeenCalledWith('9.8.7.6');
+  });
+
+  test('does NOT record a 429 on an exempt path (sitemap) — the build burst must not auto-ban', () => {
+    const recordRateLimitViolation = jest.fn(() => Promise.resolve());
+    const { mod } = load({ blocklist: { recordRateLimitViolation } });
+    const req = { ip: '3.81.219.26', path: '/sitemap-hosts.xml', headers: {} };
+    const res = mockRes();
+
+    mod.offenseTracker(req, res, jest.fn());
+    res.statusCode = 429;
+    res._finish();
+
+    expect(recordRateLimitViolation).not.toHaveBeenCalled();
   });
 
   test('does NOT record on a normal 200 response', () => {

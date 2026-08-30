@@ -25,13 +25,21 @@ const ipBlocklist = require('../lib/ipBlocklist');
 //   - /sitemap and /api/blogs are public, read-only SEO content that the Vercel
 //     prerender fetches at build time; a banned build IP 403ing here fails the
 //     whole deploy ("[prerender] blog posts unresolvable (HTTP 403)"). They carry
-//     no private data, so exempting them from the IP ban is safe (the rate
-//     limiter still applies).
+//     no private data, so exempting them is safe — and offenseTracker skips them
+//     too, so the prerender's fetch burst can't auto-ban the build runner IP in
+//     the first place (the AWS→Render fetch bypasses Cloudflare, so it has no
+//     cf-connecting-ip header and keys on the raw build IP).
 const EXEMPT_PREFIXES = ['/api/payment/webhook', '/health', '/prerender', '/sitemap', '/api/blogs'];
 
+// A path is exempt when it equals a prefix OR continues it at a real boundary.
+// The boundary set must include '.' and '-' because the actual routes are
+// `/sitemap.xml`, `/sitemap-hosts.xml`, `/sitemap-services-2.xml`, … — matching
+// only '/' or '?' (the old bug) left EVERY real sitemap file NON-exempt, so a
+// banned build IP still 403'd them and killed the deploy.
 function isExempt(req) {
   const p = (req && (req.path || req.url)) || '';
-  return EXEMPT_PREFIXES.some((e) => p === e || p.startsWith(e + '/') || p.startsWith(e + '?') || p === e);
+  return EXEMPT_PREFIXES.some((e) =>
+    p === e || p.startsWith(e + '/') || p.startsWith(e + '.') || p.startsWith(e + '-') || p.startsWith(e + '?'));
 }
 
 // A request carrying a VALID admin JWT is an already-authenticated admin. They
@@ -75,8 +83,11 @@ function offenseTracker(req, res, next) {
     res.on('finish', () => {
       // A 429 means a rate limiter rejected this request → count it toward an
       // auto-ban. Fire-and-forget; the recorder swallows its own errors.
-      // Authenticated admins are exempt (still rate-limited, never auto-banned).
-      if (res.statusCode === 429 && !isAuthenticatedAdmin(req)) {
+      // Skip exempt paths (sitemap/blogs/health/webhook): the prerender build
+      // bursts those, and counting its 429s is exactly what auto-banned the build
+      // IP and broke deploys. Authenticated admins are exempt too (still
+      // rate-limited, never auto-banned).
+      if (res.statusCode === 429 && !isExempt(req) && !isAuthenticatedAdmin(req)) {
         Promise.resolve(ipBlocklist.recordRateLimitViolation(getClientIp(req))).catch(() => {});
       }
     });
