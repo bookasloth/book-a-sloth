@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, Loader2, Mail, Phone, User, Lock, Cake } from "lucide-react";
 import { getMe, updateMe, uploadImage } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import AccountModeToggle from "../components/common/AccountModeToggle";
 import toast from "react-hot-toast";
 
 // /profile — end-user (guest) profile: view + edit.
@@ -90,6 +91,7 @@ const CustomerProfile = () => {
 
   return (
     <>
+      <AccountModeToggle />
       <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">My Profile</h1>

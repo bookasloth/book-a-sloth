@@ -283,9 +283,15 @@ function BlogsRedirect() {
 // homepage. Guests still get Home (they book from it). Prerender/crawlers have
 // no session → user is null → Home renders normally, so SEO is untouched.
 function HomeGate() {
-  const { user } = useAuth();
+  const { user, mode } = useAuth();
   const isHost = user?.is_host === true || user?.role === 'host' || user?.role === 'superadmin';
-  if (isHost) return <Navigate to="/dashboard" replace />;
+  if (isHost) {
+    // Dual-capability account respects its last-used mode (the profile-page
+    // switch). superadmin has is_host=false (trigger-forced) so it always lands
+    // in the host space, never bounced to guest.
+    const goGuest = user?.is_host === true && mode === 'traveling';
+    return <Navigate to={goGuest ? '/user' : '/dashboard'} replace />;
+  }
   return <Home />;
 }
 
