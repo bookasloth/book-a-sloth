@@ -284,10 +284,6 @@ export default function SalesLeads() {
     <div className="p-4 sm:p-6 max-w-7xl">
       <PageHeader title="Leads" subtitle="Manage prospects, follow-ups and conversations from one place."
         actions={<div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-            className="hidden sm:inline-flex items-center gap-1.5 text-[12px] adm-t3 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#FE5100]">
-            Search <kbd className="text-[10px] adm-card px-1 rounded border border-gray-200">⌘K</kbd>
-          </button>
           <Btn variant="outline" size="sm" onClick={() => setShowTags(true)}>Manage tags</Btn>
           <Btn variant="outline" size="sm" onClick={exportCsv}>Export</Btn>
           <Btn variant="outline" size="sm" onClick={() => setShowImport(true)}>Import</Btn>
