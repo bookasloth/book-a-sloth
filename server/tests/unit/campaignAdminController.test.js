@@ -1,4 +1,4 @@
-jest.mock('../../services/contactsService', () => ({ sync: async () => ({ upserted: 7 }) }));
+jest.mock('../../services/contactsService', () => ({ sync: async () => ({ upserted: 7 }), syncLeads: async () => ({ upserted: 3, linked: 2 }) }));
 jest.mock('../../services/segmentService', () => ({ count: async () => 4 }));
 jest.mock('../../services/campaignService', () => ({
   create: async (b) => ({ campaign: { id: 'camp1', ...b } }),
@@ -18,7 +18,7 @@ const mkRes = () => { const r = {}; r.status = (c) => { r.code = c; return r; };
 
 test('syncContacts returns upserted count', async () => {
   const res = mkRes(); await ctrl.syncContacts({}, res);
-  expect(res.body.upserted).toBe(7);
+  expect(res.body.upserted).toBe(10); // 7 base + 3 leads
 });
 test('previewSegment returns a count', async () => {
   const res = mkRes(); await ctrl.previewSegment({ body: { definition: {} } }, res);

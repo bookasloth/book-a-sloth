@@ -28,8 +28,12 @@ const listContacts = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 const syncContacts = async (_req, res) => {
-  try { const r = await contactsService.sync(); res.json(r); }
-  catch (e) { safeError(res, e); }
+  try {
+    // Sync both sources: profiles/bookings/purchases AND the sales CRM leads.
+    const base = await contactsService.sync();
+    const leads = await contactsService.syncLeads();
+    res.json({ upserted: (base.upserted || 0) + (leads.upserted || 0), fromLeads: leads.upserted || 0, linked: leads.linked || 0 });
+  } catch (e) { safeError(res, e); }
 };
 const suppressContact = async (req, res) => {
   try {

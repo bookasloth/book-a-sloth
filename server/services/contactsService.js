@@ -4,6 +4,7 @@
  * Derived data: never hand-edited except suppression toggles (preserved here).
  */
 'use strict';
+const { randomUUID } = require('crypto');
 const { supabaseAdmin } = require('../config/supabase');
 
 const norm = (e) => (e || '').trim().toLowerCase();
@@ -69,7 +70,11 @@ async function sync() {
   for (const [key, c] of work) {
     const prev = existing.get(key) || {};
     rows.push({
-      ...(prev.id ? { id: prev.id } : {}),
+      // Always set id: a mixed batch (some rows with id, some without) makes
+      // PostgREST insert an explicit NULL id for the id-less rows, which beats
+      // the gen_random_uuid() default and fails the NOT NULL — so the whole
+      // upsert errors and nothing syncs. Generate one for new contacts.
+      id: prev.id || randomUUID(),
       email: c.email, name: c.name, phone: c.phone, user_id: c.user_id,
       contact_type: c.contact_type, attributes: c.attributes, source: c.source,
       email_opt_in:        prev.email_opt_in        ?? true,
@@ -100,7 +105,7 @@ function buildLeadContactRow(lead, prev = {}, now) {
   const dnc = !!lead.do_not_contact || lead.status === 'do_not_contact';
   const prevSource = prev.source || '';
   return {
-    ...(prev.id ? { id: prev.id } : {}),
+    id: prev.id || randomUUID(), // see sync(): id-less rows in a mixed batch fail NOT NULL
     email: norm(lead.email),
     name: lead.name || prev.name || '',
     phone: lead.phone || prev.phone || '',
