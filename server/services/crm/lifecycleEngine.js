@@ -26,6 +26,7 @@
  */
 const { supabaseAdmin } = require('../../config/supabase');
 const leadScore = require('./leadScore');
+const relationshipHealth = require('./relationshipHealth');
 const leadService = require('./leadService');
 const sequenceService = require('./sequenceService');
 const followUpService = require('./followUpService');
@@ -54,6 +55,7 @@ const SEQ = {
 const GAP_SEQS = new Set([SEQ.NO_PHOTO, SEQ.NO_SERVICE, SEQ.NO_AVAILABILITY, SEQ.NOT_ACTIVATED]);
 
 let scoringColumns = true; // flipped false on first "column missing" error
+let healthColumns = true;  // v3.135 relationship-health columns; same fallback
 
 const daysSince = (iso, now) => (iso ? (now - new Date(iso).getTime()) / 864e5 : Infinity);
 const engagedSinceContact = (lead) =>
@@ -252,6 +254,25 @@ async function writeScoring(lead, d) {
   }
 }
 
+// Relationship health (v3.135) — a separate axis from the lead score: how current &
+// healthy the relationship is, decaying with time-since-meaningful-interaction. Pure
+// compute → stored state/score/signals for the Relationship Desk. Same schema-fallback
+// discipline as writeScoring. `ctx` is the loadAccountCtx facts for the linked account.
+async function writeHealth(lead, ctx, now) {
+  if (!healthColumns) return;
+  const h = relationshipHealth.compute(lead, { ...ctx, meetsSloth: rules.meetsSlothGate(ctx) }, now);
+  const { error } = await supabaseAdmin.from('leads').update({
+    health_state: h.state,
+    health_score: h.score,
+    health_signals: h.signals,
+    health_computed_at: new Date(now).toISOString(),
+  }).eq('id', lead.id);
+  if (error && /column .* does not exist|Could not find/i.test(error.message || '')) {
+    healthColumns = false;
+    console.warn('[crm] lifecycle: health columns missing (run v3.135) — skipping health writeback');
+  }
+}
+
 // Churn-on-lapse sweep: money-state leads whose paid term has lapsed → Churned +
 // win-back. Money states are excluded from loadOpenLeads, so they get their own pass.
 // `plan_expires_at` in the past = the paid term ended (the same signal
@@ -301,6 +322,7 @@ async function run() {
       }
 
       await writeScoring(lead, d);
+      await writeHealth(lead, ctxMap.get(lead.profile_id) || {}, now);
 
       if (d.changed) { await leadService.changeStatus(lead.id, d.status, null); moved++; }
 
