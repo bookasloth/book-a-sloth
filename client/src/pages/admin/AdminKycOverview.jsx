@@ -92,7 +92,7 @@ export default function AdminKycOverview() {
       />
 
       {/* Stat cards */}
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Pending"  value={loading ? '—' : (c.pending || 0)}  icon="clock"       iconColor="bg-amber-500"  to="/admin/kyc/pending" />
         <StatCard label="Verified" value={loading ? '—' : (c.approved || 0)} icon="checkCircle" iconColor="bg-green-500"  to="/admin/kyc/approved" />
         <StatCard label="Rejected" value={loading ? '—' : (c.rejected || 0)} icon="x"           iconColor="bg-red-500"    to="/admin/kyc/rejected" />
@@ -100,7 +100,7 @@ export default function AdminKycOverview() {
       </div>
 
       {/* Throughput / SLA */}
-      <Card className="mb-6 grid grid-cols-2 gap-4 p-5 sm:grid-cols-4">
+      <Card className="mb-4 grid grid-cols-2 gap-4 p-4 sm:grid-cols-4">
         {[
           ['Avg time to decision', fmtDur(t.avgDecisionMs)],
           ['Oldest pending', fmtDur(t.oldestPendingAgeMs)],
@@ -109,12 +109,12 @@ export default function AdminKycOverview() {
         ].map(([k, v]) => (
           <div key={k}>
             <p className="text-[11px] font-medium uppercase tracking-wide adm-t3">{k}</p>
-            <p className="mt-1 text-xl font-bold adm-t1">{loading ? '—' : v}</p>
+            <p className="mt-0.5 text-lg font-bold adm-t1">{loading ? '—' : v}</p>
           </div>
         ))}
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Action queue — oldest pending first */}
         <div>
           <div className="mb-2 flex items-center justify-between">

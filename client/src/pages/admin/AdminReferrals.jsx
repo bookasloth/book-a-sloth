@@ -40,36 +40,36 @@ const RuleRow = ({ rule, onSaved }) => {
 
   return (
     <tr className="adm-hoverable">
-      <td className="px-3 py-2.5 adm-t1 whitespace-nowrap">
+      <td className="px-3 py-1.5 adm-t1 whitespace-nowrap">
         <span className="font-semibold">{planLabel(rule.referred_plan)}</span>
         <span className="adm-t3"> · {rule.cadence}</span>
       </td>
-      <td className="px-3 py-2.5">
+      <td className="px-3 py-1.5">
         <select className="fb-input text-sm" value={form.reward_type} onChange={(e) => set('reward_type', e.target.value)}>
           <option value="cash_inr">Cash (₹)</option>
           <option value="account_credit">Account credit</option>
         </select>
       </td>
-      <td className="px-3 py-2.5">
+      <td className="px-3 py-1.5">
         <input type="number" min="0" step="1" className="fb-input text-sm w-24"
           value={form.reward_value} onChange={(e) => set('reward_value', e.target.value)} />
       </td>
-      <td className="px-3 py-2.5">
+      <td className="px-3 py-1.5">
         <input type="number" min="1" step="1" className="fb-input text-sm w-20"
           value={form.min_qualifying_charges} onChange={(e) => set('min_qualifying_charges', e.target.value)} />
       </td>
-      <td className="px-3 py-2.5">
+      <td className="px-3 py-1.5">
         <input type="number" min="0" step="1" className="fb-input text-sm w-20"
           value={form.hold_days} onChange={(e) => set('hold_days', e.target.value)} />
       </td>
-      <td className="px-3 py-2.5">
+      <td className="px-3 py-1.5">
         <input type="number" min="0" step="1" className="fb-input text-sm w-20"
           value={form.monthly_cap} onChange={(e) => set('monthly_cap', e.target.value)} />
       </td>
-      <td className="px-3 py-2.5 text-center">
+      <td className="px-3 py-1.5 text-center">
         <input type="checkbox" checked={!!form.active} onChange={(e) => set('active', e.target.checked)} />
       </td>
-      <td className="px-3 py-2.5 text-right">
+      <td className="px-3 py-1.5 text-right">
         <Btn size="sm" disabled={!dirty || saving} onClick={save}>{saving ? 'Saving…' : 'Save'}</Btn>
       </td>
     </tr>
@@ -112,20 +112,20 @@ const AdminReferrals = () => {
       ) : (
         <>
           {/* ── Reward rules ─────────────────────────────────────── */}
-          <h2 className="text-sm font-bold adm-t2 mb-3">Reward rules</h2>
-          <div className="adm-card rounded-2xl overflow-hidden mb-8">
+          <h2 className="text-sm font-bold adm-t2 mb-2">Reward rules</h2>
+          <div className="adm-card rounded-2xl overflow-hidden mb-4">
             <div className="overflow-x-auto">
               <table className="adm-table w-full text-sm">
                 <thead>
                   <tr className="adm-th text-left text-xs font-semibold adm-t3">
-                    <th className="px-3 py-2">Plan · Cadence</th>
-                    <th className="px-3 py-2">Reward type</th>
-                    <th className="px-3 py-2">Reward (₹)</th>
-                    <th className="px-3 py-2">Min charges</th>
-                    <th className="px-3 py-2">Hold (days)</th>
-                    <th className="px-3 py-2">Monthly cap</th>
-                    <th className="px-3 py-2 text-center">Active</th>
-                    <th className="px-3 py-2 text-right">Actions</th>
+                    <th className="px-3 py-1.5">Plan · Cadence</th>
+                    <th className="px-3 py-1.5">Reward type</th>
+                    <th className="px-3 py-1.5">Reward (₹)</th>
+                    <th className="px-3 py-1.5">Min charges</th>
+                    <th className="px-3 py-1.5">Hold (days)</th>
+                    <th className="px-3 py-1.5">Monthly cap</th>
+                    <th className="px-3 py-1.5 text-center">Active</th>
+                    <th className="px-3 py-1.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -139,7 +139,7 @@ const AdminReferrals = () => {
               </table>
             </div>
           </div>
-          <p className="adm-t3 text-xs mb-8 -mt-6">
+          <p className="adm-t3 text-xs mb-6">
             <strong>Min charges</strong> gates the reward until the referred host has paid that many times
             (monthly = 2 guards churn; yearly = 1 pays on first). <strong>Hold</strong> is the refund window
             before the reward is released. <strong>Monthly cap</strong> limits rewards per referrer per month
@@ -147,33 +147,33 @@ const AdminReferrals = () => {
           </p>
 
           {/* ── Recent referrals ─────────────────────────────────── */}
-          <h2 className="text-sm font-bold adm-t2 mb-3">Recent referrals</h2>
+          <h2 className="text-sm font-bold adm-t2 mb-2">Recent referrals</h2>
           <div className="adm-card rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="adm-table w-full text-sm">
                 <thead>
                   <tr className="adm-th text-left text-xs font-semibold adm-t3">
-                    <th className="px-3 py-2">Referrer</th>
-                    <th className="px-3 py-2">Referred</th>
-                    <th className="px-3 py-2">Plan</th>
-                    <th className="px-3 py-2">Reward</th>
-                    <th className="px-3 py-2">Status</th>
-                    <th className="px-3 py-2">Created</th>
+                    <th className="px-3 py-1.5">Referrer</th>
+                    <th className="px-3 py-1.5">Referred</th>
+                    <th className="px-3 py-1.5">Plan</th>
+                    <th className="px-3 py-1.5">Reward</th>
+                    <th className="px-3 py-1.5">Status</th>
+                    <th className="px-3 py-1.5">Created</th>
                   </tr>
                 </thead>
                 <tbody>
                   {referrals.map((r) => (
                     <tr key={r.id} className="adm-hoverable">
-                      <td className="px-3 py-2.5 adm-t1">{r.referrer?.username || r.referrer?.name || '—'}</td>
-                      <td className="px-3 py-2.5 adm-t2">{r.referred?.username || r.referred?.name || '—'}</td>
-                      <td className="px-3 py-2.5 adm-t2 whitespace-nowrap">
+                      <td className="px-3 py-1.5 adm-t1">{r.referrer?.username || r.referrer?.name || '—'}</td>
+                      <td className="px-3 py-1.5 adm-t2">{r.referred?.username || r.referred?.name || '—'}</td>
+                      <td className="px-3 py-1.5 adm-t2 whitespace-nowrap">
                         {r.referred_plan ? `${planLabel(r.referred_plan)} · ${r.cadence}` : '—'}
                       </td>
-                      <td className="px-3 py-2.5 adm-t2">{Number(r.reward_value) > 0 ? money(r.reward_value) : '—'}</td>
-                      <td className="px-3 py-2.5">
+                      <td className="px-3 py-1.5 adm-t2">{Number(r.reward_value) > 0 ? money(r.reward_value) : '—'}</td>
+                      <td className="px-3 py-1.5">
                         <Badge tone={STATUS_TONE[r.status] || 'neutral'}>{r.status}</Badge>
                       </td>
-                      <td className="px-3 py-2.5 text-xs adm-t3 whitespace-nowrap">{fmtDate(r.created_at)}</td>
+                      <td className="px-3 py-1.5 text-xs adm-t3 whitespace-nowrap">{fmtDate(r.created_at)}</td>
                     </tr>
                   ))}
                   {referrals.length === 0 && (
