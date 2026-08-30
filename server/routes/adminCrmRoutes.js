@@ -74,4 +74,9 @@ router.post('/leads/:id/email', manage, c.sendEmail);
 router.post('/leads/:id/follow-ups', manage, c.createFollowUp);
 router.post('/leads/:id/enroll', manage, c.enroll);
 
+// Relationship touch recommendations — act on a rec (done records the touch + closes it).
+router.post('/recommendations/:id/done', manage, c.completeRecommendation);
+router.post('/recommendations/:id/snooze', manage, c.snoozeRecommendation);
+router.post('/recommendations/:id/dismiss', manage, c.dismissRecommendation);
+
 module.exports = router;

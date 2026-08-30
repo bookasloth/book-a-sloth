@@ -16,6 +16,7 @@ const sequenceService = require('../services/crm/sequenceService');
 const attribution = require('../services/crm/attribution');
 const deskService = require('../services/crm/deskService');
 const reportService = require('../services/crm/reportService');
+const touchRecommendationService = require('../services/crm/touchRecommendationService');
 
 const actor = (req) => req.admin?.id || null;
 
@@ -24,6 +25,32 @@ const getDesk = async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 25, 100);
     res.json(await deskService.getDesk(limit));
+  } catch (e) { safeError(res, e); }
+};
+
+// ── Relationship touch recommendations (act on a rec) ─────────
+// completeRecommendation records the touch on the lead timeline (stamps the meaningful
+// clock via a real channel) and closes the rec. snooze/dismiss just move its status.
+const completeRecommendation = async (req, res) => {
+  try {
+    const { channel = null, outcome = null } = req.body || {};
+    const r = await touchRecommendationService.complete({ recId: req.params.id, adminId: actor(req), channel, outcome });
+    if (r.notFound) return res.status(404).json({ message: 'Recommendation not found' });
+    res.json({ ok: true });
+  } catch (e) { safeError(res, e); }
+};
+const snoozeRecommendation = async (req, res) => {
+  try {
+    const { until } = req.body || {};
+    if (!until) return res.status(400).json({ message: 'until (ISO timestamp) is required' });
+    const r = await touchRecommendationService.snooze(req.params.id, until);
+    res.json({ ok: r.ok });
+  } catch (e) { safeError(res, e); }
+};
+const dismissRecommendation = async (req, res) => {
+  try {
+    const r = await touchRecommendationService.dismiss(req.params.id);
+    res.json({ ok: r.ok });
   } catch (e) { safeError(res, e); }
 };
 
@@ -438,6 +465,7 @@ module.exports = {
   listLeads, createLead, getLead, updateLead, getTimeline, leadMessages,
   setStatus, setOwner, mergeLead, addTag, removeTag, setDnc, addNote, logCall,
   sendWhatsApp, sendEmail,
+  completeRecommendation, snoozeRecommendation, dismissRecommendation,
   listFollowUps, createFollowUp, completeFollowUp, cancelFollowUp,
   listSequences, createSequence, enroll,
   bulk, importPreview, importCommit, exportCsv, refreshAttribution,

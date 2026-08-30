@@ -14,8 +14,12 @@
  * Best-effort throughout — a recommendation write must never break the lifecycle run.
  */
 const { supabaseAdmin } = require('../../config/supabase');
+const { logActivity } = require('./activity');
 
 const COOLDOWN_DAYS = 14;   // after done/dismissed, don't re-surface the same reason for this long
+// A rec acted through a real channel logs a CONTACT-type activity, which stamps the
+// meaningful-interaction clock (v3.133). Anything else is recorded but not "meaningful".
+const CHANNEL_TYPE = { whatsapp: 'whatsapp_sent', email: 'email_sent', call: 'call_logged' };
 let tableReady = true;
 
 const isMissing = (err) =>
@@ -99,4 +103,31 @@ async function markDone(id, { adminId = null, outcome = null } = {}) {
   return { ok: !error };
 }
 
-module.exports = { upsertOpen, snooze, dismiss, markDone, COOLDOWN_DAYS };
+/** Load one recommendation by id (null if absent). */
+async function get(id) {
+  const { data } = await supabaseAdmin.from('touch_recommendations').select('*').eq('id', id).maybeSingle();
+  return data || null;
+}
+
+/**
+ * A human acted on a rec: record the touch on the lead's timeline — which, via a real
+ * channel (whatsapp/email/call), stamps the meaningful-interaction clock (v3.133) and
+ * tags the activity with the rec's reason (v3.137) — then close the rec. Closes the
+ * loop TOUCH → RESPONSE → updated health (health recomputes on the next tick).
+ * @returns {Promise<{ok:boolean, notFound?:boolean}>}
+ */
+async function complete({ recId, adminId = null, channel = null, outcome = null }) {
+  const rec = await get(recId);
+  if (!rec) return { ok: false, notFound: true };
+  const type = CHANNEL_TYPE[channel] || 'touch_logged';
+  await logActivity(rec.lead_id, type, {
+    actorAdminId: adminId,
+    title: `Relationship touch: ${rec.reason}`,
+    meta: { recommendation_id: recId, touch_type: rec.touch_type, outcome: outcome || null },
+    touchReason: rec.reason,
+  });
+  await markDone(recId, { adminId, outcome });
+  return { ok: true };
+}
+
+module.exports = { upsertOpen, snooze, dismiss, markDone, get, complete, COOLDOWN_DAYS };
