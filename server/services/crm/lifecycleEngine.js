@@ -27,6 +27,8 @@
 const { supabaseAdmin } = require('../../config/supabase');
 const leadScore = require('./leadScore');
 const relationshipHealth = require('./relationshipHealth');
+const relationshipTouch = require('./relationshipTouch');
+const touchRecommendationService = require('./touchRecommendationService');
 const leadService = require('./leadService');
 const sequenceService = require('./sequenceService');
 const followUpService = require('./followUpService');
@@ -255,22 +257,29 @@ async function writeScoring(lead, d) {
 }
 
 // Relationship health (v3.135) — a separate axis from the lead score: how current &
-// healthy the relationship is, decaying with time-since-meaningful-interaction. Pure
-// compute → stored state/score/signals for the Relationship Desk. Same schema-fallback
-// discipline as writeScoring. `ctx` is the loadAccountCtx facts for the linked account.
-async function writeHealth(lead, ctx, now) {
+// healthy the relationship is, decaying with time-since-meaningful-interaction. Takes
+// a PRECOMPUTED health (so the tick computes it once and reuses it for the touch recs),
+// persists state/score/signals. Same schema-fallback discipline as writeScoring.
+async function writeHealth(lead, health) {
   if (!healthColumns) return;
-  const h = relationshipHealth.compute(lead, { ...ctx, meetsSloth: rules.meetsSlothGate(ctx) }, now);
   const { error } = await supabaseAdmin.from('leads').update({
-    health_state: h.state,
-    health_score: h.score,
-    health_signals: h.signals,
-    health_computed_at: new Date(now).toISOString(),
+    health_state: health.state,
+    health_score: health.score,
+    health_signals: health.signals,
+    health_computed_at: new Date().toISOString(),
   }).eq('id', lead.id);
   if (error && /column .* does not exist|Could not find/i.test(error.message || '')) {
     healthColumns = false;
     console.warn('[crm] lifecycle: health columns missing (run v3.135) — skipping health writeback');
   }
+}
+
+// Relationship touch recommendations (v3.136) — the single most relevant relationship
+// moment for this lead, emitted into the touch_recommendations queue for the Desk.
+// Best-effort; the service self-guards a missing table. NOTHING is sent from here.
+async function upsertTouchRecs(lead, health, ctx, now) {
+  const recs = relationshipTouch.recommendationsFor(lead, health, ctx, now);
+  if (recs.length) await touchRecommendationService.upsertOpen(recs, now);
 }
 
 // Churn-on-lapse sweep: money-state leads whose paid term has lapsed → Churned +
@@ -322,7 +331,12 @@ async function run() {
       }
 
       await writeScoring(lead, d);
-      await writeHealth(lead, ctxMap.get(lead.profile_id) || {}, now);
+
+      // Relationship layer: compute health once, persist it, and emit the touch rec.
+      const healthCtx = { ...(ctxMap.get(lead.profile_id) || {}), meetsSloth: rules.meetsSlothGate(ctxMap.get(lead.profile_id) || {}) };
+      const health = relationshipHealth.compute(lead, healthCtx, now);
+      await writeHealth(lead, health);
+      await upsertTouchRecs(lead, health, healthCtx, now);
 
       if (d.changed) { await leadService.changeStatus(lead.id, d.status, null); moved++; }
 
