@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getPublicPlans, createSubscription, syncSubscription, cancelSubscription, getMyInvoices, invoiceUrl } from "../services/api";
+import { getPublicPlans, createSubscription, syncSubscription, cancelSubscription } from "../services/api";
 import toast from "react-hot-toast";
 import BackButton from "../components/common/BackButton";
 import { PageHeader, Card, Button, cn, Modal, Sheet, ConfirmSheet, Input, Select, FormField } from "../components/dashboard/ui";
@@ -36,51 +36,6 @@ const Check = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
   </svg>
 );
-
-// Host's own subscription GST invoices, downloadable. Booking invoices are
-// filtered out — those live on the guest bookings page. Always renders (empty
-// hint included) so the plan page reliably surfaces "where's my receipt".
-const BillingHistory = () => {
-  const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-    getMyInvoices()
-      .then(({ data }) => { if (active) setInvoices((data || []).filter((i) => i.source_type === "subscription")); })
-      .catch(() => {})
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
-
-  if (loading) return null;
-
-  return (
-    <Card className="mb-6">
-      <h3 className="mb-3 text-sm font-semibold text-gray-700">Billing history</h3>
-      {!invoices.length ? (
-        <p className="text-sm text-gray-400">No invoices yet — they appear here after your first paid renewal.</p>
-      ) : (
-        <div className="space-y-2">
-          {invoices.map((inv) => (
-            <div key={inv.id} className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2">
-              <div className="min-w-0">
-                <p className="truncate font-mono text-xs font-medium text-gray-800">{inv.invoice_number}</p>
-                <p className="text-[11px] text-gray-400">{inv.issued_at ? new Date(inv.issued_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : ""}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <span className="text-xs font-semibold text-gray-700">{inr(inv.total)}</span>
-                <a href={invoiceUrl(inv.id, inv.access_token)} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:opacity-80">
-                  Download
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </Card>
-  );
-};
 
 const UpgradePlan = () => {
   const { user, updateUser } = useAuth();
@@ -222,9 +177,6 @@ const UpgradePlan = () => {
           </div>
         </Card>
       )}
-
-      {/* Subscription GST invoices */}
-      <BillingHistory />
 
       {/* Cadence toggle */}
       <div className="mb-7 flex items-center justify-center gap-2">
