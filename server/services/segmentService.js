@@ -43,4 +43,20 @@ async function count(definition, channel = 'email') {
   return (await resolve(definition, channel)).length;
 }
 
-module.exports = { resolve, count };
+/**
+ * Resolve an explicit pick (manual / single audience) to contactable rows.
+ * ref = { contact_ids?: string[], emails?: string[] }. Consent + suppression
+ * are enforced here too — a hand-picked opted-out contact is still dropped.
+ */
+async function resolveRefs(ref = {}, channel = 'email') {
+  const ids = new Set(ref.contact_ids || []);
+  const emails = new Set((ref.emails || []).map((e) => String(e).toLowerCase()));
+  if (!ids.size && !emails.size) return [];
+  const { data, error } = await supabaseAdmin.from('contacts').select('*');
+  if (error) return [];
+  return (data || [])
+    .filter((c) => ids.has(c.id) || emails.has(String(c.email || '').toLowerCase()))
+    .filter((c) => contactable(c, channel));
+}
+
+module.exports = { resolve, resolveRefs, count };

@@ -163,6 +163,11 @@ export const getSupportThreads  = ()         => API.get('/support/threads');
 export const startSupportTopic  = ()         => API.post('/support/thread/new');
 export const getSupportMessages = (id)       => API.get(`/support/thread/${id}/messages`);
 export const sendSupportMessage = (id, data) => API.post(`/support/thread/${id}/messages`, data);
+export const uploadSupportAttachment = (id, file) => {
+  const fd = new FormData();
+  fd.append('image', file);
+  return API.post(`/support/thread/${id}/attachment`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+};
 export const escalateSupport    = (id, data) => API.post(`/support/thread/${id}/escalate`, data || {});
 export const rateSupportThread  = (id, data) => API.post(`/support/thread/${id}/rating`, data);
 export const markSupportRead    = (id)       => API.post(`/support/thread/${id}/read`);
@@ -554,7 +559,9 @@ export const adminCampSyncContacts = ()         => API.post('/admin/campaigns/co
 export const adminCampSuppress     = (id, data) => API.patch(`/admin/campaigns/contacts/${id}`, data);
 export const adminCampSegments     = ()         => API.get('/admin/campaigns/segments');
 export const adminCampSegPreview   = (definition, channel = 'email') => API.post('/admin/campaigns/segments/preview', { definition, channel });
+export const adminCampResolveAudience = (data)  => API.post('/admin/campaigns/audience/resolve', data);
 export const adminCampaigns        = ()         => API.get('/admin/campaigns');
+export const adminCampPreview      = (data)     => API.post('/admin/campaigns/preview', data);
 export const adminCampCreate       = (data)     => API.post('/admin/campaigns', data);
 export const adminCampGet          = (id)       => API.get(`/admin/campaigns/${id}`);
 export const adminCampUpdate       = (id, data) => API.put(`/admin/campaigns/${id}`, data);

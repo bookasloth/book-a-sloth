@@ -185,4 +185,4 @@ const uploadProductFile = async (req, res) => {
   }
 };
 
-module.exports = { uploadImage, uploadProductFile, sniffProductFile };
+module.exports = { uploadImage, uploadProductFile, sniffProductFile, sniffImage };

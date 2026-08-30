@@ -6,6 +6,7 @@ import {
   adminEmailTemplates, adminCampWaTemplates, adminCampWaCreate,
 } from '../../services/api';
 import { PageHeader, Card, Btn, Badge } from '../../components/admin/ui';
+import AdminCampaignComposer from './AdminCampaignComposer';
 
 const STATUS_TONE = { draft: 'neutral', scheduled: 'info',
   sending: 'warn', sent: 'ok',
@@ -23,6 +24,7 @@ const AdminCampaigns = () => {
   const [form, setForm] = useState(BLANK);
   const [count, setCount] = useState(null);
 
+  const [composing, setComposing] = useState(false);
   // WhatsApp template registry
   const [waManage, setWaManage] = useState(false);
   const [waForm, setWaForm] = useState({ name: '', aisensy_campaign_name: '', fields: '' });
@@ -77,13 +79,16 @@ const AdminCampaigns = () => {
 
   const isWa = form.channel === 'whatsapp';
 
+  if (composing) return <AdminCampaignComposer onClose={() => { setComposing(false); load(); }} />;
+
   return (
     <div>
       <PageHeader title="Campaigns" subtitle="Targeted Email & WhatsApp campaigns to consented segments."
         actions={<>
           <Btn variant="outline" size="sm" onClick={() => setWaManage((v) => !v)}>WhatsApp templates</Btn>
           <Btn variant="outline" size="sm" onClick={syncContacts}>Sync contacts</Btn>
-          <Btn size="sm" onClick={() => setBuilding(true)}>New campaign</Btn>
+          <Btn variant="outline" size="sm" onClick={() => setBuilding(true)}>Template campaign</Btn>
+          <Btn size="sm" onClick={() => setComposing(true)}>Create Email</Btn>
         </>} />
 
       {/* WhatsApp template registry */}

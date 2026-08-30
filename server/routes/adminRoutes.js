@@ -257,9 +257,11 @@ router.post('/campaigns/contacts/sync',    requireAdmin('campaigns.manage'), cam
 router.patch('/campaigns/contacts/:id',    requireAdmin('campaigns.manage'), campaigns.suppressContact);
 router.get('/campaigns/segments',          requireAdmin('campaigns.view'),   campaigns.listSegments);
 router.post('/campaigns/segments/preview', requireAdmin('campaigns.view'),   campaigns.previewSegment);
+router.post('/campaigns/audience/resolve', requireAdmin('campaigns.view'),   campaigns.resolveAudience);
 router.get('/campaigns/wa-templates',      requireAdmin('campaigns.view'),   campaigns.listWaTemplates);
 router.post('/campaigns/wa-templates',     requireAdmin('campaigns.manage'), campaigns.createWaTemplate);
 router.put('/campaigns/wa-templates/:id',  requireAdmin('campaigns.manage'), campaigns.updateWaTemplate);
+router.post('/campaigns/preview',          requireAdmin('campaigns.view'),   campaigns.previewCampaign);
 router.get('/campaigns',                   requireAdmin('campaigns.view'),   campaigns.listCampaigns);
 router.post('/campaigns',                  requireAdmin('campaigns.manage'), campaigns.createCampaign);
 router.get('/campaigns/:id',               requireAdmin('campaigns.view'),   campaigns.getCampaign);

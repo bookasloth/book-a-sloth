@@ -10,6 +10,8 @@ const chat = require('../services/supportChatService');
 const bot = require('../services/botService');
 const supportActions = require('../services/supportActions');
 const supportContext = require('../services/supportContextService');
+const { supabaseAdmin } = require('../config/supabase');
+const { sniffImage } = require('./uploadController');
 
 // Bolt auto-reply. Fired after the user's message is stored, ONLY while the thread
 // is still bot-handled (status 'bot') — once a human takes over ('waiting'/'assigned')
@@ -143,11 +145,33 @@ const sendMessage = async (req, res) => {
     const msg = await chat.postMessage({
       threadId: thread.id, sender: 'user',
       senderId: req.user?.id, senderName: req.user?.name,
-      body: req.body?.body,
+      body: req.body?.body, attachmentUrl: req.body?.attachment_url,
     });
     res.status(201).json(msg);
     // Async Bolt reply while the thread is still bot-handled — after the response.
-    if (thread.status === 'bot') botAutoReply(thread, msg.body);
+    // Skip when the turn is an image with no text (nothing for Bolt to answer).
+    if (thread.status === 'bot' && msg.body) botAutoReply(thread, msg.body);
+  } catch (e) { safeError(res, e); }
+};
+
+// POST /api/support/thread/:id/attachment — upload a screenshot/image for a
+// message (field "image"). Any thread OWNER may upload (guests included — unlike
+// /upload/image which is host/admin-only), so it lives here, not in uploadController.
+// Content is sniffed by magic bytes; only JPG/PNG/WEBP pass. Returns { url }.
+const uploadAttachment = async (req, res) => {
+  try {
+    const thread = await chat.getThread(req.params.id);
+    if (!owns(thread, req.user)) return res.status(404).json({ message: 'Thread not found' });
+    if (!req.file) return res.status(400).json({ message: 'No file provided' });
+    const sniffed = sniffImage(req.file.buffer);
+    if (!sniffed) return res.status(400).json({ message: 'File must be a JPG, PNG, or WEBP image.' });
+    const rand = Math.random().toString(36).slice(2, 8);
+    const key = `support/${thread.id}/${Date.now()}_${rand}${sniffed.ext}`;
+    const { error } = await supabaseAdmin.storage
+      .from('images').upload(key, req.file.buffer, { contentType: sniffed.mime, upsert: true });
+    if (error) return safeError(res, error, 500, 'Upload failed. Please try again.');
+    const { data: { publicUrl } } = supabaseAdmin.storage.from('images').getPublicUrl(key);
+    res.json({ url: publicUrl });
   } catch (e) { safeError(res, e); }
 };
 
@@ -204,4 +228,4 @@ const markRead = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { getMyThread, listThreads, startTopic, getMessages, sendMessage, escalateThread, rateThread, markRead, unread, hours, botAutoReply };
+module.exports = { getMyThread, listThreads, startTopic, getMessages, sendMessage, escalateThread, rateThread, markRead, unread, hours, botAutoReply, uploadAttachment };
