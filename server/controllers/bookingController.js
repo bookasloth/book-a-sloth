@@ -728,18 +728,27 @@ const getGuestBookings = async (req, res) => {
   try {
     // Safety ceiling (optional ?limit/?offset); response stays a bare array.
     const { from, to } = parseListRange(req.query);
-    let result = await supabaseAdmin
-      .from("bookings")
-      .select("*, services(*), profiles!bookings_host_id_fkey(*)")
-      .eq("guest_id", req.user.id)
+    // Identity match: a booking is linked to this guest by guest_id (booked while
+    // logged in) OR — for bookings placed while logged OUT — only by the phone.
+    // Match on both so the guest sees ALL their bookings after OTP login, not just
+    // the guest_id-tagged slice. Phone is the OTP-verified login identity, so
+    // matching on it is safe; normalise to the last 10 digits because guest_phone
+    // is stored inconsistently (8637758344 / +918637758344 / 918637758344).
+    const { data: me } = await supabaseAdmin
+      .from("profiles").select("phone").eq("id", req.user.id).single();
+    const d10 = String(me?.phone || req.user.phone || "").replace(/\D/g, "").slice(-10);
+    const orFilter = d10.length === 10
+      ? `guest_id.eq.${req.user.id},guest_phone.in.(${d10},+91${d10},91${d10},0${d10})`
+      : null;
+    const scoped = (q) => orFilter ? q.or(orFilter) : q.eq("guest_id", req.user.id);
+    let result = await scoped(
+      supabaseAdmin.from("bookings").select("*, services(*), profiles!bookings_host_id_fkey(*)"))
       .order("scheduled_at", { ascending: true })
       .range(from, to);
     // Fallback if schema cache is stale
     if (result.error && /Could not find the|column.*does not exist/i.test(result.error.message)) {
-      result = await supabaseAdmin
-        .from("bookings")
-        .select("id, service_id, host_id, guest_id, guest_name, guest_email, scheduled_at, status, payment_status, meeting_link, notes, created_at, updated_at, services(id, title, duration, price), profiles!bookings_host_id_fkey(id, name, email)")
-        .eq("guest_id", req.user.id)
+      result = await scoped(
+        supabaseAdmin.from("bookings").select("id, service_id, host_id, guest_id, guest_name, guest_email, scheduled_at, status, payment_status, customer_total, paid_at, meeting_link, notes, created_at, updated_at, services(id, title, duration, price), profiles!bookings_host_id_fkey(id, name, email)"))
         .order("scheduled_at", { ascending: true })
         .range(from, to);
     }
