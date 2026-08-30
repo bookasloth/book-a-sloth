@@ -289,6 +289,8 @@ async function processQueue(limit = 25) {
       await supabaseAdmin.from('email_logs').update({
         status: 'sent', attempts: attemptsMade, provider: r.provider,
         provider_response: r.response || {}, error: null,
+        // Resend email id — lets the delivery webhook match this row later (v3.138).
+        provider_message_id: r.id || r.response?.id || null,
         sent_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq('id', row.id);
       sent++;
@@ -383,6 +385,33 @@ async function enqueueCampaignEmail({
   return { ok: true, status: 'queued', logId };
 }
 
+// Provider delivery event → email_logs status, matched by the Resend message id
+// stored at send. Forward-only-ish: a bounce is terminal (never downgraded to
+// delivered), delivered won't overwrite a bounce. Best-effort + schema-safe: an
+// unmatched id or a pre-v3.138 DB just no-ops (a webhook must never throw).
+const EMAILLOG_DELIVERY = {
+  'email.delivered': { status: 'delivered', stamp: 'delivered_at' },
+  'email.bounced':   { status: 'bounced',   stamp: 'bounced_at' },
+  'email.complained':{ status: 'bounced',   stamp: 'bounced_at' },
+};
+async function recordEmailLogDelivery({ providerMessageId, event }) {
+  const map = EMAILLOG_DELIVERY[event];
+  if (!map || !providerMessageId) return { ok: true, matched: false };
+  try {
+    const { data: row } = await supabaseAdmin
+      .from('email_logs').select('id, status').eq('provider_message_id', providerMessageId).maybeSingle();
+    if (!row) return { ok: true, matched: false };
+    if (row.status === 'bounced') return { ok: true, matched: true }; // terminal
+    const now = new Date().toISOString();
+    await supabaseAdmin.from('email_logs')
+      .update({ status: map.status, [map.stamp]: now, updated_at: now }).eq('id', row.id);
+    return { ok: true, matched: true };
+  } catch (err) {
+    if (!isMissingSchema(err)) console.error('[email] recordEmailLogDelivery:', err.message);
+    return { ok: false };
+  }
+}
+
 /**
  * Deliver a composer draft to one address NOW (test send). Uses the exact same
  * compile→shell path as a real campaign, so the test mirrors production. Bypasses
@@ -410,5 +439,5 @@ async function sendComposedTest({ bodyHtml, subject: composedSubject, previewTex
 
 module.exports = {
   send, processQueue, renderEmail, getTemplate, loadSettings, loadTemplates,
-  clearCache, BACKOFFS_MIN, enqueueCampaignEmail, sendComposedTest, isMarketing, isUnsubscribed,
+  clearCache, BACKOFFS_MIN, enqueueCampaignEmail, sendComposedTest, recordEmailLogDelivery, isMarketing, isUnsubscribed,
 };

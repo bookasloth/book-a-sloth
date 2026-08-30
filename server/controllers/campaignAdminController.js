@@ -142,6 +142,43 @@ const getCampaign = async (req, res) => {
     res.json({ ...data, live_stats: stats });
   } catch (e) { safeError(res, e); }
 };
+
+/**
+ * Per-recipient history for one campaign: who was sent to, the queue status,
+ * and (for email) the delivery state stamped by the Resend webhook. Joins
+ * campaign_recipients → contacts (name) → email_logs (delivery) in batches
+ * (no FK-embed dependency). Summary counts both queue + delivery states.
+ */
+const campaignRecipients = async (req, res) => {
+  try {
+    const { data: recips, error } = await supabaseAdmin
+      .from('campaign_recipients')
+      .select('id, contact_id, destination, status, error, sent_at, email_log_id')
+      .eq('campaign_id', req.params.id).order('created_at', { ascending: true }).limit(2000);
+    if (error) return safeError(res, error);
+    const list = recips || [];
+
+    const contactIds = [...new Set(list.map((r) => r.contact_id).filter(Boolean))];
+    const { data: contacts } = contactIds.length
+      ? await supabaseAdmin.from('contacts').select('id, name').in('id', contactIds) : { data: [] };
+    const nameById = Object.fromEntries((contacts || []).map((c) => [c.id, c.name]));
+
+    const logIds = [...new Set(list.map((r) => r.email_log_id).filter(Boolean))];
+    const { data: logs } = logIds.length
+      ? await supabaseAdmin.from('email_logs').select('id, status, delivered_at, bounced_at').in('id', logIds) : { data: [] };
+    const logById = Object.fromEntries((logs || []).map((l) => [l.id, l]));
+
+    const summary = { total: list.length };
+    const rows = list.map((r) => {
+      const log = r.email_log_id ? logById[r.email_log_id] : null;
+      const delivery = log ? (log.bounced_at ? 'bounced' : log.delivered_at ? 'delivered' : null) : null;
+      summary[r.status] = (summary[r.status] || 0) + 1;
+      if (delivery) summary[delivery] = (summary[delivery] || 0) + 1;
+      return { id: r.id, name: nameById[r.contact_id] || '', email: r.destination, status: r.status, delivery, sent_at: r.sent_at, error: r.error };
+    });
+    res.json({ recipients: rows.slice(0, 1000), summary, truncated: rows.length > 1000 });
+  } catch (e) { safeError(res, e); }
+};
 const updateCampaign = async (req, res) => {
   try {
     const allowed = ['name', 'channel', 'segment_id', 'template_id', 'whatsapp_template_id', 'subject_override', 'scheduled_at', 'throttle_per_min', 'status',
@@ -203,6 +240,6 @@ const updateWaTemplate = async (req, res) => {
 module.exports = {
   listContacts, syncContacts, suppressContact,
   listSegments, previewSegment, resolveAudience, testCampaign,
-  listCampaigns, createCampaign, previewCampaign, getCampaign, updateCampaign, launchCampaign,
+  listCampaigns, createCampaign, previewCampaign, getCampaign, campaignRecipients, updateCampaign, launchCampaign,
   listWaTemplates, createWaTemplate, updateWaTemplate,
 };

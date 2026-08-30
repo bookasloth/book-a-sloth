@@ -565,6 +565,7 @@ export const adminCampaigns        = ()         => API.get('/admin/campaigns');
 export const adminCampPreview      = (data)     => API.post('/admin/campaigns/preview', data);
 export const adminCampCreate       = (data)     => API.post('/admin/campaigns', data);
 export const adminCampGet          = (id)       => API.get(`/admin/campaigns/${id}`);
+export const adminCampRecipients   = (id)       => API.get(`/admin/campaigns/${id}/recipients`);
 export const adminCampUpdate       = (id, data) => API.put(`/admin/campaigns/${id}`, data);
 export const adminCampLaunch       = (id)       => API.post(`/admin/campaigns/${id}/launch`);
 // WhatsApp template registry (AiSensy approved templates + variable mapping)

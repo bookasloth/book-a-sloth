@@ -3,16 +3,18 @@ import toast from 'react-hot-toast';
 import {
   adminCampaigns, adminCampCreate, adminCampLaunch,
   adminCampSegments, adminCampSegPreview, adminCampSyncContacts,
-  adminEmailTemplates, adminCampWaTemplates, adminCampWaCreate, adminCampResolveAudience,
+  adminEmailTemplates, adminCampWaTemplates, adminCampWaCreate, adminCampRecipients, adminCampResolveAudience,
 } from '../../services/api';
-
-const LARGE_AUDIENCE = 50; // above this, require typing the exact count to confirm
 import { PageHeader, Card, Btn, Badge } from '../../components/admin/ui';
 import AdminCampaignComposer from './AdminCampaignComposer';
 
+const LARGE_AUDIENCE = 50; // above this, require typing the exact count to confirm
+
 const STATUS_TONE = { draft: 'neutral', scheduled: 'info',
   sending: 'warn', sent: 'ok',
-  paused: 'info', failed: 'danger' };
+  paused: 'info', failed: 'danger',
+  // per-recipient states (campaign detail)
+  queued: 'neutral', delivered: 'ok', bounced: 'danger', skipped: 'neutral' };
 const Pill = ({ s }) => <Badge tone={STATUS_TONE[s] || 'neutral'}><span className="capitalize">{s}</span></Badge>;
 
 const BLANK = { name: '', channel: 'email', segment_id: '', template_id: '', whatsapp_template_id: '', subject_override: '', throttle_per_min: 120 };
@@ -27,6 +29,9 @@ const AdminCampaigns = () => {
   const [count, setCount] = useState(null);
 
   const [composing, setComposing] = useState(false);
+  // Campaign detail / history
+  const [detailTarget, setDetailTarget] = useState(null);
+  const [detail, setDetail] = useState(null); // {summary, recipients, truncated}
   // Launch confirmation
   const [launchTarget, setLaunchTarget] = useState(null); // campaign row
   const [launchCount, setLaunchCount] = useState(null);   // resolved recipient count
@@ -82,6 +87,12 @@ const AdminCampaigns = () => {
   };
   const needsTyped = launchCount > LARGE_AUDIENCE;
   const canLaunch = launchCount !== 0 && (!needsTyped || launchTyped.trim() === String(launchCount));
+
+  const openDetail = async (c) => {
+    setDetailTarget(c); setDetail(null);
+    try { const r = await adminCampRecipients(c.id); setDetail(r.data); }
+    catch { setDetail({ summary: { total: 0 }, recipients: [] }); }
+  };
 
   const syncContacts = async () => {
     try { const r = await adminCampSyncContacts(); toast.success(`Synced ${r.data.upserted} contacts`); }
@@ -191,7 +202,9 @@ const AdminCampaigns = () => {
           <tbody>
             {list.map((c) => (
               <tr key={c.id} className="border-b adm-border last:border-0 adm-hoverable">
-                <td className="px-4 py-2.5 font-medium adm-t1">{c.name}</td>
+                <td className="px-4 py-2.5 font-medium adm-t1">
+                  <button onClick={() => openDetail(c)} className="hover:underline text-left">{c.name}</button>
+                </td>
                 <td className="px-4 py-2.5 text-xs capitalize adm-t2">{c.channel}</td>
                 <td className="px-4 py-2.5"><Pill s={c.status} /></td>
                 <td className="px-4 py-2.5 text-xs adm-t2">{(c.stats?.sent ?? 0)}/{(c.stats?.total ?? 0)}</td>
@@ -207,6 +220,56 @@ const AdminCampaigns = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Campaign history / delivery detail */}
+      {detailTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setDetailTarget(null)}>
+          <div className="adm-card rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b adm-border">
+              <div>
+                <p className="text-sm font-semibold adm-t1">{detailTarget.name}</p>
+                <p className="text-[11px] adm-t3 capitalize">{detailTarget.channel} · {detailTarget.status}</p>
+              </div>
+              <button onClick={() => setDetailTarget(null)} className="adm-t3 text-lg leading-none">×</button>
+            </div>
+
+            {!detail ? <p className="text-xs adm-t3 p-4">Loading…</p> : (
+              <>
+                <div className="flex flex-wrap gap-2 px-4 py-3 border-b adm-border">
+                  {[['total', 'Total'], ['queued', 'Queued'], ['sent', 'Sent'], ['delivered', 'Delivered'], ['bounced', 'Bounced'], ['failed', 'Failed'], ['skipped', 'Skipped']]
+                    .filter(([k]) => detail.summary[k])
+                    .map(([k, label]) => (
+                      <span key={k} className="text-[11px] px-2 py-1 rounded border adm-border adm-t2">
+                        {label}: <span className="font-semibold adm-t1">{detail.summary[k]}</span>
+                      </span>
+                    ))}
+                </div>
+                <div className="overflow-auto">
+                  <table className="w-full text-xs">
+                    <thead><tr className="text-left uppercase tracking-wide adm-t3 border-b adm-border sticky top-0 adm-card">
+                      <th className="px-4 py-2">Name</th><th className="px-4 py-2">Email</th><th className="px-4 py-2">Status</th><th className="px-4 py-2">Delivery</th>
+                    </tr></thead>
+                    <tbody>
+                      {detail.recipients.map((r) => (
+                        <tr key={r.id} className="border-b adm-border last:border-0">
+                          <td className="px-4 py-1.5 adm-t1">{r.name || '—'}</td>
+                          <td className="px-4 py-1.5 adm-t2">{r.email}</td>
+                          <td className="px-4 py-1.5"><Pill s={r.status} /></td>
+                          <td className="px-4 py-1.5">
+                            {r.delivery ? <Pill s={r.delivery} /> : <span className="adm-t3">{r.error ? r.error : '—'}</span>}
+                          </td>
+                        </tr>
+                      ))}
+                      {detail.recipients.length === 0 && <tr><td colSpan="4" className="px-4 py-6 text-center adm-t3">No recipients yet — launch to snapshot the audience.</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+                {detail.truncated && <p className="text-[11px] adm-t3 px-4 py-2 border-t adm-border">Showing first 1000.</p>}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Launch confirmation + typed-count guardrail */}
       {launchTarget && (

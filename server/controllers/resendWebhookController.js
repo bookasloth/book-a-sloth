@@ -13,6 +13,7 @@
 const crypto = require('crypto');
 const { safeError } = require('../utils/httpError');
 const { recordDeliveryEvent } = require('../services/crm/webhookEvents');
+const { recordEmailLogDelivery } = require('../services/email/communicationEngine');
 
 const TOLERANCE_MS = 5 * 60 * 1000; // reject stale timestamps (replay guard)
 
@@ -51,7 +52,10 @@ const handleResendWebhook = async (req, res) => {
     const emailId = data.email_id || data.id;  // matches crm_messages.provider_message_id
     const to = Array.isArray(data.to) ? data.to[0] : data.to;
 
+    // CRM (sales outreach) delivery state…
     await recordDeliveryEvent({ channel: 'email', event: type, providerMessageId: emailId, email: to, payload: evt });
+    // …and the transactional/campaign email_logs row (feeds Campaigns history). Best-effort.
+    await recordEmailLogDelivery({ providerMessageId: emailId, event: type });
     return res.json({ ok: true });
   } catch (e) { safeError(res, e); }
 };
