@@ -327,7 +327,7 @@ export default function ServicesList() {
       </Modal>
 
       {/* Mobile: floating "Add service" (phones only; header button shows sm+) */}
-      <Fab as={Link} to="/dashboard/service/add-new" icon={Plus} label="Add service" className="sm:hidden" />
+      <Fab as={Link} to="/dashboard/service/add-new" icon={Plus} label="Add service" iconOnly className="sm:hidden" />
     </div>
   );
 }

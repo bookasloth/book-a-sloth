@@ -477,7 +477,7 @@ const Products = () => {
 
       {/* Mobile: floating create button. Label kept distinct from the header
           "Add Product" button so there's a single unambiguous named control. */}
-      {canCreate && !showForm && <Fab onClick={openCreate} icon={Plus} label="New product" className="sm:hidden" />}
+      {canCreate && !showForm && <Fab onClick={openCreate} icon={Plus} label="New product" iconOnly className="sm:hidden" />}
     </div>
   );
 };
