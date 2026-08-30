@@ -31,3 +31,25 @@ test('enqueues a campaign email as a queued log tagged with campaign_id', async 
   expect(db.email_logs[0].subject).toBe('Hi Asha');
   expect(db.email_logs[0].html).toContain('Asha');
 });
+
+test('enqueues a composer (custom-HTML) campaign email with no template', async () => {
+  const r = await engine.enqueueCampaignEmail({
+    bodyHtml: '<table><tr><td>Hey {{first_name}}</td></tr></table>',
+    subject: 'Custom {{first_name}}', previewText: 'preheader', audience: 'customer',
+    to: 'b@x.test', data: { first_name: 'Ravi' },
+    user: { name: 'Ravi', email: 'b@x.test' }, campaignId: 'camp2',
+  });
+  expect(r.ok).toBe(true);
+  expect(r.status).toBe('queued');
+  expect(db.email_logs[0].template_id).toBeNull();
+  expect(db.email_logs[0].campaign_id).toBe('camp2');
+  expect(db.email_logs[0].subject).toBe('Custom Ravi');   // token resolved in composed subject
+  expect(db.email_logs[0].html).toContain('Hey Ravi');    // token resolved in composed body
+  expect(db.email_logs[0].html).toContain('unsubscribe');  // wrapped in customer shell
+});
+
+test('rejects an enqueue with neither templateId nor bodyHtml', async () => {
+  const r = await engine.enqueueCampaignEmail({ to: 'c@x.test', campaignId: 'camp3' });
+  expect(r.ok).toBe(false);
+  expect(r.reason).toMatch(/templateId or bodyHtml/);
+});

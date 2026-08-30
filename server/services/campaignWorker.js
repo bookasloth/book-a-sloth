@@ -63,8 +63,16 @@ async function processDue() {
         await mark(rcpt.id, 'skipped', 'not_contactable'); continue;
       }
       const data = { first_name: (contact.name || '').split(' ')[0], name: contact.name, email: contact.email, ...(contact.attributes || {}) };
+      // Custom (composer) campaign carries its own compiled body; template-based
+      // campaign carries a template_id. enqueueCampaignEmail accepts either.
+      const custom = !campaign.template_id && campaign.html_content;
       const r = await communicationEngine.enqueueCampaignEmail({
-        templateId: campaign.template_id, to: contact.email, data,
+        templateId: campaign.template_id || null,
+        bodyHtml: custom ? campaign.html_content : undefined,
+        subject: custom ? campaign.subject : undefined,
+        previewText: custom ? campaign.preview_text : undefined,
+        audience: contact.contact_type === 'vendor' ? 'vendor' : 'customer',
+        to: contact.email, data,
         user: { name: contact.name, email: contact.email },
         campaignId: campaign.id, subjectOverride: campaign.subject_override || null,
         recipientUserId: contact.user_id || null,

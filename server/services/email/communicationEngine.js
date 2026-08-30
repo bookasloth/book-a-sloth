@@ -274,7 +274,15 @@ async function processQueue(limit = 25) {
     // queued row stores rendered html/subject but not the persona). Missing
     // template → null → global fallback.
     const rowTemplate = await getTemplate(row.event_key, row.audience);
-    const rowSender = await senderRegistry.senderFor(rowTemplate, settings);
+    let rowSender = await senderRegistry.senderFor(rowTemplate, settings);
+    // Composer campaigns carry no template — their persona lives on the campaign
+    // row (sender_key, default 'shubham'). Prefer it when present. Schema-safe:
+    // a select error pre-migration leaves camp null → keeps the global fallback.
+    if (String(row.event_key || '').startsWith('CAMPAIGN:')) {
+      const campId = row.event_key.slice('CAMPAIGN:'.length);
+      const { data: camp } = await supabaseAdmin.from('email_campaigns').select('sender_key').eq('id', campId).maybeSingle();
+      rowSender = (camp && await senderRegistry.byKey(camp.sender_key)) || rowSender;
+    }
     const r = await deliver({ settings, to: row.recipient, subject: row.subject, html: row.html, sender: rowSender });
 
     if (r.success) {
@@ -320,31 +328,54 @@ async function processQueue(limit = 25) {
 }
 
 /**
- * Enqueue one campaign email (render chosen template for one contact → queued log).
- * The standard processQueue() worker delivers it. Subject override optional.
+ * Enqueue one campaign email for one contact → queued log. The standard
+ * processQueue() worker delivers it.
+ *
+ * Two sources of content:
+ *   • templateId          → render a saved email_templates row (legacy path).
+ *   • bodyHtml + subject  → the composer's compiled body (custom campaign). The
+ *                           chrome-less body is wrapped in the recipient shell
+ *                           here so the unsubscribe token stays per-recipient.
+ * Placeholders ({{first_name}}…) are resolved in either path.
  */
-async function enqueueCampaignEmail({ templateId, to, data = {}, user = {}, campaignId, subjectOverride, recipientUserId = null }) {
-  if (!templateId || !to) return { ok: false, reason: 'templateId and to required' };
+async function enqueueCampaignEmail({
+  templateId, bodyHtml, subject: composedSubject, previewText, audience = 'all',
+  to, data = {}, user = {}, campaignId, subjectOverride, recipientUserId = null,
+}) {
+  if (!to) return { ok: false, reason: 'to required' };
+  if (!templateId && !bodyHtml) return { ok: false, reason: 'templateId or bodyHtml required' };
   const settings = await loadSettings();
-  const { data: template } = await supabaseAdmin.from('email_templates').select('*').eq('id', templateId).single();
-  if (!template) return { ok: false, reason: 'no_template' };
+
+  let template, renderAudience;
+  if (templateId) {
+    ({ data: template } = await supabaseAdmin.from('email_templates').select('*').eq('id', templateId).single());
+    if (!template) return { ok: false, reason: 'no_template' };
+    renderAudience = template.audience;
+  } else {
+    // Pseudo-template: renderEmail resolves tokens in the composed body + subject
+    // and wraps it in the recipient shell, exactly like a saved template.
+    template = {
+      subject: composedSubject || '', html_content: bodyHtml, preview_text: previewText || '',
+      cta_label: '', cta_url: '', email_category: '', audience,
+    };
+    renderAudience = audience;
+  }
 
   // Campaigns are bulk marketing — honor the unsubscribe list (legal requirement).
   if (await isUnsubscribed(to)) {
     const logId = await insertLog({
-      event_key: `CAMPAIGN:${campaignId || ''}`, template_id: template.id, audience: template.audience,
+      event_key: `CAMPAIGN:${campaignId || ''}`, template_id: templateId || null, audience: renderAudience,
       recipient: to, recipient_user_id: recipientUserId, campaign_id: campaignId || null,
-      subject: subjectOverride || '', html: '', status: 'suppressed', attempts: 0, is_test: false,
+      subject: subjectOverride || composedSubject || '', html: '', status: 'suppressed', attempts: 0, is_test: false,
     });
     return { ok: true, status: 'suppressed', logId };
   }
 
-  // Campaigns target a specific audience template; render that audience's shell.
   const sendData = { ...data, unsubscribe_token: data.unsubscribe_token || makeToken(to) };
-  const rendered = renderEmail(template, { data: sendData, user, settings, audience: template.audience });
+  const rendered = renderEmail(template, { data: sendData, user, settings, audience: renderAudience });
   const subject = subjectOverride || rendered.subject;
   const logId = await insertLog({
-    event_key: `CAMPAIGN:${campaignId || ''}`, template_id: template.id, audience: template.audience,
+    event_key: `CAMPAIGN:${campaignId || ''}`, template_id: templateId || null, audience: renderAudience,
     recipient: to, recipient_user_id: recipientUserId, campaign_id: campaignId || null,
     subject, html: rendered.html, status: 'queued', attempts: 0,
     next_attempt_at: new Date().toISOString(), is_test: false,
