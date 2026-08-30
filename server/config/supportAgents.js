@@ -18,6 +18,7 @@
 
 // email (lower-cased) → display name shown to customers.
 const PERSONAS = {
+  'bookasloth@gmail.com': 'Shubham', // founder's admin login (see admin_users)
   'tithi@bookasloth.in': 'Tithi',
   // 8 team members from the About page — fill real login emails when provisioned.
   'durga@bookasloth.in': 'Durga',
@@ -32,6 +33,12 @@ const PERSONAS = {
 
 const FALLBACK = 'Support Team';
 
+// Personas who introduce themselves by role instead of "from the support team"
+// (they're not team members — they ARE the company). Keyed by display name.
+const TITLES = {
+  Shubham: 'Founder & Engineer at Book A Sloth',
+};
+
 /** Customer-facing name for an admin. Never leaks a raw email/id. */
 function personaFor(email) {
   if (!email) return FALLBACK;
@@ -41,11 +48,15 @@ function personaFor(email) {
 /**
  * The auto-intro posted when an agent claims a chat. `name` is the customer's
  * first name when known (from the context service) — omitted gracefully otherwise.
+ * Three shapes: a titled persona ("I'm Shubham, Founder & Engineer at Book A
+ * Sloth."), the generic fallback (no doubled name), and a regular team member.
  */
 function introMessage(persona, name) {
   const hi = name ? `Hi ${name}` : 'Hi';
-  return `${hi} — I'm ${persona} from the Book A Sloth support team. `
-    + `Give me a moment to read your messages and I'll help you right away.`;
+  const tail = 'Give me a moment to read your messages and I\'ll help you right away.';
+  if (TITLES[persona]) return `${hi} — I'm ${persona}, ${TITLES[persona]}. ${tail}`;
+  if (persona === FALLBACK) return `${hi} — I'm from the Book A Sloth support team. ${tail}`;
+  return `${hi} — I'm ${persona} from the Book A Sloth support team. ${tail}`;
 }
 
-module.exports = { personaFor, introMessage, FALLBACK, PERSONAS };
+module.exports = { personaFor, introMessage, FALLBACK, TITLES, PERSONAS };
