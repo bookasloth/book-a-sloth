@@ -28,6 +28,15 @@ const getDesk = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── Relationship Desk: "who to talk to today" ────────────────
+// GET /admin/crm/recommendations — open touch recs ranked by priority + health.
+const getRelationships = async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 25, 100);
+    res.json(await deskService.getRelationships(limit));
+  } catch (e) { safeError(res, e); }
+};
+
 // ── Relationship touch recommendations (act on a rec) ─────────
 // completeRecommendation records the touch on the lead timeline (stamps the meaningful
 // clock via a real channel) and closes the rec. snooze/dismiss just move its status.
@@ -465,7 +474,7 @@ module.exports = {
   listLeads, createLead, getLead, updateLead, getTimeline, leadMessages,
   setStatus, setOwner, mergeLead, addTag, removeTag, setDnc, addNote, logCall,
   sendWhatsApp, sendEmail,
-  completeRecommendation, snoozeRecommendation, dismissRecommendation,
+  getRelationships, completeRecommendation, snoozeRecommendation, dismissRecommendation,
   listFollowUps, createFollowUp, completeFollowUp, cancelFollowUp,
   listSequences, createSequence, enroll,
   bulk, importPreview, importCommit, exportCsv, refreshAttribution,

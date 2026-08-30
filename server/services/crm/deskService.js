@@ -187,4 +187,46 @@ async function getDesk(limit = DEFAULT_LIMIT) {
   return { needs_attention, replies: repliesQ, followups, high_intent, activation: activationQ };
 }
 
-module.exports = { getDesk, isUnansweredReply, activationReason, mergeById, shape };
+// ── Relationship Desk (relationship engine PR-5) ─────────────────────────────
+// The "who to talk to today" queue: open touch_recommendations joined to their
+// lead's identity + health. Read-only over what the lifecycle tick wrote.
+const PRIORITY_RANK = { high: 0, medium: 1, low: 2 };
+const HEALTH_RANK = { at_risk: 0, dormant: 1, cooling: 2, steady: 3, thriving: 4 };
+
+/** PURE: most urgent first — priority, then worst health, then oldest. Unit-tested. */
+function rankRecommendations(rows) {
+  return [...(rows || [])].sort((a, b) =>
+    (PRIORITY_RANK[a.priority] ?? 9) - (PRIORITY_RANK[b.priority] ?? 9)
+    || (HEALTH_RANK[a.health_state] ?? 9) - (HEALTH_RANK[b.health_state] ?? 9)
+    || new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
+}
+
+// Flatten an embedded lead (PostgREST returns it as a nested object) onto the rec.
+function flattenRec(r) {
+  const lead = r.leads || r.lead || {};
+  return {
+    id: r.id, lead_id: r.lead_id, reason: r.reason, touch_type: r.touch_type,
+    priority: r.priority, suggested_channel: r.suggested_channel, suggested_sender: r.suggested_sender,
+    mode: r.mode, explanation: r.explanation, due_at: r.due_at, created_at: r.created_at,
+    name: lead.name ?? null, business_name: lead.business_name ?? null,
+    health_state: lead.health_state ?? null, health_score: lead.health_score ?? null,
+    last_meaningful_interaction_at: lead.last_meaningful_interaction_at ?? null,
+  };
+}
+
+async function getRelationships(limit = DEFAULT_LIMIT) {
+  const { data, error } = await supabaseAdmin
+    .from('touch_recommendations')
+    .select('id, lead_id, reason, touch_type, priority, suggested_channel, suggested_sender, mode, explanation, due_at, created_at, leads(name, business_name, health_state, health_score, last_meaningful_interaction_at)')
+    .eq('status', 'open')
+    .limit(CANDIDATE_CAP);
+  // Schema-fallback: pre-v3.136 DB (table missing) → empty queue, never a 500.
+  if (error) return { count: 0, items: [] };
+  const rows = rankRecommendations((data || []).map(flattenRec));
+  return { count: rows.length, items: rows.slice(0, limit) };
+}
+
+module.exports = {
+  getDesk, getRelationships, rankRecommendations,
+  isUnansweredReply, activationReason, mergeById, shape,
+};

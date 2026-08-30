@@ -74,6 +74,8 @@ router.post('/leads/:id/email', manage, c.sendEmail);
 router.post('/leads/:id/follow-ups', manage, c.createFollowUp);
 router.post('/leads/:id/enroll', manage, c.enroll);
 
+// Relationship Desk — "who to talk to today" (open recs ranked by priority + health).
+router.get('/recommendations', view, c.getRelationships);
 // Relationship touch recommendations — act on a rec (done records the touch + closes it).
 router.post('/recommendations/:id/done', manage, c.completeRecommendation);
 router.post('/recommendations/:id/snooze', manage, c.snoozeRecommendation);
