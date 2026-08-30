@@ -65,13 +65,24 @@ function ContextRail({ ctx, thread }) {
     <aside className="flex flex-col gap-3">
       <div className="rounded-xl border adm-border p-3">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3">{isHost ? 'Host' : 'Guest'}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3">Customer</p>
           {isHost && thread.user_id && (
             <a href={`/admin/host360/${thread.user_id}`} target="_blank" rel="noreferrer" className="text-[11px] font-medium text-[#FE5100] hover:underline">Open Host360 ↗</a>
           )}
         </div>
-        <p className="text-sm font-semibold adm-t1">{p.name || '—'}</p>
-        {p.phone && <p className="text-[12px] adm-t3">{p.phone}</p>}
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FFF4EC] text-[13px] font-bold text-[#FE5100]">
+            {(p.name || '?').trim().slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold adm-t1">{p.name || '—'}</p>
+            {p.phone && <p className="text-[12px] adm-t3">{p.phone}</p>}
+          </div>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full border adm-border px-2 py-0.5 text-[11px] font-medium adm-t2">{isHost ? 'Host' : 'Guest'}</span>
+          {p.joinedAt && <span className="text-[11px] adm-t3">Joined {fmtDay(p.joinedAt)}</span>}
+        </div>
         {isHost && (
           <div className="mt-2 border-t adm-border pt-2">
             <Row k="Plan">{p.plan || '—'}{p.planExpiresAt ? ` · exp ${fmtDay(p.planExpiresAt)}` : ''}</Row>
@@ -269,23 +280,48 @@ export default function AdminSupportChat() {
   if (sel) {
     const t = sel.thread;
     const unclaimed = t.status === 'bot' || t.status === 'waiting';
+    const assignedLabel = t.status === 'assigned' ? (t.agent_name || 'Support Team') : null;
+    const pri = priorityOf(t.subject);
+    const waitRow = { waitingOnUs: t.status === 'waiting' || (t.status === 'assigned' && (t.admin_unread || 0) > 0), waitingSince: t.last_message_at };
+    const wmin = waitMinutes(waitRow, now);
+    const wlvl = slaLevel(wmin);
     return (
       <div>
         <button onClick={() => setSel(null)} className="mb-3 text-sm font-medium text-[#FE5100]">← Back to queue</button>
-        <div className="flex flex-wrap items-center gap-2">
-          <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-sm font-semibold text-[#1E1E1E]">{t.reference}</code>
-          <Badge tone={STATUS_TONE[t.status] || 'neutral'}>{t.status}</Badge>
-          <span className="text-xs adm-t3">{who(t)}{t.guest_phone ? ` · ${t.guest_phone}` : ''}</span>
-          {t.agent_name && !unclaimed && <span className="text-xs adm-t3">· {t.agent_name} on it</span>}
-          <div className="ml-auto flex gap-2">
-            {unclaimed && (
-              <button onClick={assignToMe} disabled={assigning}
-                className="rounded-lg bg-[#FE5100] px-2.5 py-1 text-xs font-medium text-white disabled:opacity-40">
-                {assigning ? 'Assigning…' : 'Assign to me'}
-              </button>
+
+        {/* Cockpit header */}
+        <div className="rounded-xl border adm-border bg-white p-4">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <code className="text-lg font-bold tracking-tight text-[#1E1E1E]">{t.reference}</code>
+            <Badge tone={STATUS_TONE[t.status] || 'neutral'}><span className="capitalize">{t.status}</span></Badge>
+            <span className="rounded-full border adm-border px-2 py-0.5 text-[11px] font-medium adm-t2">{who(t)}</span>
+            {assignedLabel && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#faf9f7] px-2 py-0.5 text-[11px] font-medium adm-t2">
+                <span className="adm-t3">Assigned to</span> {assignedLabel}
+              </span>
             )}
-            {t.status !== 'resolved' && (
-              <button onClick={() => setResolveOpen((v) => !v)} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Mark resolved</button>
+            <div className="ml-auto flex items-center gap-2">
+              {pri !== 'high' ? null : (
+                <span className="rounded-lg bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-700">Priority · High</span>
+              )}
+              {unclaimed && (
+                <button onClick={assignToMe} disabled={assigning}
+                  className="rounded-lg border adm-border px-3 py-1.5 text-xs font-medium adm-t2 hover:border-[#FE5100] disabled:opacity-40">
+                  {assigning ? 'Assigning…' : 'Assign to me'}
+                </button>
+              )}
+              {t.status !== 'resolved' && (
+                <button onClick={() => setResolveOpen((v) => !v)}
+                  className="rounded-lg bg-[#FE5100] px-3.5 py-1.5 text-xs font-semibold text-white hover:brightness-95">✓ Resolve ticket</button>
+              )}
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] adm-t3">
+            {t.created_at && <span>🕐 Created {fmtTime(t.created_at)}</span>}
+            {wmin != null && (
+              <span className={'font-medium ' + (wlvl === 'breach' ? 'text-rose-600' : wlvl === 'warn' ? 'text-amber-600' : 'adm-t3')}>
+                ⏱ Waiting {fmtWait(wmin)}
+              </span>
             )}
           </div>
         </div>
@@ -321,16 +357,21 @@ export default function AdminSupportChat() {
               <div ref={bottomRef} />
             </div>
 
-            <form onSubmit={send} className="mt-3 flex items-end gap-2">
+            <form onSubmit={send} className="mt-3 rounded-xl border adm-border bg-white p-2.5">
+              <div className="mb-1.5 flex items-center gap-3 border-b adm-border px-1 pb-1.5">
+                <span className="border-b-2 border-[#FE5100] pb-1 text-[13px] font-semibold text-[#FE5100]">Reply</span>
+              </div>
               <textarea
                 value={reply.body} onChange={(ev) => setReply((r) => ({ ...r, body: ev.target.value }))}
                 onKeyDown={(ev) => { if (ev.key === 'Enter' && !ev.shiftKey) send(ev); }}
-                rows={2} placeholder="Reply to the customer…" aria-label="Reply"
-                className="flex-1 rounded-lg border adm-border px-3 py-2 text-sm" />
-              <button type="submit" disabled={reply.busy || !reply.body.trim()}
-                className="rounded-lg bg-[#FE5100] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-40">
-                {reply.busy ? 'Sending…' : 'Send'}
-              </button>
+                rows={3} placeholder={`Reply to ${(context?.profile?.name || 'the customer').split(' ')[0]}…`} aria-label="Reply"
+                className="w-full resize-none border-0 px-1 py-1 text-sm outline-none focus:ring-0" />
+              <div className="mt-1 flex items-center justify-end">
+                <button type="submit" disabled={reply.busy || !reply.body.trim()}
+                  className="rounded-lg bg-[#FE5100] px-4 py-2 text-sm font-medium text-white disabled:opacity-40">
+                  {reply.busy ? 'Sending…' : '➤ Send'}
+                </button>
+              </div>
             </form>
           </div>
 

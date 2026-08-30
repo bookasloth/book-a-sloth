@@ -82,7 +82,7 @@ async function getSupportContext({ userId, phone, isHost } = {}) {
   if (userId) {
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .select('name, plan, plan_expires_at, is_verified, onboarding_completed, phone')
+      .select('name, plan, plan_expires_at, is_verified, onboarding_completed, phone, created_at')
       .eq('id', userId).maybeSingle();
     if (!error && data) {
       profile = {
@@ -92,6 +92,7 @@ async function getSupportContext({ userId, phone, isHost } = {}) {
         isVerified: !!data.is_verified,
         onboardingCompleted: !!data.onboarding_completed,
         phone: data.phone || phone || null,
+        joinedAt: data.created_at || null,
       };
     }
   }
