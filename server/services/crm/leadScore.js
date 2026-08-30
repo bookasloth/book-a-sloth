@@ -13,12 +13,22 @@
  * badge): a converted lead is `intent: 'activated'` regardless of score.
  */
 
+// Kept BYTE-FOR-BYTE in sync with the client STAGE
+// (client/src/pages/admin/sales/salesConstants.js `leadScore`). The pre-v3.126
+// keys (demo_scheduled/trial) were dropped when the lifecycle statuses were
+// redesigned; the post-conversion ladder (won…champion) was added. A status
+// absent here falls to the shared `?? 10` default on BOTH sides, so retired
+// statuses stay in parity. See docs/crm-relationship-engine-audit.md (PR-0).
 const STAGE = {
-  new: 5, contacted: 20, replied: 45, qualified: 60,
-  demo_scheduled: 70, trial: 78, activated: 88, paid: 95,
-  lost: 0, do_not_contact: 0,
+  new: 5, contacted: 20, replied: 45, qualified: 60, demo: 70,
+  paid: 90, activated: 92, won: 95, sloth: 98, retained: 98, ambassador: 99, enterprised: 99, champion: 100,
+  lost: 0, churned: 0, not_reachable: 0, not_interested: 0, disqualified: 0, do_not_contact: 0,
 };
-const CONVERTED = new Set(['activated', 'paid']);
+// A converted/paying customer is `intent: 'activated'` regardless of raw score, so
+// a high-scoring customer never floods the High Intent acquisition queue. Reuse the
+// single lifecycle source of truth (paid, activated, won, sloth, retained,
+// ambassador, enterprised, champion) rather than re-listing the money states here.
+const { MONEY: CONVERTED } = require('./lifecycleRules');
 
 /** @returns {{ score:number, temp:'hot'|'warm'|'cold' }} — parity with the client. */
 function compute(lead, now = Date.now()) {
