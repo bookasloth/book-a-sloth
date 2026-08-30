@@ -110,6 +110,7 @@ const Payouts     = lazy(() => import('./pages/Payouts'));
 const ChatPage    = lazy(() => import('./pages/ChatPage'));
 const ReferEarn   = lazy(() => import('./pages/ReferEarn'));
 const Transactions = lazy(() => import('./pages/Transactions'));
+const Invoices     = lazy(() => import('./pages/Invoices'));
 const Feedback     = lazy(() => import('./pages/Feedback'));
 
 // Studio Client CRM ("Host 360") — Studio+ only, gated server-side.
@@ -460,6 +461,7 @@ function App() {
           <Route path="/dashboard/payments/payouts" element={<DashboardWrapper><Payouts /></DashboardWrapper>} />
           <Route path="/dashboard/referrals" element={<DashboardWrapper><ReferEarn /></DashboardWrapper>} />
           <Route path="/dashboard/payments/transactions" element={<DashboardWrapper><Transactions /></DashboardWrapper>} />
+          <Route path="/dashboard/invoices" element={<DashboardWrapper><Invoices /></DashboardWrapper>} />
           <Route path="/dashboard/feedback" element={<DashboardWrapper><Feedback /></DashboardWrapper>} />
           <Route path="/dashboard/chat" element={<DashboardWrapper><ChatPage /></DashboardWrapper>} />
 

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, Clock, LayoutGrid, Package,
-  LineChart, Banknote, Receipt, Gift, Sparkles, User,
+  LineChart, Banknote, Receipt, Gift, Sparkles, User, FileText,
   Compass, Boxes, Wallet, Settings, X, Headset, ArrowRight, MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -77,6 +77,7 @@ export const NAV = [
       { to: '/dashboard/earnings', label: 'Earnings', icon: LineChart },
       // KYC gates payouts, so a pending verification surfaces its attention here.
       { to: '/dashboard/payments/payouts', label: 'Payouts', icon: Banknote, matchPrefix: '/dashboard/payments/payouts', badgeKey: 'verification', badgeNoun: 'verify to get paid' },
+      { to: '/dashboard/invoices', label: 'Invoices', icon: FileText, matchPrefix: '/dashboard/invoices' },
       { to: '/dashboard/referrals', label: 'Refer & Earn', icon: Gift },
     ],
   },
