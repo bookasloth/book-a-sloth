@@ -23,6 +23,7 @@ vi.mock('../services/api', () => ({
   crmListSequences: vi.fn(() => Promise.resolve({ data: [] })),
   crmListViews: vi.fn(() => Promise.resolve({ data: [] })),
   crmCreateView: vi.fn(), crmDeleteView: vi.fn(),
+  getCategories: vi.fn(() => Promise.resolve({ data: [] })),
 }));
 vi.mock('../pages/admin/sales/LeadDrawer', () => ({ default: () => null }));
 

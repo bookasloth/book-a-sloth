@@ -4,15 +4,15 @@ import LeadDrawer from './LeadDrawer';
 import {
   crmListLeads, crmCreateLead, crmBulk, crmLeadsExportCsv, crmImportPreview, crmImportCommit,
   crmListTags, crmCreateTag, crmUpdateTag, crmDeleteTag, crmDashboard, crmListFollowUps,
-  crmUpdateLead, crmAddTag, crmRemoveTag, crmListTemplates, crmListSequences,
-  crmListViews, crmCreateView, crmDeleteView,
+  crmUpdateLead, crmListTemplates, crmListSequences,
+  crmListViews, crmCreateView, crmDeleteView, getCategories,
 } from '../../../services/api';
+import { categoryLabel } from '../../../utils/categoryUtils';
 import LeadsBoard from './LeadsBoard';
 import { ALL_STATUSES, STATUS_LABEL, STATUS_TONE, SOURCES, SMART_VIEWS, rupees, relTime } from './salesConstants';
 import { guardedSetStatus } from './statusMove';
 import { colorMap, TAG_PALETTE, swatchClass } from './salesTagColors';
 import TagChip from './TagChip';
-import TagPicker from './TagPicker';
 import MetricStrip from './MetricStrip';
 import EmptyState from './EmptyState';
 import { InlineText, InlineStatus } from './InlineCell';
@@ -150,6 +150,9 @@ export default function SalesLeads() {
   }, [searchParams, setSearchParams]);
   const [showTags, setShowTags] = useState(false);
   const [tagCatalog, setTagCatalog] = useState([]);
+  const [categories, setCategories] = useState([]); // slug→label for Business col
+
+  useEffect(() => { getCategories().then(({ data }) => setCategories(Array.isArray(data) ? data : (data?.categories || []))).catch(() => setCategories([])); }, []);
 
   // Debounce the search box (300ms) so we don't hammer the API per keystroke.
   const t = useRef();
@@ -235,7 +238,6 @@ export default function SalesLeads() {
       if (ok) loadStats(); else load();                  // cancelled → revert
     } catch { toast.error('Save failed'); load(); }
   };
-  const [tagEditId, setTagEditId] = useState(null);
   const [viewType, setViewType] = useState('table'); // 'table' | 'board' | 'list'
   const [savedViews, setSavedViews] = useState([]);
   useEffect(() => { crmListViews().then(({ data }) => setSavedViews(Array.isArray(data) ? data : [])).catch(() => setSavedViews([])); }, []);
@@ -255,48 +257,20 @@ export default function SalesLeads() {
   };
   const deleteView = async (id) => { try { await crmDeleteView(id); setSavedViews((vs) => vs.filter((v) => v.id !== id)); } catch { toast.error('Failed'); } };
 
-  const addTagInline = async (id, name) => {
-    patchRow(id, { tags: Array.from(new Set([...(rows.find((r) => r.id === id)?.tags || []), name])) });
-    setTagEditId(null);
-    try { await crmAddTag(id, name); } catch { toast.error('Failed'); load(); }
-  };
-  const createTagInline = async (id, name, color) => {
-    try { await crmCreateTag({ name, color }); loadTags(); } catch { /* dup ok */ }
-    addTagInline(id, name);
-  };
-  const removeTagInline = async (id, name) => {
-    patchRow(id, { tags: (rows.find((r) => r.id === id)?.tags || []).filter((t) => t !== name) });
-    try { await crmRemoveTag(id, name); } catch { toast.error('Failed'); load(); }
-  };
-
   const columns = [
     { key: 'sel', label: <input type="checkbox" checked={allSelected} onChange={toggleAll} onClick={(e) => e.stopPropagation()} />,
       className: 'w-8', render: (r) => <input type="checkbox" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} onClick={(e) => e.stopPropagation()} /> },
     { key: 'name', label: 'Lead', render: (r) => (
-      <div className="min-w-0">
-        <div className="font-semibold adm-t1"><InlineText value={r.name} onSave={(v) => saveField(r.id, 'name', v)} placeholder="Unnamed" /></div>
-        <p className="text-[11px] adm-t3 truncate px-1.5">{[r.phone, r.email].filter(Boolean).join(' · ') || '—'}</p>
+      <div className="min-w-0 px-1.5">
+        <div className="font-semibold adm-t1 truncate">{r.name || <span className="adm-t3">Unnamed</span>}</div>
+        <p className="text-[11px] adm-t3 truncate">{[r.phone, r.email].filter(Boolean).join(' · ') || '—'}</p>
       </div>
     )},
     { key: 'business', label: 'Business', render: (r) => (
-      <div className="adm-t2 min-w-0"><InlineText value={r.business_name} onSave={(v) => saveField(r.id, 'business_name', v)} placeholder={r.profession || '—'} /></div>
+      <div className="adm-t2 min-w-0"><InlineText value={r.business_name} onSave={(v) => saveField(r.id, 'business_name', v)} placeholder={categoryLabel(r.profession, categories) || '—'} /></div>
     )},
     { key: 'source', label: 'Source', render: (r) => <span className="text-[11px] adm-t3">{r.source}</span> },
     { key: 'stage', label: 'Stage', render: (r) => <InlineStatus value={r.status} onSave={(s) => saveStage(r.id, r.status, s)} /> },
-    { key: 'tags', label: 'Tags', render: (r) => (
-      <div className="flex flex-wrap items-center gap-1 max-w-[190px]" onClick={(e) => e.stopPropagation()}>
-        {(r.tags || []).map((tg) => <TagChip key={tg} name={tg} color={tagColors[tg]} onRemove={() => removeTagInline(r.id, tg)} />)}
-        <div className="relative">
-          <button type="button" onClick={() => setTagEditId(tagEditId === r.id ? null : r.id)}
-            className="text-[11px] w-4 h-4 leading-none rounded border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">+</button>
-          {tagEditId === r.id && (
-            <TagPicker tags={tagCatalog} exclude={r.tags || []}
-              onSelect={(name) => addTagInline(r.id, name)} onCreate={(name, color) => createTagInline(r.id, name, color)}
-              onClose={() => setTagEditId(null)} />
-          )}
-        </div>
-      </div>
-    )},
     { key: 'next', label: 'Next action', render: (r) => {
       const due = nextFollow(r);
       if (due) { const overdue = new Date(due) < new Date(); return <span className={`text-[12px] ${overdue ? 'text-red-500 font-medium' : 'adm-t2'}`}>Follow up {relTime(due)}</span>; }
