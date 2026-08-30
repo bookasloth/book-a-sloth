@@ -218,6 +218,7 @@ const AdminFeatureStatus = lazy(() => import('./pages/admin/AdminFeatureStatus')
 
 // Admin — Sales CRM command center
 const SalesDesk       = lazy(() => import('./pages/admin/sales/SalesDesk'));
+const RelationshipDesk = lazy(() => import('./pages/admin/sales/RelationshipDesk'));
 const SalesLeads      = lazy(() => import('./pages/admin/sales/SalesLeads'));
 const SalesLeadDetail = lazy(() => import('./pages/admin/sales/SalesLeadDetail'));
 const SalesFollowUps  = lazy(() => import('./pages/admin/sales/SalesFollowUps'));
@@ -555,6 +556,7 @@ function App() {
           {/* Sales CRM command center — /admin/sales folds into the Leads workspace */}
           <Route path="/admin/sales" element={<Navigate to="/admin/sales/desk" replace />} />
           <Route path="/admin/sales/desk" element={<AdminWrapper><SalesDesk /></AdminWrapper>} />
+          <Route path="/admin/sales/relationships" element={<AdminWrapper><RelationshipDesk /></AdminWrapper>} />
           <Route path="/admin/sales/leads" element={<AdminWrapper><SalesLeads /></AdminWrapper>} />
           <Route path="/admin/sales/leads/:id" element={<AdminWrapper><SalesLeadDetail /></AdminWrapper>} />
           <Route path="/admin/sales/follow-ups" element={<AdminWrapper><SalesFollowUps /></AdminWrapper>} />

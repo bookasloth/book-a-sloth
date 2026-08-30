@@ -648,6 +648,11 @@ export const crmDashboard        = ()            => API.get('/admin/crm/dashboar
 export const crmPipeline         = ()            => API.get('/admin/crm/pipeline');
 export const crmReports          = ()            => API.get('/admin/crm/reports');
 export const crmGetDesk          = (limit)       => API.get('/admin/crm/desk', { params: limit ? { limit } : {} });
+// Relationship Desk — "who to talk to today" (open touch recommendations).
+export const crmGetRelationships     = (limit)   => API.get('/admin/crm/recommendations', { params: limit ? { limit } : {} });
+export const crmRecommendationDone   = (id, data) => API.post(`/admin/crm/recommendations/${id}/done`, data || {});
+export const crmRecommendationSnooze = (id, until) => API.post(`/admin/crm/recommendations/${id}/snooze`, { until });
+export const crmRecommendationDismiss = (id)     => API.post(`/admin/crm/recommendations/${id}/dismiss`);
 // Public intent-event sink — fire on identified buying-intent (has email/phone).
 export const trackIntent         = (data)        => API.post('/events/intent', data);
 export const crmListLeads        = (params)      => API.get('/admin/crm/leads', { params });

@@ -148,6 +148,7 @@ export default function SalesDesk() {
         subtitle="Your queues, auto-populated. Work top to bottom — no searching."
         actions={
           <div className="flex gap-3 text-[12px]">
+            <a href="/admin/sales/relationships" className="adm-t2 hover:text-[#FE5100]">Relationships</a>
             <a href="/admin/sales/leads" className="adm-t2 hover:text-[#FE5100]">All leads</a>
             <a href="/admin/sales/pipeline" className="adm-t2 hover:text-[#FE5100]">Pipeline</a>
             <a href="/admin/sales/follow-ups" className="adm-t2 hover:text-[#FE5100]">Follow-ups</a>
