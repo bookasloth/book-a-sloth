@@ -7,6 +7,7 @@ import ImageCropper from "../components/common/ImageCropper";
 import FeatureGate from "../components/common/FeatureGate";
 import UsernameField from "../components/dashboard/UsernameField";
 import CategoriesSection from "../components/dashboard/CategoriesSection";
+import AccountModeToggle from "../components/common/AccountModeToggle";
 import toast from "react-hot-toast";
 import {
   getColorsForPlan,
@@ -283,6 +284,7 @@ const ProfileSetup = () => {
   return (
     <div className="mx-auto max-w-5xl">
       <BackButton hasUnsavedChanges={dirty} />
+      <AccountModeToggle />
       <PageHeader
         title="Host Profile"
         subtitle={<>How guests discover and book you. Plan: <span className="font-semibold text-gray-700">{PLAN_LABEL[plan]}</span></>}
