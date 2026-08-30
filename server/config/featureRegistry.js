@@ -73,6 +73,7 @@ const REGISTRY = [
   // ── CUSTOMER · Notifications ─────────────────────────────────
   { key: 'booking_reminders',    label: 'Booking Reminder Emails', category: 'Notifications', scope: 'customer', description: '24h / 1h reminder emails. Off = reminders not sent.' },
   { key: 'confirmation_emails',  label: 'Confirmation Emails',  category: 'Notifications', scope: 'customer', description: 'Booking confirmation emails. Off = confirmations not sent.' },
+  { key: 'birthday_greetings',   label: 'Birthday Greetings',   category: 'Notifications', scope: 'both',     description: 'Automated birthday email to hosts & guests who saved a date of birth. Off = no birthday emails sent.' },
 
   // ── ADMIN · Sales CRM ────────────────────────────────────────
   // Ships OFF (enabled:false) and is FAIL-CLOSED (services/featureFlags.js): no

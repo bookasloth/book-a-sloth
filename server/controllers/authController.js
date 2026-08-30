@@ -123,6 +123,10 @@ const serializeProfile = async (profile, session) => {
   name:                     profile.name,
   email:                    profile.email,
   phone:                    profile.phone || null,
+  // Private, owner-only — this serializer is for the account's own session, never the
+  // public profile (getHostProfile uses its own explicit selects). Used for the
+  // birthday greeting (v3.138).
+  date_of_birth:            profile.date_of_birth || null,
   password_set:             !!profile.password_set,
   role:                     profile.role,
   // is_host: new capability flag (v3.34). role is the auto-mirrored shim until
@@ -1216,11 +1220,18 @@ const getMe = async (req, res) => {
 // username, etc. Email is intentionally NOT editable (it's the auth identity).
 const updateMe = async (req, res) => {
   try {
-    const { name, phone, profile_image } = req.body;
+    const { name, phone, profile_image, date_of_birth } = req.body;
     const patch = { updated_at: new Date().toISOString() };
     if (name !== undefined)          patch.name = String(name).trim();
     if (phone !== undefined)         patch.phone = phone ? String(phone).trim() : null;
     if (profile_image !== undefined) patch.profile_image = profile_image || null;
+    if (date_of_birth !== undefined) {
+      // Private — only used for the birthday greeting (v3.138), never shown publicly.
+      const { parseDob } = require("../lib/dobValidator");
+      const dob = parseDob(date_of_birth);
+      if (!dob.ok) return res.status(400).json({ message: dob.error });
+      patch.date_of_birth = dob.value;
+    }
 
     if (patch.name === "") return res.status(400).json({ message: "Name cannot be empty" });
 
