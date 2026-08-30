@@ -10,7 +10,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { adminCampSegments, adminCampSegPreview, adminCampPreview, adminCampCreate, adminUploadImage, adminCampContacts, adminCampResolveAudience } from '../../services/api';
+import { adminCampSegments, adminCampSegPreview, adminCampPreview, adminCampCreate, adminUploadImage, adminCampContacts, adminCampResolveAudience, adminCampTest } from '../../services/api';
 import { Card, Btn } from '../../components/admin/ui';
 
 // Palette: block type → factory for a fresh block.
@@ -111,6 +111,9 @@ const AdminCampaignComposer = ({ onClose }) => {
   const [html, setHtml] = useState('');
   const [saving, setSaving] = useState(false);
   const [previewErr, setPreviewErr] = useState(false);
+  // Test send
+  const [testEmail, setTestEmail] = useState('');
+  const [testing, setTesting] = useState(false);
 
   useEffect(() => { adminCampSegments().then((r) => setSegments(r.data)).catch(() => {}); }, []);
 
@@ -171,6 +174,19 @@ const AdminCampaignComposer = ({ onClose }) => {
     const copy = [...b]; [copy[i], copy[j]] = [copy[j], copy[i]]; return copy;
   });
 
+  const sendTest = async () => {
+    if (!blocks.length) return toast.error('Add at least one content block');
+    setTesting(true);
+    try {
+      const r = await adminCampTest({
+        design_json: { blocks }, subject, preview_text: previewText, audience,
+        to: testEmail.trim() || undefined, // backend defaults to the admin's own email
+      });
+      toast.success(`Test sent to ${r.data.to}`);
+    } catch (e) { toast.error(e?.response?.data?.message || 'Test send failed'); }
+    finally { setTesting(false); }
+  };
+
   const saveDraft = async () => {
     if (!name.trim()) return toast.error('Campaign name is required');
     if (!subject.trim()) return toast.error('Subject is required');
@@ -198,7 +214,9 @@ const AdminCampaignComposer = ({ onClose }) => {
           <h1 className="text-lg font-semibold adm-t1">Create Email</h1>
           <p className="text-xs adm-t3">From Shubham · Founder &lt;shubham@bookasloth.in&gt;</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <input className="fb-input text-sm w-52" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="test to (your email)" />
+          <Btn variant="outline" size="sm" onClick={sendTest} disabled={testing}>{testing ? 'Sending…' : 'Send test'}</Btn>
           <Btn variant="outline" size="sm" onClick={onClose}>Cancel</Btn>
           <Btn size="sm" onClick={saveDraft} disabled={saving}>{saving ? 'Saving…' : 'Save draft'}</Btn>
         </div>

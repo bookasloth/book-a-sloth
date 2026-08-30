@@ -53,3 +53,21 @@ test('rejects an enqueue with neither templateId nor bodyHtml', async () => {
   expect(r.ok).toBe(false);
   expect(r.reason).toMatch(/templateId or bodyHtml/);
 });
+
+test('sendComposedTest delivers now and logs an is_test row', async () => {
+  const r = await engine.sendComposedTest({
+    bodyHtml: '<table><tr><td>Hi {{first_name}}</td></tr></table>',
+    subject: 'Draft {{first_name}}', previewText: 'p', audience: 'customer', to: 'admin@x.test',
+  });
+  expect(r.ok).toBe(true);
+  expect(db.email_logs).toHaveLength(1);
+  expect(db.email_logs[0].is_test).toBe(true);
+  expect(db.email_logs[0].status).toBe('test');
+  expect(db.email_logs[0].recipient).toBe('admin@x.test');
+  expect(db.email_logs[0].html).toContain('Hi there'); // {{first_name}} → 'there' in a test send
+});
+
+test('sendComposedTest rejects without a body or recipient', async () => {
+  expect((await engine.sendComposedTest({ to: 'a@x.test' })).ok).toBe(false);
+  expect((await engine.sendComposedTest({ bodyHtml: '<b/>' })).ok).toBe(false);
+});
