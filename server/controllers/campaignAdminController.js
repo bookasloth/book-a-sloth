@@ -9,6 +9,9 @@ const { sanitizeLikeTerm } = require('../utils/searchSanitize');
 const contactsService = require('../services/contactsService');
 const segmentService = require('../services/segmentService');
 const campaignService = require('../services/campaignService');
+const campaignCompiler = require('../services/email/campaignCompiler');
+const communicationEngine = require('../services/email/communicationEngine');
+const { audit } = require('../services/auditService');
 
 // ── Contacts ──
 const listContacts = async (req, res) => {
@@ -58,9 +61,32 @@ const listCampaigns = async (_req, res) => {
 const createCampaign = async (req, res) => {
   try {
     if (!req.body?.name) return res.status(400).json({ message: 'name is required' });
-    const r = await campaignService.create({ ...req.body, created_by: req.admin?.email || '' });
+    // A composer campaign ships a design_json block model → compile to the
+    // chrome-less html_content the send path wraps per recipient.
+    const input = { ...req.body, created_by: req.admin?.email || '' };
+    if (input.design_json) input.html_content = campaignCompiler.compile(input.design_json).bodyHtml;
+    const r = await campaignService.create(input);
     if (r.error) return res.status(500).json({ message: r.error });
     res.status(201).json(r);
+  } catch (e) { safeError(res, e); }
+};
+
+/** Preview: compile a design → full email HTML (dummy unsubscribe token). */
+const previewCampaign = async (req, res) => {
+  try {
+    const design = req.body?.design_json || { blocks: req.body?.blocks || [] };
+    const audience = req.body?.audience === 'vendor' ? 'vendor' : 'customer';
+    const { bodyHtml } = campaignCompiler.compile(design);
+    const settings = await communicationEngine.loadSettings();
+    const pseudo = {
+      subject: req.body?.subject || '', html_content: bodyHtml,
+      preview_text: req.body?.preview_text || '', cta_label: '', cta_url: '', email_category: '', audience,
+    };
+    const { html } = communicationEngine.renderEmail(pseudo, {
+      data: { unsubscribe_token: 'preview', first_name: 'there', name: 'there' },
+      user: {}, settings, audience,
+    });
+    res.json({ html });
   } catch (e) { safeError(res, e); }
 };
 const getCampaign = async (req, res) => {
@@ -73,10 +99,17 @@ const getCampaign = async (req, res) => {
 };
 const updateCampaign = async (req, res) => {
   try {
-    const allowed = ['name', 'channel', 'segment_id', 'template_id', 'whatsapp_template_id', 'subject_override', 'scheduled_at', 'throttle_per_min', 'status'];
+    const allowed = ['name', 'channel', 'segment_id', 'template_id', 'whatsapp_template_id', 'subject_override', 'scheduled_at', 'throttle_per_min', 'status',
+      'audience_type', 'audience_ref', 'design_json', 'subject', 'preview_text', 'sender_key'];
     const updates = { updated_at: new Date().toISOString() };
     for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
-    const { data, error } = await supabaseAdmin.from('email_campaigns').update(updates).eq('id', req.params.id).select().single();
+    // Recompile the body whenever the design changes.
+    if ('design_json' in req.body) updates.html_content = campaignCompiler.compile(req.body.design_json || {}).bodyHtml;
+    let { data, error } = await supabaseAdmin.from('email_campaigns').update(updates).eq('id', req.params.id).select().single();
+    if (error && /Could not find the|does not exist|column .* does not exist/i.test(error.message || '')) {
+      const { audience_type, audience_ref, design_json, subject, preview_text, sender_key, html_content, ...safe } = updates;
+      ({ data, error } = await supabaseAdmin.from('email_campaigns').update(safe).eq('id', req.params.id).select().single());
+    }
     if (error || !data) return res.status(404).json({ message: error?.message || 'Campaign not found' });
     res.json(data);
   } catch (e) { safeError(res, e); }
@@ -85,6 +118,7 @@ const launchCampaign = async (req, res) => {
   try {
     const r = await campaignService.launch(req.params.id);
     if (r.error) return res.status(400).json({ message: r.error });
+    audit(req, { action: 'campaign.launch', resource_type: 'campaign', resource_id: req.params.id, after: { recipients: r.recipients } });
     res.json({ message: `Launched — ${r.recipients} recipients queued`, recipients: r.recipients });
   } catch (e) { safeError(res, e); }
 };
@@ -124,6 +158,6 @@ const updateWaTemplate = async (req, res) => {
 module.exports = {
   listContacts, syncContacts, suppressContact,
   listSegments, previewSegment,
-  listCampaigns, createCampaign, getCampaign, updateCampaign, launchCampaign,
+  listCampaigns, createCampaign, previewCampaign, getCampaign, updateCampaign, launchCampaign,
   listWaTemplates, createWaTemplate, updateWaTemplate,
 };

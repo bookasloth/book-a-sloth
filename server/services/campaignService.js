@@ -6,6 +6,9 @@
 const { supabaseAdmin } = require('../config/supabase');
 const segmentService = require('./segmentService');
 
+const isMissingSchema = (e) =>
+  e && /Could not find the|does not exist|column .* does not exist/i.test(e.message || '');
+
 async function create(input) {
   const row = {
     name: input.name, channel: input.channel || 'email', segment_id: input.segment_id || null,
@@ -13,8 +16,18 @@ async function create(input) {
     subject_override: input.subject_override || '',
     status: 'draft', scheduled_at: input.scheduled_at || null,
     throttle_per_min: input.throttle_per_min || 120, created_by: input.created_by || '',
+    // Composer fields (v3.133). Stripped on the fallback insert below if the
+    // migration hasn't landed on this DB yet.
+    audience_type: input.audience_type || 'segment', audience_ref: input.audience_ref || null,
+    design_json: input.design_json || null, html_content: input.html_content || null,
+    subject: input.subject || null, preview_text: input.preview_text || null,
+    sender_key: input.sender_key || 'shubham',
   };
-  const { data, error } = await supabaseAdmin.from('email_campaigns').insert(row).select().single();
+  let { data, error } = await supabaseAdmin.from('email_campaigns').insert(row).select().single();
+  if (error && isMissingSchema(error)) {
+    const { audience_type, audience_ref, design_json, html_content, subject, preview_text, sender_key, ...safe } = row;
+    ({ data, error } = await supabaseAdmin.from('email_campaigns').insert(safe).select().single());
+  }
   if (error) return { error: error.message };
   return { campaign: data };
 }
@@ -25,7 +38,8 @@ async function launch(campaignId) {
   if (!campaign) return { error: 'campaign_not_found' };
   const channel = campaign.channel || 'email';
   if (channel === 'whatsapp' && !campaign.whatsapp_template_id) return { error: 'no_whatsapp_template' };
-  if (channel === 'email' && !campaign.template_id) return { error: 'no_template' };
+  // Email needs either a saved template OR composed HTML (custom campaign).
+  if (channel === 'email' && !campaign.template_id && !campaign.html_content) return { error: 'no_content' };
   if (!['draft', 'scheduled'].includes(campaign.status)) return { error: `cannot_launch_from_${campaign.status}` };
 
   const { data: segment } = await supabaseAdmin.from('segments').select('*').eq('id', campaign.segment_id).single();

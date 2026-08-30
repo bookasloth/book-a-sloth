@@ -260,6 +260,7 @@ router.post('/campaigns/segments/preview', requireAdmin('campaigns.view'),   cam
 router.get('/campaigns/wa-templates',      requireAdmin('campaigns.view'),   campaigns.listWaTemplates);
 router.post('/campaigns/wa-templates',     requireAdmin('campaigns.manage'), campaigns.createWaTemplate);
 router.put('/campaigns/wa-templates/:id',  requireAdmin('campaigns.manage'), campaigns.updateWaTemplate);
+router.post('/campaigns/preview',          requireAdmin('campaigns.view'),   campaigns.previewCampaign);
 router.get('/campaigns',                   requireAdmin('campaigns.view'),   campaigns.listCampaigns);
 router.post('/campaigns',                  requireAdmin('campaigns.manage'), campaigns.createCampaign);
 router.get('/campaigns/:id',               requireAdmin('campaigns.view'),   campaigns.getCampaign);

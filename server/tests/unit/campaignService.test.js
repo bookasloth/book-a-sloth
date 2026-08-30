@@ -32,10 +32,16 @@ test('launch snapshots resolved recipients and sets status sending', async () =>
   expect(r.recipients).toBe(2);
 });
 
-test('email campaign without template is rejected', async () => {
-  state.campaign = { id: 'camp1', status: 'draft', channel: 'email', segment_id: 'seg1', template_id: null };
+test('email campaign with neither template nor composed HTML is rejected', async () => {
+  state.campaign = { id: 'camp1', status: 'draft', channel: 'email', segment_id: 'seg1', template_id: null, html_content: null };
   const r = await campaignService.launch('camp1');
-  expect(r.error).toBe('no_template');
+  expect(r.error).toBe('no_content');
+});
+
+test('email campaign with composed HTML (no template) can launch', async () => {
+  state.campaign = { id: 'camp2', status: 'draft', channel: 'email', segment_id: 'seg1', template_id: null, html_content: '<table></table>' };
+  const r = await campaignService.launch('camp2');
+  expect(r.error).toBeUndefined();
 });
 
 test('whatsapp campaign without wa template is rejected', async () => {
