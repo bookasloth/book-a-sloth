@@ -199,7 +199,7 @@ async function loadAccountCtx(leads) {
       referralsQualified: refCount.get(p.id) || 0,
       now,
     });
-    ctx.set(p.id, { ...facts, hasService: hasService.has(p.id), hasAvailability: hasAvail.has(p.id) });
+    ctx.set(p.id, { ...facts, hasService: hasService.has(p.id), hasAvailability: hasAvail.has(p.id), bookingsTotal: bookings.length });
   }
   return ctx;
 }
@@ -278,7 +278,10 @@ async function writeHealth(lead, health) {
 // moment for this lead, emitted into the touch_recommendations queue for the Desk.
 // Best-effort; the service self-guards a missing table. NOTHING is sent from here.
 async function upsertTouchRecs(lead, health, ctx, now) {
-  const recs = relationshipTouch.recommendationsFor(lead, health, ctx, now);
+  const recs = [
+    ...relationshipTouch.recommendationsFor(lead, health, ctx, now),
+    ...relationshipTouch.milestoneRecommendationsFor(lead, ctx, now), // anniversaries + booking milestones (once-ever)
+  ];
   if (recs.length) await touchRecommendationService.upsertOpen(recs, now);
 }
 

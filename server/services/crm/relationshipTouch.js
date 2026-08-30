@@ -80,4 +80,50 @@ function recommendationsFor(lead, health, ctx = {}, now = Date.now()) {
   return [];
 }
 
-module.exports = { recommendationsFor };
+// Seeded-but-dead relationship touches (PR-6): tenure anniversaries + lifetime
+// booking milestones, surfaced as recommend-to-human moments (never auto-sent). Each
+// is ONCE-EVER per occurrence — the service permanently suppresses it after a human
+// acts, so a 1-year note or a 50-booking celebration fires exactly once. Returns 0..2.
+function milestoneRecommendationsFor(lead, ctx = {}, now = Date.now()) {
+  if (!lead || !lead.id) return [];
+  const out = [];
+  const mk = (o) => out.push({
+    subject_type: 'lead', lead_id: lead.id, reason: o.reason, touch_type: o.touch,
+    priority: o.priority, suggested_channel: o.channel, suggested_sender: o.sender || 'owner',
+    mode: o.mode, explanation: o.explanation, dedupe_key: `lead:${lead.id}:${o.key}`,
+  });
+
+  // Tenure anniversary, measured from when the relationship started (lead created_at).
+  const days = lead.created_at ? Math.floor((now - new Date(lead.created_at).getTime()) / 864e5) : null;
+  if (days != null && days >= 0) {
+    const years = Math.floor(days / 365);
+    if (years >= 1) {
+      mk({
+        reason: 'anniversary', key: `anniversary:${years}y`, touch: 'founder_note',
+        priority: 'medium', channel: 'personal', sender: 'founder', mode: 'human',
+        explanation: `${years}-year anniversary with us — a personal note from the team lands well here.`,
+      });
+    } else if (days >= 30 && days < 60) {
+      mk({
+        reason: 'anniversary', key: 'anniversary:30d', touch: 'appreciation',
+        priority: 'low', channel: 'whatsapp', mode: 'recommend',
+        explanation: "One month in — a quick check-in keeps the relationship warm.",
+      });
+    }
+  }
+
+  // Lifetime booking milestone (hosts): the highest threshold reached, once each.
+  const total = Number(ctx.bookingsTotal) || 0;
+  const threshold = [100, 50, 10].find((t) => total >= t);
+  if (threshold) {
+    mk({
+      reason: 'milestone', key: `milestone:bookings:${threshold}`, touch: 'appreciation',
+      priority: 'medium', channel: 'whatsapp', mode: 'recommend',
+      explanation: `Reached ${threshold} bookings — worth celebrating the milestone.`,
+    });
+  }
+
+  return out;
+}
+
+module.exports = { recommendationsFor, milestoneRecommendationsFor };

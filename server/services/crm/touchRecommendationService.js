@@ -17,6 +17,9 @@ const { supabaseAdmin } = require('../../config/supabase');
 const { logActivity } = require('./activity');
 
 const COOLDOWN_DAYS = 14;   // after done/dismissed, don't re-surface the same reason for this long
+// Reasons that fire exactly once per occurrence — a handled anniversary / booking
+// milestone must never re-surface (the cooldown does not expire for these).
+const ONCE_EVER = new Set(['anniversary', 'milestone']);
 // A rec acted through a real channel logs a CONTACT-type activity, which stamps the
 // meaningful-interaction clock (v3.133). Anything else is recorded but not "meaningful".
 const CHANNEL_TYPE = { whatsapp: 'whatsapp_sent', email: 'email_sent', call: 'call_logged' };
@@ -41,15 +44,18 @@ async function upsertOpen(recs, now = Date.now()) {
 
     const { data: existing, error } = await supabaseAdmin
       .from('touch_recommendations')
-      .select('dedupe_key, status, updated_at')
+      .select('dedupe_key, status, reason, updated_at')
       .in('dedupe_key', keys);
     if (error) { if (isMissing(error)) tableReady = false; return { inserted: 0 }; }
 
     const suppressed = new Set(
       (existing || [])
-        .filter((r) =>
-          r.status === 'open' || r.status === 'snoozed' ||
-          ((r.status === 'done' || r.status === 'dismissed') && r.updated_at && r.updated_at > cutoff))
+        .filter((r) => {
+          if (r.status === 'open' || r.status === 'snoozed') return true;
+          if (r.status !== 'done' && r.status !== 'dismissed') return false;
+          // once-ever reasons never re-surface; others only within the cooldown window.
+          return ONCE_EVER.has(r.reason) || (r.updated_at && r.updated_at > cutoff);
+        })
         .map((r) => r.dedupe_key),
     );
 
