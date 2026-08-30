@@ -40,18 +40,28 @@ const guestGrant = require('../../utils/bookingGrant');
 
 const res = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
 
-const wireSupabase = ({ service, host, avail, panOnFile = true }) => {
+// The `profiles` table is queried for BOTH the host (by host_id) and, for a
+// logged-in booker, their own profile (by req.user.id). Return distinct rows per
+// id — a coarse "profiles → host" mock would make every booker's email equal the
+// host's and falsely trip the self-booking guard. `eq(col, val)` captures the id
+// so single() can branch on it. A booker whose id ≠ host.id gets `guest`.
+const wireSupabase = ({ service, host, avail, panOnFile = true,
+  guest = { id: 'u1', name: 'G', email: 'g@x.com', phone: '9990001111' } }) => {
   mockFrom.mockImplementation((table) => {
+    let lastId;
     const chain = {
-      select: jest.fn(() => chain), eq: jest.fn(() => chain), neq: jest.fn(() => chain),
+      select: jest.fn(() => chain),
+      eq: jest.fn((_col, val) => { lastId = val; return chain; }), neq: jest.fn(() => chain),
       not: jest.fn(() => chain), insert: jest.fn(() => chain),
-      single: jest.fn().mockResolvedValue(
-        table === 'services' ? { data: service } :
-        table === 'profiles' ? { data: host } :
-        { data: { id: 'bkg-1', ...service }, error: null }),
-      maybeSingle: jest.fn().mockResolvedValue(
+      single: jest.fn(() => Promise.resolve(
+        // A real service always belongs to a host; derive host_id from the host so
+        // createBooking's `host_id = service.host_id` resolves (fixtures omit it).
+        table === 'services' ? { data: { host_id: host.id, ...service } } :
+        table === 'profiles' ? { data: (lastId === host.id ? host : guest) } :
+        { data: { id: 'bkg-1', ...service }, error: null })),
+      maybeSingle: jest.fn(() => Promise.resolve(
         table === 'kyc_submissions' ? { data: panOnFile ? { user_id: host?.id } : null } :
-        { data: avail }),
+        { data: avail })),
     };
     return chain;
   });
@@ -144,6 +154,48 @@ test('free booking is allowed even when the host has no PAN (no TDS on ₹0)', a
   });
   const r = res();
   const req = { user: { id: 'u1' }, body: { service_id: 's1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z' } };
+  await createBooking(req, r);
+  expect(r.status).toHaveBeenCalledWith(201);
+});
+
+// ── A host cannot book their own service (circular money + double-listed row) ──
+test('logged-in host booking their OWN service is rejected 400 (guest_id === host_id)', async () => {
+  wireSupabase({
+    service: { id: 's1', title: 'SEO', duration: 30, price: 500, meeting_mode: 'online' },
+    host: { id: 'h1', email: 'h@x.com', phone: '7904109359' },
+    avail: { timezone: 'Asia/Kolkata' },
+  });
+  const r = res();
+  // The booker IS the host — same account id.
+  const req = { user: { id: 'h1' }, body: { service_id: 's1', guest_name: 'G', scheduled_at: '2099-01-01T05:00:00.000Z' } };
+  await createBooking(req, r);
+  expect(r.status).toHaveBeenCalledWith(400);
+  expect(createCalendarEvent).not.toHaveBeenCalled();
+});
+
+test('logged-OUT host self-booking via their own email is rejected 400 (contact match)', async () => {
+  wireSupabase({
+    service: { id: 's1', title: 'SEO', duration: 30, price: 500, meeting_mode: 'online' },
+    host: { id: 'h1', email: 'h@x.com', phone: '7904109359' },
+    avail: { timezone: 'Asia/Kolkata' },
+  });
+  const r = res();
+  // Anonymous, but enters the host's own email (with a valid OTP grant for it).
+  const req = { body: { service_id: 's1', guest_name: 'G', guest_email: 'h@x.com', scheduled_at: '2099-01-01T05:00:00.000Z', booking_grant: guestGrant.issue({ email: 'h@x.com' }) } };
+  await createBooking(req, r);
+  expect(r.status).toHaveBeenCalledWith(400);
+});
+
+test('a DIFFERENT host booking this service still works (no false positive) → 201', async () => {
+  wireSupabase({
+    service: { id: 's1', title: 'SEO', duration: 30, price: 500, meeting_mode: 'online' },
+    host: { id: 'h1', email: 'h@x.com', phone: '7904109359' },
+    avail: { timezone: 'Asia/Kolkata' },
+    // Booker u2 is a real third party — different id, email and phone.
+    guest: { id: 'u2', name: 'Other', email: 'other@x.com', phone: '8888888888' },
+  });
+  const r = res();
+  const req = { user: { id: 'u2' }, body: { service_id: 's1', guest_name: 'Other', scheduled_at: '2099-01-01T05:00:00.000Z' } };
   await createBooking(req, r);
   expect(r.status).toHaveBeenCalledWith(201);
 });
