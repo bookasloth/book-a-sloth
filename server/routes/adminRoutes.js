@@ -265,6 +265,7 @@ router.post('/campaigns/preview',          requireAdmin('campaigns.view'),   cam
 router.get('/campaigns',                   requireAdmin('campaigns.view'),   campaigns.listCampaigns);
 router.post('/campaigns',                  requireAdmin('campaigns.manage'), campaigns.createCampaign);
 router.get('/campaigns/:id',               requireAdmin('campaigns.view'),   campaigns.getCampaign);
+router.get('/campaigns/:id/recipients',    requireAdmin('campaigns.view'),   campaigns.campaignRecipients);
 router.put('/campaigns/:id',               requireAdmin('campaigns.manage'), campaigns.updateCampaign);
 router.post('/campaigns/:id/launch',       requireAdmin('campaigns.manage'), campaigns.launchCampaign);
 
