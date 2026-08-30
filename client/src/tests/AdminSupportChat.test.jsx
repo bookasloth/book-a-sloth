@@ -52,14 +52,14 @@ describe('AdminSupportChat', () => {
   it('replies to the thread and appends the admin message', async () => {
     await openThread();
     fireEvent.change(screen.getByLabelText('Reply'), { target: { value: 'On it — checking now' } });
-    fireEvent.click(screen.getByRole('button', { name: /^send$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /send/i }));
     await waitFor(() => expect(adminReplySupport).toHaveBeenCalledWith('t1', { body: 'On it — checking now' }));
     await waitFor(() => expect(screen.getByText('On it — checking now')).toBeInTheDocument());
   });
 
   it('marks the thread resolved after picking (or skipping) a reason', async () => {
     await openThread();
-    fireEvent.click(screen.getByText('Mark resolved')); // opens the reason picker
+    fireEvent.click(screen.getByText(/resolve ticket/i)); // opens the reason picker
     fireEvent.click(screen.getByText('Resolve'));         // confirm (reason optional)
     await waitFor(() => expect(adminResolveSupport).toHaveBeenCalledWith('t1', {}));
   });

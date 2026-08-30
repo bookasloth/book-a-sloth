@@ -16,9 +16,10 @@ import { teamForText, TEAM_LABEL, TEAM_FILTERS } from '../../utils/supportTeams'
 import { REASON_GROUPS } from '../../utils/supportReasons';
 
 const FILTERS = [
-  { id: 'waiting', label: 'Waiting' },
-  { id: 'mine', label: 'Mine' },
+  { id: 'mine', label: 'My inbox' },
+  { id: 'unassigned', label: 'Unassigned' },
   { id: 'all', label: 'All open' },
+  { id: 'waiting', label: 'Waiting' },
 ];
 const STATUS_TONE = { bot: 'neutral', waiting: 'warn', assigned: 'ok', resolved: 'neutral' };
 const ESC_TONE = { open: 'warn', replied: 'ok', closed: 'neutral' };
@@ -65,13 +66,24 @@ function ContextRail({ ctx, thread }) {
     <aside className="flex flex-col gap-3">
       <div className="rounded-xl border adm-border p-3">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3">{isHost ? 'Host' : 'Guest'}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide adm-t3">Customer</p>
           {isHost && thread.user_id && (
             <a href={`/admin/host360/${thread.user_id}`} target="_blank" rel="noreferrer" className="text-[11px] font-medium text-[#FE5100] hover:underline">Open Host360 ↗</a>
           )}
         </div>
-        <p className="text-sm font-semibold adm-t1">{p.name || '—'}</p>
-        {p.phone && <p className="text-[12px] adm-t3">{p.phone}</p>}
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FFF4EC] text-[13px] font-bold text-[#FE5100]">
+            {(p.name || '?').trim().slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold adm-t1">{p.name || '—'}</p>
+            {p.phone && <p className="text-[12px] adm-t3">{p.phone}</p>}
+          </div>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full border adm-border px-2 py-0.5 text-[11px] font-medium adm-t2">{isHost ? 'Host' : 'Guest'}</span>
+          {p.joinedAt && <span className="text-[11px] adm-t3">Joined {fmtDay(p.joinedAt)}</span>}
+        </div>
         {isHost && (
           <div className="mt-2 border-t adm-border pt-2">
             <Row k="Plan">{p.plan || '—'}{p.planExpiresAt ? ` · exp ${fmtDay(p.planExpiresAt)}` : ''}</Row>
@@ -168,15 +180,18 @@ export default function AdminSupportChat() {
   // have no assignee, so the "Mine" filter shows threads only.
   const loadQueue = useCallback(async () => {
     setLoading(true);
-    const wantEsc = filter !== 'mine';
+    // "Unassigned" is a client-side view over the full open set (no server filter);
+    // the sort/filter step below keeps only rows with no assignee.
+    const serverFilter = filter === 'unassigned' ? 'all' : filter;
+    const wantEsc = serverFilter !== 'mine';
     const [tq, eq] = await Promise.allSettled([
-      adminSupportQueue(filter),
-      wantEsc ? adminListEscalations({ status: filter === 'waiting' ? 'open' : 'all' }) : Promise.resolve({ data: { escalations: [] } }),
+      adminSupportQueue(serverFilter),
+      wantEsc ? adminListEscalations({ status: serverFilter === 'waiting' ? 'open' : 'all' }) : Promise.resolve({ data: { escalations: [] } }),
     ]);
     if (tq.status === 'rejected' && eq.status === 'rejected') toast.error('Could not load the inbox');
     const threads = (tq.value?.data?.threads || []).map(normThread);
     let escs = (eq.value?.data?.escalations || []);
-    if (filter === 'all') escs = escs.filter((e) => e.status !== 'closed'); // "All" = open work only
+    if (serverFilter === 'all') escs = escs.filter((e) => e.status !== 'closed'); // "All" = open work only
     setItems([...threads, ...escs.map(normEsc)]); // sorted at render with the live clock
     setLoading(false);
   }, [filter]);
@@ -269,23 +284,48 @@ export default function AdminSupportChat() {
   if (sel) {
     const t = sel.thread;
     const unclaimed = t.status === 'bot' || t.status === 'waiting';
+    const assignedLabel = t.status === 'assigned' ? (t.agent_name || 'Support Team') : null;
+    const pri = priorityOf(t.subject);
+    const waitRow = { waitingOnUs: t.status === 'waiting' || (t.status === 'assigned' && (t.admin_unread || 0) > 0), waitingSince: t.last_message_at };
+    const wmin = waitMinutes(waitRow, now);
+    const wlvl = slaLevel(wmin);
     return (
       <div>
         <button onClick={() => setSel(null)} className="mb-3 text-sm font-medium text-[#FE5100]">← Back to queue</button>
-        <div className="flex flex-wrap items-center gap-2">
-          <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-sm font-semibold text-[#1E1E1E]">{t.reference}</code>
-          <Badge tone={STATUS_TONE[t.status] || 'neutral'}>{t.status}</Badge>
-          <span className="text-xs adm-t3">{who(t)}{t.guest_phone ? ` · ${t.guest_phone}` : ''}</span>
-          {t.agent_name && !unclaimed && <span className="text-xs adm-t3">· {t.agent_name} on it</span>}
-          <div className="ml-auto flex gap-2">
-            {unclaimed && (
-              <button onClick={assignToMe} disabled={assigning}
-                className="rounded-lg bg-[#FE5100] px-2.5 py-1 text-xs font-medium text-white disabled:opacity-40">
-                {assigning ? 'Assigning…' : 'Assign to me'}
-              </button>
+
+        {/* Cockpit header */}
+        <div className="rounded-xl border adm-border bg-white p-4">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <code className="text-lg font-bold tracking-tight text-[#1E1E1E]">{t.reference}</code>
+            <Badge tone={STATUS_TONE[t.status] || 'neutral'}><span className="capitalize">{t.status}</span></Badge>
+            <span className="rounded-full border adm-border px-2 py-0.5 text-[11px] font-medium adm-t2">{who(t)}</span>
+            {assignedLabel && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#faf9f7] px-2 py-0.5 text-[11px] font-medium adm-t2">
+                <span className="adm-t3">Assigned to</span> {assignedLabel}
+              </span>
             )}
-            {t.status !== 'resolved' && (
-              <button onClick={() => setResolveOpen((v) => !v)} className="rounded-lg border adm-border px-2.5 py-1 text-xs adm-t2">Mark resolved</button>
+            <div className="ml-auto flex items-center gap-2">
+              {pri !== 'high' ? null : (
+                <span className="rounded-lg bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-700">Priority · High</span>
+              )}
+              {unclaimed && (
+                <button onClick={assignToMe} disabled={assigning}
+                  className="rounded-lg border adm-border px-3 py-1.5 text-xs font-medium adm-t2 hover:border-[#FE5100] disabled:opacity-40">
+                  {assigning ? 'Assigning…' : 'Assign to me'}
+                </button>
+              )}
+              {t.status !== 'resolved' && (
+                <button onClick={() => setResolveOpen((v) => !v)}
+                  className="rounded-lg bg-[#FE5100] px-3.5 py-1.5 text-xs font-semibold text-white hover:brightness-95">✓ Resolve ticket</button>
+              )}
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] adm-t3">
+            {t.created_at && <span>🕐 Created {fmtTime(t.created_at)}</span>}
+            {wmin != null && (
+              <span className={'font-medium ' + (wlvl === 'breach' ? 'text-rose-600' : wlvl === 'warn' ? 'text-amber-600' : 'adm-t3')}>
+                ⏱ Waiting {fmtWait(wmin)}
+              </span>
             )}
           </div>
         </div>
@@ -321,16 +361,21 @@ export default function AdminSupportChat() {
               <div ref={bottomRef} />
             </div>
 
-            <form onSubmit={send} className="mt-3 flex items-end gap-2">
+            <form onSubmit={send} className="mt-3 rounded-xl border adm-border bg-white p-2.5">
+              <div className="mb-1.5 flex items-center gap-3 border-b adm-border px-1 pb-1.5">
+                <span className="border-b-2 border-[#FE5100] pb-1 text-[13px] font-semibold text-[#FE5100]">Reply</span>
+              </div>
               <textarea
                 value={reply.body} onChange={(ev) => setReply((r) => ({ ...r, body: ev.target.value }))}
                 onKeyDown={(ev) => { if (ev.key === 'Enter' && !ev.shiftKey) send(ev); }}
-                rows={2} placeholder="Reply to the customer…" aria-label="Reply"
-                className="flex-1 rounded-lg border adm-border px-3 py-2 text-sm" />
-              <button type="submit" disabled={reply.busy || !reply.body.trim()}
-                className="rounded-lg bg-[#FE5100] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-40">
-                {reply.busy ? 'Sending…' : 'Send'}
-              </button>
+                rows={3} placeholder={`Reply to ${(context?.profile?.name || 'the customer').split(' ')[0]}…`} aria-label="Reply"
+                className="w-full resize-none border-0 px-1 py-1 text-sm outline-none focus:ring-0" />
+              <div className="mt-1 flex items-center justify-end">
+                <button type="submit" disabled={reply.busy || !reply.body.trim()}
+                  className="rounded-lg bg-[#FE5100] px-4 py-2 text-sm font-medium text-white disabled:opacity-40">
+                  {reply.busy ? 'Sending…' : '➤ Send'}
+                </button>
+              </div>
             </form>
           </div>
 
@@ -343,25 +388,32 @@ export default function AdminSupportChat() {
   // Queue view — sorted live (waiting-on-us longest-first), SLA + priority surfaced.
   const sorted = [...items]
     .filter((it) => teamFilter === 'all' || it.team === teamFilter)
+    .filter((it) => filter !== 'unassigned' || (!it.agent && it.status !== 'resolved')) // no assignee only
     .sort((a, b) => inboxSort(a, b, now));
   const breaches = sorted.reduce((n, it) => n + (slaLevel(waitMinutes(it, now)) === 'breach' ? 1 : 0), 0);
   return (
     <div>
       <PageHeader title="Support Inbox" subtitle="Every conversation in one place — dashboard chats and Bolt widget escalations." />
-      <div className="mb-3 flex flex-wrap gap-2">
+      {/* Underlined pill-tabs */}
+      <div className="mb-3 flex flex-wrap items-center gap-5 border-b adm-border">
         {FILTERS.map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
-            className={'rounded-lg px-3 py-1.5 text-sm font-medium ' + (filter === f.id ? 'bg-[#FE5100] text-white' : 'border adm-border adm-t2')}>
+            className={'-mb-px border-b-2 pb-2 text-sm font-semibold transition-colors ' +
+              (filter === f.id ? 'border-[#FE5100] text-[#FE5100]' : 'border-transparent adm-t3 hover:adm-t1')}>
             {f.label}
           </button>
         ))}
-        <span className="mx-1 self-center text-adm-t3">·</span>
-        {TEAM_FILTERS.map((f) => (
-          <button key={f.id} onClick={() => setTeamFilter(f.id)} title="Route: CXO handles money & bugs, Support the rest"
-            className={'rounded-lg px-3 py-1.5 text-sm font-medium ' + (teamFilter === f.id ? 'bg-[#1E1E1E] text-white' : 'border adm-border adm-t2')}>
-            {f.label}
-          </button>
-        ))}
+      </div>
+      {/* Team dropdown */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <label className="inline-flex items-center gap-1.5 rounded-lg border adm-border px-2.5 py-1.5 text-sm adm-t2">
+          <span className="adm-t3">Team:</span>
+          <select value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}
+            title="Route: CXO handles money & bugs, Support the rest"
+            className="cursor-pointer bg-transparent font-medium outline-none">
+            {TEAM_FILTERS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+          </select>
+        </label>
       </div>
       {breaches > 0 && (
         <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
@@ -371,14 +423,16 @@ export default function AdminSupportChat() {
       {loading ? <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-16" />)}</div>
         : sorted.length === 0 ? <p className="text-sm adm-t3">{filter === 'waiting' ? 'Nothing waiting — Bolt is handling everything.' : 'Nothing open here.'}</p>
           : (
-            <div className="space-y-2">
+            <div className="grid gap-2 sm:grid-cols-2">
               {sorted.map((it) => {
                 const mins = waitMinutes(it, now);
                 const lvl = slaLevel(mins);
+                const dot = lvl === 'breach' ? 'bg-rose-500' : it.waitingOnUs ? 'bg-[#FE5100]' : it.status === 'assigned' ? 'bg-blue-500' : 'bg-gray-300';
                 return (
                   <button key={`${it._kind}:${it.id}`}
                     onClick={() => (it._kind === 'thread' ? open(it.id) : setSelEsc(it.id))}
-                    className="block w-full rounded-xl border adm-border p-3 text-left hover:border-[#FE5100]">
+                    className="relative block w-full rounded-xl border adm-border p-3 pl-5 text-left hover:border-[#FE5100]">
+                    <span className={'absolute left-2.5 top-4 h-2 w-2 rounded-full ' + dot} />
                     <div className="mb-1 flex flex-wrap items-center gap-2">
                       <span className="text-xs" title={it._kind === 'thread' ? 'Dashboard chat' : 'Bolt widget escalation'}>{it._kind === 'thread' ? '💬' : '🦥'}</span>
                       <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-xs font-semibold text-[#1E1E1E]">{it.reference}</code>
@@ -386,16 +440,20 @@ export default function AdminSupportChat() {
                       {it.priority === 'high' && <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">High</span>}
                       <span className={'rounded px-1.5 py-0.5 text-[10px] font-semibold ' + (it.team === 'cxo' ? 'bg-violet-100 text-violet-700' : 'bg-sky-50 text-sky-700')}>{TEAM_LABEL[it.team]}</span>
                       {mins != null && (
-                        <span className={'rounded px-1.5 py-0.5 text-[10px] font-medium ' + (lvl === 'breach' ? 'bg-rose-100 text-rose-700' : lvl === 'warn' ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-500')}>
-                          ⏱ {fmtWait(mins)}
+                        <span className={'rounded px-1.5 py-0.5 text-[10px] font-medium ' + (lvl === 'breach' ? 'bg-rose-100 text-rose-700' : lvl === 'warn' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700')}>
+                          ⏱ {lvl === 'breach' ? `Overdue ${fmtWait(mins)}` : `${fmtWait(mins)} SLA`}
                         </span>
                       )}
-                      <span className="text-xs adm-t3">{it.whoLabel}</span>
-                      {it.agent && <span className="text-xs adm-t3">· {it.agent}</span>}
-                      {it.unread > 0 && <Badge tone="warn">{it.unread} new</Badge>}
                       <span className="ml-auto text-xs adm-t3">{fmtDate(it.at)}</span>
                     </div>
                     <p className="text-sm adm-t1">{it.title}</p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs adm-t3">
+                      <span>{it.whoLabel}</span>
+                      {it.agent
+                        ? <span>· {it.agent}</span>
+                        : it.status !== 'resolved' && <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">Unassigned</span>}
+                      {it.unread > 0 && <Badge tone="warn">{it.unread} new</Badge>}
+                    </div>
                   </button>
                 );
               })}
