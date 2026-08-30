@@ -195,6 +195,7 @@ const ProfileSetup = () => {
     map_link: "",
     theme_color: DEFAULT_THEME_COLOR,
     reschedule_fee: 0,
+    date_of_birth: "",
     social_links: {
       instagram: "", youtube: "", linkedin: "", facebook: "",
       twitter: "", whatsapp: "", website: "", github: "", email: "",
@@ -219,6 +220,7 @@ const ProfileSetup = () => {
         map_link:       user.map_link || "",
         theme_color:    user.theme_color || DEFAULT_THEME_COLOR,
         reschedule_fee: Number(user.reschedule_fee ?? 0),
+        date_of_birth:  user.date_of_birth || "",
         social_links: {
           instagram: sl.instagram || "",
           youtube:   sl.youtube   || "",
@@ -392,6 +394,9 @@ const ProfileSetup = () => {
               </FormField>
               <FormField label="Location" className="mb-0">
                 <Input type="text" name="location" placeholder="e.g. Nagpur, Maharashtra" value={form.location} onChange={handleChange} />
+              </FormField>
+              <FormField label="Date of birth" hint="Private — only used to send you a birthday wish. Never shown on your public profile." className="mb-0">
+                <Input type="date" name="date_of_birth" value={form.date_of_birth || ''} max={new Date().toISOString().slice(0, 10)} onChange={handleChange} />
               </FormField>
             </div>
 

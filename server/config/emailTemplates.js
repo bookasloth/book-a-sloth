@@ -480,7 +480,7 @@ const TEMPLATES = [
   // ── Celebrations ─────────────────────────────────────────────────────────────
 
   (() => { const t = themeForCategory('Community Update'); return {
-    event_key: 'BIRTHDAY', audience: 'all', category: 'Celebrations',
+    event_key: 'BIRTHDAY', audience: 'all', category: 'Celebrations', sender_key: 'shubham',
     name: 'Birthday', subject: 'Happy birthday, {{first_name}}!',
     preview_text: 'A little birthday note from Book A Sloth.',
     email_category: 'Community Update',
