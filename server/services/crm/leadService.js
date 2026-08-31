@@ -93,6 +93,14 @@ async function upsertLead(patch = {}, { source, createdBy = '', attribution } = 
   await logActivity(data.id, 'lead_created', { title: `Lead created (${row.source})`, meta: { source: row.source } });
   // Stitch any intent events that fired before this lead existed (best-effort).
   require('./intentEvents').attachToLead(data).catch(() => {});
+  // Meta CRM Lead offline event (action_source system_generated, event_source crm).
+  // Matched on hashed em/ph; lead_id added once Facebook Lead Ads are captured.
+  // Fire-and-forget — CRM capture must never break on an analytics hiccup.
+  try {
+    require('../../utils/trackServer').sendMetaCrmLead({
+      email: data.email, phone: data.phone, leadId: data.meta_lead_id, eventId: `crm_lead_${data.id}`,
+    });
+  } catch (e) { console.warn('[crm] meta lead fanout skipped:', e.message); }
   return { lead: data, created: true };
 }
 

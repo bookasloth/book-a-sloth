@@ -41,6 +41,19 @@ const CONVERSIONS = {
 const sha256 = (v) =>
   v ? crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex') : undefined;
 
+// Meta phone format before hashing: digits only, country code, no '+'/spaces.
+// BAS stores Indian numbers in a few shapes → keep digits, prefix 91 when the
+// country code is absent, so em/ph both hash to what Meta expects (raises match).
+// ponytail: India-default; widen the prefix rule if international numbers appear.
+function normPhone(p) {
+  if (!p) return undefined;
+  let d = String(p).replace(/\D/g, '');
+  if (!d) return undefined;
+  if (d.length === 10) d = '91' + d;                         // bare 10-digit mobile
+  else if (d.length === 11 && d.startsWith('0')) d = '91' + d.slice(1); // 0-prefixed
+  return d;
+}
+
 // GA4 Measurement Protocol requires a client_id. The browser's _ga client_id is
 // ideal (joins the web session) — pass it via conversion.gaClientId. When absent
 // (pure server context like a webhook), we synthesize a stable id from distinctId
@@ -102,7 +115,7 @@ function sendMetaCapi(map, { value, currency = 'INR', email, phone, eventId,
   if (!FB_PIXEL || !FB_TOKEN || !canFetch) return;
   const user_data = {};
   if (email) user_data.em = [sha256(email)];
-  if (phone) user_data.ph = [sha256(phone)];
+  if (phone) user_data.ph = [sha256(normPhone(phone))];
   if (externalId) user_data.external_id = [sha256(externalId)]; // Meta hashes external_id too
   if (ip) user_data.client_ip_address = ip;          // sent raw (not hashed)
   if (userAgent) user_data.client_user_agent = userAgent;
@@ -148,4 +161,48 @@ function trackServer(distinctId, event, properties = {}, conversion = {}) {
   try { sendMetaCapi(map, enriched); } catch (e) { console.error('meta fanout error:', e.message); }
 }
 
-module.exports = { trackServer, CONVERSIONS, _internal: { sha256, ga4ClientId, metaMatchFromReq } };
+// ── CRM Lead offline events (Meta "CRM implementation guide") ────────────────
+// Distinct from the website money events above: when a lead enters or advances
+// in the sales CRM, we report it to Meta with action_source 'system_generated'
+// and custom_data.event_source 'crm', matched on hashed em/ph (+ the raw Meta
+// lead_id when a Facebook Lead Ad sourced the lead — RAW integer, never hashed).
+// This lets Meta attribute CRM pipeline outcomes back to the ad that generated
+// the lead and optimize toward leads that actually convert.
+// Shape mirrors Meta's documented CRM Lead payload exactly.
+function buildCrmLeadPayload({ email, phone, leadId, eventName = 'Lead', eventId, ts } = {}) {
+  const user_data = {};
+  const em = sha256(email);
+  const ph = phone ? sha256(normPhone(phone)) : undefined;
+  if (em) user_data.em = [em];
+  if (ph) user_data.ph = [ph];
+  if (leadId != null && String(leadId).trim() !== '') {
+    const n = Number(leadId);
+    user_data.lead_id = Number.isFinite(n) ? n : String(leadId); // raw, not hashed
+  }
+  const event = {
+    event_name: eventName,
+    event_time: ts || Math.floor(Date.now() / 1000),
+    action_source: 'system_generated',
+    custom_data: { event_source: 'crm', lead_event_source: 'Book A Sloth' },
+    user_data,
+  };
+  if (eventId) event.event_id = eventId; // de-dupe re-sends of the same lead stage
+  return { data: [event], ...(FB_TEST ? { test_event_code: FB_TEST } : {}) };
+}
+
+// Fire-and-forget CRM Lead → Meta CAPI. OFF until FB creds set; never throws.
+// Skips the network hit entirely when there's nothing to match on.
+function sendMetaCrmLead(opts = {}) {
+  if (isTest || !FB_PIXEL || !FB_TOKEN || !canFetch) return;
+  const payload = buildCrmLeadPayload(opts);
+  const ud = payload.data[0].user_data;
+  if (!ud.em && !ud.ph && ud.lead_id == null) return; // no identifiers → un-matchable
+  fetch(`https://graph.facebook.com/${FB_API_VER}/${FB_PIXEL}/events?access_token=${FB_TOKEN}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    .catch((e) => console.error('meta CRM lead error (non-fatal):', e.message));
+}
+
+module.exports = {
+  trackServer, CONVERSIONS, sendMetaCrmLead,
+  _internal: { sha256, normPhone, ga4ClientId, metaMatchFromReq, buildCrmLeadPayload },
+};

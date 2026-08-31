@@ -72,6 +72,43 @@ describe('sha256 (Meta CAPI user_data normalization)', () => {
   });
 });
 
+describe('normPhone (Meta phone format)', () => {
+  test('strips punctuation and prefixes country code for bare 10-digit', () => {
+    expect(_internal.normPhone('98765 43210')).toBe('919876543210');
+    expect(_internal.normPhone('9876543210')).toBe('919876543210');
+  });
+  test('keeps an existing country code', () => {
+    expect(_internal.normPhone('+91 98765-43210')).toBe('919876543210');
+  });
+  test('drops a leading 0 and prefixes 91', () => {
+    expect(_internal.normPhone('09876543210')).toBe('919876543210');
+  });
+});
+
+describe('buildCrmLeadPayload (Meta CRM Lead offline event)', () => {
+  test('produces the documented CRM Lead shape with hashed em/ph and raw lead_id', () => {
+    const p = _internal.buildCrmLeadPayload({
+      email: 'Jane@X.com', phone: '+91 98765 43210', leadId: 1234567890123456,
+      eventId: 'crm_lead_42', ts: 1673035686,
+    });
+    const ev = p.data[0];
+    expect(ev.action_source).toBe('system_generated');
+    expect(ev.event_name).toBe('Lead');
+    expect(ev.event_time).toBe(1673035686);
+    expect(ev.custom_data).toEqual({ event_source: 'crm', lead_event_source: 'Book A Sloth' });
+    expect(ev.event_id).toBe('crm_lead_42');
+    expect(ev.user_data.em).toEqual([_internal.sha256('jane@x.com')]);
+    expect(ev.user_data.ph).toEqual([_internal.sha256('919876543210')]);
+    expect(ev.user_data.lead_id).toBe(1234567890123456);       // raw integer, NOT hashed
+  });
+  test('omits lead_id and unmatched keys when absent', () => {
+    const ud = _internal.buildCrmLeadPayload({ email: 'a@b.com' }).data[0].user_data;
+    expect(ud.em).toHaveLength(1);
+    expect(ud.ph).toBeUndefined();
+    expect(ud.lead_id).toBeUndefined();
+  });
+});
+
 describe('ga4ClientId', () => {
   test('uses the browser _ga client_id when provided', () => {
     expect(_internal.ga4ClientId('user-1', 'GA1.1.123.456')).toBe('GA1.1.123.456');
