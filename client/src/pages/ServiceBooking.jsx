@@ -1613,7 +1613,10 @@ const ServiceBooking = () => {
                   : `Pay ₹${checkoutTotal} with Razorpay`}
               </button>
               <p className="text-xs text-gray-400 mt-3">
-                Secured by Razorpay · UPI, Card, Wallet accepted
+                Encrypted &amp; secured by Razorpay · UPI, Card &amp; Wallet accepted
+              </p>
+              <p className="text-[11px] text-gray-300 mt-1">
+                Booking securely powered by Book A Sloth
               </p>
               </div>{/* end max-w-md center wrapper */}
             </div>
@@ -1688,7 +1691,7 @@ const ServiceBooking = () => {
                     <div className="w-20 h-20 mx-auto mb-5 rounded-full flex items-center justify-center bas-pop" style={{ background: `${tc}18` }}>
                       <svg className="w-10 h-10" fill="none" stroke={tc} strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                     </div>
-                    <h2 className="text-2xl font-bold mb-2 bas-fade" style={{ color: tc }}>Booking confirmed</h2>
+                    <h2 className="text-2xl font-bold mb-2 bas-fade" style={{ color: tc }}>You&rsquo;re all set</h2>
                     <p className="text-sm text-gray-500 mb-5 bas-fade">
                       See you {selectedDate?.toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })} at {formatTime(selectedTime)} ({tzAbbr})
                     </p>

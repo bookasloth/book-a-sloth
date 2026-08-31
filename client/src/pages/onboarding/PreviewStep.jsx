@@ -119,7 +119,7 @@ const PreviewStep = () => {
 
           {/* ── Left: form ── */}
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Profile details</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Tell guests about you</h1>
             <p className="mt-2 text-sm text-gray-500">
               Add a few details so guests know what to expect.
             </p>

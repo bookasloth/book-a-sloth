@@ -622,8 +622,8 @@ const Bookings = () => {
         {paged.length === 0 ? (
           <EmptyState
             icon={CalendarX2}
-            title="No bookings here"
-            description={filter === "all" ? "New bookings will appear here as guests book you." : `You have no ${filter} bookings.`}
+            title="No bookings yet"
+            description={filter === "all" ? "They'll show up here as guests book you — share your link to get the first one." : `You have no ${filter} bookings.`}
           />
         ) : (
           groupByDay(paged).map((group) => (
@@ -661,7 +661,7 @@ const Bookings = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {paged.length === 0 ? (
-                <tr><td colSpan={7} className="py-12 text-center text-sm text-gray-400">No bookings found.</td></tr>
+                <tr><td colSpan={7} className="py-12 text-center text-sm text-gray-400">No bookings to show yet.</td></tr>
               ) : (
                 paged.map((b) => (
                   <tr key={b.id} className="transition-colors hover:bg-gray-50">

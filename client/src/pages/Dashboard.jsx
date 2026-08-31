@@ -263,7 +263,7 @@ const Dashboard = () => {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title={`Welcome back, ${user?.name?.split(' ')[0]}`} subtitle="Here's what's happening with your bookings." />
+      <PageHeader title={`Welcome back, ${user?.name?.split(' ')[0]}`} subtitle="Here's what's happening — we're handling the rest." />
 
       {/* P2-9: data load failed — distinct from an empty (new) account */}
       {loadErr && (
@@ -533,7 +533,7 @@ const Dashboard = () => {
           <div className="border-t border-gray-100 pt-3">
             <h2 className="mb-1 text-sm font-semibold text-gray-700">Recent Bookings</h2>
             {m.recentList.length === 0 ? (
-              <p className="py-3 text-xs text-gray-400">No past bookings yet.</p>
+              <p className="py-3 text-xs text-gray-400">No past bookings yet — they&rsquo;ll gather here as you go.</p>
             ) : (
               <div className="divide-y divide-gray-100">{m.recentList.map((b) => <BookingRow key={b.id} b={b} />)}</div>
             )}
