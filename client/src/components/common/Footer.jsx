@@ -11,7 +11,7 @@ const BOLT_URL = 'https://www.instagram.com/bookasloth';
 // of the CTA button and the navbar.
 const COLUMNS = [
   { h: 'Product', links: [
-    { t: 'How it works', href: '/#how-it-works' },
+    { t: 'How it works', href: '/how-it-works' },
     { t: 'Pricing', href: '/pricing' },
     { t: 'Earnings calculator', href: '/earnings-calculator' },
     { t: 'Explore', href: '/explore' },
@@ -151,9 +151,9 @@ export default function Footer({ variant = 'full' }) {
               <Link to={ROUTE_START} className="inline-flex items-center justify-center rounded-[5px] bg-white px-7 py-3 text-sm font-semibold text-ink transition-colors hover:bg-white/90 hover:no-underline">
                 Let's Get Started
               </Link>
-              <a href="/#how-it-works" className="inline-flex items-center justify-center rounded-[5px] border border-white/25 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 hover:no-underline">
+              <Link to="/how-it-works" className="inline-flex items-center justify-center rounded-[5px] border border-white/25 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 hover:no-underline">
                 See how it works
-              </a>
+              </Link>
             </div>
           </div>
         </div>
