@@ -239,9 +239,20 @@ describe('verifyOtpLogin', () => {
     expect(payload.phone).toBe('+919876543210');
   });
 
-  test('409 when phone resolves to a vendor profile', async () => {
+  test('a host phone OTP-logs into their guest space (dual login, no 409)', async () => {
     otpStore.verify.mockResolvedValue({ valid: true });
     queueFrom(chain({ data: { ...GUEST, role: 'host', is_host: true } }));
+    mintSessionForEmail.mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' });
+    const r = res();
+    await verifyOtpLogin(req({ phone: '+919876543210', otp: '123456' }), r);
+    const payload = r.json.mock.calls[0][0];
+    expect(payload.token).toBe('tok');
+    expect(r.status).not.toHaveBeenCalledWith(409);
+  });
+
+  test('409 when phone resolves to a superadmin (admin login is a separate door)', async () => {
+    otpStore.verify.mockResolvedValue({ valid: true });
+    queueFrom(chain({ data: { ...GUEST, role: 'superadmin' } }));
     const r = res();
     await verifyOtpLogin(req({ phone: '+919876543210', otp: '123456' }), r);
     expect(r.status).toHaveBeenCalledWith(409);
