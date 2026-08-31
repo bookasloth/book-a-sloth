@@ -10,8 +10,8 @@ export const hero = {
   // Typewriter cycles these one word at a time (type → hold → erase),
   // each word in its own brand colour (see HeroV2 TYPE_COLORS).
   typeWords: ["Create", "Teach", "Heal", "Coach", "Perform"],
-  leadPost: "than chase bookings.",
-  sub: "Book A Sloth helps creators publish their services, get booked, and get paid — without chasing DMs or losing a cut to commission.",
+  leadPost: "than run a front desk.",
+  sub: "Book A Sloth runs the machinery around your work — booking, payments and reminders — so you get booked and paid without chasing DMs or losing a cut to commission.",
   ctaPrimary: "Let's Get Started",
   ctaGhost: "See how it works",
   image: `${ABOUT_ASSETS}/book-a-sloth-about-hero.png`,
@@ -31,7 +31,7 @@ export const beliefs = {
   heading: "What we believe.",
   items: [
     { title: "Time should never be wasted.", body: "Every tap removed is a minute given back." },
-    { title: "Software should simplify, not complicate.", body: "If it needs a tutorial, we failed." },
+    { title: "Your craft is the valuable part.", body: "The machinery around it isn't your job — that part is ours." },
     { title: "Creators should own their audience.", body: "Your customers are yours. Always." },
     { title: "Automation should feel invisible.", body: "The best tool is the one you forget is there." },
     { title: "Calm beats hustle.", body: "Work slower. Earn smarter." },

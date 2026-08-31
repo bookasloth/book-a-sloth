@@ -813,14 +813,14 @@ const Home = () => {
           {/* LEFT */}
           <div>
             <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[3.4rem] sm:leading-[1.05] lg:text-[3.9rem]">
-              Your booking link that
+              You sell your time.
               <br />
-              <span className="font-bold text-primary">actually gets you paid</span>.
+              <span className="font-bold text-primary">We make everything around it calmer</span>.
             </Reveal>
 
             <Reveal as="p" delay={0.12} className="mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg">
-              Share one link — clients book, pay over UPI, and the money lands in
-              your account. For India's creators, coaches and studios. Set up in ~42 seconds.
+              Booking, payments and reminders — handled. So you never chase an
+              invoice or run your own front desk again. Built for India. Set up in ~42 seconds.
             </Reveal>
 
             {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
@@ -917,14 +917,14 @@ const Home = () => {
               render in the DOM (CSS-hidden per breakpoint), so this one is an h2
               to keep a single H1 per page for crawlers. */}
           <Reveal as="h2" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
-            Your booking link that
+            You sell your time.
             <br />
-            <span className="font-bold text-primary">actually gets you paid</span>.
+            <span className="font-bold text-primary">We make everything around it calmer</span>.
           </Reveal>
 
           <Reveal as="p" delay={0.12} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500">
-            Share one link — clients book, pay over UPI, and the money lands in
-            your account. For India's creators, coaches and studios. Set up in ~42 seconds.
+            Booking, payments and reminders — handled. So you never chase an
+            invoice or run your own front desk again. Built for India. Set up in ~42 seconds.
           </Reveal>
 
           {/* Google-only host funnel — fires the same flow as /be-a-sloth */}

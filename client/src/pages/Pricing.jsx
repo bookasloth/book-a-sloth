@@ -60,7 +60,7 @@ export default function Pricing() {
           <p className="mx-auto mt-4 max-w-[640px] text-neutral-500">
             {feeOnly
               ? "Pick the plan that fits your booking page. Upgrade anytime — paid bookings and payouts are launching soon."
-              : "Start free, upgrade when your bookings demand it, and keep everything you earn — always."}
+              : "Start free, upgrade when your bookings grow, and keep every rupee. We don't believe in taxing your success — so we never take a cut of what you earn."}
           </p>
         </div>
       </section>
