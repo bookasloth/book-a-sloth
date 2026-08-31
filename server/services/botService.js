@@ -484,6 +484,24 @@ function buildUserMessage(question, chunks) {
   );
 }
 
+// A one-line audience nudge for the public widget (no account data — just who's
+// asking, so the model answers from the right side of the marketplace). Logged-in
+// callers get their real is_host; anonymous ones an inferred guess (or null → no
+// line). Kept separate from contextNote, which carries authenticated account state.
+function audienceNote(audience) {
+  if (audience === 'host') {
+    return '[The person chatting is a HOST — they list/sell services on Book A Sloth. '
+      + 'Answer from the host side (dashboard, plans, payouts, KYC, getting listed). '
+      + "Don't give guest booking instructions unless they ask.]";
+  }
+  if (audience === 'guest') {
+    return '[The person chatting is a GUEST — they book services. '
+      + 'Answer from the guest side (finding/booking a service, payment, rescheduling, refunds). '
+      + "Don't give host dashboard/plan instructions unless they ask.]";
+  }
+  return '';
+}
+
 // Structured (non-streaming) model call — used by askBot / /ask.
 async function callModel(question, chunks, history = [], note = '') {
   const client = anthropicClient.getClient();
@@ -508,15 +526,16 @@ async function callModel(question, chunks, history = [], note = '') {
 // first few chars back until it can tell an answer from the escalation sentinel (so
 // the sentinel is never shown), and holding the trailing "[[FOLLOWUPS]] …" block back
 // so it never streams as text. Returns { text, escalate, followups }.
-async function streamGrounded(question, chunks, history, onDelta) {
+async function streamGrounded(question, chunks, history, onDelta, note = '') {
   const client = anthropicClient.getClient();
+  const userMsg = note ? `${note}\n\n${question}` : question;
   const stream = client.messages.stream({
     model: anthropicClient.MODELS.generate,
     max_tokens: 1024,
     system: SYSTEM_STREAM,
     messages: [
       ...toModelHistory(history),
-      { role: 'user', content: buildUserMessage(question, chunks) },
+      { role: 'user', content: buildUserMessage(userMsg, chunks) },
     ],
   });
 
@@ -664,7 +683,7 @@ async function tryIntentLayer({ q, conversationId, sessionRef, onDelta }) {
  * clean reply. Returns { answer, cited_sources, escalate, conversationId, messageId, source }.
  * `source` names the layer that answered: 'smalltalk'|'faq'|'model'|'escalation'.
  */
-async function askBot({ question, conversationId = null, sessionRef = null, ip = null, context = null } = {}) {
+async function askBot({ question, conversationId = null, sessionRef = null, ip = null, context = null, audience = null } = {}) {
   const q = String(question || '').trim();
   const qSafe = q ? redactPii(q) : q; // PII-redacted copy for third parties (Voyage embed, Claude, cache)
 
@@ -790,7 +809,7 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
       cited_sources = [];
     } else {
       try {
-        const out = await callModel(qSafe, chunks, history, context ? contextNote(context) : '');
+        const out = await callModel(qSafe, chunks, history, context ? contextNote(context) : audienceNote(audience));
         if (out && !out.escalate && String(out.answer || '').trim()) {
           escalate = false;
           source = 'model';
@@ -808,8 +827,10 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
           } else {
             answer = clean.text;
             // Cache this grounded answer for near-identical future questions (best-effort).
-            // Never cache a context-influenced answer — it's specific to this user.
-            if (!context) semanticCacheStore(qSafe, queryEmbedding, answer, cited_sources);
+            // Never cache a context- OR audience-influenced answer — a host-flavored reply
+            // must not be served to a guest (or vice-versa) via the shared, embedding-only
+            // cache. Lookups still run (they only ever return earlier neutral answers).
+            if (!context && !audience) semanticCacheStore(qSafe, queryEmbedding, answer, cited_sources);
           }
         }
       } catch (e) {
@@ -834,7 +855,7 @@ async function askBot({ question, conversationId = null, sessionRef = null, ip =
  * is produced (small-talk / FAQ arrive as a single delta; the model path streams
  * token-by-token). Resolves to the same shape as askBot once persistence is done.
  */
-async function askBotStream({ question, conversationId = null, sessionRef = null, ip = null, onDelta = () => {} } = {}) {
+async function askBotStream({ question, conversationId = null, sessionRef = null, ip = null, onDelta = () => {}, audience = null } = {}) {
   const q = String(question || '').trim();
   const qSafe = q ? redactPii(q) : q; // PII-redacted copy for third parties (Voyage embed, Claude, cache)
 
@@ -950,7 +971,7 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
       onDelta(OVER_BUDGET_MSG);
     } else {
       try {
-        const out = await streamGrounded(qSafe, chunks, history, onDelta);
+        const out = await streamGrounded(qSafe, chunks, history, onDelta, audienceNote(audience));
         if (!out.escalate && out.text) {
           escalate = false;
           source = 'model';
@@ -963,7 +984,8 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
           } else {
             answer = clean.text;
             followups = cleanFollowups(out.followups, q, history); // predictive chips
-            semanticCacheStore(qSafe, queryEmbedding, answer, cited_sources); // best-effort
+            // Skip the shared cache for audience-flavored answers (see askBot note).
+            if (!audience) semanticCacheStore(qSafe, queryEmbedding, answer, cited_sources); // best-effort
           }
         }
       } catch (e) {
