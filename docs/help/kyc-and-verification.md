@@ -10,24 +10,28 @@
 
 **When should I do it?** Any time before your first payout. Doing it early means no wait when you're ready to withdraw.
 
-## What you upload
+## What you provide
 
-Three things, from your dashboard **KYC** section (`/dashboard/kyc`):
+From your dashboard **KYC** section (`/dashboard/kyc`):
 
-1. **Bank details** — where your payout is sent.
-2. **A selfie** — taken with your camera; your face clearly visible.
-3. **ID documents** — your **PAN** and **Aadhaar**.
+**Required**
 
-**File formats and size.** Selfie: JPG, PNG, or WEBP. PAN and Aadhaar: JPG, PNG, WEBP, or PDF. Max **5 MB** per file. No password-protected files.
+1. **PAN number** — a valid PAN (format `ABCDE1234F`). Razorpay verifies this directly, so it's the one detail we can't proceed without.
+2. **Bank details** — account holder name, bank name, account number, IFSC, and account type (savings or current). This is where your payout is sent.
+3. **Registered address** — address line 1, **address line 2**, city, state, and a **6-digit PIN code**. All five are required — Razorpay's payout account won't activate without address line 2.
 
-**Photo or scan?** Either — a clear photo or a scan is fine, as long as every detail is readable and nothing is cut off. Upload the **complete** document; don't crop out details.
+**Optional**
+
+- **Aadhaar number** — you can add it, but it isn't required.
+- **Document photos** — a selfie, and a photo or scan of your PAN or Aadhaar. These are **not required** (Razorpay verifies your PAN number and bank directly); upload them only if you're asked to.
+
+**File formats and size (if you upload documents).** Selfie: JPG, PNG, or WEBP. PAN and Aadhaar: JPG, PNG, WEBP, or PDF. Max **5 MB** per file. No password-protected files. Upload the **complete** document; don't crop out details.
 
 ## Getting through verification cleanly
 
-- Clear, well-lit images — blurry, dark, or partially cut-off uploads get rejected.
-- Selfie: no sunglasses or mask; face fully visible.
-- The **name and details on your PAN/Aadhaar should match your account** — mismatches delay or fail verification.
-- Use your **own** valid, unexpired documents. Verifying on someone else's behalf, or reusing one person's documents across accounts, isn't allowed.
+- Enter your **PAN and bank details exactly as they appear officially** — mismatches delay or fail verification.
+- Use your **own** valid, unexpired PAN and bank account. Verifying on someone else's behalf, or reusing one person's details across accounts, isn't allowed.
+- **If you upload document photos:** use clear, well-lit images — blurry, dark, or cut-off uploads get rejected. For a selfie, no sunglasses or mask; face fully visible.
 
 ## Status and what happens after you submit
 
