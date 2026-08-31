@@ -59,6 +59,29 @@ async function resolveIdentity(req, visitorUuid) {
   }
 }
 
+// Which side of the marketplace is asking, for the model's audience nudge.
+// Logged-in → real is_host (one indexed single-row read; cheap next to the embed +
+// model call the same request makes). Anonymous → inferred from the page they're on,
+// null when the page is ambiguous (the model then stays neutral).
+const HOST_URL_RE  = /\/(dashboard|login-as-vendor|be-a-sloth|pricing|for)\b/i;
+const GUEST_URL_RE = /\/(user|my-bookings|book|explore)\b/i;
+function inferAudienceFromUrl(pageUrl) {
+  const u = String(pageUrl || '');
+  if (HOST_URL_RE.test(u)) return 'host';
+  if (GUEST_URL_RE.test(u)) return 'guest';
+  return null;
+}
+async function resolveAudience(req) {
+  if (req.user?.id) {
+    try {
+      const { supabaseAdmin } = require('../config/supabase');
+      const { data } = await supabaseAdmin.from('profiles').select('is_host').eq('id', req.user.id).single();
+      return data?.is_host ? 'host' : 'guest';
+    } catch (_) { return null; }
+  }
+  return inferAudienceFromUrl(req.body?.pageUrl);
+}
+
 exports.ask = async (req, res) => {
   try {
     const question = String(req.body?.question || '').trim();
@@ -68,7 +91,8 @@ exports.ask = async (req, res) => {
     if (conversationId && !UUID_RE.test(conversationId)) return res.status(400).json({ message: 'Invalid conversation reference.' });
 
     const sessionRef = req.user?.id || req.body?.visitorId || null;
-    const result = await askBot({ question, conversationId, sessionRef, ip: getClientIp(req) });
+    const audience = await resolveAudience(req);
+    const result = await askBot({ question, conversationId, sessionRef, ip: getClientIp(req), audience });
 
     let reference = null;
     let escalationId = null;
@@ -119,7 +143,8 @@ exports.askStream = async (req, res) => {
 
   try {
     const sessionRef = req.user?.id || req.body?.visitorId || null;
-    const result = await askBotStream({ question, conversationId, sessionRef, ip: getClientIp(req), onDelta: (text) => sse('delta', { text }) });
+    const audience = await resolveAudience(req);
+    const result = await askBotStream({ question, conversationId, sessionRef, ip: getClientIp(req), audience, onDelta: (text) => sse('delta', { text }) });
 
     let reference = null;
     let escalationId = null;
@@ -239,3 +264,6 @@ exports.feedback = async (req, res) => {
     return safeError(res, err);
   }
 };
+
+// Exported for unit tests.
+exports._inferAudienceFromUrl = inferAudienceFromUrl;
