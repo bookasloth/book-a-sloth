@@ -67,7 +67,7 @@ export default function LegalLayout({
             <Link
               key={p.to}
               to={p.to}
-              className={`px-3 py-1 rounded-full border text-xs transition-colors hover:no-underline ${
+              className={`inline-flex items-center px-3 py-1 rounded-full border text-xs transition-colors hover:no-underline ${
                 current === p.to
                   ? 'bg-primary/10 border-primary/30 text-primary font-semibold'
                   : 'border-gray-200 text-gray-500 hover:text-primary hover:border-primary/30'
