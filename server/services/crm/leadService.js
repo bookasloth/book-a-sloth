@@ -30,7 +30,7 @@ const lc = (e) => (e ? String(e).trim().toLowerCase() : null);
  * `patch` may include any lead column; blanks never clobber existing values.
  * @returns {{ lead, created }}
  */
-async function upsertLead(patch = {}, { source, createdBy = '', attribution, metaReq } = {}) {
+async function upsertLead(patch = {}, { source, createdBy = '', attribution, metaReq, skipMetaLead } = {}) {
   const phone = norm(patch.phone);
   const email = lc(patch.email);
   const att = cleanAttribution(attribution || {});   // null when no usable UTM/referrer
@@ -96,12 +96,16 @@ async function upsertLead(patch = {}, { source, createdBy = '', attribution, met
   // Meta CRM Lead offline event (action_source system_generated, event_source crm).
   // Matched on hashed em/ph; lead_id added once Facebook Lead Ads are captured.
   // Fire-and-forget — CRM capture must never break on an analytics hiccup.
-  try {
-    require('../../utils/trackServer').sendMetaCrmLead({
-      email: data.email, phone: data.phone, leadId: data.meta_lead_id,
-      eventId: `crm_lead_${data.id}`, req: metaReq, // req present on browser paths (website form) → EMQ keys
-    });
-  } catch (e) { console.warn('[crm] meta lead fanout skipped:', e.message); }
+  // skipMetaLead defers the event (e.g. the /be-a-sloth form fires it only after
+  // the phone is OTP-verified, so Meta optimizes toward quality leads).
+  if (!skipMetaLead) {
+    try {
+      require('../../utils/trackServer').sendMetaCrmLead({
+        email: data.email, phone: data.phone, leadId: data.meta_lead_id,
+        eventId: `crm_lead_${data.id}`, req: metaReq, // req present on browser paths (website form) → EMQ keys
+      });
+    } catch (e) { console.warn('[crm] meta lead fanout skipped:', e.message); }
+  }
   return { lead: data, created: true };
 }
 

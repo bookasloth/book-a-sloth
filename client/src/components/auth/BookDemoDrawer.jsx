@@ -47,7 +47,7 @@ export default function BookDemoDrawer({ open, onClose }) {
     }
     setBusy(true);
     try {
-      await sendBeASlothOtp({ phone: form.phone, name: form.name });
+      await sendBeASlothOtp({ phone: form.phone, name: form.name, profession: form.profession });
       setStep('otp');
       toast.success('Code sent on WhatsApp');
     } catch (err) {
