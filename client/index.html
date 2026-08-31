@@ -8,11 +8,12 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- INTERIM (fee-only) positioning: booking platform, no earnings/commission promise.
-         Static site-wide default (scrapers don't run JS). Revert to the earnings-led
-         wording on Razorpay Route go-live (a deploy re-bakes these). -->
-    <title>Book A Sloth — the booking link that gets you paid</title>
-    <meta name="description" content="Share one link — clients book, pay over UPI, and the money lands in your account. Book A Sloth is the booking page for India's creators, coaches, tutors and studios. Instant UPI payouts, reminders and calendar sync — set up in about a minute." />
+    <!-- Brand positioning: "the calm way to sell your time" — the machinery-handled
+         promise, deliberately mode-agnostic (no earnings/commission claim) so it holds in
+         both fee-only and full-payments mode. Static site-wide default (scrapers don't run
+         JS); per-route <Seo> + the prerender override this for important pages. -->
+    <title>Book A Sloth — the calm way to sell your time</title>
+    <meta name="description" content="You sell your time — Book A Sloth handles everything around it: booking, payments over UPI, and reminders, in one link. Built for India, live in minutes." />
     <meta name="theme-color" content="#FE5100" />
     <!-- NO static canonical / og:url here, on purpose. This file is the SPA
          fallback for EVERY route (via dist/spa-shell.html — see prerender.mjs):
@@ -26,14 +27,14 @@
          (runtime) and the prerender (build time). -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Book A Sloth" />
-    <meta property="og:title" content="Book A Sloth — the booking link that gets you paid" />
-    <meta property="og:description" content="Share one link — clients book, pay over UPI, and the money lands in your account. For India's creators, coaches, tutors and studios." />
+    <meta property="og:title" content="Book A Sloth — the calm way to sell your time" />
+    <meta property="og:description" content="You sell your time. Book A Sloth handles the booking, payments and reminders around it — one link, built for India." />
     <meta property="og:image" content="https://bookasloth.com/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Book A Sloth — the booking link that gets you paid" />
-    <meta name="twitter:description" content="Share one link — clients book, pay over UPI, money in your account. For India's creators, coaches, tutors and studios." />
+    <meta name="twitter:title" content="Book A Sloth — the calm way to sell your time" />
+    <meta name="twitter:description" content="You sell your time. Book A Sloth handles booking, payments and reminders around it — one link, built for India." />
     <meta name="twitter:image" content="https://bookasloth.com/og-image.png" />
     <!-- Preconnect to the four cross-origin hosts on the critical path, so the
          DNS + TLS handshake overlaps the HTML parse instead of stalling the
