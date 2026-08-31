@@ -68,7 +68,7 @@ export const PROFESSION_LANDING = {
       headlineAccent: 'booked and paid',
       headlineTail: 'before the first call.',
       subline:
-        'Book A Sloth gives every lawyer and CA one professional link — clients pick a slot, pay your fee upfront, and get reminded. You stay in court, not in your inbox.',
+        'You practise law. Book A Sloth handles everything around it — clients pick a slot, pay your fee upfront, and get reminded — so you stay in court, not in your inbox.',
       ctaText: 'Set Up My Booking Page',
       microcopy: 'Free to start · No card needed · Live in minutes',
       // Hero product-mockup content — a themed booking page for this profession.
@@ -283,7 +283,7 @@ export const PROFESSION_LANDING = {
       headlineAccent: 'booked and reminded',
       headlineTail: 'without the front-desk chaos.',
       subline:
-        'Book A Sloth gives your clinic one link — patients pick a slot, pay upfront, and get automatic reminders. Fewer no-shows, fewer phone calls, more time with patients.',
+        'You care for patients. Book A Sloth handles everything around it — patients pick a slot, pay upfront, and get reminded — so it’s fewer no-shows, fewer phone calls, and more time with patients.',
       ctaText: 'Set Up My Clinic Page',
       microcopy: 'Free to start · No card needed · Live in minutes',
       mock: {
@@ -494,7 +494,7 @@ export const PROFESSION_LANDING = {
       headlineAccent: 'booked and paid',
       headlineTail: 'before the first email reply.',
       subline:
-        'Book A Sloth gives every consultant one professional link — clients pick a slot, pay your fee upfront, and get reminded. You spend your time advising, not scheduling.',
+        'You advise. Book A Sloth handles everything around it — clients pick a slot, pay your fee upfront, and get reminded — so your time goes to strategy, not scheduling.',
       ctaText: 'Set Up My Booking Page',
       microcopy: 'Free to start · No card needed · Live in minutes',
       mock: {
@@ -705,7 +705,7 @@ export const PROFESSION_LANDING = {
       headlineAccent: 'booked and filled',
       headlineTail: 'without the phone ringing off the hook.',
       subline:
-        'Book A Sloth gives your salon one link — clients pick a slot, pay a deposit, and get reminded. Fewer no-shows, fewer missed calls, more time behind the chair.',
+        'You make clients look their best. Book A Sloth handles everything around it — clients pick a slot, pay a deposit, and get reminded — so it’s fewer no-shows and more time behind the chair.',
       ctaText: 'Set Up My Salon Page',
       microcopy: 'Free to start · No card needed · Live in minutes',
       mock: {
@@ -916,7 +916,7 @@ export const PROFESSION_LANDING = {
       headlineAccent: 'booked and paid',
       headlineTail: 'before you open the laptop.',
       subline:
-        'Book A Sloth gives every freelancer one link — clients pick a slot, pay an advance upfront, and get reminded. You do the work, not the invoice-chasing.',
+        'You do the work. Book A Sloth handles everything around it — clients pick a slot, pay an advance upfront, and get reminded — so your day goes to the craft, not chasing invoices.',
       ctaText: 'Set Up My Booking Page',
       microcopy: 'Free to start · No card needed · Live in minutes',
       mock: {
@@ -1127,7 +1127,7 @@ export const PROFESSION_LANDING = {
       headlineAccent: 'booked and paid',
       headlineTail: 'before the warm-up.',
       subline:
-        'Book A Sloth gives every trainer and studio one link — clients pick a slot, pay for the session or package upfront, and get reminded. More training, less admin.',
+        'You get clients results. Book A Sloth handles everything around it — clients pick a slot, pay for the session or package upfront, and get reminded — so it’s more training and less admin.',
       ctaText: 'Set Up My Booking Page',
       microcopy: 'Free to start · No card needed · Live in minutes',
       mock: {
@@ -1328,7 +1328,7 @@ export const PROFESSION_LANDING = {
       headlineAccent: 'booked and paid',
       headlineTail: 'before the first lesson.',
       subline:
-        'Book A Sloth gives every tutor one link — students and parents pick a slot, pay the fee upfront, and get reminded. You teach, we handle the timetable.',
+        'You teach. Book A Sloth handles everything around it — students and parents pick a slot, pay the fee upfront, and get reminded — so your time goes to lessons, not the timetable.',
       ctaText: 'Set Up My Booking Page',
       microcopy: 'Free to start · No card needed · Live in minutes',
       mock: {
@@ -1418,7 +1418,7 @@ export const PROFESSION_LANDING = {
       headlineAccent: 'booked and secured',
       headlineTail: 'before you pack the gear.',
       subline:
-        'Book A Sloth gives every photographer one link — clients pick a slot, pay a deposit upfront, and get reminded. You stay behind the lens, not in your inbox.',
+        'You make great images. Book A Sloth handles everything around it — clients pick a slot, pay a deposit upfront, and get reminded — so you stay behind the lens, not in your inbox.',
       ctaText: 'Set Up My Booking Page',
       microcopy: 'Free to start · No card needed · Live in minutes',
       mock: {
@@ -1508,7 +1508,7 @@ export const PROFESSION_LANDING = {
       headlineAccent: 'booked and dates held',
       headlineTail: 'before the first meeting.',
       subline:
-        'Book A Sloth gives every event planner one link — clients book a consultation, pay an advance to hold the date, and get reminded. You plan events, not your calendar.',
+        'You create the celebration. Book A Sloth handles everything around it — clients book a consultation, pay an advance to hold the date, and get reminded — so you plan events, not your calendar.',
       ctaText: 'Set Up My Booking Page',
       microcopy: 'Free to start · No card needed · Live in minutes',
       mock: {
@@ -1598,7 +1598,7 @@ export const PROFESSION_LANDING = {
       headlineAccent: 'booked and routed',
       headlineTail: 'before the email thread starts.',
       subline:
-        'Book A Sloth gives your agency one link — clients pick a slot with the right person, pay if you charge, and get reminded. Your team pitches, not schedules.',
+        'Your team does the work. Book A Sloth handles everything around it — clients pick a slot with the right person, pay if you charge, and get reminded — so your team pitches, not schedules.',
       ctaText: 'Set Up My Booking Page',
       microcopy: 'Free to start · No card needed · Live in minutes',
       mock: {
