@@ -57,6 +57,21 @@ const Row = ({ k, children }) => (
   <div className="flex items-center justify-between gap-2 py-1 text-[12px]"><span className="adm-t3">{k}</span><span className="text-right font-medium adm-t1">{children}</span></div>
 );
 
+// One-click canned replies — chip label + the exact message that gets SENT (no
+// draft step; clicking a chip posts it immediately). Human templates, not AI.
+const QUICK_REPLIES = [
+  { label: 'Thanks', text: 'Thank you!' },
+  { label: 'Sorry', text: 'Sorry about that.' },
+  { label: "You're welcome", text: "You're welcome!" },
+  { label: 'Please wait', text: 'Please hold on a moment while I check this for you.' },
+  { label: 'Thanks for your patience', text: 'Thanks for your patience.' },
+  { label: "We're looking into it", text: "We're looking into this for you right now." },
+  { label: 'Share more details', text: 'Could you please share a few more details so I can help?' },
+  { label: "We'll get back to you", text: "We'll get back to you on this shortly." },
+  { label: 'Issue resolved', text: 'This should be resolved now — please let me know if anything else comes up.' },
+  { label: 'Anything else?', text: 'Is there anything else I can help you with?' },
+];
+
 // The context rail — "give support eyes". Customer's live record beside the chat.
 function ContextRail({ ctx, thread }) {
   if (!ctx) return <div className="rounded-xl border adm-border p-3 text-[12px] adm-t3">Loading customer context…</div>;
@@ -169,6 +184,7 @@ export default function AdminSupportChat() {
   const [reasonCode, setReasonCode] = useState('');
   const bottomRef = useRef(null);
   const chanRef = useRef(null);
+  const replyRef = useRef(null);
 
   // Re-render each minute so waiting timers + breach badges stay live.
   useEffect(() => {
@@ -217,8 +233,11 @@ export default function AdminSupportChat() {
     try {
       await adminAssignSupport(sel.thread.id);
       const { data } = await adminGetSupportThread(sel.thread.id); // pick up intro + status
-      setSel(data);
+      // We just claimed it — force 'assigned' so the composer opens immediately
+      // even if the re-fetch races the write.
+      setSel({ ...data, thread: { ...data.thread, status: 'assigned' } });
       loadQueue();
+      setTimeout(() => replyRef.current?.focus(), 0); // land straight in the composer
     } catch { toast.error('Could not assign'); }
     finally { setAssigning(false); }
   };
@@ -245,9 +264,9 @@ export default function AdminSupportChat() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [sel?.messages]);
 
-  const send = async (e) => {
-    e?.preventDefault();
-    const body = reply.body.trim();
+  // Post a reply — shared by the composer (Send) and the auto-send quick chips.
+  const postReply = async (text) => {
+    const body = (text ?? '').trim();
     if (!body || reply.busy || !sel) return;
     setReply({ body: '', busy: true });
     try {
@@ -263,6 +282,7 @@ export default function AdminSupportChat() {
     }
     setReply({ body: '', busy: false });
   };
+  const send = (e) => { e?.preventDefault(); postReply(reply.body); };
 
   const doResolve = async () => {
     if (!sel) return;
@@ -289,97 +309,110 @@ export default function AdminSupportChat() {
     const waitRow = { waitingOnUs: t.status === 'waiting' || (t.status === 'assigned' && (t.admin_unread || 0) > 0), waitingSince: t.last_message_at };
     const wmin = waitMinutes(waitRow, now);
     const wlvl = slaLevel(wmin);
+    const firstName = (context?.profile?.name || 'the customer').split(' ')[0];
     return (
-      <div>
-        <button onClick={() => setSel(null)} className="mb-3 text-sm font-medium text-[#FE5100]">← Back to queue</button>
-
-        {/* Cockpit header */}
-        <div className="rounded-xl border adm-border bg-white p-4">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <code className="text-lg font-bold tracking-tight text-[#1E1E1E]">{t.reference}</code>
-            <Badge tone={STATUS_TONE[t.status] || 'neutral'}><span className="capitalize">{t.status}</span></Badge>
-            <span className="rounded-full border adm-border px-2 py-0.5 text-[11px] font-medium adm-t2">{who(t)}</span>
-            {assignedLabel && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#faf9f7] px-2 py-0.5 text-[11px] font-medium adm-t2">
-                <span className="adm-t3">Assigned to</span> {assignedLabel}
-              </span>
-            )}
-            <div className="ml-auto flex items-center gap-2">
-              {pri !== 'high' ? null : (
-                <span className="rounded-lg bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-700">Priority · High</span>
-              )}
-              {unclaimed && (
-                <button onClick={assignToMe} disabled={assigning}
-                  className="rounded-lg border adm-border px-3 py-1.5 text-xs font-medium adm-t2 hover:border-[#FE5100] disabled:opacity-40">
-                  {assigning ? 'Assigning…' : 'Assign to me'}
-                </button>
-              )}
-              {t.status !== 'resolved' && (
-                <button onClick={() => setResolveOpen((v) => !v)}
-                  className="rounded-lg bg-[#FE5100] px-3.5 py-1.5 text-xs font-semibold text-white hover:brightness-95">✓ Resolve ticket</button>
-              )}
-            </div>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] adm-t3">
-            {t.created_at && <span>🕐 Created {fmtTime(t.created_at)}</span>}
-            {wmin != null && (
-              <span className={'font-medium ' + (wlvl === 'breach' ? 'text-rose-600' : wlvl === 'warn' ? 'text-amber-600' : 'adm-t3')}>
-                ⏱ Waiting {fmtWait(wmin)}
-              </span>
-            )}
-          </div>
+      // Fixed-height workspace: the page itself doesn't scroll — only the message
+      // list does. Composer, quick replies + sidebar stay put. Height = viewport
+      // minus the sticky admin header (60px) and this main's padding.
+      <div className="flex flex-col h-[calc(100dvh-6.5rem)] lg:h-[calc(100dvh-7.5rem)]">
+        {/* Minimal contextual header — not a card. Back + ticket identity only. */}
+        <div className="mb-2.5 flex flex-shrink-0 flex-wrap items-center gap-2 text-[12px]">
+          <button onClick={() => setSel(null)} className="text-sm font-medium text-[#FE5100]">← Back to queue</button>
+          <span className="adm-border ml-1 border-l pl-2.5" />
+          <code className="text-sm font-bold tracking-tight adm-t1">{t.reference}</code>
+          <span className="adm-t3">· {who(t)}</span>
+          <Badge tone={STATUS_TONE[t.status] || 'neutral'}><span className="capitalize">{t.status}</span></Badge>
+          {pri === 'high' && <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700">High</span>}
+          {assignedLabel && <span className="adm-t3">· {assignedLabel}</span>}
+          {wmin != null && (
+            <span className={'ml-auto font-medium ' + (wlvl === 'breach' ? 'text-rose-600' : wlvl === 'warn' ? 'text-amber-600' : 'adm-t3')}>
+              ⏱ {fmtWait(wmin)}
+            </span>
+          )}
         </div>
-        {resolveOpen && t.status !== 'resolved' && (
-          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border adm-border bg-[#faf9f7] px-3 py-2">
-            <span className="text-xs font-medium adm-t2">Why did they need us?</span>
-            <select value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}
-              className="rounded-lg border adm-border px-2 py-1 text-xs">
-              <option value="">Reason (optional)…</option>
-              {REASON_GROUPS.map((g) => (
-                <optgroup key={g.category} label={g.category}>
-                  {g.items.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
-                </optgroup>
-              ))}
-            </select>
-            <button onClick={doResolve} className="rounded-lg bg-[#FE5100] px-2.5 py-1 text-xs font-medium text-white">Resolve</button>
-            <button onClick={() => { setResolveOpen(false); setReasonCode(''); }} className="text-xs adm-t3">Cancel</button>
-          </div>
-        )}
-        {t.subject && <p className="mt-2 text-sm font-semibold adm-t1">{t.subject}</p>}
-        {t.ai_summary && (
-          <p className="mt-2 rounded-lg bg-violet-50 px-3 py-2 text-[12.5px] text-violet-900">
-            <span className="font-semibold">🦥 Bolt summary:</span> {t.ai_summary}
-          </p>
-        )}
 
-        <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_280px]">
-          <div className="min-w-0">
-            <div className="flex flex-col gap-2.5 rounded-xl border adm-border p-3" style={{ minHeight: 320 }}>
+        <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1fr_300px]">
+          {/* Chat column — the workspace. Only the message list scrolls. */}
+          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border adm-border bg-white">
+            {t.ai_summary && (
+              <p className="flex-shrink-0 border-b adm-border bg-violet-50 px-4 py-2 text-[12px] text-violet-900">
+                <span className="font-semibold">🦥 Bolt:</span> {t.ai_summary}
+              </p>
+            )}
+            <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto p-4">
               {sel.messages.length === 0
                 ? <p className="m-auto text-sm adm-t3">No messages yet.</p>
                 : sel.messages.map((m) => <Bubble key={m.id} m={m} />)}
               <div ref={bottomRef} />
             </div>
 
-            <form onSubmit={send} className="mt-3 rounded-xl border adm-border bg-white p-2.5">
-              <div className="mb-1.5 flex items-center gap-3 border-b adm-border px-1 pb-1.5">
-                <span className="border-b-2 border-[#FE5100] pb-1 text-[13px] font-semibold text-[#FE5100]">Reply</span>
-              </div>
-              <textarea
-                value={reply.body} onChange={(ev) => setReply((r) => ({ ...r, body: ev.target.value }))}
-                onKeyDown={(ev) => { if (ev.key === 'Enter' && !ev.shiftKey) send(ev); }}
-                rows={3} placeholder={`Reply to ${(context?.profile?.name || 'the customer').split(' ')[0]}…`} aria-label="Reply"
-                className="w-full resize-none border-0 px-1 py-1 text-sm outline-none focus:ring-0" />
-              <div className="mt-1 flex items-center justify-end">
-                <button type="submit" disabled={reply.busy || !reply.body.trim()}
-                  className="rounded-lg bg-[#FE5100] px-4 py-2 text-sm font-medium text-white disabled:opacity-40">
-                  {reply.busy ? 'Sending…' : '➤ Send'}
-                </button>
-              </div>
-            </form>
+            {/* Dock — the one thing that changes with ownership. */}
+            <div className="flex-shrink-0 border-t adm-border">
+              {t.status === 'resolved' ? (
+                <div className="px-4 py-4 text-center text-sm adm-t3">✓ This conversation is resolved.</div>
+              ) : unclaimed ? (
+                // Unassigned: no composer — take ownership first.
+                <div className="flex flex-col items-center gap-1.5 px-4 py-5">
+                  <button onClick={assignToMe} disabled={assigning}
+                    className="rounded-lg bg-[#FE5100] px-6 py-2.5 text-sm font-semibold text-white hover:brightness-95 disabled:opacity-40">
+                    {assigning ? 'Assigning…' : 'Assign to me'}
+                  </button>
+                  <p className="text-[12px] adm-t3">Take ownership of this conversation to start replying.</p>
+                </div>
+              ) : (
+                // Assigned: full composer. Quick-reply chips auto-send on click.
+                <form onSubmit={send} className="p-3">
+                  <div className="mb-2 flex items-center gap-3 text-[13px]">
+                    <span className="border-b-2 border-[#FE5100] pb-0.5 font-semibold text-[#FE5100]">Reply</span>
+                  </div>
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {QUICK_REPLIES.map((q) => (
+                      <button key={q.label} type="button" title={q.text} onClick={() => postReply(q.text)}
+                        disabled={reply.busy}
+                        className="rounded-full bg-[#f0ede6] px-2.5 py-1 text-[12px] font-medium adm-t2 transition-colors hover:bg-[#FFE9DC] hover:text-[#FE5100] disabled:opacity-40">
+                        {q.label}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    ref={replyRef}
+                    value={reply.body} onChange={(ev) => setReply((r) => ({ ...r, body: ev.target.value }))}
+                    onKeyDown={(ev) => { if (ev.key === 'Enter' && !ev.shiftKey) send(ev); }}
+                    rows={2} placeholder={`Reply to ${firstName}…`} aria-label="Reply"
+                    className="w-full resize-none rounded-lg border adm-border px-2.5 py-2 text-sm outline-none focus:border-[#FE5100] focus:ring-0" />
+                  <div className="mt-2 flex items-center justify-end gap-2">
+                    <button type="button" onClick={() => setResolveOpen((v) => !v)}
+                      className="rounded-lg border adm-border px-3 py-2 text-sm font-medium adm-t2 hover:border-[#FE5100]">Resolve</button>
+                    <button type="submit" disabled={reply.busy || !reply.body.trim()}
+                      className="rounded-lg bg-[#FE5100] px-4 py-2 text-sm font-medium text-white disabled:opacity-40">
+                      {reply.busy ? 'Sending…' : 'Send →'}
+                    </button>
+                  </div>
+                  {resolveOpen && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border adm-border bg-[#faf9f7] px-3 py-2">
+                      <span className="text-xs font-medium adm-t2">Why did they need us?</span>
+                      <select value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}
+                        className="rounded-lg border adm-border px-2 py-1 text-xs">
+                        <option value="">Reason (optional)…</option>
+                        {REASON_GROUPS.map((g) => (
+                          <optgroup key={g.category} label={g.category}>
+                            {g.items.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
+                          </optgroup>
+                        ))}
+                      </select>
+                      <button type="button" onClick={doResolve} className="rounded-lg bg-[#FE5100] px-2.5 py-1 text-xs font-medium text-white">Resolve ticket</button>
+                      <button type="button" onClick={() => { setResolveOpen(false); setReasonCode(''); }} className="text-xs adm-t3">Cancel</button>
+                    </div>
+                  )}
+                </form>
+              )}
+            </div>
           </div>
 
-          <ContextRail ctx={context} thread={t} />
+          {/* Sidebar — stays put while messages scroll; scrolls on its own if tall. */}
+          <div className="hidden min-h-0 overflow-y-auto lg:block">
+            <ContextRail ctx={context} thread={t} />
+          </div>
         </div>
       </div>
     );
