@@ -230,14 +230,17 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const logout = async () => {
+  const logout = async (opts = {}) => {
     // Route by capability BEFORE clearing: a host always lands back on the
     // host login door (never the generic guest /login); everyone else → home.
+    // `opts.to` overrides this — used by the dual-login switch, where the
+    // destination is the door being switched INTO, not the capability of the
+    // session being left.
     const wasHost = user?.is_host === true || user?.role === 'host' || user?.role === 'superadmin';
     await (await getSupabase()).auth.signOut();
     localStorage.removeItem('user');
     setUser(null);
-    window.location.assign(wasHost ? '/login-as-vendor' : '/');
+    window.location.assign(opts.to || (wasHost ? '/login-as-vendor' : '/'));
   };
 
   const updateUser = (updatedData) => {

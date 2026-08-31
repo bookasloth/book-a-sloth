@@ -19,7 +19,7 @@ const WhatsAppMark = () => (
 );
 
 const Login = () => {
-  const { loginWithOtp } = useAuth();
+  const { loginWithOtp, user, mode, setMode, logout } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Honour ?redirect= only for internal single-slash paths (avoid open-redirects).
@@ -31,12 +31,30 @@ const Login = () => {
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
   const verifying = useRef(false); // in-flight guard: auto-submit + button can't double-fire
+  const justLoggedIn = useRef(false); // set on OTP success so the switch-guard below never fires post-login
 
-  // A host who logs in here still lands in the dashboard; everyone else goes to
-  // the requested page.
-  const finish = (data) => {
+  // Dual login. This is the GUEST door. If a session already exists:
+  //  - already in guest space (traveling) → nothing to do here, go to /user.
+  //  - arriving from the host session (hosting) → this is a context switch, so
+  //    end the host session first (force logout); the OTP form then re-appears.
+  useEffect(() => {
+    if (!user || justLoggedIn.current) return;
+    if (mode === "traveling") {
+      navigate(redirectTo, { replace: true });
+    } else {
+      // Switching from the host session → end it, land back on this guest door.
+      logout({ to: "/login" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, mode]);
+
+  // Guest door always lands in guest space and pins traveling mode, regardless of
+  // whether the account can also host.
+  const finish = () => {
+    justLoggedIn.current = true;
+    setMode("traveling");
     toast.success("Welcome back!");
-    navigate(data?.is_host ? "/dashboard" : redirectTo);
+    navigate(redirectTo);
   };
 
   const goToOtp = async (e) => {

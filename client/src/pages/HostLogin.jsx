@@ -43,16 +43,26 @@ const Check = () => (
 );
 
 const HostLogin = () => {
-  const { startVendorGoogleAuth, user } = useAuth();
+  const { startVendorGoogleAuth, user, mode, logout } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
 
-  // A logged-in host has nothing to do here — send them to the dashboard.
+  // Dual login. This is the HOST door. If a session already exists:
+  //  - already in host space (hosting / superadmin) → nothing to do, go to
+  //    /dashboard.
+  //  - arriving from the guest session (traveling) → this is a context switch, so
+  //    end the guest session first (force logout); the Google button then works
+  //    on a clean slate.
   useEffect(() => {
-    if (user?.is_host === true || user?.role === "host" || user?.role === "superadmin")
+    if (!user) return;
+    if (mode === "hosting" || user.role === "superadmin") {
       navigate("/dashboard", { replace: true });
-  }, [user, navigate]);
+    } else {
+      // Switching from the guest session → end it, land back on this host door.
+      logout({ to: "/login-as-vendor" });
+    }
+  }, [user, mode, navigate, logout]);
 
   // Surface a Google-callback error (this page is the /auth/google/done error target).
   useEffect(() => {

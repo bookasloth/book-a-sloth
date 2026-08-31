@@ -261,19 +261,16 @@ describe('sendOtp', () => {
     maybeSingle: jest.fn().mockResolvedValue({ data }),
   });
 
-  test('purpose:login + host number + unified_login OFF → 409 before any OTP', async () => {
-    featureFlags.isFeatureEnabled.mockResolvedValueOnce(false);
+  test('purpose:login + host number → OTP sent (dual login: host may hold a guest session)', async () => {
     profileByPhone({ is_host: true, role: 'host' });
     otpStore.set.mockClear();
     const r = res();
     await sendOtp(req({ phone: '+919876543210', purpose: 'login' }), r);
-    expect(r.status).toHaveBeenCalledWith(409);
-    expect(r.json.mock.calls[0][0].message).toMatch(/host login/i);
-    expect(otpStore.set).not.toHaveBeenCalled();
+    expect(otpStore.set).toHaveBeenCalled();
+    expect(r.status).not.toHaveBeenCalledWith(409);
   });
 
-  test('purpose:login + superadmin number + unified_login OFF → 409 before any OTP', async () => {
-    featureFlags.isFeatureEnabled.mockResolvedValueOnce(false);
+  test('purpose:login + superadmin number → 409 before any OTP (admin login is separate)', async () => {
     profileByPhone({ is_host: false, role: 'superadmin' });
     otpStore.set.mockClear();
     const r = res();
@@ -282,8 +279,7 @@ describe('sendOtp', () => {
     expect(otpStore.set).not.toHaveBeenCalled();
   });
 
-  test('purpose:login + guest number + unified_login OFF → OTP still sent', async () => {
-    featureFlags.isFeatureEnabled.mockResolvedValueOnce(false);
+  test('purpose:login + guest number → OTP still sent', async () => {
     profileByPhone({ is_host: false, role: 'guest' });
     otpStore.set.mockClear();
     const r = res();

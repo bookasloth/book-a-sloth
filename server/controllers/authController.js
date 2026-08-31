@@ -780,22 +780,19 @@ const sendOtp = async (req, res) => {
     if (!email && !normalizedPhone)
       return res.status(400).json({ message: "A valid mobile number or email is required" });
 
-    // Guest-login door: reject a host/admin number BEFORE sending an OTP (better
-    // UX than the post-verify 409 in verifyOtpLogin). Scoped to purpose:'login' so
-    // the shared booking flow still lets a host book as a customer. Mirrors the
-    // verifyOtpLogin gate: skipped when unified_login is ON (any account may phone-
-    // login then). Same 409 message so client copy stays consistent.
+    // Guest-login door: hosts MAY log into their guest space by phone (dual login,
+    // superseding the old host-Google-only rule). Only a superadmin number is
+    // refused here — an admin must never receive a user session via WhatsApp OTP.
+    // Scoped to purpose:'login' so the booking OTP flow is untouched. Mirrored by
+    // the verifyOtpLogin safety net.
     if (purpose === "login" && normalizedPhone) {
-      const unifiedLogin = await featureFlags.isFeatureEnabled("unified_login");
-      if (!unifiedLogin) {
-        const { data: prof } = await supabaseAdmin
-          .from("profiles")
-          .select("is_host, role")
-          .eq("phone", normalizedPhone)
-          .maybeSingle();
-        if (prof && (prof.is_host || prof.role === "superadmin"))
-          return res.status(409).json({ message: "This number is registered as a host. Please use host login." });
-      }
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("role")
+        .eq("phone", normalizedPhone)
+        .maybeSingle();
+      if (prof && prof.role === "superadmin")
+        return res.status(409).json({ message: "This number is registered as an admin. Please use admin login." });
     }
 
     const identifier = otpIdentifier({ email, phone });
@@ -1048,12 +1045,11 @@ const verifyOtpLogin = async (req, res) => {
     const profile = await findOrCreateProfileByPhone(normalized);
     if (!profile)
       return res.status(500).json({ message: "Could not access your account" });
-    // Unified login (flagged, Phase 3): when ON, any account may OTP-login by
-    // phone. When OFF, a host/admin number is rejected (legacy separate identity).
-    // Capability via is_host (v3.34); superadmin still on `role` until Phase D.
-    const unifiedLogin = await featureFlags.isFeatureEnabled("unified_login");
-    if (!unifiedLogin && (profile.is_host || profile.role === "superadmin"))
-      return res.status(409).json({ message: "This number is registered as a host. Please use host login." });
+    // Dual login: a host may hold a guest session alongside their host (Google)
+    // one. Only a superadmin is barred from minting a user session by phone OTP —
+    // admin login is a separate, isolated door.
+    if (profile.role === "superadmin")
+      return res.status(409).json({ message: "This number is registered as an admin. Please use admin login." });
 
     // Reunite the guest with any anonymous bookings made on this verified number.
     await backfillGuestBookings(profile.id, normalized);
