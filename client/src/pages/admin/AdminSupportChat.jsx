@@ -10,6 +10,8 @@ import {
   adminAssignSupport, adminSupportContext, adminListEscalations,
 } from '../../services/api';
 import { PageHeader, Badge, Skeleton } from '../../components/admin/ui';
+import Ic from '../../components/admin/Ic';
+import { IC } from '../../components/admin/adminNav';
 import EscalationDetail from './bolt/EscalationDetail';
 import { priorityOf, waitMinutes, slaLevel, fmtWait, inboxSort, SLA_BREACH_MIN } from '../../utils/supportSla';
 import { teamForText, TEAM_LABEL, TEAM_FILTERS } from '../../utils/supportTeams';
@@ -23,6 +25,20 @@ const FILTERS = [
 ];
 const STATUS_TONE = { bot: 'neutral', waiting: 'warn', assigned: 'ok', resolved: 'neutral' };
 const ESC_TONE = { open: 'warn', replied: 'ok', closed: 'neutral' };
+// Card icons not in the shared IC map — 24x24 stroke paths for the inbox chips.
+const ICN = {
+  robot:   ['M12 3v2', 'M5 8h14a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1V9a1 1 0 011-1z', 'M9 13h.01', 'M15 13h.01', 'M2 12v3', 'M22 12v3'],
+  headset: ['M3 14v-2a9 9 0 0118 0v2', 'M4 13h2a1 1 0 011 1v4a1 1 0 01-1 1H5a2 2 0 01-2-2z', 'M20 13h-2a1 1 0 00-1 1v4a1 1 0 001 1h1a2 2 0 002-2z', 'M18 19a3 3 0 01-3 3h-2'],
+  user:    ['M20 21v-1a5 5 0 00-5-5H9a5 5 0 00-5 5v1', 'M12 11a4 4 0 100-8 4 4 0 000 8'],
+  sparkle: ['M12 4l1.4 3.6L17 9l-3.6 1.4L12 14l-1.4-3.6L7 9l3.6-1.4z', 'M18.5 15l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z'],
+  monitor: ['M3 4h18a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1z', 'M8 20h8', 'M12 16v4'],
+};
+const CHIP = { sky: 'bg-sky-50 text-sky-700', green: 'bg-green-50 text-green-700', gray: 'bg-gray-100 text-gray-600', amber: 'bg-amber-50 text-amber-700' };
+const SupChip = ({ icon, color = 'gray', children }) => (
+  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${CHIP[color]}`}>
+    <Ic d={icon} size={12} /> {children}
+  </span>
+);
 // Normalize both stores into one queue row. _kind routes the click + detail view.
 const normThread = (t) => ({
   _kind: 'thread', id: t.id, reference: t.reference, status: t.status, tone: STATUS_TONE[t.status] || 'neutral',
@@ -459,34 +475,39 @@ export default function AdminSupportChat() {
               {sorted.map((it) => {
                 const mins = waitMinutes(it, now);
                 const lvl = slaLevel(mins);
-                const dot = lvl === 'breach' ? 'bg-rose-500' : it.waitingOnUs ? 'bg-[#FE5100]' : it.status === 'assigned' ? 'bg-blue-500' : 'bg-gray-300';
                 return (
-                  <button key={`${it._kind}:${it.id}`}
-                    onClick={() => (it._kind === 'thread' ? open(it.id) : setSelEsc(it.id))}
-                    className="relative block w-full rounded-xl border adm-border p-3 pl-5 text-left hover:border-[#FE5100]">
-                    <span className={'absolute left-2.5 top-4 h-2 w-2 rounded-full ' + dot} />
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <span className="text-xs" title={it._kind === 'thread' ? 'Dashboard chat' : 'Bolt widget escalation'}>{it._kind === 'thread' ? '💬' : '🦥'}</span>
-                      <code className="rounded bg-[#FFF4EC] px-1.5 py-0.5 text-xs font-semibold text-[#1E1E1E]">{it.reference}</code>
-                      <Badge tone={it.tone}>{it.status}</Badge>
-                      {it.priority === 'high' && <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">High</span>}
-                      <span className={'rounded px-1.5 py-0.5 text-[10px] font-semibold ' + (it.team === 'cxo' ? 'bg-violet-100 text-violet-700' : 'bg-sky-50 text-sky-700')}>{TEAM_LABEL[it.team]}</span>
+                  <div key={`${it._kind}:${it.id}`}
+                    className="flex flex-col rounded-2xl border adm-border p-4 transition hover:border-[#FE5100]">
+                    <div className="mb-2.5 flex flex-wrap items-center gap-2">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600"
+                        title={it._kind === 'thread' ? 'Dashboard chat' : 'Bolt widget escalation'}>
+                        <Ic d={IC.chat} size={17} />
+                      </span>
+                      <code className="rounded-lg bg-[#FFF4EC] px-2 py-1 text-xs font-semibold text-[#C2410C]">{it.reference}</code>
+                      <SupChip icon={ICN.robot} color="sky">{it._kind === 'thread' ? 'Chat' : 'Bot'}</SupChip>
+                      <SupChip icon={ICN.headset} color="sky">{TEAM_LABEL[it.team]}</SupChip>
+                      {it.priority === 'high' && <span className="rounded-full bg-rose-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-700">High</span>}
                       {mins != null && (
-                        <span className={'rounded px-1.5 py-0.5 text-[10px] font-medium ' + (lvl === 'breach' ? 'bg-rose-100 text-rose-700' : lvl === 'warn' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700')}>
-                          ⏱ {lvl === 'breach' ? `Overdue ${fmtWait(mins)}` : `${fmtWait(mins)} SLA`}
+                        <span className={'rounded-full px-2 py-1 text-[10px] font-semibold ' + (lvl === 'breach' ? 'bg-rose-100 text-rose-700' : lvl === 'warn' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700')}>
+                          {lvl === 'breach' ? `Overdue ${fmtWait(mins)}` : `${fmtWait(mins)} SLA`}
                         </span>
                       )}
                       <span className="ml-auto text-xs adm-t3">{fmtDate(it.at)}</span>
                     </div>
-                    <p className="text-sm adm-t1">{it.title}</p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs adm-t3">
-                      <span>{it.whoLabel}</span>
+                    <p className="mb-2.5 text-[15px] font-semibold adm-t1">{it.title}</p>
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <SupChip icon={ICN.user} color="green">{it.whoLabel}</SupChip>
                       {it.agent
-                        ? <span>· {it.agent}</span>
-                        : it.status !== 'resolved' && <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">Unassigned</span>}
-                      {it.unread > 0 && <Badge tone="warn">{it.unread} new</Badge>}
+                        ? <SupChip icon={ICN.user} color="gray">{it.agent}</SupChip>
+                        : it.status !== 'resolved' && <SupChip icon={ICN.user} color="gray">Unassigned</SupChip>}
+                      {it.unread > 0 && <SupChip icon={ICN.sparkle} color="amber">{it.unread} new</SupChip>}
                     </div>
-                  </button>
+                    <button
+                      onClick={() => (it._kind === 'thread' ? open(it.id) : setSelEsc(it.id))}
+                      className="mt-auto flex items-center justify-center gap-2 rounded-xl bg-violet-50 py-2.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-100">
+                      <Ic d={ICN.monitor} size={16} /> Monitor Chat
+                    </button>
+                  </div>
                 );
               })}
             </div>
