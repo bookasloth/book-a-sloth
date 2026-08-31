@@ -14,7 +14,7 @@ On **paid plans, we take 0% commission** — you keep the full service price. On
 
 ## Requesting a payout
 
-Once you've earned enough, request a payout from **Earnings → Payouts**. The **minimum payout is ₹100.** Our team reviews the request and marks it paid once the transfer is done. You can track the status — pending, approved, or paid — on the same page.
+Once you've earned enough, request a payout from **Earnings → Payouts**. The **minimum payout is ₹1.** Our team reviews the request and marks it paid once the transfer is done. You can track the status — pending, approved, or paid — on the same page.
 
 Make sure your payout bank details are filled in, or a payout can't be sent.
 
