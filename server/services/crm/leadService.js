@@ -93,15 +93,27 @@ async function upsertLead(patch = {}, { source, createdBy = '', attribution } = 
   await logActivity(data.id, 'lead_created', { title: `Lead created (${row.source})`, meta: { source: row.source } });
   // Stitch any intent events that fired before this lead existed (best-effort).
   require('./intentEvents').attachToLead(data).catch(() => {});
+  // Meta CRM Lead offline event (action_source system_generated, event_source crm).
+  // Matched on hashed em/ph; lead_id added once Facebook Lead Ads are captured.
+  // Fire-and-forget — CRM capture must never break on an analytics hiccup.
+  try {
+    require('../../utils/trackServer').sendMetaCrmLead({
+      email: data.email, phone: data.phone, leadId: data.meta_lead_id, eventId: `crm_lead_${data.id}`,
+    });
+  } catch (e) { console.warn('[crm] meta lead fanout skipped:', e.message); }
   return { lead: data, created: true };
 }
 
 // Insert a lead; if the attribution columns don't exist yet (migration v3.120
 // not applied on this DB), strip them and retry so lead capture never breaks.
+// Strip the schema-optional columns a DB may not have yet (attribution + the
+// Meta Lead Ads id from v3.137) so lead capture never breaks before a migration.
+const stripOptional = (row) => { const o = stripAttributionColumns(row); delete o.meta_lead_id; return o; };
+
 async function insertLeadTolerant(row) {
   let { data, error } = await supabaseAdmin.from('leads').insert(row).select('*').single();
   if (error && isMissingColumnError(error)) {
-    ({ data, error } = await supabaseAdmin.from('leads').insert(stripAttributionColumns(row)).select('*').single());
+    ({ data, error } = await supabaseAdmin.from('leads').insert(stripOptional(row)).select('*').single());
   }
   if (error) throw error;
   return data;
@@ -110,7 +122,7 @@ async function insertLeadTolerant(row) {
 async function updateLeadTolerant(id, patch) {
   let { error } = await supabaseAdmin.from('leads').update(patch).eq('id', id);
   if (error && isMissingColumnError(error)) {
-    ({ error } = await supabaseAdmin.from('leads').update(stripAttributionColumns(patch)).eq('id', id));
+    ({ error } = await supabaseAdmin.from('leads').update(stripOptional(patch)).eq('id', id));
   }
   if (error) throw error;
 }

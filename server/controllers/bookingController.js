@@ -695,6 +695,7 @@ const createBooking = async (req, res) => {
       value: service.price,
       currency: "INR",
       email: guest_email,
+      req,                    // EMQ match keys: IP/UA/fbp/fbc
       eventId: booking.id,
     });
   } catch (error) {

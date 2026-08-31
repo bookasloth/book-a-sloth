@@ -621,7 +621,10 @@ const googleCallback = async (req, res) => {
         // Acquisition conversion: brand-new host account created. Server-side so
         // the signup survives ad-blockers; fans out to GA4 (sign_up) + Meta
         // (CompleteRegistration). Fire-and-forget — never blocks the redirect.
-        trackServer(profileId, "user_registered", { method: "google", role: "host" }, { email: googleEmail });
+        trackServer(profileId, "user_registered", { method: "google", role: "host" }, { email: googleEmail, req });
+        // A brand-new host is also a Lead for the host-acquisition funnel (fuels
+        // Meta lookalike audiences). Same moment, separate standard event.
+        trackServer(profileId, "lead_captured", { method: "google", role: "host" }, { email: googleEmail, req });
 
         // Welcome the brand-new host — one email nudging them to finish setup +
         // publish. Reuses the existing VENDOR_WELCOME template (Tithi);
