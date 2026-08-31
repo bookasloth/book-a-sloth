@@ -81,7 +81,7 @@ const Loyalty = () => {
           <p className="text-sm text-gray-500">
             We're putting the finishing touches on rewards. Keep booking — your spend will count toward your tier the day it goes live.
           </p>
-          <Link to="/" className="inline-block text-sm font-medium text-[#FE5100] hover:underline mt-3">Explore creators →</Link>
+          <Link to="/explore" className="inline-block text-sm font-medium text-[#FE5100] hover:underline mt-3">Explore creators →</Link>
         </div>
     </>
   );
