@@ -143,6 +143,16 @@ export default function BookDemoDrawer({ open, onClose }) {
             >
               {busy ? 'Sending code…' : 'Book A Demo'}
             </button>
+
+            {/* Secondary, low-emphasis: try the real product live (opens in a new tab). */}
+            <a
+              href="https://bookasloth.com/sndatarkar/booking/book-a-sloth-app-online-demo-30-min-advisory-session"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 block w-full text-center text-xs font-medium text-gray-400 underline decoration-gray-300 underline-offset-2 transition-colors hover:text-ink"
+            >
+              Experience live booking →
+            </a>
           </form>
         )}
 
