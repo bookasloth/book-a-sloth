@@ -44,7 +44,7 @@ const AdminPayouts = () => {
   const initTab = TABS.includes(searchParams.get('status')) ? searchParams.get('status') : 'pending';
   const [tab, setTab] = useState(initTab);
   const [rows, setRows] = useState([]);
-  const [clearing, setClearing] = useState({ threshold: 100, hosts: [] });
+  const [clearing, setClearing] = useState({ threshold: 1, hosts: [] });
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null); // { kind: 'reject'|'pay', id }
   const [reconciling, setReconciling] = useState(false);
@@ -54,7 +54,7 @@ const AdminPayouts = () => {
     try {
       if (tab === 'clearing') {
         const { data } = await adminGetPayoutClearing();
-        setClearing(data || { threshold: 100, hosts: [] });
+        setClearing(data || { threshold: 1, hosts: [] });
       } else {
         const { data } = await adminGetPayouts(tab);
         setRows(data || []);

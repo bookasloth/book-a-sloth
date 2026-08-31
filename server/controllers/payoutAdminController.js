@@ -21,7 +21,7 @@ const payoutReconciler = require('../services/payoutReconciler');
 const now = () => new Date().toISOString();
 
 // Minimum available balance a host can withdraw (mirrors vendorController.requestPayout).
-const MIN_WITHDRAWAL = 100;
+const MIN_WITHDRAWAL = 1;
 
 const fetchPayout = async (id) => {
   const { data } = await supabaseAdmin.from('payout_requests').select('*').eq('id', id).maybeSingle();
@@ -156,7 +156,7 @@ const releasePayoutViaRoute = async (req, res) => {
 // GET /admin/payouts/clearing
 // Platform-wide settlement visibility: every host with money in the pipeline that
 // is NOT yet a payout request — clearing (maturing), pending-completion, or matured
-// but below the ₹100 withdrawal minimum. Gives admins sight of funds owed before
+// but below the ₹1 withdrawal minimum. Gives admins sight of funds owed before
 // they ever enter the Pending payout queue.
 const listClearing = async (req, res) => {
   try {
