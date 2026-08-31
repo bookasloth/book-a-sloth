@@ -37,6 +37,14 @@ const openThread = async () => {
   await waitFor(() => expect(screen.getByText('My payout is late')).toBeInTheDocument());
 };
 
+// A waiting thread shows no composer — the agent must claim it first, which flips
+// the dock into the reply composer.
+const claimThread = async () => {
+  await openThread();
+  fireEvent.click(screen.getByRole('button', { name: /assign to me/i }));
+  await waitFor(() => expect(screen.getByLabelText('Reply')).toBeInTheDocument());
+};
+
 describe('AdminSupportChat', () => {
   it('lists queued threads with reference and unread badge', async () => {
     render(<AdminSupportChat />);
@@ -49,18 +57,30 @@ describe('AdminSupportChat', () => {
     expect(screen.getByText('Riya')).toBeInTheDocument();
   });
 
-  it('replies to the thread and appends the admin message', async () => {
+  it('shows the assign CTA (not a composer) while a thread is unassigned', async () => {
     await openThread();
+    expect(screen.getByText(/take ownership of this conversation/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Reply')).not.toBeInTheDocument();
+  });
+
+  it('replies to the thread and appends the admin message', async () => {
+    await claimThread();
     fireEvent.change(screen.getByLabelText('Reply'), { target: { value: 'On it — checking now' } });
-    fireEvent.click(screen.getByRole('button', { name: /send/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^send/i }));
     await waitFor(() => expect(adminReplySupport).toHaveBeenCalledWith('t1', { body: 'On it — checking now' }));
     await waitFor(() => expect(screen.getByText('On it — checking now')).toBeInTheDocument());
   });
 
+  it('auto-sends a quick reply on one click', async () => {
+    await claimThread();
+    fireEvent.click(screen.getByRole('button', { name: 'Thanks' }));
+    await waitFor(() => expect(adminReplySupport).toHaveBeenCalledWith('t1', { body: 'Thank you!' }));
+  });
+
   it('marks the thread resolved after picking (or skipping) a reason', async () => {
-    await openThread();
-    fireEvent.click(screen.getByText(/resolve ticket/i)); // opens the reason picker
-    fireEvent.click(screen.getByText('Resolve'));         // confirm (reason optional)
+    await claimThread();
+    fireEvent.click(screen.getByRole('button', { name: /^resolve$/i })); // opens the reason picker
+    fireEvent.click(screen.getByRole('button', { name: /resolve ticket/i })); // confirm (reason optional)
     await waitFor(() => expect(adminResolveSupport).toHaveBeenCalledWith('t1', {}));
   });
 });

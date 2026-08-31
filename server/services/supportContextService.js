@@ -21,16 +21,35 @@ const { supabaseAdmin } = require('../config/supabase');
 
 const shortRef = (id) => (id ? `#${String(id).replace(/-/g, '').slice(0, 8).toUpperCase()}` : null);
 
-// Recent bookings for either side, newest first. Guests key by phone, hosts by id.
+// Pick 3 bookings around "now" as a first-match ladder: as many recent past as
+// exist (up to 3), then top up with the soonest upcoming — past3 · past2+up1 ·
+// past1+up2 · up3. Pure so it's unit-testable without a DB.
+function composeRecent(past, upcoming, n = 3) {
+  const chosen = [];
+  for (const b of past) if (chosen.length < n) chosen.push(b);        // recent past first
+  for (const b of upcoming) if (chosen.length < n) chosen.push(b);    // then soonest upcoming
+  // Display newest/soonest-future first so upcoming sits on top of recent past.
+  return chosen.sort((a, b) => (new Date(b.scheduled_at || 0)) - (new Date(a.scheduled_at || 0)));
+}
+
+// Recent bookings for either side: a 3-row window around now (recent past +
+// upcoming). Guests key by phone, hosts by id.
 async function recentBookings({ userId, phone, isHost }) {
-  let q = supabaseAdmin
-    .from('bookings')
-    .select('id, service_id, scheduled_at, status, payment_status, guest_name')
-    .order('scheduled_at', { ascending: false, nullsFirst: false })
-    .limit(5);
-  q = isHost ? q.eq('host_id', userId || '') : q.eq('guest_phone', phone || '');
-  const { data, error } = await q;
-  if (error || !data) return [];
+  const nowIso = new Date().toISOString();
+  const base = () => {
+    const q = supabaseAdmin
+      .from('bookings')
+      .select('id, service_id, scheduled_at, status, payment_status, guest_name');
+    return isHost ? q.eq('host_id', userId || '') : q.eq('guest_phone', phone || '');
+  };
+  // Most-recent past (desc) and soonest upcoming (asc), 3 each — enough to fill the ladder.
+  const [pastRes, upRes] = await Promise.all([
+    base().lt('scheduled_at', nowIso).order('scheduled_at', { ascending: false }).limit(3),
+    base().gte('scheduled_at', nowIso).order('scheduled_at', { ascending: true }).limit(3),
+  ]);
+  if (pastRes.error && upRes.error) return [];
+  const data = composeRecent(pastRes.data || [], upRes.data || []);
+  if (!data.length) return [];
 
   // Best-effort service titles in one follow-up query.
   const ids = [...new Set(data.map((b) => b.service_id).filter(Boolean))];
@@ -104,4 +123,4 @@ async function getSupportContext({ userId, phone, isHost } = {}) {
   return { kind, profile, bookings, host };
 }
 
-module.exports = { getSupportContext };
+module.exports = { getSupportContext, composeRecent };
