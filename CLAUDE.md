@@ -159,9 +159,12 @@ Guests
 - Auto-created if new.
 
 Hosts
-- Login only using Google
-- Never show  email login.
-- Never show OTP login.
+- Host login (`/login-as-vendor`) is Google only. Never show email/password here.
+- Dual login (PR #900): a host MAY also sign into their guest space via WhatsApp
+  OTP at `/login` → lands `/user`. It is ONE identity (both doors mint a session
+  for the same profile); guest vs host is the `mode` ('traveling'/'hosting'), and
+  crossing doors forces a logout of the other session.
+- Superadmin is NEVER reachable by phone OTP — admin login is a separate door.
 
 Bookings
 - Always snapshot pricing.
