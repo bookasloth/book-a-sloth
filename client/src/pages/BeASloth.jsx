@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import WhatsNewLink from '../components/auth/WhatsNewLink';
+import BookDemoDrawer from '../components/auth/BookDemoDrawer';
 import Seo from '../components/common/Seo';
 import { ogCard } from '../config/ogImages';
 import useFeeOnly from '../hooks/useFeeOnly';
@@ -70,6 +71,7 @@ const BeASloth = () => {
   // launching soon". Reverts on Route go-live. See useFeeOnly.
   const feeOnly = useFeeOnly();
   const [loading, setLoading] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -166,7 +168,7 @@ const BeASloth = () => {
 
       {/* ── RIGHT · signup card ──────────────────────────────────────────────── */}
       <main className="flex flex-col items-center justify-center px-5 py-10 sm:py-12">
-        <div className="page-card w-full max-w-lg p-6 text-center sm:p-8">
+        <div className="page-card relative w-full max-w-lg overflow-hidden p-6 text-center sm:p-8">
           <Link to="/" aria-label="Book A Sloth — home" className="inline-block">
             <Logo className="mx-auto h-14 w-14" />
           </Link>
@@ -251,19 +253,21 @@ const BeASloth = () => {
             <span className="text-xs font-medium uppercase tracking-wide text-gray-400">Or</span>
             <span className="h-px flex-1 bg-black/10" />
           </div>
-          <a
-            href="https://bookasloth.com/sndatarkar/booking/book-a-sloth-app-online-demo-30-min-advisory-session"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => setDemoOpen(true)}
             className="btn flex w-full items-center justify-center gap-3 border-2 border-primary-cta bg-primary-cta py-3 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-colors hover:bg-black hover:text-primary-cta"
           >
             Book A Demo
-          </a>
+          </button>
 
           <p className="mt-8 text-sm text-gray-500">
             Already a sloth?{' '}
             <Link to="/login-as-vendor" className="font-semibold text-primary hover:underline">Log in</Link>
           </p>
+
+          {/* Book-a-demo panel slides up from the bottom of this card, filling it. */}
+          <BookDemoDrawer open={demoOpen} onClose={() => setDemoOpen(false)} />
         </div>
 
         {/* Outside the card */}

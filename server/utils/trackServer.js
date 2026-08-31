@@ -169,12 +169,19 @@ function trackServer(distinctId, event, properties = {}, conversion = {}) {
 // This lets Meta attribute CRM pipeline outcomes back to the ad that generated
 // the lead and optimize toward leads that actually convert.
 // Shape mirrors Meta's documented CRM Lead payload exactly.
-function buildCrmLeadPayload({ email, phone, leadId, eventName = 'Lead', eventId, ts } = {}) {
+function buildCrmLeadPayload({ email, phone, leadId, eventName = 'Lead', eventId, ts, req } = {}) {
   const user_data = {};
   const em = sha256(email);
   const ph = phone ? sha256(normPhone(phone)) : undefined;
   if (em) user_data.em = [em];
   if (ph) user_data.ph = [ph];
+  // EMQ keys when a browser request is available (website form): IP/UA/fbp/fbc.
+  // Raw, never hashed. Absent on webhook/import paths — em/ph/lead_id still match.
+  const match = metaMatchFromReq(req);
+  if (match.ip) user_data.client_ip_address = match.ip;
+  if (match.userAgent) user_data.client_user_agent = match.userAgent;
+  if (match.fbp) user_data.fbp = match.fbp;
+  if (match.fbc) user_data.fbc = match.fbc;
   const lid = leadId == null ? '' : String(leadId).trim();
   if (lid) {
     // Raw, never hashed. Send as a Number when it fits a JS safe integer; a longer

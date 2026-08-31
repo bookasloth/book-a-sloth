@@ -147,6 +147,10 @@ export const subscribeNewsletter = (email)     => API.post('/email/subscribe', {
 export const sendContactMessage = (data) => API.post('/contact', data);
 export const submitEnterpriseLead = (data) => API.post('/enterprise-lead', { ...data, attribution: getAttribution() });
 
+// ── /be-a-sloth "Book a Demo" lead form (public, phone-OTP) ────
+export const sendBeASlothOtp   = (data) => API.post('/be-a-sloth-lead/send-otp', { ...data, attribution: getAttribution() });
+export const submitBeASlothLead = (data) => API.post('/be-a-sloth-lead', { ...data, attribution: getAttribution() });
+
 // ── Bolt support bot (public) ─────────────────────────────────
 export const askBot = (data) => API.post('/bot/ask', data);
 export const sendBotFeedback = (data) => API.post('/bot/feedback', data);
