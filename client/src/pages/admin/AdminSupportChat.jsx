@@ -57,19 +57,20 @@ const Row = ({ k, children }) => (
   <div className="flex items-center justify-between gap-2 py-1 text-[12px]"><span className="adm-t3">{k}</span><span className="text-right font-medium adm-t1">{children}</span></div>
 );
 
-// One-click canned replies — chip label + the exact message that gets SENT (no
-// draft step; clicking a chip posts it immediately). Human templates, not AI.
+// One-click canned replies — short chip label + the full, warm customer-care
+// message that gets SENT (no draft step; clicking a chip posts it immediately).
+// Human templates in our tone, not AI.
 const QUICK_REPLIES = [
-  { label: 'Thanks', text: 'Thank you!' },
-  { label: 'Sorry', text: 'Sorry about that.' },
-  { label: "You're welcome", text: "You're welcome!" },
-  { label: 'Please wait', text: 'Please hold on a moment while I check this for you.' },
-  { label: 'Thanks for your patience', text: 'Thanks for your patience.' },
-  { label: "We're looking into it", text: "We're looking into this for you right now." },
-  { label: 'Share more details', text: 'Could you please share a few more details so I can help?' },
-  { label: "We'll get back to you", text: "We'll get back to you on this shortly." },
-  { label: 'Issue resolved', text: 'This should be resolved now — please let me know if anything else comes up.' },
-  { label: 'Anything else?', text: 'Is there anything else I can help you with?' },
+  { label: 'Greeting', text: "Hi there! Thanks so much for reaching out — I'm here to help. Give me just a moment to look into this for you." },
+  { label: 'Sorry', text: "I'm really sorry for the inconvenience — I completely understand how frustrating this must be, and I'll do my very best to sort it out for you." },
+  { label: 'Thanks', text: 'Thank you so much for your patience and for taking the time to reach out to us — it genuinely means a lot.' },
+  { label: "You're welcome", text: "You're most welcome! It's truly my pleasure to help — that's exactly what we're here for." },
+  { label: 'One moment', text: "Please bear with me for just a moment while I check this for you — I won't keep you waiting long." },
+  { label: 'Looking into it', text: "I'm looking into this for you right now and will come back to you with an update very shortly. Thanks for hanging in there." },
+  { label: 'Need details', text: 'Could you share a few more details so I can understand exactly what happened? It will help me get this resolved for you much faster.' },
+  { label: 'Will follow up', text: "I'll personally follow up on this and get back to you the moment I have an update. Thank you for your patience while we look into it." },
+  { label: 'Resolved', text: "I'm glad we could get this sorted out for you! Please don't hesitate to reach out any time if anything else comes up — we're always here." },
+  { label: 'Anything else?', text: 'Is there anything else I can help you with today? I would be more than happy to assist.' },
 ];
 
 // The context rail — "give support eyes". Customer's live record beside the chat.

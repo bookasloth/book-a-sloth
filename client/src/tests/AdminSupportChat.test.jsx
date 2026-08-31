@@ -74,7 +74,7 @@ describe('AdminSupportChat', () => {
   it('auto-sends a quick reply on one click', async () => {
     await claimThread();
     fireEvent.click(screen.getByRole('button', { name: 'Thanks' }));
-    await waitFor(() => expect(adminReplySupport).toHaveBeenCalledWith('t1', { body: 'Thank you!' }));
+    await waitFor(() => expect(adminReplySupport).toHaveBeenCalledWith('t1', { body: expect.stringMatching(/thank you so much/i) }));
   });
 
   it('marks the thread resolved after picking (or skipping) a reason', async () => {
