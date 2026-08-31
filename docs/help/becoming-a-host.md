@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/utils/slugFormat.js, server/services/kycOnboarding.js
+product_area: onboarding
+---
+
 # Becoming a host
 
 Hosts (also called creators) are the people who publish services and take bookings on Book A Sloth. Setting up is a short guided flow.

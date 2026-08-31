@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/config/google.js
+product_area: availability
+---
+
 # Availability and Google Calendar
 
 You control exactly when you can be booked.
@@ -21,8 +27,6 @@ Connect it during setup or later from your dashboard.
 - Check you have working hours set for that weekday (empty custom days = closed).
 - Check the date isn't in your blocked dates.
 - If Google busy times aren't updating, reconnect Google Calendar.
-
-The number of calendars you can connect depends on your plan.
 
 Still not right? Reach us from the [Help](/help) page.
 
@@ -228,7 +232,7 @@ Keep working hours updated, block holidays in advance, review your schedule regu
 
 **Do I need a Google account?** Yes — Google Calendar sync requires connecting a Google account.
 
-**Is it limited to certain plans?** No. Google Calendar connection is available to hosts on all plans. (The *number of calendars* you can connect can depend on your plan.)
+**Is it limited to certain plans?** No. Google Calendar connection is available to hosts on all plans. Book A Sloth syncs with the **primary calendar** of the Google account you connect.
 
 **Will customers see my calendar events?** No. Your calendar stays private — guests only see open booking slots, never your event details.
 

@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/utils/inAppNotify.js, notificationEngine
+product_area: notifications
+---
+
 # Reminders, notifications, and badges
 
 ## Booking notifications

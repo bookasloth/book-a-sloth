@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/controllers/authController.js
+product_area: profile
+---
+
 # Your profile and email preferences
 
 ## Updating your details

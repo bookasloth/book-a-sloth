@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/lib/pricingEngine.js
+product_area: pricing
+---
+
 # Pricing and commission
 
 Full, current prices and limits are always on the [pricing](/pricing) page — this is an overview of how it works.

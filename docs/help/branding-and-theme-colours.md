@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/controllers/hostController.js
+product_area: branding
+---
+
 # Branding and theme colours
 
 Your public page can reflect your brand rather than looking like a generic tool.
@@ -46,7 +52,7 @@ Your **profile image** is what appears on your public profile and booking pages 
 
 ## Cover image
 
-If your plan supports it, upload a **cover image** to personalise your profile. Choose a clean, professional image that represents your business, services, or workspace — you can also use it to promote seasonal offers or campaigns, and update it whenever you want.
+You can upload a **cover image** to personalise your profile — available on all plans. Choose a clean, professional image that represents your business, services, or workspace — you can also use it to promote seasonal offers or campaigns, and update it whenever you want.
 
 **Text on the cover.** Keep any text simple, readable, and relevant.
 

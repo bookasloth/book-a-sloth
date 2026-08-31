@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: multiple controllers
+product_area: support
+---
+
 # Troubleshooting and error messages
 
 Quick fixes for the errors and hiccups you might run into. Still stuck after trying these? Reach us from the [Help](/help) page.

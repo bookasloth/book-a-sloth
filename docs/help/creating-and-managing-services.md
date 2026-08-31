@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/controllers/serviceController.js, planMiddleware.js
+product_area: services
+---
+
 # Creating and managing services
 
 A service is anything bookable you offer — a session, a class, a consult, a slot.
@@ -7,7 +13,7 @@ A service is anything bookable you offer — a session, a class, a consult, a sl
 In your dashboard, go to **Services → Add New** and fill in:
 
 - **Title and description** — what it is.
-- **Price** — or set it free if you don't charge for it.
+- **Price** — paid services have a **₹100 minimum**; or set it free (₹0), up to your plan's free-service limit.
 - **Duration** — how long it runs, which drives your available slots.
 - **Inclusions, exclusions, and FAQs** — so guests know exactly what they're booking.
 - **Thumbnail** — an image for the service.
@@ -230,7 +236,7 @@ If you can't create, edit, publish, or manage services, contact Book A Sloth Sup
 
 ## Can I create a service without adding a description?
 
-You may save a draft, but add a detailed description before publishing — it helps customers understand your offering and improves bookings.
+Add a detailed description before you save — a new service goes **live as soon as you save it** (there's no separate draft state), and a clear description helps customers understand your offering and improves bookings.
 
 ## Can I offer services outside my selected business category?
 
@@ -258,7 +264,7 @@ Yes, depending on how you've configured your business and appointment settings.
 
 ## Can I create services for offline appointments?
 
-Yes. Mention the meeting location and instructions in the service description.
+Yes. For an in-person (offline) service your profile needs a **location / map link** set — the service won't save without it. Add any extra meeting instructions in the service description.
 
 ## Can I offer both online and offline services?
 

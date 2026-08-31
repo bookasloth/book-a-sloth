@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/lib/pricingEngine.js, server/services/settlementService.js
+product_area: payouts
+---
+
 # Getting paid — earnings and payouts
 
 ## How earnings work

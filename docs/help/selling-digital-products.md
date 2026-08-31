@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/controllers/productController.js
+product_area: digital-products
+---
+
 # Selling digital products
 
 Alongside bookable services, you can sell digital products — guides, templates, recordings, anything that's a file.
@@ -6,7 +12,7 @@ Alongside bookable services, you can sell digital products — guides, templates
 
 In your dashboard, go to **Products**, upload your file, and set a price (or make it free). It then appears on your page for guests to buy.
 
-When someone buys, they get a secure download link automatically. Each link allows up to **3 downloads** and can expire after a while, so buyers are encouraged to save the file once they have it.
+When someone buys, they get a secure download link automatically. Each link allows up to **3 downloads** and **expires after 24 hours**, so buyers are encouraged to save the file once they have it.
 
 ## How many products can I sell?
 
@@ -18,7 +24,7 @@ Re-issue a fresh download link for them from your Products area. Links are cappe
 
 ## Upload won't go through
 
-Files have a size cap. If an upload is rejected, check the file size and that it's a supported file, then try again. Reach us from the [Help](/help) page if it keeps failing.
+Files must be under **2 MB**. If an upload is rejected, check the file size and that it's a supported file, then try again. Reach us from the [Help](/help) page if it keeps failing.
 
 ## What are Digital Products on Book A Sloth?
 
@@ -38,7 +44,7 @@ After purchasing (or claiming a free product), customers receive a secure, token
 
 ## Is there a limit on downloading a Digital Product?
 
-Yes. Each secure link allows up to 3 downloads and has an expiry period. If it expires or the limit is reached, contact the creator for a new link.
+Yes. Each secure link allows up to 3 downloads and **expires after 24 hours**. If it expires or the limit is reached, contact the creator for a new link.
 
 ## Can I sell paid Digital Products?
 

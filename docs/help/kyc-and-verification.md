@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/controllers/kycController.js
+product_area: kyc
+---
+
 # KYC and identity verification
 
 ## What KYC is and who needs it

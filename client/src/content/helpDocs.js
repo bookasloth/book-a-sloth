@@ -22,6 +22,11 @@ const RAW = import.meta.glob('../../../docs/help/*.md', {
 
 const slugFromPath = (p) => p.split('/').pop().replace(/\.md$/, '');
 
+// Strip an optional YAML front-matter block (--- … ---) from the top of a doc so
+// maintenance metadata (last_verified, etc.) never renders on the help page.
+// No-op when a file has no front-matter.
+const stripFrontmatter = (s) => s.replace(/^﻿?---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
+
 // Strip the inline markdown we use so an excerpt reads cleanly as plain text.
 const stripInline = (s) =>
   s
@@ -45,7 +50,8 @@ function parseMeta(raw) {
 const BY_SLUG = {};
 for (const [path, raw] of Object.entries(RAW)) {
   const slug = slugFromPath(path);
-  BY_SLUG[slug] = { slug, body: raw, ...parseMeta(raw) };
+  const body = stripFrontmatter(raw);
+  BY_SLUG[slug] = { slug, body, ...parseMeta(body) };
 }
 
 export const getHelpDoc = (slug) => BY_SLUG[slug] || null;
