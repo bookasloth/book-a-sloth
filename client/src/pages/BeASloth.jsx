@@ -168,7 +168,7 @@ const BeASloth = () => {
 
       {/* ── RIGHT · signup card ──────────────────────────────────────────────── */}
       <main className="flex flex-col items-center justify-center px-5 py-10 sm:py-12">
-        <div className="page-card w-full max-w-lg p-6 text-center sm:p-8">
+        <div className="page-card relative w-full max-w-lg overflow-hidden p-6 text-center sm:p-8">
           <Link to="/" aria-label="Book A Sloth — home" className="inline-block">
             <Logo className="mx-auto h-14 w-14" />
           </Link>
@@ -265,13 +265,14 @@ const BeASloth = () => {
             Already a sloth?{' '}
             <Link to="/login-as-vendor" className="font-semibold text-primary hover:underline">Log in</Link>
           </p>
+
+          {/* Book-a-demo panel slides up from the bottom of this card, filling it. */}
+          <BookDemoDrawer open={demoOpen} onClose={() => setDemoOpen(false)} />
         </div>
 
         {/* Outside the card */}
         <WhatsNewLink className="mt-6" />
       </main>
-
-      <BookDemoDrawer open={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   );
 };
