@@ -8,6 +8,7 @@
 // unexpected error returns null so the normal pipeline runs.
 
 const { HARD_HI, HARD_MR, HARD_EN, MILD, PHRASES_DIRECTED, THREATS } = require('./abuseList');
+const { detectSelfHarm, CRISIS_MSG } = require('./selfHarm');
 const anthropicClient = require('../ai/anthropicClient');
 const botBudget = require('../../lib/botBudget');
 const { supabaseAdmin } = require('../../config/supabase');
@@ -15,7 +16,15 @@ const ipBlocklist = require('../../lib/ipBlocklist');
 const botStrikes = require('../../lib/botStrikes');
 
 const IP_BLOCK_MSG = "You're on a timeout. Come back in a bit. For real issues, raise a ticket at /support.";
-const THREAT_MSG = "Not okay — I'm ending this here. If you're in a real crisis, please reach out to someone you trust or a helpline. For account issues, raise a ticket at /support.";
+// THREAT_MSG is for threats aimed at OTHERS (violence). Self-harm is handled
+// separately by selfHarm.CRISIS_MSG — see the crisis path in evaluate(), which
+// never strikes, bans, or shuts the person out.
+const THREAT_MSG = "Not okay — I'm ending this here. Threats aren't something I can help with. For account issues, raise a ticket at /support.";
+
+// A self-harm disclosure short-circuits to compassionate support with ZERO
+// penalties: no strike, no IP ban, no lock. Shared by the deterministic
+// always-on check and the Haiku `self_harm` verdict.
+const crisisResult = () => ({ answer: CRISIS_MSG, source: 'self_harm', cited_sources: [], escalate: false, locked: false });
 const COOLOFF_MSG = "Alright, that's enough — I'm tapping out. Go cool off. Got a genuine issue? Raise a ticket at /support and a human picks it up.";
 
 // Fallback-only sarcasm — fires when the Haiku roast is down or over-budget.
@@ -159,7 +168,7 @@ const HOSTILITY_RE = /\b(you(?:'re| are|r)?)\s+(?:a\s+|an\s+|so\s+|such\s+|the\s
 
 // ---- Haiku judge / roast (budget-gated) -----------------------------------
 async function classifyAbuse(msg) {
-  const safe = { abusive: false, danger: false, language: 'en' };
+  const safe = { abusive: false, danger: false, self_harm: false, language: 'en' };
   try {
     if (!anthropicClient.isConfigured()) return safe;
     // fail-closed: a budget-store error must not let the judge keep spending on a flood.
@@ -173,8 +182,10 @@ async function classifyAbuse(msg) {
       max_tokens: 128,
       system:
         'Classify a message sent to a support bot. abusive=insult/harassment ' +
-        'aimed at the bot or people. danger=credible real-world threat or ' +
-        'self-harm. Ignore mere frustration about the product (that is NOT abusive).',
+        'aimed at the bot or people. danger=credible threat of violence toward ' +
+        'OTHERS. self_harm=the sender expresses suicidal thoughts, wanting to ' +
+        'die, or intent to hurt themselves. self_harm is NOT abusive and NOT ' +
+        'danger. Ignore mere frustration about the product (that is NOT abusive).',
       tool_choice: { type: 'tool', name: 'judge' },
       tools: [{
         name: 'judge',
@@ -184,9 +195,10 @@ async function classifyAbuse(msg) {
           properties: {
             abusive: { type: 'boolean' },
             danger: { type: 'boolean' },
+            self_harm: { type: 'boolean' },
             language: { type: 'string', enum: ['en', 'hi', 'mr'] },
           },
-          required: ['abusive', 'danger', 'language'],
+          required: ['abusive', 'danger', 'self_harm', 'language'],
         },
       }],
       messages: [{ role: 'user', content: String(msg == null ? '' : msg) }],
@@ -196,6 +208,7 @@ async function classifyAbuse(msg) {
     return {
       abusive: Boolean(out.abusive),
       danger: Boolean(out.danger),
+      self_harm: Boolean(out.self_harm),
       language: ['en', 'hi', 'mr'].includes(out.language) ? out.language : 'en',
     };
   } catch (e) {
@@ -286,14 +299,21 @@ async function evaluate({ q, conversationId, ip } = {}) {
   const STRIKE_MAX = Number(process.env.BOT_STRIKE_MAX) || 5;
 
   try {
-    // Step 0: already-blocked IP — read from the durable, admin-visible app blocklist
+    // Step 0 (ALWAYS ON, wins over everything): a self-harm disclosure gets
+    // compassionate crisis support with helplines and NO penalty. Deterministic
+    // phrase match, so it needs no model call and runs even when the roast gate
+    // and IP blocking are off. Placed before the IP-block check on purpose — a
+    // person in crisis is never met with a "you're on a timeout" message.
+    if (detectSelfHarm(normalizeForMatch(q).spaced)) return crisisResult();
+
+    // Step 1: already-blocked IP — read from the durable, admin-visible app blocklist
     // (in-memory O(1) cache, DB-backed, survives restarts). Enforced independently of
     // the roast flag; ipGuard also catches these upstream when IP blocking is on.
     if (IPBLOCK_ON && ip && ipBlocklist.isBlocked(ip)) {
       return { answer: IP_BLOCK_MSG, source: 'ip_block', cited_sources: [], escalate: false, locked: true };
     }
 
-    // Roast/threat detection itself is gated by the roast flag.
+    // Roast/threat detection itself is gated by the roast flag (self-harm above is not).
     if (process.env.BOT_ROAST_ENABLED !== 'true') return null;
 
     const listed = checkListed(q);
@@ -307,6 +327,8 @@ async function evaluate({ q, conversationId, ip } = {}) {
     } else if ((listed && listed.tier === 'mild') || (!listed && HOSTILITY_RE.test(String(q || '')))) {
       const judged = await classifyAbuse(q);
       lang = judged.language || 'en';
+      // Self-harm wins over abuse/threat: support, never punish.
+      if (judged.self_harm) return crisisResult();
       if (judged.danger) route = 'threat';
       else if (judged.abusive) route = 'roast';
       else return null;
@@ -344,5 +366,5 @@ function _reset() { /* no module cache to clear */ }
 
 module.exports = {
   evaluate, checkListed, normalizeForMatch, HOSTILITY_RE,
-  IP_BLOCK_MSG, THREAT_MSG, COOLOFF_MSG, cannedRoast, CANNED, _reset,
+  IP_BLOCK_MSG, THREAT_MSG, COOLOFF_MSG, CRISIS_MSG, cannedRoast, CANNED, _reset,
 };
