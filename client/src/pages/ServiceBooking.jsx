@@ -324,6 +324,7 @@ const ServiceBooking = () => {
     gstin: user?.billing_details?.gstin || "",
     pan: user?.billing_details?.pan || "",
   });
+  const [stateOpen, setStateOpen] = useState(false); // state combobox dropdown
   const [invoiceRef, setInvoiceRef] = useState(null); // {id, token}
 
   const [otp, setOtp] = useState("");
@@ -1413,26 +1414,47 @@ const ServiceBooking = () => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <FloatingInput id="bk-address" label="Address" value={billing.address} onChange={(e) => setBilling((b) => ({ ...b, address: e.target.value }))} autoComplete="street-address" />
-                    {/* Searchable state — native datalist gives type-to-filter. */}
+                    {/* Searchable state — dropdown only appears after 3 chars typed. */}
                     <div className="relative">
                       <input
                         id="bk-state"
-                        list="in-states"
                         placeholder="State"
                         autoComplete="off"
                         className="peer fb-input fb-input--sm !rounded placeholder-transparent"
                         value={billing.state}
+                        onFocus={() => setStateOpen(true)}
+                        onBlur={() => setTimeout(() => setStateOpen(false), 120)}
                         onChange={(e) => {
                           const name = e.target.value;
                           const code = INDIAN_STATES.find((s) => s.name === name)?.code || "";
+                          setStateOpen(true);
                           setBilling((b) => ({ ...b, state: name, state_code: code }));
                         }}
                       />
-                      <datalist id="in-states">
-                        {INDIAN_STATES.map((s) => (
-                          <option key={s.code} value={s.name} />
-                        ))}
-                      </datalist>
+                      {stateOpen && billing.state.trim().length >= 3 && (() => {
+                        const q = billing.state.trim().toLowerCase();
+                        const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
+                        if (!matches.length) return null;
+                        return (
+                          <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded border-2 border-gray-100 bg-white py-1 shadow-lg">
+                            {matches.map((s) => (
+                              <li key={s.code}>
+                                <button
+                                  type="button"
+                                  className="block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50"
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onClick={() => {
+                                    setBilling((b) => ({ ...b, state: s.name, state_code: s.code }));
+                                    setStateOpen(false);
+                                  }}
+                                >
+                                  {s.name}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      })()}
                       <label htmlFor="bk-state" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-all
                         peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400
                         peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[color:var(--tc)]">
