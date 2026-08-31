@@ -6,6 +6,7 @@ const { bustSitemapCache } = require('../utils/sitemapCache');
 const { validateCategorySelection } = require('../lib/categoryRules');
 const { clearHostServiceCategories } = require('../lib/serviceCategory');
 const { bustPublicReadCaches } = require('../services/publicCacheBust');
+const { purgeUserStorage } = require('../utils/purgeUserStorage');
 
 // Admin-managed SEO fields (v3.19) — shared whitelist for service + profile SEO.
 // Builds a sanitised update payload from the request body; only provided keys
@@ -238,13 +239,29 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
+    // Read the image URLs BEFORE the row is gone — storage cleanup below needs
+    // them (the public images-bucket keys are random, derivable only from the
+    // stored URL). Best-effort; a miss just means those two images aren't purged.
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('profile_image, cover_image')
+      .eq('id', req.params.id)
+      .maybeSingle();
+
     // Delete profile row (cascade deletes related data via FK)
     const { error } = await supabaseAdmin
       .from('profiles')
       .delete()
       .eq('id', req.params.id);
     if (error) return safeError(res, error);
-    await audit(req, { action: 'user.delete', resource_type: 'profile', resource_id: req.params.id });
+
+    // FK cascade clears DB rows but never touches Storage, so a deleted user's
+    // profile/cover images (public) and KYC + host documents (private) would
+    // linger forever. Purge them — best-effort, never fails the delete.
+    const storage_removed = await purgeUserStorage(req.params.id, profile || {});
+
+    await audit(req, { action: 'user.delete', resource_type: 'profile', resource_id: req.params.id,
+      after: { storage_removed } });
     res.json({ message: 'User deleted' });
   } catch (error) {
     safeError(res, error);
