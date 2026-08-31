@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/lib/pricingEngine.js
+product_area: pricing
+---
+
 # Pricing and commission
 
 Full, current prices and limits are always on the [pricing](/pricing) page — this is an overview of how it works.
@@ -26,9 +32,18 @@ Prices can change and are set by Book A Sloth, so for the exact amount of any pl
 
 The exact percentage and prices are on the [pricing](/pricing) page.
 
-## Payment-gateway fee
+## Fees on a paid booking
 
-One separate cost applies on every paid booking regardless of plan: the payment gateway's own processing fee (Razorpay's, roughly 2.4%). That's charged by the gateway, not by us, and it's disclosed upfront — there are no other hidden fees.
+Two costs sit on top of the service price at checkout, and the guest sees the full total before paying:
+
+- A flat **₹10 booking fee (+18% GST)** — charged by Book A Sloth on each paid booking, regardless of plan.
+- The **payment gateway's processing fee** (Razorpay's) — charged by the gateway, not by us.
+
+Your earnings are calculated from the service price you set, not the total the guest pays.
+
+## Setting your prices
+
+You choose the price of each service. Paid services have a **minimum price of ₹100**. You can also list free (₹0) services, up to your plan's free-service limit — see [Plans and upgrading](/help/docs/plans-and-upgrading).
 
 ## Switching plans
 

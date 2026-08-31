@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/utils/slugFormat.js, server/services/kycOnboarding.js
+product_area: onboarding
+---
+
 # Becoming a host
 
 Hosts (also called creators) are the people who publish services and take bookings on Book A Sloth. Setting up is a short guided flow.
@@ -33,7 +39,7 @@ Stuck on a step? Reach us from the [Help](/help) page.
 
 **What are the actual steps?** Six, in order: sign in with Google → claim your username → tell us about you (individual or business, and whether you work online, offline, or both) → pick your category/profession → verify your WhatsApp number → choose a plan. Then you launch and you're live.
 
-**Username rules?** 3–60 characters, lowercase letters, numbers, and hyphens only, and it must be unique — it becomes your public link `bookasloth.com/your-name`. If one's taken, pick another. You can change it later, but changes are limited and go through a check.
+**Username rules?** 3–30 characters, lowercase letters, numbers, and hyphens only, and it must be unique — it becomes your public link `bookasloth.com/your-name`. If one's taken, pick another. You can change it later, but changes are limited and go through a check.
 
 **Is the WhatsApp step required?** It's the one step you can **skip for now** — but verifying means booking alerts and confirmations reach you, so it's worth doing. The code is valid for 10 minutes; you get 3 tries per channel, then a short lockout before you can retry. Didn't get it? Check WhatsApp and email (incl. spam) and request a new one.
 
@@ -46,6 +52,8 @@ Stuck on a step? Reach us from the [Help](/help) page.
 **What happens after I launch?** Your host account is active — add services, set your working hours, take bookings, and track earnings from the dashboard. Most of it (profile, availability, services, pricing, contact details) is editable any time.
 
 **What if my paid plan expires?** Your account automatically falls back to the free **Starter** tier until you renew — nothing is deleted. Renew from the Plans section.
+
+**Can I book my own service?** No — you can't book your own service from your own host account; the system blocks it. To test your booking flow, open your page from a different phone number or a guest account.
 
 **Do I need KYC to start?** No. You can onboard, publish services, and take bookings without KYC — it's only needed to **withdraw earnings**. See [KYC and identity verification](/help/docs/kyc-and-verification).
 

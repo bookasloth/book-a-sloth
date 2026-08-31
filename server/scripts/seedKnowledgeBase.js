@@ -26,6 +26,11 @@ const HEADING_RE = /^(#{1,6})\s+(.*)$/;
 
 const wordCount = (s) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 
+// Strip an optional YAML front-matter block (--- … ---) from the top of a doc so
+// maintenance metadata (last_verified, etc.) is never chunked into kb_chunks.
+// No-op when a file has no front-matter. Mirrors client/src/content/helpDocs.js.
+const stripFrontmatter = (s) => s.replace(/^﻿?---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
+
 // Split markdown into { heading, body } sections. Heading detection ignores `#`
 // lines inside fenced code blocks (bash comments would otherwise look like H1s).
 function toSections(md) {
@@ -108,6 +113,9 @@ function selfCheck() {
   assert.ok(chunks.length > 1, 'oversize section did not split');
   assert.ok(chunks.every((c) => c.content.length), 'empty chunk emitted');
   assert.ok(chunkMarkdown('# H\n\nshort.').length === 1, 'tiny doc should still yield one chunk');
+  // Front-matter is stripped before chunking; a doc with it yields the same as without.
+  assert.strictEqual(stripFrontmatter('---\nlast_verified: 2026-08-31\n---\n# T\n\nx.'), '# T\n\nx.', 'front-matter not stripped');
+  assert.strictEqual(stripFrontmatter('# T\n\nx.'), '# T\n\nx.', 'front-matter strip mangled a plain doc');
   console.log('seedKnowledgeBase self-check passed.');
 }
 
@@ -120,7 +128,7 @@ async function main() {
   const fileHashes = {}; // source_file → sha1(content), for version-aware cache invalidation
   for (const file of files) {
     const rel = path.relative(path.resolve(__dirname, '../..'), file).replace(/\\/g, '/');
-    const raw = fs.readFileSync(file, 'utf8');
+    const raw = stripFrontmatter(fs.readFileSync(file, 'utf8'));
     fileHashes[rel] = crypto.createHash('sha1').update(raw).digest('hex');
     const chunks = chunkMarkdown(raw);
     for (const c of chunks) rows.push({ source_file: rel, heading: c.heading, content: c.content });

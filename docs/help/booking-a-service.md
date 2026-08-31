@@ -1,3 +1,9 @@
+---
+last_verified: 2026-08-31
+verified_against: server/controllers/bookingController.js
+product_area: booking
+---
+
 # Booking a service
 
 Booking on Book A Sloth takes a minute, and you don't need an account to do it.
@@ -57,6 +63,10 @@ Yes. Multiple bookings are allowed provided the selected time slots do not overl
 
 Yes. Simply enter the correct details of the person attending the appointment during the booking process.
 
+## Can I book my own service (as the host)?
+
+No. Hosts can't book their own service from their own account — the system blocks it. To test your booking flow, use a different phone number or a separate guest account.
+
 ## How are available slots calculated?
 
 Available slots are calculated using the host's working hours, blocked dates, existing bookings, and connected Google Calendar events.
@@ -103,7 +113,7 @@ Open your booking, click **Reschedule**, select a new available time, and confir
 
 ## Is there a fee for rescheduling?
 
-Some hosts charge a ₹10 reschedule fee if that feature is enabled.
+Your **first reschedule is always free.** After that, some hosts charge a small fee (₹10 is typical, and the host sets the amount) from the **second reschedule onward** — you'll always see any fee before you confirm. Many hosts don't charge at all.
 
 ## Can I reschedule a cancelled booking?
 

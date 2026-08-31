@@ -1,10 +1,20 @@
+---
+last_verified: 2026-08-31
+verified_against: server/controllers/authController.js
+product_area: profile
+---
+
 # Your profile and email preferences
 
 ## Updating your details
 
-Your name, email, and phone number live on your [Profile](/profile) page. Sign in with your phone number, open Profile, and edit them there.
+Sign in with your phone, then open **[Profile](/user/profile)** in your guest area (under your account menu at `/user`) to update your **name, phone number, profile photo, and date of birth**.
 
-Keeping your email and phone current matters — that's where your booking confirmations and reminders go.
+Your **email address can't be changed** — it's tied to how you sign in, so it's shown but read-only. If it's wrong, contact Support from the [Help](/help) page.
+
+Keeping your phone number current matters — that's where your booking confirmations and reminders go. Your guest area (`/user`) also holds your **bookings, invoices, reviews, and loyalty** in one place.
+
+*(Note: the details above are your guest account. The rest of this page covers the **Host Profile** — your public business page — which is separate and edited from your host dashboard.)*
 
 ## Stopping marketing emails
 

@@ -994,14 +994,16 @@ async function askBotStream({ question, conversationId = null, sessionRef = null
   return { answer, cited_sources, followups, escalate, escalateReason, conversationId: convId, messageId, source, pills: pillList, locked: false };
 }
 
-// Store 👍/👎 on an assistant message. On 👎, seed a knowledge gap. On 👍, auto-suggest
-// a FAQ from the Q&A (disabled — an admin enables it in the console). Both best-effort;
-// throws only on the primary update error.
+// Store 👍/👎 on an assistant message. On 👎, seed a knowledge gap. On 👍, optionally
+// auto-suggest a FAQ from the Q&A. Both best-effort; throws only on the primary update error.
+// FAQ auto-promotion is OFF by default (governance 2026-08-31: bot_faqs is curated by hand,
+// not grown from thumbs-up — that path seeded the duplicate/stale rows we later cleaned up).
+// Set BOT_FAQ_AUTOPROMOTE_ENABLED=true to re-enable the (still admin-gated, disabled-by-default) suggestions.
 async function recordFeedback(messageId, feedback) {
   const { error } = await supabaseAdmin.from('bot_messages').update({ feedback }).eq('id', messageId);
   if (error) throw error;
   if (feedback === 'down') await logGap({ reason: 'thumbs_down', messageId });
-  if (feedback === 'up') await autopromoteFromFeedback(messageId);
+  if (feedback === 'up' && process.env.BOT_FAQ_AUTOPROMOTE_ENABLED === 'true') await autopromoteFromFeedback(messageId);
 }
 
 // Learning loop: a 👍'd grounded answer becomes a *disabled* FAQ suggestion, keyed on
