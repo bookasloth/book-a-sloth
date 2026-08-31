@@ -66,6 +66,9 @@ app.use('/api/payment/webhook', express.raw({ type: 'application/json', limit: '
 // Raw body for the Resend email webhook — Svix signature is verified over the
 // exact bytes (see resendWebhookController). Must precede express.json.
 app.use('/api/webhooks/resend', express.raw({ type: 'application/json', limit: '1mb' }));
+// Raw body for the Meta Lead Ads webhook — X-Hub-Signature-256 is verified over
+// the exact bytes (see metaLeadgenController). Must precede express.json.
+app.use('/api/webhooks/meta-leadgen', express.raw({ type: 'application/json', limit: '1mb' }));
 
 // Explicit JSON body cap (defence-in-depth vs large-body DoS). This equals the
 // body-parser default but is stated so the bound is intentional and can't drift

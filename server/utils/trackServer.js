@@ -175,9 +175,12 @@ function buildCrmLeadPayload({ email, phone, leadId, eventName = 'Lead', eventId
   const ph = phone ? sha256(normPhone(phone)) : undefined;
   if (em) user_data.em = [em];
   if (ph) user_data.ph = [ph];
-  if (leadId != null && String(leadId).trim() !== '') {
-    const n = Number(leadId);
-    user_data.lead_id = Number.isFinite(n) ? n : String(leadId); // raw, not hashed
+  const lid = leadId == null ? '' : String(leadId).trim();
+  if (lid) {
+    // Raw, never hashed. Send as a Number when it fits a JS safe integer; a longer
+    // leadgen id would lose precision as Number, so keep it as the exact string.
+    const n = Number(lid);
+    user_data.lead_id = /^\d+$/.test(lid) && Number.isSafeInteger(n) ? n : lid;
   }
   const event = {
     event_name: eventName,

@@ -5,7 +5,13 @@
 const express = require('express');
 const router = express.Router();
 const { handleResendWebhook } = require('../controllers/resendWebhookController');
+const { verifyMetaLeadgen, handleMetaLeadgen } = require('../controllers/metaLeadgenController');
 
 router.post('/resend', handleResendWebhook);
+
+// Facebook/Instagram Lead Ads. GET = one-time subscribe handshake; POST = signed
+// leadgen notifications (raw body mounted in server.js for signature verify).
+router.get('/meta-leadgen', verifyMetaLeadgen);
+router.post('/meta-leadgen', handleMetaLeadgen);
 
 module.exports = router;
