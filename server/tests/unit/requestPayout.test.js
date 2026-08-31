@@ -40,10 +40,10 @@ test('rejects amount above available', async () => {
   expect(res.json.mock.calls[0][0].message).toMatch(/exceed/i);
 });
 
-test('rejects amount below minimum 100', async () => {
+test('rejects amount below minimum 1', async () => {
   computeSettlementBalance.mockResolvedValue({ available: 1000 });
   const res = mockRes();
-  await ctrl.requestPayout({ user: { id: 'h1' }, body: { amount: 50 } }, res);
+  await ctrl.requestPayout({ user: { id: 'h1' }, body: { amount: 0.5 } }, res);
   expect(res.status).toHaveBeenCalledWith(400);
 });
 

@@ -108,8 +108,8 @@ const requestPayout = async (req, res) => {
     const { amount, notes } = req.body;
     const hostId = req.user.id;
 
-    if (!amount || isNaN(amount) || parseFloat(amount) < 100) {
-      return res.status(400).json({ message: 'Minimum withdrawal amount is ₹100' });
+    if (!amount || isNaN(amount) || parseFloat(amount) < 1) {
+      return res.status(400).json({ message: 'Minimum withdrawal amount is ₹1' });
     }
 
     // KYC gate (server-side, v3.77): the client already hides withdrawal behind
