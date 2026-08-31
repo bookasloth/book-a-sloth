@@ -362,15 +362,13 @@ export default function AdminSupportChat() {
                 </div>
               ) : (
                 // Assigned: full composer. Quick-reply chips auto-send on click.
-                <form onSubmit={send} className="p-3">
-                  <div className="mb-2 flex items-center gap-3 text-[13px]">
-                    <span className="border-b-2 border-[#FE5100] pb-0.5 font-semibold text-[#FE5100]">Reply</span>
-                  </div>
-                  <div className="mb-2 flex flex-wrap gap-1.5">
+                <form onSubmit={send} className="px-3 pb-3 pt-2.5">
+                  {/* Quick replies — one scrollable row so they never steal the message area. */}
+                  <div className="mb-2 flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
                     {QUICK_REPLIES.map((q) => (
                       <button key={q.label} type="button" title={q.text} onClick={() => postReply(q.text)}
                         disabled={reply.busy}
-                        className="rounded-full bg-[#f0ede6] px-2.5 py-1 text-[12px] font-medium adm-t2 transition-colors hover:bg-[#FFE9DC] hover:text-[#FE5100] disabled:opacity-40">
+                        className="flex-shrink-0 whitespace-nowrap rounded-full bg-[#f0ede6] px-2 py-0.5 text-[11px] font-medium adm-t2 transition-colors hover:bg-[#FFE9DC] hover:text-[#FE5100] disabled:opacity-40">
                         {q.label}
                       </button>
                     ))}
@@ -380,7 +378,7 @@ export default function AdminSupportChat() {
                     value={reply.body} onChange={(ev) => setReply((r) => ({ ...r, body: ev.target.value }))}
                     onKeyDown={(ev) => { if (ev.key === 'Enter' && !ev.shiftKey) send(ev); }}
                     rows={2} placeholder={`Reply to ${firstName}…`} aria-label="Reply"
-                    className="w-full resize-none rounded-lg border adm-border px-2.5 py-2 text-sm outline-none focus:border-[#FE5100] focus:ring-0" />
+                    className="w-full resize-none rounded-lg border adm-border px-2.5 py-1.5 text-sm outline-none focus:border-[#FE5100] focus:ring-0" />
                   <div className="mt-2 flex items-center justify-end gap-2">
                     <button type="button" onClick={() => setResolveOpen((v) => !v)}
                       className="rounded-lg border adm-border px-3 py-2 text-sm font-medium adm-t2 hover:border-[#FE5100]">Resolve</button>
