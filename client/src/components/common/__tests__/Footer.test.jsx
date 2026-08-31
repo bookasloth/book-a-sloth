@@ -39,7 +39,7 @@ describe('<Footer>', () => {
 
   test('on-page section links are root-relative so they work from any page', () => {
     renderFooter();
-    expect(screen.getByRole('link', { name: 'How it works' }).getAttribute('href')).toBe('/#how-it-works');
+    expect(screen.getByRole('link', { name: 'How it works' }).getAttribute('href')).toBe('/how-it-works');
     expect(screen.getByRole('link', { name: 'Pricing' }).getAttribute('href')).toBe('/pricing');
     expect(screen.getByRole('link', { name: 'FAQ' }).getAttribute('href')).toBe('/#faq');
   });
