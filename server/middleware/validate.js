@@ -88,7 +88,11 @@ const subscribePlanRules = [
 // open-redirect / phishing guard).
 const productUrlRule = (field, label) =>
   body(field)
-    .optional({ nullable: true })
+    // checkFalsy (not nullable): the client sends '' for URL fields the host left
+    // blank, and '' is not null/undefined — nullable let empty strings fall through
+    // to .isURL(''), 422'ing every save that omitted an optional URL. Same fix as
+    // the profile rules below.
+    .optional({ checkFalsy: true })
     .trim()
     .isURL({ require_protocol: true, protocols: ['http', 'https'] })
     .withMessage(`Invalid ${label}`);

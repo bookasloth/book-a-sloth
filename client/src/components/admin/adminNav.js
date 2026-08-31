@@ -123,7 +123,11 @@ export const NAV = [
     { label:'Services',           icon:'layers',    to:'/admin/services', perm:'services.view' },
     { label:'Service Categories', icon:'layers',    to:'/admin/services/categories', perm:'services.view' },
     { label:'Professions',        icon:'layers',    to:'/admin/professions', perm:'settings.manage' },
-    { label:'Explore Page',       icon:'search',    to:'/admin/explore', perm:'settings.manage' },
+    // Explore Page merchandising is deferred — its backing tables (v2.9_explore.sql)
+    // are not applied in prod, so every module returns "Failed to load". Hidden from
+    // nav until the Explore foundation ships; the /admin/explore route still exists
+    // in App.jsx for when it does.
+    // { label:'Explore Page',       icon:'search',    to:'/admin/explore', perm:'settings.manage' },
     { label:'Addons',             icon:'package',   to:'/admin/addons', perm:'plans.manage' },
   ]},
   { key:'people', label:'People', icon:'userCheck', color:'#059669', items:[

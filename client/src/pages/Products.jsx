@@ -52,7 +52,7 @@ const emptyForm = {
   title: "",
   description: "",
   type: "pdf",
-  price: 0,
+  price: "",
   file_url: "",
   thumbnail_url: "",
   product_url: "",
@@ -136,7 +136,7 @@ const Products = () => {
       title: p.title,
       description: p.description || "",
       type: p.type,
-      price: p.price,
+      price: p.price == null ? "" : String(p.price),
       file_url: p.file_url || "",
       thumbnail_url: p.thumbnail_url || "",
       product_url: p.product_url || "",
@@ -225,11 +225,14 @@ const Products = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      // price is held as a string so the field can go empty (no fixed leading 0);
+      // blank means free → 0.
+      const payload = { ...form, price: form.price === "" || form.price == null ? 0 : Number(form.price) };
       if (editingId) {
-        await updateProduct(editingId, form);
+        await updateProduct(editingId, payload);
         toast.success("Product updated!");
       } else {
-        await createProduct(form);
+        await createProduct(payload);
         toast.success("Product created!");
       }
       setForm(emptyForm);
@@ -335,7 +338,7 @@ const Products = () => {
               </Select>
             </FormField>
             <FormField label="Price (₹) — 0 for free" htmlFor="prod-price" className="mb-0">
-              <Input id="prod-price" type="number" min={0} value={form.price} onChange={(e) => handleChange("price", parseFloat(e.target.value) || 0)} />
+              <Input id="prod-price" type="number" min={0} placeholder="0" value={form.price} onChange={(e) => handleChange("price", e.target.value)} />
             </FormField>
           </div>
 

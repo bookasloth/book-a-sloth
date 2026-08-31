@@ -61,11 +61,16 @@ const RichEditor = ({ value, onChange }) => {
   const ref = useRef(null);
   const isComposing = useRef(false);
 
+  // Re-sync on external value changes (e.g. Write-with-Bolt fills long_description
+  // async after mount). The innerHTML !== value guard skips during normal typing —
+  // onChange already set innerHTML to value, so they're equal and the caret is left
+  // alone; it only fires when value is changed from outside the editor.
   useEffect(() => {
+    if (isComposing.current) return;
     if (ref.current && ref.current.innerHTML !== value) {
       ref.current.innerHTML = value || '';
     }
-  }, []); // only on mount
+  }, [value]);
 
   const exec = (cmd, val = null) => {
     document.execCommand(cmd, false, val);

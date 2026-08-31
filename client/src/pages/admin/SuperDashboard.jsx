@@ -702,6 +702,17 @@ const SEVERITY_STYLE = {
   warning: 'bg-[#FE5100]/10 text-[#FE5100]',
   ok:      'bg-gray-100 text-gray-400',
 };
+// Per-category tint so the six queues are scannable at a glance (keyed on the
+// stable item.key set server-side in opsAdminController). Falls back to the
+// severity tint for any unknown key.
+const CATEGORY_STYLE = {
+  pending_payouts:       'bg-green-50 text-green-600',
+  pending_verifications: 'bg-blue-50 text-blue-600',
+  pending_reviews:       'bg-orange-50 text-orange-600',
+  failed_emails:         'bg-red-50 text-red-600',
+  failed_notifications:  'bg-purple-50 text-purple-600',
+  stale_unpaid_bookings: 'bg-yellow-50 text-yellow-700',
+};
 const DISMISS_KEY = 'sd_pending_dismissed';
 const DISMISS_MS = 24 * 60 * 60 * 1000;
 
@@ -741,10 +752,11 @@ const PendingTab = ({ ops }) => {
         {items.map(item => {
           const isDismissed = !!dismissed[item.key];
           const showCount = item.count > 0 && !isDismissed;
+          const catStyle = CATEGORY_STYLE[item.key] || SEVERITY_STYLE.ok;
           return (
             <Link key={item.key} to={item.to} onClick={() => item.count > 0 && dismiss(item.key)}
               className="adm-card rounded-2xl p-5 hover:shadow-sm transition-all flex items-center gap-4 group">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${showCount ? (SEVERITY_STYLE[item.severity] || SEVERITY_STYLE.ok) : SEVERITY_STYLE.ok}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${catStyle}`}>
                 <Ic d={showCount ? IC.alert : IC.check} size={16} />
               </div>
               <div className="flex-1 min-w-0">
@@ -754,7 +766,7 @@ const PendingTab = ({ ops }) => {
                 </p>
               </div>
               {showCount && (
-                <span className={`text-sm font-bold px-2.5 py-1 rounded-lg flex-shrink-0 ${SEVERITY_STYLE[item.severity]}`}>
+                <span className={`text-sm font-bold px-2.5 py-1 rounded-lg flex-shrink-0 ${catStyle}`}>
                   {item.count}
                 </span>
               )}
