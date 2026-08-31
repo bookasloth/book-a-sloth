@@ -115,7 +115,7 @@ const Host360List = () => {
   const openDetail = (h) => navigate(`/admin/host360/${h.id}`);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const selCls = 'adm-card border rounded-xl px-3 py-2 text-[13px] adm-t1 outline-none focus:border-[#FE5100] focus:ring-2 focus:ring-[#FE5100]/25 transition flex-shrink-0';
+  const selCls = 'adm-card border rounded-xl px-3 py-2 text-[13px] adm-t1 outline-none focus:border-[#FE5100] focus:ring-2 focus:ring-[#FE5100]/25 transition w-full min-w-0';
 
   return (
     <div>
@@ -124,7 +124,7 @@ const Host360List = () => {
       {/* Filters — search + all three dropdowns share one horizontal line. The
           selects hold their width and the search takes the slack; on a narrow
           viewport the row scrolls sideways rather than wrapping. */}
-      <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <div className="relative flex-1 min-w-[200px]">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 adm-t3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={SEARCH_ICON} />

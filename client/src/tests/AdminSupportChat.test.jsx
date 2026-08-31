@@ -33,7 +33,7 @@ beforeAll(() => { window.HTMLElement.prototype.scrollIntoView = vi.fn(); });
 const openThread = async () => {
   render(<AdminSupportChat />);
   await waitFor(() => expect(screen.getByText('Payout is late')).toBeInTheDocument());
-  fireEvent.click(screen.getByText('Payout is late'));
+  fireEvent.click(screen.getByRole('button', { name: /monitor chat/i }));
   await waitFor(() => expect(screen.getByText('My payout is late')).toBeInTheDocument());
 };
 
