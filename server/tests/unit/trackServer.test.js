@@ -35,6 +35,30 @@ describe('CONVERSIONS map', () => {
       expect(CONVERSIONS[key]).toEqual({ ga4: expect.any(String), meta: expect.any(String) });
     }
   });
+  test('lead_captured maps to Meta Lead / GA4 generate_lead', () => {
+    expect(CONVERSIONS.lead_captured).toEqual({ ga4: 'generate_lead', meta: 'Lead' });
+  });
+});
+
+describe('metaMatchFromReq (Meta EMQ match keys)', () => {
+  test('pulls fbp/fbc/user-agent/ip from a browser request', () => {
+    const req = {
+      headers: { cookie: '_fbp=fb.1.111.222; _fbc=fb.1.333.abc', 'user-agent': 'UA/1' },
+      query: {}, body: {}, ip: '1.2.3.4',
+    };
+    const m = _internal.metaMatchFromReq(req);
+    expect(m.fbp).toBe('fb.1.111.222');
+    expect(m.fbc).toBe('fb.1.333.abc');
+    expect(m.userAgent).toBe('UA/1');
+    expect(m.ip).toBe('1.2.3.4');
+  });
+  test('reconstructs fbc from fbclid when the _fbc cookie is absent', () => {
+    const m = _internal.metaMatchFromReq({ headers: {}, query: { fbclid: 'XYZ' }, body: {} });
+    expect(m.fbc).toMatch(/^fb\.1\.\d+\.XYZ$/);
+  });
+  test('returns {} when no request is supplied (webhook/reconciler paths)', () => {
+    expect(_internal.metaMatchFromReq(undefined)).toEqual({});
+  });
 });
 
 describe('sha256 (Meta CAPI user_data normalization)', () => {

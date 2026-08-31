@@ -14,6 +14,7 @@
 // Disabled per-tool when its env keys are unset → safe in dev/test/local.
 const crypto = require('crypto');
 const { capture: phCapture } = require('./posthog');
+const { getClientIp } = require('../lib/clientIp');
 
 const GA4_ID     = process.env.GA4_MEASUREMENT_ID;     // G-XXXXXXXXXX
 const GA4_SECRET = process.env.GA4_API_SECRET;          // GA4 → Data Streams → MP API secret
@@ -34,6 +35,7 @@ const CONVERSIONS = {
   subscription_renewed:  { ga4: 'purchase',       meta: 'Subscribe' },
   booking_created:       { ga4: 'begin_checkout', meta: 'InitiateCheckout' },
   user_registered:       { ga4: 'sign_up',        meta: 'CompleteRegistration' },
+  lead_captured:         { ga4: 'generate_lead',  meta: 'Lead' },
 };
 
 const sha256 = (v) =>
@@ -69,11 +71,43 @@ function sendGA4(distinctId, map, { value, currency = 'INR', gaClientId, eventId
     .catch((e) => console.error('ga4 MP error (non-fatal):', e.message));
 }
 
-function sendMetaCapi(map, { value, currency = 'INR', email, phone, eventId }) {
+// Meta Event Match Quality (EMQ) fields pulled from the live browser request.
+// More match keys = higher match rate = better attribution/optimization. fbp/fbc
+// come from the browser pixel's _fbp/_fbc cookies (sent automatically on same-
+// domain requests, so no client change needed); fbc falls back to a value built
+// from the fbclid query/body param. IP + user-agent are the visitor's. Pass ONLY
+// a genuine browser req here — a webhook's req carries the payment provider's
+// IP/UA, which would poison match quality. Returns {} when req is absent.
+function readCookie(req, name) {
+  const raw = req && req.headers && req.headers.cookie;
+  if (!raw) return undefined;
+  const m = raw.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]+)'));
+  return m ? decodeURIComponent(m[1]) : undefined;
+}
+function metaMatchFromReq(req) {
+  if (!req) return {};
+  let fbc = readCookie(req, '_fbc');
+  const fbclid = (req.query && req.query.fbclid) || (req.body && req.body.fbclid);
+  if (!fbc && fbclid) fbc = `fb.1.${Math.floor(Date.now() / 1000)}.${fbclid}`;
+  return {
+    ip: getClientIp(req) || req.ip,
+    userAgent: req.headers && req.headers['user-agent'],
+    fbp: readCookie(req, '_fbp'),
+    fbc,
+  };
+}
+
+function sendMetaCapi(map, { value, currency = 'INR', email, phone, eventId,
+                             ip, userAgent, fbp, fbc, externalId }) {
   if (!FB_PIXEL || !FB_TOKEN || !canFetch) return;
   const user_data = {};
   if (email) user_data.em = [sha256(email)];
   if (phone) user_data.ph = [sha256(phone)];
+  if (externalId) user_data.external_id = [sha256(externalId)]; // Meta hashes external_id too
+  if (ip) user_data.client_ip_address = ip;          // sent raw (not hashed)
+  if (userAgent) user_data.client_user_agent = userAgent;
+  if (fbp) user_data.fbp = fbp;                        // Meta cookie ids: raw, never hashed
+  if (fbc) user_data.fbc = fbc;
   const payload = {
     data: [{
       event_name: map.meta,
@@ -101,8 +135,17 @@ function trackServer(distinctId, event, properties = {}, conversion = {}) {
   if (isTest) return;
   const map = CONVERSIONS[event];
   if (!map) return;
-  try { sendGA4(distinctId, map, conversion); } catch (e) { console.error('ga4 fanout error:', e.message); }
-  try { sendMetaCapi(map, conversion); } catch (e) { console.error('meta fanout error:', e.message); }
+  // Enrich with Meta match keys: IP/UA/fbp/fbc from the browser req (conversion.req,
+  // present only on genuine browser call sites) + external_id from the distinctId we
+  // already have. GA4/Meta senders destructure named fields, so `req` is never
+  // serialized into an outbound body.
+  const enriched = {
+    ...conversion,
+    ...metaMatchFromReq(conversion.req),
+    externalId: distinctId ? String(distinctId) : undefined,
+  };
+  try { sendGA4(distinctId, map, enriched); } catch (e) { console.error('ga4 fanout error:', e.message); }
+  try { sendMetaCapi(map, enriched); } catch (e) { console.error('meta fanout error:', e.message); }
 }
 
-module.exports = { trackServer, CONVERSIONS, _internal: { sha256, ga4ClientId } };
+module.exports = { trackServer, CONVERSIONS, _internal: { sha256, ga4ClientId, metaMatchFromReq } };

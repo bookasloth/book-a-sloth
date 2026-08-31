@@ -390,6 +390,7 @@ const verifyPayment = async (req, res) => {
         value: Number(booking.customer_total) || 0,
         currency: "INR",
         email: booking.guest_email,
+        req,                                    // EMQ match keys: IP/UA/fbp/fbc
         eventId: razorpay_payment_id,           // de-dupe vs browser pixel
         gaClientId: req.body?.ga_client_id,     // browser _ga id if client forwarded it
       }));
@@ -578,6 +579,7 @@ const verifySubscription = async (req, res) => {
       value: Number(breakdown?.totalCharged) || 0,
       currency: "INR",
       email: profile.email,
+      req,
       eventId: razorpay_payment_id,
       gaClientId: req.body?.ga_client_id,
     });
@@ -1139,6 +1141,7 @@ const verifyProductPayment = async (req, res) => {
       currency: "INR",
       email: notes.buyer_email,
       phone: notes.buyer_phone,
+      req,
       eventId: razorpay_payment_id,
       gaClientId: req.body?.ga_client_id,
     });
