@@ -22,7 +22,7 @@ Quick fixes for the errors and hiccups you might run into. Still stuck after try
 
 ## Account and username
 
-**"Username already exists".** Someone else has that name — pick another. It must be unique, 3–60 characters, lowercase letters, numbers, and hyphens only.
+**"Username already exists".** Someone else has that name — pick another. It must be unique, 3–30 characters, lowercase letters, numbers, and hyphens only.
 
 **I can't save my username.** Make sure it meets those rules and isn't reserved or already taken.
 
@@ -60,7 +60,7 @@ Quick fixes for the errors and hiccups you might run into. Still stuck after try
 
 ## Notifications
 
-**I didn't get a notification / confirmation / reminder.** Check spam, confirm your email and phone are correct, and note that reminders depend on your plan. See [Reminders, notifications, and badges](/help/docs/reminders-notifications-and-badges).
+**I didn't get a notification / confirmation / reminder.** Check spam, confirm your email and phone are correct, and note that reminders depend on your plan. You can also check the **notification bell** in your dashboard (hosts) or navbar (guests) — it shows recent alerts even if an email or WhatsApp message was missed. See [Reminders, notifications, and badges](/help/docs/reminders-notifications-and-badges).
 
 ## Site and page errors
 

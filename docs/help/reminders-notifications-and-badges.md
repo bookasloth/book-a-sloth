@@ -6,6 +6,10 @@ Confirmations, reschedules, and cancellations go out automatically by **WhatsApp
 
 For these to land, keep your WhatsApp number verified and your guests' contact details correct.
 
+## In-app notifications (the bell)
+
+Beyond email and WhatsApp, Book A Sloth shows notifications in-app on a **bell icon** — in your dashboard if you're a host, and in the top navbar if you're a guest. It updates in real time and collects things like new bookings, reschedules and cancellations, KYC decisions, subscription problems, and referral rewards. Some notices **clear themselves** once you've dealt with them — for example, a KYC-rejected notice disappears once you're approved.
+
 ## Reminders before a session
 
 Automated reminders go out before a session to cut down no-shows. **How many reminder points you get depends on your plan:**
@@ -24,7 +28,7 @@ If a badge you expected hasn't appeared, give it some time first. For verificati
 
 ## Notifications — common questions
 
-**What notifications does Book A Sloth send?** Booking confirmations, reschedules, cancellations, payment confirmations, refund updates, and (on paid plans) session reminders — over **email and WhatsApp**. Both guests and hosts get the ones relevant to them. They're triggered automatically when the related action happens.
+**What notifications does Book A Sloth send?** Booking confirmations, reschedules, cancellations, payment confirmations, refund updates, and (on paid plans) session reminders — over **email, WhatsApp, and the in-app bell**. Both guests and hosts get the ones relevant to them. They're triggered automatically when the related action happens.
 
 **Do reminders go out for every booking?** Confirmations do, always. **Reminders are plan-based** — the free tier has none, Host+ includes a reminder before the session, and Studio includes the full set. See [pricing](/pricing).
 
