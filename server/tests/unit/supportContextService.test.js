@@ -8,7 +8,7 @@ const { getSupportContext } = require('../../services/supportContextService');
 // A chainable query builder that resolves (await or .maybeSingle()) to `result`.
 function qb(result) {
   const b = {};
-  ['select', 'eq', 'neq', 'order', 'limit', 'in'].forEach((m) => { b[m] = () => b; });
+  ['select', 'eq', 'neq', 'order', 'limit', 'in', 'lt', 'lte', 'gt', 'gte'].forEach((m) => { b[m] = () => b; });
   b.maybeSingle = () => Promise.resolve(result);
   b.then = (res) => res(result);
   return b;
