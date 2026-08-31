@@ -10,7 +10,7 @@ const STEPS = [
   { n: 1, label: 'Claim URL' },
   { n: 2, label: 'Category' },
   { n: 3, label: 'Profile' },
-  { n: 4, label: 'Publish' },
+  { n: 4, label: 'Go live' },
 ];
 
 // Truthful right-rail hint per step — no "almost there" on step 1.
