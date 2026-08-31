@@ -346,6 +346,27 @@ const createBooking = async (req, res) => {
       guest_name = guest_name || gp?.name || "Guest";
     }
 
+    // A host cannot book their own service. It is circular money (the host pays
+    // the platform, the platform pays the host back minus commission/PG/TDS/TCS,
+    // so the host LOSES money to book himself) and it double-lists the one row in
+    // both the host dashboard and the guest console. Block at creation — this is
+    // the single choke point every booking routes through. guest_email/guest_phone
+    // are, for a logged-in booker, already forced to their own account contact
+    // just above, so the contact match below also catches a logged-OUT host who
+    // enters their own email/phone.
+    const digits10 = (p) => String(p || "").replace(/\D/g, "").slice(-10);
+    const isSelfBooking =
+      (resolvedGuestId && resolvedGuestId === host_id) ||
+      (guest_email && host.email &&
+        guest_email.trim().toLowerCase() === host.email.trim().toLowerCase()) ||
+      (digits10(guest_phone).length === 10 &&
+        digits10(guest_phone) === digits10(host.phone));
+    if (isSelfBooking)
+      return res.status(400).json({ message: "You can't book your own service." });
+    // ponytail: a logged-OUT host using a burner email/phone still slips through —
+    // with no account link it is indistinguishable from a real third-party guest
+    // (no circular money at the account level). Not chased.
+
     const hostTimezone = avail?.timezone || "Asia/Kolkata";
 
     // Full availability validation: past, blocked dates, working-hours window,
