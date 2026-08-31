@@ -43,12 +43,12 @@ describe('staticEntries', () => {
       expect(e.loc.startsWith('https://bookasloth.com/')).toBe(true);
     }
   });
-  test('includes the marketing clusters (LPs, features, help docs, wall of love)', () => {
+  test('includes the marketing clusters (LPs, features, help docs, careers)', () => {
     const locs = new Set(staticEntries(SITE).map((e) => e.loc));
     for (const path of [
       '/lp/setmore-alternative', '/lp/acuity-alternative', '/lp/simplybook-alternative',
       '/lp/zoho-bookings-alternative', '/features/payments', '/features/online-scheduling',
-      '/help/docs', '/help/docs/what-is-book-a-sloth', '/wall-of-love',
+      '/help/docs', '/help/docs/what-is-book-a-sloth',
       '/careers/mern-stack-developer',
     ]) {
       expect(locs.has(`https://bookasloth.com${path}`)).toBe(true);
