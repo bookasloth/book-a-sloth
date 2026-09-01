@@ -145,10 +145,23 @@ describe('updateUser', () => {
 
 describe('deleteUser', () => {
   test('deletes user and returns success message', async () => {
+    // deleteUser now (1) pre-reads the profile's image URLs, then (2) deletes
+    // the row. Same fluent object serves both: select→eq→maybeSingle and
+    // delete→eq. Storage purge runs after; stub the storage client so the
+    // best-effort sweep is a no-op here.
     supabaseAdmin.from.mockReturnValue({
-      delete: jest.fn().mockReturnThis(),
-      eq:     jest.fn().mockResolvedValue({ error: null }),
+      select:      jest.fn().mockReturnThis(),
+      delete:      jest.fn().mockReturnThis(),
+      eq:          jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      then:        (resolve) => resolve({ error: null }),
     });
+    supabaseAdmin.storage = {
+      from: jest.fn().mockReturnValue({
+        list:   jest.fn().mockResolvedValue({ data: [], error: null }),
+        remove: jest.fn().mockResolvedValue({ data: [], error: null }),
+      }),
+    };
     const r = res();
     await deleteUser(req({ id: 'u1' }), r);
     expect(r.json.mock.calls[0][0].message).toMatch(/deleted/i);

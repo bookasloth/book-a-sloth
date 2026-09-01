@@ -118,9 +118,15 @@ describe('PUT /api/admin/users/:id', () => {
 
 describe('DELETE /api/admin/users/:id', () => {
   test('deletes user and returns message', async () => {
+    // deleteUser pre-reads the profile's image URLs (select→eq→maybeSingle),
+    // then deletes the row (delete→eq). The post-delete storage purge is
+    // best-effort and safely no-ops without a storage mock.
     supabaseAdmin.from.mockReturnValue({
-      delete: jest.fn().mockReturnThis(),
-      eq:     jest.fn().mockResolvedValue({ error: null }),
+      select:      jest.fn().mockReturnThis(),
+      delete:      jest.fn().mockReturnThis(),
+      eq:          jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      then:        (resolve) => resolve({ error: null }), // delete().eq() awaits this
     });
     const res = await request(app)
       .delete('/api/admin/users/user-uuid')
