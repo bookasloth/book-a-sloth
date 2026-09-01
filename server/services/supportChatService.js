@@ -244,7 +244,22 @@ async function listQueue({ filter = 'waiting', adminId } = {}) {
   else if (filter === 'mine') q = q.eq('assigned_admin', adminId || '').neq('status', 'resolved');
   else q = q.neq('status', 'resolved'); // 'all' open threads
   const { data } = await q;
-  return data || [];
+  const threads = data || [];
+
+  // Attach each thread's latest message body for the queue preview line. One
+  // query for all threads; newest-per-thread wins. Best-effort — never blocks.
+  const ids = threads.map((t) => t.id);
+  if (ids.length) {
+    const { data: msgs } = await supabaseAdmin
+      .from('support_messages')
+      .select('thread_id, body, created_at')
+      .in('thread_id', ids)
+      .order('created_at', { ascending: false });
+    const latest = {};
+    (msgs || []).forEach((m) => { if (!latest[m.thread_id] && m.body) latest[m.thread_id] = m.body; });
+    threads.forEach((t) => { t.last_message = latest[t.id] || null; });
+  }
+  return threads;
 }
 
 module.exports = {

@@ -14,7 +14,7 @@ import Ic from '../../components/admin/Ic';
 import { IC } from '../../components/admin/adminNav';
 import EscalationDetail from './bolt/EscalationDetail';
 import { priorityOf, waitMinutes, slaLevel, fmtWait, inboxSort, SLA_BREACH_MIN } from '../../utils/supportSla';
-import { teamForText, TEAM_LABEL, TEAM_FILTERS } from '../../utils/supportTeams';
+import { teamForText, TEAM_FILTERS } from '../../utils/supportTeams';
 import { REASON_GROUPS } from '../../utils/supportReasons';
 
 const FILTERS = [
@@ -33,17 +33,12 @@ const ICN = {
   sparkle: ['M12 4l1.4 3.6L17 9l-3.6 1.4L12 14l-1.4-3.6L7 9l3.6-1.4z', 'M18.5 15l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z'],
   monitor: ['M3 4h18a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1z', 'M8 20h8', 'M12 16v4'],
 };
-const CHIP = { sky: 'bg-sky-50 text-sky-700', green: 'bg-green-50 text-green-700', gray: 'bg-gray-100 text-gray-600', amber: 'bg-amber-50 text-amber-700' };
-const SupChip = ({ icon, color = 'gray', children }) => (
-  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${CHIP[color]}`}>
-    <Ic d={icon} size={12} /> {children}
-  </span>
-);
 // Normalize both stores into one queue row. _kind routes the click + detail view.
 const normThread = (t) => ({
   _kind: 'thread', id: t.id, reference: t.reference, status: t.status, tone: STATUS_TONE[t.status] || 'neutral',
   whoLabel: t.participant_type === 'host' ? 'Host' : t.participant_type === 'guest' ? 'Guest' : t.participant_type || '—',
-  title: t.subject || `${t.participant_type || 'Support'} conversation`, unread: t.admin_unread || 0,
+  title: t.subject || t.ai_summary || `${t.participant_type || 'Support'} conversation`, unread: t.admin_unread || 0,
+  preview: t.last_message || null,
   agent: t.status === 'assigned' ? t.agent_name : null, at: t.last_message_at || t.created_at,
   // Waiting on us: escalated & unclaimed, or a customer replied on a claimed thread.
   waitingOnUs: t.status === 'waiting' || (t.status === 'assigned' && (t.admin_unread || 0) > 0),
@@ -52,11 +47,10 @@ const normThread = (t) => ({
 const normEsc = (e) => ({
   _kind: 'esc', id: e.id, reference: e.reference, status: e.status, tone: ESC_TONE[e.status] || 'neutral',
   whoLabel: e.logged_in ? (e.is_host ? 'Host' : 'Guest') : 'Anon',
-  title: e.summary || 'Bolt escalation', unread: 0, agent: null, at: e.created_at,
+  title: e.summary || 'Bolt escalation', preview: e.reason || null, unread: 0, agent: null, at: e.created_at,
   waitingOnUs: e.status === 'open', waitingSince: e.created_at,
   priority: priorityOf(`${e.summary || ''} ${e.reason || ''}`), team: teamForText(`${e.summary || ''} ${e.reason || ''}`),
 });
-const fmtDate = (s) => (s ? new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '');
 const fmtTime = (s) => { try { return new Date(s).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }); } catch { return ''; } };
 const who = (t) => (t.participant_type === 'host' ? 'Host' : t.participant_type === 'guest' ? 'Guest' : t.participant_type || '—');
 
@@ -471,43 +465,47 @@ export default function AdminSupportChat() {
       {loading ? <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-16" />)}</div>
         : sorted.length === 0 ? <p className="text-sm adm-t3">{filter === 'waiting' ? 'Nothing waiting — Bolt is handling everything.' : 'Nothing open here.'}</p>
           : (
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {sorted.map((it) => {
                 const mins = waitMinutes(it, now);
                 const lvl = slaLevel(mins);
+                // Claimable = nobody owns it yet → the CTA is the live orange action.
+                const claimable = it._kind === 'thread' ? (it.status === 'waiting' || it.status === 'bot') : it.status === 'open';
+                const ageMins = it.at ? Math.max(0, Math.round((now - new Date(it.at).getTime()) / 60000)) : null;
+                // Left accent = urgency at a glance, scanning down the column.
+                const accent = lvl === 'breach' ? 'bg-rose-500' : it.waitingOnUs ? 'bg-[#FE5100]' : it.agent ? 'bg-blue-500' : 'bg-gray-300';
                 return (
-                  <div key={`${it._kind}:${it.id}`}
-                    className="flex flex-col rounded-2xl border adm-border p-4 transition hover:border-[#FE5100]">
-                    <div className="mb-2.5 flex flex-wrap items-center gap-2">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600"
+                  <button key={`${it._kind}:${it.id}`}
+                    onClick={() => (it._kind === 'thread' ? open(it.id) : setSelEsc(it.id))}
+                    className="group relative flex flex-col rounded border adm-border bg-white p-3 pl-3.5 text-left transition hover:border-[#FE5100]">
+                    <span className={'absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded ' + accent} />
+                    <div className="mb-1 flex items-center gap-1.5">
+                      <span className="flex h-[18px] w-[18px] items-center justify-center rounded bg-[#f0ede6] text-gray-500"
                         title={it._kind === 'thread' ? 'Dashboard chat' : 'Bolt widget escalation'}>
-                        <Ic d={IC.chat} size={17} />
+                        <Ic d={it._kind === 'thread' ? IC.chat : ICN.robot} size={11} />
                       </span>
-                      <code className="rounded-lg bg-[#FFF4EC] px-2 py-1 text-xs font-semibold text-[#C2410C]">{it.reference}</code>
-                      <SupChip icon={ICN.robot} color="sky">{it._kind === 'thread' ? 'Chat' : 'Bot'}</SupChip>
-                      <SupChip icon={ICN.headset} color="sky">{TEAM_LABEL[it.team]}</SupChip>
-                      {it.priority === 'high' && <span className="rounded-full bg-rose-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-700">High</span>}
+                      <code className="text-[12px] font-bold tracking-tight adm-t1">{it.reference}</code>
+                      {it.team === 'cxo' && <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-violet-700">CXO</span>}
+                      {it.priority === 'high' && <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-rose-700">High</span>}
                       {mins != null && (
-                        <span className={'rounded-full px-2 py-1 text-[10px] font-semibold ' + (lvl === 'breach' ? 'bg-rose-100 text-rose-700' : lvl === 'warn' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700')}>
-                          {lvl === 'breach' ? `Overdue ${fmtWait(mins)}` : `${fmtWait(mins)} SLA`}
+                        <span className={'rounded px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide ' + (lvl === 'breach' ? 'bg-rose-100 text-rose-700' : lvl === 'warn' ? 'bg-amber-50 text-amber-700' : 'bg-[#fff1e9] text-[#c2410c]')}>
+                          {lvl === 'breach' ? `Overdue ${fmtWait(mins)}` : `Waiting ${fmtWait(mins)}`}
                         </span>
                       )}
-                      <span className="ml-auto text-xs adm-t3">{fmtDate(it.at)}</span>
+                      {ageMins != null && <span className="ml-auto text-[10.5px] adm-t3">{fmtWait(ageMins)} ago</span>}
                     </div>
-                    <p className="mb-2.5 text-[15px] font-semibold adm-t1">{it.title}</p>
-                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                      <SupChip icon={ICN.user} color="green">{it.whoLabel}</SupChip>
-                      {it.agent
-                        ? <SupChip icon={ICN.user} color="gray">{it.agent}</SupChip>
-                        : it.status !== 'resolved' && <SupChip icon={ICN.user} color="gray">Unassigned</SupChip>}
-                      {it.unread > 0 && <SupChip icon={ICN.sparkle} color="amber">{it.unread} new</SupChip>}
+                    <p className="truncate text-[13.5px] font-semibold adm-t1">{it.title}</p>
+                    {it.preview && <p className="mt-0.5 truncate text-[12px] adm-t3">{it.preview}</p>}
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] adm-t3">
+                      <span>{it.whoLabel}</span>
+                      <span>·</span>
+                      {it.agent ? <span className="font-medium text-blue-600">{it.agent}</span> : <span>Unassigned</span>}
+                      {it.unread > 0 && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9.5px] font-bold text-amber-700">{it.unread} new</span>}
+                      <span className={'ml-auto rounded px-2 py-1 text-[11px] font-semibold ' + (claimable ? 'bg-[#FE5100] text-white' : 'bg-gray-100 text-gray-500')}>
+                        {claimable ? 'Open & claim →' : it.agent ? 'View →' : 'Open →'}
+                      </span>
                     </div>
-                    <button
-                      onClick={() => (it._kind === 'thread' ? open(it.id) : setSelEsc(it.id))}
-                      className="mt-auto flex items-center justify-center gap-2 rounded-xl bg-violet-50 py-2.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-100">
-                      <Ic d={ICN.monitor} size={16} /> Monitor Chat
-                    </button>
-                  </div>
+                  </button>
                 );
               })}
             </div>
