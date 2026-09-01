@@ -46,6 +46,7 @@ const threadContext = async (req, res) => {
       userId: thread.user_id || null,
       phone: thread.guest_phone || null,
       isHost: thread.participant_type === 'host',
+      currentThreadId: thread.id,
     });
     res.json({ context: ctx });
   } catch (e) { safeError(res, e); }
