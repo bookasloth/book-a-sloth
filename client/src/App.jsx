@@ -76,7 +76,6 @@ const Changelog      = lazy(() => import('./pages/Changelog'));
 const Pricing        = lazy(() => import('./pages/Pricing'));
 const Blog           = lazy(() => import('./pages/Blog'));
 const Search         = lazy(() => import('./pages/Search'));
-const WallOfLove     = lazy(() => import('./pages/WallOfLove'));
 const Opening        = lazy(() => import('./pages/Opening'));
 const Inaugurators   = lazy(() => import('./pages/Inaugurators'));
 const BlogPost       = lazy(() => import('./pages/BlogPost'));
@@ -389,7 +388,6 @@ function App() {
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/search" element={<Search />} />
-          <Route path="/wall-of-love" element={<WallOfLove />} />
           <Route path="/opening" element={<Opening />} />
           <Route path="/inaugurators" element={<Inaugurators />} />
           <Route path="/blog" element={<Blog />} />

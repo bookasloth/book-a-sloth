@@ -3,6 +3,14 @@
  * AND landing-page social proof. Quotes reflect each profession's use of
  * Book A Sloth. Avatars are served from the company asset CDN by name-slug;
  * the TAvatar component falls back to initials until each image is uploaded.
+ *
+ * COMPLIANCE — endorsement/testimonial rules (FTC 16 CFR Part 255, ASCI code):
+ * every entry here is published as a REAL named person's endorsement. Each one
+ * must be a genuine quote from that host, kept only with their documented
+ * consent to be used publicly. Do NOT add invented, composite, or
+ * "placeholder" people to this list — fabricated endorsements are unlawful.
+ * Before adding/keeping an entry, confirm the quote is real and consent is on
+ * file; remove anyone who withdraws consent.
  */
 export const TESTIMONIALS = [
   { quote: "Half my day used to go in 'is a cabin free at 4?' WhatsApps. Now people just book it themselves.", name: "Mukesh Tidke", role: "Coworking Space Owner", avatar: "https://company-assets.bookasloth.in/images/testimonials/mukesh-tidke.jpg" },
