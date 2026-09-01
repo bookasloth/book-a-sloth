@@ -207,7 +207,7 @@ const FloatingInput = ({ id, label, type = "text", value, onChange, required, au
       placeholder={label}
       value={value}
       onChange={onChange}
-      className="peer fb-input fb-input--sm !rounded placeholder-transparent"
+      className="peer fb-input fb-input--sm !rounded-sm !border placeholder-transparent"
     />
     <label
       htmlFor={id}
@@ -1393,10 +1393,10 @@ const ServiceBooking = () => {
                     <FloatingInput id="bk-email" label="Email Address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
                     {/* Mobile: country dial-code select + national number; sent as fullPhone. */}
                     <div className="relative">
-                      <div className="flex items-stretch rounded border-2 overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
+                      <div className="flex items-stretch rounded-sm border overflow-hidden focus-within:border-[var(--primary)] transition-colors" style={{ borderColor: "var(--color-line)" }}>
                         <select
                           aria-label="Country code"
-                          className="w-[64px] shrink-0 bg-gray-50 text-sm font-medium text-gray-700 border-r-2 pl-2 pr-0.5 outline-none cursor-pointer"
+                          className="w-[64px] shrink-0 bg-gray-50 text-sm font-medium text-gray-700 border-r pl-2 pr-0.5 outline-none cursor-pointer"
                           style={{ borderColor: "var(--color-line)" }}
                           value={dialCode}
                           onChange={(e) => setDialCode(e.target.value)}
@@ -1420,7 +1420,7 @@ const ServiceBooking = () => {
                         id="bk-state"
                         placeholder="State"
                         autoComplete="off"
-                        className="peer fb-input fb-input--sm !rounded placeholder-transparent"
+                        className="peer fb-input fb-input--sm !rounded-sm !border placeholder-transparent"
                         value={billing.state}
                         onFocus={() => setStateOpen(true)}
                         onBlur={() => setTimeout(() => setStateOpen(false), 120)}
@@ -1436,7 +1436,7 @@ const ServiceBooking = () => {
                         const matches = INDIAN_STATES.filter((s) => s.name.toLowerCase().includes(q));
                         if (!matches.length) return null;
                         return (
-                          <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded border-2 border-gray-100 bg-white py-1 shadow-lg">
+                          <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-sm border border-gray-100 bg-white py-1 shadow-lg">
                             {matches.map((s) => (
                               <li key={s.code}>
                                 <button
@@ -1469,7 +1469,7 @@ const ServiceBooking = () => {
                   {/* Notes — plain optional box, full width */}
                   <div className="relative">
                     <textarea id="bk-notes" placeholder="Add any notes or requests for this booking."
-                      className="peer fb-input fb-input--sm !rounded resize-none !min-h-0 !h-[88px]"
+                      className="peer fb-input fb-input--sm !rounded-sm !border resize-none !min-h-0 !h-[88px]"
                       value={notes} onChange={(e) => setNotes(e.target.value)} />
                     <label htmlFor="bk-notes" className="pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-xs font-medium text-gray-500 transition-colors peer-focus:text-[color:var(--tc)]">
                       Notes <span className="font-normal text-gray-400">(Optional)</span>
