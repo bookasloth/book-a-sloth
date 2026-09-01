@@ -18,6 +18,11 @@ vi.mock('../services/api', () => ({
   getPublicPlans: vi.fn().mockResolvedValue({ data: [] }),
 }));
 
+vi.mock('react-hot-toast', () => {
+  const toast = Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() });
+  return { default: toast, Toaster: () => null };
+});
+
 vi.mock('../context/AuthContext', () => ({ useAuth: vi.fn() }));
 vi.mock('../components/common/BackButton', () => ({ default: () => <div>Back</div> }));
 // useFeature drives the admin kill-switch gate. Default ON; a test flips it OFF
@@ -26,7 +31,8 @@ vi.mock('../context/FeatureContext', () => ({ useFeature: vi.fn(() => true) }));
 
 import { useAuth } from '../context/AuthContext';
 import { useFeature } from '../context/FeatureContext';
-import { uploadProductFile, getPublicPlans } from '../services/api';
+import { uploadProductFile, getPublicPlans, createProduct } from '../services/api';
+import toast from 'react-hot-toast';
 import Products from '../pages/Products';
 
 // Reset mock call-counts before every test so assertions like
@@ -87,6 +93,23 @@ describe('Products — file upload guard', () => {
 
     expect(uploadProductFile).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByText(/not supported|allowed/i)).toBeTruthy());
+  });
+});
+
+describe('Products — validation error surfacing', () => {
+  test('shows the specific field error from a 422 instead of generic "Validation failed"', async () => {
+    createProduct.mockRejectedValueOnce({
+      response: { data: { message: 'Validation failed', errors: [{ field: 'product_url', message: 'Invalid product URL' }] } },
+    });
+    await renderProducts('creator');
+    await openForm();
+
+    const titleInput = screen.getByPlaceholderText(/UI Component Kit/i);
+    fireEvent.change(titleInput, { target: { value: 'My Guide' } });
+    fireEvent.submit(titleInput.closest('form'));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(toast.error.mock.calls.at(-1)[0]).toMatch(/Invalid product URL/);
   });
 });
 

@@ -241,12 +241,15 @@ const Products = () => {
       setDirty(false);
       fetchProducts();
     } catch (err) {
-      const msg = err.response?.data?.message || "Failed to save";
-      if (err.response?.data?.upgrade_required) {
-        toast.error(msg, { duration: 5000 });
-      } else {
-        toast.error(msg);
-      }
+      const data = err.response?.data;
+      // Surface the specific field error(s) from the 422 validator instead of the
+      // generic "Validation failed" — e.g. "Invalid product URL" tells the host to
+      // add https://, rather than leaving them stuck with no clue which field failed.
+      const fieldMsg = Array.isArray(data?.errors) && data.errors.length
+        ? data.errors.map((e) => e.message).join(" · ")
+        : null;
+      const msg = fieldMsg || data?.message || "Failed to save";
+      toast.error(msg, data?.upgrade_required ? { duration: 5000 } : undefined);
     } finally {
       setLoading(false);
     }
