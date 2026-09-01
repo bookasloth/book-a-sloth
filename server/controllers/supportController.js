@@ -67,6 +67,20 @@ async function botAutoReply(thread, question) {
   }
 }
 
+// `protect` only attaches { id, email } to req.user — never is_host — so the old
+// `req.user.is_host ? 'host' : 'guest'` stamped EVERY thread 'guest', making Bolt
+// tell hosts "you're a guest". Resolve the real flag from the profile instead.
+// Lazy require of config/supabase mirrors uploadAttachment (it throws on load in the
+// test env when the service-role key is absent). Fails soft to 'guest'.
+async function resolveParticipantType(userId) {
+  if (!userId) return 'guest';
+  try {
+    const { supabaseAdmin } = require('../config/supabase');
+    const { data } = await supabaseAdmin.from('profiles').select('is_host').eq('id', userId).maybeSingle();
+    return data?.is_host ? 'host' : 'guest';
+  } catch (_) { return 'guest'; }
+}
+
 // A participant owns a thread if the user_id matches, or (guest, no profile) the phone.
 const owns = (thread, user) =>
   !!thread && (
@@ -77,7 +91,7 @@ const owns = (thread, user) =>
 // GET /api/support/thread — the caller's open thread (created on first use).
 const getMyThread = async (req, res) => {
   try {
-    const participantType = req.user?.is_host ? 'host' : 'guest';
+    const participantType = await resolveParticipantType(req.user?.id);
     const existingCount = null; // (reserved) — could return unread here later
     const thread = await chat.getOrCreateOpenThread({
       participantType,
@@ -110,7 +124,7 @@ const listThreads = async (req, res) => {
 // one is already open, so a new question isn't buried in old history.
 const startTopic = async (req, res) => {
   try {
-    const participantType = req.user?.is_host ? 'host' : 'guest';
+    const participantType = await resolveParticipantType(req.user?.id);
     const thread = await chat.createThread({
       participantType, userId: req.user?.id, guestPhone: req.user?.phone,
     });

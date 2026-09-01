@@ -7,12 +7,18 @@ jest.mock('../../services/supportChatService', () => ({
 jest.mock('../../services/botService', () => ({ askBot: jest.fn() }));
 jest.mock('../../services/supportActions', () => ({ detectAction: jest.fn(() => null), runAction: jest.fn() }));
 jest.mock('../../services/supportContextService', () => ({ getSupportContext: jest.fn() }));
+// participantType now comes from a profiles.is_host lookup (not the unset req.user.is_host).
+jest.mock('../../config/supabase', () => ({
+  supabaseAdmin: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { is_host: true }, error: null }) }) }) }) },
+}));
 
 const chat = require('../../services/supportChatService');
 const { startTopic, listThreads } = require('../../controllers/supportController');
 
 const mkRes = () => { const r = {}; r.json = jest.fn(() => r); r.status = jest.fn(() => r); return r; };
-const req = { user: { id: 'u1', phone: '+9199', is_host: true } };
+// No is_host on req.user — `protect` never sets it. participantType must still
+// resolve to 'host' from the profile lookup (this is the bug being fixed).
+const req = { user: { id: 'u1', phone: '+9199' } };
 
 beforeEach(() => jest.clearAllMocks());
 
