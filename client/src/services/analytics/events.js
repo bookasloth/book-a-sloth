@@ -63,6 +63,7 @@ export const EVENTS = Object.freeze({
 
   // ── System / reliability (client-only) ──
   ERROR_PAGE_VIEWED:  'error_page_viewed',   // a branded error/offline page rendered
+  APP_ERROR:          'app_error_boundary',  // an uncaught render error hit RouteErrorBoundary
 });
 
 // Dev guard: reject unknown event names so a typo throws in dev instead of
