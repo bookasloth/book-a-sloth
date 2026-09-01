@@ -90,22 +90,43 @@ async function hostState(userId) {
   return out;
 }
 
+// This customer's other support conversations — history beside the live chat.
+// Excludes the thread currently open. Best-effort; empty on error.
+async function previousTickets({ userId, phone, isHost, excludeId }) {
+  let q = supabaseAdmin
+    .from('support_threads')
+    .select('id, reference, subject, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(21);
+  q = isHost ? q.eq('user_id', userId || '') : q.eq('guest_phone', phone || '');
+  const { data, error } = await q;
+  if (error || !data) return { total: 0, items: [] };
+  const rows = data.filter((t) => t.id !== excludeId);
+  return {
+    total: rows.length,
+    items: rows.slice(0, 5).map((t) => ({
+      ref: t.reference, subject: t.subject || null, status: t.status || null, at: t.created_at || null,
+    })),
+  };
+}
+
 /**
- * @param {{ userId?:string, phone?:string, isHost?:boolean }} p
+ * @param {{ userId?:string, phone?:string, isHost?:boolean, currentThreadId?:string }} p
  * @returns compact, render-ready context — sections degrade to null on error.
  */
-async function getSupportContext({ userId, phone, isHost } = {}) {
+async function getSupportContext({ userId, phone, isHost, currentThreadId } = {}) {
   const kind = isHost ? 'host' : 'guest';
 
   let profile = null;
   if (userId) {
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .select('name, plan, plan_expires_at, is_verified, onboarding_completed, phone, created_at')
+      .select('name, plan, plan_expires_at, is_verified, onboarding_completed, phone, created_at, profile_image')
       .eq('id', userId).maybeSingle();
     if (!error && data) {
       profile = {
         name: data.name || null,
+        photo: data.profile_image || null,
         plan: data.plan || null,
         planExpiresAt: data.plan_expires_at || null,
         isVerified: !!data.is_verified,
@@ -119,8 +140,9 @@ async function getSupportContext({ userId, phone, isHost } = {}) {
 
   const bookings = await recentBookings({ userId, phone, isHost });
   const host = isHost && userId ? await hostState(userId) : null;
+  const tickets = await previousTickets({ userId, phone, isHost, excludeId: currentThreadId });
 
-  return { kind, profile, bookings, host };
+  return { kind, profile, bookings, host, tickets };
 }
 
 module.exports = { getSupportContext, composeRecent };

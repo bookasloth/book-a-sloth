@@ -83,6 +83,9 @@ const QUICK_REPLIES = [
   { label: 'Anything else?', text: 'Is there anything else I can help you with today? I would be more than happy to assist.' },
 ];
 
+// Tones for a past support thread's status in the Previous-tickets list.
+const TICKET_TONE = { resolved: 'bg-green-50 text-green-700', assigned: 'bg-blue-50 text-blue-700', waiting: 'bg-amber-50 text-amber-700', bot: 'bg-gray-100 text-gray-500' };
+
 // The context rail — "give support eyes". Customer's live record beside the chat.
 function ContextRail({ ctx, thread }) {
   if (!ctx) return <div className="rounded-xl border adm-border p-3 text-[12px] adm-t3">Loading customer context…</div>;
@@ -98,8 +101,15 @@ function ContextRail({ ctx, thread }) {
           )}
         </div>
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FFF4EC] text-[13px] font-bold text-[#FE5100]">
-            {(p.name || '?').trim().slice(0, 2).toUpperCase()}
+          {/* Real photo when we have one; initials show through if it's missing/broken. */}
+          <div className="relative h-9 w-9 shrink-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FFF4EC] text-[13px] font-bold text-[#FE5100]">
+              {(p.name || '?').trim().slice(0, 2).toUpperCase()}
+            </div>
+            {p.photo && (
+              <img src={p.photo} alt="" onError={(e) => e.currentTarget.remove()}
+                className="absolute inset-0 h-9 w-9 rounded-full object-cover" />
+            )}
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold adm-t1">{p.name || '—'}</p>
@@ -113,12 +123,12 @@ function ContextRail({ ctx, thread }) {
         {isHost && (
           <div className="mt-2 border-t adm-border pt-2">
             <Row k="Plan">{p.plan || '—'}{p.planExpiresAt ? ` · exp ${fmtDay(p.planExpiresAt)}` : ''}</Row>
-            <Row k="Onboarding">{p.onboardingCompleted ? '✓ done' : '⚠ incomplete'}</Row>
+            <Row k="Onboarding">{p.onboardingCompleted ? 'Done' : 'Incomplete'}</Row>
             {ctx.host && (
               <>
                 <Row k="Listing live"><Pill v={ctx.host.listingActive ? 'confirmed' : 'cancelled'} /></Row>
                 <Row k="KYC"><Pill v={ctx.host.kyc?.status || 'none'} /></Row>
-                <Row k="Payout">{ctx.host.payoutLinked ? '✓ linked' : '⚠ not linked'}</Row>
+                <Row k="Payout">{ctx.host.payoutLinked ? 'Linked' : 'Not linked'}</Row>
               </>
             )}
           </div>
@@ -139,6 +149,28 @@ function ContextRail({ ctx, thread }) {
                   </div>
                   <p className="truncate adm-t1">{b.service || (isHost ? (b.guest || 'Booking') : 'Booking')}</p>
                   <div className="mt-1 flex gap-1"><Pill v={b.status} /><Pill v={b.payment_status} /></div>
+                </div>
+              ))}
+            </div>
+          )}
+      </div>
+
+      <div className="rounded-xl border adm-border p-3">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide adm-t3">Previous tickets</p>
+        {(!ctx.tickets || ctx.tickets.total === 0)
+          ? <p className="text-[12px] adm-t3">No earlier conversations.</p>
+          : (
+            <div className="flex flex-col gap-2">
+              <p className="text-[12px] font-medium adm-t2">{ctx.tickets.total} conversation{ctx.tickets.total > 1 ? 's' : ''}</p>
+              {ctx.tickets.items.map((tk, i) => (
+                <div key={i} className="flex items-center justify-between gap-2 rounded-lg bg-[#faf9f7] p-2 text-[12px]">
+                  <div className="min-w-0">
+                    <p className="truncate adm-t1">{tk.subject || 'Conversation'}</p>
+                    <p className="text-[11px] adm-t3"><code className="font-semibold">{tk.ref}</code> · {fmtDay(tk.at)}</p>
+                  </div>
+                  <span className={'shrink-0 rounded px-1.5 py-0.5 text-[10.5px] font-medium capitalize ' + (TICKET_TONE[tk.status] || 'bg-gray-100 text-gray-600')}>
+                    {tk.status || '—'}
+                  </span>
                 </div>
               ))}
             </div>

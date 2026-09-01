@@ -54,6 +54,20 @@ test('host context exposes KYC STATUS only — no PAN/Aadhaar/account ever in th
   expect(blob).not.toMatch(/pan_number|aadhaar|account_number|ENC/i);
 });
 
+test('previous tickets exclude the open thread and count the rest', async () => {
+  wire({
+    profiles: [{ data: { name: 'Riya' }, error: null }],
+    bookings: [{ data: [], error: null }],
+    support_threads: [{ data: [
+      { id: 'cur', reference: 'SUP-CUR', subject: 'now', status: 'assigned', created_at: '2026-08-30' },
+      { id: 't2', reference: 'SUP-002', subject: 'earlier', status: 'resolved', created_at: '2026-08-10' },
+    ], error: null }],
+  });
+  const ctx = await getSupportContext({ phone: '+91', isHost: false, currentThreadId: 'cur' });
+  expect(ctx.tickets.total).toBe(1);
+  expect(ctx.tickets.items[0]).toMatchObject({ ref: 'SUP-002', status: 'resolved' });
+});
+
 test('degrades section-by-section when a read errors, never throwing', async () => {
   wire({
     profiles: [{ data: null, error: { message: 'boom' } }],
