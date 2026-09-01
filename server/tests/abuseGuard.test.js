@@ -159,3 +159,53 @@ describe('evaluate', () => {
     expect(r.locked).toBe(true);
   });
 });
+
+// ── Self-harm crisis path ──────────────────────────────────────────────────
+// A person disclosing self-harm must ALWAYS get supportive crisis help with
+// zero penalty — regardless of the roast/IP flags, and never routed through the
+// threat/ban machinery.
+describe('evaluate — self-harm crisis handling', () => {
+  const OLD = process.env;
+  beforeEach(() => { process.env = { ...OLD }; stubStrikeRows([]); jest.clearAllMocks(); });
+  afterEach(() => { process.env = OLD; });
+
+  it('returns the crisis message even when BOT_ROAST_ENABLED is off (always on)', async () => {
+    delete process.env.BOT_ROAST_ENABLED;
+    const r = await guard.evaluate({ q: 'i want to kill myself', conversationId: 'c1' });
+    expect(r.source).toBe('self_harm');
+    expect(r.answer).toBe(guard.CRISIS_MSG);
+    expect(r.locked).toBe(false);
+  });
+
+  it('never strikes or IP-bans a person in crisis (even with IP blocking on)', async () => {
+    process.env.BOT_ROAST_ENABLED = 'true';
+    process.env.BOT_THREAT_IPBLOCK_ENABLED = 'true';
+    const r = await guard.evaluate({ q: 'i want to die', conversationId: 'c1', ip: '9.9.9.9' });
+    expect(r.source).toBe('self_harm');
+    expect(r.locked).toBe(false);
+    expect(ipBlocklist.recordAttack).not.toHaveBeenCalled();
+    expect(botStrikes.add).not.toHaveBeenCalled();
+  });
+
+  it('crisis support wins over an existing IP timeout (never met with "you are on a timeout")', async () => {
+    process.env.BOT_THREAT_IPBLOCK_ENABLED = 'true';
+    ipBlocklist.isBlocked.mockReturnValueOnce(true);
+    const r = await guard.evaluate({ q: 'suicidal and want to end my life', conversationId: 'c1', ip: '1.2.3.4' });
+    expect(r.source).toBe('self_harm');
+    expect(r.answer).toBe(guard.CRISIS_MSG);
+  });
+
+  it('detects romanized Hindi/Marathi crisis phrases', async () => {
+    delete process.env.BOT_ROAST_ENABLED;
+    for (const q of ['mujhe atmahatya karni hai', 'mala jagaycha nahi']) {
+      const r = await guard.evaluate({ q, conversationId: 'c1' });
+      expect(r && r.source).toBe('self_harm');
+    }
+  });
+
+  it('does NOT treat a threat at others ("kill yourself") as self-harm', async () => {
+    process.env.BOT_ROAST_ENABLED = 'true';
+    const r = await guard.evaluate({ q: 'kill yourself', conversationId: 'c1' });
+    expect(r.source).toBe('threat');
+  });
+});
