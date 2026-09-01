@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { analytics, initAnalytics, EVENTS } from '../../services/analytics';
 
 /**
  * Catches errors thrown while rendering lazy route chunks so a failed dynamic
@@ -26,9 +27,37 @@ class RouteErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    // Surface for PostHog/console; keep it cheap and non-throwing.
+    const componentStack = info?.componentStack;
     // eslint-disable-next-line no-console
-    console.error('[RouteErrorBoundary]', error, info?.componentStack);
+    console.error('[RouteErrorBoundary]', error, componentStack);
+
+    // Report to PostHog (always-on, first-party — no consent gate) so a prod
+    // crash names its route + component instead of dying as an anonymous "This
+    // page didn't load". Without this the error is invisible server-side and we
+    // can only guess which page/device (esp. mobile) is throwing. Fully guarded:
+    // reporting must never throw from inside an error boundary.
+    try {
+      const message = String(error?.message || error || '');
+      // A first-paint crash means AnalyticsBridge's idle-init never ran, so the
+      // PostHog SDK isn't booting yet. Nudge it (idempotent) so the queued
+      // capture actually flushes once the SDK loads.
+      initAnalytics();
+      analytics.track(EVENTS.APP_ERROR, {
+        message: message.slice(0, 300),
+        component_stack: componentStack
+          ? componentStack.trim().split('\n').map((l) => l.trim()).slice(0, 8).join(' | ').slice(0, 500)
+          : undefined,
+        path: window.location?.pathname,
+        // Distinguishes a stale-chunk-after-deploy failure from a genuine render
+        // bug — they need different fixes.
+        is_chunk_error:
+          /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|ChunkLoadError/i.test(message),
+        viewport_w: typeof window !== 'undefined' ? window.innerWidth : undefined,
+        ua: typeof navigator !== 'undefined' ? navigator.userAgent?.slice(0, 200) : undefined,
+      });
+    } catch {
+      /* reporting is best-effort — never let it re-throw */
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -46,7 +75,18 @@ class RouteErrorBoundary extends Component {
     } catch {
       /* sessionStorage unavailable — ignore */
     }
-    window.location.reload();
+    // A plain reload can replay the same stale document/chunk from the browser's
+    // bfcache or HTTP cache — the "reload doesn't help" case. A one-shot
+    // cache-busting query param forces a fresh document + module-graph fetch.
+    // Vercel ignores the param for its static/rewrite matching, so the same
+    // route still resolves; location.replace keeps it out of history.
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('_rl', Date.now().toString(36));
+      window.location.replace(url.toString());
+    } catch {
+      window.location.reload();
+    }
   };
 
   render() {

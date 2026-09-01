@@ -37,6 +37,25 @@ export default function ScrollToTop() {
     }
   }, []);
 
+  // Drop the one-shot cache-bust param added by RouteErrorBoundary's reload once
+  // we've successfully loaded, so it doesn't linger in the URL (shared links,
+  // analytics pageviews). replaceState avoids a navigation / history entry.
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("_rl")) {
+        url.searchParams.delete("_rl");
+        window.history.replaceState(
+          window.history.state,
+          "",
+          url.pathname + url.search + url.hash
+        );
+      }
+    } catch {
+      /* URL/history unavailable — harmless to skip */
+    }
+  }, []);
+
   // Continuously record the current entry's scroll offset.
   useEffect(() => {
     const save = () => positions.set(key, window.scrollY);
