@@ -121,11 +121,12 @@ async function getSupportContext({ userId, phone, isHost, currentThreadId } = {}
   if (userId) {
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .select('name, plan, plan_expires_at, is_verified, onboarding_completed, phone, created_at')
+      .select('name, plan, plan_expires_at, is_verified, onboarding_completed, phone, created_at, profile_image')
       .eq('id', userId).maybeSingle();
     if (!error && data) {
       profile = {
         name: data.name || null,
+        photo: data.profile_image || null,
         plan: data.plan || null,
         planExpiresAt: data.plan_expires_at || null,
         isVerified: !!data.is_verified,

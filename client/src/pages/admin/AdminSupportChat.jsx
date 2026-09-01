@@ -107,8 +107,15 @@ function ContextRail({ ctx, thread }) {
           )}
         </div>
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FFF4EC] text-[13px] font-bold text-[#FE5100]">
-            {(p.name || '?').trim().slice(0, 2).toUpperCase()}
+          {/* Real photo when we have one; initials show through if it's missing/broken. */}
+          <div className="relative h-9 w-9 shrink-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FFF4EC] text-[13px] font-bold text-[#FE5100]">
+              {(p.name || '?').trim().slice(0, 2).toUpperCase()}
+            </div>
+            {p.photo && (
+              <img src={p.photo} alt="" onError={(e) => e.currentTarget.remove()}
+                className="absolute inset-0 h-9 w-9 rounded-full object-cover" />
+            )}
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold adm-t1">{p.name || '—'}</p>
