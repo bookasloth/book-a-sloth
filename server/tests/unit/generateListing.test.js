@@ -50,6 +50,23 @@ test('retries once then throws AI_INVALID on no tool output', async () => {
   expect(client.__create).toHaveBeenCalledTimes(2);
 });
 
+test('retries when the first tool call is INCOMPLETE (only title + short_description)', async () => {
+  // Partial payload — the exact "only Title + Short Description populate" bug:
+  // truthy object, but missing long_description/included/excluded/faqs.
+  client.__create
+    .mockResolvedValueOnce(toolReply({ title: 'SEO', short_description: 'Grow traffic.' }))
+    .mockResolvedValueOnce(toolReply({
+      title: 'SEO Consultancy', short_description: 'Grow organic traffic fast.',
+      long_description: 'SEO consultancy is a service...', included_items: ['Audit'],
+      excluded_items: ['Ads'], faqs: [{ question: 'How long?', answer: 'Weeks.' }],
+    }));
+  const out = await generateListing({ title: 'SEO' });
+  expect(client.__create).toHaveBeenCalledTimes(2);
+  expect(out.fields.long_description).toBe('SEO consultancy is a service...');
+  expect(out.fields.included_items).toEqual(['Audit']);
+  expect(out.fields.faqs).toHaveLength(1);
+});
+
 test('throws AI_UNAVAILABLE when client null', async () => {
   const spy = jest.spyOn(client, 'getClient').mockReturnValueOnce(null);
   await expect(generateListing({ title: 'X' })).rejects.toThrow('AI_UNAVAILABLE');
