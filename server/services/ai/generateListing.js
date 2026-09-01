@@ -44,19 +44,37 @@ function thinkingParamFor(model) {
   return preAdaptive ? {} : { thinking: { type: 'disabled' } };
 }
 
+// Required fields the tool MUST emit (mirrors LISTING_TOOL.input_schema.required).
+// A tool call missing any of these is "incomplete" — either the model stopped
+// early or the JSON was truncated by max_tokens. Such a payload used to slip
+// through (raw was a truthy object, so the !raw retry never fired) and the form
+// filled only the fields that made it in — the reported "only Title + Short
+// Description populate" bug.
+const REQUIRED = ['title', 'short_description', 'long_description', 'included_items', 'excluded_items', 'faqs'];
+const isComplete = (raw) =>
+  raw && typeof raw === 'object' && REQUIRED.every((k) => {
+    const v = raw[k];
+    return Array.isArray(v) ? v.length > 0 : String(v || '').trim().length > 0;
+  });
+
 async function callOnce(client, { model, system, user }) {
   // No temperature/top_p/top_k — defaults only (Sonnet 5 rejects non-default
   // sampling params). thinking handled per-model by thinkingParamFor().
   //
-  // max_tokens 4096: the full listing (long_description + 4-6 included/excluded
-  // bullets + 4-5 FAQs + note) overruns 1500, truncating the forced tool call
-  // into invalid/partial JSON → AI_INVALID. 4096 leaves headroom.
+  // max_tokens 8192: the full listing (HTML long_description + up to 6+6
+  // included/excluded bullets + 5 FAQs + note) can exceed 4096 once the model
+  // writes richer copy, truncating the forced tool call into a PARTIAL object
+  // (only the first properties present) → the "only Title + Short Description"
+  // bug. 8192 leaves real headroom; the completeness retry below is the backstop.
   const resp = await client.messages.create({
-    model, max_tokens: 4096, system,
+    model, max_tokens: 8192, system,
     ...thinkingParamFor(model),
     tools: [LISTING_TOOL], tool_choice: { type: 'tool', name: 'emit_listing' },
     messages: [{ role: 'user', content: user }],
   });
+  if (resp.stop_reason === 'max_tokens') {
+    console.warn('generateListing: tool call hit max_tokens — listing may be truncated/incomplete.');
+  }
   const block = (resp.content || []).find((b) => b.type === 'tool_use' && b.name === 'emit_listing');
   return block ? block.input : null;
 }
@@ -72,10 +90,13 @@ async function generateListing(opts = {}) {
   const user = buildUserMessage(opts);
 
   let raw = await callOnce(client, { model, system: SYSTEM, user });
-  if (!raw) {
+  // Retry on incomplete — not just fully-null. A partial tool call (e.g. only
+  // title + short_description) is truthy but missing required fields; the old
+  // `!raw` guard let it through and the rest of the form stayed blank.
+  if (!isComplete(raw)) {
     raw = await callOnce(client, {
       model,
-      system: SYSTEM + ' You MUST call emit_listing with every required field filled.',
+      system: SYSTEM + ' You MUST call emit_listing with EVERY required field filled: title, short_description, long_description, included_items, excluded_items, and faqs.',
       user,
     });
   }
@@ -85,4 +106,4 @@ async function generateListing(opts = {}) {
   return { fields, model };
 }
 
-module.exports = { generateListing, buildUserMessage, SYSTEM, thinkingParamFor };
+module.exports = { generateListing, buildUserMessage, SYSTEM, thinkingParamFor, isComplete };
