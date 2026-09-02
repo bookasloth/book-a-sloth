@@ -161,7 +161,14 @@ function calculateVendorPayout(servicePrice, commission, razorpayFee = 0, tds = 
   assertNonNegative(razorpayFee, 'razorpayFee');
   assertNonNegative(tds, 'tds');
   assertNonNegative(tcs, 'tcs');
-  return round2(servicePrice - commission - razorpayFee - tds - tcs);
+  // Floor at 0: a payout is a share of the host's sale and can never be negative.
+  // The only way this went negative was a ₹0 (fee-only) service where the gateway
+  // fee was still subtracted — a host who sold nothing cannot owe the platform.
+  // A negative value produced a negative journal line, which post_journal_entry
+  // rejects outright ("line amounts cannot be negative"), so the ORDER_PAYMENT
+  // entry never posted and the reconciler re-failed on it forever. When the payout
+  // is 0 the gateway fee is BAS-borne — see orderPaymentEntry.
+  return round2(Math.max(0, servicePrice - commission - razorpayFee - tds - tcs));
 }
 
 // ─── Customer total (what is actually charged) ───────────────────────────────

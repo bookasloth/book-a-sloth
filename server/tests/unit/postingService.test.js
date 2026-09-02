@@ -1,7 +1,9 @@
 jest.mock('../../config/supabase', () => ({
   supabaseAdmin: { rpc: jest.fn() },
 }));
+jest.mock('../../utils/adminAlert', () => ({ adminAlert: jest.fn() }));
 const { supabaseAdmin } = require('../../config/supabase');
+const { adminAlert } = require('../../utils/adminAlert');
 const posting = require('../../services/ledger/postingService');
 
 beforeEach(() => jest.clearAllMocks());
@@ -61,5 +63,31 @@ describe('postingService.post', () => {
     supabaseAdmin.rpc.mockResolvedValue({ data: 'e3', error: null });
     const id = await posting.postSafe({ sourceType: 'ORDER_PAYMENT', sourceId: 'z', template: tpl });
     expect(id).toBe('e3');
+  });
+
+  test('postSafe alerts once a source keeps failing (dead-letter, not silent retry)', async () => {
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    supabaseAdmin.rpc.mockRejectedValue(new Error('line amounts cannot be negative'));
+    // First failure stays quiet — could be a transient blip the reconciler heals.
+    await posting.postSafe({ sourceType: 'ORDER_PAYMENT', sourceId: 'poison-1', template: tpl });
+    expect(adminAlert).not.toHaveBeenCalled();
+    // Same source fails again → surfaces instead of retrying forever in silence.
+    await posting.postSafe({ sourceType: 'ORDER_PAYMENT', sourceId: 'poison-1', template: tpl });
+    expect(adminAlert).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'ledger_poison:ORDER_PAYMENT/poison-1' }),
+    );
+    spy.mockRestore();
+  });
+
+  test('postSafe success clears the failure streak (a healed blip does not alert)', async () => {
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    supabaseAdmin.rpc.mockRejectedValueOnce(new Error('blip'));
+    await posting.postSafe({ sourceType: 'ORDER_PAYMENT', sourceId: 'flaky', template: tpl });
+    supabaseAdmin.rpc.mockResolvedValueOnce({ data: 'ok', error: null });
+    await posting.postSafe({ sourceType: 'ORDER_PAYMENT', sourceId: 'flaky', template: tpl }); // heals → streak cleared
+    supabaseAdmin.rpc.mockRejectedValueOnce(new Error('blip-again'));
+    await posting.postSafe({ sourceType: 'ORDER_PAYMENT', sourceId: 'flaky', template: tpl }); // streak back to 1
+    expect(adminAlert).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 });
