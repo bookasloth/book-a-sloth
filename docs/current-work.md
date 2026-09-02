@@ -1,16 +1,24 @@
 # Current Work — Book A Sloth
 _Last updated: 2026-09-02_
 
-## Relationship engine Phase 2 — PR-7 global touch governor — 2026-09-02
+## Relationship engine Phase 2 — governor + health signals — 2026-09-02
 
-> **Status: IN PROGRESS on `feat/crm-touch-governor`.** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. No migration (reuses `last_automated_touch_at` from v3.133). Full server suite green (2489). Sends stay OFF (`crm_admin_sends` fail-closed) — this only adds gating, it does not enable delivery.
+> **Status: MERGED to main. PRs #925 (PR-7) + #927 (PR-7.5). No migration. Sends stay OFF (`crm_admin_sends` fail-closed) — these only add gating + sharpen targeting, they do not enable delivery.** Next: PR-8 (the sends-live proof), then two-clock header, then PR-9 (guests). Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`.
 
+### PR-7 — global touch governor (#925)
 The MVP left the automated-touch cap fragmented: `sendGate` throttled CRM sends (1/48h over `crm_messages`), `touchRecommendationService` cooled the *same reason* for 14 days, and `birthdayGreetings` sent straight through `NotificationEngine` with **no cap at all** — so one person could get a cooling nudge + a birthday email + a milestone touch in the same window. PR-7 unifies them.
 
 - **`services/crm/touchGovernor.js`** — the ONE master cap. `withinCap()` is a pure, source-agnostic decision (timestamps + cap/window → allow?); `canTouch()`/`recordTouch()` are the DB adapter over the automated-touch ledger every send already writes (`lead_activities` `is_meaningful=false` CONTACT rows, which also bump `leads.last_automated_touch_at`). **Fail-open** on a missing ledger or a read error — an outage never freezes legitimate sends. Subject resolution: `lead` direct, `profile` → its linked lead, `contact` → PR-9 stub.
 - **`sendGate.throttle`** now delegates its cap to the governor (quiet-hours stays local), so a CRM send is capped against birthday/milestone touches too. `messageService` already logs a no-actor `email_sent`/`whatsapp_sent` on every send → CRM sends were already in the ledger, no double-recording.
 - **`birthdayGreetings`** consults `canTouch` before sending (capped → skip WITHOUT stamping `birthday_greeted_at`, so it retries when the window clears) and `recordTouch` after — closing the bypass. Hosts resolve to their lead ledger; a pure guest with no ledger fails open until PR-9.
 - **Config:** `CRM_TOUCH_CAP` (default 1) / `CRM_TOUCH_WINDOW_H` (default 48) in `server/.env.example` — defaults match sendGate's prior ceiling, so this is not a behaviour change for CRM sends, only an extension to the rest.
+
+### PR-7.5 — health negative-signal wiring (#927)
+`relationshipHealth.compute` already read `ctx.supportOpen` / `ctx.negativeFeedback` (soft signals: one caps at `cooling`, two reach `at_risk`) but nothing populated them — the docstring literally said "wired in a follow-up". This is that follow-up: `lifecycleEngine.loadAccountCtx` now derives both, so an unhappy host stops reading as `steady`/`thriving`.
+
+- **`sentimentSignals()`** (pure, exported, unit-tested) — `supportOpen` = an escalated, unresolved host support thread (`support_threads` `participant_type='host'`, status `waiting`/`assigned`; `bot` isn't a human issue yet and `resolved` is closed); `negativeFeedback` = a poor support rating (`support_threads.rating ≤ 2`) OR a recent (≤90d) vendor complaint / low rating (`feedback` v3.20 `type='complaint'` or `rating ≤ 3/10`).
+- `loadAccountCtx` adds two batched, fail-soft reads (a missing table yields no signal, never a throw) and merges the two booleans into each profile's ctx. **`compute` is unchanged** — the whole point of its purity. `reviews` (guest↔host) are deliberately excluded: they're not the host's sentiment toward *us*.
+- Health recomputes on the next 15-min lifecycle tick.
 
 
 ## Host notification system overhaul + AiSensy fix + admin badge — 2026-08-29
