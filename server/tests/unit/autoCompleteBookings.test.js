@@ -33,10 +33,13 @@ const baseRow = (over) => ({
 
 // Supabase mock: the list query is awaited directly (thenable → listResult);
 // each markBookingCompleted update ends in .single() (→ updateResult).
+let gteCalls = [];
 const wire = (rows) => {
+  gteCalls = [];
   mockFrom.mockImplementation(() => {
     const chain = {
       select: () => chain, eq: () => chain, neq: () => chain, lte: () => chain,
+      gte: (_col, val) => { gteCalls.push(val); return chain; },
       order: () => chain, limit: () => chain, update: () => chain,
       single: () => Promise.resolve({ data: { id: 'b', status: 'completed' }, error: null }),
       then: (resolve) => resolve({ data: rows, error: null }),
@@ -81,7 +84,7 @@ test('no eligible bookings → no completions, no notifications', async () => {
 test('query error returns zero without throwing', async () => {
   mockFrom.mockImplementation(() => {
     const chain = {
-      select: () => chain, eq: () => chain, lte: () => chain, order: () => chain, limit: () => chain,
+      select: () => chain, eq: () => chain, gte: () => chain, lte: () => chain, order: () => chain, limit: () => chain,
       then: (resolve) => resolve({ data: null, error: { message: 'boom' } }),
     };
     return chain;
@@ -89,6 +92,18 @@ test('query error returns zero without throwing', async () => {
 
   const result = await autoCompleteBookings();
   expect(result.completed).toBe(0);
+});
+
+// F20: the batch is bounded below by (cutoff − 1 day) so a pile of pre-cutoff
+// confirmed rows can't fill the ascending, fixed-size batch and starve completion.
+test('bounds the query to a scheduled_at floor (no pre-cutoff starvation)', async () => {
+  wire([]);
+  await autoCompleteBookings();
+  expect(gteCalls.length).toBeGreaterThan(0);
+  const floor = new Date(gteCalls[0]).getTime();
+  // Default cutoff is 3 days before boot; the floor is one day earlier still, and
+  // comfortably in the past relative to "now".
+  expect(floor).toBeLessThan(Date.now() - 3 * 24 * 60 * 60 * 1000);
 });
 
 test('session-complete email resolves the host name from the bare `profiles` embed key', async () => {

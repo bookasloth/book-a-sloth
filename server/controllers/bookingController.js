@@ -1877,11 +1877,22 @@ const autoCompleteBookings = async () => {
   // Coarse DB prefilter (confirmed + already past start); the precise
   // duration + grace + hold check is applied per-row in JS below because the
   // session end depends on each service's duration/grace.
+  // F20: exclude pre-cutoff rows in SQL, not just in the JS skip below. With an
+  // ascending, fixed-size batch, once 200+ un-completable confirmed bookings pile
+  // up (a host who never completes, an outage) the oldest-first batch fills
+  // entirely with pre-cutoff rows that are all skipped — and NO booking is ever
+  // auto-completed again, silently, stalling host settlement. Bounding the query
+  // to scheduled_at >= (cutoff − one day) keeps the batch full of ELIGIBLE rows in
+  // the right (oldest-first) order; the one-day slack ensures a long session that
+  // started before the cutoff but ended after it is still considered (the precise
+  // sessionEnd < cutoff decision stays in the JS loop).
+  const floorIso = new Date(AUTO_COMPLETE_CUTOFF.getTime() - 24 * 60 * 60 * 1000).toISOString();
   const baseQuery = (svcCols) =>
     supabaseAdmin
       .from("bookings")
       .select(`*, services(title, ${svcCols}), ${hostJoin}`)
       .eq("status", "confirmed")
+      .gte("scheduled_at", floorIso)
       .lte("scheduled_at", new Date(now).toISOString())
       .order("scheduled_at", { ascending: true })
       .limit(AUTO_COMPLETE_BATCH);
@@ -1936,10 +1947,17 @@ const PENDING_REAP_BATCH = 200;
 const expireStalePendingBookings = async () => {
   const cutoff = new Date(Date.now() - PENDING_HOLD_MS).toISOString();
   const nowIso = new Date().toISOString();
+  // F11: stamp settlement_status='cancelled' too, matching cancelBookingRecord.
+  // The reaper is the OTHER writer of status='cancelled', and it used to set only
+  // status — leaving reaped holds at settlement_status='pending_completion', an
+  // impossible state (cancelled but still "awaiting completion") that every
+  // settlement/payout reader (SKIP_SETTLE) has to special-case. These rows are
+  // unpaid so no money is at risk, but the invariant "cancelled ⇒ settlement
+  // cancelled" should hold for every cancel path.
   const reap = (extra) =>
     supabaseAdmin
       .from("bookings")
-      .update({ status: "cancelled", updated_at: nowIso, ...extra })
+      .update({ status: "cancelled", settlement_status: "cancelled", updated_at: nowIso, ...extra })
       .eq("status", "pending")
       .eq("payment_status", "unpaid")
       .lt("created_at", cutoff)
