@@ -286,17 +286,12 @@ setInterval(async () => {
   catch (err) { console.error('Reminder cron error:', err.message); }
 }, 5 * 60 * 1000);
 
-// Auto-complete elapsed bookings so the lifecycle closes (and revenue becomes
-// settle-able) without depending on anyone clicking "Mark Completed". Interval
-// configurable via env, default 15 min; the per-booking hold/cutoff live in
-// the controller (AUTO_COMPLETE_HOLD_MIN / AUTO_COMPLETE_CUTOFF).
-const AUTO_COMPLETE_INTERVAL_MIN = Number(process.env.AUTO_COMPLETE_INTERVAL_MIN) || 15;
-setInterval(async () => {
-  try { await runLocked('auto-complete', () => autoCompleteBookings(), { leaseMs: AUTO_COMPLETE_INTERVAL_MIN * 2 * 60 * 1000 }); }
-  catch (err) { console.error('Auto-complete cron error:', err.message); }
-}, AUTO_COMPLETE_INTERVAL_MIN * 60 * 1000);
+// ── Fast workers + short-interval crons (≤10 min) stay on their own setInterval:
+// they re-tick within minutes, so the setInterval-first-tick delay after a restart
+// is negligible. The LONG jobs (≥15 min) moved to the persisted due-runner below
+// (F4) — those are the ones Render's pod churn was silently starving. ──
 
-// ── Follow-up nudges cron (rebook). Leader-elected; fires due scheduled_followups. ──
+// Follow-up nudges (rebook) — fires due scheduled_followups.
 const { processFollowups } = require('./services/followups/followupService');
 const FOLLOWUP_INTERVAL_MIN = Number(process.env.FOLLOWUP_INTERVAL_MIN || 10);
 setInterval(async () => {
@@ -304,18 +299,14 @@ setInterval(async () => {
   catch (err) { console.error('Follow-up cron error:', err.message); }
 }, FOLLOWUP_INTERVAL_MIN * 60 * 1000);
 
-// Reap stale unpaid 'pending' bookings (security audit H-2) so abandoned or
-// maliciously-sprayed holds release the slot for real customers. Default every
-// 10 min; the hold window (default 30 min) lives in the controller.
+// Reap stale unpaid 'pending' bookings (security audit H-2).
 const PENDING_REAP_INTERVAL_MIN = Number(process.env.PENDING_REAP_INTERVAL_MIN) || 10;
 setInterval(async () => {
   try { await runLocked('expire-pending-bookings', () => expireStalePendingBookings(), { leaseMs: PENDING_REAP_INTERVAL_MIN * 2 * 60 * 1000 }); }
   catch (err) { console.error('Pending-hold reaper cron error:', err.message); }
 }, PENDING_REAP_INTERVAL_MIN * 60 * 1000);
 
-// Abandoned-payment recovery: email guests who started a paid booking and didn't
-// finish, while their slot is still held (before the reaper cancels it). Every
-// 5 min; deduped per booking in the service.
+// Abandoned-payment recovery: email guests who started a paid booking and didn't finish.
 setInterval(async () => {
   try {
     const { processAbandonedRecovery } = require('./services/abandonedRecovery');
@@ -323,75 +314,7 @@ setInterval(async () => {
   } catch (err) { console.error('Abandoned-recovery cron error:', err.message); }
 }, 5 * 60 * 1000);
 
-// Subscription renewal nudge: email paid hosts at T-7 / T-1 before their plan
-// lapses. Every 6h; fires on exact day-counts and dedupes per host in the service.
-setInterval(async () => {
-  try {
-    const { processSubscriptionExpiry } = require('./services/subscriptionExpiry');
-    await runLocked('subscription-expiry', () => processSubscriptionExpiry(), { leaseMs: 6 * 60 * 60 * 1000 });
-  } catch (err) { console.error('Subscription-expiry cron error:', err.message); }
-}, 6 * 60 * 60 * 1000);
-
-// Guest → host invite: email repeat guests (>= N completed bookings, not yet a
-// host) to start hosting. Daily; deduped per guest in the service.
-setInterval(async () => {
-  try {
-    const { processGuestHostInvites } = require('./services/guestHostInvite');
-    await runLocked('guest-host-invite', () => processGuestHostInvites(), { leaseMs: 24 * 60 * 60 * 1000 });
-  } catch (err) { console.error('Guest→host invite cron error:', err.message); }
-}, 24 * 60 * 60 * 1000);
-
-// Profile completion: pull stalled hosts (claimed URL, never published) back to
-// publish. Every 12h; capped/deduped per host in the service.
-setInterval(async () => {
-  try {
-    const { processProfileCompletion } = require('./services/profileCompletion');
-    await runLocked('profile-completion', () => processProfileCompletion(), { leaseMs: 12 * 60 * 60 * 1000 });
-  } catch (err) { console.error('Profile-completion cron error:', err.message); }
-}, 12 * 60 * 60 * 1000);
-
-setInterval(async () => {
-  try { await runLocked('otp-cleanup', () => cleanupOtps(), { leaseMs: 2 * 60 * 60 * 1000 }); }
-  catch (err) { console.error('OTP cleanup error:', err.message); }
-}, 60 * 60 * 1000);
-
-// Birthday greetings: email hosts & guests whose saved DOB is today (v3.138). Every
-// 12h; the service greets once per calendar year (birthday_greeted_at) and is gated
-// by the `birthday_greetings` feature flag.
-setInterval(async () => {
-  try {
-    const { processBirthdays } = require('./services/birthdayGreetings');
-    await runLocked('birthday', () => processBirthdays(), { leaseMs: 60 * 60 * 1000 });
-  } catch (err) { console.error('Birthday cron error:', err.message); }
-}, 12 * 60 * 60 * 1000);
-
-// ── Weekly host recap (retention loop). Ticks daily; the job self-gates on the
-// WEEKLY_RECAP_ENABLED flag and a 6-day platform marker, so this sends ~weekly and
-// only to active hosts. Leader-elected so it never double-sends across instances. ──
-const { sendWeeklyRecaps } = require('./services/weeklyHostRecap');
-setInterval(async () => {
-  try {
-    await runLocked('weekly-recap', async () => {
-      const r = await sendWeeklyRecaps();
-      if (r.sent) console.log(`Weekly recap: ${r.sent} sent, ${r.skipped} skipped`);
-    }, { leaseMs: 30 * 60 * 1000 });
-  } catch (err) { console.error('Weekly recap cron error:', err.message); }
-}, 24 * 60 * 60 * 1000);
-
-// ── Weekly support→product digest. Emails the founder/product WHY people
-// contacted support (top reasons, product-caused rate, CSAT). Same daily-tick /
-// 7-day-marker pattern; OFF unless SUPPORT_DIGEST_ENABLED === 'true'. Leader-elected. ──
-const { sendWeeklyInsightsDigest } = require('./services/supportInsightsDigest');
-setInterval(async () => {
-  try {
-    await runLocked('support-insights-digest', async () => {
-      const r = await sendWeeklyInsightsDigest();
-      if (r.sent) console.log(`Support digest: sent to ${r.recipients} recipient(s)`);
-    }, { leaseMs: 30 * 60 * 1000 });
-  } catch (err) { console.error('Support digest cron error:', err.message); }
-}, 24 * 60 * 60 * 1000);
-
-// Email queue worker — processes queued emails with retry backoff (every 60s)
+// Email queue worker (every 60s).
 const communicationEngine = require('./services/email/communicationEngine');
 setInterval(async () => {
   try {
@@ -402,7 +325,7 @@ setInterval(async () => {
   } catch (err) { console.error('Email queue worker error:', err.message); }
 }, 60 * 1000);
 
-// Campaign worker — drives 'sending' campaigns under their throttle (every 60s)
+// Campaign worker (every 60s).
 const campaignWorker = require('./services/campaignWorker');
 setInterval(async () => {
   try {
@@ -413,16 +336,10 @@ setInterval(async () => {
   } catch (err) { console.error('Campaign worker error:', err.message); }
 }, 60 * 1000);
 
-// ── Sales CRM workers (leader-elected). All sends inside these are gated by the
-// `crm_admin_sends` kill-switch (default OFF), so with the switch off these
-// ticks are cheap no-ops that only advance bookkeeping. ──
+// ── Sales CRM fast workers (60s / 5min). Sends gated by crm_admin_sends (default OFF). ──
 const crmMessageService = require('./services/crm/messageService');
 const crmSequenceService = require('./services/crm/sequenceService');
 const crmFollowUpService = require('./services/crm/followUpService');
-const crmAttribution = require('./services/crm/attribution');
-const crmLifecycleEngine = require('./services/crm/lifecycleEngine');
-
-// Drain queued CRM messages with retry backoff (every 60s).
 setInterval(async () => {
   try {
     await runLocked('crm-send-worker', async () => {
@@ -431,8 +348,6 @@ setInterval(async () => {
     }, { leaseMs: 2 * 60 * 1000 });
   } catch (err) { console.error('CRM send worker error:', err.message); }
 }, 60 * 1000);
-
-// Advance due sequence enrollments (every 60s).
 setInterval(async () => {
   try {
     await runLocked('crm-sequence-worker', async () => {
@@ -441,8 +356,6 @@ setInterval(async () => {
     }, { leaseMs: 2 * 60 * 1000 });
   } catch (err) { console.error('CRM sequence worker error:', err.message); }
 }, 60 * 1000);
-
-// Remind lead owners of due follow-ups (every 5 min).
 const CRM_FOLLOWUP_INTERVAL_MIN = Number(process.env.CRM_FOLLOWUP_INTERVAL_MIN) || 5;
 setInterval(async () => {
   try {
@@ -453,183 +366,58 @@ setInterval(async () => {
   } catch (err) { console.error('CRM follow-up reminder error:', err.message); }
 }, CRM_FOLLOWUP_INTERVAL_MIN * 60 * 1000);
 
-// Refresh lead↔account links + revenue attribution (every 60 min).
-const CRM_ATTRIBUTION_INTERVAL_MIN = Number(process.env.CRM_ATTRIBUTION_INTERVAL_MIN) || 60;
-setInterval(async () => {
-  try {
-    await runLocked('crm-attribution', async () => {
-      const r = await crmAttribution.run();
-      if (r.linked || r.updated) console.log(`CRM attribution: ${r.linked} linked, ${r.updated} refreshed`);
-    }, { leaseMs: CRM_ATTRIBUTION_INTERVAL_MIN * 2 * 60 * 1000 });
-  } catch (err) { console.error('CRM attribution error:', err.message); }
-}, CRM_ATTRIBUTION_INTERVAL_MIN * 60 * 1000);
-
-// Lifecycle engine: score + advance leads, set next action, enroll nurture /
-// open sales tasks (every 15 min). Writes lead state + enqueues only — actual
-// sends stay gated by crm_admin_sends. Set LIFECYCLE_ENGINE_DRYRUN=true to log
-// intended changes without writing.
-const CRM_LIFECYCLE_INTERVAL_MIN = Number(process.env.CRM_LIFECYCLE_INTERVAL_MIN) || 15;
-setInterval(async () => {
-  try {
-    await runLocked('crm-lifecycle-engine', async () => {
-      const r = await crmLifecycleEngine.run();
-      if (r.moved || r.enrolled || r.tasks || r.churned) console.log(`CRM lifecycle: ${r.moved} moved, ${r.enrolled} enrolled, ${r.tasks} tasks, ${r.churned || 0} churned (scanned ${r.scanned}${r.dryRun ? ', dryrun' : ''})`);
-    }, { leaseMs: CRM_LIFECYCLE_INTERVAL_MIN * 2 * 60 * 1000 });
-  } catch (err) { console.error('CRM lifecycle engine error:', err.message); }
-}, CRM_LIFECYCLE_INTERVAL_MIN * 60 * 1000);
-
-// Guest relationship engine (PR-9): the lifecycle engine's relationship layer for GUESTS
-// (contacts, not leads). Computes each customer's health off booking recency + emits
-// guest touch_recommendations for those gone quiet / at a milestone. Runs less often than
-// the lead engine (the guest base is larger and slower-moving). Writes contact state +
-// recs only — sends stay gated by crm_admin_sends.
-const crmGuestEngine = require('./services/crm/guestRelationshipEngine');
-const CRM_GUEST_ENGINE_INTERVAL_MIN = Number(process.env.CRM_GUEST_ENGINE_INTERVAL_MIN) || 60;
-setInterval(async () => {
-  try {
-    await runLocked('crm-guest-engine', async () => {
-      const r = await crmGuestEngine.run();
-      if (r.recs) console.log(`CRM guest engine: ${r.recs} recs from ${r.customers} customers (scanned ${r.scanned})`);
-    }, { leaseMs: CRM_GUEST_ENGINE_INTERVAL_MIN * 2 * 60 * 1000 });
-  } catch (err) { console.error('CRM guest engine error:', err.message); }
-}, CRM_GUEST_ENGINE_INTERVAL_MIN * 60 * 1000);
-
-// Badge engine: scheduled full evaluation (interval configurable via env, default 60 min)
+// ══ F4: LONG-interval crons (≥15 min) driven off a PERSISTED schedule (job_runs),
+// checked on a short SCHEDULER_TICK so pod churn can't starve them. Before this, a
+// setInterval whose first tick lands after a FULL interval was reset on every Render
+// restart — so ledger-reconcile, otp-cleanup, referral-release, the daily digests etc.
+// effectively never ran (their job_locks leases sat expired under dead pods). runIfDue
+// does the durable due-check + lease + run-stamp; each service self-gates/dedupes, so an
+// occasional extra run right after a restart is safe. ══
+const { runIfDue } = require('./utils/jobRunner');
+const AUTO_COMPLETE_INTERVAL_MIN = Number(process.env.AUTO_COMPLETE_INTERVAL_MIN) || 15;
 const badgeEngine = require('./services/badgeEngine');
-const BADGE_EVAL_INTERVAL_MIN = parseInt(process.env.BADGE_EVAL_INTERVAL_MIN) || 60;
-setInterval(async () => {
-  try {
-    await runLocked('badge-eval', async () => {
-      const r = await badgeEngine.evaluate();
-      if (r.awarded || r.revoked) console.log(`Badge engine: +${r.awarded} awarded, -${r.revoked} revoked`);
-    }, { leaseMs: BADGE_EVAL_INTERVAL_MIN * 2 * 60 * 1000 });
-  } catch (err) { console.error('Badge engine cron error:', err.message); }
-}, BADGE_EVAL_INTERVAL_MIN * 60 * 1000);
-
-// Ledger reconciler — self-heals missed journal postings (hourly, idempotent)
 const ledgerReconciler = require('./services/ledger/ledgerReconciler');
-const LEDGER_RECONCILE_MIN = Number(process.env.LEDGER_RECONCILE_INTERVAL_MIN || 60);
-setInterval(async () => {
-  try {
-    await runLocked('ledger-reconcile', async () => {
-      const r = await ledgerReconciler.reconcile();
-      if (r.reposted > 0) console.log(`Ledger reconciler: reposted ${r.reposted} missed entries`);
-    }, { leaseMs: LEDGER_RECONCILE_MIN * 2 * 60 * 1000 });
-  } catch (err) { console.error('Ledger reconciler cron error:', err.message); }
-}, LEDGER_RECONCILE_MIN * 60 * 1000);
-
-// Subscription reconciler — heals subscriptions whose activation webhook was
-// missed (vendor stuck 'pending'). Idempotent; interval configurable (default 15 min).
 const subscriptionReconciler = require('./services/subscriptionReconciler');
-const SUB_RECONCILE_MIN = Number(process.env.SUBSCRIPTION_RECONCILE_INTERVAL_MIN || 15);
-setInterval(async () => {
-  try {
-    await runLocked('subscription-reconcile', async () => {
-      const r = await subscriptionReconciler.reconcile();
-      if (r.healed > 0) console.log(`Subscription reconciler: activated ${r.healed} pending subscriptions`);
-      if (r.released > 0) console.log(`Subscription reconciler: released ${r.released} orphaned pending mandates`);
-      if (r.recorded > 0) console.log(`Subscription reconciler: booked ${r.recorded} missing subscription charges`);
-    }, { leaseMs: SUB_RECONCILE_MIN * 2 * 60 * 1000 });
-  } catch (err) { console.error('Subscription reconciler cron error:', err.message); }
-}, SUB_RECONCILE_MIN * 60 * 1000);
-
-// Booking-payment reconciler — heals one-off bookings stuck 'unpaid' whose
-// payment.captured webhook was missed/exhausted, by asking Razorpay directly.
-// Idempotent; interval configurable (default 15 min).
 const bookingPaymentReconciler = require('./services/bookingPaymentReconciler');
-const BOOKING_RECONCILE_MIN = Number(process.env.BOOKING_RECONCILE_INTERVAL_MIN || 15);
-setInterval(async () => {
-  try {
-    await runLocked('booking-reconcile', async () => {
-      const r = await bookingPaymentReconciler.reconcile();
-      if (r.healed > 0) console.log(`Booking reconciler: confirmed ${r.healed} paid bookings (of ${r.checked} checked)`);
-    }, { leaseMs: BOOKING_RECONCILE_MIN * 2 * 60 * 1000 });
-  } catch (err) { console.error('Booking reconciler cron error:', err.message); }
-}, BOOKING_RECONCILE_MIN * 60 * 1000);
-
-// Confirmation reconciler (P1-02) — re-drives the post-payment confirmation
-// (calendar/Meet + BOOKING_CONFIRMED messages) for paid bookings whose one-shot
-// background send was lost, so a paid booking is never left silently unconfirmed.
-// Idempotent + single-flight; no-ops until migrations/v3.102 is applied.
 const confirmationReconciler = require('./services/confirmationReconciler');
-const CONFIRMATION_RECONCILE_MIN = Number(process.env.CONFIRMATION_RECONCILE_INTERVAL_MIN || 15);
-setInterval(async () => {
-  try {
-    await runLocked('confirmation-reconcile', async () => {
-      const r = await confirmationReconciler.reconcile();
-      if (r.healed > 0) console.log(`Confirmation reconciler: re-drove ${r.healed} unconfirmed bookings (of ${r.checked} checked)`);
-    }, { leaseMs: CONFIRMATION_RECONCILE_MIN * 2 * 60 * 1000 });
-  } catch (err) { console.error('Confirmation reconciler cron error:', err.message); }
-}, CONFIRMATION_RECONCILE_MIN * 60 * 1000);
-
-// Payout reconciler (P2) — the safety net the host payout rail never had. Creates
-// missing/failed Route transfers for payout-eligible hosts, finalizes held transfers
-// whose transfer.processed webhook was missed, and alerts the founder when host money
-// can't be paid out (Route activation stuck, etc.). Mode-gated via
-// platform_settings.payout_reconciler_mode (off | observe | live); 'observe' by
-// default → scans + alerts but moves NO money. Idempotent + retry-capped. Default 15 min.
 const payoutReconciler = require('./services/payoutReconciler');
-const PAYOUT_RECONCILE_MIN = Number(process.env.PAYOUT_RECONCILE_INTERVAL_MIN || 15);
-setInterval(async () => {
-  try {
-    await runLocked('payout-reconcile', async () => {
-      const r = await payoutReconciler.reconcile();
-      if (r.created || r.finalized) console.log(`Payout reconciler (${r.mode}): created ${r.created || 0}, finalized ${r.finalized || 0}`);
-    }, { leaseMs: PAYOUT_RECONCILE_MIN * 2 * 60 * 1000 });
-  } catch (err) { console.error('Payout reconciler cron error:', err.message); }
-}, PAYOUT_RECONCILE_MIN * 60 * 1000);
-
-// Bank-holiday payout-delay notice — a weekly (Friday, IST) heads-up to hosts with a
-// recently-released payout when an upcoming RBI bank holiday will push its bank
-// settlement out a working day. Self-gating (no-ops except on a Friday before a
-// weekday holiday); emails only, moves no money. Runs daily; the service gates to Friday.
 const payoutHolidayNotice = require('./services/payoutHolidayNotice');
-setInterval(async () => {
-  try {
-    await runLocked('payout-holiday-notice', async () => {
-      const r = await payoutHolidayNotice.run();
-      if (r.notified) console.log(`Payout holiday notice: ${r.notified} host(s) for ${r.holiday}`);
-    }, { leaseMs: 60 * 60 * 1000 });
-  } catch (err) { console.error('Payout holiday notice cron error:', err.message); }
-}, 24 * 60 * 60 * 1000);
-
-// Referral reward release (v3.76) — flips qualified referrals to rewarded once the
-// hold window passes and the referred host is still paying (clawing back churned/
-// refunded ones), crediting the referrer's withdrawable balance. Idempotent; hourly.
 const referralService = require('./services/referralService');
-setInterval(async () => {
-  try {
-    await runLocked('referral-release', async () => {
-      const r = await referralService.releaseDue();
-      if (r.released || r.clawed) console.log(`Referral release: +${r.released} rewarded, ${r.clawed} clawed back`);
-    }, { leaseMs: 2 * 60 * 60 * 1000 });
-  } catch (err) { console.error('Referral release cron error:', err.message); }
-}, 60 * 60 * 1000);
-
-// Rate-limit store housekeeping — prune expired rows so the rate_limit_hits table
-// can't grow unbounded once the persistent store is enabled (RATE_LIMIT_STORE_URL).
-// No-op while the store is off, so this is free on single-instance/in-memory setups.
+const crmAttribution = require('./services/crm/attribution');
+const crmLifecycleEngine = require('./services/crm/lifecycleEngine');
+const crmGuestEngine = require('./services/crm/guestRelationshipEngine');
 const { cleanupExpired: cleanupRateLimitHits } = require('./middleware/rateLimitStore');
-setInterval(async () => {
-  try {
-    await runLocked('rate-limit-cleanup', async () => {
-      const n = await cleanupRateLimitHits();
-      if (n > 0) console.log(`Rate-limit store: pruned ${n} expired rows`);
-    }, { leaseMs: 2 * 60 * 60 * 1000 });
-  } catch (err) { console.error('Rate-limit cleanup cron error:', err.message); }
-}, 60 * 60 * 1000);
 
-// IP blocklist housekeeping — prune expired (non-permanent) bans so the table
-// can't grow unbounded under a sustained attack. Hourly; the cache already ignores
-// expired rows, so this is pure DB cleanup. No-op if the tables don't exist yet.
+const SCHEDULED_JOBS = [
+  { name: 'auto-complete', min: AUTO_COMPLETE_INTERVAL_MIN, run: () => autoCompleteBookings() },
+  { name: 'otp-cleanup', min: 60, run: () => cleanupOtps() },
+  { name: 'subscription-expiry', min: 6 * 60, run: () => require('./services/subscriptionExpiry').processSubscriptionExpiry() },
+  { name: 'guest-host-invite', min: 24 * 60, run: () => require('./services/guestHostInvite').processGuestHostInvites() },
+  { name: 'profile-completion', min: 12 * 60, run: () => require('./services/profileCompletion').processProfileCompletion() },
+  { name: 'birthday', min: 12 * 60, run: () => require('./services/birthdayGreetings').processBirthdays() },
+  { name: 'weekly-recap', min: 24 * 60, run: async () => { const r = await require('./services/weeklyHostRecap').sendWeeklyRecaps(); if (r.sent) console.log(`Weekly recap: ${r.sent} sent, ${r.skipped} skipped`); } },
+  { name: 'support-insights-digest', min: 24 * 60, run: async () => { const r = await require('./services/supportInsightsDigest').sendWeeklyInsightsDigest(); if (r.sent) console.log(`Support digest: sent to ${r.recipients} recipient(s)`); } },
+  { name: 'crm-attribution', min: Number(process.env.CRM_ATTRIBUTION_INTERVAL_MIN) || 60, run: async () => { const r = await crmAttribution.run(); if (r.linked || r.updated) console.log(`CRM attribution: ${r.linked} linked, ${r.updated} refreshed`); } },
+  { name: 'crm-lifecycle-engine', min: Number(process.env.CRM_LIFECYCLE_INTERVAL_MIN) || 15, run: async () => { const r = await crmLifecycleEngine.run(); if (r.moved || r.enrolled || r.tasks || r.churned) console.log(`CRM lifecycle: ${r.moved} moved, ${r.enrolled} enrolled, ${r.tasks} tasks, ${r.churned || 0} churned (scanned ${r.scanned}${r.dryRun ? ', dryrun' : ''})`); } },
+  { name: 'crm-guest-engine', min: Number(process.env.CRM_GUEST_ENGINE_INTERVAL_MIN) || 60, run: async () => { const r = await crmGuestEngine.run(); if (r.recs) console.log(`CRM guest engine: ${r.recs} recs from ${r.customers} customers (scanned ${r.scanned})`); } },
+  { name: 'badge-eval', min: parseInt(process.env.BADGE_EVAL_INTERVAL_MIN) || 60, run: async () => { const r = await badgeEngine.evaluate(); if (r.awarded || r.revoked) console.log(`Badge engine: +${r.awarded} awarded, -${r.revoked} revoked`); } },
+  { name: 'ledger-reconcile', min: Number(process.env.LEDGER_RECONCILE_INTERVAL_MIN || 60), run: async () => { const r = await ledgerReconciler.reconcile(); if (r.reposted > 0) console.log(`Ledger reconciler: reposted ${r.reposted} missed entries`); } },
+  { name: 'subscription-reconcile', min: Number(process.env.SUBSCRIPTION_RECONCILE_INTERVAL_MIN || 15), run: async () => { const r = await subscriptionReconciler.reconcile(); if (r.healed > 0) console.log(`Subscription reconciler: activated ${r.healed} pending subscriptions`); if (r.released > 0) console.log(`Subscription reconciler: released ${r.released} orphaned pending mandates`); if (r.recorded > 0) console.log(`Subscription reconciler: booked ${r.recorded} missing subscription charges`); } },
+  { name: 'booking-reconcile', min: Number(process.env.BOOKING_RECONCILE_INTERVAL_MIN || 15), run: async () => { const r = await bookingPaymentReconciler.reconcile(); if (r.healed > 0) console.log(`Booking reconciler: confirmed ${r.healed} paid bookings (of ${r.checked} checked)`); } },
+  { name: 'confirmation-reconcile', min: Number(process.env.CONFIRMATION_RECONCILE_INTERVAL_MIN || 15), run: async () => { const r = await confirmationReconciler.reconcile(); if (r.healed > 0) console.log(`Confirmation reconciler: re-drove ${r.healed} unconfirmed bookings (of ${r.checked} checked)`); } },
+  { name: 'payout-reconcile', min: Number(process.env.PAYOUT_RECONCILE_INTERVAL_MIN || 15), run: async () => { const r = await payoutReconciler.reconcile(); if (r.created || r.finalized) console.log(`Payout reconciler (${r.mode}): created ${r.created || 0}, finalized ${r.finalized || 0}`); } },
+  { name: 'payout-holiday-notice', min: 24 * 60, run: async () => { const r = await payoutHolidayNotice.run(); if (r.notified) console.log(`Payout holiday notice: ${r.notified} host(s) for ${r.holiday}`); } },
+  { name: 'referral-release', min: 60, run: async () => { const r = await referralService.releaseDue(); if (r.released || r.clawed) console.log(`Referral release: +${r.released} rewarded, ${r.clawed} clawed back`); } },
+  { name: 'rate-limit-cleanup', min: 60, run: async () => { const n = await cleanupRateLimitHits(); if (n > 0) console.log(`Rate-limit store: pruned ${n} expired rows`); } },
+  { name: 'ip-block-prune', min: 60, run: async () => { const n = await ipBlocklist.pruneExpired(); if (n > 0) console.log(`IP blocklist: pruned ${n} expired bans`); } },
+];
+const SCHEDULER_TICK_MIN = Number(process.env.SCHEDULER_TICK_MIN) || 5;
 setInterval(async () => {
-  try {
-    await runLocked('ip-block-prune', async () => {
-      const n = await ipBlocklist.pruneExpired();
-      if (n > 0) console.log(`IP blocklist: pruned ${n} expired bans`);
-    }, { leaseMs: 2 * 60 * 60 * 1000 });
-  } catch (err) { console.error('IP blocklist prune cron error:', err.message); }
-}, 60 * 60 * 1000);
+  for (const job of SCHEDULED_JOBS) {
+    try { await runIfDue(job.name, job.min * 60 * 1000, job.run); }
+    catch (err) { console.error(`Scheduled job ${job.name} error:`, err.message); }
+  }
+}, SCHEDULER_TICK_MIN * 60 * 1000);
 
 // Feature flags — seed any registry keys missing from the DB on boot (all ON,
 // never overwrites an admin's existing on/off choice). Best-effort; the admin
