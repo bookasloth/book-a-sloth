@@ -1,6 +1,24 @@
 # Current Work — Book A Sloth
 _Last updated: 2026-09-02_
 
+## Relationship engine Phase 2 — PR-8 sends-live proof + runbook — 2026-09-02
+
+> **Status: IN PROGRESS on `feat/crm-sends-live`.** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. No migration, no code-behaviour change. The PR ships the **proof + runbook**; the actual flip is a founder-gated, staged operational step (below), NOT in the merged diff.
+
+Turning `crm_admin_sends` ON is the moment the CRM goes from advisory to actually contacting people. Before that flip, this locks the invariant that **"sends ON" can never mean "uncapped / ungated"**.
+
+- **Bypass audit — clean.** Both CRM send primitives already pass `sendGate.canSend` first: `emailService.send` (line 50) and `whatsappService.send` (line 46), and they are the only leaves `messageService.dispatch` calls. `NotificationEngine` is not used for CRM sends (only `touchGovernor` records). Birthday is a separate platform feature (its own `birthday_greetings` flag + the governor), deliberately not under `crm_admin_sends`.
+- **`crmSendGateEnforcement.test.js`** — end-to-end proof with the flag ON: a clean subject reaches the provider exactly once; kill-switch off / do-not-contact / opt-out / a governor cap each skip WITHOUT touching the provider. Leaf providers (`sendEmail` / `aisensy.sendCampaign`) mocked; the real gate + governor delegation runs.
+- **The flag stays FAIL_CLOSED in code forever** (`featureFlags.FAIL_CLOSED_KEYS`). "On" is a DB `feature_flags` row, revocable instantly.
+
+### Go-live runbook (founder-gated — throw the switch, don't merge it)
+1. **Staging first.** Enable `crm_admin_sends` on staging (Tokyo) only. Watch the CRM message log + governor skips for one full lifecycle cycle; confirm caps hold and volume is sane.
+2. **Document** the staging result here.
+3. **Prod flip** only after founder sign-off. This is a separate switch, not part of the PR.
+4. **Rollback** = disable the DB row; sends stop instantly (fail-closed).
+
+---
+
 ## Relationship engine Phase 2 — governor + health signals — 2026-09-02
 
 > **Status: MERGED to main. PRs #925 (PR-7) + #927 (PR-7.5). No migration. Sends stay OFF (`crm_admin_sends` fail-closed) — these only add gating + sharpen targeting, they do not enable delivery.** Next: PR-8 (the sends-live proof), then two-clock header, then PR-9 (guests). Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`.
