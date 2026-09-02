@@ -7,13 +7,15 @@ const mockRpc = jest.fn();
 jest.mock('../../config/supabase', () => ({
   supabaseAdmin: { rpc: (...args) => mockRpc(...args) },
 }));
+const mockAdminAlert = jest.fn();
+jest.mock('../../utils/adminAlert', () => ({ adminAlert: (...a) => mockAdminAlert(...a) }));
 
 function loadFresh() {
   jest.resetModules();
   return require('../../utils/jobLock');
 }
 
-beforeEach(() => { mockRpc.mockReset(); });
+beforeEach(() => { mockRpc.mockReset(); mockAdminAlert.mockReset(); });
 
 describe('acquire', () => {
   test('passes the job name, a stable holder id, and the lease to the RPC', async () => {
@@ -36,16 +38,29 @@ describe('acquire', () => {
     expect(await acquire('reminders', 1000)).toBe(false);
   });
 
-  test('fails OPEN (true) when the RPC returns an error (e.g. migration missing)', async () => {
+  test('fails OPEN (true) and alerts when the RPC returns an error (e.g. migration missing)', async () => {
     const { acquire } = loadFresh();
     mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'function does not exist' } });
     expect(await acquire('reminders', 1000)).toBe(true);
+    expect(mockAdminAlert).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'joblock_fail_open' }),
+    );
   });
 
-  test('fails OPEN (true) when the RPC call throws (DB down)', async () => {
+  test('fails OPEN (true) and alerts when the RPC call throws (DB down)', async () => {
     const { acquire } = loadFresh();
     mockRpc.mockRejectedValueOnce(new Error('ECONNREFUSED'));
     expect(await acquire('reminders', 1000)).toBe(true);
+    expect(mockAdminAlert).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'joblock_fail_open' }),
+    );
+  });
+
+  test('does NOT alert on a normal win', async () => {
+    const { acquire } = loadFresh();
+    mockRpc.mockResolvedValueOnce({ data: true, error: null });
+    expect(await acquire('reminders', 1000)).toBe(true);
+    expect(mockAdminAlert).not.toHaveBeenCalled();
   });
 });
 
