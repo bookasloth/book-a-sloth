@@ -607,6 +607,17 @@ const getSettings = async (req, res) => {
 const updateSettings = async (req, res) => {
   try {
     const entries = Object.entries(req.body);
+    // Capture the prior values so the audit records what CHANGED (audit F12).
+    // These keys move money and silence customer comms — platform_fee, gst_rate,
+    // fee_only_mode, payout_reconciler_mode, maintenance_mode — and were previously
+    // written with no trail of who changed them or from what.
+    const keys = entries.map(([k]) => k);
+    let before = {};
+    if (keys.length) {
+      const { data: prior } = await supabaseAdmin
+        .from('platform_settings').select('key, value').in('key', keys);
+      before = Object.fromEntries((prior || []).map((r) => [r.key, r.value]));
+    }
     for (const [key, value] of entries) {
       await supabaseAdmin
         .from('platform_settings')
@@ -616,6 +627,10 @@ const updateSettings = async (req, res) => {
     try { require('../services/platformConfig').clearCache(); } catch (_) {}
     // Maintenance mode reads from the same table — bust its cache too.
     try { require('../middleware/maintenanceMiddleware').clearCache(); } catch (_) {}
+    await audit(req, {
+      action: 'settings.update', resource_type: 'platform_settings', resource_id: keys.join(','),
+      before, after: Object.fromEntries(entries),
+    });
     res.json({ message: 'Settings updated' });
   } catch (error) {
     safeError(res, error);
