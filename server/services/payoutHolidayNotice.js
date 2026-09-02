@@ -9,8 +9,9 @@
  * booking (bookings.holiday_notice_sent_at). Emails only — moves no money.
  */
 const { supabaseAdmin } = require('../config/supabase');
-const { istDate, upcomingDelayingHoliday, nextSettlementDay } = require('../utils/bankHolidays');
+const { istDate, upcomingDelayingHoliday, nextSettlementDay, holidayCalendarStatus } = require('../utils/bankHolidays');
 const payoutEmails = require('./payoutEmails');
+const { adminAlert } = require('../utils/adminAlert');
 
 const LOOKBACK_DAYS = Number(process.env.HOLIDAY_NOTICE_LOOKBACK_DAYS || 3);
 const LIMIT = 500;
@@ -19,6 +20,24 @@ const SKIP_SETTLE = new Set(['cancelled', 'not_eligible']);
 async function run(now = Date.now()) {
   const ist = istDate(now);
   if (ist.dow !== 5) return { skipped: 'not_friday', ymd: ist.ymd };          // Fridays only
+
+  // F19: once a week, flag a bank-holiday calendar that was never refreshed for the
+  // current year (an empty calendar would silently make upcomingDelayingHoliday
+  // return null forever — hosts under-warned, no error). adminAlert is throttled per
+  // key, so this pings ~weekly until someone tops it up. Best-effort; never blocks.
+  const cal = holidayCalendarStatus(now);
+  if (cal.stale) {
+    adminAlert({
+      key: `bank_holiday_stale:${cal.year}`,
+      subject: `Bank-holiday calendar for ${cal.year} looks incomplete (${cal.count} dates)`,
+      lines: [
+        `utils/bankHolidays.js has only ${cal.count} entries for ${cal.year}.`,
+        `Movable festival dates (Holi, both Eids, Diwali, Dussehra, Janmashtami, …) are added by hand each year.`,
+        `Until it's topped up from the RBI holiday calendar, host payout-delay notices will under-warn on those days.`,
+      ],
+    });
+  }
+
   const holiday = upcomingDelayingHoliday(ist.ymd, 4);
   if (!holiday) return { skipped: 'no_holiday', ymd: ist.ymd };
   const expected = nextSettlementDay(holiday.date);

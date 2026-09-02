@@ -7,6 +7,7 @@ const { validateCategorySelection } = require('../lib/categoryRules');
 const { clearHostServiceCategories } = require('../lib/serviceCategory');
 const { bustPublicReadCaches } = require('../services/publicCacheBust');
 const { purgeUserStorage } = require('../utils/purgeUserStorage');
+const { isValidBookingTransition } = require('./bookingController');
 
 // Admin-managed SEO fields (v3.19) — shared whitelist for service + profile SEO.
 // Builds a sanitised update payload from the request body; only provided keys
@@ -345,7 +346,24 @@ const updateBooking = async (req, res) => {
   try {
     const { status, payment_status } = req.body;
     const updates = { updated_at: new Date().toISOString() };
-    if (status) updates.status = status;
+
+    // F13: validate the STATUS transition instead of writing it raw. The host/guest
+    // handlers guard their own transitions (only-confirmed-may-complete, etc.); this
+    // editor didn't, so an admin could force cancelled→completed (re-recognising
+    // revenue for a cancelled session) or completed→confirmed (un-closing a settled
+    // row). Read the current status and reject an illegal move.
+    if (status) {
+      const { data: current } = await supabaseAdmin
+        .from('bookings').select('status').eq('id', req.params.id).single();
+      if (!current) return res.status(404).json({ message: 'Booking not found' });
+      if (!isValidBookingTransition(current.status, status)) {
+        return res.status(409).json({
+          message: `Can't move a booking from "${current.status}" to "${status}".`,
+          code: 'INVALID_TRANSITION',
+        });
+      }
+      updates.status = status;
+    }
     if (payment_status) {
       // SECURITY: 'paid' may ONLY be set by the verified Razorpay payment flow.
       // Allowing it here lets an admin fabricate a withdrawable vendor balance.
@@ -376,10 +394,65 @@ const updateBooking = async (req, res) => {
 
 const deleteBooking = async (req, res) => {
   try {
+    // F13: never hard-delete a booking that carries money. A paid/refunded booking
+    // is a financial record — its GST invoice, ledger entries and confirmation email
+    // all reference this id, and journal_entries.source_id has no FK to bookings, so
+    // a delete leaves an orphaned ledger entry pointing at a row that no longer
+    // exists. Only an unpaid booking may be removed; use cancel for anything paid.
+    const { data: bk } = await supabaseAdmin
+      .from('bookings').select('payment_status').eq('id', req.params.id).maybeSingle();
+    if (!bk) return res.status(404).json({ message: 'Booking not found' });
+    if (bk.payment_status && bk.payment_status !== 'unpaid') {
+      return res.status(409).json({
+        message: `A ${bk.payment_status} booking can't be deleted — it's a financial record. Cancel it instead.`,
+        code: 'PAID_BOOKING_DELETE_BLOCKED',
+      });
+    }
+
     const { error } = await supabaseAdmin.from('bookings').delete().eq('id', req.params.id);
     if (error) return safeError(res, error);
     await audit(req, { action: 'booking.delete', resource_type: 'booking', resource_id: req.params.id });
     res.json({ message: 'Booking deleted' });
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
+// GET /admin/bookings/:id/payment-events (F15) — the Razorpay webhook events that
+// reference this booking, so support can finally SEE a payment trail (a declined
+// card is a payment.failed carrying error_description) that previously left no
+// record anywhere. Reads the append-only webhook_events log (v3.143); a booking
+// payment carries notes.booking_id. Newest first, capped.
+const getBookingPaymentEvents = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { data, error } = await supabaseAdmin
+      .from('webhook_events')
+      .select('id, event_type, received_at, payload')
+      .eq('provider', 'razorpay')
+      .eq('payload->payload->payment->entity->notes->>booking_id', id)
+      .order('received_at', { ascending: false })
+      .limit(50);
+    if (error) {
+      // Pre-v3.143 (table absent) → empty, not an error.
+      if (/does not exist|Could not find|relation .* does not exist/i.test(error.message)) return res.json([]);
+      return safeError(res, error);
+    }
+    const events = (data || []).map((e) => {
+      const p = e.payload?.payload?.payment?.entity || {};
+      return {
+        id: e.id,
+        event_type: e.event_type,
+        at: e.received_at,
+        payment_id: p.id || null,
+        amount: p.amount != null ? Number(p.amount) / 100 : null,
+        method: p.method || null,
+        status: p.status || null,
+        error_code: p.error_code || null,
+        error: p.error_description || null,
+      };
+    });
+    res.json(events);
   } catch (error) {
     safeError(res, error);
   }
@@ -567,6 +640,17 @@ const getSettings = async (req, res) => {
 const updateSettings = async (req, res) => {
   try {
     const entries = Object.entries(req.body);
+    // Capture the prior values so the audit records what CHANGED (audit F12).
+    // These keys move money and silence customer comms — platform_fee, gst_rate,
+    // fee_only_mode, payout_reconciler_mode, maintenance_mode — and were previously
+    // written with no trail of who changed them or from what.
+    const keys = entries.map(([k]) => k);
+    let before = {};
+    if (keys.length) {
+      const { data: prior } = await supabaseAdmin
+        .from('platform_settings').select('key, value').in('key', keys);
+      before = Object.fromEntries((prior || []).map((r) => [r.key, r.value]));
+    }
     for (const [key, value] of entries) {
       await supabaseAdmin
         .from('platform_settings')
@@ -576,6 +660,10 @@ const updateSettings = async (req, res) => {
     try { require('../services/platformConfig').clearCache(); } catch (_) {}
     // Maintenance mode reads from the same table — bust its cache too.
     try { require('../middleware/maintenanceMiddleware').clearCache(); } catch (_) {}
+    await audit(req, {
+      action: 'settings.update', resource_type: 'platform_settings', resource_id: keys.join(','),
+      before, after: Object.fromEntries(entries),
+    });
     res.json({ message: 'Settings updated' });
   } catch (error) {
     safeError(res, error);
@@ -1001,6 +1089,7 @@ module.exports = {
   getAllBookings,
   updateBooking,
   deleteBooking,
+  getBookingPaymentEvents,
   getAllServices,
   updateService,
   deleteService,

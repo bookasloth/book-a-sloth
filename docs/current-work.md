@@ -3,12 +3,28 @@ _Last updated: 2026-09-02_
 
 ## Relationship engine Phase 2 — two-clock lead header — 2026-09-02
 
-> **Status: IN PROGRESS on `feat/crm-two-clock-header`.** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. No migration. Server 2500 green, client 721 green.
+> **Status: MERGED to main (#931).** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. No migration. Server 2500 green, client 721 green.
 
 A single "last contacted" line lies by omission — an automated ping makes a cooling account look freshly tended. The Relationship Desk cards now show **two clocks**: the relationship clock (time since a human last had a *meaningful* conversation) and the machine clock (time since the last *automated* touch), so "no human has spoken to them in 41d, but a bot pinged them yesterday" is visible at a glance.
 
 - **Server:** `deskService.getRelationships` now also selects + flattens `last_automated_touch_at` (the field already existed on `leads` from v3.133; it just wasn't exposed). No migration.
 - **Client:** `TwoClock.jsx` (pure, unit-tested) — the **human** clock is coloured by staleness (`>21d` amber, `>45d` red; the relationship-risk signal); the **machine** clock stays neutral, because recency of automation is not a health signal and must never be dressed up as one. Replaces the old single "Last real talk" line on each `RecCard`.
+
+## Relationship engine Phase 2 — PR-8 sends-live proof + runbook — 2026-09-02
+
+> **Status: MERGED to main (#928).** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. No migration, no code-behaviour change. The PR shipped the **proof + runbook**; the actual flip is a founder-gated, staged operational step (below), NOT in the merged diff — `crm_admin_sends` stays OFF.
+
+Turning `crm_admin_sends` ON is the moment the CRM goes from advisory to actually contacting people. Before that flip, this locks the invariant that **"sends ON" can never mean "uncapped / ungated"**.
+
+- **Bypass audit — clean.** Both CRM send primitives already pass `sendGate.canSend` first: `emailService.send` (line 50) and `whatsappService.send` (line 46), and they are the only leaves `messageService.dispatch` calls. `NotificationEngine` is not used for CRM sends (only `touchGovernor` records). Birthday is a separate platform feature (its own `birthday_greetings` flag + the governor), deliberately not under `crm_admin_sends`.
+- **`crmSendGateEnforcement.test.js`** — end-to-end proof with the flag ON: a clean subject reaches the provider exactly once; kill-switch off / do-not-contact / opt-out / a governor cap each skip WITHOUT touching the provider. Leaf providers (`sendEmail` / `aisensy.sendCampaign`) mocked; the real gate + governor delegation runs.
+- **The flag stays FAIL_CLOSED in code forever** (`featureFlags.FAIL_CLOSED_KEYS`). "On" is a DB `feature_flags` row, revocable instantly.
+
+### Go-live runbook (founder-gated — throw the switch, don't merge it)
+1. **Staging first.** Enable `crm_admin_sends` on staging (Tokyo) only. Watch the CRM message log + governor skips for one full lifecycle cycle; confirm caps hold and volume is sane.
+2. **Document** the staging result here.
+3. **Prod flip** only after founder sign-off. This is a separate switch, not part of the PR.
+4. **Rollback** = disable the DB row; sends stop instantly (fail-closed).
 
 ## Relationship engine Phase 2 — governor + health signals — 2026-09-02
 

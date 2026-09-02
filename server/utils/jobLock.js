@@ -57,6 +57,23 @@ async function acquire(name, leaseMs) {
         'Apply migrations/v3.25_job_locks.sql to enable multi-instance safety.'
       );
     }
+    // Fail-open is SAFE on a single instance but re-introduces double execution on
+    // >1 (duplicate emails/reminders, reconcilers racing on money rows). When the
+    // lock DB is unreachable — or the migration is simply missing, exactly how this
+    // stayed invisible in production — surface it instead of only a one-time warn.
+    // adminAlert throttles per key (15 min), so a persistent outage re-pings rather
+    // than spamming; best-effort, never breaks the job path.
+    try {
+      require('./adminAlert').adminAlert({
+        key: 'joblock_fail_open',
+        subject: 'Cron leader-election unavailable — jobs running unlocked',
+        lines: [
+          `try_acquire_job_lock failed: ${err.message}`,
+          'Every instance is now running every scheduled job (fail-open). Harmless on a single instance; on more than one this double-sends emails/reminders and races the reconcilers.',
+          'Check that migrations/v3.25_job_locks.sql is applied and the database is reachable.',
+        ],
+      });
+    } catch (_) { /* alerting must never break the job path */ }
     return true; // fail-open — preserve single-instance behaviour
   }
 }
