@@ -57,4 +57,84 @@ function withinCap(timestamps, now = Date.now(), o = {}) {
   return count >= cap ? { ok: false, count, reason: 'frequency_capped' } : { ok: true, count };
 }
 
-module.exports = { withinCap, CAP, WINDOW_H, WINDOW_MS };
+// ── DB adapter ───────────────────────────────────────────────────────────────
+// Lazy requires keep withinCap() dependency-free (pure, no I/O at import).
+
+// Automated CONTACT activity types = the automated-touch ledger (is_meaningful=false).
+const CONTACT_ACTIVITY_TYPES = ['whatsapp_sent', 'email_sent', 'call_logged'];
+const CHANNEL_ACTIVITY = { whatsapp: 'whatsapp_sent', email: 'email_sent', call: 'call_logged' };
+
+/**
+ * Resolve a touch subject to the lead id whose ledger holds its automated touches.
+ *   { type:'lead', id }     → id
+ *   { type:'profile', id }  → the linked lead (leads.profile_id), if any
+ *   { type:'contact', id }  → null for now (guest ledger arrives in PR-9)
+ * Returns null when there is no ledger to read/write (→ callers fail-open / no-op).
+ */
+async function resolveLeadId(subject) {
+  if (!subject || !subject.id) return null;
+  if (subject.type === 'lead') return subject.id;
+  if (subject.type === 'profile') {
+    const { supabaseAdmin } = require('../../config/supabase');
+    const { data } = await supabaseAdmin.from('leads').select('id').eq('profile_id', subject.id).limit(1);
+    return data && data[0] ? data[0].id : null;
+  }
+  return null; // 'contact' → PR-9
+}
+
+/**
+ * May we send another AUTOMATED touch to this subject right now?
+ * FAIL-OPEN: a subject with no ledger (unlinked profile / guest pre-PR-9) or a read
+ * error returns ok — an outage must never silently freeze legitimate sends. A real
+ * in-window breach always caps.
+ * @param {{type:'lead'|'profile'|'contact', id:string}} subject
+ * @returns {Promise<{ok:boolean, count?:number, reason?:string}>}
+ */
+async function canTouch(subject, now = Date.now()) {
+  try {
+    const leadId = await resolveLeadId(subject);
+    if (!leadId) return { ok: true, count: 0 }; // no ledger → fail-open
+    const { supabaseAdmin } = require('../../config/supabase');
+    const cutoff = new Date(now - WINDOW_MS).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('lead_activities')
+      .select('occurred_at')
+      .eq('lead_id', leadId)
+      .eq('is_meaningful', false)
+      .in('type', CONTACT_ACTIVITY_TYPES)
+      .gte('occurred_at', cutoff);
+    if (error) return { ok: true }; // fail-open on read error
+    return withinCap((data || []).map((r) => r.occurred_at), now);
+  } catch (_) {
+    return { ok: true }; // fail-open
+  }
+}
+
+/**
+ * Record that an automated touch went out, onto the same ledger canTouch reads.
+ * Routes through activity.logActivity with NO actor → is_meaningful=false, bumps
+ * leads.last_automated_touch_at (never raises "meaningful"). Best-effort: a subject
+ * with no ledger no-ops (the send still happened), and a write error never throws.
+ * @param {{type:string, id:string}} subject
+ * @param {{channel?:'whatsapp'|'email'|'call', event?:string, meta?:object}} [o]
+ */
+async function recordTouch(subject, { channel = 'email', event = null, meta = {} } = {}) {
+  try {
+    const leadId = await resolveLeadId(subject);
+    if (!leadId) return; // guest-without-lead → no ledger yet (PR-9); send still occurred
+    const { logActivity } = require('./activity');
+    const type = CHANNEL_ACTIVITY[channel] || 'email_sent';
+    await logActivity(leadId, type, {
+      actorAdminId: null,
+      title: event ? `Automated touch: ${event}` : 'Automated touch',
+      meta: { ...meta, ...(event ? { event } : {}), governed: true },
+    });
+  } catch (e) {
+    console.error('[crm] touchGovernor.recordTouch:', e.message);
+  }
+}
+
+module.exports = {
+  withinCap, canTouch, recordTouch, resolveLeadId,
+  CAP, WINDOW_H, WINDOW_MS, CONTACT_ACTIVITY_TYPES, CHANNEL_ACTIVITY,
+};
