@@ -10,7 +10,7 @@ const { requireAdmin, requireSuperAdmin } = require('../middleware/adminMiddlewa
 
 const {
   getStats, getProviderPlanAnalytics, getProviderOverview, getRevenueTrend, getRevenueBreakdown, getUsers, getUserById, updateUser, deleteUser, adminSetUserCategories,
-  getAllBookings, updateBooking, deleteBooking,
+  getAllBookings, updateBooking, deleteBooking, getBookingPaymentEvents,
   getAllServices, updateService, deleteService, updateServiceSeo, updateProviderSeo,
   getSettings, updateSettings,
 } = require('../controllers/adminController');
@@ -52,6 +52,7 @@ router.patch('/users/:id/categories', requireAdmin('users.edit'), adminSetUserCa
 
 // ── Bookings ───────────────────────────────────────────────────
 router.get('/bookings',        requireAdmin('bookings.view'), getAllBookings);
+router.get('/bookings/:id/payment-events', requireAdmin('bookings.view'), getBookingPaymentEvents); // F15
 router.put('/bookings/:id',    requireAdmin('bookings.edit'), updateBooking);
 router.delete('/bookings/:id', requireAdmin('bookings.edit'), deleteBooking);
 

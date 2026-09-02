@@ -264,3 +264,32 @@ describe('updateBooking', () => {
 
 // NOTE: cleanupUsers was removed in M0 (destructive mass-delete must not live on
 // the admin API), so its tests were removed with it.
+
+// ── getBookingPaymentEvents (F15) ───────────────────────────────────────────
+const { getBookingPaymentEvents } = require('../../controllers/adminController');
+describe('getBookingPaymentEvents', () => {
+  test('maps a booking\'s webhook payment events (declined card is visible)', async () => {
+    const row = {
+      id: 'we1', event_type: 'payment.failed', received_at: '2026-09-02T10:00:00Z',
+      payload: { payload: { payment: { entity: { id: 'pay_9', amount: 59000, method: 'card', status: 'failed', error_code: 'BAD_REQUEST_ERROR', error_description: 'card declined', notes: { booking_id: 'bk1' } } } } },
+    };
+    supabaseAdmin.from.mockReturnValueOnce({
+      select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(), limit: jest.fn().mockResolvedValue({ data: [row], error: null }),
+    });
+    const r = res();
+    await getBookingPaymentEvents(req({ id: 'bk1' }), r);
+    const out = r.json.mock.calls[0][0];
+    expect(out[0]).toMatchObject({ event_type: 'payment.failed', payment_id: 'pay_9', amount: 590, error: 'card declined', status: 'failed' });
+  });
+
+  test('returns [] when the webhook_events table is absent (pre-v3.143)', async () => {
+    supabaseAdmin.from.mockReturnValueOnce({
+      select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(), limit: jest.fn().mockResolvedValue({ data: null, error: { message: 'relation "webhook_events" does not exist' } }),
+    });
+    const r = res();
+    await getBookingPaymentEvents(req({ id: 'bk1' }), r);
+    expect(r.json).toHaveBeenCalledWith([]);
+  });
+});

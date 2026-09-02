@@ -385,6 +385,46 @@ const deleteBooking = async (req, res) => {
   }
 };
 
+// GET /admin/bookings/:id/payment-events (F15) — the Razorpay webhook events that
+// reference this booking, so support can finally SEE a payment trail (a declined
+// card is a payment.failed carrying error_description) that previously left no
+// record anywhere. Reads the append-only webhook_events log (v3.143); a booking
+// payment carries notes.booking_id. Newest first, capped.
+const getBookingPaymentEvents = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { data, error } = await supabaseAdmin
+      .from('webhook_events')
+      .select('id, event_type, received_at, payload')
+      .eq('provider', 'razorpay')
+      .eq('payload->payload->payment->entity->notes->>booking_id', id)
+      .order('received_at', { ascending: false })
+      .limit(50);
+    if (error) {
+      // Pre-v3.143 (table absent) → empty, not an error.
+      if (/does not exist|Could not find|relation .* does not exist/i.test(error.message)) return res.json([]);
+      return safeError(res, error);
+    }
+    const events = (data || []).map((e) => {
+      const p = e.payload?.payload?.payment?.entity || {};
+      return {
+        id: e.id,
+        event_type: e.event_type,
+        at: e.received_at,
+        payment_id: p.id || null,
+        amount: p.amount != null ? Number(p.amount) / 100 : null,
+        method: p.method || null,
+        status: p.status || null,
+        error_code: p.error_code || null,
+        error: p.error_description || null,
+      };
+    });
+    res.json(events);
+  } catch (error) {
+    safeError(res, error);
+  }
+};
+
 // ══════════════════════════════════════
 // SERVICES
 // ══════════════════════════════════════
@@ -1001,6 +1041,7 @@ module.exports = {
   getAllBookings,
   updateBooking,
   deleteBooking,
+  getBookingPaymentEvents,
   getAllServices,
   updateService,
   deleteService,
