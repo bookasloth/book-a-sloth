@@ -478,6 +478,22 @@ setInterval(async () => {
   } catch (err) { console.error('CRM lifecycle engine error:', err.message); }
 }, CRM_LIFECYCLE_INTERVAL_MIN * 60 * 1000);
 
+// Guest relationship engine (PR-9): the lifecycle engine's relationship layer for GUESTS
+// (contacts, not leads). Computes each customer's health off booking recency + emits
+// guest touch_recommendations for those gone quiet / at a milestone. Runs less often than
+// the lead engine (the guest base is larger and slower-moving). Writes contact state +
+// recs only — sends stay gated by crm_admin_sends.
+const crmGuestEngine = require('./services/crm/guestRelationshipEngine');
+const CRM_GUEST_ENGINE_INTERVAL_MIN = Number(process.env.CRM_GUEST_ENGINE_INTERVAL_MIN) || 60;
+setInterval(async () => {
+  try {
+    await runLocked('crm-guest-engine', async () => {
+      const r = await crmGuestEngine.run();
+      if (r.recs) console.log(`CRM guest engine: ${r.recs} recs from ${r.customers} customers (scanned ${r.scanned})`);
+    }, { leaseMs: CRM_GUEST_ENGINE_INTERVAL_MIN * 2 * 60 * 1000 });
+  } catch (err) { console.error('CRM guest engine error:', err.message); }
+}, CRM_GUEST_ENGINE_INTERVAL_MIN * 60 * 1000);
+
 // Badge engine: scheduled full evaluation (interval configurable via env, default 60 min)
 const badgeEngine = require('./services/badgeEngine');
 const BADGE_EVAL_INTERVAL_MIN = parseInt(process.env.BADGE_EVAL_INTERVAL_MIN) || 60;

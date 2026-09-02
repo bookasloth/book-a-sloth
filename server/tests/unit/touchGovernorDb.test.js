@@ -63,10 +63,23 @@ describe('canTouch', () => {
     expect(supabaseAdmin.from).toHaveBeenCalledTimes(1); // never queried activities
   });
 
-  test('contact subject → PR-9 stub, fail-open, no query', async () => {
+  test('contact (guest) subject with a recent automated clock → capped', async () => {
+    supabaseAdmin.from.mockReturnValueOnce(qb({ data: { last_automated_touch_at: ago(10) }, error: null }));
+    const r = await governor.canTouch({ type: 'contact', id: 'c1' }, now);
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('frequency_capped');
+  });
+
+  test('contact (guest) subject with no automated clock → ok', async () => {
+    supabaseAdmin.from.mockReturnValueOnce(qb({ data: { last_automated_touch_at: null }, error: null }));
     const r = await governor.canTouch({ type: 'contact', id: 'c1' }, now);
     expect(r.ok).toBe(true);
-    expect(supabaseAdmin.from).not.toHaveBeenCalled();
+  });
+
+  test('contact read error / pre-v3.139 column → fail-open', async () => {
+    supabaseAdmin.from.mockReturnValueOnce(qb({ data: null, error: { message: 'column contacts.last_automated_touch_at does not exist' } }));
+    const r = await governor.canTouch({ type: 'contact', id: 'c1' }, now);
+    expect(r.ok).toBe(true);
   });
 });
 
@@ -97,5 +110,17 @@ describe('recordTouch', () => {
     supabaseAdmin.from.mockReturnValueOnce(qb({ data: [], error: null }));
     await expect(governor.recordTouch({ type: 'profile', id: 'x' }, { channel: 'email' })).resolves.toBeUndefined();
     expect(logActivity).not.toHaveBeenCalled();
+  });
+
+  test('contact (guest) stamps the contacts clock directly — no lead_activities write', async () => {
+    const updates = [];
+    supabaseAdmin.from.mockImplementation((t) => ({
+      update: (vals) => { updates.push({ t, vals }); return { eq: () => Promise.resolve({ error: null }) }; },
+    }));
+    await governor.recordTouch({ type: 'contact', id: 'c1' }, { channel: 'email', event: 'BIRTHDAY' });
+    expect(logActivity).not.toHaveBeenCalled();
+    expect(updates[0].t).toBe('contacts');
+    expect(updates[0].vals).toHaveProperty('last_automated_touch_at');
+    expect(updates[0].vals).toHaveProperty('last_activity_at');
   });
 });

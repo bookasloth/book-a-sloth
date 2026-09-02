@@ -125,15 +125,39 @@ async function get(id) {
 async function complete({ recId, adminId = null, channel = null, outcome = null }) {
   const rec = await get(recId);
   if (!rec) return { ok: false, notFound: true };
-  const type = CHANNEL_TYPE[channel] || 'touch_logged';
-  await logActivity(rec.lead_id, type, {
-    actorAdminId: adminId,
-    title: `Relationship touch: ${rec.reason}`,
-    meta: { recommendation_id: recId, touch_type: rec.touch_type, outcome: outcome || null },
-    touchReason: rec.reason,
-  });
+  if (rec.subject_type === 'guest' || rec.contact_id) {
+    // Guest rec: there is no lead_activities row (no lead). A human personally reaching
+    // the guest IS a meaningful interaction — stamp the contact's clocks directly so the
+    // guest's health recomputes off the fresh contact on the next guest-engine tick.
+    await completeGuest(rec, channel);
+  } else {
+    const type = CHANNEL_TYPE[channel] || 'touch_logged';
+    await logActivity(rec.lead_id, type, {
+      actorAdminId: adminId,
+      title: `Relationship touch: ${rec.reason}`,
+      meta: { recommendation_id: recId, touch_type: rec.touch_type, outcome: outcome || null },
+      touchReason: rec.reason,
+    });
+  }
   await markDone(recId, { adminId, outcome });
   return { ok: true };
+}
+
+// Stamp a guest contact's meaningful/activity clocks (v3.139) when a human completes a
+// guest touch. Best-effort — degrades quietly on a pre-v3.139 DB (missing column).
+async function completeGuest(rec, channel) {
+  if (!rec.contact_id) return;
+  try {
+    const now = new Date().toISOString();
+    await supabaseAdmin.from('contacts').update({
+      last_meaningful_interaction_at: now,
+      last_meaningful_channel: channel || null,
+      last_activity_at: now,
+      updated_at: now,
+    }).eq('id', rec.contact_id);
+  } catch (e) {
+    console.error('[crm] touchRec completeGuest:', e.message);
+  }
 }
 
 module.exports = { upsertOpen, snooze, dismiss, markDone, get, complete, COOLDOWN_DAYS };

@@ -58,3 +58,16 @@ test('unknown rec → notFound, nothing logged', async () => {
   expect(r).toEqual({ ok: false, notFound: true });
   expect(logActivity).not.toHaveBeenCalled();
 });
+
+test('a GUEST rec stamps the contact clocks directly (no lead_activities write)', async () => {
+  const updates = mockDb({ id: 'r9', subject_type: 'guest', contact_id: 'c9', lead_id: null, reason: 'dormant', touch_type: 'winback' });
+  const r = await svc.complete({ recId: 'r9', adminId: 'a1', channel: 'email', outcome: 'sent' });
+  expect(r).toEqual({ ok: true });
+  expect(logActivity).not.toHaveBeenCalled();       // no lead → no timeline row
+  // stamps the guest's meaningful/activity clocks, then closes the rec
+  const stamp = updates.find((u) => u.last_meaningful_interaction_at);
+  expect(stamp).toMatchObject({ last_meaningful_channel: 'email' });
+  expect(stamp).toHaveProperty('last_activity_at');
+  const done = updates.find((u) => u.status === 'done');
+  expect(done).toMatchObject({ status: 'done', acted_by_admin_id: 'a1' });
+});
