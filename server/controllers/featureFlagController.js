@@ -2,6 +2,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { safeError } = require('../utils/httpError');
 const featureFlags = require('../services/featureFlags');
 const { REGISTRY } = require('../config/featureRegistry');
+const { audit } = require('../services/auditService');
 
 /**
  * Upsert every registry flag into feature_flags WITHOUT touching the `enabled`
@@ -50,6 +51,11 @@ const toggleFlag = async (req, res) => {
     const { enabled } = req.body;
     if (typeof enabled !== 'boolean')
       return res.status(400).json({ message: 'enabled (boolean) is required' });
+    // Capture the prior value for the audit trail — a kill-switch flip (send
+    // suppression, payments, confirmation emails) is a high-leverage action and
+    // was previously recorded nowhere (audit F12).
+    const { data: prior } = await supabaseAdmin
+      .from('feature_flags').select('enabled').eq('key', req.params.key).maybeSingle();
     const { data, error } = await supabaseAdmin
       .from('feature_flags')
       .update({ enabled, updated_at: new Date().toISOString(), updated_by: req.admin?.id || req.user?.id || null })
@@ -58,6 +64,10 @@ const toggleFlag = async (req, res) => {
     if (error) return safeError(res, error);
     if (!data) return res.status(404).json({ message: 'Flag not found' });
     featureFlags.clearCache();
+    await audit(req, {
+      action: 'feature_flag.toggle', resource_type: 'feature_flag', resource_id: req.params.key,
+      before: { enabled: prior?.enabled }, after: { enabled },
+    });
     res.json(data);
   } catch (e) { safeError(res, e); }
 };
@@ -85,6 +95,10 @@ const createFlag = async (req, res) => {
     const { data, error } = await supabaseAdmin.from('feature_flags').insert(row).select().single();
     if (error) return safeError(res, error);
     featureFlags.clearCache();
+    await audit(req, {
+      action: 'feature_flag.create', resource_type: 'feature_flag', resource_id: key,
+      after: { label: row.label, category: row.category, scope: row.scope, enabled: row.enabled },
+    });
     res.status(201).json(data);
   } catch (e) { safeError(res, e); }
 };
