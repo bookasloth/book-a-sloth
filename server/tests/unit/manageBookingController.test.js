@@ -4,14 +4,16 @@
  * delegates to the shared cancelBookingRecord (mocked here).
  */
 jest.mock('../../utils/httpError', () => ({ safeError: (res) => res.status(500).json({ message: 'err' }) }));
-jest.mock('../../utils/manageBookingToken', () => ({ verify: jest.fn() }));
+jest.mock('../../utils/manageBookingToken', () => ({ verify: jest.fn(), sign: jest.fn(() => 'signed-token') }));
 jest.mock('../../controllers/bookingController', () => ({ cancelBookingRecord: jest.fn() }));
+jest.mock('../../controllers/paymentController', () => ({ buildBookingOrder: jest.fn() }));
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const manageBookingToken = require('../../utils/manageBookingToken');
 const { cancelBookingRecord } = require('../../controllers/bookingController');
-const { getByToken, cancelByToken } = require('../../controllers/manageBookingController');
+const { buildBookingOrder } = require('../../controllers/paymentController');
+const { getByToken, cancelByToken, payByToken } = require('../../controllers/manageBookingController');
 
 // Drive supabaseAdmin.from('bookings').select().eq().single() → { data }.
 const mockBooking = (booking) => {
@@ -97,5 +99,46 @@ describe('cancelByToken', () => {
     const r = res();
     await cancelByToken({ params: { token: 'bad' } }, r);
     expect(r.status).toHaveBeenCalledWith(401);
+  });
+});
+
+describe('payByToken (F7 — resume payment from the link)', () => {
+  test('401 on an invalid/expired token — no order built', async () => {
+    manageBookingToken.verify.mockReturnValue(null);
+    const r = res();
+    await payByToken({ params: { token: 'bad' }, body: {} }, r);
+    expect(r.status).toHaveBeenCalledWith(401);
+    expect(buildBookingOrder).not.toHaveBeenCalled();
+  });
+
+  test('404 when the token is valid but the booking is gone', async () => {
+    manageBookingToken.verify.mockReturnValue('b1');
+    mockBooking(null);
+    const r = res();
+    await payByToken({ params: { token: 'ok' }, body: {} }, r);
+    expect(r.status).toHaveBeenCalledWith(404);
+    expect(buildBookingOrder).not.toHaveBeenCalled();
+  });
+
+  test('token possession authorizes the order — delegates to the shared builder', async () => {
+    manageBookingToken.verify.mockReturnValue('b1');
+    const pending = { ...BOOKING, status: 'pending', payment_status: 'unpaid' };
+    mockBooking(pending);
+    buildBookingOrder.mockResolvedValue({ status: 200, body: { razorpay_order_id: 'order_1', amount: 1180, key: 'rzp_key' } });
+    const r = res();
+    await payByToken({ params: { token: 'ok' }, body: { billing_details: { state: 'Maharashtra' } } }, r);
+    expect(buildBookingOrder).toHaveBeenCalledWith(pending, { billingFromRequest: { state: 'Maharashtra' } });
+    expect(r.status).toHaveBeenCalledWith(200);
+    expect(r.json.mock.calls[0][0]).toMatchObject({ razorpay_order_id: 'order_1' });
+  });
+
+  test('surfaces the builder\'s own status/body (e.g. already paid)', async () => {
+    manageBookingToken.verify.mockReturnValue('b1');
+    mockBooking({ ...BOOKING, payment_status: 'paid' });
+    buildBookingOrder.mockResolvedValue({ status: 400, body: { message: 'Already paid' } });
+    const r = res();
+    await payByToken({ params: { token: 'ok' }, body: {} }, r);
+    expect(r.status).toHaveBeenCalledWith(400);
+    expect(r.json.mock.calls[0][0]).toMatchObject({ message: 'Already paid' });
   });
 });

@@ -383,6 +383,8 @@ export const cancelBooking     = (id)              => API.put(`/bookings/${id}/c
 // Public token-authed guest self-service (no session) — /manage-booking/:token (#516)
 export const getManageBooking    = (token)         => API.get(`/manage-booking/${token}`);
 export const cancelManageBooking = (token)         => API.post(`/manage-booking/${token}/cancel`);
+// F7: resume payment for the one booking the token authorizes (recovery-email link).
+export const payManageBooking    = (token, body)   => API.post(`/manage-booking/${token}/pay-order`, body || {});
 export const completeBooking   = (id)              => API.put(`/bookings/${id}/complete`);
 export const guestCompleteBooking = (id)           => API.put(`/bookings/${id}/guest-complete`);
 export const guestReportProblem   = (id, reason)   => API.put(`/bookings/${id}/report-problem`, { reason });

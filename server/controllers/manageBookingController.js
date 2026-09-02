@@ -73,4 +73,25 @@ const cancelByToken = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
-module.exports = { getByToken, cancelByToken };
+// POST /api/manage-booking/:token/pay-order — create (or reuse) the Razorpay
+// order to finish paying for THIS one booking. Serves the abandoned-checkout
+// recovery gap (audit F7): the recovery email links here, and an anonymous guest
+// who left mid-payment can now complete it instead of only cancelling. Token
+// possession IS the authorization (scoped to one booking id); the money logic is
+// the SAME buildBookingOrder the session create-order uses, so the two can't drift.
+const payByToken = async (req, res) => {
+  try {
+    const bid = manageBookingToken.verify(req.params.token);
+    if (!bid) return res.status(401).json({ message: 'This link is invalid or has expired.' });
+    const { data: booking } = await supabaseAdmin
+      .from('bookings')
+      .select('*, services(price, title, duration, grace_period_minutes)')
+      .eq('id', bid).single();
+    if (!booking) return res.status(404).json({ message: 'Booking not found.' });
+    const { buildBookingOrder } = require('./paymentController');
+    const r = await buildBookingOrder(booking, { billingFromRequest: req.body?.billing_details });
+    return res.status(r.status).json(r.body);
+  } catch (e) { safeError(res, e); }
+};
+
+module.exports = { getByToken, cancelByToken, payByToken };
