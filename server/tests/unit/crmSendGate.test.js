@@ -1,9 +1,11 @@
 // CRM send gate — the safety checkpoint every outbound send passes.
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 jest.mock('../../services/featureFlags', () => ({ isFeatureEnabled: jest.fn() }));
+jest.mock('../../services/crm/touchGovernor', () => ({ canTouch: jest.fn() }));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const featureFlags = require('../../services/featureFlags');
+const governor = require('../../services/crm/touchGovernor');
 const { canSend, validEmail } = require('../../services/crm/sendGate');
 
 // from(table) → chain resolving maybeSingle() to the row registered for that table.
@@ -73,64 +75,48 @@ test('validEmail helper', () => {
   expect(validEmail('')).toBe(false);
 });
 
-// ── Coordinated-conversation throttle (automated sends only) ────────────────
-// crm_messages count chain: from().select(id,{count}).eq().in(status,[…]).gte() → { count }.
-// Captures the status list passed to .in() so we can assert delivered/read count too.
-let capturedStatuses = null;
-const countChain = (count) => ({
-  select: () => ({ eq: () => ({ in: (_col, vals) => { capturedStatuses = vals; return { gte: () => Promise.resolve({ count }) }; } }) }),
-});
-// Route crm_messages to a count chain (n prior sends in window); everything else
-// to the normal maybeSingle chain.
-const withRecentSends = (n) =>
-  supabaseAdmin.from.mockImplementation((t) => (t === 'crm_messages' ? countChain(n) : chain(t)));
-beforeEach(() => { capturedStatuses = null; });
-
+// ── Coordinated-conversation throttle (automated sends only) → touch governor ──
+// The cap now delegates to touchGovernor.canTouch (the ONE master cap across every
+// automated touch); sendGate keeps only quiet-hours. These assert the delegation +
+// the exemptions, not the count mechanics (those are touchGovernorDb's tests).
 const IST_NOON = new Date('2025-01-15T06:30:00Z');  // 12:00 IST — inside window
 const IST_NIGHT = new Date('2025-01-15T17:00:00Z'); // 22:30 IST — outside window
 afterEach(() => jest.useRealTimers());
 
-test('automated send is frequency-capped when a message went out in the last 48h', async () => {
+test('automated send is frequency-capped when the governor caps the subject', async () => {
   jest.useFakeTimers().setSystemTime(IST_NOON);
-  withRecentSends(1);
+  governor.canTouch.mockResolvedValue({ ok: false, reason: 'frequency_capped' });
   const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
   expect(r).toEqual({ ok: false, reason: 'frequency_capped', defer: true });
+  expect(governor.canTouch).toHaveBeenCalledWith({ type: 'lead', id: 'L1' });
 });
 
-test('the cap counts delivered/read too, not only sent (webhook-advanced messages still count)', async () => {
+test('automated send passes when the governor allows it', async () => {
   jest.useFakeTimers().setSystemTime(IST_NOON);
-  withRecentSends(1);
-  await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
-  expect(capturedStatuses).toEqual(expect.arrayContaining(['sent', 'delivered', 'read']));
-});
-
-test('automated send passes when no recent message and inside window', async () => {
-  jest.useFakeTimers().setSystemTime(IST_NOON);
-  withRecentSends(0);
+  governor.canTouch.mockResolvedValue({ ok: true });
   const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
   expect(r).toEqual({ ok: true });
 });
 
-test('automated send is deferred outside quiet hours (before the cap query)', async () => {
+test('automated send is deferred outside quiet hours (before consulting the governor)', async () => {
   jest.useFakeTimers().setSystemTime(IST_NIGHT);
-  withRecentSends(0);
+  governor.canTouch.mockResolvedValue({ ok: true });
   const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
   expect(r).toEqual({ ok: false, reason: 'quiet_hours', defer: true });
+  expect(governor.canTouch).not.toHaveBeenCalled();
 });
 
-test('human composer send is EXEMPT from cap + quiet hours', async () => {
-  jest.useFakeTimers().setSystemTime(IST_NIGHT); // night AND recent send present
-  withRecentSends(5);
+test('human composer send is EXEMPT from cap + quiet hours (governor not consulted)', async () => {
+  jest.useFakeTimers().setSystemTime(IST_NIGHT);
+  governor.canTouch.mockResolvedValue({ ok: false, reason: 'frequency_capped' });
   const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp'); // automated omitted → false
   expect(r).toEqual({ ok: true });
+  expect(governor.canTouch).not.toHaveBeenCalled();
 });
 
-test('cap query failure fails OPEN (send proceeds)', async () => {
+test('governor failure fails OPEN (send proceeds)', async () => {
   jest.useFakeTimers().setSystemTime(IST_NOON);
-  supabaseAdmin.from.mockImplementation((t) =>
-    t === 'crm_messages'
-      ? ({ select: () => ({ eq: () => ({ in: () => ({ gte: () => { throw new Error('db down'); } }) }) }) })
-      : chain(t));
+  governor.canTouch.mockRejectedValue(new Error('db down'));
   const r = await canSend({ id: 'L1', phone: '9876543210' }, 'whatsapp', { automated: true });
   expect(r).toEqual({ ok: true });
 });

@@ -5,10 +5,15 @@
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 jest.mock('../../services/featureFlags', () => ({ isFeatureEnabled: jest.fn() }));
 jest.mock('../../services/notificationEngine', () => ({ send: jest.fn(async () => ({ email: { success: true } })) }));
+jest.mock('../../services/crm/touchGovernor', () => ({
+  canTouch: jest.fn(async () => ({ ok: true })),
+  recordTouch: jest.fn(async () => {}),
+}));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const featureFlags = require('../../services/featureFlags');
 const NotificationEngine = require('../../services/notificationEngine');
+const governor = require('../../services/crm/touchGovernor');
 const { processBirthdays } = require('../../services/birthdayGreetings');
 
 const NOW = new Date('2026-06-15T09:00:00Z').getTime(); // today = 06-15, year 2026
@@ -44,6 +49,25 @@ test('greets a birthday today (not yet greeted this year) and stamps it', async 
   expect(arg.data).toMatchObject({ email: 'a@x.com', recipientUserId: 'p1' });
   expect(arg.data.emailData.first_name).toBe('Asha');
   expect(updates[0]).toHaveProperty('birthday_greeted_at');
+  // Records the automated touch on the governor's ledger (as a profile subject).
+  expect(governor.recordTouch).toHaveBeenCalledWith(
+    { type: 'profile', id: 'p1' },
+    expect.objectContaining({ channel: 'email', event: 'BIRTHDAY' }),
+  );
+});
+
+test('governor cap skips the send and does NOT stamp (retries when the cap clears)', async () => {
+  featureFlags.isFeatureEnabled.mockResolvedValue(true);
+  governor.canTouch.mockResolvedValueOnce({ ok: false, reason: 'frequency_capped' });
+  const updates = mockProfiles([
+    { id: 'p1', name: 'Asha Kumar', email: 'a@x.com', date_of_birth: '1990-06-15', birthday_greeted_at: null },
+  ]);
+  const r = await processBirthdays(NOW);
+  expect(r.sent).toBe(0);
+  expect(r.skipped).toBe(1);
+  expect(NotificationEngine.send).not.toHaveBeenCalled();
+  expect(updates).toHaveLength(0); // never stamped → next tick can retry
+  expect(governor.recordTouch).not.toHaveBeenCalled();
 });
 
 test('skips already-greeted-this-year and no-email; ignores non-today birthdays', async () => {

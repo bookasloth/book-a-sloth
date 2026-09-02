@@ -19,13 +19,17 @@
 const { supabaseAdmin } = require('../../config/supabase');
 const { isFeatureEnabled } = require('../featureFlags');
 const { normalizePhone } = require('../aisensyService');
+const governor = require('./touchGovernor');
 
 const SEND_FLAG = 'crm_admin_sends';
 
 // Coordinated-conversation limits — apply to AUTOMATED sends only (sequences /
 // queue-drained), never to a human's ad-hoc composer send. A `defer:true` reason
 // means "not now, try later" (re-queue) rather than "never" (skip).
-const CAP_WINDOW_MS = 48 * 60 * 60 * 1000;   // ≤1 automated message per lead / 48h
+// The frequency cap itself now lives in touchGovernor — the ONE master cap across
+// every automated touch (CRM sends, birthday, milestones) — so a CRM send is capped
+// against birthday/milestone touches too, not just other CRM messages. Quiet-hours
+// stays here (it's a CRM-send concern, not a per-touch one).
 const QUIET_START_IST = 9;                   // send window [09:00, 20:00) Asia/Kolkata
 const QUIET_END_IST = 20;
 
@@ -39,23 +43,17 @@ function istHour() {
   }).format(new Date()));
 }
 
-// Quiet-hours + frequency cap. Returns a defer result to block, or null to allow.
-// Fail-open on the count query (matches the opt-out lookups) — an outage must not
-// silently freeze every automated send.
+// Quiet-hours + the global frequency cap. Returns a defer result to block, or null
+// to allow. Quiet-hours is checked first (cheap, no I/O); the cap then delegates to
+// the touch governor, which counts the lead's automated-touch ledger (lead_activities
+// — CRM sends AND birthday/milestone touches). FAIL-OPEN: the governor never throws,
+// and this guards defensively too, so an outage never silently freezes every send.
 async function throttle(lead) {
   const h = istHour();
   if (h < QUIET_START_IST || h >= QUIET_END_IST) return { ok: false, reason: 'quiet_hours', defer: true };
   try {
-    const since = new Date(Date.now() - CAP_WINDOW_MS).toISOString();
-    // Count every message that actually went out in the window — not just those
-    // still at 'sent'. A provider webhook advances a message to 'delivered'/'read'
-    // seconds later; counting only 'sent' let a delivered message slip past the
-    // cap, so a second automated send could go out inside the 48h window.
-    const { count } = await supabaseAdmin
-      .from('crm_messages')
-      .select('id', { count: 'exact', head: true })
-      .eq('lead_id', lead.id).in('status', ['sent', 'delivered', 'read']).gte('sent_at', since);
-    if ((count || 0) > 0) return { ok: false, reason: 'frequency_capped', defer: true };
+    const gate = await governor.canTouch({ type: 'lead', id: lead.id });
+    if (!gate.ok) return { ok: false, reason: gate.reason || 'frequency_capped', defer: true };
   } catch (_) { /* fail-open */ }
   return null;
 }

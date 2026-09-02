@@ -14,6 +14,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const featureFlags = require('./featureFlags');
 const NotificationEngine = require('./notificationEngine');
+const governor = require('./crm/touchGovernor');
 
 // Month/day in UTC — DOB is a date-only value stored/parsed as UTC midnight, so both
 // sides of the comparison use the same frame.
@@ -44,6 +45,13 @@ async function processBirthdays(now = Date.now()) {
       if (greetedYear === thisYear) { out.skipped += 1; continue; }                 // already greeted this year
       if (!p.email) { out.skipped += 1; continue; }
 
+      // Global touch cap: a birthday counts against the same per-person ceiling as
+      // CRM/milestone touches (hosts resolve to their lead ledger; a pure guest with
+      // no ledger fails open until PR-9). Capped → skip WITHOUT stamping, so the next
+      // tick retries once the window clears rather than losing the birthday for a year.
+      const gate = await governor.canTouch({ type: 'profile', id: p.id }, now);
+      if (!gate.ok) { out.skipped += 1; continue; }
+
       await NotificationEngine.send({
         event: 'BIRTHDAY',
         data: {
@@ -56,6 +64,8 @@ async function processBirthdays(now = Date.now()) {
       });
       await supabaseAdmin.from('profiles')
         .update({ birthday_greeted_at: new Date(now).toISOString() }).eq('id', p.id);
+      // Record onto the governor's ledger so this birthday counts toward the cap.
+      await governor.recordTouch({ type: 'profile', id: p.id }, { channel: 'email', event: 'BIRTHDAY' });
       out.sent += 1;
     } catch (e) {
       console.error(`[birthday] profile ${p.id} failed:`, e.message);
