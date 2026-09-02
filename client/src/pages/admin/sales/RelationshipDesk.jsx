@@ -5,7 +5,7 @@ import LeadDrawer from './LeadDrawer';
 import {
   crmGetRelationships, crmRecommendationDone, crmRecommendationSnooze, crmRecommendationDismiss,
 } from '../../../services/api';
-import { relTime } from './salesConstants';
+import TwoClock from './TwoClock';
 
 // The Relationship Desk: "who should I talk to today, and why?" — one ranked list of
 // open touch recommendations the lifecycle engine emitted (first success, cooling,
@@ -75,11 +75,7 @@ function RecCard({ rec, onOpen, onAction, busy }) {
       {rec.explanation && <p className="text-[11px] adm-t3 mt-1.5">{rec.explanation}</p>}
 
       <div className="flex items-center justify-between mt-2">
-        <span className="text-[11px] adm-t3">
-          {rec.last_meaningful_interaction_at
-            ? `Last real talk ${relTime(rec.last_meaningful_interaction_at)}`
-            : 'No meaningful contact yet'}
-        </span>
+        <TwoClock meaningfulAt={rec.last_meaningful_interaction_at} automatedAt={rec.last_automated_touch_at} />
         <div className="flex flex-wrap gap-1">
           <button type="button" disabled={busy} onClick={(e) => fire(e, 'done')}
             className="text-[10px] px-2 py-0.5 rounded-md border border-gray-200 hover:border-[#FE5100]/50 text-emerald-600 disabled:opacity-50">Mark done</button>

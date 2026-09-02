@@ -9,15 +9,15 @@ const ITEMS = [
   { id: 'r1', lead_id: 'L1', name: 'Priya Sharma', business_name: null, reason: 'first_success',
     touch_type: 'appreciation', priority: 'high', suggested_channel: 'whatsapp', suggested_sender: 'owner',
     mode: 'recommend', explanation: 'Landed their first paid booking.', health_state: 'thriving',
-    last_meaningful_interaction_at: '2026-06-15T10:00:00Z' },
+    last_meaningful_interaction_at: '2026-06-15T10:00:00Z', last_automated_touch_at: '2026-06-20T10:00:00Z' },
   { id: 'r2', lead_id: 'L2', name: 'Rahul Verma', business_name: null, reason: 'cooling',
     touch_type: 'check_in', priority: 'medium', suggested_channel: 'email', suggested_sender: 'owner',
     mode: 'recommend', explanation: 'Cooling — last meaningful contact 24d ago.', health_state: 'cooling',
-    last_meaningful_interaction_at: null },
+    last_meaningful_interaction_at: null, last_automated_touch_at: null },
   { id: 'g1', lead_id: null, contact_id: 'C9', subject_type: 'guest', name: 'Anita Guest', business_name: null,
     reason: 'dormant', touch_type: 'winback', priority: 'low', suggested_channel: 'email', suggested_sender: 'owner',
     mode: 'recommend', explanation: 'Gone quiet after being an active customer.', health_state: 'dormant',
-    last_meaningful_interaction_at: '2026-05-01T10:00:00Z' },
+    last_meaningful_interaction_at: '2026-05-01T10:00:00Z', last_automated_touch_at: '2026-05-10T10:00:00Z' },
 ];
 
 vi.mock('../services/api', () => ({
@@ -39,7 +39,9 @@ test('renders ranked recommendations with name, reason and health', async () => 
   expect(screen.getByText('First success')).toBeInTheDocument(); // reason label
   expect(screen.getByText('Gone quiet')).toBeInTheDocument();
   expect(screen.getByText('Thriving')).toBeInTheDocument();      // health chip
-  expect(screen.getByText('No meaningful contact yet')).toBeInTheDocument(); // r2's null last-meaningful
+  // Two-clock header: r2 has neither timestamp → both clocks read "never".
+  expect(screen.getByText('Human never')).toBeInTheDocument();
+  expect(screen.getByText('Auto never')).toBeInTheDocument();
 });
 
 test('a guest rec renders with a Guest badge alongside lead recs', async () => {

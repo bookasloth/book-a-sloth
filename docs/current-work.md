@@ -10,10 +10,18 @@ The last Phase 2 item: extend the Relationship Desk to **guests** (bookers, in `
 - **The key reuse:** `relationshipHealth`'s dominant signal is time-since-a-meaningful-*human* interaction — which a guest almost never has. So for a guest the meaningful interaction **is a booking** (a real relationship event): feeding last-booking as `last_meaningful_interaction_at` makes health read as "hasn't rebooked in ~90d → cooling/at_risk" — exactly the guest signal — with **zero change to the pure functions**. Only actual customers (a paid booking) are processed; recent bookers read healthy → no rec, so the Desk stays high-signal.
 - **v3.139:** `touch_recommendations.contact_id` + `contacts` touch-clock & health columns (mirror leads v3.133/v3.135).
 - **`guestRelationshipEngine.js`** (60-min cron): pure ctx/subject/remap + `run()`. `touchGovernor` gains a `contact` subject (guests use the single `contacts.last_automated_touch_at` clock). `touchRecommendationService.complete` stamps a guest's contact clocks instead of a null-lead activity. `deskService` unions guest recs via a **separate** query that fails soft on a pre-v3.139 DB (the lead Desk never breaks). Client: guest rows carry a **Guest** badge and aren't drawer-clickable (no guest conversation view); quick-actions work the same.
+## Relationship engine Phase 2 — two-clock lead header — 2026-09-02
+
+> **Status: MERGED to main (#931).** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. No migration. Server 2500 green, client 721 green.
+
+A single "last contacted" line lies by omission — an automated ping makes a cooling account look freshly tended. The Relationship Desk cards now show **two clocks**: the relationship clock (time since a human last had a *meaningful* conversation) and the machine clock (time since the last *automated* touch), so "no human has spoken to them in 41d, but a bot pinged them yesterday" is visible at a glance.
+
+- **Server:** `deskService.getRelationships` now also selects + flattens `last_automated_touch_at` (the field already existed on `leads` from v3.133; it just wasn't exposed). No migration.
+- **Client:** `TwoClock.jsx` (pure, unit-tested) — the **human** clock is coloured by staleness (`>21d` amber, `>45d` red; the relationship-risk signal); the **machine** clock stays neutral, because recency of automation is not a health signal and must never be dressed up as one. Replaces the old single "Last real talk" line on each `RecCard`.
 
 ## Relationship engine Phase 2 — PR-8 sends-live proof + runbook — 2026-09-02
 
-> **Status: IN PROGRESS on `feat/crm-sends-live`.** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. No migration, no code-behaviour change. The PR ships the **proof + runbook**; the actual flip is a founder-gated, staged operational step (below), NOT in the merged diff.
+> **Status: MERGED to main (#928).** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. No migration, no code-behaviour change. The PR shipped the **proof + runbook**; the actual flip is a founder-gated, staged operational step (below), NOT in the merged diff — `crm_admin_sends` stays OFF.
 
 Turning `crm_admin_sends` ON is the moment the CRM goes from advisory to actually contacting people. Before that flip, this locks the invariant that **"sends ON" can never mean "uncapped / ungated"**.
 
@@ -26,8 +34,6 @@ Turning `crm_admin_sends` ON is the moment the CRM goes from advisory to actuall
 2. **Document** the staging result here.
 3. **Prod flip** only after founder sign-off. This is a separate switch, not part of the PR.
 4. **Rollback** = disable the DB row; sends stop instantly (fail-closed).
-
----
 
 ## Relationship engine Phase 2 — governor + health signals — 2026-09-02
 

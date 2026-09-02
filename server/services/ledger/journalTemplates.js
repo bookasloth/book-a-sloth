@@ -63,12 +63,21 @@ function orderPaymentEntry(snapshot) {
   const gatewayTotal = round2(Number(snapshot.razorpay_fee_actual || 0) + Number(snapshot.razorpay_tax_actual || 0));
   const gstTotal = round2(Number(snapshot.platform_fee_gst || 0) + Number(snapshot.commission_gst || 0));
 
+  // The host bears the gateway fee only when they were actually paid something
+  // (it was netted out of vendor_amount). On a ₹0 fee-only booking the host is
+  // owed nothing, so BAS — which kept the booking fee — bears the MDR instead.
+  const hostBorneFee = Number(snapshot.vendor_amount) > 0;
+
   const lines = [
     // BAS asset — cash Razorpay collected from the guest (gross of gateway MDR).
     line(ACCOUNTS.RAZORPAY_RECEIVABLE, 'debit', snapshot.customer_total, tags),
-    // Host pass-through — the host's net payout we now owe the host (NOT revenue).
-    line(ACCOUNTS.VENDOR_PAYABLES, 'credit', snapshot.vendor_amount, tags),
   ];
+  if (Number(snapshot.vendor_amount) > 0) {
+    // Host pass-through — the host's net payout we now owe the host (NOT revenue).
+    // Skipped entirely when 0: post_journal_entry rejects a zero-value line
+    // ("each line must have exactly one of debit/credit > 0").
+    lines.push(line(ACCOUNTS.VENDOR_PAYABLES, 'credit', snapshot.vendor_amount, tags));
+  }
   if (Number(snapshot.platform_fee_amount) > 0) {
     // BAS revenue — the booking fee, ex-GST.
     lines.push(line(ACCOUNTS.PLATFORM_FEE_REVENUE, 'credit', snapshot.platform_fee_amount, tags));
@@ -91,7 +100,7 @@ function orderPaymentEntry(snapshot) {
   const tcs = round2(Number(snapshot.tcs_amount || 0));
   if (tds > 0) lines.push(line(ACCOUNTS.TDS_PAYABLE, 'credit', tds, tags));   // 194-O income-tax
   if (tcs > 0) lines.push(line(ACCOUNTS.TCS_PAYABLE, 'credit', tcs, tags));   // §52 GST-TCS
-  if (gatewayTotal > 0) {
+  if (gatewayTotal > 0 && hostBorneFee) {
     // Razorpay cost, HOST-borne: MDR is deducted from the remittance, so relieve
     // the receivable and expense it, then credit the expense back — the 5000
     // account nets to 0 because the host (not BAS) bears it (already netted out
@@ -99,6 +108,14 @@ function orderPaymentEntry(snapshot) {
     lines.push(line(ACCOUNTS.RZP_CHARGES_ORDERS, 'debit', gatewayTotal, tags));
     lines.push(line(ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit', gatewayTotal, tags));
     lines.push(line(ACCOUNTS.RZP_CHARGES_ORDERS, 'credit', gatewayTotal, tags));
+  } else if (gatewayTotal > 0) {
+    // Razorpay cost, BAS-borne (fee-only ₹0 service — the host is owed nothing,
+    // so no payout absorbed the MDR). Mirror the subscription path: a REAL
+    // platform expense with no credit-back. Relieve the receivable to the net
+    // cash Razorpay actually remits, and book the fee as a 5000 expense. This is
+    // what keeps a fee-only booking's entry balanced with no negative/zero line.
+    lines.push(line(ACCOUNTS.RZP_CHARGES_ORDERS, 'debit', gatewayTotal, tags));
+    lines.push(line(ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit', gatewayTotal, tags));
   }
   return {
     description: `Order payment — booking ${snapshot.booking_id}`,

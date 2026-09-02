@@ -54,6 +54,39 @@ describe('orderPaymentEntry (marketplace v4)', () => {
     expect(lines.find((l) => l.account_code === ACCOUNTS.RZP_CHARGES_ORDERS)).toBeUndefined();
   });
 
+  test('fee-only ₹0 booking: host owed nothing, BAS bears the gateway fee, no negative/zero line', () => {
+    // The exact shape behind the production bug (F1): a ₹0 fee-only service.
+    // customer_total = fee 10 + GST 1.80; host payout 0; Razorpay fee ₹0.28.
+    // Old behaviour subtracted the fee from a 0 payout → vendor_amount -0.28 →
+    // a NEGATIVE journal line the RPC rejects → the entry never posted.
+    const feeOnly = {
+      booking_id: 'bf', host_id: 'v1',
+      service_price: 0, platform_fee_amount: 10, platform_fee_gst: 1.8,
+      commission_applied: 0, commission_gst: 0, commission_taxable: 0,
+      tds_amount: 0, tcs_amount: 0,
+      razorpay_fee_actual: 0.28, razorpay_tax_actual: 0,
+      vendor_amount: 0, customer_total: 11.8,
+    };
+    const { lines } = orderPaymentEntry(feeOnly);
+
+    // Balances.
+    expect(sum(lines, 'debit')).toBe(sum(lines, 'credit'));
+    // No host-payout line at all (a zero-value line is rejected by the RPC).
+    expect(lines.find((l) => l.account_code === ACCOUNTS.VENDOR_PAYABLES)).toBeUndefined();
+    // Gateway is BAS-borne: expensed once, NOT credited back (no net-to-zero pair).
+    expect(lineFor(lines, ACCOUNTS.RZP_CHARGES_ORDERS, 'debit').debit).toBe(0.28);
+    expect(lines.find((l) => l.account_code === ACCOUNTS.RZP_CHARGES_ORDERS && l.credit > 0)).toBeUndefined();
+    // Receivable relieved to the net cash Razorpay actually remits.
+    expect(lineFor(lines, ACCOUNTS.RAZORPAY_RECEIVABLE, 'credit').credit).toBe(0.28);
+
+    // The two invariants post_journal_entry enforces line-by-line: no negative
+    // amount, and exactly one of debit/credit positive per line.
+    for (const l of lines) {
+      expect(l.debit >= 0 && l.credit >= 0).toBe(true);
+      expect((l.debit > 0) !== (l.credit > 0)).toBe(true);
+    }
+  });
+
   test('legacy pre-v4 row (no commission_taxable/TDS/TCS) books commission gross and balances', () => {
     const legacy = {
       booking_id: 'b0', host_id: 'v1',
