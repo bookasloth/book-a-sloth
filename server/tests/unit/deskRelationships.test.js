@@ -40,9 +40,9 @@ describe('getRelationships', () => {
       select: () => ({ eq: () => ({ limit: () => Promise.resolve({
         data: [
           { id: 'r1', lead_id: 'L1', reason: 'cooling', priority: 'medium', created_at: '2026-01-02',
-            leads: { name: 'Priya', health_state: 'cooling', health_score: 44, last_meaningful_interaction_at: '2026-01-01' } },
+            leads: { name: 'Priya', health_state: 'cooling', health_score: 44, last_meaningful_interaction_at: '2026-01-01', last_automated_touch_at: '2026-01-05' } },
           { id: 'r2', lead_id: 'L2', reason: 'at_risk', priority: 'high', created_at: '2026-01-03',
-            leads: { name: 'Rahul', health_state: 'at_risk', health_score: 20, last_meaningful_interaction_at: null } },
+            leads: { name: 'Rahul', health_state: 'at_risk', health_score: 20, last_meaningful_interaction_at: null, last_automated_touch_at: null } },
         ],
         error: null,
       }) }) }),
@@ -50,8 +50,10 @@ describe('getRelationships', () => {
     const { count, items } = await deskService.getRelationships(25);
     expect(count).toBe(2);
     expect(items[0]).toMatchObject({ id: 'r2', reason: 'at_risk', name: 'Rahul', health_state: 'at_risk' }); // high priority first
-    expect(items[1]).toMatchObject({ id: 'r1', name: 'Priya', health_score: 44 });
+    expect(items[1]).toMatchObject({ id: 'r1', name: 'Priya', health_score: 44, last_automated_touch_at: '2026-01-05' });
+    // Both clocks are exposed for the two-clock header (human = meaningful, machine = automated).
     expect(items[0].last_meaningful_interaction_at).toBeNull();
+    expect(items[0].last_automated_touch_at).toBeNull();
   });
 
   test('missing table (pre-v3.136) → empty queue, not a 500', async () => {
