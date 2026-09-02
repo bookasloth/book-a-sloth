@@ -112,6 +112,21 @@ Items previously listed here as pending are now live:
     (a notice self-clears once the host fixes the problem; `resolveInApp` wires KYC-approved
     → clears `KYC_REJECTED`, subscription charge → clears `SUBSCRIPTION_HALTED`).
 
+- **Relationship engine Phase 2** (audit follow-on, PRs #925/#927/#928/#931/#936) — merged 2026-09-02.
+  Only PR-9 needed a migration; the rest are code-only (governor, health signals, sends-proof, two-clock):
+  - **`v3.139_touch_rec_guest_subject.sql`** — applied 2026-09-02 on BOTH DBs (staging Tokyo
+    `xwvciqkayammbvsidqig` first, then prod Mumbai `ayjhlwyzszykqtnaktpb`) via Supabase MCP and
+    verified identical (10 columns present on each): `touch_recommendations.contact_id` (FK
+    contacts, ON DELETE CASCADE) lets a guest rec set `subject_type='guest'` + `contact_id` with a
+    null `lead_id`; `contacts` gains the same touch-clock columns as leads' v3.133
+    (`last_meaningful_interaction_at` / `last_meaningful_channel` / `meaningful_interaction_count` /
+    `last_automated_touch_at` / `last_activity_at`) and the health columns from v3.135
+    (`health_state` CHECK + `health_score` / `health_signals` / `health_computed_at`). Additive,
+    RLS unchanged (service-role only). Code is schema-fallback safe (`guestRelationshipEngine`
+    skips the health write, `deskService` guest query fails soft) so it was safe before apply.
+  - **`crm_admin_sends` stays fail-closed OFF** — Phase 2 is advisory only until a founder-gated,
+    staged flip (staging → sign-off → prod). Runbook in `docs/current-work.md`.
+
 No migration is currently outstanding. Workflow for any NEW migration: run it on BOTH DBs, and keep the
 code-side schema fallback (SELECT/INSERT destructure) until it is confirmed applied everywhere.
 
