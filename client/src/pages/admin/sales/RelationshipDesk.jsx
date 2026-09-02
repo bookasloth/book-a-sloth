@@ -37,17 +37,27 @@ function HealthChip({ state }) {
 }
 
 function RecCard({ rec, onOpen, onAction, busy }) {
-  const open = () => onOpen(rec.lead_id);
+  // Lead recs open the shared LeadDrawer for the real conversation. Guest recs (PR-9)
+  // have no lead conversation view, so the card isn't drawer-clickable — its quick
+  // actions still work.
+  const isGuest = rec.subject_type === 'guest';
+  const clickable = !isGuest && !!rec.lead_id;
+  const open = () => { if (clickable) onOpen(rec.lead_id); };
   const fire = (e, action) => { e.stopPropagation(); onAction(rec, action); };
   return (
-    <div role="button" tabIndex={0} onClick={open}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }}
-      className="w-full text-left px-4 py-3 rounded-xl adm-hoverable border border-transparent hover:border-[#FE5100]/40 transition cursor-pointer">
+    <div role={clickable ? 'button' : undefined} tabIndex={clickable ? 0 : undefined} onClick={open}
+      onKeyDown={(e) => { if (clickable && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } }}
+      className={`w-full text-left px-4 py-3 rounded-xl adm-hoverable border border-transparent transition ${clickable ? 'hover:border-[#FE5100]/40 cursor-pointer' : ''}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full shrink-0 ${PRIORITY_DOT[rec.priority] || PRIORITY_DOT.low}`} title={`${rec.priority} priority`} />
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold adm-t1 truncate">{rec.name || rec.business_name || 'Unnamed lead'}</p>
+            <p className="text-[13px] font-semibold adm-t1 truncate flex items-center gap-1.5">
+              {rec.name || rec.business_name || (isGuest ? 'Guest' : 'Unnamed lead')}
+              <span className={`text-[9px] px-1 py-0.5 rounded font-semibold shrink-0 ${isGuest ? 'bg-sky-500/10 text-sky-600' : 'bg-gray-400/10 adm-t3'}`}>
+                {isGuest ? 'Guest' : 'Lead'}
+              </span>
+            </p>
             {rec.business_name && rec.name && <p className="text-[11px] adm-t3 truncate">{rec.business_name}</p>}
           </div>
         </div>

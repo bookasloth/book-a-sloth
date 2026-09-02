@@ -1,6 +1,16 @@
 # Current Work — Book A Sloth
 _Last updated: 2026-09-02_
 
+## Relationship engine Phase 2 — PR-9 guests via contacts — 2026-09-02
+
+> **Status: IN PROGRESS on `feat/crm-guests-relationships`.** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. **Needs migration v3.139** (apply via Supabase MCP, staging first) — code is schema-fallback safe until then. Sends stay OFF. Server 2555 green, client 715 green.
+
+The last Phase 2 item: extend the Relationship Desk to **guests** (bookers, in `contacts`) — **not** a parallel pipeline. The same pure `relationshipHealth` / `relationshipTouch` functions run over a guest-shaped subject and emit `touch_recommendations` with `subject_type='guest'` + `contact_id`; the Desk unions lead- and guest-backed recs.
+
+- **The key reuse:** `relationshipHealth`'s dominant signal is time-since-a-meaningful-*human* interaction — which a guest almost never has. So for a guest the meaningful interaction **is a booking** (a real relationship event): feeding last-booking as `last_meaningful_interaction_at` makes health read as "hasn't rebooked in ~90d → cooling/at_risk" — exactly the guest signal — with **zero change to the pure functions**. Only actual customers (a paid booking) are processed; recent bookers read healthy → no rec, so the Desk stays high-signal.
+- **v3.139:** `touch_recommendations.contact_id` + `contacts` touch-clock & health columns (mirror leads v3.133/v3.135).
+- **`guestRelationshipEngine.js`** (60-min cron): pure ctx/subject/remap + `run()`. `touchGovernor` gains a `contact` subject (guests use the single `contacts.last_automated_touch_at` clock). `touchRecommendationService.complete` stamps a guest's contact clocks instead of a null-lead activity. `deskService` unions guest recs via a **separate** query that fails soft on a pre-v3.139 DB (the lead Desk never breaks). Client: guest rows carry a **Guest** badge and aren't drawer-clickable (no guest conversation view); quick-actions work the same.
+
 ## Relationship engine Phase 2 — PR-8 sends-live proof + runbook — 2026-09-02
 
 > **Status: IN PROGRESS on `feat/crm-sends-live`.** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. No migration, no code-behaviour change. The PR ships the **proof + runbook**; the actual flip is a founder-gated, staged operational step (below), NOT in the merged diff.
