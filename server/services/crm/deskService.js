@@ -211,13 +211,14 @@ function flattenRec(r) {
     name: lead.name ?? null, business_name: lead.business_name ?? null,
     health_state: lead.health_state ?? null, health_score: lead.health_score ?? null,
     last_meaningful_interaction_at: lead.last_meaningful_interaction_at ?? null,
+    last_automated_touch_at: lead.last_automated_touch_at ?? null,
   };
 }
 
 async function getRelationships(limit = DEFAULT_LIMIT) {
   const { data, error } = await supabaseAdmin
     .from('touch_recommendations')
-    .select('id, lead_id, reason, touch_type, priority, suggested_channel, suggested_sender, mode, explanation, due_at, created_at, leads(name, business_name, health_state, health_score, last_meaningful_interaction_at)')
+    .select('id, lead_id, reason, touch_type, priority, suggested_channel, suggested_sender, mode, explanation, due_at, created_at, leads(name, business_name, health_state, health_score, last_meaningful_interaction_at, last_automated_touch_at)')
     .eq('status', 'open')
     .limit(CANDIDATE_CAP);
   // Schema-fallback: pre-v3.136 DB (table missing) → empty queue, never a 500.
