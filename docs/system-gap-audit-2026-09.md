@@ -53,13 +53,13 @@ Ordered by severity. Every finding has file/line or SQL evidence.
 
 **Severity: CRITICAL** · **CONFIRMED** · Backend / Payments / Data / Monitoring
 
-**Finding.** In fee-only mode (host price forced to ₹0, platform collects only its own booking fee), the Razorpay gateway fee is still subtracted from the host, producing a **negative `vendor_amount`**. A negative vendor payout makes the `ORDER_PAYMENT` journal entry unbalanced, `post_journal_entry` rejects it, `postSafe` swallows the error, and the hourly `ledgerReconciler` re-attempts and re-fails forever.
+**Finding.** In fee-only mode (host price forced to ₹0, platform collects only its own booking fee), the Razorpay gateway fee is still subtracted from the host, producing a **negative `vendor_amount`**. That puts a **negative journal line** into the `ORDER_PAYMENT` entry, which `post_journal_entry` rejects on its line-amount guard (`RAISE EXCEPTION 'line amounts cannot be negative'`) — the entry's debits and credits actually sum equal, so it is the negative line, not an imbalance, that kills it. `postSafe` swallows the error, and the hourly `ledgerReconciler` re-attempts and re-fails forever.
 
-**Expected behaviour.** A host who sold nothing cannot owe the platform money; `vendor_amount` should floor at 0 and the gateway fee should be borne by whoever collected the revenue (BAS, in fee-only mode). A ledger entry that can never balance should be quarantined and alerted after N failures, not retried silently forever.
+**Expected behaviour.** A host who sold nothing cannot owe the platform money; `vendor_amount` should floor at 0 and the gateway fee should be borne by whoever collected the revenue (BAS, in fee-only mode). A ledger entry that can never post should be quarantined and alerted after N failures, not retried silently forever.
 
 **Current behaviour.**
 - `server/lib/pricingEngine.js:157` — `calculateVendorPayout` asserts inputs are non-negative but never clamps the **result**: `servicePrice(0) − commission(0) − razorpayFee(0.28) − tds(0) − tcs(0) = −0.28`.
-- `server/services/ledger/journalTemplates.js:73` — credits `VENDOR_PAYABLES` with `snapshot.vendor_amount`, i.e. a **negative credit**. Debits `11.80 + 0.28 = 12.08`; credits `−0.28 + 10.00 + 1.80 + 0.28 = 11.80`. Off by ₹0.28.
+- `server/services/ledger/journalTemplates.js:70` — credits `VENDOR_PAYABLES` with `snapshot.vendor_amount`, i.e. a **negative credit line** (`credit: −0.28`). The entry as a whole does balance — debits `11.80 + 0.28 = 12.08`, credits `−0.28 + 10.00 + 1.80 + 0.28 + 0.28 = 12.08` — but `post_journal_entry` rejects any line with a negative amount before it ever checks the balance, so the entry never posts.
 - `server/services/ledger/postingService.js:44` — `postSafe` catches, `console.error`s, returns `null`.
 - `server/services/ledger/ledgerReconciler.js` — rescans and re-fails every hour. No failure counter, no alert, no dead-letter.
 
@@ -76,7 +76,9 @@ ef435404-c8b7-49c1-b608-b540ea26b8c6  |     11.80      |    -0.28      | 2026-08
 
 **Why we probably missed it.** Architecture gap + business-rule gap. Fee-only mode was designed as a temporary interim (`v3.94_fee_only_mode.sql`) and the payout formula was never re-derived for the case where the host's revenue is zero. `postSafe`'s design ("never fail a payment for a ledger error") is correct — but it was built with no counterpart for "this will never succeed."
 
-**Recommendation.** (a) Clamp `calculateVendorPayout` at 0 and route the gateway fee to BAS when `servicePrice === 0`. (b) Give `postSafe` a failure counter — on the 3rd failure for the same `source_id`, `adminAlert` and stop retrying. (c) Backfill the three rows via `ADJUSTMENT` entries. (d) Add a `journalTemplates` unit test asserting balance for the fee-only shape.
+**Recommendation.** (a) Clamp `calculateVendorPayout` at 0, and in `orderPaymentEntry` book the gateway fee as a BAS-borne expense when the host is owed nothing (mirroring the subscription path) and omit the zero-value vendor-payables line — a zero line is rejected too. (b) Give `postSafe` a failure counter — after N consecutive failures for the same `source_id`, `adminAlert` instead of retrying silently. (c) Backfill the three rows to `vendor_amount = 0` so the fixed reconciler posts the real `ORDER_PAYMENT` entry (no manual `ADJUSTMENT` needed). (d) Add a `journalTemplates` unit test asserting the fee-only shape balances with no negative or zero line.
+
+**Update (2026-09-02):** shipped in [#922](https://github.com/bookasloth/book-a-sloth/pull/922) — clamp + BAS-borne fee + `postSafe` dead-letter alert + backfill migration `v3.139`. Full unit suite green (2222).
 
 ---
 
