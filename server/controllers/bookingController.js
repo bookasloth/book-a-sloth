@@ -615,6 +615,36 @@ const createBooking = async (req, res) => {
       (bookingResult.error.code === "23P01" ||
         /bookings_no_overlap|exclusion constraint/i.test(bookingResult.error.message))
     ) {
+      // F8: the block may be THIS guest's OWN earlier unpaid hold, not a real
+      // third-party conflict — a refresh, back-button, or app-switch during a UPI
+      // redirect that lost the booking id. Telling them their own slot is taken (a
+      // 45-minute lockout until the reaper runs) is the worst message the system
+      // can produce, at the exact moment they were trying to pay. Instead, hand the
+      // existing hold back so the client resumes payment on it. Matched by the same
+      // OTP-verified / account contact used for the self-booking block above, so we
+      // only ever return a hold the caller genuinely owns.
+      const { data: holds } = await supabaseAdmin
+        .from("bookings")
+        .select("*")
+        .eq("host_id", host_id)
+        .eq("scheduled_at", scheduled_at)
+        .eq("status", "pending")
+        .eq("payment_status", "unpaid")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      const ownHold = (holds || []).find((h) =>
+        (resolvedGuestId && h.guest_id === resolvedGuestId) ||
+        (guest_email && h.guest_email &&
+          h.guest_email.trim().toLowerCase() === guest_email.trim().toLowerCase()) ||
+        (digits10(guest_phone).length === 10 && digits10(h.guest_phone) === digits10(guest_phone)),
+      );
+      if (ownHold) {
+        // Existing row — no new notifications/analytics (those fired at its
+        // creation). manage_token lets the client resume via /manage-booking too.
+        return res
+          .status(200)
+          .json({ ...ownHold, manage_token: manageBookingToken.sign(ownHold.id), resumed: true });
+      }
       return res.status(409).json({
         message: "This time slot is no longer available. Please choose another.",
       });

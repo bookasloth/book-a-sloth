@@ -107,6 +107,138 @@ const emailHtml = (body) => `
 const row = (label, value) =>
   `<p style="margin:0 0 12px;font-size:15px;color:#374151;"><strong>${label}:</strong> ${value}</p>`;
 
+// Shared order builder — everything from the paid/cancelled guard through order
+// creation, so the session create-order and the token-authorized manage-booking
+// "complete payment" path (manageBookingController.payByToken) can never drift on
+// the money logic. The CALLER owns AUTHORIZATION (session email/user match, or a
+// signed manage token); this function assumes the caller has already proven the
+// requester may pay for `booking`. Returns { status, body } for the caller to send.
+//   `booking` must be selected with services(price, title, duration, grace_period_minutes).
+async function buildBookingOrder(booking, { billingFromRequest } = {}) {
+  const booking_id = booking.id;
+  if (booking.payment_status === "paid") return { status: 400, body: { message: "Already paid" } };
+  if (booking.status === "cancelled") return { status: 400, body: { message: "Booking was cancelled" } };
+
+  // Re-validate the slot BEFORE taking money (excluding this booking itself —
+  // its pending row is what holds the slot). Catches conflicts that appeared
+  // between booking creation and checkout (e.g. a new Google Calendar event).
+  try {
+    const availabilityService = require("../services/availabilityService");
+    const { data: payHost } = await supabaseAdmin
+      .from("profiles")
+      .select("id, google_calendar_connected")
+      .eq("id", booking.host_id).single();
+    await profileSecrets.attachGoogleTokens(payHost);
+    const { data: payAvail } = await supabaseAdmin
+      .from("availability").select("*").eq("host_id", booking.host_id).maybeSingle();
+    const slotCheck = await availabilityService.validateSlot({
+      host: payHost,
+      service: booking.services,
+      availability: payAvail,
+      scheduledAtUTC: booking.scheduled_at,
+      excludeBookingId: booking.id,
+    });
+    if (!slotCheck.ok) {
+      securityLog("PAYMENT_SLOT_CONFLICT", { booking_id, reason: slotCheck.reason });
+      return { status: 409, body: {
+        message: "This slot is no longer available. Your booking was not charged — please pick another time.",
+      } };
+    }
+  } catch (revalidateErr) {
+    // Fail-open: a validation infrastructure error must not block checkout
+    console.error("buildBookingOrder slot re-validation error (non-fatal):", revalidateErr.message);
+  }
+
+  const servicePrice = booking.services?.price || 0;
+
+  // Customer pays service + platform fee + GST. Use the immutable snapshot
+  // captured at booking creation; recompute only for legacy rows without it.
+  let customerTotal = Number(booking.customer_total) || 0;
+  let platformFee   = Number(booking.platform_fee_amount) || 0;
+  let gst           = Number(booking.platform_fee_gst) || 0;
+  if (customerTotal <= 0) {
+    const { platformFee: feeSetting, gstRate } = await platformConfig.getConfig();
+    const feeOnlyMode = await require("../services/paidMode").feeOnlyForHost(booking.host_id);
+    const b = computeBreakdown({ servicePrice, commissionPercentage: 0, platformFee: feeSetting, gstRate, chargeFeeOnFree: feeOnlyMode });
+    customerTotal = b.customerTotal; platformFee = b.platformFee; gst = b.gst;
+  }
+
+  // Nothing payable (a genuinely free booking, fee-only mode off) → no order.
+  // In fee-only mode even a ₹0 service owes the booking fee, so customerTotal > 0.
+  if (customerTotal <= 0) return { status: 400, body: { message: "Cannot create order for a free booking" } };
+
+  // GST gate: a paid booking issues a platform-fee tax invoice, so a valid
+  // billing STATE must be captured before money moves — otherwise the invoice's
+  // place of supply silently defaults to the seller state. Prefer the billing
+  // snapshotted on the booking; allow the pay request to supply/complete it
+  // (older pending rows, or a pay-time billing step). Backend re-validates —
+  // a frontend-supplied state is never trusted for the tax determination.
+  if (platformFee > 0) {
+    let billing = booking.billing_details;
+    if (billingFromRequest) {
+      const n = stateService.normalizeBilling(billingFromRequest, { requireState: false });
+      if (!n.ok) return { status: 400, body: { message: n.error, field: 'billing_details' } };
+      if (n.billing) {
+        billing = n.billing;
+        await supabaseAdmin.from("bookings")
+          .update({ billing_details: billing, updated_at: new Date().toISOString() })
+          .eq("id", booking_id);
+      }
+    }
+    const billingCheck = stateService.normalizeBilling(billing || {}, { requireState: true });
+    if (!billingCheck.ok) {
+      return { status: 400, body: { message: billingCheck.error, field: 'billing_details', code: 'BILLING_STATE_REQUIRED' } };
+    }
+  }
+
+  const totalPaise = Math.round(customerTotal * 100);
+  const razorpay = await razorpayConfig.getClient();
+
+  // Idempotency: a rapid re-click (or a re-opened checkout) must not mint a
+  // second live order for the same booking. If we already have an open order
+  // for the same amount, reuse it instead of creating a new one.
+  let order = null;
+  if (booking.razorpay_order_id) {
+    try {
+      const existing = await razorpay.orders.fetch(booking.razorpay_order_id);
+      if (existing) {
+        // A payment already captured on this booking's order (webhook/reconciler
+        // will finalize shortly): do NOT mint a second order, or a guest paying in
+        // two tabs/devices could be charged twice for one booking (P2-11).
+        if (existing.status === "paid" || Number(existing.amount_paid) > 0) {
+          return { status: 409, body: { message: "Payment already received for this booking — finalizing. Please refresh in a moment." } };
+        }
+        // Reuse the still-open order for a rapid re-click / re-opened checkout.
+        if (Number(existing.amount) === totalPaise && (existing.status === "created" || existing.status === "attempted")) {
+          order = existing;
+        }
+      }
+    } catch (_) {
+      // Stale/unfetchable id — fall through and create a fresh order.
+    }
+  }
+  if (!order) {
+    order = await razorpay.orders.create({
+      amount: totalPaise, currency: "INR",
+      receipt: `bkg_${String(booking_id).slice(0, 20)}`,
+      notes: { booking_id, service: booking.services?.title, platform_fee: platformFee, gst },
+    });
+  }
+
+  // Only update razorpay_order_id — the fee/GST snapshot is immutable
+  await supabaseAdmin.from("bookings")
+    .update({ razorpay_order_id: order.id, updated_at: new Date().toISOString() })
+    .eq("id", booking_id);
+
+  auditLog('PAYMENT_ORDER_CREATED', booking.guest_id, { booking_id, amount: totalPaise });
+
+  return { status: 200, body: {
+    razorpay_order_id: order.id, amount: order.amount, currency: order.currency,
+    key: await razorpayConfig.getKeyId(),
+    service_price: servicePrice, platform_fee: platformFee, gst, total: customerTotal,
+  } };
+}
+
 // ── POST /api/payment/create-order ───────────────────────────
 // SECURITY FIX: validate guest identity against the booking before creating order
 const createOrder = async (req, res) => {
@@ -120,41 +252,10 @@ const createOrder = async (req, res) => {
       .eq("id", booking_id).single();
 
     if (error || !booking) return res.status(404).json({ message: "Booking not found" });
-    if (booking.payment_status === "paid") return res.status(400).json({ message: "Already paid" });
-    if (booking.status === "cancelled") return res.status(400).json({ message: "Booking was cancelled" });
 
-    // Re-validate the slot BEFORE taking money (excluding this booking itself —
-    // its pending row is what holds the slot). Catches conflicts that appeared
-    // between booking creation and checkout (e.g. a new Google Calendar event).
-    try {
-      const availabilityService = require("../services/availabilityService");
-      const { data: payHost } = await supabaseAdmin
-        .from("profiles")
-        .select("id, google_calendar_connected")
-        .eq("id", booking.host_id).single();
-      await profileSecrets.attachGoogleTokens(payHost);
-      const { data: payAvail } = await supabaseAdmin
-        .from("availability").select("*").eq("host_id", booking.host_id).maybeSingle();
-      const slotCheck = await availabilityService.validateSlot({
-        host: payHost,
-        service: booking.services,
-        availability: payAvail,
-        scheduledAtUTC: booking.scheduled_at,
-        excludeBookingId: booking.id,
-      });
-      if (!slotCheck.ok) {
-        securityLog("PAYMENT_SLOT_CONFLICT", { booking_id, reason: slotCheck.reason });
-        return res.status(409).json({
-          message: "This slot is no longer available. Your booking was not charged — please pick another time.",
-        });
-      }
-    } catch (revalidateErr) {
-      // Fail-open: a validation infrastructure error must not block checkout
-      console.error("createOrder slot re-validation error (non-fatal):", revalidateErr.message);
-    }
-
-    // SECURITY: Verify the requester matches the booking guest
-    // Either email matches, or the authenticated user is the guest
+    // SECURITY: Verify the requester matches the booking guest — either the email
+    // matches, or the authenticated user is the guest. (The manage-booking token
+    // path proves ownership differently; both then share buildBookingOrder.)
     const isAuthenticatedGuest = req.user?.id && req.user.id === booking.guest_id;
     const isEmailGuest = guest_email && booking.guest_email &&
       guest_email.toLowerCase().trim() === booking.guest_email.toLowerCase().trim();
@@ -164,92 +265,8 @@ const createOrder = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to pay for this booking." });
     }
 
-    const servicePrice = booking.services?.price || 0;
-
-    // Customer pays service + platform fee + GST. Use the immutable snapshot
-    // captured at booking creation; recompute only for legacy rows without it.
-    let customerTotal = Number(booking.customer_total) || 0;
-    let platformFee   = Number(booking.platform_fee_amount) || 0;
-    let gst           = Number(booking.platform_fee_gst) || 0;
-    if (customerTotal <= 0) {
-      const { platformFee: feeSetting, gstRate } = await platformConfig.getConfig();
-      const feeOnlyMode = await require("../services/paidMode").feeOnlyForHost(booking.host_id);
-      const b = computeBreakdown({ servicePrice, commissionPercentage: 0, platformFee: feeSetting, gstRate, chargeFeeOnFree: feeOnlyMode });
-      customerTotal = b.customerTotal; platformFee = b.platformFee; gst = b.gst;
-    }
-
-    // Nothing payable (a genuinely free booking, fee-only mode off) → no order.
-    // In fee-only mode even a ₹0 service owes the booking fee, so customerTotal > 0.
-    if (customerTotal <= 0) return res.status(400).json({ message: "Cannot create order for a free booking" });
-
-    // GST gate: a paid booking issues a platform-fee tax invoice, so a valid
-    // billing STATE must be captured before money moves — otherwise the invoice's
-    // place of supply silently defaults to the seller state. Prefer the billing
-    // snapshotted on the booking; allow the pay request to supply/complete it
-    // (older pending rows, or a pay-time billing step). Backend re-validates —
-    // a frontend-supplied state is never trusted for the tax determination.
-    if (platformFee > 0) {
-      let billing = booking.billing_details;
-      if (req.body.billing_details) {
-        const n = stateService.normalizeBilling(req.body.billing_details, { requireState: false });
-        if (!n.ok) return res.status(400).json({ message: n.error, field: 'billing_details' });
-        if (n.billing) {
-          billing = n.billing;
-          await supabaseAdmin.from("bookings")
-            .update({ billing_details: billing, updated_at: new Date().toISOString() })
-            .eq("id", booking_id);
-        }
-      }
-      const billingCheck = stateService.normalizeBilling(billing || {}, { requireState: true });
-      if (!billingCheck.ok) {
-        return res.status(400).json({ message: billingCheck.error, field: 'billing_details', code: 'BILLING_STATE_REQUIRED' });
-      }
-    }
-
-    const totalPaise = Math.round(customerTotal * 100);
-    const razorpay = await razorpayConfig.getClient();
-
-    // Idempotency: a rapid re-click (or a re-opened checkout) must not mint a
-    // second live order for the same booking. If we already have an open order
-    // for the same amount, reuse it instead of creating a new one.
-    let order = null;
-    if (booking.razorpay_order_id) {
-      try {
-        const existing = await razorpay.orders.fetch(booking.razorpay_order_id);
-        if (existing) {
-          // A payment already captured on this booking's order (webhook/reconciler
-          // will finalize shortly): do NOT mint a second order, or a guest paying in
-          // two tabs/devices could be charged twice for one booking (P2-11).
-          if (existing.status === "paid" || Number(existing.amount_paid) > 0) {
-            return res.status(409).json({ message: "Payment already received for this booking — finalizing. Please refresh in a moment." });
-          }
-          // Reuse the still-open order for a rapid re-click / re-opened checkout.
-          if (Number(existing.amount) === totalPaise && (existing.status === "created" || existing.status === "attempted")) {
-            order = existing;
-          }
-        }
-      } catch (_) {
-        // Stale/unfetchable id — fall through and create a fresh order.
-      }
-    }
-    if (!order) {
-      order = await razorpay.orders.create({
-        amount: totalPaise, currency: "INR",
-        receipt: `bkg_${booking_id.slice(0, 20)}`,
-        notes: { booking_id, service: booking.services?.title, platform_fee: platformFee, gst },
-      });
-    }
-
-    // Only update razorpay_order_id — the fee/GST snapshot is immutable
-    await supabaseAdmin.from("bookings")
-      .update({ razorpay_order_id: order.id, updated_at: new Date().toISOString() })
-      .eq("id", booking_id);
-
-    auditLog('PAYMENT_ORDER_CREATED', booking.guest_id, { booking_id, amount: totalPaise });
-
-    res.json({ razorpay_order_id: order.id, amount: order.amount, currency: order.currency,
-      key: await razorpayConfig.getKeyId(),
-      service_price: servicePrice, platform_fee: platformFee, gst, total: customerTotal });
+    const r = await buildBookingOrder(booking, { billingFromRequest: req.body.billing_details });
+    return res.status(r.status).json(r.body);
   } catch (error) {
     securityLog('PAYMENT_ORDER_ERROR', { error: error.message });
     res.status(500).json({ message: "Payment initiation failed. Please try again." });
@@ -1542,7 +1559,7 @@ const handleWebhook = async (req, res) => {
 };
 
 module.exports = {
-  createOrder, verifyPayment, signatureValid, subscribePlan, verifySubscription,
+  createOrder, buildBookingOrder, verifyPayment, signatureValid, subscribePlan, verifySubscription,
   createVendorSubscription, syncVendorSubscription, cancelVendorSubscription,
   createProductOrder, verifyProductPayment, createRescheduleFeeOrder, handleWebhook,
   generateBookingInvoice, generateCommissionInvoice,

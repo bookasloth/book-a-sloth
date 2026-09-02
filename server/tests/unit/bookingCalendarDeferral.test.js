@@ -45,20 +45,26 @@ const res = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(
 // id — a coarse "profiles → host" mock would make every booker's email equal the
 // host's and falsely trip the self-booking guard. `eq(col, val)` captures the id
 // so single() can branch on it. A booker whose id ≠ host.id gets `guest`.
-const wireSupabase = ({ service, host, avail, panOnFile = true,
+const wireSupabase = ({ service, host, avail, panOnFile = true, insertError = null, holds = [],
   guest = { id: 'u1', name: 'G', email: 'g@x.com', phone: '9990001111' } }) => {
   mockFrom.mockImplementation((table) => {
     let lastId;
+    let sawInsert = false;
     const chain = {
       select: jest.fn(() => chain),
       eq: jest.fn((_col, val) => { lastId = val; return chain; }), neq: jest.fn(() => chain),
-      not: jest.fn(() => chain), insert: jest.fn(() => chain),
+      not: jest.fn(() => chain), insert: jest.fn(() => { sawInsert = true; return chain; }),
+      order: jest.fn(() => chain),
+      // F8 own-hold lookup: from('bookings').select().eq×4.order().limit() → holds.
+      limit: jest.fn(() => Promise.resolve({ data: holds, error: null })),
       single: jest.fn(() => Promise.resolve(
         // A real service always belongs to a host; derive host_id from the host so
         // createBooking's `host_id = service.host_id` resolves (fixtures omit it).
         table === 'services' ? { data: { host_id: host.id, ...service } } :
         table === 'profiles' ? { data: (lastId === host.id ? host : guest) } :
-        { data: { id: 'bkg-1', ...service }, error: null })),
+        // bookings INSERT: optionally return a DB error (e.g. exclusion constraint).
+        (sawInsert && insertError ? { data: null, error: insertError } :
+          { data: { id: 'bkg-1', ...service }, error: null }))),
       maybeSingle: jest.fn(() => Promise.resolve(
         table === 'kyc_submissions' ? { data: panOnFile ? { user_id: host?.id } : null } :
         { data: avail })),
@@ -198,4 +204,42 @@ test('a DIFFERENT host booking this service still works (no false positive) → 
   const req = { user: { id: 'u2' }, body: { service_id: 's1', guest_name: 'Other', scheduled_at: '2099-01-01T05:00:00.000Z' } };
   await createBooking(req, r);
   expect(r.status).toHaveBeenCalledWith(201);
+});
+
+describe('F8 — own-hold resume (exclusion constraint is the guest\'s own pending hold)', () => {
+  const conflict = { code: '23P01', message: 'conflicting key value violates exclusion constraint "bookings_no_overlap"' };
+
+  test('returns the guest\'s OWN unpaid hold (200 + manage_token) instead of a false 409', async () => {
+    const ownHold = { id: 'held-1', status: 'pending', payment_status: 'unpaid', guest_id: 'u1', guest_email: 'g@x.com', guest_phone: '9990001111', customer_total: 11.8 };
+    wireSupabase({
+      service: { id: 's1', title: 'SEO', duration: 30, price: 0, meeting_mode: 'online' },
+      host: { id: 'h1', email: 'h@x.com', phone: '7904109359' },
+      avail: { timezone: 'Asia/Kolkata' },
+      insertError: conflict,
+      holds: [ownHold],
+    });
+    const r = res();
+    const req = { user: { id: 'u1' }, body: { service_id: 's1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z' } };
+    await createBooking(req, r);
+    expect(r.status).toHaveBeenCalledWith(200);
+    const body = r.json.mock.calls[0][0];
+    expect(body).toMatchObject({ id: 'held-1', resumed: true });
+    expect(body.manage_token).toBeTruthy();
+  });
+
+  test('a genuine third-party conflict (no matching own hold) still returns 409', async () => {
+    // The only hold at the slot belongs to a DIFFERENT guest — not ours.
+    const othersHold = { id: 'held-x', status: 'pending', payment_status: 'unpaid', guest_id: 'someone-else', guest_email: 'x@x.com', guest_phone: '8888888888' };
+    wireSupabase({
+      service: { id: 's1', title: 'SEO', duration: 30, price: 0, meeting_mode: 'online' },
+      host: { id: 'h1', email: 'h@x.com', phone: '7904109359' },
+      avail: { timezone: 'Asia/Kolkata' },
+      insertError: conflict,
+      holds: [othersHold],
+    });
+    const r = res();
+    const req = { user: { id: 'u1' }, body: { service_id: 's1', guest_name: 'G', guest_email: 'g@x.com', scheduled_at: '2099-01-01T05:00:00.000Z' } };
+    await createBooking(req, r);
+    expect(r.status).toHaveBeenCalledWith(409);
+  });
 });

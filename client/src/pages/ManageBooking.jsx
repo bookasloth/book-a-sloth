@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Loader2, Calendar, Clock, Video, MapPin, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { Loader2, Calendar, Clock, Video, MapPin, CheckCircle2, XCircle, AlertTriangle, CreditCard } from "lucide-react";
 import toast from "react-hot-toast";
-import { getManageBooking, cancelManageBooking } from "../services/api";
+import { getManageBooking, cancelManageBooking, payManageBooking, verifyPayment } from "../services/api";
+import loadRazorpay from "../utils/loadRazorpay";
 
 // /manage-booking/:token — public, token-authorized self-service for anonymous
 // (no-session) guests (MF3 #516). View + cancel exactly one booking. Reschedule
@@ -31,6 +32,7 @@ export default function ManageBooking() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancelling, setCancelling] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -40,6 +42,68 @@ export default function ManageBooking() {
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [token]);
+
+  // F7: finish paying for this booking straight from the link (the abandoned-
+  // payment recovery email lands here). Token possession authorizes it server-side.
+  const onPay = async () => {
+    if (paying) return;
+    setPaying(true);
+    const loaded = await loadRazorpay();
+    if (!loaded) {
+      toast.error("Payment gateway failed to load. Please try again.");
+      setPaying(false);
+      return;
+    }
+    try {
+      const { data: order } = await payManageBooking(token);
+      const options = {
+        key: order.key,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Book A Sloth",
+        description: booking.service_title || "Booking",
+        order_id: order.razorpay_order_id,
+        handler: async (response) => {
+          try {
+            const { data } = await verifyPayment({
+              booking_id: booking.id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            setBooking((prev) => ({ ...prev, ...(data?.booking || {}), status: "confirmed", payment_status: "paid" }));
+            toast.success("Payment successful — your booking is confirmed!");
+          } catch (e) {
+            // The webhook/reconciler will still finalize; tell the guest it's in hand.
+            toast.success("Payment received — confirming your booking now.");
+            try { const { data } = await getManageBooking(token); setBooking(data); } catch (_) { /* keep current */ }
+          } finally {
+            setPaying(false);
+          }
+        },
+        prefill: { name: booking.guest_name || "" },
+        modal: {
+          ondismiss: () => {
+            setPaying(false);
+            toast("Payment cancelled — you can finish whenever you're ready.", { icon: "🫤" });
+          },
+        },
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (resp) => {
+        setPaying(false);
+        toast.error(resp?.error?.description || "Payment failed — please try again.");
+      });
+      rzp.open();
+    } catch (err) {
+      setPaying(false);
+      if (err.response?.data?.code === "BILLING_STATE_REQUIRED") {
+        toast.error("We need your billing state to issue the invoice — please finish from your original booking link.");
+      } else {
+        toast.error(err.response?.data?.message || "Couldn't start payment. Please try again.");
+      }
+    }
+  };
 
   const onCancel = async () => {
     if (!window.confirm("Cancel this booking? This can't be undone.")) return;
@@ -110,6 +174,21 @@ export default function ManageBooking() {
             </div>
           ) : booking.cancellable ? (
             <div className="border-t pt-4">
+              {booking.payment_status !== "paid" && booking.status === "pending" && (
+                <div className="mb-3">
+                  <button
+                    onClick={onPay}
+                    disabled={paying}
+                    className="btn flex w-full items-center justify-center gap-2 rounded-xl bg-[#FE5100] py-3 text-sm font-semibold text-white hover:bg-[#e64800] disabled:opacity-60"
+                  >
+                    {paying ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard size={16} />}
+                    {paying ? "Opening payment…" : "Complete payment"}
+                  </button>
+                  <p className="mt-2 text-center text-xs text-gray-500">
+                    Your slot is held for you — finish paying to confirm it.
+                  </p>
+                </div>
+              )}
               <button
                 onClick={onCancel}
                 disabled={cancelling}
