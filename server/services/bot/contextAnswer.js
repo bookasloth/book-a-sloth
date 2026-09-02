@@ -82,11 +82,14 @@ function planAnswer(ctx) {
 
 function refundAnswer(ctx) {
   const bookings = ctx.bookings || [];
-  const refunded = bookings.find((b) => b.payment_status === 'refunded');
+  // A refund shows as payment_status='refunded' (full) OR a positive refunded_amount
+  // (a partial/tiered refund keeps payment_status='paid'). Check both so a partially
+  // refunded guest isn't told nothing was refunded (F14).
+  const refunded = bookings.find((b) => b.payment_status === 'refunded' || Number(b.refunded_amount) > 0);
   if (refunded) {
     return `I can see booking **${refunded.ref}** was **refunded**. Bank refunds usually land in **5–7 working days** from when they're issued. If it's been longer, tell me and I'll get the team to trace it.`;
   }
-  const cancelledPaid = bookings.find((b) => b.status === 'cancelled' && b.payment_status === 'paid');
+  const cancelledPaid = bookings.find((b) => b.status === 'cancelled' && b.payment_status === 'paid' && !(Number(b.refunded_amount) > 0));
   if (cancelledPaid) {
     return `Booking **${cancelledPaid.ref}** is cancelled but still shows as **paid** — a refund may still be processing. I'll flag it so the team can confirm the exact status for you.`;
   }

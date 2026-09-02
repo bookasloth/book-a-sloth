@@ -885,27 +885,54 @@ const cancelBookingRecord = async (booking, { cancelledBy, actorUserId = null } 
     console.error("Cancel notification error:", notifyError.message);
   }
 
-  // P1-03: a PAID booking cancelled here issues NO automated refund — refunds are
-  // manual (there is no Razorpay refund API call anywhere). The held Route payout
-  // is reversed above so the host isn't paid, but the GUEST's money stays captured
-  // with nobody prompted to return it. Alert an admin to make the refund decision
-  // so a paid cancel can't silently pocket the guest's money. Fire-and-forget +
-  // throttled per booking (adminAlert never throws).
+  // F2: a PAID booking cancelled here now issues an AUTOMATIC refund per the
+  // /refund policy — tiered on the service price for a GUEST cancellation (100% at
+  // ≥24h, 50% at ≥6h, nothing under 6h), and a full customer_total refund when the
+  // HOST cancelled (the guest did nothing wrong). Best-effort + backgrounded so it
+  // never blocks or breaks the cancel response; the held Route payout is already
+  // reversed above. If the refund can't be auto-issued (host already settled, or an
+  // error), fall back to the manual alert so a paid cancel can never silently pocket
+  // the guest's money.
   if (booking.payment_status === "paid") {
-    adminAlert({
-      key: `paid_cancel:${booking.id}`,
-      subject: `Paid booking cancelled — refund decision needed (${booking.id})`,
-      lines: [
-        `Service: ${booking.services?.title || "—"}`,
-        `Guest: ${booking.guest_name || booking.guest_email || booking.guest_id || "—"}`,
-        `Amount charged: ₹${booking.customer_total ?? "—"}`,
-        `Cancelled by: ${cancelledBy || "unknown"}`,
-        `Payment id: ${booking.razorpay_payment_id || booking.payment_id || "—"}`,
-        booking.razorpay_transfer_id
-          ? `Held payout ${booking.razorpay_transfer_id}: reversal attempted (host not paid).`
-          : "No held payout for this booking.",
-        "Decide: refund the guest in the Razorpay dashboard if due.",
-      ],
+    const refundMode = cancelledBy === "host" ? "full" : "tiered";
+    runInBackground("cancel:auto-refund", async () => {
+      const { issueBookingRefund } = require("../services/refundService");
+      const r = await issueBookingRefund({
+        bookingId: booking.id,
+        mode: refundMode,
+        reason: `${cancelledBy || "guest"} cancellation`,
+      });
+      if (r.ok) {
+        // Tell the guest their money is on the way (account holders; Razorpay also
+        // emails the cardholder its own refund receipt for anonymous guests).
+        if (booking.guest_id) {
+          inAppNotify({
+            userId: booking.guest_id, role: "guest", type: "REFUND_ISSUED",
+            title: "Refund issued",
+            body: `₹${r.amount} refunded for ${booking.services?.title || "your booking"}`,
+            link: "/user/my-bookings", data: { bookingId: booking.id },
+          });
+        }
+        return;
+      }
+      // not_eligible (inside the no-refund window) and already_refunded are correct,
+      // expected outcomes — no alert. Anything else means the guest's money is still
+      // captured and a human must decide: alert (throttled per booking).
+      if (r.reason === "not_eligible" || r.reason === "already_refunded") return;
+      adminAlert({
+        key: `paid_cancel_refund:${booking.id}`,
+        subject: `Paid booking cancelled — auto-refund could not be issued (${booking.id})`,
+        lines: [
+          `Service: ${booking.services?.title || "—"}`,
+          `Guest: ${booking.guest_name || booking.guest_email || booking.guest_id || "—"}`,
+          `Amount charged: ₹${booking.customer_total ?? "—"}`,
+          `Cancelled by: ${cancelledBy || "unknown"} · attempted mode: ${refundMode}`,
+          `Payment id: ${booking.razorpay_payment_id || booking.payment_id || "—"}`,
+          r.blocked === "payout_settled"
+            ? "BLOCKED: host payout already SETTLED — recover from the host, then refund in the Razorpay dashboard."
+            : `Reason: ${r.blocked || r.reason || "unknown"}. Refund the guest in the Razorpay dashboard if due.`,
+        ],
+      });
     });
   }
 

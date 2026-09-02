@@ -13,14 +13,10 @@ const { audit } = require('../services/auditService');
 const { adjustmentEntry, reversalEntry, bankTransferEntry } = require('../services/ledger/journalTemplates');
 const { post } = require('../services/ledger/postingService');
 const { recordBookingRefund } = require('../services/bookingCapture');
-const razorpayConfig = require('../services/razorpayConfig');
+const { issueBookingRefund } = require('../services/refundService');
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
-// Guest-initiated cancellation refund tiers (see /refund policy §1), applied to
-// the SERVICE PRICE only — the platform fee + GST + PG fee are non-refundable.
-const refundTierPct = (hoursToStart) =>
-  hoursToStart >= 24 ? 1 : hoursToStart >= 6 ? 0.5 : 0;
 const PAGE_LIMIT = 25;
 
 // ── GET /admin/finance/summary ────────────────────────────────
@@ -307,77 +303,35 @@ const executeRefund = async (req, res) => {
     const mode = req.body?.mode === 'full' ? 'full' : 'tiered';
     if (!bookingId) return res.status(400).json({ message: 'booking_id is required' });
 
-    const { data: bk } = await supabaseAdmin
-      .from('bookings')
-      .select('id, razorpay_payment_id, payment_status, transfer_status, customer_total, scheduled_at, services(price)')
-      .eq('id', bookingId)
-      .maybeSingle();
-    if (!bk) return res.status(404).json({ message: 'No booking with that id' });
-    if (bk.payment_status !== 'paid') return res.status(400).json({ message: `Booking is ${bk.payment_status}, not paid — nothing to refund` });
-    if (!bk.razorpay_payment_id) return res.status(400).json({ message: 'Booking has no captured payment to refund' });
+    // The whole refund (guard → amount → Razorpay → ledger + transfer reversal →
+    // booking-row reflection) lives in the shared issuer so the admin action and
+    // the auto-refund-on-cancel path can't drift. This endpoint only maps the
+    // result to admin-facing HTTP + writes the audit trail.
+    const r = await issueBookingRefund({ bookingId, mode, reason: `admin ${mode} refund`, actorEmail: req.admin?.email });
 
-    // Never absorb: block when the host has already been paid out (settled).
-    if (bk.transfer_status === 'processed') {
-      await audit(req, { action: 'FINANCE_REFUND_BLOCKED', resource_type: 'booking', resource_id: bookingId, after: { reason: 'payout_settled' } });
-      return res.status(409).json({ message: 'Host already paid out for this booking. Recover the payout from the host before refunding.' });
-    }
-
-    // Amount (₹) — server computes; never trust a client-sent amount.
-    const servicePrice = Number(bk.services?.price) || 0;
-    const customerTotal = Number(bk.customer_total) || 0;
-    let amount;
-    if (mode === 'full') {
-      amount = round2(customerTotal);
-    } else {
-      const hoursToStart = bk.scheduled_at ? (new Date(bk.scheduled_at).getTime() - Date.now()) / 3600000 : -1;
-      amount = round2(servicePrice * refundTierPct(hoursToStart));
-    }
-    if (!(amount > 0)) return res.status(400).json({ message: 'Not eligible: inside the no-refund window (under 6 hours to start), or a free booking.' });
-
-    const client = await razorpayConfig.getClient();
-
-    // Idempotency + safety: Razorpay is the source of truth on what's already been
-    // returned — block if this payment was already (partly) refunded, so a
-    // double-click or re-run can't stack refunds.
-    const pay = await client.payments.fetch(bk.razorpay_payment_id);
-    const alreadyPaise = Number(pay?.amount_refunded) || 0;
-    if (alreadyPaise > 0) {
-      return res.status(409).json({ message: `This payment was already refunded (₹${round2(alreadyPaise / 100)}). Use the Razorpay dashboard for any further refund.` });
-    }
-
-    const paise = Math.round(amount * 100);
-    const refund = await client.payments.refund(bk.razorpay_payment_id, {
-      amount: paise,
-      speed: 'optimum',
-      notes: { booking_id: bk.id, mode, by: req.admin?.email || 'admin' },
-    });
-
-    // Ledger REFUND + reverse the held payout (idempotent on the Razorpay refund id).
-    const rec = await recordBookingRefund({
-      bookingId: bk.id,
-      refundAmountPaise: paise,
-      refundId: refund.id,
-      reason: `admin ${mode} refund`,
-      reverseTransfer: true,
-    });
-
-    // Reflect a FULL refund on the booking row. The payment_status CHECK allows only
-    // unpaid/paid/refunded, so a partial (tiered) refund stays 'paid' — the ledger
-    // carries the partial amount.
-    let paymentStatus = bk.payment_status;
-    if (amount >= customerTotal && customerTotal > 0) {
-      const { error: upErr } = await supabaseAdmin.from('bookings').update({ payment_status: 'refunded' }).eq('id', bk.id);
-      if (!upErr) paymentStatus = 'refunded';
+    if (!r.ok) {
+      if (r.reason === 'booking_not_found') return res.status(404).json({ message: 'No booking with that id' });
+      if (r.reason === 'not_paid') return res.status(400).json({ message: 'Booking is not paid — nothing to refund' });
+      if (r.reason === 'no_payment') return res.status(400).json({ message: 'Booking has no captured payment to refund' });
+      if (r.blocked === 'payout_settled') {
+        await audit(req, { action: 'FINANCE_REFUND_BLOCKED', resource_type: 'booking', resource_id: bookingId, after: { reason: 'payout_settled' } });
+        return res.status(409).json({ message: 'Host already paid out for this booking. Recover the payout from the host before refunding.' });
+      }
+      if (r.reason === 'already_refunded') {
+        return res.status(409).json({ message: `This payment was already refunded${r.amount ? ` (₹${r.amount})` : ''}. Use the Razorpay dashboard for any further refund.` });
+      }
+      if (r.reason === 'not_eligible') return res.status(400).json({ message: 'Not eligible: inside the no-refund window (under 6 hours to start), or a free booking.' });
+      return res.status(500).json({ message: 'Refund failed. Check the Razorpay dashboard before retrying.' });
     }
 
     await audit(req, {
       action: 'FINANCE_REFUND_EXECUTED',
       resource_type: 'booking',
-      resource_id: bk.id,
-      after: { mode, amount, refund_id: refund.id, transfer_reversed: rec.transferReversed, ledger_posted: rec.posted },
+      resource_id: bookingId,
+      after: { mode, amount: r.amount, refund_id: r.refundId, transfer_reversed: r.transferReversed, ledger_posted: r.ledgerPosted },
     });
 
-    res.json({ ok: true, refund_id: refund.id, amount, transfer_reversed: rec.transferReversed, payment_status: paymentStatus });
+    res.json({ ok: true, refund_id: r.refundId, amount: r.amount, transfer_reversed: r.transferReversed, payment_status: r.paymentStatus });
   } catch (e) {
     safeError(res, e);
   }
