@@ -1152,6 +1152,25 @@ const verifyProductPayment = async (req, res) => {
   }
 };
 
+// F21: record a received webhook for forensics + redelivery detection. event_id
+// comes from Razorpay's per-delivery header (x-razorpay-event-id), falling back to
+// a sha256 of the raw body, so a redelivery of the same event collides on the
+// UNIQUE(event_id) index and is logged once. Best-effort — swallows every error
+// (including a missing table before migration v3.143) so it can never break the
+// webhook path. Called AFTER the signature check, so only genuine events are logged.
+async function recordWebhookEvent(req, event) {
+  try {
+    const eventId = req.headers['x-razorpay-event-id']
+      || crypto.createHash('sha256').update(req.body).digest('hex');
+    await supabaseAdmin.from('webhook_events').insert({
+      provider: 'razorpay',
+      event_id: String(eventId),
+      event_type: typeof event?.event === 'string' ? event.event : 'unknown',
+      payload: event || {},
+    });
+  } catch (_) { /* forensic log must never break the webhook path */ }
+}
+
 // ── POST /api/payment/webhook ────────────────────────────────
 // Razorpay server-side webhook for payment.captured / payment.failed events
 // MUST use raw body — register before express.json()
@@ -1183,6 +1202,15 @@ const handleWebhook = async (req, res) => {
   let event;
   try { event = JSON.parse(req.body.toString()); }
   catch { return res.status(400).json({ message: "Invalid JSON" }); }
+
+  // F21: append-only log of every signature-verified webhook, BEFORE dispatch.
+  // Previously events were verified, handled, and discarded — so "did the webhook
+  // arrive, what did it say, was it a redelivery?" was unanswerable without the
+  // Razorpay dashboard, and there was no way to tell "never got it" from "got it
+  // and mishandled it". Best-effort + non-blocking: a logging failure must never
+  // stop us handling a real payment event. Idempotency of EFFECTS stays with the
+  // per-handler conditional writes; this is the forensic record.
+  await recordWebhookEvent(req, event);
 
   // ── Subscription lifecycle (handled BEFORE the payment-only guard, since
   // subscription.activated/halted/cancelled carry no payment entity) ──
