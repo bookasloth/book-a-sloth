@@ -2,12 +2,15 @@
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 jest.mock('../../utils/bankHolidays', () => ({
   istDate: jest.fn(), upcomingDelayingHoliday: jest.fn(), nextSettlementDay: jest.fn(() => '2026-10-05'),
+  holidayCalendarStatus: jest.fn(() => ({ year: '2026', count: 22, stale: false })),
 }));
 jest.mock('../../services/payoutEmails', () => ({ sendHolidayDelay: jest.fn(() => Promise.resolve()) }));
+jest.mock('../../utils/adminAlert', () => ({ adminAlert: jest.fn() }));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const bh = require('../../utils/bankHolidays');
 const payoutEmails = require('../../services/payoutEmails');
+const { adminAlert } = require('../../utils/adminAlert');
 const { run } = require('../../services/payoutHolidayNotice');
 
 const rows = (data) => {
@@ -51,4 +54,20 @@ test('cancelled bookings are not emailed', async () => {
   const r = await run();
   expect(payoutEmails.sendHolidayDelay).not.toHaveBeenCalled();
   expect(r.notified).toBe(0);
+});
+
+test('F19: a stale bank-holiday calendar for the year raises a throttled admin alert', async () => {
+  bh.istDate.mockReturnValue({ ymd: '2027-01-15', dow: 5 });
+  bh.holidayCalendarStatus.mockReturnValue({ year: '2027', count: 4, stale: true });
+  bh.upcomingDelayingHoliday.mockReturnValue(null); // no holiday → returns early after the alert
+  await run();
+  expect(adminAlert).toHaveBeenCalledWith(expect.objectContaining({ key: 'bank_holiday_stale:2027' }));
+});
+
+test('F19: a fresh calendar does not alert', async () => {
+  bh.istDate.mockReturnValue({ ymd: '2026-09-25', dow: 5 });
+  bh.holidayCalendarStatus.mockReturnValue({ year: '2026', count: 22, stale: false });
+  bh.upcomingDelayingHoliday.mockReturnValue(null);
+  await run();
+  expect(adminAlert).not.toHaveBeenCalled();
 });

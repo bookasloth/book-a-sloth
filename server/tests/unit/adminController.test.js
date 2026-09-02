@@ -40,7 +40,7 @@ const { supabaseAdmin } = require('../../config/supabase');
 const { audit } = require('../../services/auditService');
 const {
   getStats, getUsers, getUserById, updateUser, deleteUser,
-  getAllBookings, getAllServices, updateBooking, updateSettings,
+  getAllBookings, getAllServices, updateBooking, updateSettings, deleteBooking,
 } = require('../../controllers/adminController');
 
 const req = (params = {}, body = {}, query = {}) => ({ params, body, query });
@@ -251,15 +251,45 @@ describe('updateBooking', () => {
   });
 
   test('returns 500 on DB error', async () => {
-    supabaseAdmin.from.mockReturnValue({
-      update: jest.fn().mockReturnThis(),
-      eq:     jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: { message: 'DB err' } }),
-    });
+    // F13: the status pre-read (confirmed) permits →completed; the UPDATE then errors.
+    supabaseAdmin.from
+      .mockReturnValueOnce({ select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), single: jest.fn().mockResolvedValue({ data: { status: 'confirmed' }, error: null }) })
+      .mockReturnValueOnce({ update: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), select: jest.fn().mockReturnThis(), single: jest.fn().mockResolvedValue({ data: null, error: { message: 'DB err' } }) });
     const r = res();
     await updateBooking(req({ id: 'b1' }, { status: 'completed' }), r);
     expect(r.status).toHaveBeenCalledWith(500);
+  });
+
+  // F13: illegal transitions are rejected, and a paid booking can't be hard-deleted.
+  test('rejects an illegal status transition (cancelled → completed) with 409', async () => {
+    supabaseAdmin.from.mockReturnValueOnce({
+      select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: { status: 'cancelled' }, error: null }),
+    });
+    const r = res();
+    await updateBooking(req({ id: 'b1' }, { status: 'completed' }), r);
+    expect(r.status).toHaveBeenCalledWith(409);
+    expect(r.json.mock.calls[0][0]).toMatchObject({ code: 'INVALID_TRANSITION' });
+  });
+
+  test('deleteBooking blocks a paid booking (financial record) with 409', async () => {
+    supabaseAdmin.from.mockReturnValueOnce({
+      select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: { payment_status: 'paid' }, error: null }),
+    });
+    const r = res();
+    await deleteBooking(req({ id: 'b1' }), r);
+    expect(r.status).toHaveBeenCalledWith(409);
+    expect(r.json.mock.calls[0][0]).toMatchObject({ code: 'PAID_BOOKING_DELETE_BLOCKED' });
+  });
+
+  test('deleteBooking allows an unpaid booking', async () => {
+    supabaseAdmin.from
+      .mockReturnValueOnce({ select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), maybeSingle: jest.fn().mockResolvedValue({ data: { payment_status: 'unpaid' }, error: null }) })
+      .mockReturnValueOnce({ delete: jest.fn().mockReturnThis(), eq: jest.fn().mockResolvedValue({ error: null }) });
+    const r = res();
+    await deleteBooking(req({ id: 'b1' }), r);
+    expect(r.json.mock.calls[0][0].message).toMatch(/deleted/i);
   });
 });
 

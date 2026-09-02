@@ -7,6 +7,7 @@ const { validateCategorySelection } = require('../lib/categoryRules');
 const { clearHostServiceCategories } = require('../lib/serviceCategory');
 const { bustPublicReadCaches } = require('../services/publicCacheBust');
 const { purgeUserStorage } = require('../utils/purgeUserStorage');
+const { isValidBookingTransition } = require('./bookingController');
 
 // Admin-managed SEO fields (v3.19) — shared whitelist for service + profile SEO.
 // Builds a sanitised update payload from the request body; only provided keys
@@ -345,7 +346,24 @@ const updateBooking = async (req, res) => {
   try {
     const { status, payment_status } = req.body;
     const updates = { updated_at: new Date().toISOString() };
-    if (status) updates.status = status;
+
+    // F13: validate the STATUS transition instead of writing it raw. The host/guest
+    // handlers guard their own transitions (only-confirmed-may-complete, etc.); this
+    // editor didn't, so an admin could force cancelled→completed (re-recognising
+    // revenue for a cancelled session) or completed→confirmed (un-closing a settled
+    // row). Read the current status and reject an illegal move.
+    if (status) {
+      const { data: current } = await supabaseAdmin
+        .from('bookings').select('status').eq('id', req.params.id).single();
+      if (!current) return res.status(404).json({ message: 'Booking not found' });
+      if (!isValidBookingTransition(current.status, status)) {
+        return res.status(409).json({
+          message: `Can't move a booking from "${current.status}" to "${status}".`,
+          code: 'INVALID_TRANSITION',
+        });
+      }
+      updates.status = status;
+    }
     if (payment_status) {
       // SECURITY: 'paid' may ONLY be set by the verified Razorpay payment flow.
       // Allowing it here lets an admin fabricate a withdrawable vendor balance.
@@ -376,6 +394,21 @@ const updateBooking = async (req, res) => {
 
 const deleteBooking = async (req, res) => {
   try {
+    // F13: never hard-delete a booking that carries money. A paid/refunded booking
+    // is a financial record — its GST invoice, ledger entries and confirmation email
+    // all reference this id, and journal_entries.source_id has no FK to bookings, so
+    // a delete leaves an orphaned ledger entry pointing at a row that no longer
+    // exists. Only an unpaid booking may be removed; use cancel for anything paid.
+    const { data: bk } = await supabaseAdmin
+      .from('bookings').select('payment_status').eq('id', req.params.id).maybeSingle();
+    if (!bk) return res.status(404).json({ message: 'Booking not found' });
+    if (bk.payment_status && bk.payment_status !== 'unpaid') {
+      return res.status(409).json({
+        message: `A ${bk.payment_status} booking can't be deleted — it's a financial record. Cancel it instead.`,
+        code: 'PAID_BOOKING_DELETE_BLOCKED',
+      });
+    }
+
     const { error } = await supabaseAdmin.from('bookings').delete().eq('id', req.params.id);
     if (error) return safeError(res, error);
     await audit(req, { action: 'booking.delete', resource_type: 'booking', resource_id: req.params.id });
