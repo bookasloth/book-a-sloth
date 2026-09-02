@@ -89,3 +89,25 @@ test('signals explain the state (top contributors, meaningful recency always pre
 test('null lead is a safe no-op', () => {
   expect(compute(null)).toEqual({ state: 'dormant', score: 0, signals: [] });
 });
+
+// ── PR-7.5: the two sentiment signals (now populated by lifecycleEngine.loadAccountCtx)
+// are honest inputs. A single soft signal caps at 'cooling'; two corroborate to 'at_risk'.
+describe('support/feedback sentiment wiring', () => {
+  const lead = { status: 'paid', last_meaningful_interaction_at: daysAgo(18), last_activity_at: daysAgo(2) };
+  const baseCtx = { isPaid: true, hasBooking: true, bookingsLast30d: 0 };
+
+  test('baseline (no negatives) is steady', () => {
+    expect(compute(lead, baseCtx, NOW).state).toBe('steady');
+  });
+
+  test('an open support issue alone pulls steady → cooling', () => {
+    const r = compute(lead, { ...baseCtx, supportOpen: true }, NOW);
+    expect(r.state).toBe('cooling');
+    expect(r.signals.some((s) => s.key === 'support')).toBe(true);
+  });
+
+  test('open support + negative feedback corroborate to at_risk', () => {
+    const r = compute(lead, { ...baseCtx, supportOpen: true, negativeFeedback: true }, NOW);
+    expect(r.state).toBe('at_risk');
+  });
+});

@@ -1,5 +1,16 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-08-29_
+_Last updated: 2026-09-02_
+
+## Relationship engine Phase 2 — PR-7.5 health negative-signal wiring — 2026-09-02
+
+> **Status: IN PROGRESS on `feat/crm-health-negative-signals`.** Plan: `docs/superpowers/plans/2026-08-30-relationship-engine-phase2.md`. No migration. Full server suite green (2482). Sends stay OFF.
+
+`relationshipHealth.compute` already read `ctx.supportOpen` / `ctx.negativeFeedback` (soft signals: one caps at `cooling`, two reach `at_risk`) but nothing populated them — the docstring literally said "wired in a follow-up". This is that follow-up: `lifecycleEngine.loadAccountCtx` now derives both, so an unhappy host stops reading as `steady`/`thriving`.
+
+- **`sentimentSignals()`** (pure, exported, unit-tested) — `supportOpen` = an escalated, unresolved host support thread (`support_threads` `participant_type='host'`, status `waiting`/`assigned`; `bot` isn't a human issue yet and `resolved` is closed); `negativeFeedback` = a poor support rating (`support_threads.rating ≤ 2`) OR a recent (≤90d) vendor complaint / low rating (`feedback` v3.20 `type='complaint'` or `rating ≤ 3/10`).
+- `loadAccountCtx` adds two batched, fail-soft reads (a missing table yields no signal, never a throw) and merges the two booleans into each profile's ctx. **`compute` is unchanged** — the whole point of its purity. `reviews` (guest↔host) are deliberately excluded: they're not the host's sentiment toward *us*.
+- Health recomputes on the next 15-min lifecycle tick.
+
 
 ## Host notification system overhaul + AiSensy fix + admin badge — 2026-08-29
 

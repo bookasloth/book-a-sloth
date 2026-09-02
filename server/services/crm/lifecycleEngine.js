@@ -142,6 +142,32 @@ async function loadOpenLeads() {
 // (photo / service / availability) + the facts the resolver needs to promote paid
 // hosts through Relations → Marketing (paid?, earnings, last-30d bookings, plan
 // price, renewals, qualified referrals, enterprise).
+//
+// PURE: derive relationshipHealth's two soft sentiment signals from a host's support
+// threads + vendor feedback (v3.20). supportOpen = an escalated, unresolved thread (a
+// human issue in flight — 'waiting'/'assigned'; a 'bot' thread isn't yet a human issue
+// and 'resolved' is closed). negative = a poor support rating (≤2/5) OR a recent
+// complaint / low vendor rating (≤3/10). Both are SOFT in compute (one alone caps at
+// 'cooling'; two reach 'at_risk'), so we keep them high-signal and current — a stale
+// complaint (>90d) no longer reflects the relationship and is dropped.
+const NEG_FEEDBACK_WINDOW_MS = 90 * 864e5;
+function sentimentSignals(supportRows = [], feedbackRows = [], now = Date.now()) {
+  const supportOpen = new Set();
+  const negative = new Set();
+  for (const t of supportRows || []) {
+    if (!t || !t.user_id) continue;
+    if (t.status === 'waiting' || t.status === 'assigned') supportOpen.add(t.user_id);
+    if (t.rating != null && Number(t.rating) <= 2) negative.add(t.user_id);
+  }
+  const cutoff = now - NEG_FEEDBACK_WINDOW_MS;
+  for (const f of feedbackRows || []) {
+    if (!f || !f.vendor_id) continue;
+    const recent = !f.created_at || new Date(f.created_at).getTime() >= cutoff;
+    if (recent && (f.type === 'complaint' || (f.rating != null && Number(f.rating) <= 3))) negative.add(f.vendor_id);
+  }
+  return { supportOpen, negative };
+}
+
 async function loadAccountCtx(leads) {
   const planService = require('../planService');
   const ids = [...new Set(leads.map((l) => l.profile_id).filter(Boolean))];
@@ -150,16 +176,22 @@ async function loadAccountCtx(leads) {
   const now = Date.now();
   const since30 = new Date(now - 30 * 864e5).toISOString();
   const DEAD = new Set(['cancelled', 'no_show', 'refunded']);
-  const [profilesRes, servicesRes, availRes, bookedRes, subsRes, refsRes] = await Promise.all([
+  const negSince = new Date(now - NEG_FEEDBACK_WINDOW_MS).toISOString();
+  const [profilesRes, servicesRes, availRes, bookedRes, subsRes, refsRes, supportRes, feedbackRes] = await Promise.all([
     supabaseAdmin.from('profiles').select('id, onboarding_completed, profile_image, plan, billing_cadence, plan_activated_at, razorpay_subscription_id, subscription_status').in('id', ids),
     supabaseAdmin.from('services').select('host_id').in('host_id', ids),
     supabaseAdmin.from('availability').select('host_id').in('host_id', ids),
     supabaseAdmin.from('bookings').select('host_id, customer_total, status, created_at').eq('payment_status', 'paid').in('host_id', ids),
     supabaseAdmin.from('subscription_payments').select('vendor_id').eq('status', 'paid').in('vendor_id', ids),
     supabaseAdmin.from('referrals').select('referrer_id').in('status', ['qualified', 'rewarded']).in('referrer_id', ids),
+    // Relationship-health sentiment (PR-7.5). Both fail-soft: a missing table (an
+    // un-migrated DB) resolves { data:null } and simply yields no signal, never a throw.
+    supabaseAdmin.from('support_threads').select('user_id, status, rating').eq('participant_type', 'host').in('user_id', ids),
+    supabaseAdmin.from('feedback').select('vendor_id, type, rating, created_at').in('vendor_id', ids).gte('created_at', negSince),
   ]);
   const hasService = new Set((servicesRes.data || []).map((s) => s.host_id));
   const hasAvail = new Set((availRes.data || []).map((a) => a.host_id));
+  const { supportOpen, negative } = sentimentSignals(supportRes.data, feedbackRes.data, now);
 
   // Per-host booking rows + last-30d recency (dead dispositions dropped from recency).
   const bookingsByHost = new Map(); const last30 = new Map();
@@ -199,7 +231,12 @@ async function loadAccountCtx(leads) {
       referralsQualified: refCount.get(p.id) || 0,
       now,
     });
-    ctx.set(p.id, { ...facts, hasService: hasService.has(p.id), hasAvailability: hasAvail.has(p.id), bookingsTotal: bookings.length });
+    ctx.set(p.id, {
+      ...facts,
+      hasService: hasService.has(p.id), hasAvailability: hasAvail.has(p.id),
+      bookingsTotal: bookings.length,
+      supportOpen: supportOpen.has(p.id), negativeFeedback: negative.has(p.id),
+    });
   }
   return ctx;
 }
@@ -371,4 +408,4 @@ async function run() {
   return { scanned: leads.length, moved, enrolled, tasks, churned: churn.churned, dryRun: DRYRUN };
 }
 
-module.exports = { run, decide, SEQ, churnLapsedLeads };
+module.exports = { run, decide, SEQ, churnLapsedLeads, sentimentSignals };
