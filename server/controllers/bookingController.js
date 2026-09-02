@@ -25,6 +25,23 @@ const profileSecrets = require("../utils/profileSecrets");
 const guestGrant = require("../utils/bookingGrant");
 const { inAppNotify } = require("../utils/inAppNotify");
 
+// F13: the booking lifecycle state graph, in ONE place. The host/guest handlers
+// enforce their slice of it inline (P0-2/P1-5/M-1), but the admin editor wrote
+// `status` raw — so an admin could force cancelled→completed (re-recognising
+// revenue for a cancelled session) or completed→confirmed (un-closing a settled
+// row). This is the shared validator the admin path now calls; the terminal states
+// (completed / cancelled / no_show) allow no onward transition. A no-op (from===to)
+// is always allowed so an idempotent write doesn't 409.
+const BOOKING_TRANSITIONS = Object.freeze({
+  pending:   ["confirmed", "cancelled"],
+  confirmed: ["completed", "cancelled", "no_show"],
+  completed: [],
+  cancelled: [],
+  no_show:   [],
+});
+const isValidBookingTransition = (from, to) =>
+  from === to || (BOOKING_TRANSITIONS[from] || []).includes(to);
+
 // Redact the counterparty's phone on a single booking before returning it to the
 // caller (anti-disintermediation). Role = host if the caller owns the host side,
 // else guest; host plan fetched only when needed. See lib/contactVisibility.js.
@@ -1976,6 +1993,7 @@ module.exports = {
   markBookingCompleted,
   autoCompleteBookings,
   expireStalePendingBookings,
+  isValidBookingTransition,
   rescheduleBooking,
   confirmReschedule,
   processReminders,

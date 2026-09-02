@@ -85,7 +85,20 @@ function upcomingDelayingHoliday(fromYmd, windowDays = 4) {
   return null;
 }
 
+// F19: the movable-festival dates (Holi, both Eids, Diwali, Dussehra, …) are added
+// by hand each year. A year with too few entries means the calendar was never
+// refreshed — the payout-delay notice would then SILENTLY under-warn hosts on
+// exactly the days their money is late. Report the shortfall so it gets topped up
+// from the RBI calendar instead of failing quietly (the old TODO had no alarm).
+const MIN_ENTRIES_PER_YEAR = Number(process.env.BANK_HOLIDAY_MIN_ENTRIES || 10);
+function holidayCalendarStatus(now = Date.now()) {
+  const year = istDate(now).ymd.slice(0, 4);
+  const count = Object.keys(BANK_HOLIDAYS).filter((d) => d.startsWith(`${year}-`)).length;
+  return { year, count, stale: count < MIN_ENTRIES_PER_YEAR };
+}
+
 module.exports = {
   BANK_HOLIDAYS, istDate, addDays, dowOf, isBankHoliday, holidayName,
   isNonSettlementDay, nextSettlementDay, upcomingDelayingHoliday,
+  holidayCalendarStatus,
 };
