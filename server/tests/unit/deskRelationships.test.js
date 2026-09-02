@@ -35,31 +35,45 @@ describe('rankRecommendations', () => {
 });
 
 describe('getRelationships', () => {
-  test('flattens the embedded lead and ranks; caps to limit', async () => {
-    supabaseAdmin.from.mockReturnValue({
-      select: () => ({ eq: () => ({ limit: () => Promise.resolve({
-        data: [
-          { id: 'r1', lead_id: 'L1', reason: 'cooling', priority: 'medium', created_at: '2026-01-02',
-            leads: { name: 'Priya', health_state: 'cooling', health_score: 44, last_meaningful_interaction_at: '2026-01-01', last_automated_touch_at: '2026-01-05' } },
-          { id: 'r2', lead_id: 'L2', reason: 'at_risk', priority: 'high', created_at: '2026-01-03',
-            leads: { name: 'Rahul', health_state: 'at_risk', health_score: 20, last_meaningful_interaction_at: null, last_automated_touch_at: null } },
-        ],
-        error: null,
-      }) }) }),
-    });
+  const qb = (result) => {
+    const b = {};
+    for (const m of ['select', 'eq', 'neq', 'limit', 'order', 'in']) b[m] = () => b;
+    b.then = (res, rej) => Promise.resolve(result).then(res, rej);
+    return b;
+  };
+  beforeEach(() => jest.clearAllMocks());
+
+  test('unions lead + guest recs, flattens each subject, ranks; caps to limit', async () => {
+    const leadRows = [
+      { id: 'r1', lead_id: 'L1', subject_type: 'lead', reason: 'cooling', priority: 'medium', created_at: '2026-01-02',
+        leads: { name: 'Priya', health_state: 'cooling', health_score: 44, last_meaningful_interaction_at: '2026-01-01', last_automated_touch_at: '2026-01-05' } },
+    ];
+    const guestRows = [
+      { id: 'g1', contact_id: 'C9', subject_type: 'guest', reason: 'at_risk', priority: 'high', created_at: '2026-01-03',
+        contacts: { name: 'Rahul', health_state: 'at_risk', health_score: 20, last_meaningful_interaction_at: null, last_automated_touch_at: null } },
+    ];
+    supabaseAdmin.from
+      .mockReturnValueOnce(qb({ data: leadRows, error: null }))    // lead query
+      .mockReturnValueOnce(qb({ data: guestRows, error: null }));  // guest query
     const { count, items } = await deskService.getRelationships(25);
     expect(count).toBe(2);
-    expect(items[0]).toMatchObject({ id: 'r2', reason: 'at_risk', name: 'Rahul', health_state: 'at_risk' }); // high priority first
-    expect(items[1]).toMatchObject({ id: 'r1', name: 'Priya', health_score: 44, last_automated_touch_at: '2026-01-05' });
-    // Both clocks are exposed for the two-clock header (human = meaningful, machine = automated).
-    expect(items[0].last_meaningful_interaction_at).toBeNull();
-    expect(items[0].last_automated_touch_at).toBeNull();
+    expect(items[0]).toMatchObject({ id: 'g1', subject_type: 'guest', name: 'Rahul', contact_id: 'C9', health_state: 'at_risk' }); // high priority first
+    expect(items[1]).toMatchObject({ id: 'r1', subject_type: 'lead', name: 'Priya', health_score: 44 });
+    expect(items[1].last_automated_touch_at).toBe('2026-01-05');
   });
 
-  test('missing table (pre-v3.136) → empty queue, not a 500', async () => {
-    supabaseAdmin.from.mockReturnValue({
-      select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: null, error: { message: 'relation "touch_recommendations" does not exist' } }) }) }),
-    });
+  test('lead query error (pre-v3.136 table missing) → empty queue, not a 500', async () => {
+    supabaseAdmin.from.mockReturnValue(qb({ data: null, error: { message: 'relation "touch_recommendations" does not exist' } }));
     expect(await deskService.getRelationships(25)).toEqual({ count: 0, items: [] });
+  });
+
+  test('guest query fails soft (pre-v3.139 contacts columns) → lead recs still returned', async () => {
+    const leadRows = [{ id: 'r1', lead_id: 'L1', subject_type: 'lead', reason: 'cooling', priority: 'medium', created_at: '2026-01-02', leads: { name: 'Priya', health_state: 'cooling' } }];
+    supabaseAdmin.from
+      .mockReturnValueOnce(qb({ data: leadRows, error: null }))
+      .mockReturnValueOnce(qb({ data: null, error: { message: 'column contacts.health_state does not exist' } }));
+    const { count, items } = await deskService.getRelationships(25);
+    expect(count).toBe(1);
+    expect(items[0].name).toBe('Priya');
   });
 });

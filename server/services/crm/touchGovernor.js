@@ -65,11 +65,13 @@ const CONTACT_ACTIVITY_TYPES = ['whatsapp_sent', 'email_sent', 'call_logged'];
 const CHANNEL_ACTIVITY = { whatsapp: 'whatsapp_sent', email: 'email_sent', call: 'call_logged' };
 
 /**
- * Resolve a touch subject to the lead id whose ledger holds its automated touches.
+ * Resolve a LEAD-shaped touch subject to the lead id whose lead_activities ledger holds
+ * its automated touches.
  *   { type:'lead', id }     → id
  *   { type:'profile', id }  → the linked lead (leads.profile_id), if any
- *   { type:'contact', id }  → null for now (guest ledger arrives in PR-9)
- * Returns null when there is no ledger to read/write (→ callers fail-open / no-op).
+ * A { type:'contact' } subject is handled separately (canTouch/recordTouch) — a guest
+ * has no per-touch ledger, only the single contacts.last_automated_touch_at clock.
+ * Returns null when there is no lead ledger to read/write (→ callers fail-open / no-op).
  */
 async function resolveLeadId(subject) {
   if (!subject || !subject.id) return null;
@@ -79,7 +81,7 @@ async function resolveLeadId(subject) {
     const { data } = await supabaseAdmin.from('leads').select('id').eq('profile_id', subject.id).limit(1);
     return data && data[0] ? data[0].id : null;
   }
-  return null; // 'contact' → PR-9
+  return null; // 'contact' → handled in canTouch/recordTouch, not here
 }
 
 /**
@@ -92,6 +94,17 @@ async function resolveLeadId(subject) {
  */
 async function canTouch(subject, now = Date.now()) {
   try {
+    // Guest (contact) subject: no per-touch ledger — the single denormalised
+    // last_automated_touch_at clock is the whole history. Treating that one timestamp
+    // as the window's touches is exact for the default 1/window cap (and conservative
+    // for a larger cap). Fail-open on error or a pre-v3.139 missing column.
+    if (subject && subject.type === 'contact' && subject.id) {
+      const { supabaseAdmin } = require('../../config/supabase');
+      const { data, error } = await supabaseAdmin
+        .from('contacts').select('last_automated_touch_at').eq('id', subject.id).maybeSingle();
+      if (error) return { ok: true };
+      return withinCap([data && data.last_automated_touch_at], now);
+    }
     const leadId = await resolveLeadId(subject);
     if (!leadId) return { ok: true, count: 0 }; // no ledger → fail-open
     const { supabaseAdmin } = require('../../config/supabase');
@@ -120,8 +133,17 @@ async function canTouch(subject, now = Date.now()) {
  */
 async function recordTouch(subject, { channel = 'email', event = null, meta = {} } = {}) {
   try {
+    // Guest (contact) subject: stamp the denormalised clocks directly (no ledger table).
+    if (subject && subject.type === 'contact' && subject.id) {
+      const { supabaseAdmin } = require('../../config/supabase');
+      const nowIso = new Date().toISOString();
+      await supabaseAdmin.from('contacts')
+        .update({ last_automated_touch_at: nowIso, last_activity_at: nowIso, updated_at: nowIso })
+        .eq('id', subject.id);
+      return;
+    }
     const leadId = await resolveLeadId(subject);
-    if (!leadId) return; // guest-without-lead → no ledger yet (PR-9); send still occurred
+    if (!leadId) return; // unlinked profile → no ledger; send still occurred
     const { logActivity } = require('./activity');
     const type = CHANNEL_ACTIVITY[channel] || 'email_sent';
     await logActivity(leadId, type, {

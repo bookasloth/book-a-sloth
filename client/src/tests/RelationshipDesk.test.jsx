@@ -14,10 +14,14 @@ const ITEMS = [
     touch_type: 'check_in', priority: 'medium', suggested_channel: 'email', suggested_sender: 'owner',
     mode: 'recommend', explanation: 'Cooling — last meaningful contact 24d ago.', health_state: 'cooling',
     last_meaningful_interaction_at: null, last_automated_touch_at: null },
+  { id: 'g1', lead_id: null, contact_id: 'C9', subject_type: 'guest', name: 'Anita Guest', business_name: null,
+    reason: 'dormant', touch_type: 'winback', priority: 'low', suggested_channel: 'email', suggested_sender: 'owner',
+    mode: 'recommend', explanation: 'Gone quiet after being an active customer.', health_state: 'dormant',
+    last_meaningful_interaction_at: '2026-05-01T10:00:00Z', last_automated_touch_at: '2026-05-10T10:00:00Z' },
 ];
 
 vi.mock('../services/api', () => ({
-  crmGetRelationships: vi.fn(() => Promise.resolve({ data: { count: 2, items: ITEMS } })),
+  crmGetRelationships: vi.fn(() => Promise.resolve({ data: { count: 3, items: ITEMS } })),
   crmRecommendationDone: vi.fn(() => Promise.resolve({ data: { ok: true } })),
   crmRecommendationSnooze: vi.fn(() => Promise.resolve({ data: { ok: true } })),
   crmRecommendationDismiss: vi.fn(() => Promise.resolve({ data: { ok: true } })),
@@ -38,6 +42,15 @@ test('renders ranked recommendations with name, reason and health', async () => 
   // Two-clock header: r2 has neither timestamp → both clocks read "never".
   expect(screen.getByText('Human never')).toBeInTheDocument();
   expect(screen.getByText('Auto never')).toBeInTheDocument();
+});
+
+test('a guest rec renders with a Guest badge alongside lead recs', async () => {
+  renderDesk();
+  await waitFor(() => screen.getByText('Anita Guest'));
+  expect(screen.getByText('Guest')).toBeInTheDocument();          // guest subject badge
+  expect(screen.getAllByText('Lead').length).toBe(2);             // the two lead recs
+  // every rec — lead or guest — still exposes its quick actions
+  expect(screen.getAllByRole('button', { name: 'Mark done' }).length).toBe(3);
 });
 
 test('Mark done records the touch on the rec\'s suggested channel', async () => {

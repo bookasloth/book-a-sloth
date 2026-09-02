@@ -201,33 +201,59 @@ function rankRecommendations(rows) {
     || new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
 }
 
-// Flatten an embedded lead (PostgREST returns it as a nested object) onto the rec.
+// Flatten an embedded subject (PostgREST returns it nested) onto the rec. A rec is
+// backed by EITHER a lead (subject_type 'lead'/null → leads embed) or a guest
+// (subject_type 'guest' → contacts embed, PR-9); both present the same shape so the Desk
+// renders them uniformly. Guests carry no business_name.
 function flattenRec(r) {
-  const lead = r.leads || r.lead || {};
+  const isGuest = r.subject_type === 'guest' || !!r.contact_id;
+  const subj = (isGuest ? (r.contacts || r.contact) : (r.leads || r.lead)) || {};
   return {
-    id: r.id, lead_id: r.lead_id, reason: r.reason, touch_type: r.touch_type,
+    id: r.id, lead_id: r.lead_id ?? null, contact_id: r.contact_id ?? null,
+    subject_type: r.subject_type || 'lead',
+    reason: r.reason, touch_type: r.touch_type,
     priority: r.priority, suggested_channel: r.suggested_channel, suggested_sender: r.suggested_sender,
     mode: r.mode, explanation: r.explanation, due_at: r.due_at, created_at: r.created_at,
-    name: lead.name ?? null, business_name: lead.business_name ?? null,
-    health_state: lead.health_state ?? null, health_score: lead.health_score ?? null,
-    last_meaningful_interaction_at: lead.last_meaningful_interaction_at ?? null,
-    last_automated_touch_at: lead.last_automated_touch_at ?? null,
+    name: subj.name ?? null, business_name: subj.business_name ?? null,
+    health_state: subj.health_state ?? null, health_score: subj.health_score ?? null,
+    last_meaningful_interaction_at: subj.last_meaningful_interaction_at ?? null,
+    last_automated_touch_at: subj.last_automated_touch_at ?? null,
   };
+}
+
+// Guest recs live in the SAME table with subject_type='guest' + contact_id, joined to
+// contacts instead of leads. Queried separately (not one embed) so a pre-v3.139 DB — where
+// the contacts health/clock columns don't exist yet — fails SOFT to no guest rows rather
+// than erroring the whole Desk. Best-effort; returns [] on any error.
+async function guestRecommendations() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('touch_recommendations')
+      .select('id, lead_id, contact_id, subject_type, reason, touch_type, priority, suggested_channel, suggested_sender, mode, explanation, due_at, created_at, contacts(name, health_state, health_score, last_meaningful_interaction_at, last_automated_touch_at)')
+      .eq('status', 'open').eq('subject_type', 'guest')
+      .limit(CANDIDATE_CAP);
+    if (error) return [];
+    return (data || []).map(flattenRec);
+  } catch (_) {
+    return [];
+  }
 }
 
 async function getRelationships(limit = DEFAULT_LIMIT) {
   const { data, error } = await supabaseAdmin
     .from('touch_recommendations')
-    .select('id, lead_id, reason, touch_type, priority, suggested_channel, suggested_sender, mode, explanation, due_at, created_at, leads(name, business_name, health_state, health_score, last_meaningful_interaction_at, last_automated_touch_at)')
-    .eq('status', 'open')
+    .select('id, lead_id, contact_id, subject_type, reason, touch_type, priority, suggested_channel, suggested_sender, mode, explanation, due_at, created_at, leads(name, business_name, health_state, health_score, last_meaningful_interaction_at, last_automated_touch_at)')
+    .eq('status', 'open').neq('subject_type', 'guest')
     .limit(CANDIDATE_CAP);
   // Schema-fallback: pre-v3.136 DB (table missing) → empty queue, never a 500.
   if (error) return { count: 0, items: [] };
-  const rows = rankRecommendations((data || []).map(flattenRec));
+  const leadRows = (data || []).map(flattenRec);
+  const guestRows = await guestRecommendations();       // fails soft to [] on a pre-v3.139 DB
+  const rows = rankRecommendations([...leadRows, ...guestRows]);
   return { count: rows.length, items: rows.slice(0, limit) };
 }
 
 module.exports = {
-  getDesk, getRelationships, rankRecommendations,
+  getDesk, getRelationships, rankRecommendations, flattenRec,
   isUnansweredReply, activationReason, mergeById, shape,
 };
