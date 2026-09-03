@@ -72,7 +72,7 @@ export default function Inaugurators() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 pb-24">
-        <ul className="grid grid-cols-3 gap-x-4 gap-y-9 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {stones.map((s, i) => (
             <li key={i} className={`transition ${needle ? (match(s) ? 'scale-110' : 'opacity-25') : ''}`}>
               <Stone name={s.name} shade={s.shade} shape={s.shape} />
