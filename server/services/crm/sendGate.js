@@ -19,6 +19,7 @@
 const { supabaseAdmin } = require('../../config/supabase');
 const { isFeatureEnabled } = require('../featureFlags');
 const { normalizePhone } = require('../aisensyService');
+const { isPlaceholderEmail } = require('../email/placeholderEmail');
 const governor = require('./touchGovernor');
 
 const SEND_FLAG = 'crm_admin_sends';
@@ -81,6 +82,9 @@ async function canSend(lead, channel, opts = {}) {
   } else if (channel === 'email') {
     const email = (lead.email || '').trim().toLowerCase();
     if (!validEmail(email)) return { ok: false, reason: 'invalid_email' };
+    // Phone-only users carry a synthetic p<phone>@users.bookasloth.app address that
+    // can't receive mail — emailing it only bounces. Skip (they get WhatsApp instead).
+    if (isPlaceholderEmail(email)) return { ok: false, reason: 'placeholder_email' };
     if (await isEmailUnsubscribed(email)) return { ok: false, reason: 'email_unsubscribed' };
     if (await isSuppressed(lead, 'email')) return { ok: false, reason: 'email_suppressed' };
   } else {

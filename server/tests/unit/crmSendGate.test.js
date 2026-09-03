@@ -53,6 +53,11 @@ test('unsubscribed email blocks send', async () => {
   expect(r.reason).toBe('email_unsubscribed');
 });
 
+test('placeholder phone-only email is skipped (never emailed → no bounce)', async () => {
+  const r = await canSend({ email: 'p919876543210@users.bookasloth.app' }, 'email');
+  expect(r).toEqual({ ok: false, reason: 'placeholder_email' });
+});
+
 test('suppressed contact blocks that channel', async () => {
   rows.contacts = { email_suppressed: true, whatsapp_suppressed: false };
   const r = await canSend({ email: 'a@b.com' }, 'email');

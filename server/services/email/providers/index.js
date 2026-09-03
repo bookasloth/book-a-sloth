@@ -14,6 +14,7 @@
 const smtpProvider = require('./smtpProvider');
 const resendProvider = require('./resendProvider');
 const sesProvider = require('./sesProvider');
+const { isPlaceholderEmail } = require('../placeholderEmail');
 
 const PROVIDERS = {
   smtp: smtpProvider,
@@ -21,9 +22,24 @@ const PROVIDERS = {
   ses: sesProvider,
 };
 
-/** Resolve a provider by name, defaulting to SMTP. */
+/**
+ * Resolve a provider by name (default SMTP), wrapped with the universal
+ * placeholder-recipient guard: a phone-only user's synthetic
+ * p<phone>@users.bookasloth.app address can't receive mail, so we short-circuit to
+ * a benign no-op success (never call the real provider → no bounce) for EVERY email
+ * path — CRM, transactional and campaign alike — from this one chokepoint. Success
+ * (not an error) so inline callers that throw on failure aren't broken.
+ */
 function getProvider(name) {
-  return PROVIDERS[(name || 'smtp').toLowerCase()] || smtpProvider;
+  const provider = PROVIDERS[(name || 'smtp').toLowerCase()] || smtpProvider;
+  return {
+    ...provider,
+    sendEmail: async (opts = {}) => {
+      const to = Array.isArray(opts.to) ? opts.to[0] : opts.to;
+      if (isPlaceholderEmail(to)) return { success: true, skipped: true, id: null, reason: 'placeholder_recipient' };
+      return provider.sendEmail(opts);
+    },
+  };
 }
 
 module.exports = { getProvider, PROVIDERS };
