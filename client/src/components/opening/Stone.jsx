@@ -45,6 +45,12 @@ export default function Stone({ name = '', shade: shadeIdx = 0, shape = 0, class
 
   const words = String(name).trim().split(/\s+/).filter(Boolean);
 
+  // Auto-fit long single words (e.g. "Krishnamurthy") down so they don't overflow.
+  // ponytail: char-count heuristic, no DOM measuring — assumes roughly even glyph
+  // width. Base 15px, shrink past 9 chars, floor 10px. Good enough for names.
+  const maxLen = words.length ? Math.max(...words.map((w) => w.length)) : 0;
+  const fitPx = maxLen > 9 ? Math.max(10, Math.round((15 * 9) / maxLen)) : 15;
+
   const slabStyle = {
     borderRadius: radius,
     background: [
@@ -59,6 +65,7 @@ export default function Stone({ name = '', shade: shadeIdx = 0, shape = 0, class
 
   const engraveStyle = {
     color: engrave,
+    fontSize: `${fitPx}px`,
     textShadow: '0 -1px 0 rgba(0,0,0,.30), 0 1px 0 rgba(255,255,255,.38)',
   };
 
@@ -88,7 +95,7 @@ export default function Stone({ name = '', shade: shadeIdx = 0, shape = 0, class
             aria-hidden="true"
           />
           <span
-            className="font-heading text-[13px] font-extrabold leading-[1.14] tracking-tight sm:text-[15px]"
+            className="font-heading font-extrabold leading-[1.14] tracking-tight"
             style={engraveStyle}
             aria-hidden="true"
           >
