@@ -124,8 +124,14 @@ Items previously listed here as pending are now live:
     (`health_state` CHECK + `health_score` / `health_signals` / `health_computed_at`). Additive,
     RLS unchanged (service-role only). Code is schema-fallback safe (`guestRelationshipEngine`
     skips the health write, `deskService` guest query fails soft) so it was safe before apply.
-  - **`crm_admin_sends` stays fail-closed OFF** — Phase 2 is advisory only until a founder-gated,
-    staged flip (staging → sign-off → prod). Runbook in `docs/current-work.md`.
+  - **`crm_admin_sends` is LIVE (ON) — CRM outbound is sending to real customers.** The master send
+    kill-switch (a `feature_flags` row, still FAIL-CLOSED in code) is enabled on BOTH DBs: **prod
+    Mumbai since 2026-08-27** (founder-enabled; the flag row reads `enabled=true`, ~100+ real
+    messages sent) and **staging Tokyo since 2026-09-02**. Phase 2 is therefore NOT advisory-only on
+    prod — the governor cap (1/48h per subject), quiet-hours (09–20 IST), do-not-contact and
+    email/WhatsApp opt-out gates are the live guardrails on every send (see `sendGate`/`touchGovernor`).
+    To pause all CRM sends instantly: `UPDATE feature_flags SET enabled=false WHERE key='crm_admin_sends'`
+    (fail-closed; effective within the 60s flag cache). Runbook + flip history in `docs/current-work.md`.
 
 No migration is currently outstanding. Workflow for any NEW migration: run it on BOTH DBs, and keep the
 code-side schema fallback (SELECT/INSERT destructure) until it is confirmed applied everywhere.
