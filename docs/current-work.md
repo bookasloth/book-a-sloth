@@ -1,5 +1,17 @@
 # Current Work — Book A Sloth
-_Last updated: 2026-09-02_
+_Last updated: 2026-09-03_
+
+## Prod deploy + CRM sends state — 2026-09-03
+
+> **Status: LIVE on prod, confirmed on both tiers.** Full relationship-engine Phase 2 + the placeholder-email bounce fix are deployed and running.
+
+- **Deploy — both tiers confirmed live:**
+  - **Client → Vercel:** `deploy-vercel.yml` run #491 (`workflow_dispatch` on main HEAD `4f2ef9e` = the #940 merge) — **success**. Vercel is the primary client deployer; Vercel's own git integration is disabled for main, so only this workflow ships prod (path-filtered to `client/**`, or manual dispatch).
+  - **Server → Render:** auto-deploys on every push to main (no GitHub Action). Confirmed via the `job_locks` leader-election table (the sandbox can't reach the server directly — proxy blocks the app domains): a **new Render pod** (`…-84cd676b99-tnd5r`) holds the freshest leases (renewed within ~1–2 min), replacing the prior pod — i.e. a fresh deploy is live and actively running the full cron suite, including the CRM workers (`crm-send-worker`, `crm-sequence-worker`, `crm-lifecycle-engine`, `crm-guest-engine`).
+- **CRM sends are LIVE (`crm_admin_sends` = ON).** Corrected in `CLAUDE.md` (#939) after discovering the flag was NOT off as assumed: enabled on **prod Mumbai since 2026-08-27** (founder-enabled) and **staging Tokyo since 2026-09-02**. The flag stays FAIL-CLOSED in code; "on" is a `feature_flags` row. Instant pause: `UPDATE feature_flags SET enabled=false WHERE key='crm_admin_sends'` (effective within the 60s flag cache). Live guardrails on every send: governor cap (1/48h per subject), quiet-hours (09–20 IST), do-not-contact, email/WhatsApp opt-out.
+- **Prod send-log review (Aug 24 → Sep 3):** 189 messages / 127 recipients — 107 WhatsApp sent, 54 email delivered, **7 bounced**, 21 skipped by the gate (0 cap breaches). Biggest event: a one-time "Inaugurators to Hosts" WhatsApp blast (~106, mostly Aug 24). Two cleanups from the review, both done:
+  - **`fix/never-email-placeholder-addresses` (#940, merged + deployed):** 6 of 7 bounces were synthetic `p<phone>@users.bookasloth.app` phone-only addresses (never real mailboxes). New `isPlaceholderEmail` guard skips them in the CRM gate (`sendGate`, reason `placeholder_email`) AND at the universal provider chokepoint (`email/providers.getProvider` → benign no-op), so no path emails them.
+  - **1 real bounce** (`arjunrv42@gmail.com`, dead mailbox) suppressed on prod via `email_unsubscribes` + `contacts.email_suppressed` (the auto-suppression on bounce only fires when the message has a linked `contact_id`; this one didn't).
 
 ## Relationship engine Phase 2 — PR-9 guests via contacts — 2026-09-02
 
