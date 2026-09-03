@@ -47,9 +47,9 @@ export default function Stone({ name = '', shade: shadeIdx = 0, shape = 0, class
 
   // Auto-fit long single words (e.g. "Krishnamurthy") down so they don't overflow.
   // ponytail: char-count heuristic, no DOM measuring — assumes roughly even glyph
-  // width. Base 15px, shrink past 9 chars, floor 10px. Good enough for names.
+  // width. Base 19px, shrink past 9 chars, floor 13px. Good enough for names.
   const maxLen = words.length ? Math.max(...words.map((w) => w.length)) : 0;
-  const fitPx = maxLen > 9 ? Math.max(10, Math.round((15 * 9) / maxLen)) : 15;
+  const fitPx = maxLen > 9 ? Math.max(13, Math.round((19 * 9) / maxLen)) : 19;
 
   const slabStyle = {
     borderRadius: radius,
