@@ -45,16 +45,33 @@ test('enabled but no recipient → skips', async () => {
   expect(r.skipped).toBe('no_recipient');
 });
 
-test('enabled + due → computes, emails, and marks sent', async () => {
+test('enabled + due → computes, emails EACH recipient individually, marks sent', async () => {
   process.env.SUPPORT_DIGEST_ENABLED = 'true';
   process.env.SUPPORT_DIGEST_EMAIL = 'founder@bookasloth.in, product@bookasloth.in';
   const r = await sendWeeklyInsightsDigest();
   expect(computeInsights).toHaveBeenCalledWith(7);
-  expect(sendEmail).toHaveBeenCalledTimes(1);
-  const call = sendEmail.mock.calls[0][0];
-  expect(call.to).toBe('founder@bookasloth.in,product@bookasloth.in');
-  expect(call.subject).toMatch(/12 resolved/);
+  // One send PER address — never a comma-joined `to` (Resend rejects that).
+  expect(sendEmail).toHaveBeenCalledTimes(2);
+  expect(sendEmail.mock.calls.map((c) => c[0].to)).toEqual(['founder@bookasloth.in', 'product@bookasloth.in']);
+  expect(sendEmail.mock.calls[0][0].subject).toMatch(/12 resolved/);
   expect(r).toEqual({ sent: true, recipients: 2 });
+});
+
+test('one bad recipient does not sink the rest; marker still written', async () => {
+  process.env.SUPPORT_DIGEST_ENABLED = 'true';
+  process.env.SUPPORT_DIGEST_EMAIL = 'bad-address, good@bookasloth.in';
+  sendEmail.mockImplementationOnce(() => Promise.reject(new Error('Invalid `to` field')));
+  const r = await sendWeeklyInsightsDigest();
+  expect(sendEmail).toHaveBeenCalledTimes(2);
+  expect(r).toEqual({ sent: true, recipients: 1 }); // only the good one counted
+});
+
+test('all sends failing → not marked sent (retries next tick)', async () => {
+  process.env.SUPPORT_DIGEST_ENABLED = 'true';
+  process.env.SUPPORT_DIGEST_EMAIL = 'founder@bookasloth.in';
+  sendEmail.mockImplementation(() => Promise.reject(new Error('boom')));
+  const r = await sendWeeklyInsightsDigest();
+  expect(r).toEqual({ sent: false, skipped: 'all_sends_failed' });
 });
 
 test('within 7 days of last send → too_soon', async () => {

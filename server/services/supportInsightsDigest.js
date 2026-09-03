@@ -72,13 +72,20 @@ async function sendWeeklyInsightsDigest() {
   if (last && Date.now() - new Date(last).getTime() < WEEK_MS) return { sent: false, skipped: 'too_soon' };
 
   const ins = await computeInsights(7);
-  await sendEmail({
-    to: to.join(','),
-    subject: `Support digest — ${ins.total_resolved} resolved, ${pct(ins.product_caused_rate)} product-caused`,
-    html: renderDigest(ins),
-  });
+  const subject = `Support digest — ${ins.total_resolved} resolved, ${pct(ins.product_caused_rate)} product-caused`;
+  const html = renderDigest(ins);
+  // One email PER recipient. Resend's `to` rejects a comma-joined multi-address
+  // string ("Invalid `to` field"), which silently failed every run once >1 address
+  // was configured — mirror adminAlert and send individually. A bad single address
+  // fails only its own send, not the whole digest.
+  let sent = 0;
+  for (const addr of to) {
+    try { await sendEmail({ to: addr, subject, html }); sent += 1; }
+    catch (e) { console.error('support digest send failed for', addr, e.message); }
+  }
+  if (!sent) return { sent: false, skipped: 'all_sends_failed' };
   await writeMarker(new Date().toISOString());
-  return { sent: true, recipients: to.length };
+  return { sent: true, recipients: sent };
 }
 
 module.exports = { sendWeeklyInsightsDigest, renderDigest };
