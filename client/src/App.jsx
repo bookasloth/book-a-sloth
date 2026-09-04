@@ -232,6 +232,10 @@ const SalesSequences  = lazy(() => import('./pages/admin/sales/SalesSequences'))
 const AdminFinanceDashboard = lazy(() => import('./pages/admin/AdminFinanceDashboard'));
 const AdminJournal = lazy(() => import('./pages/admin/AdminJournal'));
 const AdminLedger  = lazy(() => import('./pages/admin/AdminLedger'));
+// Admin — GST command center (P2 UI)
+const AdminGstOverview     = lazy(() => import('./pages/admin/AdminGstOverview'));
+const AdminGstTransactions = lazy(() => import('./pages/admin/AdminGstTransactions'));
+const AdminGstInvoices     = lazy(() => import('./pages/admin/AdminGstInvoices'));
 const Presentation = lazy(() => import('./pages/presentation/Presentation'));
 
 // ── Fallback shown while a route chunk downloads ──────────────────────────────
@@ -538,6 +542,11 @@ function App() {
           <Route path="/admin/finance" element={<AdminWrapper><AdminFinanceDashboard /></AdminWrapper>} />
           <Route path="/admin/finance/journal" element={<AdminWrapper><AdminJournal /></AdminWrapper>} />
           <Route path="/admin/finance/ledger" element={<AdminWrapper><AdminLedger /></AdminWrapper>} />
+
+          {/* GST command center (P2) */}
+          <Route path="/admin/gst" element={<AdminWrapper><AdminGstOverview /></AdminWrapper>} />
+          <Route path="/admin/gst/transactions" element={<AdminWrapper><AdminGstTransactions /></AdminWrapper>} />
+          <Route path="/admin/gst/invoices" element={<AdminWrapper><AdminGstInvoices /></AdminWrapper>} />
 
           {/* System — bare /admin/system has no page; send it to the dashboard */}
           <Route path="/admin/system" element={<Navigate to="/super-dashboard" replace />} />
