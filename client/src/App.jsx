@@ -161,6 +161,8 @@ const AdminKYC       = lazy(() => import('./pages/admin/AdminKYC'));
 const AdminKycOverview = lazy(() => import('./pages/admin/AdminKycOverview'));
 const Host360List    = lazy(() => import('./pages/admin/Host360List'));
 const Host360Detail  = lazy(() => import('./pages/admin/Host360Detail'));
+const Guest360List   = lazy(() => import('./pages/admin/Guest360List'));
+const Guest360Detail = lazy(() => import('./pages/admin/Guest360Detail'));
 
 // Admin — Finance
 const AdminTransactions = lazy(() => import('./pages/admin/AdminTransactions'));
@@ -498,6 +500,8 @@ function App() {
           {/* People */}
           <Route path="/admin/host360" element={<AdminWrapper><Host360List /></AdminWrapper>} />
           <Route path="/admin/host360/:hostId" element={<AdminWrapper><Host360Detail /></AdminWrapper>} />
+          <Route path="/admin/guest360" element={<AdminWrapper><Guest360List /></AdminWrapper>} />
+          <Route path="/admin/guest360/:key" element={<AdminWrapper><Guest360Detail /></AdminWrapper>} />
           <Route path="/admin/providers" element={<AdminWrapper><AdminProviders /></AdminWrapper>} />
           <Route path="/admin/providers/:status" element={<AdminWrapper><AdminProviders /></AdminWrapper>} />
           <Route path="/admin/kyc" element={<AdminWrapper><AdminKycOverview /></AdminWrapper>} />

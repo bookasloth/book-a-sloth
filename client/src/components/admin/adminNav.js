@@ -77,7 +77,7 @@ export const PATH_LABELS = {
   'super-dashboard':'Dashboard', revenue:'Revenue', pending:'Pending Actions',
   admin:null, bookings:'Bookings', users:'Users', services:'Services',
   settings:'General Settings', payment:'Payment Settings', plans:'Subscription Plans', addons:'Addons',
-  providers:'Hosts', active:'Active', suspended:'Suspended', host360:'Host 360°',
+  providers:'Hosts', active:'Active', suspended:'Suspended', host360:'Host 360°', guest360:'Guest 360°',
   referrals:'Refer & Earn', 'invite-links':'Invite Links',
   professions:'Professions', explore:'Explore Page', insights:'Marketing Insights',
   kyc:'KYC', approved:'Approved', rejected:'Rejected',
@@ -134,6 +134,7 @@ export const NAV = [
     { label:'Hosts',              icon:'userCheck', to:'/admin/providers', perm:'professionals.view', badge:'pending_verifications' },
     { label:'KYC',                icon:'shieldOk',  to:'/admin/kyc', perm:'kyc.view' },
     { label:'Host 360°',          icon:'badgeCheck',to:'/admin/host360', perm:'professionals.view' },
+    { label:'Guest 360°',         icon:'userCheck', to:'/admin/guest360', perm:'users.view' },
     { label:'Staff & Roles',      icon:'users2',    to:'/admin/staff', perm:'staff.manage' },
   ]},
   { key:'support', label:'Support & Moderation', icon:'chat', color:'#db2777', items:[

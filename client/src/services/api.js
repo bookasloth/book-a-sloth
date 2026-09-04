@@ -806,3 +806,7 @@ export const adminHost360Suspend    = (id, body)       => API.post(`/admin/host3
 export const adminHost360SetPlan    = (id, body)       => API.post(`/admin/host360/${id}/actions/plan`, body);
 export const adminHost360AssignAm   = (id, body)       => API.post(`/admin/host360/${id}/actions/assign-am`, body);
 export const adminHost360SendEmail  = (id, body)       => API.post(`/admin/host360/${id}/actions/email`, body);
+
+// Guest 360 (read-only) — key is a CRM customer key ('p:<10>' | 'e:<email>'), URL-encoded.
+export const adminGuest360List = (params)  => API.get('/admin/guest360', { params });
+export const adminGuest360Get  = (key)     => API.get(`/admin/guest360/${encodeURIComponent(key)}`);
