@@ -298,6 +298,15 @@ export const adminGstInvoices      = (params)      => API.get('/admin/gst/invoic
 export const adminGstInvoice       = (id)          => API.get(`/admin/gst/invoices/${id}`);
 // CSV export of a report (transactions/sales-register) — returns a blob.
 export const adminGstReportCsv     = (type, params) => API.get(`/admin/gst/reports/${type}`, { params: { ...params, format: 'csv' }, responseType: 'blob' });
+// GST — action center, reconciliation, ITC, returns, reports, settings (P3).
+export const adminGstIssues        = (params)      => API.get('/admin/gst/issues', { params });
+export const adminGstSetIssueStatus = (data)       => API.post('/admin/gst/issues/status', data);
+export const adminGstReconciliation = (params)     => API.get('/admin/gst/reconciliation', { params });
+export const adminGstItc            = (params)      => API.get('/admin/gst/itc', { params });
+export const adminGstReturns        = (params)      => API.get('/admin/gst/returns', { params });
+export const adminGstSetReturnStatus = (data)      => API.post('/admin/gst/returns/status', data);
+export const adminGstReport         = (type, params) => API.get(`/admin/gst/reports/${type}`, { params });
+export const adminGstSettings       = ()           => API.get('/admin/gst/settings');
 
 // Admin — Payout approval
 export const adminGetPayouts     = (status)         => API.get('/admin/payouts', { params: status ? { status } : {} });

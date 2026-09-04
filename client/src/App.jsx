@@ -236,6 +236,12 @@ const AdminLedger  = lazy(() => import('./pages/admin/AdminLedger'));
 const AdminGstOverview     = lazy(() => import('./pages/admin/AdminGstOverview'));
 const AdminGstTransactions = lazy(() => import('./pages/admin/AdminGstTransactions'));
 const AdminGstInvoices     = lazy(() => import('./pages/admin/AdminGstInvoices'));
+const AdminGstIssues       = lazy(() => import('./pages/admin/AdminGstIssues'));
+const AdminGstReconciliation = lazy(() => import('./pages/admin/AdminGstReconciliation'));
+const AdminGstItc          = lazy(() => import('./pages/admin/AdminGstItc'));
+const AdminGstReturns      = lazy(() => import('./pages/admin/AdminGstReturns'));
+const AdminGstReports      = lazy(() => import('./pages/admin/AdminGstReports'));
+const AdminGstSettings     = lazy(() => import('./pages/admin/AdminGstSettings'));
 const Presentation = lazy(() => import('./pages/presentation/Presentation'));
 
 // ── Fallback shown while a route chunk downloads ──────────────────────────────
@@ -547,6 +553,12 @@ function App() {
           <Route path="/admin/gst" element={<AdminWrapper><AdminGstOverview /></AdminWrapper>} />
           <Route path="/admin/gst/transactions" element={<AdminWrapper><AdminGstTransactions /></AdminWrapper>} />
           <Route path="/admin/gst/invoices" element={<AdminWrapper><AdminGstInvoices /></AdminWrapper>} />
+          <Route path="/admin/gst/issues" element={<AdminWrapper><AdminGstIssues /></AdminWrapper>} />
+          <Route path="/admin/gst/reconciliation" element={<AdminWrapper><AdminGstReconciliation /></AdminWrapper>} />
+          <Route path="/admin/gst/itc" element={<AdminWrapper><AdminGstItc /></AdminWrapper>} />
+          <Route path="/admin/gst/returns" element={<AdminWrapper><AdminGstReturns /></AdminWrapper>} />
+          <Route path="/admin/gst/reports" element={<AdminWrapper><AdminGstReports /></AdminWrapper>} />
+          <Route path="/admin/gst/settings" element={<AdminWrapper><AdminGstSettings /></AdminWrapper>} />
 
           {/* System — bare /admin/system has no page; send it to the dashboard */}
           <Route path="/admin/system" element={<Navigate to="/super-dashboard" replace />} />
