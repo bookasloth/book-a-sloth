@@ -22,7 +22,7 @@ const NEW_BLOCK = {
   divider: () => ({ type: 'divider' }),
   spacer:  () => ({ type: 'spacer', size: 16 }),
   // Founder-voice blocks (ported from the design catalog).
-  metric:      () => ({ type: 'metric', value: '3,200 hosts', label: 'now on Book A Sloth' }),
+  metric:      () => ({ type: 'metric', value: '78 hosts', label: 'now on Book A Sloth' }),
   callout:     () => ({ type: 'callout', text: 'The one thing I want you to take away…', background: '#fff4ed' }),
   checklist:   () => ({ type: 'checklist', items: ['First point', 'Second point'], columns: 1 }),
   beforeAfter: () => ({ type: 'beforeAfter', beforeTitle: 'Before', before: 'Chasing payments\nManual reminders', afterTitle: 'After', after: 'Auto-paid\nCalm inbox' }),
@@ -44,7 +44,7 @@ const STARTER_DESIGNS = [
   ] },
   { name: 'Milestone', blocks: [
     { type: 'heading', text: 'A quick milestone worth sharing', level: 1, align: 'left' },
-    { type: 'metric', value: '3,200 hosts', label: 'now run their bookings on Book A Sloth' },
+    { type: 'metric', value: '78 hosts', label: 'now run their bookings on Book A Sloth' },
     { type: 'text', text: "When we started, the goal was simple: give you a calm way to sell your time. Here's where that's gotten us — and where we're headed next.", align: 'left' },
     { type: 'checklist', items: ['Instant payouts, no chasing', 'Automatic reminders', 'One link for everything you offer'], columns: 1 },
     { type: 'button', label: 'Explore your dashboard', href: 'https://bookasloth.com/dashboard', align: 'left' },
