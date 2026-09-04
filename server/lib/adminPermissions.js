@@ -38,6 +38,10 @@ const PERMISSIONS = [
   'finance.view', 'finance.refund', 'finance.manage',
   'payouts.view', 'payouts.approve', 'payouts.release', 'payouts.manual',
   'commission.view', 'commission.edit',
+  // GST module (docs/gst-finance-module-architecture.md §4/§18). Tax settings
+  // and "mark filed" are deliberately narrower than plain finance access.
+  'gst.view', 'gst.manage', 'gst.reconcile',
+  'gst.returns_prepare', 'gst.returns_file', 'gst.export', 'gst.settings',
   // Growth
   'plans.view', 'plans.manage',
   'coupons.view', 'coupons.manage',
@@ -94,6 +98,7 @@ const ROLES = {
       'finance.view',
       'payouts.view',
       'commission.view',
+      'gst.view',
       'plans.view',
       'coupons.view',
       'analytics.view',
@@ -138,6 +143,8 @@ const ROLES = {
       'finance.view', 'finance.refund', 'finance.manage',
       'payouts.view', 'payouts.approve', 'payouts.release', 'payouts.manual',
       'commission.view', 'commission.edit',
+      'gst.view', 'gst.manage', 'gst.reconcile',
+      'gst.returns_prepare', 'gst.returns_file', 'gst.export', 'gst.settings',
       'plans.view',
       'coupons.view',
       'referrals.view', 'referrals.manage',
