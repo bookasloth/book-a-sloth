@@ -11,7 +11,8 @@
  * trusted into raw HTML). {{tokens}} survive escaping and are resolved per
  * recipient by placeholderResolver later. Phase 1 has no raw-HTML block.
  *
- * Supported blocks: heading · text · image · button · divider · spacer · section.
+ * Supported blocks: heading · text · image · button · divider · spacer · section
+ *   · metric · callout · checklist · beforeAfter · caseCard · quote · editorial.
  */
 
 'use strict';
@@ -86,7 +87,83 @@ function section({ background = '', blocks = [], brand = DEFAULT_BRAND }) {
   </td></tr>`;
 }
 
-const RENDERERS = { heading, text, image, button, divider, spacer, section };
+// ── founder-voice blocks (ported from the Timewheel design catalog) ──────────
+
+function metric({ value = '', label = '', background = D.dark }) {
+  const bg = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(background) ? background : D.dark;
+  return `<tr><td style="padding:6px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${bg};border-radius:1px;">
+      <tr><td style="padding:24px;text-align:center;font-family:${D.font};">
+        <span style="font-size:28px;font-weight:600;color:#ffffff;line-height:1.2;">${nl2br(value)}</span>
+        ${label ? `<div style="font-size:13px;color:#b0b3b8;margin-top:4px;">${nl2br(label)}</div>` : ''}
+      </td></tr>
+    </table>
+  </td></tr>`;
+}
+
+function callout({ text: t = '', barColor = '', background = '', brand = DEFAULT_BRAND }) {
+  const bar = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(barColor) ? barColor : brand;
+  const bg = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(background) ? background : 'transparent';
+  const cellPad = bg === 'transparent' ? '2px 0 2px 14px' : '16px 16px 16px 14px';
+  return `<tr><td style="padding:10px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${bg};border-radius:1px;">
+      <tr>
+        <td width="6" style="background:${bar};font-size:0;line-height:0;">&nbsp;</td>
+        <td style="padding:${cellPad};font-size:14px;line-height:1.7;color:${D.muted};font-family:${D.font};">${nl2br(t)}</td>
+      </tr>
+    </table>
+  </td></tr>`;
+}
+
+function checklist({ items = [], columns = 1, brand = DEFAULT_BRAND }) {
+  const list = (Array.isArray(items) ? items : []).filter((x) => String(x == null ? '' : x).trim());
+  if (!list.length) return '';
+  const cols = columns === 2 ? 2 : 1;
+  const w = cols === 2 ? '50%' : '100%';
+  const cell = (t) => `<td width="${w}" valign="top" style="padding:6px 0;font-size:14px;line-height:1.6;color:${D.muted};font-family:${D.font};"><span style="color:${brand};">&#10004;</span> ${esc(t)}</td>`;
+  let rows = '';
+  for (let i = 0; i < list.length; i += cols) {
+    const a = cell(list[i]);
+    const b = cols === 2 ? (list[i + 1] != null ? cell(list[i + 1]) : '<td width="50%"></td>') : '';
+    rows += `<tr>${a}${b}</tr>`;
+  }
+  return `<tr><td style="padding:8px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>`;
+}
+
+function beforeAfter({ beforeTitle = 'Before', before = '', afterTitle = 'After', after = '' }) {
+  const box = (title, body) => `<td width="50%" valign="top" style="padding:18px;font-size:14px;line-height:1.6;color:${D.muted};font-family:${D.font};border:1px solid ${D.border};">
+    <strong style="color:${D.dark};display:block;margin-bottom:6px;">${esc(title)}</strong>${nl2br(body)}</td>`;
+  return `<tr><td style="padding:10px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${box(beforeTitle, before)}${box(afterTitle, after)}</tr></table></td></tr>`;
+}
+
+function caseCard({ name = '', text: t = '' }) {
+  return `<tr><td style="padding:10px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${D.border};border-radius:1px;">
+      <tr><td style="padding:20px;font-family:${D.font};">
+        ${name ? `<strong style="color:${D.dark};font-size:14px;">${esc(name)}</strong>` : ''}
+        ${t ? `<div style="font-size:14px;line-height:1.7;color:${D.muted};margin-top:6px;">${nl2br(t)}</div>` : ''}
+      </td></tr>
+    </table>
+  </td></tr>`;
+}
+
+function quote({ text: t = '', author = '', align = 'center' }) {
+  return `<tr><td style="padding:20px 0;text-align:${ALIGN(align)};font-family:${D.font};">
+    <div style="font-size:18px;line-height:1.6;color:${D.dark};">${nl2br(t)}</div>
+    ${author ? `<div style="font-size:13px;color:#80868b;margin-top:8px;">&mdash; ${esc(author)}</div>` : ''}
+  </td></tr>`;
+}
+
+function editorial({ eyebrow = '', heading: h = '', body = '' }) {
+  return `<tr><td style="padding:16px 0;font-family:${D.font};">
+    ${eyebrow ? `<div style="font-size:12px;color:#80868b;letter-spacing:1px;text-transform:uppercase;">${esc(eyebrow)}</div>` : ''}
+    ${h ? `<div style="font-size:22px;font-weight:700;color:${D.dark};margin:10px 0;line-height:1.3;">${nl2br(h)}</div>` : ''}
+    ${body ? `<div style="font-size:14px;line-height:1.8;color:${D.muted};">${nl2br(body)}</div>` : ''}
+  </td></tr>`;
+}
+
+const RENDERERS = { heading, text, image, button, divider, spacer, section,
+  metric, callout, checklist, beforeAfter, caseCard, quote, editorial };
 
 /** Render an array of blocks to `<tr>…` rows. Unknown block types are skipped. */
 function renderRows(blocks, brand) {
@@ -126,6 +203,13 @@ if (require.main === module) {
       { type: 'divider' },
       { type: 'spacer', size: 24 },
       { type: 'section', background: '#eef', blocks: [{ type: 'text', text: 'nested' }] },
+      { type: 'metric', value: '3,200 hosts', label: 'now on Book A Sloth' },
+      { type: 'callout', text: 'One insight <b>here</b>', background: '#fff4ed' },
+      { type: 'checklist', items: ['One', 'Two', '', 'Three'], columns: 2 },
+      { type: 'beforeAfter', before: 'chasing payments', after: 'auto-paid' },
+      { type: 'caseCard', name: 'A host', text: 'doubled bookings' },
+      { type: 'quote', text: 'You never chase payment.', author: 'Shubham' },
+      { type: 'editorial', eyebrow: 'from shubham', heading: 'Why', body: 'a note' },
       { type: 'bogus', text: 'skip me' },
     ],
   });
@@ -134,6 +218,15 @@ if (require.main === module) {
   assert(bodyHtml.includes('Line one<br>Line two'), 'newlines → <br>');
   assert(bodyHtml.includes('#123456'), 'brand color applied to button');
   assert(bodyHtml.includes('nested'), 'section children render');
+  assert(bodyHtml.includes('3,200 hosts'), 'metric renders');
+  assert(bodyHtml.includes('&lt;b&gt;'), 'callout text escaped');
+  assert(bodyHtml.includes('&#10004;'), 'checklist ticks render');
+  assert((bodyHtml.match(/&#10004;/g) || []).length === 3, 'blank checklist items dropped');
+  assert(bodyHtml.includes('chasing payments') && bodyHtml.includes('auto-paid'), 'beforeAfter renders both');
+  assert(bodyHtml.includes('doubled bookings'), 'caseCard renders');
+  assert(bodyHtml.includes('You never chase payment.'), 'quote renders');
+  assert(bodyHtml.includes('&mdash; Shubham'), 'quote attribution');
+  assert(bodyHtml.includes('#123456') && bodyHtml.includes('&#10004;'), 'brand threads into checklist tick');
   assert(!bogusRendered(bodyHtml), 'unknown block skipped');
   function bogusRendered(h) { return h.includes('skip me'); }
   console.log('campaignCompiler self-check OK');
