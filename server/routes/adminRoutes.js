@@ -32,6 +32,10 @@ router.get('/revenue-breakdown',        requireAdmin('analytics.view'),      get
 const withholding = require('../controllers/withholdingAdminController');
 router.get('/reports/withholding',      requireAdmin('commission.view'),     withholding.getWithholdingReport);
 
+// ── GST command center — /api/admin/gst/* (docs/gst-finance-module-architecture.md) ──
+// Derives all figures from the invoices table (source of truth); own gst.* RBAC.
+router.use('/gst', require('./gstRoutes'));
+
 // ── Marketing / performance insights (owned KPI tiles, Postgres-first) ──
 const insights = require('../controllers/insightsAdminController');
 router.get('/insights/kpis', requireAdmin('analytics.view'), insights.getKpis);
