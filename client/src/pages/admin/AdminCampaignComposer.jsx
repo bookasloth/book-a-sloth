@@ -21,8 +21,42 @@ const NEW_BLOCK = {
   button:  () => ({ type: 'button', label: 'View', href: 'https://bookasloth.com', align: 'left' }),
   divider: () => ({ type: 'divider' }),
   spacer:  () => ({ type: 'spacer', size: 16 }),
+  // Founder-voice blocks (ported from the design catalog).
+  metric:      () => ({ type: 'metric', value: '3,200 hosts', label: 'now on Book A Sloth' }),
+  callout:     () => ({ type: 'callout', text: 'The one thing I want you to take away…', background: '#fff4ed' }),
+  checklist:   () => ({ type: 'checklist', items: ['First point', 'Second point'], columns: 1 }),
+  beforeAfter: () => ({ type: 'beforeAfter', beforeTitle: 'Before', before: 'Chasing payments\nManual reminders', afterTitle: 'After', after: 'Auto-paid\nCalm inbox' }),
+  caseCard:    () => ({ type: 'caseCard', name: 'A host in Pune', text: 'Doubled bookings in 60 days.' }),
+  quote:       () => ({ type: 'quote', text: 'You never chase payment.', author: 'Shubham' }),
+  editorial:   () => ({ type: 'editorial', eyebrow: 'From the desk of Shubham', heading: 'A short note', body: 'Write the story here…' }),
 };
-const PALETTE = ['heading', 'text', 'image', 'button', 'divider', 'spacer'];
+const PALETTE = ['heading', 'text', 'image', 'button', 'divider', 'spacer',
+  'metric', 'callout', 'checklist', 'beforeAfter', 'caseCard', 'quote', 'editorial'];
+
+// Ready-made founder-voice layouts. Picking one replaces the block list; blocks
+// are deep-cloned on load so edits never mutate these constants.
+const STARTER_DESIGNS = [
+  { name: 'Founder note', blocks: [
+    { type: 'editorial', eyebrow: 'From the desk of Shubham', heading: 'Why I built Book A Sloth',
+      body: 'I got tired of watching good people spend their evenings chasing payments and juggling DMs instead of doing the work they love. So we built the calm way to sell your time — where the admin runs itself and you never chase a payment again.' },
+    { type: 'quote', text: 'You should never have to chase a payment again.', author: 'Shubham', align: 'center' },
+    { type: 'button', label: "See what's new", href: 'https://bookasloth.com', align: 'left' },
+  ] },
+  { name: 'Milestone', blocks: [
+    { type: 'heading', text: 'A quick milestone worth sharing', level: 1, align: 'left' },
+    { type: 'metric', value: '3,200 hosts', label: 'now run their bookings on Book A Sloth' },
+    { type: 'text', text: "When we started, the goal was simple: give you a calm way to sell your time. Here's where that's gotten us — and where we're headed next.", align: 'left' },
+    { type: 'checklist', items: ['Instant payouts, no chasing', 'Automatic reminders', 'One link for everything you offer'], columns: 1 },
+    { type: 'button', label: 'Explore your dashboard', href: 'https://bookasloth.com/dashboard', align: 'left' },
+  ] },
+  { name: 'Re-engage a quiet host', blocks: [
+    { type: 'heading', text: "Your calendar's been quiet — let's fix that", level: 2, align: 'left' },
+    { type: 'text', text: "It's been a while since your last booking. A few small changes usually make the difference.", align: 'left' },
+    { type: 'beforeAfter', beforeTitle: 'Now', before: 'Empty slots\nManual follow-ups', afterTitle: 'After a tune-up', after: 'Steady bookings\nAuto reminders' },
+    { type: 'caseCard', name: 'A host in Pune', text: 'Refreshed her page and doubled bookings in 60 days.' },
+    { type: 'button', label: 'Tune up my page', href: 'https://bookasloth.com/dashboard', align: 'left' },
+  ] },
+];
 
 const Field = ({ label, children }) => (
   <div><label className="block text-xs font-semibold adm-t3 mb-1">{label}</label>{children}</div>
@@ -85,6 +119,66 @@ const BlockEditor = ({ block, onChange, onUpload }) => {
       return <input className="fb-input text-sm" type="number" value={block.size} onChange={(e) => set({ size: +e.target.value })} placeholder="Height px" />;
     case 'divider':
       return <p className="text-xs adm-t3">Horizontal divider.</p>;
+    case 'metric':
+      return (
+        <div className="space-y-2">
+          <input className="fb-input text-sm" value={block.value} onChange={(e) => set({ value: e.target.value })} placeholder="Big number — e.g. 3,200 hosts" />
+          <input className="fb-input text-sm" value={block.label} onChange={(e) => set({ label: e.target.value })} placeholder="Caption under the number" />
+        </div>
+      );
+    case 'callout':
+      return (
+        <div className="space-y-2">
+          <textarea className="fb-input text-sm font-sans" rows={3} value={block.text} onChange={(e) => set({ text: e.target.value })} placeholder="Key insight — stands out with a colored bar" />
+          <input className="fb-input text-sm" value={block.background || ''} onChange={(e) => set({ background: e.target.value })} placeholder="Background hex (optional, e.g. #fff4ed)" />
+        </div>
+      );
+    case 'checklist':
+      return (
+        <div className="space-y-2">
+          <textarea className="fb-input text-sm font-sans" rows={4}
+            value={(block.items || []).join('\n')}
+            onChange={(e) => set({ items: e.target.value.split('\n') })}
+            placeholder="One item per line — each gets a ✔" />
+          <select className="fb-input text-sm" value={block.columns || 1} onChange={(e) => set({ columns: +e.target.value })}>
+            <option value={1}>One column</option><option value={2}>Two columns</option>
+          </select>
+        </div>
+      );
+    case 'beforeAfter':
+      return (
+        <div className="grid grid-cols-2 gap-2">
+          <input className="fb-input text-sm" value={block.beforeTitle} onChange={(e) => set({ beforeTitle: e.target.value })} placeholder="Left title" />
+          <input className="fb-input text-sm" value={block.afterTitle} onChange={(e) => set({ afterTitle: e.target.value })} placeholder="Right title" />
+          <textarea className="fb-input text-sm font-sans" rows={3} value={block.before} onChange={(e) => set({ before: e.target.value })} placeholder="Left body (one line each)" />
+          <textarea className="fb-input text-sm font-sans" rows={3} value={block.after} onChange={(e) => set({ after: e.target.value })} placeholder="Right body (one line each)" />
+        </div>
+      );
+    case 'caseCard':
+      return (
+        <div className="space-y-2">
+          <input className="fb-input text-sm" value={block.name} onChange={(e) => set({ name: e.target.value })} placeholder="Who — e.g. A host in Pune" />
+          <textarea className="fb-input text-sm font-sans" rows={3} value={block.text} onChange={(e) => set({ text: e.target.value })} placeholder="What happened" />
+        </div>
+      );
+    case 'quote':
+      return (
+        <div className="space-y-2">
+          <textarea className="fb-input text-sm font-sans" rows={3} value={block.text} onChange={(e) => set({ text: e.target.value })} placeholder="The line worth remembering" />
+          <div className="grid grid-cols-2 gap-2">
+            <input className="fb-input text-sm" value={block.author} onChange={(e) => set({ author: e.target.value })} placeholder="Attribution" />
+            <AlignPicker value={block.align} onChange={(align) => set({ align })} />
+          </div>
+        </div>
+      );
+    case 'editorial':
+      return (
+        <div className="space-y-2">
+          <input className="fb-input text-sm" value={block.eyebrow} onChange={(e) => set({ eyebrow: e.target.value })} placeholder="Eyebrow — e.g. From the desk of Shubham" />
+          <input className="fb-input text-sm" value={block.heading} onChange={(e) => set({ heading: e.target.value })} placeholder="Heading" />
+          <textarea className="fb-input text-sm font-sans" rows={5} value={block.body} onChange={(e) => set({ body: e.target.value })} placeholder="Editorial paragraph" />
+        </div>
+      );
     default:
       return null;
   }
@@ -166,6 +260,12 @@ const AdminCampaignComposer = ({ onClose }) => {
     catch { toast.error('Upload failed'); }
   }, []);
 
+  const loadStarter = (idx) => {
+    const d = STARTER_DESIGNS[idx];
+    if (!d) return;
+    if (blocks.length && !window.confirm('Replace the current blocks with this layout?')) return;
+    setBlocks(JSON.parse(JSON.stringify(d.blocks)));
+  };
   const addBlock = (type) => setBlocks((b) => [...b, NEW_BLOCK[type]()]);
   const patchBlock = (i, nb) => setBlocks((b) => b.map((x, j) => (j === i ? nb : x)));
   const removeBlock = (i) => setBlocks((b) => b.filter((_, j) => j !== i));
@@ -289,6 +389,12 @@ const AdminCampaignComposer = ({ onClose }) => {
           </Card>
 
           <Card className="space-y-2">
+            <Field label="Start from a layout (optional)">
+              <select className="fb-input text-sm" value="" onChange={(e) => { if (e.target.value !== '') loadStarter(+e.target.value); }}>
+                <option value="">Blank — build your own</option>
+                {STARTER_DESIGNS.map((d, i) => <option key={d.name} value={i}>{d.name}</option>)}
+              </select>
+            </Field>
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold adm-t1">Content blocks</p>
               <div className="flex flex-wrap gap-1">
