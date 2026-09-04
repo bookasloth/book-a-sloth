@@ -19,6 +19,7 @@ const engine = require('../services/gst/gstEngine');
 const exceptions = require('../services/gst/gstExceptions');
 const reconcileService = require('../services/gst/gstReconcile');
 const { itcReport } = require('../services/gst/itcStub');
+const exportService = require('../services/gst/gstExportService');
 
 const p = (req) => period.resolvePeriod({ fy: req.query.fy, month: req.query.month, quarter: req.query.quarter });
 
@@ -339,14 +340,46 @@ const listExports = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// POST /admin/gst/exports — generate (or reuse) a period pack.
+// body: { pack_type: 'monthly'|'quarterly'|'annual'|'full', fy, month?, quarter? }
+// The period granularity is derived from pack_type; 'full' uses the FY.
 const createExport = async (req, res) => {
-  // Background CSV/XLSX/PDF/ZIP CA-pack generation lands in P4 (needs exceljs +
-  // archiver). Documented 501 so the route contract exists now.
-  res.status(501).json({ message: 'Export/CA-pack generation ships in P4. Use /reports/:type?format=csv for per-report CSV in the meantime.' });
+  try {
+    const packType = ['monthly', 'quarterly', 'annual', 'full'].includes(req.body?.pack_type) ? req.body.pack_type : 'monthly';
+    // Map pack type → period query for gstPeriod.
+    const q = { fy: req.body?.fy };
+    if (packType === 'monthly') q.month = req.body?.month;
+    else if (packType === 'quarterly') q.quarter = req.body?.quarter;
+    const range = period.resolvePeriod(q);
+
+    const { run, reused } = await exportService.generatePack({
+      packType, range, actorId: req.admin?.id, actorEmail: req.admin?.email,
+    });
+    if (!reused) {
+      await audit(req, {
+        action: 'GST_EXPORT_GENERATED', resource_type: 'gst_export', resource_id: run.id,
+        after: { pack_type: packType, period: range.label, records: run.record_count },
+      });
+    }
+    res.json({ run, reused });
+  } catch (e) { safeError(res, e); }
+};
+
+// GET /admin/gst/exports/:id/download — short-lived signed URL for a pack.
+const downloadExport = async (req, res) => {
+  try {
+    const { data: run, error } = await supabaseAdmin.from('gst_export_runs').select('*').eq('id', req.params.id).single();
+    if (error || !run) return res.status(404).json({ message: 'Export not found' });
+    if (run.status !== 'complete' || !run.storage_path) return res.status(409).json({ message: `Export is ${run.status}, not ready to download` });
+    const url = await exportService.signedUrlFor(run);
+    if (!url) return res.status(500).json({ message: 'Could not sign the download URL' });
+    await audit(req, { action: 'GST_EXPORT_DOWNLOADED', resource_type: 'gst_export', resource_id: run.id });
+    res.json({ url });
+  } catch (e) { safeError(res, e); }
 };
 
 module.exports = {
   getOverview, getTransactions, listInvoices, getInvoiceDetail,
   getIssues, setIssueStatus, getReconciliation, getItc,
-  getReturns, setReturnStatus, getReport, getSettings, listExports, createExport,
+  getReturns, setReturnStatus, getReport, getSettings, listExports, createExport, downloadExport,
 };

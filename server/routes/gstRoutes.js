@@ -32,6 +32,7 @@ router.post('/returns/status', requireAdmin('gst.returns_prepare'), c.setReturnS
 router.get('/reports/:type', requireAdmin('gst.view'), c.getReport);
 router.get('/exports', requireAdmin('gst.view'), c.listExports);
 router.post('/exports', requireAdmin('gst.export'), c.createExport);
+router.get('/exports/:id/download', requireAdmin('gst.export'), c.downloadExport);
 router.get('/settings', requireAdmin('gst.view'), c.getSettings);
 
 module.exports = router;

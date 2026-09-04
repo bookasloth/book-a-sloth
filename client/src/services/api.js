@@ -307,6 +307,9 @@ export const adminGstReturns        = (params)      => API.get('/admin/gst/retur
 export const adminGstSetReturnStatus = (data)      => API.post('/admin/gst/returns/status', data);
 export const adminGstReport         = (type, params) => API.get(`/admin/gst/reports/${type}`, { params });
 export const adminGstSettings       = ()           => API.get('/admin/gst/settings');
+export const adminGstExports        = ()           => API.get('/admin/gst/exports');
+export const adminGstCreateExport   = (data)       => API.post('/admin/gst/exports', data);
+export const adminGstDownloadExport = (id)         => API.get(`/admin/gst/exports/${id}/download`);
 
 // Admin — Payout approval
 export const adminGetPayouts     = (status)         => API.get('/admin/payouts', { params: status ? { status } : {} });
