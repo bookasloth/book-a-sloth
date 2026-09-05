@@ -82,7 +82,7 @@ export const PATH_LABELS = {
   professions:'Professions', explore:'Explore Page', insights:'Marketing Insights',
   kyc:'KYC', approved:'Approved', rejected:'Rejected',
   finance:'Finance', journal:'Journal', ledger:'Ledger', transactions:'Transactions', payouts:'Payouts', earnings:'Host Earnings', refunds:'Refunds',
-  gst:'GST', invoices:'Invoices', issues:'Action Center', reconciliation:'Reconciliation', itc:'ITC', returns:'Returns',
+  gst:'GST', invoices:'Invoices', issues:'Action Center', reconciliation:'Reconciliation', itc:'ITC', returns:'Returns', exports:'CA Exports',
   content:'Content', pages:'Pages', blogs:'Blogs', newsletter:'Newsletter',
   faq:'FAQ', testimonials:'Testimonials',
   support:'Support', tickets:'Tickets', disputes:'Disputes', reviews:'Reviews', feedback:'Host Feedback',
@@ -176,6 +176,7 @@ export const NAV = [
     { label:'ITC',                icon:'layers',    to:'/admin/gst/itc', perm:'gst.view' },
     { label:'Returns',            icon:'calCheck',  to:'/admin/gst/returns', perm:'gst.view' },
     { label:'Reports',            icon:'layout2',   to:'/admin/gst/reports', perm:'gst.view' },
+    { label:'CA Exports',         icon:'package',   to:'/admin/gst/exports', perm:'gst.view' },
     { label:'Settings',           icon:'gear',      to:'/admin/gst/settings', perm:'gst.view' },
   ]},
   { key:'growth', label:'Growth', icon:'bars', color:'#FE5100', items:[
