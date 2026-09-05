@@ -290,6 +290,24 @@ export const adminFinanceRefund       = (data)        => API.post('/admin/financ
 // Execute a real Razorpay refund from the booking view. mode: 'tiered' | 'full'.
 export const adminExecuteRefund       = (data)        => API.post('/admin/finance/refund/execute', data);
 
+// Admin — GST command center (/admin/gst). All figures derive from the invoices
+// table server-side; these are read-only for P2 (overview/transactions/invoices).
+export const adminGstOverview      = (params)      => API.get('/admin/gst/overview', { params });
+export const adminGstTransactions  = (params)      => API.get('/admin/gst/transactions', { params });
+export const adminGstInvoices      = (params)      => API.get('/admin/gst/invoices', { params });
+export const adminGstInvoice       = (id)          => API.get(`/admin/gst/invoices/${id}`);
+// CSV export of a report (transactions/sales-register) — returns a blob.
+export const adminGstReportCsv     = (type, params) => API.get(`/admin/gst/reports/${type}`, { params: { ...params, format: 'csv' }, responseType: 'blob' });
+// GST — action center, reconciliation, ITC, returns, reports, settings (P3).
+export const adminGstIssues        = (params)      => API.get('/admin/gst/issues', { params });
+export const adminGstSetIssueStatus = (data)       => API.post('/admin/gst/issues/status', data);
+export const adminGstReconciliation = (params)     => API.get('/admin/gst/reconciliation', { params });
+export const adminGstItc            = (params)      => API.get('/admin/gst/itc', { params });
+export const adminGstReturns        = (params)      => API.get('/admin/gst/returns', { params });
+export const adminGstSetReturnStatus = (data)      => API.post('/admin/gst/returns/status', data);
+export const adminGstReport         = (type, params) => API.get(`/admin/gst/reports/${type}`, { params });
+export const adminGstSettings       = ()           => API.get('/admin/gst/settings');
+
 // Admin — Payout approval
 export const adminGetPayouts     = (status)         => API.get('/admin/payouts', { params: status ? { status } : {} });
 export const adminApprovePayout  = (id)             => API.post(`/admin/payouts/${id}/approve`);
