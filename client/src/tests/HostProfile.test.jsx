@@ -48,10 +48,16 @@ describe('HostProfile — loading/error', () => {
     expect(document.querySelector('.pl-overlay')).toBeTruthy();
   });
 
-  test('shows "Host not found" on 404', async () => {
+  test('renders the branded noindex 404 (not thin 200 HTML) on 404', async () => {
     getHostProfile.mockRejectedValueOnce({ response: { status: 404 } });
     renderProfile('ghost-user');
-    await waitFor(() => expect(screen.getByText(/host not found/i)).toBeTruthy());
+    // A dead host slug must render the branded ErrorPage, which carries
+    // <meta robots="noindex"> via ErrorLayout — otherwise the thin "Host not found"
+    // HTML served at 200 gets flagged by Google as a soft 404.
+    await waitFor(() => expect(screen.getByText(/error 404/i)).toBeTruthy());
+    expect(
+      document.querySelector('meta[name="robots"]')?.getAttribute('content')
+    ).toMatch(/noindex/i);
   });
 });
 

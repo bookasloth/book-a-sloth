@@ -120,6 +120,14 @@ function ExploreFull() {
 
   const firstLoad = fetching && services.length === 0;
 
+  // Faceted / searched / paginated Explore views are thin, duplicative variants of
+  // the canonical /explore (which they already canonicalize to). Google was indexing
+  // them and flagging "soft 404" (the ?category=&service= combos are emitted as
+  // crawlable links + ItemList JSON-LD from /services/:profession). noindex any
+  // variant with an active param, or an empty result set; keep the bare /explore
+  // indexable. `follow` so crawlers still reach the host/service pages the cards link to.
+  const noindex = !!(q || category || service || page > 1) || (!fetching && services.length === 0);
+
   return (
     <div className="min-h-screen bg-surface">
       <Seo
@@ -127,6 +135,7 @@ function ExploreFull() {
         description="Discover and book 1:1 services from coaches, consultants, therapists and creators on Book A Sloth. Search by skill or browse by category."
         image={ogCard('explore')}
         canonical={`${SITE_URL}/explore`}
+        robots={noindex ? 'noindex, follow' : undefined}
         jsonLd={[
           collectionPageJsonLd({
             name: 'Explore Services — Book A Sloth',

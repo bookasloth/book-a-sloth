@@ -13,12 +13,13 @@
 // must also be added to scripts/prerender.mjs so scrapers see the baked HTML.
 
 import { useMemo, useState } from 'react';
-import { Link, useParams, Navigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Reveal from '../../components/home/Reveal';
 import { ArrowRight, Check, Star, Sparkles, ShieldCheck, Plus } from 'lucide-react';
 import useLenis from '../../hooks/useLenis';
 import Seo from '../../components/common/Seo';
+import ErrorPage from '../ErrorPage';
 import { SITE_URL } from '../../utils/seo';
 import { HERO_FACES } from '../../components/home/images';
 import { TESTIMONIALS } from '../../data/testimonials';
@@ -240,8 +241,10 @@ export default function ProfessionLanding() {
     return [...first, ...rest].slice(0, 3);
   }, [data]);
 
-  // Unknown profession → home (friendlier than a bare 404).
-  if (!data) return <Navigate to="/" replace />;
+  // Unknown profession → branded 404 (noindex/nofollow via ErrorLayout). A redirect
+  // to home was friendlier but is a Google "soft 404" pattern (redirecting a dead URL
+  // to an unrelated page), which is exactly what we're clearing from Search Console.
+  if (!data) return <ErrorPage code={404} />;
 
   const { theme, seo, hero, socialProof, trust, stats, painPoints, features, headings, pricing, faq, finalCta, midCtas = {}, madeFor, label } = data;
   const canonical = `${SITE_URL}/for/${data.slug}`;
