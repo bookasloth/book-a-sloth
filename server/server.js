@@ -411,6 +411,7 @@ const SCHEDULED_JOBS = [
   { name: 'referral-release', min: 60, run: async () => { const r = await referralService.releaseDue(); if (r.released || r.clawed) console.log(`Referral release: +${r.released} rewarded, ${r.clawed} clawed back`); } },
   { name: 'rate-limit-cleanup', min: 60, run: async () => { const n = await cleanupRateLimitHits(); if (n > 0) console.log(`Rate-limit store: pruned ${n} expired rows`); } },
   { name: 'ip-block-prune', min: 60, run: async () => { const n = await ipBlocklist.pruneExpired(); if (n > 0) console.log(`IP blocklist: pruned ${n} expired bans`); } },
+  { name: 'seo-crawl', min: Number(process.env.SEO_CRAWL_INTERVAL_MIN) || 24 * 60, run: () => require('./services/seo/seoCrawler').run({ trigger: 'nightly' }) },
 ];
 const SCHEDULER_TICK_MIN = Number(process.env.SCHEDULER_TICK_MIN) || 5;
 setInterval(async () => {
