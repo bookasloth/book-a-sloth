@@ -1,8 +1,10 @@
 // server/services/seo/rules/index.js
 const { REGISTRY } = require('./registry');
 const onpage = require('./onpage');
-// Task 5/6 add: const technical = require('./technical'); etc. Push into GROUPS below.
-const GROUPS = [onpage];
+const technical = require('./technical');
+const indexability = require('./indexability');
+// Task 6 add: links/images/schema/sitemap groups. Push into GROUPS below.
+const GROUPS = [onpage, technical, indexability];
 
 const SHOULD_INDEX_TYPES = new Set(['host', 'service', 'blog', 'static']);
 
