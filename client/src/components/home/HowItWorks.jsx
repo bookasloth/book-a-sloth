@@ -72,9 +72,13 @@ export const STEPS = [
 
 /**
  * The three "how it works" cards + directional arrows.
- * Caller supplies the surrounding <section>, heading and dark background.
+ * Caller supplies the surrounding <section>, heading and background.
+ * `theme` ("dark" default | "light") flips the card / text / chevron colours so
+ * the component reads on either surface — dark landing pages keep the glass
+ * look; the light homepage section gets white cards on the canvas.
  */
-export default function HowItWorks() {
+export default function HowItWorks({ theme = "dark" }) {
+  const light = theme === "light";
   return (
     <div className="relative mt-16">
       {/* Direction chevrons sitting in the gaps between cards (desktop).
@@ -83,28 +87,28 @@ export default function HowItWorks() {
         aria-hidden
         size={40}
         strokeWidth={2.25}
-        className="absolute left-1/3 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/70 md:block"
+        className={`absolute left-1/3 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 md:block ${light ? "text-neutral-300" : "text-white/70"}`}
       />
       <ArrowRight
         aria-hidden
         size={40}
         strokeWidth={2.25}
-        className="absolute left-2/3 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 text-white/70 md:block"
+        className={`absolute left-2/3 top-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 md:block ${light ? "text-neutral-300" : "text-white/70"}`}
       />
 
       <div className="grid gap-12 md:grid-cols-3 md:gap-16">
         {STEPS.map((s, i) => (
           <Reveal key={s.title} delay={i * 0.12}>
-            <div className="group relative flex h-full flex-col items-center rounded-[6px] border border-white/10 bg-white/5 p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
+            <div className={`group relative flex h-full flex-col items-center rounded-[6px] p-8 text-center transition-all duration-300 hover:-translate-y-1.5 ${light ? "border border-black/5 bg-white shadow-[0_8px_30px_rgba(26,26,26,0.04)] hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)]" : "border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/10 backdrop-blur-xl hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]"}`}>
               {/* Vertical connector to the next step (mobile) */}
               {i < STEPS.length - 1 && (
                 <span
                   aria-hidden
-                  className="absolute left-1/2 top-full z-20 h-12 w-px -translate-x-1/2 bg-white/25 md:hidden"
+                  className={`absolute left-1/2 top-full z-20 h-12 w-px -translate-x-1/2 md:hidden ${light ? "bg-neutral-200" : "bg-white/25"}`}
                 >
                   <ArrowRight
                     size={16}
-                    className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 bg-neutral-800 text-white/55"
+                    className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-90 ${light ? "bg-canvas text-neutral-400" : "bg-neutral-800 text-white/55"}`}
                   />
                 </span>
               )}
@@ -127,14 +131,14 @@ export default function HowItWorks() {
                 </span>
               </div>
 
-              <h3 className="mt-6 font-heading text-xl font-bold text-white">{s.title}</h3>
-              <p className="mx-auto mt-2 max-w-xs text-neutral-200">{s.desc}</p>
+              <h3 className={`mt-6 font-heading text-xl font-bold ${light ? "text-ink" : "text-white"}`}>{s.title}</h3>
+              <p className={`mx-auto mt-2 max-w-xs ${light ? "text-neutral-500" : "text-neutral-200"}`}>{s.desc}</p>
 
               <span
                 className="mt-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
                 style={{
                   backgroundColor: `color-mix(in srgb, ${s.color} 26%, transparent)`,
-                  color: `color-mix(in srgb, ${s.color} 30%, white)`,
+                  color: light ? `color-mix(in srgb, ${s.color} 55%, #1a1a1a)` : `color-mix(in srgb, ${s.color} 30%, white)`,
                   boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${s.color} 45%, transparent)`,
                 }}
               >
