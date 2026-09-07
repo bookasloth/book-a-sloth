@@ -6,8 +6,8 @@ function check(p, ctx) {
   const out = [];
   const at = p.url;
   const push = (ruleKey, evidence) => out.push({ ruleKey, affectedUrl: at, evidence });
-  if (p.pageType && !ctx.SHOULD_INDEX_TYPES.has(p.pageType)) return out; // only audit indexable page types
-  if (p.httpStatus && p.httpStatus !== 200) return out;                  // on-page rules need a real page
+  if (!p.pageType || !ctx.SHOULD_INDEX_TYPES.has(p.pageType)) return out; // only audit indexable page types
+  if (p.httpStatus !== 200) return out;                  // on-page rules need a real page (null/undefined/0 = fetch failed, not indexable)
 
   if (!p.title) push('onpage.missing_title', {});
   else {

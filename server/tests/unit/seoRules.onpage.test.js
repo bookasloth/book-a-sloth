@@ -32,4 +32,10 @@ describe('onpage rules', () => {
     const ctx = buildContext([page({ h1: ['one', 'two'] })], new Set());
     expect(check(page({ h1: ['one', 'two'] }), ctx).map((i) => i.ruleKey)).toContain('onpage.multiple_h1');
   });
+
+  test('a failed-fetch page (httpStatus null) yields no on-page issues', () => {
+    const p = page({ httpStatus: null, title: null, metaDescription: null, h1: [] });
+    const ctx = buildContext([p], new Set());
+    expect(check(p, ctx)).toEqual([]);
+  });
 });
