@@ -6,6 +6,7 @@ import { analytics, EVENTS } from "../services/analytics";
 import BrandPreloader from "../components/preloader/BrandPreloader";
 import { useMinimalFooter } from "../context/ChromeContext";
 import Seo from "../components/common/Seo";
+import ErrorPage from "./ErrorPage";
 import { resolveProfileSeo, profileJsonLd, breadcrumbJsonLd, SITE_URL } from "../utils/seo";
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
@@ -419,6 +420,11 @@ const HostProfile = () => {
   // All hooks have run — safe to short-circuit the render for a vanity slug.
   if (isVanity) return <Navigate to={`/${VANITY_TARGET}`} replace />;
 
+  // A dead slug otherwise renders thin "Host not found" HTML at 200 — which Google
+  // flags as a "soft 404". ErrorPage carries noindex/nofollow (via ErrorLayout), so
+  // it drops out of the index cleanly. 404 for an unknown host, 500 for a real error.
+  if (error) return <ErrorPage code={error === 'Host not found' ? 404 : 500} />;
+
   return (
     <>
       {seo && <Seo {...seo} jsonLd={jsonLd} />}
@@ -429,14 +435,7 @@ const HostProfile = () => {
         accentColor={tc}
       />
 
-      {error ? (
-        <div className="min-h-[70vh] flex items-center justify-center px-4 py-16" style={{ background: C.bg }}>
-          <div className="text-center">
-            <p className="text-lg" style={{ color: C.secondary }}>{error}</p>
-            <Link to="/" className="mt-4 inline-block text-sm hover:underline" style={{ color: C.text }}>← Back to home</Link>
-          </div>
-        </div>
-      ) : !host ? (
+      {!host ? (
         // Placeholder, NOT null: these routes are prerendered, so hydration runs
         // with host===null for one API round-trip. Rendering nothing collapsed the
         // document and threw the footer to the top and back — CLS 0.93. Holding

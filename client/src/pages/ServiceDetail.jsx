@@ -8,6 +8,7 @@ import DOMPurify from 'dompurify';
 import { svcGetPublicByProfile, getAvailableSlots } from '../services/api';
 import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/themeUtils';
 import Seo from '../components/common/Seo';
+import ErrorPage from './ErrorPage';
 import { useMinimalFooter } from '../context/ChromeContext';
 import { resolveServiceSeo, serviceJsonLd, breadcrumbJsonLd, faqJsonLd, SITE_URL } from '../utils/seo';
 
@@ -844,7 +845,7 @@ export default function ServiceDetail() {
         // SEO (title/description/robots/canonical/OG/JSON-LD) is rendered
         // declaratively via <Seo> below, from the admin-managed fields.
       })
-      .catch(() => setError('Service not found'))
+      .catch((err) => setError(err?.response?.status === 404 ? 404 : 500))
       .finally(() => setLoading(false));
   }, [profileSlug, serviceSlug]);
 
@@ -860,14 +861,10 @@ export default function ServiceDetail() {
     </div>
   );
 
-  if (error || !data) return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
-      <div className="text-center">
-        <p className="text-gray-400 text-lg mb-3">{error || 'Service not found'}</p>
-        <button onClick={() => navigate(-1)} className="text-primary text-sm hover:underline">Go back</button>
-      </div>
-    </div>
-  );
+  // A dead service slug otherwise renders thin "Service not found" HTML at 200 —
+  // Google flags that as a "soft 404". ErrorPage carries noindex/nofollow (via
+  // ErrorLayout), so it drops out of the index cleanly.
+  if (error || !data) return <ErrorPage code={error || 404} />;
 
   const { service, vendor, totalServices, totalBookings, reviews, avgRating, ratingBreakdown, bookingFee, bookingFeeBreakdown } = data;
 
