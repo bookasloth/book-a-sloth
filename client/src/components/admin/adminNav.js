@@ -83,6 +83,7 @@ export const PATH_LABELS = {
   kyc:'KYC', approved:'Approved', rejected:'Rejected',
   finance:'Finance', journal:'Journal', ledger:'Ledger', transactions:'Transactions', payouts:'Payouts', earnings:'Host Earnings', refunds:'Refunds',
   gst:'GST', invoices:'Invoices', issues:'Action Center', reconciliation:'Reconciliation', itc:'ITC', returns:'Returns', exports:'CA Exports',
+  seo:'SEO',
   content:'Content', pages:'Pages', blogs:'Blogs', newsletter:'Newsletter',
   faq:'FAQ', testimonials:'Testimonials',
   support:'Support', tickets:'Tickets', disputes:'Disputes', reviews:'Reviews', feedback:'Host Feedback',
@@ -180,6 +181,7 @@ export const NAV = [
     { label:'Settings',           icon:'gear',      to:'/admin/gst/settings', perm:'gst.view' },
   ]},
   { key:'growth', label:'Growth', icon:'bars', color:'#FE5100', items:[
+    { label:'SEO',                 icon:'search',    to:'/admin/seo', perm:'seo.manage' },
     { label:'Campaigns',          icon:'mail',      to:'/admin/campaigns', perm:'campaigns.view' },
     { label:'Communication',      icon:'mail',      to:'/admin/platform/communication', perm:'email.manage', badge:'failed_emails' },
     { label:'Notifications',      icon:'bell',      to:'/admin/notifications', perm:'notifications.view', badge:'failed_notifications' },
