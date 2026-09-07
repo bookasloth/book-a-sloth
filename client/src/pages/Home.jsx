@@ -933,16 +933,16 @@ const Home = () => {
 
 
       {/* ════════════════ HOW THE CALM WORKS ════════════════ */}
-      <section id="how-it-works" className="bg-neutral-800 px-5 py-20 sm:px-8 lg:py-28">
+      <section id="how-it-works" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <Reveal as="h2" className="mx-auto max-w-[750px] text-center text-4xl text-white sm:text-5xl">
+          <Reveal as="h2" className="mx-auto max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
             From link to paid. <span className="font-extrabold text-primary">In three steps.</span>
           </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-200">
+          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
             No back-and-forth. No payment awkwardness. No reminders to write.
           </Reveal>
 
-          <HowItWorks />
+          <HowItWorks theme="light" />
         </div>
       </section>
 
