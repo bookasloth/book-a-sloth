@@ -15,7 +15,6 @@ const REGISTRY = {
   // technical
   'technical.non_200':            { category: 'technical', severity: 'P0', confidence: 1,   autoFixable: false, title: 'Non-200 / unreachable' },
   'technical.redirect':           { category: 'technical', severity: 'P3', confidence: 0.9, autoFixable: false, title: 'URL redirects' },
-  'technical.redirect_chain':     { category: 'technical', severity: 'P2', confidence: 1,   autoFixable: false, title: 'Redirect chain (>1 hop)' },
   'technical.slow_response':      { category: 'technical', severity: 'P3', confidence: 0.7, autoFixable: false, title: 'Slow response' },
   'technical.missing_canonical':  { category: 'technical', severity: 'P2', confidence: 1,   autoFixable: false, title: 'Missing canonical' },
   'technical.canonical_to_other': { category: 'technical', severity: 'P2', confidence: 0.7, autoFixable: false, title: 'Canonical points elsewhere' },

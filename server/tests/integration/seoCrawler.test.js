@@ -19,7 +19,7 @@ jest.mock('../../services/sitemapService', () => ({
   fetchBlogs: async () => [{ slug: 'post-1' }],
   fetchProfessions: async () => [],
 }));
-jest.mock('../../utils/jobLock', () => ({ runLocked: jest.fn((_n, fn) => fn()) }));
+jest.mock('../../utils/jobLock', () => ({ runLocked: jest.fn((name, fn) => fn()) }));
 
 const persist = require('../../services/seo/seoPersist');
 const { runLocked } = require('../../utils/jobLock');
@@ -74,5 +74,18 @@ describe('seoCrawler', () => {
     expect(id).toBe('crawl1');
     expect(persist.finishCrawl).toHaveBeenLastCalledWith('crawl1', { status: 'skipped' });
     expect(persist.saveResults.mock.calls.length).toBe(saveResultsCallsBefore);
+  });
+
+  // Regression (Finding 1): runIfDue's outer lock in server.js and _execute's inner
+  // lock must NOT share a name — same name collides in jobLock's _inFlight guard
+  // (inner call sees itself already "in flight" and returns undefined), so the
+  // nightly crawl silently skipped every tick. Assert the inner lock uses a distinct
+  // name.
+  test('_execute uses a lock name distinct from the outer seo-crawl lock', async () => {
+    runLocked.mockClear();
+    await run({ trigger: 'manual' });
+    const names = runLocked.mock.calls.map((call) => call[0]);
+    expect(names).toContain('seo-crawl-exec');
+    expect(names).not.toContain('seo-crawl');
   });
 });

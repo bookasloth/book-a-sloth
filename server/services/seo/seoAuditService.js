@@ -74,8 +74,15 @@ async function muteIssue(id, { ruleType, mutedBy } = {}) {
     url_pattern: ruleType === 'url' ? issue.affected_url : null,
     muted_by: mutedBy || null,
   };
-  const saved = unwrap(await supabaseAdmin.from('seo_issue_mutes').insert(row).select('*'));
-  return (saved && saved[0]) || row;
+  const { data, error } = await supabaseAdmin.from('seo_issue_mutes').insert(row).select('*');
+  if (error) {
+    // 23505 = unique_violation on uq_seo_issue_mutes(rule_key, COALESCE(url_pattern,''))
+    // — already muted (double-click, or another issue with the same rule_key).
+    // Idempotent: treat as success rather than surfacing a 500.
+    if (error.code === '23505') return row;
+    throw error;
+  }
+  return (data && data[0]) || row;
 }
 
 module.exports = { latestOverview, listIssues, getIssue, listPages, getPage, scoreHistory, getCrawl, muteIssue };

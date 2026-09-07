@@ -11,7 +11,6 @@ function check(p, ctx) {
   if (p.httpStatus == null || p.httpStatus >= 400) push('technical.non_200', { status: p.httpStatus, error: p.error });
   if ([301, 302, 307, 308].includes(p.httpStatus) || (p.redirectChain || []).length > 0)
     push('technical.redirect', { finalUrl: p.finalUrl });
-  if ((p.redirectChain || []).length > 1) push('technical.redirect_chain', { chain: p.redirectChain });
   if (p.responseMs > SLOW_MS) push('technical.slow_response', { responseMs: p.responseMs });
   if (p.httpStatus === 200 && !p.canonical) push('technical.missing_canonical', {});
   if (p.canonical && normalize(p.canonical) !== normalize(p.finalUrl || p.url))

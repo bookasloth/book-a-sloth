@@ -50,7 +50,12 @@ async function pool(items, n, worker) {
 }
 
 async function _execute(crawlId, seeds) {
-  return runLocked('seo-crawl', async () => {
+  // ponytail: distinct name from the outer runIfDue('seo-crawl', ...) lock in
+  // server.js — same name here would collide with jobLock's _inFlight guard
+  // and self-skip every nightly tick (manual start() has no outer lock, so it
+  // never hit this). Nightly now holds BOTH locks; manual vs nightly still
+  // serialize against each other via this inner lock.
+  return runLocked('seo-crawl-exec', async () => {
     const sitemapUrls = new Set(seeds.map((s) => s.url));
     const pages = await pool(seeds, CONCURRENCY, crawlOne);
     const ctx = buildContext(pages, sitemapUrls);
