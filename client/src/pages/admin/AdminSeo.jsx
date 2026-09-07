@@ -1,7 +1,7 @@
 // AdminSeo.jsx — /admin/seo read-only SEO audit dashboard. Mirrors AdminGstOverview's
 // load/loading/toast shape. Three tabs: Overview (scores + crawl-stats + run-crawl),
 // Issues (filterable table + detail drawer + mute), Pages (crawled-page table).
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { PageHeader, Card, StatCard, Badge, Skeleton } from '../../components/admin/ui';
 import {
@@ -22,6 +22,8 @@ export default function AdminSeo() {
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [crawling, setCrawling] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const loadOverview = useCallback(async () => {
     setLoading(true);
@@ -43,20 +45,28 @@ export default function AdminSeo() {
     try {
       const { data } = await adminSeoRunCrawl();
       let status = 'running';
-      // ponytail: simple poll loop, no backoff — crawls are short-lived and this is an admin-only page.
-      while (status === 'running') {
+      let ticks = 0;
+      const MAX_TICKS = 60; // ponytail: bounded poll (~2min at 2s/tick), add backoff if crawls run longer.
+      while (status === 'running' && ticks < MAX_TICKS && mountedRef.current) {
         // eslint-disable-next-line no-await-in-loop
         await new Promise((r) => setTimeout(r, 2000));
+        if (!mountedRef.current) break;
         // eslint-disable-next-line no-await-in-loop
         const res = await adminSeoCrawlStatus(data.crawlId);
-        status = res.data.status;
+        status = res.data.crawl?.status;
+        ticks += 1;
       }
-      toast.success('Crawl finished');
+      if (!mountedRef.current) return;
+      if (!status) {
+        toast('Crawl still running — check back shortly.');
+      } else {
+        toast.success('Crawl finished');
+      }
       await loadOverview();
     } catch (e) {
-      toast.error(e.response?.data?.message || 'Crawl failed');
+      if (mountedRef.current) toast.error(e.response?.data?.message || 'Crawl failed');
     } finally {
-      setCrawling(false);
+      if (mountedRef.current) setCrawling(false);
     }
   };
 
@@ -182,7 +192,6 @@ function IssuesTab() {
               <th className="text-left py-2 px-4">Severity</th>
               <th className="text-left py-2 px-4">Category</th>
               <th className="text-left py-2 px-4">Title</th>
-              <th className="text-right py-2 px-4">Affected</th>
             </tr></thead>
             <tbody>
               {issues.map((iss) => (
@@ -190,10 +199,9 @@ function IssuesTab() {
                   <td className="py-2 px-4"><Badge tone={SEVERITY_TONE[iss.severity]}>{iss.severity}</Badge></td>
                   <td className="py-2 px-4 capitalize">{iss.category}</td>
                   <td className="py-2 px-4">{iss.title}</td>
-                  <td className="py-2 px-4 text-right">{iss.affectedCount ?? iss.affected_count ?? 0}</td>
                 </tr>
               ))}
-              {!issues.length && <tr><td colSpan={4} className="py-6 text-center adm-t3">No issues found.</td></tr>}
+              {!issues.length && <tr><td colSpan={3} className="py-6 text-center adm-t3">No issues found.</td></tr>}
             </tbody>
           </table>
         </Card>
@@ -210,7 +218,7 @@ function IssueDrawer({ issue, onClose, onMuted }) {
   const mute = async () => {
     setMuting(true);
     try {
-      await adminSeoMuteIssue(issue.id, { ruleType: issue.ruleType || issue.rule_type });
+      await adminSeoMuteIssue(issue.id, { ruleType: true });
       toast.success('Issue muted');
       onMuted?.();
       onClose();
@@ -232,8 +240,8 @@ function IssueDrawer({ issue, onClose, onMuted }) {
         <div className="space-y-3 text-sm">
           <div><span className="text-gray-500">Severity</span><div><Badge tone={SEVERITY_TONE[issue.severity]}>{issue.severity}</Badge></div></div>
           <div><span className="text-gray-500">Category</span><div className="capitalize">{issue.category}</div></div>
-          {issue.why && <div><span className="text-gray-500">Why it matters</span><div>{issue.why}</div></div>}
-          {issue.affectedUrl && <div><span className="text-gray-500">Affected URL</span><div className="break-all">{issue.affectedUrl}</div></div>}
+          {issue.detail && <div><span className="text-gray-500">Why it matters</span><div>{issue.detail}</div></div>}
+          {issue.affected_url && <div><span className="text-gray-500">Affected URL</span><div className="break-all">{issue.affected_url}</div></div>}
           {issue.evidence && <div><span className="text-gray-500">Evidence</span><pre className="text-xs bg-gray-50 p-2 rounded whitespace-pre-wrap">{typeof issue.evidence === 'string' ? issue.evidence : JSON.stringify(issue.evidence, null, 2)}</pre></div>}
         </div>
         <div className="mt-6 flex justify-end gap-2">
@@ -276,7 +284,6 @@ function PagesTab() {
           <th className="text-left py-2 px-4">Type</th>
           <th className="text-right py-2 px-4">Status</th>
           <th className="text-right py-2 px-4">Indexable</th>
-          <th className="text-right py-2 px-4">Issues</th>
         </tr></thead>
         <tbody>
           {pages.map((p) => (
@@ -285,10 +292,9 @@ function PagesTab() {
               <td className="py-2 px-4">{p.page_type}</td>
               <td className="py-2 px-4 text-right">{p.http_status}</td>
               <td className="py-2 px-4 text-right">{p.indexable ? 'Yes' : 'No'}</td>
-              <td className="py-2 px-4 text-right">{p.issue_count ?? 0}</td>
             </tr>
           ))}
-          {!pages.length && <tr><td colSpan={5} className="py-6 text-center adm-t3">No crawled pages yet.</td></tr>}
+          {!pages.length && <tr><td colSpan={4} className="py-6 text-center adm-t3">No crawled pages yet.</td></tr>}
         </tbody>
       </table>
     </Card>

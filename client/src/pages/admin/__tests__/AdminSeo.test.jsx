@@ -13,7 +13,7 @@ vi.mock('../../../services/api', () => ({
   adminSeoIssues: vi.fn(() => Promise.resolve({ data: { issues: [], total: 0 } })),
   adminSeoPages: vi.fn(() => Promise.resolve({ data: { pages: [], total: 0 } })),
   adminSeoRunCrawl: vi.fn(() => Promise.resolve({ data: { crawlId: 'c2' } })),
-  adminSeoCrawlStatus: vi.fn(() => Promise.resolve({ data: { status: 'done' } })),
+  adminSeoCrawlStatus: vi.fn(() => Promise.resolve({ data: { crawl: { status: 'done' } } })),
   adminSeoMuteIssue: vi.fn(() => Promise.resolve({ data: {} })),
   adminSeoScoreHistory: vi.fn(() => Promise.resolve({ data: { snapshots: [] } })),
 }));
