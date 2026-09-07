@@ -279,125 +279,6 @@ const GlassCard = ({ icon: Icon, label, value, accent, className, float }) => (
   </div>
 );
 
-/* ════════════════════════════════════════════════════════════
-   PRODUCT MOCKUPS — stylised UI placeholders for the screenshots
-   section. Built from brand tokens so they read as "our product"
-   without needing real screenshots. Swap for real captures later.
-   ════════════════════════════════════════════════════════════ */
-const Bar = ({ w = "w-full", c = "bg-neutral-200", h = "h-2.5" }) => (
-  <div className={`${h} ${w} ${c} rounded-full`} />
-);
-const ProductMock = ({ kind }) => {
-  if (kind === "booking") {
-    return (
-      <div className="flex h-full flex-col">
-        <div className="relative">
-          <div className="h-16 rounded-[8px]" style={{ background: "linear-gradient(110deg,#fb7185,#f59e0b,#a78bfa,#22d3ee)" }} />
-          <div className="absolute -bottom-6 left-3 h-14 w-14 rounded-2xl border-[3px] border-white bg-gradient-to-br from-neutral-200 to-neutral-300" />
-        </div>
-        <div className="space-y-1 pl-1 pt-7">
-          <div className="h-3 w-44 rounded bg-neutral-300" />
-          <div className="h-2 w-28 rounded bg-neutral-200" />
-          <span className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary">Startup Advisor</span>
-        </div>
-        <div className="mt-4 space-y-2.5">
-          {[["My First Free Service", "Free"], ["My First Paid Service", "₹1,500"]].map(([name, price]) => (
-            <div key={name} className="flex items-center justify-between rounded-[6px] border border-neutral-100 bg-white p-3">
-              <div>
-                <div className="text-xs font-semibold text-ink">{name}</div>
-                <div className="mt-0.5 text-[9px] text-neutral-400">20 min · Online</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-ink">{price}</span>
-                <span className="rounded-[5px] bg-primary-cta px-2.5 py-1 text-[9px] font-bold text-white">Book</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  if (kind === "service") {
-    return (
-      <div className="space-y-3">
-        <div className="rounded-[8px] p-4" style={{ background: "linear-gradient(135deg,#ffd2bf,#fff2ec)" }}>
-          <span className="text-[9px] font-bold uppercase tracking-wide text-primary">New · 20 min · Online</span>
-          <div className="mt-1.5 font-heading text-base font-extrabold leading-tight text-ink">
-            Let&apos;s talk about your <span className="text-primary">booking page</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 pl-0.5">
-          <div className="h-6 w-6 rounded-full bg-gradient-to-br from-neutral-200 to-neutral-300" />
-          <div className="h-2 w-24 rounded bg-neutral-200" />
-        </div>
-        <div className="flex items-center justify-between rounded-[6px] border border-neutral-100 p-3">
-          <span className="text-base font-extrabold text-ink">Free</span>
-          <span className="rounded-[6px] bg-primary-cta px-4 py-1.5 text-[10px] font-bold text-white">Book a Slot</span>
-        </div>
-        <div className="flex gap-4 pl-0.5 text-[9px] font-medium text-neutral-500">
-          <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Verified host</span>
-          <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Instant confirmation</span>
-        </div>
-      </div>
-    );
-  }
-  if (kind === "checkout") {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center">
-          {["Time", "Details", "Verify", "Done"].map((s, i) => (
-            <span key={s} className={`flex items-center ${i < 3 ? "flex-1" : ""}`}>
-              <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[7px] font-bold ${i === 0 ? "bg-primary-cta text-white" : "bg-neutral-200 text-neutral-400"}`}>{i + 1}</span>
-              {i < 3 && <span className="mx-1 h-px flex-1 bg-neutral-200" />}
-            </span>
-          ))}
-        </div>
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <div className="mb-1.5 flex items-center justify-between">
-              <div className="h-2.5 w-14 rounded bg-neutral-300" />
-              <div className="flex gap-1"><span className="h-2 w-2 rounded-full bg-neutral-200" /><span className="h-2 w-2 rounded-full bg-neutral-200" /></div>
-            </div>
-            <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: 21 }).map((_, i) => (
-                <div key={i} className={`flex aspect-square items-center justify-center rounded-[3px] text-[7px] font-semibold ${i === 11 ? "bg-primary-cta text-white" : i === 10 ? "text-primary ring-1 ring-primary" : "bg-neutral-100 text-neutral-400"}`}>{i + 5}</div>
-              ))}
-            </div>
-          </div>
-          <div className="w-px self-stretch bg-neutral-100" />
-          <div className="flex-1">
-            <div className="mb-2 h-2.5 w-20 rounded bg-neutral-300" />
-            <div className="grid grid-cols-2 gap-1.5">
-              {["9:00", "9:25", "3:15", "3:40", "4:05", "4:30"].map((t, i) => (
-                <div key={t} className={`rounded-[5px] py-1.5 text-center text-[9px] font-semibold ${i === 2 ? "bg-primary text-white" : "border border-neutral-200 text-neutral-500"}`}>{t}</div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  // dashboard
-  return (
-    <div className="flex h-full flex-col gap-3">
-      <div className="space-y-1">
-        <div className="h-3.5 w-44 rounded bg-neutral-300" />
-        <div className="h-2 w-28 rounded bg-neutral-200" />
-      </div>
-      <div className="grid flex-1 grid-cols-2 gap-2.5">
-        {[["1", "Upcoming", "#2563eb"], ["2", "Completed", "#059669"], ["1", "Cancelled", "#dc2626"], ["₹10", "Earnings", "#f59e0b"]].map(([v, l, c]) => (
-          <div key={l} className="flex flex-col justify-center rounded-[8px] border border-neutral-100 p-3.5">
-            <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: c + "1a" }}>
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />
-            </div>
-            <div className="text-2xl font-extrabold leading-none text-ink">{v}</div>
-            <div className="mt-1 text-[11px] text-neutral-400">{l}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 /* ════════════════════════════════════════════════════════════
    FEATURES (bento)
@@ -411,70 +292,7 @@ const FEATURES = [
   { icon: Sparkles, title: "AI Assistant", desc: "Suggests slots, drafts briefs, sends thank-yous." },
 ];
 
-/* "…and so much more" — features + integrations.
-   Line icons, per-card colour + subtle glow; hover reveals the description. */
-const MOREFEATURES = [
-  // Features — payments, video and reminders are covered by their named integrations below.
-  { icon: Link2, title: "Short booking links", desc: "bookasloth.com/you — one link for everything you offer.", color: "#0ea5e9" },
-  { icon: ShieldCheck, title: "Privacy first", desc: "Your data stays yours. Encrypted, access-controlled, never sold.", color: "#059669" },
-  { icon: Code2, title: "Easy embeds", desc: "Drop your booking widget into any website in one line.", color: "#4f46e5" },
-  { icon: Palette, title: "Simple customization", desc: "Brand your page — colours, logo and theme in a few clicks.", color: "#db2777" },
-  { icon: Star, title: "Reviews & ratings", desc: "Two-way reviews build trust after every session.", color: "#eab308" },
-  { icon: BarChart3, title: "Insightful analytics", desc: "Bookings, revenue and no-shows — all at a glance.", color: "#0891b2" },
-  // Integrations
-  { icon: IndianRupee, title: "Razorpay", desc: "UPI, cards & netbanking — clients pay before the session starts.", color: "#3b82f6" },
-  { icon: Calendar, title: "Google Calendar", desc: "Two-way sync keeps your real availability accurate.", color: "#ea4335" },
-  { icon: Webcam, title: "Google Meet", desc: "Auto-generated meet links on confirmed online bookings.", color: "#16a34a" },
-  { icon: MessageCircle, title: "WhatsApp & Email", desc: "Confirmations and reminders land where clients look — WhatsApp and inbox.", color: "#25d366" },
-];
 
-/* Industry Discovery — the 20 live (active) categories, grouped by industry.
-   Mirrors the server categories seed v3.21 (group_label = industry, label =
-   profession; only `status:'active'` shown). Fully data-driven: add an industry
-   by adding an entry. NOTE: this is a static snapshot — wire it to the live
-   categories API later if you want it to track admin changes automatically. */
-const INDUSTRIES = [
-  {
-    name: "Technology & Product",
-    slug: "technology-product",
-    icon: Cpu,
-    color: "var(--c-blue)",
-    description: "Build products. Mentor makers.",
-    professions: ["Software Engineer", "Product Manager", "UX Designer", "Data Scientist", "AI Engineer"],
-  },
-  {
-    name: "Coaching & Consulting",
-    slug: "coaching-consulting",
-    icon: Target,
-    color: "var(--c-violet)",
-    description: "Coach, advise, and transform.",
-    professions: ["Career Coach", "Life Coach", "Executive Coach", "Leadership Coach", "Business Coach"],
-  },
-  {
-    name: "Health & Wellness",
-    slug: "health-wellness",
-    icon: HeartPulse,
-    color: "var(--c-emerald)",
-    description: "Care for minds and bodies.",
-    professions: ["Psychologist", "Nutritionist", "Speech Therapist"],
-  },
-  {
-    name: "Education",
-    slug: "education",
-    icon: GraduationCap,
-    color: "var(--c-amber)",
-    description: "Teach, mentor, and inspire.",
-    professions: ["Language Tutor", "IELTS Coach", "Study Abroad Consultant"],
-  },
-  {
-    name: "Business Services",
-    slug: "business-services",
-    icon: Briefcase,
-    color: "var(--c-cyan)",
-    description: "Advise, strategize, and grow.",
-    professions: ["Financial Advisor", "Startup Advisor", "Business Consultant", "HR Consultant"],
-  },
-];
 
 /* "Who it's for" personas */
 const WHO = [
@@ -503,15 +321,6 @@ export const STATS = [
   { icon: Smile, value: "5 / 5", label: "Average host rating" },
 ];
 
-/* ── Problem → solution pairs ── */
-const PROBLEMS = [
-  { icon: Wallet, problem: "Chasing clients for payment", solution: "They pay before the slot is even confirmed." },
-  { icon: MessageCircle, problem: "Booking back-and-forth on WhatsApp", solution: "One link. They pick, pay, done." },
-  { icon: Clock, problem: "No-shows wasting your time", solution: "Auto reminders go out — you do nothing." },
-  { icon: Calendar, problem: "Calendar chaos across apps", solution: "Two-way Google Calendar sync, always live." },
-  { icon: CalendarX2, problem: "Double bookings and clashes", solution: "Slots lock the moment they're taken." },
-  { icon: BellRing, problem: "Writing reminders and follow-ups by hand", solution: "They send themselves, before and after every session." },
-];
 
 /* ── Feature breakdown — grouped by the job it does ── */
 const FEATURE_GROUPS = [
@@ -521,23 +330,7 @@ const FEATURE_GROUPS = [
   { icon: BellRing, title: "Reduce no-shows", desc: "Gentle reminders that go out automatically. You don't lift a finger.", items: ["Email & WhatsApp reminders", "Instant confirmations", "Post-session follow-ups"] },
 ];
 
-/* ── Product mockups (stylised UI placeholders — swap for real screenshots later) ── */
-const PRODUCT_SHOTS = [
-  { tab: "bookasloth.com/you", title: "Public booking page", kind: "booking", color: "#2563eb" },
-  { tab: "bookasloth.com/you/strategy-call", title: "Service page", kind: "service", color: "#7c3aed" },
-  { tab: "Checkout · Razorpay", title: "Checkout & payment", kind: "checkout", color: "#0891b2" },
-  { tab: "Dashboard", title: "Your dashboard", kind: "dashboard", color: "#059669" },
-];
 
-/* ── Why Book A Sloth — reasons to choose it ── */
-const WHY_CARDS = [
-  { icon: IndianRupee, title: "Built for India", desc: "INR, GST, UPI — native.", color: "var(--c-blue)" },
-  { icon: Wallet, title: "0% commission", desc: "You keep every rupee you earn.", color: "var(--c-emerald)" },
-  { icon: CreditCard, title: "Razorpay inside", desc: "Payments your clients already trust.", color: "var(--c-violet)" },
-  { icon: Zap, title: "Live in minutes", desc: "Claim your link. Add a service. Done.", color: "var(--c-amber)" },
-  { icon: Wind, title: "Calm by design", desc: "Clean for you. Clean for your clients.", color: "var(--c-cyan)" },
-  { icon: Target, title: "Made for services", desc: "Built for booked time — not bolted onto a CRM.", color: "var(--c-pink)" },
-];
 
 /* ── FAQ ── */
 const FAQS = [
@@ -589,11 +382,6 @@ const Home = () => {
         ? { ...g, title: "Payments coming soon", desc: "Paid bookings and payouts are launching soon — take free bookings today.", items: ["UPI, cards & netbanking (soon)", "Advance & full payments (soon)", "Automatic GST invoices"] }
         : g)
     : FEATURE_GROUPS;
-  const whyCards = feeOnly
-    ? WHY_CARDS.map((w) => w.title === "0% commission"
-        ? { ...w, title: "Made for creators", desc: "Booking, scheduling and reminders — done right." }
-        : w)
-    : WHY_CARDS;
   const faqs = feeOnly
     ? FAQS.map((f) => {
         if (f.q === "Is Book A Sloth really free?") return { q: "Is Book A Sloth free to start?", a: "Yes. Creating your booking page, publishing services and taking bookings is free. Paid bookings and payouts are launching soon." };
@@ -717,7 +505,6 @@ const Home = () => {
   const [tW, setTW] = useState(0);
   const tWrapRef = useRef(null);
   const tPausedRef = useRef(false);
-  const shotsRef = useRef(null);
   // Drag-to-navigate (pointer): follow the finger live, snap to nearest card on release.
   const [dragDX, setDragDX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -757,23 +544,7 @@ const Home = () => {
     return () => clearTimeout(id);
   }, [activeT, N_T]);
 
-  // Reveal + stack the "See it in action" shots. Desktop piles them via CSS
-  // sticky; mobile fades each up on entry. Fails open so none stay hidden.
-  useEffect(() => {
-    const node = shotsRef.current;
-    if (!node) return;
-    const cards = [...node.querySelectorAll(".home-shot")];
-    const reveal = (el) => el.classList.add("is-in");
-    if (typeof IntersectionObserver === "undefined") { cards.forEach(reveal); return; }
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => { if (e.isIntersecting) { reveal(e.target); io.unobserve(e.target); } });
-    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
-    cards.forEach((el) => io.observe(el));
-    const failOpen = setTimeout(() => {
-      if (!cards.some((el) => el.classList.contains("is-in"))) cards.forEach(reveal);
-    }, 1500);
-    return () => { clearTimeout(failOpen); io.disconnect(); };
-  }, []);  const tFrac = tW >= 1024 ? 0.44 : tW >= 640 ? 0.6 : 0.84;
+  const tFrac = tW >= 1024 ? 0.44 : tW >= 640 ? 0.6 : 0.84;
   const tCardW = tW ? tW * tFrac : 0;
   const tOffset = tW ? (tW - tCardW) / 2 - activeT * (tCardW + T_GAP) : 0;
 
@@ -1016,134 +787,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ════════════════ ...AND SO MUCH MORE (features + integrations) ════════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
-            Features & integrations
-          </Reveal>
-          <Reveal as="h2" delay={0.05} className="mt-3 text-center text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
-            Everything you need. <span className="text-primary">Nothing you don't.</span>
-          </Reveal>
 
-          <div className="mt-14 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-5">
-            {MOREFEATURES.map((f, i) => (
-              <Reveal key={f.title} delay={(i % 5) * 0.05}>
-                <div className="group relative flex h-full min-h-[210px] flex-col items-center justify-center overflow-hidden rounded-[20px] border border-black/5 bg-white p-5 text-center transition-all duration-300 hover:-translate-y-1.5 hover:border-black/10 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.22)]">
-                  {/* Diagonal shine sweep on hover */}
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/[0.04] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
-                  />
-
-                  {/* Icon tile + coloured glow */}
-                  <span className="relative mb-4 inline-flex h-14 w-14 items-center justify-center">
-                    <span
-                      aria-hidden
-                      className="absolute inset-0 rounded-2xl opacity-20 blur-xl transition-all duration-300 group-hover:scale-125 group-hover:opacity-60"
-                      style={{ background: f.color }}
-                    />
-                    <span className="relative inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-black/5 bg-white shadow-sm transition-transform duration-300 group-hover:scale-105">
-                      <f.icon size={24} strokeWidth={1.75} style={{ color: f.color }} />
-                    </span>
-                  </span>
-
-                  <h3 className="font-heading text-sm font-bold text-ink">{f.title}</h3>
-
-                  {/* Hover-revealed info */}
-                  <p className="mt-2 max-h-0 overflow-hidden text-xs leading-relaxed text-neutral-500 opacity-0 transition-all duration-300 ease-out group-hover:max-h-24 group-hover:opacity-100">
-                    {f.desc}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-
-          <Reveal as="p" delay={0.1} className="mx-auto mt-10 max-w-[750px] text-center text-base text-neutral-500">
-            Works with the tools you already use — Razorpay, Google Calendar, Google Meet, WhatsApp and Email.
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ════════════════ INDUSTRY DISCOVERY (dark) ════════════════ */}
-      <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
-            Industries we support
-          </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Built for your <span className="font-extrabold text-primary">profession.</span>
-          </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
-            Whatever you charge for — sessions, audits, consultations, classes — there's a place for it on Book A Sloth.
-          </Reveal>
-
-          <div className="mt-14 flex flex-wrap justify-center gap-5">
-            {INDUSTRIES.map((ind, i) => (
-              <Reveal key={ind.slug} delay={(i % 3) * 0.08} className="w-full sm:w-[calc(50%-0.625rem)] lg:w-[calc(33.333%-0.833rem)]">
-                {/* Focusable card: hover (mouse), focus-within (keyboard) and
-                    tap (mobile focuses the tabIndex=0 card) all trigger expand. */}
-                {/* Fixed-height card: default summary and detail crossfade in the
-                    SAME footprint — the card never resizes, so nothing shifts. */}
-                <div
-                  tabIndex={0}
-                  role="group"
-                  aria-label={`${ind.name} — show popular professions`}
-                  className="group relative h-full min-h-[233px] overflow-hidden rounded-[6px] border border-white/10 bg-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] outline-none ring-1 ring-inset ring-white/10 backdrop-blur-xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)] focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary/40 motion-reduce:transition-none"
-                >
-                  {/* Big line icon anchored to the top-left corner — card background */}
-                  <ind.icon
-                    aria-hidden
-                    strokeWidth={1.25}
-                    className="pointer-events-none absolute -left-3 -top-3 h-24 w-24 opacity-25 transition-opacity duration-300 group-hover:opacity-40 group-focus-within:opacity-40 motion-reduce:transition-none"
-                    style={{ color: ind.color }}
-                  />
-
-                  {/* DEFAULT layer — title sits top-right next to the corner icon;
-                      description + hint anchor to the bottom. Fades out on hover/focus. */}
-                  <div className="absolute inset-0 flex flex-col p-6 transition-opacity duration-300 group-hover:opacity-0 group-focus-within:opacity-0 motion-reduce:transition-none">
-                    <h3 className="ml-auto max-w-[60%] text-right font-heading text-xl font-bold leading-tight text-white">{ind.name}</h3>
-                    <p className="mt-auto text-sm leading-relaxed text-white/60">{ind.description}</p>
-                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-white/50">
-                      Explore roles <ArrowRight size={12} />
-                    </span>
-                  </div>
-
-                  {/* DETAIL layer — frosted panel (bg + blur) fully hides/blurs the
-                      back content; professions + CTA fade in over it. */}
-                  <div className="absolute inset-0 flex flex-col bg-ink/70 p-6 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
-                      Popular professions
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {ind.professions.map((p) => (
-                        <span
-                          key={p}
-                          className="rounded-full border px-3 py-1 text-xs font-medium"
-                          style={{
-                            backgroundColor: `color-mix(in srgb, ${ind.color} 18%, transparent)`,
-                            borderColor: `color-mix(in srgb, ${ind.color} 35%, transparent)`,
-                            color: `color-mix(in srgb, ${ind.color} 60%, white)`,
-                          }}
-                        >
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-                    <Link
-                      to={`${ROUTE_START}?industry=${ind.slug}`}
-                      className="mt-auto inline-flex w-fit items-center gap-1.5 rounded-[6px] bg-primary-cta px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:bg-primary-dark hover:no-underline"
-                    >
-                      See professions <ArrowRight size={15} />
-                    </Link>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-
-          </div>
-        </div>
-      </section>
 
       {/* ════════════════ SEARCH — "Find a vendor" ════════════════
          TEMPORARILY DISABLED (keep for later). The whole section is preserved
@@ -1287,40 +931,6 @@ const Home = () => {
       </section>
       )}
 
-      {/* ════════════════ PROBLEM → SOLUTION ════════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
-            Sound familiar?
-          </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            The admin that eats your week — <span className="font-extrabold text-primary">gone.</span>
-          </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
-            You didn't get into this to chase payments and send reminders. Book A Sloth handles the back-office so you don't have to.
-          </Reveal>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 sm:gap-6">
-            {PROBLEMS.map((p, i) => (
-              <Reveal key={p.problem} delay={(i % 2) * 0.08}>
-                <div className="h-full rounded-[6px] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(26,26,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-black/10 hover:shadow-[0_22px_45px_-18px_rgba(26,26,26,0.16)] sm:p-7">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <p.icon size={18} />
-                    </span>
-                    <p className="text-sm font-semibold text-neutral-500 line-through decoration-neutral-400 decoration-[1.5px]">
-                      {p.problem}
-                    </p>
-                  </div>
-                  <div className="mt-4 flex items-start gap-3 border-t border-dashed border-neutral-200 pt-4">
-                    <Check size={18} className="mt-0.5 flex-shrink-0 text-primary" />
-                    <p className="text-[15px] font-medium leading-relaxed text-ink">{p.solution}</p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ════════════════ HOW THE CALM WORKS ════════════════ */}
       <section id="how-it-works" className="bg-neutral-800 px-5 py-20 sm:px-8 lg:py-28">
@@ -1427,70 +1037,6 @@ const Home = () => {
       </section>
       )}
 
-      {/* ════════════════ PRODUCT SCREENSHOTS ════════════════ */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
-            See it in action
-          </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-ink sm:text-5xl">
-            Calm to look at. <span className="font-extrabold text-primary">Calm to use.</span>
-          </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-neutral-500">
-            Your booking page, service pages, checkout and dashboard — all clean, all connected, all working while you're not.
-          </Reveal>
-          <div ref={shotsRef} className="home-shots mx-auto mt-14 max-w-2xl">
-            {PRODUCT_SHOTS.map((shot, i) => (
-              <figure key={shot.title} className="home-shot" style={{ "--cc": shot.color, "--i": i }}>
-                <div
-                  className="flex min-h-[22rem] flex-col overflow-hidden rounded-[10px] bg-white transition-all duration-300 hover:-translate-y-1 sm:h-[24rem]"
-                  style={{
-                    border: "1px solid color-mix(in srgb, var(--cc) 40%, transparent)",
-                    boxShadow: "0 18px 40px -26px color-mix(in srgb, var(--cc) 48%, transparent)",
-                  }}
-                >
-                  <div
-                    className="flex items-center gap-2 border-b px-4 py-3"
-                    style={{
-                      background: "color-mix(in srgb, var(--cc) 8%, white)",
-                      borderColor: "color-mix(in srgb, var(--cc) 16%, transparent)",
-                    }}
-                  >
-                    <span className="flex gap-1.5" aria-hidden>
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "color-mix(in srgb, var(--cc) 60%, white)" }} />
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "color-mix(in srgb, var(--cc) 40%, white)" }} />
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "color-mix(in srgb, var(--cc) 22%, white)" }} />
-                    </span>
-                    <div className="ml-2 flex-1 truncate rounded-full bg-white px-3 py-1 text-[11px] text-neutral-400 ring-1 ring-inset ring-black/5">
-                      {shot.tab}
-                    </div>
-                  </div>
-                  <div className="flex-1 p-5 sm:p-6">
-                    <ProductMock kind={shot.kind} />
-                  </div>
-                  {/* Caption lives INSIDE the opaque card so the sticky deck
-                      covers it like the body — keeps trailing text from
-                      piling up/overlapping during the stack scroll. */}
-                  <figcaption
-                    className="border-t px-5 py-3 text-center text-sm font-semibold"
-                    style={{
-                      borderColor: "color-mix(in srgb, var(--cc) 16%, transparent)",
-                      color: "color-mix(in srgb, var(--cc) 80%, #1a1a1a)",
-                    }}
-                  >
-                    {shot.title}
-                    {shot.kind === "dashboard" && (
-                      <span className="mt-0.5 block text-sm font-medium text-primary">
-                        This is what your Monday morning looks like.
-                      </span>
-                    )}
-                  </figcaption>
-                </div>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ════════════════ FEATURE BREAKDOWN (dark) ════════════════ */}
       <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
@@ -1695,39 +1241,6 @@ const Home = () => {
       </section>
       )}
 
-      {/* ════════════════ WHY BOOK A SLOTH (dark) ════════════════ */}
-      <section className="bg-ink px-5 py-20 text-white sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-6xl">
-          <Reveal as="p" className="text-center text-sm font-medium uppercase tracking-[0.2em] text-primary">
-            Why Book A Sloth
-          </Reveal>
-          <Reveal as="h2" delay={0.05} className="mx-auto mt-3 max-w-[750px] text-center text-4xl text-white sm:text-5xl">
-            Made for India. <span className="font-extrabold text-primary">Not adapted for it.</span>
-          </Reveal>
-          <Reveal as="p" delay={0.1} className="mx-auto mt-4 max-w-[750px] text-center text-base text-white/70">
-            Most booking tools are built for the West and patched for India. Book A Sloth starts from INR, GST and UPI — and works outward from there.
-          </Reveal>
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-            {whyCards.map((w, i) => (
-              <Reveal key={w.title} delay={(i % 3) * 0.07}>
-                <div className="flex h-full flex-col rounded-[6px] border border-white/10 bg-white/5 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-18px_rgba(0,0,0,0.6)] sm:p-7">
-                  <span
-                    className="flex h-12 w-12 items-center justify-center rounded-xl"
-                    style={{
-                      backgroundColor: `color-mix(in srgb, ${w.color} 22%, transparent)`,
-                      color: `color-mix(in srgb, ${w.color} 60%, white)`,
-                    }}
-                  >
-                    <w.icon size={22} />
-                  </span>
-                  <h3 className="mt-5 font-heading text-lg font-bold text-white">{w.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-white/60">{w.desc}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ════════════════ PRICING (shared PricingCards — 4 plans) ════════════════ */}
       <section id="pricing" className="px-5 pb-12 pt-20 sm:px-8 lg:pb-16 lg:pt-28">
