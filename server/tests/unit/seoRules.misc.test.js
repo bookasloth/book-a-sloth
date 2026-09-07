@@ -24,3 +24,8 @@ test('sitemap.missing_indexable fires for a 200 indexable page not in the sitema
   const ctx = buildContext([p], new Set()); // empty sitemap set
   expect(sitemap.siteCheck(ctx).map((i) => i.ruleKey)).toContain('sitemap.missing_indexable');
 });
+test('broken_internal does NOT flag an internal link to an uncrawled (non-sitemap) target', () => {
+  const src = { url: 'https://bookasloth.com/a', pageType: 'static', httpStatus: 200, links: { internal: ['https://bookasloth.com/login'], external: [] }, images: [] };
+  const ctx = buildContext([src], new Set()); // /login never crawled → absent from ctx.pages
+  expect(links.check(src, ctx).map((i) => i.ruleKey)).not.toContain('links.broken_internal');
+});

@@ -13,8 +13,9 @@ function check(p, ctx) {
   for (const href of p.links?.internal || []) {
     // ponytail: linear find is fine at audit scale (hundreds of pages); index ctx.pages by URL if this profiles hot.
     const target = ctx.pages.find((pg) => normalize(pg.url) === normalize(href));
-    const status = target ? target.httpStatus : null;
-    if (status == null || status >= 400) push('links.broken_internal', { href });
+    // Only flag a target we actually crawled — httpStatus==null there means "fetch failed" (seoFetch.js).
+    // A target absent from ctx.pages was simply never crawled (e.g. non-sitemap app route), not broken.
+    if (target && (target.httpStatus == null || target.httpStatus >= 400)) push('links.broken_internal', { href });
   }
 
   if (p.inSitemap && !ctx.internalLinkTargets.has(normalize(p.url))) push('links.orphan_page', {});
