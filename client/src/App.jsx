@@ -36,6 +36,9 @@ const OpeningTakeover = lazy(() => import('./components/opening/OpeningTakeover'
 
 // Public pages
 const Home           = lazy(() => import('./pages/Home'));
+// Pre-compaction homepage snapshot — parked at /_attic (hidden, noindex) so the
+// sections cut from the live homepage stay reachable for future reuse.
+const HomeArchive    = lazy(() => import('./pages/HomeArchive'));
 const Login          = lazy(() => import('./pages/Login'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword  = lazy(() => import('./pages/ResetPassword'));
@@ -651,6 +654,11 @@ function App() {
           {/* /offline — reachable now; the Service Worker will serve it from
               cache in a follow-up branch. */}
           <Route path="/offline" element={<Offline />} />
+
+          {/* Hidden archive of the pre-compaction homepage (noindex, unlinked,
+              reserved). Holds the sections cut from the live homepage so they
+              can be harvested later. Must precede the /:profileSlug catch-all. */}
+          <Route path="/_attic" element={<HomeArchive />} />
 
           {/* Public host/service pages — specific before dynamic */}
           <Route path="/:profileSlug/badges" element={<BadgeShowcase />} />
