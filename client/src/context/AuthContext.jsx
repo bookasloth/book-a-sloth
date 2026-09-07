@@ -5,7 +5,12 @@ import { getSupabase } from '../services/supabaseClient';
 
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
+// `|| {}` hardens every consumer against a transient render outside the provider.
+// Seen on mobile: in-app translation corrupts the tree (see utils/domTranslateGuard.js),
+// React remounts a page detached from AuthProvider, and a bare useContext() returns
+// undefined — destructuring it (e.g. Home's `{ startVendorGoogleAuth }`) then throws
+// into the RouteErrorBoundary. Empty object degrades that to a harmless no-op.
+export const useAuth = () => useContext(AuthContext) || {};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
