@@ -26,6 +26,13 @@ const REGISTRY = {
   'indexability.canonical_sitemap_mismatch': { category: 'indexability', severity: 'P2', confidence: 0.8, autoFixable: false, title: 'Canonical ≠ sitemap URL' },
   'indexability.soft_404':                   { category: 'indexability', severity: 'P1', confidence: 0.6, autoFixable: false, title: 'Soft 404 (200 but thin)' },
   'indexability.prerender_regression':       { category: 'indexability', severity: 'P0', confidence: 0.7, autoFixable: false, title: 'Prerender regression (homepage title)' },
-  // (links/images/schema/sitemap.* in Task 6)
+  // links / images / structured data / sitemap
+  'links.broken_internal':     { category: 'links',          severity: 'P1', confidence: 1,   autoFixable: false, title: 'Broken internal link' },
+  'links.orphan_page':         { category: 'internal_linking', severity: 'P2', confidence: 0.7, autoFixable: false, title: 'Orphan page (no internal links)' },
+  'images.missing_alt':        { category: 'onpage',         severity: 'P3', confidence: 1,   autoFixable: true,  title: 'Images missing alt text' },
+  'schema.missing':            { category: 'onpage',         severity: 'P3', confidence: 0.7, autoFixable: false, title: 'No structured data' },
+  'schema.invalid_json':       { category: 'onpage',         severity: 'P2', confidence: 1,   autoFixable: false, title: 'Invalid JSON-LD' },
+  'schema.wrong_type':         { category: 'onpage',         severity: 'P3', confidence: 0.6, autoFixable: false, title: 'Missing expected schema type' },
+  'sitemap.missing_indexable': { category: 'indexability',   severity: 'P2', confidence: 0.8, autoFixable: false, title: 'Indexable page missing from sitemap' },
 };
 module.exports = { REGISTRY };

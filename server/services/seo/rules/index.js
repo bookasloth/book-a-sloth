@@ -3,8 +3,11 @@ const { REGISTRY } = require('./registry');
 const onpage = require('./onpage');
 const technical = require('./technical');
 const indexability = require('./indexability');
-// Task 6 add: links/images/schema/sitemap groups. Push into GROUPS below.
-const GROUPS = [onpage, technical, indexability];
+const links = require('./links');
+const images = require('./images');
+const structuredData = require('./structuredData');
+const sitemap = require('./sitemap');
+const GROUPS = [onpage, technical, indexability, links, images, structuredData, sitemap];
 
 const SHOULD_INDEX_TYPES = new Set(['host', 'service', 'blog', 'static']);
 
