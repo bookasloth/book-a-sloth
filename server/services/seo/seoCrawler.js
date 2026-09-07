@@ -18,7 +18,6 @@ async function seedUrls() {
   const seen = new Set();
   const add = (url, pageType) => { if (!seen.has(url)) { seen.add(url); out.push({ url, pageType, inSitemap: true }); } };
   for (const e of sm.staticEntries(SITE_URL)) add(e.loc.replace(/\/$/, '') || `${SITE_URL}/`, 'static');
-  add(`${SITE_URL}/`, 'static');
   for (const h of await sm.fetchHosts()) add(sm.hostUrl(SITE_URL, h.username), 'host');
   for (const s of await sm.fetchServices()) if (s.profiles?.username) add(sm.serviceUrl(SITE_URL, s.profiles.username, s.slug), 'service');
   for (const b of await sm.fetchBlogs()) add(`${SITE_URL}/blog/${b.slug}`, 'blog');
@@ -29,7 +28,7 @@ async function seedUrls() {
 async function crawlOne(seed) {
   const r = await fetchUrl(seed.url);
   const parsed = r.status === 200 && (r.contentType || '').includes('html') ? parse(r.body, r.headers) : {};
-  const noindex = parsed.robots ? parsed.robots.includes('noindex') : null;
+  const noindex = parsed.robots ? parsed.robots.includes('noindex') : false;
   return {
     url: seed.url, pageType: seed.pageType, inSitemap: seed.inSitemap,
     httpStatus: r.status, finalUrl: r.finalUrl, redirectChain: r.redirectChain, responseMs: r.responseMs, contentType: r.contentType,
@@ -68,13 +67,18 @@ async function _execute(crawlId, seeds) {
 
 async function run({ trigger = 'manual', triggeredBy = null } = {}) {
   const crawlId = await persist.createCrawl({ trigger, triggeredBy });
-  try { await _execute(crawlId, await seedUrls()); }
+  try {
+    const result = await _execute(crawlId, await seedUrls());
+    if (result === undefined) await persist.finishCrawl(crawlId, { status: 'skipped' });
+  }
   catch (e) { await persist.finishCrawl(crawlId, { status: 'failed', error: e.message }); throw e; }
   return crawlId;
 }
 async function start({ trigger = 'manual', triggeredBy = null } = {}) {
   const crawlId = await persist.createCrawl({ trigger, triggeredBy });
-  seedUrls().then((s) => _execute(crawlId, s)).catch((e) => persist.finishCrawl(crawlId, { status: 'failed', error: e.message }));
+  seedUrls().then((s) => _execute(crawlId, s)).then((result) => {
+    if (result === undefined) return persist.finishCrawl(crawlId, { status: 'skipped' });
+  }).catch((e) => persist.finishCrawl(crawlId, { status: 'failed', error: e.message }));
   return crawlId;
 }
 module.exports = { run, start, seedUrls };

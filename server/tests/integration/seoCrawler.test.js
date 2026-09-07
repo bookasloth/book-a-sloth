@@ -19,16 +19,17 @@ jest.mock('../../services/sitemapService', () => ({
   fetchBlogs: async () => [{ slug: 'post-1' }],
   fetchProfessions: async () => [],
 }));
-jest.mock('../../utils/jobLock', () => ({ runLocked: (_n, fn) => fn() }));
+jest.mock('../../utils/jobLock', () => ({ runLocked: jest.fn((_n, fn) => fn()) }));
 
 const persist = require('../../services/seo/seoPersist');
+const { runLocked } = require('../../utils/jobLock');
 const { run, seedUrls } = require('../../services/seo/seoCrawler');
 
 describe('seoCrawler', () => {
   test('seedUrls includes static, host, service, blog URLs', async () => {
     const urls = await seedUrls();
     const list = urls.map((u) => u.url);
-    expect(list).toContain('https://bookasloth.com/');
+    expect(list).toContain('https://bookasloth.com');
     expect(list).toContain('https://bookasloth.com/jane');
     expect(list).toContain('https://bookasloth.com/jane/intro');
     expect(list).toContain('https://bookasloth.com/blog/post-1');
@@ -41,5 +42,37 @@ describe('seoCrawler', () => {
     expect(pages.length).toBeGreaterThan(0);
     expect(Array.isArray(issues)).toBe(true);
     expect(scores.overall).toBeLessThanOrEqual(100);
+  });
+
+  // Regression: staticEntries' homepage loc AND an explicit add() both resolved to the
+  // homepage — seeded twice, doubling titleCounts/descCounts and fabricating duplicate-title
+  // issues against the homepage every crawl. Assert it now appears exactly once.
+  test('seedUrls seeds the homepage exactly once (no static+explicit dupe)', async () => {
+    const urls = await seedUrls();
+    const list = urls.map((u) => u.url);
+    const homepageHits = list.filter((u) => u === 'https://bookasloth.com' || u === 'https://bookasloth.com/');
+    expect(homepageHits.length).toBe(1);
+  });
+
+  // Regression: a 200 page with no robots meta defaulted `noindex` to null, and
+  // `null === false` is false, so normal pages were persisted indexable:false.
+  test('indexable is true for a 200 page with no robots meta', async () => {
+    await run({ trigger: 'manual' });
+    const calls = persist.saveResults.mock.calls;
+    const pages = calls[calls.length - 1][1];
+    expect(pages.length).toBeGreaterThan(0);
+    expect(pages.every((p) => p.indexable === true)).toBe(true);
+  });
+
+  // Regression: runLocked returns undefined (no throw) when a crawl is already in-flight
+  // or another instance holds the lease. run()/start() must not leave the row 'running'
+  // forever, and must not persist a partial/empty result for the skipped tick.
+  test('when the lock is skipped, the crawl is marked skipped and nothing is persisted', async () => {
+    const saveResultsCallsBefore = persist.saveResults.mock.calls.length;
+    runLocked.mockImplementationOnce(() => undefined);
+    const id = await run({ trigger: 'manual' });
+    expect(id).toBe('crawl1');
+    expect(persist.finishCrawl).toHaveBeenLastCalledWith('crawl1', { status: 'skipped' });
+    expect(persist.saveResults.mock.calls.length).toBe(saveResultsCallsBefore);
   });
 });
