@@ -303,7 +303,9 @@ async function main() {
   let created = 0, merged = 0, failed = 0;
   for (const k of kept) {
     try {
-      const { created: isNew } = await leadService.upsertLead(k.patch, { source: 'import', createdBy: 'topmate-import' });
+      // skipMetaLead: a scraped-prospect import must NOT fire Meta CAPI "Lead"
+      // conversion events (would misreport conversions + skew ad optimization).
+      const { created: isNew } = await leadService.upsertLead(k.patch, { source: 'import', createdBy: 'topmate-import', skipMetaLead: true });
       isNew ? created++ : merged++;
     } catch (e) { failed++; console.warn(`  ! ${k.patch.email}: ${e.message}`); }
   }
