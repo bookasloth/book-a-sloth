@@ -4,7 +4,7 @@
 // unset / table empty / not yet synced) → emit nothing (graceful).
 const norm = (u) => (u || '').replace(/\/$/, '').toLowerCase();
 const cs = (g) => (g.coverage_state || '').toLowerCase();
-const isIndexed = (state) => /submitted and indexed|indexed, not submitted/.test(state); // Google says indexed
+const isIndexed = (state) => /^\s*indexed\b/.test(state) || state.includes('submitted and indexed'); // Google says indexed
 
 function check(p, ctx) {
   const g = ctx.gscByUrl && ctx.gscByUrl.get(p.url);

@@ -51,4 +51,16 @@ describe('gsc rules', () => {
     const ctx = ctxFor({ coverage_state: 'Submitted and indexed', google_canonical: url });
     expect(check(page(), ctx)).toEqual([]);
   });
+
+  test('Indexed, though blocked by robots.txt → zero gsc.* issues (indexed state variant)', () => {
+    const ctx = ctxFor({ coverage_state: 'Indexed, though blocked by robots.txt', google_canonical: url });
+    const keys = check(page({ indexable: true }), ctx).map((i) => i.ruleKey);
+    expect(keys).not.toContain('gsc.indexable_mismatch');
+  });
+
+  test('Crawled - currently not indexed still fires indexable_mismatch', () => {
+    const ctx = ctxFor({ coverage_state: 'Crawled - currently not indexed' });
+    const keys = check(page({ indexable: true }), ctx).map((i) => i.ruleKey);
+    expect(keys).toContain('gsc.indexable_mismatch');
+  });
 });
