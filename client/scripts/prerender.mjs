@@ -374,6 +374,21 @@ async function prerender() {
         // Some pages keep default title — that's fine
       });
 
+      // Data-driven pages (blog posts, profession /services pages) fetch their
+      // content client-side, so a cold/slow backend at build time makes them
+      // render their fallback — the "Could not load" error state or the bare SPA
+      // shell — which then ships as a 200 with no real content (this is exactly
+      // how 47 /services pages went out as shells). Both fallbacks lack the
+      // <link rel="canonical"> that a healthy render always sets, so treat a
+      // missing canonical on these routes as a failed render: throw → the route
+      // defers to the serial pass (warm backend, longer timeout) and, if it still
+      // fails there, counts as failed and stops the release. Static pages set no
+      // canonical of their own and are deliberately excluded.
+      if (/^\/(blog|services)\//.test(route)) {
+        const hasCanonical = await page.evaluate(() => !!document.querySelector('link[rel="canonical"]'));
+        if (!hasCanonical) throw new Error('empty render (no canonical — content fetch failed at build time)');
+      }
+
       // Strip runtime-injected external scripts (PostHog, analytics, etc.)
       // that got captured during render — they'll reload on hydration anyway.
       await page.evaluate(() => {
