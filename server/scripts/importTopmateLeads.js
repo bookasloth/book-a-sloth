@@ -141,9 +141,17 @@ function inferType(hay) {
 }
 
 // ── Row → lead patch (or a skip) ────────────────────────────────────────────────
-function transform(r, enrich = {}) {
+function transform(r, enrich = {}, opts = {}) {
   const grade = (r.grade || '').trim().toUpperCase();
-  if (grade !== 'A' && grade !== 'B') return { skip: 'not grade A/B' };
+  // Default: only the email-addressable, verified tiers (A/B). `anyEmail` widens
+  // to every row that has a usable email, regardless of grade or link_status
+  // (a dead Topmate link doesn't affect email deliverability).
+  if (!opts.anyEmail) {
+    if (grade !== 'A' && grade !== 'B') return { skip: 'not grade A/B' };
+    if (r.link_status && r.link_status.trim() && r.link_status.trim().toLowerCase() !== 'active') {
+      return { skip: `link ${r.link_status.trim().toLowerCase()}` };
+    }
+  }
 
   const email = (r.primary_email || '').trim().toLowerCase();
   if (!emailUsable(email)) return { skip: email ? 'unusable email' : 'no email' };
@@ -167,7 +175,9 @@ function transform(r, enrich = {}) {
   const { tag: typeTag, confidence: typeConf } =
     inferType([headline, headline, name, company, r.topmate_profile, website, r.source_url, r.all_socials].join(' '));
 
-  const tags = ['topmate', 'verified-email', nature];
+  const tags = ['topmate', nature];
+  if (grade) tags.push(`grade-${grade.toLowerCase()}`);       // grade-a|b|c|d — lets you isolate the safe set
+  if (grade === 'A' || grade === 'B') tags.push('verified-email'); // A/B = verified LinkedIn + email; D is unconfirmed
   if (grade === 'A') tags.push('high-priority');
   if (switcher) tags.push('potential-switcher');
   if (typeTag) tags.push(typeTag);
@@ -186,7 +196,7 @@ function transform(r, enrich = {}) {
       business_name: company,
       profession: typeTag || '',
       score,
-      intent: grade === 'A' ? 'high' : 'medium',
+      intent: grade === 'A' ? 'high' : grade === 'B' ? 'medium' : 'low',
       tags: [...new Set(tags)],
       attributes: {
         source_dataset: 'topmate',
@@ -199,6 +209,9 @@ function transform(r, enrich = {}) {
         match_confidence: r.confidence || '',
         ascore: r.ascore || '',
         tm_name: r.tm_name || '',
+        india: r.india || '',
+        india_signals: r.india_signals || '',
+        link_status: (r.link_status || '').trim(),
         linkedin_company: /\/company\//i.test(r.linkedin_profile || '') ? r.linkedin_profile : '',
         type_confidence: typeConf,
       },
@@ -228,12 +241,13 @@ async function main() {
   const args = process.argv.slice(2);
   if (args.includes('--selftest')) return selftest();
   const commit = args.includes('--commit');
+  const anyEmail = args.includes('--any-email');
   const filesArg = args[args.indexOf('--files') + 1];
   const files = args.includes('--files') && filesArg ? filesArg.split(',').map((s) => s.trim()) : defaultFiles();
   const outArg = args[args.indexOf('--out') + 1];
   const outDir = args.includes('--out') && outArg ? outArg : os.tmpdir();
 
-  console.log(`\nTopmate import — ${commit ? 'COMMIT (writing to leads)' : 'DRY RUN (writes nothing)'}`);
+  console.log(`\nTopmate import — ${commit ? 'COMMIT (writing to leads)' : 'DRY RUN (writes nothing)'}${anyEmail ? ' · ANY-EMAIL (all grades/links with a usable email)' : ' · A+B active only'}`);
   const rows = loadRows(files);
   if (!rows.length) { console.error('No input rows. Pass --files a.csv,b.csv'); process.exit(1); }
 
@@ -250,7 +264,7 @@ async function main() {
 
   const kept = [], skipped = [], seenEmail = new Set();
   for (const r of rows) {
-    const t = transform(r, enrich);
+    const t = transform(r, enrich, { anyEmail });
     if (t.skip) { skipped.push({ name: r.name || r.tm_name || '', email: r.primary_email || '', reason: t.skip }); continue; }
     if (seenEmail.has(t.patch.email)) { skipped.push({ name: t.patch.name, email: t.patch.email, reason: 'dup in batch' }); continue; }
     seenEmail.add(t.patch.email);
@@ -323,8 +337,16 @@ function selftest() {
   // grade A, on-domain email → high-priority + business-email + switcher
   const a = transform({ grade: 'A', name: 'Rupreet', primary_email: 'r@rupreetg.com', domain: 'rupreetg.com', company: 'Coach', ascore: '11', website: 'https://rupreetg.com/', all_socials: '{}' });
   A.ok(a.patch.tags.includes('high-priority') && a.patch.tags.includes('business-email') && a.patch.tags.includes('potential-switcher'), 'A tags');
+  A.ok(a.patch.tags.includes('grade-a') && a.patch.tags.includes('verified-email'), 'A grade tag');
   A.equal(a.patch.intent, 'high');
   A.equal(a.patch.attributes.grade, 'A');
+
+  // anyEmail: a grade-D row with an email imports, tagged grade-d, NOT verified-email, intent low
+  A.equal(transform({ grade: 'D', primary_email: 'x@site.com', link_status: 'lost', all_socials: '{}' }).skip, 'not grade A/B', 'D skipped by default');
+  const d = transform({ grade: 'D', primary_email: 'x@site.com', domain: 'site.com', link_status: 'lost', all_socials: '{}' }, {}, { anyEmail: true });
+  A.ok(d.patch, 'D kept under --any-email despite dead link');
+  A.ok(d.patch.tags.includes('grade-d') && !d.patch.tags.includes('verified-email') && !d.patch.tags.includes('high-priority'), 'D tags honest');
+  A.equal(d.patch.intent, 'low');
 
   // stem matches suffix: "Psychologist"/"Clinical" → health (the \b\b bug)
   A.equal(inferType('Online Clinical Psychologist').tag, 'health', 'psychologist → health');

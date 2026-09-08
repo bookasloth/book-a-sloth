@@ -26,7 +26,13 @@ INSERT INTO crm_tags (name, color, created_by) VALUES
   ('personal-email',     'gray',   'seed'),  -- free provider (gmail/outlook/…)
   ('potential-switcher', 'green',  'seed'),  -- owns a branded domain + on-domain email
   ('high-priority',      'red',    'seed'),  -- grade A: verified + on-domain email + site
-  ('nurture',            'brown',  'seed'),  -- not email-ready yet (future C/D import)
+  ('nurture',            'brown',  'seed'),  -- not email-ready yet
+  -- data-grade of the source pair (verified LinkedIn ↔ email). Lets you email the
+  -- verified A/B set confidently and hold grade-d (unconfirmed pairing) for review.
+  ('grade-a', 'red',    'seed'),
+  ('grade-b', 'orange', 'seed'),
+  ('grade-c', 'teal',   'seed'),
+  ('grade-d', 'pink',   'seed'),
   -- inferred profession/type (best-effort at import; low-confidence flagged in attributes)
   ('coach',      'yellow', 'seed'),
   ('mentor',     'yellow', 'seed'),
@@ -60,7 +66,11 @@ INSERT INTO crm_views (name, definition, created_by) VALUES
   ('Topmate — Business Email',
    '{"viewType":"table","filters":{"tag":"business-email"}}', 'seed'),
   ('Topmate — Personal Email',
-   '{"viewType":"table","filters":{"tag":"personal-email"}}', 'seed')
+   '{"viewType":"table","filters":{"tag":"personal-email"}}', 'seed'),
+  ('Topmate — Verified (A/B)',
+   '{"viewType":"table","filters":{"tag":"verified-email","stage":"new"}}', 'seed'),
+  ('Topmate — Verify First (D)',
+   '{"viewType":"table","filters":{"tag":"grade-d","stage":"new"}}', 'seed')
 ON CONFLICT (lower(name)) DO UPDATE SET definition = EXCLUDED.definition, updated_at = now();
 
 -- ============================================================
