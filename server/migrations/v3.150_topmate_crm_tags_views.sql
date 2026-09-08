@@ -33,6 +33,7 @@ INSERT INTO crm_tags (name, color, created_by) VALUES
   ('consultant', 'yellow', 'seed'),
   ('creator',    'yellow', 'seed'),
   ('developer',  'yellow', 'seed'),
+  ('designer',   'yellow', 'seed'),
   ('finance',    'yellow', 'seed'),
   ('health',     'yellow', 'seed'),
   ('career',     'yellow', 'seed'),

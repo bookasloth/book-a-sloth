@@ -106,17 +106,24 @@ function parseSocials(json) {
 }
 const firstMatch = (arr, needle) => (Array.isArray(arr) ? arr.find((u) => (u || '').toLowerCase().includes(needle)) : '') || '';
 
+// topmate.io/<slug> → "<slug>" (drop query/trailing slash), for the enrichment join.
+const topmateSlug = (url = '') => {
+  const m = String(url).match(/topmate\.[a-z]+\/([^/?#]+)/i);
+  return m ? m[1].toLowerCase() : '';
+};
+
 // ── Best-effort profession/type inference ───────────────────────────────────────
 // ponytail: keyword heuristic over the text we have, low-confidence flagged in
 // attributes.type_confidence. Correct in bulk from the lead list, don't build ML.
 // Stems match as substrings (so "psycholog" catches "Psychologist"); short or
 // ambiguous tokens keep \b guards (so "dev" doesn't fire on "Devanshu").
 const TYPE_RULES = [ // precedence: most specific first
-  ['finance',    /finance|fintech|wealth|invest|mutual fund|stock|trading|\btax\b|\bgst\b|\bca\b|chartered account|\bcfo\b|accounting|payroll|nri tax/i],
-  ['health',     /nutrition|dietician|dietitian|doctor|psycholog|therap|wellness|fitness|gyneco|dental|dentist|medical|physician|\bmental\b|ayurveda|clinic/i],
-  ['developer',  /developer|devops|\bdev\b|engineer|software|frontend|backend|full[- ]?stack|programming|coding|coder|python|javascript|\breact\b|golang|\bsde\b|machine learning|data science|cyber|\bsecurity\b|hacker|system design|vlsi|\bcloud\b|kubernetes/i],
+  ['finance',    /finance|fintech|wealth|invest|mutual fund|stock|trading|\btax\b|\bgst\b|\bca\b|chartered account|\bcfo\b|accounting|payroll|nri tax|quant|equity research|portfolio manager|financial analyst/i],
+  ['health',     /nutrition|dietician|dietitian|doctor|psycholog|therap|wellness|fitness|gyneco|dental|dentist|medical|physician|\bmental\b|ayurveda|clinic|counsel/i],
+  ['developer',  /developer|devops|\bdev\b|engineer|software|frontend|backend|full[- ]?stack|programming|coding|coder|python|javascript|\breact\b|golang|\bsde\b|machine learning|data scien|data engineer|big ?data|architect|gen ?ai|agentic|\bml\b|\bllm\b|\bnlp\b|\bai\b engineer|prompt engineer|cyber|\bsecurity\b|threat detection|infosec|pentest|penetration test|\bsre\b|site reliability|hacker|system design|vlsi|\bcloud\b|kubernetes|blockchain|tech speaker/i],
   ['career',     /career|resume|interview|hiring|placement|\bjobs?\b|land better|preplaced/i],
   ['product',    /product manager|product management|\bpm\b|productwallah|roadmap/i],
+  ['designer',   /designer|\bux\b|\bui\b|product design|graphic design/i],
   ['marketing',  /marketing|\bbrand|\bseo\b|content writ|content strateg|copywrit|\bgrowth\b|social media|\bads\b|agency/i],
   ['coach',      /coach/i],
   ['mentor',     /mentor/i],
@@ -134,12 +141,16 @@ function inferType(hay) {
 }
 
 // ── Row → lead patch (or a skip) ────────────────────────────────────────────────
-function transform(r) {
+function transform(r, enrich = {}) {
   const grade = (r.grade || '').trim().toUpperCase();
   if (grade !== 'A' && grade !== 'B') return { skip: 'not grade A/B' };
 
   const email = (r.primary_email || '').trim().toLowerCase();
   if (!emailUsable(email)) return { skip: email ? 'unusable email' : 'no email' };
+
+  // Topmate headline (scraped by enrichTopmateCategories.js) is the strongest
+  // profession signal we have — put it first in the inference haystack.
+  const headline = enrich[topmateSlug(r.topmate_profile)]?.headline || '';
 
   const socials = parseSocials(r.all_socials);
   const name = pickName(r.name, r.tm_name);
@@ -154,7 +165,7 @@ function transform(r) {
   const nature = isFree(dom) ? 'personal-email' : 'business-email';
   const switcher = nature === 'business-email' && !!dom && !isAggregator(dom);
   const { tag: typeTag, confidence: typeConf } =
-    inferType([name, company, r.topmate_profile, website, r.source_url, r.all_socials].join(' '));
+    inferType([headline, headline, name, company, r.topmate_profile, website, r.source_url, r.all_socials].join(' '));
 
   const tags = ['topmate', 'verified-email', nature];
   if (grade === 'A') tags.push('high-priority');
@@ -181,6 +192,7 @@ function transform(r) {
         source_dataset: 'topmate',
         grade,
         topmate_profile: r.topmate_profile || '',
+        topmate_headline: headline,
         domain,
         email_tier: r.email_tier || '',
         match_signal: r.verified_linkedin || '',
@@ -225,9 +237,20 @@ async function main() {
   const rows = loadRows(files);
   if (!rows.length) { console.error('No input rows. Pass --files a.csv,b.csv'); process.exit(1); }
 
+  // Optional Topmate category cache (produced by enrichTopmateCategories.js).
+  // Defaults next to the first input CSV; override with --enrich <path>.
+  const enrichArg = args[args.indexOf('--enrich') + 1];
+  const enrichPath = args.includes('--enrich') && enrichArg
+    ? enrichArg : path.join(path.dirname(files[0]), 'topmate_categories.json');
+  let enrich = {};
+  if (fs.existsSync(enrichPath)) {
+    try { enrich = JSON.parse(fs.readFileSync(enrichPath, 'utf8')); console.log(`  enrich: ${Object.keys(enrich).length} headlines from ${path.basename(enrichPath)}`); }
+    catch { console.warn(`! could not read enrich cache ${enrichPath}`); }
+  } else { console.log('  enrich: none (run enrichTopmateCategories.js for real Topmate categories)'); }
+
   const kept = [], skipped = [], seenEmail = new Set();
   for (const r of rows) {
-    const t = transform(r);
+    const t = transform(r, enrich);
     if (t.skip) { skipped.push({ name: r.name || r.tm_name || '', email: r.primary_email || '', reason: t.skip }); continue; }
     if (seenEmail.has(t.patch.email)) { skipped.push({ name: t.patch.name, email: t.patch.email, reason: 'dup in batch' }); continue; }
     seenEmail.add(t.patch.email);
@@ -303,13 +326,26 @@ function selftest() {
   // stem matches suffix: "Psychologist"/"Clinical" → health (the \b\b bug)
   A.equal(inferType('Online Clinical Psychologist').tag, 'health', 'psychologist → health');
   A.equal(inferType('Devanshu Tak').tag, null, 'a name is not a developer');
+  A.equal(inferType('AI & BigData Architect @ Mobilewalla').tag, 'developer', 'architect → developer');
+  A.equal(inferType('Quantitative Analyst at UBS').tag, 'finance', 'quant → finance');
+  A.equal(inferType('UI/UX & Product Designer | Founder Mindset').tag, 'designer', 'designer beats founder');
   // junk name → Topmate display name
   A.equal(pickName('admin', 'Rakesh Verma'), 'Rakesh Verma');
   A.equal(pickName('Jane Doe', 'jd'), 'Jane Doe');
+
+  // enrichment: scraped Topmate headline drives the type (beats a bare-domain company)
+  A.equal(topmateSlug('https://topmate.io/Rakesh_Verma10?x=1'), 'rakesh_verma10');
+  const en = transform(
+    { grade: 'B', name: 'X', primary_email: 'x@xyz.com', domain: 'xyz.com', company: 'xyz.com', topmate_profile: 'https://topmate.io/xy', all_socials: '{}' },
+    { xy: { headline: 'Nutritionist & Dietitian | Author' } });
+  A.equal(en.patch.attributes.topmate_headline, 'Nutritionist & Dietitian | Author');
+  A.ok(en.patch.tags.includes('health'), 'headline → health tag');
 
   A.equal(transform({ grade: 'C', primary_email: 'x@y.com' }).skip, 'not grade A/B');
   A.equal(transform({ grade: 'A', primary_email: '' }).skip, 'no email');
   console.log('selftest OK');
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+module.exports = { parseCSV, inferType, transform, decodeEntities, topmateSlug };
+
+if (require.main === module) main().catch((e) => { console.error(e); process.exit(1); });
