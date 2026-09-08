@@ -214,13 +214,15 @@ async function hostServiceRoutes() {
 
   try {
     const indexRes = await fetchWithRetry(`${origin}/sitemap.xml`);
-    // Only the host + service sub-sitemaps; pages/professions/blog are handled
-    // by PRERENDER_ROUTES + blogRoutes already. Fetch each by its OWN path off our
-    // reachable origin (the <loc> carries the public SITE_URL domain, which may
-    // route through Vercel — the path is all we need).
+    // Host + service + profession sub-sitemaps; pages/blog are handled by
+    // PRERENDER_ROUTES + blogRoutes already. Professions (/services/:slug) are
+    // DB-driven and can't be a hardcoded list — without prerender they shipped an
+    // empty SPA shell to Google (soft_404) for all 47 sitemap URLs. Fetch each by
+    // its OWN path off our reachable origin (the <loc> carries the public SITE_URL
+    // domain, which may route through Vercel — the path is all we need).
     const subPaths = locs(await indexRes.text())
       .map((u) => new URL(u).pathname)
-      .filter((p) => /\/sitemap-(hosts|services)/.test(p));
+      .filter((p) => /\/sitemap-(hosts|services|professions)/.test(p));
 
     const routes = [];
     for (const sub of subPaths) {
@@ -311,7 +313,8 @@ function createStaticServer() {
 async function prerender() {
   const puppeteer = await import('puppeteer');
 
-  const routes = [...PRERENDER_ROUTES, ...(await blogRoutes()), ...(await hostServiceRoutes())];
+  // Dedup: professions sub-sitemap also carries the /services root already in PRERENDER_ROUTES.
+  const routes = [...new Set([...PRERENDER_ROUTES, ...(await blogRoutes()), ...(await hostServiceRoutes())])];
 
   const server = createStaticServer();
   await new Promise((resolve) => server.listen(PORT, resolve));

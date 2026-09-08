@@ -27,7 +27,7 @@ jest.mock('../../services/sitemapService', () => ({
   fetchHosts: async () => [{ username: 'jane', updated_at: null }],
   fetchServices: async () => [{ slug: 'intro', profiles: { username: 'jane' } }],
   fetchBlogs: async () => [{ slug: 'post-1' }],
-  fetchProfessions: async () => [],
+  fetchProfessions: async () => [{ slug: 'life-coach' }],
 }));
 jest.mock('../../utils/jobLock', () => ({ runLocked: jest.fn((name, fn) => fn()) }));
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
@@ -50,10 +50,13 @@ describe('seoCrawler', () => {
   test('seedUrls includes static, host, service, blog URLs', async () => {
     const urls = await seedUrls();
     const list = urls.map((u) => u.url);
-    expect(list).toContain('https://bookasloth.com');
+    expect(list).toContain('https://bookasloth.com/'); // homepage keeps its trailing slash (no bare-apex 301)
     expect(list).toContain('https://bookasloth.com/jane');
     expect(list).toContain('https://bookasloth.com/jane/intro');
     expect(list).toContain('https://bookasloth.com/blog/post-1');
+    // Professions audit /services/:slug (the published sitemap URL), not /for/:slug.
+    expect(list).toContain('https://bookasloth.com/services/life-coach');
+    expect(list).not.toContain('https://bookasloth.com/for/life-coach');
   });
   test('run() crawls, scores and persists', async () => {
     const id = await run({ trigger: 'manual' });
@@ -123,7 +126,7 @@ describe('seoCrawler', () => {
     expect(resolveServiceMeta).toHaveBeenCalledWith('jane', 'intro');
 
     const fetchedUrls = fetchUrl.mock.calls.map((c) => c[0]);
-    expect(fetchedUrls).toContain('https://bookasloth.com');
+    expect(fetchedUrls).toContain('https://bookasloth.com/');
     expect(fetchedUrls).toContain('https://bookasloth.com/blog/post-1');
     expect(fetchedUrls).not.toContain('https://bookasloth.com/jane');
     expect(fetchedUrls).not.toContain('https://bookasloth.com/jane/intro');
