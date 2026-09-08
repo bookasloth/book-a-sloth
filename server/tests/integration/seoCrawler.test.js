@@ -56,6 +56,7 @@ describe('seoCrawler', () => {
     expect(list).toContain('https://bookasloth.com/blog/post-1');
     // Professions audit /services/:slug (the published sitemap URL), not /for/:slug.
     expect(list).toContain('https://bookasloth.com/services/life-coach');
+    expect(list).toContain('https://bookasloth.com/services'); // hub that links all /services/:slug (de-orphans them)
     expect(list).not.toContain('https://bookasloth.com/for/life-coach');
   });
   test('run() crawls, scores and persists', async () => {
