@@ -296,6 +296,8 @@ export const adminGstOverview      = (params)      => API.get('/admin/gst/overvi
 export const adminGstTransactions  = (params)      => API.get('/admin/gst/transactions', { params });
 export const adminGstInvoices      = (params)      => API.get('/admin/gst/invoices', { params });
 export const adminGstInvoice       = (id)          => API.get(`/admin/gst/invoices/${id}`);
+// Printable tax invoice (HTML) — returns a blob for browser download.
+export const adminGstInvoiceDownload = (id)        => API.get(`/admin/gst/invoices/${id}/download`, { responseType: 'blob' });
 // CSV export of a report (transactions/sales-register) — returns a blob.
 export const adminGstReportCsv     = (type, params) => API.get(`/admin/gst/reports/${type}`, { params: { ...params, format: 'csv' }, responseType: 'blob' });
 // GST — action center, reconciliation, ITC, returns, reports, settings (P3).

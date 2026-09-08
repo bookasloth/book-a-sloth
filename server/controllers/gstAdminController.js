@@ -20,6 +20,7 @@ const exceptions = require('../services/gst/gstExceptions');
 const reconcileService = require('../services/gst/gstReconcile');
 const { itcReport } = require('../services/gst/itcStub');
 const exportService = require('../services/gst/gstExportService');
+const { buildTaxInvoiceHTML } = require('../services/invoiceHtml');
 
 const p = (req) => period.resolvePeriod({ fy: req.query.fy, month: req.query.month, quarter: req.query.quarter });
 
@@ -127,6 +128,22 @@ const getInvoiceDetail = async (req, res) => {
     // Drill-down links back to the source record.
     const source = { type: inv.source_type, id: inv.source_id, payment_id: inv.payment_id };
     res.json({ invoice: inv, issues, source, ratePct: engine.ratePct(inv) });
+  } catch (e) { safeError(res, e); }
+};
+
+// ── GET /admin/gst/invoices/:id/download ──────────────────────
+// Printable tax invoice (HTML → browser print-to-PDF). Reuses the same
+// buildTaxInvoiceHTML the guest/email invoice links render, fed the raw
+// invoices row (not the engine's shaped view) so the layout matches exactly.
+const downloadInvoice = async (req, res) => {
+  try {
+    const { data: inv } = await supabaseAdmin
+      .from('invoices').select('*').eq('id', req.params.id).maybeSingle();
+    if (!inv) return res.status(404).json({ message: 'Invoice not found' });
+    res
+      .set('Content-Type', 'text/html; charset=utf-8')
+      .set('Content-Disposition', `attachment; filename="${(inv.invoice_number || 'invoice').replace(/[^\w.-]/g, '_')}.html"`)
+      .send(buildTaxInvoiceHTML(inv));
   } catch (e) { safeError(res, e); }
 };
 
@@ -379,7 +396,7 @@ const downloadExport = async (req, res) => {
 };
 
 module.exports = {
-  getOverview, getTransactions, listInvoices, getInvoiceDetail,
+  getOverview, getTransactions, listInvoices, getInvoiceDetail, downloadInvoice,
   getIssues, setIssueStatus, getReconciliation, getItc,
   getReturns, setReturnStatus, getReport, getSettings, listExports, createExport, downloadExport,
 };
