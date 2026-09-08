@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Check, X } from "lucide-react";
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
+import { SITE_URL } from "../utils/seo";
 import { PLAN_COLUMNS, PLAN_MATRIX } from "../data/plans";
 import PricingCards from "../components/pricing/PricingCards";
 import useFeeOnly from "../hooks/useFeeOnly";
@@ -48,6 +49,7 @@ export default function Pricing() {
         title={feeOnly ? "Pricing — Book A Sloth | Plans for creators & professionals" : "Pricing — Book A Sloth | Zero-commission booking from ₹0"}
         description={feeOnly ? "Simple, honest pricing for your booking page — scheduling, reminders, and payments launching soon. Compare Host+ and Studio side by side — prices in INR, excl. GST." : "Simple, honest pricing. Start free, keep 0% commission on paid plans. Compare Starter, Host+ and Studio side by side — prices in INR, excl. GST."}
         image={ogCard('pricing')}
+        canonical={`${SITE_URL}/pricing`}
         jsonLd={JSON_LD}
       />
 
