@@ -637,8 +637,8 @@ const Home = () => {
             </Reveal>
 
             <Reveal as="p" delay={0.12} className="mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg">
-              Get booked and paid without the admin. Payments, confirmations and
-              reminders run themselves. Built for India. Set up in 3 minutes.
+              Get booked &amp; get paid. Let clients book appointments, pay, and get
+              reminders automatically. Built for India. Set up in 3 minutes and skip the admin.
             </Reveal>
 
             {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
@@ -743,8 +743,8 @@ const Home = () => {
           </Reveal>
 
           <Reveal as="p" delay={0.12} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500">
-            Get booked and paid without the admin. Payments, confirmations and
-            reminders run themselves. Built for India. Set up in 3 minutes.
+            Get booked &amp; get paid. Let clients book appointments, pay, and get
+            reminders automatically. Built for India. Set up in 3 minutes and skip the admin.
           </Reveal>
 
           {/* Google-only host funnel — fires the same flow as /be-a-sloth */}
