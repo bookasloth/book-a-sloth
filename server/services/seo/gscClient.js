@@ -14,9 +14,14 @@ const getClient = () => {
   if (cached) return cached;
   let credentials;
   try {
-    credentials = JSON.parse(process.env.GSC_SA_KEY);
+    // Accept the key as raw JSON OR base64-encoded JSON. Env UIs (Render) mangle
+    // the newlines inside private_key when raw JSON is pasted, breaking JSON.parse;
+    // a base64 blob is one line with nothing to mangle. Raw JSON starts with '{'.
+    let raw = (process.env.GSC_SA_KEY || '').trim();
+    if (raw && raw[0] !== '{') raw = Buffer.from(raw, 'base64').toString('utf8');
+    credentials = JSON.parse(raw);
   } catch (err) {
-    console.warn('[gscClient] GSC_SA_KEY is not valid JSON — skipping:', err.message);
+    console.warn('[gscClient] GSC_SA_KEY is not valid JSON (raw or base64) — skipping:', err.message);
     return null;
   }
   const auth = new google.auth.GoogleAuth({
