@@ -154,4 +154,4 @@ async function start({ trigger = 'manual', triggeredBy = null } = {}) {
   }).catch((e) => persist.finishCrawl(crawlId, { status: 'failed', error: e.message }));
   return crawlId;
 }
-module.exports = { run, start, seedUrls };
+module.exports = { run, start, seedUrls, crawlOne };

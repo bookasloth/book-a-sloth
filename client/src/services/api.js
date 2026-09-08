@@ -325,6 +325,10 @@ export const adminSeoFixes        = (params)  => API.get('/admin/seo/fixes', { p
 export const adminSeoFix          = (id)      => API.get(`/admin/seo/fixes/${id}`);
 export const adminSeoGenerateFixes = (data)   => API.post('/admin/seo/fixes/generate', data || {});
 export const adminSeoDecideFix    = (id, data) => API.post(`/admin/seo/fixes/${id}/decide`, data);
+export const adminSeoApplyFix     = (id)      => API.post(`/admin/seo/fixes/${id}/apply`);
+export const adminSeoMarkApplied  = (id, data) => API.post(`/admin/seo/fixes/${id}/mark-applied`, data);
+export const adminSeoRollbackFix  = (id)      => API.post(`/admin/seo/fixes/${id}/rollback`);
+export const adminSeoRetestFix    = (id)      => API.post(`/admin/seo/fixes/${id}/retest`);
 export const adminSeoRunCrawl     = ()        => API.post('/admin/seo/crawl');
 export const adminSeoCrawlStatus  = (id)      => API.get(`/admin/seo/crawl/${id}`);
 export const adminSeoMuteIssue    = (id, data) => API.post(`/admin/seo/issues/${id}/mute`, data);

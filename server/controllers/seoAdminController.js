@@ -12,6 +12,7 @@ const crawler = require('../services/seo/seoCrawler');
 const svc = require('../services/seo/seoAuditService');
 const fixSvc = require('../services/seo/seoFixService');
 const fixEngine = require('../services/seo/fixes');
+const fixApply = require('../services/seo/fixes/apply');
 
 // ── GET /admin/seo/overview ───────────────────────────────────
 const getOverview = async (req, res) => {
@@ -140,6 +141,47 @@ const postDecideFix = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── POST /admin/seo/fixes/:id/apply ───────────────────────────
+// Phase 3. db_field fixes write directly (guarded); code/content fixes return
+// requiresPr. Blocked by DRY_RUN. Re-tests after any write.
+const postApplyFix = async (req, res) => {
+  try {
+    const result = await fixApply.applyFix(req.params.id, { adminId: req.admin?.id });
+    if (result.ok) await audit(req, { action: 'SEO_FIX_APPLIED', resource_type: 'seo_fix', resource_id: req.params.id, after: { status: result.fix?.status, resolved: result.fix?.test_after?.resolved } });
+    res.json(result);
+  } catch (e) { safeError(res, e); }
+};
+
+// ── POST /admin/seo/fixes/:id/mark-applied ────────────────────
+// A code/content fix landed via PR — record + re-test to confirm FIXED/FAILED.
+const postMarkApplied = async (req, res) => {
+  try {
+    const result = await fixApply.markApplied(req.params.id, { ref: req.body?.ref, adminId: req.admin?.id });
+    if (result.ok) await audit(req, { action: 'SEO_FIX_MARKED_APPLIED', resource_type: 'seo_fix', resource_id: req.params.id, after: { ref: req.body?.ref, resolved: result.fix?.test_after?.resolved } });
+    res.json(result);
+  } catch (e) { safeError(res, e); }
+};
+
+// ── POST /admin/seo/fixes/:id/rollback ────────────────────────
+const postRollbackFix = async (req, res) => {
+  try {
+    const result = await fixApply.rollbackFix(req.params.id, { adminId: req.admin?.id });
+    if (result.ok) await audit(req, { action: 'SEO_FIX_ROLLED_BACK', resource_type: 'seo_fix', resource_id: req.params.id, after: { note: result.note } });
+    res.json(result);
+  } catch (e) { safeError(res, e); }
+};
+
+// ── POST /admin/seo/fixes/:id/retest ──────────────────────────
+// Re-crawl + re-score the fix's URL without applying anything.
+const postRetestFix = async (req, res) => {
+  try {
+    const fix = await fixSvc.getFix(req.params.id);
+    if (!fix) return res.status(404).json({ message: 'Fix not found' });
+    const result = await fixApply.retest(fix.url, fix.page_type, false);
+    res.json({ retest: result, resolved: fixApply.resolved(fix, result) });
+  } catch (e) { safeError(res, e); }
+};
+
 // ── POST /admin/seo/crawl ─────────────────────────────────────
 // Kicks off a crawl in the background (seoCrawler.start resolves as soon as
 // the crawl row exists — the crawl itself keeps running after this returns).
@@ -199,5 +241,6 @@ module.exports = {
   getOverview, getIssues, getIssue, getPages, getPage,
   getCategories, getReports, getChanges,
   getFixes, getFix, postGenerateFixes, postDecideFix,
+  postApplyFix, postMarkApplied, postRollbackFix, postRetestFix,
   getScoreHistory, postCrawl, getCrawl, postMuteIssue, getGsc, postGscSync,
 };

@@ -8,6 +8,7 @@ import {
   adminSeoOverview, adminSeoIssues, adminSeoReports,
   adminSeoCategories, adminSeoChanges,
   adminSeoFixes, adminSeoGenerateFixes, adminSeoDecideFix,
+  adminSeoApplyFix, adminSeoMarkApplied, adminSeoRollbackFix, adminSeoRetestFix,
   adminSeoRunCrawl, adminSeoCrawlStatus, adminSeoMuteIssue, adminSeoGsc, adminSeoGscSync,
 } from '../../services/api';
 
@@ -412,12 +413,14 @@ function FixesTab() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [level, setLevel] = useState('');
+  const [status, setStatus] = useState('proposed');
   const [selected, setSelected] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { status: 'proposed' };
+      const params = {};
+      if (status) params.status = status;
       if (level) params.approvalLevel = level;
       const res = await adminSeoFixes(params);
       setFixes(res.data.fixes || []);
@@ -427,7 +430,7 @@ function FixesTab() {
       toast.error(e.response?.data?.message || 'Failed to load fixes');
       setFixes([]);
     } finally { setLoading(false); }
-  }, [level]);
+  }, [level, status]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -457,7 +460,10 @@ function FixesTab() {
         </button>
       </Card>
 
-      <div className="flex gap-3 mb-4 items-center">
+      <div className="flex gap-3 mb-4 items-center flex-wrap">
+        <select className="fb-input text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
+          {['proposed', 'approved', 'applied', 'failed', 'rejected', 'rolled_back', ''].map((s) => <option key={s || 'all'} value={s}>{s || 'all statuses'}</option>)}
+        </select>
         <select className="fb-input text-sm" value={level} onChange={(e) => setLevel(e.target.value)}>
           <option value="">All levels</option>
           {['AUTO', 'REVIEW', 'DO_NOT'].map((l) => <option key={l} value={l}>{l}</option>)}
@@ -500,17 +506,33 @@ function FixesTab() {
 
 function FixDrawer({ fix, onClose, onDecided }) {
   const [busy, setBusy] = useState(false);
-  const decide = async (decision) => {
-    setBusy(true);
+  const [note, setNote] = useState(null);
+
+  const run = async (fn, okMsg) => {
+    setBusy(true); setNote(null);
     try {
-      await adminSeoDecideFix(fix.id, { decision });
-      toast.success(decision === 'approve' ? 'Fix approved (staged)' : 'Fix rejected');
+      const res = await fn();
+      const d = res?.data || {};
+      if (d.ok === false) {
+        // Not applied — explain why (dry-run, needs PR, needs config).
+        setNote(d.message || d.reason || 'No change applied.');
+        if (d.dryRun) toast('DRY_RUN — nothing applied.');
+        else if (d.requiresPr) toast('Land this as a PR, then Mark applied.');
+        else toast(d.message || 'No change applied.');
+      } else if (d.retest) {
+        toast(d.resolved ? 'Re-test: issue resolved ✓' : 'Re-test: issue still present');
+        setNote(`Re-test → ${d.retest.status} · health ${d.retest.health}${d.resolved != null ? ` · resolved: ${d.resolved}` : ''}`);
+      } else {
+        toast.success(okMsg);
+        onDecided?.(); onClose(); return;
+      }
       onDecided?.();
-      onClose();
     } catch (e) {
       toast.error(e.response?.data?.message || 'Action failed');
     } finally { setBusy(false); }
   };
+
+  const st = fix.status;
   const canApprove = fix.approval_level !== 'DO_NOT';
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -521,7 +543,10 @@ function FixDrawer({ fix, onClose, onDecided }) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">✕</button>
         </div>
         <div className="space-y-3 text-sm">
-          <div><span className="text-gray-500">Approval</span><div><Badge tone={LEVEL_TONE[fix.approval_level] || 'neutral'}>{fix.approval_level}</Badge></div></div>
+          <div className="flex gap-2">
+            <Badge tone={LEVEL_TONE[fix.approval_level] || 'neutral'}>{fix.approval_level}</Badge>
+            <Badge tone="neutral">{st}</Badge>
+          </div>
           <div><span className="text-gray-500">URL</span><div className="break-all">{fix.url}</div></div>
           <div><span className="text-gray-500">Target / field</span><div>{fix.target}{fix.field ? ` · ${fix.field}` : ''}</div></div>
           {fix.reason && <div><span className="text-gray-500">Reason</span><div>{fix.reason}</div></div>}
@@ -534,13 +559,29 @@ function FixDrawer({ fix, onClose, onDecided }) {
           {fix.new_value == null && (
             <div><span className="text-gray-500">Content context</span><pre className="text-xs bg-gray-50 p-2 rounded whitespace-pre-wrap">{JSON.stringify(fix.context || {}, null, 2)}</pre></div>
           )}
+          {fix.test_after && Object.keys(fix.test_after).length > 0 && (
+            <div><span className="text-gray-500">Re-test</span><div>{fix.test_after.status} · health {fix.test_after.health} · resolved: {String(fix.test_after.resolved)}</div></div>
+          )}
+          {note && <div className="text-xs rounded bg-amber-50 text-amber-800 p-2">{note}</div>}
         </div>
-        <div className="mt-6 flex justify-end gap-2">
-          <button onClick={() => decide('reject')} disabled={busy} className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50">Reject</button>
-          {canApprove && (
-            <button onClick={() => decide('approve')} disabled={busy} className="rounded-lg bg-[#FE5100] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e04800] disabled:opacity-50">
-              {busy ? 'Saving…' : 'Approve (stage)'}
-            </button>
+
+        <div className="mt-6 flex flex-wrap justify-end gap-2">
+          <button onClick={() => run(() => adminSeoRetestFix(fix.id))} disabled={busy} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50">Re-test</button>
+          {st === 'proposed' && (
+            <>
+              <button onClick={() => run(() => adminSeoDecideFix(fix.id, { decision: 'reject' }), 'Rejected')} disabled={busy} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50">Reject</button>
+              {canApprove && <button onClick={() => run(() => adminSeoDecideFix(fix.id, { decision: 'approve' }), 'Approved (staged)')} disabled={busy} className="rounded-lg bg-[#FE5100] px-3 py-2 text-sm font-semibold text-white hover:bg-[#e04800] disabled:opacity-50">Approve (stage)</button>}
+            </>
+          )}
+          {st === 'approved' && (
+            <>
+              {fix.target === 'db_field'
+                ? <button onClick={() => run(() => adminSeoApplyFix(fix.id), 'Applied')} disabled={busy} className="rounded-lg bg-[#FE5100] px-3 py-2 text-sm font-semibold text-white hover:bg-[#e04800] disabled:opacity-50">Apply</button>
+                : <button onClick={() => run(() => adminSeoMarkApplied(fix.id, {}), 'Marked applied')} disabled={busy} className="rounded-lg bg-[#FE5100] px-3 py-2 text-sm font-semibold text-white hover:bg-[#e04800] disabled:opacity-50">Mark applied (PR landed)</button>}
+            </>
+          )}
+          {(st === 'applied' || st === 'failed') && (
+            <button onClick={() => run(() => adminSeoRollbackFix(fix.id), 'Rolled back')} disabled={busy} className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">Rollback</button>
           )}
         </div>
       </div>
