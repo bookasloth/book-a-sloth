@@ -28,6 +28,10 @@ async function seedUrls() {
   // Profession pages live at /services/:slug (what professionEntries publishes to
   // Google) — NOT /for/:slug (that route is the hardcoded marketing landings; a DB
   // slug there renders a noindex 404). Auditing /for/ produced 47 phantom soft_404s.
+  // The /services hub (professionEntries' root loc) is NOT in staticEntries — seed it
+  // too, or the crawler never visits the page that links all /services/:slug and
+  // flags every one as links.orphan_page.
+  add(`${SITE_URL}/services`, 'static');
   for (const p of await sm.fetchProfessions()) add(`${SITE_URL}/services/${p.slug}`, 'static');
   return out;
 }
