@@ -8,7 +8,10 @@ const images = require('./images');
 const structuredData = require('./structuredData');
 const sitemap = require('./sitemap');
 const gsc = require('./gsc');
-const GROUPS = [onpage, technical, indexability, links, images, structuredData, sitemap, gsc];
+const semantic = require('./semantic');
+const content = require('./content');
+const cannibalization = require('./cannibalization');
+const GROUPS = [onpage, technical, indexability, links, images, structuredData, sitemap, gsc, semantic, content, cannibalization];
 
 const SHOULD_INDEX_TYPES = new Set(['host', 'service', 'blog', 'static']);
 
