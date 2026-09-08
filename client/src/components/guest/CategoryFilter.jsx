@@ -13,11 +13,14 @@ export default function CategoryFilter({ categories = [], selected = '', onChang
     <div className="relative">
       {/* Fade the right edge so a scrollable row reads as scrollable. MUST match
           the page background (Explore is bg-surface); fading to the old cream
-          left a visible smudge once the page went white. */}
-      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-12
-                      bg-gradient-to-l from-surface to-transparent" />
+          left a visible smudge once the page went white. Only at sm+ where the
+          row scrolls sideways — on mobile the row wraps, so no fade. */}
+      <div className="pointer-events-none absolute right-0 top-0 z-10 hidden h-full w-12
+                      bg-gradient-to-l from-surface to-transparent sm:block" />
 
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      {/* Mobile: wrap onto multiple lines (no sideways scroll). sm+: single
+          sideways-scrolling row. */}
+      <div className="flex flex-wrap gap-2 pb-1 sm:flex-nowrap sm:overflow-x-auto sm:scrollbar-hide">
         {all.map((cat) => {
           const active = cat.slug === selected;
           return (
