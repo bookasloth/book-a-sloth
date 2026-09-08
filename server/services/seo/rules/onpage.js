@@ -22,8 +22,13 @@ function check(p, ctx) {
   if (p.bodyCrawled !== false) {
     if (!p.h1 || p.h1.length === 0) push('onpage.missing_h1', {});
     else if (p.h1.length > 1) push('onpage.multiple_h1', { count: p.h1.length });
-    if (p.title && p.h1 && p.h1.length === 1 && p.h1[0].toLowerCase() !== p.title.toLowerCase())
-      push('onpage.title_h1_mismatch', { title: p.title, h1: p.h1[0] });
+    // A brand/section suffix in the title ("Heading | Book A Sloth") is correct SEO,
+    // not a mismatch — flag only when neither string contains the other (they're
+    // about genuinely different things).
+    if (p.title && p.h1 && p.h1.length === 1) {
+      const t = p.title.toLowerCase(), h = p.h1[0].toLowerCase();
+      if (!t.includes(h) && !h.includes(t)) push('onpage.title_h1_mismatch', { title: p.title, h1: p.h1[0] });
+    }
   }
   return out;
 }
