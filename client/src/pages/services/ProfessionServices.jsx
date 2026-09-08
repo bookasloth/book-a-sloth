@@ -54,7 +54,7 @@ export default function ProfessionServices() {
   return (
     <div className="app-container py-12">
       <Seo
-        title={`${prof.label} Services — Book Online | Book A Sloth`}
+        title={`Book a ${prof.label} online | Book A Sloth`}
         description={`Browse ${services.length} bookable ${prof.label.toLowerCase()} services — ${services.slice(0, 3).map((s) => s.name).join(', ')} and more. Compare hosts and book online.`}
         canonical={canonical}
         jsonLd={jsonLd}
