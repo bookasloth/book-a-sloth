@@ -2,9 +2,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Seo from '../../components/common/Seo';
-import { SITE_URL } from '../../utils/seo';
+import { SITE_URL, faqJsonLd } from '../../utils/seo';
 import ServiceCategoryCard from '../../components/services/ServiceCategoryCard';
 import { getProfessionServices } from '../../services/api';
+import { professionSeo, cardBlurb } from './professionSeoContent';
 
 export default function ProfessionServices() {
   const { profession } = useParams();
@@ -28,6 +29,7 @@ export default function ProfessionServices() {
 
   const { profession: prof, services } = data;
   const canonical = `${SITE_URL}/services/${prof.slug}`;
+  const { intro, faqs, forLanding } = professionSeo(prof, services);
   const jsonLd = [
     {
       '@context': 'https://schema.org', '@type': 'ItemList',
@@ -46,6 +48,7 @@ export default function ProfessionServices() {
         { '@type': 'ListItem', position: 2, name: prof.label, item: canonical },
       ],
     },
+    faqJsonLd({ faqs }),
   ];
 
   return (
@@ -60,17 +63,55 @@ export default function ProfessionServices() {
         <Link to="/services" className="hover:underline">Services</Link> / {prof.label}
       </nav>
       <h1 className="font-heading text-[2.1rem] font-extrabold leading-[1.12] tracking-tight text-[#1E1E1E] xl:text-[2.7rem]">
-        {prof.label} services you can book today
+        Book a {prof.label} online
       </h1>
-      <p className="mt-3 max-w-2xl text-[#64748b]">
-        Every service below is offered by verified {prof.label.toLowerCase()} hosts on Book A Sloth.
-        Pick one to see professionals, prices and reviews.
-      </p>
-      <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {services.map((s) => (
-          <ServiceCategoryCard key={s.slug} service={s} profession={prof.slug} />
+      <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[#475569]">{intro}</p>
+
+      <h2 className="mt-12 font-heading text-xl font-bold text-[#1E1E1E]">
+        {prof.label} services you can book today
+      </h2>
+      <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((s, i) => (
+          <ServiceCategoryCard
+            key={s.slug}
+            service={{ ...s, description: cardBlurb(s.name, prof.label, i) }}
+            profession={prof.slug}
+          />
         ))}
       </div>
+
+      {faqs.length > 0 && (
+        <section className="mt-14 max-w-2xl">
+          <h2 className="font-heading text-xl font-bold text-[#1E1E1E]">
+            {prof.label} bookings — frequently asked questions
+          </h2>
+          <dl className="mt-6 space-y-6">
+            {faqs.map((f) => (
+              <div key={f.q}>
+                <dt className="font-semibold text-[#1E1E1E]">{f.q}</dt>
+                <dd className="mt-1 text-[15px] leading-relaxed text-[#475569]">{f.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      <section className="mt-14 border-t-2 border-[#1E1E1E]/10 pt-8">
+        <h2 className="font-heading text-lg font-bold text-[#1E1E1E]">Keep exploring</h2>
+        <div className="mt-4 flex flex-wrap gap-3 text-sm">
+          <Link to="/services" className="rounded-full border-2 border-[#1E1E1E] px-4 py-1.5 font-semibold hover:bg-[#1E1E1E] hover:text-white">
+            All professions
+          </Link>
+          <Link to="/explore" className="rounded-full border-2 border-[#1E1E1E] px-4 py-1.5 font-semibold hover:bg-[#1E1E1E] hover:text-white">
+            Explore all services
+          </Link>
+          {forLanding && (
+            <Link to={`/for/${forLanding}`} className="rounded-full border-2 border-[#1E1E1E] px-4 py-1.5 font-semibold hover:bg-[#1E1E1E] hover:text-white">
+              Why {prof.label.toLowerCase()}s choose Book A Sloth
+            </Link>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
