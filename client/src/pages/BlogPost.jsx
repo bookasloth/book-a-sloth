@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams, Navigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { themeFor, AUTHOR_URL } from '../data/blogPosts';
 import { getBlogBySlug } from '../services/api';
+import ErrorPage from './ErrorPage';
 import Seo from '../components/common/Seo';
 import { SITE_URL, articleJsonLd, breadcrumbJsonLd, faqJsonLd } from '../utils/seo';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
@@ -247,7 +248,11 @@ const BlogPost = () => {
     return () => { alive = false; };
   }, [slug]);
 
-  if (status === 'notfound') return <Navigate to="/blog" replace />;
+  // Branded 404 (noindex/nofollow via ErrorLayout), NOT a redirect to /blog: a
+  // dead post URL redirecting to the index is Google's soft-404 pattern AND made
+  // every prerendered post bake the index's canonical (dropping all posts from
+  // search). Matches HostProfile/ProfessionLanding.
+  if (status === 'notfound') return <ErrorPage code={404} />;
   if (status === 'loading' || !post) {
     return (
       <div className="blog-page grid min-h-[60vh] place-items-center" style={{ backgroundColor: BODY_BG }}>

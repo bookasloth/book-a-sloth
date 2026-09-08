@@ -316,6 +316,14 @@ async function prerender() {
   // Dedup: professions sub-sitemap also carries the /services root already in PRERENDER_ROUTES.
   const routes = [...new Set([...PRERENDER_ROUTES, ...(await blogRoutes()), ...(await hostServiceRoutes())])];
 
+  // The app's absolute API base (…/api). Prerender runs on localhost:4173, which
+  // the API's CORS allowlist rejects, so every in-browser fetch (getBlogBySlug,
+  // getProfessionServices) is blocked → the page bakes its notfound/error fallback
+  // (blog posts redirected to /blog, poisoning the canonical of all 8 posts). We
+  // proxy those calls through node (no CORS) below so real content renders.
+  const API_BASE = (loadEnv(process.env.NODE_ENV || 'production', join(__dirname, '..'), '').VITE_API_URL
+    || process.env.VITE_API_URL || '').replace(/\/+$/, '');
+
   const server = createStaticServer();
   await new Promise((resolve) => server.listen(PORT, resolve));
   console.log(`[prerender] Static server on ${ORIGIN}`);
@@ -330,13 +338,29 @@ async function prerender() {
     try {
       // Block analytics/tracking requests — avoids phantom pageviews and speeds up render
       await page.setRequestInterception(true);
-      page.on('request', (req) => {
+      page.on('request', async (req) => {
         const url = req.url();
         if (url.includes('posthog') || url.includes('clarity') || url.includes('google-analytics') || url.includes('facebook')) {
-          req.abort();
-        } else {
-          req.continue();
+          return req.abort();
         }
+        // Proxy the app's API through node (no CORS) so data-driven pages render
+        // real content instead of their CORS-blocked notfound fallback. GET-only:
+        // prerendered pages never POST. ponytail: on any proxy error, fall back to
+        // the browser's own (blocked) request — no worse than before this fix.
+        if (API_BASE && url.startsWith(API_BASE) && req.method() === 'GET') {
+          try {
+            const r = await fetch(url, { headers: { Accept: 'application/json' } });
+            const body = Buffer.from(await r.arrayBuffer());
+            return req.respond({
+              status: r.status,
+              headers: { 'content-type': r.headers.get('content-type') || 'application/json', 'access-control-allow-origin': '*' },
+              body,
+            });
+          } catch {
+            return req.continue();
+          }
+        }
+        return req.continue();
       });
 
       await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle0', timeout: navTimeout });
