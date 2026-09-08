@@ -98,7 +98,16 @@ const postMuteIssue = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── GET /admin/seo/gsc ─────────────────────────────────────────
+const getGsc = async (req, res) => {
+  try {
+    const gsc = await svc.listGscUrls(req.query);
+    const configured = require('../services/seo/gscClient').isConfigured();
+    res.json({ gsc, configured });
+  } catch (e) { safeError(res, e); }
+};
+
 module.exports = {
   getOverview, getIssues, getIssue, getPages, getPage,
-  getScoreHistory, postCrawl, getCrawl, postMuteIssue,
+  getScoreHistory, postCrawl, getCrawl, postMuteIssue, getGsc,
 };

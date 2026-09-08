@@ -1,6 +1,6 @@
 // client/src/pages/admin/__tests__/AdminSeo.test.jsx
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import AdminSeo from '../AdminSeo';
 
@@ -16,6 +16,9 @@ vi.mock('../../../services/api', () => ({
   adminSeoCrawlStatus: vi.fn(() => Promise.resolve({ data: { crawl: { status: 'done' } } })),
   adminSeoMuteIssue: vi.fn(() => Promise.resolve({ data: {} })),
   adminSeoScoreHistory: vi.fn(() => Promise.resolve({ data: { snapshots: [] } })),
+  adminSeoGsc: vi.fn(() => Promise.resolve({ data: { gsc: [
+    { url: 'https://bookasloth.com/x', coverage_state: 'Submitted and indexed', impressions: 42, clicks: 3, position: 5.2 },
+  ], configured: true } })),
 }));
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }));
 
@@ -24,5 +27,13 @@ describe('AdminSeo', () => {
     render(<MemoryRouter><AdminSeo /></MemoryRouter>);
     await waitFor(() => expect(screen.getByText('82')).toBeTruthy());
     expect(screen.getByText(/Overall/i)).toBeTruthy();
+  });
+
+  it('renders GSC data in the Search Console tab', async () => {
+    render(<MemoryRouter><AdminSeo /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByText('82')).toBeTruthy());
+    fireEvent.click(screen.getByText('Search Console'));
+    await waitFor(() => expect(screen.getByText('42')).toBeTruthy());
+    expect(screen.getByText('Submitted and indexed')).toBeTruthy();
   });
 });
