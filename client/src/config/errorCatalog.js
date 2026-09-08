@@ -128,7 +128,7 @@ export const ERROR_CATALOG = Object.freeze({
   },
   503: {
     title: "We'll be right back",
-    message: 'We’re doing a little maintenance. Hang tight — this won’t take long.',
+    message: 'We’re doing a little maintenance. Hang tight, this won’t take long.',
     art: 'maintenance',
     cta: { label: 'Refresh', action: ACTIONS.RELOAD },
   },
