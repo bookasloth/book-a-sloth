@@ -15,7 +15,7 @@ const STATUS_TONE = {
 };
 // 'clearing' is a read-only view of funds not yet in the payout queue (maturing
 // or below the withdrawal minimum) — it is not a payout_requests status.
-const TABS = ['pending', 'approved', 'paid', 'rejected', 'all', 'clearing'];
+const TABS = ['all', 'pending', 'approved', 'paid', 'rejected', 'clearing'];
 
 const Modal = ({ title, label, placeholder, confirmText, onClose, onConfirm }) => {
   const [val, setVal] = useState('');

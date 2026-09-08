@@ -15,6 +15,7 @@ router.get('/overview', requireAdmin('gst.view'), c.getOverview);
 router.get('/transactions', requireAdmin('gst.view'), c.getTransactions);
 router.get('/invoices', requireAdmin('gst.view'), c.listInvoices);
 router.get('/invoices/:id', requireAdmin('gst.view'), c.getInvoiceDetail);
+router.get('/invoices/:id/download', requireAdmin('gst.view'), c.downloadInvoice);
 
 // Action center
 router.get('/issues', requireAdmin('gst.view'), c.getIssues);

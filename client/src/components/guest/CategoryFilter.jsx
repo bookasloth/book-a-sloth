@@ -27,7 +27,7 @@ export default function CategoryFilter({ categories = [], selected = '', onChang
               // Selection reads as fill vs outline rather than shadow depth —
               // same pill language as /blog. Only used by Explore.
               className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5
-                          text-[13px] font-semibold transition-colors duration-150
+                          text-[13px] font-semibold leading-none transition-colors duration-150
                           ${active
                             ? 'bg-ink text-white'
                             : 'border border-black/10 bg-white text-muted hover:bg-black/[0.04] hover:text-ink'

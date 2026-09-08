@@ -4,8 +4,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { PageHeader, Card, Badge, Btn, Skeleton } from '../../components/admin/ui';
-import { adminGstInvoices, adminGstInvoice } from '../../services/api';
-import { inr, num, PeriodFilter, defaultPeriod, periodParams, SOURCE_LABEL } from './gstShared';
+import { adminGstInvoices, adminGstInvoice, adminGstInvoiceDownload } from '../../services/api';
+import { inr, num, PeriodFilter, defaultPeriod, periodParams, SOURCE_LABEL, downloadBlob } from './gstShared';
 
 const LIMIT = 50;
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—');
@@ -129,6 +129,19 @@ export default function AdminGstInvoices() {
 
 function InvoiceDetailModal({ detail, onClose }) {
   const inv = detail.invoice;
+  const [downloading, setDownloading] = useState(false);
+  const download = async () => {
+    if (!inv) return;
+    setDownloading(true);
+    try {
+      const res = await adminGstInvoiceDownload(inv.id);
+      downloadBlob(res, `${inv.invoice_number || 'invoice'}.html`);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to download invoice');
+    } finally {
+      setDownloading(false);
+    }
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="adm-card rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
@@ -143,7 +156,10 @@ function InvoiceDetailModal({ detail, onClose }) {
                 <div className="text-lg font-semibold">{inv.invoice_number}</div>
                 <div className="text-xs adm-t3">{fmtDate(inv.issued_at)} · <span className="capitalize">{SOURCE_LABEL[inv.source_type] || inv.source_type}</span> · {detail.ratePct}% GST</div>
               </div>
-              <button onClick={onClose} className="adm-t3 text-xl leading-none px-2" aria-label="Close">×</button>
+              <div className="flex items-center gap-2">
+                <Btn variant="outline" size="sm" onClick={download} disabled={downloading}>{downloading ? 'Downloading…' : 'Download'}</Btn>
+                <button onClick={onClose} className="adm-t3 text-xl leading-none px-2" aria-label="Close">×</button>
+              </div>
             </div>
 
             <div className="text-[11px] uppercase tracking-wide adm-t3 mb-1">Buyer</div>
