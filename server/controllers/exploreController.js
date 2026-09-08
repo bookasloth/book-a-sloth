@@ -8,6 +8,7 @@ const { supabase, supabaseAdmin } = require('../config/supabase');
 const responseCache = require('../services/responseCache');
 const { setPublicCache } = require('../utils/httpCache');
 const { sanitizeLikeTerm } = require('../utils/searchSanitize');
+const { parseSearchQuery } = require('../services/ai/parseSearchQuery');
 
 // Read-through cache TTL for the public listing (matches host/service pages).
 const EXPLORE_CACHE_MS = 120 * 1000;
@@ -18,9 +19,12 @@ const DEFAULT_LIMIT = 12;
 const now = () => new Date().toISOString();
 
 // Filter-scoped cache key — deliberately page-INDEPENDENT: we cache the full ranked
-// list (≤96) once per (category, service, q) so all 8 pages share one DB computation
-// and pagination is a pure in-memory slice. (Improves on the old per-page key.)
-const rankKey = (category, service, q) => `explore:v2:${category}|${service}|${q}`;
+// list (≤96) once per (category, service, parsed query) so all 8 pages share one DB
+// computation and pagination is a pure in-memory slice. Keyed on the PARSED query
+// (text|location|mode) so "Mock Interview Offline Nagpur" and a later identical
+// search share a cache line. (Improves on the old per-page key.)
+const rankKey = (category, service, p) =>
+  `explore:v3:${category}|${service}|${p.text}|${p.location}|${p.mode}`;
 
 // Search relevance multiplier. FTS/tsvector + trigram typo-fallback are DEFERRED
 // (pointless over 35 rows — see PROGRESS.md tripwires); at this scale substring
@@ -90,9 +94,9 @@ function logSearchEvent(req, { q, filters, page, results }) {
   } catch { /* best-effort */ }
 }
 
-// One DB read → rank in memory. Reads precomputed service_scores.effective_score
-// (quality × penalties, baked at compute time); request time never scores.
-async function fetchRanked(category, service, q) {
+// Build the base candidate query (all the always-on visibility + category/service
+// filters). Split out so the text-relax fallback below can rebuild it cleanly.
+function baseQuery(category, service) {
   let sel = supabaseAdmin
     .from('services')
     .select(`id, slug, title, description, short_description, meeting_mode, price, currency, category, thumbnail_url, rating, total_reviews,
@@ -105,19 +109,55 @@ async function fetchRanked(category, service, q) {
     .not('profiles.username', 'is', null);
   if (category) sel = sel.eq('profiles.primary_category', category);
   if (service)  sel = sel.eq('category', service);
-  if (q)        sel = sel.or(`title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%`);
-  sel = sel.limit(300); // candidate ceiling before ranking; 96 kept after sort
+  return sel;
+}
 
-  const { data, error } = await sel;
-  if (error) throw error; // thrown → not cached; outer catch returns 500
-
+// Rank the rows for a given text term (substring relevance tiers). Empty text =>
+// every row passes (mult 1) so location/mode filters alone can drive results.
+function rankRows(data, text) {
   return (data || [])
-    .map((r) => ({ card: toCard(r), mult: relevanceMult(r, q), eff: scoreOf(r)?.effective_score || 0 }))
+    .map((r) => ({ card: toCard(r), mult: relevanceMult(r, text), eff: scoreOf(r)?.effective_score || 0 }))
     .filter((x) => x.mult > 0)
     .map((x) => ({ ...x, final: x.mult * x.eff }))
     .sort((a, b) => b.final - a.final || b.eff - a.eff || (b.card.reviewCount - a.card.reviewCount))
     .slice(0, MAX_RESULTS)
     .map((x) => x.card);
+}
+
+// One DB read → rank in memory. Reads precomputed service_scores.effective_score
+// (quality × penalties, baked at compute time); request time never scores.
+// `p` is the parsed query { text, location, mode }: text drives ilike + relevance,
+// location filters the host's free-text city (ilike, so "Nagpur" matches
+// "Nagpur, Maharashtra"), mode filters meeting_mode (hybrid => no filter, since
+// no service is stored hybrid).
+async function fetchRanked(category, service, p) {
+  const text = p.text || '';
+  const applyFilters = (sel) => {
+    if (p.location) sel = sel.ilike('profiles.location', `%${p.location}%`);
+    if (p.mode === 'online' || p.mode === 'offline') sel = sel.eq('meeting_mode', p.mode);
+    return sel;
+  };
+
+  let sel = applyFilters(baseQuery(category, service));
+  if (text) sel = sel.or(`title.ilike.%${text}%,description.ilike.%${text}%,category.ilike.%${text}%`);
+  sel = sel.limit(300); // candidate ceiling before ranking; 96 kept after sort
+
+  const { data, error } = await sel;
+  if (error) throw error; // thrown → not cached; outer catch returns 500
+
+  let ranked = rankRows(data, text);
+
+  // Prioritise exact/topic matches, but never dead-end: if a topic + a
+  // location/mode found nothing (e.g. "Resume Review in Nagpur" with no resume
+  // service there), relax the topic and show the closest relevant — services in
+  // that location/mode — rather than an empty page. (Acceptance criteria.)
+  if (!ranked.length && text && (p.location || p.mode)) {
+    const { data: relaxed, error: relaxErr } = await applyFilters(baseQuery(category, service)).limit(300);
+    if (relaxErr) throw relaxErr;
+    ranked = rankRows(relaxed, '');
+  }
+
+  return ranked;
 }
 
 const parseControls = (req) => {
@@ -150,16 +190,27 @@ async function listServices(req, res) {
       return res.status(400).json({ message: 'service filter requires a category (profession)' });
     }
 
+    // Natural-language parse: peel a city + delivery mode off the topic terms
+    // ("Mock Interview Offline Nagpur" → text/location/mode). Fails soft to the
+    // raw text, so search degrades to the old title/desc/category match if the
+    // model is unavailable. Sanitize each part for the ilike/or() builders.
+    const parsedRaw = await parseSearchQuery(q);
+    const parsed = {
+      text: sanitizeLikeTerm(parsedRaw.text || ''),
+      location: sanitizeLikeTerm(parsedRaw.location || ''),
+      mode: parsedRaw.mode || '',
+    };
+
     // Read-through cache (120s, Redis L1, fail-open) of the full ranked list.
     const ranked = await responseCache.getOrSet(
-      rankKey(category, service, q), EXPLORE_CACHE_MS,
-      () => fetchRanked(category, service, q),
+      rankKey(category, service, parsed), EXPLORE_CACHE_MS,
+      () => fetchRanked(category, service, parsed),
     );
 
     const { total, totalPages, start, items } = paginate(ranked, page, limit);
 
     logSearchEvent(req, {
-      q, filters: { category, service }, page,
+      q, filters: { category, service, ...parsed }, page,
       results: items.map((c, i) => ({ service_id: c.id, rank: start + i + 1, score: c.score })),
     });
 
@@ -167,7 +218,8 @@ async function listServices(req, res) {
     return res.json({
       services: items,
       meta: { page, limit, total, totalPages, hasMore: page < totalPages },
-      filters: { category, service, q },
+      // `parsed` lets the client show what it understood ("Showing offline in Nagpur").
+      filters: { category, service, q, parsed },
     });
   } catch (err) {
     console.error('[explore.listServices]', err);
@@ -180,7 +232,10 @@ async function listServices(req, res) {
 async function serveStaleOrEmpty(req, res) {
   try {
     const { category, service, q, page, limit } = parseControls(req);
-    const ranked = await responseCache.peek(rankKey(category, service, q));
+    // Rate-limited path: DON'T spend an LLM parse here. Peek the plain-text key
+    // (matches non-NL searches); an NL query misses and falls to soft-empty,
+    // which is the intended fail-soft anyway.
+    const ranked = await responseCache.peek(rankKey(category, service, { text: q, location: '', mode: '' }));
     if (ranked) {
       const { total, totalPages, items } = paginate(ranked, page, limit);
       setPublicCache(res, 120);
