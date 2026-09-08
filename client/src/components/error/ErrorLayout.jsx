@@ -1,14 +1,14 @@
 // ErrorLayout — the single visual shell every branded error / offline page uses.
 //
 // No header, no footer (it calls useHideChrome to drop the global chrome), one
-// centred card, one primary CTA, calm fade-in, keyboard accessible. SEO is
-// locked to noindex/nofollow with no canonical. The page-specific bits (eyebrow,
-// title, copy, art, CTA) come in as props from the catalog via ErrorPage, so
-// adding a new error never touches this file.
+// centred column, one primary CTA, calm fade-in, keyboard accessible. SEO is
+// locked to noindex/nofollow with no canonical. The page-specific bits (title,
+// copy, CTA) come in as props from the catalog via ErrorPage, so adding a new
+// error never touches this file.
 //
-// Colour: error pages are ALWAYS white (no dark-mode variant) — the sloth
-// illustrations have a white background, so a dark card would frame them in an
-// ugly white box. Forced light regardless of OS theme.
+// Colour: error pages are ALWAYS light (no dark-mode variant), on a #F1F2F2
+// ground with no card box — the email footer logo and copy sit directly on the
+// page. Forced light regardless of OS theme.
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
@@ -42,30 +42,17 @@ export default function ErrorLayout({
   };
 
   return (
-    <main className="bas-error min-h-screen flex items-center justify-center px-5 py-12 bg-white text-[#1a1a1a]">
+    <main className="bas-error min-h-screen w-full flex items-center justify-center px-5 py-12 bg-[#F1F2F2] text-[#1a1a1a]">
       {/* Error pages must never be indexed and carry no canonical. */}
       <Seo title={seoTitle} robots="noindex, nofollow, noarchive" />
 
-      <div className="bas-error__card w-full max-w-md text-center rounded-md bg-white border border-black/5 shadow-[0_12px_44px_-16px_rgba(20,20,20,0.25)] px-7 py-10 sm:px-10 sm:py-12">
-        {/* Brand mark — quiet, not a nav. */}
-        <a
-          href="/"
-          aria-label="Book a Sloth — home"
-          className="inline-flex items-center gap-2 mb-7 text-[#1a1a1a]"
-        >
-          <img src="/favicon.svg" alt="" width="28" height="28" className="h-7 w-7" />
-          <span className="font-heading font-semibold text-[15px] tracking-tight">Book a Sloth</span>
-        </a>
-
-        <div className="flex justify-center mb-5 text-[#1a1a1a]">
+      {/* No card box — content sits directly on the page ground. */}
+      <div className="bas-error__card w-full max-w-3xl text-center px-7 py-10 sm:px-10 sm:py-12">
+        {/* Sloth art — random PNG variant on 404/410, line-art elsewhere. No
+            wordmark beside it. */}
+        <div className="flex justify-center mb-6 text-[#1a1a1a]">
           <ErrorIllustration art={art} image={image} />
         </div>
-
-        {eyebrow && (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fe5100] mb-3">
-            {eyebrow}
-          </p>
-        )}
 
         {/* Explicit colour: a global `h1 { color: var(--text) }` (base-fb.css) is
             not theme-aware and would force the title dark-on-dark. */}
@@ -73,7 +60,7 @@ export default function ErrorLayout({
           {title}
         </h1>
 
-        <p className="text-[15px] leading-relaxed text-gray-500 mb-8 max-w-sm mx-auto">
+        <p className="text-[15px] leading-relaxed text-gray-500 mb-8 max-w-xl mx-auto">
           {message}
         </p>
 
@@ -92,12 +79,12 @@ export default function ErrorLayout({
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search services by skill or topic…"
                 aria-label="Search Book a Sloth"
-                className="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-[15px] text-[#1a1a1a] outline-none placeholder:text-gray-400"
+                className="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-[15px] text-[#1a1a1a] outline-none focus:outline-none focus:ring-0 focus:shadow-none focus:border-transparent placeholder:text-gray-400"
               />
               <button
                 type="submit"
                 aria-label="Search"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fe5100] text-white transition hover:bg-[#d94400] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fe5100] focus-visible:ring-offset-2"
+                className="flex h-11 w-11 min-h-0 shrink-0 aspect-square items-center justify-center rounded-full bg-[#fe5100] text-white transition hover:bg-[#d94400] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fe5100] focus-visible:ring-offset-2"
               >
                 <Search size={16} />
               </button>

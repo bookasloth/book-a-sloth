@@ -60,7 +60,7 @@ export const ERROR_CATALOG = Object.freeze({
   },
   404: {
     title: 'This page pulled a vanishing act',
-    message: "We searched high and low — magnifying glass and all — but this page isn't here. It may have moved, or it never existed.",
+    message: "We looked everywhere, magnifying glass and all, but this page isn't here. It may have moved, or it never existed.",
     art: 'lost',
     image: true,
     cta: { label: 'Go Home', action: ACTIONS.HOME },
@@ -128,7 +128,7 @@ export const ERROR_CATALOG = Object.freeze({
   },
   503: {
     title: "We'll be right back",
-    message: 'We’re doing a little maintenance. Hang tight — this won’t take long.',
+    message: 'We’re doing a little maintenance. Hang tight, this won’t take long.',
     art: 'maintenance',
     cta: { label: 'Refresh', action: ACTIONS.RELOAD },
   },
