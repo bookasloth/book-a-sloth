@@ -10,6 +10,8 @@ const { safeError } = require('../utils/httpError');
 const { audit } = require('../services/auditService');
 const crawler = require('../services/seo/seoCrawler');
 const svc = require('../services/seo/seoAuditService');
+const fixSvc = require('../services/seo/seoFixService');
+const fixEngine = require('../services/seo/fixes');
 
 // ── GET /admin/seo/overview ───────────────────────────────────
 const getOverview = async (req, res) => {
@@ -93,6 +95,51 @@ const getScoreHistory = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── GET /admin/seo/fixes ──────────────────────────────────────
+// The fix queue (Phase 2). Proposals + a summary by level/status.
+const getFixes = async (req, res) => {
+  try {
+    const { crawlId, status, approvalLevel, limit } = req.query || {};
+    const [fixes, summary] = await Promise.all([
+      fixSvc.listFixes({ crawlId, status, approvalLevel, limit }),
+      fixSvc.fixSummary({ crawlId }),
+    ]);
+    res.json({ fixes, summary, dryRun: fixEngine.DRY_RUN });
+  } catch (e) { safeError(res, e); }
+};
+
+// ── GET /admin/seo/fixes/:id ──────────────────────────────────
+const getFix = async (req, res) => {
+  try {
+    const fix = await fixSvc.getFix(req.params.id);
+    if (!fix) return res.status(404).json({ message: 'Fix not found' });
+    res.json({ fix });
+  } catch (e) { safeError(res, e); }
+};
+
+// ── POST /admin/seo/fixes/generate ────────────────────────────
+// Regenerate proposals from the latest crawl. Writes seo_fixes rows only (no live
+// change). No-ops gracefully if the v3.148 table isn't applied yet.
+const postGenerateFixes = async (req, res) => {
+  try {
+    const result = await fixEngine.generateProposals({ crawlId: req.body?.crawlId });
+    await audit(req, { action: 'SEO_FIXES_GENERATED', resource_type: 'seo_crawl', resource_id: result.crawlId, after: { proposed: result.proposed, byLevel: result.byLevel } });
+    res.json(result);
+  } catch (e) { safeError(res, e); }
+};
+
+// ── POST /admin/seo/fixes/:id/decide ──────────────────────────
+// body: { decision: 'approve' | 'reject' }. Phase 2 staging only — approve queues
+// the fix for Phase 3 apply; it does NOT publish anything.
+const postDecideFix = async (req, res) => {
+  try {
+    const decision = req.body?.decision === 'approve' ? 'approve' : 'reject';
+    const fix = await fixSvc.decideFix(req.params.id, { decision, adminId: req.admin?.id });
+    await audit(req, { action: 'SEO_FIX_DECIDED', resource_type: 'seo_fix', resource_id: req.params.id, after: { decision, status: fix.status } });
+    res.json({ ok: true, fix });
+  } catch (e) { safeError(res, e); }
+};
+
 // ── POST /admin/seo/crawl ─────────────────────────────────────
 // Kicks off a crawl in the background (seoCrawler.start resolves as soon as
 // the crawl row exists — the crawl itself keeps running after this returns).
@@ -151,5 +198,6 @@ const postGscSync = async (req, res) => {
 module.exports = {
   getOverview, getIssues, getIssue, getPages, getPage,
   getCategories, getReports, getChanges,
+  getFixes, getFix, postGenerateFixes, postDecideFix,
   getScoreHistory, postCrawl, getCrawl, postMuteIssue, getGsc, postGscSync,
 };
