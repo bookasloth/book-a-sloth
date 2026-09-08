@@ -18,8 +18,8 @@ function check(p, ctx) {
     if (target && (target.httpStatus == null || target.httpStatus >= 400)) push('links.broken_internal', { href });
   }
 
-  // orphan-ness is undeterminable for host/service pages — their inbound links are SPA-rendered (not in crawled HTML); skip to avoid false positives.
-  if (p.inSitemap && !ctx.internalLinkTargets.has(normalize(p.url)) && !['host', 'service'].includes(p.pageType)) push('links.orphan_page', {});
+  // orphan-ness is undeterminable for bodiless pages (meta-shell only, no crawled inbound links); skip to avoid false positives.
+  if (p.inSitemap && !ctx.internalLinkTargets.has(normalize(p.url)) && p.bodyCrawled !== false) push('links.orphan_page', {});
   return out;
 }
 module.exports = { check };

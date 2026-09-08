@@ -25,4 +25,13 @@ describe('technical + indexability rules', () => {
     const ctx = buildContext([], new Set(['https://bookasloth.com/jane']));
     expect(idx.check(base({ httpStatus: 404, inSitemap: true }), ctx).map((i) => i.ruleKey)).toContain('indexability.error_url_in_sitemap');
   });
+  test('soft_404 does NOT fire for a bodiless (bodyCrawled:false) page with wordCount 0', () => {
+    const ctx = buildContext([], new Set());
+    expect(idx.check(base({ wordCount: 0, bodyCrawled: false }), ctx).map((i) => i.ruleKey)).not.toContain('indexability.soft_404');
+  });
+  test('soft_404 STILL fires for a crawled (bodyCrawled:true or unset) 200 page with wordCount 0', () => {
+    const ctx = buildContext([], new Set());
+    expect(idx.check(base({ wordCount: 0, bodyCrawled: true }), ctx).map((i) => i.ruleKey)).toContain('indexability.soft_404');
+    expect(idx.check(base({ wordCount: 0 }), ctx).map((i) => i.ruleKey)).toContain('indexability.soft_404');
+  });
 });

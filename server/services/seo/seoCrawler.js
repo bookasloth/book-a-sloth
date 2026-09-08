@@ -54,7 +54,7 @@ async function crawlPrerendered(seed) {
       title: args.title || null, metaDescription: args.description || null, canonical: args.canonical || null,
       robots, h1: [], headings: [],
       links: { internal: [], external: [] }, images: [], jsonLd: args.jsonLd ? [args.jsonLd] : [],
-      wordCount: 0, viewport: 'width=device-width,initial-scale=1',
+      wordCount: 0, viewport: 'width=device-width,initial-scale=1', bodyCrawled: false,
       indexable: m.status === 200 && !(robots && robots.includes('noindex')), fetchError: null,
     };
   } catch (err) {
@@ -63,7 +63,7 @@ async function crawlPrerendered(seed) {
       httpStatus: null, finalUrl: seed.url, redirectChain: [], responseMs: Date.now() - started, contentType: null,
       title: null, metaDescription: null, canonical: null, robots: null, h1: [], headings: [],
       links: { internal: [], external: [] }, images: [], jsonLd: [],
-      wordCount: 0, viewport: null, indexable: false, fetchError: err.message || String(err),
+      wordCount: 0, viewport: null, bodyCrawled: false, indexable: false, fetchError: err.message || String(err),
     };
   }
 }
@@ -79,7 +79,7 @@ async function crawlOne(seed) {
     title: parsed.title || null, metaDescription: parsed.metaDescription || null, canonical: parsed.canonical || null,
     robots: parsed.robots || null, h1: parsed.h1 || [], headings: parsed.headings || [],
     links: parsed.links || { internal: [], external: [] }, images: parsed.images || [], jsonLd: parsed.jsonLd || [],
-    wordCount: parsed.wordCount || 0, viewport: parsed.viewport || null,
+    wordCount: parsed.wordCount || 0, viewport: parsed.viewport || null, bodyCrawled: true,
     indexable: r.status === 200 && noindex === false, fetchError: r.error,
   };
 }

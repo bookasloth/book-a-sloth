@@ -19,10 +19,12 @@ function check(p, ctx) {
     if (p.metaDescription.length < DESC_MIN || p.metaDescription.length > DESC_MAX) push('onpage.description_length', { length: p.metaDescription.length });
     if ((ctx.descCounts.get(p.metaDescription) || 0) > 1) push('onpage.duplicate_description', { count: ctx.descCounts.get(p.metaDescription) });
   }
-  if (!p.h1 || p.h1.length === 0) push('onpage.missing_h1', {});
-  else if (p.h1.length > 1) push('onpage.multiple_h1', { count: p.h1.length });
-  if (p.title && p.h1 && p.h1.length === 1 && p.h1[0].toLowerCase() !== p.title.toLowerCase())
-    push('onpage.title_h1_mismatch', { title: p.title, h1: p.h1[0] });
+  if (p.bodyCrawled !== false) {
+    if (!p.h1 || p.h1.length === 0) push('onpage.missing_h1', {});
+    else if (p.h1.length > 1) push('onpage.multiple_h1', { count: p.h1.length });
+    if (p.title && p.h1 && p.h1.length === 1 && p.h1[0].toLowerCase() !== p.title.toLowerCase())
+      push('onpage.title_h1_mismatch', { title: p.title, h1: p.h1[0] });
+  }
   return out;
 }
 module.exports = { check };
