@@ -7,6 +7,7 @@ const { prioritize } = require('./prioritize');
 const { score } = require('./healthScore');
 const persist = require('./seoPersist');
 const { runLocked } = require('../../utils/jobLock');
+const { supabaseAdmin } = require('../../config/supabase');
 
 const SITE_URL = (process.env.SITE_URL || 'https://bookasloth.com').replace(/\/$/, '');
 const CONCURRENCY = Number(process.env.SEO_CRAWL_CONCURRENCY) || 4;
@@ -84,6 +85,18 @@ async function crawlOne(seed) {
   };
 }
 
+// Fail-soft: missing table / no creds / not synced yet all resolve to an
+// empty map (rules/gsc.js then emits nothing) — never throws into the crawl.
+async function loadGscMap() {
+  try {
+    const { data, error } = await supabaseAdmin.from('seo_gsc_urls').select('*');
+    if (error || !data) return new Map();
+    return new Map(data.map((r) => [r.url, r]));
+  } catch {
+    return new Map();
+  }
+}
+
 async function pool(items, n, worker) {
   const results = []; let idx = 0;
   const runners = Array.from({ length: Math.min(n, items.length) }, async () => {
@@ -102,7 +115,8 @@ async function _execute(crawlId, seeds) {
   return runLocked('seo-crawl-exec', async () => {
     const sitemapUrls = new Set(seeds.map((s) => s.url));
     const pages = await pool(seeds, CONCURRENCY, crawlOne);
-    const ctx = buildContext(pages, sitemapUrls);
+    const gscByUrl = await loadGscMap();
+    const ctx = buildContext(pages, sitemapUrls, gscByUrl);
     let issues = [];
     for (const p of pages) issues.push(...runRules(p, ctx));
     issues.push(...runSiteRules(ctx));

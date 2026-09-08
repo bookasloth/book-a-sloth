@@ -54,4 +54,11 @@ describe('onpage rules', () => {
     expect(check(short, ctx).map((i) => i.ruleKey)).toContain('onpage.title_length');
     expect(check(long, ctx).map((i) => i.ruleKey)).toContain('onpage.title_length');
   });
+
+  // Back-compat: existing 2-arg callers (no GSC map) must still work.
+  test('buildContext without a 3rd arg still works and defaults gscByUrl to an empty Map', () => {
+    const ctx = buildContext([page()], new Set());
+    expect(ctx.gscByUrl).toBeInstanceOf(Map);
+    expect(ctx.gscByUrl.size).toBe(0);
+  });
 });

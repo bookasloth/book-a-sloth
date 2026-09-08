@@ -30,14 +30,23 @@ jest.mock('../../services/sitemapService', () => ({
   fetchProfessions: async () => [],
 }));
 jest.mock('../../utils/jobLock', () => ({ runLocked: jest.fn((name, fn) => fn()) }));
+jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
 
+const { supabaseAdmin } = require('../../config/supabase');
 const persist = require('../../services/seo/seoPersist');
 const { runLocked } = require('../../utils/jobLock');
 const { fetchUrl } = require('../../services/seo/seoFetch');
 const { resolveProfileMeta, resolveServiceMeta } = require('../../controllers/prerenderController');
 const { run, seedUrls } = require('../../services/seo/seoCrawler');
 
+const selectResolves = (result) => ({ select: jest.fn(() => Promise.resolve(result)) });
+
 describe('seoCrawler', () => {
+  beforeEach(() => {
+    // Default: no GSC data synced yet — loadGscMap resolves to an empty map.
+    supabaseAdmin.from.mockImplementation(() => selectResolves({ data: [], error: null }));
+  });
+
   test('seedUrls includes static, host, service, blog URLs', async () => {
     const urls = await seedUrls();
     const list = urls.map((u) => u.url);
@@ -143,5 +152,34 @@ describe('seoCrawler', () => {
     expect(hostPage.bodyCrawled).toBe(false);
     expect(servicePage.bodyCrawled).toBe(false);
     expect(blogPage.bodyCrawled).toBe(true);
+  });
+
+  // GSC integration (chunk 2): buildContext loads seo_gsc_urls → rules/gsc.js
+  // turns a coverage anomaly into an issue for that url.
+  test('a seo_gsc_urls row for a crawled url produces a gsc.* issue', async () => {
+    supabaseAdmin.from.mockImplementation((table) => {
+      if (table === 'seo_gsc_urls') {
+        return selectResolves({ data: [{ url: 'https://bookasloth.com/jane', coverage_state: 'Soft 404' }], error: null });
+      }
+      return selectResolves({ data: [], error: null });
+    });
+    await run({ trigger: 'manual' });
+    const calls = persist.saveResults.mock.calls;
+    const issues = calls[calls.length - 1][2];
+    const hostIssues = issues.filter((i) => i.affectedUrl === 'https://bookasloth.com/jane');
+    expect(hostIssues.map((i) => i.ruleKey)).toContain('gsc.soft_404');
+  });
+
+  // Fail-soft: loadGscMap must never crash the crawl (missing table / creds / query error).
+  test('a failing seo_gsc_urls query does not crash the crawl (fail-soft, no gsc issues)', async () => {
+    supabaseAdmin.from.mockImplementation((table) => {
+      if (table === 'seo_gsc_urls') throw new Error('relation "seo_gsc_urls" does not exist');
+      return selectResolves({ data: [], error: null });
+    });
+    const id = await run({ trigger: 'manual' });
+    expect(id).toBe('crawl1');
+    const calls = persist.saveResults.mock.calls;
+    const issues = calls[calls.length - 1][2];
+    expect(issues.some((i) => i.ruleKey.startsWith('gsc.'))).toBe(false);
   });
 });

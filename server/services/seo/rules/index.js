@@ -7,11 +7,12 @@ const links = require('./links');
 const images = require('./images');
 const structuredData = require('./structuredData');
 const sitemap = require('./sitemap');
-const GROUPS = [onpage, technical, indexability, links, images, structuredData, sitemap];
+const gsc = require('./gsc');
+const GROUPS = [onpage, technical, indexability, links, images, structuredData, sitemap, gsc];
 
 const SHOULD_INDEX_TYPES = new Set(['host', 'service', 'blog', 'static']);
 
-function buildContext(pages, sitemapUrls) {
+function buildContext(pages, sitemapUrls, gscByUrl = new Map()) {
   const titleCounts = new Map();
   const descCounts = new Map();
   const internalLinkTargets = new Set();
@@ -24,7 +25,7 @@ function buildContext(pages, sitemapUrls) {
     if (p.url === siteUrl || p.url === `${siteUrl}/`) homepageTitle = p.title;
   }
   return { pages, sitemapUrls: sitemapUrls || new Set(), titleCounts, descCounts,
-    internalLinkTargets, homepageTitle, SHOULD_INDEX_TYPES };
+    internalLinkTargets, homepageTitle, SHOULD_INDEX_TYPES, gscByUrl };
 }
 
 function decorate(raw) {
