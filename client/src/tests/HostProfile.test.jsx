@@ -54,7 +54,9 @@ describe('HostProfile — loading/error', () => {
     // A dead host slug must render the branded ErrorPage, which carries
     // <meta robots="noindex"> via ErrorLayout — otherwise the thin "Host not found"
     // HTML served at 200 gets flagged by Google as a soft 404.
-    await waitFor(() => expect(screen.getByText(/error 404/i)).toBeTruthy());
+    // #984 flat redesign dropped the "Error 404" eyebrow — assert the branded 404
+    // title instead (still proves ErrorPage rendered, not the thin 200 HTML).
+    await waitFor(() => expect(screen.getByText(/vanishing act/i)).toBeTruthy());
     expect(
       document.querySelector('meta[name="robots"]')?.getAttribute('content')
     ).toMatch(/noindex/i);
