@@ -36,6 +36,7 @@ const INFRA = [
 const FUTURE = [
   'docs', 'doc', 'blog', 'blogs', 'pricing', 'plans', 'plan', 'features', 'feature',
   'presentation', // full-screen product pitch deck — client /presentation route
+  'pitch-deck', // investor pitch deck — client /pitch-deck route (noindex, unlinked)
 
   'changelog', 'roadmap', 'security', 'legal', 'cookies', 'careers', 'jobs', 'press',
   'newsroom', 'contact', 'faq', 'guides', 'guide', 'tutorials', 'tutorial', 'resources',
