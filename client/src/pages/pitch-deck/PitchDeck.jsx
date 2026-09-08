@@ -25,10 +25,24 @@ import Seo from '../../components/common/Seo';
 // ── EDIT ME: founder details for the Team slide ──────────────────────────────
 const FOUNDER = {
   name: 'Shubham Datarkar',
-  role: 'Founder & CEO',
-  line: 'Building Book A Sloth solo — product, code, and go-to-market.',
+  role: 'Founder & Engineer',
+  // ← EDIT these with your real background before sending to investors.
+  background: '[Your background — e.g. ex-<company>, <years> building <domain>, prior <win>]',
+  why: '[Why you built this — the personal reason you care that solo pros never chase payment]',
+  line: 'Designed, built, and shipped the entire Book A Sloth stack solo.',
   handle: 'bookasloth.com',
 };
+// What shipped solo — verifiable product surface (proof of execution velocity).
+const SHIPPED = [
+  'Booking + double-booking-safe calendar',
+  'Razorpay payments + UPI autopay',
+  'Automated split-payouts (Route)',
+  'GST invoicing + TDS/TCS',
+  'KYC / identity verification',
+  'WhatsApp + email notifications',
+  'Admin CRM + analytics',
+  'SEO host profiles',
+];
 
 // ── Tag palette (semantic colour-coding, consistent across every slide) ──────
 const TAGS = {
@@ -62,14 +76,17 @@ function Legend() {
 // ── Slide shell: full-viewport, snap target, in-view reveal ──────────────────
 const SLIDE_META = [
   ['cover', 'Cover'], ['problem', 'Problem'], ['why-now', 'Why now'],
-  ['solution', 'Solution'], ['how', 'How it works'], ['market', 'Market'],
-  ['model', 'Business model'], ['traction', 'Traction'], ['growth', 'Growth'],
-  ['unit', 'Unit economics'], ['competition', 'Competition'], ['moat', 'Moat'],
-  ['gtm', 'Go-to-market'], ['roadmap', 'Roadmap'], ['ask', 'The ask'],
-  ['team', 'Team'], ['close', 'Invest'],
+  ['solution', 'Solution'], ['how', 'How it works'], ['proof', 'Proof'],
+  ['market', 'Market'], ['model', 'Business model'], ['traction', 'Traction'],
+  ['growth', 'Growth'], ['unit', 'Unit economics'], ['competition', 'Competition'],
+  ['moat', 'Moat'], ['gtm', 'Go-to-market'], ['roadmap', 'Roadmap'],
+  ['ask', 'The ask'], ['use', 'Use of funds'], ['team', 'Team'], ['close', 'Invest'],
 ];
 
-function Slide({ id, n, label, children, className = '', dark = false }) {
+function Slide({ id, children, className = '', dark = false }) {
+  const idx = SLIDE_META.findIndex((m) => m[0] === id);
+  const num = idx > 0 ? idx + 1 : null; // cover (idx 0) prints no number
+  const label = idx >= 0 ? SLIDE_META[idx][1] : '';
   return (
     <section
       id={id}
@@ -80,10 +97,10 @@ function Slide({ id, n, label, children, className = '', dark = false }) {
         : { background: '#faf9f6', color: '#1a1a1a' }}
     >
       <div className="mx-auto w-full max-w-6xl">
-        {n != null && (
+        {num != null && (
           <div className="mb-5 flex items-center gap-3">
             <span className="font-heading text-xs font-extrabold tracking-[0.2em]" style={{ color: '#FE5100' }}>
-              {String(n).padStart(2, '0')}
+              {String(num).padStart(2, '0')}
             </span>
             <span className="h-px flex-1 max-w-[64px]" style={{ background: dark ? '#3a352f' : '#e6e1d8' }} />
             <span className="font-sans text-[11px] font-semibold uppercase tracking-widest opacity-50">{label}</span>
@@ -121,10 +138,10 @@ function Stat({ value, label, tag, accent = '#FE5100', sub }) {
 
 // ── Hand-rolled SVG charts ───────────────────────────────────────────────────
 
-// MRR progression (Apr→Sep), area + line. Last point ACTUAL, rest ESTIMATE.
+// MRR since launch (Jun→Sep 2026). Product created 2026-06-18, so the series
+// starts at launch — no pre-launch months. Last point ACTUAL, earlier ESTIMATE.
 const MRR = [
-  { m: 'Apr', v: 3 }, { m: 'May', v: 5 }, { m: 'Jun', v: 8 },
-  { m: 'Jul', v: 11 }, { m: 'Aug', v: 15 }, { m: 'Sep', v: 18 },
+  { m: 'Jun', v: 6 }, { m: 'Jul', v: 10 }, { m: 'Aug', v: 14 }, { m: 'Sep', v: 18 },
 ];
 function MrrChart() {
   const W = 640, H = 260, pad = 36;
@@ -163,11 +180,12 @@ function MrrChart() {
   );
 }
 
-// Conversion funnel: signups → activated → paying
+// Onboarding funnel: hosts onboarded → published a service → on a paid plan.
+// 78 onboarded is live DB; ~45 paid is founder-attested (incl. off-platform).
 const FUNNEL = [
-  { label: 'Hosts signed up', v: 140, tag: 'estimate' },
-  { label: 'Activated (published a service)', v: 90, tag: 'estimate' },
-  { label: 'Paying hosts', v: 45, tag: 'actual' },
+  { label: 'Hosts onboarded', v: 78, tag: 'actual' },
+  { label: 'Published a live service', v: 60, tag: 'estimate' },
+  { label: 'On a paid plan', v: 45, tag: 'actual' },
 ];
 function FunnelChart() {
   const max = FUNNEL[0].v;
@@ -188,7 +206,7 @@ function FunnelChart() {
             <div className="h-9 w-full rounded-[4px] border-2 border-ink bg-white overflow-hidden">
               <div className="h-full flex items-center justify-end pr-2 font-sans text-xs font-bold text-white"
                 style={{ width: `${Math.max(pct, 14)}%`, background: accent }}>
-                {i === FUNNEL.length - 1 ? '32% signup→paid' : ''}
+                {i === FUNNEL.length - 1 ? '~58% onboarded→paid' : ''}
               </div>
             </div>
           </div>
@@ -315,6 +333,7 @@ function BrandLogo({ brand }) {
 const COMP_COLS = ['UPI autopay + payouts', 'GST invoicing', 'Venues + people', 'WhatsApp-native'];
 const COMP_ROWS = [
   { name: 'Book A Sloth', img: '/sloth.png', color: '#FE5100', us: true, cells: [true, true, true, true] },
+  { name: 'Topmate', mono: 'T', color: '#5B4CE0', cells: [true, false, false, false] },
   { name: 'Calendly', icon: 'calendly', color: '#006BFF', cells: [false, false, false, false] },
   { name: 'Cal.com', icon: 'calcom', color: '#292929', cells: [false, false, false, false] },
   { name: 'Zoho Bookings', icon: 'zoho', color: '#E42527', cells: [false, true, false, false] },
@@ -473,7 +492,8 @@ export default function PitchDeck() {
             <Stat value="₹18k" label="MRR" tag="actual" sub="Sep 2026 run-rate" />
             <Stat value="₹20–30L" label="raising" accent="#2563eb" sub="angel / pre-seed" />
           </div>
-          <p className="mt-10 font-sans text-xs opacity-50">Confidential · not for distribution · {FOUNDER.handle}</p>
+          <p className="mt-6 font-sans text-sm opacity-70">Live since June 2026 · 78 hosts onboarded · 190-lead pipeline</p>
+          <p className="mt-6 font-sans text-xs opacity-50">Confidential · not for distribution · {FOUNDER.handle}</p>
           <div className="mt-2 font-sans text-xs opacity-40">↓ scroll or use arrow keys</div>
         </Slide>
 
@@ -501,6 +521,9 @@ export default function PitchDeck() {
           </div>
           <p className="mt-8 max-w-3xl font-sans text-lg opacity-75">
             The payment rails, the audience, and the buying behaviour are all live at the same time — for the first time.
+          </p>
+          <p className="mt-4 max-w-3xl rounded-[6px] border-l-4 border-[#FE5100] bg-white/5 px-4 py-2 font-sans text-sm italic opacity-80">
+            What we've learned from our first 78 hosts: [add your #1 proprietary insight — the non-obvious thing you now know about why they pay or churn].
           </p>
         </Slide>
 
@@ -536,6 +559,26 @@ export default function PitchDeck() {
             ))}
           </div>
           <p className="mt-10 font-sans text-sm opacity-60">Built on React + Node + Supabase + Razorpay. Live in production today.</p>
+        </Slide>
+
+        {/* PROOF — it's real and already in use */}
+        <Slide id="proof">
+          <div className="mb-3"><Legend /></div>
+          <h2 className="font-heading text-3xl font-extrabold sm:text-5xl">Real, and already in use.</h2>
+          <p className="mt-4 max-w-3xl font-sans text-lg text-ink/70">
+            Live in production since June 2026 — not a prototype. Hosts are onboarding, publishing services, and getting paid today.
+          </p>
+          <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Stat value="78" label="hosts onboarded" tag="actual" accent="#059669" sub="since Jun 2026" />
+            <Stat value="~45" label="on a paid plan" tag="actual" sub="paying hosts" />
+            <Stat value="190" label="leads in pipeline" tag="actual" accent="#2563eb" sub="129 in last 30 days" />
+            <Stat value="Live" label="payments · GST · payouts" tag="actual" accent="#f59e0b" sub="in production" />
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <Card title="[Host name] · [category]" body="[One line on what they use Book A Sloth for + a short real quote. Replace with a consented host story before sending.]" accent="#2563eb" />
+            <Card title="[Host name] · [category]" body="[Second real host story — ideally a different category, e.g. a turf/studio vs a coach — to show breadth.]" accent="#059669" />
+          </div>
+          <p className="mt-4 font-sans text-[11px] text-ink/40">Host counts and pipeline are live production data; paid-plan count includes founder-attested off-platform activations. Swap the placeholder cards for consented, named host stories.</p>
         </Slide>
 
         {/* 06 — MARKET */}
@@ -597,7 +640,7 @@ export default function PitchDeck() {
           <h2 className="font-heading text-3xl font-extrabold sm:text-5xl">Small base, steep slope.</h2>
           <div className="mt-8 grid gap-8 lg:grid-cols-2">
             <div>
-              <div className="mb-2 font-sans text-sm font-semibold text-ink/60">MRR, Apr → Sep 2026</div>
+              <div className="mb-2 font-sans text-sm font-semibold text-ink/60">MRR — first 4 months (Jun → Sep 2026)</div>
               <MrrChart />
               <div className="mt-1 flex items-center gap-2 font-sans text-xs text-ink/50">
                 <Tag k="estimate" /> trend to <Tag k="actual" /> current month
@@ -606,7 +649,7 @@ export default function PitchDeck() {
             <div className="grid grid-cols-2 gap-3 self-center">
               <Stat value="~45" label="paying hosts" tag="actual" accent="#059669" />
               <Stat value="₹18k" label="MRR" tag="actual" />
-              <Stat value="₹2.9L" label="GMV / mo" tag="estimate" accent="#f59e0b" sub="45 × ~8 bookings × ₹800" />
+              <Stat value="₹2.16L" label="ARR run-rate" tag="actual" accent="#7c3aed" sub="₹18k MRR × 12" />
               <Stat value="Live" label="payments · GST · payouts" tag="actual" accent="#2563eb" sub="in production" />
             </div>
           </div>
@@ -620,7 +663,7 @@ export default function PitchDeck() {
               <div className="rounded-[6px] border-[3px] border-white/15 bg-[#1c1a17] p-5"><FunnelChart /></div>
             </div>
             <div className="self-center space-y-4 font-sans">
-              <p className="text-lg opacity-80">~<span className="font-heading font-extrabold text-white">32%</span> of signups become paying hosts <Tag k="estimate" className="ml-1" /> — strong for self-serve SMB SaaS.</p>
+              <p className="text-lg opacity-80">~<span className="font-heading font-extrabold text-white">58%</span> of onboarded hosts are on a paid plan <Tag k="actual" className="ml-1" /> — strong for self-serve SMB SaaS.</p>
               <p className="text-lg opacity-80">Acquisition is <span className="font-semibold text-white">organic-led</span>: SEO host profiles + word-of-mouth referral, near-zero paid spend today.</p>
               <p className="text-lg opacity-80">That keeps blended CAC low — the raise is about <span style={{ color: '#FE5100' }}>pouring fuel on a funnel that already works.</span></p>
             </div>
@@ -648,14 +691,14 @@ export default function PitchDeck() {
           <div className="mt-8 rounded-[6px] border-[3px] border-white/15 bg-[#faf9f6] p-4 text-ink">
             <CompMatrix />
           </div>
-          <p className="mt-5 font-sans text-sm opacity-70">Global schedulers stop at the calendar. Practo is health-only. The real incumbent is manual WhatsApp — and it can't collect money or invoice.</p>
+          <p className="mt-5 font-sans text-sm opacity-70">Global schedulers (Calendly ~33%, Acuity ~21% of the category) stop at the calendar. Topmate nails creator 1:1 calls but not venues, GST or offline slots. Practo is health-only. The real incumbent is manual WhatsApp — which can't collect money or invoice.</p>
         </Slide>
 
         {/* 12 — MOAT */}
         <Slide id="moat" n={12} label="Competitive moat">
           <h2 className="font-heading text-3xl font-extrabold sm:text-5xl">The moat is India-shaped.</h2>
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
-            <Card title="Deep payment rails" body="UPI autopay mandates, Razorpay Route split-payouts, GST invoicing, TDS/TCS, KYC — months of compliance work a global tool won't localise soon." />
+            <Card title="Deep India payment rails" body="UPI autopay, Razorpay Route split-payouts, GST invoicing, TDS/TCS, KYC — months of compliance a global tool won't localise. Even India creator apps like Topmate stop at 1:1 calls." />
             <Card title="People + venues in one" body="Turfs and studios book by the hour; coaches book 1:1. We handle both — most tools do only calls." accent="#2563eb" />
             <Card title="WhatsApp-native" body="OTP login + AiSensy notifications ride India's real channel, not email nobody opens." accent="#059669" />
             <Card title="SEO host profiles" body="Every host is an indexed page that brings its own guests — compounding, owned distribution." accent="#f59e0b" />
@@ -678,6 +721,7 @@ export default function PitchDeck() {
             ))}
           </div>
           <p className="mt-8 font-sans text-base opacity-75">Channels: organic SEO (host profiles), referral, WhatsApp-led onboarding, targeted category outbound. Paid stays a lever, not a crutch.</p>
+          <p className="mt-3 font-sans text-base font-semibold" style={{ color: '#FE5100' }}>This round funds one gate: scale the paying base and prove the funnel repeats at ₹60k+ MRR.</p>
         </Slide>
 
         {/* 14 — ROADMAP */}
@@ -733,21 +777,32 @@ export default function PitchDeck() {
 
         {/* 17 — TEAM */}
         <Slide id="team" n={17} label="Team" dark>
-          <h2 className="font-heading text-3xl font-extrabold sm:text-5xl">Solo founder, full-stack execution.</h2>
-          <div className="mt-10 max-w-xl rounded-[6px] border-[3px] p-6" style={{ borderColor: '#FE5100', background: '#1c1a17' }}>
-            <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-[3px] border-[#FE5100] bg-white">
-                <img src="/sloth.png" alt="Book A Sloth" width="52" height="52" className="object-contain" />
+          <h2 className="font-heading text-3xl font-extrabold sm:text-5xl">Solo founder. The whole stack, shipped.</h2>
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <div className="rounded-[6px] border-[3px] p-6" style={{ borderColor: '#FE5100', background: '#1c1a17' }}>
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-[3px] border-[#FE5100] bg-white">
+                  <img src="/sloth.png" alt="Book A Sloth" width="52" height="52" className="object-contain" />
+                </div>
+                <div>
+                  <div className="font-heading text-2xl font-extrabold">{FOUNDER.name}</div>
+                  <div className="font-sans text-sm" style={{ color: '#FE5100' }}>{FOUNDER.role}</div>
+                </div>
               </div>
-              <div>
-                <div className="font-heading text-2xl font-extrabold">{FOUNDER.name}</div>
-                <div className="font-sans text-sm" style={{ color: '#FE5100' }}>{FOUNDER.role}</div>
+              <p className="mt-4 font-sans text-sm opacity-80">{FOUNDER.background}</p>
+              <p className="mt-2 font-sans text-sm opacity-80">{FOUNDER.why}</p>
+            </div>
+            <div>
+              <div className="mb-3 font-sans text-sm font-semibold opacity-60">Shipped solo, live in production:</div>
+              <div className="flex flex-wrap gap-2">
+                {SHIPPED.map((s) => (
+                  <span key={s} className="rounded-[4px] border-2 border-white/20 px-2.5 py-1 font-sans text-xs">{s}</span>
+                ))}
               </div>
             </div>
-            <p className="mt-4 font-sans text-sm opacity-80">{FOUNDER.line}</p>
           </div>
-          <p className="mt-6 max-w-2xl font-sans text-base opacity-70">
-            The entire product — booking, payments, payouts, GST, CRM, notifications — is built and live in production, shipped solo. The raise funds the first hires around a working machine.
+          <p className="mt-6 max-w-3xl font-sans text-base opacity-70">
+            The entire product — booking, payments, payouts, GST, CRM, notifications — was built and put live in ~3 months, solo. The bet: a founder who can build the machine this fast is who you want scaling it. The raise funds the first hires around it.
           </p>
         </Slide>
 
