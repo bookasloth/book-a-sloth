@@ -7,6 +7,7 @@ import { PageHeader, Card, StatCard, Badge, Skeleton } from '../../components/ad
 import {
   adminSeoOverview, adminSeoIssues, adminSeoReports,
   adminSeoCategories, adminSeoChanges,
+  adminSeoFixes, adminSeoGenerateFixes, adminSeoDecideFix,
   adminSeoRunCrawl, adminSeoCrawlStatus, adminSeoMuteIssue, adminSeoGsc, adminSeoGscSync,
 } from '../../services/api';
 
@@ -15,11 +16,13 @@ const TABS = [
   { key: 'issues', label: 'Issues' },
   { key: 'categories', label: 'Categories' },
   { key: 'pages', label: 'Pages' },
+  { key: 'fixes', label: 'Fixes' },
   { key: 'gsc', label: 'Search Console' },
 ];
 
 const SEVERITY_TONE = { P0: 'danger', P1: 'danger', P2: 'warn', P3: 'neutral', P4: 'neutral' };
 const STATUS_TONE = { PASS: 'ok', WARNING: 'warn', FAIL: 'danger' };
+const LEVEL_TONE = { AUTO: 'ok', REVIEW: 'warn', DO_NOT: 'danger' };
 const MATURITY_TONE = { NEW: 'neutral', DEVELOPING: 'neutral', ESTABLISHED: 'ok', STRONG: 'ok' };
 const CATEGORIES = ['technical', 'onpage', 'content', 'semantic', 'structured_data', 'indexability', 'internal_linking'];
 const actionFor = (p) => (p.status === 'FAIL' ? 'Fix critical issue' : p.status === 'WARNING' ? 'Review warnings' : 'OK');
@@ -150,6 +153,7 @@ export default function AdminSeo() {
       {tab === 'issues' && <IssuesTab />}
       {tab === 'categories' && <CategoriesTab />}
       {tab === 'pages' && <PagesTab />}
+      {tab === 'fixes' && <FixesTab />}
       {tab === 'gsc' && <GscTab />}
     </div>
   );
@@ -397,6 +401,149 @@ function PagesTab() {
           </tbody>
         </table>
       </Card>
+    </div>
+  );
+}
+
+function FixesTab() {
+  const [fixes, setFixes] = useState([]);
+  const [summary, setSummary] = useState({});
+  const [dryRun, setDryRun] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [level, setLevel] = useState('');
+  const [selected, setSelected] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = { status: 'proposed' };
+      if (level) params.approvalLevel = level;
+      const res = await adminSeoFixes(params);
+      setFixes(res.data.fixes || []);
+      setSummary(res.data.summary || {});
+      setDryRun(res.data.dryRun !== false);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to load fixes');
+      setFixes([]);
+    } finally { setLoading(false); }
+  }, [level]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const generate = async () => {
+    setGenerating(true);
+    try {
+      const { data } = await adminSeoGenerateFixes();
+      if (data.skipped) toast(data.skipped);
+      else toast.success(`Proposed ${data.proposed} fix(es)`);
+      await load();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to generate proposals');
+    } finally { setGenerating(false); }
+  };
+
+  const byLevel = summary.byLevel || {};
+
+  return (
+    <div>
+      <Card className="mb-4 text-sm flex items-center justify-between">
+        <div>
+          {dryRun ? <Badge tone="warn">DRY RUN</Badge> : <Badge tone="danger">LIVE APPLY</Badge>}
+          <span className="ml-3 adm-t3">Proposals only — approving stages a fix; nothing publishes in this phase.</span>
+        </div>
+        <button onClick={generate} disabled={generating} className="adm-btn adm-btn-primary text-sm px-3 py-1.5 rounded-lg disabled:opacity-50">
+          {generating ? 'Generating…' : 'Generate proposals'}
+        </button>
+      </Card>
+
+      <div className="flex gap-3 mb-4 items-center">
+        <select className="fb-input text-sm" value={level} onChange={(e) => setLevel(e.target.value)}>
+          <option value="">All levels</option>
+          {['AUTO', 'REVIEW', 'DO_NOT'].map((l) => <option key={l} value={l}>{l}</option>)}
+        </select>
+        <div className="flex gap-2">
+          {['AUTO', 'REVIEW', 'DO_NOT'].map((l) => <Badge key={l} tone={LEVEL_TONE[l]}>{l}: {byLevel[l] || 0}</Badge>)}
+        </div>
+      </div>
+
+      {loading ? <Skeleton className="h-40" /> : (
+        <Card className="p-0 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="text-[11px] uppercase tracking-wide adm-t3 border-b adm-border">
+              <th className="text-left py-2 px-4">Level</th>
+              <th className="text-left py-2 px-4">Rule</th>
+              <th className="text-left py-2 px-4">URL</th>
+              <th className="text-left py-2 px-4">Target</th>
+              <th className="text-left py-2 px-4">Evidence</th>
+            </tr></thead>
+            <tbody>
+              {fixes.map((f) => (
+                <tr key={f.id} className="border-b adm-border last:border-0 cursor-pointer hover:adm-hover" onClick={() => setSelected(f)}>
+                  <td className="py-2 px-4"><Badge tone={LEVEL_TONE[f.approval_level] || 'neutral'}>{f.approval_level}</Badge></td>
+                  <td className="py-2 px-4">{f.rule_key}</td>
+                  <td className="py-2 px-4 break-all">{f.url}</td>
+                  <td className="py-2 px-4">{f.target}</td>
+                  <td className="py-2 px-4">{f.evidence_maturity || '—'}</td>
+                </tr>
+              ))}
+              {!fixes.length && <tr><td colSpan={5} className="py-6 text-center adm-t3">No proposals — run Generate proposals after a crawl.</td></tr>}
+            </tbody>
+          </table>
+        </Card>
+      )}
+
+      {selected && <FixDrawer fix={selected} onClose={() => setSelected(null)} onDecided={load} />}
+    </div>
+  );
+}
+
+function FixDrawer({ fix, onClose, onDecided }) {
+  const [busy, setBusy] = useState(false);
+  const decide = async (decision) => {
+    setBusy(true);
+    try {
+      await adminSeoDecideFix(fix.id, { decision });
+      toast.success(decision === 'approve' ? 'Fix approved (staged)' : 'Fix rejected');
+      onDecided?.();
+      onClose();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Action failed');
+    } finally { setBusy(false); }
+  };
+  const canApprove = fix.approval_level !== 'DO_NOT';
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="relative h-full w-full max-w-md overflow-y-auto bg-white shadow-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-gray-900">{fix.rule_key}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">✕</button>
+        </div>
+        <div className="space-y-3 text-sm">
+          <div><span className="text-gray-500">Approval</span><div><Badge tone={LEVEL_TONE[fix.approval_level] || 'neutral'}>{fix.approval_level}</Badge></div></div>
+          <div><span className="text-gray-500">URL</span><div className="break-all">{fix.url}</div></div>
+          <div><span className="text-gray-500">Target / field</span><div>{fix.target}{fix.field ? ` · ${fix.field}` : ''}</div></div>
+          {fix.reason && <div><span className="text-gray-500">Reason</span><div>{fix.reason}</div></div>}
+          {fix.new_value != null && (
+            <div>
+              <span className="text-gray-500">Change</span>
+              <pre className="text-xs bg-gray-50 p-2 rounded whitespace-pre-wrap"><span className="text-red-600">- {fix.old_value ?? '(none)'}</span>{'\n'}<span className="text-green-700">+ {fix.new_value}</span></pre>
+            </div>
+          )}
+          {fix.new_value == null && (
+            <div><span className="text-gray-500">Content context</span><pre className="text-xs bg-gray-50 p-2 rounded whitespace-pre-wrap">{JSON.stringify(fix.context || {}, null, 2)}</pre></div>
+          )}
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <button onClick={() => decide('reject')} disabled={busy} className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50">Reject</button>
+          {canApprove && (
+            <button onClick={() => decide('approve')} disabled={busy} className="rounded-lg bg-[#FE5100] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e04800] disabled:opacity-50">
+              {busy ? 'Saving…' : 'Approve (stage)'}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
