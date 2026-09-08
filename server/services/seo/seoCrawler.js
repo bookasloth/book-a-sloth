@@ -18,11 +18,17 @@ async function seedUrls() {
   const out = [];
   const seen = new Set();
   const add = (url, pageType) => { if (!seen.has(url)) { seen.add(url); out.push({ url, pageType, inSitemap: true }); } };
-  for (const e of sm.staticEntries(SITE_URL)) add(e.loc.replace(/\/$/, '') || `${SITE_URL}/`, 'static');
+  // Use the exact loc the public sitemap emits (root stays `/` — stripping it to
+  // the bare apex made the crawler fetch a URL that 301s to `/`, then flag its own
+  // mangled URL as indexability.error_url_in_sitemap).
+  for (const e of sm.staticEntries(SITE_URL)) add(e.loc, 'static');
   for (const h of await sm.fetchHosts()) add(sm.hostUrl(SITE_URL, h.username), 'host');
   for (const s of await sm.fetchServices()) if (s.profiles?.username) add(sm.serviceUrl(SITE_URL, s.profiles.username, s.slug), 'service');
   for (const b of await sm.fetchBlogs()) add(`${SITE_URL}/blog/${b.slug}`, 'blog');
-  for (const p of await sm.fetchProfessions()) add(`${SITE_URL}/for/${p.slug}`, 'static');
+  // Profession pages live at /services/:slug (what professionEntries publishes to
+  // Google) — NOT /for/:slug (that route is the hardcoded marketing landings; a DB
+  // slug there renders a noindex 404). Auditing /for/ produced 47 phantom soft_404s.
+  for (const p of await sm.fetchProfessions()) add(`${SITE_URL}/services/${p.slug}`, 'static');
   return out;
 }
 

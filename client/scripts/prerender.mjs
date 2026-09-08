@@ -214,13 +214,15 @@ async function hostServiceRoutes() {
 
   try {
     const indexRes = await fetchWithRetry(`${origin}/sitemap.xml`);
-    // Only the host + service sub-sitemaps; pages/professions/blog are handled
-    // by PRERENDER_ROUTES + blogRoutes already. Fetch each by its OWN path off our
-    // reachable origin (the <loc> carries the public SITE_URL domain, which may
-    // route through Vercel — the path is all we need).
+    // Host + service + profession sub-sitemaps; pages/blog are handled by
+    // PRERENDER_ROUTES + blogRoutes already. Professions (/services/:slug) are
+    // DB-driven and can't be a hardcoded list — without prerender they shipped an
+    // empty SPA shell to Google (soft_404) for all 47 sitemap URLs. Fetch each by
+    // its OWN path off our reachable origin (the <loc> carries the public SITE_URL
+    // domain, which may route through Vercel — the path is all we need).
     const subPaths = locs(await indexRes.text())
       .map((u) => new URL(u).pathname)
-      .filter((p) => /\/sitemap-(hosts|services)/.test(p));
+      .filter((p) => /\/sitemap-(hosts|services|professions)/.test(p));
 
     const routes = [];
     for (const sub of subPaths) {
@@ -311,7 +313,16 @@ function createStaticServer() {
 async function prerender() {
   const puppeteer = await import('puppeteer');
 
-  const routes = [...PRERENDER_ROUTES, ...(await blogRoutes()), ...(await hostServiceRoutes())];
+  // Dedup: professions sub-sitemap also carries the /services root already in PRERENDER_ROUTES.
+  const routes = [...new Set([...PRERENDER_ROUTES, ...(await blogRoutes()), ...(await hostServiceRoutes())])];
+
+  // The app's absolute API base (…/api). Prerender runs on localhost:4173, which
+  // the API's CORS allowlist rejects, so every in-browser fetch (getBlogBySlug,
+  // getProfessionServices) is blocked → the page bakes its notfound/error fallback
+  // (blog posts redirected to /blog, poisoning the canonical of all 8 posts). We
+  // proxy those calls through node (no CORS) below so real content renders.
+  const API_BASE = (loadEnv(process.env.NODE_ENV || 'production', join(__dirname, '..'), '').VITE_API_URL
+    || process.env.VITE_API_URL || '').replace(/\/+$/, '');
 
   const server = createStaticServer();
   await new Promise((resolve) => server.listen(PORT, resolve));
@@ -327,13 +338,29 @@ async function prerender() {
     try {
       // Block analytics/tracking requests — avoids phantom pageviews and speeds up render
       await page.setRequestInterception(true);
-      page.on('request', (req) => {
+      page.on('request', async (req) => {
         const url = req.url();
         if (url.includes('posthog') || url.includes('clarity') || url.includes('google-analytics') || url.includes('facebook')) {
-          req.abort();
-        } else {
-          req.continue();
+          return req.abort();
         }
+        // Proxy the app's API through node (no CORS) so data-driven pages render
+        // real content instead of their CORS-blocked notfound fallback. GET-only:
+        // prerendered pages never POST. ponytail: on any proxy error, fall back to
+        // the browser's own (blocked) request — no worse than before this fix.
+        if (API_BASE && url.startsWith(API_BASE) && req.method() === 'GET') {
+          try {
+            const r = await fetch(url, { headers: { Accept: 'application/json' } });
+            const body = Buffer.from(await r.arrayBuffer());
+            return req.respond({
+              status: r.status,
+              headers: { 'content-type': r.headers.get('content-type') || 'application/json', 'access-control-allow-origin': '*' },
+              body,
+            });
+          } catch {
+            return req.continue();
+          }
+        }
+        return req.continue();
       });
 
       await page.goto(`${ORIGIN}${route}`, { waitUntil: 'networkidle0', timeout: navTimeout });
