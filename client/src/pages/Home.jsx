@@ -95,7 +95,7 @@ function CalmerWord() {
   const reduce = useReducedMotion();
   const text = useTypewriter(CALM_WORDS, !reduce);
   return (
-    <span className="whitespace-nowrap">
+    <span className="whitespace-nowrap text-primary">
       <span aria-hidden="true">{text}</span>
       {!reduce && (
         <span
@@ -631,7 +631,9 @@ const Home = () => {
             <Reveal as="h1" delay={0.05} className="text-[clamp(1.7rem,7vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[3.4rem] sm:leading-[1.05] lg:text-[3.9rem]">
               You sell your time.
               <br />
-              <span className="font-bold text-primary">We make everything <CalmerWord /> around it</span>.
+              <span className="font-bold">We make <span className="text-primary">everything</span>
+                <br />
+                <CalmerWord /> around it.</span>
             </Reveal>
 
             <Reveal as="p" delay={0.12} className="mt-5 max-w-md text-base leading-relaxed text-neutral-500 sm:mt-7 sm:text-lg">
@@ -735,7 +737,9 @@ const Home = () => {
           <Reveal as="h2" delay={0.05} className="text-[clamp(2.2rem,9vw,3.2rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
             You sell your time.
             <br />
-            <span className="font-bold text-primary">We make everything <CalmerWord /> around it</span>.
+            <span className="font-bold">We make <span className="text-primary">everything</span>
+                <br />
+                <CalmerWord /> around it.</span>
           </Reveal>
 
           <Reveal as="p" delay={0.12} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-neutral-500">
