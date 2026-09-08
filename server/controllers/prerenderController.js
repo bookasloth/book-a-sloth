@@ -74,81 +74,93 @@ ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script
 
 // ── Profile ─────────────────────────────────────────────────────────────────
 
+// Pure resolver: DB lookup + meta computation only, no res.* calls. Extracted
+// so the SEO crawler can get a host page's real meta/indexability in-process
+// (no HTTP round-trip, so Cloudflare's bot-UA block never applies to it).
+// Returns { status: 200, buildHtmlArgs } | { status: 404 } | { status: 301, redirectTo }.
+async function resolveProfileMeta(username) {
+  const { buildHostProfile } = require('./hostController');
+  const outcome = await buildHostProfile(username);
+
+  if (outcome.notFound || outcome.redirect) {
+    if (outcome.redirect) {
+      return { status: 301, redirectTo: `${trimSlash(SITE_URL)}/${outcome.username}` };
+    }
+    return { status: 404 };
+  }
+
+  const { host, services } = outcome.payload;
+  const site = trimSlash(SITE_URL);
+  const name = host.name || 'Host';
+
+  const title = host.seo_title
+    || `${name}${host.profession ? ` — ${host.profession}` : ''} | Book A Sloth`;
+  const description = host.seo_description
+    || truncate(host.bio || `Book sessions with ${name} on Book A Sloth.`);
+  const canonical = `${site}/${host.username}`;
+  // Resolved once: the OG tag and the JSON-LD both point at the host's photo,
+  // and upscaling only one of them is how you get a card that works next to
+  // structured data that still says 96px.
+  const avatar = upscaleAvatar(host.seo_image || host.profile_image) || undefined;
+
+  // og:image is a SHARE CARD, not the avatar. A square Google photo letterboxes
+  // inside a summary_large_image card, so we serve the generated 1200x630 host
+  // card whenever one EXISTS — including a 'dirty' one (a visible field changed
+  // and a regen is queued): a slightly-stale personal card beats dropping to the
+  // generic site card, which is exactly the design's "dirty => serve old image".
+  // Only a host with no card yet ('none') gets the site-wide default.
+  // The avatar still feeds JSON-LD Person.image below, which is correct there.
+  // ponytail: default = the existing site card; swap for a host-flavoured
+  // default 1200x630 when one's designed.
+  const ogCard = host.og_image || `${site}/og-image.png`;
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    url: canonical,
+    mainEntity: {
+      '@type': 'Person',
+      name,
+      url: canonical,
+      jobTitle: host.profession || undefined,
+      description: host.seo_description || host.bio || undefined,
+      image: avatar,
+      ...(Array.isArray(services) && services.length ? {
+        makesOffer: services.filter(s => s && s.title).map(s => ({
+          '@type': 'Offer',
+          itemOffered: { '@type': 'Service', name: s.title, url: s.slug ? `${canonical}/${s.slug}` : undefined },
+        })),
+      } : {}),
+    },
+  };
+
+  const buildHtmlArgs = {
+    title,
+    description,
+    canonical,
+    // Share-card copy is its own fixed voice — the SAME line across every host
+    // profile, deliberately NOT derived from bio/profession. The <title>/meta
+    // description above stay SEO-flavoured for Google; these OG tags carry the
+    // brand share line. Explicit og_/seo_ fields still override when set.
+    ogTitle: host.og_title || host.seo_title || `${name} — now taking bookings on Book A Sloth.`,
+    ogDescription: host.og_description || host.seo_description
+      || `Skip the back-and-forth — ${name}'s calendar is open. Book a slot with them.`,
+    image: ogCard,
+    cardImage: true, // ogCard is always a known 1200x630 card (generated or site default)
+    robots: host.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
+    jsonLd,
+  };
+
+  return { status: 200, buildHtmlArgs };
+}
+
 const renderProfileMeta = async (req, res) => {
   try {
-    const { buildHostProfile } = require('./hostController');
-    const username = req.params.username;
-    const outcome = await buildHostProfile(username);
+    const m = await resolveProfileMeta(req.params.username);
+    if (m.status === 404) return res.status(404).send('Not found');
+    if (m.status === 301) return res.redirect(301, m.redirectTo);
 
-    if (outcome.notFound || outcome.redirect) {
-      if (outcome.redirect) {
-        return res.redirect(301, `${trimSlash(SITE_URL)}/${outcome.username}`);
-      }
-      return res.status(404).send('Not found');
-    }
-
-    const { host, services } = outcome.payload;
-    const site = trimSlash(SITE_URL);
-    const name = host.name || 'Host';
-
-    const title = host.seo_title
-      || `${name}${host.profession ? ` — ${host.profession}` : ''} | Book A Sloth`;
-    const description = host.seo_description
-      || truncate(host.bio || `Book sessions with ${name} on Book A Sloth.`);
-    const canonical = `${site}/${host.username}`;
-    // Resolved once: the OG tag and the JSON-LD both point at the host's photo,
-    // and upscaling only one of them is how you get a card that works next to
-    // structured data that still says 96px.
-    const avatar = upscaleAvatar(host.seo_image || host.profile_image) || undefined;
-
-    // og:image is a SHARE CARD, not the avatar. A square Google photo letterboxes
-    // inside a summary_large_image card, so we serve the generated 1200x630 host
-    // card whenever one EXISTS — including a 'dirty' one (a visible field changed
-    // and a regen is queued): a slightly-stale personal card beats dropping to the
-    // generic site card, which is exactly the design's "dirty => serve old image".
-    // Only a host with no card yet ('none') gets the site-wide default.
-    // The avatar still feeds JSON-LD Person.image below, which is correct there.
-    // ponytail: default = the existing site card; swap for a host-flavoured
-    // default 1200x630 when one's designed.
-    const ogCard = host.og_image || `${site}/og-image.png`;
-
-    const jsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'ProfilePage',
-      url: canonical,
-      mainEntity: {
-        '@type': 'Person',
-        name,
-        url: canonical,
-        jobTitle: host.profession || undefined,
-        description: host.seo_description || host.bio || undefined,
-        image: avatar,
-        ...(Array.isArray(services) && services.length ? {
-          makesOffer: services.filter(s => s && s.title).map(s => ({
-            '@type': 'Offer',
-            itemOffered: { '@type': 'Service', name: s.title, url: s.slug ? `${canonical}/${s.slug}` : undefined },
-          })),
-        } : {}),
-      },
-    };
-
-    const html = buildHtml({
-      title,
-      description,
-      canonical,
-      // Share-card copy is its own fixed voice — the SAME line across every host
-      // profile, deliberately NOT derived from bio/profession. The <title>/meta
-      // description above stay SEO-flavoured for Google; these OG tags carry the
-      // brand share line. Explicit og_/seo_ fields still override when set.
-      ogTitle: host.og_title || host.seo_title || `${name} — now taking bookings on Book A Sloth.`,
-      ogDescription: host.og_description || host.seo_description
-        || `Skip the back-and-forth — ${name}'s calendar is open. Book a slot with them.`,
-      image: ogCard,
-      cardImage: true, // ogCard is always a known 1200x630 card (generated or site default)
-      robots: host.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
-      jsonLd,
-    });
-
+    const html = buildHtml(m.buildHtmlArgs);
     res.set('Content-Type', 'text/html');
     res.set('Cache-Control', 'public, max-age=120, s-maxage=300');
     res.send(html);
@@ -160,64 +172,74 @@ const renderProfileMeta = async (req, res) => {
 
 // ── Service ─────────────────────────────────────────────────────────────────
 
+// Pure resolver mirroring resolveProfileMeta, for the service page. Returns
+// { status: 200, buildHtmlArgs } | { status: 404 } (services never redirect).
+async function resolveServiceMeta(username, serviceSlug) {
+  const { buildPublicServiceByProfileAndSlug } = require('./serviceController');
+  const outcome = await buildPublicServiceByProfileAndSlug(username, serviceSlug);
+
+  if (outcome.hostNotFound || outcome.notFound) {
+    return { status: 404 };
+  }
+
+  const { service, vendor } = outcome.payload;
+  const site = trimSlash(SITE_URL);
+  const baseTitle = service.title || 'Service';
+
+  const title = service.seo_title
+    || `${baseTitle}${vendor.name ? ` with ${vendor.name}` : ''} | Book A Sloth`;
+  const description = service.seo_description
+    || truncate(service.short_description || service.description || `Book ${baseTitle} on Book A Sloth.`);
+  const canonical = vendor.username && service.slug
+    ? `${site}/${vendor.username}/${service.slug}`
+    : site;
+
+  const avgRating = outcome.payload.avgRating || 0;
+  const reviewCount = (outcome.payload.reviews || []).length;
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: baseTitle,
+    description: service.seo_description || service.short_description || service.description || undefined,
+    url: canonical,
+    provider: vendor.name
+      ? { '@type': 'Person', name: vendor.name, url: vendor.username ? `${site}/${vendor.username}` : undefined }
+      : undefined,
+    offers: {
+      '@type': 'Offer',
+      price: String(service.price ?? 0),
+      priceCurrency: service.currency || 'INR',
+      availability: 'https://schema.org/InStock',
+      url: canonical,
+    },
+    ...(service.seo_image || service.thumbnail_url ? { image: service.seo_image || service.thumbnail_url } : {}),
+    ...(reviewCount > 0 && avgRating > 0 ? {
+      aggregateRating: { '@type': 'AggregateRating', ratingValue: avgRating, reviewCount },
+    } : {}),
+  };
+
+  const buildHtmlArgs = {
+    title,
+    description,
+    canonical,
+    ogTitle: service.og_title || service.seo_title || baseTitle,
+    ogDescription: service.og_description || description,
+    image: service.seo_image || service.thumbnail_url,
+    robots: service.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
+    jsonLd,
+  };
+
+  return { status: 200, buildHtmlArgs };
+}
+
 const renderServiceMeta = async (req, res) => {
   try {
-    const { buildPublicServiceByProfileAndSlug } = require('./serviceController');
     const { username, serviceSlug } = req.params;
-    const outcome = await buildPublicServiceByProfileAndSlug(username, serviceSlug);
+    const m = await resolveServiceMeta(username, serviceSlug);
+    if (m.status === 404) return res.status(404).send('Not found');
 
-    if (outcome.hostNotFound || outcome.notFound) {
-      return res.status(404).send('Not found');
-    }
-
-    const { service, vendor } = outcome.payload;
-    const site = trimSlash(SITE_URL);
-    const baseTitle = service.title || 'Service';
-
-    const title = service.seo_title
-      || `${baseTitle}${vendor.name ? ` with ${vendor.name}` : ''} | Book A Sloth`;
-    const description = service.seo_description
-      || truncate(service.short_description || service.description || `Book ${baseTitle} on Book A Sloth.`);
-    const canonical = vendor.username && service.slug
-      ? `${site}/${vendor.username}/${service.slug}`
-      : site;
-
-    const avgRating = outcome.payload.avgRating || 0;
-    const reviewCount = (outcome.payload.reviews || []).length;
-
-    const jsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      name: baseTitle,
-      description: service.seo_description || service.short_description || service.description || undefined,
-      url: canonical,
-      provider: vendor.name
-        ? { '@type': 'Person', name: vendor.name, url: vendor.username ? `${site}/${vendor.username}` : undefined }
-        : undefined,
-      offers: {
-        '@type': 'Offer',
-        price: String(service.price ?? 0),
-        priceCurrency: service.currency || 'INR',
-        availability: 'https://schema.org/InStock',
-        url: canonical,
-      },
-      ...(service.seo_image || service.thumbnail_url ? { image: service.seo_image || service.thumbnail_url } : {}),
-      ...(reviewCount > 0 && avgRating > 0 ? {
-        aggregateRating: { '@type': 'AggregateRating', ratingValue: avgRating, reviewCount },
-      } : {}),
-    };
-
-    const html = buildHtml({
-      title,
-      description,
-      canonical,
-      ogTitle: service.og_title || service.seo_title || baseTitle,
-      ogDescription: service.og_description || description,
-      image: service.seo_image || service.thumbnail_url,
-      robots: service.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
-      jsonLd,
-    });
-
+    const html = buildHtml(m.buildHtmlArgs);
     res.set('Content-Type', 'text/html');
     res.set('Cache-Control', 'public, max-age=120, s-maxage=300');
     res.send(html);
@@ -227,4 +249,4 @@ const renderServiceMeta = async (req, res) => {
   }
 };
 
-module.exports = { renderProfileMeta, renderServiceMeta };
+module.exports = { renderProfileMeta, renderServiceMeta, resolveProfileMeta, resolveServiceMeta };

@@ -1,0 +1,100 @@
+// server/tests/unit/prerenderResolvers.test.js
+// resolveProfileMeta/resolveServiceMeta are the pure meta-computation halves
+// of renderProfileMeta/renderServiceMeta, extracted so the SEO crawler can
+// call them in-process (no HTTP fetch -> no Cloudflare bot-UA 403).
+jest.mock('../../controllers/hostController', () => ({ buildHostProfile: jest.fn() }));
+jest.mock('../../controllers/serviceController', () => ({ buildPublicServiceByProfileAndSlug: jest.fn() }));
+
+const { buildHostProfile } = require('../../controllers/hostController');
+const { buildPublicServiceByProfileAndSlug } = require('../../controllers/serviceController');
+const {
+  resolveProfileMeta, resolveServiceMeta, renderProfileMeta,
+} = require('../../controllers/prerenderController');
+
+describe('resolveProfileMeta', () => {
+  test('returns 200 with title/canonical/robots for a normal host', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: {
+        host: { username: 'jane', name: 'Jane', is_indexable: true },
+        services: [],
+      },
+    });
+    const m = await resolveProfileMeta('jane');
+    expect(m.status).toBe(200);
+    expect(m.buildHtmlArgs.title).toContain('Jane');
+    expect(m.buildHtmlArgs.canonical).toBe('https://bookasloth.com/jane');
+    expect(m.buildHtmlArgs.robots).toBe('index,follow');
+  });
+
+  test('returns 404 when host not found', async () => {
+    buildHostProfile.mockResolvedValueOnce({ notFound: true });
+    const m = await resolveProfileMeta('ghost');
+    expect(m.status).toBe(404);
+  });
+
+  test('returns 301 + redirectTo when username has moved', async () => {
+    buildHostProfile.mockResolvedValueOnce({ redirect: true, username: 'newname' });
+    const m = await resolveProfileMeta('oldname');
+    expect(m.status).toBe(301);
+    expect(m.redirectTo).toBe('https://bookasloth.com/newname');
+  });
+
+  test('robots is noindex,nofollow when is_indexable is false', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: { host: { username: 'jane', name: 'Jane', is_indexable: false }, services: [] },
+    });
+    const m = await resolveProfileMeta('jane');
+    expect(m.buildHtmlArgs.robots).toBe('noindex,nofollow');
+  });
+});
+
+describe('resolveServiceMeta', () => {
+  test('returns 200 with title/canonical/robots for a normal service', async () => {
+    buildPublicServiceByProfileAndSlug.mockResolvedValueOnce({
+      payload: {
+        service: { title: 'Intro Call', slug: 'intro', is_indexable: true },
+        vendor: { username: 'jane', name: 'Jane' },
+        reviews: [],
+      },
+    });
+    const m = await resolveServiceMeta('jane', 'intro');
+    expect(m.status).toBe(200);
+    expect(m.buildHtmlArgs.title).toContain('Intro Call');
+    expect(m.buildHtmlArgs.canonical).toBe('https://bookasloth.com/jane/intro');
+    expect(m.buildHtmlArgs.robots).toBe('index,follow');
+  });
+
+  test('returns 404 when host or service not found', async () => {
+    buildPublicServiceByProfileAndSlug.mockResolvedValueOnce({ hostNotFound: true });
+    expect((await resolveServiceMeta('ghost', 'intro')).status).toBe(404);
+    buildPublicServiceByProfileAndSlug.mockResolvedValueOnce({ notFound: true });
+    expect((await resolveServiceMeta('jane', 'ghost')).status).toBe(404);
+  });
+
+  test('robots is noindex,nofollow when is_indexable is false', async () => {
+    buildPublicServiceByProfileAndSlug.mockResolvedValueOnce({
+      payload: {
+        service: { title: 'Intro Call', slug: 'intro', is_indexable: false },
+        vendor: { username: 'jane', name: 'Jane' },
+        reviews: [],
+      },
+    });
+    const m = await resolveServiceMeta('jane', 'intro');
+    expect(m.buildHtmlArgs.robots).toBe('noindex,nofollow');
+  });
+});
+
+// Confirms the bot-handler behavior is unchanged after extracting the resolver:
+// renderProfileMeta must still send full HTML containing the title, via res.send.
+describe('renderProfileMeta (bot handler, unchanged behavior)', () => {
+  test('sends HTML containing the title', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: { host: { username: 'jane', name: 'Jane', is_indexable: true }, services: [] },
+    });
+    const res = { status: jest.fn().mockReturnThis(), set: jest.fn(), send: jest.fn(), redirect: jest.fn() };
+    await renderProfileMeta({ params: { username: 'jane' } }, res);
+    expect(res.send).toHaveBeenCalledTimes(1);
+    expect(res.send.mock.calls[0][0]).toContain('Jane');
+    expect(res.set).toHaveBeenCalledWith('Content-Type', 'text/html');
+  });
+});

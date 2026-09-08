@@ -5,6 +5,16 @@ jest.mock('../../services/seo/seoFetch', () => ({
     headers: {}, body: `<title>${url}</title><h1>${url}</h1><meta name="description" content="${'d'.repeat(150)}">`, error: null,
   })),
 }));
+jest.mock('../../controllers/prerenderController', () => ({
+  resolveProfileMeta: jest.fn(async (username) => ({
+    status: 200,
+    buildHtmlArgs: { title: `host:${username}`, description: 'd'.repeat(150), canonical: `https://bookasloth.com/${username}`, robots: 'index,follow', jsonLd: { '@type': 'ProfilePage' } },
+  })),
+  resolveServiceMeta: jest.fn(async (username, slug) => ({
+    status: 200,
+    buildHtmlArgs: { title: `service:${username}/${slug}`, description: 'd'.repeat(150), canonical: `https://bookasloth.com/${username}/${slug}`, robots: 'index,follow', jsonLd: { '@type': 'Service' } },
+  })),
+}));
 jest.mock('../../services/seo/seoPersist', () => ({
   createCrawl: jest.fn(async () => 'crawl1'),
   finishCrawl: jest.fn(async () => {}),
@@ -23,6 +33,8 @@ jest.mock('../../utils/jobLock', () => ({ runLocked: jest.fn((name, fn) => fn())
 
 const persist = require('../../services/seo/seoPersist');
 const { runLocked } = require('../../utils/jobLock');
+const { fetchUrl } = require('../../services/seo/seoFetch');
+const { resolveProfileMeta, resolveServiceMeta } = require('../../controllers/prerenderController');
 const { run, seedUrls } = require('../../services/seo/seoCrawler');
 
 describe('seoCrawler', () => {
@@ -87,5 +99,35 @@ describe('seoCrawler', () => {
     const names = runLocked.mock.calls.map((call) => call[0]);
     expect(names).toContain('seo-crawl-exec');
     expect(names).not.toContain('seo-crawl');
+  });
+
+  // Two-mode fetch: host/service pages get their meta from the in-process
+  // prerender resolver (no Cloudflare bot-UA 403 risk); static/blog pages still
+  // go through the real HTTP fetch.
+  test('host/service pages use the prerender resolver, not seoFetch; static/blog still use seoFetch', async () => {
+    fetchUrl.mockClear();
+    resolveProfileMeta.mockClear();
+    resolveServiceMeta.mockClear();
+    await run({ trigger: 'manual' });
+
+    expect(resolveProfileMeta).toHaveBeenCalledWith('jane');
+    expect(resolveServiceMeta).toHaveBeenCalledWith('jane', 'intro');
+
+    const fetchedUrls = fetchUrl.mock.calls.map((c) => c[0]);
+    expect(fetchedUrls).toContain('https://bookasloth.com');
+    expect(fetchedUrls).toContain('https://bookasloth.com/blog/post-1');
+    expect(fetchedUrls).not.toContain('https://bookasloth.com/jane');
+    expect(fetchedUrls).not.toContain('https://bookasloth.com/jane/intro');
+
+    const calls = persist.saveResults.mock.calls;
+    const pages = calls[calls.length - 1][1];
+    const hostPage = pages.find((p) => p.url === 'https://bookasloth.com/jane');
+    const servicePage = pages.find((p) => p.url === 'https://bookasloth.com/jane/intro');
+    expect(hostPage.title).toBe('host:jane');
+    expect(hostPage.httpStatus).toBe(200);
+    expect(hostPage.indexable).toBe(true);
+    expect(servicePage.title).toBe('service:jane/intro');
+    expect(servicePage.httpStatus).toBe(200);
+    expect(servicePage.indexable).toBe(true);
   });
 });

@@ -25,7 +25,51 @@ async function seedUrls() {
   return out;
 }
 
+// Host/service pages are resolved in-process via prerenderController instead
+// of an HTTP fetch: Cloudflare 403-blocks the crawler's UA (any UA, bot or
+// browser, is a gamble for AI-crawler-shaped traffic), but the meta these
+// pages need is exactly what the same DB builders behind the live prerender
+// route already compute — no HTTP round-trip required, so the block never
+// applies. Trade-off: the meta shell has no body, so link/image/orphan rules
+// don't apply to host/service pages in P1 — acceptable, their audit value is
+// meta + indexability, not on-page content.
+async function crawlPrerendered(seed) {
+  const { resolveProfileMeta, resolveServiceMeta } = require('../../controllers/prerenderController');
+  const started = Date.now();
+  try {
+    const prefix = `${SITE_URL}/`;
+    const rest = seed.url.startsWith(prefix) ? seed.url.slice(prefix.length) : seed.url;
+    const [username, serviceSlug] = rest.split('/');
+    const m = seed.pageType === 'service'
+      ? await resolveServiceMeta(username, serviceSlug)
+      : await resolveProfileMeta(username);
+    const responseMs = Date.now() - started;
+    const args = m.buildHtmlArgs || {};
+    const robots = args.robots ? String(args.robots).toLowerCase() : null;
+    return {
+      url: seed.url, pageType: seed.pageType, inSitemap: seed.inSitemap,
+      httpStatus: m.status, finalUrl: seed.url,
+      redirectChain: m.status === 301 ? [seed.url, m.redirectTo] : [],
+      responseMs, contentType: 'text/html',
+      title: args.title || null, metaDescription: args.description || null, canonical: args.canonical || null,
+      robots, h1: [], headings: [],
+      links: { internal: [], external: [] }, images: [], jsonLd: args.jsonLd ? [args.jsonLd] : [],
+      wordCount: 0, viewport: 'width=device-width,initial-scale=1',
+      indexable: m.status === 200 && !(robots && robots.includes('noindex')), fetchError: null,
+    };
+  } catch (err) {
+    return {
+      url: seed.url, pageType: seed.pageType, inSitemap: seed.inSitemap,
+      httpStatus: null, finalUrl: seed.url, redirectChain: [], responseMs: Date.now() - started, contentType: null,
+      title: null, metaDescription: null, canonical: null, robots: null, h1: [], headings: [],
+      links: { internal: [], external: [] }, images: [], jsonLd: [],
+      wordCount: 0, viewport: null, indexable: false, fetchError: err.message || String(err),
+    };
+  }
+}
+
 async function crawlOne(seed) {
+  if (seed.pageType === 'host' || seed.pageType === 'service') return crawlPrerendered(seed);
   const r = await fetchUrl(seed.url);
   const parsed = r.status === 200 && (r.contentType || '').includes('html') ? parse(r.body, r.headers) : {};
   const noindex = parsed.robots ? parsed.robots.includes('noindex') : false;
