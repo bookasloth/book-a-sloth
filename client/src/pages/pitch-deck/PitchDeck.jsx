@@ -14,9 +14,15 @@
 // ASSUMPTION grey. ~45 paying hosts / ₹18k MRR are founder-attested (incl.
 // off-platform); 78 hosts / 190 leads are live product data.
 import { useEffect, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useHideChrome } from '../../context/ChromeContext';
 import Seo from '../../components/common/Seo';
+
+// Best-effort browser fullscreen (must be called in a user-gesture task).
+const enterFullscreen = () => { try { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); } catch { /* ignore */ } };
+const toggleFullscreen = () => {
+  try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); } catch { /* ignore */ }
+};
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const TOKEN_KEY = 'pitch_deck_token'; // sessionStorage — clears on tab close
@@ -41,9 +47,8 @@ async function pitchApi(path, { body, token } = {}) {
 const FOUNDER = {
   name: 'Shubham Datarkar',
   role: 'Founder & Engineer',
-  // ← EDIT these with your real background before sending to investors.
-  background: '[Your background — e.g. ex-<company>, <years> building <domain>, prior <win>]',
-  why: '[Why you built this — the personal reason you care that solo pros never chase payment]',
+  background: 'Product engineer focused on building simple, scalable SaaS products.',
+  why: 'Solo professionals shouldn’t have to chase clients for payments, reminders, and invoices. I built this to make it automatic.',
   handle: 'bookasloth.com',
 };
 const SHIPPED = [
@@ -93,22 +98,30 @@ function Slide({ id, children, className = '', dark = false }) {
   const label = idx >= 0 ? SLIDE_META[idx][1] : '';
   return (
     <section id={id} data-slide={id}
-      className={`snap-start min-h-[100dvh] w-full flex flex-col justify-center px-6 py-16 sm:px-10 md:px-16 lg:px-24 ${className}`}
+      className={`relative overflow-hidden snap-start min-h-[100dvh] w-full flex flex-col justify-center px-6 py-16 sm:px-10 md:px-16 lg:px-24 ${className}`}
       style={dark ? { background: '#141210', color: '#faf9f6' } : { background: '#faf9f6', color: '#1a1a1a' }}>
-      <div className="mx-auto w-full max-w-6xl">
+      {dark && (
+        <motion.div aria-hidden className="pointer-events-none absolute right-[6%] top-[12%] h-72 w-72 rounded-full"
+          style={{ background: 'radial-gradient(circle,#FE5100,transparent 70%)', opacity: 0.1 }}
+          animate={{ scale: [1, 1.18, 1], x: [0, 26, 0], y: [0, -20, 0] }}
+          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }} />
+      )}
+      <div className="relative z-10 mx-auto w-full max-w-6xl">
         {num != null && (
-          <div className="mb-5 flex items-center gap-3">
+          <motion.div className="mb-5 flex items-center gap-3"
+            initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ amount: 0.6 }} transition={{ duration: 0.4 }}>
             <span className="font-heading text-xs font-extrabold tracking-[0.2em]" style={{ color: '#FE5100' }}>
               {String(num).padStart(2, '0')}
             </span>
             <span className="h-px flex-1 max-w-[64px]" style={{ background: dark ? '#3a352f' : '#e6e1d8' }} />
             <span className="font-sans text-[11px] font-semibold uppercase tracking-widest opacity-50">{label}</span>
-          </div>
+          </motion.div>
         )}
         <motion.div
           className={dark ? '[&_h1]:text-[#faf9f6] [&_h2]:text-[#faf9f6] [&_h3]:text-[#faf9f6]' : ''}
-          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+          initial={{ opacity: 0, y: 40, scale: 0.98 }} whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ amount: 0.5 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
           {children}
         </motion.div>
       </div>
@@ -117,20 +130,22 @@ function Slide({ id, children, className = '', dark = false }) {
 }
 function Stat({ value, label, tag, accent = '#FE5100', sub }) {
   return (
-    <div className="rounded-[6px] border-[3px] border-ink bg-white p-5" style={{ boxShadow: '5px 5px 0 rgba(26,26,26,0.9)' }}>
+    <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+      className="rounded-[6px] border-[3px] border-ink bg-white p-5" style={{ boxShadow: '5px 5px 0 rgba(26,26,26,0.9)' }}>
       <div className="font-heading text-4xl font-extrabold leading-none sm:text-5xl" style={{ color: accent }}>{value}</div>
       <div className="mt-2 font-sans text-sm font-semibold text-ink">{label}</div>
       {sub && <div className="mt-1 font-sans text-xs text-ink/60">{sub}</div>}
       {tag && <div className="mt-3"><Tag k={tag} /></div>}
-    </div>
+    </motion.div>
   );
 }
 function Card({ title, body, accent = '#FE5100' }) {
   return (
-    <div className="rounded-[6px] border-[3px] border-ink bg-white p-5" style={{ boxShadow: '4px 4px 0 rgba(26,26,26,0.9)' }}>
+    <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+      className="rounded-[6px] border-[3px] border-ink bg-white p-5" style={{ boxShadow: '4px 4px 0 rgba(26,26,26,0.9)' }}>
       <div className="mb-1 font-heading text-base font-extrabold" style={{ color: accent }}>{title}</div>
       <div className="font-sans text-sm text-ink/75 leading-snug">{body}</div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -331,89 +346,89 @@ function useDeckNav() {
   }, [scrollTo]);
   return { active, scrollTo };
 }
-function DotRail({ active, scrollTo }) {
-  return (
-    <nav aria-label="Slides" className="fixed right-3 top-1/2 z-30 hidden -translate-y-1/2 flex-col gap-2 md:flex">
-      {SLIDE_META.map(([id, label], i) => (
-        <button key={id} onClick={() => scrollTo(i)} aria-label={`Go to ${label}`} aria-current={i === active} className="group flex items-center justify-end gap-2">
-          <span className="pointer-events-none rounded-[4px] bg-ink px-2 py-0.5 font-sans text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">{label}</span>
-          <span className="h-2.5 w-2.5 rounded-full border-2 border-ink transition"
-            style={{ background: i === active ? '#FE5100' : 'transparent', transform: i === active ? 'scale(1.25)' : 'scale(1)' }} />
-        </button>
-      ))}
-    </nav>
-  );
-}
-
 // ── OTP + passcode gate ──────────────────────────────────────────────────────
 function Gate({ onUnlock }) {
-  const [step, setStep] = useState('passcode'); // 'passcode' | 'otp'
+  const [step, setStep] = useState('code'); // 'code' | 'phone' | 'otp'
   const [passcode, setPasscode] = useState('');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  const submitCode = async (e) => {
+    e.preventDefault(); setError(''); setBusy(true);
+    try { await pitchApi('/check-passcode', { body: { passcode: passcode.trim() } }); setStep('phone'); }
+    catch (err) { setError(err.message); } finally { setBusy(false); }
+  };
   const sendCode = async (e) => {
-    e.preventDefault();
-    setError(''); setBusy(true);
-    try {
-      await pitchApi('/request-otp', { body: { passcode: passcode.trim(), phone: phone.trim() } });
-      setStep('otp');
-    } catch (err) { setError(err.message); } finally { setBusy(false); }
+    e.preventDefault(); setError(''); setBusy(true);
+    try { await pitchApi('/request-otp', { body: { passcode: passcode.trim(), phone: phone.trim() } }); setStep('otp'); }
+    catch (err) { setError(err.message); } finally { setBusy(false); }
   };
   const verify = async (e) => {
-    e.preventDefault();
-    setError(''); setBusy(true);
+    e.preventDefault(); enterFullscreen(); setError(''); setBusy(true);
     try {
       const { token } = await pitchApi('/verify-otp', { body: { passcode: passcode.trim(), phone: phone.trim(), otp: otp.trim() } });
       const data = await pitchApi('/data', { token });
       onUnlock(token, data);
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   };
+  const back = (to) => { setStep(to); setError(''); };
 
   const field = 'w-full rounded-[4px] border-[3px] border-white/20 bg-[#1c1a17] px-4 py-3 font-sans text-base text-white outline-none focus:border-[#FE5100]';
   const btn = 'w-full rounded-[4px] border-[3px] border-[#FE5100] bg-[#FE5100] px-6 py-3 font-heading text-base font-extrabold text-white transition hover:brightness-110 disabled:opacity-50';
+  const backBtn = 'w-full font-sans text-xs opacity-60 hover:opacity-100';
+  const subtitle = { code: 'Enter your access code to continue.', phone: 'Enter your phone — we’ll send a one-time code on WhatsApp.', otp: `Enter the code we sent on WhatsApp to ${phone}.` }[step];
+  const anim = { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -24 }, transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } };
 
   return (
-    <main className="fixed inset-0 flex items-center justify-center overflow-y-auto px-6 py-10 font-sans" style={{ background: '#141210', color: '#faf9f6' }}>
-      <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-20" style={{ background: 'radial-gradient(circle,#FE5100,transparent 70%)' }} />
+    <main className="fixed inset-0 flex items-center justify-center overflow-hidden px-6 py-10 font-sans" style={{ background: '#141210', color: '#faf9f6' }}>
+      <motion.div aria-hidden className="pointer-events-none absolute right-[-6rem] top-[-6rem] h-96 w-96 rounded-full"
+        style={{ background: 'radial-gradient(circle,#FE5100,transparent 70%)', opacity: 0.2 }}
+        animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }} />
       <div className="relative w-full max-w-sm">
         <div className="mb-6 flex items-center gap-2 font-heading text-lg font-extrabold">
           <img src="/sloth.png" alt="Book A Sloth" width="32" height="32" className="object-contain" /> Book A Sloth
         </div>
         <h1 className="font-heading text-3xl font-extrabold leading-tight text-[#faf9f6]">Investor access</h1>
-        <p className="mt-2 font-sans text-sm opacity-70">
-          {step === 'passcode'
-            ? 'Enter your access code and phone. We’ll send a one-time code on WhatsApp.'
-            : `Enter the code we sent on WhatsApp to ${phone}.`}
-        </p>
+        <div className="mt-3 flex gap-1.5">
+          {['code', 'phone', 'otp'].map((s, i) => (
+            <span key={s} className="h-1.5 w-6 rounded-full transition"
+              style={{ background: ['code', 'phone', 'otp'].indexOf(step) >= i ? '#FE5100' : '#3a352f' }} />
+          ))}
+        </div>
+        <p className="mt-3 min-h-[2.5rem] font-sans text-sm opacity-70">{subtitle}</p>
 
-        {step === 'passcode' ? (
-          <form onSubmit={sendCode} className="mt-6 space-y-3">
-            <input className={field} type="text" placeholder="Access code" value={passcode}
-              onChange={(e) => setPasscode(e.target.value)} autoFocus autoComplete="off" />
-            <input className={field} type="tel" placeholder="Phone (e.g. +91 98765 43210)" value={phone}
-              onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
-            {error && <p className="font-sans text-sm text-[#fca5a5]">{error}</p>}
-            <button className={btn} type="submit" disabled={busy || !passcode || !phone}>
-              {busy ? 'Sending…' : 'Send code on WhatsApp'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={verify} className="mt-6 space-y-3">
-            <input className={`${field} tracking-[0.4em]`} type="text" inputMode="numeric" placeholder="000000" value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} autoFocus autoComplete="one-time-code" />
-            {error && <p className="font-sans text-sm text-[#fca5a5]">{error}</p>}
-            <button className={btn} type="submit" disabled={busy || otp.length < 4}>
-              {busy ? 'Verifying…' : 'Verify & open deck'}
-            </button>
-            <button type="button" className="w-full font-sans text-xs opacity-60 hover:opacity-100"
-              onClick={() => { setStep('passcode'); setOtp(''); setError(''); }}>
-              ← Use a different code or number
-            </button>
-          </form>
-        )}
+        <div className="overflow-hidden">
+          <AnimatePresence mode="wait">
+            {step === 'code' && (
+              <motion.form key="code" {...anim} onSubmit={submitCode} className="space-y-3">
+                <input className={field} type="text" placeholder="Access code" value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)} autoFocus autoComplete="off" />
+                {error && <p className="font-sans text-sm text-[#fca5a5]">{error}</p>}
+                <button className={btn} type="submit" disabled={busy || !passcode}>{busy ? 'Checking…' : 'Continue'}</button>
+              </motion.form>
+            )}
+            {step === 'phone' && (
+              <motion.form key="phone" {...anim} onSubmit={sendCode} className="space-y-3">
+                <input className={field} type="tel" placeholder="Phone (e.g. +91 98765 43210)" value={phone}
+                  onChange={(e) => setPhone(e.target.value)} autoFocus autoComplete="tel" />
+                {error && <p className="font-sans text-sm text-[#fca5a5]">{error}</p>}
+                <button className={btn} type="submit" disabled={busy || !phone}>{busy ? 'Sending…' : 'Send code on WhatsApp'}</button>
+                <button type="button" className={backBtn} onClick={() => back('code')}>← Back</button>
+              </motion.form>
+            )}
+            {step === 'otp' && (
+              <motion.form key="otp" {...anim} onSubmit={verify} className="space-y-3">
+                <input className={`${field} tracking-[0.4em]`} type="text" inputMode="numeric" placeholder="000000" value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} autoFocus autoComplete="one-time-code" />
+                {error && <p className="font-sans text-sm text-[#fca5a5]">{error}</p>}
+                <button className={btn} type="submit" disabled={busy || otp.length < 4}>{busy ? 'Verifying…' : 'Verify & open deck'}</button>
+                <button type="button" className={backBtn} onClick={() => back('phone')}>← Change number</button>
+              </motion.form>
+            )}
+          </AnimatePresence>
+        </div>
         <p className="mt-8 font-sans text-[11px] opacity-40">Confidential · time-limited access · {FOUNDER.handle}</p>
       </div>
     </main>
@@ -433,16 +448,17 @@ function Splash({ text = 'Loading…' }) {
 
 // ── The deck body (mounted only once figures are fetched; d = payload) ────────
 function DeckBody({ d }) {
-  const { active, scrollTo } = useDeckNav();
+  const { active } = useDeckNav();
   const paidPct = Math.round((d.funnel[2].v / d.funnel[0].v) * 100);
   return (
-    <main id="deck-scroll" className="fixed inset-0 overflow-y-auto snap-y snap-mandatory scroll-smooth font-sans text-ink">
+    <main id="deck-scroll" className="fixed inset-0 overflow-x-hidden overflow-y-auto snap-y snap-mandatory scroll-smooth font-sans text-ink">
       <div className="fixed left-0 top-0 z-30 h-1 bg-[#FE5100] transition-all" style={{ width: `${((active + 1) / SLIDE_META.length) * 100}%` }} />
       <div className="fixed left-4 top-4 z-30 font-heading text-xs font-extrabold tracking-widest">
         <span style={{ color: '#FE5100' }}>{String(active + 1).padStart(2, '0')}</span>
         <span className="opacity-40"> / {String(SLIDE_META.length).padStart(2, '0')}</span>
       </div>
-      <DotRail active={active} scrollTo={scrollTo} />
+      <button onClick={toggleFullscreen} aria-label="Toggle fullscreen" title="Toggle fullscreen"
+        className="fixed right-4 top-4 z-30 rounded-[4px] border-2 border-ink/20 bg-white/70 px-2 py-1 font-sans text-xs font-bold text-ink backdrop-blur transition hover:border-ink">⛶</button>
 
       {/* COVER */}
       <Slide id="cover" dark className="relative overflow-hidden">

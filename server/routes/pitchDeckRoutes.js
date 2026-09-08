@@ -5,12 +5,14 @@
 // (per-IP + per-contact) to stop passcode brute-force and OTP bombing.
 const express = require('express');
 const { otpLimiter, otpContactLimiter, authLimiter } = require('../middleware/security');
-const { requestOtp, verifyOtp, getData } = require('../controllers/pitchDeckController');
+const { checkPasscodeOnly, requestOtp, verifyOtp, getData, accessLog } = require('../controllers/pitchDeckController');
 
 const router = express.Router();
 
+router.post('/check-passcode', authLimiter, checkPasscodeOnly);
 router.post('/request-otp', otpLimiter, otpContactLimiter, requestOtp);
 router.post('/verify-otp', otpLimiter, otpContactLimiter, verifyOtp);
 router.get('/data', authLimiter, getData);
+router.post('/access-log', authLimiter, accessLog);
 
 module.exports = router;
