@@ -321,6 +321,7 @@ export const adminSeoCrawlStatus  = (id)      => API.get(`/admin/seo/crawl/${id}
 export const adminSeoMuteIssue    = (id, data) => API.post(`/admin/seo/issues/${id}/mute`, data);
 export const adminSeoScoreHistory = ()        => API.get('/admin/seo/scores/history');
 export const adminSeoGsc          = (params)  => API.get('/admin/seo/gsc', { params });
+export const adminSeoGscSync      = ()        => API.post('/admin/seo/gsc/sync');
 
 // Admin — Payout approval
 export const adminGetPayouts     = (status)         => API.get('/admin/payouts', { params: status ? { status } : {} });

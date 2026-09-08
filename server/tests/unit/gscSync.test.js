@@ -1,9 +1,11 @@
 // server/tests/unit/gscSync.test.js
 jest.mock('../../services/seo/gscClient');
 jest.mock('../../config/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
+jest.mock('../../utils/jobLock', () => ({ runLocked: jest.fn((_n, fn) => fn()) }));
 
 const gscClient = require('../../services/seo/gscClient');
 const { supabaseAdmin } = require('../../config/supabase');
+const { runLocked } = require('../../utils/jobLock');
 const gscSync = require('../../services/seo/gscSync');
 
 const makeQuery = (result) => {
@@ -117,4 +119,14 @@ test('run() isolates a single URL inspection failure — other URLs still upsert
   const rows = upsert.mock.calls[0][0];
   expect(rows.map((r) => r.url)).toEqual(['https://bookasloth.com/good']);
   expect(result.upserted).toBe(1);
+});
+
+test('run() returns {skipped:true} without calling the API when a sync is already in flight', async () => {
+  gscClient.isConfigured.mockReturnValue(true);
+  runLocked.mockResolvedValueOnce(undefined); // lock held by a concurrent run
+
+  const result = await gscSync.run();
+
+  expect(result).toEqual({ skipped: true, reason: 'in-flight' });
+  expect(gscClient.getClient).not.toHaveBeenCalled();
 });

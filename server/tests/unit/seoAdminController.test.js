@@ -4,9 +4,12 @@ jest.mock('../../utils/httpError', () => ({ safeError: jest.fn((res, err) => res
 jest.mock('../../services/seo/seoCrawler', () => ({ start: jest.fn(async () => 'crawlX') }));
 jest.mock('../../services/auditService', () => ({ audit: jest.fn() }));
 jest.mock('../../services/seo/gscClient', () => ({ isConfigured: jest.fn(() => true) }));
+jest.mock('../../services/seo/gscSync', () => ({ run: jest.fn(() => Promise.resolve({ upserted: 0 })) }));
 
 const { supabaseAdmin } = require('../../config/supabase');
 const crawler = require('../../services/seo/seoCrawler');
+const gscClient = require('../../services/seo/gscClient');
+const gscSync = require('../../services/seo/gscSync');
 const ctrl = require('../../controllers/seoAdminController');
 
 const makeQuery = (result) => {
@@ -52,4 +55,20 @@ test('getGsc fails soft to an empty array when the query errors', async () => {
   const r = res();
   await ctrl.getGsc({ query: {} }, r);
   expect(r.json).toHaveBeenCalledWith({ gsc: [], configured: true });
+});
+
+test('postGscSync starts the sync when configured', async () => {
+  gscClient.isConfigured.mockReturnValue(true);
+  const r = res();
+  await ctrl.postGscSync({}, r);
+  expect(r.json).toHaveBeenCalledWith({ configured: true, started: true });
+  expect(gscSync.run).toHaveBeenCalled();
+});
+
+test('postGscSync no-ops when GSC is not configured', async () => {
+  gscClient.isConfigured.mockReturnValue(false);
+  const r = res();
+  await ctrl.postGscSync({}, r);
+  expect(r.json).toHaveBeenCalledWith({ configured: false, started: false });
+  expect(gscSync.run).not.toHaveBeenCalled();
 });

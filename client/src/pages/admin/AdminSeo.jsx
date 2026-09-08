@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { PageHeader, Card, StatCard, Badge, Skeleton } from '../../components/admin/ui';
 import {
   adminSeoOverview, adminSeoIssues, adminSeoPages,
-  adminSeoRunCrawl, adminSeoCrawlStatus, adminSeoMuteIssue, adminSeoGsc,
+  adminSeoRunCrawl, adminSeoCrawlStatus, adminSeoMuteIssue, adminSeoGsc, adminSeoGscSync,
 } from '../../services/api';
 
 const TABS = [
@@ -307,22 +307,42 @@ function GscTab() {
   const [gsc, setGsc] = useState([]);
   const [configured, setConfigured] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await adminSeoGsc();
-        setGsc(res.data.gsc || []);
-        setConfigured(!!res.data.configured);
-      } catch (e) {
-        toast.error(e.response?.data?.message || 'Failed to load Search Console data');
-        setGsc([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const loadGsc = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminSeoGsc();
+      setGsc(res.data.gsc || []);
+      setConfigured(!!res.data.configured);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to load Search Console data');
+      setGsc([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { loadGsc(); }, [loadGsc]);
+
+  const runSync = async () => {
+    setSyncing(true);
+    try {
+      const res = await adminSeoGscSync();
+      if (res.data.configured === false) {
+        toast.error('Search Console not connected — set GSC_SA_KEY / GSC_PROPERTY');
+      } else {
+        toast.success('Sync started — refreshing in ~30s');
+        setTimeout(() => { if (mountedRef.current) loadGsc(); }, 30000);
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to start sync');
+    } finally {
+      if (mountedRef.current) setSyncing(false);
+    }
+  };
 
   if (loading) return <Skeleton className="h-40" />;
 
@@ -333,6 +353,15 @@ function GscTab() {
           Google Search Console not connected — set GSC_SA_KEY and GSC_PROPERTY to enable.
         </Card>
       )}
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={runSync}
+          disabled={syncing}
+          className="adm-btn adm-btn-primary text-sm px-3 py-1.5 rounded-lg disabled:opacity-50"
+        >
+          {syncing ? 'Syncing…' : 'Sync GSC now'}
+        </button>
+      </div>
       <Card className="p-0 overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="text-[11px] uppercase tracking-wide adm-t3 border-b adm-border">

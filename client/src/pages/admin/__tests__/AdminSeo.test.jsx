@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import AdminSeo from '../AdminSeo';
+import * as api from '../../../services/api';
 
 vi.mock('../../../services/api', () => ({
   adminSeoOverview: vi.fn(() => Promise.resolve({ data: {
@@ -19,6 +20,7 @@ vi.mock('../../../services/api', () => ({
   adminSeoGsc: vi.fn(() => Promise.resolve({ data: { gsc: [
     { url: 'https://bookasloth.com/x', coverage_state: 'Submitted and indexed', impressions: 42, clicks: 3, position: 5.2 },
   ], configured: true } })),
+  adminSeoGscSync: vi.fn(() => Promise.resolve({ data: { configured: true, started: true } })),
 }));
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }));
 
@@ -35,5 +37,25 @@ describe('AdminSeo', () => {
     fireEvent.click(screen.getByText('Search Console'));
     await waitFor(() => expect(screen.getByText('42')).toBeTruthy());
     expect(screen.getByText('Submitted and indexed')).toBeTruthy();
+  });
+
+  it('triggers a manual GSC sync from the Search Console tab', async () => {
+    render(<MemoryRouter><AdminSeo /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByText('82')).toBeTruthy());
+    fireEvent.click(screen.getByText('Search Console'));
+    await waitFor(() => expect(screen.getByText('42')).toBeTruthy());
+    fireEvent.click(screen.getByText('Sync GSC now'));
+    await waitFor(() => expect(api.adminSeoGscSync).toHaveBeenCalled());
+  });
+
+  it('shows a not-connected toast when GSC sync is triggered while unconfigured', async () => {
+    const toast = (await import('react-hot-toast')).default;
+    api.adminSeoGscSync.mockResolvedValueOnce({ data: { configured: false, started: false } });
+    render(<MemoryRouter><AdminSeo /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByText('82')).toBeTruthy());
+    fireEvent.click(screen.getByText('Search Console'));
+    await waitFor(() => expect(screen.getByText('42')).toBeTruthy());
+    fireEvent.click(screen.getByText('Sync GSC now'));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('not connected')));
   });
 });

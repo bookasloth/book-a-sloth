@@ -2,6 +2,7 @@
 // No-ops gracefully when GSC creds aren't configured yet (ships pre-cutover).
 const gscClient = require('./gscClient');
 const { supabaseAdmin } = require('../../config/supabase');
+const { runLocked } = require('../../utils/jobLock');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -31,94 +32,102 @@ async function run() {
     return { skipped: true };
   }
 
-  const sc = gscClient.getClient();
-  const siteUrl = gscClient.siteUrl();
+  // Distinct lock name from the scheduler's outer runLocked('gsc-sync') — a manual
+  // trigger calls run() directly with no outer lock, so the sync body needs its own
+  // lease here to stay safe against overlap with a concurrent run (manual or nightly).
+  const result = await runLocked('gsc-sync-exec', async () => {
+    const sc = gscClient.getClient();
+    const siteUrl = gscClient.siteUrl();
 
-  const urls = await seedUrls();
+    const urls = await seedUrls();
 
-  // URL Inspection — per URL, throttled, each failure isolated.
-  const inspectionByUrl = new Map();
-  for (const url of urls) {
+    // URL Inspection — per URL, throttled, each failure isolated.
+    const inspectionByUrl = new Map();
+    for (const url of urls) {
+      try {
+        const res = await sc.urlInspection.index.inspect({ requestBody: { inspectionUrl: url, siteUrl } });
+        const result = res?.data?.inspectionResult?.indexStatusResult || {};
+        inspectionByUrl.set(url, {
+          coverage_state: result.coverageState || null,
+          indexing_state: result.indexingState || null,
+          google_canonical: result.googleCanonical || null,
+          user_canonical: result.userCanonical || null,
+          robots_txt_state: result.robotsTxtState || null,
+          last_crawl_time: result.lastCrawlTime || null,
+          inspection_raw: result,
+        });
+      } catch (err) {
+        console.warn(`[gsc-sync] inspection failed for ${url}:`, err.message);
+      }
+      await sleep(120);
+    }
+
+    // Search Analytics — one batched call, last 28 days.
+    const analyticsByUrl = new Map();
+    const today = new Date();
+    const start = new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000);
+    let analyticsRows = 0;
     try {
-      const res = await sc.urlInspection.index.inspect({ requestBody: { inspectionUrl: url, siteUrl } });
-      const result = res?.data?.inspectionResult?.indexStatusResult || {};
-      inspectionByUrl.set(url, {
-        coverage_state: result.coverageState || null,
-        indexing_state: result.indexingState || null,
-        google_canonical: result.googleCanonical || null,
-        user_canonical: result.userCanonical || null,
-        robots_txt_state: result.robotsTxtState || null,
-        last_crawl_time: result.lastCrawlTime || null,
-        inspection_raw: result,
+      const res = await sc.searchanalytics.query({
+        siteUrl,
+        requestBody: {
+          startDate: isoDate(start),
+          endDate: isoDate(today),
+          dimensions: ['page'],
+          rowLimit: 25000,
+        },
       });
+      const rows = res?.data?.rows || [];
+      analyticsRows = rows.length;
+      for (const row of rows) {
+        const page = row.keys?.[0];
+        if (!page) continue;
+        analyticsByUrl.set(page, {
+          impressions: row.impressions || 0,
+          clicks: row.clicks || 0,
+          ctr: row.ctr || 0,
+          position: row.position || null,
+          analytics_raw: row,
+        });
+      }
     } catch (err) {
-      console.warn(`[gsc-sync] inspection failed for ${url}:`, err.message);
+      console.warn('[gsc-sync] search analytics query failed:', err.message);
     }
-    await sleep(120);
-  }
 
-  // Search Analytics — one batched call, last 28 days.
-  const analyticsByUrl = new Map();
-  const today = new Date();
-  const start = new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000);
-  let analyticsRows = 0;
-  try {
-    const res = await sc.searchanalytics.query({
-      siteUrl,
-      requestBody: {
-        startDate: isoDate(start),
-        endDate: isoDate(today),
-        dimensions: ['page'],
-        rowLimit: 25000,
-      },
+    // Merge + upsert.
+    const allUrls = new Set([...inspectionByUrl.keys(), ...analyticsByUrl.keys()]);
+    const now = new Date().toISOString();
+    const rows = [...allUrls].map((url) => {
+      const insp = inspectionByUrl.get(url) || {};
+      const an = analyticsByUrl.get(url) || {};
+      return {
+        url,
+        coverage_state: insp.coverage_state ?? null,
+        indexing_state: insp.indexing_state ?? null,
+        google_canonical: insp.google_canonical ?? null,
+        user_canonical: insp.user_canonical ?? null,
+        robots_txt_state: insp.robots_txt_state ?? null,
+        last_crawl_time: insp.last_crawl_time ?? null,
+        impressions: an.impressions ?? 0,
+        clicks: an.clicks ?? 0,
+        ctr: an.ctr ?? 0,
+        position: an.position ?? null,
+        inspection_raw: insp.inspection_raw ?? {},
+        analytics_raw: an.analytics_raw ?? {},
+        last_synced: now,
+      };
     });
-    const rows = res?.data?.rows || [];
-    analyticsRows = rows.length;
-    for (const row of rows) {
-      const page = row.keys?.[0];
-      if (!page) continue;
-      analyticsByUrl.set(page, {
-        impressions: row.impressions || 0,
-        clicks: row.clicks || 0,
-        ctr: row.ctr || 0,
-        position: row.position || null,
-        analytics_raw: row,
-      });
-    }
-  } catch (err) {
-    console.warn('[gsc-sync] search analytics query failed:', err.message);
-  }
 
-  // Merge + upsert.
-  const allUrls = new Set([...inspectionByUrl.keys(), ...analyticsByUrl.keys()]);
-  const now = new Date().toISOString();
-  const rows = [...allUrls].map((url) => {
-    const insp = inspectionByUrl.get(url) || {};
-    const an = analyticsByUrl.get(url) || {};
-    return {
-      url,
-      coverage_state: insp.coverage_state ?? null,
-      indexing_state: insp.indexing_state ?? null,
-      google_canonical: insp.google_canonical ?? null,
-      user_canonical: insp.user_canonical ?? null,
-      robots_txt_state: insp.robots_txt_state ?? null,
-      last_crawl_time: insp.last_crawl_time ?? null,
-      impressions: an.impressions ?? 0,
-      clicks: an.clicks ?? 0,
-      ctr: an.ctr ?? 0,
-      position: an.position ?? null,
-      inspection_raw: insp.inspection_raw ?? {},
-      analytics_raw: an.analytics_raw ?? {},
-      last_synced: now,
-    };
+    if (rows.length) {
+      const { error } = await supabaseAdmin.from('seo_gsc_urls').upsert(rows, { onConflict: 'url' });
+      if (error) throw error;
+    }
+
+    return { inspected: inspectionByUrl.size, analytics: analyticsRows, upserted: rows.length };
   });
 
-  if (rows.length) {
-    const { error } = await supabaseAdmin.from('seo_gsc_urls').upsert(rows, { onConflict: 'url' });
-    if (error) throw error;
-  }
-
-  return { inspected: inspectionByUrl.size, analytics: analyticsRows, upserted: rows.length };
+  if (result === undefined) return { skipped: true, reason: 'in-flight' };
+  return result;
 }
 
 module.exports = { run };
