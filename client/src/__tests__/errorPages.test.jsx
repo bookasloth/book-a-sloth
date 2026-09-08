@@ -41,10 +41,10 @@ describe('errorCatalog integrity', () => {
 });
 
 describe('ErrorPage renders from config', () => {
-  it('renders the 404 title, eyebrow and CTA', () => {
+  it('renders the 404 title and CTA', () => {
     renderAt(<ErrorPage code={404} />);
+    // #984 flat redesign dropped the "Error 404" eyebrow — title + CTA are the page now.
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('This page pulled a vanishing act');
-    expect(screen.getByText('Error 404')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Go Home' })).toBeInTheDocument();
   });
 
