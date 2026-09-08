@@ -270,6 +270,14 @@ export default function SalesLeads() {
       <div className="adm-t2 min-w-0"><InlineText value={r.business_name} onSave={(v) => saveField(r.id, 'business_name', v)} placeholder={categoryLabel(r.profession, categories) || '—'} /></div>
     )},
     { key: 'source', label: 'Source', render: (r) => <span className="text-[11px] adm-t3">{r.source}</span> },
+    { key: 'tags', label: 'Tags', render: (r) => (
+      (r.tags || []).length
+        ? <div className="flex flex-wrap gap-1">
+            {r.tags.slice(0, 3).map((tg) => <TagChip key={tg} name={tg} color={tagColors[tg]} />)}
+            {r.tags.length > 3 && <span className="text-[11px] adm-t3">+{r.tags.length - 3}</span>}
+          </div>
+        : <span className="text-[11px] adm-t3">—</span>
+    )},
     { key: 'stage', label: 'Stage', render: (r) => <InlineStatus value={r.status} onSave={(s) => saveStage(r.id, r.status, s)} /> },
     { key: 'next', label: 'Next action', render: (r) => {
       const due = nextFollow(r);
