@@ -13,7 +13,7 @@ import {
   Heart, MessageCircle, Repeat2, ThumbsUp, Share2, Send, Bookmark, Play, ArrowRight,
 } from 'lucide-react';
 import Seo from '../components/common/Seo';
-import { collectionPageJsonLd, breadcrumbJsonLd } from '../utils/seo';
+import { collectionPageJsonLd, breadcrumbJsonLd, SITE_URL } from '../utils/seo';
 import {
   WALL_TWEETS, WALL_GOOGLE, WALL_LINKEDIN, WALL_INSTAGRAM, WALL_YOUTUBE_PLACEHOLDERS,
 } from '../data/wallOfLove';
@@ -203,6 +203,7 @@ export default function WallOfLove() {
       <Seo
         title="Wall of Love — Book A Sloth"
         description="Real words from Book A Sloth hosts who publish services, get booked, and get paid — across X, Google, LinkedIn and Instagram."
+        canonical={`${SITE_URL}/wall-of-love`}
         jsonLd={[
           collectionPageJsonLd({
             name: 'Wall of Love — Book A Sloth',

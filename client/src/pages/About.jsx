@@ -1,6 +1,6 @@
 import Seo from "../components/common/Seo";
 import { ogCard } from "../config/ogImages";
-import { ORG_SAME_AS } from "../utils/seo";
+import { ORG_SAME_AS, SITE_URL } from "../utils/seo";
 import useAboutMotion from "../components/about/useAboutMotion";
 import HeroV2 from "../components/about/HeroV2";
 import LogoMarquee from "../components/about/LogoMarquee";
@@ -31,6 +31,7 @@ export default function About() {
         title="About Book A Sloth — the calm way to get booked"
         description="Why we exist, who we are, and how we help creators get booked and paid without commission."
         image={ogCard('about')}
+        canonical={`${SITE_URL}/about`}
         jsonLd={JSON_LD}
       />
       {/* Sequence: Hero → Brands → How it works → Team → Belief → Join → Testimonials → FAQ */}
