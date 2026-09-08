@@ -33,5 +33,11 @@ const REGISTRY = {
   'schema.invalid_json':       { category: 'onpage',         severity: 'P2', confidence: 1,   autoFixable: false, title: 'Invalid JSON-LD' },
   'schema.wrong_type':         { category: 'onpage',         severity: 'P3', confidence: 0.6, autoFixable: false, title: 'Missing expected schema type' },
   'sitemap.missing_indexable': { category: 'indexability',   severity: 'P2', confidence: 0.8, autoFixable: false, title: 'Indexable page missing from sitemap' },
+  // Google Search Console (gsc-sync → seo_gsc_urls)
+  'gsc.google_chose_different_canonical': { category: 'indexability', severity: 'P1', confidence: 0.9, autoFixable: false, title: 'Google chose a different canonical' },
+  'gsc.soft_404':               { category: 'indexability', severity: 'P1', confidence: 0.9, autoFixable: false, title: 'Google reports soft 404' },
+  'gsc.crawled_not_indexed':    { category: 'indexability', severity: 'P2', confidence: 0.8, autoFixable: false, title: 'Crawled — currently not indexed (GSC)' },
+  'gsc.indexable_mismatch':     { category: 'indexability', severity: 'P2', confidence: 0.7, autoFixable: false, title: 'We flag indexable but Google has not indexed it' },
+  'gsc.discovered_not_indexed': { category: 'indexability', severity: 'P4', confidence: 0.6, autoFixable: false, title: 'Discovered — not yet indexed (GSC)' },
 };
 module.exports = { REGISTRY };

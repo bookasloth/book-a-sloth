@@ -98,7 +98,29 @@ const postMuteIssue = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── GET /admin/seo/gsc ─────────────────────────────────────────
+const getGsc = async (req, res) => {
+  try {
+    const gsc = await svc.listGscUrls(req.query);
+    const configured = require('../services/seo/gscClient').isConfigured();
+    res.json({ gsc, configured });
+  } catch (e) { safeError(res, e); }
+};
+
+// ── POST /admin/seo/gsc/sync ────────────────────────────────────
+// Manual trigger for the GSC sync (normally nightly-only). Fire-and-forget —
+// gscSync.run() holds its own lock (gsc-sync-exec) so this can't overlap a
+// concurrent run; we don't await it here, just kick it off and return.
+const postGscSync = async (req, res) => {
+  try {
+    const configured = require('../services/seo/gscClient').isConfigured();
+    if (!configured) return res.json({ configured: false, started: false });
+    require('../services/seo/gscSync').run().catch((e) => console.error('[gsc-sync manual] error:', e.message));
+    res.json({ configured: true, started: true });
+  } catch (e) { safeError(res, e); }
+};
+
 module.exports = {
   getOverview, getIssues, getIssue, getPages, getPage,
-  getScoreHistory, postCrawl, getCrawl, postMuteIssue,
+  getScoreHistory, postCrawl, getCrawl, postMuteIssue, getGsc, postGscSync,
 };

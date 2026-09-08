@@ -63,6 +63,16 @@ async function getCrawl(id) {
   return unwrap(await supabaseAdmin.from('seo_crawls').select('*').eq('id', id).maybeSingle());
 }
 
+// GSC-synced URLs (seo_gsc_urls, populated by services/seo/gscSync). Fail soft:
+// table may not exist yet pre-cutover, or the query may error — never throw.
+async function listGscUrls({ limit = 500 } = {}) {
+  try {
+    return unwrap(await supabaseAdmin.from('seo_gsc_urls').select('*').order('impressions', { ascending: false }).limit(limit));
+  } catch (e) {
+    return [];
+  }
+}
+
 // Mute an issue: rule-wide (ruleType 'rule', url_pattern null) or just this URL
 // (ruleType 'url', url_pattern = the issue's affected_url). Matches seoPersist's
 // isMuted() lookup (rule_key + optional url_pattern).
@@ -85,4 +95,4 @@ async function muteIssue(id, { ruleType, mutedBy } = {}) {
   return (data && data[0]) || row;
 }
 
-module.exports = { latestOverview, listIssues, getIssue, listPages, getPage, scoreHistory, getCrawl, muteIssue };
+module.exports = { latestOverview, listIssues, getIssue, listPages, getPage, scoreHistory, getCrawl, muteIssue, listGscUrls };

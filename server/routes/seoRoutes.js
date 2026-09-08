@@ -17,5 +17,7 @@ router.get('/scores/history', requireAdmin('seo.manage'), c.getScoreHistory);
 router.post('/crawl', requireAdmin('seo.manage'), c.postCrawl);
 router.get('/crawl/:id', requireAdmin('seo.manage'), c.getCrawl);
 router.post('/issues/:id/mute', requireAdmin('seo.manage'), c.postMuteIssue);
+router.get('/gsc', requireAdmin('seo.manage'), c.getGsc);
+router.post('/gsc/sync', requireAdmin('seo.manage'), c.postGscSync);
 
 module.exports = router;

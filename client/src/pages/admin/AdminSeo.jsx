@@ -6,13 +6,14 @@ import toast from 'react-hot-toast';
 import { PageHeader, Card, StatCard, Badge, Skeleton } from '../../components/admin/ui';
 import {
   adminSeoOverview, adminSeoIssues, adminSeoPages,
-  adminSeoRunCrawl, adminSeoCrawlStatus, adminSeoMuteIssue,
+  adminSeoRunCrawl, adminSeoCrawlStatus, adminSeoMuteIssue, adminSeoGsc, adminSeoGscSync,
 } from '../../services/api';
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'issues', label: 'Issues' },
   { key: 'pages', label: 'Pages' },
+  { key: 'gsc', label: 'Search Console' },
 ];
 
 const SEVERITY_TONE = { P0: 'danger', P1: 'danger', P2: 'warn', P3: 'neutral', P4: 'neutral' };
@@ -141,6 +142,7 @@ export default function AdminSeo() {
 
       {tab === 'issues' && <IssuesTab />}
       {tab === 'pages' && <PagesTab />}
+      {tab === 'gsc' && <GscTab />}
     </div>
   );
 }
@@ -298,5 +300,95 @@ function PagesTab() {
         </tbody>
       </table>
     </Card>
+  );
+}
+
+function GscTab() {
+  const [gsc, setGsc] = useState([]);
+  const [configured, setConfigured] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
+  const loadGsc = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminSeoGsc();
+      setGsc(res.data.gsc || []);
+      setConfigured(!!res.data.configured);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to load Search Console data');
+      setGsc([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadGsc(); }, [loadGsc]);
+
+  const runSync = async () => {
+    setSyncing(true);
+    try {
+      const res = await adminSeoGscSync();
+      if (res.data.configured === false) {
+        toast.error('Search Console not connected — set GSC_SA_KEY / GSC_PROPERTY');
+      } else {
+        toast.success('Sync started — refreshing in ~30s');
+        setTimeout(() => { if (mountedRef.current) loadGsc(); }, 30000);
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to start sync');
+    } finally {
+      if (mountedRef.current) setSyncing(false);
+    }
+  };
+
+  if (loading) return <Skeleton className="h-40" />;
+
+  return (
+    <div>
+      {!configured && (
+        <Card className="mb-4 text-sm">
+          Google Search Console not connected — set GSC_SA_KEY and GSC_PROPERTY to enable.
+        </Card>
+      )}
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={runSync}
+          disabled={syncing}
+          className="adm-btn adm-btn-primary text-sm px-3 py-1.5 rounded-lg disabled:opacity-50"
+        >
+          {syncing ? 'Syncing…' : 'Sync GSC now'}
+        </button>
+      </div>
+      <Card className="p-0 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead><tr className="text-[11px] uppercase tracking-wide adm-t3 border-b adm-border">
+            <th className="text-left py-2 px-4">URL</th>
+            <th className="text-left py-2 px-4">Coverage</th>
+            <th className="text-right py-2 px-4">Impressions</th>
+            <th className="text-right py-2 px-4">Clicks</th>
+            <th className="text-right py-2 px-4">Position</th>
+          </tr></thead>
+          <tbody>
+            {gsc.map((row) => (
+              <tr key={row.id || row.url} className="border-b adm-border last:border-0">
+                <td className="py-2 px-4 break-all">{row.url}</td>
+                <td className="py-2 px-4">{row.coverage_state || '—'}</td>
+                <td className="py-2 px-4 text-right">{row.impressions ?? 0}</td>
+                <td className="py-2 px-4 text-right">{row.clicks ?? 0}</td>
+                <td className="py-2 px-4 text-right">{row.position != null ? Math.round(row.position) : '—'}</td>
+              </tr>
+            ))}
+            {!gsc.length && (
+              <tr><td colSpan={5} className="py-6 text-center adm-t3">
+                {configured ? 'No Search Console data yet — runs on the next gsc-sync' : 'No data — connect Search Console to enable.'}
+              </td></tr>
+            )}
+          </tbody>
+        </table>
+      </Card>
+    </div>
   );
 }

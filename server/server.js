@@ -412,6 +412,7 @@ const SCHEDULED_JOBS = [
   { name: 'rate-limit-cleanup', min: 60, run: async () => { const n = await cleanupRateLimitHits(); if (n > 0) console.log(`Rate-limit store: pruned ${n} expired rows`); } },
   { name: 'ip-block-prune', min: 60, run: async () => { const n = await ipBlocklist.pruneExpired(); if (n > 0) console.log(`IP blocklist: pruned ${n} expired bans`); } },
   { name: 'seo-crawl', min: Number(process.env.SEO_CRAWL_INTERVAL_MIN) || 24 * 60, run: () => require('./services/seo/seoCrawler').run({ trigger: 'nightly' }) },
+  { name: 'gsc-sync', min: Number(process.env.GSC_SYNC_INTERVAL_MIN) || 24 * 60, run: () => require('./services/seo/gscSync').run() },
 ];
 const SCHEDULER_TICK_MIN = Number(process.env.SCHEDULER_TICK_MIN) || 5;
 setInterval(async () => {
