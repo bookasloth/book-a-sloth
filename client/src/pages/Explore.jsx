@@ -169,7 +169,7 @@ function ExploreFull() {
               <input
                 value={inputVal}
                 onChange={e => setInputVal(e.target.value)}
-                placeholder="Search services by skill or topic..."
+                placeholder="Try “Mock Interview in Nagpur” or “Career Consultation online”"
                 aria-label="Search services"
                 className="flex-1 bg-transparent px-4 py-3 text-[15px] text-ink outline-none placeholder:text-muted"
               />
