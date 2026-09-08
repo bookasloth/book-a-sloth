@@ -329,6 +329,16 @@ const SERVICE_CATEGORY_SEED = {
   'spa-owner': ['Full Body Massage', 'Swedish Massage', 'Deep Tissue Massage', 'Aromatherapy Massage', 'Thai Massage', 'Hot Stone Massage', 'Couple Massage', 'Foot Massage', 'Head Massage', 'Body Scrub', 'Body Polishing', 'Facial', 'Body Wrap', 'Steam Bath', 'Sauna Session', 'Reflexology', 'Ayurvedic Massage', 'Detox Therapy', 'Prenatal Massage', 'Spa Day Package'],
   'salon-owner': ['Haircut', 'Hair Coloring', 'Hair Spa', 'Facial', 'Cleanup', 'Manicure', 'Pedicure', 'Waxing', 'Threading', 'Bleach', 'Bridal Package', 'Groom Package', 'Hair Straightening', 'Makeup', 'Head Massage', 'Body Polishing', 'De-Tan Treatment', 'Beard Grooming', 'Party Package', 'Hair Treatment'],
   'recording-studio-owner': ['Song Recording', 'Vocal Recording', 'Instrument Recording', 'Mixing', 'Mastering', 'Music Production', 'Voice Over Recording', 'Podcast Recording', 'Jingle Production', 'Audiobook Recording', 'Dubbing', 'Beat Making', 'Sound Design', 'Live Session Recording', 'Cover Song Recording', 'Rehearsal Space Booking', 'Album Production', 'Audio Editing', 'Studio Rental'],
+
+  // ── Sports & Venues ─────────────────────────────────────────────────────────
+  // Sports facility / arena operators renting time-slots of a court, turf, ground
+  // or lane (and the coaching/membership they sell on the same facility). All
+  // OUTSIDE GST §9(5) — facility rental is not accommodation/transport/food.
+  // NOTE (product): today's booking flow is appointment-shaped (one calendar, flat
+  // price, no advance/deposit, no per-court parallel resources). These services work
+  // for a single-court arena + the coaching side; multi-court, advance-collection
+  // and peak/off-peak pricing are a separate build (see GROWTH-STRATEGY.md gaps).
+  'sports-arena': ['Football Turf', 'Box Cricket', 'Cricket Nets', 'Badminton Court', 'Pickleball Court', 'Tennis Court', 'Basketball Court', 'Volleyball Court', 'Futsal Court', 'Table Tennis', 'Squash Court', 'Swimming Pool Lane', 'Gaming Arena', 'Snooker & Pool Table', 'Golf Simulator', 'Skating Rink', 'Bowling Lane', 'Multipurpose Ground', 'Full Ground Rental', 'Cricket Coaching', 'Football Coaching', 'Tennis Coaching', 'Swimming Lessons', 'Monthly Membership', 'Sports Event Booking'],
 };
 
 module.exports = { SERVICE_CATEGORY_SEED };
