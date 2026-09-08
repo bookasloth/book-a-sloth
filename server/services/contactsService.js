@@ -9,7 +9,9 @@ const { supabaseAdmin } = require('../config/supabase');
 
 const norm = (e) => (e || '').trim().toLowerCase();
 
-const TYPE_RANK = { vendor: 3, buyer: 2, guest: 1 };
+// prospect (cold CRM lead) is the LOWEST rank: syncing a lead never demotes a
+// real guest/vendor/buyer, and a prospect who later books gets upgraded to guest.
+const TYPE_RANK = { vendor: 3, buyer: 2, guest: 1, prospect: 0 };
 const rankType = (a, b) => ((TYPE_RANK[b] || 0) > (TYPE_RANK[a] || 0) ? b : (a || b));
 
 async function loadExistingByEmail() {
@@ -104,14 +106,29 @@ async function sync() {
 function buildLeadContactRow(lead, prev = {}, now) {
   const dnc = !!lead.do_not_contact || lead.status === 'do_not_contact';
   const prevSource = prev.source || '';
+  // Cold imported prospects become contact_type='prospect' (firewalled from the
+  // generic guest/all-contacts audiences) and carry their lead tags/profession/
+  // grade onto the contact so campaign segments can target them.
+  const isCold = ['import', 'cold_outreach'].includes(lead.source);
+  const leadAttrs = lead.attributes || {};
   return {
     id: prev.id || randomUUID(), // see sync(): id-less rows in a mixed batch fail NOT NULL
     email: norm(lead.email),
     name: lead.name || prev.name || '',
     phone: lead.phone || prev.phone || '',
     user_id: prev.user_id || null,
-    contact_type: rankType(prev.contact_type, 'guest'), // never demote a vendor/buyer
-    attributes: { ...(prev.attributes || {}), crm_lead: true, lead_status: lead.status || null },
+    contact_type: rankType(prev.contact_type, isCold ? 'prospect' : 'guest'), // never demote a vendor/buyer
+    attributes: {
+      ...(prev.attributes || {}),
+      crm_lead: true,
+      lead_status: lead.status || null,
+      ...(isCold ? {
+        tags: Array.isArray(lead.tags) ? lead.tags : [],
+        profession: lead.profession || '',
+        grade: leadAttrs.grade || '',
+        source_dataset: leadAttrs.source_dataset || '',
+      } : {}),
+    },
     source: prevSource ? (prevSource.includes('crm_lead') ? prevSource : `${prevSource},crm_lead`) : 'crm_lead',
     email_opt_in:        prev.email_opt_in        ?? true,
     whatsapp_opt_in:     prev.whatsapp_opt_in     ?? true,
@@ -124,7 +141,7 @@ function buildLeadContactRow(lead, prev = {}, now) {
 
 async function syncLeads() {
   const { data: leads } = await supabaseAdmin.from('leads')
-    .select('id, email, name, phone, status, do_not_contact, contact_id')
+    .select('id, email, name, phone, status, do_not_contact, contact_id, source, tags, profession, attributes')
     .not('email', 'is', null);
   const withEmail = (leads || []).filter((l) => norm(l.email));
   if (!withEmail.length) return { upserted: 0, linked: 0 };

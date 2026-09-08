@@ -5,7 +5,8 @@
  *
  * definition = { contact_type?: string, filters?: [{ field, op, value }] }
  *   field is a top-level contact column OR an attributes.<key>.
- *   op ∈ 'eq' | 'neq' | 'exists' | 'gt' | 'lt'
+ *   op ∈ 'eq' | 'neq' | 'exists' | 'gt' | 'lt' | 'contains'
+ *   'contains' tests membership in an array field (e.g. attributes.tags).
  */
 'use strict';
 const { supabaseAdmin } = require('../config/supabase');
@@ -20,6 +21,7 @@ const passes = (c, f) => {
     case 'exists': return v !== null && v !== undefined && v !== '';
     case 'gt':     return v != null && v > f.value;
     case 'lt':     return v != null && v < f.value;
+    case 'contains': return Array.isArray(v) && v.includes(f.value);
     default:       return true;
   }
 };

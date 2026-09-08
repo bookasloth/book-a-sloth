@@ -6,6 +6,7 @@ import {
   crmListTags, crmCreateTag, crmUpdateTag, crmDeleteTag, crmDashboard, crmListFollowUps,
   crmUpdateLead, crmListTemplates, crmListSequences,
   crmListViews, crmCreateView, crmDeleteView, getCategories,
+  adminCampCreateSegment,
 } from '../../../services/api';
 import { categoryLabel } from '../../../utils/categoryUtils';
 import LeadsBoard from './LeadsBoard';
@@ -257,6 +258,20 @@ export default function SalesLeads() {
   };
   const deleteView = async (id) => { try { await crmDeleteView(id); setSavedViews((vs) => vs.filter((v) => v.id !== id)); } catch { toast.error('Failed'); } };
 
+  // Save the current lead filter as a reusable CAMPAIGN audience (segment over
+  // the prospect contacts). The tag filter maps to attributes.tags contains <tag>;
+  // no tag = all Topmate prospects. Appears in the campaign composer's segment list.
+  const saveAudience = async () => {
+    const name = prompt('Name this campaign audience:', tag ? `Topmate — ${tag}` : 'Topmate — All Prospects');
+    if (!name || !name.trim()) return;
+    const filters = tag ? [{ field: 'tags', op: 'contains', value: tag }] : [];
+    const definition = { contact_type: 'prospect', filters };
+    try {
+      await adminCampCreateSegment({ name: name.trim(), description: tag ? `Lead list · tag ${tag}` : 'Lead list · all prospects', definition });
+      toast.success(`Audience “${name.trim()}” saved — pick it in Campaigns`);
+    } catch (e) { toast.error(e.response?.data?.message || 'Could not save audience'); }
+  };
+
   const columns = [
     { key: 'sel', label: <input type="checkbox" checked={allSelected} onChange={toggleAll} onClick={(e) => e.stopPropagation()} />,
       className: 'w-8', render: (r) => <input type="checkbox" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} onClick={(e) => e.stopPropagation()} /> },
@@ -319,6 +334,8 @@ export default function SalesLeads() {
             </span>
           ))}
           <button type="button" onClick={saveView} className="text-[12px] px-2 py-1 rounded-full border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">+ Save view</button>
+          <button type="button" onClick={saveAudience} title="Save the current filter as a reusable campaign audience"
+            className="text-[12px] px-2 py-1 rounded-full border border-dashed border-[#FE5100]/40 text-[#FE5100] hover:border-[#FE5100]">↗ Save as audience</button>
         </div>
       </div>
 

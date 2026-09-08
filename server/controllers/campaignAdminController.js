@@ -58,6 +58,36 @@ const previewSegment = async (req, res) => {
 };
 
 /**
+ * Create/update a saved segment (audience). Powers "Save as campaign audience"
+ * from the lead list — build a list once (by tag/profession/grade) and reuse it
+ * as a campaign audience. Idempotent on name (case-insensitive) so re-saving the
+ * same list updates it rather than duplicating.
+ */
+const createSegment = async (req, res) => {
+  try {
+    const { name, description = '', definition } = req.body || {};
+    const nm = String(name || '').trim();
+    if (!nm) return res.status(400).json({ message: 'name required' });
+    if (!definition || typeof definition !== 'object' || Array.isArray(definition)) {
+      return res.status(400).json({ message: 'definition object required' });
+    }
+    const now = new Date().toISOString();
+    const { data: existing } = await supabaseAdmin.from('segments').select('id, is_system').ilike('name', nm).maybeSingle();
+    if (existing?.is_system) return res.status(409).json({ message: 'A system segment already uses that name' });
+    const body = { name: nm, description: String(description || ''), definition };
+    let data, error;
+    if (existing?.id) {
+      ({ data, error } = await supabaseAdmin.from('segments').update({ ...body, updated_at: now }).eq('id', existing.id).select().single());
+    } else {
+      ({ data, error } = await supabaseAdmin.from('segments').insert({ ...body, is_system: false }).select().single());
+    }
+    if (error) return safeError(res, error);
+    try { await audit(req, 'campaign.segment.upsert', { name: nm }); } catch { /* audit best-effort */ }
+    res.status(existing?.id ? 200 : 201).json(data);
+  } catch (e) { safeError(res, e); }
+};
+
+/**
  * Resolve an audience to the actual recipient list (name/email/type) so the
  * admin can SEE who receives before launching. Segment (definition) or an
  * explicit pick (audience_ref). Consent/suppression already applied.
@@ -243,7 +273,7 @@ const updateWaTemplate = async (req, res) => {
 
 module.exports = {
   listContacts, syncContacts, suppressContact,
-  listSegments, previewSegment, resolveAudience, testCampaign,
+  listSegments, previewSegment, createSegment, resolveAudience, testCampaign,
   listCampaigns, createCampaign, previewCampaign, getCampaign, campaignRecipients, updateCampaign, launchCampaign,
   listWaTemplates, createWaTemplate, updateWaTemplate,
 };

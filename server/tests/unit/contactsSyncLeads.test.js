@@ -48,3 +48,16 @@ test('non-DNC lead does not resurrect a prior suppression', () => {
   const r = buildLeadContactRow({ email: 'q@x.com', status: 'new' }, { email_suppressed: true }, NOW);
   expect(r.email_suppressed).toBe(true); // preserved, not forced false
 });
+
+test('cold import lead → prospect type + tags/profession/grade mirrored onto the contact', () => {
+  const r = buildLeadContactRow(
+    { email: 'c@x.com', status: 'new', source: 'import', profession: 'coach', tags: ['topmate', 'coach', 'grade-a'], attributes: { grade: 'A', source_dataset: 'topmate' } },
+    {}, NOW);
+  expect(r.contact_type).toBe('prospect');
+  expect(r.attributes).toMatchObject({ crm_lead: true, tags: ['topmate', 'coach', 'grade-a'], profession: 'coach', grade: 'A', source_dataset: 'topmate' });
+});
+
+test('cold prospect never demotes an existing real guest', () => {
+  const r = buildLeadContactRow({ email: 'g@x.com', status: 'new', source: 'import', tags: ['topmate'] }, { contact_type: 'guest' }, NOW);
+  expect(r.contact_type).toBe('guest'); // real guest outranks prospect
+});
