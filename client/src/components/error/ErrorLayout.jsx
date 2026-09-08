@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import Seo from '../common/Seo';
+import ErrorIllustration from './ErrorIllustration';
 import { useHideChrome } from '../../context/ChromeContext';
 import '../../styles/error-pages.css';
 
@@ -47,14 +48,11 @@ export default function ErrorLayout({
 
       {/* No card box — content sits directly on the page ground. */}
       <div className="bas-error__card w-full max-w-md text-center px-7 py-10 sm:px-10 sm:py-12">
-        {/* Brand mark = the email footer logo (PNG, no wordmark beside it). */}
-        <a href="/" aria-label="Book a Sloth — home" className="inline-flex justify-center mb-7">
-          <img
-            src="https://company-assets.bookasloth.in/images/email/footer-logo.png"
-            alt="Book a Sloth"
-            className="h-16 w-auto"
-          />
-        </a>
+        {/* Sloth art — random PNG variant on 404/410, line-art elsewhere. No
+            wordmark beside it. */}
+        <div className="flex justify-center mb-6 text-[#1a1a1a]">
+          <ErrorIllustration art={art} image={image} />
+        </div>
 
         {/* Explicit colour: a global `h1 { color: var(--text) }` (base-fb.css) is
             not theme-aware and would force the title dark-on-dark. */}
