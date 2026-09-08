@@ -382,7 +382,7 @@ function Gate({ onUnlock }) {
         <div className="mb-6 flex items-center gap-2 font-heading text-lg font-extrabold">
           <img src="/sloth.png" alt="Book A Sloth" width="32" height="32" className="object-contain" /> Book A Sloth
         </div>
-        <h1 className="font-heading text-3xl font-extrabold leading-tight">Investor access</h1>
+        <h1 className="font-heading text-3xl font-extrabold leading-tight text-[#faf9f6]">Investor access</h1>
         <p className="mt-2 font-sans text-sm opacity-70">
           {step === 'passcode'
             ? 'Enter your access code and phone. We’ll send a one-time code on WhatsApp.'
