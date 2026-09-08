@@ -84,7 +84,7 @@ export default function ErrorLayout({
               <button
                 type="submit"
                 aria-label="Search"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fe5100] text-white transition hover:bg-[#d94400] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fe5100] focus-visible:ring-offset-2"
+                className="flex h-11 w-11 min-h-0 shrink-0 aspect-square items-center justify-center rounded-full bg-[#fe5100] text-white transition hover:bg-[#d94400] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fe5100] focus-visible:ring-offset-2"
               >
                 <Search size={16} />
               </button>
