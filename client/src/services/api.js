@@ -311,6 +311,16 @@ export const adminGstExports        = ()           => API.get('/admin/gst/export
 export const adminGstCreateExport   = (data)       => API.post('/admin/gst/exports', data);
 export const adminGstDownloadExport = (id)         => API.get(`/admin/gst/exports/${id}/download`);
 
+// Admin — SEO audit dashboard (/admin/seo). Read-only crawl findings.
+export const adminSeoOverview     = ()        => API.get('/admin/seo/overview');
+export const adminSeoIssues       = (params)  => API.get('/admin/seo/issues', { params });
+export const adminSeoIssue        = (id)      => API.get(`/admin/seo/issues/${id}`);
+export const adminSeoPages        = (params)  => API.get('/admin/seo/pages', { params });
+export const adminSeoRunCrawl     = ()        => API.post('/admin/seo/crawl');
+export const adminSeoCrawlStatus  = (id)      => API.get(`/admin/seo/crawl/${id}`);
+export const adminSeoMuteIssue    = (id, data) => API.post(`/admin/seo/issues/${id}/mute`, data);
+export const adminSeoScoreHistory = ()        => API.get('/admin/seo/scores/history');
+
 // Admin — Payout approval
 export const adminGetPayouts     = (status)         => API.get('/admin/payouts', { params: status ? { status } : {} });
 export const adminApprovePayout  = (id)             => API.post(`/admin/payouts/${id}/approve`);

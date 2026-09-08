@@ -248,6 +248,8 @@ const AdminGstReturns      = lazy(() => import('./pages/admin/AdminGstReturns'))
 const AdminGstReports      = lazy(() => import('./pages/admin/AdminGstReports'));
 const AdminGstSettings     = lazy(() => import('./pages/admin/AdminGstSettings'));
 const AdminGstExports      = lazy(() => import('./pages/admin/AdminGstExports'));
+// Admin — SEO audit dashboard
+const AdminSeo = lazy(() => import('./pages/admin/AdminSeo'));
 const Presentation = lazy(() => import('./pages/presentation/Presentation'));
 
 // ── Fallback shown while a route chunk downloads ──────────────────────────────
@@ -568,6 +570,9 @@ function App() {
           <Route path="/admin/gst/reports" element={<AdminWrapper><AdminGstReports /></AdminWrapper>} />
           <Route path="/admin/gst/settings" element={<AdminWrapper><AdminGstSettings /></AdminWrapper>} />
           <Route path="/admin/gst/exports" element={<AdminWrapper><AdminGstExports /></AdminWrapper>} />
+
+          {/* SEO audit dashboard (read-only) */}
+          <Route path="/admin/seo" element={<AdminWrapper><AdminSeo /></AdminWrapper>} />
 
           {/* System — bare /admin/system has no page; send it to the dashboard */}
           <Route path="/admin/system" element={<Navigate to="/super-dashboard" replace />} />
