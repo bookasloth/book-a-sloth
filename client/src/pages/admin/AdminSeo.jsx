@@ -5,18 +5,24 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { PageHeader, Card, StatCard, Badge, Skeleton } from '../../components/admin/ui';
 import {
-  adminSeoOverview, adminSeoIssues, adminSeoPages,
+  adminSeoOverview, adminSeoIssues, adminSeoReports,
+  adminSeoCategories, adminSeoChanges,
   adminSeoRunCrawl, adminSeoCrawlStatus, adminSeoMuteIssue, adminSeoGsc, adminSeoGscSync,
 } from '../../services/api';
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'issues', label: 'Issues' },
+  { key: 'categories', label: 'Categories' },
   { key: 'pages', label: 'Pages' },
   { key: 'gsc', label: 'Search Console' },
 ];
 
 const SEVERITY_TONE = { P0: 'danger', P1: 'danger', P2: 'warn', P3: 'neutral', P4: 'neutral' };
+const STATUS_TONE = { PASS: 'ok', WARNING: 'warn', FAIL: 'danger' };
+const MATURITY_TONE = { NEW: 'neutral', DEVELOPING: 'neutral', ESTABLISHED: 'ok', STRONG: 'ok' };
+const CATEGORIES = ['technical', 'onpage', 'content', 'semantic', 'structured_data', 'indexability', 'internal_linking'];
+const actionFor = (p) => (p.status === 'FAIL' ? 'Fix critical issue' : p.status === 'WARNING' ? 'Review warnings' : 'OK');
 
 export default function AdminSeo() {
   const [tab, setTab] = useState('overview');
@@ -136,11 +142,13 @@ export default function AdminSeo() {
                 </div>
               </div>
             </Card>
+            <ChangesCard />
           </>
         )
       )}
 
       {tab === 'issues' && <IssuesTab />}
+      {tab === 'categories' && <CategoriesTab />}
       {tab === 'pages' && <PagesTab />}
       {tab === 'gsc' && <GscTab />}
     </div>
@@ -181,7 +189,7 @@ function IssuesTab() {
         </select>
         <select className="fb-input text-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="">All categories</option>
-          {['technical', 'onpage', 'content', 'indexability', 'internal_linking'].map((c) => <option key={c} value={c}>{c}</option>)}
+          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
 
@@ -257,15 +265,89 @@ function IssueDrawer({ issue, onClose, onMuted }) {
   );
 }
 
+// Change summary since the previous crawl (historical baseline, spec §1h).
+function ChangesCard() {
+  const [c, setC] = useState(null);
+  useEffect(() => {
+    (async () => {
+      try { const res = await adminSeoChanges(); setC(res.data); } catch { /* non-blocking */ }
+    })();
+  }, []);
+  if (!c || !c.previous) return null;
+  return (
+    <Card className="mt-4">
+      <div className="text-sm font-semibold mb-3">Since previous crawl</div>
+      <div className="flex flex-wrap gap-6 text-sm">
+        <div><span className="adm-t3">Issues now</span><div className="font-medium">{c.total_latest}</div></div>
+        <div><span className="adm-t3">New</span><div className="font-medium text-red-600">+{c.added}</div></div>
+        <div><span className="adm-t3">Resolved</span><div className="font-medium" style={{ color: 'var(--adm-ok)' }}>−{c.resolved}</div></div>
+        <div><span className="adm-t3">Was</span><div className="font-medium">{c.total_previous}</div></div>
+      </div>
+    </Card>
+  );
+}
+
+function CategoriesTab() {
+  const [rollups, setRollups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await adminSeoCategories();
+        setRollups(res.data.rollups || []);
+      } catch (e) {
+        toast.error(e.response?.data?.message || 'Failed to load category rollups');
+        setRollups([]);
+      } finally { setLoading(false); }
+    })();
+  }, []);
+  if (loading) return <Skeleton className="h-40" />;
+  return (
+    <Card className="p-0 overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead><tr className="text-[11px] uppercase tracking-wide adm-t3 border-b adm-border">
+          <th className="text-left py-2 px-4">Category</th>
+          <th className="text-right py-2 px-4">Pages</th>
+          <th className="text-right py-2 px-4">Indexable</th>
+          <th className="text-right py-2 px-4">Pass</th>
+          <th className="text-right py-2 px-4">Warn</th>
+          <th className="text-right py-2 px-4">Fail</th>
+          <th className="text-right py-2 px-4">Avg health</th>
+          <th className="text-right py-2 px-4">Critical</th>
+          <th className="text-right py-2 px-4">Meta unique</th>
+        </tr></thead>
+        <tbody>
+          {rollups.map((r) => (
+            <tr key={r.category} className="border-b adm-border last:border-0">
+              <td className="py-2 px-4 font-medium">{r.category}</td>
+              <td className="py-2 px-4 text-right">{r.total}</td>
+              <td className="py-2 px-4 text-right">{r.indexable}</td>
+              <td className="py-2 px-4 text-right" style={{ color: 'var(--adm-ok)' }}>{r.pass}</td>
+              <td className="py-2 px-4 text-right" style={{ color: 'var(--adm-warn)' }}>{r.warning}</td>
+              <td className="py-2 px-4 text-right" style={{ color: 'var(--adm-danger)' }}>{r.fail}</td>
+              <td className="py-2 px-4 text-right">{r.avg_health}</td>
+              <td className="py-2 px-4 text-right">{r.critical_issues}</td>
+              <td className="py-2 px-4 text-right">{r.metadata_uniqueness}%</td>
+            </tr>
+          ))}
+          {!rollups.length && <tr><td colSpan={9} className="py-6 text-center adm-t3">No crawled pages yet.</td></tr>}
+        </tbody>
+      </table>
+    </Card>
+  );
+}
+
 function PagesTab() {
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState('');
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const res = await adminSeoPages();
+        const res = await adminSeoReports();
         setPages(res.data.pages || []);
       } catch (e) {
         toast.error(e.response?.data?.message || 'Failed to load crawled pages');
@@ -278,28 +360,44 @@ function PagesTab() {
 
   if (loading) return <Skeleton className="h-40" />;
 
+  const shown = status ? pages.filter((p) => p.status === status) : pages;
+
   return (
-    <Card className="p-0 overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead><tr className="text-[11px] uppercase tracking-wide adm-t3 border-b adm-border">
-          <th className="text-left py-2 px-4">URL</th>
-          <th className="text-left py-2 px-4">Type</th>
-          <th className="text-right py-2 px-4">Status</th>
-          <th className="text-right py-2 px-4">Indexable</th>
-        </tr></thead>
-        <tbody>
-          {pages.map((p) => (
-            <tr key={p.id || p.url} className="border-b adm-border last:border-0">
-              <td className="py-2 px-4 break-all">{p.url}</td>
-              <td className="py-2 px-4">{p.page_type}</td>
-              <td className="py-2 px-4 text-right">{p.http_status}</td>
-              <td className="py-2 px-4 text-right">{p.indexable ? 'Yes' : 'No'}</td>
-            </tr>
-          ))}
-          {!pages.length && <tr><td colSpan={4} className="py-6 text-center adm-t3">No crawled pages yet.</td></tr>}
-        </tbody>
-      </table>
-    </Card>
+    <div>
+      <div className="flex gap-3 mb-4">
+        <select className="fb-input text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">All statuses</option>
+          {['PASS', 'WARNING', 'FAIL'].map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      <Card className="p-0 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead><tr className="text-[11px] uppercase tracking-wide adm-t3 border-b adm-border">
+            <th className="text-left py-2 px-4">URL</th>
+            <th className="text-left py-2 px-4">Type</th>
+            <th className="text-center py-2 px-4">Status</th>
+            <th className="text-right py-2 px-4">Health</th>
+            <th className="text-right py-2 px-4">Issues</th>
+            <th className="text-left py-2 px-4">Evidence</th>
+            <th className="text-left py-2 px-4">Action</th>
+          </tr></thead>
+          <tbody>
+            {shown.map((p) => (
+              <tr key={p.id || p.url} className="border-b adm-border last:border-0">
+                <td className="py-2 px-4 break-all">{p.url}</td>
+                <td className="py-2 px-4">{p.page_type}</td>
+                <td className="py-2 px-4 text-center"><Badge tone={STATUS_TONE[p.status] || 'neutral'}>{p.status}</Badge></td>
+                <td className="py-2 px-4 text-right">{p.health}</td>
+                <td className="py-2 px-4 text-right">{p.issue_count}</td>
+                <td className="py-2 px-4"><Badge tone={MATURITY_TONE[p.evidence_maturity] || 'neutral'} title={`Seen in ${p.evidence_seen} crawl(s)`}>{p.evidence_maturity}</Badge></td>
+                <td className="py-2 px-4 adm-t3">{actionFor(p)}</td>
+              </tr>
+            ))}
+            {!shown.length && <tr><td colSpan={7} className="py-6 text-center adm-t3">No crawled pages yet.</td></tr>}
+          </tbody>
+        </table>
+      </Card>
+    </div>
   );
 }
 

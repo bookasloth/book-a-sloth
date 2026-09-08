@@ -29,10 +29,18 @@ const REGISTRY = {
   'links.broken_internal':     { category: 'links',          severity: 'P1', confidence: 1,   autoFixable: false, title: 'Broken internal link' },
   'links.orphan_page':         { category: 'internal_linking', severity: 'P2', confidence: 0.7, autoFixable: false, title: 'Orphan page (no internal links)' },
   'images.missing_alt':        { category: 'onpage',         severity: 'P3', confidence: 1,   autoFixable: true,  title: 'Images missing alt text' },
-  'schema.missing':            { category: 'onpage',         severity: 'P3', confidence: 0.7, autoFixable: false, title: 'No structured data' },
-  'schema.invalid_json':       { category: 'onpage',         severity: 'P2', confidence: 1,   autoFixable: false, title: 'Invalid JSON-LD' },
-  'schema.wrong_type':         { category: 'onpage',         severity: 'P3', confidence: 0.6, autoFixable: false, title: 'Missing expected schema type' },
+  'schema.missing':            { category: 'structured_data', severity: 'P3', confidence: 0.7, autoFixable: false, title: 'No structured data' },
+  'schema.invalid_json':       { category: 'structured_data', severity: 'P2', confidence: 1,   autoFixable: false, title: 'Invalid JSON-LD' },
+  'schema.wrong_type':         { category: 'structured_data', severity: 'P3', confidence: 0.6, autoFixable: false, title: 'Missing expected schema type' },
   'sitemap.missing_indexable': { category: 'indexability',   severity: 'P2', confidence: 0.8, autoFixable: false, title: 'Indexable page missing from sitemap' },
+  // content quality (Phase 1, spec §1f/§1g) — advisory, never auto-acts
+  'content.generic_h1':               { category: 'content',  severity: 'P3', confidence: 0.7, autoFixable: false, title: 'Generic H1' },
+  'content.template_heavy':           { category: 'content',  severity: 'P3', confidence: 0.5, autoFixable: false, title: 'Template-heavy / low unique content' },
+  'content.potential_cannibalization':{ category: 'content',  severity: 'P3', confidence: 0.5, autoFixable: false, title: 'Potential keyword cannibalization' },
+  // semantic / AI readiness (Phase 1, spec §1e) — SEO quality signals, not ranking factors
+  'semantic.jsonld_untyped':   { category: 'semantic', severity: 'P3', confidence: 0.7, autoFixable: false, title: 'JSON-LD present but untyped' },
+  'semantic.no_headings':      { category: 'semantic', severity: 'P3', confidence: 0.8, autoFixable: false, title: 'No heading structure' },
+  'semantic.heading_skip':     { category: 'semantic', severity: 'P4', confidence: 0.6, autoFixable: false, title: 'Heading level skipped' },
   // Google Search Console (gsc-sync → seo_gsc_urls)
   'gsc.google_chose_different_canonical': { category: 'indexability', severity: 'P1', confidence: 0.9, autoFixable: false, title: 'Google chose a different canonical' },
   'gsc.soft_404':               { category: 'indexability', severity: 'P1', confidence: 0.9, autoFixable: false, title: 'Google reports soft 404' },

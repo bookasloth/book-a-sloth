@@ -12,7 +12,11 @@ vi.mock('../../../services/api', () => ({
     counts: { P0: 1, P1: 1, P2: 2, P3: 0, P4: 0 },
   } })),
   adminSeoIssues: vi.fn(() => Promise.resolve({ data: { issues: [], total: 0 } })),
-  adminSeoPages: vi.fn(() => Promise.resolve({ data: { pages: [], total: 0 } })),
+  adminSeoReports: vi.fn(() => Promise.resolve({ data: { pages: [] } })),
+  adminSeoCategories: vi.fn(() => Promise.resolve({ data: { rollups: [
+    { category: 'Static', total: 8, indexable: 8, pass: 6, warning: 1, fail: 1, avg_health: 84, critical_issues: 1, duplicate_title_rate: 0, metadata_uniqueness: 100 },
+  ] } })),
+  adminSeoChanges: vi.fn(() => Promise.resolve({ data: { latest: 'c1', previous: null, added: 0, resolved: 0, total_latest: 4, total_previous: 0 } })),
   adminSeoRunCrawl: vi.fn(() => Promise.resolve({ data: { crawlId: 'c2' } })),
   adminSeoCrawlStatus: vi.fn(() => Promise.resolve({ data: { crawl: { status: 'done' } } })),
   adminSeoMuteIssue: vi.fn(() => Promise.resolve({ data: {} })),
@@ -29,6 +33,14 @@ describe('AdminSeo', () => {
     render(<MemoryRouter><AdminSeo /></MemoryRouter>);
     await waitFor(() => expect(screen.getByText('82')).toBeTruthy());
     expect(screen.getByText(/Overall/i)).toBeTruthy();
+  });
+
+  it('renders category rollups in the Categories tab', async () => {
+    render(<MemoryRouter><AdminSeo /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByText('82')).toBeTruthy());
+    fireEvent.click(screen.getByText('Categories'));
+    await waitFor(() => expect(screen.getByText('Static')).toBeTruthy());
+    expect(screen.getByText('84')).toBeTruthy(); // avg_health
   });
 
   it('renders GSC data in the Search Console tab', async () => {

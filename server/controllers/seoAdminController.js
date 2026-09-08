@@ -57,6 +57,34 @@ const getPage = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── GET /admin/seo/categories ─────────────────────────────────
+// Category → page rollups for the hierarchy view (Phase 1, spec §1d).
+const getCategories = async (req, res) => {
+  try {
+    const { crawlId } = req.query || {};
+    const { crawlId: id, rollups } = await svc.categoryRollups({ crawlId });
+    res.json({ crawlId: id, rollups });
+  } catch (e) { safeError(res, e); }
+};
+
+// ── GET /admin/seo/reports ────────────────────────────────────
+// Per-page report: each page + hard status, health, dimensions, evidence maturity.
+const getReports = async (req, res) => {
+  try {
+    const { crawlId } = req.query || {};
+    const { crawlId: id, pages } = await svc.pageReports({ crawlId });
+    res.json({ crawlId: id, pages });
+  } catch (e) { safeError(res, e); }
+};
+
+// ── GET /admin/seo/changes ────────────────────────────────────
+// "What changed since the previous crawl?" (Phase 1 historical baseline, §1h).
+const getChanges = async (req, res) => {
+  try {
+    res.json(await svc.changedSincePrevious());
+  } catch (e) { safeError(res, e); }
+};
+
 // ── GET /admin/seo/scores/history ─────────────────────────────
 const getScoreHistory = async (req, res) => {
   try {
@@ -122,5 +150,6 @@ const postGscSync = async (req, res) => {
 
 module.exports = {
   getOverview, getIssues, getIssue, getPages, getPage,
+  getCategories, getReports, getChanges,
   getScoreHistory, postCrawl, getCrawl, postMuteIssue, getGsc, postGscSync,
 };
