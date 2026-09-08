@@ -130,4 +130,18 @@ describe('seoCrawler', () => {
     expect(servicePage.httpStatus).toBe(200);
     expect(servicePage.indexable).toBe(true);
   });
+
+  // bodyCrawled flag: resolver-built (host/service) pages are meta shells with no
+  // crawled body; fetched (static/blog) pages have real body content.
+  test('host/service pages are bodyCrawled:false; static/blog pages are bodyCrawled:true', async () => {
+    await run({ trigger: 'manual' });
+    const calls = persist.saveResults.mock.calls;
+    const pages = calls[calls.length - 1][1];
+    const hostPage = pages.find((p) => p.url === 'https://bookasloth.com/jane');
+    const servicePage = pages.find((p) => p.url === 'https://bookasloth.com/jane/intro');
+    const blogPage = pages.find((p) => p.url === 'https://bookasloth.com/blog/post-1');
+    expect(hostPage.bodyCrawled).toBe(false);
+    expect(servicePage.bodyCrawled).toBe(false);
+    expect(blogPage.bodyCrawled).toBe(true);
+  });
 });

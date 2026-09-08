@@ -15,7 +15,7 @@ function check(p, ctx) {
     push('indexability.error_url_in_sitemap', { status: p.httpStatus });
   if (p.inSitemap && p.canonical && normalize(p.canonical) !== normalize(p.url))
     push('indexability.canonical_sitemap_mismatch', { canonical: p.canonical });
-  if (p.httpStatus === 200 && p.wordCount < SOFT_MIN && !(p.robots && p.robots.includes('noindex')))
+  if (p.httpStatus === 200 && p.wordCount < SOFT_MIN && !(p.robots && p.robots.includes('noindex')) && p.bodyCrawled !== false)
     push('indexability.soft_404', { wordCount: p.wordCount });
   if ((p.pageType === 'host' || p.pageType === 'service') && p.title && ctx.homepageTitle && p.title === ctx.homepageTitle)
     push('indexability.prerender_regression', { title: p.title });

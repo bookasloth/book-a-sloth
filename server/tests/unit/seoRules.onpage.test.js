@@ -38,4 +38,20 @@ describe('onpage rules', () => {
     const ctx = buildContext([p], new Set());
     expect(check(p, ctx)).toEqual([]);
   });
+
+  test('a bodiless (bodyCrawled:false) page with h1:[] does not fire missing_h1 or title_h1_mismatch', () => {
+    const p = page({ bodyCrawled: false, h1: [] });
+    const ctx = buildContext([p], new Set());
+    const keys = check(p, ctx).map((i) => i.ruleKey);
+    expect(keys).not.toContain('onpage.missing_h1');
+    expect(keys).not.toContain('onpage.title_h1_mismatch');
+  });
+
+  test('a bodiless page still fires title_length for an out-of-band title (resolver-provided title stays valid)', () => {
+    const short = page({ bodyCrawled: false, h1: [], title: 'Short' });
+    const long = page({ bodyCrawled: false, h1: [], title: 'x'.repeat(90) });
+    const ctx = buildContext([short, long], new Set());
+    expect(check(short, ctx).map((i) => i.ruleKey)).toContain('onpage.title_length');
+    expect(check(long, ctx).map((i) => i.ruleKey)).toContain('onpage.title_length');
+  });
 });

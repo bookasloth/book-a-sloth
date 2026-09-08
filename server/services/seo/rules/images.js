@@ -3,6 +3,7 @@
 function check(p, ctx) {
   const out = [];
   if (p.httpStatus !== 200) return out;
+  if (p.bodyCrawled === false) return out;
 
   const missing = (p.images || []).filter((img) => img.alt === null);
   if (missing.length > 0) {
