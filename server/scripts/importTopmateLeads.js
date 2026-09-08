@@ -267,16 +267,19 @@ async function main() {
   const skipReasons = skipped.reduce((m, s) => { m[s.reason] = (m[s.reason] || 0) + 1; return m; }, {});
   console.log('  skip why   :', skipReasons);
 
-  // Preview artefacts (dry run) — safe to share, no DB touched.
-  const jsonPath = path.join(outDir, 'topmate_import_preview.json');
-  const csvPath = path.join(outDir, 'topmate_import_preview.csv');
-  fs.writeFileSync(jsonPath, JSON.stringify({ kept: kept.map((k) => k.patch), skipped }, null, 2));
-  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const head = ['name', 'email', 'business_name', 'profession', 'score', 'tags', 'website', 'linkedin'];
-  const csv = [head.join(',')].concat(kept.map((k) => head.map((h) =>
-    esc(h === 'tags' ? k.patch.tags.join('|') : k.patch[h])).join(','))).join('\n');
-  fs.writeFileSync(csvPath, csv);
-  console.log(`\n  preview: ${jsonPath}\n           ${csvPath}`);
+  // Preview artefacts — a nice-to-have. Guarded: a locked temp file (open in a
+  // viewer / AV scan) must NEVER abort the actual import below.
+  try {
+    const jsonPath = path.join(outDir, 'topmate_import_preview.json');
+    const csvPath = path.join(outDir, 'topmate_import_preview.csv');
+    fs.writeFileSync(jsonPath, JSON.stringify({ kept: kept.map((k) => k.patch), skipped }, null, 2));
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const head = ['name', 'email', 'business_name', 'profession', 'score', 'tags', 'website', 'linkedin'];
+    const csv = [head.join(',')].concat(kept.map((k) => head.map((h) =>
+      esc(h === 'tags' ? k.patch.tags.join('|') : k.patch[h])).join(','))).join('\n');
+    fs.writeFileSync(csvPath, csv);
+    console.log(`\n  preview: ${jsonPath}\n           ${csvPath}`);
+  } catch (e) { console.warn(`\n  (preview not written: ${e.code || e.message})`); }
 
   if (!commit) { console.log('\nDry run complete. Re-run with --commit to write to leads.\n'); return; }
 
