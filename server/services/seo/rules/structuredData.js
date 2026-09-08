@@ -19,15 +19,16 @@ function check(p, ctx) {
   if (p.httpStatus !== 200) return out;
 
   const jsonLd = p.jsonLd || [];
-  if (jsonLd.length === 0) push('schema.missing', {});
   const invalidCount = jsonLd.filter((e) => e && e.__invalid).length;
   if (invalidCount > 0) push('schema.invalid_json', { count: invalidCount });
 
-  const expected = EXPECTED_TYPES[p.pageType]; // no entry for 'static' -> skipped
-  if (expected && jsonLd.length > 0) {
-    const found = jsonLd.flatMap(typesOf);
-    if (!found.some((t) => expected.includes(t))) push('schema.wrong_type', { expected, found });
-  }
+  const expected = EXPECTED_TYPES[p.pageType]; // no entry for 'static' -> not schema-expected
+  // Structured data is only *expected* on entity pages (host/service/blog). Generic
+  // static/legal pages (privacy, terms, LP...) legitimately have none — don't flag them.
+  if (!expected) return out;
+  if (jsonLd.length === 0) { push('schema.missing', {}); return out; }
+  const found = jsonLd.flatMap(typesOf);
+  if (!found.some((t) => expected.includes(t))) push('schema.wrong_type', { expected, found });
   return out;
 }
 module.exports = { check };

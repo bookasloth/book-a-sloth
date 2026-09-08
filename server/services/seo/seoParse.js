@@ -45,9 +45,15 @@ function parse(html, headers = {}) {
     src: img.getAttribute('src') || '', alt: img.hasAttribute('alt') ? (img.getAttribute('alt') || '') : null,
   }));
 
-  const jsonLd = root.querySelectorAll('script[type="application/ld+json"]').map((s) => {
+  // One <script> can hold a single node, an array of nodes, or a { @graph: [...] }
+  // wrapper (all valid JSON-LD). Flatten to individual typed nodes so type checks
+  // see e.g. BlogPosting inside an array instead of an array with no top-level @type.
+  const jsonLd = root.querySelectorAll('script[type="application/ld+json"]').flatMap((s) => {
     const raw = s.text.trim();
-    try { return JSON.parse(raw); } catch { return { __invalid: true, raw }; }
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { return [{ __invalid: true, raw }]; }
+    const nodes = Array.isArray(parsed) ? parsed : [parsed];
+    return nodes.flatMap((n) => (n && Array.isArray(n['@graph']) ? n['@graph'] : [n]));
   });
 
   const bodyText = (root.querySelector('body')?.text || '').replace(/\s+/g, ' ').trim();
