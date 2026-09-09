@@ -224,8 +224,9 @@ function renderColdLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, settings, d
   const fromName = settings.from_name   || 'Book A Sloth';
   const unsubToken = data.unsubscribe_token || '';
 
+  // Footer text matches the body: same size (15px), color (muted) and line-height.
   const footerRow = `<tr>
-    <td style="padding:20px 28px;border-top:1px solid ${D.border};text-align:center;font-size:11px;line-height:1.7;color:${D.note};font-family:${D.font};">
+    <td style="padding:20px 28px;border-top:1px solid ${D.border};text-align:center;font-size:15px;line-height:1.7;color:${D.muted};font-family:${D.font};">
       ${esc(fromName)} by ${esc(COMPANY)}.<br>
       ${esc(ADDRESS)}<br>
       <a href="${esc(website)}/unsubscribe?u=${esc(unsubToken)}" style="color:${D.muted};text-decoration:underline;">Unsubscribe</a>
