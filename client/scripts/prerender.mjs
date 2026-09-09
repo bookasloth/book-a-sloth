@@ -332,6 +332,7 @@ async function prerender() {
 
   let rendered = 0;
   let failed = 0;
+  const errorBaked = []; // routes whose render came back as the branded ErrorPage
 
   const renderOnce = async (route, navTimeout = NAV_TIMEOUT_MS) => {
     const page = await browser.newPage();
@@ -395,6 +396,20 @@ async function prerender() {
 
       const html = await page.content();
 
+      // A page whose data fetch failed mid-render shows the branded ErrorPage
+      // (ErrorLayout's root .bas-error). Serializing THAT bakes a permanent 500
+      // for a route the sitemap says is live — real users load fine, but crawlers
+      // only ever see the frozen error and mark it soft-404 (the service-page
+      // soft_404 cluster). Refuse to bake it: throw so the pool defers it to the
+      // serial pass (a transient build-fetch blip usually clears on the idle
+      // retry); a persistent one is handled after the loop — the poisoned file is
+      // never written either way, so the route serves its live fallback, not a 500.
+      if (/class="[^"]*\bbas-error\b/.test(html)) {
+        const e = new Error('rendered the branded ErrorPage (build-time data fetch failed) — not baking a 500');
+        e.errorBake = true;
+        throw e;
+      }
+
       // Write to dist/<route>/index.html (or dist/index.html for /)
       let outPath;
       if (route === '/') {
@@ -454,8 +469,17 @@ async function prerender() {
         rendered++;
         console.log(`[prerender] ${route} → ${outPath.replace(DIST, 'dist')} (deferred retry)`);
       } catch (err) {
-        failed++;
-        console.error(`[prerender] FAIL ${route}: ${err.message}`);
+        if (err.errorBake) {
+          // Persistent error-bake: leave it UNBAKED (no file written) so the route
+          // serves its live fallback instead of a frozen 500. Not counted as a hard
+          // render failure — see the reverted empty-content guard (#979) that froze
+          // every deploy; we do not repeat that unless explicitly opted in below.
+          errorBaked.push(route);
+          console.error(`[prerender] ERROR-BAKE ${route}: left unbaked (would have shipped a 500)`);
+        } else {
+          failed++;
+          console.error(`[prerender] FAIL ${route}: ${err.message}`);
+        }
       }
     }
   }
@@ -463,7 +487,19 @@ async function prerender() {
   await browser.close();
   server.close();
 
-  console.log(`[prerender] Done: ${rendered} rendered, ${failed} failed (${routes.length} routes)`);
+  console.log(`[prerender] Done: ${rendered} rendered, ${failed} failed, ${errorBaked.length} error-baked (${routes.length} routes)`);
+
+  // Routes that came back as the ErrorPage were NOT written, so they fall back to
+  // the live page instead of shipping a frozen 500 to crawlers. Surface them loudly
+  // (this is how the soft_404 cluster hid for weeks). Opt in to hard-failing the
+  // build on them with PRERENDER_FAIL_ON_ERROR_BAKE=1 once build-fetch is reliable.
+  if (errorBaked.length > 0) {
+    console.error(`[prerender] ${errorBaked.length} route(s) rendered as the ErrorPage and were left unbaked (serving live fallback): ${errorBaked.join(', ')}`);
+    if (process.env.PRERENDER_FAIL_ON_ERROR_BAKE === '1') {
+      console.error('[prerender] FAILED: PRERENDER_FAIL_ON_ERROR_BAKE is set — refusing to ship with error-baked routes.');
+      process.exit(1);
+    }
+  }
 
   // A route that failed to render ships as the bare SPA shell: 200 OK, no title,
   // no og:image, no JSON-LD. Crawlers and WhatsApp see nothing. That is invisible
