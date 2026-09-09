@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { themeFor, AUTHOR_URL } from '../data/blogPosts';
 import { getBlogBySlug } from '../services/api';
+import { isNotFoundError } from '../utils/fetchError';
 import ErrorPage from './ErrorPage';
 import Seo from '../components/common/Seo';
 import { SITE_URL, resolveBlogSeo, articleGraphJsonLd } from '../utils/seo';
@@ -236,23 +237,59 @@ const AuthorLink = ({ name, className, style }) => (
 const BlogPost = () => {
   const { slug } = useParams();
   const [post, setPost] = useState(null);
-  const [status, setStatus] = useState('loading'); // loading | ready | notfound
+  const [status, setStatus] = useState('loading'); // loading | ready | notfound | error
 
   useEffect(() => {
     let alive = true;
     setStatus('loading');
     window.scrollTo(0, 0);
-    getBlogBySlug(slug)
-      .then((res) => { if (alive) { setPost(res.data.post); setStatus('ready'); } })
-      .catch(() => { if (alive) setStatus('notfound'); });
+
+    // A real 404 means the post is gone → the noindex ErrorPage is correct. Any
+    // OTHER failure (network/timeout, 5xx, or a 429/403 from an edge rate-limit or
+    // IP guard) is transient: retry with a short backoff, and if it still fails,
+    // fall to the 'error' state — NOT the noindex ErrorPage. A JS-rendering crawler
+    // that hit a transient API failure would otherwise noindex this live,
+    // prerendered post and drop it from search (found via the Rich Results Test).
+    const load = (attempt = 0) => {
+      getBlogBySlug(slug)
+        .then((res) => { if (alive) { setPost(res.data.post); setStatus('ready'); } })
+        .catch((err) => {
+          if (!alive) return;
+          if (isNotFoundError(err)) { setStatus('notfound'); return; }
+          if (attempt < 2) { setTimeout(() => { if (alive) load(attempt + 1); }, 800 * (attempt + 1)); return; }
+          setStatus('error');
+        });
+    };
+    load();
     return () => { alive = false; };
   }, [slug]);
 
   // Branded 404 (noindex/nofollow via ErrorLayout), NOT a redirect to /blog: a
   // dead post URL redirecting to the index is Google's soft-404 pattern AND made
   // every prerendered post bake the index's canonical (dropping all posts from
-  // search). Matches HostProfile/ProfessionLanding.
+  // search). Matches HostProfile/ProfessionLanding. ONLY a genuine 404 lands here.
   if (status === 'notfound') return <ErrorPage code={404} />;
+
+  // Transient load failure — deliberately NOT the noindex ErrorPage: this is a
+  // live, prerendered post, so a blip must not drop it from search. No robots meta
+  // is emitted (stays indexable), the baked prerendered head tags remain, and the
+  // reader gets a retry.
+  if (status === 'error') {
+    return (
+      <main className="blog-page grid min-h-[60vh] place-items-center px-6 text-center" style={{ backgroundColor: BODY_BG }}>
+        <Seo canonical={`${SITE_URL}/blog/${slug}`} />
+        <div>
+          <p className="text-base" style={{ color: BODY_TX }}>This article didn’t load. Please try again.</p>
+          <button type="button" onClick={() => window.location.reload()}
+            className="btn mt-5 inline-flex px-5 py-2.5 text-sm font-semibold"
+            style={{ backgroundColor: '#FFFFFF', color: '#141416' }}>
+            Reload
+          </button>
+          <p className="mt-4 text-sm"><Link to="/blog" style={{ color: BODY_DIM }}>Back to all posts</Link></p>
+        </div>
+      </main>
+    );
+  }
   if (status === 'loading' || !post) {
     return (
       <div className="blog-page grid min-h-[60vh] place-items-center" style={{ backgroundColor: BODY_BG }}>
