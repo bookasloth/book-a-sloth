@@ -126,7 +126,7 @@ export default function SalesLeads() {
   // Filters
   const [q, setQ] = useState('');
   const [dq, setDq] = useState('');          // debounced query
-  const [view, setView] = useState('all');   // smart-view key
+  const [view, setView] = useState('new');   // smart-view key — default to New
   const [stage, setStage] = useState('');     // explicit stage override
   const [source, setSource] = useState('');
   const [tag, setTag] = useState('');
@@ -282,7 +282,8 @@ export default function SalesLeads() {
       </div>
     )},
     { key: 'business', label: 'Business', render: (r) => (
-      <div className="adm-t2 min-w-0"><InlineText value={r.business_name} onSave={(v) => saveField(r.id, 'business_name', v)} placeholder={categoryLabel(r.profession, categories) || '—'} /></div>
+      // Cap the width so long business names clip (InlineText truncates) and the table stays visible.
+      <div className="adm-t2 min-w-0 max-w-[160px] sm:max-w-[200px]"><InlineText value={r.business_name} onSave={(v) => saveField(r.id, 'business_name', v)} placeholder={categoryLabel(r.profession, categories) || '—'} /></div>
     )},
     { key: 'source', label: 'Source', render: (r) => <span className="text-[11px] adm-t3">{r.source}</span> },
     { key: 'tags', label: 'Tags', render: (r) => (
@@ -326,16 +327,22 @@ export default function SalesLeads() {
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 flex-1">
-          {savedViews.map((v) => (
-            <span key={v.id} className="group inline-flex items-center gap-1 text-[12px] px-2 py-1 rounded-full border border-gray-200 adm-t2 hover:border-[#FE5100]">
-              <button type="button" onClick={() => applyView(v)}>{v.name}</button>
-              <button type="button" onClick={() => deleteView(v.id)} className="opacity-0 group-hover:opacity-100 adm-t3 hover:text-red-500">×</button>
-            </span>
-          ))}
-          <button type="button" onClick={saveView} className="text-[12px] px-2 py-1 rounded-full border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100]">+ Save view</button>
-          <button type="button" onClick={saveAudience} title="Save the current filter as a reusable campaign audience"
-            className="text-[12px] px-2 py-1 rounded-full border border-dashed border-[#FE5100]/40 text-[#FE5100] hover:border-[#FE5100]">↗ Save as audience</button>
+        {/* Saved views + segments: ONE horizontal-scroll row (was wrapping to 3+ rows);
+            the save buttons stay pinned on the right so they never scroll out of reach. */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto flex-1 min-w-0 py-0.5" style={{ scrollbarWidth: 'thin' }}>
+            {savedViews.map((v) => (
+              <span key={v.id} className="group inline-flex items-center gap-1 text-[12px] px-2 py-1 rounded-full border border-gray-200 adm-t2 hover:border-[#FE5100] whitespace-nowrap shrink-0">
+                <button type="button" onClick={() => applyView(v)}>{v.name}</button>
+                <button type="button" onClick={() => deleteView(v.id)} className="opacity-0 group-hover:opacity-100 adm-t3 hover:text-red-500">×</button>
+              </span>
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button type="button" onClick={saveView} className="text-[12px] px-2 py-1 rounded-full border border-dashed border-gray-300 adm-t3 hover:border-[#FE5100] whitespace-nowrap">+ Save view</button>
+            <button type="button" onClick={saveAudience} title="Save the current filter as a reusable campaign audience"
+              className="text-[12px] px-2 py-1 rounded-full border border-dashed border-[#FE5100]/40 text-[#FE5100] hover:border-[#FE5100] whitespace-nowrap">↗ Save as audience</button>
+          </div>
         </div>
       </div>
 
