@@ -574,6 +574,7 @@ function App() {
 
           {/* SEO audit dashboard (read-only) */}
           <Route path="/admin/seo" element={<AdminWrapper><AdminSeo /></AdminWrapper>} />
+          <Route path="/admin/seo/:view" element={<AdminWrapper><AdminSeo /></AdminWrapper>} />
 
           {/* System — bare /admin/system has no page; send it to the dashboard */}
           <Route path="/admin/system" element={<Navigate to="/super-dashboard" replace />} />

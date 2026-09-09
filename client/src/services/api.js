@@ -318,6 +318,7 @@ export const adminSeoOverview     = ()        => API.get('/admin/seo/overview');
 export const adminSeoIssues       = (params)  => API.get('/admin/seo/issues', { params });
 export const adminSeoIssue        = (id)      => API.get(`/admin/seo/issues/${id}`);
 export const adminSeoPages        = (params)  => API.get('/admin/seo/pages', { params });
+export const adminSeoPage         = (id)      => API.get(`/admin/seo/pages/${id}`);
 export const adminSeoCategories   = (params)  => API.get('/admin/seo/categories', { params });
 export const adminSeoReports      = (params)  => API.get('/admin/seo/reports', { params });
 export const adminSeoChanges      = ()        => API.get('/admin/seo/changes');
@@ -335,6 +336,10 @@ export const adminSeoMuteIssue    = (id, data) => API.post(`/admin/seo/issues/${
 export const adminSeoScoreHistory = ()        => API.get('/admin/seo/scores/history');
 export const adminSeoGsc          = (params)  => API.get('/admin/seo/gsc', { params });
 export const adminSeoGscSync      = ()        => API.post('/admin/seo/gsc/sync');
+// v2 control center: list-first views, dashboard, opportunities, page inspector.
+export const adminSeoList         = (params)  => API.get('/admin/seo/list', { params });
+export const adminSeoDashboard    = (params)  => API.get('/admin/seo/dashboard', { params });
+export const adminSeoOpportunities = (params) => API.get('/admin/seo/opportunities', { params });
 
 // Admin — Payout approval
 export const adminGetPayouts     = (status)         => API.get('/admin/payouts', { params: status ? { status } : {} });
