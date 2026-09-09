@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { resolveServiceSeo, resolveProfileSeo, serviceJsonLd, profileJsonLd } from '../seo';
+import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd } from '../seo';
 
 const SITE = 'https://bookasloth.com';
 const VENDOR = { name: 'John Doe', username: 'john-doe', profile_image: 'https://img/john.jpg' };
@@ -89,5 +89,27 @@ describe('profileJsonLd', () => {
     const ld = profileJsonLd({ host: { name: 'John Doe', username: 'john-doe', profession: 'Consultant' }, siteUrl: SITE });
     expect(ld['@type']).toBe('ProfilePage');
     expect(ld.mainEntity).toMatchObject({ '@type': 'Person', name: 'John Doe', url: 'https://bookasloth.com/john-doe' });
+  });
+});
+
+describe('resolveBlogSeo — no truncated titles/descriptions', () => {
+  test('appends the brand suffix only when the whole title fits 60 chars', () => {
+    const short = resolveBlogSeo({ post: { title: 'The First Booking', slug: 'the-first-booking' } });
+    expect(short.title).toBe('The First Booking | Book A Sloth Blog');
+    expect(short.title.length).toBeLessThanOrEqual(60);
+    // A long headline keeps the article title and drops the suffix rather than truncating it.
+    const long = resolveBlogSeo({ post: { title: 'Monthly plans, a WhatsApp code instead of a password, and reminders', slug: 'x' } });
+    expect(long.title).not.toContain('| Book A Sloth Blog');
+    expect(long.title).toBe('Monthly plans, a WhatsApp code instead of a password, and reminders');
+  });
+  test('truncates a long excerpt to <=160 chars', () => {
+    const { description } = resolveBlogSeo({ post: { title: 'X', slug: 'x', excerpt: 'y'.repeat(300) } });
+    expect(description.length).toBeLessThanOrEqual(160);
+    expect(description.endsWith('…')).toBe(true);
+  });
+  test('admin seo_title / seo_description win verbatim', () => {
+    const r = resolveBlogSeo({ post: { title: 'X', slug: 'x', seo_title: 'Custom', seo_description: 'Custom desc' } });
+    expect(r.title).toBe('Custom');
+    expect(r.description).toBe('Custom desc');
   });
 });

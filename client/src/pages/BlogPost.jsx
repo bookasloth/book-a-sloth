@@ -5,7 +5,7 @@ import { themeFor, AUTHOR_URL } from '../data/blogPosts';
 import { getBlogBySlug } from '../services/api';
 import ErrorPage from './ErrorPage';
 import Seo from '../components/common/Seo';
-import { SITE_URL, articleJsonLd, breadcrumbJsonLd, faqJsonLd } from '../utils/seo';
+import { SITE_URL, resolveBlogSeo, articleJsonLd, breadcrumbJsonLd, faqJsonLd } from '../utils/seo';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 import RelatedPosts from '../components/blog/RelatedPosts';
 
@@ -268,13 +268,14 @@ const BlogPost = () => {
   // hero and setting it suppresses the icon thumbnail, so the two must stay
   // separate concerns. Falls back to a real hero photo, then the site-wide card.
   const ogImage = post.ogImage || post.image || `${SITE_URL}/og-image.png`;
+  const blogSeo = resolveBlogSeo({ post });
   const faqs = faqsFrom(post.body);
 
   return (
     <article className="blog-page" style={{ backgroundColor: BODY_BG }}>
       <Seo
-        title={`${post.title} | Book A Sloth Blog`}
-        description={post.excerpt}
+        title={blogSeo.title}
+        description={blogSeo.description}
         canonical={canonical}
         image={ogImage}
         siteName="Book A Sloth"
