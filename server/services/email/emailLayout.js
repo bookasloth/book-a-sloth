@@ -226,7 +226,9 @@ function renderColdLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, settings, d
 
   const footerRow = `<tr>
     <td style="padding:20px 28px;border-top:1px solid ${D.border};text-align:center;font-size:11px;line-height:1.7;color:${D.note};font-family:${D.font};">
-      ${esc(COMPANY)} &middot; ${esc(ADDRESS)}<br>
+      <span style="color:${D.muted};font-weight:600;">Shubham</span><br>
+      Founder, ${esc(fromName)}<br>
+      ${esc(ADDRESS)}<br>
       <a href="${esc(website)}/unsubscribe?u=${esc(unsubToken)}" style="color:${D.muted};text-decoration:underline;">Unsubscribe</a>
     </td>
   </tr>`;

@@ -72,8 +72,9 @@ describe("renderLayout — cold outreach layout", () => {
     // legal floor present
     expect(html).toMatch(/Unsubscribe/i);
     expect(html).toContain('https://x.test/unsubscribe?u=TOK123');
-    expect(html).toContain('Timewheel');            // sender legal identity
-    expect(html).toContain('Nagpur');               // postal address
+    expect(html).toContain('Shubham');              // founder sign-off
+    expect(html).toContain('Founder');
+    expect(html).toContain('Nagpur');               // postal address (legal floor)
     // header chrome + customer clutter stripped
     expect(html).not.toContain('images/email/header-logo.png');
     expect(html).not.toContain('images/email/footer-logo.png');
