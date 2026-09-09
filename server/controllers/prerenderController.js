@@ -186,8 +186,19 @@ async function resolveServiceMeta(username, serviceSlug) {
   const site = trimSlash(SITE_URL);
   const baseTitle = service.title || 'Service';
 
-  const title = service.seo_title
-    || `${baseTitle}${vendor.name ? ` with ${vendor.name}` : ''} | Book A Sloth`;
+  // Compose progressively so the title isn't truncated in results (Google cuts
+  // ~60 chars): full → drop " | Book A Sloth" → drop " with {host}" → the bare
+  // service title. The service title is host-authored (UGC) and never truncated.
+  // Mirrors client resolveServiceSeo (utils/seo.js) — this server path is what the
+  // SEO crawler and bots audit, so it must apply the same guard.
+  const composeTitle = () => {
+    const withName = vendor.name ? `${baseTitle} with ${vendor.name}` : baseTitle;
+    const full = `${withName} | Book A Sloth`;
+    if (full.length <= 60) return full;
+    if (withName.length <= 60) return withName;
+    return baseTitle;
+  };
+  const title = service.seo_title || composeTitle();
   const description = service.seo_description
     || truncate(service.short_description || service.description || `Book ${baseTitle} on Book A Sloth.`);
   const canonical = vendor.username && service.slug
