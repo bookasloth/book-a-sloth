@@ -5,7 +5,7 @@ import { themeFor, AUTHOR_URL } from '../data/blogPosts';
 import { getBlogBySlug } from '../services/api';
 import ErrorPage from './ErrorPage';
 import Seo from '../components/common/Seo';
-import { SITE_URL, resolveBlogSeo, articleJsonLd, breadcrumbJsonLd, faqJsonLd } from '../utils/seo';
+import { SITE_URL, resolveBlogSeo, articleGraphJsonLd } from '../utils/seo';
 import BlogHeroThumbnail from '../components/blog/BlogHeroThumbnail';
 import RelatedPosts from '../components/blog/RelatedPosts';
 
@@ -268,11 +268,21 @@ const BlogPost = () => {
   // hero and setting it suppresses the icon thumbnail, so the two must stay
   // separate concerns. Falls back to a real hero photo, then the site-wide card.
   const ogImage = post.ogImage || post.image || `${SITE_URL}/og-image.png`;
+  // The generated per-post card and the site-wide card are both 1200x630; only a
+  // raw hero photo (post.image, used when no card exists) has unknown dimensions,
+  // so we emit width/height only for the cards rather than invent them.
+  const cardDims = post.ogImage || !post.image ? { width: 1200, height: 630 } : {};
   const blogSeo = resolveBlogSeo({ post });
   const faqs = faqsFrom(post.body);
+  // One trail for both the visible breadcrumb and the BreadcrumbList JSON-LD.
+  const crumbs = [
+    { name: 'Home', path: '/' },
+    { name: 'Blog', path: '/blog' },
+    { name: post.title, path: `/blog/${post.slug}` },
+  ];
 
   return (
-    <article className="blog-page" style={{ backgroundColor: BODY_BG }}>
+    <main className="blog-page" style={{ backgroundColor: BODY_BG }}>
       <Seo
         title={blogSeo.title}
         description={blogSeo.description}
@@ -284,29 +294,39 @@ const BlogPost = () => {
         ogType="article"
         articlePublishedTime={post.published_at}
         articleModifiedTime={post.updated_at}
-        jsonLd={[
-          articleJsonLd({ post: { slug: post.slug, title: post.title, excerpt: post.excerpt, image: ogImage, author: post.author, published_at: post.published_at, updated_at: post.updated_at } }),
-          breadcrumbJsonLd({ items: [
-            { name: 'Home', path: '/' },
-            { name: 'Blog', path: '/blog' },
-            { name: post.title, path: `/blog/${post.slug}` },
-          ] }),
-          // Only emit FAQPage when the post actually shows the Q&A on the page —
-          // structured data for content a reader can't see is what earns a manual action.
-          ...(faqs.length ? [faqJsonLd({ faqs })] : []),
-        ]}
+        jsonLd={articleGraphJsonLd({
+          url: canonical,
+          type: 'BlogPosting',
+          headline: post.title,
+          // Same resolved string the meta description uses — one source, so the two match.
+          description: blogSeo.description,
+          image: ogImage,
+          imageWidth: cardDims.width,
+          imageHeight: cardDims.height,
+          datePublished: post.published_at,
+          dateModified: post.updated_at,
+          author: { name: post.author, url: AUTHOR_URL },
+          breadcrumb: crumbs,
+          // FAQPage only when the post actually shows the Q&A on the page —
+          // structured data for content a reader can't see earns a manual action.
+          faqs,
+        })}
       />
+      <article>
       {/* ── Split hero: left colour + text, right image (hidden on mobile) ── */}
       <header className="grid items-stretch lg:grid-cols-2" style={{ backgroundColor: t.band }}>
         <div className="app-container py-14 sm:py-20">
           <div className="mx-auto max-w-xl lg:mx-0 lg:ml-auto lg:pr-10">
-            <Link to="/blog" className="inline-flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-80"
-              style={{ color: tt.faint }}>
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M19 12H5M11 18l-6-6 6-6" />
-              </svg>
-              All posts
-            </Link>
+            {/* Visible breadcrumb — same trail as the BreadcrumbList JSON-LD (crumbs). */}
+            <nav aria-label="Breadcrumb">
+              <ol className="flex flex-wrap items-center gap-1.5 text-sm font-medium" style={{ color: tt.faint }}>
+                <li><Link to="/" className="transition-opacity hover:opacity-80" style={{ color: tt.faint }}>Home</Link></li>
+                <li aria-hidden="true">/</li>
+                <li><Link to="/blog" className="transition-opacity hover:opacity-80" style={{ color: tt.faint }}>Blog</Link></li>
+                <li aria-hidden="true">/</li>
+                <li aria-current="page" className="max-w-[18rem] truncate" style={{ color: tt.title }}>{post.title}</li>
+              </ol>
+            </nav>
 
             <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: tt.faint }}>
               {post.category}
@@ -323,7 +343,9 @@ const BlogPost = () => {
               <dl className="grid grid-cols-3 gap-4">
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tt.faint }}>Published</dt>
-                  <dd className="mt-1 text-sm font-semibold sm:text-base" style={{ color: tt.title }}>{post.date}</dd>
+                  <dd className="mt-1 text-sm font-semibold sm:text-base" style={{ color: tt.title }}>
+                    <time dateTime={post.published_at || undefined}>{post.date}</time>
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tt.faint }}>Author</dt>
@@ -361,8 +383,9 @@ const BlogPost = () => {
           <RelatedPosts slug={post.slug} />
         </div>
       </div>
+      </article>
 
-      {/* ── Bottom CTA band (same category colour) ── */}
+      {/* ── Bottom CTA band (same category colour) — outside <article>: promo, not post content ── */}
       <section style={{ backgroundColor: t.band }}>
         <div className="app-container py-16 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
@@ -380,7 +403,7 @@ const BlogPost = () => {
           </div>
         </div>
       </section>
-    </article>
+    </main>
   );
 };
 

@@ -2,7 +2,7 @@ import { useParams, Link, Navigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Seo from '../components/common/Seo';
 import { ogCard } from '../config/ogImages';
-import { SITE_URL } from '../utils/seo';
+import { SITE_URL, articleGraphJsonLd } from '../utils/seo';
 import Markdown from '../components/common/Markdown';
 import { getHelpDoc } from '../content/helpDocs';
 
@@ -17,30 +17,49 @@ const HelpDoc = () => {
   if (!doc) return <Navigate to="/help/docs" replace />;
 
   const canonical = `${SITE_URL}/help/docs/${doc.slug}`;
-  const articleJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: doc.title,
-    description: doc.excerpt || undefined,
-    url: canonical,
-    publisher: { '@type': 'Organization', name: 'Book A Sloth' },
-    mainEntityOfPage: canonical,
-  };
+  // One resolved description string for both the meta tag and the schema, so the
+  // meta description equals the schema description.
+  const description = doc.excerpt || `${doc.title} — Book A Sloth help.`;
+  // Same trail as the BreadcrumbList JSON-LD below. Help docs carry no author or
+  // dates, so — per "don't invent" — the graph omits the Person and date nodes.
+  const crumbs = [
+    { name: 'Home', path: '/' },
+    { name: 'Help', path: '/help/docs' },
+    { name: doc.title, path: `/help/docs/${doc.slug}` },
+  ];
 
   return (
-    <div className="min-h-screen" style={{ background: '#f7f5ef' }}>
+    <main className="min-h-screen" style={{ background: '#f7f5ef' }}>
       <Seo
         title={`${doc.title} — Help — Book A Sloth`}
-        description={doc.excerpt || `${doc.title} — Book A Sloth help.`}
+        description={description}
         image={ogCard('help')}
         canonical={canonical}
-        jsonLd={articleJsonLd}
+        jsonLd={articleGraphJsonLd({
+          url: canonical,
+          type: 'Article',
+          headline: doc.title,
+          description,
+          image: ogCard('help'), // hand-made 1200x630 help card
+          imageWidth: 1200,
+          imageHeight: 630,
+          breadcrumb: crumbs,
+        })}
       />
       <div className="app-container py-8 sm:py-12 max-w-3xl">
-        <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-5">
-          <Link to="/help/docs" className="inline-flex items-center gap-1.5 hover:text-gray-700">
-            <ArrowLeft size={15} /> All help articles
-          </Link>
+        {/* Visible breadcrumb — matches the BreadcrumbList JSON-LD (crumbs). */}
+        <nav aria-label="Breadcrumb" className="mb-5">
+          <ol className="flex flex-wrap items-center gap-1.5 text-sm text-gray-500">
+            <li><Link to="/" className="hover:text-gray-700">Home</Link></li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <Link to="/help/docs" className="inline-flex items-center gap-1.5 hover:text-gray-700">
+                <ArrowLeft size={15} /> Help
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page" className="max-w-[18rem] truncate text-gray-700">{doc.title}</li>
+          </ol>
         </nav>
 
         <article className="bg-white border rounded-2xl p-6 sm:p-8">
@@ -56,7 +75,7 @@ const HelpDoc = () => {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 
