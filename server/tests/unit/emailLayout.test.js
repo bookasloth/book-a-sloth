@@ -66,6 +66,27 @@ describe('renderLayout — footer distinction (UNCHANGED by redesign)', () => {
   });
 });
 
+describe("renderLayout — cold outreach layout", () => {
+  test("audience 'cold' → no header chrome, legal-floor footer only", () => {
+    const html = renderLayout({ audience: 'cold', bodyHtml: '<p>hi</p>', emailCategory: 'Booking Confirmed', settings, data: { unsubscribe_token: 'TOK123' } });
+    // legal floor present
+    expect(html).toMatch(/Unsubscribe/i);
+    expect(html).toContain('https://x.test/unsubscribe?u=TOK123');
+    expect(html).toContain('Timewheel');            // legal entity sign-off
+    expect(html).toContain('Book A Sloth by');
+    expect(html).toContain('Nagpur');               // postal address (legal floor)
+    // header chrome + customer clutter stripped
+    expect(html).not.toContain('images/email/header-logo.png');
+    expect(html).not.toContain('images/email/footer-logo.png');
+    expect(html).not.toMatch(/Booking Confirmed/);  // no category pill
+    expect(html).not.toMatch(/My Bookings/i);
+    expect(html).not.toMatch(/Powered by/i);
+    expect(html).not.toMatch(/All rights reserved/i);
+    expect(html).not.toContain('height:4px;line-height:4px'); // no orange accent bar
+    expect(html).toContain('<p>hi</p>');            // body still injected
+  });
+});
+
 describe('renderLayout — shared structure', () => {
   test('both layouts carry the 4px brand accent and the 600px card with the body', () => {
     for (const audience of ['customer', 'vendor']) {
