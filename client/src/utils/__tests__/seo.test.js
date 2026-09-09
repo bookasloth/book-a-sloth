@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd } from '../seo';
+import { resolveServiceSeo, resolveProfileSeo, resolveBlogSeo, serviceJsonLd, profileJsonLd, articleGraphJsonLd } from '../seo';
 
 const SITE = 'https://bookasloth.com';
 const VENDOR = { name: 'John Doe', username: 'john-doe', profile_image: 'https://img/john.jpg' };
@@ -124,5 +124,86 @@ describe('resolveBlogSeo — no truncated titles/descriptions', () => {
     const r = resolveBlogSeo({ post: { title: 'X', slug: 'x', seo_title: 'Custom', seo_description: 'Custom desc' } });
     expect(r.title).toBe('Custom');
     expect(r.description).toBe('Custom desc');
+  });
+});
+
+describe('articleGraphJsonLd — one @graph, real Person, stable @id relationships', () => {
+  const base = {
+    url: `${SITE}/blog/the-first-booking`,
+    type: 'BlogPosting',
+    headline: 'The First Booking',
+    description: 'How the first booking happens.',
+    image: 'https://cdn/card.jpg',
+    imageWidth: 1200,
+    imageHeight: 630,
+    datePublished: '2026-07-06T00:00:00+05:30',
+    dateModified: '2026-07-08T00:00:00+05:30',
+    author: { name: 'Bolt 958', url: 'https://bolt958.xyz' },
+    breadcrumb: [
+      { name: 'Home', path: '/' },
+      { name: 'Blog', path: '/blog' },
+      { name: 'The First Booking', path: '/blog/the-first-booking' },
+    ],
+  };
+  const typesOf = (g) => g['@graph'].map((n) => n['@type']);
+
+  test('returns a single @graph, one @context, and exactly one of each core node', () => {
+    const g = articleGraphJsonLd({ siteUrl: SITE, ...base });
+    expect(g['@context']).toBe('https://schema.org');
+    expect(Array.isArray(g['@graph'])).toBe(true);
+    const types = typesOf(g);
+    for (const t of ['WebSite', 'Organization', 'WebPage', 'BlogPosting', 'Person', 'ImageObject', 'BreadcrumbList']) {
+      expect(types.filter((x) => x === t)).toHaveLength(1);
+    }
+    // No FAQPage unless faqs are passed.
+    expect(types).not.toContain('FAQPage');
+  });
+
+  test('author is a real Person; article references it by @id, never a placeholder org', () => {
+    const g = articleGraphJsonLd({ siteUrl: SITE, ...base });
+    const person = g['@graph'].find((n) => n['@type'] === 'Person');
+    const article = g['@graph'].find((n) => n['@type'] === 'BlogPosting');
+    expect(person).toMatchObject({ name: 'Bolt 958', url: 'https://bolt958.xyz' });
+    expect(article.author).toEqual({ '@id': person['@id'] });
+    expect(article.author['@type']).toBeUndefined(); // not an inline Organization
+  });
+
+  test('mainEntityOfPage points at the article WebPage, not the homepage', () => {
+    const g = articleGraphJsonLd({ siteUrl: SITE, ...base });
+    const webpage = g['@graph'].find((n) => n['@type'] === 'WebPage');
+    const article = g['@graph'].find((n) => n['@type'] === 'BlogPosting');
+    expect(webpage['@id']).toBe(`${base.url}#webpage`);
+    expect(article.mainEntityOfPage).toEqual({ '@id': webpage['@id'] });
+  });
+
+  test('image is an ImageObject with url + width + height, referenced by @id', () => {
+    const g = articleGraphJsonLd({ siteUrl: SITE, ...base });
+    const img = g['@graph'].find((n) => n['@type'] === 'ImageObject' && n.url === 'https://cdn/card.jpg');
+    expect(img).toMatchObject({ url: 'https://cdn/card.jpg', width: 1200, height: 630 });
+    const article = g['@graph'].find((n) => n['@type'] === 'BlogPosting');
+    expect(article.image).toEqual({ '@id': img['@id'] });
+  });
+
+  test('emits a FAQPage only when faqs are provided', () => {
+    const withFaq = articleGraphJsonLd({ siteUrl: SITE, ...base, faqs: [{ q: 'Q', a: 'A' }] });
+    const faq = withFaq['@graph'].find((n) => n['@type'] === 'FAQPage');
+    expect(faq.mainEntity).toHaveLength(1);
+    expect(faq.mainEntity[0].name).toBe('Q');
+    expect(typesOf(articleGraphJsonLd({ siteUrl: SITE, ...base }))).not.toContain('FAQPage');
+  });
+
+  test('omits image width/height when not supplied (no invented dimensions)', () => {
+    const g = articleGraphJsonLd({ siteUrl: SITE, ...base, imageWidth: undefined, imageHeight: undefined });
+    const img = g['@graph'].find((n) => n['@type'] === 'ImageObject' && n.url === 'https://cdn/card.jpg');
+    expect(img.width).toBeUndefined();
+    expect(img.height).toBeUndefined();
+  });
+
+  test('falls back to the Organization as author when there is no byline (help docs)', () => {
+    const g = articleGraphJsonLd({ siteUrl: SITE, url: `${SITE}/help/docs/x`, type: 'Article', headline: 'X', author: undefined });
+    const types = g['@graph'].map((n) => n['@type']);
+    expect(types).not.toContain('Person');
+    const article = g['@graph'].find((n) => n['@type'] === 'Article');
+    expect(article.author).toEqual({ '@id': `${SITE}/#organization` });
   });
 });

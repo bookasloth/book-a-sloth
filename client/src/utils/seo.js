@@ -251,26 +251,135 @@ export const faqJsonLd = ({ faqs = [] } = {}) => ({
     })),
 });
 
-// BlogPosting for a single article. Pass the loaded post record.
-export const articleJsonLd = ({ post = {}, siteUrl = SITE_URL } = {}) => {
+// Organization as a @graph node (with a stable @id and an ImageObject logo), for
+// pages that build a single @graph and reference the org by @id. The standalone
+// organizationJsonLd above stays as-is for pages that inline the org directly.
+const LOGO_URL = (site) => `${site}/logo-512.png`;
+const orgNode = (site) => ({
+  '@type': 'Organization',
+  '@id': `${site}/#organization`,
+  name: 'Book A Sloth',
+  url: `${site}/`,
+  logo: { '@type': 'ImageObject', '@id': `${site}/#logo`, url: LOGO_URL(site), contentUrl: LOGO_URL(site), width: 512, height: 512 },
+  description: 'Online booking and appointment scheduling platform for coaches, consultants, therapists, and small businesses.',
+  sameAs: ORG_SAME_AS,
+});
+
+/**
+ * articleGraphJsonLd — the ONE structured-data object an article page emits.
+ *
+ * Returns a single `@graph` whose nodes cross-reference by stable `@id`, so the
+ * page renders exactly one <script type="application/ld+json">. Nodes: WebSite,
+ * Organization (+ logo ImageObject), a primary-image ImageObject, the author
+ * Person, a WebPage, the article (BlogPosting/Article) and a BreadcrumbList —
+ * plus a FAQPage ONLY when the caller passes FAQs the page actually shows.
+ *
+ * The caller passes already-resolved headline/description/url/image/dates so the
+ * meta tags and the schema come from one source (see resolveBlogSeo) and the meta
+ * description equals the schema description. `mainEntityOfPage` points at the
+ * article's own WebPage (never the homepage); the author is a real Person when a
+ * byline exists, and only falls back to the Organization when there is none.
+ *
+ * Nothing is invented: width/height, dates and the author URL are emitted only
+ * when the caller supplies them.
+ */
+export const articleGraphJsonLd = ({
+  siteUrl = SITE_URL,
+  url,
+  type = 'BlogPosting',
+  headline,
+  description,
+  image,
+  imageWidth,
+  imageHeight,
+  datePublished,
+  dateModified,
+  author,            // { name, url } — Person node emitted only when name is set
+  breadcrumb = [],   // ordered [{ name, path }]
+  faqs = [],
+} = {}) => {
   const site = trimSlash(siteUrl);
-  const url = post.slug ? `${site}/blog/${post.slug}` : `${site}/blog`;
-  const ld = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: post.seo_title || post.title || 'Book A Sloth Blog',
-    description: post.seo_description || post.excerpt || undefined,
-    url,
-    mainEntityOfPage: url,
-    datePublished: post.published_at || post.created_at || undefined,
-    dateModified: post.updated_at || post.published_at || post.created_at || undefined,
-    author: { '@type': 'Organization', name: post.author || 'Book A Sloth' },
-    publisher: organizationJsonLd({ siteUrl: site }),
+  const pageUrl = url || `${site}/`;
+  const abs = (p) => (/^https?:/i.test(p) ? p : `${site}${String(p || '').startsWith('/') ? '' : '/'}${p || ''}`);
+
+  const id = {
+    website: `${site}/#website`,
+    org: `${site}/#organization`,
+    webpage: `${pageUrl}#webpage`,
+    article: `${pageUrl}#article`,
+    image: `${pageUrl}#primaryimage`,
+    breadcrumb: `${pageUrl}#breadcrumb`,
+    faq: `${pageUrl}#faq`,
+    person: author && author.name ? `${author.url || pageUrl}#author` : undefined,
   };
-  if (post.seo_image || post.cover_image || post.image) {
-    ld.image = post.seo_image || post.cover_image || post.image;
+
+  const graph = [
+    { '@type': 'WebSite', '@id': id.website, url: `${site}/`, name: 'Book A Sloth', publisher: { '@id': id.org }, inLanguage: 'en-IN' },
+    orgNode(site),
+  ];
+
+  if (image) {
+    const img = { '@type': 'ImageObject', '@id': id.image, url: image, contentUrl: image };
+    if (imageWidth) img.width = imageWidth;
+    if (imageHeight) img.height = imageHeight;
+    graph.push(img);
   }
-  return ld;
+
+  if (id.person) {
+    graph.push({ '@type': 'Person', '@id': id.person, name: author.name, url: author.url || undefined });
+  }
+
+  graph.push({
+    '@type': 'BreadcrumbList',
+    '@id': id.breadcrumb,
+    itemListElement: (breadcrumb || [])
+      .filter((it) => it && it.name && it.path)
+      .map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, item: abs(it.path) })),
+  });
+
+  const webpage = {
+    '@type': 'WebPage',
+    '@id': id.webpage,
+    url: pageUrl,
+    name: headline,
+    description: description || undefined,
+    isPartOf: { '@id': id.website },
+    breadcrumb: { '@id': id.breadcrumb },
+    datePublished: datePublished || undefined,
+    dateModified: dateModified || datePublished || undefined,
+    inLanguage: 'en-IN',
+  };
+  if (image) webpage.primaryImageOfPage = { '@id': id.image };
+  graph.push(webpage);
+
+  const article = {
+    '@type': type,
+    '@id': id.article,
+    headline,
+    description: description || undefined,
+    url: pageUrl,
+    mainEntityOfPage: { '@id': id.webpage },
+    isPartOf: { '@id': id.webpage },
+    datePublished: datePublished || undefined,
+    dateModified: dateModified || datePublished || undefined,
+    author: id.person ? { '@id': id.person } : { '@id': id.org },
+    publisher: { '@id': id.org },
+    inLanguage: 'en-IN',
+  };
+  if (image) article.image = { '@id': id.image };
+  graph.push(article);
+
+  if (Array.isArray(faqs) && faqs.length) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': id.faq,
+      mainEntity: faqs
+        .filter((f) => f && f.q && f.a)
+        .map((f) => ({ '@type': 'Question', name: String(f.q), acceptedAnswer: { '@type': 'Answer', text: String(f.a) } })),
+    });
+  }
+
+  return { '@context': 'https://schema.org', '@graph': graph };
 };
 
 // ContactPage node with the support contact point.
