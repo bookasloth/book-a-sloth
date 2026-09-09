@@ -30,6 +30,7 @@ export const POST_TAGS = {
   'the-strike-you-could-reset-yourself': ['security', 'trust', 'bolt'],
   'bolt-learned-to-say-no': ['bolt', 'support', 'ai', 'security'],
   'meet-bolt-the-support-assistant': ['bolt', 'support', 'ai'],
+  'write-with-bolt-drafts-your-listing': ['bolt', 'ai'],
   'explore-ranking-and-a-more-app-like-app': ['discovery', 'growth', 'booking'],
   'gst-invoices-host-verification-mobile': ['payments', 'invoices', 'onboarding', 'hosting'],
   'themes-doors-and-a-warmer-booking-flow': ['booking', 'guest-experience', 'hosting'],
