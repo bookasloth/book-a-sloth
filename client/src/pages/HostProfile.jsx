@@ -7,6 +7,8 @@ import BrandPreloader from "../components/preloader/BrandPreloader";
 import { useMinimalFooter } from "../context/ChromeContext";
 import Seo from "../components/common/Seo";
 import ErrorPage from "./ErrorPage";
+import TransientError from "../components/error/TransientError";
+import { isNotFoundError } from "../utils/fetchError";
 import { resolveProfileSeo, profileJsonLd, breadcrumbJsonLd, SITE_URL } from "../utils/seo";
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
@@ -330,9 +332,19 @@ const HostProfile = () => {
 
   useEffect(() => {
     if (isVanity) return; // vanity slug → redirected in render; skip the 404 lookup
-    const load = async () => {
+    let alive = true;
+    setError('');
+    setLoading(true);
+    // Only a real 404 means the host is gone → the noindex ErrorPage is correct.
+    // Any OTHER failure (network/timeout, 5xx, or a 429/403 from an edge
+    // rate-limit or IP guard) is transient: retry with a short backoff, then fall
+    // to the non-noindex 'transient' state — a JS-rendering crawler that hit a
+    // transient API failure would otherwise noindex this live, prerendered page
+    // and drop it from search. See BlogPost.jsx / TransientError.
+    const load = async (attempt = 0) => {
       try {
         const { data } = await getHostProfile(profileSlug);
+        if (!alive) return;
         // Old/changed username → server returns the canonical one. The Vercel
         // edge function already issues a real 301 for crawlers; this self-corrects
         // the SPA URL for in-app navigations that bypass the edge.
@@ -346,13 +358,16 @@ const HostProfile = () => {
         getHostReviews(profileSlug).then(r => setReviewData(r.data)).catch(() => {});
         getHostProducts(profileSlug).then(r => setProducts(r.data || [])).catch(() => {});
         getVendorBadges(profileSlug).then(r => setBadgeList(r.data?.badges || [])).catch(() => {});
-      } catch (err) {
-        setError(err.response?.status === 404 ? 'Host not found' : 'Something went wrong');
-      } finally {
         setLoading(false);
+      } catch (err) {
+        if (!alive) return;
+        if (isNotFoundError(err)) { setError('notfound'); setLoading(false); return; }
+        if (attempt < 2) { setTimeout(() => { if (alive) load(attempt + 1); }, 800 * (attempt + 1)); return; }
+        setError('transient'); setLoading(false);
       }
     };
     load();
+    return () => { alive = false; };
   }, [profileSlug, isVanity]);
 
   // SEO (title/description/robots/canonical/OG/ProfilePage JSON-LD) is rendered
@@ -422,8 +437,11 @@ const HostProfile = () => {
 
   // A dead slug otherwise renders thin "Host not found" HTML at 200 — which Google
   // flags as a "soft 404". ErrorPage carries noindex/nofollow (via ErrorLayout), so
-  // it drops out of the index cleanly. 404 for an unknown host, 500 for a real error.
-  if (error) return <ErrorPage code={error === 'Host not found' ? 404 : 500} />;
+  // a genuinely gone host (404) drops out of the index cleanly. A transient failure
+  // uses TransientError instead, which emits NO noindex, so a live host page is not
+  // dropped from search over a blip.
+  if (error === 'notfound') return <ErrorPage code={404} />;
+  if (error === 'transient') return <TransientError message="This profile didn’t load. Please try again." />;
 
   return (
     <>

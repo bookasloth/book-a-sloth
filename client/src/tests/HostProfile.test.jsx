@@ -56,10 +56,15 @@ describe('HostProfile — loading/error', () => {
     // HTML served at 200 gets flagged by Google as a soft 404.
     // #984 flat redesign dropped the "Error 404" eyebrow — assert the branded 404
     // title instead (still proves ErrorPage rendered, not the thin 200 HTML).
-    await waitFor(() => expect(screen.getByText(/vanishing act/i)).toBeTruthy());
-    expect(
-      document.querySelector('meta[name="robots"]')?.getAttribute('content')
-    ).toMatch(/noindex/i);
+    // The robots meta is set imperatively by <Seo>'s useEffect, which flushes AFTER
+    // the "vanishing act" text paints — so both assertions live in the SAME waitFor.
+    // Asserting the meta outside it raced the effect and flaked under parallel CI load.
+    await waitFor(() => {
+      expect(screen.getByText(/vanishing act/i)).toBeTruthy();
+      expect(
+        document.querySelector('meta[name="robots"]')?.getAttribute('content')
+      ).toMatch(/noindex/i);
+    });
   });
 });
 

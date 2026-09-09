@@ -9,6 +9,8 @@ import { svcGetPublicByProfile, getAvailableSlots } from '../services/api';
 import { applyProfileTheme, isValidHex, DEFAULT_THEME_COLOR } from '../utils/themeUtils';
 import Seo from '../components/common/Seo';
 import ErrorPage from './ErrorPage';
+import TransientError from '../components/error/TransientError';
+import { isNotFoundError } from '../utils/fetchError';
 import { useMinimalFooter } from '../context/ChromeContext';
 import { resolveServiceSeo, serviceJsonLd, breadcrumbJsonLd, faqJsonLd, SITE_URL } from '../utils/seo';
 
@@ -833,20 +835,38 @@ export default function ServiceDetail() {
   }, []);
 
   useEffect(() => {
-    svcGetPublicByProfile(profileSlug, serviceSlug)
-      .then(r => {
-        setData(r.data);
-        // Per-host theme → CSS vars consumed by the Book Slot CTAs
-        const v = r.data?.vendor;
-        applyProfileTheme(
-          document.documentElement,
-          isValidHex(v?.theme_color) ? v.theme_color : DEFAULT_THEME_COLOR,
-        );
-        // SEO (title/description/robots/canonical/OG/JSON-LD) is rendered
-        // declaratively via <Seo> below, from the admin-managed fields.
-      })
-      .catch((err) => setError(err?.response?.status === 404 ? 404 : 500))
-      .finally(() => setLoading(false));
+    let alive = true;
+    setError('');
+    setLoading(true);
+    // Only a real 404 means the service is gone → the noindex ErrorPage is correct.
+    // Any OTHER failure (network/timeout, 5xx, or a 429/403 from an edge rate-limit
+    // or IP guard) is transient: retry with a short backoff, then fall to the
+    // non-noindex 'transient' state so a JS-rendering crawler that hit a transient
+    // API failure doesn't noindex this live, prerendered page. See TransientError.
+    const load = (attempt = 0) => {
+      svcGetPublicByProfile(profileSlug, serviceSlug)
+        .then(r => {
+          if (!alive) return;
+          setData(r.data);
+          // Per-host theme → CSS vars consumed by the Book Slot CTAs
+          const v = r.data?.vendor;
+          applyProfileTheme(
+            document.documentElement,
+            isValidHex(v?.theme_color) ? v.theme_color : DEFAULT_THEME_COLOR,
+          );
+          // SEO (title/description/robots/canonical/OG/JSON-LD) is rendered
+          // declaratively via <Seo> below, from the admin-managed fields.
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (!alive) return;
+          if (isNotFoundError(err)) { setError('notfound'); setLoading(false); return; }
+          if (attempt < 2) { setTimeout(() => { if (alive) load(attempt + 1); }, 800 * (attempt + 1)); return; }
+          setError('transient'); setLoading(false);
+        });
+    };
+    load();
+    return () => { alive = false; };
   }, [profileSlug, serviceSlug]);
 
   if (loading) return (
@@ -861,10 +881,11 @@ export default function ServiceDetail() {
     </div>
   );
 
-  // A dead service slug otherwise renders thin "Service not found" HTML at 200 —
-  // Google flags that as a "soft 404". ErrorPage carries noindex/nofollow (via
-  // ErrorLayout), so it drops out of the index cleanly.
-  if (error || !data) return <ErrorPage code={error || 404} />;
+  // A transient failure must NOT noindex a live, prerendered service page — use the
+  // non-noindex fallback. A genuinely gone service (404, or an empty payload) still
+  // renders the branded noindex ErrorPage, avoiding the thin-200 "soft 404".
+  if (error === 'transient') return <TransientError message="This service didn’t load. Please try again." />;
+  if (error === 'notfound' || !data) return <ErrorPage code={404} />;
 
   const { service, vendor, totalServices, totalBookings, reviews, avgRating, ratingBreakdown, bookingFee, bookingFeeBreakdown } = data;
 
