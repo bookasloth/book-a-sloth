@@ -57,6 +57,11 @@ async function crawlPrerendered(seed) {
     const responseMs = Date.now() - started;
     const args = m.buildHtmlArgs || {};
     const robots = args.robots ? String(args.robots).toLowerCase() : null;
+    // DB-derived content model for the new SEO/GEO scorer only. We deliberately keep
+    // bodyCrawled:false and the top-level parsed fields empty so the EXISTING rule
+    // engine's behaviour for host/service pages is unchanged (no new orphan/broken-
+    // link noise); the v2 scorer reads raw_signals.contentModel directly instead.
+    const contentModel = require('./pageContentModel').build(seed.pageType, m.payload);
     return {
       url: seed.url, pageType: seed.pageType, inSitemap: seed.inSitemap,
       httpStatus: m.status, finalUrl: seed.url,
@@ -65,7 +70,7 @@ async function crawlPrerendered(seed) {
       title: args.title || null, metaDescription: args.description || null, canonical: args.canonical || null,
       robots, h1: [], headings: [],
       links: { internal: [], external: [] }, images: [], jsonLd: args.jsonLd ? [args.jsonLd] : [],
-      wordCount: 0, viewport: 'width=device-width,initial-scale=1', bodyCrawled: false,
+      wordCount: 0, viewport: 'width=device-width,initial-scale=1', bodyCrawled: false, contentModel,
       indexable: m.status === 200 && !(robots && robots.includes('noindex')), fetchError: null,
     };
   } catch (err) {
@@ -91,6 +96,7 @@ async function crawlOne(seed) {
     robots: parsed.robots || null, h1: parsed.h1 || [], headings: parsed.headings || [],
     links: parsed.links || { internal: [], external: [] }, images: parsed.images || [], jsonLd: parsed.jsonLd || [],
     wordCount: parsed.wordCount || 0, viewport: parsed.viewport || null, bodyCrawled: true,
+    bodyText: parsed.bodyText || '',
     indexable: r.status === 200 && noindex === false, fetchError: r.error,
   };
 }

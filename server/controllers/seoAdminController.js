@@ -80,6 +80,34 @@ const getReports = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── GET /admin/seo/list ───────────────────────────────────────
+// List-first views (spec §2): services/profiles/blogs/pages via ?type=, with
+// search/sort/filter/pagination. One code path powers every list.
+const getList = async (req, res) => {
+  try {
+    const { crawlId, type, search, sort, dir, page, pageSize, indexable, status } = req.query || {};
+    const filters = { crawlId, type, search, sort, dir, page, pageSize, status };
+    if (indexable != null) filters.indexable = indexable === 'true';
+    res.json(await svc.pageList(filters));
+  } catch (e) { safeError(res, e); }
+};
+
+// ── GET /admin/seo/dashboard ──────────────────────────────────
+// Decision-first overview (spec §13): SEO/GEO health, indexed, attention, trend,
+// by-type breakdown and top opportunities.
+const getDashboard = async (req, res) => {
+  try {
+    res.json(await svc.dashboard({ crawlId: req.query?.crawlId }));
+  } catch (e) { safeError(res, e); }
+};
+
+// ── GET /admin/seo/opportunities ──────────────────────────────
+const getOpportunities = async (req, res) => {
+  try {
+    res.json(await svc.opportunities({ crawlId: req.query?.crawlId }));
+  } catch (e) { safeError(res, e); }
+};
+
 // ── GET /admin/seo/changes ────────────────────────────────────
 // "What changed since the previous crawl?" (Phase 1 historical baseline, §1h).
 const getChanges = async (req, res) => {
@@ -239,6 +267,7 @@ const postGscSync = async (req, res) => {
 
 module.exports = {
   getOverview, getIssues, getIssue, getPages, getPage,
+  getList, getDashboard, getOpportunities,
   getCategories, getReports, getChanges,
   getFixes, getFix, postGenerateFixes, postDecideFix,
   postApplyFix, postMarkApplied, postRollbackFix, postRetestFix,

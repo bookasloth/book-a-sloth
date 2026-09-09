@@ -59,7 +59,7 @@ function parse(html, headers = {}) {
   const bodyText = (root.querySelector('body')?.text || '').replace(/\s+/g, ' ').trim();
   const wordCount = bodyText ? bodyText.split(' ').length : 0;
 
-  return { title, metaDescription, canonical, robots, viewport, h1, headings, links, images, jsonLd, wordCount };
+  return { title, metaDescription, canonical, robots, viewport, h1, headings, links, images, jsonLd, wordCount, bodyText };
 }
 
 module.exports = { parse };

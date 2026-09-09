@@ -53,6 +53,12 @@ async function saveResults(crawlId, pages, issues, scores) {
     raw_signals: {
       headings: p.headings, links: p.links, images: p.images,
       jsonLd: p.jsonLd, viewport: p.viewport, fetchError: p.fetchError,
+      // DB-derived content model for host/service pages (null for body-crawled
+      // static/blog, which carry real parsed signals above). Read by the v2 scorer.
+      contentModel: p.contentModel || null,
+      // Truncated body text (body-crawled pages only) for GEO evidence detection
+      // (statistics/quotes/citations). Capped so raw_signals stays small.
+      bodyText: p.bodyText ? String(p.bodyText).slice(0, 4000) : null,
     },
   }));
   const { data: savedPages, error: pagesError } = await supabaseAdmin

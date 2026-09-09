@@ -7,6 +7,8 @@
 const { supabaseAdmin } = require('../../config/supabase');
 const { scorePage } = require('./healthScore');
 const { categoryForType } = require('./pageClassify');
+const v2 = require('./scoring');
+const robotsAudit = require('./robotsAudit');
 
 const unwrap = ({ data, error }) => {
   if (error) throw error;
@@ -62,11 +64,48 @@ async function listPages(filters = {}) {
 async function getPage(id) {
   const page = unwrap(await supabaseAdmin.from('seo_crawl_pages').select('*').eq('id', id).maybeSingle());
   if (!page) return null;
-  const issues = unwrap(await supabaseAdmin.from('seo_issues').select('severity,category,rule_key').eq('page_id', id));
-  const decorated = (issues || []).map((i) => ({ severity: i.severity, category: i.category, ruleKey: i.rule_key }));
+  const issueRows = unwrap(await supabaseAdmin.from('seo_issues').select('severity,category,rule_key,title,detail,affected_url').eq('page_id', id));
+  const decorated = (issueRows || []).map((i) => ({ severity: i.severity, category: i.category, ruleKey: i.rule_key }));
   const sp = scorePage(decorated, page.page_type);
-  return { ...page, category: categoryForType(page.page_type), status: sp.status, health: sp.health,
-    dimensions: sp.dimensions, critical_count: sp.criticalCount, issue_count: sp.issueCount };
+
+  const [gscMap, qMap, robots] = await Promise.all([gscMapByUrl(), queriesByUrl(), robotsAudit.getMap()]);
+  const gsc = gscMap.get(page.url) || null;
+  const queries = (qMap.get(page.url) || []).sort((a, b) => (b.impressions || 0) - (a.impressions || 0));
+  const scored = v2.scorePage(page, { issues: decorated, gsc, queries, robots });
+
+  // Previous-crawl comparison: same URL in the prior done crawl, re-scored (spec §7).
+  let previous = null;
+  try {
+    const prevCrawl = unwrap(await supabaseAdmin.from('seo_crawls').select('id').eq('status', 'done').lt('id', page.crawl_id).order('id', { ascending: false }).limit(1));
+    const prevId = prevCrawl?.[0]?.id;
+    if (prevId) {
+      const prevPage = unwrap(await supabaseAdmin.from('seo_crawl_pages').select('*').eq('crawl_id', prevId).eq('url', page.url).maybeSingle());
+      if (prevPage) {
+        const prevIssues = unwrap(await supabaseAdmin.from('seo_issues').select('severity,category,rule_key').eq('page_id', prevPage.id));
+        const prevDec = (prevIssues || []).map((i) => ({ severity: i.severity, category: i.category, ruleKey: i.rule_key }));
+        const prevScored = v2.scorePage(prevPage, { issues: prevDec, gsc: null, queries: [], robots });
+        previous = { seo_score: prevScored.seo.score, geo_score: prevScored.geo.score, at: prevPage.created_at };
+      }
+    }
+  } catch { /* history optional */ }
+
+  return {
+    ...page,
+    category: categoryForType(page.page_type),
+    status: sp.status, health: sp.health, dimensions: sp.dimensions,
+    critical_count: sp.criticalCount, issue_count: sp.issueCount,
+    seo_score: scored.seo.score, geo_score: scored.geo.score,
+    seo: scored.seo, geo: scored.geo,
+    recommendations: scored.recommendations, signals: scored.signals,
+    gsc: gscDelta(gsc),
+    queries: queries.map((q) => ({
+      query: q.query, clicks: q.clicks, impressions: q.impressions, ctr: q.ctr, position: q.position,
+      prev_position: q.prev_position,
+      position_change: q.prev_position != null && q.position != null ? Number((q.prev_position - q.position).toFixed(1)) : null,
+    })),
+    issues: (issueRows || []).map((i) => ({ severity: i.severity, category: i.category, rule_key: i.rule_key, title: i.title, detail: i.detail })),
+    previous,
+  };
 }
 
 // Score trend — most recent snapshots first, newest crawl last-in for a chart.
@@ -108,9 +147,40 @@ async function maturityByUrl() {
   return counts;
 }
 
-// Per-page report for one crawl: each page enriched with hard status, health
-// score, per-dimension scores and evidence maturity (spec §1a/§1b/§1i).
-async function pageReports({ crawlId } = {}) {
+// ── GSC read helpers (fail soft: tables may be pre-migration / unsynced) ──────
+async function gscMapByUrl() {
+  try {
+    const rows = unwrap(await supabaseAdmin.from('seo_gsc_urls').select('*'));
+    return new Map((rows || []).map((r) => [r.url, r]));
+  } catch { return new Map(); }
+}
+async function queriesByUrl() {
+  try {
+    const rows = unwrap(await supabaseAdmin.from('seo_gsc_queries').select('*'));
+    const m = new Map();
+    for (const r of rows || []) { if (!m.has(r.url)) m.set(r.url, []); m.get(r.url).push(r); }
+    return m;
+  } catch { return new Map(); }
+}
+// Flatten a seo_gsc_urls row into the drawer/list performance block with deltas.
+// positionChange > 0 means the page IMPROVED (lower average position is better).
+function gscDelta(g) {
+  if (!g) return null;
+  const posChange = g.prev_position != null && g.position != null ? Number((g.prev_position - g.position).toFixed(1)) : null;
+  return {
+    clicks: g.clicks || 0, impressions: g.impressions || 0, ctr: g.ctr || 0, position: g.position,
+    prev_clicks: g.prev_clicks, prev_impressions: g.prev_impressions, prev_position: g.prev_position,
+    clicks_change: g.prev_clicks != null ? (g.clicks || 0) - g.prev_clicks : null,
+    impressions_change: g.prev_impressions != null ? (g.impressions || 0) - g.prev_impressions : null,
+    position_change: posChange,
+    coverage_state: g.coverage_state || null, google_canonical: g.google_canonical || null,
+  };
+}
+
+// Core: every page of a crawl, enriched with v1 status (kept for compat) AND the v2
+// SEO + GEO scores, breakdowns, recommendations, GSC performance and query counts.
+// Shared by pageReports / pageList / categoryRollups / opportunities so scoring runs once.
+async function scoredPages({ crawlId } = {}) {
   const id = crawlId || (await latestCrawlId());
   if (!id) return { crawlId: null, pages: [] };
   const pages = unwrap(await supabaseAdmin.from('seo_crawl_pages').select('*').eq('crawl_id', id));
@@ -120,15 +190,37 @@ async function pageReports({ crawlId } = {}) {
     if (!byUrl.has(i.affected_url)) byUrl.set(i.affected_url, []);
     byUrl.get(i.affected_url).push({ severity: i.severity, category: i.category, ruleKey: i.rule_key });
   }
-  const maturity = await maturityByUrl();
+  const [maturity, gscMap, qMap, robots] = await Promise.all([
+    maturityByUrl(), gscMapByUrl(), queriesByUrl(), robotsAudit.getMap(),
+  ]);
   const out = (pages || []).map((p) => {
-    const sp = scorePage(byUrl.get(p.url) || [], p.page_type);
+    const pageIssues = byUrl.get(p.url) || [];
+    const sp = scorePage(pageIssues, p.page_type); // v1 hard status
+    const gsc = gscMap.get(p.url) || null;
+    const queries = qMap.get(p.url) || [];
+    const scored = v2.scorePage(p, { issues: pageIssues, gsc, queries, robots });
     const seen = maturity.get(p.url) || 1;
-    return { ...p, category: categoryForType(p.page_type), status: sp.status, health: sp.health,
-      dimensions: sp.dimensions, critical_count: sp.criticalCount, issue_count: sp.issueCount,
-      evidence_seen: seen, evidence_maturity: maturityLevel(seen) };
+    return {
+      ...p,
+      category: categoryForType(p.page_type),
+      status: sp.status, health: sp.health, dimensions: sp.dimensions,
+      critical_count: sp.criticalCount, issue_count: sp.issueCount,
+      evidence_seen: seen, evidence_maturity: maturityLevel(seen),
+      seo_score: scored.seo.score, geo_score: scored.geo.score,
+      seo: scored.seo, geo: scored.geo,
+      recommendations: scored.recommendations,
+      opportunities_count: scored.recommendations.length,
+      signals: scored.signals,
+      gsc: gscDelta(gsc),
+      query_count: queries.length,
+    };
   });
   return { crawlId: id, pages: out };
+}
+
+// Back-compat wrapper (existing /reports endpoint + tests).
+async function pageReports({ crawlId } = {}) {
+  return scoredPages({ crawlId });
 }
 
 // Category → page rollups (spec §1d). Pure aggregation over pageReports.
@@ -179,6 +271,99 @@ async function changedSincePrevious() {
   return { latest: latest.id, previous: prev.id, added, resolved, total_latest: latestIssues?.length || 0, total_previous: prevIssues?.length || 0 };
 }
 
+// ── List views (spec §2): one query path for services/profiles/blogs/pages ───
+// Scores once (scoredPages) then filters/sorts/paginates in memory. ponytail:
+// in-memory paginate is fine at current volume (a few hundred pages/crawl); move to
+// a persisted score column + SQL pagination if a crawl ever tops a few thousand pages.
+const SORT_FIELDS = {
+  seo: (p) => p.seo_score, geo: (p) => p.geo_score, health: (p) => p.health,
+  clicks: (p) => p.gsc?.clicks ?? -1, impressions: (p) => p.gsc?.impressions ?? -1,
+  ctr: (p) => p.gsc?.ctr ?? -1, position: (p) => (p.gsc?.position ?? 999),
+  issues: (p) => p.issue_count, opportunities: (p) => p.opportunities_count,
+  updated: (p) => p.created_at || '',
+};
+// Slim row for lists — drops the heavy breakdown/recommendations arrays (drawer loads
+// those via getPage). Keeps the columns the table shows.
+function slimRow(p) {
+  return {
+    id: p.id, url: p.url, page_type: p.page_type, category: p.category,
+    title: p.title, indexable: p.indexable, http_status: p.http_status, status: p.status,
+    seo_score: p.seo_score, geo_score: p.geo_score, health: p.health,
+    issue_count: p.issue_count, opportunities_count: p.opportunities_count,
+    query_count: p.query_count, evidence_maturity: p.evidence_maturity,
+    gsc: p.gsc, created_at: p.created_at,
+    seo_caps: p.seo?.caps?.length || 0, geo_caps: p.geo?.caps?.length || 0,
+  };
+}
+async function pageList({ crawlId, type, search, sort = 'seo', dir = 'asc', page = 1, pageSize = 50, indexable, status } = {}) {
+  const { crawlId: id, pages } = await scoredPages({ crawlId });
+  let rows = pages;
+  if (type) { const types = String(type).split(','); rows = rows.filter((p) => types.includes(p.page_type)); }
+  if (indexable != null) rows = rows.filter((p) => p.indexable === indexable);
+  if (status) rows = rows.filter((p) => p.status === status);
+  if (search) { const q = String(search).toLowerCase(); rows = rows.filter((p) => (p.url || '').toLowerCase().includes(q) || (p.title || '').toLowerCase().includes(q)); }
+  const getter = SORT_FIELDS[sort] || SORT_FIELDS.seo;
+  const sign = dir === 'desc' ? -1 : 1;
+  rows.sort((a, b) => { const av = getter(a); const bv = getter(b); return av < bv ? -1 * sign : av > bv ? 1 * sign : 0; });
+  const total = rows.length;
+  const ps = Math.max(1, Math.min(200, Number(pageSize) || 50));
+  const pg = Math.max(1, Number(page) || 1);
+  const slice = rows.slice((pg - 1) * ps, (pg - 1) * ps + ps).map(slimRow);
+  return { crawlId: id, total, page: pg, pageSize: ps, pages: slice };
+}
+
+// ── Dashboard: decisions, not vanity (spec §13) ──────────────────────────────
+const sample = (arr, n = 8) => arr.slice(0, n).map((p) => ({ id: p.id, url: p.url, page_type: p.page_type, seo_score: p.seo_score, geo_score: p.geo_score, gsc: p.gsc }));
+function buildOpportunities(pages) {
+  const striking = pages.filter((p) => p.gsc && p.gsc.position != null && p.gsc.position >= 4 && p.gsc.position <= 15 && (p.gsc.impressions || 0) >= 50);
+  const lowCtr = pages.filter((p) => p.gsc && (p.gsc.impressions || 0) >= 100 && p.gsc.ctr != null && p.gsc.ctr < 0.02);
+  const weakLinks = pages.filter((p) => (p.recommendations || []).some((r) => r.axis === 'SEO' && r.dimension === 'internal_linking'));
+  const indexing = pages.filter((p) => p.status === 'FAIL' || !p.indexable || (p.http_status && p.http_status !== 200));
+  const seoNotGeo = pages.filter((p) => p.seo_score >= 70 && p.geo_score < 55);
+  return [
+    { key: 'striking_distance', label: 'Ranking 4–15 with impressions — push to page one', count: striking.length, pages: sample(striking) },
+    { key: 'low_ctr', label: 'High impressions but low CTR — rewrite title/description', count: lowCtr.length, pages: sample(lowCtr) },
+    { key: 'weak_internal_links', label: 'Weak or missing internal links', count: weakLinks.length, pages: sample(weakLinks) },
+    { key: 'indexing_problems', label: 'Indexing / crawl problems', count: indexing.length, pages: sample(indexing) },
+    { key: 'strong_seo_weak_geo', label: 'Strong SEO but weak GEO readiness', count: seoNotGeo.length, pages: sample(seoNotGeo) },
+  ].filter((b) => b.count > 0);
+}
+async function dashboard({ crawlId } = {}) {
+  const { crawlId: id, pages } = await scoredPages({ crawlId });
+  if (!pages.length) return { crawlId: id, empty: true };
+  const n = pages.length;
+  const mean = (f) => Math.round(pages.reduce((s, p) => s + (f(p) || 0), 0) / n);
+  const withPos = pages.filter((p) => p.gsc && p.gsc.position != null);
+  const totalImpr = pages.reduce((s, p) => s + (p.gsc?.impressions || 0), 0);
+  const avgPos = withPos.length ? Number((withPos.reduce((s, p) => s + p.gsc.position * (p.gsc.impressions || 1), 0) / withPos.reduce((s, p) => s + (p.gsc.impressions || 1), 0)).toFixed(1)) : null;
+  const byType = {};
+  for (const p of pages) {
+    const t = p.page_type; byType[t] = byType[t] || { type: t, count: 0, seoSum: 0, geoSum: 0 };
+    byType[t].count++; byType[t].seoSum += p.seo_score; byType[t].geoSum += p.geo_score;
+  }
+  return {
+    crawlId: id,
+    totals: {
+      pages: n,
+      avg_seo: mean((p) => p.seo_score),
+      avg_geo: mean((p) => p.geo_score),
+      indexed: pages.filter((p) => p.indexable && p.http_status === 200).length,
+      needs_attention: pages.filter((p) => p.seo_score < 60 || p.status === 'FAIL').length,
+      improving: pages.filter((p) => p.gsc && p.gsc.position_change != null && p.gsc.position_change > 0.1).length,
+      declining: pages.filter((p) => p.gsc && p.gsc.position_change != null && p.gsc.position_change < -0.1).length,
+      clicks: pages.reduce((s, p) => s + (p.gsc?.clicks || 0), 0),
+      impressions: totalImpr,
+      avg_position: avgPos,
+    },
+    by_type: Object.values(byType).map((t) => ({ type: t.type, count: t.count, avg_seo: Math.round(t.seoSum / t.count), avg_geo: Math.round(t.geoSum / t.count) })),
+    opportunities: buildOpportunities(pages),
+  };
+}
+async function opportunities({ crawlId } = {}) {
+  const { crawlId: id, pages } = await scoredPages({ crawlId });
+  return { crawlId: id, opportunities: buildOpportunities(pages) };
+}
+
 // Mute an issue: rule-wide (ruleType 'rule', url_pattern null) or just this URL
 // (ruleType 'url', url_pattern = the issue's affected_url). Matches seoPersist's
 // isMuted() lookup (rule_key + optional url_pattern).
@@ -202,4 +387,5 @@ async function muteIssue(id, { ruleType, mutedBy } = {}) {
 }
 
 module.exports = { latestOverview, listIssues, getIssue, listPages, getPage, scoreHistory, getCrawl, muteIssue, listGscUrls,
-  pageReports, categoryRollups, changedSincePrevious, latestCrawlId };
+  pageReports, categoryRollups, changedSincePrevious, latestCrawlId,
+  scoredPages, pageList, dashboard, opportunities };
