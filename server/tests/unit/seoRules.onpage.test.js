@@ -15,10 +15,20 @@ describe('onpage rules', () => {
     expect(keys).toContain('onpage.missing_title');
   });
 
-  test('flags title length outside 50-60', () => {
-    const ctx = buildContext([page({ title: 'Short' })], new Set());
-    const keys = check(page({ title: 'Short' }), ctx).map((i) => i.ruleKey);
-    expect(keys).toContain('onpage.title_length');
+  test('flags a title that is too long (truncation risk), not a short one', () => {
+    // Too long → flagged (Google truncates ~60 chars).
+    const longP = page({ title: 'x'.repeat(90) });
+    expect(check(longP, buildContext([longP], new Set())).map((i) => i.ruleKey)).toContain('onpage.title_length');
+    // Short → NOT flagged (spec §20: no minimum length gate).
+    const shortP = page({ title: 'Short' });
+    expect(check(shortP, buildContext([shortP], new Set())).map((i) => i.ruleKey)).not.toContain('onpage.title_length');
+  });
+
+  test('flags a description that is too long, not a short one', () => {
+    const longP = page({ metaDescription: 'x'.repeat(200) });
+    expect(check(longP, buildContext([longP], new Set())).map((i) => i.ruleKey)).toContain('onpage.description_length');
+    const shortP = page({ metaDescription: 'Short and sweet.' });
+    expect(check(shortP, buildContext([shortP], new Set())).map((i) => i.ruleKey)).not.toContain('onpage.description_length');
   });
 
   test('flags duplicate titles across pages', () => {
@@ -47,11 +57,11 @@ describe('onpage rules', () => {
     expect(keys).not.toContain('onpage.title_h1_mismatch');
   });
 
-  test('a bodiless page still fires title_length for an out-of-band title (resolver-provided title stays valid)', () => {
+  test('a bodiless page fires title_length only for a too-long title (resolver-provided title stays valid)', () => {
     const short = page({ bodyCrawled: false, h1: [], title: 'Short' });
     const long = page({ bodyCrawled: false, h1: [], title: 'x'.repeat(90) });
     const ctx = buildContext([short, long], new Set());
-    expect(check(short, ctx).map((i) => i.ruleKey)).toContain('onpage.title_length');
+    expect(check(short, ctx).map((i) => i.ruleKey)).not.toContain('onpage.title_length');
     expect(check(long, ctx).map((i) => i.ruleKey)).toContain('onpage.title_length');
   });
 

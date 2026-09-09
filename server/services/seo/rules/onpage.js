@@ -1,6 +1,10 @@
 // server/services/seo/rules/onpage.js
-// Detection only. Title/description length bands come from docs/seo-aeo-geo-plan.md.
-const TITLE_MIN = 50, TITLE_MAX = 60, DESC_MIN = 140, DESC_MAX = 160;
+// Detection only. We flag a title/description only when it's long enough to be
+// TRUNCATED in results — there is NO minimum. A short title or description is not
+// a defect (spec §20: no arbitrary length gates); "too short" was crying wolf on
+// ~400 healthy pages. Google truncates titles near ~60 chars and descriptions
+// near ~160, so those are the only bands that map to real harm (lost SERP text).
+const TITLE_MAX = 60, DESC_MAX = 160;
 
 function check(p, ctx) {
   const out = [];
@@ -11,12 +15,12 @@ function check(p, ctx) {
 
   if (!p.title) push('onpage.missing_title', {});
   else {
-    if (p.title.length < TITLE_MIN || p.title.length > TITLE_MAX) push('onpage.title_length', { length: p.title.length });
+    if (p.title.length > TITLE_MAX) push('onpage.title_length', { length: p.title.length, max: TITLE_MAX });
     if ((ctx.titleCounts.get(p.title) || 0) > 1) push('onpage.duplicate_title', { title: p.title, count: ctx.titleCounts.get(p.title) });
   }
   if (!p.metaDescription) push('onpage.missing_description', {});
   else {
-    if (p.metaDescription.length < DESC_MIN || p.metaDescription.length > DESC_MAX) push('onpage.description_length', { length: p.metaDescription.length });
+    if (p.metaDescription.length > DESC_MAX) push('onpage.description_length', { length: p.metaDescription.length, max: DESC_MAX });
     if ((ctx.descCounts.get(p.metaDescription) || 0) > 1) push('onpage.duplicate_description', { count: ctx.descCounts.get(p.metaDescription) });
   }
   if (p.bodyCrawled !== false) {
