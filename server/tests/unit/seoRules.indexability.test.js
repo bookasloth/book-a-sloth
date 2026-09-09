@@ -21,15 +21,22 @@ describe('technical + indexability rules', () => {
     const ctx = buildContext([home, p], new Set());
     expect(idx.check(p, ctx).map((i) => i.ruleKey)).toContain('indexability.prerender_regression');
   });
-  test('unrendered_title fires for a body-crawled static page that serves the homepage title', () => {
-    const home = { url: 'https://bookasloth.com/', pageType: 'static', title: 'Book A Sloth — home' };
-    const prof = base({ url: 'https://bookasloth.com/services/career-coach', pageType: 'static', title: 'Book A Sloth — home', bodyCrawled: true });
-    const ctx = buildContext([home, prof], new Set());
-    expect(idx.check(prof, ctx).map((i) => i.ruleKey)).toContain('onpage.unrendered_title');
+  // Shell title = a title shared by >= 5 pages (the un-prerendered SPA fallback).
+  const shellPages = (n) => Array.from({ length: n }, (_, i) => ({ url: `https://bookasloth.com/services/p${i}`, pageType: 'static', httpStatus: 200, bodyCrawled: true, title: 'Book A Sloth — the calm way to sell your time' }));
+  test('unrendered_title fires for a page serving the shared shell title (>=5 pages)', () => {
+    const home = { url: 'https://bookasloth.com/', pageType: 'static', httpStatus: 200, title: 'Book A Sloth — home (prerendered)' };
+    const pages = shellPages(6);
+    const ctx = buildContext([home, ...pages], new Set());
+    expect(idx.check(pages[0], ctx).map((i) => i.ruleKey)).toContain('onpage.unrendered_title');
   });
-  test('unrendered_title does NOT fire for the homepage itself', () => {
-    const home = base({ url: 'https://bookasloth.com/', pageType: 'static', title: 'Book A Sloth — home', bodyCrawled: true });
-    const ctx = buildContext([home], new Set());
+  test('unrendered_title does NOT fire when only a few pages share a title (real dup, not shell)', () => {
+    const pages = shellPages(2); // below the >=5 shell threshold
+    const ctx = buildContext(pages, new Set());
+    expect(idx.check(pages[0], ctx).map((i) => i.ruleKey)).not.toContain('onpage.unrendered_title');
+  });
+  test('unrendered_title does NOT fire for the prerendered homepage (unique title)', () => {
+    const home = base({ url: 'https://bookasloth.com/', pageType: 'static', title: 'Book A Sloth — home (prerendered)', bodyCrawled: true });
+    const ctx = buildContext([home, ...shellPages(6)], new Set());
     expect(idx.check(home, ctx).map((i) => i.ruleKey)).not.toContain('onpage.unrendered_title');
   });
   test('error_url_in_sitemap fires for a 404 that is in the sitemap', () => {

@@ -28,8 +28,17 @@ function buildContext(pages, sitemapUrls, gscByUrl = new Map()) {
     for (const l of p.links?.internal || []) internalLinkTargets.add(l.replace(/\/$/, ''));
     if (p.url === siteUrl || p.url === `${siteUrl}/`) { homepageTitle = p.title; homepageUrl = p.url; }
   }
+  // Shell title = the SPA's built index.html <title>, which un-prerendered routes
+  // serve verbatim. It is NOT the homepage title (the homepage is prerendered to its
+  // own title). Detect it as the one title shared by many pages: every page should
+  // have a unique title, so a title repeated >= SHELL_TITLE_MIN times is the generic
+  // fallback. Pages carrying it were not prerendered for non-JS clients.
+  const SHELL_TITLE_MIN = Number(process.env.SEO_SHELL_TITLE_MIN) || 5;
+  let shellTitle = null; let shellMax = 0;
+  for (const [t, c] of titleCounts) { if (c > shellMax) { shellMax = c; shellTitle = t; } }
+  if (shellMax < SHELL_TITLE_MIN) shellTitle = null;
   return { pages, sitemapUrls: sitemapUrls || new Set(), titleCounts, descCounts,
-    internalLinkTargets, homepageTitle, homepageUrl, SHOULD_INDEX_TYPES, gscByUrl };
+    internalLinkTargets, homepageTitle, homepageUrl, shellTitle, SHOULD_INDEX_TYPES, gscByUrl };
 }
 
 function decorate(raw) {
