@@ -13,6 +13,19 @@ describe('resolveServiceSeo — admin overrides win, fallbacks otherwise', () =>
     expect(seo.description).toBe('A 1:1 call.');
   });
 
+  test('drops the brand suffix (then the host) so the title is not truncated', () => {
+    // Full form overflows 60 → drop " | Book A Sloth", keep service + host.
+    const mid = resolveServiceSeo({ service: { ...base, title: 'Marketing Automation Consultation' }, vendor: { name: 'Mohini Daf' }, siteUrl: SITE });
+    expect(mid.title).toBe('Marketing Automation Consultation with Mohini Daf');
+    expect(mid.title.length).toBeLessThanOrEqual(60);
+    // Even "service with host" overflows → drop the host too, keep the service title.
+    const long = resolveServiceSeo({ service: { ...base, title: 'SEO Consultancy – Expert Guidance to Boost Your Rankings' }, vendor: { name: 'Aastha Nikhare' }, siteUrl: SITE });
+    expect(long.title).toBe('SEO Consultancy – Expert Guidance to Boost Your Rankings');
+    // A short title keeps the full branded form (unchanged behaviour).
+    const short = resolveServiceSeo({ service: base, vendor: VENDOR, siteUrl: SITE });
+    expect(short.title).toBe('Business Consultation with John Doe | Book A Sloth');
+  });
+
   test('uses admin seo_title / seo_description verbatim when set', () => {
     const seo = resolveServiceSeo({
       service: { ...base, seo_title: 'Hire a Top Consultant', seo_description: 'Custom meta.' },

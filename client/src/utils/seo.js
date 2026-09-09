@@ -31,9 +31,19 @@ export const resolveServiceSeo = ({ service = {}, vendor = {}, siteUrl = SITE_UR
   const username = vendor.username;
   const baseTitle = service.title || 'Service';
 
-  // Admin seo_title is used verbatim (full control of the tag); otherwise compose.
-  const title = service.seo_title
-    || `${baseTitle}${vendor.name ? ` with ${vendor.name}` : ''} | Book A Sloth`;
+  // Admin seo_title is used verbatim (full control of the tag); otherwise compose
+  // progressively so the tag isn't truncated in results (Google cuts ~60 chars):
+  // full → drop the " | Book A Sloth" brand suffix → drop " with {host}" → the bare
+  // service title. The service title is host-authored (UGC) so we never truncate it
+  // — if it alone exceeds 60, it stays as the host wrote it.
+  const composeTitle = () => {
+    const withName = vendor.name ? `${baseTitle} with ${vendor.name}` : baseTitle;
+    const full = `${withName} | Book A Sloth`;
+    if (full.length <= 60) return full;
+    if (withName.length <= 60) return withName;
+    return baseTitle;
+  };
+  const title = service.seo_title || composeTitle();
   const description = service.seo_description
     || truncate(service.short_description || service.description || `Book ${baseTitle} on Book A Sloth.`);
 
