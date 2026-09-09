@@ -59,7 +59,12 @@ export default function ConsentBanner({ variant = "full" }) {
       </div>
 
       <div className="text-center leading-relaxed">
-        <h4 className="mb-1.5 text-base font-semibold">This site uses cookies 🍪</h4>
+        {/* Not an <h4>: this dialog renders above the page's <h1>, so a heading
+            here made the article's first heading an h4 and broke the document
+            outline on every page (semantic.heading_skip on ~195 pages). The dialog
+            already has its own accessible name via aria-label above, so this needs
+            no heading role — a styled <p> keeps the exact look. */}
+        <p className="mb-1.5 text-base font-semibold">This site uses cookies 🍪</p>
         <p className="text-xs text-gray-600">
           We use cookies for analytics &amp; marketing. Essential analytics always
           run — you can decline marketing &amp; ad cookies.
