@@ -1,14 +1,17 @@
 /**
  * emailLayout.js — recipient-driven email shells.
  *
- * Two layouts, selected by the RECIPIENT audience (not the template row tag):
+ * Three layouts, selected by the RECIPIENT audience (not the template row tag):
  *   • customer → Book A Sloth-branded header, nav + legal footer (new users:
  *                build platform trust, give navigation + legal unsubscribe).
  *   • vendor   → host-branded header (host's own logo/name), minimal
  *                "Powered by Book a Sloth" footer (they already know the brand).
+ *   • cold     → NO header chrome, legal-floor footer only (sender + address +
+ *                unsubscribe). Founder cold outreach: reads like a 1:1 note.
  *
  * renderLayout({ audience, ... }) dispatches:
  *   'vendor'                      → renderVendorLayout
+ *   'cold'                        → renderColdLayout
  *   'customer' | 'all' | missing  → renderCustomerLayout (safe default; it is
  *                                   platform-branded and carries unsubscribe)
  *
@@ -209,6 +212,29 @@ function renderVendorLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, emailCate
     + shellClose({ bodyHtml, cta: ctaButton(ctaLabel, ctaUrl, brand), footerRow });
 }
 
+// ── Cold layout ──────────────────────────────────────────────────────────────
+// For founder cold outreach: NO header chrome (no logo/pill — reads like a 1:1
+// note, not a bulk blast, which lands better than a branded template). Footer is
+// the legal floor only: sender identity + postal address + unsubscribe (DPDP /
+// CAN-SPAM require all three on commercial cold mail). No nav, no "My Bookings",
+// no rights-reserved. ponytail: reuses the shared shell, just drops the header row.
+function renderColdLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, settings, data }) {
+  const brand    = settings.brand_color || '#FE5100';
+  const website  = settings.website_url || 'https://bookasloth.com';
+  const fromName = settings.from_name   || 'Book A Sloth';
+  const unsubToken = data.unsubscribe_token || '';
+
+  const footerRow = `<tr>
+    <td style="padding:20px 28px;border-top:1px solid ${D.border};text-align:center;font-size:11px;line-height:1.7;color:${D.note};font-family:${D.font};">
+      ${esc(COMPANY)} &middot; ${esc(ADDRESS)}<br>
+      <a href="${esc(website)}/unsubscribe?u=${esc(unsubToken)}" style="color:${D.muted};text-decoration:underline;">Unsubscribe</a>
+    </td>
+  </tr>`;
+
+  return shellOpen({ previewText, fromName, brand })
+    + shellClose({ bodyHtml, cta: ctaButton(ctaLabel, ctaUrl, brand), footerRow });
+}
+
 // ── Dispatcher ───────────────────────────────────────────────────────────────
 
 /**
@@ -242,7 +268,9 @@ function renderLayout({
     emailCategory,
     settings, data: data || {},
   };
-  return audience === 'vendor' ? renderVendorLayout(args) : renderCustomerLayout(args);
+  if (audience === 'vendor') return renderVendorLayout(args);
+  if (audience === 'cold')   return renderColdLayout(args);
+  return renderCustomerLayout(args);
 }
 
 module.exports = { renderLayout, tint };

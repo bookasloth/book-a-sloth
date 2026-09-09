@@ -333,6 +333,7 @@ const AdminCampaignComposer = ({ onClose }) => {
               <select className="fb-input text-sm" value={audience} onChange={(e) => setAudience(e.target.value)}>
                 <option value="customer">Guest (branded footer)</option>
                 <option value="vendor">Host (minimal footer)</option>
+                <option value="cold">Cold outreach (no header, plain)</option>
               </select>
             </Field>
           </Card>
