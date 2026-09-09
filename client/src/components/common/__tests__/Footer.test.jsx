@@ -24,6 +24,17 @@ describe('<Footer>', () => {
     expect(screen.getByRole('link', { name: 'Explore' }).getAttribute('href')).toBe('/explore');
   });
 
+  test('links the previously-orphaned marketing pages (features / for / compare / wall of love)', () => {
+    renderFooter();
+    expect(screen.getByRole('link', { name: 'Payments' }).getAttribute('href')).toBe('/features/payments');
+    expect(screen.getByRole('link', { name: 'Analytics' }).getAttribute('href')).toBe('/features/analytics');
+    expect(screen.getByRole('link', { name: 'Agencies' }).getAttribute('href')).toBe('/for/agencies');
+    expect(screen.getByRole('link', { name: 'Freelancers' }).getAttribute('href')).toBe('/for/freelancers');
+    expect(screen.getByRole('link', { name: 'vs Calendly' }).getAttribute('href')).toBe('/lp/calendly-alternative');
+    expect(screen.getByRole('link', { name: 'vs Zoho Bookings' }).getAttribute('href')).toBe('/lp/zoho-bookings-alternative');
+    expect(screen.getByRole('link', { name: 'Wall of Love' }).getAttribute('href')).toBe('/wall-of-love');
+  });
+
   test('drops redundant links that duplicate the CTA and the navbar', () => {
     renderFooter();
     expect(screen.queryByRole('link', { name: 'Be a Host' })).toBeNull();

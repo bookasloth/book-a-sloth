@@ -17,11 +17,40 @@ const COLUMNS = [
     { t: 'Explore', href: '/explore' },
     { t: 'Enterprise', href: '/enterprise' },
   ] },
+  // Feature pages had zero internal links (orphaned — only reachable via sitemap).
+  // The footer renders site-wide, so this is the durable way to get them crawled.
+  { h: 'Features', links: [
+    { t: 'Online scheduling', href: '/features/online-scheduling' },
+    { t: 'Booking pages', href: '/features/booking-pages' },
+    { t: 'Payments', href: '/features/payments' },
+    { t: 'Availability', href: '/features/availability' },
+    { t: 'Google Calendar', href: '/features/google-calendar' },
+    { t: 'Notifications', href: '/features/notifications' },
+    { t: 'Client management', href: '/features/client-management' },
+    { t: 'Digital products', href: '/features/digital-products' },
+    { t: 'Reviews & ratings', href: '/features/reviews' },
+    { t: 'Analytics', href: '/features/analytics' },
+  ] },
+  { h: "Who it's for", links: [
+    { t: 'Doctors', href: '/for/doctors' },
+    { t: 'Business consultants', href: '/for/business-consultant' },
+    { t: 'Agencies', href: '/for/agencies' },
+    { t: 'Freelancers', href: '/for/freelancers' },
+    { t: 'Events', href: '/for/events' },
+  ] },
+  { h: 'Compare', links: [
+    { t: 'vs Calendly', href: '/lp/calendly-alternative' },
+    { t: 'vs Acuity', href: '/lp/acuity-alternative' },
+    { t: 'vs Setmore', href: '/lp/setmore-alternative' },
+    { t: 'vs SimplyBook', href: '/lp/simplybook-alternative' },
+    { t: 'vs Zoho Bookings', href: '/lp/zoho-bookings-alternative' },
+    { t: 'vs Topmate', href: '/lp/topmate-vs-bookasloth' },
+  ] },
   { h: 'Company', links: [
     { t: 'About', href: '/about' },
     { t: 'Blog', href: '/blog' },
     { t: 'Careers', href: '/careers' },
-    { t: 'Reviews', href: '/#collective' },
+    { t: 'Wall of Love', href: '/wall-of-love' }, // was /#collective (a homepage anchor) — /wall-of-love was orphaned
   ] },
   { h: 'Support', links: [
     { t: 'Help', href: '/help' },
@@ -161,7 +190,7 @@ export default function Footer({ variant = 'full' }) {
         {/* Brand column + link columns + newsletter — dropped in minimal variant */}
         {!minimal && (
         <>
-        <div className="grid gap-10 border-t border-white/10 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.4fr]">
+        <div className="grid gap-x-8 gap-y-10 border-t border-white/10 py-12 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {/* Link columns */}
           <nav aria-label="Footer" className="contents">
             {COLUMNS.map((col) => (
