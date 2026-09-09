@@ -112,8 +112,8 @@ function ctaButton(label, url, brand) {
   </table>`;
 }
 
-/** Document shell + card open. Returns the HTML up to (and including) the accent bar. */
-function shellOpen({ previewText, fromName, brand }) {
+/** Document shell + card open. Returns the HTML up to (and including) the accent bar (omitted when accent=false). */
+function shellOpen({ previewText, fromName, brand, accent = true }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -129,7 +129,7 @@ function shellOpen({ previewText, fromName, brand }) {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${D.bg};padding:32px 16px;">
     <tr><td align="center">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:${D.white};border:1px solid ${D.border};border-radius:1px;overflow:hidden;">
-        ${accentBar(brand)}`;
+        ${accent ? accentBar(brand) : ''}`;
 }
 
 /** Body cell + card/document close, with the supplied footer row injected. */
@@ -226,14 +226,14 @@ function renderColdLayout({ bodyHtml, previewText, ctaLabel, ctaUrl, settings, d
 
   const footerRow = `<tr>
     <td style="padding:20px 28px;border-top:1px solid ${D.border};text-align:center;font-size:11px;line-height:1.7;color:${D.note};font-family:${D.font};">
-      <span style="color:${D.muted};font-weight:600;">Shubham</span><br>
-      Founder, ${esc(fromName)}<br>
+      ${esc(fromName)} by ${esc(COMPANY)}.<br>
       ${esc(ADDRESS)}<br>
       <a href="${esc(website)}/unsubscribe?u=${esc(unsubToken)}" style="color:${D.muted};text-decoration:underline;">Unsubscribe</a>
     </td>
   </tr>`;
 
-  return shellOpen({ previewText, fromName, brand })
+  // accent:false → no orange top bar; fully plain.
+  return shellOpen({ previewText, fromName, brand, accent: false })
     + shellClose({ bodyHtml, cta: ctaButton(ctaLabel, ctaUrl, brand), footerRow });
 }
 
