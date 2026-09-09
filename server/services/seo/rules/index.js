@@ -20,15 +20,16 @@ function buildContext(pages, sitemapUrls, gscByUrl = new Map()) {
   const descCounts = new Map();
   const internalLinkTargets = new Set();
   let homepageTitle = null;
+  let homepageUrl = null;
   const siteUrl = process.env.SITE_URL || 'https://bookasloth.com';
   for (const p of pages) {
     if (p.title) titleCounts.set(p.title, (titleCounts.get(p.title) || 0) + 1);
     if (p.metaDescription) descCounts.set(p.metaDescription, (descCounts.get(p.metaDescription) || 0) + 1);
     for (const l of p.links?.internal || []) internalLinkTargets.add(l.replace(/\/$/, ''));
-    if (p.url === siteUrl || p.url === `${siteUrl}/`) homepageTitle = p.title;
+    if (p.url === siteUrl || p.url === `${siteUrl}/`) { homepageTitle = p.title; homepageUrl = p.url; }
   }
   return { pages, sitemapUrls: sitemapUrls || new Set(), titleCounts, descCounts,
-    internalLinkTargets, homepageTitle, SHOULD_INDEX_TYPES, gscByUrl };
+    internalLinkTargets, homepageTitle, homepageUrl, SHOULD_INDEX_TYPES, gscByUrl };
 }
 
 function decorate(raw) {

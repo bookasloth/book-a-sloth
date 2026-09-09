@@ -21,6 +21,17 @@ describe('technical + indexability rules', () => {
     const ctx = buildContext([home, p], new Set());
     expect(idx.check(p, ctx).map((i) => i.ruleKey)).toContain('indexability.prerender_regression');
   });
+  test('unrendered_title fires for a body-crawled static page that serves the homepage title', () => {
+    const home = { url: 'https://bookasloth.com/', pageType: 'static', title: 'Book A Sloth — home' };
+    const prof = base({ url: 'https://bookasloth.com/services/career-coach', pageType: 'static', title: 'Book A Sloth — home', bodyCrawled: true });
+    const ctx = buildContext([home, prof], new Set());
+    expect(idx.check(prof, ctx).map((i) => i.ruleKey)).toContain('onpage.unrendered_title');
+  });
+  test('unrendered_title does NOT fire for the homepage itself', () => {
+    const home = base({ url: 'https://bookasloth.com/', pageType: 'static', title: 'Book A Sloth — home', bodyCrawled: true });
+    const ctx = buildContext([home], new Set());
+    expect(idx.check(home, ctx).map((i) => i.ruleKey)).not.toContain('onpage.unrendered_title');
+  });
   test('error_url_in_sitemap fires for a 404 that is in the sitemap', () => {
     const ctx = buildContext([], new Set(['https://bookasloth.com/jane']));
     expect(idx.check(base({ httpStatus: 404, inSitemap: true }), ctx).map((i) => i.ruleKey)).toContain('indexability.error_url_in_sitemap');

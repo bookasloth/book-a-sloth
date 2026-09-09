@@ -19,6 +19,15 @@ function check(p, ctx) {
     push('indexability.soft_404', { wordCount: p.wordCount });
   if ((p.pageType === 'host' || p.pageType === 'service') && p.title && ctx.homepageTitle && p.title === ctx.homepageTitle)
     push('indexability.prerender_regression', { title: p.title });
+  // A body-crawled page (static/blog) that serves the exact homepage <title> was not
+  // prerendered for non-JS clients — the crawler, AI/search bots and social scrapers
+  // all see the generic site title instead of a page-specific one. One actionable
+  // issue per page (not the noise of pairwise cannibalization on an identical title).
+  // Excludes the homepage itself. e.g. /services/:slug profession pages.
+  if (p.httpStatus === 200 && p.bodyCrawled !== false && p.title && ctx.homepageTitle
+      && p.title === ctx.homepageTitle && p.url !== ctx.homepageUrl
+      && p.pageType !== 'host' && p.pageType !== 'service')
+    push('onpage.unrendered_title', { title: p.title });
   return out;
 }
 module.exports = { check };

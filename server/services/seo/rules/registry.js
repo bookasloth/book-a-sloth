@@ -12,6 +12,7 @@ const REGISTRY = {
   'onpage.missing_h1':           { category: 'onpage', severity: 'P2', confidence: 1,   autoFixable: false, title: 'Missing H1' },
   'onpage.multiple_h1':          { category: 'onpage', severity: 'P3', confidence: 1,   autoFixable: false, title: 'Multiple H1 tags' },
   'onpage.title_h1_mismatch':    { category: 'onpage', severity: 'P4', confidence: 0.6, autoFixable: false, title: 'Title / H1 mismatch' },
+  'onpage.unrendered_title':     { category: 'onpage', severity: 'P1', confidence: 0.9, autoFixable: false, title: 'Serves the generic site title (page not prerendered)' },
   // technical
   'technical.non_200':            { category: 'technical', severity: 'P0', confidence: 1,   autoFixable: false, title: 'Non-200 / unreachable' },
   'technical.redirect':           { category: 'technical', severity: 'P3', confidence: 0.9, autoFixable: false, title: 'URL redirects' },
