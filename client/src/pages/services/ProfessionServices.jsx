@@ -7,6 +7,13 @@ import ServiceCategoryCard from '../../components/services/ServiceCategoryCard';
 import { getProfessionServices } from '../../services/api';
 import { professionSeo, cardBlurb } from './professionSeoContent';
 
+// Slug → Title Case label ("career-coach" → "Career Coach"). Fallback for the meta
+// title before/without the API response, so a real title is always present.
+const humanizeSlug = (s) => String(s || '')
+  .split('-').filter(Boolean)
+  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+  .join(' ') || 'Professional';
+
 export default function ProfessionServices() {
   const { profession } = useParams();
   const navigate = useNavigate();
@@ -24,13 +31,20 @@ export default function ProfessionServices() {
       .finally(() => setLoading(false));
   }, [profession, navigate]);
 
-  if (loading) return <div className="app-container py-16">Loading…</div>;
-  if (!data || data.error) return <div className="app-container py-16">Could not load this page. Please retry.</div>;
-
-  const { profession: prof, services } = data;
-  const canonical = `${SITE_URL}/services/${prof.slug}`;
-  const { intro, faqs, forLanding } = professionSeo(prof, services);
-  const jsonLd = [
+  // Meta is rendered in EVERY state (loading/error/loaded), not gated behind the
+  // fetch — otherwise the build-time prerender bakes the generic shell <title> for
+  // these pages when its late-in-run API fetch is rate-limited (they'd serve the
+  // homepage title to non-JS bots). The slug gives a real fallback title; the fetched
+  // data upgrades it. Mirrors the /services hub (ServicesDirectory), which is robust
+  // for exactly this reason.
+  const prof = data && !data.error ? data.profession : null;
+  const services = prof ? data.services : [];
+  const label = prof?.label || humanizeSlug(profession);
+  const canonical = `${SITE_URL}/services/${prof?.slug || profession}`;
+  const description = services.length
+    ? `Browse ${services.length} bookable ${label.toLowerCase()} services — ${services.slice(0, 3).map((s) => s.name).join(', ')} and more. Compare hosts and book online.`
+    : `Browse and book ${label.toLowerCase()} services online on Book A Sloth — compare hosts, see pricing, and book instantly.`;
+  const jsonLd = prof ? [
     {
       '@context': 'https://schema.org', '@type': 'ItemList',
       itemListElement: services.map((s, i) => ({
@@ -45,19 +59,27 @@ export default function ProfessionServices() {
       '@context': 'https://schema.org', '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Services', item: `${SITE_URL}/services` },
-        { '@type': 'ListItem', position: 2, name: prof.label, item: canonical },
+        { '@type': 'ListItem', position: 2, name: label, item: canonical },
       ],
     },
-    faqJsonLd({ faqs }),
-  ];
+  ] : undefined;
+  const seo = (
+    <Seo title={`Book a ${label} online | Book A Sloth`} description={description} canonical={canonical} jsonLd={jsonLd} />
+  );
+
+  if (loading) return <div className="app-container py-16">{seo}Loading…</div>;
+  if (!prof) return <div className="app-container py-16">{seo}Could not load this page. Please retry.</div>;
+
+  const { intro, faqs, forLanding } = professionSeo(prof, services);
+  const faqLd = faqs.length ? faqJsonLd({ faqs }) : null;
 
   return (
     <div className="app-container py-12">
       <Seo
-        title={`Book a ${prof.label} online | Book A Sloth`}
-        description={`Browse ${services.length} bookable ${prof.label.toLowerCase()} services — ${services.slice(0, 3).map((s) => s.name).join(', ')} and more. Compare hosts and book online.`}
+        title={`Book a ${label} online | Book A Sloth`}
+        description={description}
         canonical={canonical}
-        jsonLd={jsonLd}
+        jsonLd={faqLd ? [...jsonLd, faqLd] : jsonLd}
       />
       <nav className="mb-6 text-sm text-[#64748b]">
         <Link to="/services" className="hover:underline">Services</Link> / {prof.label}
