@@ -49,13 +49,11 @@ test('missing_alt skips a bodiless (bodyCrawled:false) page', () => {
   expect(images.check(p, buildContext([p], new Set())).map((i) => i.ruleKey)).not.toContain('images.missing_alt');
 });
 
-test('cannibalization ignores pages that serve the homepage title (not prerendered)', () => {
+test('cannibalization ignores un-prerendered pages sharing the shell title (>=5)', () => {
   const cannibal = require('../../services/seo/rules/cannibalization');
-  const home = { url: 'https://bookasloth.com/', pageType: 'static', httpStatus: 200, title: 'Book A Sloth — home' };
-  // Two profession pages both serving the shell/home title — must NOT flag each other.
-  const a = { url: 'https://bookasloth.com/services/career-coach', pageType: 'static', httpStatus: 200, title: 'Book A Sloth — home' };
-  const b = { url: 'https://bookasloth.com/services/life-coach', pageType: 'static', httpStatus: 200, title: 'Book A Sloth — home' };
-  const ctx = buildContext([home, a, b], new Set());
+  // 6 profession pages all serving the shell title — must NOT flag each other.
+  const pages = Array.from({ length: 6 }, (_, i) => ({ url: `https://bookasloth.com/services/p${i}`, pageType: 'static', httpStatus: 200, title: 'Book A Sloth — the calm way to sell your time' }));
+  const ctx = buildContext(pages, new Set());
   expect(cannibal.siteCheck(ctx).map((i) => i.ruleKey)).not.toContain('content.potential_cannibalization');
 });
 

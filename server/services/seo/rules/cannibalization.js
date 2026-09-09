@@ -23,11 +23,11 @@ function siteCheck(ctx) {
   const byType = new Map();
   for (const p of ctx.pages) {
     if (p.httpStatus !== 200 || !p.title) continue;
-    // Skip pages that weren't prerendered — they all carry the generic homepage
-    // <title>, so comparing them flags every pair as cannibalizing a title that
-    // isn't really theirs. The not-prerendered gap is reported by
+    // Skip pages that weren't prerendered — they all carry the generic shell
+    // <title> (ctx.shellTitle), so comparing them flags every pair as cannibalizing a
+    // title that isn't really theirs. The not-prerendered gap is reported by
     // onpage.unrendered_title / indexability.prerender_regression instead.
-    if (ctx.homepageTitle && p.title === ctx.homepageTitle) continue;
+    if (ctx.shellTitle && p.title === ctx.shellTitle) continue;
     if (!byType.has(p.pageType)) byType.set(p.pageType, []);
     byType.get(p.pageType).push({ url: p.url, toks: tokens(p.title), title: p.title });
   }
