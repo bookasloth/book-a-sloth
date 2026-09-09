@@ -335,6 +335,7 @@ export const adminSeoCrawlStatus  = (id)      => API.get(`/admin/seo/crawl/${id}
 export const adminSeoMuteIssue    = (id, data) => API.post(`/admin/seo/issues/${id}/mute`, data);
 export const adminSeoScoreHistory = ()        => API.get('/admin/seo/scores/history');
 export const adminSeoGsc          = (params)  => API.get('/admin/seo/gsc', { params });
+export const adminSeoGscStatus    = ()        => API.get('/admin/seo/gsc/status');
 export const adminSeoGscSync      = ()        => API.post('/admin/seo/gsc/sync');
 // v2 control center: list-first views, dashboard, opportunities, page inspector.
 export const adminSeoList         = (params)  => API.get('/admin/seo/list', { params });

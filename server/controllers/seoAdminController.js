@@ -252,6 +252,17 @@ const getGsc = async (req, res) => {
   } catch (e) { safeError(res, e); }
 };
 
+// ── GET /admin/seo/gsc/status ──────────────────────────────────
+// Newest last_synced + whether GSC is configured — lets the client confirm a sync
+// actually landed (poll until last_synced advances).
+const getGscStatus = async (req, res) => {
+  try {
+    const status = await svc.gscStatus();
+    const configured = require('../services/seo/gscClient').isConfigured();
+    res.json({ ...status, configured });
+  } catch (e) { safeError(res, e); }
+};
+
 // ── POST /admin/seo/gsc/sync ────────────────────────────────────
 // Manual trigger for the GSC sync (normally nightly-only). Fire-and-forget —
 // gscSync.run() holds its own lock (gsc-sync-exec) so this can't overlap a
@@ -271,5 +282,5 @@ module.exports = {
   getCategories, getReports, getChanges,
   getFixes, getFix, postGenerateFixes, postDecideFix,
   postApplyFix, postMarkApplied, postRollbackFix, postRetestFix,
-  getScoreHistory, postCrawl, getCrawl, postMuteIssue, getGsc, postGscSync,
+  getScoreHistory, postCrawl, getCrawl, postMuteIssue, getGsc, getGscStatus, postGscSync,
 };

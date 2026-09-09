@@ -5,11 +5,11 @@ import { NAV, IC, PATH_LABELS, flattenDestinations, flattenAllDestinations, sess
 const SUPER = { permissions: ['*'] };
 
 describe('adminNav', () => {
-  it('has 9 or fewer priority-ordered sections, each with a shape the rail needs', () => {
-    // Rail is full-height (fixed inset-y-0) with ~48px slots — 9 sections fit on
-    // any lg viewport. Bumped from 8 when GST got its own top-level section.
+  it('has 10 or fewer priority-ordered sections, each with a shape the rail needs', () => {
+    // Rail is full-height (fixed inset-y-0) with ~48px slots — 10 sections (~480px)
+    // still fit on any lg viewport. Bumped from 8 (GST) then 9 (SEO & GEO).
     expect(NAV.length).toBeGreaterThan(0);
-    expect(NAV.length).toBeLessThanOrEqual(9);
+    expect(NAV.length).toBeLessThanOrEqual(10);
     NAV.forEach(sec => {
       expect(sec.key).toBeTruthy();
       expect(sec.label).toBeTruthy();

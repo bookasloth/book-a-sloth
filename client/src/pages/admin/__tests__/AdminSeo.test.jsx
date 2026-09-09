@@ -51,6 +51,7 @@ vi.mock('../../../services/api', () => ({
   adminSeoGsc: vi.fn(() => Promise.resolve({ data: { gsc: [
     { url: 'https://bookasloth.com/x', coverage_state: 'Submitted and indexed', impressions: 42, clicks: 3, position: 5.2 },
   ], configured: true } })),
+  adminSeoGscStatus: vi.fn(() => Promise.resolve({ data: { configured: true, last_synced: null } })),
   adminSeoGscSync: vi.fn(() => Promise.resolve({ data: { configured: true, started: true } })),
 }));
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }));
@@ -86,10 +87,16 @@ describe('AdminSeo control center', () => {
     expect(screen.getByText('technical.missing_canonical')).toBeTruthy();
   });
 
-  it('search console tab renders data and triggers a sync', async () => {
+  it('search console tab renders GSC data', async () => {
     renderAt('search-console');
     await waitFor(() => expect(screen.getByText('42')).toBeTruthy());
-    fireEvent.click(screen.getByText('Sync GSC now'));
-    await waitFor(() => expect(api.adminSeoGscSync).toHaveBeenCalled());
+    expect(screen.getByText('Submitted and indexed')).toBeTruthy();
+  });
+
+  it('the header button runs crawl + sync sequentially', async () => {
+    renderAt('dashboard');
+    await waitFor(() => expect(screen.getByText('82')).toBeTruthy());
+    fireEvent.click(screen.getByText('Run crawl + sync'));
+    await waitFor(() => expect(api.adminSeoRunCrawl).toHaveBeenCalled());
   });
 });
