@@ -26,7 +26,7 @@ test('run() no-ops and never touches supabase when unconfigured', async () => {
   expect(supabaseAdmin.from).not.toHaveBeenCalled();
 });
 
-test('run() upserts analytics first, then inspects and upserts each seeded URL', async () => {
+test('run() upserts page + query analytics first, then inspects and upserts each seeded URL', async () => {
   gscClient.isConfigured.mockReturnValue(true);
   gscClient.siteUrl.mockReturnValue('sc-domain:bookasloth.com');
   const inspect = jest.fn().mockImplementation(({ requestBody }) => Promise.resolve({
@@ -43,12 +43,17 @@ test('run() upserts analytics first, then inspects and upserts each seeded URL',
       },
     },
   }));
-  const query = jest.fn().mockResolvedValue({
-    data: {
-      rows: [
-        { keys: ['https://bookasloth.com/a'], clicks: 3, impressions: 10, ctr: 0.3, position: 4.2 },
-      ],
-    },
+  // Two windows (current + previous) × two dimension sets (page, page+query) = 4 calls.
+  // Shape rows by the requested dimensions so the query-dimension path gets 2 keys.
+  const query = jest.fn().mockImplementation(({ requestBody }) => {
+    const isQuery = requestBody.dimensions.includes('query');
+    return Promise.resolve({
+      data: {
+        rows: isQuery
+          ? [{ keys: ['https://bookasloth.com/a', 'career coach'], clicks: 2, impressions: 8, ctr: 0.25, position: 5.1 }]
+          : [{ keys: ['https://bookasloth.com/a'], clicks: 3, impressions: 10, ctr: 0.3, position: 4.2 }],
+      },
+    });
   });
   gscClient.getClient.mockReturnValue({
     urlInspection: { index: { inspect } },
@@ -56,40 +61,48 @@ test('run() upserts analytics first, then inspects and upserts each seeded URL',
   });
 
   const upsert = jest.fn().mockResolvedValue({ error: null });
+  const upsertQueries = jest.fn().mockResolvedValue({ error: null });
   supabaseAdmin.from.mockImplementation((table) => {
     if (table === 'seo_crawls') return makeQuery({ data: [{ id: 'crawl-1' }], error: null });
     if (table === 'seo_crawl_pages') return makeQuery({ data: [{ url: 'https://bookasloth.com/a' }, { url: 'https://bookasloth.com/b' }], error: null });
     if (table === 'seo_gsc_urls') return { upsert };
+    if (table === 'seo_gsc_queries') return { upsert: upsertQueries };
     return makeQuery({ data: [], error: null });
   });
 
   const result = await gscSync.run();
 
-  expect(query).toHaveBeenCalledTimes(1);
+  // page(cur) + page(prev) + page+query(cur) + page+query(prev)
+  expect(query).toHaveBeenCalledTimes(4);
   expect(query).toHaveBeenCalledWith(expect.objectContaining({
     siteUrl: 'sc-domain:bookasloth.com',
     requestBody: expect.objectContaining({ dimensions: ['page'], rowLimit: 25000 }),
   }));
   expect(inspect).toHaveBeenCalledTimes(2);
 
-  // One analytics upsert (batched) + one per inspected URL.
+  // seo_gsc_urls: one analytics batch + one per inspected URL, all keyed on url.
   expect(upsert).toHaveBeenCalledTimes(3);
   expect(upsert.mock.calls.every(([, opts]) => opts && opts.onConflict === 'url')).toBe(true);
 
-  // First upsert is the analytics batch (impressions only, no coverage columns).
+  // First upsert is the analytics batch (impressions + prev_* trend, no coverage columns).
   const analyticsPayload = upsert.mock.calls[0][0];
   expect(analyticsPayload).toHaveLength(1);
-  expect(analyticsPayload[0]).toMatchObject({ url: 'https://bookasloth.com/a', impressions: 10, clicks: 3, ctr: 0.3, position: 4.2 });
+  expect(analyticsPayload[0]).toMatchObject({ url: 'https://bookasloth.com/a', impressions: 10, clicks: 3, ctr: 0.3, position: 4.2, prev_impressions: 10 });
   expect(analyticsPayload[0]).not.toHaveProperty('coverage_state');
 
-  // Subsequent upserts are per-URL inspection rows (coverage, no impressions).
+  // Query-level rows go to seo_gsc_queries keyed on url+query, with prev trend.
+  expect(upsertQueries).toHaveBeenCalledTimes(1);
+  expect(upsertQueries.mock.calls[0][1]).toMatchObject({ onConflict: 'url,query' });
+  expect(upsertQueries.mock.calls[0][0][0]).toMatchObject({ url: 'https://bookasloth.com/a', query: 'career coach', impressions: 8, prev_position: 5.1 });
+
+  // Subsequent seo_gsc_urls upserts are per-URL inspection rows (coverage, no impressions).
   const inspectPayloads = upsert.mock.calls.slice(1).map(([rows]) => rows);
   const inspectedUrls = inspectPayloads.map((row) => row.url).sort();
   expect(inspectedUrls).toEqual(['https://bookasloth.com/a', 'https://bookasloth.com/b']);
   expect(inspectPayloads[0]).toMatchObject({ coverage_state: 'Submitted and indexed' });
   expect(inspectPayloads[0]).not.toHaveProperty('impressions');
 
-  expect(result).toEqual({ analyticsRows: 1, analyticsUpserted: 1, inspected: 2, inspectUpserted: 2, urls: 2 });
+  expect(result).toEqual({ analyticsRows: 1, analyticsUpserted: 1, queriesUpserted: 1, inspected: 2, inspectUpserted: 2, urls: 2 });
 });
 
 test('run() isolates a single URL inspection failure — other URLs still upsert', async () => {

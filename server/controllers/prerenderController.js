@@ -151,7 +151,9 @@ async function resolveProfileMeta(username) {
     jsonLd,
   };
 
-  return { status: 200, buildHtmlArgs };
+  // payload is passed through (additive) so the SEO crawler can build a DB-derived
+  // content model for this bodiless page — see services/seo/pageContentModel.js.
+  return { status: 200, buildHtmlArgs, payload: outcome.payload };
 }
 
 const renderProfileMeta = async (req, res) => {
@@ -241,7 +243,8 @@ async function resolveServiceMeta(username, serviceSlug) {
     jsonLd,
   };
 
-  return { status: 200, buildHtmlArgs };
+  // payload passed through (additive) for the crawler's content model (see profile).
+  return { status: 200, buildHtmlArgs, payload: outcome.payload };
 }
 
 const renderServiceMeta = async (req, res) => {
