@@ -130,6 +130,34 @@ export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [] } =
   };
 };
 
+// ── Blog post ────────────────────────────────────────────────────────────────
+
+const BLOG_SUFFIX = ' | Book A Sloth Blog';
+
+// Blog was the one public page type without a resolver, so BlogPost built its meta
+// inline: it appended BLOG_SUFFIX unconditionally (overflowing 60 chars on long
+// headlines → truncated in results) and used the raw excerpt as the description
+// (frequently > 160 → truncated). Both now go through here.
+//   • title: admin seo_title verbatim; else the headline + brand suffix ONLY when
+//     the whole thing still fits Google's ~60-char window (a long headline alone is
+//     more useful than a headline whose brand tag gets cut off).
+//   • description: admin seo_description; else the excerpt truncated to 160.
+export const resolveBlogSeo = ({ post = {}, siteUrl = SITE_URL } = {}) => {
+  const site = trimSlash(siteUrl);
+  const headline = post.title || 'Book A Sloth Blog';
+  const title = post.seo_title
+    || (headline.length + BLOG_SUFFIX.length <= 60 ? `${headline}${BLOG_SUFFIX}` : headline);
+  const description = post.seo_description
+    || truncate(post.excerpt || `Read ${headline} on the Book A Sloth blog.`, 160);
+  return {
+    title,
+    description,
+    canonical: post.slug ? `${site}/blog/${post.slug}` : `${site}/blog`,
+    indexable: post.is_indexable !== false,
+    robots: robotsFor(post.is_indexable),
+  };
+};
+
 // ── Shared brand / page builders ─────────────────────────────────────────────
 
 // Official brand profiles — used for Organization.sameAs (entity disambiguation

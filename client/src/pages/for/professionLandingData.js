@@ -1681,6 +1681,10 @@ PROFESSION_LANDING['doctors-india'] = {
   seo: {
     ...PROFESSION_LANDING.doctors.seo,
     title: 'Appointment Booking Software for Doctors in India | Book A Sloth',
+    // Distinct from /for/doctors (they shared one description → duplicate-meta flag)
+    // and kept under ~160 chars so it isn't truncated in results.
+    description:
+      'Appointment booking software for doctors and clinics in India — patients self-book, pay upfront, and get reminders that cut no-shows. From ₹10/day.',
     ogImage: 'https://company-assets.bookasloth.in/images/seo/for-doctors-india-og-1200x630.jpg',
   },
 };
