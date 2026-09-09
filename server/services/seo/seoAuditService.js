@@ -117,6 +117,17 @@ async function getCrawl(id) {
   return unwrap(await supabaseAdmin.from('seo_crawls').select('*').eq('id', id).maybeSingle());
 }
 
+// Lightweight GSC sync status for the client to poll after triggering a sync — the
+// newest last_synced advances as soon as the analytics batch upserts (early in the
+// run), so the client can confirm "it actually synced" without a jobs table. Fail
+// soft (table may be pre-sync / missing).
+async function gscStatus() {
+  try {
+    const rows = unwrap(await supabaseAdmin.from('seo_gsc_urls').select('last_synced').order('last_synced', { ascending: false }).limit(1));
+    return { last_synced: rows?.[0]?.last_synced || null };
+  } catch { return { last_synced: null }; }
+}
+
 // GSC-synced URLs (seo_gsc_urls, populated by services/seo/gscSync). Fail soft:
 // table may not exist yet pre-cutover, or the query may error — never throw.
 async function listGscUrls({ limit = 500 } = {}) {
@@ -388,4 +399,4 @@ async function muteIssue(id, { ruleType, mutedBy } = {}) {
 
 module.exports = { latestOverview, listIssues, getIssue, listPages, getPage, scoreHistory, getCrawl, muteIssue, listGscUrls,
   pageReports, categoryRollups, changedSincePrevious, latestCrawlId,
-  scoredPages, pageList, dashboard, opportunities };
+  scoredPages, pageList, dashboard, opportunities, gscStatus };

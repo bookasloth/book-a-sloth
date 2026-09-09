@@ -3,7 +3,7 @@
 // right-side inspector drawer, and the operational tabs (Issues / Fixes / Search
 // Console). View is the :view route param so every tab is a real, linkable URL.
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Ic from '../../components/admin/Ic';
 import { IC } from '../../components/admin/adminNav';
@@ -11,21 +11,55 @@ import { PageHeader, Card, Badge, Skeleton, Btn } from '../../components/admin/u
 import {
   adminSeoIssues, adminSeoFixes, adminSeoGenerateFixes, adminSeoDecideFix,
   adminSeoApplyFix, adminSeoMarkApplied, adminSeoRollbackFix, adminSeoRetestFix,
-  adminSeoRunCrawl, adminSeoCrawlStatus, adminSeoMuteIssue, adminSeoGsc, adminSeoGscSync,
+  adminSeoRunCrawl, adminSeoCrawlStatus, adminSeoMuteIssue, adminSeoGsc, adminSeoGscStatus, adminSeoGscSync,
 } from '../../services/api';
 import SeoDashboard from '../../components/admin/seo/SeoDashboard';
 import SeoList from '../../components/admin/seo/SeoList';
 
-const VIEWS = [
-  { key: 'dashboard', label: 'Dashboard', icon: 'grid' },
-  { key: 'services', label: 'Services', icon: 'layers' },
-  { key: 'profiles', label: 'Profiles', icon: 'users' },
-  { key: 'blogs', label: 'Blog', icon: 'news' },
-  { key: 'pages', label: 'Pages', icon: 'file' },
-  { key: 'issues', label: 'Issues', icon: 'alert' },
-  { key: 'fixes', label: 'Fixes', icon: 'checkCircle' },
-  { key: 'search-console', label: 'Search Console', icon: 'search' },
-];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const secs = (ms) => (ms == null ? '' : `${(ms / 1000).toFixed(ms < 10000 ? 1 : 0)}s`);
+
+// One sequential progress line (Crawl, then Search Console) with a live timer.
+function PhaseLine({ label, state, elapsed, note }) {
+  return (
+    <div className="flex items-center gap-2">
+      {state === 'active' && <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" style={{ color: 'var(--adm-accent)' }} />}
+      {state === 'done' && <Ic d={IC.check} size={14} style={{ color: 'var(--adm-ok)' }} />}
+      {state === 'error' && <span style={{ color: 'var(--adm-danger)' }}>✕</span>}
+      {state === 'pending' && <span className="inline-block w-3.5 h-3.5 rounded-full border-2 adm-t3" style={{ opacity: 0.3 }} />}
+      {state === 'skipped' && <span className="adm-t3">–</span>}
+      <span className={state === 'pending' ? 'adm-t3' : 'adm-t1 font-medium'}>{label}</span>
+      {state === 'skipped' && <span className="adm-t3 text-[12px]">not connected — skipped</span>}
+      {elapsed != null && state !== 'pending' && state !== 'skipped' && <span className="adm-t3 tabular-nums text-[12px]">{secs(elapsed)}</span>}
+      {note && <span className="adm-t3 text-[12px]">· {note}</span>}
+    </div>
+  );
+}
+
+function RunStatus({ job, onDismiss }) {
+  const now = Date.now();
+  const crawlEl = job.crawlStart ? (job.crawlEnd || now) - job.crawlStart : null;
+  const gscEl = job.gscStart ? (job.gscEnd || now) - job.gscStart : null;
+  const total = job.crawlStart ? (job.gscEnd || job.crawlEnd || now) - job.crawlStart : null;
+  const crawlState = job.phase === 'error' && !job.crawlEnd ? 'error' : job.crawlEnd ? 'done' : job.phase === 'crawl' ? 'active' : 'pending';
+  const gscState = job.gscSkipped ? 'skipped' : (job.phase === 'error' && job.crawlEnd && !job.gscEnd) ? 'error' : job.gscEnd ? 'done' : job.phase === 'gsc' ? 'active' : 'pending';
+  return (
+    <Card className="mb-4 py-3">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex flex-col gap-1.5 text-[13px]">
+          <PhaseLine label="1 · Crawl site" state={crawlState} elapsed={crawlEl} />
+          <PhaseLine label="2 · Sync Search Console" state={gscState} elapsed={gscEl} note={job.gscTimeout ? 'started — still finishing in background' : undefined} />
+        </div>
+        <div className="flex items-center gap-3">
+          {job.phase === 'done' && <Badge tone="ok">Done in {secs(total)}</Badge>}
+          {job.phase === 'error' && <Badge tone="danger">{job.error || 'Failed'}</Badge>}
+          {job.active && <span className="adm-t3 text-[12px] tabular-nums">{secs(total)}</span>}
+          {!job.active && <button onClick={onDismiss} className="adm-t3 text-[12px] adm-hoverable rounded px-2 py-1">Dismiss</button>}
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 const SEVERITY_TONE = { P0: 'danger', P1: 'danger', P2: 'warn', P3: 'neutral', P4: 'neutral' };
 const LEVEL_TONE = { AUTO: 'ok', REVIEW: 'warn', DO_NOT: 'danger' };
@@ -33,30 +67,56 @@ const CATEGORIES = ['technical', 'onpage', 'content', 'semantic', 'structured_da
 
 export default function AdminSeo() {
   const { view = 'dashboard' } = useParams();
-  const [crawling, setCrawling] = useState(false);
+  const [job, setJob] = useState(null);
+  const [, setTick] = useState(0); // drives the live timer while a run is active
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => {
+    if (!job?.active) return undefined;
+    const id = setInterval(() => setTick((t) => t + 1), 500);
+    return () => clearInterval(id);
+  }, [job?.active]);
 
-  const runCrawl = async () => {
-    setCrawling(true);
+  // One button, two phases, in order: crawl the site → then sync Search Console.
+  // Each phase polls to real completion (crawl via crawl status; GSC via the newest
+  // last_synced advancing), so the UI shows genuine done/failed, never a guess.
+  const runAll = async () => {
+    if (job?.active) return;
+    const j = { active: true, phase: 'crawl', crawlStart: Date.now() };
+    setJob({ ...j });
     try {
       const { data } = await adminSeoRunCrawl();
-      let status = 'running';
-      let ticks = 0;
-      const MAX_TICKS = 60; // ponytail: bounded ~2min poll, add backoff if crawls run longer.
-      while (status === 'running' && ticks < MAX_TICKS && mountedRef.current) {
-        await new Promise((r) => setTimeout(r, 2000)); // eslint-disable-line no-await-in-loop
-        if (!mountedRef.current) break;
+      let status = 'running'; let ticks = 0;
+      while (status === 'running' && ticks < 90 && mountedRef.current) {
+        await sleep(2000); // eslint-disable-line no-await-in-loop
         const res = await adminSeoCrawlStatus(data.crawlId); // eslint-disable-line no-await-in-loop
-        status = res.data.crawl?.status;
-        ticks += 1;
+        status = res.data.crawl?.status; ticks += 1;
       }
       if (!mountedRef.current) return;
-      toast[status ? 'success' : 'error'](status ? 'Crawl finished — reopen a view to see fresh scores' : 'Crawl still running — check back shortly.');
+      if (status === 'running') throw new Error('Crawl timed out — still running in the background.');
+      j.crawlEnd = Date.now(); j.phase = 'gsc'; j.gscStart = Date.now(); setJob({ ...j });
+
+      const before = await adminSeoGscStatus().then((r) => r.data).catch(() => ({ configured: true, last_synced: null }));
+      if (before.configured === false) {
+        j.gscSkipped = true; j.gscEnd = Date.now();
+      } else {
+        await adminSeoGscSync();
+        let advanced = false; let t2 = 0;
+        while (!advanced && t2 < 40 && mountedRef.current) { // ~2min at 3s/tick
+          await sleep(3000); // eslint-disable-line no-await-in-loop
+          const s = await adminSeoGscStatus().then((r) => r.data).catch(() => ({})); // eslint-disable-line no-await-in-loop
+          if (s.last_synced && (!before.last_synced || s.last_synced > before.last_synced)) advanced = true;
+          t2 += 1;
+        }
+        if (!mountedRef.current) return;
+        j.gscEnd = Date.now(); if (!advanced) j.gscTimeout = true;
+      }
+      j.phase = 'done'; j.active = false; setJob({ ...j });
+      toast.success('Crawl + Search Console sync complete');
     } catch (e) {
-      if (mountedRef.current) toast.error(e.response?.data?.message || 'Crawl failed');
-    } finally {
-      if (mountedRef.current) setCrawling(false);
+      if (!mountedRef.current) return;
+      j.phase = 'error'; j.active = false; j.error = e.response?.data?.message || e.message || 'Failed'; setJob({ ...j });
+      toast.error(j.error);
     }
   };
 
@@ -65,22 +125,9 @@ export default function AdminSeo() {
       <PageHeader
         title="SEO & GEO"
         subtitle="Traditional search health + AI/GEO readiness. List → inspect → diagnose → fix → measure."
-        actions={<Btn variant="primary" size="sm" icon="refresh" onClick={runCrawl} disabled={crawling}>{crawling ? 'Crawling…' : 'Run crawl'}</Btn>}
+        actions={<Btn variant="primary" size="sm" icon="refresh" onClick={runAll} disabled={job?.active}>{job?.active ? (job.phase === 'crawl' ? 'Crawling…' : 'Syncing…') : 'Run crawl + sync'}</Btn>}
       />
-
-      {/* Secondary rail */}
-      <div className="flex gap-1 mb-5 overflow-x-auto pb-1 -mx-1 px-1">
-        {VIEWS.map((v) => {
-          const active = view === v.key;
-          return (
-            <Link key={v.key} to={`/admin/seo/${v.key}`}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors ${active ? 'text-white' : 'adm-t2 adm-hoverable'}`}
-              style={active ? { background: 'var(--adm-accent)' } : undefined}>
-              <Ic d={IC[v.icon]} size={14} />{v.label}
-            </Link>
-          );
-        })}
-      </div>
+      {job && <RunStatus job={job} onDismiss={() => setJob(null)} />}
 
       {view === 'dashboard' && <SeoDashboard />}
       {view === 'services' && <SeoList type="service" />}
@@ -346,9 +393,6 @@ function GscTab() {
   const [gsc, setGsc] = useState([]);
   const [configured, setConfigured] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const loadGsc = useCallback(async () => {
     setLoading(true);
@@ -361,20 +405,11 @@ function GscTab() {
 
   useEffect(() => { loadGsc(); }, [loadGsc]);
 
-  const runSync = async () => {
-    setSyncing(true);
-    try {
-      const res = await adminSeoGscSync();
-      if (res.data.configured === false) toast.error('Search Console not connected — set GSC_SA_KEY / GSC_PROPERTY');
-      else { toast.success('Sync started — refreshing in ~30s'); setTimeout(() => { if (mountedRef.current) loadGsc(); }, 30000); }
-    } catch (e) { toast.error(e.response?.data?.message || 'Failed to start sync'); } finally { if (mountedRef.current) setSyncing(false); }
-  };
-
   if (loading) return <Skeleton className="h-40" />;
   return (
     <div>
       {!configured && <Card className="mb-4 text-sm">Google Search Console not connected — set GSC_SA_KEY and GSC_PROPERTY to enable.</Card>}
-      <div className="flex justify-end mb-3"><Btn variant="primary" size="sm" icon="refresh" onClick={runSync} disabled={syncing}>{syncing ? 'Syncing…' : 'Sync GSC now'}</Btn></div>
+      <div className="flex justify-end mb-3"><span className="text-[12px] adm-t3">Use <b>Run crawl + sync</b> in the header to refresh this data.</span></div>
       <Card className="p-0 overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="text-[11px] uppercase tracking-wide adm-t3 border-b adm-border">
