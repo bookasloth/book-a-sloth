@@ -38,6 +38,22 @@ const FEATURE_LINKS = [
   { label: 'Analytics',         href: '/features/analytics' },
 ];
 
+// Profession landing pages ("Who it's for"). Surfaced as a nav dropdown so the
+// /for/ cluster is internally linked (was footer-only). Only slugs with real
+// professionLandingData are listed — dead links would be soft-404s.
+const WHOFOR_LINKS = [
+  { label: 'Doctors',              href: '/for/doctors' },
+  { label: 'Business consultants', href: '/for/business-consultant' },
+  { label: 'Agencies',             href: '/for/agencies' },
+  { label: 'Freelancers',          href: '/for/freelancers' },
+  { label: 'Events',               href: '/for/events' },
+  { label: 'Tutors',               href: '/for/tutors' },
+  { label: 'Fitness',              href: '/for/fitness' },
+  { label: 'Lawyers',              href: '/for/lawyers' },
+  { label: 'Photographers',        href: '/for/photographers' },
+  { label: 'Salons',               href: '/for/salon' },
+];
+
 // "More" overflow menu. How It Works, Pricing and Explore are top-level links
 // (see PublicCenterNav), so they are deliberately absent here.
 const MORE_MENU = [
@@ -261,6 +277,16 @@ const PublicCenterNav = () => (
         {FEATURE_LINKS.map((f) => (
           <Link key={f.href} to={f.href} role="menuitem" className="rounded-lg px-3 py-2 text-[13px] text-gray-600 transition-colors hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
             {f.label}
+          </Link>
+        ))}
+      </div>
+    </NavDropdown>
+
+    <NavDropdown label="Who it's for" wide>
+      <div className="grid grid-cols-2 gap-0.5 p-2">
+        {WHOFOR_LINKS.map((w) => (
+          <Link key={w.href} to={w.href} role="menuitem" className="rounded-lg px-3 py-2 text-[13px] text-gray-600 transition-colors hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+            {w.label}
           </Link>
         ))}
       </div>
@@ -738,6 +764,22 @@ const Navbar = () => {
                     {FEATURE_LINKS.map((f) => (
                       <Link key={f.href} to={f.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
                         {f.label}
+                      </Link>
+                    ))}
+                  </div>
+                </details>
+
+                {/* Who it's for — collapsed by default */}
+                <details className="group rounded-lg">
+                  <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
+                    <Award size={16} className="flex-shrink-0 text-gray-400" />
+                    <span className="flex-1">Who it's for</span>
+                    <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="space-y-0.5 pl-1 pt-0.5">
+                    {WHOFOR_LINKS.map((w) => (
+                      <Link key={w.href} to={w.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                        {w.label}
                       </Link>
                     ))}
                   </div>
