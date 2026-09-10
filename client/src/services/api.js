@@ -341,6 +341,7 @@ export const adminSeoGscSync      = ()        => API.post('/admin/seo/gsc/sync')
 export const adminSeoList         = (params)  => API.get('/admin/seo/list', { params });
 export const adminSeoDashboard    = (params)  => API.get('/admin/seo/dashboard', { params });
 export const adminSeoOpportunities = (params) => API.get('/admin/seo/opportunities', { params });
+export const adminSeoLinkGraph    = (params)  => API.get('/admin/seo/link-graph', { params });
 
 // Admin — Payout approval
 export const adminGetPayouts     = (status)         => API.get('/admin/payouts', { params: status ? { status } : {} });
