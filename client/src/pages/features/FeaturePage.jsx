@@ -1,406 +1,541 @@
-// /features/:slug — data-driven feature marketing page template.
+// /features/:slug — data-driven feature marketing page.
 //
-// One component, ten pages: the visual variety comes entirely from
-// `feature.layout.hero` / `feature.layout.sections` (see featureData.js) picking
-// which of the 6 hero layouts / 4 section layouts to render, plus the page's own
-// `accent` / `accentLight` / `darkBg` piped in as CSS custom properties
-// (--fp-accent / --fp-accent-light / --fp-dark). Same skeleton, different skin —
-// mirrors the pattern already used by /for/:profession (ProfessionLanding.jsx).
+// Reuses the Book A Sloth visual language ported from the About / Attic /
+// Enterprise / How-It-Works pages (see featurePage.css, scoped under .fp-page):
+//   Hero .............. About HeroV2 (split, peach aura, accent word)
+//   Stats ............. Attic odometer strip (dark)
+//   Problem/Solution .. How-It-Works BenefitsComparison (without / with)
+//   Signature flow .... ONE of: coverflow (HIW ProcessOverview) |
+//                       timeline (Enterprise journey map) | automation
+//                       (HIW AutomationFlow) — picked per feature via
+//                       feature.signature
+//   Capabilities ...... About BeliefGrid (icon chips)
+//   Product ........... Attic ProductMock (CSS UI, no screenshots)
+//   Use cases ......... icon card grid
+//   Testimonials ...... About TestimonialsFlip (card row)
+//   Related ........... internal-link cards (descriptive anchors)
+//   FAQ ............... About FaqAccordion (dark)
+//   CTA ............... About JoinSplit
 //
+// Global Navbar + Footer come from App.jsx (/features is not in hideNavbar).
 // All CTAs hand off to the real host signup funnel (/be-a-sloth).
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Check, Star, ChevronDown } from 'lucide-react';
-import Reveal from '../../components/home/Reveal';
+import {
+  ArrowRight, ArrowLeft, Check, X, Star, Plus, Clock, CalendarCheck, CalendarDays,
+  CalendarClock, CalendarX2, CalendarOff, Wallet, CreditCard, IndianRupee, Share2,
+  Link2, Bell, BellRing, BellOff, MailCheck, Mail, Users, Layers, Globe, Zap,
+  ShieldCheck, FileText, Download, BarChart3, LayoutDashboard, RefreshCw, Video,
+  Settings, PenLine, Briefcase, GraduationCap, Repeat, Search, MessageCircle,
+  FolderX, FolderCheck, Sparkles, Tag, UserPlus, Receipt,
+} from 'lucide-react';
 import Seo from '../../components/common/Seo';
 import { ogCard } from '../../config/ogImages';
 import { SITE_URL } from '../../utils/seo';
 import { getFeature } from './featureData';
+import { TESTIMONIALS } from '../../data/testimonials';
+import { HERO_FACES } from '../../components/home/images';
+import './featurePage.css';
 
 const ROUTE = '/be-a-sloth';
-// Full brand palette, cycled for variety inside multi-item grids (card borders,
-// bento dots) so a page never reads as one-color-only even though `accent` leads.
-const PALETTE = ['#FE5100', '#FF4D93', '#4AB765', '#FFCC1C', '#269CEF'];
+// Brand palette cycled for icon chips / borders so a page never reads one-note.
+const PALETTE = ['#FE5100', '#FF4D93', '#4AB765', '#FFCC1C', '#269CEF', '#8B5CF6'];
+const soft = (hex) => `color-mix(in srgb, ${hex} 14%, white)`;
 
-// ponytail: one static testimonial reused across all feature pages — featureData
-// has no per-feature quote field. Add one there if a page ever needs a distinct voice.
-const TESTIMONIAL = {
-  quote: 'Book A Sloth replaced three tools and the follow-up emails I used to send by hand. My clients book, pay, and show up — I just do the work.',
-  name: 'Ananya Rao',
-  role: 'Independent Consultant',
+// Icon-name → component. featureData refers to icons by string.
+const ICONS = {
+  ArrowRight, ArrowLeft, Check, X, Star, Clock, CalendarCheck, CalendarDays,
+  CalendarClock, CalendarX2, CalendarOff, Wallet, CreditCard, IndianRupee, Share2,
+  Link2, Bell, BellRing, BellOff, MailCheck, Mail, Users, Layers, Globe, Zap,
+  ShieldCheck, FileText, Download, BarChart3, LayoutDashboard, RefreshCw, Video,
+  Settings, PenLine, Briefcase, GraduationCap, Repeat, Search, MessageCircle,
+  FolderX, FolderCheck, Sparkles, Tag, UserPlus, Receipt,
+};
+const Icon = ({ name, ...p }) => {
+  const C = ICONS[name] || Sparkles;
+  return <C {...p} />;
 };
 
-/* ════════════════════════════ Header / Footer ════════════════════════════ */
+/* Hero social-proof face + testimonial avatar — copied verbatim from Home.jsx so
+   the CDN photos (with initials/neutral fallback) render identically here. */
+function HeroFace({ src }) {
+  const [err, setErr] = useState(false);
+  if (err || !src) return <span className="h-10 w-10 flex-shrink-0 rounded-full border-2 border-canvas bg-gradient-to-br from-primary-light to-sand" />;
+  return <img src={src} onError={() => setErr(true)} alt="" loading="lazy" className="h-10 w-10 flex-shrink-0 rounded-full border-2 border-canvas object-cover" />;
+}
+function TAvatar({ src, name }) {
+  const [err, setErr] = useState(false);
+  if (err || !src) return <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">{name?.charAt(0) || '★'}</div>;
+  return <img src={src} onError={() => setErr(true)} alt={name} loading="lazy" className="h-11 w-11 flex-shrink-0 rounded-xl object-cover" />;
+}
 
-function Header() {
+/* ── shared CTA (global .btn geometry; primary keeps HeroV2 hard shadow) ── */
+// One brand orange everywhere: #FE5100, the same fill as the product mock's
+// "Confirm and pay" button. (Note: #FE5100 + white is ~3.3:1, below WCAG AA;
+// chosen for brand consistency per request over the darker AA shade.)
+function Cta({ children = 'Get started free', variant = 'primary' }) {
+  if (variant === 'primary') {
+    return (
+      <Link to={ROUTE} className="btn inline-flex items-center justify-center gap-1.5 px-7 py-3.5 text-white shadow-[var(--shadow-hard-1)] hover:no-underline" style={{ background: '#FE5100' }}>
+        {children} <ArrowRight size={16} />
+      </Link>
+    );
+  }
   return (
-    <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-center px-5 py-3.5 sm:justify-between sm:px-8">
-        <Link to="/" className="flex items-center gap-2 hover:no-underline" aria-label="Book A Sloth — home">
-          <img src="/favicon.svg" alt="" className="h-7 w-7 rounded" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-          <span className="font-heading text-[15px] font-bold tracking-tight text-ink">Book A Sloth</span>
-        </Link>
-        <Link
-          to={ROUTE}
-          className="hidden items-center gap-1.5 rounded px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:no-underline sm:inline-flex"
-          style={{ background: '#FE5100' }}
-        >
-          Get Started Free <ArrowRight size={15} />
-        </Link>
+    <Link to={ROUTE} className="btn btn--outline inline-flex items-center justify-center gap-1.5 px-7 py-3.5 hover:no-underline">
+      {children}
+    </Link>
+  );
+}
+
+/* ════════════════ ProductMock — CSS product UI (no images) ════════════════ */
+function ProductMock({ mock }) {
+  if (!mock) return null;
+  const { kind, title, subtitle, rows = [], slots = [], go } = mock;
+  return (
+    <div className="frame">
+      <div className="tt" aria-hidden><i /><i /><i /></div>
+      <div className="bd">
+        <div className="ch">{title}{subtitle && <small>{subtitle}</small>}</div>
+        {kind === 'calendar' && (
+          <>
+            <div className="days"><b>MON</b><b>TUE</b><b>WED</b><b>THU</b><b>FRI</b></div>
+            <div className="slots">
+              {slots.map((s, i) => (
+                <div key={i} className={`slot${s.on ? ' on' : ''}${s.dim ? ' dim' : ''}`}>{s.t}</div>
+              ))}
+            </div>
+          </>
+        )}
+        {kind === 'list' && rows.map((r, i) => (
+          <div key={i} className="rowline">
+            <span>{r.label}</span>
+            <span className="pill" style={{ background: soft(r.tint || '#4AB765'), color: r.tint || '#4AB765' }}>{r.value}</span>
+          </div>
+        ))}
+        {go && <div className="go">{go}</div>}
+      </div>
+      <span className="tag" aria-hidden>Product preview</span>
+    </div>
+  );
+}
+
+/* ════════════════ Hero (About HeroV2) ════════════════ */
+function Hero({ feature }) {
+  const h = feature.hero || {};
+  const glass = feature.heroGlass || [];
+  return (
+    <header className="fp-hero">
+      <span aria-hidden className="aura" />
+      <div className="fp-wrap grid">
+        <div>
+          <nav aria-label="Breadcrumb" className="fp-hero-crumb">
+            <Link to="/">Home</Link>
+            <span aria-hidden className="sp">/</span>
+            <span>Features</span>
+            <span aria-hidden className="sp">/</span>
+            <span className="cur" aria-current="page">{feature.title}</span>
+          </nav>
+          <h1 style={{ marginTop: 16 }}>
+            {h.pre}{' '}<span className="type">{h.accent}</span>{h.post ? <> <span className="post">{h.post}</span></> : null}
+          </h1>
+          <p className="sub">{h.sub || feature.description}</p>
+          <div className="btn-row">
+            <Cta>{h.cta || 'Get started free'}</Cta>
+            <Cta variant="outline">See how it works</Cta>
+          </div>
+          <div className="proof">
+            <div className="fp-faces" aria-hidden>
+              {HERO_FACES.map((src, i) => <HeroFace key={i} src={src} />)}
+            </div>
+            <div>
+              <div className="fp-stars" aria-hidden>{[0, 1, 2, 3, 4].map((i) => <Star key={i} size={13} fill="#FFCC1C" />)}</div>
+              <p className="fp-proof-cap">Loved by India&rsquo;s creators and coaches.</p>
+            </div>
+          </div>
+        </div>
+        <div className="fp-mock">
+          <ProductMock mock={feature.heroMock} />
+          {glass.map((g, i) => (
+            <div key={i} className={`fp-glass g${i + 1}`}>
+              <span className="ic" style={{ background: soft(g.tint || feature.accent) }}><Icon name={g.icon} size={15} color={g.tint || feature.accent} /></span>
+              <div><div className="lb">{g.label}</div><div className="vl">{g.value}</div></div>
+            </div>
+          ))}
+        </div>
       </div>
     </header>
   );
 }
 
-function Footer() {
-  return (
-    <footer className="bg-primary px-5 py-10 text-center text-white sm:px-8">
-      <div className="mx-auto max-w-3xl">
-        <div className="font-heading text-lg font-bold">Book A Sloth</div>
-        <p className="mt-2 text-sm text-white/85">Book A Sloth © 2026 · Made in India 🇮🇳</p>
-      </div>
-    </footer>
-  );
-}
-
-/* Shared CTA button — always brand orange, per spec. */
-function CtaButton({ children = 'Get Started Free', className = '' }) {
-  return (
-    <Link
-      to={ROUTE}
-      className={`inline-flex items-center justify-center gap-2 rounded px-7 py-4 text-sm font-semibold text-white shadow-lg transition-transform hover:no-underline ${className}`}
-      style={{ background: '#FE5100' }}
-    >
-      {children} <ArrowRight size={16} />
-    </Link>
-  );
-}
-
-/* ════════════════════════════ Hero variants (6) ════════════════════════════ */
-
-// 1. split — 50/50, text one side + accent blob, image rotated with shadow.
-function HeroSplit({ feature }) {
-  const { title, tagline, description, heroImage, layout } = feature;
-  const reverse = !!layout?.heroReverse;
-  return (
-    <section className="relative overflow-hidden bg-white px-5 py-16 sm:px-8 sm:py-24">
-      <div className={`mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 ${reverse ? 'lg:[&>*:first-child]:order-2' : ''}`}>
-        <div className="relative">
-          <span aria-hidden className="absolute -left-12 -top-12 -z-10 h-72 w-72 rounded-[50%] blur-3xl" style={{ background: 'var(--fp-accent-light)' }} />
-          <Reveal as="p" className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--fp-accent)]">{tagline}</Reveal>
-          <Reveal as="h1" delay={0.05} className="mt-5 font-heading text-4xl font-extrabold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">{title}</Reveal>
-          <Reveal as="p" delay={0.1} className="mt-6 max-w-lg text-base leading-relaxed text-neutral-500 sm:text-lg">{description}</Reveal>
-          <Reveal delay={0.16} className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-            <CtaButton />
-            <span className="flex items-center gap-1.5 text-xs text-neutral-500">
-              <Check size={13} className="text-[color:var(--fp-accent)]" /> No credit card needed
-            </span>
-          </Reveal>
-        </div>
-        <Reveal delay={0.1}>
-          <img
-            src={heroImage}
-            alt={title}
-            className="w-full rounded-[24px] object-cover shadow-2xl"
-            style={{ transform: `rotate(${reverse ? '2.5deg' : '-2.5deg'})` }}
-          />
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// 2. overlap — full-width dark hero, browser-frame mockup overlapping ~80px into next section.
-function HeroOverlap({ feature }) {
-  const { title, tagline, description, heroImage, darkBg } = feature;
-  return (
-    <section className="relative pb-8 pt-20 text-center sm:pt-28" style={{ background: darkBg }}>
-      <div className="mx-auto max-w-3xl px-5 sm:px-8">
-        <Reveal as="p" className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--fp-accent)]">{tagline}</Reveal>
-        <Reveal as="h1" delay={0.05} className="mt-5 font-heading text-4xl font-extrabold leading-[1.08] text-white sm:text-5xl lg:text-6xl">{title}</Reveal>
-        <Reveal as="p" delay={0.1} className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/70">{description}</Reveal>
-        <Reveal delay={0.16} className="mt-8 flex justify-center">
-          <CtaButton />
-        </Reveal>
-      </div>
-      <Reveal delay={0.22} className="relative z-10 mx-auto -mb-20 mt-16 max-w-4xl px-5 sm:px-8">
-        <div className="overflow-hidden rounded-[10px] bg-white shadow-[0_50px_100px_-30px_rgba(0,0,0,0.6)] ring-1 ring-black/10" style={{ borderTop: '4px solid var(--fp-accent)' }}>
-          <div className="flex items-center gap-1.5 border-b border-black/5 bg-neutral-50 px-4 py-2.5" aria-hidden>
-            <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-            <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-            <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-          </div>
-          <img src={heroImage} alt={title} className="aspect-[16/10] w-full object-cover" />
-        </div>
-      </Reveal>
-    </section>
-  );
-}
-
-// 3. diagonal — clip-path split, dark text panel over a light image panel.
-function HeroDiagonal({ feature }) {
-  const { title, tagline, description, heroImage, darkBg } = feature;
-  return (
-    <section className="relative isolate overflow-hidden bg-[#F2F2F2]">
-      <div
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-[70%] sm:w-[58%]"
-        style={{ background: darkBg, clipPath: 'polygon(0 0, 100% 0, 68% 100%, 0 100%)' }}
-      />
-      <div className="relative z-10 mx-auto grid max-w-7xl gap-10 px-5 py-20 sm:px-8 sm:py-28 lg:grid-cols-2 lg:gap-10">
-        <div className="flex flex-col justify-center text-white lg:max-w-md">
-          <Reveal as="p" className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--fp-accent)]">{tagline}</Reveal>
-          <Reveal as="h1" delay={0.05} className="mt-5 font-heading text-4xl font-extrabold leading-tight sm:text-5xl">{title}</Reveal>
-          <span aria-hidden className="mt-6 block h-1 w-16 rounded-full bg-[color:var(--fp-accent)]" />
-          <Reveal as="p" delay={0.1} className="mt-6 text-base leading-relaxed text-white/70">{description}</Reveal>
-          <Reveal delay={0.16} className="mt-8">
-            <CtaButton />
-          </Reveal>
-        </div>
-        <Reveal delay={0.14} className="flex items-center justify-center lg:justify-end">
-          <img src={heroImage} alt={title} className="aspect-[4/3] w-full max-w-lg rounded-[4px] object-cover shadow-2xl" />
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// 4. centered — oversized headline (last word accented), image card with floating pills.
-function HeroCentered({ feature }) {
-  const { title, tagline, description, heroImage } = feature;
-  const words = title.split(' ');
-  const last = words.pop();
-  return (
-    <section className="relative overflow-hidden bg-white px-5 py-20 text-center sm:px-8 sm:py-28">
-      <Reveal as="p" className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--fp-accent)]">{tagline}</Reveal>
-      <Reveal as="h1" delay={0.05} className="mx-auto mt-5 max-w-4xl font-heading text-5xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-6xl lg:text-7xl">
-        {words.join(' ')} <span className="text-[color:var(--fp-accent)]">{last}</span>
-      </Reveal>
-      <Reveal as="p" delay={0.1} className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-neutral-500 sm:text-lg">{description}</Reveal>
-      <Reveal delay={0.16} className="mt-8 flex justify-center">
-        <CtaButton />
-      </Reveal>
-      <Reveal delay={0.24} className="relative mx-auto mt-16 max-w-4xl">
-        <img src={heroImage} alt={title} className="w-full rounded-[20px] object-cover shadow-2xl" />
-        <span className="absolute -left-4 top-8 hidden rounded-full px-4 py-2 text-xs font-bold text-white shadow-lg sm:block" style={{ background: 'var(--fp-accent)' }}>No-code setup</span>
-        <span className="absolute -right-4 bottom-16 hidden rounded-full px-4 py-2 text-xs font-bold text-white shadow-lg sm:block" style={{ background: '#FF4D93' }}>Payments built-in</span>
-        <span className="absolute -bottom-4 left-1/3 hidden rounded-full px-4 py-2 text-xs font-bold text-white shadow-lg sm:block" style={{ background: '#269CEF' }}>Live in minutes</span>
-      </Reveal>
-    </section>
-  );
-}
-
-// 5. editorial — magazine asymmetric split, huge type left, tall image bleeding off top right.
-function HeroEditorial({ feature }) {
-  const { title, tagline, description, heroImage } = feature;
-  return (
-    <section className="relative bg-white px-5 pb-16 pt-20 sm:px-8 sm:pt-28">
-      <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-5 lg:gap-8">
-        <div className="lg:col-span-3">
-          <Reveal as="p" className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--fp-accent)]">{tagline}</Reveal>
-          <span aria-hidden className="mt-4 block h-1 w-20 rounded-full bg-[color:var(--fp-accent)]" />
-          <Reveal as="h1" delay={0.05} className="mt-6 font-heading text-6xl font-extrabold leading-[0.98] tracking-tight text-ink sm:text-7xl lg:text-8xl">{title}</Reveal>
-          <Reveal as="p" delay={0.12} className="mt-8 max-w-lg text-base leading-relaxed text-neutral-500 sm:text-lg">{description}</Reveal>
-          <Reveal delay={0.18} className="mt-8">
-            <CtaButton />
-          </Reveal>
-        </div>
-        <Reveal delay={0.1} className="lg:col-span-2">
-          <img src={heroImage} alt={title} className="-mt-10 aspect-[3/4] w-full rounded-[4px] object-cover shadow-2xl sm:-mt-16 lg:-mt-24" />
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// 6. gradient — mesh gradient (accent + darkBg), white centered text, phone mockup with glow.
-function HeroGradient({ feature }) {
-  const { title, tagline, description, heroImage } = feature;
-  return (
-    <section
-      className="relative overflow-hidden px-5 pb-24 pt-20 text-center sm:px-8 sm:pt-28"
-      style={{
-        background: [
-          'radial-gradient(120% 100% at 15% 0%, color-mix(in srgb, var(--fp-accent) 55%, transparent), transparent 60%)',
-          'radial-gradient(120% 100% at 85% 100%, color-mix(in srgb, var(--fp-accent) 35%, transparent), transparent 55%)',
-          'var(--fp-dark)',
-        ].join(', '),
-      }}
-    >
-      <Reveal as="p" className="text-xs font-semibold uppercase tracking-[0.24em] text-white/80">{tagline}</Reveal>
-      <Reveal as="h1" delay={0.05} className="mx-auto mt-5 max-w-3xl font-heading text-4xl font-extrabold leading-[1.08] text-white sm:text-5xl lg:text-6xl">{title}</Reveal>
-      <Reveal as="p" delay={0.1} className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/75">{description}</Reveal>
-      <Reveal delay={0.16} className="mt-8 flex justify-center">
-        <CtaButton />
-      </Reveal>
-      <Reveal delay={0.26} className="relative mx-auto mt-16 max-w-[280px]">
-        <span aria-hidden className="absolute inset-x-6 -bottom-6 h-16 rounded-full opacity-60 blur-2xl" style={{ background: 'var(--fp-accent)' }} />
-        <div className="relative rounded-[36px] border-[6px] border-black bg-black p-2 shadow-2xl">
-          <img src={heroImage} alt={title} className="aspect-[9/18] w-full rounded-[26px] object-cover" />
-        </div>
-      </Reveal>
-    </section>
-  );
-}
-
-const HERO_VARIANTS = {
-  split: HeroSplit,
-  overlap: HeroOverlap,
-  diagonal: HeroDiagonal,
-  centered: HeroCentered,
-  editorial: HeroEditorial,
-  gradient: HeroGradient,
-};
-
-/* ════════════════════════════ Stats bar ════════════════════════════ */
-
-function StatsBar({ stats }) {
+/* ════════════════ Stats (Attic odometer strip) ════════════════ */
+function Stats({ stats }) {
   if (!stats?.length) return null;
   return (
-    <section className="border-y border-black/5 bg-white px-5 py-12 sm:px-8">
-      <div className="mx-auto grid max-w-4xl grid-cols-3 gap-6 text-center">
-        {stats.map((s, i) => (
-          <Reveal key={s.label} delay={i * 0.08}>
-            <div className="font-heading text-3xl font-extrabold tracking-tight text-[color:var(--fp-accent)] sm:text-4xl">{s.value}</div>
-            <p className="mx-auto mt-1.5 max-w-[10rem] text-xs leading-snug text-neutral-500 sm:text-sm">{s.label}</p>
-          </Reveal>
+    <section className="fp-stats">
+      <div className="fp-wrap r">
+        {stats.map((s) => (
+          <div key={s.label}>
+            <div className="n">{s.value}</div>
+            <div className="l">{s.label}</div>
+          </div>
         ))}
       </div>
     </section>
   );
 }
 
-/* ════════════════════════════ Feature section variants (4) ════════════════════════════ */
-
-// 1. zigzag — alternating image/text rows, alternating background tint.
-function SectionZigzag({ feature }) {
+/* ════════════════ Problem → Solution (HIW BenefitsComparison) ════════════════ */
+function Benefits({ benefits }) {
+  if (!benefits) return null;
   return (
-    <section>
-      {(feature.features || []).map((f, i) => {
-        const reverse = i % 2 === 1;
-        return (
-          <div key={f.title} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F2F2F2]'}>
-            <div className="mx-auto px-5 py-16 sm:px-8 sm:py-20">
-              <div className={`mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16 ${reverse ? 'lg:[&>*:first-child]:order-2' : ''}`}>
-                <Reveal>
-                  <img src={f.image} alt={f.title} loading="lazy" className="aspect-[4/3] w-full rounded-[4px] object-cover shadow-lg" />
-                </Reveal>
-                <Reveal delay={0.08}>
-                  <h3 className="font-heading text-2xl font-bold text-[color:var(--fp-accent)] sm:text-3xl">{f.title}</h3>
-                  <p className="mt-4 text-base leading-relaxed text-neutral-600">{f.description}</p>
-                </Reveal>
-              </div>
+    <section className="fp-sec"><div className="fp-wrap fp-center">
+      <p className="fp-eyebrow">The problem</p>
+      <h2 className="fp-title" style={{ marginTop: 12 }}>{benefits.heading}</h2>
+      {benefits.lead && <p className="fp-lead">{benefits.lead}</p>}
+      <div className="fp-cmp">
+        <div className="fp-col bad">
+          <h3><span className="fp-head-bad"><X size={18} /></span> Doing it by hand</h3>
+          <ul>{benefits.without.map((b, i) => (
+            <li key={i}><span className="mk"><X size={13} /></span><div><div className="it-t">{b.title}</div><div className="it-d">{b.desc}</div></div></li>
+          ))}</ul>
+        </div>
+        <div className="fp-col good">
+          <h3><span className="fp-head-good"><Check size={18} /></span> With Book A Sloth</h3>
+          <ul>{benefits.with.map((b, i) => (
+            <li key={i}><span className="mk"><Check size={13} /></span><div><div className="it-t">{b.title}</div><div className="it-d">{b.desc}</div></div></li>
+          ))}</ul>
+        </div>
+      </div>
+    </div></section>
+  );
+}
+
+/* ════════════════ Signature: coverflow (HIW ProcessOverview) ════════════════ */
+function Coverflow({ steps, heading, lead }) {
+  const [active, setActive] = useState(Math.min(1, steps.length - 1));
+  if (!steps?.length) return null;
+  const pos = (i) => { const d = i - active; return Math.abs(d) > 2 ? 'hidden' : String(d); };
+  return (
+    <section className="fp-sec fp-soft-bg"><div className="fp-wrap fp-center">
+      <p className="fp-eyebrow">How it works</p>
+      <h2 className="fp-title" style={{ marginTop: 12 }}>{heading}</h2>
+      {lead && <p className="fp-lead">{lead}</p>}
+      <div className="fp-cover">
+        {steps.map((s, i) => {
+          const tint = PALETTE[i % PALETTE.length];
+          return (
+            <button type="button" key={s.title} className="fp-pc" data-pos={pos(i)} onClick={() => setActive(i)} aria-label={`Step ${i + 1}: ${s.title}`}>
+              <span className="num">{String(i + 1).padStart(2, '0')}</span>
+              <span className="ic" style={{ background: soft(tint), color: tint }}><Icon name={s.icon} size={22} /></span>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </button>
+          );
+        })}
+      </div>
+      <div className="fp-cover-nav">
+        <button type="button" className="fp-arrow" onClick={() => setActive((a) => Math.max(0, a - 1))} aria-label="Previous step"><ArrowLeft size={20} /></button>
+        <div className="fp-dots">{steps.map((s, i) => (
+          <button type="button" key={s.title} className={active === i ? 'on' : ''} onClick={() => setActive(i)} aria-label={`Go to step ${i + 1}`} />
+        ))}</div>
+        <button type="button" className="fp-arrow" onClick={() => setActive((a) => Math.min(steps.length - 1, a + 1))} aria-label="Next step"><ArrowRight size={20} /></button>
+      </div>
+    </div></section>
+  );
+}
+
+/* ════════════════ Signature: automation (HIW AutomationFlow) ════════════════ */
+function Automation({ automation }) {
+  if (!automation) return null;
+  const { heading, lead, nodes = [], cards = [] } = automation;
+  return (
+    <section className="fp-sec fp-auto"><div className="fp-wrap fp-center">
+      <p className="fp-eyebrow">Automation</p>
+      <h2 className="fp-title" style={{ marginTop: 12 }}>{heading}</h2>
+      {lead && <p className="fp-lead">{lead}</p>}
+      <div className="fp-chain">
+        {nodes.map((n, i) => (
+          <div key={n.label} style={{ display: 'contents' }}>
+            <div className="fp-node"><span className="ic"><Icon name={n.icon} size={20} /></span><span>{n.label}</span></div>
+            {i < nodes.length - 1 && <ArrowRight className="fp-arw" size={16} aria-hidden />}
+          </div>
+        ))}
+      </div>
+      <div className="fp-acards">
+        {cards.map((c) => (
+          <div key={c.title} className="fp-acard"><span className="ic"><Icon name={c.icon} size={20} /></span><h3>{c.title}</h3><p>{c.desc}</p></div>
+        ))}
+      </div>
+    </div></section>
+  );
+}
+
+/* ════════════════ Signature: timeline (Enterprise "journey" map, ported) ════════════════ */
+// The exact Enterprise curve + node coordinates + morphing blob info-card, copied
+// verbatim (enterprise-v2/Timeline.jsx + enterprise.scoped.css), content-swapped.
+// All timeline features carry 5 stops → 5 of the 8 Enterprise positions, on-path.
+const TL_PATH = 'M 90 150 C 165 200, 260 190, 345 145 C 470 82, 610 58, 735 75 C 885 92, 1035 135, 1115 205 C 1170 260, 1170 340, 1115 395 C 1035 468, 870 505, 720 485 C 555 465, 430 420, 305 412 C 220 405, 145 430, 90 478';
+const TL_COORDS = [[13.2, 26.8], [61.25, 13.4], [90.2, 37.5], [60, 86.3], [13.2, 85.4]];
+const TL_SHAPE = 'M 200 8 C 310 6, 395 48, 430 120 C 458 178, 449 235, 405 280 C 365 322, 295 344, 208 342 C 98 340, 18 280, 12 186 C 6 90, 88 15, 200 8 Z';
+const tlColor = (i) => PALETTE[i % PALETTE.length];
+
+function Timeline({ timeline }) {
+  const nodes = timeline?.nodes || [];
+  const [active, setActive] = useState(0);
+  if (!nodes.length) return null;
+  const cur = nodes[active];
+  const color = tlColor(active);
+  const phaseVars = { '--phase-color': color, '--phase-soft-color': soft(color) };
+  return (
+    <section className="fp-sec"><div className="fp-wrap fp-center">
+      <p className="fp-eyebrow">The journey</p>
+      <h2 className="fp-title" style={{ marginTop: 12 }}>{timeline.heading}</h2>
+      {timeline.lead && <p className="fp-lead">{timeline.lead}</p>}
+
+      <div className="fp-tl-map">
+        <svg className="path" viewBox="0 0 1200 560" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <path d={TL_PATH} fill="none" stroke="var(--fp-accent)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <div className="fp-tl-nodes">
+          {nodes.map((n, i) => (
+            <button type="button" key={n.title} className={`fp-tl-node${active === i ? ' on' : ''}`}
+              style={{ left: `${(TL_COORDS[i] || [50, 50])[0]}%`, top: `${(TL_COORDS[i] || [50, 50])[1]}%`, '--phase-color': tlColor(i), '--phase-soft-color': soft(tlColor(i)) }}
+              onClick={() => setActive(i)} aria-label={`Stop ${i + 1}: ${n.title}`} aria-pressed={active === i}>
+              <span className="fp-tl-node__circle">{i + 1}</span>
+            </button>
+          ))}
+        </div>
+        <div className="fp-tl-center" style={phaseVars}>
+          <svg className="fp-tl-center__shape" viewBox="-18 -18 476 386" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id={`tlGrad-${timeline.heading?.length}-${active}`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="100%" stopColor={soft(color)} />
+              </linearGradient>
+            </defs>
+            <path className="fp-tl-shape-outline" d={TL_SHAPE} />
+            <path className="fp-tl-shape-main" d={TL_SHAPE} fill={`url(#tlGrad-${timeline.heading?.length}-${active})`} />
+          </svg>
+          <div className="fp-tl-content">
+            <div className="fp-tl-icon"><Icon name={cur.icon} size={29} strokeWidth={1.8} /></div>
+            <span className="fp-tl-phase">Stop {active + 1} of {nodes.length}</span>
+            <h3>{cur.title}</h3>
+            <p>{cur.desc}</p>
+            <div className="fp-tl-nav">
+              <button type="button" onClick={() => setActive((a) => Math.max(a - 1, 0))} disabled={active === 0} aria-label="Previous stop"><ArrowLeft size={17} strokeWidth={2} /></button>
+              <span>{active + 1} / {nodes.length}</span>
+              <button type="button" onClick={() => setActive((a) => Math.min(a + 1, nodes.length - 1))} disabled={active === nodes.length - 1} aria-label="Next stop"><ArrowRight size={17} strokeWidth={2} /></button>
             </div>
           </div>
-        );
-      })}
-    </section>
-  );
-}
-
-// 2. cards — 3-col grid, 16:10 image, accent-cycled top border, hover lift.
-function SectionCards({ feature }) {
-  return (
-    <section className="bg-white px-5 py-20 sm:px-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {(feature.features || []).map((f, i) => (
-            <Reveal
-              key={f.title}
-              delay={(i % 3) * 0.08}
-              className="group overflow-hidden rounded-[4px] border border-black/5 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.2)]"
-              style={{ borderTop: `4px solid ${PALETTE[i % PALETTE.length]}` }}
-            >
-              <div className="aspect-[16/10] overflow-hidden">
-                <img src={f.image} alt={f.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              </div>
-              <div className="p-6">
-                <h3 className="font-heading text-lg font-bold text-ink">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-500">{f.description}</p>
-              </div>
-            </Reveal>
-          ))}
         </div>
       </div>
-    </section>
-  );
-}
 
-// 3. bento — first item spans 2x2, rest single cells, image overlay text + accent dots.
-function SectionBento({ feature }) {
-  const items = feature.features || [];
-  return (
-    <section className="bg-[#F2F2F2] px-5 py-20 sm:px-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="grid auto-rows-[220px] grid-cols-1 gap-4 sm:auto-rows-[240px] sm:grid-cols-2 lg:grid-cols-4">
-          {items.map((f, i) => (
-            <Reveal
-              key={f.title}
-              delay={i * 0.06}
-              className={`group relative overflow-hidden rounded-[4px] ${i === 0 ? 'sm:col-span-2 sm:row-span-2 lg:col-span-2 lg:row-span-2' : ''}`}
-            >
-              <img src={f.image} alt={f.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-              <span aria-hidden className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full" style={{ background: PALETTE[i % PALETTE.length] }} />
-              <div className="absolute inset-x-0 bottom-0 p-5">
-                <h3 className="font-heading text-lg font-bold text-white">{f.title}</h3>
-                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/80">{f.description}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// 4. showcase — full-bleed stacked images, alternating text alignment, numbered badge.
-function SectionShowcase({ feature }) {
-  const align = ['items-start text-left', 'items-center text-center', 'items-end text-right'];
-  return (
-    <section>
-      {(feature.features || []).map((f, i) => (
-        <div key={f.title} className="relative h-[70vh] min-h-[420px] w-full overflow-hidden">
-          <img src={f.image} alt={f.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
-          <div aria-hidden className="absolute inset-0 bg-black/45" />
-          <div className={`relative z-10 flex h-full flex-col justify-center px-6 sm:px-16 ${align[i % align.length]}`}>
-            <Reveal className="max-w-md">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full font-heading text-sm font-bold text-white" style={{ background: 'var(--fp-accent)' }}>
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <h3 className="mt-4 font-heading text-3xl font-bold text-white sm:text-4xl">{f.title}</h3>
-              <p className="mt-3 text-base leading-relaxed text-white/80">{f.description}</p>
-            </Reveal>
+      <div className="fp-tl-mobile">
+        {nodes.map((n, i) => (
+          <div key={n.title} className="fp-tl-step">
+            <span className="n" style={{ background: tlColor(i), color: tlColor(i) === '#FFCC1C' ? '#1E1E1E' : '#fff' }}>{i + 1}</span>
+            <div><div style={{ fontWeight: 700 }}>{n.title}</div><div style={{ fontSize: 13, color: 'var(--fp-muted)', marginTop: 2 }}>{n.desc}</div></div>
           </div>
-        </div>
-      ))}
-    </section>
+        ))}
+      </div>
+    </div></section>
   );
 }
 
-const SECTION_VARIANTS = {
-  zigzag: SectionZigzag,
-  cards: SectionCards,
-  bento: SectionBento,
-  showcase: SectionShowcase,
-};
+function Signature({ feature }) {
+  if (feature.signature === 'timeline') return <Timeline timeline={feature.timeline} />;
+  if (feature.signature === 'automation') return <Automation automation={feature.automation} />;
+  return <Coverflow steps={feature.steps} heading={feature.stepsHeading || 'How it works'} lead={feature.stepsLead} />;
+}
 
-/* ════════════════════════════ Competitor / testimonial / FAQ / CTA ════════════════════════════ */
-
-function CompetitorStrip({ competitors }) {
-  if (!competitors?.length) return null;
+/* ════════════════ Capabilities (About BeliefGrid) ════════════════ */
+function Capabilities({ feature }) {
+  const items = feature.capabilities || [];
+  if (!items.length) return null;
   return (
-    <section className="bg-[#F2F2F2] px-5 py-16 sm:px-8">
+    <section className="fp-sec"><div className="fp-wrap fp-center">
+      <p className="fp-eyebrow">Capabilities</p>
+      <h2 className="fp-title" style={{ marginTop: 12 }}>{feature.capabilitiesHeading || `What you can do with ${feature.title.toLowerCase()}`}</h2>
+      {feature.capabilitiesLead && <p className="fp-lead">{feature.capabilitiesLead}</p>}
+      <div className="fp-belief">
+        {items.map((c, i) => {
+          const tint = PALETTE[i % PALETTE.length];
+          return (
+            <div key={c.title} className="fp-bcard" style={{ borderTopColor: tint }}>
+              <span className="fp-bchip" style={{ background: soft(tint), color: tint }}><Icon name={c.icon} size={21} /></span>
+              <h3>{c.title}</h3><p>{c.body}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div></section>
+  );
+}
+
+/* ════════════════ Product panel (Attic ProductMock) ════════════════ */
+function ProductPanel({ feature }) {
+  const p = feature.product;
+  if (!p) return null;
+  return (
+    <section className="fp-sec fp-soft-bg fp-prod"><div className="fp-wrap in">
+      <div>
+        <p className="fp-eyebrow">{p.eyebrow || 'See it live'}</p>
+        <h2 className="fp-title" style={{ marginTop: 12 }}>{p.heading}</h2>
+        <p style={{ marginTop: 16, color: 'var(--fp-muted)', maxWidth: '30rem' }}>{p.body}</p>
+        <div className="btn-row" style={{ marginTop: 26 }}><Cta /></div>
+      </div>
+      <div className="fp-mock" style={{ maxWidth: 420 }}><ProductMock mock={p.mock} /></div>
+    </div></section>
+  );
+}
+
+/* ════════════════ Use cases ════════════════ */
+function UseCases({ useCases }) {
+  if (!useCases?.length) return null;
+  return (
+    <section className="fp-sec fp-soft-bg"><div className="fp-wrap fp-center">
+      <p className="fp-eyebrow">Who it&rsquo;s for</p>
+      <h2 className="fp-title" style={{ marginTop: 12 }}>Built for the way you work</h2>
+      <div className="fp-uc">
+        {useCases.map((u) => (
+          <div key={u.audience} className="fp-ucard">
+            <span className="k" style={{ background: 'var(--fp-accent-soft)', color: 'var(--fp-accent)' }}><Icon name={u.icon} size={24} /></span>
+            <h3>{u.audience}</h3><p>{u.description}</p>
+          </div>
+        ))}
+      </div>
+    </div></section>
+  );
+}
+
+/* ════════════════ Testimonials — homepage centred carousel, verbatim ════════════════ */
+// Ported from Home.jsx (real TESTIMONIALS from data/testimonials.js). Transform
+// track, tripled list, forward auto-advance with a seamless jump back one copy,
+// drag-to-navigate and keyboard support. Same markup and behaviour as the homepage.
+const T_GAP = 20;
+function Testimonials() {
+  const N_T = TESTIMONIALS.length;
+  const [activeT, setActiveT] = useState(N_T);
+  const [tAnim, setTAnim] = useState(false);
+  const [tW, setTW] = useState(0);
+  const tWrapRef = useRef(null);
+  const tPausedRef = useRef(false);
+  const [dragDX, setDragDX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef({ active: false, startX: 0 });
+
+  useEffect(() => {
+    const el = tWrapRef.current;
+    if (!el) return undefined;
+    const measure = () => setTW(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  useEffect(() => {
+    if (tAnim || !tW) return undefined;
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setTAnim(true)));
+    return () => cancelAnimationFrame(id);
+  }, [tAnim, tW]);
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return undefined;
+    const id = setInterval(() => { if (!tPausedRef.current) setActiveT((a) => a + 1); }, 2500);
+    return () => clearInterval(id);
+  }, []);
+  useEffect(() => {
+    if (activeT < 2 * N_T) return undefined;
+    const id = setTimeout(() => { setTAnim(false); setActiveT((a) => a - N_T); }, 700);
+    return () => clearTimeout(id);
+  }, [activeT, N_T]);
+  useEffect(() => {
+    if (activeT >= N_T) return undefined;
+    const id = setTimeout(() => { setTAnim(false); setActiveT((a) => a + N_T); }, 700);
+    return () => clearTimeout(id);
+  }, [activeT, N_T]);
+
+  const tFrac = tW >= 1024 ? 0.44 : tW >= 640 ? 0.6 : 0.84;
+  const tCardW = tW ? tW * tFrac : 0;
+  const tOffset = tW ? (tW - tCardW) / 2 - activeT * (tCardW + T_GAP) : 0;
+
+  return (
+    <section className="fp-sec fp-soft-bg" style={{ overflow: 'hidden' }}>
       <div className="mx-auto max-w-3xl text-center">
-        <Reveal as="p" className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-400">Switching from</Reveal>
-        <div className="mt-8 space-y-4">
-          {competitors.map((c, i) => (
-            <Reveal key={c.name} delay={i * 0.06} className="flex items-center justify-center gap-3 text-base font-medium text-ink sm:text-lg">
-              <span aria-hidden className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: c.color }} />
-              Everything <span className="font-bold">{c.name}</span> does, plus payments in ₹.
-            </Reveal>
+        <h2 className="fp-title">Don&rsquo;t take our word for it.</h2>
+        <p className="fp-lead">Real professionals. Real bookings. Real calm.</p>
+      </div>
+      <div className="relative mt-8">
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-12 top-12 z-0 hidden lg:block">
+          <div className="absolute inset-x-0 top-0 border-t border-dashed border-neutral-200" />
+          <div className="absolute inset-x-0 bottom-0 border-t border-dashed border-neutral-200" />
+          <div className="absolute inset-y-0 left-[28%] border-l border-dashed border-neutral-200" />
+          <div className="absolute inset-y-0 left-[72%] border-l border-dashed border-neutral-200" />
+        </div>
+        <div
+          ref={tWrapRef}
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="What our customers say — use the arrow keys to browse"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowRight") { e.preventDefault(); setActiveT((a) => a + 1); }
+            else if (e.key === "ArrowLeft") { e.preventDefault(); setActiveT((a) => a - 1); }
+          }}
+          onMouseEnter={() => { tPausedRef.current = true; }}
+          onMouseLeave={() => { tPausedRef.current = false; }}
+          onPointerDown={(e) => {
+            dragRef.current = { active: true, startX: e.clientX };
+            setDragging(true); tPausedRef.current = true;
+            e.currentTarget.setPointerCapture?.(e.pointerId);
+          }}
+          onPointerMove={(e) => { if (dragRef.current.active) setDragDX(e.clientX - dragRef.current.startX); }}
+          onPointerUp={(e) => {
+            if (!dragRef.current.active) return;
+            const dx = e.clientX - dragRef.current.startX;
+            const step = tCardW + T_GAP;
+            let moved = step ? Math.round(-dx / step) : 0;
+            if (moved === 0 && Math.abs(dx) > 48) moved = dx < 0 ? 1 : -1;
+            const lim = N_T - 1;
+            moved = Math.max(-lim, Math.min(lim, moved));
+            dragRef.current.active = false; setDragging(false); setDragDX(0);
+            if (moved !== 0) setActiveT((a) => a + moved);
+            tPausedRef.current = false;
+            e.currentTarget.releasePointerCapture?.(e.pointerId);
+          }}
+          onPointerCancel={() => { dragRef.current.active = false; setDragging(false); setDragDX(0); tPausedRef.current = false; }}
+          className="relative z-10 cursor-grab touch-pan-y select-none overflow-hidden rounded-[6px] py-12 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:cursor-grabbing"
+        >
+          <div
+            className={`flex ${tAnim && !dragging ? "transition-transform duration-700 ease-out motion-reduce:transition-none" : ""}`}
+            style={{ transform: `translate3d(${tOffset + dragDX}px, 0, 0)`, columnGap: `${T_GAP}px` }}
+          >
+            {tW > 0 && [...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => {
+              const isActive = i === activeT;
+              return (
+                <figure
+                  key={i}
+                  style={{ width: `${tCardW}px` }}
+                  className={`relative flex h-[14rem] flex-shrink-0 flex-col justify-between overflow-hidden rounded-[6px] p-7 text-left transition-[opacity,box-shadow,border-color] duration-500 sm:p-9 ${isActive ? "border border-black/5 bg-white opacity-100 shadow-[0_30px_70px_-30px_rgba(26,26,26,0.35)]" : "border border-transparent bg-transparent opacity-40"}`}
+                >
+                  {isActive && <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-primary" />}
+                  <blockquote className="text-[15px] font-semibold leading-snug text-ink sm:text-[18px]">&ldquo;{t.quote}&rdquo;</blockquote>
+                  <figcaption className="flex items-center gap-3">
+                    <TAvatar src={t.avatar} name={t.name} />
+                    <div>
+                      <div className="text-sm font-semibold text-ink">{t.name}</div>
+                      <div className="text-xs text-neutral-500">{t.role}</div>
+                    </div>
+                  </figcaption>
+                </figure>
+              );
+            })}
+          </div>
+        </div>
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-12 top-12 z-20 hidden lg:block">
+          {["left-[28%] top-0 -translate-x-1/2 -translate-y-1/2", "left-[72%] top-0 -translate-x-1/2 -translate-y-1/2", "left-[28%] bottom-0 -translate-x-1/2 translate-y-1/2", "left-[72%] bottom-0 -translate-x-1/2 translate-y-1/2"].map((pos) => (
+            <Plus key={pos} size={18} className={`absolute ${pos} text-neutral-300`} />
           ))}
         </div>
       </div>
@@ -408,117 +543,137 @@ function CompetitorStrip({ competitors }) {
   );
 }
 
-function Testimonial() {
+/* ════════════════ Related features (internal links) ════════════════ */
+function Related({ related }) {
+  const items = (related || []).map((r) => ({ ...r, feature: getFeature(r.slug) })).filter((r) => r.feature);
+  if (!items.length) return null;
   return (
-    <section className="bg-white px-5 py-20 sm:px-8">
-      <Reveal className="mx-auto max-w-2xl text-center">
-        <div className="flex justify-center gap-1" aria-hidden>
-          {[0, 1, 2, 3, 4].map((i) => <Star key={i} size={16} className="fill-amber-400 text-amber-400" />)}
-        </div>
-        <blockquote className="mt-5 font-heading text-xl font-semibold leading-snug text-ink sm:text-2xl">
-          &ldquo;{TESTIMONIAL.quote}&rdquo;
-        </blockquote>
-        <p className="mt-4 text-sm font-medium text-neutral-500">{TESTIMONIAL.name} · {TESTIMONIAL.role}</p>
-      </Reveal>
-    </section>
-  );
-}
-
-/* Single-open, smoothly-animated FAQ accordion — accent left border on open row. */
-function FaqAccordion({ faq }) {
-  const [open, setOpen] = useState(null);
-  return (
-    <div className="space-y-3">
-      {faq.map((f, i) => {
-        const isOpen = open === i;
-        return (
-          <div
-            key={f.q}
-            className="overflow-hidden rounded-[4px] border bg-white transition-colors"
-            style={{ borderColor: isOpen ? 'var(--fp-accent)' : 'rgba(0,0,0,0.08)', borderLeftWidth: isOpen ? '4px' : '1px' }}
-          >
-            <button
-              type="button"
-              onClick={() => setOpen(isOpen ? null : i)}
-              aria-expanded={isOpen}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold text-ink"
-            >
-              {f.q}
-              <ChevronDown
-                size={18}
-                className="flex-shrink-0 transition-transform duration-300"
-                style={{ transform: isOpen ? 'rotate(180deg)' : 'none', color: isOpen ? 'var(--fp-accent)' : '#a3a3a3' }}
-              />
-            </button>
-            <AnimatePresence initial={false}>
-              {isOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
-                >
-                  <p className="px-5 pb-4 text-sm leading-relaxed text-neutral-500">{f.a}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function CtaSection({ cta, darkBg }) {
-  return (
-    <section className="relative overflow-hidden px-5 py-24 text-center sm:px-8" style={{ background: darkBg }}>
-      <span aria-hidden className="absolute -left-16 -top-16 h-56 w-56 rounded-full opacity-20 blur-3xl" style={{ background: 'var(--fp-accent)' }} />
-      <span aria-hidden className="absolute -bottom-20 -right-10 h-72 w-72 rounded-full opacity-20 blur-3xl" style={{ background: '#FF4D93' }} />
-      <div className="relative z-10 mx-auto max-w-2xl">
-        <Reveal as="h2" className="font-heading text-3xl font-extrabold leading-tight text-white sm:text-4xl">{cta.headline}</Reveal>
-        <Reveal as="p" delay={0.08} className="mx-auto mt-4 max-w-lg text-base text-white/70">{cta.subline}</Reveal>
-        <Reveal delay={0.16} className="mt-8 flex justify-center">
-          <CtaButton />
-        </Reveal>
+    <section className="fp-sec"><div className="fp-wrap fp-center">
+      <p className="fp-eyebrow">Explore</p>
+      <h2 className="fp-title" style={{ marginTop: 12 }}>Works better together</h2>
+      <div className="fp-rel">
+        {items.map((r) => (
+          <Link key={r.slug} to={`/features/${r.slug}`} className="hover:no-underline">
+            <span className="k"><Icon name={r.icon || 'Sparkles'} size={18} /></span>
+            <div><div className="tt">{r.feature.title}</div><div className="ds">{r.label}</div></div>
+            <span className="go"><ArrowRight size={16} /></span>
+          </Link>
+        ))}
       </div>
-    </section>
+    </div></section>
   );
 }
 
-/* ════════════════════════════ Page ════════════════════════════ */
+/* ════════════════ FAQ (About FaqAccordion, dark) ════════════════ */
+function Faq({ faq }) {
+  if (!faq?.length) return null;
+  return (
+    <section className="fp-sec fp-faqwrap"><div className="fp-wrap fp-center">
+      <h2 className="fp-title">Questions, answered.</h2>
+      <div className="fp-faq">
+        {faq.map((f, i) => (
+          <details key={f.q} open={i === 0}>
+            <summary>{f.q}<Plus className="pl" size={20} /></summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div></section>
+  );
+}
 
+/* ════════════════ Final CTA (About JoinSplit) ════════════════ */
+function FinalCta({ feature }) {
+  const cta = feature.cta || {};
+  return (
+    <section className="fp-sec"><div className="fp-wrap fp-join"><div className="in">
+      <div>
+        <h2>{cta.headline}</h2>
+        <p>{cta.subline}</p>
+        <div className="btn-row" style={{ marginTop: 24 }}><Cta />{' '}<Cta variant="outline">See pricing</Cta></div>
+      </div>
+      <div className="vis"><div className="fp-mock" style={{ maxWidth: 'none' }}><ProductMock mock={feature.heroMock} /></div></div>
+    </div></div></section>
+  );
+}
+
+/* ════════════════ Page ════════════════ */
 export default function FeaturePage() {
   const { slug } = useParams();
   const feature = getFeature(slug);
 
   const canonical = feature ? `${SITE_URL}/features/${feature.slug}` : null;
   const jsonLd = useMemo(() => {
-    if (!feature?.faq?.length) return undefined;
-    return [{
+    if (!feature) return undefined;
+    const graph = [];
+
+    // Breadcrumb trail (Home → this feature).
+    graph.push({
       '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: feature.faq.map((f) => ({
-        '@type': 'Question',
-        name: f.q,
-        acceptedAnswer: { '@type': 'Answer', text: f.a },
-      })),
-    }];
-  }, [feature]);
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: feature.title, item: canonical },
+      ],
+    });
+
+    // SoftwareApplication — answer engines cite this as the product itself, with
+    // its feature list and the real free tier (no fabricated rating).
+    graph.push({
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'Book A Sloth',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      url: canonical,
+      description: feature.seo?.description || feature.description,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+      featureList: (feature.capabilities || []).map((c) => c.title),
+      publisher: { '@type': 'Organization', name: 'Book A Sloth', url: SITE_URL },
+    });
+
+    // HowTo — the page's one signature process (coverflow steps, timeline stops,
+    // or automation chain) as an ordered how-to for AI "how do I…" answers.
+    const howSteps = feature.steps
+      ? feature.steps.map((s) => ({ name: s.title, text: s.desc }))
+      : feature.timeline?.nodes
+        ? feature.timeline.nodes.map((n) => ({ name: n.title, text: n.desc }))
+        : feature.automation?.nodes
+          ? feature.automation.nodes.map((n) => ({ name: n.label, text: n.label }))
+          : [];
+    if (howSteps.length) {
+      graph.push({
+        '@context': 'https://schema.org',
+        '@type': 'HowTo',
+        name: feature.stepsHeading || feature.timeline?.heading || feature.automation?.heading || `How ${feature.title} works`,
+        description: feature.stepsLead || feature.timeline?.lead || feature.automation?.lead || feature.description,
+        step: howSteps.map((s, i) => ({ '@type': 'HowToStep', position: i + 1, name: s.name, text: s.text })),
+      });
+    }
+
+    // FAQ — direct Q&A for answer-engine extraction.
+    if (feature.faq?.length) {
+      graph.push({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: feature.faq.map((f) => ({
+          '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      });
+    }
+    return graph;
+  }, [feature, canonical]);
 
   if (!feature) return <Navigate to="/404" replace />;
 
-  const HeroComponent = HERO_VARIANTS[feature.layout?.hero] || HeroSplit;
-  const SectionComponent = SECTION_VARIANTS[feature.layout?.sections] || SectionZigzag;
-
   const styleVars = {
     '--fp-accent': feature.accent,
-    '--fp-accent-light': feature.accentLight,
+    '--fp-accent-soft': feature.accentLight,
     '--fp-dark': feature.darkBg,
   };
 
   return (
-    <div id="feature-page" className="overflow-x-clip bg-white font-sans text-ink" style={styleVars}>
+    <div className="fp-page" style={styleVars}>
       <Seo
         title={feature.seo?.title || feature.title}
         description={feature.seo?.description || feature.description}
@@ -533,26 +688,17 @@ export default function FeaturePage() {
         jsonLd={jsonLd}
       />
 
-      <Header />
-      <HeroComponent feature={feature} />
-      <StatsBar stats={feature.stats} />
-      <SectionComponent feature={feature} />
-      <CompetitorStrip competitors={feature.competitors} />
-      <Testimonial />
-
-      <section className="bg-[#F2F2F2] px-5 py-20 sm:px-8">
-        <div className="mx-auto max-w-3xl">
-          <Reveal as="h2" className="text-center font-heading text-3xl font-bold leading-tight text-ink sm:text-4xl">
-            Questions, answered.
-          </Reveal>
-          <div className="mt-10">
-            <FaqAccordion faq={feature.faq || []} />
-          </div>
-        </div>
-      </section>
-
-      <CtaSection cta={feature.cta || {}} darkBg={feature.darkBg} />
-      <Footer />
+      <Hero feature={feature} />
+      <Stats stats={feature.stats} />
+      <Benefits benefits={feature.benefits} />
+      <Signature feature={feature} />
+      <Capabilities feature={feature} />
+      <ProductPanel feature={feature} />
+      <UseCases useCases={feature.useCases} />
+      <Testimonials testimonials={feature.testimonials} />
+      <Related related={feature.related} />
+      <Faq faq={feature.faq} />
+      <FinalCta feature={feature} />
     </div>
   );
 }
