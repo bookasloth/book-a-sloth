@@ -41,11 +41,15 @@ describe('<Footer>', () => {
     expect(screen.queryByRole('link', { name: 'Host log in' })).toBeNull();
   });
 
-  test('newsletter signup form is present in the full variant', () => {
+  test('renders the Company & Product column and support/legal rows', () => {
     renderFooter();
-    expect(screen.getByText(/Stay in touch/i)).toBeTruthy();
-    expect(screen.getByRole('button', { name: /join/i })).toBeTruthy();
-    expect(screen.getByLabelText('Email address').getAttribute('type')).toBe('email');
+    // Brand column doubles as Company & Product
+    expect(screen.getByRole('link', { name: 'How it works' }).getAttribute('href')).toBe('/how-it-works');
+    expect(screen.getByRole('link', { name: 'Blog' }).getAttribute('href')).toBe('/blog');
+    // Support row
+    expect(screen.getByRole('link', { name: 'Documentation' }).getAttribute('href')).toBe('/help/docs');
+    // Newsletter form was removed in the mega-footer redesign
+    expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
   });
 
   test('on-page section links are root-relative so they work from any page', () => {
