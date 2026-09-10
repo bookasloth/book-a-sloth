@@ -152,7 +152,7 @@ const HOME_JSONLD = [
       "@type": "AggregateRating",
       ratingValue: "5",
       bestRating: "5",
-      reviewCount: "50",
+      reviewCount: "176",
     },
   },
   {
