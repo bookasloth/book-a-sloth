@@ -9,7 +9,8 @@ import Seo from "../components/common/Seo";
 import ErrorPage from "./ErrorPage";
 import TransientError from "../components/error/TransientError";
 import { isNotFoundError } from "../utils/fetchError";
-import { resolveProfileSeo, profileJsonLd, breadcrumbJsonLd, SITE_URL } from "../utils/seo";
+import { resolveProfileSeo, profileJsonLd, breadcrumbJsonLd, faqJsonLd, SITE_URL } from "../utils/seo";
+import { profileFaqs } from "../utils/profileFaqs";
 
 // Production base for canonical/OG (Vercel env overrides the apex default).
 const SEO_SITE = import.meta.env?.VITE_PUBLIC_SITE_URL || SITE_URL;
@@ -424,12 +425,14 @@ const HostProfile = () => {
 
   // Admin-managed SEO → head tags + ProfilePage JSON-LD (only once host loaded).
   const seo = host ? resolveProfileSeo({ host, siteUrl: SEO_SITE }) : null;
+  const faqs = host ? profileFaqs({ host, services }) : [];
   const jsonLd = host ? [
     profileJsonLd({ host, siteUrl: SEO_SITE, services, rating: { avg: reviewData.avg, count: reviewData.count } }),
     breadcrumbJsonLd({ items: [
       { name: 'Home', path: '/' },
       { name: host.name || 'Host', path: `/${host.username}` },
     ], siteUrl: SEO_SITE }),
+    ...(faqs.length ? [faqJsonLd({ faqs })] : []),
   ] : null;
 
   // All hooks have run — safe to short-circuit the render for a vanity slug.
@@ -742,6 +745,23 @@ const HostProfile = () => {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* FAQ — templated from real profile data (utils/profileFaqs); powers
+                the FAQPage schema + gives answer engines extractable Q&A. */}
+            {faqs.length > 0 && (
+              <div className="mt-10">
+                <h2 className="text-lg font-bold mb-4" style={{ color: C.text }}>Frequently asked questions</h2>
+                <dl className="space-y-4">
+                  {faqs.map((f) => (
+                    <div key={f.q} className="rounded-xl p-4"
+                      style={{ background: C.card, border: `1px solid ${C.border}` }}>
+                      <dt className="text-sm font-semibold" style={{ color: C.text }}>{f.q}</dt>
+                      <dd className="mt-1 text-sm leading-relaxed" style={{ color: C.secondary }}>{f.a}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
             )}
 

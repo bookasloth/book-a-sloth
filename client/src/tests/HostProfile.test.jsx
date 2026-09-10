@@ -94,7 +94,8 @@ describe('HostProfile — profile info', () => {
 
   test('renders location', async () => {
     renderProfile();
-    await waitFor(() => expect(screen.getByText(/Mumbai/i)).toBeTruthy());
+    // getAllByText: location also appears in the auto-FAQ answer ("based in Mumbai").
+    await waitFor(() => expect(screen.getAllByText(/Mumbai/i).length).toBeGreaterThan(0));
   });
 
   test('renders verified badge icon', async () => {

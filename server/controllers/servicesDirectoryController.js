@@ -77,6 +77,36 @@ const getProfession = async (req, res) => {
       if (r.error) throw r.error;
       if (!r.data || r.data.length === 0) return { notFound: true };
 
+      // Listable hosts in this profession — a crawlable link from this indexable
+      // topical hub to each host profile (the fix for GSC "URL unknown to Google":
+      // profiles were sitemapped but under-linked). Same visibility rule as the
+      // sitemap (verified + indexable + not banned + has username). Best-effort:
+      // a hosts read error must not 404 the whole directory page.
+      let hosts = [];
+      try {
+        let h = await supabaseAdmin
+          .from('profiles')
+          .select('username, name, profession, profile_image')
+          .eq('role', 'host').eq('primary_category', slug)
+          .eq('is_verified', true).eq('is_banned', false).eq('is_indexable', true)
+          .not('username', 'is', null)
+          .order('updated_at', { ascending: false })
+          .limit(60);
+        if (h.error && /Could not find the|column .* does not exist/i.test(h.error.message)) {
+          h = await supabaseAdmin
+            .from('profiles')
+            .select('username, name, profession, profile_image')
+            .eq('role', 'host').eq('primary_category', slug)
+            .eq('is_verified', true).eq('is_banned', false)
+            .not('username', 'is', null)
+            .limit(60);
+        }
+        hosts = (h.data || []).filter((p) => p.username).map((p) => ({
+          username: p.username, name: p.name || p.username,
+          profession: p.profession || null, profile_image: p.profile_image || null,
+        }));
+      } catch { /* hosts list is additive — page still renders without it */ }
+
       return {
         profession: prof,
         services: r.data.map((c) => ({
@@ -85,6 +115,7 @@ const getProfession = async (req, res) => {
           description: c.description || fallbackDescription(prof.label, c.name),
           icon: c.icon || null,
         })),
+        hosts,
       };
     });
 

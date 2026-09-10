@@ -39,6 +39,7 @@ export default function ProfessionServices() {
   // for exactly this reason.
   const prof = data && !data.error ? data.profession : null;
   const services = prof ? data.services : [];
+  const hosts = prof ? (data.hosts || []) : [];
   const label = prof?.label || humanizeSlug(profession);
   const canonical = `${SITE_URL}/services/${prof?.slug || profession}`;
   const description = services.length
@@ -62,6 +63,16 @@ export default function ProfessionServices() {
         { '@type': 'ListItem', position: 2, name: label, item: canonical },
       ],
     },
+    // Crawlable ItemList of the hosts linked below — gives Google a discovery path
+    // to each profile from this indexable hub.
+    ...(hosts.length ? [{
+      '@context': 'https://schema.org', '@type': 'ItemList',
+      name: `${label}s on Book A Sloth`,
+      itemListElement: hosts.map((h, i) => ({
+        '@type': 'ListItem', position: i + 1,
+        item: { '@type': 'Person', name: h.name, url: `${SITE_URL}/${h.username}` },
+      })),
+    }] : []),
   ] : undefined;
   const seo = (
     <Seo title={`Book a ${label} online | Book A Sloth`} description={description} canonical={canonical} jsonLd={jsonLd} />
@@ -115,6 +126,38 @@ export default function ProfessionServices() {
               </div>
             ))}
           </dl>
+        </section>
+      )}
+
+      {hosts.length > 0 && (
+        <section className="mt-14">
+          <h2 className="font-heading text-xl font-bold text-[#1E1E1E]">
+            {prof.label}s taking bookings on Book A Sloth
+          </h2>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {hosts.map((h) => (
+              <Link
+                key={h.username}
+                to={`/${h.username}`}
+                className="flex items-center gap-3 rounded-xl border-2 border-[#1E1E1E]/10 p-4 transition-colors hover:border-[#1E1E1E] hover:no-underline"
+              >
+                {h.profile_image ? (
+                  <img src={h.profile_image} alt={h.name} loading="lazy"
+                    className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1E1E1E]/5 font-bold text-[#1E1E1E]">
+                    {(h.name || '?').charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold text-[#1E1E1E]">{h.name}</span>
+                  {h.profession && (
+                    <span className="block truncate text-[13px] text-[#64748b]">{h.profession}</span>
+                  )}
+                </span>
+              </Link>
+            ))}
+          </div>
         </section>
       )}
 
