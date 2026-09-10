@@ -49,7 +49,7 @@ export default function ConsentBanner({ variant = "full" }) {
           />
           <img
             src="https://company-assets.bookasloth.in/images/banner/consent.png"
-            alt=""
+            alt="Book A Sloth cookie preferences"
             width={298}
             height={280}
             decoding="async"

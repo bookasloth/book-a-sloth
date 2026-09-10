@@ -31,7 +31,7 @@ const bandText = (t) =>
 const HeroVisual = ({ post, t }) => (
   <div className="relative hidden overflow-hidden lg:block" style={{ backgroundColor: t.band }}>
     {post.image ? (
-      <img src={post.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      <img src={post.image} alt={post.title} className="absolute inset-0 h-full w-full object-cover" />
     ) : (
       <BlogHeroThumbnail post={post} theme={t} />
     )}

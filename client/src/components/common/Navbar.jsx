@@ -146,7 +146,7 @@ const NavbarLogo = ({ appearance }) => {
   if (mode === 'icon_text' && appearance?.icon_url) {
     return (
       <>
-        <img src={appearance.icon_url} alt="" width={26} height={26} decoding="async"
+        <img src={appearance.icon_url} alt="Book A Sloth" width={26} height={26} decoding="async"
              className="h-[26px] w-[26px] rounded block" />
         {wordmarkText()}
       </>
