@@ -263,6 +263,7 @@ const TagPill = ({ text }) =>
 const NavDropdown = ({ label, icon: Icon, panelClass = 'w-56', align = 'left', children }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const closeTimer = useRef(null);
   const location = useLocation();
   useEffect(() => { setOpen(false); }, [location.pathname]);
   useEffect(() => {
@@ -273,8 +274,15 @@ const NavDropdown = ({ label, icon: Icon, panelClass = 'w-56', align = 'left', c
     document.addEventListener('keydown', onKey);
     return () => { document.removeEventListener('pointerdown', onPointer); document.removeEventListener('keydown', onKey); };
   }, [open]);
+  // Open on hover; close on leave after a short grace period so the cursor can
+  // travel from the trigger to the panel without it snapping shut. Click still
+  // toggles (touch + keyboard).
+  const cancelClose = () => { if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; } };
+  const hoverOpen = () => { cancelClose(); setOpen(true); };
+  const hoverClose = () => { cancelClose(); closeTimer.current = setTimeout(() => setOpen(false), 120); };
+  useEffect(() => cancelClose, []);
   return (
-    <div ref={ref} className="relative flex items-stretch">
+    <div ref={ref} className="relative flex items-stretch" onMouseEnter={hoverOpen} onMouseLeave={hoverClose}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
