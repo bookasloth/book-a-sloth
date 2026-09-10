@@ -22,10 +22,12 @@ async function create(input) {
     design_json: input.design_json || null, html_content: input.html_content || null,
     subject: input.subject || null, preview_text: input.preview_text || null,
     sender_key: input.sender_key || 'shubham',
+    // v3.153: the send shell (customer|vendor|cold). Lets 'cold' outreach fire.
+    layout: input.layout || 'customer',
   };
   let { data, error } = await supabaseAdmin.from('email_campaigns').insert(row).select().single();
   if (error && isMissingSchema(error)) {
-    const { audience_type, audience_ref, design_json, html_content, subject, preview_text, sender_key, ...safe } = row;
+    const { audience_type, audience_ref, design_json, html_content, subject, preview_text, sender_key, layout, ...safe } = row;
     ({ data, error } = await supabaseAdmin.from('email_campaigns').insert(safe).select().single());
   }
   if (error) return { error: error.message };
