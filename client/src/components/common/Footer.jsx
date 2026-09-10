@@ -63,14 +63,11 @@ const COLUMNS = [
   ] },
 ];
 
-// Inline horizontal rows below the grid.
-const SUPPORT = [
+// Single centered inline row below the grid (support + legal, no label).
+const LEGAL = [
   { t: 'Help', href: '/help' },
   { t: 'FAQ', href: '/#faq' },
   { t: 'Documentation', href: '/help/docs' },
-];
-
-const LEGAL = [
   { t: 'Terms', href: '/terms' },
   { t: 'Privacy', href: '/privacy' },
   { t: 'Refund', href: '/refund' },
@@ -109,13 +106,12 @@ function FLink({ href, className, children }) {
 
 const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-// Inline label + pipe-separated links (Support / Legal rows).
-function InlineRow({ label, items }) {
+// Centered, pipe-separated inline row (support + legal links, no label).
+function InlineRow({ items }) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-1 gap-y-2">
-      <span className="mr-3 font-heading text-sm font-semibold text-white">{label}</span>
+    <div className="flex flex-wrap items-center justify-center gap-y-2">
       {items.map((l, i) => (
-        <span key={l.t} className="flex items-baseline">
+        <span key={l.t} className="flex items-center">
           {i > 0 && <span aria-hidden="true" className="mx-3 text-white/20">|</span>}
           <FLink href={l.href} className="text-sm text-white/55 transition-colors hover:text-white hover:no-underline">
             {l.t}
@@ -187,10 +183,9 @@ export default function Footer({ variant = 'full' }) {
           </nav>
         </div>
 
-        {/* Support + Legal inline rows */}
-        <div className="flex flex-col gap-4 border-t border-white/10 py-8">
-          <InlineRow label="Support" items={SUPPORT} />
-          <InlineRow label="Legal" items={LEGAL} />
+        {/* Support + Legal — one centered inline row */}
+        <div className="border-t border-white/10 py-8">
+          <InlineRow items={LEGAL} />
         </div>
 
         {/* Centered socials */}
