@@ -82,6 +82,20 @@ describe('resolveProfileMeta', () => {
       .toEqual({ '@type': 'AggregateRating', ratingValue: 4.7, reviewCount: 3 });
   });
 
+  test('emits a FAQPage shell node (booking + payment) for non-JS crawlers', async () => {
+    buildHostProfile.mockResolvedValueOnce({
+      payload: {
+        host: { username: 'jane', name: 'Jane', is_indexable: true, profession: 'Coach' },
+        services: [{ title: 'Intro', price: 500 }],
+      },
+    });
+    const m = await resolveProfileMeta('jane');
+    expect(m.buildHtmlArgs.faqJsonLd['@type']).toBe('FAQPage');
+    const questions = m.buildHtmlArgs.faqJsonLd.mainEntity.map((q) => q.name);
+    expect(questions.some((q) => /how do i book jane/i.test(q))).toBe(true);
+    expect(questions.some((q) => /payment secure/i.test(q))).toBe(true);
+  });
+
   test('no aggregateRating when the host has zero reviews (never a platform default)', async () => {
     buildHostProfile.mockResolvedValueOnce({
       payload: { host: { username: 'jane', name: 'Jane', is_indexable: true }, services: [], reviews: [], avgRating: 0 },

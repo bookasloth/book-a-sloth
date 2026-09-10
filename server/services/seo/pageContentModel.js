@@ -150,4 +150,4 @@ function build(pageType, payload) {
   }
 }
 
-module.exports = { build, sameAsFrom };
+module.exports = { build, sameAsFrom, profileFaqs };
