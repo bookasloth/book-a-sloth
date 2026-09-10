@@ -31,7 +31,7 @@ const truncate = (s, n = 160) => {
  */
 const upscaleAvatar = (url) => String(url || '').replace(/=s\d+-c$/, '=s512-c');
 
-function buildHtml({ title, description, canonical, ogTitle, ogDescription, image, robots, jsonLd, cardImage }) {
+function buildHtml({ title, description, canonical, ogTitle, ogDescription, image, robots, jsonLd, faqJsonLd, cardImage }) {
   const site = trimSlash(SITE_URL);
   const img = image || `${site}/og-image.png`;
   const rob = robots || 'index,follow';
@@ -64,6 +64,7 @@ function buildHtml({ title, description, canonical, ogTitle, ogDescription, imag
 <meta name="twitter:description" content="${esc(ogDescription || description)}">
 <meta name="twitter:image" content="${esc(img)}">
 ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}
+${faqJsonLd ? `<script type="application/ld+json">${JSON.stringify(faqJsonLd)}</script>` : ''}
 <noscript><meta http-equiv="refresh" content="0;url=${esc(canonical)}"></noscript>
 </head>
 <body>
@@ -78,9 +79,19 @@ ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script
 // so the SEO crawler can get a host page's real meta/indexability in-process
 // (no HTTP round-trip, so Cloudflare's bot-UA block never applies to it).
 // Returns { status: 200, buildHtmlArgs } | { status: 404 } | { status: 301, redirectTo }.
+// FAQPage node from [{q,a}]. Kept here (not imported from client utils/seo) so the
+// server prerender shell has no client dependency; shape matches faqJsonLd there.
+function faqPageLd(faqs) {
+  const mainEntity = (faqs || []).filter((f) => f && f.q && f.a).map((f) => ({
+    '@type': 'Question', name: String(f.q),
+    acceptedAnswer: { '@type': 'Answer', text: String(f.a) },
+  }));
+  return mainEntity.length ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity } : null;
+}
+
 async function resolveProfileMeta(username) {
   const { buildHostProfile } = require('./hostController');
-  const { sameAsFrom } = require('../services/seo/pageContentModel');
+  const { sameAsFrom, profileFaqs } = require('../services/seo/pageContentModel');
   const outcome = await buildHostProfile(username);
 
   if (outcome.notFound || outcome.redirect) {
@@ -163,6 +174,9 @@ async function resolveProfileMeta(username) {
     cardImage: true, // ogCard is always a known 1200x630 card (generated or site default)
     robots: host.is_indexable === false ? 'noindex,nofollow' : 'index,follow',
     jsonLd,
+    // Same templated FAQ the client renders (utils/profileFaqs mirror) — emitted as
+    // a second JSON-LD script so non-JS crawlers + AI answer bots get the FAQPage.
+    faqJsonLd: faqPageLd(profileFaqs(host, services)),
   };
 
   // payload is passed through (additive) so the SEO crawler can build a DB-derived
