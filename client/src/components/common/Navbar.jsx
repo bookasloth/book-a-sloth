@@ -304,20 +304,36 @@ const NavDropdown = ({ label, icon: Icon, panelClass = 'w-56', align = 'left', c
   );
 };
 
-// ── Mega-menu pieces (grouped columns, icon + label + subtext) ───────────────
-const MegaItem = ({ item }) => {
+// ── Mega-menu pieces (grouped columns, colored icon tile + label + subtext) ──
+// Per-item colored tiles + a matching full-row hover tint. Classes are literal
+// (Tailwind JIT can't see interpolated names), keyed by a tone that cycles per
+// column. Icon tile idle color = the row's hover tint, so hover just deepens it.
+const TILE_TONES = ['pink', 'blue', 'green', 'orange', 'violet', 'amber', 'teal', 'rose'];
+const TILE_MAP = {
+  pink:   { tile: 'bg-pink-100 text-pink-500',     row: 'hover:bg-pink-50' },
+  blue:   { tile: 'bg-blue-100 text-blue-500',     row: 'hover:bg-blue-50' },
+  green:  { tile: 'bg-emerald-100 text-emerald-500', row: 'hover:bg-emerald-50' },
+  orange: { tile: 'bg-orange-100 text-orange-500', row: 'hover:bg-orange-50' },
+  violet: { tile: 'bg-violet-100 text-violet-500', row: 'hover:bg-violet-50' },
+  amber:  { tile: 'bg-amber-100 text-amber-500',   row: 'hover:bg-amber-50' },
+  teal:   { tile: 'bg-teal-100 text-teal-500',     row: 'hover:bg-teal-50' },
+  rose:   { tile: 'bg-rose-100 text-rose-500',     row: 'hover:bg-rose-50' },
+};
+
+const MegaItem = ({ item, tone }) => {
   const Icon = item.icon;
+  const c = TILE_MAP[tone] || TILE_MAP.orange;
   return (
     <Link
       to={item.href}
       role="menuitem"
-      className="group/mi flex items-start gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-[#FE5100]/5 hover:no-underline"
+      className={`flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors ${c.row} hover:no-underline`}
     >
-      <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 transition-colors group-hover/mi:bg-[#FE5100]/10 group-hover/mi:text-[#FE5100]">
-        <Icon size={16} strokeWidth={1.9} />
+      <span className={`mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${c.tile}`}>
+        <Icon size={19} strokeWidth={2} />
       </span>
       <span className="min-w-0">
-        <span className="block text-[13.5px] font-semibold text-[#1E1E1E] group-hover/mi:text-[#FE5100]">{item.label}</span>
+        <span className="block text-[14px] font-bold text-[#1E1E1E]">{item.label}</span>
         {item.desc && <span className="block text-[12px] leading-snug text-gray-400">{item.desc}</span>}
       </span>
     </Link>
@@ -328,10 +344,10 @@ const MegaItem = ({ item }) => {
 const MegaMenu = ({ sections, promo }) => (
   <div className="flex gap-6 p-6">
     {sections.map((col) => (
-      <div key={col.header} className="min-w-[12.5rem]">
+      <div key={col.header} className="min-w-[13.5rem]">
         <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{col.header}</p>
         <div className="space-y-0.5">
-          {col.items.map((it) => <MegaItem key={it.href} item={it} />)}
+          {col.items.map((it, i) => <MegaItem key={it.href} item={it} tone={TILE_TONES[i % TILE_TONES.length]} />)}
         </div>
       </div>
     ))}
