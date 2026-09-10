@@ -299,7 +299,7 @@ const AdminCampaignComposer = ({ onClose }) => {
       await adminCampCreate({
         name, channel: 'email', ...aud,
         subject, preview_text: previewText, sender_key: 'shubham',
-        design_json: { blocks }, throttle_per_min: 120,
+        design_json: { blocks }, throttle_per_min: 120, layout: audience,
       });
       toast.success('Draft saved');
       onClose?.();

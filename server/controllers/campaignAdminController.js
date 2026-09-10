@@ -13,6 +13,10 @@ const campaignCompiler = require('../services/email/campaignCompiler');
 const communicationEngine = require('../services/email/communicationEngine');
 const { audit } = require('../services/auditService');
 
+// Composer Layout dropdown → email shell. 'vendor' and 'cold' pass through; any
+// other value (incl. undefined) falls back to the branded customer shell.
+const shellAudience = (a) => (a === 'vendor' || a === 'cold' ? a : 'customer');
+
 // ── Contacts ──
 const listContacts = async (req, res) => {
   try {
@@ -124,7 +128,7 @@ const testCampaign = async (req, res) => {
     const { bodyHtml } = campaignCompiler.compile(design_json || { blocks: blocks || [] });
     const r = await communicationEngine.sendComposedTest({
       bodyHtml, subject, previewText: preview_text,
-      audience: audience === 'vendor' ? 'vendor' : 'customer', senderKey: 'shubham', to: dest,
+      audience: shellAudience(audience), senderKey: 'shubham', to: dest,
     });
     if (!r.ok) return res.status(502).json({ message: r.error || 'Test send failed' });
     res.json({ ok: true, to: dest });
@@ -154,7 +158,7 @@ const createCampaign = async (req, res) => {
 const previewCampaign = async (req, res) => {
   try {
     const design = req.body?.design_json || { blocks: req.body?.blocks || [] };
-    const audience = req.body?.audience === 'vendor' ? 'vendor' : 'customer';
+    const audience = shellAudience(req.body?.audience);
     const { bodyHtml } = campaignCompiler.compile(design);
     const settings = await communicationEngine.loadSettings();
     const pseudo = {
