@@ -4,52 +4,34 @@ const ROUTE_START = '/be-a-sloth';
 const EMAIL = 'bolt@bookasloth.in';
 const BOLT_URL = 'https://www.instagram.com/bookasloth';
 
-// Brand column doubles as the first link column ("Company & Product"). Legal and
-// Support live in the inline rows below the grid (they read as horizontal bars,
-// not full columns). Every href below points at a route that actually renders —
-// dead footer links are soft-404s, and the footer's whole job is crawlability.
-const COMPANY = [
-  { t: 'How it works', href: '/how-it-works' },
-  { t: 'Pricing', href: '/pricing' },
-  { t: 'Earnings calculator', href: '/earnings-calculator' },
-  { t: 'Explore', href: '/explore' },
-  { t: 'Enterprise', href: '/enterprise' },
-  { t: 'About', href: '/about' },
-  { t: 'Blog', href: '/blog' },
-  { t: 'Careers', href: '/careers' },
-  { t: 'Wall of Love', href: '/wall-of-love' },
-  { t: 'Contact', href: '/contact' },
-];
-
+// Four columns, six links each — curated by click intent, not exhaustive.
+// Every href points at a route that actually renders — dead footer links are
+// soft-404s, and the footer's whole job is crawlability. (The /for/ profession
+// pages moved off the footer; they stay in the sitemap.)
 const COLUMNS = [
-  // Feature pages had zero internal links (orphaned — only reachable via sitemap).
-  // The footer renders site-wide, so this is the durable way to get them crawled.
+  { h: 'Company', links: [
+    { t: 'About', href: '/about' },
+    { t: 'Blog', href: '/blog' },
+    { t: 'Careers', href: '/careers' },
+    { t: 'Wall of Love', href: '/wall-of-love' },
+    { t: 'Contact', href: '/contact' },
+    { t: 'Help', href: '/help' },
+  ] },
+  { h: 'Product', links: [
+    { t: 'How it works', href: '/how-it-works' },
+    { t: 'Pricing', href: '/pricing' },
+    { t: 'Earnings calculator', href: '/earnings-calculator' },
+    { t: 'Explore', href: '/explore' },
+    { t: 'Enterprise', href: '/enterprise' },
+    { t: 'Digital products', href: '/features/digital-products' },
+  ] },
   { h: 'Features', links: [
     { t: 'Online scheduling', href: '/features/online-scheduling' },
     { t: 'Booking pages', href: '/features/booking-pages' },
     { t: 'Payments', href: '/features/payments' },
-    { t: 'Availability', href: '/features/availability' },
     { t: 'Google Calendar', href: '/features/google-calendar' },
-    { t: 'Notifications', href: '/features/notifications' },
     { t: 'Client management', href: '/features/client-management' },
-    { t: 'Digital products', href: '/features/digital-products' },
-    { t: 'Reviews & ratings', href: '/features/reviews' },
     { t: 'Analytics', href: '/features/analytics' },
-  ] },
-  // /for/:profession is dynamic — only slugs with real professionLandingData
-  // render. Wire the ones that exist; Coaches/Therapists/Creators/Service-
-  // businesses were dropped (no data → soft-404).
-  { h: "Who it's for", links: [
-    { t: 'Doctors', href: '/for/doctors' },
-    { t: 'Business consultants', href: '/for/business-consultant' },
-    { t: 'Agencies', href: '/for/agencies' },
-    { t: 'Freelancers', href: '/for/freelancers' },
-    { t: 'Events', href: '/for/events' },
-    { t: 'Tutors', href: '/for/tutors' },
-    { t: 'Fitness', href: '/for/fitness' },
-    { t: 'Lawyers', href: '/for/lawyers' },
-    { t: 'Photographers', href: '/for/photographers' },
-    { t: 'Salons', href: '/for/salon' },
   ] },
   // Only the comparison LPs that exist. YouCanBookMe / Microsoft Bookings /
   // Square / Google Calendar have no LP yet — omitted rather than 404'd.
@@ -65,7 +47,6 @@ const COLUMNS = [
 
 // Single centered inline row below the grid (support + legal, no label).
 const LEGAL = [
-  { t: 'Help', href: '/help' },
   { t: 'FAQ', href: '/#faq' },
   { t: 'Documentation', href: '/help/docs' },
   { t: 'Terms', href: '/terms' },
@@ -150,21 +131,7 @@ export default function Footer({ variant = 'full' }) {
         {!minimal && (
         <>
         <div className="grid gap-x-8 gap-y-10 border-t border-white/10 py-12 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Company & Product column */}
-          <div>
-            <h3 className="font-heading text-sm font-semibold text-white">Company &amp; Product</h3>
-            <ul className="mt-4 space-y-2.5">
-              {COMPANY.map((l) => (
-                <li key={l.t}>
-                  <FLink href={l.href} className="text-sm text-white/55 transition-colors hover:text-white hover:no-underline">
-                    {l.t}
-                  </FLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Features / Who it's for / Compare */}
+          {/* Company / Product / Features / Compare */}
           <nav aria-label="Footer" className="contents">
             {COLUMNS.map((col) => (
               <div key={col.h}>
