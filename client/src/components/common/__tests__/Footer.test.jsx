@@ -16,21 +16,15 @@ describe('<Footer>', () => {
     ).toBe('/be-a-sloth');
   });
 
-  test('renders representative links from each column', () => {
+  test('is minimal — no link columns (discovery lives in the navbar now)', () => {
     renderFooter();
-    expect(screen.getByRole('link', { name: 'Enterprise' }).getAttribute('href')).toBe('/enterprise');
-    expect(screen.getByRole('link', { name: 'About' }).getAttribute('href')).toBe('/about');
-    expect(screen.getByRole('link', { name: 'Help' }).getAttribute('href')).toBe('/help');
-    expect(screen.getByRole('link', { name: 'Explore' }).getAttribute('href')).toBe('/explore');
-  });
-
-  test('links the previously-orphaned marketing pages (features / compare / wall of love)', () => {
-    renderFooter();
-    expect(screen.getByRole('link', { name: 'Payments' }).getAttribute('href')).toBe('/features/payments');
-    expect(screen.getByRole('link', { name: 'Analytics' }).getAttribute('href')).toBe('/features/analytics');
-    expect(screen.getByRole('link', { name: 'vs Calendly' }).getAttribute('href')).toBe('/lp/calendly-alternative');
-    expect(screen.getByRole('link', { name: 'vs Zoho Bookings' }).getAttribute('href')).toBe('/lp/zoho-bookings-alternative');
-    expect(screen.getByRole('link', { name: 'Wall of Love' }).getAttribute('href')).toBe('/wall-of-love');
+    // The old 4-column link grid moved into the navbar mega-menus.
+    expect(screen.queryByRole('link', { name: 'About' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Payments' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Enterprise' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'vs Calendly' })).toBeNull();
+    // No newsletter form.
+    expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
   });
 
   test('drops redundant links that duplicate the CTA and the navbar', () => {
@@ -39,30 +33,13 @@ describe('<Footer>', () => {
     expect(screen.queryByRole('link', { name: 'Host log in' })).toBeNull();
   });
 
-  test('renders the Company & Product column and support/legal rows', () => {
+  test('legal strip has the legal + support links, operator line and support email', () => {
     renderFooter();
-    // Brand column doubles as Company & Product
-    expect(screen.getByRole('link', { name: 'How it works' }).getAttribute('href')).toBe('/how-it-works');
-    expect(screen.getByRole('link', { name: 'Blog' }).getAttribute('href')).toBe('/blog');
-    // Support row
-    expect(screen.getByRole('link', { name: 'Documentation' }).getAttribute('href')).toBe('/help/docs');
-    // Newsletter form was removed in the mega-footer redesign
-    expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
-  });
-
-  test('on-page section links are root-relative so they work from any page', () => {
-    renderFooter();
-    expect(screen.getByRole('link', { name: 'How it works' }).getAttribute('href')).toBe('/how-it-works');
-    expect(screen.getByRole('link', { name: 'Pricing' }).getAttribute('href')).toBe('/pricing');
     expect(screen.getByRole('link', { name: 'FAQ' }).getAttribute('href')).toBe('/#faq');
-  });
-
-  test('legal bar has Terms, Privacy, Refund and the support email', () => {
-    renderFooter();
+    expect(screen.getByRole('link', { name: 'Documentation' }).getAttribute('href')).toBe('/help/docs');
     expect(screen.getByRole('link', { name: 'Terms' }).getAttribute('href')).toBe('/terms');
     expect(screen.getByRole('link', { name: 'Privacy' }).getAttribute('href')).toBe('/privacy');
     expect(screen.getByRole('link', { name: 'Refund' }).getAttribute('href')).toBe('/refund');
-    expect(screen.getByRole('link', { name: 'Contact' }).getAttribute('href')).toBe('/contact');
     // Company ownership line — required by the Google OAuth verification checklist.
     expect(screen.getByText(/Operated by Timewheel Internet Private Limited/i)).toBeTruthy();
     const mail = screen

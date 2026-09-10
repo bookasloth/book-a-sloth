@@ -4,48 +4,10 @@ const ROUTE_START = '/be-a-sloth';
 const EMAIL = 'bolt@bookasloth.in';
 const BOLT_URL = 'https://www.instagram.com/bookasloth';
 
-// Four columns, six links each — curated by click intent, not exhaustive.
-// Every href points at a route that actually renders — dead footer links are
-// soft-404s, and the footer's whole job is crawlability. (The /for/ profession
-// pages moved off the footer; they stay in the sitemap.)
-const COLUMNS = [
-  { h: 'Company', links: [
-    { t: 'About', href: '/about' },
-    { t: 'Blog', href: '/blog' },
-    { t: 'Careers', href: '/careers' },
-    { t: 'Wall of Love', href: '/wall-of-love' },
-    { t: 'Contact', href: '/contact' },
-    { t: 'Help', href: '/help' },
-  ] },
-  { h: 'Product', links: [
-    { t: 'How it works', href: '/how-it-works' },
-    { t: 'Pricing', href: '/pricing' },
-    { t: 'Earnings calculator', href: '/earnings-calculator' },
-    { t: 'Explore', href: '/explore' },
-    { t: 'Enterprise', href: '/enterprise' },
-    { t: 'Digital products', href: '/features/digital-products' },
-  ] },
-  { h: 'Features', links: [
-    { t: 'Online scheduling', href: '/features/online-scheduling' },
-    { t: 'Booking pages', href: '/features/booking-pages' },
-    { t: 'Payments', href: '/features/payments' },
-    { t: 'Google Calendar', href: '/features/google-calendar' },
-    { t: 'Client management', href: '/features/client-management' },
-    { t: 'Analytics', href: '/features/analytics' },
-  ] },
-  // Only the comparison LPs that exist. YouCanBookMe / Microsoft Bookings /
-  // Square / Google Calendar have no LP yet — omitted rather than 404'd.
-  { h: 'Compare', links: [
-    { t: 'vs Calendly', href: '/lp/calendly-alternative' },
-    { t: 'vs Acuity', href: '/lp/acuity-alternative' },
-    { t: 'vs Setmore', href: '/lp/setmore-alternative' },
-    { t: 'vs SimplyBook', href: '/lp/simplybook-alternative' },
-    { t: 'vs Zoho Bookings', href: '/lp/zoho-bookings-alternative' },
-    { t: 'vs Topmate', href: '/lp/topmate-vs-bookasloth' },
-  ] },
-];
+// Minimal footer: link discovery now lives in the navbar mega-menus, so the
+// footer is just the CTA band + a centered legal strip + socials + operator bar.
 
-// Single centered inline row below the grid (support + legal, no label).
+// Single centered inline row (support + legal, no label).
 const LEGAL = [
   { t: 'FAQ', href: '/#faq' },
   { t: 'Documentation', href: '/help/docs' },
@@ -127,29 +89,10 @@ export default function Footer({ variant = 'full' }) {
           </div>
         </div>
 
-        {/* Brand + link columns — dropped in minimal variant */}
+        {/* Minimal footer: no link columns (nav mega-menus own discovery now) —
+            just a centered legal strip + socials, dropped in the minimal variant. */}
         {!minimal && (
         <>
-        <div className="grid gap-x-8 gap-y-10 border-t border-white/10 py-12 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Company / Product / Features / Compare */}
-          <nav aria-label="Footer" className="contents">
-            {COLUMNS.map((col) => (
-              <div key={col.h}>
-                <h3 className="font-heading text-sm font-semibold text-white">{col.h}</h3>
-                <ul className="mt-4 space-y-2.5">
-                  {col.links.map((l) => (
-                    <li key={l.t}>
-                      <FLink href={l.href} className="text-sm text-white/55 transition-colors hover:text-white hover:no-underline">
-                        {l.t}
-                      </FLink>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </nav>
-        </div>
-
         {/* Support + Legal — one centered inline row */}
         <div className="border-t border-white/10 py-8">
           <InlineRow items={LEGAL} />

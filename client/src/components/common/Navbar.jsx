@@ -18,50 +18,93 @@ import {
   Gift, Star, Info, Cpu, HeartPulse,
   GraduationCap, Sparkles, Mail, Award, Layers, Headset,
   BookOpen, Building2,
+  Users, Scale, Dumbbell, Scissors, Camera, Ticket, Heart, HelpCircle,
 } from 'lucide-react';
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
 
-// Feature pages — surfaced as a nav dropdown so the cluster is discoverable, not
-// only crawlable via the footer. Hardcoded (like Footer's list) to keep the big
-// marketing featureData out of the site-wide nav bundle.
-const FEATURE_LINKS = [
-  { label: 'Online scheduling', href: '/features/online-scheduling' },
-  { label: 'Booking pages',     href: '/features/booking-pages' },
-  { label: 'Payments',          href: '/features/payments' },
-  { label: 'Availability',      href: '/features/availability' },
-  { label: 'Google Calendar',   href: '/features/google-calendar' },
-  { label: 'Notifications',     href: '/features/notifications' },
-  { label: 'Client management', href: '/features/client-management' },
-  { label: 'Digital products',  href: '/features/digital-products' },
-  { label: 'Reviews & ratings', href: '/features/reviews' },
-  { label: 'Analytics',         href: '/features/analytics' },
+// ── Mega-menu configs (Calendly/Cal.com-style: grouped columns, icon + subtext) ─
+// Hardcoded (not derived from featureData) to keep the marketing data out of the
+// site-wide nav bundle. Every href points at a route that renders — dead nav
+// links are soft-404s, and the mega-nav is now the site-wide crawl anchor (the
+// footer went minimal), so these lists ARE the internal-linking surface.
+
+const PRODUCT_MENU = [
+  { header: 'Products', items: [
+    { label: 'Online scheduling', href: '/features/online-scheduling', desc: 'Simplified booking',      icon: CalendarCheck },
+    { label: 'Booking pages',     href: '/features/booking-pages',     desc: 'Your public link',        icon: LayoutDashboard },
+    { label: 'Payments',          href: '/features/payments',          desc: 'Get paid upfront',        icon: Wallet },
+    { label: 'Client management', href: '/features/client-management', desc: 'Relationships in one place', icon: Users },
+    { label: 'Digital products',  href: '/features/digital-products',  desc: 'Sell without sessions',   icon: Layers },
+    { label: 'Analytics',         href: '/features/analytics',         desc: 'Know what converts',      icon: BarChart2 },
+  ] },
+  { header: 'Platform', items: [
+    { label: 'Google Calendar',   href: '/features/google-calendar',   desc: 'Two-way sync',            icon: CalendarCheck },
+    { label: 'Notifications',     href: '/features/notifications',     desc: 'WhatsApp + email',        icon: Bell },
+    { label: 'Availability',      href: '/features/availability',      desc: 'Rules that fit you',      icon: Clock },
+    { label: 'Reviews & ratings', href: '/features/reviews',           desc: 'Build trust',             icon: Star },
+    { label: 'Explore',           href: '/explore',                    desc: 'Discover creators',       icon: Search },
+  ] },
 ];
 
-// Profession landing pages ("Who it's for"). Surfaced as a nav dropdown so the
-// /for/ cluster is internally linked (was footer-only). Only slugs with real
-// professionLandingData are listed — dead links would be soft-404s.
-const WHOFOR_LINKS = [
-  { label: 'Doctors',              href: '/for/doctors' },
-  { label: 'Business consultants', href: '/for/business-consultant' },
-  { label: 'Agencies',             href: '/for/agencies' },
-  { label: 'Freelancers',          href: '/for/freelancers' },
-  { label: 'Events',               href: '/for/events' },
-  { label: 'Tutors',               href: '/for/tutors' },
-  { label: 'Fitness',              href: '/for/fitness' },
-  { label: 'Lawyers',              href: '/for/lawyers' },
-  { label: 'Photographers',        href: '/for/photographers' },
-  { label: 'Salons',               href: '/for/salon' },
+// Profession landing pages. Only slugs with real professionLandingData — dead
+// links would be soft-404s.
+const WHOFOR_MENU = [
+  { header: 'By profession', items: [
+    { label: 'Doctors',              href: '/for/doctors',              desc: 'Clinics & consults',  icon: HeartPulse },
+    { label: 'Business consultants', href: '/for/business-consultant',  desc: 'Advisory calls',      icon: Briefcase },
+    { label: 'Lawyers',              href: '/for/lawyers',              desc: 'Legal consults',      icon: Scale },
+    { label: 'Tutors',               href: '/for/tutors',               desc: 'Classes & coaching',  icon: GraduationCap },
+    { label: 'Fitness',              href: '/for/fitness',              desc: 'Trainers & studios',  icon: Dumbbell },
+    { label: 'Salons',               href: '/for/salon',                desc: 'Beauty & grooming',   icon: Scissors },
+  ] },
+  { header: 'By type', items: [
+    { label: 'Freelancers',   href: '/for/freelancers',   desc: 'Solo & independent',  icon: User },
+    { label: 'Agencies',      href: '/for/agencies',      desc: 'Teams & studios',     icon: Building2 },
+    { label: 'Events',        href: '/for/events',        desc: 'Workshops & meetups', icon: Ticket },
+    { label: 'Photographers', href: '/for/photographers', desc: 'Shoots & sessions',   icon: Camera },
+  ] },
+];
+const WHOFOR_PROMO = { title: 'For teams & enterprise', desc: 'Scale scheduling across your org.', href: '/enterprise', cta: 'Talk to sales' };
+
+const RESOURCES_MENU = [
+  { header: 'Get started', items: [
+    { label: 'How it works',        href: '/how-it-works',        desc: 'The 3-minute setup',  icon: Sparkles },
+    { label: 'Earnings calculator', href: '/earnings-calculator', desc: 'See what you keep',    icon: TrendingUp },
+    { label: 'Documentation',       href: '/help/docs',           desc: 'Guides & how-tos',    icon: BookOpen },
+  ] },
+  { header: 'Discover', items: [
+    { label: 'Blog',         href: '/blog',         desc: 'Tips & playbooks',   icon: BookOpen },
+    { label: 'Wall of Love', href: '/wall-of-love', desc: 'What hosts say',     icon: Heart },
+    { label: 'About',        href: '/about',        desc: 'Our mission',        icon: Info },
+    { label: 'Careers',      href: '/careers',      desc: 'Join the team',      icon: Award },
+  ] },
+  { header: 'Support', items: [
+    { label: 'Help center', href: '/help',    desc: 'Articles & FAQs',   icon: HelpCircle },
+    { label: 'FAQ',         href: '/#faq',    desc: 'Quick answers',     icon: MessageCircle },
+    { label: 'Contact',     href: '/contact', desc: 'Talk to a human',   icon: Mail },
+  ] },
 ];
 
-// "More" overflow menu. How It Works, Pricing and Explore are top-level links
-// (see PublicCenterNav), so they are deliberately absent here.
-const MORE_MENU = [
-  { label: 'Blog',       href: '/blog',       icon: BookOpen },
-  { label: 'About',      href: '/about',      icon: Info },
-  { label: 'Careers',    href: '/careers',    icon: Briefcase },
-  { label: 'Enterprise', href: '/enterprise', icon: Building2 },
-  { label: 'Contact',    href: '/contact',    icon: Mail },
+// Compare — flat list (no icons/subtext). Only LPs that exist.
+const COMPARE_MENU = [
+  { label: 'vs Calendly',      href: '/lp/calendly-alternative' },
+  { label: 'vs Acuity',        href: '/lp/acuity-alternative' },
+  { label: 'vs Setmore',       href: '/lp/setmore-alternative' },
+  { label: 'vs SimplyBook',    href: '/lp/simplybook-alternative' },
+  { label: 'vs Zoho Bookings', href: '/lp/zoho-bookings-alternative' },
+  { label: 'vs Topmate',       href: '/lp/topmate-vs-bookasloth' },
+];
+
+// Flat lists derived from the mega configs — reused by the mobile accordions.
+const flat = (cols) => cols.flatMap((c) => c.items);
+
+// Mobile drawer: the same menus as collapsible accordions (flat, no columns).
+const MOBILE_SECTIONS = [
+  { label: 'Product',      icon: Sparkles, items: flat(PRODUCT_MENU) },
+  { label: "Who it's for", icon: Award,    items: flat(WHOFOR_MENU) },
+  { label: 'Resources',    icon: Layers,   items: flat(RESOURCES_MENU) },
+  { label: 'Compare',      icon: BarChart2, items: COMPARE_MENU },
 ];
 
 // Slim guest profile menu (logged-in guests). The navbar carries nothing but the
@@ -218,7 +261,7 @@ const TagPill = ({ text }) =>
 // ── Self-contained header dropdown (Use Cases / More) ────────────────────────
 // Owns its open state + outside-click/ESC/route-change close, so the public
 // center nav can host several independent menus without shared wiring.
-const NavDropdown = ({ label, icon: Icon, wide = false, children }) => {
+const NavDropdown = ({ label, icon: Icon, panelClass = 'w-56', align = 'left', children }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const location = useLocation();
@@ -250,7 +293,7 @@ const NavDropdown = ({ label, icon: Icon, wide = false, children }) => {
       </button>
       {open && (
         <div
-          className={`absolute left-0 top-full mt-0 ${wide ? 'w-[32rem]' : 'w-56'} bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden`}
+          className={`absolute top-full mt-0 ${align === 'center' ? 'left-1/2 -translate-x-1/2' : 'left-0'} ${panelClass} max-w-[calc(100vw-2rem)] bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden`}
           role="menu"
           onClick={() => setOpen(false)}
         >
@@ -261,53 +304,80 @@ const NavDropdown = ({ label, icon: Icon, wide = false, children }) => {
   );
 };
 
-// ── Public center nav (logged-out): How It Works + Pricing + Explore + More ──
+// ── Mega-menu pieces (grouped columns, icon + label + subtext) ───────────────
+const MegaItem = ({ item }) => {
+  const Icon = item.icon;
+  return (
+    <Link
+      to={item.href}
+      role="menuitem"
+      className="group/mi flex items-start gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-[#FE5100]/5 hover:no-underline"
+    >
+      <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 transition-colors group-hover/mi:bg-[#FE5100]/10 group-hover/mi:text-[#FE5100]">
+        <Icon size={16} strokeWidth={1.9} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[13.5px] font-semibold text-[#1E1E1E] group-hover/mi:text-[#FE5100]">{item.label}</span>
+        {item.desc && <span className="block text-[12px] leading-snug text-gray-400">{item.desc}</span>}
+      </span>
+    </Link>
+  );
+};
+
+// Renders grouped columns + an optional promo tile on the right.
+const MegaMenu = ({ sections, promo }) => (
+  <div className="flex gap-6 p-6">
+    {sections.map((col) => (
+      <div key={col.header} className="min-w-[12.5rem]">
+        <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{col.header}</p>
+        <div className="space-y-0.5">
+          {col.items.map((it) => <MegaItem key={it.href} item={it} />)}
+        </div>
+      </div>
+    ))}
+    {promo && (
+      <Link
+        to={promo.href}
+        className="flex w-52 flex-col justify-end rounded-xl bg-gradient-to-br from-[#FE5100] to-[#ff8244] p-5 text-white transition-transform hover:scale-[1.01] hover:no-underline"
+      >
+        <p className="text-[15px] font-bold leading-tight">{promo.title}</p>
+        <p className="mt-1.5 text-[12.5px] leading-snug text-white/85">{promo.desc}</p>
+        <span className="mt-4 inline-flex items-center gap-1 text-[13px] font-semibold">
+          {promo.cta} <ChevronRight size={15} />
+        </span>
+      </Link>
+    )}
+  </div>
+);
+
+// ── Public center nav (logged-out): mega-menus + Pricing ─────────────────────
 const PublicCenterNav = () => (
   <>
-    <Link to="/how-it-works" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
-      How It Works
-    </Link>
+    <NavDropdown label="Product" panelClass="w-[40rem]" align="center">
+      <MegaMenu sections={PRODUCT_MENU} />
+    </NavDropdown>
+
+    <NavDropdown label="Who it's for" panelClass="w-[46rem]" align="center">
+      <MegaMenu sections={WHOFOR_MENU} promo={WHOFOR_PROMO} />
+    </NavDropdown>
+
+    <NavDropdown label="Resources" panelClass="w-[46rem]" align="center">
+      <MegaMenu sections={RESOURCES_MENU} />
+    </NavDropdown>
+
+    <NavDropdown label="Compare">
+      <div className="py-1">
+        {COMPARE_MENU.map((c) => (
+          <Link key={c.href} to={c.href} role="menuitem" className="block px-4 py-2.5 text-[13px] text-gray-600 transition-colors hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+            {c.label}
+          </Link>
+        ))}
+      </div>
+    </NavDropdown>
 
     <Link to="/pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
       Pricing
     </Link>
-
-    <NavDropdown label="Features" wide>
-      <div className="grid grid-cols-2 gap-0.5 p-2">
-        {FEATURE_LINKS.map((f) => (
-          <Link key={f.href} to={f.href} role="menuitem" className="rounded-lg px-3 py-2 text-[13px] text-gray-600 transition-colors hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-            {f.label}
-          </Link>
-        ))}
-      </div>
-    </NavDropdown>
-
-    <NavDropdown label="Who it's for" wide>
-      <div className="grid grid-cols-2 gap-0.5 p-2">
-        {WHOFOR_LINKS.map((w) => (
-          <Link key={w.href} to={w.href} role="menuitem" className="rounded-lg px-3 py-2 text-[13px] text-gray-600 transition-colors hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-            {w.label}
-          </Link>
-        ))}
-      </div>
-    </NavDropdown>
-
-    {/* Explore hidden from nav (marketplace demand not proven yet); /explore
-        route + page stay live and directly reachable. Restore <UseCasesMegaMenu/>
-        here to bring it back. */}
-
-    <NavDropdown label="More">
-      <div className="py-1">
-        {MORE_MENU.map((m) => {
-          const Icon = m.icon;
-          return (
-            <Link key={m.label} to={m.href} role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-600 transition-colors hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-              <Icon size={15} className="flex-shrink-0 text-gray-400" /> {m.label}
-            </Link>
-          );
-        })}
-      </div>
-    </NavDropdown>
   </>
 );
 
@@ -753,56 +823,30 @@ const Navbar = () => {
 
                 {/* Explore hidden from nav (see PublicCenterNav). /explore still live. */}
 
-                {/* Features — collapsed by default */}
-                <details className="group rounded-lg">
-                  <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
-                    <Sparkles size={16} className="flex-shrink-0 text-gray-400" />
-                    <span className="flex-1">Features</span>
-                    <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="space-y-0.5 pl-1 pt-0.5">
-                    {FEATURE_LINKS.map((f) => (
-                      <Link key={f.href} to={f.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-                        {f.label}
-                      </Link>
-                    ))}
-                  </div>
-                </details>
-
-                {/* Who it's for — collapsed by default */}
-                <details className="group rounded-lg">
-                  <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
-                    <Award size={16} className="flex-shrink-0 text-gray-400" />
-                    <span className="flex-1">Who it's for</span>
-                    <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="space-y-0.5 pl-1 pt-0.5">
-                    {WHOFOR_LINKS.map((w) => (
-                      <Link key={w.href} to={w.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-                        {w.label}
-                      </Link>
-                    ))}
-                  </div>
-                </details>
-
-                {/* More — collapsed by default */}
-                <details className="group rounded-lg">
-                  <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
-                    <Layers size={16} className="flex-shrink-0 text-gray-400" />
-                    <span className="flex-1">More</span>
-                    <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="space-y-0.5 pl-1 pt-0.5">
-                    {MORE_MENU.map((m) => {
-                      const Icon = m.icon;
-                      return (
-                        <Link key={m.label} to={m.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-                          <Icon size={15} className="flex-shrink-0 text-gray-400" /> {m.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </details>
+                {/* Product / Who it's for / Resources / Compare — collapsed accordions */}
+                {MOBILE_SECTIONS.map((sec) => {
+                  const SecIcon = sec.icon;
+                  return (
+                    <details key={sec.label} className="group rounded-lg">
+                      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
+                        <SecIcon size={16} className="flex-shrink-0 text-gray-400" />
+                        <span className="flex-1">{sec.label}</span>
+                        <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
+                      </summary>
+                      <div className="space-y-0.5 pl-1 pt-0.5">
+                        {sec.items.map((it) => {
+                          const ItIcon = it.icon;
+                          return (
+                            <Link key={it.href} to={it.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                              {ItIcon && <ItIcon size={15} className="flex-shrink-0 text-gray-400" />}
+                              {it.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  );
+                })}
 
                 {/* Primary conversion CTA — last in the sequence */}
                 <Link
