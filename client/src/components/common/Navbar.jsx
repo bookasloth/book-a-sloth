@@ -308,16 +308,24 @@ const NavDropdown = ({ label, icon: Icon, panelClass = 'w-56', align = 'left', c
 //   tile  — idle icon square (pastel bg + colored glyph)
 //   solid — group-hover: solid square + white glyph
 //   c1/c2 — the two curtain layers (front lighter, back deeper)
-const TILE_TONES = ['pink', 'blue', 'green', 'orange', 'violet', 'amber', 'teal', 'rose'];
+// Wide palette so hues keep changing down and across the menu (the tone index
+// runs continuously across columns — see MegaMenu — instead of resetting).
+const TILE_TONES = ['pink', 'blue', 'emerald', 'orange', 'violet', 'amber', 'teal', 'rose', 'sky', 'indigo', 'fuchsia', 'lime', 'cyan', 'red'];
 const TILE_MAP = {
-  pink:   { tile: 'bg-pink-100 text-pink-500',       solid: 'group-hover/mi:bg-pink-500 group-hover/mi:text-white',       c1: 'bg-pink-50',    c2: 'bg-pink-100' },
-  blue:   { tile: 'bg-blue-100 text-blue-500',       solid: 'group-hover/mi:bg-blue-500 group-hover/mi:text-white',       c1: 'bg-blue-50',    c2: 'bg-blue-100' },
-  green:  { tile: 'bg-emerald-100 text-emerald-500', solid: 'group-hover/mi:bg-emerald-500 group-hover/mi:text-white',    c1: 'bg-emerald-50', c2: 'bg-emerald-100' },
-  orange: { tile: 'bg-orange-100 text-orange-500',   solid: 'group-hover/mi:bg-orange-500 group-hover/mi:text-white',     c1: 'bg-orange-50',  c2: 'bg-orange-100' },
-  violet: { tile: 'bg-violet-100 text-violet-500',   solid: 'group-hover/mi:bg-violet-500 group-hover/mi:text-white',     c1: 'bg-violet-50',  c2: 'bg-violet-100' },
-  amber:  { tile: 'bg-amber-100 text-amber-500',     solid: 'group-hover/mi:bg-amber-500 group-hover/mi:text-white',      c1: 'bg-amber-50',   c2: 'bg-amber-100' },
-  teal:   { tile: 'bg-teal-100 text-teal-500',       solid: 'group-hover/mi:bg-teal-500 group-hover/mi:text-white',       c1: 'bg-teal-50',    c2: 'bg-teal-100' },
-  rose:   { tile: 'bg-rose-100 text-rose-500',       solid: 'group-hover/mi:bg-rose-500 group-hover/mi:text-white',       c1: 'bg-rose-50',    c2: 'bg-rose-100' },
+  pink:    { tile: 'bg-pink-100 text-pink-500',       solid: 'group-hover/mi:bg-pink-500 group-hover/mi:text-white',       c1: 'bg-pink-50',    c2: 'bg-pink-100' },
+  blue:    { tile: 'bg-blue-100 text-blue-500',       solid: 'group-hover/mi:bg-blue-500 group-hover/mi:text-white',       c1: 'bg-blue-50',    c2: 'bg-blue-100' },
+  emerald: { tile: 'bg-emerald-100 text-emerald-500', solid: 'group-hover/mi:bg-emerald-500 group-hover/mi:text-white',    c1: 'bg-emerald-50', c2: 'bg-emerald-100' },
+  orange:  { tile: 'bg-orange-100 text-orange-500',   solid: 'group-hover/mi:bg-orange-500 group-hover/mi:text-white',     c1: 'bg-orange-50',  c2: 'bg-orange-100' },
+  violet:  { tile: 'bg-violet-100 text-violet-500',   solid: 'group-hover/mi:bg-violet-500 group-hover/mi:text-white',     c1: 'bg-violet-50',  c2: 'bg-violet-100' },
+  amber:   { tile: 'bg-amber-100 text-amber-500',     solid: 'group-hover/mi:bg-amber-500 group-hover/mi:text-white',      c1: 'bg-amber-50',   c2: 'bg-amber-100' },
+  teal:    { tile: 'bg-teal-100 text-teal-500',       solid: 'group-hover/mi:bg-teal-500 group-hover/mi:text-white',       c1: 'bg-teal-50',    c2: 'bg-teal-100' },
+  rose:    { tile: 'bg-rose-100 text-rose-500',       solid: 'group-hover/mi:bg-rose-500 group-hover/mi:text-white',       c1: 'bg-rose-50',    c2: 'bg-rose-100' },
+  sky:     { tile: 'bg-sky-100 text-sky-500',         solid: 'group-hover/mi:bg-sky-500 group-hover/mi:text-white',        c1: 'bg-sky-50',     c2: 'bg-sky-100' },
+  indigo:  { tile: 'bg-indigo-100 text-indigo-500',   solid: 'group-hover/mi:bg-indigo-500 group-hover/mi:text-white',     c1: 'bg-indigo-50',  c2: 'bg-indigo-100' },
+  fuchsia: { tile: 'bg-fuchsia-100 text-fuchsia-500', solid: 'group-hover/mi:bg-fuchsia-500 group-hover/mi:text-white',    c1: 'bg-fuchsia-50', c2: 'bg-fuchsia-100' },
+  lime:    { tile: 'bg-lime-100 text-lime-600',       solid: 'group-hover/mi:bg-lime-500 group-hover/mi:text-white',       c1: 'bg-lime-50',    c2: 'bg-lime-100' },
+  cyan:    { tile: 'bg-cyan-100 text-cyan-500',       solid: 'group-hover/mi:bg-cyan-500 group-hover/mi:text-white',       c1: 'bg-cyan-50',    c2: 'bg-cyan-100' },
+  red:     { tile: 'bg-red-100 text-red-500',         solid: 'group-hover/mi:bg-red-500 group-hover/mi:text-white',        c1: 'bg-red-50',     c2: 'bg-red-100' },
 };
 
 const MegaItem = ({ item, tone }) => {
@@ -349,14 +357,18 @@ const MegaItem = ({ item, tone }) => {
 // Renders grouped columns + an optional promo tile on the right.
 const MegaMenu = ({ sections, promo }) => (
   <div className="flex gap-6 p-6">
-    {sections.map((col) => (
-      <div key={col.header} className="min-w-[13.5rem]">
-        <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{col.header}</p>
-        <div className="space-y-0.5">
-          {col.items.map((it, i) => <MegaItem key={it.href} item={it} tone={TILE_TONES[i % TILE_TONES.length]} />)}
+    {sections.map((col, ci) => {
+      // Tone index continues across columns so hues keep rotating (never resets).
+      const offset = sections.slice(0, ci).reduce((n, s) => n + s.items.length, 0);
+      return (
+        <div key={col.header} className="min-w-[13.5rem]">
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{col.header}</p>
+          <div className="space-y-0.5">
+            {col.items.map((it, i) => <MegaItem key={it.href} item={it} tone={TILE_TONES[(offset + i) % TILE_TONES.length]} />)}
+          </div>
         </div>
-      </div>
-    ))}
+      );
+    })}
     {promo && (
       <Link
         to={promo.href}
