@@ -16,9 +16,9 @@ import {
   Search, User, Settings, LogOut, TrendingUp,
   Clock, Wallet, LayoutDashboard, ExternalLink,
   Gift, Star, Info, Cpu, HeartPulse,
-  GraduationCap, Sparkles, Mail, Award, Layers, Headset,
+  Sparkles, Mail, Award, Layers, Headset,
   BookOpen, Building2,
-  Users, Scale, Dumbbell, Scissors, Camera, Ticket, Heart, HelpCircle,
+  Users, Scale, Scissors, Camera, Ticket, Heart, HelpCircle,
 } from 'lucide-react';
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
@@ -36,7 +36,6 @@ const PRODUCT_MENU = [
     { label: 'Payments',          href: '/features/payments',          desc: 'Get paid upfront',        icon: Wallet },
     { label: 'Client management', href: '/features/client-management', desc: 'Relationships in one place', icon: Users },
     { label: 'Digital products',  href: '/features/digital-products',  desc: 'Sell without sessions',   icon: Layers },
-    { label: 'Analytics',         href: '/features/analytics',         desc: 'Know what converts',      icon: BarChart2 },
   ] },
   { header: 'Platform', items: [
     { label: 'Google Calendar',   href: '/features/google-calendar',   desc: 'Two-way sync',            icon: CalendarCheck },
@@ -51,12 +50,10 @@ const PRODUCT_MENU = [
 // links would be soft-404s.
 const WHOFOR_MENU = [
   { header: 'By profession', items: [
-    { label: 'Doctors',              href: '/for/doctors',              desc: 'Clinics & consults',  icon: HeartPulse },
-    { label: 'Business consultants', href: '/for/business-consultant',  desc: 'Advisory calls',      icon: Briefcase },
-    { label: 'Lawyers',              href: '/for/lawyers',              desc: 'Legal consults',      icon: Scale },
-    { label: 'Tutors',               href: '/for/tutors',               desc: 'Classes & coaching',  icon: GraduationCap },
-    { label: 'Fitness',              href: '/for/fitness',              desc: 'Trainers & studios',  icon: Dumbbell },
-    { label: 'Salons',               href: '/for/salon',                desc: 'Beauty & grooming',   icon: Scissors },
+    { label: 'Doctors',    href: '/for/doctors',             desc: 'Clinics & consults', icon: HeartPulse },
+    { label: 'Consultant', href: '/for/business-consultant', desc: 'Advisory calls',     icon: Briefcase },
+    { label: 'Lawyers',    href: '/for/lawyers',             desc: 'Legal consults',     icon: Scale },
+    { label: 'Salons',     href: '/for/salon',               desc: 'Beauty & grooming',  icon: Scissors },
   ] },
   { header: 'By type', items: [
     { label: 'Freelancers',   href: '/for/freelancers',   desc: 'Solo & independent',  icon: User },
