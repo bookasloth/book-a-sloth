@@ -15,6 +15,7 @@ router.get('/pages', requireAdmin('seo.manage'), c.getPages);
 router.get('/list', requireAdmin('seo.manage'), c.getList);
 router.get('/dashboard', requireAdmin('seo.manage'), c.getDashboard);
 router.get('/opportunities', requireAdmin('seo.manage'), c.getOpportunities);
+router.get('/link-graph', requireAdmin('seo.manage'), c.getLinkGraph);
 router.get('/categories', requireAdmin('seo.manage'), c.getCategories);
 router.get('/reports', requireAdmin('seo.manage'), c.getReports);
 router.get('/changes', requireAdmin('seo.manage'), c.getChanges);

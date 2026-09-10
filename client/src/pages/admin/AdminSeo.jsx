@@ -15,6 +15,7 @@ import {
 } from '../../services/api';
 import SeoDashboard from '../../components/admin/seo/SeoDashboard';
 import SeoList from '../../components/admin/seo/SeoList';
+import SeoNetwork from '../../components/admin/seo/SeoNetwork';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const secs = (ms) => (ms == null ? '' : `${(ms / 1000).toFixed(ms < 10000 ? 1 : 0)}s`);
@@ -134,6 +135,7 @@ export default function AdminSeo() {
       {view === 'profiles' && <SeoList type="host" />}
       {view === 'blogs' && <SeoList type="blog" />}
       {view === 'pages' && <SeoList type="static,unknown" />}
+      {view === 'network' && <SeoNetwork />}
       {view === 'issues' && <IssuesTab />}
       {view === 'fixes' && <FixesTab />}
       {view === 'search-console' && <GscTab />}
