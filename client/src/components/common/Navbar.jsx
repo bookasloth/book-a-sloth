@@ -257,35 +257,24 @@ const TagPill = ({ text }) =>
     </span>
   ) : null;
 
-// ── Self-contained header dropdown (Use Cases / More) ────────────────────────
-// Owns its open state + outside-click/ESC/route-change close, so the public
-// center nav can host several independent menus without shared wiring.
-const NavDropdown = ({ label, icon: Icon, panelClass = 'w-max', align = 'left', children }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const closeTimer = useRef(null);
-  const location = useLocation();
-  useEffect(() => { setOpen(false); }, [location.pathname]);
-  useEffect(() => {
-    if (!open) return undefined;
-    const onPointer = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('pointerdown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('pointerdown', onPointer); document.removeEventListener('keydown', onKey); };
-  }, [open]);
-  // Open on hover; close on leave after a short grace period so the cursor can
-  // travel from the trigger to the panel without it snapping shut. Click still
-  // toggles (touch + keyboard).
-  const cancelClose = () => { if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; } };
-  const hoverOpen = () => { cancelClose(); setOpen(true); };
-  const hoverClose = () => { cancelClose(); closeTimer.current = setTimeout(() => setOpen(false), 120); };
-  useEffect(() => cancelClose, []);
+// ── Header dropdown (controlled) ─────────────────────────────────────────────
+// Open state is owned by the parent menu bar so only ONE menu is open at a time
+// — switching between adjacent triggers is an instant handoff (no two panels
+// overlapping mid-switch). The panel is always mounted and animated via classes
+// so it fades/slides on BOTH enter and exit.
+const NavDropdown = ({ id, label, icon: Icon, align = 'left', activeKey, onOpen, onClose, children }) => {
+  const open = activeKey === id;
+  const centered = align === 'center';
   return (
-    <div ref={ref} className="relative flex items-stretch" onMouseEnter={hoverOpen} onMouseLeave={hoverClose}>
+    <div
+      data-navmenu
+      className="relative flex items-stretch"
+      onMouseEnter={() => onOpen(id)}
+      onMouseLeave={() => onClose(false)}
+    >
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? onClose(true) : onOpen(id))}
         aria-expanded={open}
         aria-haspopup="menu"
         className={[
@@ -298,15 +287,20 @@ const NavDropdown = ({ label, icon: Icon, panelClass = 'w-max', align = 'left', 
         {label}
         <ChevronDown size={13} strokeWidth={2.5} className={`text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open && (
-        <div
-          className={`absolute top-full mt-0 ${align === 'center' ? 'left-1/2 -translate-x-1/2' : 'left-0'} ${panelClass} max-w-[calc(100vw-2rem)] bg-white rounded-xl border border-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden`}
-          role="menu"
-          onClick={() => setOpen(false)}
-        >
-          {children}
-        </div>
-      )}
+      <div
+        role="menu"
+        aria-hidden={!open}
+        onClick={() => onClose(true)}
+        className={[
+          'absolute top-full mt-1.5 w-max max-w-[calc(100vw-2rem)] origin-top rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-50 overflow-hidden',
+          centered ? 'left-1/2' : 'left-0',
+          'transition duration-200 ease-out motion-reduce:transition-none',
+          centered ? '-translate-x-1/2' : '',
+          open ? 'translate-y-0 scale-100 opacity-100' : '-translate-y-1 scale-[0.98] opacity-0 pointer-events-none',
+        ].join(' ')}
+      >
+        {children}
+      </div>
     </div>
   );
 };
@@ -418,14 +412,14 @@ const CompareItem = ({ item }) => {
       <span aria-hidden="true" style={{ backgroundColor: item.color, opacity: 0.1 }} className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-500 ease-out group-hover/mi:translate-x-0 motion-reduce:transition-none" />
       <span aria-hidden="true" style={{ backgroundColor: item.color, opacity: 0.16 }} className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-300 ease-out group-hover/mi:translate-x-0 motion-reduce:transition-none" />
 
-      {/* Sloth favicon  vs  competitor favicon */}
+      {/* Sloth favicon  vs  competitor favicon (sized to match the other menu tiles) */}
       <span className="relative z-10 flex flex-shrink-0 items-center gap-1.5">
-        <img src="/sloth.png" alt="Book A Sloth" width="24" height="24" className="h-6 w-6 rounded" />
+        <img src="/sloth.png" alt="Book A Sloth" width="36" height="36" className="h-9 w-9 rounded-lg bg-gray-50 p-1" />
         <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400">vs</span>
         {imgOk ? (
-          <img src={favicon} alt="" width="24" height="24" loading="lazy" onError={() => setImgOk(false)} className="h-6 w-6 rounded" />
+          <img src={favicon} alt="" width="36" height="36" loading="lazy" onError={() => setImgOk(false)} className="h-9 w-9 rounded-lg bg-gray-50 p-1" />
         ) : (
-          <span className="flex h-6 w-6 items-center justify-center rounded text-[12px] font-bold text-white" style={{ backgroundColor: item.color }}>
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg text-[14px] font-bold text-white" style={{ backgroundColor: item.color }}>
             {item.name[0]}
           </span>
         )}
@@ -453,29 +447,56 @@ const CompareMega = () => {
 };
 
 // ── Public center nav (logged-out): mega-menus + Pricing ─────────────────────
-const PublicCenterNav = () => (
-  <>
-    <NavDropdown label="Product" align="center">
-      <MegaMenu sections={PRODUCT_MENU} />
-    </NavDropdown>
+// Owns the single "which menu is open" state so switching between triggers is an
+// instant handoff (never two panels at once). One shared close timer bridges the
+// gap from a trigger to its panel; Escape / outside-click / route change close.
+const PublicCenterNav = () => {
+  const [activeKey, setActiveKey] = useState(null);
+  const timer = useRef(null);
+  const location = useLocation();
 
-    <NavDropdown label="Who it's for" align="center">
-      <MegaMenu sections={WHOFOR_MENU} promo={WHOFOR_PROMO} />
-    </NavDropdown>
+  const openMenu = (k) => { if (timer.current) clearTimeout(timer.current); setActiveKey(k); };
+  const closeMenu = (immediate) => {
+    if (timer.current) clearTimeout(timer.current);
+    if (immediate) { setActiveKey(null); return; }
+    timer.current = setTimeout(() => setActiveKey(null), 120);
+  };
 
-    <NavDropdown label="Resources" align="center">
-      <MegaMenu sections={RESOURCES_MENU} />
-    </NavDropdown>
+  useEffect(() => { setActiveKey(null); }, [location.pathname]);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setActiveKey(null); };
+    const onPointer = (e) => { if (!e.target.closest?.('[data-navmenu]')) setActiveKey(null); };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPointer);
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('pointerdown', onPointer); };
+  }, []);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-    <NavDropdown label="Compare" align="center">
-      <CompareMega />
-    </NavDropdown>
+  const menuProps = { activeKey, onOpen: openMenu, onClose: closeMenu, align: 'center' };
+  return (
+    <>
+      <NavDropdown id="product" label="Product" {...menuProps}>
+        <MegaMenu sections={PRODUCT_MENU} />
+      </NavDropdown>
 
-    <Link to="/pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
-      Pricing
-    </Link>
-  </>
-);
+      <NavDropdown id="whofor" label="Who it's for" {...menuProps}>
+        <MegaMenu sections={WHOFOR_MENU} promo={WHOFOR_PROMO} />
+      </NavDropdown>
+
+      <NavDropdown id="resources" label="Resources" {...menuProps}>
+        <MegaMenu sections={RESOURCES_MENU} />
+      </NavDropdown>
+
+      <NavDropdown id="compare" label="Compare" {...menuProps}>
+        <CompareMega />
+      </NavDropdown>
+
+      <Link to="/pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
+        Pricing
+      </Link>
+    </>
+  );
+};
 
 // ── Main component ────────────────────────────────────────────────────────────
 
