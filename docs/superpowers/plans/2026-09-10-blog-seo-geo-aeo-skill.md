@@ -445,7 +445,7 @@ git commit -m "feat(seo): blog-seo-optimizer skill definition
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
 
-> Note: `~/.claude/skills/` is outside the repo; the commit records only in-repo files. Skill file lives in the user's Claude config. (Future phase relocates it into a public repo.)
+> Note: the skill is committed in-repo at `.claude/skills/blog-seo-optimizer/SKILL.md` (versioned + auto-discovered by the harness). (Future phase relocates it into a public repo.)
 
 ---
 

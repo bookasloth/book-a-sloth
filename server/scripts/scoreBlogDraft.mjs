@@ -6,14 +6,13 @@ import scoringPkg from '../services/seo/scoring/index.js'; // CJS module → def
 const { scorePage } = scoringPkg;
 import { articleGraphJsonLd } from '../../client/src/utils/seo.js';
 
-export const LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
+const LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
 
 export function analyzeBody(body = []) {
   const headings = [];
   const textParts = [];
   const internal = new Set();
   const external = new Set();
-  const images = [];
 
   const harvestLinks = (s) => {
     for (const m of String(s || '').matchAll(LINK_RE)) {
@@ -46,7 +45,6 @@ export function analyzeBody(body = []) {
     bodyText,
     headings,
     links: { internal: [...internal], external: [...external] },
-    images,
     wordCount,
   };
 }
@@ -66,7 +64,7 @@ export function buildPageRow(post, { siteUrl = 'https://bookasloth.com', jsonLdG
     h1: [post.title || ''],
     word_count: a.wordCount,
     raw_signals: {
-      headings: a.headings,
+      headings: [{ tag: 'h1', text: post.title || '' }, ...a.headings],
       links: a.links,
       images,
       bodyText: a.bodyText,
@@ -119,7 +117,7 @@ function selfcheck() {
   assert.equal(row.canonical, 'https://bookasloth.com/blog/s');
   assert.deepEqual(row.h1, ['T']);
   assert.equal(row.raw_signals.jsonLd[0]['@type'], 'BlogPosting');
-  assert.equal(row.raw_signals.headings.length, 1);
+  assert.equal(row.raw_signals.headings.length, 2, 'h1 (title) + one h2');
   console.log('selfcheck (analyze+row): PASS');
 
   // Import sanity — both app modules must resolve under Node ESM.
