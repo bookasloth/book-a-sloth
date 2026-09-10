@@ -22,6 +22,22 @@ import {
 
 // ── Nav item configs (config-driven, no hardcoded HTML) ──────────────────────
 
+// Feature pages — surfaced as a nav dropdown so the cluster is discoverable, not
+// only crawlable via the footer. Hardcoded (like Footer's list) to keep the big
+// marketing featureData out of the site-wide nav bundle.
+const FEATURE_LINKS = [
+  { label: 'Online scheduling', href: '/features/online-scheduling' },
+  { label: 'Booking pages',     href: '/features/booking-pages' },
+  { label: 'Payments',          href: '/features/payments' },
+  { label: 'Availability',      href: '/features/availability' },
+  { label: 'Google Calendar',   href: '/features/google-calendar' },
+  { label: 'Notifications',     href: '/features/notifications' },
+  { label: 'Client management', href: '/features/client-management' },
+  { label: 'Digital products',  href: '/features/digital-products' },
+  { label: 'Reviews & ratings', href: '/features/reviews' },
+  { label: 'Analytics',         href: '/features/analytics' },
+];
+
 // "More" overflow menu. How It Works, Pricing and Explore are top-level links
 // (see PublicCenterNav), so they are deliberately absent here.
 const MORE_MENU = [
@@ -239,6 +255,16 @@ const PublicCenterNav = () => (
     <Link to="/pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
       Pricing
     </Link>
+
+    <NavDropdown label="Features" wide>
+      <div className="grid grid-cols-2 gap-0.5 p-2">
+        {FEATURE_LINKS.map((f) => (
+          <Link key={f.href} to={f.href} role="menuitem" className="rounded-lg px-3 py-2 text-[13px] text-gray-600 transition-colors hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+            {f.label}
+          </Link>
+        ))}
+      </div>
+    </NavDropdown>
 
     {/* Explore hidden from nav (marketplace demand not proven yet); /explore
         route + page stay live and directly reachable. Restore <UseCasesMegaMenu/>
@@ -700,6 +726,22 @@ const Navbar = () => {
                 </Link>
 
                 {/* Explore hidden from nav (see PublicCenterNav). /explore still live. */}
+
+                {/* Features — collapsed by default */}
+                <details className="group rounded-lg">
+                  <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-[#FE5100]/5 [&::-webkit-details-marker]:hidden">
+                    <Sparkles size={16} className="flex-shrink-0 text-gray-400" />
+                    <span className="flex-1">Features</span>
+                    <ChevronDown size={15} className="text-gray-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="space-y-0.5 pl-1 pt-0.5">
+                    {FEATURE_LINKS.map((f) => (
+                      <Link key={f.href} to={f.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-gray-600 hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
+                        {f.label}
+                      </Link>
+                    ))}
+                  </div>
+                </details>
 
                 {/* More — collapsed by default */}
                 <details className="group rounded-lg">

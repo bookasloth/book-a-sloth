@@ -343,7 +343,6 @@ function App() {
     location.pathname.startsWith('/vendor-register') ||
     location.pathname.startsWith('/lp') ||
     location.pathname.startsWith('/for/') ||
-    location.pathname.startsWith('/features') ||
     location.pathname === '/be-a-sloth' ||
     location.pathname === '/opening' ||
     location.pathname === '/hello-sloth';
@@ -623,7 +622,7 @@ function App() {
           {/* Profession marketing landing pages (/for/:profession) — sell BAS per profession */}
           <Route path="/for/:profession" element={<ProfessionLanding />} />
 
-          {/* Feature marketing pages (/features/:slug) — own header/footer, nav hidden */}
+          {/* Feature marketing pages (/features/:slug) — use the global Navbar + Footer */}
           <Route path="/features/:slug" element={<FeaturePage />} />
 
           {/* Support / Contact — placeholders; MUST precede the /:profileSlug catch-all */}
