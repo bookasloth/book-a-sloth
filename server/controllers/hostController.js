@@ -305,16 +305,18 @@ const buildHostProfile = async (username) => {
   // must not drop the profile, so reviewCount/avgRating default to 0.
   let reviews = [];
   let avgRating = 0;
-  const { data: ratingRows } = await supabaseAdmin
-    .from('reviews')
-    .select('rating')
-    .eq('host_id', host.id)
-    .eq('direction', 'guest_to_host')
-    .neq('status', 'hidden');
-  if (Array.isArray(ratingRows) && ratingRows.length) {
-    reviews = ratingRows;
-    avgRating = Math.round((ratingRows.reduce((s, r) => s + (r.rating || 0), 0) / ratingRows.length) * 10) / 10;
-  }
+  try {
+    const { data: ratingRows } = await supabaseAdmin
+      .from('reviews')
+      .select('rating')
+      .eq('host_id', host.id)
+      .eq('direction', 'guest_to_host')
+      .neq('status', 'hidden');
+    if (Array.isArray(ratingRows) && ratingRows.length) {
+      reviews = ratingRows;
+      avgRating = Math.round((ratingRows.reduce((s, r) => s + (r.rating || 0), 0) / ratingRows.length) * 10) / 10;
+    }
+  } catch { /* rating is best-effort — a reviews read hiccup must not drop the profile */ }
 
   return { payload: { host, services: services || [], availability, reviews, avgRating } };
 };
