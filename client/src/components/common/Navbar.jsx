@@ -260,7 +260,7 @@ const TagPill = ({ text }) =>
 // ── Self-contained header dropdown (Use Cases / More) ────────────────────────
 // Owns its open state + outside-click/ESC/route-change close, so the public
 // center nav can host several independent menus without shared wiring.
-const NavDropdown = ({ label, icon: Icon, panelClass = 'w-56', align = 'left', children }) => {
+const NavDropdown = ({ label, icon: Icon, panelClass = 'w-max', align = 'left', children }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const closeTimer = useRef(null);
@@ -364,14 +364,19 @@ const MegaItem = ({ item, tone }) => {
   );
 };
 
+// One consistent grid system for every mega-menu: fixed equal-width columns,
+// same gap + padding everywhere; the panel auto-sizes to fit. The promo tile and
+// the Compare cards use the same MENU_COL width so nothing feels off-rhythm.
+const MENU_COL = 'w-60'; // 15rem — every column, promo tile and compare cell
+
 // Renders grouped columns + an optional promo tile on the right.
 const MegaMenu = ({ sections, promo }) => (
-  <div className="flex gap-6 p-6">
+  <div className="flex gap-5 p-5">
     {sections.map((col, ci) => {
       // Tone index continues across columns so hues keep rotating (never resets).
       const offset = sections.slice(0, ci).reduce((n, s) => n + s.items.length, 0);
       return (
-        <div key={col.header} className="min-w-[13.5rem]">
+        <div key={col.header} className={MENU_COL}>
           <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{col.header}</p>
           <div className="space-y-0.5">
             {col.items.map((it, i) => <MegaItem key={it.href} item={it} tone={TILE_TONES[(offset + i) % TILE_TONES.length]} />)}
@@ -382,7 +387,7 @@ const MegaMenu = ({ sections, promo }) => (
     {promo && (
       <Link
         to={promo.href}
-        className="flex w-52 flex-col justify-end rounded-xl bg-gradient-to-br from-[#FE5100] to-[#ff8244] p-5 text-white transition-transform hover:scale-[1.01] hover:no-underline"
+        className={`flex ${MENU_COL} flex-col justify-end rounded-xl bg-gradient-to-br from-[#FE5100] to-[#ff8244] p-5 text-white transition-transform hover:scale-[1.01] hover:no-underline`}
       >
         <p className="text-[15px] font-bold leading-tight">{promo.title}</p>
         <p className="mt-1.5 text-[12.5px] leading-snug text-white/85">{promo.desc}</p>
@@ -430,31 +435,39 @@ const CompareItem = ({ item }) => {
   );
 };
 
-const CompareMega = () => (
-  <div className="p-4">
-    <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Switching? See how we compare</p>
-    <div className="grid grid-cols-2 gap-0.5">
-      {COMPARE_MENU.map((c) => <CompareItem key={c.href} item={c} />)}
+const CompareMega = () => {
+  const mid = Math.ceil(COMPARE_MENU.length / 2);
+  const cols = [COMPARE_MENU.slice(0, mid), COMPARE_MENU.slice(mid)];
+  return (
+    <div className="p-5">
+      <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Switching? See how we compare</p>
+      <div className="flex gap-5">
+        {cols.map((group, i) => (
+          <div key={i} className={`${MENU_COL} space-y-0.5`}>
+            {group.map((c) => <CompareItem key={c.href} item={c} />)}
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ── Public center nav (logged-out): mega-menus + Pricing ─────────────────────
 const PublicCenterNav = () => (
   <>
-    <NavDropdown label="Product" panelClass="w-[40rem]" align="center">
+    <NavDropdown label="Product" align="center">
       <MegaMenu sections={PRODUCT_MENU} />
     </NavDropdown>
 
-    <NavDropdown label="Who it's for" panelClass="w-[46rem]" align="center">
+    <NavDropdown label="Who it's for" align="center">
       <MegaMenu sections={WHOFOR_MENU} promo={WHOFOR_PROMO} />
     </NavDropdown>
 
-    <NavDropdown label="Resources" panelClass="w-[46rem]" align="center">
+    <NavDropdown label="Resources" align="center">
       <MegaMenu sections={RESOURCES_MENU} />
     </NavDropdown>
 
-    <NavDropdown label="Compare" panelClass="w-[34rem]" align="center">
+    <NavDropdown label="Compare" align="center">
       <CompareMega />
     </NavDropdown>
 
