@@ -2,6 +2,7 @@
 // Score a draft blog post (blogPosts.js shape) with the live v2 scorer, no crawl.
 // Pure analyzer + row builder here; scorer wiring added in the next task.
 import assert from 'node:assert/strict';
+import { pathToFileURL } from 'node:url';
 import scoringPkg from '../services/seo/scoring/index.js'; // CJS module → default import
 const { scorePage } = scoringPkg;
 import { articleGraphJsonLd } from '../../client/src/utils/seo.js';
@@ -145,11 +146,16 @@ async function readPost() {
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 }
 
-if (process.argv.includes('--selfcheck')) {
-  selfcheck();
-} else {
-  const siteUrl = process.env.SITE_URL || 'https://bookasloth.com';
-  readPost()
-    .then((post) => { process.stdout.write(JSON.stringify(scoreDraft(post, { siteUrl }), null, 2)); })
-    .catch((e) => { console.error('scoreBlogDraft error:', e.message); process.exit(1); });
+// Only run the CLI/selfcheck when this file is the entry point — importing it
+// (e.g. for batch scoring) must not fire the stdin CLI.
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  if (process.argv.includes('--selfcheck')) {
+    selfcheck();
+  } else {
+    const siteUrl = process.env.SITE_URL || 'https://bookasloth.com';
+    readPost()
+      .then((post) => { process.stdout.write(JSON.stringify(scoreDraft(post, { siteUrl }), null, 2)); })
+      .catch((e) => { console.error('scoreBlogDraft error:', e.message); process.exit(1); });
+  }
 }
