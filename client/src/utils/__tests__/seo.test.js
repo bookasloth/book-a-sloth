@@ -160,7 +160,13 @@ describe('articleGraphJsonLd — one @graph, real Person, stable @id relationshi
     imageHeight: 630,
     datePublished: '2026-07-06T00:00:00+05:30',
     dateModified: '2026-07-08T00:00:00+05:30',
-    author: { name: 'Bolt 958', url: 'https://bolt958.xyz' },
+    author: {
+      name: 'Shubham N Datarkar',
+      url: 'https://bookasloth.com/sndatarkar',
+      jobTitle: 'Founder, Book A Sloth',
+      image: 'https://company-assets.bookasloth.in/images/about/shubham-datarkar.jpg',
+      sameAs: ['https://x.com/sndatarkar', 'https://www.instagram.com/sndatarkar', 'https://shubhamdatarkar.com'],
+    },
     breadcrumb: [
       { name: 'Home', path: '/' },
       { name: 'Blog', path: '/blog' },
@@ -185,7 +191,13 @@ describe('articleGraphJsonLd — one @graph, real Person, stable @id relationshi
     const g = articleGraphJsonLd({ siteUrl: SITE, ...base });
     const person = g['@graph'].find((n) => n['@type'] === 'Person');
     const article = g['@graph'].find((n) => n['@type'] === 'BlogPosting');
-    expect(person).toMatchObject({ name: 'Bolt 958', url: 'https://bolt958.xyz' });
+    expect(person).toMatchObject({
+      name: 'Shubham N Datarkar',
+      url: 'https://bookasloth.com/sndatarkar',
+      jobTitle: 'Founder, Book A Sloth',
+      sameAs: ['https://x.com/sndatarkar', 'https://www.instagram.com/sndatarkar', 'https://shubhamdatarkar.com'],
+    });
+    expect(person['@id']).toBe('https://bookasloth.com/sndatarkar#author');
     expect(article.author).toEqual({ '@id': person['@id'] });
     expect(article.author['@type']).toBeUndefined(); // not an inline Organization
   });
