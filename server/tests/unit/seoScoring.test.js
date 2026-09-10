@@ -136,3 +136,43 @@ describe('robotsAudit parser', () => {
     expect(robotsAudit.allows(groups, 'googlebot')).toBe(true);
   });
 });
+
+describe('signals: referenced author (@graph)', () => {
+  const signals = require('../../services/seo/scoring/signals');
+  const blogPage = (over = {}) => ({
+    page_type: 'static', url: 'https://bookasloth.com/blog/x', http_status: 200, indexable: true,
+    robots: 'index,follow', title: 'X', meta_description: 'd', canonical: 'https://bookasloth.com/blog/x',
+    h1: ['X'], word_count: 900,
+    raw_signals: {
+      headings: [{ tag: 'h1', text: 'X' }], links: { internal: [], external: [] }, images: [], bodyText: 'body',
+      contentModel: null,
+      jsonLd: [
+        { '@type': 'Organization', '@id': 'https://bookasloth.com/#organization', name: 'Book A Sloth', sameAs: ['https://x.com/bookasloth'] },
+        { '@type': 'Person', '@id': 'https://bookasloth.com/sndatarkar#author', name: 'Shubham N Datarkar', sameAs: ['https://x.com/sndatarkar', 'https://www.instagram.com/sndatarkar'] },
+        { '@type': 'BlogPosting', '@id': 'https://bookasloth.com/blog/x#article', author: { '@id': 'https://bookasloth.com/sndatarkar#author' } },
+      ],
+    },
+    ...over,
+  });
+
+  it('resolves an author referenced by @id to the Person node name', () => {
+    const s = signals.extract(blogPage());
+    expect(s.hasAuthor).toBe(true);
+    expect(s.author).toBe('Shubham N Datarkar');
+  });
+
+  it('collects sameAs from the author Person and the Organization node', () => {
+    const s = signals.extract(blogPage());
+    expect(s.hasSameAs).toBe(true);
+    expect(s.sameAs).toEqual(expect.arrayContaining([
+      'https://x.com/sndatarkar', 'https://www.instagram.com/sndatarkar', 'https://x.com/bookasloth',
+    ]));
+  });
+
+  it('entity_clarity now credits author + sameAs for a blog', () => {
+    const before = v2.scorePage({ ...blogPage(), raw_signals: { ...blogPage().raw_signals, jsonLd: [{ '@type': 'BlogPosting', author: { '@id': 'x#author' } }] } }, { robots: allow });
+    const after = v2.scorePage(blogPage(), { robots: allow });
+    const ec = (r) => r.geo.dimensions.find((d) => d.key === 'entity_clarity').score;
+    expect(ec(after)).toBeGreaterThan(ec(before));
+  });
+});
