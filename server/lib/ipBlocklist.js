@@ -29,6 +29,33 @@ const adminFails = new Map(); // ip -> { count, windowStart(ms) }
 
 const normalizeIp = (ip) => String(ip == null ? '' : ip).trim();
 
+// A private/reserved (non-routable) address — RFC1918, loopback, link-local, or
+// their IPv6 equivalents — can never be a genuine internet client. It can only be
+// a misresolved proxy hop (e.g. Render's internal 10.x address when CLIENT_IP_HEADER
+// is unset behind an edge proxy — see docs/cloudflare-edge-setup.md "Incident
+// response"). Banning one bans every request that resolves to that same internal
+// hop, i.e. the whole platform, and it has happened in production (2026-07-23).
+// Refuse to treat such an address as banned, and refuse to create a new ban for
+// one, from any source (manual admin action included) — there is no legitimate
+// case for blocking a private address.
+function isPrivateOrReservedIp(ip) {
+  const k = normalizeIp(ip).replace(/^::ffff:/i, '');
+  if (!k) return false;
+  if (k === '::1' || k === '127.0.0.1') return true;
+  if (/^fc[0-9a-f]{2}:|^fd[0-9a-f]{2}:/i.test(k)) return true; // IPv6 ULA fc00::/7
+  if (/^fe80:/i.test(k)) return true; // IPv6 link-local
+  const m = k.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!m) return false;
+  const a = Number(m[1]);
+  const b = Number(m[2]);
+  if (a === 10) return true;               // 10.0.0.0/8
+  if (a === 127) return true;               // 127.0.0.0/8 (loopback)
+  if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+  if (a === 192 && b === 168) return true;  // 192.168.0.0/16
+  if (a === 169 && b === 254) return true;  // 169.254.0.0/16 (link-local)
+  return false;
+}
+
 // ── DB store seam ─────────────────────────────────────────────
 const supabaseStore = {
   async fetchBans() {
@@ -113,6 +140,7 @@ function isAllowed(ip) { return allow.has(normalizeIp(ip)); }
 function isBlocked(ip) {
   const k = normalizeIp(ip);
   if (!k) return false;
+  if (isPrivateOrReservedIp(k)) return false; // never treat a private/proxy-hop address as banned
   if (allow.has(k)) return false; // allowlist always wins
   const ban = bans.get(k);
   if (!ban) return false;
@@ -134,6 +162,7 @@ function getBan(ip) {
 async function addBan(ip, { reason = null, source = 'manual', ttlMs = null, expiresAt = null, createdBy = null } = {}) {
   const k = normalizeIp(ip);
   if (!k) return { ok: false, error: 'invalid ip' };
+  if (isPrivateOrReservedIp(k)) return { ok: false, skipped: 'private-range' }; // never ban a proxy-hop address
   if (allow.has(k)) return { ok: false, skipped: 'allowlisted' }; // never ban a trusted IP
 
   let exp = expiresAt;
@@ -278,6 +307,7 @@ module.exports = {
   recordAdminLoginFailure,
   resetAdminLoginFailures,
   recordAttack,
+  isPrivateOrReservedIp,
   // test-only
   __setStore,
 };

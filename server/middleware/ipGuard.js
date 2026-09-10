@@ -42,6 +42,27 @@ function isExempt(req) {
     p === e || p.startsWith(e + '/') || p.startsWith(e + '.') || p.startsWith(e + '-') || p.startsWith(e + '?'));
 }
 
+// GET /api/host/:username and GET /api/host/:username/:slug are the public host
+// profile + service detail reads (hostController.getHostProfile / getServiceBySlug)
+// — no auth, no private data. Google's Web Rendering Service re-fetches these at
+// runtime when it hydrates a prerendered host/service page; if that fetch trips a
+// 403 (or 429, see offenseTracker below) the page's WRS render fails and Google
+// drops it from search (same failure mode #1006/#1008 fixed client-side for
+// transient errors — this closes the server side for these two routes, mirroring
+// the existing /api/blogs exemption above).
+//
+// Deliberately narrower than a blanket '/api/host' prefix: the OTHER routes under
+// /api/host/* (search, availability, categories, username, services/:id) are either
+// auth-gated dashboard reads or writes and must keep full IP-ban protection, so
+// only the two-segment public-detail shape is matched, and only for GET.
+const HOST_PUBLIC_READ_RESERVED = new Set(['search', 'availability', 'categories', 'username', 'services']);
+function isPublicHostRead(req) {
+  if (!req || req.method !== 'GET') return false;
+  const p = String((req && (req.path || req.url)) || '').split('?')[0];
+  const m = /^\/api\/host\/([^/]+)(?:\/([^/]+))?\/?$/.exec(p);
+  return !!m && !HOST_PUBLIC_READ_RESERVED.has(m[1]);
+}
+
 // A request carrying a VALID admin JWT is an already-authenticated admin. They
 // are still rate-limited (429s are returned), but must never be counted toward
 // an auto-ban: the admin panel fires several API calls per page load, so normal
@@ -66,7 +87,7 @@ function ipGuard(req, res, next) {
     if (!config.enabled) return next();
     if (isLoadTestMode()) return next();
     if (isOpenAccess()) return next();  // launch/event window — don't block any IP
-    if (isExempt(req)) return next();
+    if (isExempt(req) || isPublicHostRead(req)) return next();
     if (ipBlocklist.isBlocked(getClientIp(req))) {
       return res.status(403).json({ message: 'Access denied.' });
     }
@@ -83,11 +104,12 @@ function offenseTracker(req, res, next) {
     res.on('finish', () => {
       // A 429 means a rate limiter rejected this request → count it toward an
       // auto-ban. Fire-and-forget; the recorder swallows its own errors.
-      // Skip exempt paths (sitemap/blogs/health/webhook): the prerender build
-      // bursts those, and counting its 429s is exactly what auto-banned the build
-      // IP and broke deploys. Authenticated admins are exempt too (still
-      // rate-limited, never auto-banned).
-      if (res.statusCode === 429 && !isExempt(req) && !isAuthenticatedAdmin(req)) {
+      // Skip exempt paths (sitemap/blogs/health/webhook) and the public host/service
+      // detail reads: the prerender build and Google's WRS both burst these, and
+      // counting their 429s is exactly what auto-banned the build IP and broke
+      // deploys. Authenticated admins are exempt too (still rate-limited, never
+      // auto-banned).
+      if (res.statusCode === 429 && !isExempt(req) && !isPublicHostRead(req) && !isAuthenticatedAdmin(req)) {
         Promise.resolve(ipBlocklist.recordRateLimitViolation(getClientIp(req))).catch(() => {});
       }
     });
@@ -95,4 +117,4 @@ function offenseTracker(req, res, next) {
   next();
 }
 
-module.exports = { ipGuard, offenseTracker, isExempt, getClientIp };
+module.exports = { ipGuard, offenseTracker, isExempt, isPublicHostRead, getClientIp };

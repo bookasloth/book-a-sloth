@@ -11,6 +11,23 @@ const { isOpenAccess } = require('../config/openAccessWindow');
 const { makeRateLimitStore } = require('./rateLimitStore');
 const { getClientIp } = require('../lib/clientIp');
 const ipBlocklist = require('../lib/ipBlocklist');
+const { isExempt: isIpGuardExempt, isPublicHostRead } = require('./ipGuard');
+
+// Shared IP-keyed generator: every per-IP limiter below must resolve through
+// getClientIp() (which honours CLIENT_IP_HEADER behind an edge proxy), not
+// express-rate-limit's own default (plain req.ip). Before this, only adminLimiter
+// and botLimiter did — every other limiter silently ignored CLIENT_IP_HEADER, so
+// setting it on Render (the documented Cloudflare-edge fix, see
+// docs/cloudflare-edge-setup.md Step 9.3) would NOT have protected them from the
+// shared-edge-IP problem it exists to solve.
+const ipKeyGenerator = (req) => getClientIp(req) || req.ip;
+
+// The global apiLimiter's own cap must never 429 a legitimate crawler re-fetching
+// public, unauthenticated, read-only SEO content (blog/sitemap/host/service
+// detail) — same reasoning as the ipGuard exemptions for these paths. Only GET
+// requests to these specific routes are skipped; every other endpoint (including
+// the OTHER routes under /api/host/*) keeps the 100/min cap.
+const isPublicSeoGet = (req) => req.method === 'GET' && (isIpGuardExempt(req) || isPublicHostRead(req));
 
 // Load-test bypass: a single JMeter IP would trip every per-IP limiter
 // instantly. Off by default (isLoadTestMode() is false) → every limiter
@@ -58,6 +75,7 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many auth attempts. Please try again in 15 minutes.' },
   skipSuccessfulRequests: false,
   skip: skipWhenOpen,
@@ -70,6 +88,7 @@ const otpLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many OTP requests. Please wait before requesting another.' },
   skip: skipWhenOpen,
 });
@@ -81,8 +100,9 @@ const apiLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many requests. Please slow down.' },
-  skip: skipWhenOpen,
+  skip: (req) => skipWhenOpen() || isPublicSeoGet(req),
 });
 
 // Admin data endpoints: a DoS/enumeration backstop, NOT a throttle on the working
@@ -127,6 +147,7 @@ const paymentLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many payment requests. Please try again later.' },
   skip: skipWhenOpen,
 });
@@ -138,6 +159,7 @@ const slugLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many requests. Please slow down.' },
   skip: skipWhenOpen,
 });
@@ -150,6 +172,7 @@ const slotsLimiter = rateLimit({
   max: 40,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many availability checks. Please wait a moment.' },
   skip: skipWhenOpen,
 });
@@ -164,6 +187,7 @@ const searchLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many searches. Please slow down.' },
   // Fail-soft: over the limit, serve last-good cache (or a soft-empty 200) instead
   // of a hard 429 — the cap still blocks the live DB query, but a shared-IP user
@@ -179,6 +203,7 @@ const bookingLimiter = rateLimit({
   max: 15,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many booking attempts. Please try again later.' },
   skip: skipWhenOpen,
 });
@@ -197,7 +222,7 @@ const bookingContactLimiter = rateLimit({
     const email = String(req.body?.guest_email || '').toLowerCase().trim();
     if (email) return `e:${email}`;
     const phone = String(req.body?.guest_phone || '').replace(/[\s\-().]/g, '');
-    return phone ? `p:${phone}` : req.ip;
+    return phone ? `p:${phone}` : ipKeyGenerator(req);
   },
   message: { message: 'Too many bookings for this contact. Please try again later.' },
   skip: skipWhenOpen,
@@ -218,7 +243,7 @@ const otpContactLimiter = rateLimit({
     const email = String(req.body?.email || '').toLowerCase().trim();
     if (email) return `e:${email}`;
     const phone = String(req.body?.phone || req.body?.identifier || '').replace(/[\s\-().]/g, '');
-    return phone ? `p:${phone}` : req.ip;
+    return phone ? `p:${phone}` : ipKeyGenerator(req);
   },
   message: { message: 'Too many code requests for this contact. Please wait before trying again.' },
   skip: skipWhenOpen,
@@ -234,7 +259,7 @@ const freeDownloadLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     const email = String(req.body?.buyer_email || '').toLowerCase().trim();
-    return email || req.ip;
+    return email || ipKeyGenerator(req);
   },
   message: { message: 'Too many download requests for this email. Please try again later.' },
   skip: skipWhenOpen,
@@ -250,6 +275,7 @@ const freeDownloadIpLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many download requests. Please try again later.' },
   skip: skipWhenOpen,
 });
@@ -265,6 +291,7 @@ const downloadTokenLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many download requests. Please try again later.' },
   skip: skipWhenOpen,
 });
@@ -279,7 +306,7 @@ const newsletterEmailLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     const email = String(req.body?.email || '').toLowerCase().trim();
-    return email || req.ip;
+    return email || ipKeyGenerator(req);
   },
   message: { message: 'Too many signups for this email. Please try again later.' },
   skip: skipWhenOpen,
@@ -295,6 +322,7 @@ const newsletterIpLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'Too many signups. Please try again later.' },
   skip: skipWhenOpen,
 });
@@ -311,7 +339,7 @@ const botLimiter = rateLimit({
   legacyHeaders: false,
   // Key on the resolved client IP (honours CLIENT_IP_HEADER behind an edge proxy),
   // matching the bot abuse/IP-block path so both see the same address.
-  keyGenerator: (req) => getClientIp(req) || req.ip,
+  keyGenerator: ipKeyGenerator,
   message: { message: 'You’re sending messages too quickly. Please wait a moment and try again.' },
   skip: skipWhenOpen,
 });
@@ -363,6 +391,7 @@ const speedLimiter = slowDown({
   delayMs: (used) => (used - 300) * 100,    // gentle ramp only past the threshold
   maxDelayMs: 2000,                         // never add more than 2s, ever
   validate: { delayMs: false },             // silence express-slow-down v2 notice
+  keyGenerator: ipKeyGenerator,
   skip: skipWhenOpen,
 });
 
@@ -441,6 +470,8 @@ module.exports = {
   helmetMiddleware,
   skipWhenLoadTest,
   skipWhenOpen,
+  ipKeyGenerator,
+  isPublicSeoGet,
   authLimiter,
   otpLimiter,
   apiLimiter,

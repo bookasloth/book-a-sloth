@@ -62,6 +62,16 @@ Verify recovery: `curl -s -o /dev/null -w "%{http_code}\n" https://book-a-sloth.
 **Kill-switch** (neutralise the entire guard, no deploy): set `IP_BLOCK_ENABLED=false`
 on Render. Re-enable once `CLIENT_IP_HEADER` is fixed.
 
+**Fixed at the code layer 2026-09-10:** `lib/ipBlocklist.js` now refuses to ever
+create or honour a ban on a private/reserved (RFC1918, loopback, link-local) IP —
+`addBan` skips it (`{ok:false, skipped:'private-range'}`) and `isBlocked` always
+returns `false` for one, even for a bad row already sitting in the DB from a past
+incident. A single auto-ban on Render's internal `10.x` address can no longer lock
+out the platform, regardless of whether `CLIENT_IP_HEADER` is set. Step 9 below is
+still the right permanent fix (bans should key on the real client, not fail to key
+on the proxy hop at all), but this closes the "everyone 403s" blast radius even if
+Step 9 is skipped or misconfigured.
+
 **This recurs until Step 9 is done.** Each recurrence needs a manual unban. The
 permanent fix is to key the guard on the real client IP — see Step 9 below.
 
@@ -156,9 +166,11 @@ traffic as coming from one upstream IP — and a single auto-ban would lock out
 3. **Re-check `trust proxy`.** `server.js` currently sets `app.set('trust proxy', 1)`
    (one proxy hop). With Cloudflare + Vercel in front there may be more hops; if
    `req.ip` is still used anywhere as a fallback and looks wrong, increase the hop
-   count. With `CLIENT_IP_HEADER` set, the blocklist no longer depends on `req.ip`,
-   but the rate limiters in `middleware/security.js` still key on `req.ip` — so
-   verify they bucket per real client, not per edge IP.
+   count. **Fixed 2026-09-10:** every per-IP rate limiter in `middleware/security.js`
+   now shares one `ipKeyGenerator` that resolves through `getClientIp()` (same
+   helper the blocklist uses), so setting `CLIENT_IP_HEADER` protects ALL of them,
+   not just `adminLimiter`/`botLimiter` as before. `req.ip` is only ever the
+   fallback when the header is absent.
 4. **Optional hardening:** once on Cloudflare, restrict Render/Vercel to only accept
    traffic with valid Cloudflare headers (e.g. Cloudflare Authenticated Origin Pulls
    or an allowlist of Cloudflare IP ranges) so attackers can't bypass the edge by

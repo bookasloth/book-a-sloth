@@ -148,6 +148,56 @@ describe('attack-pattern ban', () => {
   });
 });
 
+describe('private/reserved IPs are never banned (shared-edge-IP lockout guard)', () => {
+  test.each([
+    '10.0.0.1',        // Render's internal proxy range (the documented incident)
+    '172.16.0.5',
+    '172.31.255.1',
+    '192.168.1.1',
+    '127.0.0.1',
+    '169.254.1.1',
+    '::1',
+    '::ffff:10.0.0.1',
+    'fe80::1',
+    'fd00::1',
+  ])('addBan skips %s and isBlocked never reports it as banned', async (ip) => {
+    const m = loadFresh();
+    const r = await m.addBan(ip, { reason: 'test', source: 'manual' });
+    expect(r.ok).toBe(false);
+    expect(r.skipped).toBe('private-range');
+    expect(m.isBlocked(ip)).toBe(false);
+  });
+
+  test('auto-ban thresholds never produce a ban for a private IP', async () => {
+    const m = loadFresh(); // general max = 3
+    await m.recordRateLimitViolation('10.0.0.1');
+    await m.recordRateLimitViolation('10.0.0.1');
+    await m.recordRateLimitViolation('10.0.0.1');
+    expect(m.isBlocked('10.0.0.1')).toBe(false);
+  });
+
+  test('recordAttack never bans a private IP', async () => {
+    const m = loadFresh();
+    await m.recordAttack('10.0.0.1', 'sqli');
+    expect(m.isBlocked('10.0.0.1')).toBe(false);
+  });
+
+  test('a private IP already sitting in the DB (pre-existing bad row) is never treated as blocked', async () => {
+    jest.resetModules();
+    process.env = { ...OLD_ENV, IP_BLOCK_ENABLED: 'true' };
+    const m = require('../../lib/ipBlocklist');
+    m.__setStore(makeFakeStore({ bans: [{ ip: '10.0.0.1', source: 'auto', expires_at: null }] }));
+    await m.refresh();
+    expect(m.isBlocked('10.0.0.1')).toBe(false);
+  });
+
+  test('isPrivateOrReservedIp is exported and classifies a normal public IP as false', () => {
+    const m = loadFresh();
+    expect(m.isPrivateOrReservedIp('203.0.113.1')).toBe(false);
+    expect(m.isPrivateOrReservedIp('10.1.2.3')).toBe(true);
+  });
+});
+
 describe('refresh()', () => {
   test('loads bans + allowlist from the store and skips already-expired bans', async () => {
     jest.resetModules();
@@ -155,17 +205,17 @@ describe('refresh()', () => {
     const m = require('../../lib/ipBlocklist');
     m.__setStore(makeFakeStore({
       bans: [
-        { ip: '10.0.0.1', source: 'manual', expires_at: null }, // permanent
-        { ip: '10.0.0.2', source: 'auto', expires_at: new Date(Date.now() - 1000).toISOString() }, // expired
+        { ip: '203.0.113.1', source: 'manual', expires_at: null }, // permanent
+        { ip: '203.0.113.2', source: 'auto', expires_at: new Date(Date.now() - 1000).toISOString() }, // expired
       ],
-      allow: [{ ip: '10.0.0.9', note: 'ops' }],
+      allow: [{ ip: '203.0.113.9', note: 'ops' }],
     }));
 
     await m.refresh();
 
-    expect(m.isBlocked('10.0.0.1')).toBe(true);
-    expect(m.isBlocked('10.0.0.2')).toBe(false); // expired → not loaded
-    expect(m.isAllowed('10.0.0.9')).toBe(true);
+    expect(m.isBlocked('203.0.113.1')).toBe(true);
+    expect(m.isBlocked('203.0.113.2')).toBe(false); // expired → not loaded
+    expect(m.isAllowed('203.0.113.9')).toBe(true);
   });
 });
 
