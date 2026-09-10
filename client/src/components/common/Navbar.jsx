@@ -83,14 +83,16 @@ const RESOURCES_MENU = [
   ] },
 ];
 
-// Compare — flat list (no icons/subtext). Only LPs that exist.
+// Compare — a mega-menu of "Sloth vs <competitor>" cards. Each carries the
+// competitor's domain (favicon) and primary brand colour (hover tint). Only LPs
+// that exist. `label` (mobile) kept alongside name/domain/color (desktop cards).
 const COMPARE_MENU = [
-  { label: 'vs Calendly',      href: '/lp/calendly-alternative' },
-  { label: 'vs Acuity',        href: '/lp/acuity-alternative' },
-  { label: 'vs Setmore',       href: '/lp/setmore-alternative' },
-  { label: 'vs SimplyBook',    href: '/lp/simplybook-alternative' },
-  { label: 'vs Zoho Bookings', href: '/lp/zoho-bookings-alternative' },
-  { label: 'vs Topmate',       href: '/lp/topmate-vs-bookasloth' },
+  { label: 'vs Calendly',      name: 'Calendly',      href: '/lp/calendly-alternative',      domain: 'calendly.com',         color: '#006BFF' },
+  { label: 'vs Acuity',        name: 'Acuity',        href: '/lp/acuity-alternative',        domain: 'acuityscheduling.com', color: '#1B7FA8' },
+  { label: 'vs Setmore',       name: 'Setmore',       href: '/lp/setmore-alternative',       domain: 'setmore.com',          color: '#009DE0' },
+  { label: 'vs SimplyBook',    name: 'SimplyBook',    href: '/lp/simplybook-alternative',    domain: 'simplybook.me',        color: '#2FA8C9' },
+  { label: 'vs Zoho Bookings', name: 'Zoho Bookings', href: '/lp/zoho-bookings-alternative', domain: 'zoho.com',             color: '#E42527' },
+  { label: 'vs Topmate',       name: 'Topmate',       href: '/lp/topmate-vs-bookasloth',     domain: 'topmate.io',           color: '#FF3E5F' },
 ];
 
 // Flat lists derived from the mega configs — reused by the mobile accordions.
@@ -384,6 +386,51 @@ const MegaMenu = ({ sections, promo }) => (
   </div>
 );
 
+// ── Compare mega-menu: "Sloth vs <competitor>" cards ─────────────────────────
+// Favicons come from Google's favicon service (reliable, avoids pinging the
+// competitor); if that is blocked the img hides and a brand-colour monogram
+// shows instead. The competitor's primary brand colour (--bc) drives the
+// two-layer curtain + the name on hover.
+const CompareItem = ({ item }) => {
+  const [imgOk, setImgOk] = useState(true);
+  const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=64`;
+  return (
+    <Link
+      to={item.href}
+      role="menuitem"
+      style={{ '--bc': item.color }}
+      className="group/mi relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-2.5 hover:no-underline"
+    >
+      {/* Two-layer brand-colour curtain (inline bg = the competitor colour) */}
+      <span aria-hidden="true" style={{ backgroundColor: item.color, opacity: 0.1 }} className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-500 ease-out group-hover/mi:translate-x-0 motion-reduce:transition-none" />
+      <span aria-hidden="true" style={{ backgroundColor: item.color, opacity: 0.16 }} className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-300 ease-out group-hover/mi:translate-x-0 motion-reduce:transition-none" />
+
+      {/* Sloth favicon  vs  competitor favicon */}
+      <span className="relative z-10 flex flex-shrink-0 items-center gap-1.5">
+        <img src="/sloth.png" alt="Book A Sloth" width="24" height="24" className="h-6 w-6 rounded" />
+        <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400">vs</span>
+        {imgOk ? (
+          <img src={favicon} alt="" width="24" height="24" loading="lazy" onError={() => setImgOk(false)} className="h-6 w-6 rounded" />
+        ) : (
+          <span className="flex h-6 w-6 items-center justify-center rounded text-[12px] font-bold text-white" style={{ backgroundColor: item.color }}>
+            {item.name[0]}
+          </span>
+        )}
+      </span>
+      <span className="relative z-10 text-[14px] font-bold text-[#1E1E1E] transition-colors group-hover/mi:text-[var(--bc)]">{item.name}</span>
+    </Link>
+  );
+};
+
+const CompareMega = () => (
+  <div className="p-4">
+    <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Switching? See how we compare</p>
+    <div className="grid grid-cols-2 gap-0.5">
+      {COMPARE_MENU.map((c) => <CompareItem key={c.href} item={c} />)}
+    </div>
+  </div>
+);
+
 // ── Public center nav (logged-out): mega-menus + Pricing ─────────────────────
 const PublicCenterNav = () => (
   <>
@@ -399,14 +446,8 @@ const PublicCenterNav = () => (
       <MegaMenu sections={RESOURCES_MENU} />
     </NavDropdown>
 
-    <NavDropdown label="Compare">
-      <div className="py-1">
-        {COMPARE_MENU.map((c) => (
-          <Link key={c.href} to={c.href} role="menuitem" className="block px-4 py-2.5 text-[13px] text-gray-600 transition-colors hover:bg-[#FE5100]/5 hover:text-[#FE5100] hover:no-underline">
-            {c.label}
-          </Link>
-        ))}
-      </div>
+    <NavDropdown label="Compare" panelClass="w-[34rem]" align="center">
+      <CompareMega />
     </NavDropdown>
 
     <Link to="/pricing" className="flex items-center px-3.5 text-[12.5px] font-medium text-gray-500 transition-colors hover:text-[#FE5100] hover:no-underline">
