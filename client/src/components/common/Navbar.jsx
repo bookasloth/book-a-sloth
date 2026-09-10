@@ -31,18 +31,18 @@ import {
 
 const PRODUCT_MENU = [
   { header: 'Products', items: [
-    { label: 'Online scheduling', href: '/features/online-scheduling', desc: 'Simplified booking',      icon: CalendarCheck },
-    { label: 'Booking pages',     href: '/features/booking-pages',     desc: 'Your public link',        icon: LayoutDashboard },
-    { label: 'Payments',          href: '/features/payments',          desc: 'Get paid upfront',        icon: Wallet },
-    { label: 'Client management', href: '/features/client-management', desc: 'Relationships in one place', icon: Users },
-    { label: 'Digital products',  href: '/features/digital-products',  desc: 'Sell without sessions',   icon: Layers },
+    { label: 'Online scheduling', href: '/features/online-scheduling', desc: 'Clients pick a time — no back-and-forth',   icon: CalendarCheck },
+    { label: 'Booking pages',     href: '/features/booking-pages',     desc: 'A clean public page for every service',     icon: LayoutDashboard },
+    { label: 'Payments',          href: '/features/payments',          desc: 'Get paid up front and kill no-shows',       icon: Wallet },
+    { label: 'Client management', href: '/features/client-management', desc: 'Clients, bookings and notes in one place',  icon: Users },
+    { label: 'Digital products',  href: '/features/digital-products',  desc: 'Sell guides & templates, no live call',     icon: Layers },
   ] },
   { header: 'Platform', items: [
-    { label: 'Google Calendar',   href: '/features/google-calendar',   desc: 'Two-way sync',            icon: CalendarCheck },
-    { label: 'Notifications',     href: '/features/notifications',     desc: 'WhatsApp + email',        icon: Bell },
-    { label: 'Availability',      href: '/features/availability',      desc: 'Rules that fit you',      icon: Clock },
-    { label: 'Reviews & ratings', href: '/features/reviews',           desc: 'Build trust',             icon: Star },
-    { label: 'Explore',           href: '/explore',                    desc: 'Discover creators',       icon: Search },
+    { label: 'Google Calendar',   href: '/features/google-calendar',   desc: 'Two-way sync, always up to date',           icon: CalendarCheck },
+    { label: 'Notifications',     href: '/features/notifications',     desc: 'Automatic WhatsApp + email reminders',      icon: Bell },
+    { label: 'Availability',      href: '/features/availability',      desc: 'Buffers, limits and hours that fit you',    icon: Clock },
+    { label: 'Reviews & ratings', href: '/features/reviews',           desc: 'Collect reviews that win more bookings',    icon: Star },
+    { label: 'Explore',           href: '/explore',                    desc: 'Get discovered in the marketplace',         icon: Search },
   ] },
 ];
 
@@ -363,15 +363,16 @@ const MegaItem = ({ item, tone }) => {
 // the Compare cards use the same MENU_COL width so nothing feels off-rhythm.
 const MENU_COL = 'w-60'; // 15rem — every column, promo tile and compare cell
 
-// Renders grouped columns + an optional promo tile on the right.
-const MegaMenu = ({ sections, promo }) => (
+// Renders grouped columns + an optional promo tile on the right. `colClass` lets
+// a menu widen its columns (Product uses fewer, wider columns).
+const MegaMenu = ({ sections, promo, colClass = MENU_COL }) => (
   <div className="flex gap-5 p-5">
     {sections.map((col, ci) => {
       // Tone index continues across columns so hues keep rotating (never resets).
       const offset = sections.slice(0, ci).reduce((n, s) => n + s.items.length, 0);
       return (
-        <div key={col.header} className={MENU_COL}>
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{col.header}</p>
+        <div key={col.header} className={colClass}>
+          <p className="mb-2 px-3 text-[11px] font-normal uppercase tracking-wider text-gray-400">{col.header}</p>
           <div className="space-y-0.5">
             {col.items.map((it, i) => <MegaItem key={it.href} item={it} tone={TILE_TONES[(offset + i) % TILE_TONES.length]} />)}
           </div>
@@ -430,11 +431,12 @@ const CompareItem = ({ item }) => {
 };
 
 const CompareMega = () => {
-  const mid = Math.ceil(COMPARE_MENU.length / 2);
-  const cols = [COMPARE_MENU.slice(0, mid), COMPARE_MENU.slice(mid)];
+  // Three columns (two cards each) so Compare matches the Resources width.
+  const per = Math.ceil(COMPARE_MENU.length / 3);
+  const cols = [0, 1, 2].map((n) => COMPARE_MENU.slice(n * per, n * per + per));
   return (
     <div className="p-5">
-      <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Switching? See how we compare</p>
+      <p className="mb-2 px-3 text-[11px] font-normal uppercase tracking-wider text-gray-400">Switching? See how we compare</p>
       <div className="flex gap-5">
         {cols.map((group, i) => (
           <div key={i} className={`${MENU_COL} space-y-0.5`}>
@@ -476,7 +478,7 @@ const PublicCenterNav = () => {
   return (
     <>
       <NavDropdown id="product" label="Product" {...menuProps}>
-        <MegaMenu sections={PRODUCT_MENU} />
+        <MegaMenu sections={PRODUCT_MENU} colClass="w-[23rem]" />
       </NavDropdown>
 
       <NavDropdown id="whofor" label="Who it's for" {...menuProps}>
