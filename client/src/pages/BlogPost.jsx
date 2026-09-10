@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { themeFor, AUTHOR_URL } from '../data/blogPosts';
+import { themeFor, AUTHOR_URL, AUTHOR } from '../data/blogPosts';
 import { getBlogBySlug } from '../services/api';
 import { isNotFoundError } from '../utils/fetchError';
 import ErrorPage from './ErrorPage';
@@ -342,7 +342,7 @@ const BlogPost = () => {
           imageHeight: cardDims.height,
           datePublished: post.published_at,
           dateModified: post.updated_at,
-          author: { name: post.author, url: AUTHOR_URL },
+          author: { ...AUTHOR, name: post.author || AUTHOR.name },
           breadcrumb: crumbs,
           // FAQPage only when the post actually shows the Q&A on the page —
           // structured data for content a reader can't see earns a manual action.

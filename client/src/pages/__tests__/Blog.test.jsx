@@ -14,7 +14,7 @@ const POSTS = Array.from({ length: 22 }, (_, i) => ({
   title: `Post ${i + 1}`,
   excerpt: 'Excerpt.',
   category: 'News',
-  author: 'Bolt 958',
+  author: 'Shubham N Datarkar',
   date: 'JUL 15, 2026',
   readMins: 5,
   image: null,
@@ -83,6 +83,6 @@ describe('Blog index paging', () => {
 
   it('bylines each card with the post author', async () => {
     renderAt('/blog');
-    expect(await screen.findAllByText('Bolt 958')).toHaveLength(13);
+    expect(await screen.findAllByText('Shubham N Datarkar')).toHaveLength(13);
   });
 });

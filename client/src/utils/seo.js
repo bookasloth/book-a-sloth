@@ -313,7 +313,7 @@ export const articleGraphJsonLd = ({
   imageHeight,
   datePublished,
   dateModified,
-  author,            // { name, url } — Person node emitted only when name is set
+  author,            // { name, url, jobTitle?, image?, sameAs? } — Person node emitted only when name is set
   breadcrumb = [],   // ordered [{ name, path }]
   faqs = [],
 } = {}) => {
@@ -345,7 +345,11 @@ export const articleGraphJsonLd = ({
   }
 
   if (id.person) {
-    graph.push({ '@type': 'Person', '@id': id.person, name: author.name, url: author.url || undefined });
+    const person = { '@type': 'Person', '@id': id.person, name: author.name, url: author.url || undefined };
+    if (author.jobTitle) person.jobTitle = author.jobTitle;
+    if (author.image) person.image = author.image;
+    if (Array.isArray(author.sameAs) && author.sameAs.length) person.sameAs = author.sameAs;
+    graph.push(person);
   }
 
   graph.push({
