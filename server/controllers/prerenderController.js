@@ -80,6 +80,7 @@ ${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script
 // Returns { status: 200, buildHtmlArgs } | { status: 404 } | { status: 301, redirectTo }.
 async function resolveProfileMeta(username) {
   const { buildHostProfile } = require('./hostController');
+  const { sameAsFrom } = require('../services/seo/pageContentModel');
   const outcome = await buildHostProfile(username);
 
   if (outcome.notFound || outcome.redirect) {
@@ -114,10 +115,14 @@ async function resolveProfileMeta(username) {
   // default 1200x630 when one's designed.
   const ogCard = host.og_image || `${site}/og-image.png`;
 
+  // sameAs (external identity links) + dateModified are AEO/entity-clarity signals:
+  // they tell answer engines who this Person is and how fresh the page is.
+  const sameAs = sameAsFrom(host);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
     url: canonical,
+    ...(host.updated_at ? { dateModified: host.updated_at } : {}),
     mainEntity: {
       '@type': 'Person',
       name,
@@ -125,6 +130,7 @@ async function resolveProfileMeta(username) {
       jobTitle: host.profession || undefined,
       description: host.seo_description || host.bio || undefined,
       image: avatar,
+      ...(sameAs.length ? { sameAs } : {}),
       ...(Array.isArray(services) && services.length ? {
         makesOffer: services.filter(s => s && s.title).map(s => ({
           '@type': 'Offer',

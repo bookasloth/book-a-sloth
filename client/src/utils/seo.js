@@ -113,9 +113,20 @@ export const resolveProfileSeo = ({ host = {}, siteUrl = SITE_URL } = {}) => {
   };
 };
 
+// Identity links backing schema.org sameAs — mirrors server sameAsFrom()
+// (server/services/seo/pageContentModel.js). Reads host.social_links (JSONB),
+// keeping only real http(s) identity URLs (drops email/whatsapp + blanks).
+const SAMEAS_SOCIALS = ['instagram', 'youtube', 'linkedin', 'facebook', 'twitter', 'website', 'github'];
+const sameAsFromSocials = (social = {}) => [...new Set(
+  SAMEAS_SOCIALS
+    .map((k) => (typeof social[k] === 'string' ? social[k].trim() : ''))
+    .filter((v) => /^https?:\/\//i.test(v)),
+)];
+
 export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [] } = {}) => {
   const site = trimSlash(siteUrl);
   const url = host.username ? `${site}/${host.username}` : site;
+  const sameAs = sameAsFromSocials(host.social_links);
   const person = {
     '@type': 'Person',
     name: host.name || 'Host',
@@ -123,6 +134,7 @@ export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [] } =
     jobTitle: host.profession || undefined,
     description: host.seo_description || host.bio || undefined,
     image: host.seo_image || host.profile_image || undefined,
+    ...(sameAs.length ? { sameAs } : {}),
   };
   if (Array.isArray(services) && services.length) {
     person.makesOffer = services
@@ -136,6 +148,7 @@ export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [] } =
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
     url,
+    ...(host.updated_at ? { dateModified: host.updated_at } : {}),
     mainEntity: person,
   };
 };

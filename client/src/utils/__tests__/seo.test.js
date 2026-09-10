@@ -103,6 +103,22 @@ describe('profileJsonLd', () => {
     expect(ld['@type']).toBe('ProfilePage');
     expect(ld.mainEntity).toMatchObject({ '@type': 'Person', name: 'John Doe', url: 'https://bookasloth.com/john-doe' });
   });
+  test('adds sameAs (http socials only) + dateModified when present', () => {
+    const ld = profileJsonLd({
+      host: {
+        name: 'John Doe', username: 'john-doe', updated_at: '2026-09-01T10:00:00.000Z',
+        social_links: { instagram: 'https://instagram.com/j', website: '', email: 'j@x.com', whatsapp: '9' },
+      },
+      siteUrl: SITE,
+    });
+    expect(ld.mainEntity.sameAs).toEqual(['https://instagram.com/j']);
+    expect(ld.dateModified).toBe('2026-09-01T10:00:00.000Z');
+  });
+  test('omits sameAs / dateModified when socials blank and no updated_at', () => {
+    const ld = profileJsonLd({ host: { name: 'J', username: 'j', social_links: {} }, siteUrl: SITE });
+    expect(ld.mainEntity).not.toHaveProperty('sameAs');
+    expect(ld).not.toHaveProperty('dateModified');
+  });
 });
 
 describe('resolveBlogSeo — no truncated titles/descriptions', () => {

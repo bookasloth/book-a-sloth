@@ -21,12 +21,19 @@ const wc = (parts) => {
   return { bodyText: t, wordCount: t ? t.split(' ').length : 0 };
 };
 
-// Common social/profile fields that back schema.org sameAs (entity clarity signal).
-// ponytail: reads whatever social columns exist on the row; add more keys here if the
-// profiles schema grows, no other change needed.
+// Identity links backing schema.org sameAs (entity-clarity + evidence signals).
+// Host socials live in the profiles.social_links JSONB (keys: instagram/youtube/
+// linkedin/facebook/twitter/website/github/email/whatsapp) — NOT flat columns.
+// Keep only real http(s) identity URLs (drops email/whatsapp + blank fields).
+// ponytail: add a key here if the socials object grows; no other change needed.
+const IDENTITY_SOCIALS = ['instagram', 'youtube', 'linkedin', 'facebook', 'twitter', 'website', 'github'];
 function sameAsFrom(row = {}) {
-  const keys = ['website', 'website_url', 'instagram', 'instagram_url', 'linkedin', 'twitter', 'x_url', 'youtube', 'facebook'];
-  return keys.map((k) => clean(row[k])).filter(Boolean);
+  const s = row.social_links || {};
+  return [...new Set(
+    IDENTITY_SOCIALS
+      .map((k) => (typeof s[k] === 'string' ? s[k].trim() : ''))
+      .filter((v) => /^https?:\/\//i.test(v)),
+  )];
 }
 
 function hostContent(payload) {
@@ -105,4 +112,4 @@ function build(pageType, payload) {
   }
 }
 
-module.exports = { build };
+module.exports = { build, sameAsFrom };
