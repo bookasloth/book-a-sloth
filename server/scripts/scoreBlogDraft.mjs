@@ -2,6 +2,9 @@
 // Score a draft blog post (blogPosts.js shape) with the live v2 scorer, no crawl.
 // Pure analyzer + row builder here; scorer wiring added in the next task.
 import assert from 'node:assert/strict';
+import scoringPkg from '../services/seo/scoring/index.js'; // CJS module → default import
+const { scorePage } = scoringPkg;
+import { articleGraphJsonLd } from '../../client/src/utils/seo.js';
 
 export const LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
 
@@ -72,6 +75,30 @@ export function buildPageRow(post, { siteUrl = 'https://bookasloth.com', jsonLdG
   };
 }
 
+export function scoreDraft(post, { siteUrl = 'https://bookasloth.com', queries = [] } = {}) {
+  const graph = articleGraphJsonLd({
+    siteUrl,
+    url: `${siteUrl}/blog/${post.slug}`,
+    type: 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    image: post.image || undefined,
+    datePublished: post.date || undefined,
+    dateModified: post.dateModified || post.date || undefined,
+    author: post.author && typeof post.author === 'object' ? post.author : undefined,
+    breadcrumb: [{ name: 'Blog', path: '/blog' }, { name: post.title, path: `/blog/${post.slug}` }],
+    faqs: collectFaqs(post.body || []),
+  });
+  const row = buildPageRow(post, { siteUrl, jsonLdGraph: graph['@graph'] });
+  return scorePage(row, { queries, gsc: null, robots: {} });
+}
+
+function collectFaqs(body = []) {
+  const out = [];
+  for (const b of body) if (b && 'faq' in b) for (const f of (b.faq || [])) if (f?.q && f?.a) out.push({ q: f.q, a: f.a });
+  return out;
+}
+
 function selfcheck() {
   const body = [
     { h2: 'How booking works' },
@@ -94,6 +121,37 @@ function selfcheck() {
   assert.equal(row.raw_signals.jsonLd[0]['@type'], 'BlogPosting');
   assert.equal(row.raw_signals.headings.length, 1);
   console.log('selfcheck (analyze+row): PASS');
+
+  // Import sanity — both app modules must resolve under Node ESM.
+  const graph = articleGraphJsonLd({ url: 'https://bookasloth.com/blog/s', headline: 'T', description: 'E' });
+  assert.ok(Array.isArray(graph['@graph']) && graph['@graph'].length, 'articleGraphJsonLd returns a @graph');
+  assert.equal(typeof scorePage, 'function', 'scorePage imported');
+
+  const longBody = [{ h2: 'Intro' }, { p: 'word '.repeat(400) + '[src](https://example.com)' }];
+  const res = scoreDraft({ slug: 's', title: 'A real blog title about booking', excerpt: 'x'.repeat(150), body: longBody, date: '2026-09-10' }, {});
+  assert.ok(res.seo && typeof res.seo.score === 'number', 'seo score present');
+  assert.ok(res.geo && typeof res.geo.score === 'number', 'geo score present');
+  assert.equal(res.seo.profile, 'blog', 'blog weight profile selected');
+  assert.ok(Array.isArray(res.recommendations), 'recommendations array');
+  console.log('selfcheck (scoreDraft): PASS');
 }
 
-if (process.argv.includes('--selfcheck')) selfcheck();
+async function readPost() {
+  const fileArg = process.argv.find((a) => a.endsWith('.json'));
+  if (fileArg) {
+    const { readFile } = await import('node:fs/promises');
+    return JSON.parse(await readFile(fileArg, 'utf8'));
+  }
+  const chunks = [];
+  for await (const c of process.stdin) chunks.push(c);
+  return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+}
+
+if (process.argv.includes('--selfcheck')) {
+  selfcheck();
+} else {
+  const siteUrl = process.env.SITE_URL || 'https://bookasloth.com';
+  readPost()
+    .then((post) => { process.stdout.write(JSON.stringify(scoreDraft(post, { siteUrl }), null, 2)); })
+    .catch((e) => { console.error('scoreBlogDraft error:', e.message); process.exit(1); });
+}
