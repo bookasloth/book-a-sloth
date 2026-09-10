@@ -300,7 +300,7 @@ export const BLOG_POSTS = [
       p: "The pages that convert for SaaS are product-led, not generic blog filler. As Ishir's breakdown of SaaS growth argues, the workhorses are [comparison, \"alternative to,\" and integration pages](https://www.ishir.com/blog/318664/digital-marketing-for-saas-companies.htm) that catch buyers already choosing between tools. Layer in use-case tutorials and playbooks that show your product doing the reader's exact job."
     },
     {
-      p: "The catch is patience. Lean Labs advises planning for [organic lead growth over a 36–48 month horizon](https://www.leanlabs.com/blog/digital-marketing-for-saas-companies) — SEO compounds, but it doesn't sprint. Start early and publish consistently, and the curve bends in your favor right when paid gets expensive."
+      p: "The catch is patience. Lean Labs advises planning for [organic lead growth over a 36–48 month horizon](https://www.leanlabs.com/blog/digital-marketing-for-saas-companies) — SEO compounds, but it doesn't sprint. Start early and [publish consistently](/blog/content-marketing-for-brand-awareness), and the curve bends in your favor right when paid gets expensive."
     },
     {
       h2: "Product-led growth and free trials"
@@ -315,7 +315,7 @@ export const BLOG_POSTS = [
       h2: "Rounding out the mix: paid, email, and ABM"
     },
     {
-      p: "Paid ads, email nurture, and account-based marketing (ABM) are accelerants — they don't replace the compounding channels, they speed up specific stages of the funnel. Google and LinkedIn ads buy top-of-funnel reach and bottom-of-funnel intent capture; use them to test messaging and catch high-intent \"best [category]\" searches, not as your only engine. Email nurture carries trial users and MQLs across the long consideration gap that defines B2B SaaS. ABM concentrates spend on a named list of dream accounts when your contract values justify it. The point isn't to run every channel — it's to match each channel to the funnel stage where it earns its keep."
+      p: "Paid ads, email nurture, and account-based marketing (ABM) are accelerants — they don't replace the compounding channels, they speed up specific stages of the funnel. Google and LinkedIn ads buy top-of-funnel reach and bottom-of-funnel intent capture; use them to test messaging and catch high-intent \"best [category]\" searches, not as your only engine. [Email nurture](/blog/email-marketing-for-customer-acquisition) carries trial users and MQLs across the long consideration gap that defines B2B SaaS. ABM concentrates spend on a named list of dream accounts when your contract values justify it. The point isn't to run every channel — it's to match each channel to the funnel stage where it earns its keep."
     },
     {
       h2: "Affiliate marketing for developers (and other partners)"
@@ -382,7 +382,7 @@ export const BLOG_POSTS = [
         },
         {
           q: "Can developers really make money with affiliate marketing?",
-          a: "Yes — developers are well suited to it because they can recommend tools they genuinely use through tutorials and reviews, and many SaaS programs pay recurring commissions or fixed bounties per paying customer. Authenticity is the entire edge. ---"
+          a: "Yes — developers are well suited to it because they can recommend tools they genuinely use through tutorials and reviews, and many SaaS programs pay recurring commissions or fixed bounties per paying customer. Authenticity is the entire edge."
         }
       ]
     }
