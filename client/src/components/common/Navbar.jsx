@@ -265,6 +265,12 @@ const TagPill = ({ text }) =>
 const NavDropdown = ({ id, label, icon: Icon, align = 'left', activeKey, onOpen, onClose, children }) => {
   const open = activeKey === id;
   const centered = align === 'center';
+  // Lazy-mount the panel contents on first open, so the menus don't fetch their
+  // images (e.g. Compare's competitor favicons) on every page load — only once
+  // the user actually opens a menu. Kept mounted afterwards so the exit
+  // animation still runs.
+  const [mounted, setMounted] = useState(false);
+  if (open && !mounted) setMounted(true);
   return (
     <div
       data-navmenu
@@ -299,7 +305,7 @@ const NavDropdown = ({ id, label, icon: Icon, align = 'left', activeKey, onOpen,
           open ? 'translate-y-0 scale-100 opacity-100' : '-translate-y-1 scale-[0.98] opacity-0 pointer-events-none',
         ].join(' ')}
       >
-        {children}
+        {mounted && children}
       </div>
     </div>
   );
@@ -452,7 +458,7 @@ const CompareMega = () => {
 // Owns the single "which menu is open" state so switching between triggers is an
 // instant handoff (never two panels at once). One shared close timer bridges the
 // gap from a trigger to its panel; Escape / outside-click / route change close.
-const PublicCenterNav = () => {
+export const PublicCenterNav = () => {
   const [activeKey, setActiveKey] = useState(null);
   const timer = useRef(null);
   const location = useLocation();

@@ -139,7 +139,7 @@ export default function Footer({ variant = 'full' }) {
             <span className="text-white/25">·</span>
             {/* Company ownership visible site-wide — part of the Google OAuth
                 verification checklist (homepage must identify the operator). */}
-            <span>Operated by Timewheel Internet Private Limited · CIN U62012OD2026PTC052654</span>
+            <span>Operated by Timewheel Internet Private Limited</span>
           </div>
           <p className="text-white/40">Razorpay-secure payments · GST invoices · Made in India 🇮🇳</p>
         </div>
