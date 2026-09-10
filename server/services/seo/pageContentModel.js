@@ -36,6 +36,38 @@ function sameAsFrom(row = {}) {
   )];
 }
 
+// Templated profile FAQ — MIRRORS client/src/utils/profileFaqs.js (kept identical
+// so the crawler's answer-coverage/structure score reflects what the page renders).
+// Only real profile data → the FAQPage schema always matches visible content.
+function profileFaqs(host = {}, services = []) {
+  const name = clean(host.name) || 'this host';
+  const priced = (services || []).map((s) => Number(s && s.price)).filter((p) => p > 0);
+  const faqs = [{
+    q: `How do I book ${name}?`,
+    a: `Pick a service on ${name}'s page, choose a time that suits you and pay securely online. Your booking is confirmed instantly and you get reminders before the session.`,
+  }];
+  if (services && services.length) {
+    faqs.push(priced.length ? {
+      q: `How much does ${name} charge?`,
+      a: `${name} has ${services.length} bookable service${services.length > 1 ? 's' : ''}, starting from ₹${Math.min(...priced).toLocaleString('en-IN')}.`,
+    } : {
+      q: `What can I book with ${name}?`,
+      a: `${name} offers ${services.length} bookable service${services.length > 1 ? 's' : ''} you can schedule directly on this page.`,
+    });
+  }
+  if (host.profession) {
+    faqs.push({
+      q: `What does ${name} do?`,
+      a: `${name} is a ${clean(host.profession)}${host.location ? ` based in ${clean(host.location)}` : ''} taking bookings on Book A Sloth.`,
+    });
+  }
+  faqs.push({
+    q: 'Is payment secure?',
+    a: 'Yes — payments are processed securely online and you receive booking confirmation and reminders automatically.',
+  });
+  return faqs;
+}
+
 function hostContent(payload) {
   const { host = {}, services = [] } = payload || {};
   const name = clean(host.name) || 'Host';
@@ -52,10 +84,16 @@ function hostContent(payload) {
     if (s.thumbnail_url) images.push({ src: s.thumbnail_url, alt: clean(s.title) || '' });
   }
 
+  // FAQ questions become extractable headings; answers feed body text — this is
+  // what lifts the crawler's structure + answer-coverage dimensions.
+  const faqs = profileFaqs(host, services);
+  for (const f of faqs) headings.push({ tag: 'h3', text: f.q });
+
   const reviews = payload?.reviews || [];
   const { bodyText, wordCount } = wc([
     host.bio, host.profession,
     ...services.flatMap((s) => [s?.title, s?.short_description, s?.description]),
+    ...faqs.flatMap((f) => [f.q, f.a]),
     ...reviews.map((r) => r?.comment || r?.text),
   ]);
 

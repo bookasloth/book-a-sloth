@@ -180,7 +180,7 @@ describe('GET /api/services-directory/:profession', () => {
     expect(res1.status).toBe(200);
     expect(res2.status).toBe(200);
     expect(res2.body.services[0].slug).toBe('wedding-photography');
-    expect(supabaseAdmin.from).toHaveBeenCalledTimes(2); // profession lookup + services, once total
+    expect(supabaseAdmin.from).toHaveBeenCalledTimes(3); // profession lookup + services + hosts, once total (cache serves the 2nd request)
   });
 
   test('a cached notFound marker keeps returning 404 without re-querying', async () => {
