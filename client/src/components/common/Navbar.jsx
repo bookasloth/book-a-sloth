@@ -302,19 +302,22 @@ const NavDropdown = ({ label, icon: Icon, panelClass = 'w-56', align = 'left', c
 };
 
 // ── Mega-menu pieces (grouped columns, colored icon tile + label + subtext) ──
-// Per-item colored tiles + a matching full-row hover tint. Classes are literal
-// (Tailwind JIT can't see interpolated names), keyed by a tone that cycles per
-// column. Icon tile idle color = the row's hover tint, so hover just deepens it.
+// Per-item colored tiles + a two-layer "curtain" that wipes in left→right on
+// hover (and reverses out). Classes are literal (Tailwind JIT can't see
+// interpolated names), keyed by a tone that cycles per column:
+//   tile  — idle icon square (pastel bg + colored glyph)
+//   solid — group-hover: solid square + white glyph
+//   c1/c2 — the two curtain layers (front lighter, back deeper)
 const TILE_TONES = ['pink', 'blue', 'green', 'orange', 'violet', 'amber', 'teal', 'rose'];
 const TILE_MAP = {
-  pink:   { tile: 'bg-pink-100 text-pink-500',     row: 'hover:bg-pink-50' },
-  blue:   { tile: 'bg-blue-100 text-blue-500',     row: 'hover:bg-blue-50' },
-  green:  { tile: 'bg-emerald-100 text-emerald-500', row: 'hover:bg-emerald-50' },
-  orange: { tile: 'bg-orange-100 text-orange-500', row: 'hover:bg-orange-50' },
-  violet: { tile: 'bg-violet-100 text-violet-500', row: 'hover:bg-violet-50' },
-  amber:  { tile: 'bg-amber-100 text-amber-500',   row: 'hover:bg-amber-50' },
-  teal:   { tile: 'bg-teal-100 text-teal-500',     row: 'hover:bg-teal-50' },
-  rose:   { tile: 'bg-rose-100 text-rose-500',     row: 'hover:bg-rose-50' },
+  pink:   { tile: 'bg-pink-100 text-pink-500',       solid: 'group-hover/mi:bg-pink-500 group-hover/mi:text-white',       c1: 'bg-pink-50',    c2: 'bg-pink-100' },
+  blue:   { tile: 'bg-blue-100 text-blue-500',       solid: 'group-hover/mi:bg-blue-500 group-hover/mi:text-white',       c1: 'bg-blue-50',    c2: 'bg-blue-100' },
+  green:  { tile: 'bg-emerald-100 text-emerald-500', solid: 'group-hover/mi:bg-emerald-500 group-hover/mi:text-white',    c1: 'bg-emerald-50', c2: 'bg-emerald-100' },
+  orange: { tile: 'bg-orange-100 text-orange-500',   solid: 'group-hover/mi:bg-orange-500 group-hover/mi:text-white',     c1: 'bg-orange-50',  c2: 'bg-orange-100' },
+  violet: { tile: 'bg-violet-100 text-violet-500',   solid: 'group-hover/mi:bg-violet-500 group-hover/mi:text-white',     c1: 'bg-violet-50',  c2: 'bg-violet-100' },
+  amber:  { tile: 'bg-amber-100 text-amber-500',     solid: 'group-hover/mi:bg-amber-500 group-hover/mi:text-white',      c1: 'bg-amber-50',   c2: 'bg-amber-100' },
+  teal:   { tile: 'bg-teal-100 text-teal-500',       solid: 'group-hover/mi:bg-teal-500 group-hover/mi:text-white',       c1: 'bg-teal-50',    c2: 'bg-teal-100' },
+  rose:   { tile: 'bg-rose-100 text-rose-500',       solid: 'group-hover/mi:bg-rose-500 group-hover/mi:text-white',       c1: 'bg-rose-50',    c2: 'bg-rose-100' },
 };
 
 const MegaItem = ({ item, tone }) => {
@@ -324,12 +327,18 @@ const MegaItem = ({ item, tone }) => {
     <Link
       to={item.href}
       role="menuitem"
-      className={`flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors ${c.row} hover:no-underline`}
+      className="group/mi relative flex items-start gap-3 overflow-hidden rounded-xl px-3 py-2.5 hover:no-underline"
     >
-      <span className={`mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${c.tile}`}>
+      {/* Two-layer curtain: back layer trails, front leads — both slide in from
+          the left on hover and slide back out on leave (transition reverses). */}
+      <span aria-hidden="true" className={`pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-500 ease-out group-hover/mi:translate-x-0 motion-reduce:transition-none ${c.c2}`} />
+      <span aria-hidden="true" className={`pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-300 ease-out group-hover/mi:translate-x-0 motion-reduce:transition-none ${c.c1}`} />
+
+      {/* Content sits above the curtain */}
+      <span className={`relative z-10 mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-colors duration-200 ${c.tile} ${c.solid}`}>
         <Icon size={19} strokeWidth={2} />
       </span>
-      <span className="min-w-0">
+      <span className="relative z-10 min-w-0">
         <span className="block text-[14px] font-bold text-[#1E1E1E]">{item.label}</span>
         {item.desc && <span className="block text-[12px] leading-snug text-gray-400">{item.desc}</span>}
       </span>
