@@ -123,7 +123,7 @@ const sameAsFromSocials = (social = {}) => [...new Set(
     .filter((v) => /^https?:\/\//i.test(v)),
 )];
 
-export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [] } = {}) => {
+export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [], rating = null } = {}) => {
   const site = trimSlash(siteUrl);
   const url = host.username ? `${site}/${host.username}` : site;
   const sameAs = sameAsFromSocials(host.social_links);
@@ -135,6 +135,12 @@ export const profileJsonLd = ({ host = {}, siteUrl = SITE_URL, services = [] } =
     description: host.seo_description || host.bio || undefined,
     image: host.seo_image || host.profile_image || undefined,
     ...(sameAs.length ? { sameAs } : {}),
+    // Host's OWN rating only (shown on the profile). Never a platform default —
+    // that would be reviews not about this person. Platform rating lives on the
+    // homepage SoftwareApplication node.
+    ...(rating && rating.count > 0 && rating.avg > 0 ? {
+      aggregateRating: { '@type': 'AggregateRating', ratingValue: rating.avg, reviewCount: rating.count },
+    } : {}),
   };
   if (Array.isArray(services) && services.length) {
     person.makesOffer = services

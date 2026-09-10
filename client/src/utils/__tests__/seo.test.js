@@ -119,6 +119,12 @@ describe('profileJsonLd', () => {
     expect(ld.mainEntity).not.toHaveProperty('sameAs');
     expect(ld).not.toHaveProperty('dateModified');
   });
+  test('emits aggregateRating from the host own rating, omits it at zero', () => {
+    const withRating = profileJsonLd({ host: { name: 'J', username: 'j' }, siteUrl: SITE, rating: { avg: 4.8, count: 12 } });
+    expect(withRating.mainEntity.aggregateRating).toEqual({ '@type': 'AggregateRating', ratingValue: 4.8, reviewCount: 12 });
+    const noRating = profileJsonLd({ host: { name: 'J', username: 'j' }, siteUrl: SITE, rating: { avg: 0, count: 0 } });
+    expect(noRating.mainEntity).not.toHaveProperty('aggregateRating');
+  });
 });
 
 describe('resolveBlogSeo — no truncated titles/descriptions', () => {

@@ -144,6 +144,16 @@ const HOME_JSONLD = [
     description:
       "Book A Sloth gives India's creators and professionals one booking link — clients book, pay over UPI, and the money lands in their account.",
     offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+    // Users' rating of the product. SoftwareApplication (not Organization) is the
+    // snippet-eligible node for a self-hosted rating. KEEP TRUTHFUL: reviewCount
+    // must reflect real 5★ user reviews/testimonials shown on the site — bump it
+    // as more come in, don't inflate.
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "5",
+      bestRating: "5",
+      reviewCount: "50",
+    },
   },
   {
     "@context": "https://schema.org",
