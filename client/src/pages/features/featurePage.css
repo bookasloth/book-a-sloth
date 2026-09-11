@@ -71,7 +71,7 @@
 .fp-mock .rowline { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--fp-line); font-size: 13px; }
 .fp-mock .rowline:last-child { border-bottom: 0; }
 .fp-mock .pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 100px; }
-.fp-mock .go { margin-top: 14px; background: var(--primary); color: #fff; border-radius: 4px; text-align: center; font-weight: 700; font-size: 13px; padding: 11px; }
+.fp-mock .go { margin-top: 14px; background: var(--fp-accent); color: #fff; border-radius: 4px; text-align: center; font-weight: 700; font-size: 13px; padding: 11px; }
 .fp-mock .tag { position: absolute; left: 8px; bottom: 8px; font-size: 9px; letter-spacing: .13em; text-transform: uppercase; color: #b8b1a2; }
 .fp-glass { position: absolute; display: flex; align-items: center; gap: 9px; background: rgba(255, 255, 255, .85); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, .7); box-shadow: 0 14px 34px -12px rgba(20, 20, 20, .3); border-radius: 9px; padding: 9px 12px; }
 .fp-glass .ic { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; }
@@ -207,7 +207,7 @@
 .fp-rel a { display: flex; align-items: center; gap: 14px; background: var(--fp-accent-soft); border: 1px solid transparent; border-radius: 10px; padding: 18px 20px; transition: transform .2s, background .2s; }
 .fp-rel a:hover { transform: translateY(-3px); background: color-mix(in srgb, var(--fp-accent) 16%, white); }
 .fp-rel .k { width: 42px; height: 42px; border-radius: 10px; background: #fff; color: var(--fp-accent); display: grid; place-items: center; flex: none; box-shadow: 0 6px 16px -8px rgba(20,20,20,.25); }
-.fp-rel .tt { font-weight: 700; font-size: 15px; }
+.fp-rel .tt { font-weight: 700; font-size: 15px; color: var(--fp-accent); }
 .fp-rel .ds { font-size: 12.5px; color: var(--fp-muted); margin-top: 2px; }
 .fp-rel .go { margin-left: auto; width: 34px; height: 34px; border-radius: 50%; background: var(--fp-accent); color: #fff; display: grid; place-items: center; flex: none; transition: transform .2s; }
 .fp-rel a:hover .go { transform: translateX(3px); }
